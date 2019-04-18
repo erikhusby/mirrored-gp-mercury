@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
@@ -36,6 +37,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -92,7 +94,7 @@ public class MayoManifestEjbTest extends Arquillian {
         List<List<String>> cellGrid = makeCellGrid(testDigits, ImmutableMap.of("Bx-" + testDigits, 4));
         List<Header> headers = MayoManifestImportProcessor.extractHeaders(cellGrid.get(0), null, null);
         int boxIndex = headers.indexOf(Header.BOX_ID);
-        int collabSampleIndex = headers.indexOf(Header.COLLABORATOR_SAMPLE_ID);
+        int collabSampleIndex = headers.indexOf(Header.BIOBANK_SAMPLE_ID);
         String rackBarcode = cellGrid.get(1).get(boxIndex);
 
         // Writes the spreadsheet to the storage bucket.
@@ -144,7 +146,7 @@ public class MayoManifestEjbTest extends Arquillian {
 
         // Modifies some sample metadata in the spreadsheet and re-uploads it.
         // This tests if Mayo updates a manifest file by replacing it in the storage bucket.
-        cellGrid.forEach(row -> {
+        cellGrid.subList(1, cellGrid.size()).forEach(row -> {
             for (int i = 0; i < row.size(); ++i) {
                 String value = row.get(i);
                 if (value.startsWith("Bi")) {
@@ -199,7 +201,7 @@ public class MayoManifestEjbTest extends Arquillian {
         List<Header> headers = MayoManifestImportProcessor.extractHeaders(cellGrid.get(0), null, null);
         int boxIndex = headers.indexOf(Header.BOX_ID);
         int tubeIndex = headers.indexOf(Header.MATRIX_ID);
-        int positionIndex = headers.indexOf(Header.WELL_LOCATION);
+        int positionIndex = headers.indexOf(Header.WELL_POSITION);
         String[] rackBarcode = cellGrid.subList(1, cellGrid.size()).stream().map(row -> row.get(boxIndex)).
                 collect(Collectors.toList()).toArray(new String[0]);
         String[] tubeBarcode = cellGrid.subList(1, cellGrid.size()).stream().map(row -> row.get(tubeIndex)).
@@ -367,6 +369,8 @@ public class MayoManifestEjbTest extends Arquillian {
 
         // The manifest file has not yet been written. An attempt to accession the rack should
         // cause it to be only received, with no MercurySamples made.
+        Assert.assertTrue(CollectionUtils.isEmpty(manifestSessionDao.getSessionsByPrefix(
+                MayoReceivingActionBean.getManifestKey(rackBarcode))));
         MayoReceivingActionBean bean = new MayoReceivingActionBean();
         bean.setMessageCollection(messageCollection);
         bean.setRackBarcode(rackBarcode);
@@ -517,8 +521,8 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
         List<List<String>> displayCellGrid = bean.getManifestCellGrid();
-        Assert.assertEquals(displayCellGrid.stream().flatMap(list -> list.stream()).collect(Collectors.joining(" ")),
-                cellGrid.stream().flatMap(list -> list.stream()).collect(Collectors.joining(" ")));
+        Assert.assertEquals(displayCellGrid.stream().flatMap(Collection::stream).collect(Collectors.joining(" ")),
+                cellGrid.stream().flatMap(Collection::stream).collect(Collectors.joining(" ")));
     }
 
     private void validateManifest(ManifestSession manifestSession, List<List<String>> cellGrid) {
@@ -535,7 +539,7 @@ public class MayoManifestEjbTest extends Arquillian {
             Assert.assertNotNull(expectedValues, "No row for tube " + tubeBarcode);
             for (int i = 0; i < expectedValues.size(); ++i) {
                 Header header = headers.get(i);
-                if (header != null) {
+                if (header != null && !header.isIgnored()) {
                     String rowValue = expectedValues.get(i);
                     if (header.hasUnits() && StringUtils.isNotBlank(rowValue)) {
                         rowValue = (new BigDecimal(rowValue)).setScale(2, BigDecimal.ROUND_UNNECESSARY).toPlainString();
@@ -555,8 +559,8 @@ public class MayoManifestEjbTest extends Arquillian {
         List<Header> headers = MayoManifestImportProcessor.extractHeaders(cellGrid.get(0), null, null);
         int boxIndex = headers.indexOf(Header.BOX_ID);
         int tubeIndex = headers.indexOf(Header.MATRIX_ID);
-        int sampleIndex = headers.indexOf(Header.BROAD_SAMPLE_ID);
-        int collabSampleIndex = headers.indexOf(Header.COLLABORATOR_SAMPLE_ID);
+        int sampleIndex = headers.indexOf(Header.MATRIX_ID);
+        int collabSampleIndex = headers.indexOf(Header.BIOBANK_SAMPLE_ID);
         int collabParticipantIndex = headers.indexOf(Header.BIOBANK_ID);
         int sexIndex = headers.indexOf(Header.SEX);
         int materialTypeIndex = headers.indexOf(Header.SAMPLE_TYPE);
@@ -616,10 +620,12 @@ public class MayoManifestEjbTest extends Arquillian {
             }
         }
         // All tubes in the rack should have been validated.
+        Assert.assertNotNull(tubeFormation.getContainerRole());
         Assert.assertEquals(tubes.size(), tubeFormation.getContainerRole().getContainedVessels().size(),
                 "Rack " + rackBarcode);
 
         // Validates the most recent RCT ticket linked to the rack.
+        Assert.assertNotNull(rack.getJiraTickets());
         JiraTicket jiraTicket = rack.getJiraTickets().stream().
                 filter(t -> t.getTicketName().startsWith(CreateFields.ProjectType.RECEIPT_PROJECT.getKeyPrefix())).
                 sorted(Comparator.comparing(JiraTicket::getTicketName).reversed()).
@@ -698,11 +704,11 @@ public class MayoManifestEjbTest extends Arquillian {
     private List<List<String>> makeCellGrid(String testSuffix, Map<String, Integer> rackBarcodeToNumberTubes) {
         List<List<String>> cellGrid = new ArrayList<>();
         cellGrid.add(Arrays.asList(
-                "Package Id", "Box Label", "Matrix Id", "Well Position", "Sample Id", "Parent Sample Id",
-                "Biobankid_Sampleid", "Collection Date", "Biobank Id", "Sex At Birth",
-                "Age", "Sample Type", "Treatments", "Quantity (ul)", "Total Concentration (ng/ul)",
-                "Total Dna(ng)", "Visit Description", "Sample Source", "Study", "Tracking Number",
-                "Contact", "Email", "Requesting Physician", "Test Name"));
+                "PackageId", "BoxId", "MatrixId", "Well_Position", "SampleId", "Parent_SampleId",
+                "BiobankId_SampleId", "Collection_Date", "BiobankId", "Sex_At_Birth",
+                "Age", "Sample_Type", "Treatments", "Quantity(ul)", "Total_Concentration(ng/ul)",
+                "Total_Dna(ng)", "Visit_Description", "Sample_Source", "Study", "Tracking_Number",
+                "Contact", "Email", "Requesting_Physician", "Test_Name", "NY_State(Y/N)"));
 
         int tubeIndex = 0;
         for (String rackBarcode : rackBarcodeToNumberTubes.keySet()) {
@@ -711,10 +717,10 @@ public class MayoManifestEjbTest extends Arquillian {
                 String position = String.format("%c%02d", "ABCDEFGH".charAt(i / 12), (i % 12) + 1); // A01 thru H12
                 cellGrid.add(Arrays.asList(
                         "Pk-" + testSuffix, rackBarcode, "T" + iSuffix, position, "S-" + iSuffix,
-                        "PS-" + iSuffix, "BiS-" + iSuffix, "02/03/2019", "Bi-" + iSuffix, (i % 2 == 0 ? "M" : "F"),
+                        "PS-" + iSuffix, "BiS-" + iSuffix, "02/03/2019", "Bi-" + iSuffix, (i % 2 == 0 ? "M":"F"),
                         "22", "DNA", "", String.valueOf(100 - tubeIndex), String.valueOf(100 + tubeIndex) + ".13",
                         "333", "Followup", "Whole Blood", "StudyXYZ", "Tk-" + testSuffix,
-                        "Minnie Me", "mm@none.org", "Dr Evil", "All Tests"));
+                        "Minnie Me", "mm@none.org", "Dr Evil", "All Tests", (i %2 == 0 ? "Y":"N")));
             }
         }
         return cellGrid;
@@ -725,7 +731,7 @@ public class MayoManifestEjbTest extends Arquillian {
         List<Header> headers = MayoManifestImportProcessor.extractHeaders(cellGrid.get(0), null, null);
         int rackIndex = headers.indexOf(Header.BOX_ID);
         int tubeIndex = headers.indexOf(Header.MATRIX_ID);
-        int positionIndex = headers.indexOf(Header.WELL_LOCATION);
+        int positionIndex = headers.indexOf(Header.WELL_POSITION);
         return new LinkedHashMap<>(cellGrid.subList(1, cellGrid.size()).stream().
                 filter(row -> row.size() > rackIndex && rackBarcode.equals(row.get(rackIndex))).
                 collect(Collectors.toMap(row -> row.get(positionIndex), row -> row.get(tubeIndex))));

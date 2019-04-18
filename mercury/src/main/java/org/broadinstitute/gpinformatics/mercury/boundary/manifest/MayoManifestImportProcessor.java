@@ -60,51 +60,43 @@ public class MayoManifestImportProcessor {
 
     private List<Header> sheetHeaders = new ArrayList<>();
 
-    private enum Attribute {REQUIRED, HAS_UNITS, IS_DATE}
+    private enum Attribute {REQUIRED, HAS_UNITS, IS_DATE, IGNORE}
 
     public enum Header {
-        // column names must be lower case and space delimited so that initHeaders() can match.
+        // For initHeaders() to match, defines names in lower case, space delimited, no parenthetical part.
         PACKAGE_ID("package id", Metadata.Key.PACKAGE_ID, Attribute.REQUIRED),
-        BOX_ID("box label", Metadata.Key.BOX_ID, Attribute.REQUIRED),
+        BIOBANK_SAMPLE_ID("biobank id sample id", Metadata.Key.SAMPLE_ID, Attribute.REQUIRED),
+        BOX_ID("box id", Metadata.Key.BOX_ID, Attribute.REQUIRED),
+        WELL_POSITION("well position", Metadata.Key.WELL_POSITION, Attribute.REQUIRED),
+        SAMPLE_ID("sample id", Metadata.Key.COLLAB_SAMPLE_ID2),
+        PARENT_SAMPLE_ID("parent sample id", Metadata.Key.COLLAB_PARTICIPANT_ID2),
         MATRIX_ID("matrix id", Metadata.Key.BROAD_2D_BARCODE, Attribute.REQUIRED),
-        WELL_LOCATION("well position", Metadata.Key.WELL, Attribute.REQUIRED),
-        BROAD_SAMPLE_ID("sample id", Metadata.Key.BROAD_SAMPLE_ID, Attribute.REQUIRED),
-
-        COLLECTION_DATE("collection date", Metadata.Key.COLLECTION_DATE, Attribute.IS_DATE),
-        VOLUME("quantity", Metadata.Key.QUANTITY, Attribute.HAS_UNITS),
+        COLLECTION_DATE("collection date", null, Attribute.IGNORE),
+        BIOBANK_ID("biobank id", Metadata.Key.PATIENT_ID, Attribute.REQUIRED),
+        SEX("sex at birth", Metadata.Key.GENDER),
+        AGE("age", null, Attribute.IGNORE),
+        NY_STATE("ny state", Metadata.Key.NY_STATE),
+        SAMPLE_TYPE("sample type", Metadata.Key.MATERIAL_TYPE),
+        TREATMENTS("treatments", null, Attribute.IGNORE),
+        VOLUME("quantity", Metadata.Key.VOLUME, Attribute.HAS_UNITS),
         CONCENTRATION("total concentration", Metadata.Key.CONCENTRATION, Attribute.HAS_UNITS),
         MASS("total dna", Metadata.Key.MASS, Attribute.HAS_UNITS),
-        BIOBANK_ID("biobank id", Metadata.Key.PATIENT_ID),
-
-        // The parent relationship is in sample metadata only, not in chain-of-custody.
-        PARENT_SAMPLE_ID("parent sample id", Metadata.Key.PARENT_SAMPLE_ID),
-        // This naming scheme looks redundant since the sample id part will be unique in Mercury.
-        // I suppose it's used to make the patient-sample hierarchy explicit in Mercury.
-        COLLABORATOR_SAMPLE_ID("biobank id sample id", Metadata.Key.SAMPLE_ID),
-        SEX("sex at birth", Metadata.Key.GENDER),
-        SAMPLE_TYPE("sample type", Metadata.Key.MATERIAL_TYPE),
+        VISIT_DESCRIPTION("visit description", null, Attribute.IGNORE),
         SAMPLE_SOURCE("sample source", Metadata.Key.ORIGINAL_MATERIAL_TYPE),
-
-        TREATMENTS("treatments", Metadata.Key.TREATMENTS),
-        VISIT_DESCRIPTION("visit description", Metadata.Key.VISIT_DESCRIPTION),
         STUDY("study", Metadata.Key.STUDY),
-        REQUESTING_PHYSICIAN("requesting physician", Metadata.Key.REQUESTING_PHYSICIAN),
         TRACKING_NUMBER("tracking number", Metadata.Key.TRACKING_NUMBER),
-
-        AGE("age", Metadata.Key.AGE),
         CONTACT("contact", Metadata.Key.CONTACT),
-        EMAIL("email", Metadata.Key.EMAIL),
-        TEST_NAME("test name", Metadata.Key.TEST_NAME),
-        ;
+        EMAIL("email", Metadata.Key.CONTACT_EMAIL),
+        REQUESTING_PHYSICIAN("requesting physician", Metadata.Key.REQUESTING_PHYSICIAN),
+        TEST_NAME("test name", Metadata.Key.PRODUCT_TYPE);
 
         @NotNull
         private final String columnName;
-        @NotNull
         private final Metadata.Key metadataKey;
         private final List<Attribute> attributes;
         private BigDecimal factor = BigDecimal.ZERO;
 
-        Header(@NotNull String columnName, @NotNull Metadata.Key metadataKey, Attribute... attributes) {
+        Header(@NotNull String columnName, @Nullable Metadata.Key metadataKey, Attribute... attributes) {
             this.columnName = columnName;
             this.metadataKey = metadataKey;
             this.attributes = Arrays.asList(attributes);
@@ -114,13 +106,17 @@ public class MayoManifestImportProcessor {
             return columnName;
         }
 
-        @NotNull
+        @Nullable
         public Metadata.Key getMetadataKey() {
             return metadataKey;
         }
 
         public boolean isRequired() {
             return attributes.contains(Attribute.REQUIRED);
+        }
+
+        public boolean isIgnored() {
+            return attributes.contains(Attribute.IGNORE);
         }
 
         public boolean hasUnits() {
@@ -274,7 +270,7 @@ public class MayoManifestImportProcessor {
                 ManifestRecord manifestRecord = new ManifestRecord();
                 for (int columnIndex = 0; columnIndex < sheetHeaders.size(); ++columnIndex) {
                     Header header = sheetHeaders.get(columnIndex);
-                    if (header != null) {
+                    if (header != null && !header.isIgnored()) {
                         String value = (row.size() > columnIndex) ? row.get(columnIndex) : null;
                         if (StringUtils.isNotBlank(value)) {
                             if (header.hasUnits()) {

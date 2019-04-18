@@ -22,22 +22,22 @@ public class MayoManifestImportProcessorDbFreeTest {
 
     public void testHeaderParsing1() throws Exception {
         for (String headers : Arrays.asList(
-                "Package_Id,Biobankid_Sampleid,Box_Label,Well_Position,Sample_Id,Parent_Sample_Id,Matrix_Id," +
-                        "Collection_Date,Biobank_Id,Sex_At_Birth,Age,Sample_Type,Treatments,Quantity_(ul)," +
-                        "Total_Concentration_(ng/ul),Total_Dna(ng),Visit_Description,Sample_Source,Study," +
-                        "Tracking_Number,Contact,Email,Requesting_Physician,Test_Name",
+                "Package_Id,BiobankId_SampleId,Box_Id,Well_Position,Sample_Id,Parent_Sample_Id,Matrix_Id," +
+                        "Collection_Date,Biobank_Id,Sex_At_Birth,Age,NY State (Y/N),Sample_Type,Treatments," +
+                        "Quantity_(ul),Total_Concentration_(ng/ul),Total_Dna(ng),Visit_Description,Sample_Source," +
+                        "Study,Tracking_Number,Contact,Email,Requesting_Physcian,Test_Name",
                 // Units.
-                "Package_Id,Biobankid_Sampleid,Box_Label,Well_Position,Sample_Id,Parent_Sample_Id,Matrix_Id," +
+                "Package_Id,Biobankid_Sampleid,Box_id,Well_Position,Sample_Id,Parent_Sample_Id,Matrix_Id," +
                         "Collection_Date,Biobank_Id,Sex_At_Birth,Age,Sample_Type,Treatments,Quantity_ul," +
                         "Total_Concentration ( ng / ul ) ,Total_Dna ng,Visit  Description  ,Sample_Source,Study," +
                         "Tracking_Number,Contact,Email,Requesting_Physician,Test_Name",
                 // Mixed case, dropped parentheses, run-on Id.
-                "PACKAGE_ID,BIOBANKID_SAMPLEID,BOX_LABEL,WELL_POSITION,SAMPLE_ID,PARENT_SAMPLE_ID,MATRIX_ID," +
+                "PACKAGE_ID,BIOBANKID_SAMPLEID,BOXID,WELL_POSITION,SAMPLE_ID,PARENT_SAMPLE_ID,MATRIX_ID," +
                         "collection_date,biobank_id,sex_at_birth,age,sample_type,treatments,quantity_(ul)," +
                         "tOTAL_cONCENTRATION_nG/uL,Total Dna NG,vISIT_dESCRIPTION,sAMPLE_SOURCE,sTUDY," +
                         "Tracking Number,Contact,Email,Requesting Physician,Test Name",
                 // only required headers
-                "PackageId,Box Label,Well Position,SampleId,Matrix Id"
+                "PackageId,BoxId,Well Position,BiobankId,Biobankid_Sampleid,Matrix Id"
         )) {
             // Puts numbers in each value column that corresponds to a header.
             String content = headers + "\n" + IntStream.range(0, headers.split(",").length).
@@ -54,7 +54,7 @@ public class MayoManifestImportProcessorDbFreeTest {
     /** Parser should strip out spurious characters that are not 7-bit ASCII from the headers and values. */
     public void testHeaderParsing2() throws Exception {
         char[] invalidChars = {(char)0x9a, (char)0xa2, (char)0x07, (char)0x0a, (char)0x0b, (char)0x0c, (char)0x0d};
-        String[] contentPieces = {"", "P", "ackage_Id", ",Biobankid_Samp", "leid,Box_Label,We", "ll_Position,",
+        String[] contentPieces = {"", "P", "ackage_Id", ",Biobankid_Samp", "leid,Box_id,We", "ll_Position,",
                 "", "Sample_Id", "", ",Parent_Sa", "mple_Id,", "Matrix_Id,Collection_Date,Biobank_Id,Sex_At_B",
                 "irth,Age,Sample_Type,Treatments,Quantity_(", "ul", "),Total_Concen", "tration_(n", "g/ul),",
                 "Total_Dna(ng),Visit_Description,Sample_Source,Study,", "Tracking_Number,Contact,Email,Reques",
@@ -116,7 +116,7 @@ public class MayoManifestImportProcessorDbFreeTest {
     }
 
     public void testErrors() {
-        String headers = "Package Id,Biobankid Sampleid,Box Label,Well Position,Sample Id,Parent Sample Id," +
+        String headers = "Package Id,Biobankid Sampleid,Box ID,Well Position,Sample Id,Parent Sample Id," +
                 "Matrix Id,Collection Date,Biobank Id,Sex At Birth,Age,Sample Type,Treatments," +
                 "Quantity (ul),Total Concentration (ng/ul),Total Dna(ng),Visit Description,Sample Source," +
                 "Study,Tracking Number,Contact,Email,Requesting Physician,Test Name";
@@ -210,9 +210,9 @@ public class MayoManifestImportProcessorDbFreeTest {
     }
 
     public void testUnits() throws Exception {
-        String headers = "Quantity(%s),Total Concentration(%s),Total Dna(%s),Package Id,Box Label,Well Position," +
-                "Sample Id,Matrix Id,Collection Date,Sample Source,Tracking Number,Requesting Physician\n";
-        String data = "%s,%s,%s,P1,B1,A1,S1,T1,1/1/2020,DNA,K1,DrNo";
+        String headers = "Quantity(%s),Total Concentration(%s),Total Dna(%s),Package Id,Box id,Well Position," +
+                "BiobankId,Biobank Id Sample Id,Matrix Id,Collection Date,Sample Source,Tracking Number\n";
+        String data = "%s,%s,%s,P1,B1,A1,S1,BS1,T1,1/1/2020,DNA,K1";
         for (Triple<String, String, String> triple : Arrays.asList(
                 Triple.of("pL,pG/pL,pG", "1234567,2345678,3456.789", "1.23,2345678000.00,3.46"),
                 Triple.of("nL,nG/pL,nG", "1234567,2345678,3456.789", "1234.57,2345678000000.00,3456.79"),
@@ -232,7 +232,7 @@ public class MayoManifestImportProcessorDbFreeTest {
             Multimap<String, ManifestRecord> records = processor.makeManifestRecords(cellGrid, CSV, messages);
             Assert.assertFalse(messages.hasErrors(), StringUtils.join(messages.getErrors()));
             ManifestRecord record = records.values().iterator().next();
-            Assert.assertEquals(record.getMetadataByKey(Metadata.Key.QUANTITY).getValue(),
+            Assert.assertEquals(record.getMetadataByKey(Metadata.Key.VOLUME).getValue(),
                     expectations[0], triple.toString());
             Assert.assertEquals(record.getMetadataByKey(Metadata.Key.CONCENTRATION).getValue(),
                     expectations[1], triple.toString());
@@ -244,7 +244,7 @@ public class MayoManifestImportProcessorDbFreeTest {
     public void testTwoRacks() throws Exception {
         MayoManifestImportProcessor processor = new MayoManifestImportProcessor();
         MessageCollection messageCollection = new MessageCollection();
-        String content = "Package Id,Biobankid Sampleid,Box Label,Well Position,Sample Id,Parent Sample Id," +
+        String content = "Package Id,Biobankid Sampleid,Box id,Well Position,Sample Id,Parent Sample Id," +
                 "Matrix Id,Collection Date,Biobank Id,Sex At Birth,Age,Sample Type,Treatments," +
                 "Quantity (ul),Total Concentration (ng/ul),Total Dna(ng),Visit Description,Sample Source," +
                 "Study,Tracking Number,Contact,Email,Requesting Physician,Test Name\n" +

@@ -307,7 +307,7 @@ public class MayoManifestEjb {
                         manifestRecord.getValueByKey(Metadata.Key.MATERIAL_TYPE), "No Type Given"));
 
                 String tubeBarcode = manifestRecord.getValueByKey(Metadata.Key.BROAD_2D_BARCODE);
-                String positionName = manifestRecord.getValueByKey(Metadata.Key.WELL);
+                String positionName = manifestRecord.getValueByKey(Metadata.Key.WELL_POSITION);
                 VesselPosition position = VesselPosition.getByName(positionName);
                 if (position == null) {
                     bean.getMessageCollection().addError(UNKNOWN_WELL, positionName);
@@ -363,7 +363,7 @@ public class MayoManifestEjb {
                 for (String barcode : tubeMap.keySet()) {
                     BarcodedTube tube = tubeMap.get(barcode);
                     for (Metadata metadata : sampleMetadata.get(tubeToSample.get(barcode))) {
-                        if (metadata.getKey() == Metadata.Key.QUANTITY) {
+                        if (metadata.getKey() == Metadata.Key.VOLUME) {
                             tube.setVolume(NumberUtils.toScaledBigDecimal(metadata.getValue()));
                         } else if (metadata.getKey() == Metadata.Key.CONCENTRATION) {
                             tube.setConcentration(NumberUtils.toScaledBigDecimal(metadata.getValue()));
