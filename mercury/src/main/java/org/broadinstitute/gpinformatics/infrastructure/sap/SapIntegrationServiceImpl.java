@@ -219,11 +219,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
             final SAPOrderItem sapOrderItem = new SAPOrderItem(product.getPartNumber(), sampleCount);
 
-
-                defineConditionsForOrderItem(placedOrder, product, sapOrderItem);
+            defineConditionsForOrderItem(placedOrder, product, sapOrderItem);
 
             return sapOrderItem;
-
     }
 
     private void defineConditionsForOrderItem(ProductOrder placedOrder, Product product, SAPOrderItem sapOrderItem) {
