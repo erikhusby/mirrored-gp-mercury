@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
-import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -44,6 +43,7 @@ import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -229,8 +229,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                                         int additionalSampleCount, boolean creatingNewOrder, boolean closingOrder,
                                         boolean forOrderValueQuery) throws SAPIntegrationException {
             BigDecimal sampleCount =
-                getSampleCount(placedOrder, product, additionalSampleCount, creatingNewOrder, closingOrder, forOrderValueQuery);
+                getSampleCount(placedOrder, product, additionalSampleCount, creatingNewOrder, closingOrder,
+                    forOrderValueQuery);
         SapQuote sapQuote = placedOrder.getSapQuote(this);
+
         if (sapQuote != null) {
             Collection<QuoteItem> quoteItems = sapQuote.getQuoteItemMap().get(product.getPartNumber());
             if (quoteItems.size() != 1) {
@@ -241,9 +243,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 new SAPOrderItem(quoteItem.getMaterialNumber(), quoteItem.getQuoteItemNumber(),
                     quoteItem.getMaterialDescription(), sampleCount, quoteItem.getMaterialDescription(),
                     String.format("%s qty of %s", sampleCount.toPlainString(), quoteItem.getMaterialNumber()));
-            if (closingOrder){
-// ?
-            }
+
             defineConditionsForOrderItem(placedOrder, product, sapOrderItem);
             return sapOrderItem;
         }
