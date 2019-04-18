@@ -999,7 +999,11 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         String clinicalDisplayCharge = "";
         if (determineCompanyConfiguration()
             == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) {
-            clinicalDisplayCharge =  NumberFormat.getCurrencyInstance().format(getFeeByCondition(Condition.CLINICAL_CHARGE));
+            final BigDecimal feeByCondition = getFeeByCondition(Condition.CLINICAL_CHARGE);
+            if(feeByCondition.compareTo(BigDecimal.ZERO) > 0) {
+                clinicalDisplayCharge = NumberFormat.getCurrencyInstance().format(
+                        feeByCondition);
+            }
         }
         return clinicalDisplayCharge;
     }
@@ -1009,7 +1013,11 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         String commercialDisplayCharge = "";
         if (determineCompanyConfiguration()
             == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) {
-            commercialDisplayCharge =  NumberFormat.getCurrencyInstance().format(getFeeByCondition(Condition.COMMERCIAL_CHARGE));
+            final BigDecimal feeByCondition = getFeeByCondition(Condition.COMMERCIAL_CHARGE);
+            if(feeByCondition.compareTo(BigDecimal.ZERO) > 0) {
+                commercialDisplayCharge = NumberFormat.getCurrencyInstance().format(
+                        feeByCondition);
+            }
         }
         return commercialDisplayCharge;
     }
@@ -1018,7 +1026,11 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         String interCompanyDisplayCharge = "";
         if (determineCompanyConfiguration()
                           == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) {
-            interCompanyDisplayCharge =  NumberFormat.getCurrencyInstance().format(getFeeByCondition(Condition.INTERCOMPANY_FEE));
+            final BigDecimal feeByCondition = getFeeByCondition(Condition.INTERCOMPANY_FEE);
+            if(feeByCondition.compareTo(BigDecimal.ZERO)>0) {
+                interCompanyDisplayCharge = NumberFormat.getCurrencyInstance().format(
+                        feeByCondition);
+            }
         }
         return interCompanyDisplayCharge;
     }
@@ -1075,8 +1087,13 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     }
 
     public String getQuoteServerPrice() {
+        String displayPrice = "";
         BigDecimal rawPrice = getQuoteServerRawPrice();
-        return NumberFormat.getCurrencyInstance().format(rawPrice);
+        if(rawPrice.compareTo(BigDecimal.ZERO) > 0 ||
+           (getPrimaryPriceItem() != null && StringUtils.isNotBlank(getPrimaryPriceItem().getPrice()))) {
+            displayPrice = NumberFormat.getCurrencyInstance().format(rawPrice);
+        }
+        return displayPrice;
     }
 
     private BigDecimal getQuoteServerRawPrice() {
