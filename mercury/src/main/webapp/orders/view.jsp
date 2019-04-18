@@ -881,7 +881,6 @@ function updateFundsRemaining() {
     var quoteSource = "${actionBean.editOrder.quoteSource}";
 
     if ($j.trim(quoteIdentifier)) {
-        debugger;
         $j.ajax({
             url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier="+quoteIdentifier+"&productOrder=" + productOrderKey + "&quoteSource=" + quoteSource,
             dataType: 'json',

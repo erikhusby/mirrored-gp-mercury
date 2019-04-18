@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
+import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.poi.ss.formula.functions.T;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
@@ -27,8 +27,6 @@ import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.OrderCriteria;
 import org.broadinstitute.sap.entity.SAPDeliveryDocument;
 import org.broadinstitute.sap.entity.SAPDeliveryItem;
-import org.broadinstitute.sap.entity.SAPOrder;
-import org.broadinstitute.sap.entity.SAPOrderItem;
 import org.broadinstitute.sap.entity.SAPReturnOrder;
 import org.broadinstitute.sap.entity.material.SAPChangeMaterial;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
@@ -194,9 +192,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             getOrderItems(placedOrder, creatingOrder, closingOrder, placedOrder.getProduct());
 
         SAPOrder newOrder =
-            new SAPUpdateOrder(sapCompanyConfiguration, orderToUpdate.getQuoteId(), userFullName,
-                sapCompanyConfiguration.getCompanyCode(), sapOrderNumber, orderToUpdate.getJiraTicketKey(),
-                orderToUpdate.getResearchProject().getJiraTicketKey(), null,
+            new SAPUpdateOrder(sapCompanyConfiguration, orderToUpdate.getQuoteId(), userFullName, sapOrderNumber,
+                orderToUpdate.getJiraTicketKey(), orderToUpdate.getResearchProject().getJiraTicketKey(), null,
                 orderItems.toArray(new SAPOrderItem[0]));
 
         if (creatingOrder) {
@@ -238,9 +235,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 throw new SAPIntegrationException("Could not determint the line item of the quote");
             }
             QuoteItem quoteItem = quoteItems.iterator().next();
-            SAPOrderItem sapOrderItem = new SAPOrderItem(quoteItem.getMaterialNumber(), quoteItem.getQuoteItemNumber(),
-                quoteItem.getMaterialDescription(), sampleCount, quoteItem.getMaterialDescription(),
-                String.format("%s qty of %s", sampleCount.toPlainString(), quoteItem.getMaterialNumber()));
+            SAPOrderItem sapOrderItem =
+                new SAPOrderItem(quoteItem.getMaterialNumber(), quoteItem.getQuoteItemNumber(),
+                    quoteItem.getMaterialDescription(), sampleCount, quoteItem.getMaterialDescription(),
+                    String.format("%s qty of %s", sampleCount.toPlainString(), quoteItem.getMaterialNumber()));
             if (closingOrder){
 // ?
             }
@@ -308,10 +306,12 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product, int additionalSampleCount,
-                                        boolean closingOrder)
-            throws SAPIntegrationException {
+                                        boolean closingOrder) throws SAPIntegrationException {
         SapQuote sapQuote = placedOrder.getSapQuote(this);
-        QuoteItem quoteLineItem = sapQuote.getLineItem(product.getPartNumber());
+        Collection<QuoteItem> quoteItems = sapQuote.getQuoteItemMap().get(product.getPartNumber());
+
+        // todo: GPLIM-6224 line item should be stored so this method returns the correct one!
+        QuoteItem quoteLineItem = quoteItems.iterator().next();
 
         BigDecimal sampleCount = getSampleCount(placedOrder, product, additionalSampleCount, false, closingOrder);
         SAPOrderItem sapOrderItem =

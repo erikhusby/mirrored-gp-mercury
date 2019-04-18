@@ -38,7 +38,7 @@ public class MockSapQuote {
     public static SapQuote newInstance(String quoteId, ProductOrder productOrder, BigDecimal totalOpenOrderValue,
                                            BigDecimal quoteTotal) {
         QuoteItem  quoteItem = Mockito.mock(QuoteItem.class);
-        Mockito.when(quoteItem.getQuoteItemNumber()).thenReturn(quoteId);
+        Mockito.when(quoteItem.getQuoteItemNumber()).thenReturn(10);
         Mockito.when(quoteItem.getQuoteNumber()).thenReturn(quoteId);
         String partNumber = productOrder.getProduct().getPartNumber();
         Mockito.when(quoteItem.getMaterialNumber()).thenReturn(partNumber);
@@ -53,12 +53,11 @@ public class MockSapQuote {
                 Collectors.toList());
         IntStream.range(0, productAddOns.size()).forEach(index -> {
             String partName = productAddOns.get(index);
-            String lineItem = String.format("%s0", index + 1);
 
             QuoteItem  addOnItem = Mockito.mock(QuoteItem.class);
             Mockito.when(addOnItem.getQuoteNumber()).thenReturn(quoteId);
             Mockito.when(addOnItem.getMaterialNumber()).thenReturn(partName);
-            Mockito.when(addOnItem.getQuoteItemNumber()).thenReturn(lineItem);
+            Mockito.when(addOnItem.getQuoteItemNumber()).thenReturn(index + 1);
             quoteItemMap.put(partName, addOnItem);
             quoteItemByDescriptionMap.put(addOnItem.getMaterialDescription(), addOnItem);
         });
@@ -78,7 +77,7 @@ public class MockSapQuote {
         Mockito.when(quoteHeader.getFundingHeaderStatus()).thenReturn(FundingStatus.APPROVED);
         Mockito.when(sapQuote.isAllFundingApproved()).thenCallRealMethod();
         try {
-            Mockito.when(sapQuote.getLineItem(Mockito.anyString())).thenCallRealMethod();
+            Mockito.when(sapQuote.getLineItem(Mockito.anyInt(), Mockito.anyString())).thenCallRealMethod();
         } catch (SAPIntegrationException e) {
             e.printStackTrace();
         }

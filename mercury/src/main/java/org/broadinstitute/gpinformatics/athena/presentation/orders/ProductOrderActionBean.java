@@ -948,7 +948,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             addGlobalValidationError(unFundedMessage);
         }
 
-        BigDecimal fundsRemaining = quote.getQuoteHeader().getQuoteTotal().subtract(quote.getQuoteHeader().getQuoteOpenValue());
+        BigDecimal fundsRemaining = quote.getQuoteHeader().fundsRemaining();
         double outstandingEstimate = estimateSapOutstandingOrders(quote, additionalSampleCount, editOrder);
         double valueOfCurrentOrder = 0;
 
@@ -1541,7 +1541,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 final Date todayTruncated =
                         org.apache.commons.lang3.time.DateUtils.truncate(new Date(), Calendar.DATE);
 
-                if (StringUtils.equals(quoteSource, ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName()) ) {
+                if (StringUtils.equals(quoteSource, ProductOrder.QuoteSourceType.QUOTE_SERVER.name()) ) {
                     Quote quote = quoteService.getQuoteByAlphaId(quoteIdentifier);
                     final QuoteFunding quoteFunding = quote.getQuoteFunding();
                     double fundsRemaining = Double.parseDouble(quoteFunding.getFundsRemaining());
@@ -1588,25 +1588,19 @@ public class ProductOrderActionBean extends CoreActionBean {
                         });
                     }
                     item.put("fundingDetails", fundingDetails);
-                } else if (StringUtils.equals(quoteSource, ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName())) {
+                } else if (StringUtils.equals(quoteSource, ProductOrder.QuoteSourceType.SAP_SOURCE.name())) {
                     SapQuote quote = sapService.findSapQuote(quoteIdentifier);
                     item.put("quoteType", ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName());
+                    item.put("fundsRemaining",
+                        NumberFormat.getCurrencyInstance().format(quote.getQuoteHeader().fundsRemaining()));
 
-                    final Optional<BigDecimal> quoteTotal = Optional.ofNullable(quote.getQuoteHeader().getQuoteTotal());
-                    final Optional<BigDecimal> quoteOpenValue = Optional.ofNullable(quote.getQuoteHeader().getQuoteOpenValue());
-
-                    if(quoteTotal.isPresent() && quoteOpenValue.isPresent()) {
-                        item.put("fundsRemaining",
-                                NumberFormat.getCurrencyInstance()
-                                        .format(quoteTotal.get().subtract(quoteOpenValue.get())));
-                    }
-                    final Optional<FundingStatus> fundingHeaderStatus = Optional.ofNullable(quote.getQuoteHeader().getFundingHeaderStatus());
+                    Optional<FundingStatus> fundingHeaderStatus =
+                        Optional.ofNullable(quote.getQuoteHeader().getFundingHeaderStatus());
                     if(fundingHeaderStatus.isPresent()) {
                         item.put("status", fundingHeaderStatus.get().getStatusText());
                     }
                     item.put("outstandingEstimate",
-                            NumberFormat.getCurrencyInstance()
-                                    .format(estimateSapOutstandingOrders(quote, 0, null)));
+                            NumberFormat.getCurrencyInstance().format(estimateSapOutstandingOrders(quote, 0, null)));
 
                     if(CollectionUtils.isEmpty(quote.getFundingDetails())) {
                         item.put("error", "This quote has no active Funding Sources.");
