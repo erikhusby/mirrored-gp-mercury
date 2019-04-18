@@ -174,9 +174,8 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
         }
     }
 
-    public Map<Product, Integer> getNumberOfBilledEntriesByProduct() {
-        Map<Product, Integer> billedCount = new HashMap<>();
-
+    public Map<Product, Double> getNumberOfBilledEntriesByProduct() {
+        Map<Product, Double> billedCount = new HashMap<>();
 
         for (LedgerEntry ledgerEntry : this.ledgerEntries) {
             final ProductOrder productOrder = ledgerEntry.getProductOrderSample().getProductOrder();
@@ -198,8 +197,8 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
             }
 
             if (ledgerEntry.isBilled()) {
-                int oldCount = (billedCount.containsKey(aggregatingProduct))?billedCount.get(aggregatingProduct):0;
-                billedCount.put(aggregatingProduct, oldCount + 1);
+                double oldCount = billedCount.getOrDefault(aggregatingProduct, 0d);
+                billedCount.put(aggregatingProduct, oldCount + ledgerEntry.getQuantity());
             }
         }
 

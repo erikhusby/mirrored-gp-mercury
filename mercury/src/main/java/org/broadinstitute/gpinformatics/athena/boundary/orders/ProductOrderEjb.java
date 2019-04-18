@@ -395,7 +395,7 @@ public class ProductOrderEjb {
         BigDecimal sampleCount = BigDecimal.ZERO ;
         if(orderToUpdate.isPriorToSAP1_5()) {
             sampleCount = SapIntegrationServiceImpl.getSampleCount(orderToUpdate,
-                    orderToUpdate.getProduct(), 0, false, closingOrder);
+                    orderToUpdate.getProduct(), 0, false, closingOrder, false);
         }
         orderToUpdate.updateSapDetails(sampleCount.intValue(),
             MercuryStringUtils.makeDigest(allProductsOrdered),"");

@@ -2146,7 +2146,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return (filteredResults != null) ? Iterators.size(filteredResults.iterator()) : 0;
     }
 
-    public static double getUnbilledNonSampleCount(ProductOrder order, Product targetProduct, int totalCount) {
+    public static double getUnbilledNonSampleCount(ProductOrder order, Product targetProduct, double totalCount) {
+        double existingCount = getBilledSampleCount(order, targetProduct);
+        return totalCount - existingCount;
+    }
+
+    public static double getBilledSampleCount(ProductOrder order, Product targetProduct) {
         double existingCount = 0;
 
         for (ProductOrderSample targetSample : order.getSamples()) {
@@ -2159,7 +2164,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             }
 
         }
-        return totalCount - existingCount;
+        return existingCount;
     }
 
     public boolean isSavedInSAP() {
