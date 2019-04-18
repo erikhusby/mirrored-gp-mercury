@@ -347,7 +347,7 @@ public class ImportLcsetTest extends Arquillian {
                     }
 
                     bucketEntries.add(new BucketEntry(barcodedTube, foundProductOrder, shearingBucket,
-                            BucketEntry.BucketEntryType.PDO_ENTRY, 1));
+                            BucketEntry.BucketEntryType.PDO_ENTRY));
 
                     // Create a transfer from each sample to its dev aliquots.
                     List<String> devTubeList = mapSampleToListDevTubes.get(row.getSampleBarcode());

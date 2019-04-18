@@ -2219,5 +2219,11 @@
             <column name="IS_LAB_BATCH_COMPUTED" type="number(1,0)"/>
         </addColumn>
     </changeSet>
+    <changeSet id="GPLIM-5849-14" author="thompson">
+        <dropColumn schemaName="mercury" tableName="BUCKET_ENTRY" columnName="product_order_ranking"/>
+    </changeSet>
+    <changeSet id="GPLIM-5849-15" author="thompson">
+        <dropColumn schemaName="mercury" tableName="BUCKET_ENTRY_AUD" columnName="product_order_ranking"/>
+    </changeSet>
 
 </databaseChangeLog>

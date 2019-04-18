@@ -146,7 +146,7 @@ public class BatchToJiraTest extends Arquillian {
         ProductOrder stubTestPDO = ProductOrderTestFactory.createDummyProductOrder(LabBatchEJBTest.STUB_TEST_PDO_KEY);
 
         Bucket bucket = new Bucket("Test");
-        batch.addBucketEntry(new BucketEntry(tube1, stubTestPDO, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, 1));
+        batch.addBucketEntry(new BucketEntry(tube1, stubTestPDO, bucket, BucketEntry.BucketEntryType.PDO_ENTRY));
 
         batchEjb.batchToJira("andrew", null, batch, CreateFields.IssueType.EXOME_EXPRESS, CreateFields.ProjectType.LCSET_PROJECT);
 
@@ -160,7 +160,7 @@ public class BatchToJiraTest extends Arquillian {
         // now try it with SM-02 as a rework
         // FIXME find a different way to do this.  This method, addReworkToBatch, is not a production used method.
         reworkEjb.addReworkToBatch(batch, tube2Label, "scottmat");
-        batch.addBucketEntry(new BucketEntry(tube2, stubTestPDO, bucket, BucketEntry.BucketEntryType.REWORK_ENTRY, 1));
+        batch.addBucketEntry(new BucketEntry(tube2, stubTestPDO, bucket, BucketEntry.BucketEntryType.REWORK_ENTRY));
         batchEjb.batchToJira("andrew", null, batch, CreateFields.IssueType.EXOME_EXPRESS, CreateFields.ProjectType.LCSET_PROJECT);
 
         ticket = jiraService.getIssue(batch.getJiraTicket().getTicketId());
