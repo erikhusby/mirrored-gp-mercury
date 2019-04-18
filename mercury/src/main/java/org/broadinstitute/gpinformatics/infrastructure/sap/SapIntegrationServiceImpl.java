@@ -208,14 +208,16 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * @param additionalSampleCount
      * @param creatingNewOrder
      * @param closingOrder
+     * @param forOrderValueQuery
      * @return JAXB sub element of the SAP order to represent the Product that will be charged and the quantity that
      * is expected of it.
      */
     protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product,
-                                        int additionalSampleCount, boolean creatingNewOrder, boolean closingOrder) throws SAPIntegrationException {
+                                        int additionalSampleCount, boolean creatingNewOrder, boolean closingOrder,
+                                        boolean forOrderValueQuery) throws SAPIntegrationException {
             BigDecimal sampleCount =
                 getSampleCount(placedOrder, product, additionalSampleCount, creatingNewOrder, closingOrder,
-                        false);
+                        forOrderValueQuery);
 
             final SAPOrderItem sapOrderItem = new SAPOrderItem(product.getPartNumber(), sampleCount);
 
