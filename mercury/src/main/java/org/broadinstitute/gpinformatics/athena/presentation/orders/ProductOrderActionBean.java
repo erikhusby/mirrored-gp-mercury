@@ -1561,7 +1561,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 final Date todayTruncated =
                         org.apache.commons.lang3.time.DateUtils.truncate(new Date(), Calendar.DATE);
 
-                if (StringUtils.equals(quoteSource, ProductOrder.QuoteSourceType.QUOTE_SERVER.name()) ) {
+                if (StringUtils.equals(quoteSource, ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName()) ) {
                     Quote quote = quoteService.getQuoteByAlphaId(quoteIdentifier);
                     final QuoteFunding quoteFunding = quote.getQuoteFunding();
                     double fundsRemaining = Double.parseDouble(quoteFunding.getFundsRemaining());
@@ -1608,7 +1608,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                         });
                     }
                     item.put("fundingDetails", fundingDetails);
-                } else if (StringUtils.equals(quoteSource, ProductOrder.QuoteSourceType.SAP_SOURCE.name())) {
+                } else if (StringUtils.equals(quoteSource, ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName())) {
                     SapQuote quote = sapService.findSapQuote(quoteIdentifier);
                     item.put("quoteType", ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName());
                     item.put("fundsRemaining",

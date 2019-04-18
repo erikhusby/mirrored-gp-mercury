@@ -1616,7 +1616,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
                         </c:otherwise>
                     </c:choose>
                     ${actionBean.editOrder.quoteId}
-                    <c:if test="${ not actionBean.editOrder.hasSapQuote()}">
+                    <c:if test="${ actionBean.editOrder.hasQuote() }">
                         </a>
                     </c:if>
                 </c:if>
