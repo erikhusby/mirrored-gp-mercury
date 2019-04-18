@@ -2382,7 +2382,8 @@ public class ProductOrderActionBeanTest {
         } else {
             Assert.assertEquals(actionBean.estimateSapOutstandingOrders(TestUtils.buildTestSapQuote(testQuoteIdentifier, extraOrderValues, BigDecimal.valueOf(800000),
                     testOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED), 0,
-                    null), extraOrderValues.doubleValue());
+                    null),
+                    extraOrderValues.doubleValue());
         }
 
         // Now mimic saving order to SAP
@@ -2890,7 +2891,8 @@ public class ProductOrderActionBeanTest {
                 sapQHeader.setFUNDTYPE(SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION.name());
                 sapQHeader.setQUOTESTATUSTXT("");
                 sapQHeader.setQUOTETOTAL(BigDecimal.valueOf(198));
-                sapQHeader.setQUOTEOPENVAL(BigDecimal.valueOf(98));
+                sapQHeader.setSOTOTAL(BigDecimal.valueOf(98));
+                sapQHeader.setQUOTEOPENVAL(BigDecimal.valueOf(100));
 
                 QuoteHeader header = new QuoteHeader(sapQHeader);
 
@@ -2986,7 +2988,8 @@ public class ProductOrderActionBeanTest {
                 sapQHeader.setFUNDTYPE(SapIntegrationClientImpl.FundingType.PURCHASE_ORDER.name());
                 sapQHeader.setQUOTESTATUSTXT("");
                 sapQHeader.setQUOTETOTAL(BigDecimal.valueOf(198));
-                sapQHeader.setQUOTEOPENVAL(BigDecimal.valueOf(98));
+                sapQHeader.setSOTOTAL(BigDecimal.valueOf(98));
+                sapQHeader.setQUOTEOPENVAL(BigDecimal.valueOf(100));
 
                 QuoteHeader header = new QuoteHeader(sapQHeader);
 

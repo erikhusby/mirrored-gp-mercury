@@ -1618,7 +1618,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                     if(quoteTotal.isPresent() && quoteOpenValue.isPresent()) {
                         item.put("fundsRemaining",
                                 NumberFormat.getCurrencyInstance()
-                                        .format(quoteTotal.orElse(BigDecimal.ZERO)));
+                                        .format(quoteOpenValue.orElse(BigDecimal.ZERO)));
                     }
                     final Optional<FundingStatus> fundingHeaderStatus = Optional.ofNullable(quote.getQuoteHeader().getFundingHeaderStatus());
                     if(fundingHeaderStatus.isPresent()) {

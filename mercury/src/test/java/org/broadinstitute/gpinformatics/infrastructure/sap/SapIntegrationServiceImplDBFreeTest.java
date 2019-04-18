@@ -403,7 +403,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         countTestPDO.setQuoteId(testSingleSourceQuote.getAlphanumericId());
         countTestPDO.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         countTestPDO.addSapOrderDetail(new SapOrderDetail("testSAPOrder", 10, testSingleSourceQuote.getAlphanumericId(),
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", ""));
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode()));
         System.out.println("The current order status is : " + testOrderStatus.getDisplayName());
         countTestPDO.setOrderStatus(testOrderStatus);
 

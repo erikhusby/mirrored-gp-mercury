@@ -190,7 +190,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         newOrder.setResearchProjectNumber(orderToUpdate.getResearchProject().getJiraTicketKey());
 
         Product primaryProduct = placedOrder.getProduct();
-        newOrder.addOrderItem(getOrderItem(placedOrder, primaryProduct, 0, creatingOrder, closingOrder));
+        newOrder.addOrderItem(getOrderItem(placedOrder, primaryProduct, 0, creatingOrder, closingOrder, false));
 
         for (ProductOrderAddOn addon : placedOrder.getAddOns()) {
             newOrder.addOrderItem(getOrderItem(placedOrder, addon.getAddOn(), 0, creatingOrder,
