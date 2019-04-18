@@ -114,6 +114,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
@@ -132,6 +133,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.datatables.State;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.OrderValue;
+import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.entity.quote.FundingStatus;
 import org.broadinstitute.sap.entity.quote.QuoteItem;
 import org.broadinstitute.sap.entity.quote.SapQuote;
@@ -612,21 +614,32 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         if(editOrder.getProduct() != null) {
-            if(ProductOrder.OrderAccessType.COMMERCIAL.getDisplayName().equals(orderType) &&
-               (!editOrder.getProduct().hasExternalCounterpart() || !editOrder.getProduct().isClinicalProduct() ||
-                !editOrder.getProduct().isExternalOnlyProduct())) {
-                addGlobalValidationError("Selecting " +
-                                         ProductOrder.OrderAccessType.COMMERCIAL.getDisplayName() +
-                                         " Is not valid since " + editOrder.getProduct().getDisplayName() +
-                                         " is not offered as either clinical or commercial");
-            } else if (ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK.getDisplayName().equals(orderType) &&
-                       editOrder.getProduct().isExternalOnlyProduct()) {
-                addGlobalValidationError("Selecting " +
-                                         ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK.getDisplayName() +
-                                         " Is not valid since " + editOrder.getProduct().getDisplayName() +
-                                         " is not offered as research");
-            }
 
+            if(editOrder.hasSapQuote()) {
+                final SapQuote sapQuote = editOrder.getSapQuote(sapService);
+                final String salesOrganization =
+                        sapQuote.getQuoteHeader().getSalesOrganization();
+
+                SapIntegrationClientImpl.SAPCompanyConfiguration companyCode =
+                        SapIntegrationClientImpl.SAPCompanyConfiguration
+                                .fromSalesOrgForMaterial(salesOrganization);
+                //if the Quote used is not a GP Quote, they must be ordering SSF Products.
+                if(!Arrays.asList(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES).contains(companyCode)) {
+                    companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+                }
+                Optional<SAPMaterial> cachedProduct =
+                        Optional.ofNullable(productPriceCache.findByPartNumber(editOrder.getProduct().getPartNumber(),
+                                companyCode ));
+                if(!cachedProduct.isPresent()) {
+                    addGlobalValidationError("The product you selected " +
+                                             editOrder.getProduct().getDisplayName() + " is invalid for your quote " +
+                                             sapQuote.getQuoteHeader().getQuoteNumber() +
+                                             " because the product is not available for sales organization " +
+                                             salesOrganization +
+                                             ".  Please check either the selected product or the quote you are using.");
+                }
+            }
         }
         /*
          * update or add to list of kit details
@@ -1014,9 +1027,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         double value = 0d;
 
         if(productOrder == null) {
-            final Optional<BigDecimal> quoteOpenValue = Optional.ofNullable(foundQuote.getQuoteHeader().getQuoteOpenValue());
-            if(quoteOpenValue.isPresent()) {
-                value = quoteOpenValue.get().doubleValue();
+            final Optional<BigDecimal> openSalesValue = Optional.ofNullable(foundQuote.getQuoteHeader().getSalesOrderTotal());
+            if(openSalesValue.isPresent()) {
+                value = openSalesValue.get().doubleValue();
             }
         } else {
             OrderCalculatedValues calculatedValues = null;
@@ -1156,7 +1169,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             productValue = productPrice * (unbilledCount);
         } else {
-            throw new InvalidProductException("Price for " + product.getPrimaryPriceItem().getDisplayName() +
+            throw new InvalidProductException("Price for " + product.getPriceItemDisplayName() +
                                               " for product " + product.getDisplayName() + " was not found.");
         }
         return productValue;
@@ -1455,17 +1468,24 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             QuotePriceItem priceItemByKeyFields = null;
             if (editOrder.getProduct() != null) {
-                priceItemByKeyFields = priceListCache.findByKeyFields(editOrder.getProduct().getPrimaryPriceItem());
-                if (priceItemByKeyFields != null) {
-                    editOrder.getProduct().getPrimaryPriceItem().setUnits(priceItemByKeyFields.getUnit());
+                if (editOrder.getProduct().getPrimaryPriceItem() != null) {
+                    priceItemByKeyFields = priceListCache.findByKeyFields(editOrder.getProduct().getPrimaryPriceItem());
+                    if (priceItemByKeyFields != null) {
+
+                        //todo this will nolonger be necessary once units are added to the Product
+                        editOrder.getProduct().getPrimaryPriceItem().setUnits(priceItemByKeyFields.getUnit());
+                    }
                 }
             }
 
             for (ProductOrderAddOn productOrderAddOn : editOrder.getAddOns()) {
-                final QuotePriceItem addOnPriceItemByKeyFields =
-                        priceListCache.findByKeyFields(productOrderAddOn.getAddOn().getPrimaryPriceItem());
-                if (addOnPriceItemByKeyFields != null ) {
-                    productOrderAddOn.getAddOn().getPrimaryPriceItem().setUnits(addOnPriceItemByKeyFields.getUnit());
+                if (productOrderAddOn.getAddOn().getPrimaryPriceItem() != null) {
+                    final QuotePriceItem addOnPriceItemByKeyFields =
+                            priceListCache.findByKeyFields(productOrderAddOn.getAddOn().getPrimaryPriceItem());
+                    if (addOnPriceItemByKeyFields != null ) {
+                        //todo this will nolonger be necessary once units are added to the Product
+                        productOrderAddOn.getAddOn().getPrimaryPriceItem().setUnits(addOnPriceItemByKeyFields.getUnit());
+                    }
                 }
             }
         }
@@ -1933,21 +1953,9 @@ public class ProductOrderActionBean extends CoreActionBean {
             saveType = ProductOrder.SaveType.CREATING;
         }
 
-        if (editOrder.getProduct() != null) {
-            if(editOrder.getProduct().isClinicalProduct() ||
-                    editOrder.getProduct().isExternalOnlyProduct()) {
-                editOrder.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
-            } else {
-            // TODO SGM Saving this implementation for the final 2.0 SAP/GP release of Mercury
-//                if (userBean.isPDMUser() || userBean.isGPPMUser() || userBean.isDeveloperUser()) {
-//
-//                    if (orderType != null) {
-//                        editOrder.setOrderType(ProductOrder.OrderAccessType.fromDisplayName(orderType));
-//                    }
-//                } else {
-                        editOrder.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
-//                }
-            }
+        if (editOrder.getProduct() != null && editOrder.hasSapQuote()) {
+            final SapQuote sapQuote = editOrder.getSapQuote(sapService);
+            editOrder.setOrderType(ProductOrder.OrderAccessType.fromSalesOrg(sapQuote.getQuoteHeader().getSalesOrganization()));
         }
 
         if (editOrder.isRegulatoryInfoEditAllowed()) {
@@ -2075,14 +2083,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         Product tokenProduct = productTokenInput.getTokenObject();
         Product product = tokenProduct != null ? productDao.findByPartNumber(tokenProduct.getPartNumber()) : null;
         if(product != null) {
-            product.setSapMaterial(productPriceCache.findByPartNumber(product.getPartNumber(),
-                    product.determineCompanyConfiguration()));
+            Product.setMaterialOnProduct(product, productPriceCache);
         }
         List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
 
         for (Product addOnProduct : addOnProducts) {
-            addOnProduct.setSapMaterial(productPriceCache.findByPartNumber(addOnProduct.getPartNumber(),
-                    addOnProduct.determineCompanyConfiguration()));
+            Product.setMaterialOnProduct(addOnProduct, productPriceCache);
         }
 
         try {
@@ -2157,49 +2163,17 @@ public class ProductOrderActionBean extends CoreActionBean {
         return new RedirectResolution(ProductOrderActionBean.class, LIST_ACTION);
     }
 
-    @HandlesEvent("getAddOns")
-    public Resolution getAddOns() throws Exception {
-        Product product = null;
-        if(this.product != null) {
-            product = productDao.findByBusinessKey(this.product);
-        }
-
-        JSONArray itemList = supportsGetAddOns(product);
-        return createTextResolution(itemList.toString());
-    }
-
     @NotNull
-    private JSONArray supportsGetAddOns(Product product) throws JSONException {
+    private JSONArray supportsGetAddOns(Product product, SapQuote sapQuote,
+                                        SapIntegrationClientImpl.SAPCompanyConfiguration companyCode) throws JSONException, SAPIntegrationException {
         JSONArray itemList = new JSONArray();
         if (product != null) {
             for (Product addOn : product.getAddOns(userBean)) {
                 JSONObject item = new JSONObject();
                 item.put("key", addOn.getBusinessKey());
                 item.put("value", addOn.getProductName());
-                String priceTitle = "researchListPrice";
-                if(addOn.isExternalOnlyProduct()) {
-                    priceTitle =  "externalListPrice";
-                } else if(addOn.isClinicalProduct()) {
-                    priceTitle = "clinicalPrice";
-                }
-
-                QuotePriceItem quoteForAddon = priceListCache.findByKeyFields(addOn.getPrimaryPriceItem());
-                if (quoteForAddon != null) {
-                    BigDecimal priceForFormat = new BigDecimal(quoteForAddon.getPrice());
-                    item.put(priceTitle , NumberFormat.getCurrencyInstance().format(priceForFormat));
-                    itemList.put(item);
-                }
-
-//                String externalPrice = null;
-//                if (addOn.getExternalPriceItem() != null) {
-//                    final QuotePriceItem externalPriceListItem = priceListCache.findByKeyFields(addOn.getExternalPriceItem());
-//                    if(externalPriceListItem != null) {
-//                        externalPrice = externalPriceListItem.getPrice();
-//                    }
-//                }
-//
-//                item.put("externalListPrice", (externalPrice != null) ?externalPrice:"");
-
+                addProductPriceToJson(addOn, sapQuote, companyCode, item);
+                itemList.put(item);
             }
         }
         return itemList;
@@ -2610,39 +2584,73 @@ public class ProductOrderActionBean extends CoreActionBean {
             productEntity = productDao.findByBusinessKey(product);
         }
 
-        JSONObject productInfo = new JSONObject();
+        SapQuote sapQuote = null;
 
+        SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+        if(StringUtils.isNotBlank(quoteIdentifier) && StringUtils.isNotBlank(quoteSource)) {
+            if(StringUtils.equals(quoteSource, ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName())) {
+                sapQuote = sapService.findSapQuote(quoteIdentifier);
+                if(Arrays.asList(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES,
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD).contains(
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.fromSalesOrgForMaterial(sapQuote.getQuoteHeader().getSalesOrganization())
+                )) {
+                   companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.fromSalesOrgForMaterial(sapQuote.getQuoteHeader().getSalesOrganization());
+                }
+            }
+        }
+
+        JSONObject productInfo = new JSONObject();
         if (productEntity != null) {
             supportGetSupportsNumberOfLanes(productInfo, productEntity);
             supportsGetSupportsSkippingQuote(productInfo, productEntity);
-            productInfo.put("addOns", supportsGetAddOns(productEntity));
+            productInfo.put("addOns", supportsGetAddOns(productEntity, sapQuote, companyCode));
 
             productInfo.put("clinicalProduct", productEntity.isClinicalProduct());
             productInfo.put("externalProduct", productEntity.isExternalOnlyProduct());
             productInfo.put("productName", productEntity.getName());
             productInfo.put("baitLocked", productEntity.getBaitLocked());
-            String priceTitle = "researchListPrice";
-
-            if(productEntity.isExternalOnlyProduct()) {
-                priceTitle = "externalListPrice";
-            }
-            if(productEntity.isClinicalProduct()) {
-                priceTitle = "clinicalPrice";
-            }
-            productInfo.put("productAgp", productEntity.getDefaultAggregationParticle());
-            BigDecimal priceForFormat = new BigDecimal(priceListCache.findByKeyFields(productEntity.getPrimaryPriceItem()).getPrice());
-            productInfo.put(priceTitle, NumberFormat.getCurrencyInstance().format(priceForFormat));
-//            String externalPrice = null;
-//            if (productEntity.getExternalPriceItem() != null) {
-//                final QuotePriceItem externalPriceItem = priceListCache.findByKeyFields(productEntity.getExternalPriceItem());
-//                if (externalPriceItem != null) {
-//                    externalPrice = externalPriceItem.getPrice();
-//                }
-//            }
-//            productInfo.put("externalListPrice", (externalPrice != null)?externalPrice:"");
+            addProductPriceToJson(productEntity, sapQuote, companyCode, productInfo);
         }
 
         return createTextResolution(productInfo.toString());
+    }
+
+    /**
+     * Helper method to support multiple layers of retrieving JSON representation of pricing for a product.  This
+     * replaces code that was duplicated when getting this information for both the primary product and the addon
+     * product of a product order
+     * @param productEntity Product for which we wish to obtain pricing info
+     * @param sapQuote      SAP quote (if valid) which is associated with the order on which the product is defined
+     * @param companyCode   represents if this order will be sold as SSF or LLC
+     * @param productInfo   JSON Object into which the pricing information will be stored
+     * @throws JSONException
+     */
+    public void addProductPriceToJson(Product productEntity, SapQuote sapQuote,
+                                      SapIntegrationClientImpl.SAPCompanyConfiguration companyCode,
+                                      JSONObject productInfo) throws JSONException {
+        String priceTitle = "researchListPrice";
+        if(sapQuote != null &&
+           StringUtils.equals(sapQuote.getQuoteHeader().getSalesOrganization(),
+                   SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization())) {
+            priceTitle = "externalListPrice";
+
+        }
+        if (productEntity.isExternalOnlyProduct()) {
+            priceTitle = "externalListPrice";
+        }
+        if(productEntity.isClinicalProduct()) {
+            priceTitle = "clinicalPrice";
+        }
+        productInfo.put("productAgp", productEntity.getDefaultAggregationParticle());
+        BigDecimal priceForFormat = null;
+        if (sapQuote != null) {
+            priceForFormat =
+                    new BigDecimal(productPriceCache.findByPartNumber(productEntity.getPartNumber(),companyCode ).getBasePrice());
+        } else {
+            priceForFormat =
+                    new BigDecimal(priceListCache.findByKeyFields(productEntity.getPrimaryPriceItem()).getPrice());
+        }
+        productInfo.put(priceTitle, NumberFormat.getCurrencyInstance().format(priceForFormat));
     }
 
     @HandlesEvent("getSupportsNumberOfLanes")
@@ -3049,14 +3057,21 @@ public class ProductOrderActionBean extends CoreActionBean {
         return new ForwardResolution(CUSTOMIZE_PRODUCT_ASSOCIATIONS);
     }
 
-    private void buildJsonObjectFromEditOrderProductCustomizations() throws JSONException {
+    private void buildJsonObjectFromEditOrderProductCustomizations() throws JSONException, SAPIntegrationException {
 
+        SapQuote sapQuote = null;
+        if(StringUtils.isNotBlank(quoteIdentifier) && StringUtils.isNotBlank(quoteSource)) {
+            if (StringUtils.equals(quoteSource, ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName())) {
+                sapQuote = sapService.findSapQuote(quoteIdentifier);
+            }
+        }
         JSONObject customizationJson = new JSONObject(customizationJsonString);
 
         final Iterator keys = customizationJson.keys();
 
         while(keys.hasNext()) {
             String productPartNumber = (String)keys.next();
+
             JSONObject currentCustomization = (JSONObject) customizationJson.get(productPartNumber);
 
             final Product product = productDao.findByPartNumber(productPartNumber);
@@ -3066,9 +3081,22 @@ public class ProductOrderActionBean extends CoreActionBean {
                     (String) ((currentCustomization.has("price") && currentCustomization.get("price") != null) ?currentCustomization.get("price"):""),
                     (String) ((currentCustomization.has("customName") && currentCustomization.get("customName") != null) ?currentCustomization.get("customName"):""));
             customizedProductInfo.setProductName(product.getProductName());
-            final QuotePriceItem priceListItem = priceListCache.findByKeyFields(product.getPrimaryPriceItem());
-            customizedProductInfo.setUnits(priceListItem.getUnit().toLowerCase());
-            BigDecimal formatedPrice = new BigDecimal(priceListItem.getPrice());
+
+            QuotePriceItem priceListItem = null;
+            BigDecimal formatedPrice = null;
+
+            if (product.getPrimaryPriceItem() != null) {
+                priceListItem = priceListCache.findByKeyFields(product.getPrimaryPriceItem());
+                formatedPrice = new BigDecimal(priceListItem.getPrice());
+            } else {
+
+                if (sapQuote != null) {
+                    formatedPrice = new BigDecimal(productPriceCache.findByProduct(product,
+                            SapIntegrationServiceImpl.determineCompanyCode(sapQuote)).getBasePrice());
+                }
+            }
+
+            customizedProductInfo.setUnits(product.getUnitsDisplay());
             customizedProductInfo.setOriginalPrice(NumberFormat.getCurrencyInstance().format(formatedPrice));
             productCustomizations.add(customizedProductInfo);
         }

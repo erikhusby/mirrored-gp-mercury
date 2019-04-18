@@ -205,7 +205,7 @@ public class ProductOrderActionBeanTest {
         mockSapClient = Mockito.mock(SapIntegrationClientImpl.class);
         mockSAPService.setWrappedClient(mockSapClient);
 
-        Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(new SAPAccessControl());
+        Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenThrow(new RuntimeException());
         stubProductPriceCache.setAccessControlEjb(mockAccessController);
         actionBean.setProductPriceCache(stubProductPriceCache);
 
@@ -1867,7 +1867,7 @@ public class ProductOrderActionBeanTest {
 
         final SAPAccessControl enabledControl = new SAPAccessControl();
 
-        Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(enabledControl);
+        Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenThrow(new RuntimeException());
         stubProductPriceCache.setAccessControlEjb(mockAccessController);
 
         // to derive price, each sample for this product is worth 1
@@ -2382,7 +2382,8 @@ public class ProductOrderActionBeanTest {
         } else {
             Assert.assertEquals(actionBean.estimateSapOutstandingOrders(TestUtils.buildTestSapQuote(testQuoteIdentifier, extraOrderValues, BigDecimal.valueOf(800000),
                     testOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED), 0,
-                    null), extraOrderValues.doubleValue());
+                    null),
+                    extraOrderValues.doubleValue());
         }
 
         // Now mimic saving order to SAP
@@ -2836,6 +2837,7 @@ public class ProductOrderActionBeanTest {
     public void testQuoteOptionsFundsReservationExpiresAfterLeapYear() throws Exception {
         String quoteId = "DNA4JD";
         testOrder = new ProductOrder();
+        testOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
         FundingLevel fundingLevel = new FundingLevel();
         Funding funding = new Funding(Funding.FUNDS_RESERVATION, "test", "c333");
         funding.setGrantNumber("1234");
@@ -2855,6 +2857,7 @@ public class ProductOrderActionBeanTest {
         actionBean.setQuoteService(mockQuoteService);
         actionBean.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName());
 
+        actionBean.setQuoteSource(testOrder.getQuoteSource().getDisplayName());
         JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
         JSONObject fundingDetails = (JSONObject) quoteFundingJson.getJSONArray("fundingDetails").get(0);
 
@@ -2885,7 +2888,8 @@ public class ProductOrderActionBeanTest {
                 sapQHeader.setFUNDTYPE(SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION.name());
                 sapQHeader.setQUOTESTATUSTXT("");
                 sapQHeader.setQUOTETOTAL(BigDecimal.valueOf(198));
-                sapQHeader.setQUOTEOPENVAL(BigDecimal.valueOf(98));
+                sapQHeader.setSOTOTAL(BigDecimal.valueOf(98));
+                sapQHeader.setQUOTEOPENVAL(BigDecimal.valueOf(100));
 
                 QuoteHeader header = new QuoteHeader(sapQHeader);
 
@@ -2981,7 +2985,8 @@ public class ProductOrderActionBeanTest {
                 sapQHeader.setFUNDTYPE(SapIntegrationClientImpl.FundingType.PURCHASE_ORDER.name());
                 sapQHeader.setQUOTESTATUSTXT("");
                 sapQHeader.setQUOTETOTAL(BigDecimal.valueOf(198));
-                sapQHeader.setQUOTEOPENVAL(BigDecimal.valueOf(98));
+                sapQHeader.setSOTOTAL(BigDecimal.valueOf(98));
+                sapQHeader.setQUOTEOPENVAL(BigDecimal.valueOf(100));
 
                 QuoteHeader header = new QuoteHeader(sapQHeader);
 

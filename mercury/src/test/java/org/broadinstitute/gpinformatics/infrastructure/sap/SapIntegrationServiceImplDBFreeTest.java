@@ -4,7 +4,6 @@ import com.google.common.collect.ArrayListMultimap;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
-import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOnPriceAdjustment;
@@ -37,15 +36,19 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -135,7 +138,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         productPriceCache = new SAPProductPriceCache(integrationService);
         integrationService.setProductPriceCache(productPriceCache);
         final SAPAccessControlEjb mockAccessController = Mockito.mock(SAPAccessControlEjb.class);
-        Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(new SAPAccessControl());
+        Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenThrow(new RuntimeException());
         productPriceCache.setAccessControlEjb(mockAccessController);
     }
 
@@ -402,16 +405,20 @@ public class SapIntegrationServiceImplDBFreeTest {
         }
     }
 
-    public void testTetSampleCountFreshOrderNoOverrides() throws Exception {
+    @Test(dataProvider = "orderStatusForSampleCount")
+    public void testGetSampleCountFreshOrderNoOverrides(ProductOrder.OrderStatus testOrderStatus, int extraSamples) throws Exception {
         PriceList priceList = new PriceList();
         Collection<QuoteItem> quoteItems = new HashSet<>();
         Set<SAPMaterial> materials = new HashSet<>();
 
         ProductOrder countTestPDO = ProductOrderTestFactory.createDummyProductOrder(10, "PDO-smpcnt");
+        countTestPDO.setPriorToSAP1_5(false);
         countTestPDO.setQuoteId(testSingleSourceQuote.getAlphanumericId());
         countTestPDO.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         countTestPDO.addSapOrderDetail(new SapOrderDetail("SAPORDER01", 10, testSingleSourceQuote.getAlphanumericId(),
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode()));
+        System.out.println("The current order status is : " + testOrderStatus.getDisplayName());
+        countTestPDO.setOrderStatus(testOrderStatus);
 
         final Product primaryProduct = countTestPDO.getProduct();
         addTestProductMaterialPrice("50.00", priceList, materials, primaryProduct,
@@ -425,32 +432,42 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         double closingCount = 0d;
 
-
         while (closingCount <= countTestPDO.getSamples().size()) {
             double primarySampleCount =
-                    SapIntegrationServiceImpl.getSampleCount(countTestPDO, countTestPDO.getProduct(), 0, false, false).doubleValue();
+                    SapIntegrationServiceImpl.getSampleCount(countTestPDO, countTestPDO.getProduct(), extraSamples, false, false,
+                            false).doubleValue();
             double primaryClosingCount =
-                    SapIntegrationServiceImpl.getSampleCount(countTestPDO, countTestPDO.getProduct(), 0, false, true).doubleValue();
-            assertThat(primarySampleCount, is(equalTo(Double.valueOf(countTestPDO.getSamples().size()))));
+                    SapIntegrationServiceImpl.getSampleCount(countTestPDO, countTestPDO.getProduct(), extraSamples, false, true,
+                            false).doubleValue();
+            double primaryOrderValueQueryCount =
+                    SapIntegrationServiceImpl.getSampleCount(countTestPDO, countTestPDO.getProduct(), extraSamples, false, false,
+                            true).doubleValue();
+            assertThat(primarySampleCount, is(equalTo((double) countTestPDO.getSamples().size()+extraSamples)));
             assertThat(primaryClosingCount, is(equalTo(closingCount)));
+            assertThat(primaryOrderValueQueryCount, is(equalTo((double) countTestPDO.getSamples().size()+extraSamples - closingCount)));
 
 
             for (ProductOrderAddOn addOn : countTestPDO.getAddOns()) {
                 final double addonSampleCount =
-                        SapIntegrationServiceImpl.getSampleCount(countTestPDO, addOn.getAddOn(), 0, false, false).doubleValue();
+                        SapIntegrationServiceImpl.getSampleCount(countTestPDO, addOn.getAddOn(), extraSamples, false, false,
+                                false).doubleValue();
                 final double addonClosingCount =
-                        SapIntegrationServiceImpl.getSampleCount(countTestPDO, addOn.getAddOn(), 0, false, true).doubleValue();
-                assertThat(addonSampleCount, is(equalTo(Double.valueOf(countTestPDO.getSamples().size()))));
+                        SapIntegrationServiceImpl.getSampleCount(countTestPDO, addOn.getAddOn(), extraSamples, false, true,
+                                false).doubleValue();
+                final double addOnOrderValueQueryCount =
+                        SapIntegrationServiceImpl.getSampleCount(countTestPDO, addOn.getAddOn(), extraSamples, false, false,
+                                true).doubleValue();
+                assertThat(addonSampleCount, is(equalTo((double) countTestPDO.getSamples().size()+extraSamples)));
                 assertThat(addonClosingCount, is(equalTo(closingCount)));
+                assertThat(addOnOrderValueQueryCount, is(equalTo((double) countTestPDO.getSamples().size()+extraSamples - closingCount)));
             }
             addLedgerItems(countTestPDO, 1);
 
             closingCount++;
         }
-
     }
 
-    void addLedgerItems(ProductOrder order, int ledgerCount) {
+    private void addLedgerItems(ProductOrder order, int ledgerCount) {
         for (ProductOrderSample productOrderSample : order.getSamples()) {
             if(!productOrderSample.isCompletelyBilled()) {
                 productOrderSample.addLedgerItem(new Date(), order.getProduct().getPrimaryPriceItem(), ledgerCount * 1d);
@@ -484,5 +501,23 @@ public class SapIntegrationServiceImplDBFreeTest {
                 primaryProduct.getPrimaryPriceItem().getName(),
                 primaryProduct.getPrimaryPriceItem().getName(), primaryMaterialBasePrice, "test",
                 primaryProduct.getPrimaryPriceItem().getPlatform()));
+    }
+
+    @DataProvider(name="orderStatusForSampleCount")
+    public Iterator<Object[]> orderStatusForSampleCount() {
+        List<Object[]> testScenarios = new ArrayList<>();
+
+        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Submitted, 2});
+        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Submitted, 0});
+        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Draft, 2});
+        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Draft, 0});
+        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Abandoned, 2});
+        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Abandoned, 0});
+        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Completed, 2});
+        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Completed, 0});
+        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Pending, 2});
+        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Pending, 0});
+
+        return testScenarios.iterator();
     }
 }

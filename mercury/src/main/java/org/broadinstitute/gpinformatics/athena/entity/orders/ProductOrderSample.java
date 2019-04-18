@@ -51,6 +51,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -158,20 +159,18 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     public Product getProductForPriceItem(PriceItem priceItem) {
         Product result = getProductOrder().getProduct();
-        if(getProductOrder().getProduct().getPrimaryPriceItem().equals(priceItem) ||
-           priceItem.equals(getProductOrder().getProduct().getExternalPriceItem())) {
+        if(Objects.equals(getProductOrder().getProduct().getPrimaryPriceItem(),priceItem)) {
             result = getProductOrder().getProduct();
         } else {
             for(ProductOrderAddOn addOn:getProductOrder().getAddOns()) {
-                if(addOn.getAddOn().getPrimaryPriceItem().equals(priceItem) ||
-                   priceItem.equals(addOn.getAddOn().getExternalPriceItem())) {
+                if(Objects.equals(addOn.getAddOn().getPrimaryPriceItem(),priceItem)) {
                     result = addOn.getAddOn();
                     break;
                 }
             }
         }
         if(result == null) {
-            throw new RuntimeException("Unable to find a product associated with the given addon");
+            throw new RuntimeException("Unable to find a product associated with the given price item");
         }
         return result;
     }

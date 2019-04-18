@@ -74,7 +74,8 @@ public class TestUtils {
         sapQHeader.setFUNDTYPE(SapIntegrationClientImpl.FundingType.PURCHASE_ORDER.name());
         sapQHeader.setQUOTESTATUSTXT("");
         sapQHeader.setQUOTETOTAL(quoteTotal);
-        sapQHeader.setQUOTEOPENVAL(totalOpenOrderValue);
+        sapQHeader.setSOTOTAL(totalOpenOrderValue);
+        sapQHeader.setQUOTEOPENVAL(quoteTotal.subtract(totalOpenOrderValue));
 
         QuoteHeader header = new QuoteHeader(sapQHeader);
 

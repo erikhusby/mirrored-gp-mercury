@@ -70,7 +70,8 @@ public class ProductOrderListEntry implements Serializable {
                                   ProductOrder.OrderStatus orderStatus, Product product, String researchProjectTitle,
                                   Long ownerId, Date placedDate, Integer laneCount, String quoteId,
                                   Long billingSessionId,
-                                  long constructedCount, ProductOrder.OrderAccessType orderType, ProductOrder.QuoteSourceType quoteSourceType) {
+                                  long constructedCount, ProductOrder.OrderAccessType orderType,
+                                  ProductOrder.QuoteSourceType quoteSourceType) {
         this.orderId = orderId;
         this.title = title;
         this.jiraTicketKey = jiraTicketKey;
