@@ -11,7 +11,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentra
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
-import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
@@ -78,7 +77,6 @@ import javax.inject.Inject;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -514,6 +512,7 @@ public class LabEventFactory implements Serializable {
                 labEvent.getDisambiguator()))) {
             labEvent.setDisambiguator(labEvent.getDisambiguator() + 1L);
         }
+        labEvent.computeLabBatches();
         if (persistEntities) {
             labEventDao.persist(labEvent);
             labEventDao.flush();
