@@ -1,11 +1,8 @@
-<%@ page import="static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.QuoteSourceType.*" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.products.Product" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
-<%@ page import="static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderAccessType.displayNames" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
-<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="static org.broadinstitute.sap.services.SapIntegrationClientImpl.FundingType.*" %>
 
 <%@ include file="/resources/layout/taglibs.jsp" %>
@@ -721,7 +718,6 @@
 
             var productKey = $j("#product").val();
             var quote = $j("#quote").val();
-            var quoteSource = $j("#quoteSource").val();
             if ((productKey === null) || (productKey === "")) {
                 $j("#customizationJsonString").val("");
                 customizationValues = {};
@@ -746,7 +742,7 @@
                 }
                 $j.ajax({
                     url: "${ctxpath}/orders/order.action?getProductInfo=&product=" + productKey +
-                    "&quoteIdentifier=" + quote + "&quoteSource="+quoteSource,
+                    "&quoteIdentifier=" + quote,
                     dataType: 'json',
                     success: selectedProductFollowup,
                     complete: detectNumberOfLanesVisibility
@@ -1109,12 +1105,11 @@
         function updateFundsRemaining() {
             var quoteIdentifier = $j("#quote").val().trim();
             var quoteTitle = $j("#quote").attr('title');
-            var quoteType = $j("#quoteSource").find(":selected").text();
             var productOrderKey = $j("input[name='productOrder']").val();
             if (quoteIdentifier && quoteIdentifier !== quoteTitle) {
                 $j.ajax({
                     url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier +
-                        "&productOrder=" + productOrderKey + "&quoteSource=" + quoteType,
+                        "&productOrder=" + productOrderKey ,
                     dataType: 'json',
                     success: updateFunds
                 });
@@ -1272,7 +1267,6 @@
                 url: "${ctxpath}/orders/order.action?openCustomView=",
                 data: {
                     'customizationJsonString': JSON.stringify(customizationValues),
-                    'quoteSource':$j("#quoteSource"),
                     'quoteIdentifier':$j("#quote")
                 },
                 datatype: 'html',
@@ -1739,18 +1733,6 @@
                     <div class="controls">
                         <stripes:text id="numberOfLanes" name="editOrder.laneCount" class="defaultText"
                                       title="Enter Number of Lanes"/>
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <stripes:label for="quoteSource" class="control-label">
-                        Quote Source
-                    </stripes:label>
-                    <div class="controls">
-                        <stripes:select name="editOrder.quoteSource" id="quoteSource" onchange="updateFundsRemaining()">
-                            <stripes:option value="">Select a Source For the Quote</stripes:option>
-                            <stripes:options-enumeration enum="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.QuoteSourceType" label="displayName" />
-                        </stripes:select>
                     </div>
                 </div>
 
