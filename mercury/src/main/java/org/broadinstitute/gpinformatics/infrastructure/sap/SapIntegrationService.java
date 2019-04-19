@@ -1,9 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.entity.quote.SapQuote;
@@ -11,7 +14,9 @@ import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -44,9 +49,9 @@ public interface SapIntegrationService {
      * @return Unique order identifier of the sales/release order currently in SAP
      * @throws SAPIntegrationException
      */
-    void updateOrder(ProductOrder placedOrder, boolean closingOrder) throws SAPIntegrationException;
+    void updateOrder(ProductOrder placedOrder, Option options) throws SAPIntegrationException;
 
-    void updateOrderWithQuote(ProductOrder placedOrder, boolean closingOrder) throws SAPIntegrationException;
+    void updateOrderWithQuote(ProductOrder placedOrder, Option options) throws SAPIntegrationException;
 
     /**
      * For Phase 1 of the SAP/GP integration, Orders placed in SAP need to have reference to the customer number found
@@ -106,4 +111,79 @@ public interface SapIntegrationService {
      */
     String creditDelivery(String deliveryDocumentId, QuoteImportItem quoteItemForBilling)
             throws SAPIntegrationException;
+
+    class Option {
+        public static final Option NONE = Option.create();
+
+        private Set<Type> options = new HashSet<>();
+
+        private Option(Type... options) {
+            this.options = new HashSet<>(Arrays.asList(options));
+        }
+
+        public static Option create(Type... orderOptions) {
+            return new Option(orderOptions);
+
+        }
+
+        public static Type isClosing(boolean booleanFlag) {
+            if (booleanFlag) {
+                return Type.CLOSING;
+            }
+            return null;
+        }
+
+        public static Type isCreating(boolean booleanFlag) {
+            if (booleanFlag) {
+                return Type.CREATING;
+            }
+            return null;
+        }
+
+        public static Type isForValueQuery(boolean booleanFlag) {
+            if (booleanFlag) {
+                return Type.ORDER_VALUE_QUERY;
+            }
+            return null;
+        }
+
+        public boolean hasOption(Type sapOrderOption) {
+            return options.stream().anyMatch(option -> option == sapOrderOption);
+        }
+
+        public enum Type {
+            CREATING,
+            CLOSING,
+            ORDER_VALUE_QUERY
+        }
+
+        @Override
+        @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+
+            if (o == null || (!OrmUtil.proxySafeIsInstance(o, Option.class))) {
+                return false;
+            }
+
+            if (!(o instanceof Option)) {
+                return false;
+            }
+
+            Option option = OrmUtil.proxySafeCast(o, Option.class);
+
+            return new EqualsBuilder()
+                .append(options, option.options)
+                .isEquals();
+        }
+
+        @Override
+        public int hashCode() {
+            return new HashCodeBuilder(17, 37)
+                .append(options)
+                .toHashCode();
+        }
+    }
 }

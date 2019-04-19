@@ -391,11 +391,13 @@ public class ProductOrderEjb {
                                   MessageCollection messageCollection,
                                   boolean closingOrder)
             throws SAPIntegrationException {
-        sapService.updateOrder(orderToUpdate, closingOrder);
+        SapIntegrationService.Option serviceOptions =
+            SapIntegrationService.Option.create(SapIntegrationService.Option.isClosing(closingOrder));
+        sapService.updateOrder(orderToUpdate, serviceOptions);
         BigDecimal sampleCount = BigDecimal.ZERO ;
         if(orderToUpdate.isPriorToSAP1_5()) {
-            sampleCount = SapIntegrationServiceImpl.getSampleCount(orderToUpdate,
-                    orderToUpdate.getProduct(), 0, false, closingOrder, false);
+            sampleCount =
+                SapIntegrationServiceImpl.getSampleCount(orderToUpdate, orderToUpdate.getProduct(), 0, serviceOptions);
         }
         orderToUpdate.updateSapDetails(sampleCount.intValue(),
             MercuryStringUtils.makeDigest(allProductsOrdered),"");
@@ -418,8 +420,7 @@ public class ProductOrderEjb {
             throws SAPIntegrationException {
 
         if(closingOrder && orderToPublish.isSavedInSAP()) {
-            updateOrderInSap(orderToPublish, allProductsOrdered, messageCollection,
-                    closingOrder);
+            updateOrderInSap(orderToPublish, allProductsOrdered, messageCollection, closingOrder);
         }
 
         String sapOrderIdentifier = sapService.createOrder(orderToPublish);

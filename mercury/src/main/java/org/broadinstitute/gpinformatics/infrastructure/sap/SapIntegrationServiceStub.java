@@ -44,11 +44,11 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     }
 
     @Override
-    public void updateOrder(ProductOrder placedOrder, boolean closingOrder) throws SAPIntegrationException {
+    public void updateOrder(ProductOrder placedOrder, Option serviceOptions) throws SAPIntegrationException {
     }
 
     @Override
-    public void updateOrderWithQuote(ProductOrder placedOrder, boolean closingOrder) throws SAPIntegrationException {
+    public void updateOrderWithQuote(ProductOrder placedOrder, Option serviceOptions) throws SAPIntegrationException {
         throw new SAPIntegrationException("SAP Quotes nto available at this time");
     }
 
