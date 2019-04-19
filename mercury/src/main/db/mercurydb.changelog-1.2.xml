@@ -2153,8 +2153,12 @@
             <column name="POSITION_LAB_BATCHES_ID" type="number(19,0)">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="PK_LAB_BATCH_SET"/>
             </column>
-            <column name="VESSEL_POSITION" type="varchar2(255)"/>
-            <column name="LAB_EVENT" type="number(19,0)"/>
+            <column name="VESSEL_POSITION" type="varchar2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="LAB_EVENT" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
     </changeSet>
     <changeSet id="GPLIM-5849-7" author="thompson">

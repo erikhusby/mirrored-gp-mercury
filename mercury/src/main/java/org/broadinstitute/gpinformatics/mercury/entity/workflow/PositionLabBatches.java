@@ -42,6 +42,14 @@ public class PositionLabBatches {
     @Enumerated(EnumType.STRING)
     private VesselPosition vesselPosition;
 
+    public PositionLabBatches(LabEvent labEvent, VesselPosition vesselPosition) {
+        this.labEvent = labEvent;
+        this.vesselPosition = vesselPosition;
+    }
+
+    public PositionLabBatches() {
+    }
+
     public Set<LabBatch> getLabBatchSet() {
         return labBatchSet;
     }

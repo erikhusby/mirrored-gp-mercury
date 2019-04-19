@@ -701,7 +701,7 @@ todo jmt adder methods
                         targetPosition != cherryPickTransferList.get(i + 1).getTargetPosition()) {
                     PositionLabBatches labBatches = mapPositionToLcSets.get(targetPosition);
                     if (labBatches == null) {
-                        labBatches = new PositionLabBatches();
+                        labBatches = new PositionLabBatches(this, targetPosition);
                         mapPositionToLcSets.put(targetPosition, labBatches);
                     }
                     Set<LabBatch> localComputedLcSets = VesselContainer.computeLcSets(mapLabBatchToCount,
