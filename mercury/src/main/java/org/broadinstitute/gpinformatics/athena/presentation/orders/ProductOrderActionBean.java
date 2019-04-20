@@ -3588,7 +3588,16 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    private void updateAndValidateQuoteSource() {
+    /**
+     * Helper method to interpret the quote ID (if entered) and set the Quote Source based on its makeup:
+     * <ul><li>If the quote ID is all numeric, it must be SAP</li>
+     * <li>otherwise, consider it to be Quote Server</li></ul>
+     *
+     * If the quote is SAP and the products are set on the order, check to determine if all of the products on the
+     * order (primary and add ons) are offered in the sales org of the quote.  If not, show an error that the quote is
+     * not compatible with the selected products
+     */
+    void updateAndValidateQuoteSource() {
         if (StringUtils.isNotBlank(editOrder.getQuoteId())) {
             if (StringUtils.isNumeric(editOrder.getQuoteId())) {
                 try {
@@ -3598,13 +3607,14 @@ public class ProductOrderActionBean extends CoreActionBean {
                         boolean canSwitch = true;
                         String offendingProduct = "";
                         if(editOrder.getProduct() != null) {
-                            Optional<SAPMaterial> cachedProduct = Optional.ofNullable(productPriceCache.findByProduct(editOrder.getProduct(),
-                                    SapIntegrationClientImpl.SAPCompanyConfiguration.fromSalesOrgForMaterial(
-                                            quote.getQuoteHeader().getSalesOrganization())));
+                            Optional<SAPMaterial> cachedProduct =
+                                    Optional.ofNullable(productPriceCache.findByProduct(editOrder.getProduct(),
+                                            SapIntegrationClientImpl.SAPCompanyConfiguration.fromSalesOrgForMaterial(
+                                                    quote.getQuoteHeader().getSalesOrganization())));
                             canSwitch = cachedProduct.isPresent();
                             offendingProduct = editOrder.getProduct().getDisplayName();
                             final Iterator<ProductOrderAddOn> addOnIterator = editOrder.getAddOns().iterator();
-                            while(addOnIterator.hasNext() && canSwitch){
+                            while (addOnIterator.hasNext() && canSwitch) {
                                 final Product addOn = addOnIterator.next().getAddOn();
                                 Optional<SAPMaterial> cachedAddon = Optional.ofNullable(productPriceCache.findByProduct(
                                         addOn,
@@ -3613,18 +3623,14 @@ public class ProductOrderActionBean extends CoreActionBean {
                                 canSwitch = cachedAddon.isPresent();
                                 offendingProduct = addOn.getDisplayName();
                             }
-                            if(!canSwitch) {
-                                addGlobalValidationError("The Quote you are attempting to switch to is not compatible with " + offendingProduct);
+                            if (!canSwitch) {
+                                addGlobalValidationError(
+                                        "The Quote you are attempting to switch to is not compatible with "
+                                        + offendingProduct);
                             }
                         }
 
-                        if(editOrder.getOrderStatus().canPlace()) {
-                            editOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
-                        } else {
-                            if(editOrder.getQuoteSource() != ProductOrder.QuoteSourceType.SAP_SOURCE) {
-                                addGlobalValidationError("The Quote you are attempting to switch to is not compatible with this order");
-                            }
-                        }
+                        editOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
                     });
 
                 } catch (SAPIntegrationException e) {

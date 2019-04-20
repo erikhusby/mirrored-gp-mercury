@@ -60,14 +60,14 @@ public class TestUtils {
     @NotNull
     public static SapQuote buildTestSapQuote(String testQuoteIdentifier, BigDecimal totalOpenOrderValue,
                                              BigDecimal quoteTotal, ProductOrder billingOrder,
-                                             SapQuoteTestScenario quoteTestScenario)
+                                             SapQuoteTestScenario quoteTestScenario, String salesorg)
             throws SAPIntegrationException {
 
         ZESDQUOTEHEADER sapQHeader = ZESDQUOTEHEADER.Factory.newInstance();
         sapQHeader.setPROJECTNAME("TestProject");
         sapQHeader.setQUOTENAME(testQuoteIdentifier);
         sapQHeader.setQUOTESTATUS(FundingStatus.APPROVED.name());
-        sapQHeader.setSALESORG("GP01");
+        sapQHeader.setSALESORG(salesorg);
         sapQHeader.setFUNDHEADERSTATUS(FundingStatus.APPROVED.name());
         sapQHeader.setCUSTOMER("");
         sapQHeader.setDISTCHANNEL("GE");

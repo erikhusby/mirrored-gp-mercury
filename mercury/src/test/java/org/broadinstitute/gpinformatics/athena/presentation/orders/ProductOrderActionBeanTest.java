@@ -473,7 +473,7 @@ public class ProductOrderActionBeanTest {
                     .thenThrow(new QuoteServerException("Quote Server should not be called for SAP Source"));
 
             sapMockQuote = TestUtils.buildTestSapQuote(quoteId, BigDecimal.valueOf(30000), BigDecimal.valueOf(37387),
-                    pdo,quoteItemsMatchOrderProducts);
+                    pdo,quoteItemsMatchOrderProducts, "GP01");
 
             Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapMockQuote);
         } else {
@@ -1591,7 +1591,7 @@ public class ProductOrderActionBeanTest {
                 public SapQuote answer(InvocationOnMock invocationOnMock) throws Throwable {
                     return TestUtils.buildTestSapQuote(testQuoteIdentifier,
                             extraOrderValues.add(getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote)), BigDecimal.valueOf(800000),
-                            testOrder, quoteItemsMatchOrderProducts);
+                            testOrder, quoteItemsMatchOrderProducts, "GP01");
                 }
             });
         } else {
@@ -1754,7 +1754,7 @@ public class ProductOrderActionBeanTest {
                     final SapQuote sapQuote = TestUtils.buildTestSapQuote(testOrder.getQuoteId(),
                             totalOpenOrderValue,
                             totalOpenOrderValue.add(new BigDecimal(testQuote.getQuoteFunding().getFundsRemaining())),
-                            testOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED);
+                            testOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
                     return sapQuote;
                 }
             });
@@ -2345,7 +2345,7 @@ public class ProductOrderActionBeanTest {
                         @Override
                         public SapQuote answer(InvocationOnMock invocationOnMock) throws Throwable {
                             return TestUtils.buildTestSapQuote(testQuoteIdentifier, extraOrderValues,
-                                    BigDecimal.valueOf(800000), testOrder, quoteItemsMatchOrderProducts);
+                                    BigDecimal.valueOf(800000), testOrder, quoteItemsMatchOrderProducts, "GP01");
                         }
                     });
         } else {
@@ -2372,7 +2372,7 @@ public class ProductOrderActionBeanTest {
             testQuote.setQuoteItems(quoteItems);
         } else {
             Assert.assertEquals(actionBean.estimateSapOutstandingOrders(TestUtils.buildTestSapQuote(testQuoteIdentifier, extraOrderValues, BigDecimal.valueOf(800000),
-                    testOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED), 0,
+                    testOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01"), 0,
                     testOrder), overrideCalculatedOrderValue.add(extraOrderValues).doubleValue());
         }
 
@@ -2381,7 +2381,7 @@ public class ProductOrderActionBeanTest {
                         null), extraOrderValues.doubleValue());
         } else {
             Assert.assertEquals(actionBean.estimateSapOutstandingOrders(TestUtils.buildTestSapQuote(testQuoteIdentifier, extraOrderValues, BigDecimal.valueOf(800000),
-                    testOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED), 0,
+                    testOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01"), 0,
                     null),
                     extraOrderValues.doubleValue());
         }
@@ -2401,7 +2401,7 @@ public class ProductOrderActionBeanTest {
                     getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote).add(extraOrderValues).doubleValue());
         } else {
             Assert.assertEquals(actionBean.estimateSapOutstandingOrders(TestUtils.buildTestSapQuote(testQuoteIdentifier, extraOrderValues, BigDecimal.valueOf(800000),
-                    testOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED), 0, testOrder),
+                    testOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01"), 0, testOrder),
                     getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote).add(extraOrderValues).doubleValue());
         }
 
@@ -2412,7 +2412,7 @@ public class ProductOrderActionBeanTest {
                     getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote).add(extraOrderValues).doubleValue());
         } else {
             Assert.assertEquals(actionBean.estimateSapOutstandingOrders(TestUtils.buildTestSapQuote(testQuoteIdentifier, extraOrderValues, BigDecimal.valueOf(800000),
-                    testOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED), 0, testOrder),
+                    testOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01"), 0, testOrder),
                     getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote).add(extraOrderValues).doubleValue());
         }
 
@@ -2423,7 +2423,7 @@ public class ProductOrderActionBeanTest {
                     getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote).add(extraOrderValues).doubleValue());
         } else {
             Assert.assertEquals(actionBean.estimateSapOutstandingOrders(TestUtils.buildTestSapQuote(testQuoteIdentifier, extraOrderValues, BigDecimal.valueOf(800000),
-                    testOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED), 0, testOrder),
+                    testOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01"), 0, testOrder),
                     getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote).add(extraOrderValues).doubleValue());
         }
 
@@ -2437,7 +2437,7 @@ public class ProductOrderActionBeanTest {
                     getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote).add(extraOrderValues).doubleValue());
         } else {
             Assert.assertEquals(actionBean.estimateSapOutstandingOrders(TestUtils.buildTestSapQuote(testQuoteIdentifier, extraOrderValues, BigDecimal.valueOf(800000),
-                    testOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED), 0, testOrder),
+                    testOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01"), 0, testOrder),
                     getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote).add(extraOrderValues).doubleValue());
         }
 
@@ -2448,7 +2448,7 @@ public class ProductOrderActionBeanTest {
                     getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote).add(extraOrderValues).doubleValue());
         } else {
             Assert.assertEquals(actionBean.estimateSapOutstandingOrders(TestUtils.buildTestSapQuote(testQuoteIdentifier, extraOrderValues, BigDecimal.valueOf(800000),
-                    testOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED), 0, testOrder),
+                    testOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01"), 0, testOrder),
                     getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote).add(extraOrderValues).doubleValue());
         }
 
@@ -2457,7 +2457,7 @@ public class ProductOrderActionBeanTest {
                     getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote).add(extraOrderValues).doubleValue());
         } else {
             Assert.assertEquals(actionBean.estimateSapOutstandingOrders(TestUtils.buildTestSapQuote(testQuoteIdentifier, extraOrderValues, BigDecimal.valueOf(800000),
-                    testOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED), 0, testOrder),
+                    testOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01"), 0, testOrder),
                     getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote).add(extraOrderValues).doubleValue());
         }
 
@@ -2467,7 +2467,7 @@ public class ProductOrderActionBeanTest {
             actionBean.validateQuoteDetails(testQuote, 0);
         } else {
             actionBean.validateSapQuoteDetails(TestUtils.buildTestSapQuote(testQuoteIdentifier, extraOrderValues, BigDecimal.valueOf(800000),
-                    testOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED), 0);
+                    testOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01"), 0);
         }
 
         Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
@@ -2588,7 +2588,7 @@ public class ProductOrderActionBeanTest {
                 @Override
                 public SapQuote answer(InvocationOnMock invocationOnMock) throws Throwable {
                     return TestUtils.buildTestSapQuote(testOrder.getQuoteId(), BigDecimal.valueOf(100000),
-                            BigDecimal.valueOf(1000000),testOrder,quoteItemsMatchOrderProducts);
+                            BigDecimal.valueOf(1000000),testOrder,quoteItemsMatchOrderProducts, "GP01");
                 }
             });
         } else {
@@ -3647,7 +3647,127 @@ public class ProductOrderActionBeanTest {
         Assert.assertTrue(CollectionUtils.isNotEmpty(pdo.getCustomPriceAdjustments()));
     }
 
-    public static BigDecimal incrementOrderValue(BigDecimal potentialOrderValue, PriceList priceList,
+    @DataProvider(name = "provideAlternateQuoteTypes")
+    public Iterator<Object[]> provideAlternateQuoteTypes() {
+        List<Object[]> testCases = new ArrayList<>();
+        //                          Quote ID,       expected source type,               Order status,       Will the product be offered in the sales org of the quote, is the quote valid
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     true, true});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   true, true});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, true, true});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, true, true});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, true, true});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     false, true});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   false, true});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, false, true});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, false, true});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, false, true});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     true, false});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   true, false});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, true, false});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, true, false});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, true, false});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     false, false});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   false, false});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, false, false});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, false, false});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, false, false});
+
+        testCases.add(new Object[]{"GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Draft,      true, true});
+        testCases.add(new Object[]{"GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Pending,    true, true});
+        testCases.add(new Object[]{"GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Submitted,  true, true});
+        testCases.add(new Object[]{"GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Abandoned,  true, true});
+        testCases.add(new Object[]{"GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Completed,  true, true});
+
+        return testCases.iterator();
+    }
+
+    @Test(dataProvider = "provideAlternateQuoteTypes")
+    public void testValidateQuoteSoure(String quote, ProductOrder.QuoteSourceType expectedSourceType,
+                                       ProductOrder.OrderStatus orderStatus, boolean quoteMatchSalesOrg, boolean quoteIsValid)
+            throws Exception{
+        pdo = ProductOrderTestFactory.createDummyProductOrder(3, "");
+        pdo.setQuoteId(quote);
+        pdo.setOrderStatus(orderStatus);
+
+        PriceList priceList = new PriceList();
+        Collection<QuoteItem> quoteItems = new HashSet<>();
+        Set<SAPMaterial> returnMaterials = new HashSet<>();
+
+        BigDecimal pricedMoreThanQuote = BigDecimal.valueOf(20.00d);
+        addPriceItemForProduct(quote, priceList, quoteItems, pdo.getProduct(),
+                pricedMoreThanQuote.toString(), "20", pricedMoreThanQuote.toString());
+
+        for (SapIntegrationClientImpl.SAPCompanyConfiguration companyCode : SapIntegrationClientImpl.SAPCompanyConfiguration
+                .values()) {
+            Optional<String> defaultWbs = Optional.ofNullable(companyCode.getDefaultWbs());
+            final SAPMaterial productMaterial =
+                    new SAPMaterial(pdo.getProduct().getPartNumber(),
+                            companyCode,
+                            defaultWbs.orElse("888"),
+                            pdo.getProduct().getName(),pricedMoreThanQuote.toString(),
+                            "EA",BigDecimal.ONE,"sdsf", "sdfsd", "sdfs",
+                            new Date(),new Date(),
+                            Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
+                            companyCode.getSalesOrganization());
+            returnMaterials.add(productMaterial);
+
+            for (ProductOrderAddOn addOn : pdo.getAddOns()) {
+                addPriceItemForProduct(quote, priceList, quoteItems,
+                        addOn.getAddOn(),
+                        pricedMoreThanQuote.multiply(BigDecimal.valueOf(2)).toString(),
+                        "20",
+                        pricedMoreThanQuote.multiply(BigDecimal.valueOf(2)).toString());
+                final SAPMaterial addonMaterial =
+                        new SAPMaterial(addOn.getAddOn().getPartNumber(),
+                                companyCode,
+                                defaultWbs.orElse("888"),
+                                pdo.getProduct().getName(),
+                                pricedMoreThanQuote.multiply(BigDecimal.valueOf(2)).toString(),"EA",
+                                BigDecimal.ONE,"sdf", "dsf", "sfd",
+                                new Date(), new Date(),
+                                Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
+                                companyCode.getSalesOrganization());
+                returnMaterials.add(addonMaterial);
+            }
+        }
+
+        Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(returnMaterials);
+        stubProductPriceCache.refreshCache();
+
+        if (expectedSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
+            if (quoteIsValid) {
+                Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenAnswer(new Answer<SapQuote>() {
+                    @Override
+                    public SapQuote answer(InvocationOnMock invocationOnMock) throws Throwable {
+                        return TestUtils.buildTestSapQuote("27000001",
+                                BigDecimal.valueOf(30000), BigDecimal.valueOf(37387), pdo,
+                                TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, (quoteMatchSalesOrg) ? "GP01" : "GP03");
+                    }
+                });
+            } else {
+                Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString()))
+                        .thenThrow(new SAPIntegrationException("Quote is Invalid"));
+            }
+        } else {
+            Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString()))
+                    .thenThrow(new RuntimeException("SAP Should not be searched for here"));
+        }
+
+        actionBean.setEditOrder(pdo);
+
+        actionBean.updateAndValidateQuoteSource();
+
+        if(!quoteMatchSalesOrg || !quoteIsValid) {
+            Assert.assertFalse(actionBean.getValidationErrors().isEmpty(),
+                    "Validation Errors should be thrown in this scneario");
+        } else {
+                Assert.assertEquals(pdo.getQuoteSource(), expectedSourceType);
+                Assert.assertTrue(actionBean.getValidationErrors().isEmpty(),
+                        "No validations should have been thrown in this scenario");
+        }
+    }
+
+    private static BigDecimal incrementOrderValue(BigDecimal potentialOrderValue, PriceList priceList,
                                                  ProductOrder pdo, Product product) {
         BigDecimal primaryMultiplier =
                 new BigDecimal(priceList.findByKeyFields(product.getPrimaryPriceItem()).getPrice());
