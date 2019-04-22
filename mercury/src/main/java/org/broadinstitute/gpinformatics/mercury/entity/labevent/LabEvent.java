@@ -532,6 +532,7 @@ todo jmt adder methods
 
     public void setManualOverrideLcSet(LabBatch manualOverrideLcSet) {
         this.manualOverrideLcSet = manualOverrideLcSet;
+        computeLabBatches();
     }
 
     public String getWorkflowQualifier() {
@@ -578,7 +579,6 @@ todo jmt adder methods
             System.out.println("Starting computeLabBatches for " + labEventId);
         }
         computedLcSets.clear();
-//        isLabBatchComputed = true;  // avoid stack overflow LabEvent.computeLcSetsForCherryPickTransfers / VesselContainer.getSampleInstancesAtPositionV2 / VesselContainer.getAncestorSampleInstances / SampleInstanceV2.applyEvent / LabEvent.getComputedLcSets / LabEvent.computeLabBatches
         if (inPlaceLabVessel != null) {
             // Event in-place vessel is mutually exclusive to any event transfers
             if (inPlaceLabVessel.getContainerRole() != null) {

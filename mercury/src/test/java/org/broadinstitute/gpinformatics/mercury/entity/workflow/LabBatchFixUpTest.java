@@ -1970,61 +1970,9 @@ public class LabBatchFixUpTest extends Arquillian {
             LabBatch labBatch = labBatchDao.findByName(line);
             System.out.println(labBatch.getBatchName());
             for (BucketEntry bucketEntry : labBatch.getBucketEntries()) {
-                TransferTraverserCriteria transferTraverserCriteria = new TransferTraverserCriteria() {
-                    @Override
-                    public TraversalControl evaluateVesselPreOrder(Context context) {
-                        LabVessel contextVessel = context.getContextVessel();
-                        VesselContainer<?> contextVesselContainer = context.getContextVesselContainer();
-                        LabVessel.VesselEvent contextVesselEvent = context.getVesselEvent();
-
-                        if(contextVesselEvent != null ) {
-                            compute(contextVesselEvent.getLabEvent());
-                        }
-
-                        if( contextVessel != null ) {
-                            for (LabEvent labEvent : contextVessel.getInPlaceLabEvents()) {
-                                compute(labEvent);
-                            }
-
-                            for (VesselContainer<?> containerVessel : contextVessel.getVesselContainers()) {
-                                // In place events may apply to containers
-                                for (LabEvent labEvent : containerVessel.getEmbedder().getInPlaceLabEvents()) {
-                                    compute(labEvent);
-                                }
-                            }
-                        }
-
-                        // Check for in place events on vessel container (e.g. EndRepair, ABase, APWash)
-                        if( contextVesselContainer != null ) { // todo jmt does this over count
-                            LabVessel containerVessel = contextVesselContainer.getEmbedder();
-                            if (containerVessel != null) {
-                                for (LabEvent labEvent : containerVessel.getInPlaceLabEvents()) {
-                                    compute(labEvent);
-                                }
-
-                                // Look for what comes in from the side (e.g. IndexedAdapterLigation, BaitAddition)
-                                for (LabEvent containerEvent : containerVessel.getTransfersTo()) {
-                                    compute(containerEvent);
-                                    for (LabVessel ancestorLabVessel : containerEvent.getSourceLabVessels()) {
-                                        if( ancestorLabVessel.getContainerRole() != null ){
-                                            for (LabEvent labEvent : ancestorLabVessel.getContainerRole().getEmbedder().getTransfersTo()) {
-                                                compute(labEvent);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        return TraversalControl.ContinueTraversing;
-                    }
-
-                    @Override
-                    public void evaluateVesselPostOrder(Context context) {
-
-                    }
-                };
-                bucketEntry.getLabVessel().evaluateCriteria(transferTraverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                TransferTraverserCriteria transferTraverserCriteria = new ComputeLabBatchTtc(false);
+                bucketEntry.getLabVessel().evaluateCriteria(transferTraverserCriteria,
+                        TransferTraverserCriteria.TraversalDirection.Descendants);
             }
 
             userTransaction.commit();
@@ -2032,9 +1980,70 @@ public class LabBatchFixUpTest extends Arquillian {
         }
     }
 
-    private void compute(LabEvent labEvent) {
-        if (!labEvent.isLabBatchComputed()) {
-            labEvent.computeLabBatches();
+    public static class ComputeLabBatchTtc extends TransferTraverserCriteria {
+        private boolean force;
+
+        public ComputeLabBatchTtc(boolean force) {
+            this.force = force;
+        }
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            LabVessel contextVessel = context.getContextVessel();
+            VesselContainer<?> contextVesselContainer = context.getContextVesselContainer();
+            LabVessel.VesselEvent contextVesselEvent = context.getVesselEvent();
+
+            if(contextVesselEvent != null ) {
+                compute(contextVesselEvent.getLabEvent());
+            }
+
+            if( contextVessel != null ) {
+                for (LabEvent labEvent : contextVessel.getInPlaceLabEvents()) {
+                    compute(labEvent);
+                }
+
+                for (VesselContainer<?> containerVessel : contextVessel.getVesselContainers()) {
+                    // In place events may apply to containers
+                    for (LabEvent labEvent : containerVessel.getEmbedder().getInPlaceLabEvents()) {
+                        compute(labEvent);
+                    }
+                }
+            }
+
+            // Check for in place events on vessel container (e.g. EndRepair, ABase, APWash)
+            if( contextVesselContainer != null ) {
+                LabVessel containerVessel = contextVesselContainer.getEmbedder();
+                if (containerVessel != null) {
+                    for (LabEvent labEvent : containerVessel.getInPlaceLabEvents()) {
+                        compute(labEvent);
+                    }
+
+                    // Look for what comes in from the side (e.g. IndexedAdapterLigation, BaitAddition)
+                    for (LabEvent containerEvent : containerVessel.getTransfersTo()) {
+                        compute(containerEvent);
+                        for (LabVessel ancestorLabVessel : containerEvent.getSourceLabVessels()) {
+                            if( ancestorLabVessel.getContainerRole() != null ){
+                                for (LabEvent labEvent : ancestorLabVessel.getContainerRole().getEmbedder().getTransfersTo()) {
+                                    compute(labEvent);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return TraversalControl.ContinueTraversing;
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {
+
+        }
+
+        private void compute(LabEvent labEvent) {
+            if (force || !labEvent.isLabBatchComputed()) {
+                labEvent.computeLabBatches();
+            }
         }
     }
 }
