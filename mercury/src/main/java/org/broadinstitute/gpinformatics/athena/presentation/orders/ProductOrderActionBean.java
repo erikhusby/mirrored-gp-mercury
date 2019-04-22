@@ -1034,9 +1034,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         } else {
             OrderCalculatedValues calculatedValues = null;
             try {
-                calculatedValues = sapService
-                        .calculateOpenOrderValues(addedSampleCount, foundQuote.getQuoteHeader().getQuoteNumber(),
-                                productOrder);
+                calculatedValues = sapService.calculateOpenOrderValues(addedSampleCount, foundQuote, productOrder);
             } catch (SAPIntegrationException e) {
                 logger.info("Attempting to calculate order from SAP yielded an error", e);
             }

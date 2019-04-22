@@ -76,11 +76,6 @@ public class MockSapQuote {
         Mockito.when(quoteHeader.getFundingType()).thenReturn(SapIntegrationClientImpl.FundingType.PURCHASE_ORDER);
         Mockito.when(quoteHeader.getFundingHeaderStatus()).thenReturn(FundingStatus.APPROVED);
         Mockito.when(sapQuote.isAllFundingApproved()).thenCallRealMethod();
-        try {
-            Mockito.when(sapQuote.getLineItem(Mockito.anyInt(), Mockito.anyString())).thenCallRealMethod();
-        } catch (SAPIntegrationException e) {
-            e.printStackTrace();
-        }
         return sapQuote;
     }
 
