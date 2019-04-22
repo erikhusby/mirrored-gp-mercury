@@ -3651,6 +3651,12 @@ public class ProductOrderActionBeanTest {
     public Iterator<Object[]> provideAlternateQuoteTypes() {
         List<Object[]> testCases = new ArrayList<>();
         //                          Quote ID,       expected source type,               Order status,       Will the product be offered in the sales org of the quote, is the quote valid
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     true, true});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   true, true});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, true, true});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, true, true});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, true, true});
+
         testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     true, true});
         testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   true, true});
         testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, true, true});
@@ -3677,6 +3683,18 @@ public class ProductOrderActionBeanTest {
         testCases.add(new Object[]{"GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Submitted,  true, true});
         testCases.add(new Object[]{"GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Abandoned,  true, true});
         testCases.add(new Object[]{"GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Completed,  true, true});
+        testCases.add(new Object[]{"0GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Draft,      true, true});
+        testCases.add(new Object[]{"0GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Pending,    true, true});
+        testCases.add(new Object[]{"0GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Submitted,  true, true});
+        testCases.add(new Object[]{"0GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Abandoned,  true, true});
+        testCases.add(new Object[]{"0GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Completed,  true, true});
+        testCases.add(new Object[]{"027oooo1", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Draft,     true, true});
+        testCases.add(new Object[]{"027oooo1", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Pending,   true, true});
+        testCases.add(new Object[]{"027oooo1", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Submitted, true, true});
+        testCases.add(new Object[]{"027oooo1", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Abandoned, true, true});
+        testCases.add(new Object[]{"027oooo1", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Completed, true, true});
+
+
 
         return testCases.iterator();
     }
