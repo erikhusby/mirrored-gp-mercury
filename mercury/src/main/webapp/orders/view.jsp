@@ -878,12 +878,11 @@ function renderPico(data, type, row, meta) {
 function updateFundsRemaining() {
     var quoteIdentifier = '${actionBean.editOrder.quoteId}';
     var productOrderKey = $j("input[name='productOrder']").val();
-    var quoteSource = "${actionBean.editOrder.quoteSource}";
 
     if ($j.trim(quoteIdentifier)) {
         debugger;
         $j.ajax({
-            url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier="+quoteIdentifier+"&productOrder=" + productOrderKey + "&quoteSource=${actionBean.editOrder.quoteSource.displayName}",
+            url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier="+quoteIdentifier+"&productOrder=" + productOrderKey,
             dataType: 'json',
             success: updateFunds
         });
@@ -1607,18 +1606,12 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
         <div class="controls">
             <div class="form-value">
                 <c:if test="${actionBean.editOrder.quoteIdSet}">
-                    <c:choose>
-                        <c:when test="${actionBean.editOrder.hasSapQuote()}">
-                            <b>SAP Quote: </b>
-                            <a href="${actionBean.sapQuoteUrl}" class="external" target="QUOTE">
-                        </c:when>
-                        <c:otherwise>
-                            <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
-                        </c:otherwise>
-                    </c:choose>
-                    ${actionBean.editOrder.quoteId}
-                    <c:if test="${ not actionBean.editOrder.hasSapQuote()}">
-                        </a>
+                    <c:if test="${actionBean.editOrder.hasSapQuote()}">
+                        <b>SAP Quote: </b>
+                        <a href="${actionBean.sapQuoteUrl}" class="external" target="QUOTE">${actionBean.editOrder.quoteId}</a>
+                    </c:if>
+                    <c:if test="${actionBean.editOrder.hasQuoteServerQuote()}">
+                        <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">${actionBean.editOrder.quoteId}</a>
                     </c:if>
                 </c:if>
                 <div id="fundsRemaining"></div>
