@@ -684,7 +684,6 @@ public class LabBatchFixUpTest extends Arquillian {
                                        " and batch starting vessel " + labBatchStartingVessel.getBatchStartingVesselId());
 
                     // Unlinks the bucket entry from the vessel.
-                    // todo jmt
                     labBatchStartingVessel.getLabVessel().getBucketEntries().remove(undesiredBucketEntry);
                     // Unlinks the bucket entry from the batch.
                     undesiredLcset.getBucketEntries().remove(undesiredBucketEntry);
@@ -1557,8 +1556,7 @@ public class LabBatchFixUpTest extends Arquillian {
                 BucketEntry bucketEntry = badBucketEntryIter.next();
                 LabVessel labVessel = bucketEntry.getLabVessel();
                 System.out.println("Removing bucket entry " + bucketEntry + " from " + labBatch.getBatchName());
-                // todo jmt
-                labVessel.getBucketEntries().remove(bucketEntry);
+                labVessel.removeBucketEntry(bucketEntry);
             }
 
             for (LabEvent labEvent : labBatchDao.findListByList(LabEvent.class, LabEvent_.manualOverrideLcSet,
@@ -1865,7 +1863,7 @@ public class LabBatchFixUpTest extends Arquillian {
         for (BucketEntry bucketEntry : bucketEntriesToRemove) {
             labBatch.getBucketEntries().remove(bucketEntry);
             LabVessel labVessel = bucketEntry.getLabVessel();
-            labVessel.getBucketEntries().remove(bucketEntry);
+            labVessel.removeBucketEntry(bucketEntry);
             ProductOrder productOrder = bucketEntry.getProductOrder();
             productOrder.getBucketEntries().remove(bucketEntry);
             labBatchDao.remove(bucketEntry);

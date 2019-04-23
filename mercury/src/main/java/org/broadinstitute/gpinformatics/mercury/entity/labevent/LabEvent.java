@@ -210,21 +210,25 @@ public class LabEvent {
     /**
      * Set by transfer traversal, based on ancestor lab batches and transfers.
      */
-    // todo jmt rename to computedLabBatches
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinTable(schema = "mercury", name = "le_computed_lcsets"
             , joinColumns = {@JoinColumn(name = "LAB_EVENT")}
             , inverseJoinColumns = {@JoinColumn(name = "COMPUTED_LCSETS")})
     private Set<LabBatch> computedLcSets = new HashSet<>();
 
+    /**
+     * Whether lab batches have been computed for this event, most useful during backfill of inference.
+     */
     private Boolean isLabBatchComputed;
 
+    /**
+     * The LabBatch inference for each position in a rack of pooled tubes.
+     */
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labEvent")
     @BatchSize(size = 20)
     @MapKeyEnumerated(EnumType.STRING)
     @MapKeyColumn(name = "VESSEL_POSITION")
     private Map<VesselPosition, PositionLabBatches> mapPositionToLcSets = new HashMap<>();
-    // todo jmt table with FK from event, position, FK from LabBatch
 
     /**
      * Can be set by a user to indicate the LCSET, in the absence of any distinguishing context, e.g. a set of samples
@@ -687,7 +691,7 @@ todo jmt adder methods
             Set<LabBatch> totalLabBatches = new HashSet<>();
             for (int i = 0; i < cherryPickTransferList.size(); i++) {
                 CherryPickTransfer cherryPickTransfer = cherryPickTransferList.get(i);
-                // Some transfers backfilled from BSP contain daughters and and granddaughters.  Avoid getting sample
+                // Some transfers backfilled from BSP contain daughters and granddaughters.  Avoid getting sample
                 // instances for granddaughters, because this will cause a stack overflow.
                 if (destContainerBarcodes.contains(cherryPickTransfer.getSourceVesselContainer().getEmbedder().getLabel())) {
                     continue;
@@ -715,7 +719,7 @@ todo jmt adder methods
             return totalLabBatches;
         } else {
             for (CherryPickTransfer cherryPickTransfer : cherryPickTransfers) {
-                // Some transfers backfilled from BSP contain daughters and and granddaughters.  Avoid getting sample
+                // Some transfers backfilled from BSP contain daughters and granddaughters.  Avoid getting sample
                 // instances for granddaughters, because this will cause a stack overflow.
                 if (destContainerBarcodes.contains(cherryPickTransfer.getSourceVesselContainer().getEmbedder().getLabel())) {
                     continue;

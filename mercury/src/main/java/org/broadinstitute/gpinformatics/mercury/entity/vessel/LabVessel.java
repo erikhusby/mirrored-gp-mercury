@@ -1072,6 +1072,12 @@ public abstract class LabVessel implements Serializable {
         return Collections.emptySet();
     }
 
+    public void removeBucketEntry(BucketEntry bucketEntry) {
+        if (bucketEntries.remove(bucketEntry)) {
+            bucketEntriesCount--;
+        }
+    }
+
     public Integer getBucketEntriesCount(){
         return bucketEntriesCount;
     }
@@ -1121,13 +1127,11 @@ public abstract class LabVessel implements Serializable {
             if (Objects.equals(labBatchStartingVessel.getLabBatch(), labBatch)) {
                 labBatchStartingVessel.setLabVessel(null);
                 labBatchStartingVessel.getLabBatch().getLabBatchStartingVessels().remove(labBatchStartingVessel);
-                // todo remover method?
                 labBatches.remove(labBatchStartingVessel);
                 labBatchesCount--;
                 break;
             }
         }
-        // todo remover method?
         reworkLabBatches.remove(labBatch);
         reworkLabBatchesCount--;
     }
