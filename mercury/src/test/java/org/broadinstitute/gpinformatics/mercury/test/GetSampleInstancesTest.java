@@ -183,7 +183,6 @@ public class GetSampleInstancesTest {
         extractionTransfer.getSectionTransfers().add(new SectionTransfer(
                 sourceTubeFormation.getContainerRole(), SBSSection.ALL96, null,
                 targetTubeFormation.getContainerRole(), SBSSection.ALL96, null, extractionTransfer));
-//        extractionTransfer.com
 
         // sequencing PDO
         Product sequencingProduct = ProductTestFactory.createDummyProduct(Workflow.HYBRID_SELECTION, "HYBSEL-01");

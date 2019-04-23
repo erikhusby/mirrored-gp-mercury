@@ -20,10 +20,14 @@ import javax.persistence.Table;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Persists computed LabBatches for each position in a rack of pooled tubes.
+ */
 @Entity
 @Audited
 @Table(schema = "mercury")
 public class PositionLabBatches {
+    @SuppressWarnings("unused")
     @Id
     @SequenceGenerator(name = "SEQ_POSITION_LAB_BATCHES", schema = "mercury", sequenceName = "SEQ_POSITION_LAB_BATCHES")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_POSITION_LAB_BATCHES")
