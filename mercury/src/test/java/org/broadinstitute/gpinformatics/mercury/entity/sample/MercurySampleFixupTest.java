@@ -86,7 +86,7 @@ public class MercurySampleFixupTest extends Arquillian {
         for (MercurySample mercurySample : mercurySamples) {
             Set<LabVessel> labVessels = mercurySample.getLabVessel();
             for (LabVessel labVessel : labVessels) {
-                labVessel.getMercurySamples().remove(mercurySample); // todo jmt
+                labVessel.getMercurySamples().remove(mercurySample);
             }
             mercurySampleDao.remove(mercurySample);
         }
@@ -102,7 +102,7 @@ public class MercurySampleFixupTest extends Arquillian {
         for (MercurySample mercurySample : mercurySamples) {
             Set<LabVessel> labVessels = mercurySample.getLabVessel();
             for (LabVessel labVessel : labVessels) {
-                labVessel.getMercurySamples().remove(mercurySample); // todo jmt
+                labVessel.getMercurySamples().remove(mercurySample);
             }
             mercurySampleDao.remove(mercurySample);
         }
@@ -134,7 +134,7 @@ public class MercurySampleFixupTest extends Arquillian {
         for (MercurySample mercurySample : mercurySamples) {
             Set<LabVessel> labVessels = mercurySample.getLabVessel();
             for (LabVessel labVessel : labVessels) {
-                labVessel.getMercurySamples().remove(mercurySample); // todo jmt
+                labVessel.removeSample(mercurySample);
             }
             mercurySampleDao.remove(mercurySample);
         }

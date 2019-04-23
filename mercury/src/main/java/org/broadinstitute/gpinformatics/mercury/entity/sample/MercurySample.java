@@ -40,7 +40,6 @@ import javax.persistence.Table;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -446,7 +445,7 @@ public class MercurySample extends AbstractSample {
 
     public void removeSampleFromVessels(Collection<LabVessel> vesselsForRemoval) {
         for (LabVessel labVesselForRemoval : vesselsForRemoval) {
-            labVesselForRemoval.getMercurySamples().remove(this); // todo jmt
+            labVesselForRemoval.removeSample(this);
             labVessel.remove(labVesselForRemoval);
         }
     }

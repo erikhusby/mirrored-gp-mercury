@@ -1186,6 +1186,17 @@ public abstract class LabVessel implements Serializable {
         return Collections.emptySet();
     }
 
+    public void clearSamples() {
+        mercurySamples.clear();
+        mercurySamplesCount = 0;
+    }
+
+    public void removeSample(MercurySample mercurySample) {
+        if (mercurySamples.remove(mercurySample)) {
+            mercurySamplesCount--;
+        }
+    }
+
     public void addSample(MercurySample mercurySample) {
         mercurySamples.add(mercurySample);
         if (mercurySamplesCount == null) {

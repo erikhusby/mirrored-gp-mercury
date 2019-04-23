@@ -465,7 +465,7 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
                         getLabVesselMap().put(barcode, labVessel);
                     } else {
                         // Tube is being re-uploaded, so clearing old samples is appropriate.
-                        labVessel.getMercurySamples().clear(); // todo jmt
+                        labVessel.clearSamples();
                     }
                     SampleInstanceEjb.RowDto firstRowHavingTube = mapBarcodeToFirstRow.get(barcode);
                     labVessel.setVolume(firstRowHavingTube.getVolume());
