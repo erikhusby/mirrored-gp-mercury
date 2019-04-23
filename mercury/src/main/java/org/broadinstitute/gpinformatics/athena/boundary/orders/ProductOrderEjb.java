@@ -389,22 +389,18 @@ public class ProductOrderEjb {
      * @throws SAPIntegrationException
      */
     public void updateOrderInSap(ProductOrder orderToUpdate, List<Product> allProductsOrdered,
-                                  MessageCollection messageCollection,
-                                  boolean closingOrder)
+                                  MessageCollection messageCollection, boolean closingOrder)
             throws SAPIntegrationException {
         SapIntegrationService.Option serviceOptions =
             SapIntegrationService.Option.create(SapIntegrationService.Option.isClosing(closingOrder));
-        sapService.updateOrder(orderToUpdate, serviceOptions);
+        sapService.updateOrder(orderToUpdate, closingOrder);
         BigDecimal sampleCount = BigDecimal.ZERO ;
         if(orderToUpdate.isPriorToSAP1_5()) {
             sampleCount =
                 SapIntegrationServiceImpl.getSampleCount(orderToUpdate, orderToUpdate.getProduct(), 0, serviceOptions);
         }
-        orderToUpdate.updateSapDetails(sampleCount.intValue(),
-            MercuryStringUtils.makeDigest(allProductsOrdered),"");
-        messageCollection.addInfo("Order "+orderToUpdate.getJiraTicketKey() +
-                                  " has been successfully updated in SAP");
-
+        orderToUpdate.updateSapDetails(sampleCount.intValue(), MercuryStringUtils.makeDigest(allProductsOrdered),"");
+        messageCollection.addInfo("Order "+orderToUpdate.getJiraTicketKey() + " has been successfully updated in SAP");
     }
 
     /**

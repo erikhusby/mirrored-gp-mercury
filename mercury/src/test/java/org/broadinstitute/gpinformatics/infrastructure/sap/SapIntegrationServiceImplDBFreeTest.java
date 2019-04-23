@@ -167,7 +167,7 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         conversionPdo.setQuoteId(testSingleSourceQuote.getAlphanumericId());
         conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-        conversionPdo.addSapOrderDetail(new SapOrderDetail(null, 10, testSingleSourceQuote.getAlphanumericId(),
+        conversionPdo.addSapOrderDetail(new SapOrderDetail(SAP_ORDER_NUMBER, 10, testSingleSourceQuote.getAlphanumericId(),
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode()));
 
         final Product primaryProduct = conversionPdo.getProduct();
@@ -178,7 +178,6 @@ public class SapIntegrationServiceImplDBFreeTest {
             addTestProductMaterialPrice(addonMaterialPrice, priceList, materials, addOn.getAddOn(),
                     testSingleSourceQuote.getAlphanumericId());
         }
-
 
         final String customProductName = "Test custom material";
         final String customAddonProductName = "Test custom addon material";
@@ -195,7 +194,6 @@ public class SapIntegrationServiceImplDBFreeTest {
         }
         sapQuote = TestUtils.buildTestSapQuote("01234", BigDecimal.TEN, BigDecimal.TEN, conversionPdo,
             TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS);
-//        integrationService.createOrder(conversionPdo);O
 
         SAPOrder convertedOrder = integrationService.initializeSAPOrder(sapQuote, conversionPdo,
             Option.create(Option.Type.CREATING));
