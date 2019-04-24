@@ -124,8 +124,6 @@ public class SapIntegrationServiceImplDBFreeTest {
         integrationService.setBspUserList(mockUserList);
 
         SapIntegrationClientImpl mockIntegrationClient = Mockito.mock(SapIntegrationClientImpl.class);
-        Mockito.when(mockIntegrationClient.findCustomerNumber(Mockito.anyString(), Mockito.any(SapIntegrationClientImpl.SAPCompanyConfiguration.class))).thenReturn(
-                MOCK_CUSTOMER_NUMBER);
 
         Mockito.when(mockIntegrationClient.findQuoteDetails(Mockito.anyString())).thenAnswer(new Answer<SapQuote>() {
             @Override
@@ -193,7 +191,7 @@ public class SapIntegrationServiceImplDBFreeTest {
             productOrderAddOn.setCustomPriceAdjustment(customAdjustment);
         }
         sapQuote = TestUtils.buildTestSapQuote("01234", BigDecimal.TEN, BigDecimal.TEN, conversionPdo,
-            TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS);
+            TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS, "GP01");
 
         SAPOrder convertedOrder = integrationService.initializeSAPOrder(sapQuote, conversionPdo,
             Option.create(Option.Type.CREATING));
