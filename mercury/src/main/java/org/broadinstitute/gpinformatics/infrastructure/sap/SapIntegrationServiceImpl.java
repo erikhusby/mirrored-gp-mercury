@@ -15,8 +15,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderPriceAd
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
-import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -51,12 +49,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option.*;
-import static org.broadinstitute.sap.services.SapIntegrationClientImpl.MISSING_CUSTOMER_RESULT;
+import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option.Type;
+import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option.create;
+import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option.isClosing;
+import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option.isForValueQuery;
 import static org.broadinstitute.sap.services.SapIntegrationClientImpl.SAPCompanyConfiguration;
 import static org.broadinstitute.sap.services.SapIntegrationClientImpl.SAPEnvironment;
-import static org.broadinstitute.sap.services.SapIntegrationClientImpl.SystemIdentifier;
-import static org.broadinstitute.sap.services.SapIntegrationClientImpl.TOO_MANY_ACCOUNTS_RESULT;
 
 @Dependent
 @Default
@@ -380,61 +378,6 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @Override
-    public String findCustomer(SAPCompanyConfiguration companyCode, FundingLevel fundingLevel) throws SAPIntegrationException {
-
-        String customerNumber = null;
-        if (fundingLevel == null || CollectionUtils.isEmpty(fundingLevel.getFunding())) {
-            // Too many funding sources to allow this to work with SAP.  Keep using the Quote Server as the definition
-            // of funding
-            throw new SAPIntegrationException(
-                    "Unable to continue with SAP.  The associated quote has either too few or too many funding sources");
-        } else {
-            for (Funding funding : fundingLevel.getFunding()) {
-
-                if (funding.getFundingType().equals(Funding.PURCHASE_ORDER)) {
-                    try {
-                        customerNumber =
-                                getClient().findCustomerNumber(funding.getPurchaseOrderContact(), companyCode);
-                    } catch (SAPIntegrationException e) {
-                        if (e.getMessage().equals(MISSING_CUSTOMER_RESULT)) {
-                            throw new SAPIntegrationException(
-                                    "Your order cannot be placed in SAP because the email address "
-                                    + "specified on the Quote is not attached to any SAP Customer account.\n"
-                                    + "An email has been sent to Dan Warrington in AR to initiate "
-                                    + "this SAP Customer Creation process. Please contact Dan Warrington to follow this up.\n"
-                                    + "Once the Customer has been created in SAP you will need "
-                                    + "to resubmit this order to ensure that your work is "
-                                    + "properly processed.\n"
-                                    + "For further questions please contact Mercury support");
-                        } else if (e.getMessage().equals(TOO_MANY_ACCOUNTS_RESULT)) {
-                            throw new SAPIntegrationException(
-                                    "Your order cannot be placed because the email address specified "
-                                    + "on the Quote is associated with more than 1 SAP Customer account.\n"
-                                    + "An email has been sent to Amber Kennedy in AR to initiate "
-                                    + "this SAP Customer Creation process. Please contact Amber "
-                                    + "Kennedy to follow this up.\n"
-                                    + "Once the SAP Customer account has been corrected you will "
-                                    + "need to resubmit this order to ensure that your work is "
-                                    + "properly processed.\n"
-                                    + "For further questions please contact Mercury support");
-                        } else {
-                            throw e;
-                        }
-                    }
-                }
-                /*
-                This really only needs to loop once since the information that is retrieved will be the same for each
-                funding instance under fundingLevel
-                */
-
-                break;
-            }
-        }
-
-        return customerNumber;
-    }
-
-    @Override
     public String billOrder(QuoteImportItem quoteItemForBilling, BigDecimal quantityOverride, Date workCompleteDate)
             throws SAPIntegrationException {
 
@@ -526,7 +469,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
 
         orderCalculatedValues =
-            getClient().calculateOrderValues(sapQuote, SystemIdentifier.MERCURY, potentialOrderCriteria);
+            getClient().calculateOrderValues(sapQuote, potentialOrderCriteria);
         return orderCalculatedValues;
     }
 
@@ -588,8 +531,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         OrderCriteria orderCriteria = null;
 
         //todo  The customer number is no longer necessary for the order criteria.
-        orderCriteria = new OrderCriteria(customerNumber, productOrder.getSapCompanyConfigurationForProductOrder(),
-                    sapOrderItems);
+        orderCriteria = new OrderCriteria(customerNumber,sapOrderItems);
         return orderCriteria;
     }
 

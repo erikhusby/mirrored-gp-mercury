@@ -5,13 +5,10 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
-import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -48,17 +45,6 @@ public interface SapIntegrationService {
      * @throws SAPIntegrationException
      */
     void updateOrder(ProductOrder placedOrder, boolean closingOrder) throws SAPIntegrationException;
-
-    /**
-     * For Phase 1 of the SAP/GP integration, Orders placed in SAP need to have reference to the customer number found
-     * in SAP of the contact person on a purchase order.  This method will give Mercury the ability to search for that
-     * number
-     * @param companyCode The code associated with the SAP company structure in which this customer should be found
-     * @param fundingLevel
-     * @return If this quote is eligible and backed by a purchase order, the customer number found in SAP is returned
-     * @throws SAPIntegrationException
-     */
-    String findCustomer(SapIntegrationClientImpl.SAPCompanyConfiguration companyCode, FundingLevel fundingLevel) throws SAPIntegrationException;
 
     /**
      * This method will allow mercury to record completed work in SAP in order to complete the Billing process
