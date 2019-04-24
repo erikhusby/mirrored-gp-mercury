@@ -30,12 +30,23 @@ import org.testng.annotations.Test;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.FIXUP)
 public class BillingSessionFixupTest extends Arquillian {
@@ -186,6 +197,35 @@ public class BillingSessionFixupTest extends Arquillian {
                                                       + "ledger entries which successfully created Delivery documents "
                                                       + "in SAP but SAP incorrectly recorded a failure along with the "
                                                       + "success so the success was not captured"));
+    }
+
+    @Test(enabled = false)
+    public void gplim6239UpdateLedgerItems() throws Exception {
+        userBean.loginOSUser();
+
+        Map<String, String> deliveryPairings = new HashMap<>();
+        String productOrderKey = "PDO-16275";
+        String quoteWorkItemId = "200002667";
+        final ProductOrder orderToModify = productOrderDao.findByBusinessKey(productOrderKey);
+
+        orderToModify.getSamples().stream()
+                .filter(productOrderSample -> !productOrderSample.isCompletelyBilled())
+                .forEach(productOrderSample -> {
+            productOrderSample.getLedgerItems().stream()
+                    .filter(ledgerEntry -> StringUtils.equals(ledgerEntry.getWorkItem(), quoteWorkItemId) && ledgerEntry.getQuantity() == .91d)
+                    .forEach(ledgerEntry -> {
+                        System.out.println("changing ledger status for work Item "+ ledgerEntry.getWorkItem()+
+                                           " to complete.");
+                        ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
+                    });
+        });
+
+        billingSessionDao.persist(new FixupCommentary("GPLIM-6239: Updated the work ID for one "
+                                                      + "ledger entry associated with "+productOrderKey
+                                                      + " which was unsuccessful at creating Delivery documents "
+                                                      + "in SAP because the SAP order got corrupted.  A subsequent "
+                                                      + "request to Business Systems is made to move the work Item to "
+                                                      + "Comleted status"));
     }
 
     private Set<LedgerEntry> findNegativelyBilledEntriesByOrder(@Nonnull List<String> productOrderBusinessKeys) {
