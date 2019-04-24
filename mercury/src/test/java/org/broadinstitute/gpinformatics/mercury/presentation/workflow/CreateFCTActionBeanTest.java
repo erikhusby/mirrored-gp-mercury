@@ -209,7 +209,8 @@ public class CreateFCTActionBeanTest {
         for (IlluminaFlowcell.FlowcellType flowcellType : Arrays.asList(IlluminaFlowcell.FlowcellType.HiSeqFlowcell,
                 IlluminaFlowcell.FlowcellType.MiSeqFlowcell,
                 IlluminaFlowcell.FlowcellType.NovaSeqFlowcell,
-                IlluminaFlowcell.FlowcellType.NovaSeqS4Flowcell)) {
+                IlluminaFlowcell.FlowcellType.NovaSeqS4Flowcell,
+                IlluminaFlowcell.FlowcellType.NovaSeqSPFlowcell)) {
 
             dto.setSequencerModel(flowcellType);
 

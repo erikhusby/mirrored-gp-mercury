@@ -56,7 +56,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     private Map<String, AnalysisType> analysisTypeMap = new HashMap<>();
     private Map<String, MolecularIndexingScheme> molecularIndexingSchemeMap = new HashMap<>();
     private Map<String, ReferenceSequence> referenceSequenceMap = new HashMap<>();
-    private Map<String, IlluminaFlowcell.FlowcellType> sequencerModelMap = new HashMap<>();
     private Set<Object> entitiesToUpdate = new HashSet<>();
     private List<String> validAggregationDataTypes = new ArrayList();
 
@@ -594,7 +593,8 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         sampleInstanceEntity.setReagentDesign(dto.getReagent());
         sampleInstanceEntity.setReferenceSequence(getReferenceSequenceMap().get(dto.getReferenceSequenceName()));
         sampleInstanceEntity.setRootSample(getSampleMap().get(dto.getRootSampleName()));
-        sampleInstanceEntity.setSequencerModel(getSequencerModelMap().get(dto.getSequencerModelName()));
+        sampleInstanceEntity.setSequencerModel(IlluminaFlowcell.FlowcellType.getTypeForExternalUiName(
+                dto.getSequencerModelName()));
         sampleInstanceEntity.setUploadDate(new Date());
         sampleInstanceEntity.setUmisPresent(dto.getUmisPresent());
         return sampleInstanceEntity;
@@ -950,10 +950,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
 
     public Map<String, ReferenceSequence> getReferenceSequenceMap() {
         return referenceSequenceMap;
-    }
-
-    public Map<String, IlluminaFlowcell.FlowcellType> getSequencerModelMap() {
-        return sequencerModelMap;
     }
 
     /**
