@@ -526,12 +526,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             sapOrderItems.add(orderSubItem);
         }
 
-        String customerNumber = null;
-        Optional <SapQuote> foundQuote = null;
         OrderCriteria orderCriteria = null;
 
         //todo  The customer number is no longer necessary for the order criteria.
-        orderCriteria = new OrderCriteria(customerNumber,sapOrderItems);
+        orderCriteria = new OrderCriteria(productOrder.getSapOrderNumber(), sapOrderItems);
         return orderCriteria;
     }
 
