@@ -495,7 +495,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
 
         orderCalculatedValues =
-                getClient().calculateOrderValues(quoteId, SystemIdentifier.MERCURY, potentialOrderCriteria);
+                getClient().calculateOrderValues(quoteId, potentialOrderCriteria);
         return orderCalculatedValues;
     }
 
@@ -557,8 +557,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         OrderCriteria orderCriteria = null;
 
         //todo  The customer number is no longer necessary for the order criteria.
-        orderCriteria = new OrderCriteria(customerNumber, productOrder.getSapCompanyConfigurationForProductOrder(),
-                    sapOrderItems);
+        orderCriteria = new OrderCriteria(customerNumber,sapOrderItems);
         return orderCriteria;
     }
 
