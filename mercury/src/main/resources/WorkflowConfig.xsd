@@ -35,6 +35,9 @@
             <xs:element type="xs:string" name="sourceSection" minOccurs="0"/>
             <xs:element type="xs:string" name="targetVesselTypeGeometryString"/>
             <xs:element type="xs:string" name="targetSection"/>
+            <xs:element type="xs:string" name="targetSections" minOccurs="0"/>
+            <xs:element type="xs:string" name="targetBarcodedTubeTypeString"/>
+            <xs:element type="xs:string" name="sourceBarcodedTubeTypeString"/>
             <xs:element type="xs:string" name="targetWellTypeString"/>
             <xs:element type="xs:boolean" name="sourceMassRemoved"/>
             <xs:element type="xs:string" name="buttonValue" minOccurs="0"/>

@@ -964,6 +964,40 @@ public enum LabEventType {
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.MatrixTube075).build(),
             MaterialType.DNA_GENOMIC, LibraryType.NONE_ASSIGNED),
 
+    TENX_EXTRACTION_CHIP_LOADING("10XExtractionChipLoading",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
+                    RackOfTubes.RackType.Matrix96SlotRack075,
+                    StaticPlate.PlateType.Plate96Well200PCR).
+                    targetSection(SBSSection.P96_COL1).
+                    sourceSection(SBSSection.P96_COL1)
+                    .sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.MatrixTube075)
+                    .build(),
+            LibraryType.NONE_ASSIGNED),
+    TENX_EXTRACTION_CHIP_UNLOADING("10XExtractionChipUnloading",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
+                    StaticPlate.PlateType.Plate96Well200PCR,
+                    StaticPlate.PlateType.Plate96Well200PCR).
+                    targetSection(SBSSection.P96_COL1).
+                    sourceSection(SBSSection.P96_COL1)
+                    .build(),
+            LibraryType.NONE_ASSIGNED),
+    TENX_EXTRACTION_CONSOLIDATION("10XExtractionConsolidation",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED, TranslateBspMessage.SECTION_TO_CHERRY),
+    TENX_EXTRACTION_CDNA_AMPLIFICATION("10XExtractionCDNAAmplification",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    TENX_EXTRACTION_CDNA_CLEANUP("10XExtractionCDNACleanup",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            MaterialType.DNA_CDNA, LibraryType.NONE_ASSIGNED),
+
     //ALL Prep Forward BSP
     ALL_PREP_TRANSFER_CRYOVIAL("AllPrepTransferCryovial",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
@@ -1992,6 +2026,10 @@ public enum LabEventType {
             ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE, PlasticToValidate.SOURCE,
             PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
+    TENX_EXTRACTION_BUCKET("10XExtractionBucket", ExpectSourcesEmpty.TRUE,
+            ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE, PlasticToValidate.SOURCE,
+            PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
 
     // Transfer blood to micro centrifuge tube
     EXTRACT_BLOOD_TO_MICRO("ExtractBloodToMicro",
@@ -2845,6 +2883,8 @@ public enum LabEventType {
         /** The set of positions in the target geometry from which to transfer. */
         private SBSSection targetSection;
 
+        private SBSSection[] targetSections;
+
         /** Whether to allow entry of target volumes. */
         private boolean targetVolume;
 
@@ -2871,14 +2911,18 @@ public enum LabEventType {
         private VesselTypeGeometry[] sourceVesselTypeGeometries = {};
 
         /** For source rack geometries, specifies the type of tube in the rack */
-        private BarcodedTube.BarcodedTubeType sourceBarcodedTubeType = BarcodedTube.BarcodedTubeType.MatrixTube;
+        private BarcodedTube.BarcodedTubeType sourceBarcodedTubeType;
+
+        private String sourceBarcodedTubeTypeString;
 
         /** Prompts user with a list of target vessel geometry types. */
         @XmlTransient
         private VesselTypeGeometry[] targetVesselTypeGeometries = {};
 
         /** For target rack geometries, specifies the type of tube in the rack */
-        private BarcodedTube.BarcodedTubeType targetBarcodedTubeType = BarcodedTube.BarcodedTubeType.MatrixTube;
+        private BarcodedTube.BarcodedTubeType targetBarcodedTubeType;
+
+        private String targetBarcodedTubeTypeString;
 
         @XmlTransient
         private VesselTypeGeometry targetWellTypeGeometry;
@@ -3173,6 +3217,10 @@ public enum LabEventType {
             return targetSection;
         }
 
+        public SBSSection[] getTargetSections() {
+            return targetSections;
+        }
+
         public boolean targetVolume() {
             return targetVolume;
         }
@@ -3214,6 +3262,10 @@ public enum LabEventType {
         }
 
         public BarcodedTube.BarcodedTubeType getSourceBarcodedTubeType() {
+            if (sourceBarcodedTubeTypeString != null) {
+                String[] split = sourceBarcodedTubeTypeString.split("\\.");
+                return BarcodedTube.BarcodedTubeType.getByAutomationName(split[1]);
+            }
             return sourceBarcodedTubeType;
         }
 
@@ -3230,6 +3282,10 @@ public enum LabEventType {
         }
 
         public BarcodedTube.BarcodedTubeType getTargetBarcodedTubeType() {
+            if (targetBarcodedTubeTypeString != null) {
+                String[] split = targetBarcodedTubeTypeString.split("\\.");
+                return BarcodedTube.BarcodedTubeType.getByAutomationName(split[1]);
+            }
             return targetBarcodedTubeType;
         }
 
@@ -3317,6 +3373,14 @@ public enum LabEventType {
             VolumeConcUpdate volumeConcUpdate, LibraryType libraryType) {
         this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
                 pipelineTransformation, forwardMessage, volumeConcUpdate, null, null, libraryType);
+    }
+
+    LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
+                 SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
+                 PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
+                 VolumeConcUpdate volumeConcUpdate, MaterialType materialType, LibraryType libraryType) {
+        this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
+                pipelineTransformation, forwardMessage, volumeConcUpdate, null, materialType, libraryType);
     }
 
     LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,

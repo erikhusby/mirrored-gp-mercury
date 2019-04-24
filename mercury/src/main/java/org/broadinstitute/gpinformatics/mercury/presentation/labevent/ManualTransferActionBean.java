@@ -207,6 +207,10 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 numEvents++;
             }
 
+            if (manualTransferDetails.getTargetSections() != null) {
+                numEvents = manualTransferDetails.getTargetSections().length;
+            }
+
             for (int i = 0; i < numEvents; i++) {
                 StationEventType stationEvent;
                 switch (manualTransferDetails.getMessageType()) {
@@ -895,6 +899,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     } else {
                         messageCollection.addInfo(direction.getText() + " " + barcode + " is not in the database");
                     }
+                } else if (expectedEmpty != null && expectedEmpty) {
+                    messageCollection.addError(direction.getText() + " " + barcode + " is not empty");
                 } else {
                     messageCollection.addInfo(direction.getText() + " " + barcode + " is in the database");
                     returnMapBarcodeToVessel.put(labVessel.getLabel(), labVessel);
@@ -1131,6 +1137,25 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                 (PlateTransferEventType) stationEvents.get(0);
                         plateTransferEventType.setSourcePlate(firstPlateTransferEventType.getSourcePlate());
                         plateTransferEventType.setSourcePositionMap(firstPlateTransferEventType.getSourcePositionMap());
+                    }
+                    if (manualTransferDetails.getTargetSections() != null) {
+                        if (eventIndex > 0) {
+                            // copy destination from primary
+                            if (plateTransferEventType.getSourcePlate() == null
+                                || plateTransferEventType.getSourcePlate().getBarcode() == null) {
+                                iterator.remove();
+                                continue;
+                            } else {
+                                PlateTransferEventType firstPlateTransferEventType =
+                                        (PlateTransferEventType) stationEvents.get(0);
+                                PlateType firstPlate = firstPlateTransferEventType.getPlate();
+                                PlateType plateType = new PlateType();
+                                plateType.setBarcode(firstPlate.getBarcode());
+                                plateType.setPhysType(firstPlate.getPhysType());
+                                plateTransferEventType.setPlate(plateType);
+                            }
+                        }
+                        plateTransferEventType.getPlate().setSection(manualTransferDetails.getTargetSections()[eventIndex].getSectionName());
                     }
                     if (manualTransferDetails.getTargetWellType() != null &&
                         manualTransferDetails.getTargetWellType() != PlateWell.WellType.None) {
