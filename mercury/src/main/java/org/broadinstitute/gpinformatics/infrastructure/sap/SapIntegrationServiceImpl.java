@@ -374,8 +374,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         BigDecimal sampleCount = getSampleCount(placedOrder, product, additionalSampleCount, serviceOptions);
         SAPOrderItem sapOrderItem =
             new SAPOrderItem(quoteLineItem.getMaterialNumber(), quoteLineItem.getQuoteItemNumber(),
-                product.getProductName(), sampleCount, null,
-                String.format("%s qty of %s", sampleCount.toPlainString(), product.getPartNumber()));
+                product.getProductName(), sampleCount, null, null);
         defineConditionsForOrderItem(placedOrder, product, sapOrderItem);
         return sapOrderItem;
     }
