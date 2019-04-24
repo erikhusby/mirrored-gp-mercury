@@ -613,6 +613,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder.updateCustomSettings(productCustomizations);
         }
 
+        updateAndValidateQuoteSource();
         if(editOrder.getProduct() != null) {
 
             if(editOrder.hasSapQuote()) {
@@ -827,9 +828,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                                         funding.getDisplayName(), quote.get().getAlphanumericId());
                         });
                 }
-
-            validateQuoteDetails(quote.orElseThrow(() -> new QuoteServerException("A quote was not found for " +
-                                                                                  editOrder.getQuoteId())), 0);}
+                validateQuoteDetails(quote.orElseThrow(() -> new QuoteServerException("A quote was not found for " +
+                                                                                      editOrder.getQuoteId())), 0);
+            }
 
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
@@ -1559,7 +1560,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 final Date todayTruncated =
                         org.apache.commons.lang3.time.DateUtils.truncate(new Date(), Calendar.DATE);
 
-                if (StringUtils.equals(quoteSource, ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName()) ) {
+                if ( ! StringUtils.isNumeric(quoteIdentifier)) {
                     Quote quote = quoteService.getQuoteByAlphaId(quoteIdentifier);
                     final QuoteFunding quoteFunding = quote.getQuoteFunding();
                     double fundsRemaining = Double.parseDouble(quoteFunding.getFundsRemaining());
@@ -1606,7 +1607,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                         });
                     }
                     item.put("fundingDetails", fundingDetails);
-                } else if (StringUtils.equals(quoteSource, ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName())) {
+                } else if (StringUtils.isNumeric(quoteIdentifier)) {
                     SapQuote quote = sapService.findSapQuote(quoteIdentifier);
                     item.put("quoteType", ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName());
                     item.put("fundsRemaining",
@@ -2585,8 +2586,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         SapQuote sapQuote = null;
 
         SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
-        if(StringUtils.isNotBlank(quoteIdentifier) && StringUtils.isNotBlank(quoteSource)) {
-            if(StringUtils.equals(quoteSource, ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName())) {
+        if(StringUtils.isNotBlank(quoteIdentifier)) {
+            if(StringUtils.isNumeric(quoteIdentifier)) {
                 sapQuote = sapService.findSapQuote(quoteIdentifier);
                 if(Arrays.asList(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD).contains(
@@ -2878,7 +2879,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @ValidationMethod(on = ADD_SAMPLES_ACTION)
     public void addSampleExtraValidations() throws Exception {
         try {
-                validateQuoteDetailsWithAddedSamples(editOrder, stringToSampleList(addSamplesText).size());
+            validateQuoteDetailsWithAddedSamples(editOrder, stringToSampleList(addSamplesText).size());
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
         } catch (InvalidProductException | SAPIntegrationException e) {
@@ -3056,10 +3057,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private void buildJsonObjectFromEditOrderProductCustomizations() throws JSONException, SAPIntegrationException {
-
         SapQuote sapQuote = null;
-        if(StringUtils.isNotBlank(quoteIdentifier) && StringUtils.isNotBlank(quoteSource)) {
-            if (StringUtils.equals(quoteSource, ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName())) {
+        if(StringUtils.isNotBlank(quoteIdentifier)) {
+            if (StringUtils.isNumeric(quoteIdentifier)) {
                 sapQuote = sapService.findSapQuote(quoteIdentifier);
             }
         }
@@ -3570,16 +3570,66 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void validateQuoteOptions(String action) {
 
-        if(action.equals(PLACE_ORDER_ACTION)) {
-            requireField(editOrder.getQuoteSource(), " a quote source type selected", action);
-        }
-
         if (action.equals(PLACE_ORDER_ACTION) || action.equals(VALIDATE_ORDER) ||
             (action.equals(SAVE_ACTION) && editOrder.isSubmitted())) {
-            boolean hasQuote = !StringUtils.isBlank(editOrder.getQuoteId());
+            boolean hasQuote = StringUtils.isNotBlank(editOrder.getQuoteId());
             requireField(hasQuote || editOrder.canSkipQuote(), "a quote specified", action);
             if (!hasQuote && editOrder.allowedToSkipQuote()) {
                 requireField(editOrder.getSkipQuoteReason() , "an explanation for why a quote cannot be entered", action);
+            }
+        }
+    }
+
+    /**
+     * Helper method to interpret the quote ID (if entered) and set the Quote Source based on its makeup:
+     * <ul><li>If the quote ID is all numeric, it must be SAP</li>
+     * <li>otherwise, consider it to be Quote Server</li></ul>
+     *
+     * If the quote is SAP and the products are set on the order, check to determine if all of the products on the
+     * order (primary and add ons) are offered in the sales org of the quote.  If not, show an error that the quote is
+     * not compatible with the selected products
+     */
+    void updateAndValidateQuoteSource() {
+        if (StringUtils.isNotBlank(editOrder.getQuoteId())) {
+            if (StringUtils.isNumeric(editOrder.getQuoteId())) {
+                try {
+                    Optional<SapQuote> sapQuote = Optional.ofNullable(sapService.findSapQuote(editOrder.getQuoteId()));
+
+                    sapQuote.ifPresent(quote -> {
+                        boolean canSwitch = true;
+                        String offendingProduct = "";
+                        if(editOrder.getProduct() != null) {
+                            Optional<SAPMaterial> cachedProduct =
+                                    Optional.ofNullable(productPriceCache.findByProduct(editOrder.getProduct(),
+                                            SapIntegrationClientImpl.SAPCompanyConfiguration.fromSalesOrgForMaterial(
+                                                    quote.getQuoteHeader().getSalesOrganization())));
+                            canSwitch = cachedProduct.isPresent();
+                            offendingProduct = editOrder.getProduct().getDisplayName();
+                            final Iterator<ProductOrderAddOn> addOnIterator = editOrder.getAddOns().iterator();
+                            while (addOnIterator.hasNext() && canSwitch) {
+                                final Product addOn = addOnIterator.next().getAddOn();
+                                Optional<SAPMaterial> cachedAddon = Optional.ofNullable(productPriceCache.findByProduct(
+                                        addOn,
+                                        SapIntegrationClientImpl.SAPCompanyConfiguration.fromSalesOrgForMaterial(
+                                                quote.getQuoteHeader().getSalesOrganization())));
+                                canSwitch = cachedAddon.isPresent();
+                                offendingProduct = addOn.getDisplayName();
+                            }
+                            if (!canSwitch) {
+                                addGlobalValidationError(
+                                        "The Quote you are attempting to switch to is not compatible with "
+                                        + offendingProduct);
+                            }
+                        }
+
+                        editOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
+                    });
+
+                } catch (SAPIntegrationException e) {
+                    addGlobalValidationError("The quote you are attempting to switch to is invalid.");
+                }
+            } else {
+                editOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
             }
         }
     }

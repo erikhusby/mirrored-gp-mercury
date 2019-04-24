@@ -198,7 +198,7 @@ public class BillingCreditDbFreeTest {
         pdo.setQuoteSource(quoteSourceType);
 
         SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), BigDecimal.valueOf(10000),BigDecimal.valueOf(100000),
-                pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED);
+                pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
 
         HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
         billingMap.put(pdoSample, Pair.of(priceItem, qtyPositiveTwo));
@@ -286,7 +286,7 @@ public class BillingCreditDbFreeTest {
         pdo.setQuoteSource(quoteSourceType);
 
         SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), BigDecimal.valueOf(10000),BigDecimal.valueOf(100000),
-                pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED);
+                pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
         final String firstDeliveryDocumentId = "0211403";
 
         if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
@@ -386,7 +386,7 @@ public class BillingCreditDbFreeTest {
         pdo.setQuoteSource(quoteSourceType);
 
         SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), BigDecimal.valueOf(10000),BigDecimal.valueOf(100000),
-                pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED);
+                pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
 
         if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
             Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapQuote);
@@ -440,7 +440,7 @@ public class BillingCreditDbFreeTest {
         pdo.setQuoteSource(quoteSourceType);
 
         SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), BigDecimal.valueOf(10000),BigDecimal.valueOf(100000),
-                pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED);
+                pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
 
         if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
             Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapQuote);
@@ -501,7 +501,7 @@ public class BillingCreditDbFreeTest {
         pdo.setQuoteSource(quoteSourceType);
 
         SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), BigDecimal.valueOf(10000),BigDecimal.valueOf(100000),
-                pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED);
+                pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
 
         if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
             Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapQuote);
