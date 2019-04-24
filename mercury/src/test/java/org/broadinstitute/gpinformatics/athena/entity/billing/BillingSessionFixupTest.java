@@ -208,16 +208,24 @@ public class BillingSessionFixupTest extends Arquillian {
         String quoteWorkItemId = "200002667";
         final ProductOrder orderToModify = productOrderDao.findByBusinessKey(productOrderKey);
 
-        orderToModify.getSamples().stream()
-                .filter(productOrderSample -> !productOrderSample.isCompletelyBilled())
-                .forEach(productOrderSample -> {
-            productOrderSample.getLedgerItems().stream()
-                    .filter(ledgerEntry -> StringUtils.equals(ledgerEntry.getWorkItem(), quoteWorkItemId) && ledgerEntry.getQuantity() == .91d)
-                    .forEach(ledgerEntry -> {
-                        System.out.println("changing ledger status for work Item "+ ledgerEntry.getWorkItem()+
-                                           " to complete.");
-                        ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
-                    });
+        final List<ProductOrderSample> notCompletelyBilldSamples = orderToModify.getSamples().stream()
+                .filter(productOrderSample -> !productOrderSample.isCompletelyBilled()).collect(Collectors.toList());
+
+        Assert.assertEquals(notCompletelyBilldSamples.size(), 1);
+
+        notCompletelyBilldSamples.forEach(productOrderSample -> {
+            final List<LedgerEntry> ledgerEntries = productOrderSample.getLedgerItems().stream()
+                    .filter(ledgerEntry -> StringUtils.equals(ledgerEntry.getWorkItem(), quoteWorkItemId)
+                                           && ledgerEntry.getQuantity() == .91d)
+                    .collect(Collectors.toList());
+
+            Assert.assertEquals(ledgerEntries.size(), 1);
+
+            ledgerEntries.forEach(ledgerEntry -> {
+                System.out.println("changing ledger status for work Item " + ledgerEntry.getWorkItem() +
+                                   " to complete.");
+                ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
+            });
         });
 
         billingSessionDao.persist(new FixupCommentary("GPLIM-6239: Updated the work ID for one "
