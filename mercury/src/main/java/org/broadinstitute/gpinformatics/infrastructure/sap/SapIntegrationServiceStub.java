@@ -6,7 +6,6 @@ import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
-import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.OrderValue;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
@@ -50,11 +49,6 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     @Override
     public void updateOrderWithQuote(ProductOrder placedOrder, boolean closingOrder) throws SAPIntegrationException {
         throw new SAPIntegrationException("SAP Quotes nto available at this time");
-    }
-
-    @Override
-    public String findCustomer(SapIntegrationClientImpl.SAPCompanyConfiguration companyCode, FundingLevel fundingLevel) throws SAPIntegrationException {
-        return TEST_CUSTOMER_NUMBER;
     }
 
     @Override
