@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.UpdateFields;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

@@ -11,7 +11,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -123,7 +122,12 @@ public class DenatureToDilutionTubeHandler extends AbstractEventHandler {
             for (LabBatch fctLabBatch : fctBatches) {
                 if (fctTicket.equals(fctLabBatch.getBusinessKey())) {
                     foundTicket = true;
-                    LabBatchStartingVessel startingVessel = findStartingVessel(fctLabBatch, denatureTube, transfer);
+                    String lane = null;
+                    // If flowcell is loaded from tubes in one column, assigns the lane based on the row.
+                    if (fctLabBatch.getFlowcellType() != null && fctLabBatch.getFlowcellType().isLoadFromColumn()) {
+                        lane = "LANE" + (transfer.getTargetPosition().name().charAt(0) - 'A' + 1);
+                    }
+                    LabBatchStartingVessel startingVessel = findStartingVessel(fctLabBatch, lane, denatureTube);
                     if (startingVessel != null) {
                         if (startingVessel.getDilutionVessel() == null) {
                             startingVessel.setDilutionVessel(dilutionTube);
@@ -150,33 +154,26 @@ public class DenatureToDilutionTubeHandler extends AbstractEventHandler {
     }
 
     /**
-     * Returns a labBatchStartingVessel for this FCT batch by looking at the loading tube and its ancestors,
+     * Returns a labBatchStartingVessel for this FCT batch by looking at the event tube and its ancestors,
      * or returns null if none found.
      */
-    private LabBatchStartingVessel findStartingVessel(LabBatch fctLabBatch, LabVessel loadingTube,
-            CherryPickTransfer transfer) {
-
-        boolean mustMatchLane = fctLabBatch.getFlowcellType() != null &&
-                (fctLabBatch.getFlowcellType() == IlluminaFlowcell.FlowcellType.NovaSeqFlowcell ||
-                        fctLabBatch.getFlowcellType() == IlluminaFlowcell.FlowcellType.NovaSeqS4Flowcell);
+    public static LabBatchStartingVessel findStartingVessel(LabBatch fctLabBatch, String lane, LabVessel eventTube) {
 
         for (LabBatchStartingVessel labBatchStartingVessel : fctLabBatch.getLabBatchStartingVessels()) {
-            boolean tubeMatches = loadingTube.equals(labBatchStartingVessel.getLabVessel());
-            boolean laneMatches = !mustMatchLane || (labBatchStartingVessel.getVesselPosition() != null &&
-                    (transfer.getTargetPosition().name().charAt(0) - 'A' + 1) ==
-                            Integer.parseInt(StringUtils.substringAfter(
-                                    labBatchStartingVessel.getVesselPosition().name(), "LANE")));
+            boolean tubeMatches = eventTube.equals(labBatchStartingVessel.getLabVessel());
+            boolean laneMatches = lane == null || (labBatchStartingVessel.getVesselPosition() != null &&
+                    lane.equals(labBatchStartingVessel.getVesselPosition().name()));
             if (tubeMatches && laneMatches) {
                 return labBatchStartingVessel;
             }
         }
-        if (!loadingTube.getContainers().isEmpty()) {
-            List<LabVessel.VesselEvent> ancestors = loadingTube.getAncestors();
+        if (!eventTube.getContainers().isEmpty()) {
+            List<LabVessel.VesselEvent> ancestors = eventTube.getAncestors();
             if (ancestors != null && !ancestors.isEmpty()) {
                 LabVessel.VesselEvent vesselEvent = ancestors.get(0);
                 LabVessel ancestorTube = vesselEvent.getSourceLabVessel();
                 // Recursively calls this method on the ancestor tube.
-                return findStartingVessel(fctLabBatch, ancestorTube, transfer);
+                return findStartingVessel(fctLabBatch, lane, ancestorTube);
             }
         }
         return null;

@@ -1,6 +1,7 @@
 <%@ taglib uri="http://mercury.broadinstitute.org/Mercury/security" prefix="security" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
@@ -47,19 +48,7 @@
                     openRegulatoryInfoDialog(
                             '${actionBean.editResearchProject.businessKey}',
                         '${actionBean.editResearchProject.businessKey} - ${actionBean.editResearchProject.webSafeTitle}',
-                            function() {
-                                location.reload(true);
-                            }
-                    );
-                });
-
-                $j('.editRegulatoryInfo').click(function(event) {
-                    event.preventDefault();
-                    $target = $j(event.target);
-                    openRegulatoryInfoEditDialog(
-                            $target.attr('regulatoryInfoId'),
-                            '${actionBean.editResearchProject.businessKey} - ${actionBean.editResearchProject.webSafeTitle}',
-                            function() {
+                            function(reOpenDialog) {
                                 location.reload(true);
                             }
                     );
@@ -487,14 +476,15 @@
                                rpTitle="${actionBean.editResearchProject.title}" />
 
             <div style="clear:both;" class="tableBar">
-        <security:authorizeBlock roles="<%= roles(Developer, GPProjectManager, PM, PDM) %>">
                 <h4 style="display:inline">Regulatory Information for ${actionBean.editResearchProject.title}</h4>
+        <security:authorizeBlock roles="<%= roles(Developer, GPProjectManager, PM, PDM) %>">
                 <a href="#" id="addRegulatoryInfo" class="pull-right"><i class="icon-plus"></i>Add Regulatory
                     Information</a>
         </security:authorizeBlock>
             </div>
         <div>
-            <h5>${actionBean.complianceStatement}</h5>
+            <h5>${ResearchProject.REGULATORY_COMPLIANCE_STATEMENT}<br><br>
+                    ${ResearchProject.REGULATORY_COMPLIANCE_STATEMENT_2}</h5>
         </div>
 
         <stripes:form beanclass="${actionBean.class.name}">
@@ -506,7 +496,6 @@
                         <th style="width:10em">Identifier</th>
                         <th>Protocol Title</th>
                         <th style="width:25em">Type</th>
-                        <th style="width:5em"></th>
                         <th style="width:9em"></th>
                 </thead>
                 <tbody>
@@ -515,20 +504,6 @@
                             <td>${regulatoryInfo.identifier}</td>
                             <td>${regulatoryInfo.name}</td>
                             <td>${regulatoryInfo.type.name}</td>
-                            <td style="text-align:center">
-                                <security:authorizeBlock roles="<%= roles(Developer, GPProjectManager, PM, PDM) %>">
-                                    <c:choose>
-                                        <c:when test="${actionBean.isRegulatoryInfoEditAllowed(regulatoryInfo)}">
-                                            <a href="#" class="editRegulatoryInfo"
-                                               regulatoryInfoId="${regulatoryInfo.regulatoryInfoId}">Edit...</a>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <span class="disabled-link" style="font-size: 12px;"
-                                                  title="Editing regulatory information from the ORSP Portal is not allowed.">Edit...</span>
-                                        </c:otherwise>
-                                    </c:choose>
-                                </security:authorizeBlock>
-                            </td>
                             <td style="text-align:center">
                                 <security:authorizeBlock roles="<%= roles(Developer, GPProjectManager, PM, PDM) %>">
                                     <stripes:submit name="remove"

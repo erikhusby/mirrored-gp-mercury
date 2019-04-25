@@ -1830,14 +1830,6 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
                                     style="margin-left:5px;" onclick="showRiskDialog()"/>
 
                 </security:authorizeBlock>
-                <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                    <c:if test="${actionBean.editOrder.product.supportsNumberOfLanes}">
-                        <stripes:link beanclass="${actionBean.class.name}" event="<%= ProductOrderActionBean.SQUID_COMPONENTS_ACTION %>">
-                            <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
-                            Build Squid Components
-                        </stripes:link>
-                    </c:if>
-                </security:authorizeBlock>
             </span>
 
             <security:authorizeBlock roles="${actionBean.modifyOrderRoles}">
