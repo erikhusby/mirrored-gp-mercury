@@ -880,7 +880,6 @@ function updateFundsRemaining() {
     var productOrderKey = $j("input[name='productOrder']").val();
 
     if ($j.trim(quoteIdentifier)) {
-        debugger;
         $j.ajax({
             url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier="+quoteIdentifier+"&productOrder=" + productOrderKey,
             dataType: 'json',
@@ -907,9 +906,9 @@ function updateFunds(data) {
         if(fundingDetails) {
             fundsRemainingNotification += '<br><B>Funding Information</b>';
         }
-
+        fundsRemainingNotification+='<ol>';
         for(var detailIndex in fundingDetails) {
-            fundsRemainingNotification += '<br>' + (detailIndex+1) +") " +fundingDetails[detailIndex].fundingType
+            fundsRemainingNotification += '<li>' + (detailIndex+1) +") " +fundingDetails[detailIndex].fundingType
                 + ": " + fundingDetails[detailIndex].fundingStatus;
 
             if(fundingDetails[detailIndex].fundingStatus !== ((data.quoteType == "Quote Server Quote")?"Active":"Approved")) {
@@ -942,6 +941,7 @@ function updateFunds(data) {
 
             fundsRemainingNotification += '<br>';
         }
+        fundsRemainingNotification+='<ol>';
         $j("#fundsRemaining").html(fundsRemainingNotification);
     } else {
         $j("#fundsRemaining").html('Error: ' + data.error);

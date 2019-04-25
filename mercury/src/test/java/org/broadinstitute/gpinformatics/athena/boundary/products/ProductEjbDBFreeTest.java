@@ -194,7 +194,7 @@ public class ProductEjbDBFreeTest {
             new SAPChangeMaterial("test", broad, broad.getDefaultWbs(), "test description", "50",
                 SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "",
                 new Date(), new Date(), Collections.emptyMap(), Collections.emptyMap(),
-                SAPMaterial.MaterialStatus.ENABLED, "", false);
+                SAPMaterial.MaterialStatus.ENABLED, "");
 
         Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD))).thenReturn(
                 primaryProductMaterial);
@@ -270,7 +270,7 @@ public class ProductEjbDBFreeTest {
         final SAPChangeMaterial primaryProductMaterial =
             new SAPChangeMaterial("test", broad, broad.getDefaultWbs(), "test description", "50",
                                     SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
-                                    Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "",false);
+                                    Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
 
         Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD))).thenReturn(
                 primaryProductMaterial);
@@ -278,7 +278,7 @@ public class ProductEjbDBFreeTest {
         final SAPMaterial primaryProductMaterialExternal =
             new SAPChangeMaterial("test", broad, broad.getDefaultWbs(), "test description", "50",
                                     SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
-                                    Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "",false);
+                                    Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
 
         Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES))).thenReturn(
                 primaryProductMaterialExternal);
@@ -340,14 +340,14 @@ public class ProductEjbDBFreeTest {
         final SAPChangeMaterial primaryProductMaterial =
             new SAPChangeMaterial("test", broadInternal, broadInternal.getDefaultWbs(), "test description", "50",
                 SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
-                Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "", false);
+                Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
         Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD))).thenReturn(
                 primaryProductMaterial);
 
         final SAPMaterial primaryProductMaterialExternal =
             new SAPChangeMaterial("test", broadExternal, broadExternal.getDefaultWbs(), "test description", "50",
                 SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
-                Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "", false);
+                Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
         Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES))).thenReturn(
                 primaryProductMaterialExternal);
 

@@ -2709,6 +2709,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return isQuoteIdSet() && QuoteSourceType.QUOTE_SERVER == getQuoteSource();
     }
 
+    public boolean hasQuote() {
+        return hasSapQuote() || hasQuoteServerQuote();
+    }
+
     public boolean isLatestSapQuote() {
         return latestSapOrderDetail() != null &&
                StringUtils.equals(latestSapOrderDetail().getQuoteId(), quoteId);
