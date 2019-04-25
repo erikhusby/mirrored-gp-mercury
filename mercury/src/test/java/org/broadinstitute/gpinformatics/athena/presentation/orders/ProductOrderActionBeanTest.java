@@ -2858,7 +2858,7 @@ public class ProductOrderActionBeanTest {
     }
 
     public void testSapQuoteOptionsFundsReservation() throws Exception {
-        String quoteId = "DNA4JD";
+        String quoteId = "12345";
         testOrder = new ProductOrder();
         testOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
         Date oneWeek = DateUtils.getOneWeek();
@@ -2955,7 +2955,7 @@ public class ProductOrderActionBeanTest {
     }
 
     public void testSapQuoteOptionsPurchaseOrder() throws Exception {
-        String quoteId = "DNA4JD";
+        String quoteId = "12345";
         testOrder = new ProductOrder();
         testOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
         Date oneWeek = DateUtils.getOneWeek();
@@ -3035,7 +3035,7 @@ public class ProductOrderActionBeanTest {
      }
 
     public void testSapQuoteOptionsNoFunding() throws Exception {
-        String quoteId = "DNA4JD";
+        String quoteId = "12345";
         testOrder = new ProductOrder();
         testOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
 
