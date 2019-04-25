@@ -187,11 +187,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
                 map(ReferenceSequence::getName).
                 sorted().
                 collect(Collectors.toList()).toArray(new String[0]);
-        String[] validSequencingTechnology = Arrays.asList(IlluminaFlowcell.FlowcellType.values()).stream().
-                filter(flowcellType -> flowcellType.getCreateFct() == IlluminaFlowcell.CreateFct.YES).
-                map(flowcellType -> SampleInstanceEjb.makeSequencerValue(flowcellType)).
-                sorted().
-                collect(Collectors.toList()).toArray(new String[0]);
+        String[] validSequencingTechnology = IlluminaFlowcell.FlowcellType.getExternalUiNames().toArray(new String[0]);
         String[] validAggregationDataTypes = (
                 new ArrayList<String>() {{
                     add("");
