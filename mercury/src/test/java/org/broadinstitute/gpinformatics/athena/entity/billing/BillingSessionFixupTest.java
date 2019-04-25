@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -39,6 +40,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -199,25 +201,38 @@ public class BillingSessionFixupTest extends Arquillian {
                                                       + "success so the success was not captured"));
     }
 
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void gplim6239UpdateLedgerItems() throws Exception {
         userBean.loginOSUser();
 
         String productOrderKey = "PDO-16275";
-        String quoteWorkItemId = "200002667";
+        String quoteWorkItemId = "320954";
         final ProductOrder orderToModify = productOrderDao.findByBusinessKey(productOrderKey);
 
         final List<ProductOrderSample> notCompletelyBilldSamples = orderToModify.getSamples().stream()
-                .filter(productOrderSample -> !productOrderSample.isCompletelyBilled() &&
-                                              !productOrderSample.getDeliveryStatus().isAbandoned())
-                .collect(Collectors.toList());
+                .filter(productOrderSample -> {
+                    final PriceItem addOnPriceItem =
+                            orderToModify.getAddOns().iterator().next().getAddOn().getPrimaryPriceItem();
+                    Optional<ProductOrderSample.LedgerQuantities> ledgerQuantitiesForPriceItem =
+                                    Optional.ofNullable(productOrderSample.getLedgerQuantities()
+                                            .get(addOnPriceItem));
+
+                            boolean result = false;
+                            if(ledgerQuantitiesForPriceItem.isPresent()) {
+                                System.out.println("found ledger entry for " + productOrderSample.getSampleKey() +
+                                                   " and price item " + addOnPriceItem.getDisplayName());
+                                result =!productOrderSample.getDeliveryStatus().isAbandoned()
+                                        && ledgerQuantitiesForPriceItem.get().isBeingBilled();
+                            }
+                            return result;
+                }).collect(Collectors.toList());
 
         Assert.assertEquals(notCompletelyBilldSamples.size(), 1);
 
         notCompletelyBilldSamples.forEach(productOrderSample -> {
             final List<LedgerEntry> ledgerEntries = productOrderSample.getLedgerItems().stream()
                     .filter(ledgerEntry -> StringUtils.equals(ledgerEntry.getWorkItem(), quoteWorkItemId)
-                                           && ledgerEntry.getQuantity() == .91d)
+                                           && ledgerEntry.getQuantity() == 0.9053d)
                     .collect(Collectors.toList());
 
             Assert.assertEquals(ledgerEntries.size(), 1);
