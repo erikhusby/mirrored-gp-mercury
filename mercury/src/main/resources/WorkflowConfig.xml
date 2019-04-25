@@ -4175,7 +4175,7 @@
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Chip Unloading</name>
+                <name>Chip Unloading + RT</name>
                 <labEventTypes>TENX_EXTRACTION_CHIP_UNLOADING</labEventTypes>
                 <workflowQualifier>TENX_EXTRACTION_CHIP_UNLOADING</workflowQualifier>
                 <instructions>
@@ -4192,35 +4192,11 @@
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Reverse Transcription</name>
-                <labEventTypes>IN_PLACE</labEventTypes>
-                <workflowQualifier>10X_EXTRACTION_REVERSE_TRANSCRIPTION</workflowQualifier>
-                <instructions>
-                </instructions>
-                <manualTransferDetails>
-                    <messageType>PLATE_EVENT</messageType>
-                    <targetVesselTypeGeometryString>PlateType.Plate96Well200PCR</targetVesselTypeGeometryString>
-                    <targetSection>ALL96</targetSection>
-                </manualTransferDetails>
-            </workflowStepDefs>
-            <workflowStepDefs>
-                <name>Break and Recovery</name>
-                <labEventTypes>IN_PLACE</labEventTypes>
-                <workflowQualifier>10X_EXTRACTION_BREAK_AND_RECOVERY</workflowQualifier>
-                <instructions>
-                </instructions>
-                <manualTransferDetails>
-                    <messageType>PLATE_EVENT</messageType>
-                    <targetVesselTypeGeometryString>PlateType.Plate96Well200PCR</targetVesselTypeGeometryString>
-                    <targetSection>ALL96</targetSection>
-                </manualTransferDetails>
-            </workflowStepDefs>
-            <workflowStepDefs>
-                <name>10X Consolidation</name>
+                <name>Break and Recover + Consolidation</name>
                 <labEventTypes>TENX_EXTRACTION_CONSOLIDATION</labEventTypes>
                 <workflowQualifier>TENX_EXTRACTION_CONSOLIDATION</workflowQualifier>
                 <instructions>
-                    10X Consolidation
+                     Consolidation
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_TRANSFER_EVENT</messageType>
@@ -4242,7 +4218,7 @@
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>10X cDNA Amplification</name>
+                <name>cDNA Amplification</name>
                 <labEventTypes>TENX_EXTRACTION_CDNA_AMPLIFICATION</labEventTypes>
                 <workflowQualifier>TENX_EXTRACTION_CDNA_AMPLIFICATION</workflowQualifier>
                 <instructions>
@@ -4257,7 +4233,7 @@
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>10X cDNA Cleanup</name>
+                <name>cDNA Cleanup</name>
                 <labEventTypes>TENX_EXTRACTION_CDNA_CLEANUP</labEventTypes>
                 <workflowQualifier>TENX_EXTRACTION_CDNA_CLEANUP</workflowQualifier>
                 <instructions>
