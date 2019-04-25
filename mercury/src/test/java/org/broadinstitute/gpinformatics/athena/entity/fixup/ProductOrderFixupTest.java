@@ -1796,4 +1796,13 @@ public class ProductOrderFixupTest extends Arquillian {
             utx.rollback();
         }
     }
+
+    public void fixupGplim5763RetroactiveQuoteSourceUpdate() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        productOrderDao.findListWithWildcard()
+
+
+    }
 }
