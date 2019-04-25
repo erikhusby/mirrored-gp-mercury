@@ -203,13 +203,14 @@ public class BillingSessionFixupTest extends Arquillian {
     public void gplim6239UpdateLedgerItems() throws Exception {
         userBean.loginOSUser();
 
-        Map<String, String> deliveryPairings = new HashMap<>();
         String productOrderKey = "PDO-16275";
         String quoteWorkItemId = "200002667";
         final ProductOrder orderToModify = productOrderDao.findByBusinessKey(productOrderKey);
 
         final List<ProductOrderSample> notCompletelyBilldSamples = orderToModify.getSamples().stream()
-                .filter(productOrderSample -> !productOrderSample.isCompletelyBilled()).collect(Collectors.toList());
+                .filter(productOrderSample -> !productOrderSample.isCompletelyBilled() &&
+                                              !productOrderSample.getDeliveryStatus().isAbandoned())
+                .collect(Collectors.toList());
 
         Assert.assertEquals(notCompletelyBilldSamples.size(), 1);
 
