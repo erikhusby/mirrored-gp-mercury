@@ -5,8 +5,11 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Build the messages used in Samples (BSP) Pico batches
@@ -75,7 +78,10 @@ public class SamplesPicoJaxbBuilder {
         bettaLimsMessageTestFactory.addMessage(messageList, picoBufferAdditionJaxb);
 
         // PicoMicrofluorTransfer
-        String picoMicrofluorPlateBarcode = "PicoMicrofluorPlate" + timestamp;
+        Random r = new Random();
+        // reverted to 12 digits with leading 'A'
+        NumberFormat formatter = new DecimalFormat("A000000000000");
+        String picoMicrofluorPlateBarcode = formatter.format(r.nextInt(Integer.MAX_VALUE));
         picoMicrofluorTransferJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("PicoMicrofluorTransfer",
                 picoDilutionPlateBarcode,
                 picoMicrofluorPlateBarcode);
