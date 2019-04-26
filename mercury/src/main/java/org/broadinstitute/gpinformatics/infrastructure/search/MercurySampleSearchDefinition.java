@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.columns.DisplayExpression;
+import org.broadinstitute.gpinformatics.infrastructure.columns.PassingFingerprintPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.SampleMetadataPlugin;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
@@ -220,6 +221,8 @@ public class MercurySampleSearchDefinition {
         searchTerms.add(searchTerm);
 
         // ***** Build sample metadata child search term (the metadata value) ***** //
+        // todo jmt GPLIM-6243 gender
+        // todo jmt PT-ID
         List<SearchTerm> childSearchTerms = new ArrayList<>();
         searchTerm = new SearchTerm();
         searchTerm.setName("Metadata Value");
@@ -419,6 +422,11 @@ public class MercurySampleSearchDefinition {
             }
         });
         parentSearchTerm.addNestedEntityColumn(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Passing Initial Fingerprint");
+        searchTerm.setPluginClass(PassingFingerprintPlugin.class);
+        searchTerms.add(searchTerm);
 
         return searchTerms;
     }
