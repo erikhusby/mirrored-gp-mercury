@@ -16,7 +16,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
-import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -30,6 +29,7 @@ import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,7 +40,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -201,38 +200,28 @@ public class BillingSessionFixupTest extends Arquillian {
                                                       + "success so the success was not captured"));
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim6239UpdateLedgerItems() throws Exception {
         userBean.loginOSUser();
 
-        String productOrderKey = "PDO-16275";
-        String quoteWorkItemId = "320954";
+        final String productOrderKey = "PDO-16275";
+        final String quoteWorkItemId = "320954";
+        final String sampleToFind = "SM-G9JXF";
+        final String workCompleteDate = "3/25/2019";
+
+        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("mm/dd/YYYY");
+
         final ProductOrder orderToModify = productOrderDao.findByBusinessKey(productOrderKey);
 
         final List<ProductOrderSample> notCompletelyBilldSamples = orderToModify.getSamples().stream()
-                .filter(productOrderSample -> {
-                    final PriceItem addOnPriceItem =
-                            orderToModify.getAddOns().iterator().next().getAddOn().getPrimaryPriceItem();
-                    Optional<ProductOrderSample.LedgerQuantities> ledgerQuantitiesForPriceItem =
-                                    Optional.ofNullable(productOrderSample.getLedgerQuantities()
-                                            .get(addOnPriceItem));
-
-                            boolean result = false;
-                            if(ledgerQuantitiesForPriceItem.isPresent()) {
-                                System.out.println("found ledger entry for " + productOrderSample.getSampleKey() +
-                                                   " and price item " + addOnPriceItem.getDisplayName());
-                                result =!productOrderSample.getDeliveryStatus().isAbandoned()
-                                        && ledgerQuantitiesForPriceItem.get().isBeingBilled();
-                            }
-                            return result;
-                }).collect(Collectors.toList());
+                .filter(productOrderSample -> StringUtils.equals(productOrderSample.getSampleKey(), sampleToFind))
+                .collect(Collectors.toList());
 
         Assert.assertEquals(notCompletelyBilldSamples.size(), 1);
 
         notCompletelyBilldSamples.forEach(productOrderSample -> {
             final List<LedgerEntry> ledgerEntries = productOrderSample.getLedgerItems().stream()
-                    .filter(ledgerEntry -> StringUtils.equals(ledgerEntry.getWorkItem(), quoteWorkItemId)
-                                           && ledgerEntry.getQuantity() == 0.9053d)
+                    .filter(ledgerEntry -> StringUtils.equals(ledgerEntry.getWorkItem(), quoteWorkItemId))
                     .collect(Collectors.toList());
 
             Assert.assertEquals(ledgerEntries.size(), 1);
@@ -240,7 +229,12 @@ public class BillingSessionFixupTest extends Arquillian {
             ledgerEntries.forEach(ledgerEntry -> {
                 System.out.println("changing ledger status for work Item " + ledgerEntry.getWorkItem() +
                                    " to complete.");
-                ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
+                try {
+                    ledgerEntry.setWorkCompleteDate(simpleDateFormat.parse(workCompleteDate));
+                    ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
+                } catch (ParseException e) {
+                    throw new RuntimeException(e);
+                }
             });
         });
 
