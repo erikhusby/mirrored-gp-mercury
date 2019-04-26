@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -44,9 +43,6 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  */
 @Test(groups = TestGroups.STANDARD)
 public class ConfigurableListContainerTest extends Arquillian {
-
-    @Inject
-    private BSPSampleSearchService bspSampleSearchService;
 
     @Inject
     private LabBatchDao labBatchDao;
@@ -307,6 +303,32 @@ public class ConfigurableListContainerTest extends Arquillian {
         Assert.assertEquals(resultRow.getResultId(), "HJVHFADXX");
         Assert.assertEquals(resultRow.getRenderableCells().get(0), "HJVHFADXX");
         Assert.assertEquals(resultRow.getRenderableCells().get(1), "1109099877");
+    }
+
+    @Test
+    public void testLatestFingerprint() {
+        String entityName = ColumnEntity.MERCURY_SAMPLE.getEntityName();
+        ConfigurableSearchDefinition configurableSearchDef =
+                SearchDefinitionFactory.getForEntity(entityName);
+        SearchInstance searchInstance = new SearchInstance();
+        SearchInstance.SearchValue mercurySampleId = searchInstance.addTopLevelTerm(
+                "Mercury Sample ID", configurableSearchDef);
+        mercurySampleId.setOperator(SearchInstance.Operator.IN);
+        mercurySampleId.setValues(Arrays.asList("SM-744ME", "SM-744MT"));
+        searchInstance.setPredefinedViewColumns(Arrays.asList("Mercury Sample ID", "Participant ID(s)",
+                "Passing Initial Fingerprint"));
+        searchInstance.establishRelationships(configurableSearchDef);
+
+        SearchContext context = buildSearchContext();
+        context.setSearchInstance(searchInstance);
+
+        ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
+                searchInstance,configurableSearchDef, null, 0, null, "ASC", entityName);
+
+        ConfigurableList.ResultList resultList = firstPageResults.getResultList();
+        Assert.assertEquals(resultList.getResultRows().size(), 2);
+        Assert.assertEquals(resultList.getResultRows().get(0).getRenderableCells().size(), 6);
+        // todo jmt more asserts
     }
 
     /**
