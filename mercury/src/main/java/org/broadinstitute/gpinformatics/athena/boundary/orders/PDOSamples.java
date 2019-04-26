@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
-import org.codehaus.jackson.annotate.JsonIgnore;
 
 import javax.annotation.Nonnull;
 import javax.xml.bind.annotation.XmlRootElement;

@@ -56,7 +56,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     private Map<String, AnalysisType> analysisTypeMap = new HashMap<>();
     private Map<String, MolecularIndexingScheme> molecularIndexingSchemeMap = new HashMap<>();
     private Map<String, ReferenceSequence> referenceSequenceMap = new HashMap<>();
-    private Map<String, IlluminaFlowcell.FlowcellType> sequencerModelMap = new HashMap<>();
     private Set<Object> entitiesToUpdate = new HashSet<>();
     private List<String> validAggregationDataTypes = new ArrayList();
 
@@ -371,6 +370,17 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
                         "Concentration", mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber(),
                         found.getBarcode()));
             }
+            // Issues warnings for mixed values that may be technically possible in a pooled tube.
+            if (found.getInsertSize() != null && !Objects.equals(found.getInsertSize(), expected.getInsertSize())) {
+                messages.addWarning(String.format(SampleInstanceEjb.INCONSISTENT_TUBE, found.getRowNumber(),
+                        "Insert Size", mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber(),
+                        found.getBarcode()));
+            }
+            if (found.getReadLength() != null && !Objects.equals(found.getReadLength(), expected.getReadLength())) {
+                messages.addWarning(String.format(SampleInstanceEjb.INCONSISTENT_TUBE, found.getRowNumber(),
+                        "Read Length", mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber(),
+                        found.getBarcode()));
+            }
         }
     }
 
@@ -579,11 +589,12 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         sampleInstanceEntity.setMercurySample(mercurySample);
         sampleInstanceEntity.setMolecularIndexingScheme(getMolecularIndexingSchemeMap().get(dto.getMisName()));
         sampleInstanceEntity.setNumberLanes(dto.getNumberOfLanes());
-        sampleInstanceEntity.setReadLength(dto.getReadLength());
+        sampleInstanceEntity.setReadLength1(dto.getReadLength());
         sampleInstanceEntity.setReagentDesign(dto.getReagent());
         sampleInstanceEntity.setReferenceSequence(getReferenceSequenceMap().get(dto.getReferenceSequenceName()));
         sampleInstanceEntity.setRootSample(getSampleMap().get(dto.getRootSampleName()));
-        sampleInstanceEntity.setSequencerModel(getSequencerModelMap().get(dto.getSequencerModelName()));
+        sampleInstanceEntity.setSequencerModel(IlluminaFlowcell.FlowcellType.getTypeForExternalUiName(
+                dto.getSequencerModelName()));
         sampleInstanceEntity.setUploadDate(new Date());
         sampleInstanceEntity.setUmisPresent(dto.getUmisPresent());
         return sampleInstanceEntity;
@@ -939,10 +950,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
 
     public Map<String, ReferenceSequence> getReferenceSequenceMap() {
         return referenceSequenceMap;
-    }
-
-    public Map<String, IlluminaFlowcell.FlowcellType> getSequencerModelMap() {
-        return sequencerModelMap;
     }
 
     /**

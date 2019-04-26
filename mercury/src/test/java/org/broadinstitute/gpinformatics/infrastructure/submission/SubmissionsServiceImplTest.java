@@ -11,7 +11,6 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
-import com.sun.jersey.api.client.ClientResponse;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
@@ -24,6 +23,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -69,13 +69,13 @@ public class SubmissionsServiceImplTest {
     }
 
     public void testServerResponseBadRequest() {
-        ClientResponse clientResponse = Mockito.mock(ClientResponse.class);
-        Mockito.when(clientResponse.getStatus()).thenReturn(ClientResponse.Status.BAD_REQUEST.getStatusCode());
+        Response clientResponse = Mockito.mock(Response.class);
+        Mockito.when(clientResponse.getStatus()).thenReturn(Response.Status.BAD_REQUEST.getStatusCode());
         String activityName = "just testing y'all";
         String exceptonMessage = "There was an error";
         String errorMessage = String.format("Error received while %s: %s (%d)", activityName, exceptonMessage,
-                ClientResponse.Status.BAD_REQUEST.getStatusCode());
-        Mockito.when(clientResponse.getEntity(String.class)).thenReturn(exceptonMessage);
+                Response.Status.BAD_REQUEST.getStatusCode());
+        Mockito.when(clientResponse.readEntity(String.class)).thenReturn(exceptonMessage);
         SubmissionsServiceImpl submissionsServiceImpl = ((SubmissionsServiceImpl) submissionsService);
         try {
             submissionsServiceImpl.validateResponseStatus(activityName, clientResponse);
@@ -89,8 +89,8 @@ public class SubmissionsServiceImplTest {
     }
 
     public void testServerResponseOK() {
-        ClientResponse clientResponse = Mockito.mock(ClientResponse.class);
-        Mockito.when(clientResponse.getStatus()).thenReturn(ClientResponse.Status.OK.getStatusCode());
+        Response clientResponse = Mockito.mock(Response.class);
+        Mockito.when(clientResponse.getStatus()).thenReturn(Response.Status.OK.getStatusCode());
         SubmissionsServiceImpl submissionsServiceImpl = ((SubmissionsServiceImpl) submissionsService);
         try {
             submissionsServiceImpl.validateResponseStatus(null, clientResponse);
