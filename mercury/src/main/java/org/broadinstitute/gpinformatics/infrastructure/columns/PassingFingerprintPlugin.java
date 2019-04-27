@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
+import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGetExportedSamplesFromAliquots;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
@@ -79,6 +80,10 @@ public class PassingFingerprintPlugin implements ListPlugin {
             }
 
             // Get most recent passing fingerprint from each export
+            Comparator<Fingerprint> comparator = (o1, o2) -> new CompareToBuilder().
+                    append(o1.getPlatform().getPrecedenceForInitial(), o2.getPlatform().getPrecedenceForInitial()).
+                    append(o2.getDateGenerated(), o1.getDateGenerated()).
+                    build();
             Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(sampleKeys);
             List<Fingerprint> fingerprints = new ArrayList<>();
             for (Map.Entry<String, MercurySample> idMercurySampleEntry : mapIdToMercurySample.entrySet()) {
@@ -86,13 +91,11 @@ public class PassingFingerprintPlugin implements ListPlugin {
                 if (mercurySample != null) {
                     Optional<Fingerprint> optionalFingerprint = mercurySample.getFingerprints().stream().
                             filter(fingerprint -> fingerprint.getDisposition() == Fingerprint.Disposition.PASS &&
-                                    initialPlatforms.contains(fingerprint.getPlatform())).
-                            max(Comparator.comparing(Fingerprint::getDateGenerated));
+                                    initialPlatforms.contains(fingerprint.getPlatform())).max(comparator);
                     optionalFingerprint.ifPresent(fingerprints::add);
                 }
             }
-            Optional<Fingerprint> optionalFingerprint = fingerprints.stream().max(
-                    Comparator.comparing(Fingerprint::getDateGenerated));
+            Optional<Fingerprint> optionalFingerprint = fingerprints.stream().max(comparator);
 
             // Add row to table
             ConfigurableList.Row row = new ConfigurableList.Row(sample.getSampleKey());
