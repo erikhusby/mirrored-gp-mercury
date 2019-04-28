@@ -31,6 +31,7 @@
                         {"bSortable": true, "sType": "numeric"},        // SAP Clinical Charge
                         {"bSortable": true, "sType": "numeric"},        // SAP Commerical Charge
                         {"bSortable": true, "sType": "numeric"},        // SAP SSF Intercompany Charge
+                        {"bSortable": true, "sType": "numeric"},        // SAP Delivery Replacement Charge
                         </security:authorizeBlock>
                         {"bSortable": true, "sType" : "title-string"},  // Commercial Indicator
                         {"bSortable": true, "sType" : "title-string"},  // Clinical Indicator
@@ -85,6 +86,7 @@
                     <th>SAP Clinical Charge</th>
                     <th>SAP Commercial Charge</th>
                     <th>SAP SSF intercompany Charge</th>
+                    <th>SAP Delivery Replacement Charge</th>
                 </security:authorizeBlock>
                 <th>Commercial?</th>
                 <th>Clinical?</th>
@@ -152,6 +154,11 @@
                     <td>
                         <c:if test="${inSAP}">
                             ${product.sapSSFIntercompanyCharge}
+                        </c:if>
+                    </td>
+                    <td>
+                        <c:if test="${inSAP}">
+                            ${product.replacementPrices}
                         </c:if>
                     </td>
                 </security:authorizeBlock>

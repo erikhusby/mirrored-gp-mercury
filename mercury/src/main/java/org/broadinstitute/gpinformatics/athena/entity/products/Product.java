@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.sap.entity.Condition;
+import org.broadinstitute.sap.entity.DeliveryCondition;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hibernate.annotations.BatchSize;
@@ -1073,6 +1074,23 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
             }
         }
         return price;
+    }
+
+    public String getReplacementPrices()  {
+        StringBuffer displayValues = new StringBuffer();
+
+        for (Map.Entry<String, SAPMaterial> stringSAPMaterialEntry : this.sapMaterials.entrySet()) {
+            for (Map.Entry<DeliveryCondition, BigDecimal> deliveryConditionBigDecimalEntry : stringSAPMaterialEntry
+                    .getValue().getPossibleDeliveryConditions().entrySet()) {
+                if(deliveryConditionBigDecimalEntry.getValue().compareTo(BigDecimal.ZERO)>0) {
+                    displayValues.append(deliveryConditionBigDecimalEntry.getKey().name()).append(" = ")
+                            .append(NumberFormat.getCurrencyInstance().format(deliveryConditionBigDecimalEntry.getValue()))
+                            .append("<br/>");
+                }
+            }
+        }
+
+        return displayValues.toString();
     }
 
     public boolean isQuotePriceDifferent() {
