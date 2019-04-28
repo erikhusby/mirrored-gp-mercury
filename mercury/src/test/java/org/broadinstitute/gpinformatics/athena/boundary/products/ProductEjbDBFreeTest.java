@@ -18,15 +18,11 @@ import org.broadinstitute.sap.entity.material.SAPChangeMaterial;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.mockito.Mockito;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -185,7 +181,9 @@ public class ProductEjbDBFreeTest {
         testEjb.publishProductToSAP(testProduct);
 
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(2)).createMaterial(Mockito.any(SAPMaterial.class));
+        assertThat(testProduct.isSavedInSAP(), is(true));
+        Mockito.verify(mockWrappedClient, Mockito.times(13)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(0)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
 
         SapIntegrationClientImpl.SAPCompanyConfiguration broad = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
@@ -199,43 +197,116 @@ public class ProductEjbDBFreeTest {
         Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD))).thenReturn(
                 primaryProductMaterial);
 
+
+        testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(2)).createMaterial(Mockito.any(SAPMaterial.class));
-        Mockito.verify(mockWrappedClient, Mockito.times(0)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
+        /*
+            Since we are mimicking that the product has been published to only one Platform, it will call ChangeMaterial
+            for that one, and create material for the other 12
+         */
+        Mockito.verify(mockWrappedClient, Mockito.times(25)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(1)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
         Mockito.when(productPriceCache.productExists(Mockito.anyString())).thenReturn(Boolean.TRUE);
         Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES))).thenReturn(new SAPMaterial("", SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES, "", "", "", "", BigDecimal.ONE, "", "", "", new Date(), new Date(), Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, ""));
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES)))
+                .thenReturn(new SAPMaterial("", SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES, "", "", "", "", BigDecimal.ONE, "", "", "", new Date(), new Date(), Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, ""));
+
+
+        SAPMaterial otherPlatformMaterial =
+                new SAPChangeMaterial("test", SapIntegrationClientImpl.SAPCompanyConfiguration.DSP, "", "test description", "50",
+                        SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES))).thenReturn(
+                otherPlatformMaterial);
+
+        otherPlatformMaterial =
+                new SAPChangeMaterial("test", SapIntegrationClientImpl.SAPCompanyConfiguration.PRISM, "", "test description", "50",
+                        SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES))).thenReturn(
+                otherPlatformMaterial);
+
+        otherPlatformMaterial =
+                new SAPChangeMaterial("test", SapIntegrationClientImpl.SAPCompanyConfiguration.BITSTORE, "", "test description", "50",
+                        SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES))).thenReturn(
+                otherPlatformMaterial);
+
+        otherPlatformMaterial =
+                new SAPChangeMaterial("test", SapIntegrationClientImpl.SAPCompanyConfiguration.PROTEOMICS, "", "test description", "50",
+                        SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES))).thenReturn(
+                otherPlatformMaterial);
+
+        otherPlatformMaterial =
+                new SAPChangeMaterial("test", SapIntegrationClientImpl.SAPCompanyConfiguration.GPP, "", "test description", "50",
+                        SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES))).thenReturn(
+                otherPlatformMaterial);
+
+        otherPlatformMaterial =
+                new SAPChangeMaterial("test", SapIntegrationClientImpl.SAPCompanyConfiguration.CDOT, "", "test description", "50",
+                        SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES))).thenReturn(
+                otherPlatformMaterial);
+
+        otherPlatformMaterial =
+                new SAPChangeMaterial("test", SapIntegrationClientImpl.SAPCompanyConfiguration.METABOLOMICS, "", "test description", "50",
+                        SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES))).thenReturn(
+                otherPlatformMaterial);
+
+        otherPlatformMaterial =
+                new SAPChangeMaterial("test", SapIntegrationClientImpl.SAPCompanyConfiguration.IMAGING, "", "test description", "50",
+                        SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES))).thenReturn(
+                otherPlatformMaterial);
+
+        otherPlatformMaterial =
+                new SAPChangeMaterial("test", SapIntegrationClientImpl.SAPCompanyConfiguration.CMAP, "", "test description", "50",
+                        SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES))).thenReturn(
+                otherPlatformMaterial);
+
+        otherPlatformMaterial =
+                new SAPChangeMaterial("test", SapIntegrationClientImpl.SAPCompanyConfiguration.MICROBIAL, "", "test description", "50",
+                        SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES))).thenReturn(
+                otherPlatformMaterial);
+
+        otherPlatformMaterial =
+                new SAPChangeMaterial("test", SapIntegrationClientImpl.SAPCompanyConfiguration.GENOME_METHYLATION, "", "test description", "50",
+                        SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES))).thenReturn(
+                otherPlatformMaterial);
+
+
+
 
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(2)).createMaterial(Mockito.any(SAPMaterial.class));
-        Mockito.verify(mockWrappedClient, Mockito.times(2)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(25)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(14)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(2)).createMaterial(Mockito.any(SAPMaterial.class));
-        Mockito.verify(mockWrappedClient, Mockito.times(4)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
-
-        testEjb.publishProductToSAP(testProduct);
-        assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(2)).createMaterial(Mockito.any(SAPMaterial.class));
-        Mockito.verify(mockWrappedClient, Mockito.times(6)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(25)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(27)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
     }
 
-    @DataProvider(name = "publishScenario")
-    private Iterator<Object[]> publishScenario() {
-        List<Object[]> testCases = new ArrayList<>();
-
-        testCases.add(new Object[]{SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD, 2});
-        testCases.add(new Object[]{SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES, 1});
-
-        return testCases.iterator();
-    }
-
-    @Test(dataProvider = "publishScenario")
-    public void testPublishClinicalToSAPCheckClientCalls(SapIntegrationClientImpl.SAPCompanyConfiguration configuration,
-                                                         Integer callMultiplier) throws Exception {
+    public void testPublishClinicalToSAPCheckClientCalls() throws Exception {
+        SapIntegrationClientImpl.SAPCompanyConfiguration configuration =
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES;
         final SAPAccessControlEjb mockSapAccessControl = Mockito.mock(SAPAccessControlEjb.class);
         final AttributeArchetypeDao mockAttributeArchetypeDao = Mockito.mock(AttributeArchetypeDao.class);
         final AuditReaderDao mockAuditReaderDao = Mockito.mock(AuditReaderDao.class);
@@ -262,7 +333,7 @@ public class ProductEjbDBFreeTest {
         testEjb.publishProductToSAP(testProduct);
 
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(1*callMultiplier)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(1)).createMaterial(Mockito.any(SAPMaterial.class));
 
 
         SapIntegrationClientImpl.SAPCompanyConfiguration broad = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
@@ -284,23 +355,23 @@ public class ProductEjbDBFreeTest {
                 primaryProductMaterialExternal);
 
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(1*callMultiplier)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(1)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(0)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(1*callMultiplier)).createMaterial(Mockito.any(SAPMaterial.class));
-        Mockito.verify(mockWrappedClient, Mockito.times(1*callMultiplier)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(1)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(1)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(1*callMultiplier)).createMaterial(Mockito.any(SAPMaterial.class));
-        Mockito.verify(mockWrappedClient, Mockito.times(2*callMultiplier)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(1)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(2)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(1*callMultiplier)).createMaterial(Mockito.any(SAPMaterial.class));
-        Mockito.verify(mockWrappedClient, Mockito.times(3*callMultiplier)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(1)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(3)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
     }
 
@@ -327,48 +398,122 @@ public class ProductEjbDBFreeTest {
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenThrow(new RuntimeException());
         testEjb.publishProductToSAP(testProduct);
+        assertThat(testProduct.isSavedInSAP(), is(true));
+        Mockito.verify(mockWrappedClient, Mockito.times(1)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(0)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
+
+        testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockWrappedClient, Mockito.times(2)).createMaterial(Mockito.any(SAPMaterial.class));
-
+        Mockito.verify(mockWrappedClient, Mockito.times(0)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
         SapIntegrationClientImpl.SAPCompanyConfiguration broadInternal =
-            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
         SapIntegrationClientImpl.SAPCompanyConfiguration broadExternal=
-            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES;
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES;
 
         final SAPChangeMaterial primaryProductMaterial =
-            new SAPChangeMaterial("test", broadInternal, broadInternal.getDefaultWbs(), "test description", "50",
-                SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
-                Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+                new SAPChangeMaterial("test", broadInternal, broadInternal.getDefaultWbs(), "test description", "50",
+                        SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
         Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD))).thenReturn(
                 primaryProductMaterial);
 
         final SAPMaterial primaryProductMaterialExternal =
-            new SAPChangeMaterial("test", broadExternal, broadExternal.getDefaultWbs(), "test description", "50",
-                SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
-                Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+                new SAPChangeMaterial("test", broadExternal, broadExternal.getDefaultWbs(), "test description", "50",
+                        SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
         Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES))).thenReturn(
                 primaryProductMaterialExternal);
 
+        SAPMaterial otherPlatformMaterial =
+                new SAPChangeMaterial("test", SapIntegrationClientImpl.SAPCompanyConfiguration.DSP, broadExternal.getDefaultWbs(), "test description", "50",
+                        SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES))).thenReturn(
+                otherPlatformMaterial);
+
+        otherPlatformMaterial =
+                new SAPChangeMaterial("test", SapIntegrationClientImpl.SAPCompanyConfiguration.PRISM, broadExternal.getDefaultWbs(), "test description", "50",
+                        SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES))).thenReturn(
+                otherPlatformMaterial);
+
+        otherPlatformMaterial =
+                new SAPChangeMaterial("test", SapIntegrationClientImpl.SAPCompanyConfiguration.BITSTORE, broadExternal.getDefaultWbs(), "test description", "50",
+                        SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES))).thenReturn(
+                otherPlatformMaterial);
+
+        otherPlatformMaterial =
+                new SAPChangeMaterial("test", SapIntegrationClientImpl.SAPCompanyConfiguration.PROTEOMICS, broadExternal.getDefaultWbs(), "test description", "50",
+                        SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES))).thenReturn(
+                otherPlatformMaterial);
+
+        otherPlatformMaterial =
+                new SAPChangeMaterial("test", SapIntegrationClientImpl.SAPCompanyConfiguration.GPP, broadExternal.getDefaultWbs(), "test description", "50",
+                        SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES))).thenReturn(
+                otherPlatformMaterial);
+
+        otherPlatformMaterial =
+                new SAPChangeMaterial("test", SapIntegrationClientImpl.SAPCompanyConfiguration.CDOT, broadExternal.getDefaultWbs(), "test description", "50",
+                        SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES))).thenReturn(
+                otherPlatformMaterial);
+
+        otherPlatformMaterial =
+                new SAPChangeMaterial("test", SapIntegrationClientImpl.SAPCompanyConfiguration.METABOLOMICS, broadExternal.getDefaultWbs(), "test description", "50",
+                        SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES))).thenReturn(
+                otherPlatformMaterial);
+
+        otherPlatformMaterial =
+                new SAPChangeMaterial("test", SapIntegrationClientImpl.SAPCompanyConfiguration.IMAGING, broadExternal.getDefaultWbs(), "test description", "50",
+                        SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES))).thenReturn(
+                otherPlatformMaterial);
+
+        otherPlatformMaterial =
+                new SAPChangeMaterial("test", SapIntegrationClientImpl.SAPCompanyConfiguration.CMAP, broadExternal.getDefaultWbs(), "test description", "50",
+                        SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES))).thenReturn(
+                otherPlatformMaterial);
+
+        otherPlatformMaterial =
+                new SAPChangeMaterial("test", SapIntegrationClientImpl.SAPCompanyConfiguration.MICROBIAL, broadExternal.getDefaultWbs(), "test description", "50",
+                        SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES))).thenReturn(
+                otherPlatformMaterial);
+
+        otherPlatformMaterial =
+                new SAPChangeMaterial("test", SapIntegrationClientImpl.SAPCompanyConfiguration.GENOME_METHYLATION, broadExternal.getDefaultWbs(), "test description", "50",
+                        SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES))).thenReturn(
+                otherPlatformMaterial);
+
+
+        testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockWrappedClient, Mockito.times(2)).createMaterial(Mockito.any(SAPMaterial.class));
-        Mockito.verify(mockWrappedClient, Mockito.times(0)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(1)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockWrappedClient, Mockito.times(2)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(2)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
-
-        testEjb.publishProductToSAP(testProduct);
-        assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(2)).createMaterial(Mockito.any(SAPMaterial.class));
-        Mockito.verify(mockWrappedClient, Mockito.times(4)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
-
-        testEjb.publishProductToSAP(testProduct);
-        assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(2)).createMaterial(Mockito.any(SAPMaterial.class));
-        Mockito.verify(mockWrappedClient, Mockito.times(6)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
     }
 }
 

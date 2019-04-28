@@ -46,8 +46,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option.Type;
 import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option.create;
@@ -399,7 +399,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
     @NotNull
     protected SAPMaterial initializeSapMaterialObject(Product product) throws SAPIntegrationException {
-        SAPCompanyConfiguration companyCode = product.isExternalProduct() ?
+        SAPCompanyConfiguration companyCode = (product.isExternalProduct() || product.isClinicalProduct()) ?
             SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES :
             SAPCompanyConfiguration.BROAD;
         String productHeirarchy = SAPCompanyConfiguration.BROAD.getSalesOrganization();
@@ -424,19 +424,30 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         } else {
             getClient().changeMaterialDetails(sapMaterial);
         }
+
+        final Set<SAPCompanyConfiguration> otherPlatformsToPublish = Arrays.stream(SAPCompanyConfiguration.values())
+                .filter(configuration -> configuration != SAPCompanyConfiguration.BROAD).collect(
+                        Collectors.toSet());
+
         if(sapMaterial.getCompanyCode() == SAPCompanyConfiguration.BROAD) {
-            sapMaterial.setCompanyCode(SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES);
+            for (SAPCompanyConfiguration platformToPublish : otherPlatformsToPublish) {
 
-            String materialName = StringUtils.defaultString(product.getAlternateExternalName(), product.getName());
-            sapMaterial.setMaterialName(materialName);
-            if (productPriceCache.findByProduct(product, SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) == null) {
-                getClient().createMaterial(sapMaterial);
-            } else {
-                getClient().changeMaterialDetails(sapMaterial);
+                sapMaterial.setCompanyCode(platformToPublish);
+
+                if(platformToPublish == SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) {
+                    String materialName =
+                            StringUtils.defaultString(product.getAlternateExternalName(), product.getName());
+                    sapMaterial.setMaterialName(materialName);
+                } else {
+                    sapMaterial.setMaterialName(product.getName());
+                }
+                if (productPriceCache.findByProduct(product, SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) == null) {
+                    getClient().createMaterial(sapMaterial);
+                } else {
+                    getClient().changeMaterialDetails(sapMaterial);
+                }
             }
-
         }
-
     }
 
     private boolean isNewMaterial(Product product) {
