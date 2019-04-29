@@ -551,6 +551,7 @@ public class LabBatch {
         CLUSTER_STATION("Cluster Station", true),
         MATERIAL_TYPE("Material Type", true),
         LANE_INFO("Lane Info", true),
+        READ_STRUCTURE("Read Structure", true),
         SAMPLES_ON_RISK("Samples On Risk", true),
         RISK_CATEGORIZED_SAMPLES("Risk Categorized Samples", true),
         REWORK_SAMPLES("Rework Samples",true),

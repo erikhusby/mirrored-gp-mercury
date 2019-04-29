@@ -174,6 +174,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus = OrderStatus.Draft;
 
+    @Enumerated(EnumType.STRING)
+    private Product.AggregationParticle defaultAggregationParticle;
     /**
      * Alphanumeric Id
      */
@@ -829,6 +831,23 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public void setOrderStatus(OrderStatus orderStatus) {
         this.orderStatus = orderStatus;
+    }
+
+    @Transient
+    public String getAggregationParticleDisplayName() {
+        String displayValue = Product.AggregationParticle.DEFAULT_LABEL;
+        if (defaultAggregationParticle != null) {
+            displayValue = defaultAggregationParticle.getDisplayName();
+        }
+        return displayValue;
+    }
+
+    public Product.AggregationParticle getDefaultAggregationParticle() {
+        return defaultAggregationParticle;
+    }
+
+    public void setDefaultAggregationParticle(Product.AggregationParticle defaultAggregationParticle) {
+        this.defaultAggregationParticle = defaultAggregationParticle;
     }
 
     public String getComments() {
@@ -2103,7 +2122,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return (filteredResults != null) ? Iterators.size(filteredResults.iterator()) : 0;
     }
 
-    public static double getUnbilledNonSampleCount(ProductOrder order, Product targetProduct, int totalCount) {
+    public static double getUnbilledNonSampleCount(ProductOrder order, Product targetProduct, double totalCount) {
+        double existingCount = getBilledSampleCount(order, targetProduct);
+        return totalCount - existingCount;
+    }
+
+    public static double getBilledSampleCount(ProductOrder order, Product targetProduct) {
         double existingCount = 0;
 
         for (ProductOrderSample targetSample : order.getSamples()) {
@@ -2116,7 +2140,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             }
 
         }
-        return totalCount - existingCount;
+        return existingCount;
     }
 
     public boolean isSavedInSAP() {

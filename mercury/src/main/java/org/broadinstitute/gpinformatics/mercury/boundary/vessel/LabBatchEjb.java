@@ -2,8 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Factory;
 import org.apache.commons.collections4.map.LazyMap;
@@ -37,6 +35,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapT
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
@@ -74,6 +73,8 @@ import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
@@ -139,6 +140,8 @@ public class LabBatchEjb {
     private BSPRestClient bspRestClient;
 
     private BSPExportsService bspExportsService;
+
+    private SequencingTemplateFactory sequencingTemplateFactory;
 
     private static final VesselPosition[] VESSEL_POSITIONS = {VesselPosition.LANE1, VesselPosition.LANE2,
             VesselPosition.LANE3, VesselPosition.LANE4, VesselPosition.LANE5, VesselPosition.LANE6,
@@ -406,7 +409,7 @@ public class LabBatchEjb {
             }
 
             AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
-                    .getInstance(projectType, newBatch, productOrderDao, workflowConfig);
+                    .getInstance(projectType, newBatch, sequencingTemplateFactory, productOrderDao, workflowConfig);
             if (projectType == null) {
                 projectType = fieldBuilder.getProjectType();
             }
@@ -576,7 +579,7 @@ public class LabBatchEjb {
         }
 
         AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
-                .getInstance(projectType, batch, productOrderDao, workflowConfig);
+                .getInstance(projectType, batch, sequencingTemplateFactory, productOrderDao, workflowConfig);
         if (projectType == null) {
             projectType = fieldBuilder.getProjectType();
         }
@@ -978,7 +981,7 @@ public class LabBatchEjb {
                 throw new RuntimeException("Rack barcode is required to auto-export");
             }
             // Update rack in BSP, to add control
-            WebResource webResource = bspRestClient.getWebResource(bspRestClient.getUrl(BSP_CONTAINER_UPDATE_LAYOUT));
+            WebTarget webTarget = bspRestClient.getWebResource(bspRestClient.getUrl(BSP_CONTAINER_UPDATE_LAYOUT));
             PlateTransferEventType plateTransferEventType = new PlateTransferEventType();
             PositionMapType positionMap = new PositionMapType();
             positionMap.setBarcode(rackBarcode);
@@ -1007,11 +1010,13 @@ public class LabBatchEjb {
             plateTransferEventType.setPlate(plateType);
             BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
             bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
-            ClientResponse response = webResource.type(MediaType.APPLICATION_XML).post(ClientResponse.class, bettaLIMSMessage);
+            Response response = webTarget.request(MediaType.TEXT_PLAIN).post(Entity.xml(bettaLIMSMessage));
             if (response.getStatus() == Response.Status.OK.getStatusCode()) {
                 bspExportsService.export(rackBarcode, userBean.getLoginUserName());
+                response.close();
             } else {
-                messageReporter.addMessage(response.getEntity(String.class));
+                messageReporter.addMessage(response.readEntity(String.class));
+                response.close();
                 throw new RuntimeException("Failed to update layout in BSP.");
             }
         }
@@ -1508,5 +1513,10 @@ public class LabBatchEjb {
     @Inject
     public void setBspExportsService(BSPExportsService bspExportsService) {
         this.bspExportsService = bspExportsService;
+    }
+
+    @Inject
+    public void setSequencingTemplateFactory(SequencingTemplateFactory sequencingTemplateFactory) {
+        this.sequencingTemplateFactory = sequencingTemplateFactory;
     }
 }
