@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
 
 import java.util.ArrayList;
@@ -275,7 +276,7 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
             }
 
             if (StringUtils.isNotBlank(dto.getSequencerModelName()) &&
-                    getSequencerModelMap().get(dto.getSequencerModelName()) == null) {
+                    IlluminaFlowcell.FlowcellType.getTypeForExternalUiName(dto.getSequencerModelName()) == null) {
                 messages.addError(String.format(SampleInstanceEjb.UNKNOWN, dto.getRowNumber(),
                         "Sequencing Technology", "Mercury"));
             }

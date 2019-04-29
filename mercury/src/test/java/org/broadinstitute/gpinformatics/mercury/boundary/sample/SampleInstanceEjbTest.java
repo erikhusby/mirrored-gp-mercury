@@ -275,7 +275,7 @@ public class SampleInstanceEjbTest extends Arquillian {
                     Arrays.asList("WholeGenomeShotgun.AssemblyWithoutReference", "WholeGenomeShotgun.Resequencing",
                             "cDNAShotgunReadTwoSense.AssemblyWithoutReference",
                             "cDNAShotgunReadTwoSense.Resequencing").get(i));
-            Assert.assertEquals(SampleInstanceEjb.makeSequencerValue(entity.getSequencerModel()),
+            Assert.assertEquals(entity.getSequencerModel().getExternalUiName(),
                     Arrays.asList("MiSeq", "HiSeq X 10", "NovaSeq S4", "NextSeq").get(i));
             LabVessel tube = entity.getLabVessel();
             Assert.assertEquals(tube.getVolume(),
