@@ -2430,7 +2430,7 @@ nodePrinter.print(webapp)
             <plugin>
                 <groupId>com.amashchenko.maven.plugin</groupId>
                 <artifactId>gitflow-maven-plugin</artifactId>
-                <version>1.11.0</version>
+                <version>1.12.0</version>
                 <configuration>
                     <verbose>true</verbose>
                     <!-- Do not run the unit tests during the finish goals -->
