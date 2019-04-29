@@ -182,7 +182,7 @@ public class ProductEjbDBFreeTest {
 
         assertThat(testProduct.isSavedInSAP(), is(true));
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(13)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(2)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(0)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
 
@@ -204,7 +204,7 @@ public class ProductEjbDBFreeTest {
             Since we are mimicking that the product has been published to only one Platform, it will call ChangeMaterial
             for that one, and create material for the other 12
          */
-        Mockito.verify(mockWrappedClient, Mockito.times(25)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(3)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(1)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
         Mockito.when(productPriceCache.productExists(Mockito.anyString())).thenReturn(Boolean.TRUE);
@@ -295,13 +295,13 @@ public class ProductEjbDBFreeTest {
 
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(25)).createMaterial(Mockito.any(SAPMaterial.class));
-        Mockito.verify(mockWrappedClient, Mockito.times(14)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(3)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(3)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(25)).createMaterial(Mockito.any(SAPMaterial.class));
-        Mockito.verify(mockWrappedClient, Mockito.times(27)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(3)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(5)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
     }
 
     public void testPublishClinicalToSAPCheckClientCalls() throws Exception {

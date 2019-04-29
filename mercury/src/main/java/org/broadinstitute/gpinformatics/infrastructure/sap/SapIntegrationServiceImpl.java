@@ -47,7 +47,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option.Type;
 import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option.create;
@@ -421,32 +420,15 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             getClient().changeMaterialDetails(sapMaterial);
         }
 
-        final Set<SAPCompanyConfiguration> otherPlatformsToPublish = Arrays.stream(SAPCompanyConfiguration.values())
-                .filter(configuration -> configuration != SAPCompanyConfiguration.BROAD).collect(
-                        Collectors.toSet());
+        sapMaterial.setCompanyCode(SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES);
 
-        for (SAPCompanyConfiguration platformToPublish : otherPlatformsToPublish) {
-
-            if (platformToPublish == SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES ||
-                (platformToPublish != SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES &&
-                 !StringUtils.equals(sapMaterial.getProductHierarchy(),
-                        SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization()))) {
-                sapMaterial.setCompanyCode(platformToPublish);
-
-                if (platformToPublish == SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) {
-                    String materialName =
-                            StringUtils.defaultString(product.getAlternateExternalName(), product.getName());
-                    sapMaterial.setMaterialName(materialName);
-                } else {
-                    sapMaterial.setMaterialName(product.getName());
-                }
-                if (productPriceCache.findByProduct(product, SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES)
-                    == null) {
-                    getClient().createMaterial(sapMaterial);
-                } else {
-                    getClient().changeMaterialDetails(sapMaterial);
-                }
-            }
+        String materialName =
+                StringUtils.defaultString(product.getAlternateExternalName(), product.getName());
+        sapMaterial.setMaterialName(materialName);
+        if (productPriceCache.findByProduct(product, SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) == null) {
+            getClient().createMaterial(sapMaterial);
+        } else {
+            getClient().changeMaterialDetails(sapMaterial);
         }
     }
 
