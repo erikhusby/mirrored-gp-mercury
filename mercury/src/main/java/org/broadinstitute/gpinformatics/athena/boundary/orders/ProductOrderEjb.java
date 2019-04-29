@@ -63,6 +63,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 
 import javax.annotation.Nonnull;
@@ -388,20 +389,18 @@ public class ProductOrderEjb {
      * @throws SAPIntegrationException
      */
     public void updateOrderInSap(ProductOrder orderToUpdate, List<Product> allProductsOrdered,
-                                  MessageCollection messageCollection,
-                                  boolean closingOrder)
+                                  MessageCollection messageCollection, boolean closingOrder)
             throws SAPIntegrationException {
+        SapIntegrationService.Option serviceOptions =
+            SapIntegrationService.Option.create(SapIntegrationService.Option.isClosing(closingOrder));
         sapService.updateOrder(orderToUpdate, closingOrder);
         BigDecimal sampleCount = BigDecimal.ZERO ;
         if(orderToUpdate.isPriorToSAP1_5()) {
-            sampleCount = SapIntegrationServiceImpl.getSampleCount(orderToUpdate,
-                    orderToUpdate.getProduct(), 0, false, closingOrder, false);
+            sampleCount =
+                SapIntegrationServiceImpl.getSampleCount(orderToUpdate, orderToUpdate.getProduct(), 0, serviceOptions);
         }
-        orderToUpdate.updateSapDetails(sampleCount.intValue(),
-            MercuryStringUtils.makeDigest(allProductsOrdered),"");
-        messageCollection.addInfo("Order "+orderToUpdate.getJiraTicketKey() +
-                                  " has been successfully updated in SAP");
-
+        orderToUpdate.updateSapDetails(sampleCount.intValue(), MercuryStringUtils.makeDigest(allProductsOrdered),"");
+        messageCollection.addInfo("Order "+orderToUpdate.getJiraTicketKey() + " has been successfully updated in SAP");
     }
 
     /**
@@ -418,8 +417,7 @@ public class ProductOrderEjb {
             throws SAPIntegrationException {
 
         if(closingOrder && orderToPublish.isSavedInSAP()) {
-            updateOrderInSap(orderToPublish, allProductsOrdered, messageCollection,
-                    closingOrder);
+            updateOrderInSap(orderToPublish, allProductsOrdered, messageCollection, closingOrder);
         }
 
         String sapOrderIdentifier = sapService.createOrder(orderToPublish);

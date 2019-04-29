@@ -38,17 +38,7 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     }
 
     @Override
-    public String createOrderWithQuote(ProductOrder placedOrder) throws SAPIntegrationException {
-        throw new SAPIntegrationException("SAP Quotes nto available at this time");
-    }
-
-    @Override
-    public void updateOrder(ProductOrder placedOrder, boolean closingOrder) throws SAPIntegrationException {
-    }
-
-    @Override
-    public void updateOrderWithQuote(ProductOrder placedOrder, boolean closingOrder) throws SAPIntegrationException {
-        throw new SAPIntegrationException("SAP Quotes nto available at this time");
+    public void updateOrder(ProductOrder placedOrder, boolean serviceOptions) throws SAPIntegrationException {
     }
 
     @Override
@@ -299,7 +289,7 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     }
 
     @Override
-    public OrderCalculatedValues calculateOpenOrderValues(int addedSampleCount, String quoteId,
+    public OrderCalculatedValues calculateOpenOrderValues(int addedSampleCount, SapQuote sapQuote,
                                                           ProductOrder productOrder) throws SAPIntegrationException {
         return new OrderCalculatedValues(BigDecimal.ONE, Collections.<OrderValue>emptySet());
     }
