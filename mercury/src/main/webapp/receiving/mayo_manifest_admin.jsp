@@ -23,6 +23,13 @@
                 </c:if>
             </div>
 
+            <!-- Shows files that were read in but failed to make manifests. -->
+            <div style="padding-top: 20px;">
+                <stripes:submit id="showFailedFilesListBtn" name="showFailedFilesListBtn" value="Show Failed Files"
+                                class="btn btn-primary"
+                                title="Click to get a txt file download of manifest bucket files that were read in but failed to make manifests."/>
+            </div>
+
             <!-- Loads all new manifest files. -->
             <div style="padding-top: 20px;">
                 <stripes:submit id="pullAllFilesBtn" name="pullAllFilesBtn" value="Pull All New Manifest Files"
@@ -60,10 +67,6 @@
                     <stripes:submit id="viewFileBtn" name="viewFileBtn" value="View A Manifest File"
                                     class="btn btn-primary"
                                     title="Click to display contents of a manifest file."/>
-                    <span style="margin-left: 20px;">
-                        Filename:
-                        <stripes:text id="filename" name="filename"/>
-                    </span>
                 </span>
             </div>
 

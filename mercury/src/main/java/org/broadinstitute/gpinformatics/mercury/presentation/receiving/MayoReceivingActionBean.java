@@ -45,6 +45,7 @@ public class MayoReceivingActionBean extends RackScanActionBean {
     private static final String STORAGE_UTILITIES = "storageUtilities";
     private static final String TEST_ACCESS_BTN = "testAccessBtn";
     private static final String SHOW_BUCKETLIST_BTN = "showBucketListBtn";
+    private static final String SHOW_FAILED_FILES_LIST_BTN = "showFailedFilesListBtn";
     private static final String PULL_ALL_BTN = "pullAllFilesBtn";
     private static final String PULL_ONE_BTN = "pullFileBtn";
     private static final String REACCESSION_BTN = "reaccessionBtn";
@@ -58,11 +59,12 @@ public class MayoReceivingActionBean extends RackScanActionBean {
     private List<String> rackScanEntries = new ArrayList<>();
     private List<List<String>> manifestCellGrid = new ArrayList<>();
     private List<String> bucketList = new ArrayList<>();
+    private List<String> failedFilesList = new ArrayList<>();
 
     @Inject
     private MayoManifestEjb mayoManifestEjb;
 
-    @Validate(required = true, on = {SCAN_BTN, VIEW_MANIFEST_BTN, SAVE_BTN})
+    @Validate(required = true, on = {SCAN_BTN, VIEW_MANIFEST_BTN, SAVE_BTN, REACCESSION_BTN})
     private String rackBarcode;
 
     @Validate(required = true, on = {VIEW_FILE_BTN, PULL_ONE_BTN})
@@ -147,7 +149,23 @@ public class MayoReceivingActionBean extends RackScanActionBean {
             response.setContentType("application/text");
             response.setContentLength(bytes.length);
             response.setHeader("Expires:", "0"); // eliminates browser caching
-            response.setHeader("Content-Disposition", "attachment; filename=bucketList.txt");
+            response.setHeader("Content-Disposition", "attachment; filename=allFiles.txt");
+            OutputStream outStream = response.getOutputStream();
+            outStream.write(bytes);
+            outStream.flush();
+        };
+        return resolution;
+    }
+
+    @HandlesEvent(SHOW_FAILED_FILES_LIST_BTN)
+    public Resolution showFailedFilesList() {
+        mayoManifestEjb.getFailedFiles(this);
+        final byte[] bytes = failedFilesList.stream().sorted().collect(Collectors.joining("\n")).getBytes();
+        Resolution resolution = (request, response) -> {
+            response.setContentType("application/text");
+            response.setContentLength(bytes.length);
+            response.setHeader("Expires:", "0"); // eliminates browser caching
+            response.setHeader("Content-Disposition", "attachment; filename=failedFiles.txt");
             OutputStream outStream = response.getOutputStream();
             outStream.write(bytes);
             outStream.flush();
@@ -178,7 +196,8 @@ public class MayoReceivingActionBean extends RackScanActionBean {
 
     /**
      * Re-accessions the rack and its tubes using the most recent manifest.
-     * Any tube or position changes must be fixed up before running this.
+     * Any tube or position changes must be fixed up before running this because
+     * the tubes used are the ones that Mercury has in the specified rack.
      */
     @HandlesEvent(REACCESSION_BTN)
     public Resolution reaccession() {
@@ -325,6 +344,14 @@ public class MayoReceivingActionBean extends RackScanActionBean {
 
     public void setBucketList(List<String> bucketList) {
         this.bucketList = bucketList;
+    }
+
+    public List<String> getFailedFilesList() {
+        return failedFilesList;
+    }
+
+    public void setFailedFilesList(List<String> failedFilesList) {
+        this.failedFilesList = failedFilesList;
     }
 
     /**

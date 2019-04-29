@@ -43,9 +43,6 @@ import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -53,6 +50,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -65,12 +63,13 @@ import java.util.stream.Stream;
 public class MayoManifestEjb {
     private static Log logger = LogFactory.getLog(MayoManifestEjb.class);
     public static final String ACCESSIONED = "Accessioned rack %s, samples %s.";
-    public static final String AFFECTS_MANIFEST = "Manifest file update affects manifests for rack: %s.";
     public static final String ALREADY_ACCESSIONED = "Tubes have already been accessioned: %s.";
     public static final String ALREADY_ACCESSIONED_RACK = "The rack's tubes have already been accessioned: %s.";
+    public static final String FILES_PROCESSED = "%d manifest files processed: %s.";
     public static final String INVALID = "Cannot find a %s for %s.";
     public static final String JIRA_PROBLEM = "Problem creating or updating RCT ticket: %s";
-    public static final String MANIFEST_CREATED = "Created manifest for %s having %d samples.";
+    public static final String MANIFEST_CREATED = "Created manifest for %s.";
+    public static final String MANIFEST_CREATE_ITEM = "rack %s (%d tubes)";
     public static final String MULTIPLE_TUBE_FORMS = "Rack %s must only have one tube formation.";
     public static final String NOT_A_RACK = "Rack %s matches an existing vessel but it is not a rack.";
     public static final String NOT_A_TUBE = "Tube %s matches an existing vessel but it is not a tube.";
@@ -282,8 +281,8 @@ public class MayoManifestEjb {
         }
         tubeFormation.addRackOfTubes(rack);
 
-        // Looks for a manifest in order to make the samples and do accessioning. A missing manifest
-        // is not an error. The rack and tube should still be Received and Quarantined.
+        // Looks for a manifest in order to make the samples and do accessioning. Any problems found
+        // while processing manifests should not prevent the rack and tubes from being Received.
         ManifestSession manifestSession = lookupManifestSession(bean.getManifestKey(), bean.getMessageCollection(),
                 true);
         Map<String, MercurySample> sampleMap = Collections.emptyMap();
@@ -301,7 +300,8 @@ public class MayoManifestEjb {
 
             for (ManifestRecord manifestRecord : manifestSession.findRecordsByKey(bean.getRackBarcode(),
                     Metadata.Key.BOX_ID)) {
-                String sampleName = manifestRecord.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID);
+                // Uses the tube barcode for the MercurySample.sampleKey.
+                String sampleName = manifestRecord.getValueByKey(Metadata.Key.BROAD_2D_BARCODE);
                 sampleMetadata.putAll(sampleName, manifestRecord.getMetadata());
                 materialTypes.add(StringUtils.defaultIfBlank(
                         manifestRecord.getValueByKey(Metadata.Key.MATERIAL_TYPE), "No Type Given"));
@@ -398,6 +398,7 @@ public class MayoManifestEjb {
      * first. If a matching tube formation isn't found and error is generated.
      */
     public void reaccession(MayoReceivingActionBean bean) {
+        assert(StringUtils.isNotBlank(bean.getRackBarcode()));
         LabVessel vessel = labVesselDao.findByIdentifier(bean.getRackBarcode());
         if (vessel == null) {
             bean.getMessageCollection().addError(INVALID, "rack", bean.getRackBarcode());
@@ -419,7 +420,7 @@ public class MayoManifestEjb {
         TubeFormation tubeFormation = rack.getTubeFormations().iterator().next();
         bean.setVesselGeometry(tubeFormation.getVesselGeometry());
         // Synthesizes a rack scan from the existing rack.
-        bean.getRackScan().clear();
+        bean.setRackScan(new LinkedHashMap<>());
         tubeFormation.getContainerRole().getMapPositionToVessel().entrySet().forEach(entry -> {
             VesselPosition position = entry.getKey();
             BarcodedTube tube = entry.getValue();
@@ -440,7 +441,7 @@ public class MayoManifestEjb {
                 ManifestSession manifestSession = lookupManifestSession(bean.getManifestKey(),
                         bean.getMessageCollection(), true);
                 if (manifestSession == null || manifestSession.getManifestFile() == null) {
-                    bean.getMessageCollection().addInfo(INVALID, "manifest", bean.getManifestKey());
+                    bean.getMessageCollection().addInfo(INVALID, "Mercury manifest record", bean.getManifestKey());
                 } else {
                     String[] fileBucket = manifestSession.getManifestFile().getQualifiedFilename().
                             split(FILE_DELIMITER);
@@ -456,9 +457,31 @@ public class MayoManifestEjb {
         bean.setManifestCellGrid(readManifestFileCellGrid(bean.getFilename(), bean.getMessageCollection()));
     }
 
+    /** Generates info messages. Puts a listing of all bucket filenames in the bean. */
     public void testAccess(MayoReceivingActionBean bean) {
-        // Generates info messages and obtains a list of filenames in the bucket.
+        bean.getBucketList().clear();
         bean.setBucketList(googleBucketDao.test(bean.getMessageCollection()));
+    }
+
+    /**
+     * Finds bucket filenames that have been processed but were not made into manifest sessions
+     * and puts the list into the bean.
+     */
+    public void getFailedFiles(MayoReceivingActionBean bean) {
+        List<String> previouslySeen = manifestSessionDao.getQualifiedFilenames(
+                FILE_DELIMITER + mayoManifestConfig.getBucketName());
+        List<String> manifestFilenames = manifestSessionDao.findAll(ManifestSession.class).stream().
+                map(manifestSession -> manifestSession.getManifestFile()).
+                filter(manifestFile -> manifestFile != null).
+                map(manifestFile -> manifestFile.getQualifiedFilename()).
+                collect(Collectors.toList());
+        previouslySeen.removeAll(manifestFilenames);
+        // Expects qualifiedFilename = filename + delimiter + bucket name.
+        // Keep only the filename part.
+        bean.setFailedFilesList(previouslySeen.stream().
+                map(qualifiedFilename -> qualifiedFilename.split(FILE_DELIMITER)[0]).
+                sorted().
+                collect(Collectors.toList()));
     }
 
     public void pullAll(MayoReceivingActionBean bean) {
@@ -506,31 +529,20 @@ public class MayoManifestEjb {
 
     /**
      * Reads manifest file storage and persists files as ManifestSessions.
-     * @param filename if non-blank then forces reload of that file only. If blank then all new files are read.
+     * @param forceReloadFilename if non-blank forces reload of the one file only. If blank, all new files are read.
      */
-    private List<ManifestSession> processNewManifestFiles(@Nullable String filename, MessageCollection messages) {
+    private List<ManifestSession> processNewManifestFiles(@Nullable String forceReloadFilename,
+            MessageCollection messages) {
         List<ManifestSession> manifestSessions = new ArrayList<>();
         Set<Object> newEntities = new HashSet<>();
         String bucketName = mayoManifestConfig.getBucketName();
 
-        if (StringUtils.isNotBlank(filename)) {
-            // When a filename is present the file is assumed to be an update of an earlier upload
-            // having the same filename. The file is made into a new manifest session.
-            List<List<String>> cellGrid = readManifestFileCellGrid(filename, messages);
-            String cellGridMd5 = manifestHash(cellGrid);
-            Set<String> manifestsAffected = new HashSet<>();
-            MayoManifestImportProcessor processor = new MayoManifestImportProcessor();
-            for (String manifestKey : processor.extractManifestKeys(cellGrid)) {
-                ManifestSession existingSession = lookupManifestSession(manifestKey, messages, false);
-                if (!cellGridMd5.equals(existingSession.getManifestFileMd5())) {
-                    manifestsAffected.add(manifestKey);
-                }
-            }
-            manifestSessions.addAll(makeManifestSessions(filename, bucketName, messages, newEntities));
-            messages.addInfo(AFFECTS_MANIFEST, StringUtils.defaultIfBlank(
-                    manifestsAffected.stream().sorted().collect(Collectors.joining(", ")), "none (no changes found)"));
+        // Makes the list of filenames that need to be processed.
+        List<String> filenames;
+        if (StringUtils.isNotBlank(forceReloadFilename)) {
+            filenames = Collections.singletonList(forceReloadFilename);
         } else {
-            List<String> filenames = googleBucketDao.list(messages);
+            filenames = googleBucketDao.list(messages);
             // Removes the filenames already seen from those found in the bucket.
             // Expects qualifiedFilename = filename + delimiter + bucket name.
             List<String> previouslySeen = manifestSessionDao.getQualifiedFilenames(FILE_DELIMITER + bucketName).
@@ -538,8 +550,14 @@ public class MayoManifestEjb {
                     map(name -> StringUtils.substringBefore(name, FILE_DELIMITER)).
                     collect(Collectors.toList());
             filenames.removeAll(previouslySeen);
-            for (String newFilename : filenames) {
-                manifestSessions.addAll(makeManifestSessions(newFilename, bucketName, messages, newEntities));
+            Collections.sort(filenames);
+        }
+        // Each manifest file is made into one or more new manifest sessions, one per rack.
+        for (String filename : filenames) {
+            if (MayoManifestImportProcessor.cleanupValue(filename).equals(filename)) {
+                manifestSessions.addAll(makeManifestSessions(filename, bucketName, messages, newEntities));
+            } else {
+                logger.error("Skipping Google bucket file '%s' because the name contains non-7-bit ascii chars.");
             }
         }
         if (!newEntities.isEmpty()) {
@@ -548,50 +566,40 @@ public class MayoManifestEjb {
             manifestSessionDao.persistAll(newEntities);
             manifestSessionDao.flush();
         }
-        for (ManifestSession session : manifestSessions) {
-            messages.addInfo(String.format(MANIFEST_CREATED, session.getSessionPrefix(), session.getRecords().size()));
+        if (!filenames.isEmpty()) {
+            messages.addInfo(String.format(FILES_PROCESSED, filenames.size(), StringUtils.join(filenames, ", ")));
+        }
+        if (!manifestSessions.isEmpty()) {
+            messages.addInfo(String.format(MANIFEST_CREATED, manifestSessions.stream().
+                    map(session -> String.format(MANIFEST_CREATE_ITEM,
+                            session.getSessionPrefix(), session.getRecords().size())).
+                    collect(Collectors.joining(", "))));
         }
         return manifestSessions;
-    }
-
-    /** Returns an MD5 hex string of the cellGrid. */
-    private String manifestHash(List<List<String>> cellGrid) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("MD5");
-            byte[] data = cellGrid.stream().flatMap(Collection::stream).collect(Collectors.joining()).getBytes();
-            digest.update(data, 0, data.length);
-            return String.format("%032X", new BigInteger(1, digest.digest()));
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     private Collection<ManifestSession> makeManifestSessions(String filename, String bucketName,
             MessageCollection messageCollection, Set<Object> newEntities) {
 
-        List<List<String>> cellGrid = readManifestFileCellGrid(filename, messageCollection);
+        // Always persists the filename. If already persisted then uses the entity.
         String qualifiedFilename = filename + FILE_DELIMITER + bucketName;
         ManifestFile manifestFile = findManifestFile(qualifiedFilename);
         if (manifestFile == null) {
             manifestFile = new ManifestFile(qualifiedFilename);
-            if (cellGrid.isEmpty()) {
-                // File in the bucket is not a manifest file. Just persists the filename.
-                newEntities.add(manifestFile);
-            }
+            newEntities.add(manifestFile);
         }
 
         List<ManifestSession> sessions = new ArrayList<>();
+        List<List<String>> cellGrid = readManifestFileCellGrid(filename, messageCollection);
         if (!cellGrid.isEmpty()) {
             MayoManifestImportProcessor processor = new MayoManifestImportProcessor();
             // Makes a new ManifestSession for each manifest key (i.e. rack barcode).
             Multimap<String, ManifestRecord> manifestKeyToManifestRecords =
                     processor.makeManifestRecords(cellGrid, filename, messageCollection);
-            String md5hash = manifestHash(cellGrid);
             for (String manifestKey : manifestKeyToManifestRecords.keySet()) {
                 ManifestSession manifestSession = new ManifestSession(null, manifestKey,
                         userBean.getBspUser(), false, manifestKeyToManifestRecords.get(manifestKey));
                 manifestSession.setManifestFile(manifestFile);
-                manifestSession.setManifestFileMd5(md5hash);
                 newEntities.add(manifestSession);
                 sessions.add(manifestSession);
             }

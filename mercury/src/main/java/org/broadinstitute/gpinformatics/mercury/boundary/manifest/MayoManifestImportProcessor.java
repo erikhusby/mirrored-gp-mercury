@@ -50,13 +50,12 @@ public class MayoManifestImportProcessor {
     private static final String DETAILS_SHEETNAME = "Details";
     public static final String CANNOT_PARSE = "Manifest file %s cannot be parsed due to %s.";
     public static final String DUPLICATE_HEADER = "Manifest file %s has duplicate header %s.";
-    public static final String MISSING_DATA = "Manifest file %s is missing a required value for %s.";
+    public static final String INVALID_DATA = "Manifest file %s has invalid values for %s.";
+    public static final String MISSING_DATA = "Manifest file %s is missing required values for %s.";
     public static final String MISSING_HEADER = "Manifest file %s is missing header %s.";
     public static final String MISSING_SHEET = "Manifest file %s does not have a %s sheet and will not be used.";
-    public static final String NOT_NUMBER = "Manifest file %s has a %s value \"%s\" that is not a number.";
-    public static final String UNKNOWN_UNITS = "Manifest file %s has header %s that has unknown units \"%s\".";
-    public static final String UNKNOWN_HEADER = "Manifest file %s has unknown header \"%s\" which will be ignored.";
-    public static final String NO_VALUE_PRESENT = "[blank]";
+    public static final String UNKNOWN_UNITS = "Manifest file %s has unknown units in headers: %s.";
+    public static final String UNKNOWN_HEADER = "Manifest file %s has unknown headers: %s.";
 
     private List<Header> sheetHeaders = new ArrayList<>();
 
@@ -68,7 +67,7 @@ public class MayoManifestImportProcessor {
         BIOBANK_SAMPLE_ID("biobank id sample id", Metadata.Key.SAMPLE_ID, Attribute.REQUIRED),
         BOX_ID("box id", Metadata.Key.BOX_ID, Attribute.REQUIRED),
         WELL_POSITION("well position", Metadata.Key.WELL_POSITION, Attribute.REQUIRED),
-        SAMPLE_ID("sample id", Metadata.Key.COLLAB_SAMPLE_ID2),
+        SAMPLE_ID("sample id", Metadata.Key.COLLAB_SAMPLE_ID2, Attribute.REQUIRED),
         PARENT_SAMPLE_ID("parent sample id", Metadata.Key.COLLAB_PARTICIPANT_ID2),
         MATRIX_ID("matrix id", Metadata.Key.BROAD_2D_BARCODE, Attribute.REQUIRED),
         COLLECTION_DATE("collection date", null, Attribute.IGNORE),
@@ -151,15 +150,19 @@ public class MayoManifestImportProcessor {
         /**
          * Calculates a numeric conversion factor to represent concentration in ng/ul, and quantity in ul.
          */
-        private void setFactor(String headerSuffix, String filename, MessageCollection messages) {
+        private void setFactor(String headerSuffix, @Nullable List<String> unknownUnits) {
             if (StringUtils.isBlank(headerSuffix)) {
-                messages.addError(UNKNOWN_UNITS, filename, getText(), NO_VALUE_PRESENT);
+                if (unknownUnits != null) {
+                    unknownUnits.add(getText());
+                }
             } else{
                 // Splits the header suffix into numerator and denominator, or just numerator.
                 String[] parts = headerSuffix.split("/", 2);
                 // The only ratio should be concentration.
                 if (getMetadataKey() == Metadata.Key.CONCENTRATION ^ parts.length != 1) {
-                    messages.addError(UNKNOWN_UNITS, filename, getText(), headerSuffix);
+                    if (unknownUnits != null) {
+                        unknownUnits.add(getText());
+                    }
                 } else {
                     BigDecimal number = null;
                     for (int idx = 0; idx < parts.length; ++idx) {
@@ -170,7 +173,9 @@ public class MayoManifestImportProcessor {
                             }
                         }
                         if (number == null) {
-                            messages.addError(UNKNOWN_UNITS, filename, getText(), headerSuffix);
+                            if (unknownUnits != null) {
+                                unknownUnits.add(getText());
+                            }
                             factor = BigDecimal.ZERO;
                             break;
                         } else if (idx == 0) {
@@ -214,15 +219,6 @@ public class MayoManifestImportProcessor {
                         filter(line -> line != null && !StringUtils.isAllBlank(line)).
                         map(Arrays::asList).
                         forEach(cellGrid::add);
-                // Decides it's not spreadsheet (to avoid a ream of misleading error output) if
-                // there's only 1 row (i.e. no data row) or if rows have different number of columns.
-                if (cellGrid.size() < 2 || cellGrid.subList(1, cellGrid.size()).stream().
-                        mapToInt(row -> row.size()).
-                        filter(size -> size != cellGrid.get(0).size()).
-                        findFirst().isPresent()) {
-                    messages.addWarning(CANNOT_PARSE, filename, "invalid .csv spreadsheet");
-                    cellGrid.clear();
-                }
             }
         } catch(Exception e) {
             messages.addWarning(CANNOT_PARSE, filename, e.toString());
@@ -241,58 +237,94 @@ public class MayoManifestImportProcessor {
         Multimap<String, ManifestRecord> records = HashMultimap.create();
 
         if (CollectionUtils.isNotEmpty(cellGrid)) {
-            // Cleanup values, i.e. removes characters that may present a problem later.
+            // Cleans up headers and values by removing characters that may present a problem later.
             for (List<String> columns : cellGrid) {
                 for (int i = 0; i < columns.size(); ++i) {
                     columns.set(i, cleanupValue(columns.get(i)));
                 }
             }
             // Makes headers from the first row in the cell grid.
-            initHeaders(cellGrid.get(0), filename, messages);
+            List<String> unknownUnits = new ArrayList<>();
+            List<String> unknownHeaders = new ArrayList<>();
+            initHeaders(cellGrid.get(0), unknownUnits, unknownHeaders);
             fixupDates(cellGrid.subList(1, cellGrid.size()), filename);
 
-            // Error if a required header is missing from the spreadsheet.
-            Arrays.asList(Header.values()).stream().
+            // Finds missing required headers.
+            List<String> missingHeaders = Arrays.asList(Header.values()).stream().
                     filter(header -> header.isRequired() && !sheetHeaders.contains(header)).
-                    map(Header::getText).
-                    forEach(headerName -> messages.addError(MISSING_HEADER, filename, headerName));
-
-            // Error if a spreadsheet header appears twice.
-            CollectionUtils.getCardinalityMap(
-                    sheetHeaders.stream().filter(header -> header != null).collect(Collectors.toList())
-            ).entrySet().stream().
+                    map(Header::getText).collect(Collectors.toList());
+            // Finds duplicate headers.
+            List<String> duplicateHeaders = CollectionUtils.getCardinalityMap(
+                    sheetHeaders.stream().filter(header -> header != null).collect(Collectors.toList())).
+                    entrySet().stream().
                     filter(mapEntry -> mapEntry.getValue() > 1).
-                    forEachOrdered(mapEntry ->
-                            messages.addError(DUPLICATE_HEADER, filename, mapEntry.getKey().getText()));
+                    map(mapEntry -> mapEntry.getKey().getText()).
+                    sorted().
+                    collect(Collectors.toList());
 
-            // Makes a ManifestRecord for each row of data.
-            for (List<String> row : cellGrid.subList(1, cellGrid.size())) {
-                ManifestRecord manifestRecord = new ManifestRecord();
-                for (int columnIndex = 0; columnIndex < sheetHeaders.size(); ++columnIndex) {
-                    Header header = sheetHeaders.get(columnIndex);
-                    if (header != null && !header.isIgnored()) {
-                        String value = (row.size() > columnIndex) ? row.get(columnIndex) : null;
-                        if (StringUtils.isNotBlank(value)) {
-                            if (header.hasUnits()) {
-                                // For values with units, calculates metadata value = (column value) * factor.
-                                if (NumberUtils.isParsable(value)) {
-                                    value = new BigDecimal(value).
-                                            multiply(header.getFactor()).
-                                            setScale(2, BigDecimal.ROUND_HALF_EVEN).
-                                            toPlainString();
-                                } else {
-                                    messages.addError(NOT_NUMBER, filename, header.getText(), value);
-                                    value = header.isRequired() ? "0" : "";
+            Set<String> badValues = new HashSet<>();
+            Set<String> missingValues = new HashSet<>();
+            if (missingHeaders.isEmpty() && unknownUnits.isEmpty() && unknownHeaders.isEmpty() &&
+                    duplicateHeaders.isEmpty()) {
+                // Validates the data before attempting to persist ManifestRecords.
+                for (List<String> row : cellGrid.subList(1, cellGrid.size())) {
+                    for (int columnIndex = 0; columnIndex < sheetHeaders.size(); ++columnIndex) {
+                        Header header = sheetHeaders.get(columnIndex);
+                        if (header != null && !header.isIgnored()) {
+                            String value = (row.size() > columnIndex) ? row.get(columnIndex) : null;
+                            if (StringUtils.isNotBlank(value)) {
+                                if (header.hasUnits() && !NumberUtils.isParsable(value)) {
+                                    badValues.add(header.getText());
                                 }
+                            } else if (header.isRequired()) {
+                                missingValues.add(header.getText());
                             }
-                            manifestRecord.addMetadata(header.getMetadataKey(), value);
-
-                        } else if (header.isRequired()) {
-                            messages.addError(MISSING_DATA, filename, header.getText());
                         }
                     }
+
                 }
-                if (!messages.hasErrors()) {
+            }
+            if (filename != null && messages != null) {
+                if (!missingHeaders.isEmpty()) {
+                    messages.addWarning(MISSING_HEADER, filename, StringUtils.join(missingHeaders, ", "));
+                }
+                if (!unknownHeaders.isEmpty()) {
+                    messages.addWarning(UNKNOWN_HEADER, filename, StringUtils.join(unknownHeaders, ", "));
+                }
+                if (!unknownUnits.isEmpty()) {
+                    messages.addWarning(UNKNOWN_UNITS, filename, StringUtils.join(unknownUnits, ", "));
+                }
+                if (!duplicateHeaders.isEmpty()) {
+                    messages.addWarning(DUPLICATE_HEADER, filename, StringUtils.join(duplicateHeaders, ", "));
+                }
+                if (!missingValues.isEmpty()) {
+                    messages.addWarning(MISSING_DATA, filename, StringUtils.join(missingValues, ", "));
+                }
+                if (!badValues.isEmpty()) {
+                    messages.addWarning(INVALID_DATA, filename, StringUtils.join(badValues, ", "));
+                }
+            }
+
+            if (missingHeaders.isEmpty() && unknownUnits.isEmpty() && unknownHeaders.isEmpty() &&
+                    duplicateHeaders.isEmpty() && badValues.isEmpty() && missingValues.isEmpty()) {
+                // Makes a ManifestRecord for each row of data.
+                for (List<String> row : cellGrid.subList(1, cellGrid.size())) {
+                    ManifestRecord manifestRecord = new ManifestRecord();
+                    for (int columnIndex = 0; columnIndex < sheetHeaders.size(); ++columnIndex) {
+                        Header header = sheetHeaders.get(columnIndex);
+                        if (header != null && !header.isIgnored()) {
+                            String value = (row.size() > columnIndex) ? row.get(columnIndex) : null;
+                            if (StringUtils.isNotBlank(value)) {
+                                if (header.hasUnits()) {
+                                    // For values with units, calculates metadata value = (column value) * factor.
+                                    value = new BigDecimal(value).multiply(header.getFactor()).
+                                            setScale(2, BigDecimal.ROUND_HALF_EVEN).
+                                            toPlainString();
+                                }
+                                manifestRecord.addMetadata(header.getMetadataKey(), value);
+                            }
+                        }
+                    }
                     String manifestKey = MayoReceivingActionBean.makeManifestKey(sheetHeaders, row);
                     records.put(manifestKey, manifestRecord);
                 }
@@ -327,16 +359,17 @@ public class MayoManifestImportProcessor {
         return manifestKeys;
     }
 
-    private void initHeaders(List<String> headerRow, @Nullable String filename, @Nullable MessageCollection messages) {
+    private void initHeaders(List<String> headerRow, @Nullable List<String> unknownUnits,
+            @Nullable List<String> unknownHeaders) {
         sheetHeaders.clear();
-        sheetHeaders.addAll(MayoManifestImportProcessor.extractHeaders(headerRow, filename, messages));
+        sheetHeaders.addAll(MayoManifestImportProcessor.extractHeaders(headerRow, unknownUnits, unknownHeaders));
     }
 
     /**
      * Parses the header text, extracts the units if any, and sets the header's conversion factor.
      */
-    static List<Header> extractHeaders(List<String> headerRow, @Nullable String filename,
-            @Nullable MessageCollection messages) {
+    static List<Header> extractHeaders(List<String> headerRow, @Nullable List<String> unknownUnits,
+            @Nullable List<String> unknownHeaders) {
 
         Map<String, Header> nameToHeader = Stream.of(Header.values()).
                 collect(Collectors.toMap(Header::getText, Function.identity()));
@@ -344,10 +377,14 @@ public class MayoManifestImportProcessor {
         List<Header> headers = new ArrayList<>();
         for (String column : headerRow) {
             String header = column.toLowerCase().replaceAll("_", " ").replace('(', ' ').replace(')', ' ').
-                    // Space between name and id, e.g. sampleId -> sample id
-                    replaceAll("id$", " id").replaceAll("id ", " id ").
+                    // Put space between name and id (e.g. sampleId -> sample id)
+                    // and between "<name>id " and <name> id (e.g. biobankid sample id -> biobank id sample id)
+                            replaceAll("id$", " id").
+                            replaceAll("id ", " id ").
                     // Removes spaces around '/' so that if units are present they are always the last single token.
-                    replace(" /", "/").replace("/ ", "/").replaceAll("[ ]+", " ").trim();
+                            replace(" /", "/").replace("/ ", "/").
+                    // Collapse multiple spaces into one and trim.
+                            replaceAll("[ ]+", " ").trim();
             // Looks for the header name. If no match, try without the last token in case it's the units.
             Header match = nameToHeader.get(header);
             String units = "";
@@ -355,12 +392,10 @@ public class MayoManifestImportProcessor {
                 match = nameToHeader.get(StringUtils.substringBeforeLast(header, " "));
                 units = StringUtils.substringAfterLast(header, " ");
             }
-            if (filename != null && messages != null) {
-                if (match == null) {
-                    messages.addWarning(UNKNOWN_HEADER, filename, column);
-                } else if (match.hasUnits()) {
-                    match.setFactor(units, filename, messages);
-                }
+            if (match == null && unknownHeaders != null) {
+                unknownHeaders.add(column);
+            } else if (match != null && match.hasUnits()) {
+                match.setFactor(units, unknownUnits);
             }
             // An unknown header is added as a null, to maintain a corresponding index with data rows.
             headers.add(match);
@@ -390,9 +425,9 @@ public class MayoManifestImportProcessor {
 
     /**
      * Returns the string stripped of control characters, line breaks, and >7-bit ascii
-     * (which become "¿" characters in the database).
+     * (which become upside-down ? characters in the database).
      */
-    private static String cleanupValue(String value) {
+    public static String cleanupValue(String value) {
         return org.apache.commons.codec.binary.StringUtils.newStringUsAscii(
                 org.apache.commons.codec.binary.StringUtils.getBytesUsAscii(value)).
                 replaceAll("\\?","").

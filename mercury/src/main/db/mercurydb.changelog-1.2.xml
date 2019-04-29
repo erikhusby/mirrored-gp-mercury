@@ -2155,15 +2155,5 @@
         <addUniqueConstraint tableName="manifest_file" columnNames="qualified_filename"
                              constraintName="U_MANIFEST_FILE_FILENAME" schemaName="mercury" />
     </changeSet>
-    <changeSet id="GPLIM-6005-010" author="epolk">
-        <addColumn schemaName="mercury" tableName="manifest_session">
-            <column name="manifest_file_md5" type="varchar(255)"/>
-        </addColumn>
-    </changeSet>
-    <changeSet id="GPLIM-6005-011" author="epolk">
-        <addColumn schemaName="mercury" tableName="manifest_session_aud">
-            <column name="manifest_file_md5" type="varchar(255)"/>
-        </addColumn>
-    </changeSet>
 
 </databaseChangeLog>
