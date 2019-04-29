@@ -225,8 +225,6 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * Helper method to compile the order object which will be transmitted to SAP for either creation up to be
      * updated
      * @param placedOrder The ProductOrder from which a JAXB representation of an SAP order will be created
-     * @param creatingOrder
-     * @param closingOrder
      * @return JAXB representation of a Product Order
      * @throws SAPIntegrationException
      */
@@ -267,9 +265,6 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * @param placedOrder Order from which the quantities are defined
      * @param product Product that is to be eventually charged when work on the product order is completed
      * @param additionalSampleCount
-     * @param creatingNewOrder
-     * @param closingOrder
-     * @param forOrderValueQuery
      * @return JAXB sub element of the SAP order to represent the Product that will be charged and the quantity that
      * is expected of it.
      */
@@ -399,8 +394,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
     @NotNull
     protected SAPMaterial initializeSapMaterialObject(Product product) throws SAPIntegrationException {
-        SAPCompanyConfiguration companyCode = (product.isExternalProduct() || product.isClinicalProduct()) ?
-            SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES :
+        SAPCompanyConfiguration companyCode =
+//                (product.isExternalProduct() || product.isClinicalProduct()) ?
+//            SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES :
             SAPCompanyConfiguration.BROAD;
         String productHeirarchy = SAPCompanyConfiguration.BROAD.getSalesOrganization();
 
@@ -429,19 +425,23 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 .filter(configuration -> configuration != SAPCompanyConfiguration.BROAD).collect(
                         Collectors.toSet());
 
-        if(sapMaterial.getCompanyCode() == SAPCompanyConfiguration.BROAD) {
-            for (SAPCompanyConfiguration platformToPublish : otherPlatformsToPublish) {
+        for (SAPCompanyConfiguration platformToPublish : otherPlatformsToPublish) {
 
+            if (platformToPublish == SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES ||
+                (platformToPublish != SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES &&
+                 !StringUtils.equals(sapMaterial.getProductHierarchy(),
+                        SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization()))) {
                 sapMaterial.setCompanyCode(platformToPublish);
 
-                if(platformToPublish == SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) {
+                if (platformToPublish == SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) {
                     String materialName =
                             StringUtils.defaultString(product.getAlternateExternalName(), product.getName());
                     sapMaterial.setMaterialName(materialName);
                 } else {
                     sapMaterial.setMaterialName(product.getName());
                 }
-                if (productPriceCache.findByProduct(product, SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) == null) {
+                if (productPriceCache.findByProduct(product, SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES)
+                    == null) {
                     getClient().createMaterial(sapMaterial);
                 } else {
                     getClient().changeMaterialDetails(sapMaterial);
