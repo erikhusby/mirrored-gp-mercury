@@ -35,12 +35,14 @@ import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A transient class returned by LabVessel.getSampleInstances.  It accumulates information encountered
@@ -623,7 +625,9 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         }
 
         for (MercurySample mercurySample : labVessel.getMercurySamples()) {
-            allProductOrderSamples.addAll(mercurySample.getProductOrderSamples());
+            allProductOrderSamples.addAll(mercurySample.getProductOrderSamples().stream().
+                    sorted(Comparator.comparing(o -> o.getProductOrder().getProductOrderId() == null ? 0L : o.getProductOrder().getProductOrderId())).
+                    collect(Collectors.toList()));
         }
     }
 
