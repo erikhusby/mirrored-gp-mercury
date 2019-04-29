@@ -1799,6 +1799,7 @@ public class ProductOrderFixupTest extends Arquillian {
         }
     }
 
+    @Test(enabled = false)
     public void fixupGplim5813RetroactiveQuoteSourceUpdate() throws Exception {
         userBean.loginOSUser();
         beginTransaction();
@@ -1815,7 +1816,10 @@ public class ProductOrderFixupTest extends Arquillian {
                         criteriaQuery.where(noSourcePredicate);
                     }
                 });
-        allOrdersWithNoQuoteSource.forEach(productOrder -> productOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER));
+        allOrdersWithNoQuoteSource.forEach(productOrder -> {
+            productOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
+            System.out.println("Update quote source on "+ productOrder.getJiraTicketKey());
+        });
         productOrderDao.persist(new FixupCommentary("GPLIM-5813 Retroactively set all Product orders created "
                                                     + "prior to the SAP 2.0 launch to recognize that their quoute "
                                                     + "comes from the Quote Server"));
