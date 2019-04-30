@@ -37,10 +37,19 @@ public class CsvParser {
                                                              @Nullable Map<String, String> columnNameToBeanMap,
                                                              CsvToBeanFilter filter,
                                                              int skipLines) {
+        BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+        return parseCsvStreamToBeanByMapping(br, fieldDelimiter, beanClass, columnNameToBeanMap, filter, skipLines);
+    }
+
+    public static <T> List<T> parseCsvStreamToBeanByMapping(BufferedReader br,
+                                                            char fieldDelimiter,
+                                                            Class<T> beanClass,
+                                                            @Nullable Map<String, String> columnNameToBeanMap,
+                                                            CsvToBeanFilter filter,
+                                                            int skipLines) {
         CSVReader reader = null;
         try {
-            reader = new CSVReader(new BufferedReader(new InputStreamReader(inputStream)),
-                    fieldDelimiter, '\'', skipLines);
+            reader = new CSVReader(br, fieldDelimiter, '\'', skipLines);
             HeaderColumnNameTranslateMappingStrategy<T> strategy =
                     new HeaderColumnNameTranslateMappingStrategy<>();
             strategy.setColumnMapping(columnNameToBeanMap);
