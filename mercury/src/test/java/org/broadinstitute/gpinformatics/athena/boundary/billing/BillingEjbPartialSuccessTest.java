@@ -462,9 +462,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                               ".java.lang.RuntimeException: Intentional Work Registration Failure!";
             }
         }
-        String successMessagePattern =
-            String.format(BillingAdaptor.BILLING_LOG_TEXT_FORMAT, GOOD_WORK_ID, SAP_DOCUMENT_ID, "", "", 0f, "", "", "")
-                .substring(0, 50) + ".*";
+        String successMessagePattern = String.format(BillingAdaptor.BILLING_LOG_TEXT_FORMAT, GOOD_WORK_ID,
+            BillingAdaptor.NOT_ELIGIBLE_FOR_SAP_INDICATOR, "", "", 0f, "", "", "").substring(0, 50) + ".*";
         assertThat(failMessage, notNullValue());
 
         assertThat(testLogHandler.messageMatches(failMessage), is(true));
