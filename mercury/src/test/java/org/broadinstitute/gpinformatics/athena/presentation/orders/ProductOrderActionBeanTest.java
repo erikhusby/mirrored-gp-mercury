@@ -439,6 +439,7 @@ public class ProductOrderActionBeanTest {
             quoteId = "9999999";
         }
         pdo.setQuoteId(quoteId);
+        pdo.setQuoteSource(quoteSource);
         pdo.addRegulatoryInfo(new RegulatoryInfo("test", RegulatoryInfo.Type.IRB, "test"));
         pdo.setAttestationConfirmed(true);
         pdo.setJiraTicketKey("");

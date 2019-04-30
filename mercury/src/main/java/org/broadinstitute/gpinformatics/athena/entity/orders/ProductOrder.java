@@ -848,14 +848,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             cachedQuote = null;
         }
         this.quoteId = quoteId;
-        if(StringUtils.isNotBlank(this.quoteId)) {
-
-            if(StringUtils.isNumeric(this.quoteId)) {
-                this.quoteSource = QuoteSourceType.SAP_SOURCE;
-            } else {
-                this.quoteSource = QuoteSourceType.QUOTE_SERVER;
-            }
-        }
     }
 
     public boolean isQuoteIdSet() {
