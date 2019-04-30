@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -50,10 +51,10 @@ public class BucketEntry {
     public static final Comparator<BucketEntry> byDate = new Comparator<BucketEntry>() {
         @Override
         public int compare(BucketEntry bucketEntryPrime, BucketEntry bucketEntrySecond) {
-            int result = bucketEntryPrime.getCreatedDate().compareTo(bucketEntrySecond.getCreatedDate());
+            int result = ObjectUtils.compare(bucketEntryPrime.getCreatedDate(), bucketEntrySecond.getCreatedDate());
 
             if (result == 0) {
-                result = bucketEntryPrime.getBucketEntryId().compareTo(bucketEntrySecond.getBucketEntryId());
+                result = ObjectUtils.compare(bucketEntryPrime.getBucketEntryId(), bucketEntrySecond.getBucketEntryId());
             }
 
             return result;
