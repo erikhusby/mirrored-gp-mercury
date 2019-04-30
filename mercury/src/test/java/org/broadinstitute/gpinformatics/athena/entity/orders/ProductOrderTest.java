@@ -72,7 +72,7 @@ public class ProductOrderTest {
     private static final Long TEST_CREATOR = 1111L;
     public static final String PDO_JIRA_KEY = "PDO-8";
     private static final String PDO_TITLE = "title";
-    private static final String QUOTE = "quote";
+    private static final String QUOTE = "09282821";
     private final List<ProductOrderSample> sixSamplesWithNamesInBspFormatNoDupes =
             ProductOrderSampleTestFactory
                     .createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-2ACGC", "SM-2ABDD", "SM-2ACKV", "SM-2AB1B", "SM-2ACJC", "SM-2AD5D");
@@ -153,6 +153,7 @@ public class ProductOrderTest {
                 .ignoreProperty("reagentDesignKey")
                 .ignoreProperty("defaultAggregationParticle")
                 .ignoreProperty("quoteSource")
+                .ignoreProperty("quoteReferences")
                 .build();
         tester.testBean(ProductOrder.class, configuration);
 
@@ -711,7 +712,6 @@ public class ProductOrderTest {
                         quoteTestOrder, TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
 
-        assertThat(quoteTestOrder.getQuoteReferences(), is(empty()));
         try {
             quoteTestOrder.updateQuoteItems(sapQuote);
             final Set<SapQuoteItemReference> quoteReferences = quoteTestOrder.getQuoteReferences();
@@ -740,6 +740,7 @@ public class ProductOrderTest {
                 TestUtils.buildTestSapQuote("00332883", BigDecimal.valueOf(20000), BigDecimal.valueOf(100000),
                         quoteTestOrder, TestUtils.SapQuoteTestScenario.MATCH_QUOTE_ITEMS_AND_DOLLAR_LIMITED,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
+        quoteTestOrder.setQuoteId(mixedQuote.getQuoteHeader().getQuoteNumber());
 
         try {
             quoteTestOrder.updateQuoteItems(mixedQuote);
@@ -769,7 +770,7 @@ public class ProductOrderTest {
                 TestUtils.buildTestSapQuote("00332883", BigDecimal.valueOf(20000), BigDecimal.valueOf(100000),
                         quoteTestOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
-
+        quoteTestOrder.setQuoteId(dollarLimitQuote.getQuoteHeader().getQuoteNumber());
         try {
             quoteTestOrder.updateQuoteItems(dollarLimitQuote);
             final Set<SapQuoteItemReference> quoteReferences = quoteTestOrder.getQuoteReferences();
@@ -799,7 +800,7 @@ public class ProductOrderTest {
                 TestUtils.buildTestSapQuote("00332883", BigDecimal.valueOf(20000), BigDecimal.valueOf(100000),
                         quoteTestOrder, TestUtils.SapQuoteTestScenario.PRODUCTS_DIFFER,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
-
+        quoteTestOrder.setQuoteId(differingQuote.getQuoteHeader().getQuoteNumber());
         try {
             quoteTestOrder.updateQuoteItems(differingQuote);
             Assert.fail();

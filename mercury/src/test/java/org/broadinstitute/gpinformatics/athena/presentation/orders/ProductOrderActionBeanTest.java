@@ -104,7 +104,6 @@ import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.OrderCriteria;
 import org.broadinstitute.sap.entity.OrderValue;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
-import org.broadinstitute.sap.entity.order.SAPOrder;
 import org.broadinstitute.sap.entity.quote.FundingDetail;
 import org.broadinstitute.sap.entity.quote.FundingStatus;
 import org.broadinstitute.sap.entity.quote.QuoteHeader;
@@ -435,9 +434,11 @@ public class ProductOrderActionBeanTest {
             throws Exception {
 
         pdo = ProductOrderTestFactory.createDummyProductOrder();
-        final String quoteId = "BSP252";
+        String quoteId = "BSP252";
+        if(quoteSource == ProductOrder.QuoteSourceType.SAP_SOURCE) {
+            quoteId = "9999999";
+        }
         pdo.setQuoteId(quoteId);
-        pdo.setQuoteSource(quoteSource);
         pdo.addRegulatoryInfo(new RegulatoryInfo("test", RegulatoryInfo.Type.IRB, "test"));
         pdo.setAttestationConfirmed(true);
         pdo.setJiraTicketKey("");
@@ -1422,7 +1423,8 @@ public class ProductOrderActionBeanTest {
     public void testEstimateSomeSAPOrders(ProductOrder.QuoteSourceType quoteSource,
                                           TestUtils.SapQuoteTestScenario quoteItemsMatchOrderProducts) throws Exception {
 
-        final String testQuoteIdentifier = "testQuote";
+        final String testQuoteIdentifier = (quoteSource == ProductOrder.QuoteSourceType.SAP_SOURCE)?"9999999":"testQuote";
+
         Quote testQuote = buildSingleTestQuote(testQuoteIdentifier, null);
 
             Product primaryProduct = new Product();
@@ -2531,7 +2533,11 @@ public class ProductOrderActionBeanTest {
     public void testEstimateCustomHigherThanQuote(ProductOrder.QuoteSourceType quoteSource,
                                                   TestUtils.SapQuoteTestScenario quoteItemsMatchOrderProducts) throws Exception {
 
-        final String testQuoteIdentifier = "testQuote";
+        String testQuoteIdentifier = "testQuote";
+        if(quoteSource == ProductOrder.QuoteSourceType.SAP_SOURCE) {
+            testQuoteIdentifier = "9999999";
+        }
+
         Quote testQuote = buildSingleTestQuote(testQuoteIdentifier, "12000");
 
         Product primaryProduct = new Product();
@@ -2604,7 +2610,7 @@ public class ProductOrderActionBeanTest {
     }
 
     private void addSapMaterial(Set<SAPMaterial> returnMaterials, Product product, String basePrice,
-                               SapIntegrationClientImpl.SAPCompanyConfiguration broad) throws SAPIntegrationException {
+                               SapIntegrationClientImpl.SAPCompanyConfiguration broad){
         final SAPMaterial material =
                 new SAPMaterial(product.getPartNumber(),broad, broad.getDefaultWbs(),"description",
                         basePrice,SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,"Test Description",

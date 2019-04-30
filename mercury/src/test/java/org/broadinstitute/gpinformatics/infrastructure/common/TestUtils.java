@@ -5,6 +5,7 @@ import functions.rfc.sap.document.sap_com.ZESDQUOTEHEADER;
 import functions.rfc.sap.document.sap_com.ZESDQUOTEITEM;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.sap.entity.quote.FundingDetail;
 import org.broadinstitute.sap.entity.quote.FundingStatus;
 import org.broadinstitute.sap.entity.quote.QuoteHeader;
@@ -70,6 +71,7 @@ public class TestUtils {
         sapQHeader.setQUOTENAME(testQuoteIdentifier);
         sapQHeader.setQUOTESTATUS(FundingStatus.APPROVED.name());
         sapQHeader.setSALESORG(salesorg);
+        sapQHeader.setQUOTATION(testQuoteIdentifier);
         sapQHeader.setFUNDHEADERSTATUS(FundingStatus.APPROVED.name());
         sapQHeader.setCUSTOMER("");
         sapQHeader.setDISTCHANNEL("GE");
@@ -150,7 +152,13 @@ public class TestUtils {
 
         fundingDetailsCollection.add(new FundingDetail(sapFundDetail));
 
-        return new SapQuote(header, fundingDetailsCollection, Collections.emptySet(), quoteItems);
+        final SapQuote sapQuote = new SapQuote(header, fundingDetailsCollection, Collections.emptySet(), quoteItems);
+        try {
+            billingOrder.updateQuoteItems(sapQuote);
+        } catch (SAPInterfaceException e) {
+
+        }
+        return sapQuote;
     }
 
     public enum SapQuoteTestScenario {

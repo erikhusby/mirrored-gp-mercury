@@ -195,7 +195,10 @@ public class BillingCreditDbFreeTest {
     public void testCreateBillingCreditRequest(ProductOrder.QuoteSourceType quoteSourceType)
             throws Exception {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
-        pdo.setQuoteSource(quoteSourceType);
+//        pdo.setQuoteSource(quoteSourceType);
+        if(quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
+            pdo.setQuoteId("00029338");
+        }
 
         SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), BigDecimal.valueOf(10000),BigDecimal.valueOf(100000),
                 pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
@@ -281,9 +284,12 @@ public class BillingCreditDbFreeTest {
 
     @Test(dataProvider = "sapOrQuoteProvider")
     public void testCreateBillingCreditRequestNoFunding(ProductOrder.QuoteSourceType quoteSourceType)
-            throws QuoteNotFoundException, QuoteServerException, SAPIntegrationException {
+            throws Exception {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
         pdo.setQuoteSource(quoteSourceType);
+        if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
+            pdo.setQuoteId("99339288");
+        }
 
         SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), BigDecimal.valueOf(10000),BigDecimal.valueOf(100000),
                 pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
@@ -384,6 +390,9 @@ public class BillingCreditDbFreeTest {
     public void testNegativeBilling(ProductOrder.QuoteSourceType quoteSourceType) throws Exception {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
         pdo.setQuoteSource(quoteSourceType);
+        if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
+            pdo.setQuoteId("99339288");
+        }
 
         SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), BigDecimal.valueOf(10000),BigDecimal.valueOf(100000),
                 pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
@@ -438,6 +447,9 @@ public class BillingCreditDbFreeTest {
     public void testPositiveBilling(ProductOrder.QuoteSourceType quoteSourceType) throws Exception {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
         pdo.setQuoteSource(quoteSourceType);
+        if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
+            pdo.setQuoteId("99339288");
+        }
 
         SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), BigDecimal.valueOf(10000),BigDecimal.valueOf(100000),
                 pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
@@ -499,6 +511,9 @@ public class BillingCreditDbFreeTest {
             throws Exception {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
         pdo.setQuoteSource(quoteSourceType);
+        if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
+            pdo.setQuoteId("99339288");
+        }
 
         SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), BigDecimal.valueOf(10000),BigDecimal.valueOf(100000),
                 pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
