@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.presentation.run;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.sun.istack.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.util.MessageCollection;
@@ -16,6 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.mercury.presentation.workflow.CreateFCTActionBean.CONTROLS;
 
@@ -134,26 +135,6 @@ public class DesignationUtils {
         }
     }
 
-    /** Finds the best lcset(s) and sample instances for the loading tube. */
-    public static Pair<Set<LabBatch>, Set<SampleInstanceV2>> findBestLcsets(LabVessel loadingTube) {
-        Set<LabBatch> bestLcsets = new HashSet<>();
-        Set<LabBatch> allLcsets = new HashSet<>();
-        Set<SampleInstanceV2> sampleInstances = loadingTube.getSampleInstancesV2();
-        for (SampleInstanceV2 sampleInstance : sampleInstances) {
-            LabBatch singleBatch = sampleInstance.getSingleBatch();
-            if (singleBatch != null) {
-                // Multiple single lcsets can exist in one loading tube (e.g. norm tube 0185941254).
-                bestLcsets.add(singleBatch);
-            } else {
-                allLcsets.addAll(sampleInstance.getAllWorkflowBatches());
-            }
-        }
-        if (bestLcsets.isEmpty()) {
-            bestLcsets = allLcsets;
-        }
-        return Pair.of(bestLcsets, sampleInstances);
-    }
-
     /**
      * Makes dtos from existing designations. This is essentially starting from a loading tube
      * since the lcset will have been normalized, except in the case where there was a chosen lcet.
@@ -166,9 +147,10 @@ public class DesignationUtils {
                                                              MessageCollection messageCollection) {
         List<LcsetAssignmentDto> lcsetAssignmentDtos = new ArrayList<>();
         for (FlowcellDesignation designation : flowcellDesignations) {
-            Pair<Set<LabBatch>, Set<SampleInstanceV2>> lcsetsSampleInsts = findBestLcsets(designation.getLoadingTube());
-            Set<LabBatch> lcsets = lcsetsSampleInsts.getLeft();
-            Set<SampleInstanceV2> sampleInstances = lcsetsSampleInsts.getRight();
+            Set<SampleInstanceV2> sampleInstances = designation.getStartingTube().getSampleInstancesV2();
+            Set<LabBatch> lcsets = sampleInstances.stream().
+                    flatMap(sampleInstance -> sampleInstance.getAllWorkflowBatches().stream()).
+                    collect(Collectors.toSet());
             // If there is only one lcset, uses it. If there are multiple lcsets and one of those is the
             // lcset that had been chosen by the user, uses it. Otherwise returns an error message.
             LabBatch lcset = lcsets.size() == 1 ? lcsets.iterator().next() :
@@ -178,21 +160,18 @@ public class DesignationUtils {
                 if (lcsets.size() > 1) {
                     // Returns the ambiguous lcset assignment dtos in case it's a good time to
                     // have the user to choose one.
-                    LcsetAssignmentDto assignmentDto = new LcsetAssignmentDto(designation.getLoadingTube(), lcsets);
+                    LcsetAssignmentDto assignmentDto = new LcsetAssignmentDto(designation.getStartingTube(), lcsets);
                     assignmentDto.setDesignationId(designation.getDesignationId());
                     lcsetAssignmentDtos.add(assignmentDto);
                 }
                 messageCollection.addError(String.format(UNKNOWN_LCSET_MSG, designation.getDesignationId(),
-                        designation.getLoadingTube().getLabel()));
+                        designation.getStartingTube().getLabel()));
             } else {
                 Set<BucketEntry> bucketEntries = new HashSet<>();
                 Set<LabVessel> startingVessels = new HashSet<>();
 
                 for (SampleInstanceV2 sampleInstance : sampleInstances) {
-                    if (sampleInstance.getSingleBatch() != null &&
-                        sampleInstance.getSingleBatch().equals(lcset) ||
-                        sampleInstance.getSingleBatch() == null &&
-                        sampleInstance.getAllWorkflowBatches().contains(lcset)) {
+                    if (sampleInstance.getAllWorkflowBatches().contains(lcset)) {
 
                         // Finds starting vessels for this tube in this lcset.
                         for (LabBatchStartingVessel startingVessel : sampleInstance.getAllBatchVessels(
@@ -216,7 +195,7 @@ public class DesignationUtils {
                     controls.remove(bucketEntry.getLabVessel());
                 }
 
-                DesignationDto designationDto = makeDesignationDto(designation.getLoadingTube(),
+                DesignationDto designationDto = makeDesignationDto(designation.getStartingTube(),
                         lcset, bucketEntries, controls, designation);
 
                 caller.getDtos().add(designationDto);
@@ -260,8 +239,16 @@ public class DesignationUtils {
                 if (dto.getLoadingConc() == null) {
                     dto.setLoadingConc(product.getLoadingConcentration());
                 }
+                if (dto.getIndexType() == null) {
+                    FlowcellDesignation.IndexType indexType = (product.getIndexType() != null) ?
+                            product.getIndexType() : FlowcellDesignation.IndexType.DUAL;
+                    dto.setIndexType(indexType);
+                }
             } else {
                 productName = "[" + bucketEntry.getProductOrder().getJiraTicketKey() + "]";
+            }
+            if (dto.getIndexType() == null) {
+                dto.setIndexType(FlowcellDesignation.IndexType.NONE);
             }
             productToStartingVessel.put(productName, bucketEntry.getLabVessel().getLabel());
 

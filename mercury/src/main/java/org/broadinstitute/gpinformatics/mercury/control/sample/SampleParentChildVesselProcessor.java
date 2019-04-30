@@ -39,7 +39,7 @@ public class SampleParentChildVesselProcessor extends SampleVesselProcessor {
     }
 
     @Override
-    public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
+    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber, boolean requiredValuesPresent) {
         String sampleId = dataRow.get(Headers.SAMPLE_ID.getText());
         String tubeBarcode = dataRow.get(Headers.MANUFACTURER_TUBE_BARCODE.getText());
         String containerBarcode = dataRow.get(Headers.CONTAINER_BARCODE.getText());
@@ -51,10 +51,10 @@ public class SampleParentChildVesselProcessor extends SampleVesselProcessor {
             mapBarcodeToParentVessel.put(containerBarcode, parentVesselBean);
         }
         if (!tubeBarcodes.add(tubeBarcode)) {
-            addDataMessage("Duplicate tube barcode " + tubeBarcode, dataRowIndex);
+            addDataMessage("Duplicate tube barcode " + tubeBarcode, dataRowNumber);
         }
         if (!sampleIds.add(sampleId)) {
-            addDataMessage("Duplicate sample ID " + sampleId, dataRowIndex);
+            addDataMessage("Duplicate sample ID " + sampleId, dataRowNumber);
         }
         parentVesselBean.getChildVesselBeans().add(new ChildVesselBean(tubeBarcode, sampleId,
                 BarcodedTube.BarcodedTubeType.MatrixTube.getDisplayName(), position));

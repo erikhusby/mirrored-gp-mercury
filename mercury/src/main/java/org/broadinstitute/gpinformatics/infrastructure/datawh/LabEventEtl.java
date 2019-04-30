@@ -524,7 +524,6 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             Collections.sort(dtos, EventFactDto.BY_SAMPLE_KEY);
         }
 
-
         postEtlLogging();
 
         return dtos;
@@ -594,7 +593,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                     }
 
                     if (StringUtils.isBlank(workflowName) && pdo != null) {
-                        workflowName = pdo.getProduct().getWorkflow().getWorkflowName();
+                        workflowName = pdo.getProduct().getWorkflowName();
                     }
 
                     WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(

@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -54,6 +55,8 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
     public void setUp() {
 
         reworkEjb = new ReworkEjb();
+        WorkflowLoader workflowLoader = new WorkflowLoader();
+        reworkEjb.setWorkflowConfig(workflowLoader.load());
 
         labVessel = new BarcodedTube("22834023", BarcodedTube.BarcodedTubeType.MatrixTube);
 
@@ -161,7 +164,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
         nonExomeExpressPdo.setJiraTicketKey("PDO-18");
         nonExomeExpressPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         nonExomeExpressPdo.setSamples(sampleList5);
-        nonExomeExpressPdo.getProduct().setWorkflow(Workflow.ICE_EXOME_EXPRESS);
+        nonExomeExpressPdo.getProduct().setWorkflowName(Workflow.ICE_EXOME_EXPRESS);
         nonExomeExpressPdo.getProduct().setProductFamily(new ProductFamily(
                 ProductFamily.ProductFamilyInfo.EXOME.getFamilyName()));
 
@@ -251,7 +254,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
         nonExomeExpressPdo.setJiraTicketKey("PDO-18");
         nonExomeExpressPdo.setSamples(sampleList5);
         nonExomeExpressPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-        nonExomeExpressPdo.getProduct().setWorkflow(Workflow.ICE_EXOME_EXPRESS);
+        nonExomeExpressPdo.getProduct().setWorkflowName(Workflow.ICE_EXOME_EXPRESS);
         nonExomeExpressPdo.getProduct().setProductFamily(new ProductFamily(
                 ProductFamily.ProductFamilyInfo.EXOME.getFamilyName()));
 

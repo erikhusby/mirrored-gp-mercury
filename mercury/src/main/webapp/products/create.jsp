@@ -1,6 +1,6 @@
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
-<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.entity.products.Product" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -65,7 +65,9 @@
                     $j("#primaryPriceItem").tokenInput(
                         "${ctxpath}/products/product.action?priceItemAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                             hintText: "Type a Price Item name",
+                            <enhance:out escapeXml="false">
                             prePopulate: ${actionBean.ensureStringResult(actionBean.priceItemTokenInput.completeData)},
+                            </enhance:out>
                             resultsFormatter: formatInput,
                             tokenLimit: 1,
                             tokenDelimiter: "${actionBean.priceItemTokenInput.separator}",
@@ -77,7 +79,9 @@
                     $j("#externalPriceItem").tokenInput(
                         "${ctxpath}/products/product.action?externalPriceItemAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                             hintText: "Type an External Price Item name",
+                            <enhance:out escapeXml="false">
                             prePopulate: ${actionBean.ensureStringResult(actionBean.externalPriceItemTokenInput.completeData)},
+                            </enhance:out>
                             resultsFormatter: formatInput,
                             tokenLimit: 1,
                             tokenDelimiter: "${actionBean.externalPriceItemTokenInput.separator}",
@@ -89,7 +93,9 @@
                     $j("#addOns").tokenInput(
                         "${ctxpath}/products/product.action?addOnsAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                             hintText: "Type a Product name",
+                            <enhance:out escapeXml="false">
                             prePopulate: ${actionBean.ensureStringResult(actionBean.addOnTokenInput.completeData)},
+                            </enhance:out>
                             resultsFormatter: formatInput,
                             tokenDelimiter: "${actionBean.addOnTokenInput.separator}",
                             preventDuplicates: true,
@@ -662,9 +668,9 @@
                             Workflow
                         </stripes:label>
                         <div class="controls">
-                            <stripes:select name="editProduct.workflow" id="workflow">
-                                <stripes:option value="<%= Workflow.NONE %>">None</stripes:option>
-                                <stripes:options-collection collection="${actionBean.availableWorkflows}" label="workflowName"/>
+                            <stripes:select name="editProduct.workflowName" id="workflow">
+                                <stripes:option value="">None</stripes:option>
+                                <stripes:options-collection collection="${actionBean.availableWorkflows}" />
                             </stripes:select>
                         </div>
                     </div>
@@ -683,6 +689,22 @@
                                               class="defaultText" title="Enter data type to use for aggregation"/>
                             </div>
                         </div>
+
+                        <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                            <div class="control-group">
+                                <stripes:label for="aggregationParticle" name="customAggregationParticle"
+                                               class="control-label"/>
+                                <div class="controls">
+                                    <stripes:select style="width: auto;" id="customAggregationParticle"
+                                                    name="editProduct.defaultAggregationParticle"
+                                                    title="Select the custom aggregation particle which the pipleine will appended to their default aggregation. By default the pipeline aggregates on the research project.">
+                                        <stripes:option value=""><%=Product.AggregationParticle.DEFAULT_LABEL%></stripes:option>
+                                        <stripes:options-enumeration label="displayName"
+                                                                     enum="org.broadinstitute.gpinformatics.athena.entity.products.Product.AggregationParticle"/>
+                                    </stripes:select>
+                                </div>
+                            </div>
+                        </security:authorizeBlock>
 
                         <div class="control-group">
                             <stripes:label for="analysisTypeKey" name="Analysis Type" class="control-label"/>
@@ -755,6 +777,17 @@
                             </stripes:label>
                             <div class="controls">
                                 <stripes:checkbox id="pairedEndRead" name="editProduct.pairedEndRead" style="margin-top: 10px;"/>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <stripes:label for="indexType" class="control-label">Index Type</stripes:label>
+                            <div class="controls">
+                                <stripes:select name="editProduct.indexType">
+                                    <stripes:options-enumeration
+                                            enum="org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation.IndexType"
+                                            label="displayName"/>
+                                </stripes:select>
                             </div>
                         </div>
 

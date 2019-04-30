@@ -217,7 +217,6 @@
                  * they are filtered out of the DOM when the page loads
                  */
                 'bStateSave': false,
-                "iDisplayLength": 50,
                 'aoColumns': [
                     {'bSortable': false},                                                   // 0: checkbox
                     {'bVisible': false},                                                    // 1: search text
@@ -249,6 +248,8 @@
                         }).add("Please be aware that the user interface is less responsive when large amounts of data are displayed. (clicking things takes longer)", 'slowMessage');
 
                     }
+                    // re-build datePickers
+                    setupDatePickers();
                 },
                 fnInitComplete: function(){
                     /*
@@ -370,32 +371,37 @@
              */
             $j('div.onRisk').popover();
 
+            var $dateCompleteInputs = $ledger.find("input.dateComplete");
+
             /*
              * Set up date pickers for date complete.
              */
-            var $dateCompleteInputs = $ledger.find("input.dateComplete");
-            $dateCompleteInputs.on("click", function(){
-                var $thisInput = $j(this);
-                function destroyMe(){
-                    $j(this).datepicker("destroy");
+            function setupDatePickers() {
+                // Re-find dateCompleteInputs in case this method is called after a page change.
+                $dateCompleteInputs = $ledger.find("input.dateComplete");
+                $dateCompleteInputs.on("click", function(){
+                    var $thisInput = $j(this);
+                    function destroyMe(){
+                        $j(this).datepicker("destroy");
+                    }
+                    $thisInput.datepicker({ onClose: destroyMe, dateFormat: 'M d, yy', maxDate: 0}).datepicker('refresh');
+                    $thisInput.datepicker("show");
+                });
+                // Update display styles for all date complete inputs when the page loads.
+                for (var i = 0; i < $dateCompleteInputs.length; i++) {
+                    updateDateCompleteValidation($dateCompleteInputs.eq(i));
                 }
-                $thisInput.datepicker({ onClose: destroyMe, dateFormat: 'M d, yy', maxDate: 0}).datepicker('refresh');
-                $thisInput.datepicker("show");
-            });
-            // Update display styles for all date complete inputs when the page loads.
-            for (var i = 0; i < $dateCompleteInputs.length; i++) {
-                updateDateCompleteValidation($dateCompleteInputs.eq(i));
-            }
 
-            // Update display styles in response to change event fired after auto-fill.
-            $ledgerQuantities.on('change', function(event) {
-                updateUnbilledStatus($j(event.target), $dateCompleteInputs);
-                updateSubmitButton();
-            });
+                // Update display styles in response to change event fired after auto-fill.
+                $ledgerQuantities.on('change', function(event) {
+                    updateUnbilledStatus($j(event.target), $dateCompleteInputs);
+                    updateSubmitButton();
+                });
 
-            // Update display styles for all quantities when the page loads.
-            for (var i = 0; i < $ledgerQuantities.length; i++) {
-                updateUnbilledStatus($ledgerQuantities.eq(i), $dateCompleteInputs);
+                // Update display styles for all quantities when the page loads.
+                for (var i = 0; i < $ledgerQuantities.length; i++) {
+                    updateUnbilledStatus($ledgerQuantities.eq(i), $dateCompleteInputs);
+                }
             }
 
             function toggleHidden(row) {
@@ -450,12 +456,14 @@
             });
 
             ledgerForm.submit(function (event) {
-                var infoMessages = modalMessages("info");
-                var statusNamespace = "updateStatus";
-                infoMessages.add("Updating Ledger", statusNamespace);
 
-                // clear any previous success messages
-                modalMessages('success').clear();
+                // clear any previous messages
+                ['error', 'success', 'info', 'warning'].forEach(function (level) {
+                    modalMessages(level).clear();
+                });
+
+                var statusNamespace = "updateStatus";
+                modalMessages("info").add("Updating Ledger", statusNamespace);
 
                 var formData = $j(event.target).serializeArray();
 
@@ -519,7 +527,7 @@
                                 } else {
                                     message = "Ledger data updated for ".concat(rowsCompleted).concat(" samples, ").concat(rowsRemaining).concat(" remaining.");
                                 }
-                                infoMessages.add(message, statusNamespace);
+                                modalMessages("info").add(message, statusNamespace);
                                 message = "&successMessage=Successfully updated ".concat(totalRowsToUpdate).concat(" ledger entries.");
                                 if (json.redirectOnSuccess) {
                                     modalMessages("info").clear();
@@ -972,8 +980,22 @@
         <tbody>
             <c:forEach items="${actionBean.productOrderSampleLedgerInfos}" var="info">
                 <tr class="${info.sample.deliveryStatus.displayName == 'Abandoned' ? 'abandoned' : ''}">
+
+                    <c:set var="disableAbandon" value="${false}"/>
+                    <c:if test="${info.sample.deliveryStatus.abandoned}">
+                        <c:choose>
+                            <c:when test="${info.anyQuantitySet}">
+                                <c:set var="disableAbandon" value="${false}" />
+                            </c:when>
+                            <c:otherwise>
+                                <c:set var="disableAbandon" value="${true}"/>
+                            </c:otherwise>
+                        </c:choose>
+                    </c:if>
                     <td>
-                        <input type="checkbox" title="${info.sample.samplePosition}" class="shiftCheckbox" name="selectedProductOrderSampleIds" value="${info.sample.productOrderSampleId}">
+                        <c:if test="${!disableAbandon}">
+                            <input type="checkbox" title="${info.sample.samplePosition}" class="shiftCheckbox" name="selectedProductOrderSampleIds" value="${info.sample.productOrderSampleId}">
+                        </c:if>
                     </td>
                     <td>
                         ${info.sample.name}
@@ -1012,10 +1034,17 @@
                                value="${actionBean.ledgerData[info.sample.samplePosition].completeDateFormatted}"/>
                         <c:set var="currentValue"
                                value="${submittedCompleteDate != null ? submittedCompleteDate : info.dateCompleteFormatted}"/>
-                        <input name="ledgerData[${info.sample.samplePosition}].workCompleteDate"
-                               value="${currentValue}" data-rownum = "${info.sample.samplePosition}"
-                               originalValue="${info.dateCompleteFormatted}"
-                               class="dateComplete ${currentValue != info.dateCompleteFormatted ? 'changed' : ''}">
+                        <c:choose>
+                            <c:when test="${disableAbandon}">
+                                ${info.dateCompleteFormatted}
+                            </c:when>
+                            <c:otherwise>
+                                <input name="ledgerData[${info.sample.samplePosition}].workCompleteDate"
+                                       value="${currentValue}" data-rownum="${info.sample.samplePosition}"
+                                       originalValue="${info.dateCompleteFormatted}"
+                                       class="dateComplete ${currentValue != info.dateCompleteFormatted ? 'changed' : ''}">
+                            </c:otherwise>
+                        </c:choose>
                     </td>
 
                     <c:forEach items="${actionBean.priceItems}" var="priceItem">
@@ -1027,12 +1056,15 @@
                                    name="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].originalQuantity"
                                    value="${info.getTotalForPriceItem(priceItem)}"/>
                             <c:set var="submittedQuantity" value="${actionBean.ledgerData[info.sample.samplePosition].quantities[priceItem.priceItemId].submittedQuantity}"/>
-                            <input id="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
-                                   name="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
-                                   value="${submittedQuantity != null ? submittedQuantity : info.getTotalForPriceItem(priceItem)}"
-                                   class="ledgerQuantity" data-rownum = "${info.sample.samplePosition}"
-                                   priceItemId="${priceItem.priceItemId}"
-                                   billedQuantity="${info.getBilledForPriceItem(priceItem)}">
+                                <c:if test="${!disableAbandon}">
+                                    <input id="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
+                                           name="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
+                                           value="${submittedQuantity != null ? submittedQuantity : info.getTotalForPriceItem(priceItem)}"
+                                           class="ledgerQuantity" data-rownum = "${info.sample.samplePosition}"
+                                           priceItemId="${priceItem.priceItemId}"
+                                           billedQuantity="${info.getBilledForPriceItem(priceItem)}">
+
+                                </c:if>
                             <c:if test="${priceItem == actionBean.productOrder.determinePriceItemByCompanyCode(actionBean.productOrder.product) && info.autoFillQuantity != 0}">
                                 <input type="hidden"
                                        name="${info.sample.samplePosition}-autoFill-${info.sample.name}"

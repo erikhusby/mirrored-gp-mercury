@@ -1285,10 +1285,10 @@ public class LabEventTest extends BaseEventTest {
     private TubeFormation getTubeFormation(String unique) {
         HashMap<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
         BarcodedTube p1 = new BarcodedTube("P1" + unique);
-        p1.getMercurySamples().add(new MercurySample("SM-P1" + unique, MercurySample.MetadataSource.MERCURY));
+        p1.addSample(new MercurySample("SM-P1" + unique, MercurySample.MetadataSource.MERCURY));
         mapPositionToTube.put(VesselPosition.A01, p1);
         BarcodedTube p2 = new BarcodedTube("P2" + unique);
-        p2.getMercurySamples().add(new MercurySample("SM-P2" + unique, MercurySample.MetadataSource.MERCURY));
+        p2.addSample(new MercurySample("SM-P2" + unique, MercurySample.MetadataSource.MERCURY));
         mapPositionToTube.put(VesselPosition.A02, p2);
         LabBatch labBatch = new LabBatch("LCSET-" + unique, new HashSet<LabVessel>(mapPositionToTube.values()),
                 LabBatch.LabBatchType.WORKFLOW);
@@ -2291,12 +2291,12 @@ public class LabEventTest extends BaseEventTest {
     }
 
     private void testGenomeWorkflow(ProductOrder productOrder, LibraryConstructionJaxbBuilder.PondType pondType,
-                                    String[] expectedEventNames, Workflow workflow) {
+                                    String[] expectedEventNames, String workflow) {
         testGenomeWorkflow(productOrder, pondType, expectedEventNames, workflow, "1", false);
     }
 
     private QtpEntityBuilder testGenomeWorkflow(ProductOrder productOrder, LibraryConstructionJaxbBuilder.PondType pondType,
-                                                String[] expectedEventNames, Workflow workflow, String barcodeSuffix,
+                                                String[] expectedEventNames, String workflow, String barcodeSuffix,
                                                 boolean includeUMI) {
         Pair<Map<String, BarcodedTube>, QtpEntityBuilder> pair =
                 testUpToBooking(productOrder, pondType, workflow, barcodeSuffix,
@@ -2304,12 +2304,15 @@ public class LabEventTest extends BaseEventTest {
         QtpEntityBuilder qtpEntityBuilder = pair.getRight();
         Map<String, BarcodedTube> mapBarcodeToTube = pair.getLeft();
         int numSeqReagents = 1;
-        if (workflow == Workflow.CUSTOM_SELECTION)
+        if (workflow.equals(Workflow.CUSTOM_SELECTION)) {
             numSeqReagents = 2;
-        if (workflow == Workflow.ICE_EXOME_EXPRESS_HYPER_PREP)
+        }
+        if (workflow.equals(Workflow.ICE_EXOME_EXPRESS_HYPER_PREP)) {
             numSeqReagents = 3;
-        if (includeUMI)
+        }
+        if (includeUMI) {
             numSeqReagents++;
+        }
 
         LabVessel denatureSource =
                 qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
@@ -2341,7 +2344,7 @@ public class LabEventTest extends BaseEventTest {
     }
 
     private Pair<Map<String, BarcodedTube>, QtpEntityBuilder> testUpToBooking(ProductOrder productOrder, LibraryConstructionJaxbBuilder.PondType pondType,
-                                                                              Workflow workflow, String barcodeSuffix,
+                                                                              String workflow, String barcodeSuffix,
                                                                               LibraryConstructionEntityBuilder.Indexing indexing,
                                                                               LibraryConstructionEntityBuilder.Umi umi) {
         expectedRouting = SystemRouter.System.MERCURY;
@@ -2360,7 +2363,7 @@ public class LabEventTest extends BaseEventTest {
         String platingBarcode = null;
         Map<String, BarcodedTube> mapBarcodeToDaughterTube = null;
         Map<String, BarcodedTube> mapBarcodeToPlatingVessel = null;
-        if (workflow == Workflow.ICE_EXOME_EXPRESS_HYPER_PREP || workflow == Workflow.CUSTOM_SELECTION) {
+        if (workflow.equals(Workflow.ICE_EXOME_EXPRESS_HYPER_PREP) || workflow.equals(Workflow.CUSTOM_SELECTION)) {
             CrspPicoEntityBuilder crspPicoEntityBuilder = new CrspPicoEntityBuilder(getBettaLimsMessageTestFactory(),
                     getLabEventFactory(), getLabEventHandler(), "", "CRSP", mapBarcodeToTube).invoke();
             platingTubeFormation = (TubeFormation) crspPicoEntityBuilder.getShearingAliquotEntity().
@@ -2384,7 +2387,7 @@ public class LabEventTest extends BaseEventTest {
         }
 
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder;
-        if (workflow == Workflow.CELL_FREE_HYPER_PREP_UMIS && umi != LibraryConstructionEntityBuilder.Umi.NONE) {
+        if (workflow.equals(Workflow.CELL_FREE_HYPER_PREP_UMIS) && umi != LibraryConstructionEntityBuilder.Umi.NONE) {
             LibraryConstructionCellFreeUMIEntityBuilder libraryConstructionProcessWithUMI =
                     runLibraryConstructionProcessWithUMI(mapBarcodeToPlatingVessel,
                             platingTubeFormation, umi);
@@ -2430,14 +2433,14 @@ public class LabEventTest extends BaseEventTest {
 
         QtpEntityBuilder qtpEntityBuilder = null;
 
-        if (workflow == Workflow.ICE_EXOME_EXPRESS_HYPER_PREP) {
+        if (workflow.equals(Workflow.ICE_EXOME_EXPRESS_HYPER_PREP)) {
             IceEntityBuilder iceEntityBuilder = runHyperPrepIceProcess(
                     Collections.singletonList(libraryConstructionEntityBuilder.getPondRegRack()),
                     "1");
             qtpEntityBuilder = runQtpProcess(iceEntityBuilder.getCatchEnrichRack(),
                     iceEntityBuilder.getCatchEnrichBarcodes(),
                     iceEntityBuilder.getMapBarcodeToCatchEnrichTubes(), barcodeSuffix);
-        } else if (workflow == Workflow.CUSTOM_SELECTION) {
+        } else if (workflow.equals(Workflow.CUSTOM_SELECTION)) {
             SelectionEntityBuilder selectionEntityBuilder = runSelectionProcess(
                     Collections.singletonList(libraryConstructionEntityBuilder.getPondRegRack()),
                     "1");

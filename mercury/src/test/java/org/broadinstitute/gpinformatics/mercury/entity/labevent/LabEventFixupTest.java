@@ -28,10 +28,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchFixUpTest;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.hibernate.SQLQuery;
@@ -1950,9 +1952,47 @@ public class LabEventFixupTest extends Arquillian {
             LabEvent labEvent = labEventDao.findById(LabEvent.class, Long.parseLong(id));
             labEvent.setManualOverrideLcSet(labBatch);
             System.out.println("Lab event " + labEvent.getLabEventId() + " manual override to " + batchId);
+            TransferTraverserCriteria transferTraverserCriteria = new LabBatchFixUpTest.ComputeLabBatchTtc(true);
+            for (LabVessel targetLabVessel : labEvent.getTargetLabVessels()) {
+                VesselContainer<?> containerRole = targetLabVessel.getContainerRole();
+                if (containerRole == null) {
+                    targetLabVessel.evaluateCriteria(transferTraverserCriteria,
+                            TransferTraverserCriteria.TraversalDirection.Descendants);
+                } else {
+                    for (VesselPosition vesselPosition : targetLabVessel.getVesselGeometry().getVesselPositions()) {
+                        containerRole.evaluateCriteria(vesselPosition, transferTraverserCriteria,
+                                TransferTraverserCriteria.TraversalDirection.Descendants, 0);
+                    }
+                }
+            }
         }
 
         labEventDao.persist(new FixupCommentary(jiraTicket + " manual override to " + batchId));
+        labEventDao.flush();
+        utx.commit();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/ClearManualOverrideLabEvents.txt,
+     * so it can be used for other similar fixups, without writing a new test.  It is used to clear previous LabBatch
+     * manual overrides of LabEvents.  Example contents of the file are:
+     * GPLIM-5906
+     * 3117214
+     */
+    @Test(enabled = false)
+    public void fixupGplim5906() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ClearManualOverrideLabEvents.txt"));
+        String jiraTicket = lines.get(0);
+        for (String id : lines.subList(1, lines.size())) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, Long.parseLong(id));
+            labEvent.setManualOverrideLcSet(null);
+            System.out.println("Lab event " + labEvent.getLabEventId() + " clear manual override");
+        }
+
+        labEventDao.persist(new FixupCommentary(jiraTicket + " clear manual override"));
         labEventDao.flush();
         utx.commit();
     }

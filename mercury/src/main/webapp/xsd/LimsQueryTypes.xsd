@@ -112,6 +112,16 @@
         </xsd:sequence>
     </xsd:complexType>
 
+    <xsd:element name="SampleKitReceivedRequest">
+        <xsd:complexType>
+            <xsd:choice>
+                <xsd:element name="sampleKitId" type="xsd:string"/>
+                <xsd:element name="username" type="xsd:string"/>
+                <xsd:element name="wellAndSourceTubeType" type="wellAndSourceTubeType" maxOccurs="unbounded"/>
+            </xsd:choice>
+        </xsd:complexType>
+    </xsd:element>
+
     <xsd:complexType name="wellAndSourceTubeType">
         <xsd:sequence>
             <xsd:element name="wellName" type="xsd:string"/>

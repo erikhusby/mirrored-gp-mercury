@@ -261,7 +261,7 @@ public class SearchActionBean extends CoreActionBean {
      *
      * @return {@link List<String>} of all the keys from the searchKey string
      */
-    private static List<String> cleanInputString(String searchKey, boolean includeSampleFixup) {
+    static List<String> cleanInputString(String searchKey, boolean includeSampleFixup) {
         if (searchKey == null) {
             return Collections.emptyList();
         }
@@ -275,7 +275,9 @@ public class SearchActionBean extends CoreActionBean {
         List<String> sampleIds = new ArrayList<>(valueArray.length);
         for (String value : valueArray) {
             if (!StringUtils.isBlank(value)) {
-                value = value.trim();
+
+                // '\h' matches a horizontal whitespace character, which trim() won't remove.
+                value = StringUtils.trim(value.replaceAll("(^\\h*)|(\\h*$)", ""));
                 if (includeSampleFixup && UPPERCASE_PATTERN.matcher(value).matches()) {
                     value = value.toUpperCase();
                 }

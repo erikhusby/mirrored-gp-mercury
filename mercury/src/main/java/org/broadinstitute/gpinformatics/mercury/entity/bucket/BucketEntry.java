@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.hibernate.annotations.BatchSize;
@@ -54,8 +53,7 @@ public class BucketEntry {
             int result = bucketEntryPrime.getCreatedDate().compareTo(bucketEntrySecond.getCreatedDate());
 
             if (result == 0) {
-                result =
-                        bucketEntryPrime.getProductOrderRanking().compareTo(bucketEntrySecond.getProductOrderRanking());
+                result = bucketEntryPrime.getBucketEntryId().compareTo(bucketEntrySecond.getBucketEntryId());
             }
 
             return result;
@@ -106,14 +104,6 @@ public class BucketEntry {
     @Enumerated(EnumType.STRING)
     private Status status = Status.Active;
 
-    /*
-        TODO Implement this as a separate join table to have the ranking associated directly with the Product
-        order, and not duplicated across bucket entries
-        todo jmt can this be removed?
-     */
-    @Column(name = "product_order_ranking")
-    private Integer productOrderRanking = 1;
-
     @Column(name = "created_date", nullable = false)
     private Date createdDate;
 
@@ -138,24 +128,23 @@ public class BucketEntry {
      * getWorkflows()
      */
     @Transient
-    private Collection<Workflow> workflows = null;
+    private Collection<String> workflows = null;
 
     protected BucketEntry() {
     }
 
     public BucketEntry(@Nonnull LabVessel vessel, @Nonnull ProductOrder productOrder, @Nonnull Bucket bucket,
-                       @Nonnull BucketEntryType entryType, int productOrderRanking) {
+                       @Nonnull BucketEntryType entryType) {
         this.labVessel = vessel;
         this.bucket = bucket;
         this.entryType = entryType;
-        this.productOrderRanking = productOrderRanking;
         this.createdDate = new Date();
         setProductOrder(productOrder);
     }
 
     public BucketEntry(@Nonnull LabVessel vessel, @Nonnull ProductOrder productOrder, @Nonnull Bucket bucket,
-                       @Nonnull BucketEntryType entryType, int productOrderRanking, @Nonnull Date date) {
-        this(vessel, productOrder, bucket, entryType, productOrderRanking);
+                       @Nonnull BucketEntryType entryType, @Nonnull Date date) {
+        this(vessel, productOrder, bucket, entryType);
         createdDate = date;
     }
 
@@ -166,17 +155,6 @@ public class BucketEntry {
     public BucketEntry(@Nonnull LabVessel labVesselIn, @Nonnull ProductOrder productOrder,
                        @Nonnull BucketEntryType entryType) {
         this(labVesselIn, productOrder, null, entryType);
-    }
-
-
-    /**
-     * TODO: since this is currently only used in tests it should be moved, or the tests should use a different constructor.
-     * This Constructor is only called by tests and another deprecated constructor
-     */
-    @Deprecated
-    public BucketEntry(@Nonnull LabVessel vessel, @Nonnull ProductOrder productOrder, Bucket bucket,
-                       @Nonnull BucketEntryType entryType) {
-        this(vessel, productOrder, bucket, entryType, 1);
     }
 
     /**
@@ -230,14 +208,6 @@ public class BucketEntry {
      */
     public Date getCreatedDate() {
         return createdDate;
-    }
-
-    public Integer getProductOrderRanking() {
-        return productOrderRanking;
-    }
-
-    public void setProductOrderRanking(Integer productOrderRanking) {
-        this.productOrderRanking = productOrderRanking;
     }
 
     public Long getBucketEntryId() {
@@ -341,10 +311,10 @@ public class BucketEntry {
     }
 
     @Nonnull
-    private Collection<Workflow> loadWorkflows(WorkflowConfig workflowConfig) {
-        Collection<Workflow> workflows = new HashSet<>();
-        for (Workflow workflow : getProductOrder().getProductWorkflows()) {
-            ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(workflow);
+    private Collection<String> loadWorkflows(WorkflowConfig workflowConfig) {
+        Collection<String> workflows = new HashSet<>();
+        for (String workflow : getProductOrder().getProductWorkflows()) {
+            ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(workflow);
             for (WorkflowBucketDef workflowBucketDef : productWorkflowDef.getEffectiveVersion().getBuckets()) {
                 if (workflowBucketDef.meetsBucketCriteria(labVessel, productOrder)) {
                     workflows.add(workflow);
@@ -359,7 +329,7 @@ public class BucketEntry {
      * @return
      */
     @Nonnull
-    public Collection<Workflow> getWorkflows(WorkflowConfig workflowConfig) {
+    public Collection<String> getWorkflows(WorkflowConfig workflowConfig) {
         if (workflows == null) {
             workflows = loadWorkflows(workflowConfig);
         }

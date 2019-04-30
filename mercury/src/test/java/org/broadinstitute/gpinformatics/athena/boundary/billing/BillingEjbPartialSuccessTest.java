@@ -80,7 +80,9 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         super();
         Logger billingAdaptorLogger = Logger.getLogger(BillingAdaptor.class.getName());
         billingAdaptorLogger.setLevel(Level.ALL);
-        testLogHandler = new TestLogHandler();
+        Arrays.stream(billingAdaptorLogger.getHandlers())
+            .filter(handler -> !(handler instanceof TestLogHandler)).forEach(billingAdaptorLogger::removeHandler);
+        testLogHandler = TestLogHandler.newInstance();
         billingAdaptorLogger.addHandler(testLogHandler);
         testLogHandler.setLevel(Level.ALL);
     }
@@ -150,8 +152,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         }
 
         PriceListCache tempPriceListCache = new PriceListCache(quotePriceItems);
-
-        billingAdaptor = new BillingAdaptor(billingEjb, billingSessionDao, tempPriceListCache, quoteService,
+        billingAdaptor = new BillingAdaptor(billingEjb, tempPriceListCache, quoteService,
                 billingSessionAccessEjb, sapService, productPriceCache, accessControlEjb);
         billingAdaptor.setProductOrderEjb(productOrderEjb);
     }

@@ -66,7 +66,7 @@ public class AddEntriesToPicoBucketTest extends Arquillian {
         ProductOrder order = productOrderDao.findByBusinessKey("PDO-107");   //183
 
         if (order != null) {
-            ProductWorkflowDef workflowDef = workflowConfig.getWorkflow(order.getProduct().getWorkflow());
+            ProductWorkflowDef workflowDef = workflowConfig.getWorkflow(order.getProduct().getWorkflowName());
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
             WorkflowBucketDef workingBucketIdentifier = null;
             for (WorkflowBucketDef bucketDef : workflowVersion.getBuckets()) {

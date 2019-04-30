@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.presentation.projects;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Collections2;
 import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.Before;
@@ -68,8 +70,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.cache.SessionCache;
 import org.broadinstitute.gpinformatics.mercury.presentation.cache.SessionCacheException;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.type.TypeReference;
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -726,7 +726,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
      */
     public boolean isRegulatoryInfoEditAllowed(RegulatoryInfo regulatoryInfo) {
         OrspProject orspProject = orspProjectDao.findByKey(regulatoryInfo.getIdentifier());
-        return !(orspProject != null && regulatoryInfo.getName().equals(orspProject.getName()));
+        return !getUserBean().isViewer() && !(orspProject != null && regulatoryInfo.getName().equals(orspProject.getName()));
     }
 
     /**

@@ -464,16 +464,7 @@ public class LimsQueries {
             reagentDesignType.setWasFound(true);
             Set<String> reagentDesigns = new HashSet<>();
             for (SampleInstanceV2 sampleInstanceV2: labVessel.getSampleInstancesV2()) {
-                ProductOrderSample pdoSampleForSingleBucket = sampleInstanceV2.getProductOrderSampleForSingleBucket();
-                if (pdoSampleForSingleBucket == null) {
-                    for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
-                        if (productOrderSample.getProductOrder().getProduct() != null) {
-                            reagentDesigns.add(productOrderSample.getProductOrder().getReagentDesignKey());
-                        }
-                    }
-                } else {
-                    reagentDesigns.add(pdoSampleForSingleBucket.getProductOrder().getReagentDesignKey());
-                }
+                fetchExpectedReagentDesignsForSample(sampleInstanceV2, reagentDesigns);
             }
             if (reagentDesigns.size() == 0) {
                 reagentDesignType.setHasErrors(true);
@@ -566,5 +557,24 @@ public class LimsQueries {
             }
         }
         return productInfosTypeList;
+    }
+
+    public static void fetchExpectedReagentDesignsForSample(SampleInstanceV2 sampleInstanceV2, Set<String> reagentDesigns) {
+        ProductOrderSample pdoSampleForSingleBucket = sampleInstanceV2.getProductOrderSampleForSingleBucket();
+        if (pdoSampleForSingleBucket == null) {
+            for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
+                if (productOrderSample.getProductOrder().getProduct() != null) {
+                    String reagentDesignKey = productOrderSample.getProductOrder().getReagentDesignKey();
+                    if (StringUtils.isNotBlank(reagentDesignKey)) {
+                        reagentDesigns.add(reagentDesignKey);
+                    }
+                }
+            }
+        } else {
+            String reagentDesignKey = pdoSampleForSingleBucket.getProductOrder().getReagentDesignKey();
+            if (StringUtils.isNotBlank(reagentDesignKey)) {
+                reagentDesigns.add(reagentDesignKey);
+            }
+        }
     }
 }

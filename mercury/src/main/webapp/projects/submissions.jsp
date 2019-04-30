@@ -123,7 +123,9 @@
             $j("#bioProject").tokenInput(
                     "${ctxpath}/projects/project.action?bioProjectAutocomplete=", {
                         hintText: "Type a Study Name",
+                        <enhance:out escapeXml="false">
                         prePopulate: ${actionBean.ensureStringResult(actionBean.bioProjectTokenInput.completeData)},
+                        </enhance:out>
                         tokenDelimiter: "${actionBean.bioProjectTokenInput.separator}",
                         preventDuplicates: true,
                         tokenLimit: 1,
@@ -148,7 +150,10 @@
             }
 
             var oTable;
-            $j("${submissionsTabSelector}").click(function () {
+            <enhance:out escapeXml="false">
+                var submissionsTabSelector = "${submissionsTabSelector}";
+            </enhance:out>
+            $j(submissionsTabSelector).click(function () {
                 function buildMessage(jqXHR) {
                     var responseText = jqXHR.responseJSON;
                     if (responseText && responseText.stripesMessages) {
@@ -364,13 +369,20 @@
                 $j("#filtering").accordion({
                       "collapsible": true, "heightStyle": "content", 'active': false
                     });
+                var additionalOptionMap = {
+                    value: "sample",
+                    text: "Sample List",
+                    searchIndex: 1
+                };
 
-                includeAdvancedFilter(oTable, "#submissionSamples");
+                includeAdvancedFilter(oTable, "#submissionSamples", additionalOptionMap);
                 $j('#submissionSamples').one('init', function (event, oSettings, aaData) {
+                    <enhance:out escapeXml="false">
                     $j('#submissionSamples').filterColumn("Current Status", ${actionBean.submissionStatusesJson}, {
                         selectedValues: ${actionBean.preselectedStatusesJson},
                         filteringText: "#columnFilter_filteringText .headerText"
                     });
+                    </enhance:out>
                 });
             }
             });

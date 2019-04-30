@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.ListMultimap;
@@ -41,9 +44,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerExceptio
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.sap.services.SAPIntegrationException;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -546,6 +546,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
         private Map<PriceItem, ProductOrderSample.LedgerQuantities> ledgerQuantities;
         private ListMultimap<PriceItem, LedgerEntry> ledgerEntriesByPriceItem = ArrayListMultimap.create();
         private int autoFillQuantity = 0;
+        private boolean anyQuantitySet = false;
 
         public ProductOrderSampleLedgerInfo(ProductOrderSample productOrderSample, Date coverageFirstMet) {
             this.productOrderSample = productOrderSample;
@@ -558,6 +559,12 @@ public class BillingLedgerActionBean extends CoreActionBean {
             }
 
             ledgerQuantities = productOrderSample.getLedgerQuantities();
+
+            for(Map.Entry<PriceItem, ProductOrderSample.LedgerQuantities> quantityEntry: ledgerQuantities.entrySet()) {
+                if(quantityEntry.getValue().getTotal()>0) {
+                    anyQuantitySet = true;
+                }
+            }
 
             boolean primaryBilled = false;
             for (LedgerEntry ledgerEntry : productOrderSample.getLedgerItems()) {
@@ -608,6 +615,10 @@ public class BillingLedgerActionBean extends CoreActionBean {
         public int getAutoFillQuantity() {
             return autoFillQuantity;
         }
+
+        public boolean isAnyQuantitySet() {
+            return anyQuantitySet;
+        }
     }
 
     /**
@@ -641,6 +652,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
         public void setQuantities(Map<Long, ProductOrderSampleQuantities> quantities) {
             this.quantities = quantities;
         }
+
     }
 
     /**

@@ -20,12 +20,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.text.Format;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Generic metadata storage class with String keys and values.
@@ -161,16 +156,18 @@ public class Metadata {
     @Override
     public int hashCode() {
         HashCodeBuilder hashCodeBuilder = new HashCodeBuilder().append(key);
-        switch (key.getDataType()) {
-        case STRING:
-            hashCodeBuilder.append(stringValue);
-            break;
-        case NUMBER:
-            hashCodeBuilder.append(numberValue);
-            break;
-        case DATE:
-            hashCodeBuilder.append(dateValue);
-            break;
+        if (key != null) {
+            switch (key.getDataType()) {
+            case STRING:
+                hashCodeBuilder.append(stringValue);
+                break;
+            case NUMBER:
+                hashCodeBuilder.append(numberValue);
+                break;
+            case DATE:
+                hashCodeBuilder.append(dateValue);
+                break;
+            }
         }
         return hashCodeBuilder.hashCode();
     }
@@ -305,7 +302,11 @@ public class Metadata {
         CELL_TYPE(Category.SAMPLE, DataType.STRING, "Cell Type", Visibility.USER),
         CELLS_PER_WELL(Category.SAMPLE, DataType.NUMBER, "Cells Per Well", Visibility.USER),
         POSITIVE_CONTROL(Category.SAMPLE, DataType.STRING, "Positive Control", Visibility.USER),
-        NEGATIVE_CONTROL(Category.SAMPLE, DataType.STRING, "Negative Control", Visibility.USER);
+        NEGATIVE_CONTROL(Category.SAMPLE, DataType.STRING, "Negative Control", Visibility.USER),
+        SYNTHESIS_DATE(Category.REAGENT, DataType.DATE, "Synthesis Date", Visibility.USER),
+        MANUFACTURING_DATE(Category.REAGENT, DataType.DATE, "Manufacturing Date", Visibility.USER),
+        STORAGE_CONDITIONS(Category.REAGENT, DataType.STRING, "Storage Conditions", Visibility.USER),
+        MANUFACTURER_DESIGN_ID(Category.REAGENT, DataType.STRING, "Manufacturer Design ID", Visibility.USER);
 
         private final Category category;
         private final DataType dataType;

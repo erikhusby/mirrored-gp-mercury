@@ -36,16 +36,16 @@ public class SampleLooseVesselProcessor extends SampleVesselProcessor {
     }
 
     @Override
-    public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
+    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber, boolean requiredValuesPresent) {
         String sampleId = dataRow.get(Headers.SAMPLE_ID.getText());
         String vesselType = dataRow.get(Headers.VESSEL_TYPE.getText());
         if (!sampleIds.add(sampleId)) {
-            addDataMessage("Duplicate sample ID: " + sampleId, dataRowIndex);
+            addDataMessage("Duplicate sample ID: " + sampleId, dataRowNumber);
         }
         tubeBarcodes.add(sampleId);
         BarcodedTube.BarcodedTubeType barcodedTubeType = BarcodedTube.BarcodedTubeType.getByDisplayName(vesselType);
         if (barcodedTubeType == null) {
-            addDataMessage("Not a valid tube type: " + sampleId, dataRowIndex);
+            addDataMessage("Not a valid tube type: " + sampleId, dataRowNumber);
         }
         parentVesselBeans.add(new ParentVesselBean(sampleId, sampleId, vesselType, null));
     }

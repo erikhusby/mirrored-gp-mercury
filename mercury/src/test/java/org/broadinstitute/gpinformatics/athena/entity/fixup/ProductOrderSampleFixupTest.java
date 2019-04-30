@@ -5,6 +5,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -17,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -163,7 +165,7 @@ public class ProductOrderSampleFixupTest extends Arquillian {
                     throw new RuntimeException("Failed to find position " + fields[0] + " sample " + fields[1]);
                 }
                 System.out.println("Setting " + productOrderSample.getSampleKey() + " to " + fields[2]);
-                productOrderSample.setAggregationParticle(fields[2]);
+                productOrderSample.setAggregationParticle(fields[2].equals("null") ? null : fields[2]);
             }
 
             productOrderSampleDao.persist(new FixupCommentary(jiraTicket +
@@ -171,5 +173,21 @@ public class ProductOrderSampleFixupTest extends Arquillian {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim5934() throws Exception {
+        userBean.loginOSUser();
+        ProductOrderSample productOrderSample =  productOrderSampleDao.findById(ProductOrderSample.class, 2659324L);
+        Assert.assertNotNull(productOrderSample);
+        Assert.assertEquals(productOrderSample.getMercurySample().getSampleKey(), "SM-HZS72_8812");
+        ProductOrder productOrder = productOrderSample.getProductOrder();
+        System.out.println("Unlinking mercury sample " + productOrderSample.getMercurySample().getSampleKey() +
+                " from pdo sample named " + productOrderSample.getSampleKey() + " and removing it from " +
+                productOrder.getBusinessKey());
+        productOrderSample.setMercurySample(null);
+        productOrder.getSamples().remove(productOrderSample);
+        productOrderSampleDao.persistAll(Arrays.asList(productOrder,
+                new FixupCommentary("GPLIM-5934 unlink mercury sample and remove pdo sample from pdo")));
     }
 }

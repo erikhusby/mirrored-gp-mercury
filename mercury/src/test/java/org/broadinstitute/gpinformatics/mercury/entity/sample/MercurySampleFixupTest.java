@@ -134,7 +134,7 @@ public class MercurySampleFixupTest extends Arquillian {
         for (MercurySample mercurySample : mercurySamples) {
             Set<LabVessel> labVessels = mercurySample.getLabVessel();
             for (LabVessel labVessel : labVessels) {
-                labVessel.getMercurySamples().remove(mercurySample);
+                labVessel.removeSample(mercurySample);
             }
             mercurySampleDao.remove(mercurySample);
         }
@@ -526,9 +526,14 @@ public class MercurySampleFixupTest extends Arquillian {
 
         List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("AddSampleToVessel.txt"));
         for (int i = 1; i < lines.size(); i++) {
-            String[] fields = LabVesselFixupTest.WHITESPACE_PATTERN.split(lines.get(i));
+            String line = lines.get(i);
+            // Allow commenting out of lines, to recover from errors
+            if (line.startsWith("#")) {
+                continue;
+            }
+            String[] fields = LabVesselFixupTest.WHITESPACE_PATTERN.split(line);
             if (fields.length != 2) {
-                throw new RuntimeException("Expected two white-space separated fields in " + lines.get(i));
+                throw new RuntimeException("Expected two white-space separated fields in " + line);
             }
             String barcode = fields[0];
             LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
@@ -544,6 +549,117 @@ public class MercurySampleFixupTest extends Arquillian {
             }
             System.out.println("Adding " + mercurySample.getSampleKey() + " to " + labVessel.getLabel());
             labVessel.addSample(mercurySample);
+            // Limit the size of each transaction, to avoid overloading FixUpEtl
+            if (i % 100 == 0) {
+                labVesselDao.persist(new FixupCommentary(lines.get(0)));
+                labVesselDao.flush();
+            }
+        }
+
+        labVesselDao.persist(new FixupCommentary(lines.get(0)));
+        labVesselDao.flush();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/UpdateSampleToRoot.txt,
+     * so it can be used for other similar fixups, without writing a new test.  This is used to set the
+     * isRoot indicator on the given Mercury Sample.  Example contents of the file are (first line is the fixup commentary,
+     * subsequent lines are sample ID):
+     * SUPPORT-4707 mark sample as root
+     * SM-H5GZC
+     * SM-H5GZI
+     */
+    @Test(enabled = false)
+    public void fixupSuppor4707() throws IOException {
+        userBean.loginOSUser();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("UpdateSampleToRoot.txt"));
+        for (int i = 1; i < lines.size(); i++) {
+            String[] fields = LabVesselFixupTest.WHITESPACE_PATTERN.split(lines.get(i));
+            if (fields.length != 1) {
+                throw new RuntimeException("Expected one white-space separated fields in " + lines.get(i));
+            }
+            String sampleKey = fields[0];
+            MercurySample mercurySample = mercurySampleDao.findBySampleKey(sampleKey);
+            if (mercurySample == null) {
+                throw new RuntimeException("Failed to find Mercury Sample " + sampleKey);
+            }
+            System.out.println("Setting " + sampleKey + " is root to true.");
+            mercurySample.setRoot(true);
+        }
+
+        labVesselDao.persist(new FixupCommentary(lines.get(0)));
+        labVesselDao.flush();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/ReplaceSampleInVessel.txt,
+     * so it can be used for other similar fixups, without writing a new test.  It is used to replace samples in
+     * specified vessels.  Example contents of the file are (first line is the fixup commentary,
+     * subsequent lines are whitespace separated vessel barcode, old sample ID, new sample ID):
+     * SUPPORT-4271 reflect changes to array plates
+     * CO-26671753A01 SM-H5GZC SM-HK74N
+     * CO-26671756A01 SM-H5GZI SM-HK74M
+     */
+    @Test(enabled = false)
+    public void fixupSupport4271() throws IOException {
+        userBean.loginOSUser();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ReplaceSampleInVessel.txt"));
+        for (int i = 1; i < lines.size(); i++) {
+            String[] fields = LabVesselFixupTest.WHITESPACE_PATTERN.split(lines.get(i));
+            if (fields.length != 3) {
+                throw new RuntimeException("Expected three white-space separated fields in " + lines.get(i));
+            }
+            String barcode = fields[0];
+            LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
+            Assert.assertNotNull(labVessel, barcode + " not found");
+
+            Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(
+                    Arrays.asList(fields[1], fields[2]));
+            MercurySample oldSample = mapIdToMercurySample.get(fields[1]);
+            Assert.assertNotNull(oldSample);
+            MercurySample newSample = mapIdToMercurySample.get(fields[2]);
+            Assert.assertNotNull(newSample);
+            labVessel.getMercurySamples().remove(oldSample);
+            System.out.println("Adding " + newSample.getSampleKey() + " to " + labVessel.getLabel());
+            labVessel.addSample(newSample);
+        }
+
+        labVesselDao.persist(new FixupCommentary(lines.get(0)));
+        labVesselDao.flush();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/RemoveSampleFromVessel.txt,
+     * so it can be used for other similar fixups, without writing a new test.  It is used to remove samples from
+     * vessels that were added in error.  Example contents of the file are (first line is the fixup commentary,
+     * subsequent lines are whitespace separated vessel barcode and sample ID):
+     * SUPPORT-4760 disassociate dev sample
+     * 0311427535 SM-HZS6Z_8812
+     */
+    @Test(enabled = false)
+    public void fixupSupport4760() throws IOException {
+        userBean.loginOSUser();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("RemoveSampleFromVessel.txt"));
+        for (int i = 1; i < lines.size(); i++) {
+            String[] fields = LabVesselFixupTest.WHITESPACE_PATTERN.split(lines.get(i));
+            if (fields.length != 2) {
+                throw new RuntimeException("Expected two white-space separated fields in " + lines.get(i));
+            }
+            String barcode = fields[0];
+            LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
+            Assert.assertNotNull(labVessel, barcode + " not found");
+            String sampleKey = fields[1];
+            MercurySample mercurySample = mercurySampleDao.findBySampleKey(sampleKey);
+            if (!mercurySample.getLabVessel().contains(labVessel)) {
+                throw new RuntimeException("Sample " + sampleKey + " is not associated with vessel " +
+                        mercurySample.getLabVessel().iterator().next().getLabel());
+            }
+            System.out.println("Removing " + mercurySample.getSampleKey() + " from " + labVessel.getLabel());
+            labVessel.getMercurySamples().remove(mercurySample);
+            mercurySample.getLabVessel().remove(labVessel);
         }
 
         labVesselDao.persist(new FixupCommentary(lines.get(0)));

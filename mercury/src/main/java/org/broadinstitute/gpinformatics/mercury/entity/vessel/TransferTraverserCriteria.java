@@ -7,6 +7,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
@@ -1034,6 +1036,65 @@ public abstract class TransferTraverserCriteria {
 
         public Map<LabEventType, VesselAndPosition> getMapTypeToVesselPosition() {
             return mapTypeToVesselPosition;
+        }
+    }
+
+    public static class RootSample extends TransferTraverserCriteria {
+        private Set<MercurySample> rootSamples = new HashSet<>();
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            LabVessel contextVessel = context.getContextVessel();
+            if (contextVessel == null) {
+                return TraversalControl.ContinueTraversing;
+            } else {
+                boolean incomingTransfers = !contextVessel.getTransfersTo().isEmpty();
+                boolean stop = false;
+                for (MercurySample mercurySample : contextVessel.getMercurySamples()) {
+                    if (mercurySample.isRoot() || incomingTransfers) {
+                        rootSamples.add(mercurySample);
+                        stop = true;
+                    }
+                }
+                return stop ? TraversalControl.StopTraversing : TraversalControl.ContinueTraversing;
+            }
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {
+        }
+
+        public Set<MercurySample> getRootSamples() {
+            return rootSamples;
+        }
+    }
+
+    public static class Fingerprints extends TransferTraverserCriteria {
+        Set<Fingerprint> fingerprints = new HashSet<>();
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            LabVessel contextVessel = context.getContextVessel();
+            if (contextVessel != null) {
+                boolean stop = false;
+                for (MercurySample mercurySample : contextVessel.getMercurySamples()) {
+                    Set<Fingerprint> sampleFingerprints = mercurySample.getFingerprints();
+                    if (!sampleFingerprints.isEmpty()) {
+                        fingerprints.addAll(sampleFingerprints);
+                        stop = true;
+                    }
+                }
+                return stop ? TraversalControl.StopTraversing : TraversalControl.ContinueTraversing;
+            }
+            return TraversalControl.ContinueTraversing;
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {
+        }
+
+        public Set<Fingerprint> getFingerprints() {
+            return fingerprints;
         }
     }
 }

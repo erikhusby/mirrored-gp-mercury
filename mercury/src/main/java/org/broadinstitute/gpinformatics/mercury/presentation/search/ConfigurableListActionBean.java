@@ -7,13 +7,16 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.SimpleError;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.ThreadEntityManager;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConstrainedValueDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
@@ -59,6 +62,15 @@ public class ConfigurableListActionBean extends CoreActionBean {
 
     @Inject
     private ThreadEntityManager threadEntityManager;
+
+    @Inject
+    private JiraConfig jiraConfig;
+
+    @Inject
+    private PriceListCache priceListCache;
+
+    @Inject
+    private QuoteLink quoteLink;
 
     @Inject
     private ConstrainedValueDao constrainedValueDao;
@@ -137,6 +149,10 @@ public class ConfigurableListActionBean extends CoreActionBean {
         evalContext.setBspUserList( bspUserList );
         evalContext.setSearchInstance(searchInstance);
         evalContext.setColumnEntityType(ColumnEntity.getByName(entityName));
+        evalContext.setUserBean(userBean);
+        evalContext.setJiraConfig(jiraConfig);
+        evalContext.setPriceListCache(priceListCache);
+        evalContext.setQuoteLink(quoteLink);
         evalContext.setOptionValueDao(constrainedValueDao);
         return evalContext;
     }

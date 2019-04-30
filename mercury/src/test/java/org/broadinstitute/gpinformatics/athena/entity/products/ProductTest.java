@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
+import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
@@ -21,11 +22,16 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.equalTo;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductTest {
@@ -86,5 +92,23 @@ public class ProductTest {
         product.setProductName(productName);
         return product;
     }
+    @DataProvider(name = "aggregationParticles")
+      public Iterator<Object[]> aggregationParticles() {
+          List<Object[]> testCases = new ArrayList<>();
+          testCases.add(new Object[]{null, Product.AggregationParticle.DEFAULT_LABEL});
+          testCases.add(new Object[]{Product.AggregationParticle.PDO, Product.AggregationParticle.PDO.getDisplayName()});
+          testCases.add(new Object[]{Product.AggregationParticle.PDO_ALIQUOT,
+              Product.AggregationParticle.PDO_ALIQUOT.getDisplayName()});
 
+          return testCases.iterator();
+      }
+
+      @Test(dataProvider = "aggregationParticles")
+      public void testDefaultAggregationParticleDefaultValueNeverNull(Product.AggregationParticle aggregationParticle, String displayValue) {
+          Product product = new Product();
+          product.setDefaultAggregationParticle(aggregationParticle);
+
+          assertThat(StringUtils.isNotBlank(displayValue), is(true));
+          assertThat(product.getAggregationParticleDisplayName(), equalTo(displayValue));
+      }
 }

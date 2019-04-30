@@ -9,6 +9,8 @@
  */
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
@@ -16,8 +18,7 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
+import org.owasp.encoder.Encode;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -523,6 +524,11 @@ public class SearchInstance implements Serializable {
         }
 
         @Override
+        public boolean mustEscape() {
+            return getSearchTerm().mustEscape();
+        }
+
+        @Override
         public Object evalViewHeaderExpression(Object entity, SearchContext context) {
             return evalHeaderExpression(entity, context);
         }
@@ -882,12 +888,12 @@ public class SearchInstance implements Serializable {
                 ObjectMapper mapper = new ObjectMapper();
                 JsonNode root = mapper.readTree(nameAndParams);
                 ResultParamValues resultParams = new ResultParamValues(
-                        root.get("paramType").getTextValue(),
-                        root.get("entityName").getTextValue(),
-                        root.get("elementName").getTextValue());
-                for(Iterator<JsonNode> iter = root.get("paramValues").getElements(); iter.hasNext(); ) {
+                        root.get("paramType").textValue(),
+                        root.get("entityName").textValue(),
+                        root.get("elementName").textValue());
+                for(Iterator<JsonNode> iter = root.get("paramValues").elements(); iter.hasNext(); ) {
                     JsonNode input = iter.next();
-                    resultParams.addParamValue( input.get("name").getTextValue(), input.get("value").getTextValue() );
+                    resultParams.addParamValue( input.get("name").textValue(), input.get("value").textValue() );
                 }
                 return Pair.of(resultParams.getElementName(), resultParams);
             } catch( Exception je ) {
@@ -1183,7 +1189,7 @@ public class SearchInstance implements Serializable {
             }
         }
         if (searchInstance == null) {
-            throw new RuntimeException("No saved search instance named '" + searchName + "' is available");
+            throw new RuntimeException("No saved search instance named '" + Encode.forHtml(searchName) + "' is available");
         }
         searchInstance.establishRelationships(configurableSearchDef);
         searchInstance.postLoad();

@@ -4,7 +4,9 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
@@ -34,7 +36,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 
 /**
  *
@@ -49,6 +50,9 @@ public class ProductFixupTest extends Arquillian {
 
     @Inject
     ProductDao productDao;
+
+    @Inject
+    ProductOrderDao productOrderDao;
 
     @Inject
     private UserBean userBean;
@@ -76,8 +80,8 @@ public class ProductFixupTest extends Arquillian {
 
         Product exExProduct = productDao.findByPartNumber("P-EX-0002");
 
-        if (exExProduct.getWorkflow() != Workflow.AGILENT_EXOME_EXPRESS) {
-            exExProduct.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+        if (exExProduct.getWorkflowName() != Workflow.AGILENT_EXOME_EXPRESS) {
+            exExProduct.setWorkflowName(Workflow.AGILENT_EXOME_EXPRESS);
             productDao.persist(exExProduct);
         }
     }
@@ -86,7 +90,7 @@ public class ProductFixupTest extends Arquillian {
     public void addHybridSelectionWorkflowName() {
 
         Product hybSelProject = productDao.findByPartNumber("P-EX-0001");
-            hybSelProject.setWorkflow(Workflow.HYBRID_SELECTION);
+            hybSelProject.setWorkflowName(Workflow.HYBRID_SELECTION);
 
         productDao.persist(hybSelProject);
     }
@@ -97,11 +101,11 @@ public class ProductFixupTest extends Arquillian {
         List<Product> wgProducts = new ArrayList<>(3);
 
         Product wholeGenomeProduct1 = productDao.findByPartNumber("P-WG-0001");
-            wholeGenomeProduct1.setWorkflow(Workflow.WHOLE_GENOME);
+            wholeGenomeProduct1.setWorkflowName(Workflow.WHOLE_GENOME);
         Product wholeGenomeProduct2 = productDao.findByPartNumber("P-WG-0002");
-            wholeGenomeProduct2.setWorkflow(Workflow.WHOLE_GENOME);
+            wholeGenomeProduct2.setWorkflowName(Workflow.WHOLE_GENOME);
         Product wholeGenomeProduct3 = productDao.findByPartNumber("P-WG-0003");
-            wholeGenomeProduct3.setWorkflow(Workflow.WHOLE_GENOME);
+            wholeGenomeProduct3.setWorkflowName(Workflow.WHOLE_GENOME);
 
         Collections.addAll(wgProducts, wholeGenomeProduct1, wholeGenomeProduct2, wholeGenomeProduct3);
 
@@ -361,5 +365,63 @@ public class ProductFixupTest extends Arquillian {
             }
         }
         System.out.println(StringUtils.join(errors,"\n"));
+    }
+
+    /**
+     *
+     * This test makes use of an input file "mercury/src/test/resources/testdata/changeProductCommercialStatus.txt"
+     * to get the products which are to have their commercial status updated.
+     *
+     * File format will be a summary on line 1, followed by one or more lines indicating the Part number and true/false
+     *      indicating if the product will be Sold as commercial only.  The lines are tab delimited:
+     * SUPPORT-5166 Change the commercial status for products
+     * P-EX-0001\tTRUE
+     * P-EX-0001 FALSE
+     *
+     *
+     * @throws Exception
+     */
+    @Test(enabled=false)
+    public void fixupChangeProductCommercialStatus() throws Exception {
+
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("changeProductCommercialStatus.txt"));
+        String fixupReason = lines.get(0);
+        Assert.assertTrue(StringUtils.isNotBlank(fixupReason), "A fixup reason needs to be defined");
+        final List<String> productsWithCommercialStatuses = lines.subList(1, lines.size());
+        Assert.assertTrue(CollectionUtils.isNotEmpty(productsWithCommercialStatuses));
+
+        Map<String, Boolean> commercialStatusByProduct = new HashMap<>();
+
+        for (String productsWithStatus : productsWithCommercialStatuses) {
+            final String[] splitProductsFromStatus = productsWithStatus.split("\t");
+            Assert.assertTrue(splitProductsFromStatus.length == 2, "Either one of the items in the line is missing or they are not separated by a tab");
+            Assert.assertTrue(StringUtils.isNotBlank(splitProductsFromStatus[0])&&
+                              StringUtils.isNotBlank(splitProductsFromStatus[1]),"Either the product or the commercial status has not been set");
+
+            commercialStatusByProduct.put(splitProductsFromStatus[0], Boolean.valueOf(splitProductsFromStatus[1]));
+        }
+
+        final List<Product> productsToUpdate = productDao.findByPartNumbers(new ArrayList<>(commercialStatusByProduct.keySet()));
+
+        for (Product product : productsToUpdate) {
+            product.setExternalOnlyProduct(commercialStatusByProduct.get(product.getPartNumber()));
+
+            final List<ProductOrder> ordersWithCommonProduct =
+                    productOrderDao.findOrdersWithCommonProduct(product.getPartNumber());
+
+            for (ProductOrder productOrder : ordersWithCommonProduct) {
+                productOrder.setOrderType((commercialStatusByProduct.get(product.getPartNumber()))?
+                        ProductOrder.OrderAccessType.COMMERCIAL: ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
+            }
+            productDao.persist(product);
+        }
+
+        System.out.println("Commercial statuses updated: "+ StringUtils.join(commercialStatusByProduct.keySet(), ", "));
+
+        productDao.persist(new FixupCommentary(fixupReason));
+        utx.commit();
     }
 }

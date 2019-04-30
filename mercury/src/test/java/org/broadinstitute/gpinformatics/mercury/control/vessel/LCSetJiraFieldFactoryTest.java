@@ -58,7 +58,7 @@ import static org.hamcrest.Matchers.equalTo;
 public class LCSetJiraFieldFactoryTest {
 
     private List<String> pdoNames;
-    private Workflow workflow;
+    private String workflow;
     private Map<String, BarcodedTube> mapBarcodeToTube;
     private String rpSynopsis;
     private Map<String, CustomFieldDefinition> jiraFieldDefs;
@@ -157,7 +157,7 @@ public class LCSetJiraFieldFactoryTest {
         int numSamples = testBatch.getStartingBatchLabVessels().size();
 
         AbstractBatchJiraFieldFactory testBuilder = AbstractBatchJiraFieldFactory.getInstance(
-                CreateFields.ProjectType.LCSET_PROJECT, testBatch, productOrderDao, workflowConfig);
+                CreateFields.ProjectType.LCSET_PROJECT, testBatch, null, productOrderDao, workflowConfig);
 
         Assert.assertEquals(testBuilder.generateDescription(),
                 "1 sample with material types [] from MyResearchProject PDO-7\n5 samples with material types [] from MyResearchProject PDO-999\n");
@@ -198,7 +198,7 @@ public class LCSetJiraFieldFactoryTest {
             if (fieldDefinitionName.equals(LabBatch.TicketFields.PROTOCOL.getName())) {
 
                 ProductWorkflowDef workflowDef = workflowConfig.getWorkflow(
-                        testProductOrder.getProduct().getWorkflow());
+                        testProductOrder.getProduct().getWorkflowName());
 
                 Assert.assertEquals(
                         workflowDef.getName() + ":" + workflowDef.getEffectiveVersion(testBatch.getCreatedOn())
@@ -252,11 +252,10 @@ public class LCSetJiraFieldFactoryTest {
         reworks.add(tube2);
 
         LabBatch batch = new LabBatch("test", newTubes, LabBatch.LabBatchType.WORKFLOW);
-        batch.addBucketEntry(new BucketEntry(tube1, testProductOrder, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, 1));
+        batch.addBucketEntry(new BucketEntry(tube1, testProductOrder, bucket, BucketEntry.BucketEntryType.PDO_ENTRY));
 
         batch.addReworks(reworks);
-        batch.addBucketEntry(new BucketEntry(tube2, testProductOrder, bucket, BucketEntry.BucketEntryType.REWORK_ENTRY,
-                1));
+        batch.addBucketEntry(new BucketEntry(tube2, testProductOrder, bucket, BucketEntry.BucketEntryType.REWORK_ENTRY));
 
         String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch, true);
         assertThat(actualText.trim(), equalTo(expectedText.trim()));
@@ -273,7 +272,7 @@ public class LCSetJiraFieldFactoryTest {
 
         LabBatch batch = new LabBatch("test", newTubes, LabBatch.LabBatchType.WORKFLOW);
         batch.addBucketEntry(new BucketEntry(tube, testProductOrder, new Bucket("Test"),
-                BucketEntry.BucketEntryType.PDO_ENTRY, 1));
+                BucketEntry.BucketEntryType.PDO_ENTRY));
 
         String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch, true);
         assertThat(actualText.trim(), equalTo(sampleKey.trim()));
@@ -308,12 +307,10 @@ public class LCSetJiraFieldFactoryTest {
         reworks.add(tube2);
 
         LabBatch batch = new LabBatch("test", newTubes, LabBatch.LabBatchType.WORKFLOW);
-        batch.addBucketEntry(new BucketEntry(tube1, testProductOrder, bucket, BucketEntry.BucketEntryType.PDO_ENTRY,
-                1));
+        batch.addBucketEntry(new BucketEntry(tube1, testProductOrder, bucket, BucketEntry.BucketEntryType.PDO_ENTRY));
 
         batch.addReworks(reworks);
-        batch.addBucketEntry(new BucketEntry(tube2, testProductOrder, bucket, BucketEntry.BucketEntryType.REWORK_ENTRY,
-                1));
+        batch.addBucketEntry(new BucketEntry(tube2, testProductOrder, bucket, BucketEntry.BucketEntryType.REWORK_ENTRY));
 
         // Test nearest sample names.
         String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch, true);
@@ -344,7 +341,7 @@ public class LCSetJiraFieldFactoryTest {
 
         LabBatch batch = new LabBatch("test", newTubes, LabBatch.LabBatchType.WORKFLOW);
         batch.addBucketEntry(new BucketEntry(tube, testProductOrder, new Bucket("test"),
-                BucketEntry.BucketEntryType.PDO_ENTRY, 1));
+                BucketEntry.BucketEntryType.PDO_ENTRY));
 
         String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch, true);
         assertThat(actualText.trim(), equalTo(expectedText.trim()));

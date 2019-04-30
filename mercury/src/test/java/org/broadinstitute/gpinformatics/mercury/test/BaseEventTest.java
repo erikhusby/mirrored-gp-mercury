@@ -727,9 +727,9 @@ public class BaseEventTest {
     public HiSeq2500FlowcellEntityBuilder runHiSeq2500FlowcellProcess(TubeFormation denatureRack, String barcodeSuffix,
                                                                       String fctTicket,
                                                                       ProductionFlowcellPath productionFlowcellPath,
-                                                                      String designationName, Workflow workflow) {
+                                                                      String designationName, String workflow) {
         int flowcellLanes = 8;
-        if (workflow == Workflow.AGILENT_EXOME_EXPRESS) {
+        if (workflow.equals(Workflow.AGILENT_EXOME_EXPRESS)) {
             flowcellLanes = 2;
         }
         String flowcellBarcode = "flowcell" + new Date().getTime() + "ADXX";
@@ -1082,7 +1082,7 @@ public class BaseEventTest {
                             TransferTraverserCriteria.TraversalDirection.Descendants),
                     fileWriter,
                     Arrays.asList(TransferVisualizerV2.AlternativeIds.SAMPLE_ID,
-                            TransferVisualizerV2.AlternativeIds.LCSET));
+                            TransferVisualizerV2.AlternativeIds.INFERRED_LCSET));
             fileWriter.flush();
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -1128,14 +1128,12 @@ public class BaseEventTest {
         }
     }
 
-    ZimsIlluminaRunFactory constructZimsIlluminaRunFactory(final ProductOrder productOrder,
+    public ZimsIlluminaRunFactory constructZimsIlluminaRunFactory(final ProductOrder productOrder,
                                                            List<FlowcellDesignation> flowcellDesignations) {
         ProductOrderDao productOrderDao = Mockito.mock(ProductOrderDao.class);
         FlowcellDesignationEjb flowcellDesignationEjb = Mockito.mock(FlowcellDesignationEjb.class);
         Mockito.when(productOrderDao.findByBusinessKey(Mockito.anyString())).thenReturn(productOrder);
         Mockito.when(flowcellDesignationEjb.getFlowcellDesignations(Mockito.any(LabBatch.class))).
-                thenReturn(flowcellDesignations);
-        Mockito.when(flowcellDesignationEjb.getFlowcellDesignations(Mockito.any(Collection.class))).
                 thenReturn(flowcellDesignations);
         AttributeArchetypeDao attributeArchetypeDao = Mockito.mock(AttributeArchetypeDao.class);
         Mockito.when(attributeArchetypeDao.findWorkflowMetadata(Mockito.anyString())).then(new Answer<Object>() {

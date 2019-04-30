@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -179,7 +180,7 @@ public class LabBatchResource {
                         if (product.getProductFamily().getName().equals(productFamilyName) ||
                                 // Some array / sequencing combo products are in family "Exome"
                                 productFamilyName.equals(ProductFamily.WHOLE_GENOME_GENOTYPING) &&
-                                        product.getWorkflow().name().contains("INFINIUM")) {
+                                        StringUtils.containsIgnoreCase(product.getWorkflowName(), "INFINIUM")) {
                             if (productOrderSample.getProductOrder().getOrderStatus() == ProductOrder.OrderStatus.Submitted) {
                                 productOrders.add(productOrderSample.getProductOrder());
                             }
