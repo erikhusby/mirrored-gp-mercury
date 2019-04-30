@@ -63,6 +63,8 @@ public class TestUtils {
                                              SapQuoteTestScenario quoteTestScenario, String salesorg)
             throws SAPIntegrationException {
 
+        billingOrder.setQuoteId(testQuoteIdentifier);
+
         ZESDQUOTEHEADER sapQHeader = ZESDQUOTEHEADER.Factory.newInstance();
         sapQHeader.setPROJECTNAME("TestProject");
         sapQHeader.setQUOTENAME(testQuoteIdentifier);
@@ -116,6 +118,24 @@ public class TestUtils {
             });
 
             break;
+        case MATCH_QUOTE_ITEMS_AND_DOLLAR_LIMITED:
+            ZESDQUOTEITEM item = ZESDQUOTEITEM.Factory.newInstance();
+            item.setMAKTX(QuoteItem.DOLLAR_LIMIT_MATERIAL_DESCRIPTOR);
+            item.setMATNR("GP-001");
+            item.setQUOTEITEM(String.valueOf((quoteItems.size() + 1) * 10));
+            item.setQUOTATION(testQuoteIdentifier);
+
+            quoteItems.add(new QuoteItem(item));
+            allProductsOrdered.forEach(product -> {
+                ZESDQUOTEITEM lambdaItem = ZESDQUOTEITEM.Factory.newInstance();
+                lambdaItem.setMAKTX(product.getProductName());
+                lambdaItem.setMATNR(product.getPartNumber());
+                lambdaItem.setQUOTEITEM(String.valueOf((quoteItems.size() + 1) * 10));
+                lambdaItem.setQUOTATION(testQuoteIdentifier);
+
+                quoteItems.add(new QuoteItem(lambdaItem));
+            });
+            break;
         }
 
         final Set<FundingDetail> fundingDetailsCollection = new HashSet<>();
@@ -134,6 +154,6 @@ public class TestUtils {
     }
 
     public enum SapQuoteTestScenario {
-       PRODUCTS_MATCH_QUOTE_ITEMS, DOLLAR_LIMITED, PRODUCTS_DIFFER;
+       PRODUCTS_MATCH_QUOTE_ITEMS, DOLLAR_LIMITED, MATCH_QUOTE_ITEMS_AND_DOLLAR_LIMITED, PRODUCTS_DIFFER;
     }
 }

@@ -14,6 +14,7 @@ import javax.persistence.EntityListeners;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -25,6 +26,7 @@ import java.io.Serializable;
 @Table(name = "SAP_QUOTE_ITEM_REFERENCE", schema = "athena")
 public class SapQuoteItemReference implements Serializable, Comparable<SapQuoteItemReference> {
 
+    private static final long serialVersionUID = 5984798910740489773L;
     @Id
     @SequenceGenerator(name = "SEQ_SAP_QUOTE_ITEM_REF", schema = "athena", sequenceName = "SEQ_SAP_QUOTE_ITEM_REF")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_SAP_QUOTE_ITEM_REF")
@@ -32,10 +34,18 @@ public class SapQuoteItemReference implements Serializable, Comparable<SapQuoteI
     private Long sapQuoteItemReferenceId;
 
     @ManyToOne
+    @JoinColumn(name = "MATERIAL_REFERENCE_PRODUCT_ID")
     private Product materialReference;
 
-    @Column
+    @Column(name = "QUOTE_LINE_REFERENCE")
     private String quoteLineReference;
+
+    @ManyToOne
+    @JoinColumn(name = "PARENT_PRODUCT_ORDER")
+    private ProductOrder parentOrderDetail;
+
+    public SapQuoteItemReference() {
+    }
 
     public SapQuoteItemReference(Product materialReference, String quoteLineReference) {
         this.materialReference = materialReference;
@@ -48,6 +58,14 @@ public class SapQuoteItemReference implements Serializable, Comparable<SapQuoteI
 
     public String getQuoteLineReference() {
         return quoteLineReference;
+    }
+
+    public ProductOrder getParentOrderDetail() {
+        return parentOrderDetail;
+    }
+
+    public void setParentOrderDetail(ProductOrder parentOrderDetail) {
+        this.parentOrderDetail = parentOrderDetail;
     }
 
     @Override
@@ -64,6 +82,7 @@ public class SapQuoteItemReference implements Serializable, Comparable<SapQuoteI
 
         return new EqualsBuilder()
                 .append(getMaterialReference(), that.getMaterialReference())
+                .append(getQuoteLineReference(), that.getQuoteLineReference())
                 .isEquals();
     }
 
@@ -71,6 +90,7 @@ public class SapQuoteItemReference implements Serializable, Comparable<SapQuoteI
     public int hashCode() {
         return new HashCodeBuilder(17, 37)
                 .append(getMaterialReference())
+                .append(getQuoteLineReference())
                 .toHashCode();
     }
 
@@ -78,7 +98,8 @@ public class SapQuoteItemReference implements Serializable, Comparable<SapQuoteI
     public int compareTo(@NotNull SapQuoteItemReference o) {
         CompareToBuilder compareToBuilder = new CompareToBuilder();
 
-        compareToBuilder.append(getMaterialReference(), o.getMaterialReference());
+        compareToBuilder.append(getMaterialReference(), o.getMaterialReference())
+                .append(getQuoteLineReference(), o.getQuoteLineReference());
 
         return compareToBuilder.build();
     }

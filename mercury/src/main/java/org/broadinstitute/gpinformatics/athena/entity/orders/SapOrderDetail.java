@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -26,7 +25,6 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
@@ -96,10 +94,6 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
             orphanRemoval = true)
     private Set<LedgerEntry> ledgerEntries = new HashSet<>();
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    @JoinColumn(name="sap_order_detail")
-    private Set<SapQuoteItemReference> quoteReferences = new HashSet<>();
-
     public SapOrderDetail() {
     }
 
@@ -156,22 +150,6 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
     public void addLedgerEntry(LedgerEntry ledgerEntry) {
         ledgerEntry.setSapOrderDetail(this);
         this.ledgerEntries.add(ledgerEntry);
-    }
-
-    public Set<SapQuoteItemReference> getQuoteReferences() {
-        return quoteReferences;
-    }
-
-    public void addQuoteReference(SapQuoteItemReference quoteItemReference) {
-        this.quoteReferences.add(quoteItemReference);
-    }
-
-    public void addQuoteReferences(Collection<SapQuoteItemReference> references) {
-        if(CollectionUtils.isNotEmpty(references)) {
-            this.quoteReferences.addAll(references);
-        } else {
-            this.quoteReferences.clear();
-        }
     }
 
     public Map<Product, Double> getNumberOfBilledEntriesByProduct() {

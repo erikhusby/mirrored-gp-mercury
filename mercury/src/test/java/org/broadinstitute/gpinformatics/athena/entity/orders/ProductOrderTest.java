@@ -14,12 +14,15 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.sap.entity.quote.QuoteItem;
+import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matchers;
@@ -35,6 +38,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -44,11 +48,14 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus;
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.InBspFormatSample.inBspFormat;
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.MetadataMatcher.isMetadataSource;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.hasItem;
@@ -695,7 +702,109 @@ public class ProductOrderTest {
         assertThat(quoteTestOrder.hasSapQuote(), is(equalTo(false)));
         assertThat(quoteTestOrder.hasQuoteServerQuote(), is(equalTo(true)));
         assertThat(quoteTestOrder.isQuoteIdSet(), is(equalTo(true)));
+    }
 
+    public void testDeterminingQuoteItemsForOrder() throws Exception {
+        ProductOrder quoteTestOrder = ProductOrderTestFactory.createDummyProductOrder();
+        SapQuote sapQuote =
+                TestUtils.buildTestSapQuote("00332883", BigDecimal.valueOf(20000), BigDecimal.valueOf(100000),
+                        quoteTestOrder, TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
+
+        assertThat(quoteTestOrder.getQuoteReferences(), is(empty()));
+        try {
+            quoteTestOrder.updateQuoteItems(sapQuote);
+            final Set<SapQuoteItemReference> quoteReferences = quoteTestOrder.getQuoteReferences();
+            assertThat(quoteReferences, is(not(empty())));
+
+            final Set<SapQuoteItemReference> collectionOfPrimaryProductReferences =
+                    quoteReferences.stream().filter(sapQuoteItemReference -> sapQuoteItemReference.getMaterialReference().equals(quoteTestOrder.getProduct())).collect(
+                    Collectors.toSet());
+            assertThat(collectionOfPrimaryProductReferences.size(), is(equalTo(1)));
+            assertThat(collectionOfPrimaryProductReferences.iterator().next().getQuoteLineReference(),
+                    is(equalTo(sapQuote.getQuoteItemMap().get(quoteTestOrder.getProduct().getPartNumber()).iterator().next().getQuoteItemNumber().toString())));
+
+            quoteTestOrder.getAddOns().forEach(productOrderAddOn -> {
+                final Set<SapQuoteItemReference> collectionOfAddOnProductReferences = quoteReferences.stream().filter(sapQuoteItemReference ->
+                        sapQuoteItemReference.getMaterialReference().equals(productOrderAddOn.getAddOn())).collect(
+                        Collectors.toSet());
+                assertThat(collectionOfAddOnProductReferences.size(), is(equalTo(1)));
+                assertThat(collectionOfAddOnProductReferences.iterator().next().getQuoteLineReference(),
+                        is(equalTo(sapQuote.getQuoteItemMap().get(productOrderAddOn.getAddOn().getPartNumber()).iterator().next().getQuoteItemNumber().toString())));
+            });
+        } catch (SAPInterfaceException e) {
+            Assert.fail();
+        }
+
+        SapQuote mixedQuote =
+                TestUtils.buildTestSapQuote("00332883", BigDecimal.valueOf(20000), BigDecimal.valueOf(100000),
+                        quoteTestOrder, TestUtils.SapQuoteTestScenario.MATCH_QUOTE_ITEMS_AND_DOLLAR_LIMITED,
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
+
+        try {
+            quoteTestOrder.updateQuoteItems(mixedQuote);
+            final Set<SapQuoteItemReference> quoteReferences = quoteTestOrder.getQuoteReferences();
+            assertThat(quoteReferences, is(not(empty())));
+
+            final Set<SapQuoteItemReference> collectionOfPrimaryProductReferences =
+                    quoteReferences.stream().filter(sapQuoteItemReference -> sapQuoteItemReference.getMaterialReference().equals(quoteTestOrder.getProduct())).collect(
+                            Collectors.toSet());
+            assertThat(collectionOfPrimaryProductReferences.size(), is(equalTo(1)));
+            assertThat(collectionOfPrimaryProductReferences.iterator().next().getQuoteLineReference(),
+                    is(equalTo(mixedQuote.getQuoteItemMap().get(quoteTestOrder.getProduct().getPartNumber()).iterator().next().getQuoteItemNumber().toString())));
+
+            quoteTestOrder.getAddOns().forEach(productOrderAddOn -> {
+                final Set<SapQuoteItemReference> collectionOfAddOnProductReferences = quoteReferences.stream().filter(sapQuoteItemReference ->
+                        sapQuoteItemReference.getMaterialReference().equals(productOrderAddOn.getAddOn())).collect(
+                        Collectors.toSet());
+                assertThat(collectionOfAddOnProductReferences.size(), is(equalTo(1)));
+                assertThat(collectionOfAddOnProductReferences.iterator().next().getQuoteLineReference(),
+                        is(equalTo(mixedQuote.getQuoteItemMap().get(productOrderAddOn.getAddOn().getPartNumber()).iterator().next().getQuoteItemNumber().toString())));
+            });
+        } catch (SAPInterfaceException e) {
+            Assert.fail();
+        }
+
+        SapQuote dollarLimitQuote =
+                TestUtils.buildTestSapQuote("00332883", BigDecimal.valueOf(20000), BigDecimal.valueOf(100000),
+                        quoteTestOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED,
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
+
+        try {
+            quoteTestOrder.updateQuoteItems(dollarLimitQuote);
+            final Set<SapQuoteItemReference> quoteReferences = quoteTestOrder.getQuoteReferences();
+            assertThat(quoteReferences, is(not(empty())));
+
+            final Set<SapQuoteItemReference> collectionOfPrimaryProductReferences =
+                    quoteReferences.stream().filter(sapQuoteItemReference -> sapQuoteItemReference.getMaterialReference().equals(quoteTestOrder.getProduct())).collect(
+                            Collectors.toSet());
+            assertThat(collectionOfPrimaryProductReferences.size(), is(equalTo(1)));
+            assertThat(collectionOfPrimaryProductReferences.iterator().next().getQuoteLineReference(),
+                    is(equalTo(dollarLimitQuote.getQuoteItemByDescriptionMap().get(QuoteItem.DOLLAR_LIMIT_MATERIAL_DESCRIPTOR).iterator().next().getQuoteItemNumber().toString())));
+
+            quoteTestOrder.getAddOns().forEach(productOrderAddOn -> {
+                final Set<SapQuoteItemReference> collectionOfAddOnProductReferences = quoteReferences.stream().filter(sapQuoteItemReference ->
+                        sapQuoteItemReference.getMaterialReference().equals(productOrderAddOn.getAddOn())).collect(
+                        Collectors.toSet());
+                assertThat(collectionOfAddOnProductReferences.size(), is(equalTo(1)));
+                assertThat(collectionOfAddOnProductReferences.iterator().next().getQuoteLineReference(),
+                        is(equalTo(dollarLimitQuote.getQuoteItemByDescriptionMap().get(QuoteItem.DOLLAR_LIMIT_MATERIAL_DESCRIPTOR).iterator().next().getQuoteItemNumber().toString())));
+            });
+        } catch (SAPInterfaceException e) {
+            Assert.fail();
+        }
+
+
+        SapQuote differingQuote =
+                TestUtils.buildTestSapQuote("00332883", BigDecimal.valueOf(20000), BigDecimal.valueOf(100000),
+                        quoteTestOrder, TestUtils.SapQuoteTestScenario.PRODUCTS_DIFFER,
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
+
+        try {
+            quoteTestOrder.updateQuoteItems(differingQuote);
+            Assert.fail();
+        } catch (SAPInterfaceException e) {
+        }
 
     }
 }
