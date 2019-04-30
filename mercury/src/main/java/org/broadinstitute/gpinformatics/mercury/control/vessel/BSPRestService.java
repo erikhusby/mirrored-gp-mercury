@@ -121,21 +121,21 @@ public class BSPRestService implements Serializable {
                                                      String username) {
         String urlString = bspRestClient.getUrl(BSP_RECEIVE_BY_KIT_SCAN);
 
-        WebResource webResource = bspRestClient.getWebResource(urlString);
+        WebTarget webResource = bspRestClient.getWebResource(urlString);
         SampleKitReceivedRequest sampleKitReceived = new SampleKitReceivedRequest();
         sampleKitReceived.setSampleKitId(sampleKitBarcode);
         sampleKitReceived.setUsername(username);
         sampleKitReceived.getWellAndSourceTubeType().addAll(wellAndTubes);
-        ClientResponse response = webResource.queryParam("sampleKitBarcode", sampleKitBarcode)
-                .queryParam("username", username).accept(MediaType.APPLICATION_XML)
-                .post(ClientResponse.class, sampleKitReceived);
-        if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
+        Response response = webResource.queryParam("sampleKitBarcode", sampleKitBarcode)
+                .queryParam("username", username).request(MediaType.APPLICATION_XML)
+                .post(Entity.xml(sampleKitReceived));
+        if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
             SampleKitReceivedBean receiptResponse = new SampleKitReceivedBean(false);
-            logger.warn("POST to " + urlString + " returned: " + response.getEntity(String.class));
+            logger.warn("POST to " + urlString + " returned: " + response.readEntity(String.class));
             return receiptResponse;
         }
 
-        return response.getEntity(SampleKitReceivedBean.class);
+        return response.readEntity(SampleKitReceivedBean.class);
     }
 
     public void setBspRestClient(BSPRestClient bspRestClient) {
