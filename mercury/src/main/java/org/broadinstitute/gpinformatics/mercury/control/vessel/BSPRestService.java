@@ -7,6 +7,8 @@ import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.RegisterNonBroadTubesBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleKitInfo;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleKitReceivedBean;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SampleKitReceivedRequest;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
@@ -15,6 +17,7 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -25,6 +28,7 @@ public class BSPRestService implements Serializable {
     public static final String BSP_SAMPLE_KIT_INFO = "sampleKit/getSampleKitDetails";
     public static final String BSP_CONTAINER_SAMPLE_INFO = "container/getSampleInfo";
     public static final String BSP_RECEIVE_NON_BROAD_SAMPLE = "sampleKit/receiveNonBroadTubes";
+    public static final String BSP_RECEIVE_BY_KIT_SCAN = "sampleKit/receiveByKitScan";
 
     private static final Log logger = LogFactory.getLog(BSPRestService.class);
 
@@ -103,6 +107,35 @@ public class BSPRestService implements Serializable {
         SampleKitReceivedBean sampleKitReceivedBean = response.readEntity(SampleKitReceivedBean.class);
         response.close();
         return sampleKitReceivedBean;
+    }
+
+    /**
+     * Receives non broad samples within BSP, validate that they can be received and receives the samples within Mercury.
+     *
+     * @param sampleKitBarcode SK Barcode to receive
+     * @param wellAndTubes List of well/tube pairs from rack scan
+     * @param username Username of the operator
+     * @return SampleKitReceiptResponse returned from BSP.
+     */
+    public SampleKitReceivedBean receiveByKitScan(String sampleKitBarcode, List<WellAndSourceTubeType> wellAndTubes,
+                                                     String username) {
+        String urlString = bspRestClient.getUrl(BSP_RECEIVE_BY_KIT_SCAN);
+
+        WebResource webResource = bspRestClient.getWebResource(urlString);
+        SampleKitReceivedRequest sampleKitReceived = new SampleKitReceivedRequest();
+        sampleKitReceived.setSampleKitId(sampleKitBarcode);
+        sampleKitReceived.setUsername(username);
+        sampleKitReceived.getWellAndSourceTubeType().addAll(wellAndTubes);
+        ClientResponse response = webResource.queryParam("sampleKitBarcode", sampleKitBarcode)
+                .queryParam("username", username).accept(MediaType.APPLICATION_XML)
+                .post(ClientResponse.class, sampleKitReceived);
+        if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
+            SampleKitReceivedBean receiptResponse = new SampleKitReceivedBean(false);
+            logger.warn("POST to " + urlString + " returned: " + response.getEntity(String.class));
+            return receiptResponse;
+        }
+
+        return response.getEntity(SampleKitReceivedBean.class);
     }
 
     public void setBspRestClient(BSPRestClient bspRestClient) {
