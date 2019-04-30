@@ -59,6 +59,8 @@ public class BillingAdaptor implements Serializable {
     public static final String NOT_ELIGIBLE_FOR_SAP_INDICATOR = "NotEligible";
     public static final String BILLING_CREDIT_REQUESTED_INDICATOR = "Credit Requested";
     public static final String NOT_ELLIGIBLE_FOR_QUOTE_SERVER_INDICATOR = "Not Elligible for Quote Server.";
+    public static final String BILLING_LOG_TEXT_FORMAT =
+        "Work item '%s' and SAP Document '%s' with completion date of '%s' posted at '%s' for '%2.2f' units of '%s' on behalf of %s in '%s'";
 
     private BillingEjb billingEjb;
 
@@ -385,8 +387,7 @@ public class BillingAdaptor implements Serializable {
         if(quotePriceItem != null) {
             priceItemName = quoteImportItem.getProduct().getProductName();
         }
-        String billingLogText = String.format(
-                "Work item '%s' and SAP Document '%s' with completion date of '%s' posted at '%s' for '%2.2f' units of '%s' on behalf of %s in '%s'",
+        String billingLogText = String.format(BILLING_LOG_TEXT_FORMAT,
                 workId,
                 sapDocumentID,
                 BILLING_DATE_FORMAT.format(quoteImportItem.getWorkCompleteDate()),
