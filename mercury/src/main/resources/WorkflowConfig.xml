@@ -4220,9 +4220,9 @@
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>cDNA Cleanup</name>
-                <labEventTypes>TENX_EXTRACTION_CDNA_CLEANUP</labEventTypes>
-                <workflowQualifier>TENX_EXTRACTION_CDNA_CLEANUP</workflowQualifier>
+                <name>Siline Cleanup</name>
+                <labEventTypes>TENX_EXTRACTION_SILINE_CLEANUP</labEventTypes>
+                <workflowQualifier>TENX_EXTRACTION_SILINE_CLEANUP</workflowQualifier>
                 <instructions>
                     Scan in source plate (consolidated plate) and final plate (&quot;cDNA&quot; plate).
                 </instructions>
@@ -4239,7 +4239,7 @@
                 <labEventTypes>TENX_EXTRACTION_CDNA_AMPLIFICATION</labEventTypes>
                 <workflowQualifier>TENX_EXTRACTION_CDNA_AMPLIFICATION</workflowQualifier>
                 <instructions>
-                    Scan in source barcode (&quot;cDNA Amp&quot; plate) and scan in new matrix rack (&quot;cDNA&quot; rack) barcodes and tube IDs
+                    Scan in all of the source PCR plate barcodes (1 barcode per plate), then scan in the new consolidated plate barcode.
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_TRANSFER_EVENT</messageType>
@@ -4248,6 +4248,21 @@
                     <targetVesselTypeGeometryString>RackType.Matrix96SlotRack075</targetVesselTypeGeometryString>
                     <targetSection>ALL96</targetSection>
                     <targetBarcodedTubeTypeString>BarcodedTubeType.MatrixTube075</targetBarcodedTubeTypeString>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>cDNA Cleanup</name>
+                <labEventTypes>TENX_EXTRACTION_CDNA_CLEANUP</labEventTypes>
+                <workflowQualifier>TENX_EXTRACTION_CDNA_CLEANUP</workflowQualifier>
+                <instructions>
+                    Scan in source barcode (&quot;cDNA Amp&quot; plate) and scan in new matrix rack (&quot;cDNA&quot; rack) barcodes and tube IDs
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96Well200PCR</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>PlateType.Plate96Well200PCR</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
                 </manualTransferDetails>
             </workflowStepDefs>
         </workflowProcessDefVersions>
