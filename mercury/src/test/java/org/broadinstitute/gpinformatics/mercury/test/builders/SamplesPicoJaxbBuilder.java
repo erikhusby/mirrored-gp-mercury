@@ -41,7 +41,7 @@ public class SamplesPicoJaxbBuilder {
         BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
 
         // 3 x  PicoDilutionTransfer
-        String picoDilutionPlateBarcode = "PicoDilutionPlate" + timestamp;
+        String picoDilutionPlateBarcode = generateBarcode();
         picoDilutionTransferJaxbA1 = bettaLimsMessageTestFactory.buildRackToPlate("PicoDilutionTransfer",
                 "PicoRack" + timestamp, tubeBarcodes, picoDilutionPlateBarcode);
         picoDilutionTransferJaxbA1.getPlate().setSection("P384_96TIP_1INTERVAL_A1");
@@ -78,10 +78,7 @@ public class SamplesPicoJaxbBuilder {
         bettaLimsMessageTestFactory.addMessage(messageList, picoBufferAdditionJaxb);
 
         // PicoMicrofluorTransfer
-        Random r = new Random();
-        // reverted to 12 digits with leading 'A'
-        NumberFormat formatter = new DecimalFormat("A000000000000");
-        String picoMicrofluorPlateBarcode = formatter.format(r.nextInt(Integer.MAX_VALUE));
+        String picoMicrofluorPlateBarcode = generateBarcode();
         picoMicrofluorTransferJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("PicoMicrofluorTransfer",
                 picoDilutionPlateBarcode,
                 picoMicrofluorPlateBarcode);
@@ -92,6 +89,13 @@ public class SamplesPicoJaxbBuilder {
         // todo jmt batch ID is set only for the first message?
         picoMicrofluorTransferJaxb.setBatchId(labBatchId);
         bettaLimsMessageTestFactory.addMessage(messageList, picoMicrofluorTransferJaxb);
+    }
+
+    public String generateBarcode() {
+        Random r = new Random();
+        // reverted to 12 digits with leading 'A'
+        NumberFormat formatter = new DecimalFormat("A000000000000");
+        return formatter.format(r.nextInt(Integer.MAX_VALUE));
     }
 
     public List<BettaLIMSMessage> getMessageList() {
