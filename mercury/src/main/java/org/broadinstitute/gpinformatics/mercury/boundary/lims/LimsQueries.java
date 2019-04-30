@@ -507,7 +507,7 @@ public class LimsQueries {
                                 ProductInfoType productInfoType = new ProductInfoType();
                                 productInfoType.setPartNumber(product.getPartNumber());
                                 productInfoType.setProductName(product.getProductName());
-                                productInfoType.setWorkflowName(product.getWorkflow().getWorkflowName());
+                                productInfoType.setWorkflowName(product.getWorkflowName());
                                 productInfoType.setProductFamily(product.getProductFamily().getName());
                                 productInfosType.getProductInfoType().add(productInfoType);
                                 mapProductToProductInfo.put(product, productInfoType);
@@ -543,7 +543,7 @@ public class LimsQueries {
                     ProductInfoType productInfoType = new ProductInfoType();
                     productInfoType.setPartNumber(product.getPartNumber());
                     productInfoType.setProductName(product.getProductName());
-                    productInfoType.setWorkflowName(product.getWorkflow().getWorkflowName());
+                    productInfoType.setWorkflowName(product.getWorkflowName());
                     productInfoType.setCoverageKey(product.getCoverageTypeKey());
                     productInfoType.setReagentDesignKey(productOrder.getReagentDesignKey());
                     productInfosType.getProductInfoType().add(productInfoType);
