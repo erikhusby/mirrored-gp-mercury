@@ -60,6 +60,7 @@ public class MayoReceivingActionBean extends RackScanActionBean {
     private List<List<String>> manifestCellGrid = new ArrayList<>();
     private List<String> bucketList = new ArrayList<>();
     private List<String> failedFilesList = new ArrayList<>();
+    private boolean forcedQuarantine;
 
     @Inject
     private MayoManifestEjb mayoManifestEjb;
@@ -352,6 +353,14 @@ public class MayoReceivingActionBean extends RackScanActionBean {
 
     public void setFailedFilesList(List<String> failedFilesList) {
         this.failedFilesList = failedFilesList;
+    }
+
+    public boolean isForcedQuarantine() {
+        return forcedQuarantine;
+    }
+
+    public void setForcedQuarantine(boolean forcedQuarantine) {
+        this.forcedQuarantine = forcedQuarantine;
     }
 
     /**

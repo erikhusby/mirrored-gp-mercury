@@ -35,15 +35,16 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -52,9 +53,9 @@ import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.MayoMan
 
 @Test(groups = TestGroups.STANDARD)
 public class MayoManifestEjbTest extends Arquillian {
-    private Random random = new Random(System.currentTimeMillis());
     private GoogleBucketDao googleBucketDao = new GoogleBucketDao();
     private static Deployment deployment = Deployment.DEV;
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MMddHHmmss");
 
     @Inject
     private MercurySampleDao mercurySampleDao;
@@ -88,7 +89,7 @@ public class MayoManifestEjbTest extends Arquillian {
     public void testLoadAndReloadManifestFiles() throws Exception {
         mayoManifestEjb.getUserBean().loginTestUser();
         MessageCollection messageCollection = new MessageCollection();
-        String testDigits = String.format("%09d", random.nextInt(10000000));
+        String testDigits = DATE_FORMAT.format(new Date());
 
         // Makes a spreadsheet consisting of mostly random value test data.
         List<List<String>> cellGrid = makeCellGrid(testDigits, ImmutableMap.of("Bx-" + testDigits, 4));
@@ -96,6 +97,11 @@ public class MayoManifestEjbTest extends Arquillian {
         int boxIndex = headers.indexOf(Header.BOX_ID);
         int collabSampleIndex = headers.indexOf(Header.BIOBANK_SAMPLE_ID);
         String rackBarcode = cellGrid.get(1).get(boxIndex);
+
+        // Sets first char in the collaborator sample id in the spreadsheet.
+        cellGrid.subList(1, cellGrid.size()).forEach(row -> {
+            row.set(collabSampleIndex, "Q" + row.get(collabSampleIndex));
+        });
 
         // Writes the spreadsheet to the storage bucket.
         String filename = String.format("test_%s.csv", testDigits);
@@ -124,7 +130,7 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertEquals(manifestSessionDao.getSessionsByPrefix(manifestKey).size(), 1);
 
         // Tests Mayo Admin UI "pull one file". A forced reload will make a new manifest session.
-        // In this case it will have identical content.
+        // In this case it will have the same filename and content.
         bean.setFilename(filename);
         mayoManifestEjb.pullOne(bean);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors()));
@@ -136,6 +142,7 @@ public class MayoManifestEjbTest extends Arquillian {
         long sessionId2 = sessions.iterator().next().getManifestSessionId();
 
         // Two manifest files with identical content should be treated as two Mercury manifest sessions.
+        // In this case it has a different filename but the same content.
         String filename2 = StringUtils.replace(filename, ".csv", "a.csv");
         googleBucketDao.upload(filename2, makeContent(cellGrid), messageCollection);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
@@ -150,21 +157,17 @@ public class MayoManifestEjbTest extends Arquillian {
         long sessionId3 = sessions.iterator().next().getManifestSessionId();
         Assert.assertTrue(sessionId3 > sessionId2, "For rack " + rackBarcode);
 
-        // Modifies some sample metadata in the spreadsheet and re-uploads it.
+        // Modifies collaborator sample id in the spreadsheet and re-uploads it.
         // This tests if Mayo updates a manifest file by replacing it in the storage bucket.
+        // In this case it has the same filename but different metadata content.
         cellGrid.subList(1, cellGrid.size()).forEach(row -> {
-            for (int i = 0; i < row.size(); ++i) {
-                String value = row.get(i);
-                if (value.startsWith("Bi")) {
-                    row.set(collabSampleIndex, value.replaceFirst("Bi", "VERS"));
-                }
-            }
+            row.set(collabSampleIndex, "W" + row.get(collabSampleIndex));
         });
         googleBucketDao.upload(filename2, makeContent(cellGrid), messageCollection);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
         // A force reload is necessary for Mercury to pick up the changes.
-        bean.setFilename(filename);
+        bean.setFilename(filename2);
         mayoManifestEjb.pullOne(bean);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors()));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
@@ -176,14 +179,11 @@ public class MayoManifestEjbTest extends Arquillian {
 
         // Again modifies the sample metadata in the spreadsheet and re-uploads it as a new file.
         // This tests if Mayo updates a manifest file by writing a new file to the storage bucket.
-        cellGrid.forEach(row -> {
-            for (int i = 0; i < row.size(); ++i) {
-                String value = row.get(i);
-                if (value.startsWith("VERS")) {
-                    row.set(collabSampleIndex, value.replaceFirst("VERS", "UPD"));
-                }
-            }
+        // In this case it has a different filename and different metadata content.
+        cellGrid.subList(1, cellGrid.size()).forEach(row -> {
+            row.set(collabSampleIndex, "E" + row.get(collabSampleIndex));
         });
+
         String filename3 = StringUtils.replace(filename, ".csv", "b.csv");
         googleBucketDao.upload(filename3, makeContent(cellGrid), messageCollection);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
@@ -202,7 +202,7 @@ public class MayoManifestEjbTest extends Arquillian {
     public void testScanValidation() throws Exception {
         mayoManifestEjb.getUserBean().loginTestUser();
         MessageCollection messageCollection = new MessageCollection();
-        String testDigits = String.format("%09d", random.nextInt(100000000));
+        String testDigits = DATE_FORMAT.format(new Date());
 
         // Makes a spreadsheet with 10 racks each having one tube. Writes it to a manifest file.
         List<List<String>> cellGrid = makeCellGrid(testDigits,
@@ -333,7 +333,8 @@ public class MayoManifestEjbTest extends Arquillian {
     public void testAccession() throws Exception {
         mayoManifestEjb.getUserBean().loginTestUser();
         MessageCollection messageCollection = new MessageCollection();
-        String testDigits = String.format("%09d", random.nextInt(10000000));
+        String testDigits = DATE_FORMAT.format(new Date());
+
         // Makes a spreadsheet with two racks.
         String rackBarcodes[] = {"Bx-" + testDigits + "i", "Bx-" + testDigits + "j"};
         List<List<String>> cellGrid = makeCellGrid(testDigits, ImmutableMap.of(rackBarcodes[0], 4, rackBarcodes[1], 5));
@@ -376,7 +377,8 @@ public class MayoManifestEjbTest extends Arquillian {
     public void testReceiptThenAccession() throws Exception {
         mayoManifestEjb.getUserBean().loginTestUser();
         MessageCollection messageCollection = new MessageCollection();
-        String testDigits = String.format("%09d", random.nextInt(10000000));
+        String testDigits = DATE_FORMAT.format(new Date());
+
         // Makes a spreadsheet with 94 samples.
         List<List<String>> cellGrid = makeCellGrid(testDigits, ImmutableMap.of("Bx-" + testDigits, 94));
         List<Header> headers = MayoManifestImportProcessor.extractHeaders(cellGrid.get(0), null, null);
@@ -428,7 +430,8 @@ public class MayoManifestEjbTest extends Arquillian {
     public void testAccessionFixup() throws Exception {
         mayoManifestEjb.getUserBean().loginTestUser();
         MessageCollection messageCollection = new MessageCollection();
-        String testDigits = String.format("%09d", random.nextInt(10000000));
+        String testDigits = DATE_FORMAT.format(new Date());
+
         // Makes a spreadsheet
         List<List<String>> cellGrid = makeCellGrid(testDigits, ImmutableMap.of("Bx-" + testDigits, 96));
         List<Header> headers = MayoManifestImportProcessor.extractHeaders(cellGrid.get(0), null, null);
@@ -515,7 +518,8 @@ public class MayoManifestEjbTest extends Arquillian {
 
     @Test
     public void testBucketAccessAndViewFileByFilename() {
-        String testDigits = String.format("%09d", random.nextInt(10000000));
+        String testDigits = DATE_FORMAT.format(new Date());
+;
         mayoManifestEjb.getUserBean().loginTestUser();
         MessageCollection messageCollection = new MessageCollection();
         MayoReceivingActionBean bean = new MayoReceivingActionBean();
@@ -551,6 +555,40 @@ public class MayoManifestEjbTest extends Arquillian {
         List<List<String>> displayCellGrid = bean.getManifestCellGrid();
         Assert.assertEquals(displayCellGrid.stream().flatMap(Collection::stream).collect(Collectors.joining(" ")),
                 cellGrid.stream().flatMap(Collection::stream).collect(Collectors.joining(" ")));
+    }
+
+    @Test
+    public void testForcedQuarantine() throws Exception {
+        mayoManifestEjb.getUserBean().loginTestUser();
+        MessageCollection messageCollection = new MessageCollection();
+        String testDigits = DATE_FORMAT.format(new Date());
+
+        // Makes a spreadsheet with 2 samples.
+        List<List<String>> cellGrid = makeCellGrid(testDigits, ImmutableMap.of("Bx-" + testDigits, 2));
+        List<Header> headers = MayoManifestImportProcessor.extractHeaders(cellGrid.get(0), null, null);
+        int boxIndex = headers.indexOf(Header.BOX_ID);
+        String rackBarcode = cellGrid.get(1).get(boxIndex);
+        // Writes the spreadsheet to the storage bucket.
+        String filename = String.format("test_%s.csv", testDigits);
+        googleBucketDao.upload(filename, makeContent(cellGrid), messageCollection);
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+
+        Assert.assertTrue(CollectionUtils.isEmpty(manifestSessionDao.getSessionsByPrefix(
+                MayoReceivingActionBean.getManifestKey(rackBarcode))));
+        MayoReceivingActionBean bean = new MayoReceivingActionBean();
+        bean.setMessageCollection(messageCollection);
+        bean.setRackBarcode(rackBarcode);
+        bean.setRackScan(makeRackScan(cellGrid, rackBarcode));
+        bean.setShipmentCondition("Two tubes are cracked and empty.");
+        bean.setForcedQuarantine(true);
+        bean.setDeliveryMethod("Local Courier");
+        bean.setReceiptType("None");
+        mayoManifestEjb.receiveAndAccession(bean);
+        // No errors.
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
+        messageCollection.clearAll();
+        validateEntities(cellGrid, rackBarcode, true);
     }
 
     private void validateManifest(ManifestSession manifestSession, List<List<String>> cellGrid) {
@@ -622,7 +660,8 @@ public class MayoManifestEjbTest extends Arquillian {
                     Assert.assertTrue(tube.getContainers().contains(tubeFormation), "Tube " + tube.getLabel());
                 }
                 if (receiptOnly) {
-                    Assert.assertTrue(tube.getMercurySamples().isEmpty(), "Tube " + tube.getLabel());
+                    Assert.assertTrue(tube.getMercurySamples().isEmpty(), "Tube " + tube.getLabel() +
+                            " should not have a linked MercurySample.");
                 } else {
                     // Validates the tube's sample.
                     Assert.assertEquals(tube.getMercurySamples().size(), 1);

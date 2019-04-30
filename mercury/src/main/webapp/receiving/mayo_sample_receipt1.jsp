@@ -14,16 +14,16 @@
             </c:if>
 
             <!-- Captures the rack barcode. -->
-            <div class="control-group">
+            <div class="control-group" style="padding-left: 75px">
                 Rack Barcode:
-                <span style="padding-left: 10px;">
+                <span style="padding-left: 10px">
                     <input type="text" id="rackBarcode" name="rackBarcode" value="${actionBean.rackBarcode}"/>
                 </span>
             </div>
 
             <!-- Button to lookup the manifest file for the rack and display contents. -->
             <c:if test="${actionBean.getManifestCellGrid().isEmpty()}">
-                <div style="padding-left: 8em;">
+                <div style="padding-left: 200px">
                     <stripes:submit id="viewManifestBtn" name="viewManifestBtn" value="View The Manifest File"
                                     class="btn btn-primary"
                                     title="Click for a display of the manifest file that will be used for the rack."/>

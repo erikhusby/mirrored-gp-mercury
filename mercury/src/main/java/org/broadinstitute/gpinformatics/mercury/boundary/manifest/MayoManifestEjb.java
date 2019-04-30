@@ -198,12 +198,8 @@ public class MayoManifestEjb {
         String invalidPositions = bean.getRackScan().keySet().stream().
                 filter(position -> VesselPosition.getByName(position) == null).
                 collect(Collectors.joining(", "));
-        if (StringUtils.isNotBlank(invalidPositions)) {
-            bean.getMessageCollection().addError(UNKNOWN_WELL_SCAN, invalidPositions);
-        }
-
-        // Turns the rack scan into a list of position & sample to pass to and from jsp.
-        if (!bean.getMessageCollection().hasErrors()) {
+        if (StringUtils.isBlank(invalidPositions)) {
+            // Turns the rack scan into a list of position & sample to pass to and from jsp.
             bean.getRackScanEntries().addAll(bean.getRackScan().entrySet().stream().
                     map(mapEntry -> StringUtils.join(mapEntry.getKey(), " ", mapEntry.getValue())).
                     sorted().collect(Collectors.toList()));
@@ -215,7 +211,10 @@ public class MayoManifestEjb {
                 bean.getMessageCollection().addError(NO_RACK_TYPE,
                         bean.getRackScan().keySet().stream().sorted().collect(Collectors.joining(", ")));
             }
+        } else {
+            bean.getMessageCollection().addError(UNKNOWN_WELL_SCAN, invalidPositions);
         }
+
     }
 
     /**
@@ -344,7 +343,7 @@ public class MayoManifestEjb {
                                 manifestPositions.get(tube), tubeToPosition.get(tube)));
             }
 
-            if (!bean.getMessageCollection().hasErrors()) {
+            if (!bean.getMessageCollection().hasErrors() && !bean.isForcedQuarantine()) {
                 // Creates or updates samples. All will have MetadataSource.MERCURY.
                 sampleMap = mercurySampleDao.findMapIdToMercurySample(sampleMetadata.keySet());
                 for (String sampleName : sampleMetadata.keySet()) {
@@ -633,7 +632,8 @@ public class MayoManifestEjb {
             List<String> tubeBarcodes, List<String> sampleNames, List<String> materialTypes,
             String packageId, String requestingPhysician, String trackingNumber) {
         // Infers that it's accessioned if no errors were given and all the samples are present.
-        boolean isQuarantined = bean.getMessageCollection().hasErrors() || (tubeBarcodes.size() != sampleNames.size());
+        boolean isQuarantined = bean.getMessageCollection().hasErrors() ||
+                tubeBarcodes.size() != sampleNames.size() || bean.isForcedQuarantine();
         // The title field.
         String title = String.format(isQuarantined ? QUARANTINED_RCT_TITLE : RCT_TITLE, rack.getLabel());
         CustomField titleField = new CustomField(new CustomFieldDefinition("summary", "Summary", true), title);
@@ -702,15 +702,23 @@ public class MayoManifestEjb {
                 "|Acknowledgement of Shipping Form|" +
                     StringUtils.defaultIfBlank(bean.getShippingAcknowledgement(), "unknown") + "|\n";
             if (isQuarantined) {
+                boolean hasReason = false;
                 comment += "Quarantine reason: ";
                 if (bean.getMessageCollection().hasErrors()) {
                     comment += StringUtils.join(bean.getMessageCollection().getErrors(), "; ") + "\n";
+                    hasReason = true;
                 } else if (bean.getMessageCollection().hasWarnings()) {
                     comment += StringUtils.join(bean.getMessageCollection().getWarnings(), "; ") + "\n";
-                } else {
+                    hasReason = true;
+                }
+                if (bean.isForcedQuarantine()) {
+                    comment += "Quarantined due to shipment condition.";
+                    hasReason = true;
+                }
+                if (!hasReason) {
                     comment += "(unknown)\n";
                 }
-                comment += String.format(ONLY_RECEIVED, rack.getLabel(), StringUtils.join(tubeBarcodes, " "));
+                comment += "\n" + String.format(ONLY_RECEIVED, rack.getLabel(), StringUtils.join(tubeBarcodes, " "));
             } else if (ManifestSessionEjb.JiraTransition.ACCESSIONED.getStateName().equals(issueStatus)) {
                 comment += String.format(REACCESSIONED, StringUtils.join(sampleNames, " "));
             } else {
