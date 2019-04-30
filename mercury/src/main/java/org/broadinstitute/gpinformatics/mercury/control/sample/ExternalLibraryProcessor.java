@@ -464,7 +464,7 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
                         getLabVesselMap().put(barcode, labVessel);
                     } else {
                         // Tube is being re-uploaded, so clearing old samples is appropriate.
-                        labVessel.getMercurySamples().clear();
+                        labVessel.clearSamples();
                     }
                     SampleInstanceEjb.RowDto firstRowHavingTube = mapBarcodeToFirstRow.get(barcode);
                     labVessel.setVolume(firstRowHavingTube.getVolume());
@@ -518,7 +518,7 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
 
             SampleInstanceEntity sampleInstanceEntity = makeSampleInstanceEntity(dto, labVessel, mercurySample);
 
-            labVessel.getSampleInstanceEntities().add(sampleInstanceEntity);
+            labVessel.addSampleInstanceEntity(sampleInstanceEntity);
             dto.setSampleInstanceEntity(sampleInstanceEntity);
             sampleInstanceEntities.add(sampleInstanceEntity);
         }

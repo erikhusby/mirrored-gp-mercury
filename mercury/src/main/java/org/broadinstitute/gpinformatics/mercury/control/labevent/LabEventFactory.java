@@ -512,6 +512,7 @@ public class LabEventFactory implements Serializable {
                 labEvent.getDisambiguator()))) {
             labEvent.setDisambiguator(labEvent.getDisambiguator() + 1L);
         }
+        labEvent.computeLabBatches();
         if (persistEntities) {
             labEventDao.persist(labEvent);
             labEventDao.flush();

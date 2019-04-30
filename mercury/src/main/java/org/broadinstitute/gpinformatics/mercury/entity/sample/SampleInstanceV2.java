@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
@@ -27,9 +26,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.PositionLabBatches;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -51,7 +50,7 @@ import java.util.stream.Collectors;
 public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
 
     /**
-     * Allows LabEvent.computeLcSets to choose the nearest match if there are multiple.
+     * Allows LabEvent.computeLabBatches to choose the nearest match if there are multiple.
      */
     public static class LabBatchDepth {
         private final int depth;
@@ -634,8 +633,8 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     /**
      * Applies a LabEvent, specifically computed LCSets.
      */
-    public void applyEvent(LabEvent labEvent, LabVessel labVessel) {
-        LabEventType labEventType = labEvent.getLabEventType();
+    public void applyEvent(LabVessel.VesselEvent vesselEvent, LabVessel labVessel) {
+        LabEventType labEventType = vesselEvent.getLabEvent().getLabEventType();
         if (labEventType.getPipelineTransformation() == LabEventType.PipelineTransformation.PCR) {
             if (firstPcrVessel == null && labVessel != null) {
                 firstPcrVessel = labVessel;
@@ -646,25 +645,21 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             materialType = resultingMaterialType;
         }
 
-        if (labEvent.getManualOverrideLcSet() != null) {
-            singleWorkflowBatch = labEvent.getManualOverrideLcSet();
+        if (vesselEvent.getLabEvent().getManualOverrideLcSet() != null) {
+            singleWorkflowBatch = vesselEvent.getLabEvent().getManualOverrideLcSet();
             setSingleBucketEntry(labEventType, singleWorkflowBatch);
         }
         // Multiple workflow batches need help.
         // Avoid overwriting a singleWorkflowBatch set by applyVesselChanges.
         else if (singleWorkflowBatch == null) {
-            Set<LabBatch> computedLcsets = labEvent.getComputedLcSets();
+            Set<LabBatch> computedLcsets = vesselEvent.getLabEvent().getComputedLcSets();
             // A single computed LCSET can help resolve ambiguity of multiple bucket entries.
             if (computedLcsets.size() != 1) {
                 // Didn't get a single LCSET for the entire event, see if there's one for the vessel.
-                LabVessel targetLabVessel = labEvent.getTargetLabVessels().iterator().next();
-                VesselContainer<?> containerRole = targetLabVessel.getContainerRole();
-                if (containerRole != null) {
-                    Set<LabBatch> posLabBatches = labEvent.getMapPositionToLcSets().get(
-                            containerRole.getPositionOfVessel(labVessel));
-                    if (posLabBatches != null) {
-                        computedLcsets = posLabBatches;
-                    }
+                PositionLabBatches posLabBatches = vesselEvent.getLabEvent().getMapPositionToLcSets().get(
+                        vesselEvent.getTargetPosition());
+                if (posLabBatches != null && !posLabBatches.getLabBatchSet().isEmpty()) {
+                    computedLcsets = posLabBatches.getLabBatchSet();
                 }
             }
             if (computedLcsets.size() == 1) {

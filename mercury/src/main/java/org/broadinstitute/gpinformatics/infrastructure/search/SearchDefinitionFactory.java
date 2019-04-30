@@ -167,10 +167,17 @@ public class SearchDefinitionFactory {
         MAP_NAME_TO_DEF.put(ColumnEntity.PRODUCT_ORDER.getEntityName(), productOrderSearchDefinition);
     }
 
+    /**
+     * Prepends batch type from search term name to a numeric entry <br/>
+     * e.g converts user input 7786 to ARRAY-7786 for ARRAY term name
+     */
     static SearchTerm.Evaluator<Object> getBatchNameInputConverter(){
         return batchNameInputConverter;
     }
 
+    /**
+     * Prepends 'PDO-' to a numeric entry for PDO term
+     */
     static SearchTerm.Evaluator<Object> getPdoInputConverter(){
         return pdoConverter;
     }
