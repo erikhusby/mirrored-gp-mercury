@@ -15,8 +15,8 @@ import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.DataValidation;
+import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.util.IOUtils;
@@ -43,7 +43,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @UrlBinding(value = "/sample/ExternalLibraryUpload.action")
 public class ExternalLibraryUploadActionBean extends CoreActionBean {
@@ -122,16 +121,12 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         String[] validAnalysisTypes = analysisTypeDao.findAll().stream().
                 map(AnalysisType::getBusinessKey).
                 sorted().
-                collect(Collectors.toList()).toArray(new String[0]);
+                toArray(String[]::new);
         String[] validReferenceSequence = referenceSequenceDao.findAllCurrent().stream().
                 map(ReferenceSequence::getName).
                 sorted().
-                collect(Collectors.toList()).toArray(new String[0]);
-        String[] validSequencingTechnology = Arrays.asList(IlluminaFlowcell.FlowcellType.values()).stream().
-                filter(flowcellType -> flowcellType.getCreateFct() == IlluminaFlowcell.CreateFct.YES).
-                map(IlluminaFlowcell.FlowcellType::getTechnology).
-                sorted().
-                collect(Collectors.toList()).toArray(new String[0]);
+                toArray(String[]::new);
+        String[] validSequencingTechnology = IlluminaFlowcell.FlowcellType.getExternalUiNames().toArray(new String[0]);
         String[] validAggregationDataTypes = (
                 new ArrayList<String>() {{
                     add("");
@@ -151,16 +146,19 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
 
         // Makes a mapping from type of data presence to the cell's background color.
         Map<ExternalLibraryProcessor.DataPresence, Short> colorMap = new HashMap<>();
-        colorMap.put(ExternalLibraryProcessor.DataPresence.REQUIRED, HSSFColor.RED.index);
-        colorMap.put(ExternalLibraryProcessor.DataPresence.ONCE_PER_TUBE, HSSFColor.PINK.index);
-        colorMap.put(ExternalLibraryProcessor.DataPresence.OPTIONAL, HSSFColor.TAN.index);
-        colorMap.put(ExternalLibraryProcessor.DataPresence.IGNORED, HSSFColor.GREY_25_PERCENT.index);
+        colorMap.put(ExternalLibraryProcessor.DataPresence.REQUIRED, HSSFColor.HSSFColorPredefined.RED.getIndex());
+        colorMap.put(ExternalLibraryProcessor.DataPresence.ONCE_PER_TUBE,
+                HSSFColor.HSSFColorPredefined.PINK.getIndex());
+        colorMap.put(ExternalLibraryProcessor.DataPresence.OPTIONAL, HSSFColor.HSSFColorPredefined.TAN.getIndex());
+        colorMap.put(ExternalLibraryProcessor.DataPresence.IGNORED,
+                HSSFColor.HSSFColorPredefined.GREY_25_PERCENT.getIndex());
         // Tweaks the colors for better appearance in Excel.
         HSSFPalette palette = workbook.getCustomPalette();
-        palette.setColorAtIndex(HSSFColor.RED.index, (byte)255, (byte)64, (byte)64);
-        palette.setColorAtIndex(HSSFColor.PINK.index, (byte)255, (byte)160, (byte)148);
-        palette.setColorAtIndex(HSSFColor.TAN.index, (byte)255, (byte)220, (byte)240);
-        palette.setColorAtIndex(HSSFColor.GREY_25_PERCENT.index, (byte)200, (byte)195, (byte)190);
+        palette.setColorAtIndex(HSSFColor.HSSFColorPredefined.RED.getIndex(), (byte)255, (byte)64, (byte)64);
+        palette.setColorAtIndex(HSSFColor.HSSFColorPredefined.PINK.getIndex(), (byte)255, (byte)160, (byte)148);
+        palette.setColorAtIndex(HSSFColor.HSSFColorPredefined.TAN.getIndex(), (byte)255, (byte)220, (byte)240);
+        palette.setColorAtIndex(HSSFColor.HSSFColorPredefined.GREY_25_PERCENT.getIndex(),
+                (byte)200, (byte)195, (byte)190);
 
         // Puts the dropdown list content in sheet2. This sheet only holds the lists of
         // possible values for dropdowns in sheet1, so its appearance is not important.
@@ -212,7 +210,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         for (ExternalLibraryProcessor.DataPresence dataPresence : ExternalLibraryProcessor.DataPresence.values()) {
             HSSFCellStyle style = workbook.createCellStyle();
             style.setFillForegroundColor(colorMap.get(dataPresence));
-            style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+            style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             headerStyles.put(dataPresence, style);
         }
 
@@ -287,7 +285,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
 
             HSSFCellStyle style = workbook.createCellStyle();
             if (pair.getLeft() != null) {
-                style.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
+                style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
                 style.setFillForegroundColor(colorMap.get(pair.getLeft()));
             }
             Row row = sheet1.createRow(rowIndex++);

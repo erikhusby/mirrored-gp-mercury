@@ -252,11 +252,10 @@ public class LCSetJiraFieldFactoryTest {
         reworks.add(tube2);
 
         LabBatch batch = new LabBatch("test", newTubes, LabBatch.LabBatchType.WORKFLOW);
-        batch.addBucketEntry(new BucketEntry(tube1, testProductOrder, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, 1));
+        batch.addBucketEntry(new BucketEntry(tube1, testProductOrder, bucket, BucketEntry.BucketEntryType.PDO_ENTRY));
 
         batch.addReworks(reworks);
-        batch.addBucketEntry(new BucketEntry(tube2, testProductOrder, bucket, BucketEntry.BucketEntryType.REWORK_ENTRY,
-                1));
+        batch.addBucketEntry(new BucketEntry(tube2, testProductOrder, bucket, BucketEntry.BucketEntryType.REWORK_ENTRY));
 
         String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch, true);
         assertThat(actualText.trim(), equalTo(expectedText.trim()));
@@ -273,7 +272,7 @@ public class LCSetJiraFieldFactoryTest {
 
         LabBatch batch = new LabBatch("test", newTubes, LabBatch.LabBatchType.WORKFLOW);
         batch.addBucketEntry(new BucketEntry(tube, testProductOrder, new Bucket("Test"),
-                BucketEntry.BucketEntryType.PDO_ENTRY, 1));
+                BucketEntry.BucketEntryType.PDO_ENTRY));
 
         String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch, true);
         assertThat(actualText.trim(), equalTo(sampleKey.trim()));
@@ -308,12 +307,10 @@ public class LCSetJiraFieldFactoryTest {
         reworks.add(tube2);
 
         LabBatch batch = new LabBatch("test", newTubes, LabBatch.LabBatchType.WORKFLOW);
-        batch.addBucketEntry(new BucketEntry(tube1, testProductOrder, bucket, BucketEntry.BucketEntryType.PDO_ENTRY,
-                1));
+        batch.addBucketEntry(new BucketEntry(tube1, testProductOrder, bucket, BucketEntry.BucketEntryType.PDO_ENTRY));
 
         batch.addReworks(reworks);
-        batch.addBucketEntry(new BucketEntry(tube2, testProductOrder, bucket, BucketEntry.BucketEntryType.REWORK_ENTRY,
-                1));
+        batch.addBucketEntry(new BucketEntry(tube2, testProductOrder, bucket, BucketEntry.BucketEntryType.REWORK_ENTRY));
 
         // Test nearest sample names.
         String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch, true);
@@ -344,7 +341,7 @@ public class LCSetJiraFieldFactoryTest {
 
         LabBatch batch = new LabBatch("test", newTubes, LabBatch.LabBatchType.WORKFLOW);
         batch.addBucketEntry(new BucketEntry(tube, testProductOrder, new Bucket("test"),
-                BucketEntry.BucketEntryType.PDO_ENTRY, 1));
+                BucketEntry.BucketEntryType.PDO_ENTRY));
 
         String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch, true);
         assertThat(actualText.trim(), equalTo(expectedText.trim()));

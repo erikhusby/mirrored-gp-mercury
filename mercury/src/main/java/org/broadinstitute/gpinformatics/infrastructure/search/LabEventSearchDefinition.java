@@ -50,7 +50,7 @@ public class LabEventSearchDefinition {
     // Use an enum rather than having to reference via String values of term names
     // TODO: JMS Create a shared interface that this implements then use this as a registry of all term names
     public enum MultiRefTerm {
-        LCSET("LCSET");
+        LCSET("Lab Batch");
 
         MultiRefTerm(String termRefName ) {
             this.termRefName = termRefName;
@@ -582,10 +582,9 @@ public class LabEventSearchDefinition {
         searchTerm = new SearchTerm();
         searchTerm.setName(MultiRefTerm.LCSET.getTermRefName());
         searchTerm.setHelpText(
-                "LCSET term will only locate events associated with batch or rework batch vessels.<br>"
+                "Lab Batch term will only locate events associated with batch or rework batch vessels.<br>"
                 + "Traversal option(s) should be selected if chain of custody events are desired.<br>"
-                + "Note: The LCSET term is exclusive, no other terms can be selected.");
-        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getBatchNameInputConverter());
+                + "Note: The Lab Batch term is exclusive, no other terms can be selected.");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
@@ -602,7 +601,7 @@ public class LabEventSearchDefinition {
         searchTerm.setCriteriaPaths(blankCriteriaPaths);
 
         SearchTerm lcsetEventTerm = new SearchTerm();
-        lcsetEventTerm.setName("LCSET event type");
+        lcsetEventTerm.setName("Lab batch event type");
         lcsetEventTerm.setConstrainedValuesExpression(new SearchDefinitionFactory.EventTypeValuesExpression());
         lcsetEventTerm.setTraversalFilterExpression(new SearchTerm.Evaluator<Boolean>() {
             @Override
@@ -800,7 +799,7 @@ public class LabEventSearchDefinition {
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerms.add(searchTerm);
 
-        // By LCSET
+        // By lab batch
         searchTerm = new SearchTerm();
         searchTerm.setName(MultiRefTerm.LCSET.getTermRefName());
 

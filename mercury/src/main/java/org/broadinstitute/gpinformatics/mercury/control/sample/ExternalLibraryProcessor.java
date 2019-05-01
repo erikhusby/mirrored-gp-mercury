@@ -314,7 +314,7 @@ public class ExternalLibraryProcessor extends TableProcessor {
             }
 
             if (StringUtils.isNotBlank(dto.getSequencingTechnology()) &&
-                    IlluminaFlowcell.FlowcellType.getByTechnology(dto.getSequencingTechnology()) == null) {
+                    IlluminaFlowcell.FlowcellType.getTypeForExternalUiName(dto.getSequencingTechnology()) == null) {
                 messages.addError(String.format(SampleInstanceEjb.UNKNOWN, dto.getRowNumber(),
                         Headers.SEQUENCING_TECHNOLOGY.getText(), "Mercury"));
             }
@@ -538,6 +538,17 @@ public class ExternalLibraryProcessor extends TableProcessor {
                         Headers.FRAGMENT_SIZE.getText(),
                         mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber(), found.getBarcode()));
             }
+            // Issues warnings for mixed values that may be technically possible in a pooled tube.
+            if (found.getInsertSize() != null && !Objects.equals(found.getInsertSize(), expected.getInsertSize())) {
+                messages.addWarning(String.format(SampleInstanceEjb.INCONSISTENT_TUBE, found.getRowNumber(),
+                        "Insert Size", mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber(),
+                        found.getBarcode()));
+            }
+            if (found.getReadLength() != null && !Objects.equals(found.getReadLength(), expected.getReadLength())) {
+                messages.addWarning(String.format(SampleInstanceEjb.INCONSISTENT_TUBE, found.getRowNumber(),
+                        "Read Length", mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber(),
+                        found.getBarcode()));
+            }
         }
     }
 
@@ -577,23 +588,49 @@ public class ExternalLibraryProcessor extends TableProcessor {
         try {
             // Creates/updates tubes. Sets tube volume and concentration.
             dtos.stream().
-                    map(SampleInstanceEjb.RowDto::getBarcode).
+                    map(dto -> dto.getBarcode()).
+                    filter(s -> StringUtils.isNotBlank(s)).
                     distinct().
-                    forEach(barcode -> {
-                        LabVessel labVessel = labVesselMap.get(barcode);
+                    forEach(barcode ->
+                    {
+                        LabVessel labVessel = getLabVesselMap().get(barcode);
                         if (labVessel == null) {
                             labVessel = new BarcodedTube(barcode, BarcodedTube.BarcodedTubeType.MatrixTube);
-                            labVesselMap.put(barcode, labVessel);
+                            getLabVesselMap().put(barcode, labVessel);
                         } else {
                             // Tube is being re-uploaded, so clearing old samples is appropriate.
-                            labVessel.getMercurySamples().clear();
-                            labVessel.getMetrics().clear();
+                            labVessel.clearSamples();
                         }
                         SampleInstanceEjb.RowDto firstRowHavingTube = mapBarcodeToFirstRow.get(barcode);
                         labVessel.setVolume(firstRowHavingTube.getVolume());
                         labVessel.setConcentration(firstRowHavingTube.getConcentration());
-                        SampleInstanceEjb.addLibrarySize(labVessel,
+                        SampleInstanceEjb.addLibrarySize(labVessel, //xxx needed?
                                 new BigDecimal(firstRowHavingTube.getFragmentSize()));
+                    });
+
+            // Collects all of the root sample names.
+            Set<String> rootNames = dtos.stream().
+                    map(SampleInstanceEjb.RowDto::getRootSampleName).
+                    filter(rootName -> StringUtils.isNotBlank(rootName)).
+                    collect(Collectors.toSet());
+            // Creates/updates samples, sorted so that any of the samples that are referenced as root samples in
+            // the upload are created first.
+            dtos.stream().
+                    map(SampleInstanceEjb.RowDto::getSampleName).
+                    filter(sampleName -> StringUtils.isNotBlank(sampleName)).
+                    distinct().
+                    sorted((String o1, String o2) -> (rootNames.contains(o1) ? 0 : 1) - (rootNames.contains(o2) ? 0 : 1)).
+                    forEach(sampleName ->
+                    {
+                        MercurySample mercurySample = getSampleMap().get(sampleName);
+                        SampleData sampleData = getFetchedData().get(sampleName);
+                        if (mercurySample == null) {
+                            if (sampleData != null) {
+                                // Can really be only BSP sample data, since otherwise mercurySample would exist.
+                                mercurySample = new MercurySample(sampleName, sampleData.getMetadataSource());
+                                mercurySample.setSampleData(sampleData);
+                            }
+                        }
                     });
 
             // Creates/updates samples.
@@ -637,8 +674,7 @@ public class ExternalLibraryProcessor extends TableProcessor {
             mercurySample.addLabVessel(labVessel);
 
             SampleInstanceEntity sampleInstanceEntity = makeSampleInstanceEntity(dto, labVessel, mercurySample);
-
-            labVessel.getSampleInstanceEntities().add(sampleInstanceEntity);
+            labVessel.addSampleInstanceEntity(sampleInstanceEntity);
             sampleInstanceEntities.add(sampleInstanceEntity);
         }
         return sampleInstanceEntities;
@@ -703,11 +739,10 @@ public class ExternalLibraryProcessor extends TableProcessor {
         sampleInstanceEntity.setInsertSize(dto.getInsertSize());
         sampleInstanceEntity.setMercurySample(mercurySample);
         sampleInstanceEntity.setImpliedSampleName(dto.isImpliedSampleName());
-        sampleInstanceEntity.setMolecularIndexingScheme(molecularIndexingSchemeMap.get(dto.getMisName()));
-        sampleInstanceEntity.setReadLength(dto.getReadLength());
-        sampleInstanceEntity.setReagentDesign(baitMap.get(dto.getBait()));
-        sampleInstanceEntity.setReferenceSequence(referenceSequenceMap.get(dto.getReferenceSequence()));
-        sampleInstanceEntity.setSequencerModel(IlluminaFlowcell.FlowcellType.getByTechnology(
+        sampleInstanceEntity.setMolecularIndexingScheme(getMolecularIndexingSchemeMap().get(dto.getMisName()));
+        sampleInstanceEntity.setReadLength1(dto.getReadLength());
+        sampleInstanceEntity.setReferenceSequence(getReferenceSequenceMap().get(dto.getReferenceSequence()));
+        sampleInstanceEntity.setSequencerModel(IlluminaFlowcell.FlowcellType.getTypeForExternalUiName(
                 dto.getSequencingTechnology()));
         sampleInstanceEntity.setUploadDate(new Date());
         sampleInstanceEntity.setUmisPresent(dto.getUmisPresent());

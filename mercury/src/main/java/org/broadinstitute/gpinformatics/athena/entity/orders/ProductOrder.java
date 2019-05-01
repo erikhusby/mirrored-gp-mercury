@@ -290,6 +290,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Column(name = "REAGENT_DESIGN_KEY", nullable = true, length = 200)
     private String reagentDesignKey;
 
+    @Column(name = "COVERAGE_TYPE_KEY", nullable = true, length = 200)
+    private String coverageTypeKey;
+
     @Transient
     private Quote cachedQuote;
 
@@ -2122,7 +2125,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return (filteredResults != null) ? Iterators.size(filteredResults.iterator()) : 0;
     }
 
-    public static double getUnbilledNonSampleCount(ProductOrder order, Product targetProduct, int totalCount) {
+    public static double getUnbilledNonSampleCount(ProductOrder order, Product targetProduct, double totalCount) {
+        double existingCount = getBilledSampleCount(order, targetProduct);
+        return totalCount - existingCount;
+    }
+
+    public static double getBilledSampleCount(ProductOrder order, Product targetProduct) {
         double existingCount = 0;
 
         for (ProductOrderSample targetSample : order.getSamples()) {
@@ -2135,7 +2143,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             }
 
         }
-        return totalCount - existingCount;
+        return existingCount;
     }
 
     public boolean isSavedInSAP() {
@@ -2328,6 +2336,25 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public void setReagentDesignKey(String reagentDesignKey) {
         this.reagentDesignKey = reagentDesignKey;
+    }
+
+    /**
+     * @return - If coverage type is set on the PDO then accept as override of the value on Product. Otherwise
+     * return the value on the product.
+     */
+    public String getCoverageTypeKey() {
+        if (product != null ) {
+            if (!StringUtils.isBlank(coverageTypeKey)) {
+                return coverageTypeKey;
+            } else {
+                return product.getCoverageTypeKey();
+            }
+        }
+        return coverageTypeKey;
+    }
+
+    public void setCoverageTypeKey(String coverageTypeKey) {
+        this.coverageTypeKey = coverageTypeKey;
     }
 
     public static void checkQuoteValidity(Quote quote) throws QuoteServerException {

@@ -1,8 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary;
 
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.UniformInterfaceException;
-import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
@@ -17,6 +14,8 @@ import javax.enterprise.context.Dependent;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -73,14 +72,14 @@ public class UnknownUserExceptionContainerTest extends RestServiceContainerTest 
     @RunAsClient
     public void testUnknownUserExceptionReturns304Response(@ArquillianResource URL baseUrl)
             throws MalformedURLException {
-        WebResource resource = makeWebResource(baseUrl, UnknownUserExceptionContainerTestResource.METHOD_PATH);
+        WebTarget resource = makeWebResource(baseUrl, UnknownUserExceptionContainerTestResource.METHOD_PATH);
         String username = "test_user";
         resource = resource.queryParam("username", username);
 
-        UniformInterfaceException error = getWithError(resource);
-        ClientResponse response = error.getResponse();
+        WebApplicationException error = getWithError(resource);
+        Response response = error.getResponse();
 
         assertThat(response.getStatus(), equalTo(Response.Status.FORBIDDEN.getStatusCode()));
-        assertThat(response.getEntity(String.class), containsString(username));
+        assertThat(response.readEntity(String.class), containsString(username));
     }
 }

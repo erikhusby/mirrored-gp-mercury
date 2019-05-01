@@ -11,7 +11,6 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
@@ -55,7 +54,6 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcell
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.easymock.EasyMock;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -80,7 +78,6 @@ import java.util.stream.Collectors;
 import static org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor.REQUIRED_VALUE_IS_MISSING;
 import static org.broadinstitute.gpinformatics.mercury.test.LabEventTest.FCT_TICKET;
 import static org.mockito.Matchers.anyCollection;
-import static org.mockito.Matchers.anyString;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
@@ -92,26 +89,31 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
     private MercurySampleDao mercurySampleDao = Mockito.mock(MercurySampleDao.class);
     private ReagentDesignDao reagentDesignDao = Mockito.mock(ReagentDesignDao.class);
     private SampleDataFetcher sampleDataFetcher = Mockito.mock(SampleDataFetcher.class);
-    private JiraService jiraService = Mockito.mock(JiraService.class);
     private ReferenceSequenceDao referenceSequenceDao = Mockito.mock(ReferenceSequenceDao.class);
     private AnalysisTypeDao analysisTypeDao = Mockito.mock(AnalysisTypeDao.class);
     private ProductDao productDao = Mockito.mock(ProductDao.class);
 
     @Test
-    public void testWalkupSequencing() throws Exception {
+    public void testWalkupSequencing() {
         SampleInstanceEjb sampleInstanceEjb = setMocks();
         MessageCollection messages = new MessageCollection();
-        sampleInstanceEjb.verifyAndPersistSubmission(new WalkUpSequencing() {{
+        SampleInstanceEntity entity = sampleInstanceEjb.verifyAndPersistSubmission(new WalkUpSequencing() {{
             setLibraryName("TEST_LIBRARY");
             setTubeBarcode("TEST_BARCODE");
-            setReadType("TEST_READ_TYPE");
-            setAnalysisType("TEST");
-            setLabName("TEST lab");
-            setBaitSetName("TEST_BAIT");
+            setAnalysisType("No_Analysis");
             setReadType("Paried End");
+            setBaitSetName("TEST bait");
         }}, messages);
+        // dbFree must explicitly do what Hibernate entity mapping would normally do.
+        entity.getLabVessel().getSampleInstanceEntities().add(entity);
 
         Assert.assertFalse(messages.hasErrors(), StringUtils.join(messages.getErrors(), "; "));
+        Assert.assertTrue(CollectionUtils.isNotEmpty(entity.getLabVessel().getSampleInstancesV2()));
+        for (SampleInstanceV2 sampleInstance : entity.getLabVessel().getSampleInstancesV2()) {
+            Assert.assertEquals(sampleInstance.getBaitName(), "TEST bait");
+            Assert.assertEquals(sampleInstance.getAnalysisType().getName(), "No_Analysis");
+            Assert.assertTrue(sampleInstance.getPairedEndRead());
+        }
     }
 
     @Test
@@ -173,8 +175,9 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
             Assert.assertEquals(entity.getAnalysisType().getBusinessKey(), "HybridSelection.Resequencing");
 
-            Assert.assertEquals(entity.getReadLength(), Arrays.asList(440, 101).get(i));
-
+            Assert.assertEquals(entity.getReadLength1(), Arrays.asList(440, 101).get(i));
+            Assert.assertEquals(entity.getReadLength1().intValue(), new int[]{4, 2}[i]);
+            Assert.assertEquals(entity.getAggregationParticle(), select(i, "1", ""));
             Assert.assertEquals(entity.getUmisPresent(), new Boolean[]{null, Boolean.TRUE}[i]);
 
             Assert.assertEquals(tube.getVolume(), new BigDecimal("0.60"));
@@ -188,7 +191,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(entity.getReferenceSequence().getName(),
                     select(i, "Homo_sapiens_assembly19", "Homo_sapiens_assembly38"));
 
-            Assert.assertEquals(entity.getSequencerModel().getTechnology(),
+            Assert.assertEquals(entity.getSequencerModel().getExternalUiName(),
                     select(i, "HiSeq X 10", "HiSeq 2500 Rapid Run"));
 
             Assert.assertEquals(entity.getAggregationDataType(), select(i, "", "Exome"));
@@ -273,7 +276,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
     }
 
     @Test
-    public void testNullSpreadsheet() throws Exception {
+    public void testNullSpreadsheet() {
         SampleInstanceEjb sampleInstanceEjb = setMocks();
         MessageCollection messageCollection = new MessageCollection();
 
@@ -419,19 +422,17 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
     }
 
     /** Sets up the mocks for all test cases. */
-    private SampleInstanceEjb setMocks() throws Exception {
+    private SampleInstanceEjb setMocks() {
 
         // BarcodedTubes
-        Mockito.when(labVesselDao.findByBarcodes(Mockito.anyList())).thenAnswer(new Answer<Map<String, LabVessel>>() {
-            @Override
-            public Map<String, LabVessel> answer(InvocationOnMock invocation) throws Throwable {
-                Map<String, LabVessel> map = new HashMap<>();
-                for (String barcode : (List<String>) invocation.getArguments()[0]) {
-                    map.put(barcode, new BarcodedTube(barcode, BarcodedTube.BarcodedTubeType.MatrixTube075));
-                }
-                return map;
-            }
-        });
+        Mockito.when(labVesselDao.findByBarcodes(Mockito.anyList())).thenAnswer(
+                (Answer<Map<String, LabVessel>>) invocation -> {
+                    Map<String, LabVessel> map = new HashMap<>();
+                    for (String barcode : (List<String>) invocation.getArguments()[0]) {
+                        map.put(barcode, new BarcodedTube(barcode, BarcodedTube.BarcodedTubeType.MatrixTube075));
+                    }
+                    return map;
+                });
 
         // Mercury samples
         final Map<String, Set<Metadata>> metadataMap = new HashMap<>();
@@ -473,118 +474,87 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         }
 
         Mockito.when(mercurySampleDao.findMapIdToMercurySample(Mockito.anySet())).thenAnswer(
-                new Answer<Map<String, MercurySample>>() {
-                    @Override
-                    public Map<String, MercurySample> answer(InvocationOnMock invocation) throws Throwable {
-                        Map<String, MercurySample> map = new HashMap<>();
-                        for (String name : (Set<String>) invocation.getArguments()[0]) {
-                            if (metadataMap.containsKey(name)) {
-                                map.put(name, new MercurySample(name, metadataMap.get(name)));
-                            } else if (bspSampleData.containsKey(name)) {
-                                map.put(name, new MercurySample(name, bspSampleData.get(name)));
-                            } else if (!name.contains("UNKNOWN")) {
-                                // Root samples will have no metadata.
-                                map.put(name, new MercurySample(name, name.startsWith("SM-") ?
-                                        MercurySample.MetadataSource.BSP : MercurySample.MetadataSource.MERCURY));
-                            }
+                (Answer<Map<String, MercurySample>>) invocation -> {
+                    Map<String, MercurySample> map = new HashMap<>();
+                    for (String name : (Set<String>) invocation.getArguments()[0]) {
+                        if (metadataMap.containsKey(name)) {
+                            map.put(name, new MercurySample(name, metadataMap.get(name)));
+                        } else if (bspSampleData.containsKey(name)) {
+                            map.put(name, new MercurySample(name, bspSampleData.get(name)));
+                        } else if (!name.contains("UNKNOWN")) {
+                            // Root samples will have no metadata.
+                            map.put(name, new MercurySample(name, name.startsWith("SM-") ?
+                                    MercurySample.MetadataSource.BSP : MercurySample.MetadataSource.MERCURY));
                         }
-                        return map;
                     }
+                    return map;
                 });
 
         Mockito.when(sampleDataFetcher.fetchSampleData(Mockito.anyCollection())).thenAnswer(
-                new Answer<Map<String, SampleData>>() {
-                    @Override
-                    public Map<String, SampleData> answer(InvocationOnMock invocation) throws Throwable {
-                        Map<String, SampleData> map = new HashMap<>();
-                        for (String name : (Collection<String>) invocation.getArguments()[0]) {
-                            if (bspSampleData.containsKey(name)) {
-                                map.put(name, bspSampleData.get(name));
-                            }
+                (Answer<Map<String, SampleData>>) invocation -> {
+                    Map<String, SampleData> map = new HashMap<>();
+                    for (String name : (Collection<String>) invocation.getArguments()[0]) {
+                        if (bspSampleData.containsKey(name)) {
+                            map.put(name, bspSampleData.get(name));
                         }
-                        return map;
                     }
+                    return map;
                 });
 
-        Mockito.when(analysisTypeDao.findByBusinessKey(Mockito.anyString())).thenAnswer(new Answer<AnalysisType>() {
-            @Override
-            public AnalysisType answer(InvocationOnMock invocation) throws Throwable {
-                String name = (String)invocation.getArguments()[0];
-                return (StringUtils.isBlank(name) || name.equalsIgnoreCase("unknown")) ?
-                        null : new AnalysisType(name);
-            }
-        });
+        Mockito.when(analysisTypeDao.findByBusinessKey(Mockito.anyString())).thenAnswer(
+                (Answer<AnalysisType>) invocation -> {
+                    String name = (String)invocation.getArguments()[0];
+                    return (StringUtils.isBlank(name) || name.equalsIgnoreCase("unknown")) ?
+                            null : new AnalysisType(name);
+                });
 
         // ReferenceSequences
         Mockito.when(referenceSequenceDao.findCurrent(Mockito.anyString())).thenAnswer(
-                new Answer<ReferenceSequence>() {
-                    @Override
-                    public ReferenceSequence answer(InvocationOnMock invocation) throws Throwable {
-                        String name = (String)invocation.getArguments()[0];
-                        return (StringUtils.isBlank(name) || name.equalsIgnoreCase("unknown")) ?
-                                null : new ReferenceSequence(name, "");
-                    }
+                (Answer<ReferenceSequence>) invocation -> {
+                    String name = (String)invocation.getArguments()[0];
+                    return (StringUtils.isBlank(name) || name.equalsIgnoreCase("unknown")) ?
+                            null : new ReferenceSequence(name, "");
                 });
 
         Mockito.when(referenceSequenceDao.findByBusinessKey(Mockito.anyString())).thenAnswer(
-                new Answer<ReferenceSequence>() {
-                    @Override
-                    public ReferenceSequence answer(InvocationOnMock invocation) throws Throwable {
-                        String businessKey = (String)invocation.getArguments()[0];
-                        return StringUtils.isBlank(businessKey) ? null : new ReferenceSequence(
-                                StringUtils.substringBeforeLast(businessKey, "|"),
-                                StringUtils.substringAfterLast(businessKey, "|"));
+                (Answer<ReferenceSequence>) invocation -> {
+                    String businessKey = (String)invocation.getArguments()[0];
+                    return StringUtils.isBlank(businessKey) ? null : new ReferenceSequence(
+                            StringUtils.substringBeforeLast(businessKey, "|"),
+                            StringUtils.substringAfterLast(businessKey, "|"));
 
-                    }
                 });
 
         // MolecularIndexingScheme
         Mockito.when(molecularIndexingSchemeDao.findByNames(Mockito.anyCollection())).thenAnswer(
-                new Answer<List<MolecularIndexingScheme>>() {
-                    @Override
-                    public List<MolecularIndexingScheme> answer(InvocationOnMock invocation) throws Throwable {
-                        return ((Collection<String>)invocation.getArguments()[0]).stream().
-                                filter(name -> StringUtils.isNotBlank(name) && name.startsWith("Illumina_")).
-                                map(name -> new MolecularIndexingScheme() {{
-                                    setName(name);
-                                }}).
-                                collect(Collectors.toList());
-                    }
-                });
+                (Answer<List<MolecularIndexingScheme>>) invocation -> ((Collection<String>)invocation.getArguments()[0]).stream().
+                        filter(name -> StringUtils.isNotBlank(name) && name.startsWith("Illumina_")).
+                        map(name -> new MolecularIndexingScheme() {{
+                            setName(name);
+                        }}).
+                        collect(Collectors.toList()));
 
         // ReagentDesign
         Mockito.when(reagentDesignDao.findByBusinessKey(Mockito.anyString())).thenAnswer(
-                new Answer<ReagentDesign>() {
-                    @Override
-                    public ReagentDesign answer(InvocationOnMock invocation) throws Throwable {
-                        String name = (String)invocation.getArguments()[0];
-                        return (StringUtils.isBlank(name) || name.equalsIgnoreCase("unknown")) ? null :
-                                new ReagentDesign() {{
-                                    setDesignName(name);
-                                }};
-                    }
+                (Answer<ReagentDesign>) invocation -> {
+                    String name = (String)invocation.getArguments()[0];
+                    return (StringUtils.isBlank(name) || name.equalsIgnoreCase("unknown")) ? null :
+                            new ReagentDesign() {{
+                                setDesignName(name);
+                            }};
                 });
         Mockito.when(reagentDesignDao.findByBusinessKeys(Mockito.anyCollection())).thenAnswer(
-                new Answer<List<ReagentDesign>>() {
-                    @Override
-                    public List<ReagentDesign> answer(InvocationOnMock invocation) throws Throwable {
-                        return ((Collection<String>)(invocation.getArguments()[0])).stream().
-                                filter(name -> StringUtils.isNotBlank(name) && !name.equalsIgnoreCase("unknown")).
-                                map(name -> new ReagentDesign() {{
-                                    setDesignName(name);
-                                }}).
-                                collect(Collectors.toList());
-                    }
-                });
-
+                (Answer<List<ReagentDesign>>) invocation -> ((Collection<String>)(invocation.getArguments()[0])).stream().
+                        filter(name -> StringUtils.isNotBlank(name) && !name.equalsIgnoreCase("unknown")).
+                        map(name -> new ReagentDesign() {{
+                            setDesignName(name);
+                        }}).
+                        collect(Collectors.toList()));
         // Product.aggregationDataType
-        Mockito.when(productDao.findAggregationDataTypes()).thenAnswer(new Answer<List<String>>() {
-            @Override
-            public List<String> answer(InvocationOnMock invocation) throws Throwable {
-                return Arrays.asList("10X_WGS", "16S", "CustomHybSel", "Custom_Selection", "Exome", "ExomePlus",
-                        "Jump", "PCR", "RNA", "RRBS", "ShortRangePCR", "WGS");
-            }
-        });
+        Mockito.when(productDao.findAggregationDataTypes()).thenAnswer(
+                (Answer<List<String>>) invocation -> Arrays.asList("10X_WGS", "16S", "CustomHybSel",
+                        "Custom_Selection", "Exome", "ExomePlus",
+                        "Jump", "PCR", "RNA", "RRBS", "ShortRangePCR", "WGS"));
 
         // SampleInstanceEntity
         Mockito.when(sampleInstanceEntityDao.findByBarcodes(anyCollection())).thenReturn(Collections.emptyList());

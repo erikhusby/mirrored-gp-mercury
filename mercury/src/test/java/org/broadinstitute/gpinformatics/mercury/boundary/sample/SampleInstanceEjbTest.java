@@ -3,8 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
@@ -20,7 +18,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanceEntityDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -54,7 +51,6 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 public class SampleInstanceEjbTest extends Arquillian {
     private Random random = new Random(System.currentTimeMillis());
     private final String INDICATOR = "(";
-    private static final Log log = LogFactory.getLog(SampleInstanceEjbTest.class);
     private final static Set<String> tested = new HashSet<>();
 
     @Inject
@@ -69,9 +65,6 @@ public class SampleInstanceEjbTest extends Arquillian {
     @Inject
     private MercurySampleDataFetcher mercurySampleDataFetcher;
 
-    @Inject
-    private LabVesselDao labVesselDao;
-
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV);
@@ -80,7 +73,6 @@ public class SampleInstanceEjbTest extends Arquillian {
     private BSPConfig bspConfig = BSPConfig.produce(DEV);
     private BSPSampleSearchService bspSampleSearchService = new BSPSampleSearchServiceImpl(bspConfig);
     private BSPSampleDataFetcher bspSampleDataFetcher = new BSPSampleDataFetcherImpl(bspSampleSearchService, bspConfig);
-    private SampleDataFetcher sampleDataFetcher;
 
     private enum Pooled {Y, N}
 
@@ -133,12 +125,13 @@ public class SampleInstanceEjbTest extends Arquillian {
      * The upload is expected to succeed. Entity data is validated by matching to what was in the spreadsheet.
      */
     @Test(dataProvider = "successCases")
-    public void testUploadSuccess(String filenames, Pooled pooled, MetadataExists metadataExists) throws Exception {
+    public void testUploadSuccess(String filenames, Pooled pooled, MetadataExists metadataExists) {
         if (!tested.add(filenames)) {
             // Stops Arquillian from running the data provider n^^2 times.
             return;
         }
-        sampleDataFetcher = new SampleDataFetcher(mercurySampleDao, bspSampleDataFetcher, mercurySampleDataFetcher);
+        SampleDataFetcher sampleDataFetcher =
+                new SampleDataFetcher(mercurySampleDao, bspSampleDataFetcher, mercurySampleDataFetcher);
         String base = String.format("%06d", random.nextInt(1000000));
         boolean overwrite = false;
         for (String filename : filenames.split(" ")) {
@@ -270,10 +263,10 @@ public class SampleInstanceEjbTest extends Arquillian {
                         sampleInstanceEntity.getAnalysisType().getName()), msg);
                 Assert.assertTrue(testEquals(processor.getAggregationDataTypes(), i,
                         sampleInstanceEntity.getAggregationDataType()), msg);
-                Assert.assertTrue(testEquals(processor.getReadLengths(), i, sampleInstanceEntity.getReadLength()),
+                Assert.assertTrue(testEquals(processor.getReadLengths(), i, sampleInstanceEntity.getReadLength1()),
                         msg);
-                Assert.assertTrue(testEquals(processor.getUmisPresents(), i,
-                        sampleInstanceEntity.getUmisPresent()), msg);
+                Assert.assertTrue(testEquals(processor.getUmisPresents(), i, sampleInstanceEntity.getUmisPresent()),
+                        msg);
                 // The "once per tube" values only need to match on the first occurrence of the tube
                 // and may be blank after that.
                 if (firstOccurrence || StringUtils.isNotBlank(SampleInstanceEjb.get(processor.getVolumes(), i))) {
@@ -300,7 +293,7 @@ public class SampleInstanceEjbTest extends Arquillian {
                                 null : sampleInstanceEntity.getReferenceSequence().getName()), msg);
                 Assert.assertTrue(testEquals(processor.getSequencingTechnologies(), i,
                         sampleInstanceEntity.getSequencerModel() == null ?
-                                null : sampleInstanceEntity.getSequencerModel().getTechnology()), msg);
+                                null : sampleInstanceEntity.getSequencerModel().getExternalUiName()), msg);
             }
             // Sets overwrite in case there is another upload in the same test case.
             overwrite = true;
@@ -312,7 +305,7 @@ public class SampleInstanceEjbTest extends Arquillian {
      * then passes when overwrite is set.
      */
     @Test
-    public void testExistingTubeOverwriteFail() throws Exception {
+    public void testExistingTubeOverwriteFail() {
         String filename = "externalLibMinimal.xlsx";
         String base = String.format("%06d", random.nextInt(1000000));
         // Uploads the tube with a new library (and implied sample).
@@ -353,7 +346,7 @@ public class SampleInstanceEjbTest extends Arquillian {
      * is not set and then passes when overwrite is set.
      */
     @Test
-    public void testExistingSampleOverwriteFail() throws Exception {
+    public void testExistingSampleOverwriteFail() {
         String filename = "externalLibMinimal.xlsx";
         String base = String.format("%06d", random.nextInt(1000000));
         String[] csBase = {"CS_HFwK", "CS_HFwK", "CS_Gxi3c", "CS_Gxi3c"};
@@ -398,7 +391,7 @@ public class SampleInstanceEjbTest extends Arquillian {
     }
 
     @Test
-    public void testBspMetadataOverwriteFail() throws Exception {
+    public void testBspMetadataOverwriteFail() {
         String filename = "externalLibBspMetadata.xlsx";
         String base = String.format("%06d", random.nextInt(1000000));
 
@@ -448,7 +441,6 @@ public class SampleInstanceEjbTest extends Arquillian {
             Assert.assertEquals(truncatedErrors, expectedErrors, "Actually: " + StringUtils.join(truncatedErrors));
         }
     }
-
 
     private boolean testEquals(List<String> spreadsheetValues, int index, String actualValue) {
         String spreadsheetValue = SampleInstanceEjb.get(spreadsheetValues, index);
