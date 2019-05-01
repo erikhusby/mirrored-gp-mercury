@@ -321,7 +321,7 @@ public class ConfigurableSearchTest extends Arquillian {
         // Verify data for sample 797366
         List<String> values = row.getRenderableCells();
         Assert.assertEquals( values.get(columnNumbersByHeader.get("PDO")),                                               "PDO-5115",    "Incorrect PDO Value");
-        Assert.assertEquals( values.get(columnNumbersByHeader.get("Lab Batch")),                                             "LCSET-6449",  "Incorrect LCSET Value");
+        Assert.assertEquals( values.get(columnNumbersByHeader.get("Lab Batch")),                                         "LCSET-6449",  "Incorrect LCSET Value");
         Assert.assertEquals( values.get(columnNumbersByHeader.get("Root Sample ID")),                                    "SM-74PK6",    "Incorrect Root Sample ID Value");
         Assert.assertEquals( values.get(columnNumbersByHeader.get("Mercury Sample Tube Barcode")),                       "0175567583",  "Incorrect Mercury Sample Tube Barcode Value");
         Assert.assertEquals( values.get(columnNumbersByHeader.get(Metadata.Key.GENDER.getDisplayName())),                "Male",        "Incorrect Gender Value");
