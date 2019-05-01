@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.customfields;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;

@@ -1,7 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
-import com.sun.jersey.api.client.UniformInterfaceException;
-import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
@@ -12,6 +10,8 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.enterprise.context.Dependent;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.WebTarget;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -102,7 +102,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testEchoBooleanAsJson(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "echoBoolean");
+        WebTarget resource = makeWebResource(baseUrl, "echoBoolean");
 
         String result1 = get(resource.queryParam("value", "false"));
         assertThat(result1, equalTo("false"));
@@ -115,7 +115,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testEchoDoubleAsJson(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "echoDouble");
+        WebTarget resource = makeWebResource(baseUrl, "echoDouble");
 
         String result1 = get(resource.queryParam("value", "1.234"));
         assertThat(result1, equalTo("1.234"));
@@ -128,7 +128,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testEchoStringAsJson(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "echoString");
+        WebTarget resource = makeWebResource(baseUrl, "echoString");
 
         String result = get(resource.queryParam("value", "test"));
         assertThat(result, equalTo("test"));
@@ -138,7 +138,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testEchoStringArrayAsJson(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "echoStringArray");
+        WebTarget resource = makeWebResource(baseUrl, "echoStringArray");
 
         List<String> values = Arrays.asList("value1", "value2");
         String result = get(addQueryParam(resource, "s", values));
@@ -157,7 +157,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testEchoStringArrayLargeAsJson(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "echoStringArray");
+        WebTarget resource = makeWebResource(baseUrl, "echoStringArray");
 
         List<String> values = new ArrayList<>();
         for (int i = 0; i < 384; i++) {
@@ -172,7 +172,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testEchoFlowcellDesignationAsJson(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "echoFlowcellDesignation");
+        WebTarget resource = makeWebResource(baseUrl, "echoFlowcellDesignation");
 
         String result = post(resource, FLOWCELL_DESIGNATION_JSON);
         assertThat(result, equalTo(FLOWCELL_DESIGNATION_JSON));
@@ -182,7 +182,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testEchoStringToBooleanMap(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "echoStringToBooleanMap");
+        WebTarget resource = makeWebResource(baseUrl, "echoStringToBooleanMap");
 
         String request = "{\"result1\":false,\"result2\":true}";
         String result = post(resource, request);
@@ -193,7 +193,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testEchoWellAndSourceTube(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "echoWellAndSourceTube");
+        WebTarget resource = makeWebResource(baseUrl, "echoWellAndSourceTube");
 
         String request = "{\"wellName\":\"A01\",\"tubeBarcode\":\"tube_barcode1\"}";
         String result = post(resource, request);
@@ -204,7 +204,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testEchoWellAndSourceTubeList(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "echoWellAndSourceTubeList");
+        WebTarget resource = makeWebResource(baseUrl, "echoWellAndSourceTubeList");
 
         String request =
                 "[{\"wellName\":\"A01\",\"tubeBarcode\":\"tube_barcode1\"},{\"wellName\":\"A02\",\"tubeBarcode\":\"tube_barcode2\"}]";
@@ -216,8 +216,8 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testThrowRuntimeException(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "throwRuntimeException");
-        UniformInterfaceException caught = getWithError(resource.queryParam("message", "testThrowRuntimeException"));
+        WebTarget resource = makeWebResource(baseUrl, "throwRuntimeException");
+        WebApplicationException caught = getWithError(resource.queryParam("message", "testThrowRuntimeException"));
         assertErrorResponse(caught, 500, "testThrowRuntimeException");
     }
 
@@ -225,8 +225,8 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testThrowApplicationException(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "throwApplicationException");
-        UniformInterfaceException caught =
+        WebTarget resource = makeWebResource(baseUrl, "throwApplicationException");
+        WebApplicationException caught =
                 getWithError(resource.queryParam("message", "testThrowApplicationException"));
         assertErrorResponse(caught, 500, "testThrowApplicationException");
     }

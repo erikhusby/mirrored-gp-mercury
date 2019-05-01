@@ -1,11 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
-import com.sun.jersey.api.client.UniformInterfaceException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
@@ -29,6 +27,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
@@ -68,8 +67,6 @@ public class SolexaRunResource {
 
     private SquidConnector connector;
 
-    private HipChatMessageSender messageSender;
-
     private SquidConfig squidConfig;
 
     private MiSeqReagentKitDao reagentKitDao;
@@ -79,7 +76,6 @@ public class SolexaRunResource {
                              IlluminaSequencingRunFactory illuminaSequencingRunFactory,
                              IlluminaFlowcellDao illuminaFlowcellDao, VesselTransferEjb vesselTransferEjb,
                              SystemRouter router, SquidConnector connector,
-                             HipChatMessageSender messageSender,
                              SquidConfig squidConfig, MiSeqReagentKitDao reagentKitDao) {
         this.illuminaSequencingRunDao = illuminaSequencingRunDao;
         this.illuminaSequencingRunFactory = illuminaSequencingRunFactory;
@@ -87,7 +83,6 @@ public class SolexaRunResource {
         this.vesselTransferEjb = vesselTransferEjb;
         this.router = router;
         this.connector = connector;
-        this.messageSender = messageSender;
         this.squidConfig = squidConfig;
         this.reagentKitDao = reagentKitDao;
     }
@@ -156,7 +151,6 @@ public class SolexaRunResource {
                 }
             } catch (Exception e) {
                 LOG.error("Failed to process run" + Response.Status.INTERNAL_SERVER_ERROR, e);
-                messageSender.postMessageToGpLims("Failed to process run" + Response.Status.INTERNAL_SERVER_ERROR);
                 if (route == SystemRouter.System.MERCURY) {
                     throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
                 }
@@ -247,11 +241,11 @@ public class SolexaRunResource {
                     } else {
                         callerResponse = Response.status(structureResponse.getCode()).entity(requestToReturn).build();
                     }
-                } catch (UniformInterfaceException t) {
+                } catch (WebApplicationException t) {
                     requestToReturn.setError(
                             String.format("Failed while sending solexa_run_synopsis data to squid for %s:%s",
                                     requestIdentifier, t.getMessage()));
-                    callerResponse = Response.status(t.getResponse().getClientResponseStatus().getStatusCode())
+                    callerResponse = Response.status(t.getResponse().getStatusInfo().getStatusCode())
                             .entity(requestToReturn).build();
                 }
             }

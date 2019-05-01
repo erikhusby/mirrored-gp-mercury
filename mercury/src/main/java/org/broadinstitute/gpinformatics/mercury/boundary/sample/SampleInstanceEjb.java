@@ -34,7 +34,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.sample.WalkUpSequencing;
-import org.broadinstitute.gpinformatics.mercury.presentation.workflow.CreateFCTActionBean;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -45,10 +44,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -89,12 +86,6 @@ public class SampleInstanceEjb {
     public static final String PREXISTING_VALUES =
             "Row #%d values for %s already exist in Mercury; set the Overwrite checkbox to re-upload.";
     public static final String UNKNOWN = "Row #%d the value for %s is not in %s.";
-    /**
-     * A string of the available sequencer model names.
-     */
-    public static final String SEQUENCER_MODELS;
-
-    private static final Map<String, IlluminaFlowcell.FlowcellType> mapSequencerToFlowcellType = new HashMap<>();
     private static final Log log = LogFactory.getLog(SampleInstanceEjb.class);
 
     @Inject
@@ -135,14 +126,6 @@ public class SampleInstanceEjb {
 
     @Inject
     private ProductDao productDao;
-
-    static {
-        for (IlluminaFlowcell.FlowcellType flowcellType : CreateFCTActionBean.FLOWCELL_TYPES) {
-            String sequencer = makeSequencerValue(flowcellType);
-            mapSequencerToFlowcellType.put(sequencer, flowcellType);
-        }
-        SEQUENCER_MODELS = "\"" + StringUtils.join(mapSequencerToFlowcellType.keySet(), "\", \"") + "\"";
-    }
 
     public SampleInstanceEjb() {
     }
@@ -268,13 +251,6 @@ public class SampleInstanceEjb {
                 }
             }
 
-            if (StringUtils.isNotBlank(dto.getSequencerModelName())) {
-                IlluminaFlowcell.FlowcellType sequencerModel = findFlowcellType(dto.getSequencerModelName());
-                if (sequencerModel != null) {
-                    processor.getSequencerModelMap().put(dto.getSequencerModelName(), sequencerModel);
-                }
-            }
-
             if (StringUtils.isNotBlank(dto.getAnalysisTypeName())) {
                 AnalysisType analysisType = analysisTypeDao.findByBusinessKey(dto.getAnalysisTypeName());
                 if (analysisType != null) {
@@ -305,7 +281,8 @@ public class SampleInstanceEjb {
      * @param walkUpSequencing the data from a walkup sequencing submission.
      * @param messages         collected errors, warnings, info to be passed back.
      */
-    public void verifyAndPersistSubmission(WalkUpSequencing walkUpSequencing, MessageCollection messages) {
+    public SampleInstanceEntity verifyAndPersistSubmission(WalkUpSequencing walkUpSequencing,
+            MessageCollection messages) {
         if (ExternalLibraryProcessor.asInteger(walkUpSequencing.getFragmentSize()) < 0) {
             messages.addError("Fragment Size must be a non-zero integer or blank");
         }
@@ -326,17 +303,9 @@ public class SampleInstanceEjb {
                             " version '" + walkUpSequencing.getReferenceVersion() + "'" : ""));
         }
 
-        ReagentDesign baitSet = null;
-        if (StringUtils.isNotBlank(walkUpSequencing.getBaitSetName())) {
-            baitSet = reagentDesignDao.findByBusinessKey(walkUpSequencing.getBaitSetName());
-            if (baitSet == null) {
-                messages.addError("Unknown Bait Reagent '" + walkUpSequencing.getBaitSetName() + "'");
-            }
-        }
-
         IlluminaFlowcell.FlowcellType sequencerModel = null;
         if (StringUtils.isNotBlank(walkUpSequencing.getIlluminaTech())) {
-            sequencerModel = SampleInstanceEjb.findFlowcellType(walkUpSequencing.getIlluminaTech());
+            sequencerModel = IlluminaFlowcell.FlowcellType.getTypeForExternalUiName(walkUpSequencing.getIlluminaTech());
             if (sequencerModel == null) {
                 messages.addError("Unknown Sequencing Technology '" + walkUpSequencing.getIlluminaTech() + "'");
             }
@@ -384,16 +353,18 @@ public class SampleInstanceEjb {
                 sampleInstanceEntity.setSampleLibraryName(walkUpSequencing.getLibraryName());
                 newEntities.add(sampleInstanceEntity);
             }
-            sampleInstanceEntity.setPairedEndRead(StringUtils.startsWithIgnoreCase(walkUpSequencing.getReadType(),
-                    "p"));
+            sampleInstanceEntity.setPairedEndRead(walkUpSequencing.isPairedEndRead());
             sampleInstanceEntity.setReferenceSequence(referenceSequence);
             sampleInstanceEntity.setUploadDate(walkUpSequencing.getSubmitDate());
-            sampleInstanceEntity.setReadLength(Math.max(
-                    ExternalLibraryProcessor.asInteger(walkUpSequencing.getReadLength()),
-                    ExternalLibraryProcessor.asInteger(walkUpSequencing.getReadLength2())));
+            sampleInstanceEntity.setReadLength1(ExternalLibraryProcessor.asInteger(walkUpSequencing.getReadLength1()));
+            sampleInstanceEntity.setReadLength2(ExternalLibraryProcessor.asInteger(walkUpSequencing.getReadLength2()));
+            sampleInstanceEntity.setIndexLength1(ExternalLibraryProcessor.asInteger(walkUpSequencing.getIndexLength1()));
+            sampleInstanceEntity.setIndexLength2(ExternalLibraryProcessor.asInteger(walkUpSequencing.getIndexLength2()));
+            sampleInstanceEntity.setIndexType(walkUpSequencing.getIndexType());
             sampleInstanceEntity.setNumberLanes(ExternalLibraryProcessor.asInteger(walkUpSequencing.getLaneQuantity()));
             sampleInstanceEntity.setComments(walkUpSequencing.getComments());
-            sampleInstanceEntity.setReagentDesign(baitSet);
+            // Assumes that bait set name has been validated by the walkup app and so any value is acceptable.
+            sampleInstanceEntity.setBaitName(walkUpSequencing.getBaitSetName());
             sampleInstanceEntity.setLabVessel(labVessel);
             sampleInstanceEntity.setMercurySample(mercurySample);
             sampleInstanceEntity.setSequencerModel(sequencerModel);
@@ -401,7 +372,9 @@ public class SampleInstanceEjb {
             sampleInstanceEntity.setAnalysisType(analysisType);
 
             sampleInstanceEntityDao.persistAll(newEntities);
+            return sampleInstanceEntity;
         }
+        return null;
     }
 
     private static Comparator<String> BY_ROW_NUMBER = new Comparator<String>() {
@@ -415,10 +388,6 @@ public class SampleInstanceEjb {
             return (o1Row == o2Row) ? o1.compareTo(o2) : (o1Row - o2Row);
         }
     };
-
-    private static IlluminaFlowcell.FlowcellType findFlowcellType(String sequencerModel) {
-        return mapSequencerToFlowcellType.get(sequencerModel);
-    }
 
     /**
      * Adds library size metric to the given lab vessel, but does not add the same value
@@ -443,11 +412,6 @@ public class SampleInstanceEjb {
      */
     public static <T> T get(List<T> list, int index) {
         return (CollectionUtils.isNotEmpty(list) && list.size() > index) ? list.get(index) : null;
-    }
-
-    /** Returns a string that can be used as a sequencer value in the spreadsheet. */
-    public static String makeSequencerValue(IlluminaFlowcell.FlowcellType flowcellType) {
-        return StringUtils.substringBeforeLast(flowcellType.getDisplayName(), "Flowcell").trim();
     }
 
     /** Dto containing data from a spreadsheet row. */

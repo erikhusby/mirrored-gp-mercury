@@ -32,6 +32,7 @@ import javax.persistence.Id;
 import javax.persistence.ManyToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -162,6 +163,9 @@ public class RegulatoryInfo implements Serializable, BusinessObject {
     @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "regulatoryInfos")
     private Collection<ProductOrder> productOrders = new HashSet<>();
 
+    @Transient
+    private boolean userEdit;
+
     public RegulatoryInfo() {
     }
 
@@ -251,6 +255,14 @@ public class RegulatoryInfo implements Serializable, BusinessObject {
 
     public Collection<ProductOrder> getProductOrders() {
         return productOrders;
+    }
+
+    public boolean isUserEdit() {
+        return userEdit;
+    }
+
+    public void setUserEdit(boolean userEdit) {
+        this.userEdit = userEdit;
     }
 
     @Override

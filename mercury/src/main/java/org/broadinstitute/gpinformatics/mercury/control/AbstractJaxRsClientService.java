@@ -1,15 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.control;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientHandlerException;
-import com.sun.jersey.api.client.ClientRequest;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
-import com.sun.jersey.api.client.filter.ClientFilter;
-import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
-import com.sun.jersey.api.json.JSONConfiguration;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.logging.Log;
@@ -18,9 +8,17 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.jboss.resteasy.client.jaxrs.BasicAuthentication;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.ClientRequestContext;
+import javax.ws.rs.client.ClientResponseContext;
+import javax.ws.rs.client.ClientResponseFilter;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
@@ -37,42 +35,33 @@ import java.util.List;
 import static javax.ws.rs.core.Response.Status.ACCEPTED;
 import static javax.ws.rs.core.Response.Status.OK;
 
-public abstract class AbstractJerseyClientService implements Serializable {
+public abstract class AbstractJaxRsClientService implements Serializable {
     private static final long serialVersionUID = 460875882310020779L;
 
-    private transient Client jerseyClient;
-
-    private static final Log logger = LogFactory.getLog(AbstractJerseyClientService.class);
+    private static final Log logger = LogFactory.getLog(AbstractJaxRsClientService.class);
 
     @Inject
     private Deployment deployment;
 
-    public AbstractJerseyClientService() {}
-    
-    /**
-     * Subclasses can call this to turn on JSON processing support for client calls.
-     */
-    protected void supportJson(ClientConfig clientConfig) {
-        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
-    }
+    public AbstractJaxRsClientService() {}
 
     /**
      * Subclasses can call this to specify the username and password for HTTP Auth
      *
      */
     protected void specifyHttpAuthCredentials(Client client, LoginAndPassword loginAndPassword) {
-        client.addFilter(new HTTPBasicAuthFilter(loginAndPassword.getLogin(), loginAndPassword.getPassword()));
+        client.register(new BasicAuthentication(loginAndPassword.getLogin(), loginAndPassword.getPassword()));
     }
 
     /**
      * Subclasses can call this to force a MIME type on the response if needed (Quote service)
      */
     protected void forceResponseMimeTypes(Client client, final MediaType... mediaTypes) {
-        client.addFilter(new ClientFilter() {
+        client.register(new ClientResponseFilter() {
             @Override
-            public ClientResponse handle(ClientRequest cr) throws ClientHandlerException {
-                ClientResponse resp = getNext().handle(cr);
-                MultivaluedMap<String, String> map = resp.getHeaders();
+            public void filter(ClientRequestContext clientRequestContext, ClientResponseContext clientResponseContext) throws IOException {
+
+                MultivaluedMap<String, String> map = clientResponseContext.getHeaders();
                 List<String> mimeTypes = new ArrayList<>();
 
                 for (MediaType mediaType : mediaTypes) {
@@ -80,7 +69,6 @@ public abstract class AbstractJerseyClientService implements Serializable {
                 }
 
                 map.put("Content-Type", mimeTypes);
-                return resp;
             }
         });
     }
@@ -88,26 +76,24 @@ public abstract class AbstractJerseyClientService implements Serializable {
     /**
      * Method for subclasses to retrieve the {@link Client} for making webservice calls.
      */
-    protected Client getJerseyClient() {
-        if (jerseyClient == null) {
-            DefaultClientConfig clientConfig = new DefaultClientConfig();
-            if(deployment != Deployment.PROD) {
-                JerseyUtils.acceptAllServerCertificates(clientConfig);
-            }
-            customizeConfig(clientConfig);
-
-            jerseyClient = Client.create(clientConfig);
-            customizeClient(jerseyClient);
+    protected Client getJaxRsClient() {
+        ClientBuilder clientBuilder = ClientBuilder.newBuilder();
+        if(deployment != Deployment.PROD) {
+            JaxRsUtils.acceptAllServerCertificates(clientBuilder);
         }
+        customizeBuilder(clientBuilder);
+
+        Client jerseyClient = clientBuilder.build();
+        customizeClient(jerseyClient);
         return jerseyClient;
     }
 
     /**
      * The default for this is to do nothing, but it can be overridden for custom set up.
      *
-     * @param clientConfig The config object
+     * @param clientBuilder The builder object
      */
-    protected void customizeConfig(ClientConfig clientConfig) {
+    protected void customizeBuilder(ClientBuilder clientBuilder) {
     }
 
     /**
@@ -149,20 +135,21 @@ public abstract class AbstractJerseyClientService implements Serializable {
      * Post method.
      *
      * @param urlString Base URL.
-     * @param paramString Parameter string with embedded ampersands, <b>without</b> initial question mark.
+     * @param params map from parameter names to values
      * @param extraTab Extra tab flag, strip a trailing tab if this is present.
      * @param callback Callback method to feed data.
      */
-    public void post(@Nonnull String urlString, @Nonnull String paramString, @Nonnull ExtraTab extraTab, @Nonnull PostCallback callback) {
+    public void post(@Nonnull String urlString, @Nonnull MultivaluedMap<String, String> params,
+                     @Nonnull ExtraTab extraTab, @Nonnull PostCallback callback) {
         logger.debug(String.format("URL string is '%s'", urlString));
-        WebResource webResource = getJerseyClient().resource(urlString);
+        WebTarget webTarget = getJaxRsClient().target(urlString);
 
         BufferedReader reader = null;
+        Response clientResponse = null;
         try {
-            ClientResponse clientResponse =
-                    webResource.type(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(ClientResponse.class, paramString);
+            clientResponse = webTarget.request().post(Entity.form(params));
 
-            InputStream is = clientResponse.getEntityInputStream();
+            InputStream is = clientResponse.readEntity(InputStream.class);
             reader = new BufferedReader(new InputStreamReader(is));
 
             Response.Status clientResponseStatus = Response.Status.fromStatusCode(clientResponse.getStatus());
@@ -204,10 +191,9 @@ public abstract class AbstractJerseyClientService implements Serializable {
             logger.error(e);
         } finally {
             IOUtils.closeQuietly(reader);
+            if (clientResponse != null) {
+                clientResponse.close();
+            }
         }
-    }
-
-    protected void clearClient() {
-        jerseyClient = null;
     }
 }
