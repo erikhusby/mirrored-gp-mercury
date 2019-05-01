@@ -38,7 +38,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -708,7 +707,7 @@ public class ProductOrderTest {
     public void testDeterminingQuoteItemsForOrder() throws Exception {
         ProductOrder quoteTestOrder = ProductOrderTestFactory.createDummyProductOrder();
         SapQuote sapQuote =
-                TestUtils.buildTestSapQuote("00332883", BigDecimal.valueOf(20000), BigDecimal.valueOf(100000),
+                TestUtils.buildTestSapQuote("00332883", 20000d, 100000d,
                         quoteTestOrder, TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
 
@@ -737,7 +736,7 @@ public class ProductOrderTest {
         }
 
         SapQuote mixedQuote =
-                TestUtils.buildTestSapQuote("00332883", BigDecimal.valueOf(20000), BigDecimal.valueOf(100000),
+                TestUtils.buildTestSapQuote("00332883", 20000d, 100000d,
                         quoteTestOrder, TestUtils.SapQuoteTestScenario.MATCH_QUOTE_ITEMS_AND_DOLLAR_LIMITED,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
         quoteTestOrder.setQuoteId(mixedQuote.getQuoteHeader().getQuoteNumber());
@@ -767,7 +766,7 @@ public class ProductOrderTest {
         }
 
         SapQuote dollarLimitQuote =
-                TestUtils.buildTestSapQuote("00332883", BigDecimal.valueOf(20000), BigDecimal.valueOf(100000),
+                TestUtils.buildTestSapQuote("00332883", 20000d, 100000d,
                         quoteTestOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
         quoteTestOrder.setQuoteId(dollarLimitQuote.getQuoteHeader().getQuoteNumber());
@@ -797,7 +796,7 @@ public class ProductOrderTest {
 
 
         SapQuote differingQuote =
-                TestUtils.buildTestSapQuote("00332883", BigDecimal.valueOf(20000), BigDecimal.valueOf(100000),
+                TestUtils.buildTestSapQuote("00332883", 20000d, 100000d,
                         quoteTestOrder, TestUtils.SapQuoteTestScenario.PRODUCTS_DIFFER,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
         quoteTestOrder.setQuoteId(differingQuote.getQuoteHeader().getQuoteNumber());

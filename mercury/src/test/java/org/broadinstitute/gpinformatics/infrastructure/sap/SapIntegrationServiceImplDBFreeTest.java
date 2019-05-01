@@ -189,7 +189,7 @@ public class SapIntegrationServiceImplDBFreeTest {
             customAdjustment.setListPrice(new BigDecimal(priceList.findByKeyFields(productOrderAddOn.getAddOn().getPrimaryPriceItem()).getPrice()));
             productOrderAddOn.setCustomPriceAdjustment(customAdjustment);
         }
-        sapQuote = TestUtils.buildTestSapQuote("01234", BigDecimal.TEN, BigDecimal.TEN, conversionPdo,
+        sapQuote = TestUtils.buildTestSapQuote("01234", 10d, 10d, conversionPdo,
             TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS, "GP01");
 
         SAPOrder convertedOrder = integrationService.initializeSAPOrder(sapQuote, conversionPdo,
