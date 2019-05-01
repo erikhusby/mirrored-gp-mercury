@@ -439,7 +439,7 @@ public class LabEventFactory implements Serializable {
                                                 if (mercurySample == null) {
                                                     mercurySample = new MercurySample(smId,MercurySample.MetadataSource.BSP);
                                                 }
-                                                vessel.getMercurySamples().add(mercurySample);
+                                                vessel.addSample(mercurySample);
                                             }
                                         }
                                     }
