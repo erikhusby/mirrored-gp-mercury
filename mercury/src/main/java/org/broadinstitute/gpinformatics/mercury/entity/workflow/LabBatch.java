@@ -140,6 +140,10 @@ public class LabBatch {
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "labBatch")
     private Set<LabBatchStartingVessel> startingBatchLabVessels = new HashSet<>();
 
+    /**
+     * Deprecated in favor of LabBatchStartingVessel
+     * @see org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch#startingBatchLabVessels
+     */
     @Deprecated
     @ManyToMany(cascade = CascadeType.PERSIST)
     // have to specify name, generated aud name is too long for Oracle
@@ -207,7 +211,11 @@ public class LabBatch {
         /**
          * MISEQ FCT Batch
          */
-        MISEQ
+        MISEQ,
+        /**
+         * Sample Retrieval and Storage Batch
+         */
+        SRS
     }
 
     @Enumerated(EnumType.STRING)
@@ -379,10 +387,24 @@ public class LabBatch {
         batchName = this.jiraTicket.getTicketName();
     }
 
+    /**
+     * Deprecated in favor of:
+     * @see org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch#getStartingBatchLabVessels()
+     * @see org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch#getNonReworkStartingLabVessels()
+     * @see org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch#getLabBatchStartingVessels()
+     */
+    @Deprecated
     public Set<LabVessel> getStartingLabVessels() {
         return startingLabVessels;
     }
 
+    /**
+     * Deprecated in favor of:
+     * @see org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch#addLabVessel(LabVessel)
+     * @see org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch#addLabVessels(Collection<LabVessel>)
+     * @see org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch#addLabVessel(VesselToLanesInfo)
+     */
+    @Deprecated
     public void setStartingLabVessels(Set<LabVessel> oldStartingLabVessels) {
         this.startingLabVessels = oldStartingLabVessels;
     }
@@ -562,8 +584,11 @@ public class LabBatch {
         NUMBER_OF_EMPTIES("Number of Empties", true),
         NUMBER_OF_WELLS("Total Samples, Controls, and Empties", true),
         CONTAINER_ID("Container ID", true),
-        ;
 
+        // SRS tickets
+        //(Sample IDs, Number of Samples defined above)
+        SOURCE("Source", true),
+        DESTINATION("Destination", true);
 
         private final String fieldName;
         private final boolean customField;

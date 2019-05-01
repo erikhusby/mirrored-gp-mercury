@@ -112,10 +112,7 @@ public class PickerActionBean extends CoreActionBean {
 
                 Set<LabVessel> startingLabVessels = new HashSet<>();
                 for (LabBatch labBatch: labBatches) {
-                    Set<LabBatchStartingVessel> startingVessels = labBatch.getLabBatchStartingVessels();
-                    for (LabBatchStartingVessel labBatchStartingVessel: startingVessels) {
-                        startingLabVessels.add(labBatchStartingVessel.getLabVessel());
-                    }
+                    startingLabVessels.addAll(labBatch.getNonReworkStartingLabVessels());
                 }
                 if (!messageCollection.hasErrors()) {
                     pickLabVessels(new ArrayList<>(startingLabVessels), messageCollection);

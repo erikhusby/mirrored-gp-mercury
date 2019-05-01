@@ -301,12 +301,26 @@
                         </security:authorizeBlock>
                         <security:authorizeBlock
                                 roles="<%= roles(LabManager, PDM, GPProjectManager, PM, Developer, LabUser) %>">
-
                             <li>
                                 <stripes:link id="pickFromStorage"
                                               beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.PickerActionBean"
                                               event="view">
                                     Create Pick List From Storage
+                                </stripes:link>
+                            </li>
+                            <li class="divider"></li>
+                            <li>
+                                <stripes:link id="srsBatch"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.SRSBatchActionBean"
+                                              event="view">
+                                    SRS Batch Management
+                                </stripes:link>
+                            </li>
+                            <li>
+                                <stripes:link id="pickWorkspace"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.PickWorkspaceActionBean"
+                                              event="view">
+                                    Pick Workspace
                                 </stripes:link>
                             </li>
                         </security:authorizeBlock>

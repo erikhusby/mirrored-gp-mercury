@@ -4,13 +4,28 @@
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.PickerActionBean" />
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Create Picker CSV"
-                       sectionTitle="Create Picker CSV" showCreate="false">
+                       sectionTitle="Create Picker CSV" showCreate="false" dataTablesVersion="1.10">
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function () {
 
                 $j('#labVesselResultsTable').dataTable({
+                    rowReorder: true,
+                    "order": [[ 3, "asc" ]],
+                    "columns": [
+                        { "orderable": false, "searchable": false },  // Selected checkboxes
+                        { "orderable": true }, // Sample
+                        { "orderable": true },  // Barcode
+                        { "orderable": true },  // Storage Location
+                        { "orderable": false, "searchable": false, "width": "5%" } // Delete button
+                    ]
+                });
+
+
+
+
+                ({
                     "oTableTools": {
                         "sSwfPath": "/Mercury/resources/scripts/DataTables-1.9.4/extras/TableTools/media/swf/copy_csv_xls.swf",
                         "aButtons": [
@@ -87,8 +102,8 @@
                                        downloadColumnSets="${actionBean.downloadColumnSets}"
                                        resultList="${actionBean.resultList}"
                                        action="${ctxpath}/search/ConfigurableSearch.action"
-                                       downloadViewedColumns="False"
-                                       isDbSortAllowed="False"
+                                       downloadViewedColumns="false"
+                                       isDbSortAllowed="false"
                                        dbSortPath=""
                                        dataTable="true"
                                        loadDatatable="false"
