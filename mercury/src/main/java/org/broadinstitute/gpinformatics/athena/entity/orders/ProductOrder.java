@@ -2740,8 +2740,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
     }
 
-    public void setQuoteReferences(
-            Set<SapQuoteItemReference> quoteReferences) {
+    public void setQuoteReferences(Set<SapQuoteItemReference> quoteReferences) {
         this.quoteReferences.clear();
         addQuoteReferences(quoteReferences);
     }
@@ -2757,10 +2756,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         Set<SapQuoteItemReference> updatedLineItemReferences = new HashSet<>();
 
         if(product != null) {
-            determineQuoteReferenceForProduct(sapQuote, updatedLineItemReferences, product);
+            updatedLineItemReferences.addAll(determineQuoteReferenceForProduct(sapQuote, product));
         }
         for (ProductOrderAddOn addOn : getAddOns()) {
-            determineQuoteReferenceForProduct(sapQuote, updatedLineItemReferences, addOn.getAddOn());
+            updatedLineItemReferences.addAll(determineQuoteReferenceForProduct(sapQuote, addOn.getAddOn()));
         }
 
         setQuoteReferences(updatedLineItemReferences);
@@ -2770,14 +2769,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * Helper method to compartmentalize the logic to find and validate the line item in the SAP quote
      * which will match a given Product
      * @param sapQuote Quote objec
-     * @param updatedLineItemReferences
      * @param product
      * @throws SAPInterfaceException
      */
-    private void determineQuoteReferenceForProduct(SapQuote sapQuote,
-                                                   Set<SapQuoteItemReference> updatedLineItemReferences,
-                                                   Product product)
+    private Set<SapQuoteItemReference> determineQuoteReferenceForProduct(SapQuote sapQuote, Product product)
             throws SAPInterfaceException {
+        Set<SapQuoteItemReference> updatedLineItemReferences = new HashSet<>();
         Collection<QuoteItem> quoteItems = sapQuote.getQuoteItemMap().get(product.getPartNumber());
         if (CollectionUtils.isEmpty(quoteItems)) {
             quoteItems = sapQuote.getQuoteItemByDescriptionMap().get(QuoteItem.DOLLAR_LIMIT_MATERIAL_DESCRIPTOR);
@@ -2796,6 +2793,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                                             + sapQuote.getQuoteHeader().getQuoteNumber()+" for "
                                             + product.getDisplayName());
         }
+        return updatedLineItemReferences;
     }
 
 }
