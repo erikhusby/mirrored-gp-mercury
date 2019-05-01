@@ -46,7 +46,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option.Type;
@@ -302,13 +301,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             final ProductOrderPriceAdjustment singlePriceAdjustment = placedOrder.getSinglePriceAdjustment();
             if (singlePriceAdjustment != null && singlePriceAdjustment.hasPriceAdjustment()) {
 
-                singlePriceAdjustment.setListPrice(
-                    new BigDecimal(productPriceCache.findByProduct(product,
-                        placedOrder.getSapCompanyConfigurationForProductOrder()).getBasePrice()));
-
                 if (singlePriceAdjustment.getAdjustmentValue() != null) {
                     sapOrderItem.addCondition(singlePriceAdjustment.deriveAdjustmentCondition(),
-                        singlePriceAdjustment.getAdjustmentDifference());
+                        singlePriceAdjustment.getAdjustmentValue());
                 }
                 if (StringUtils.isNotBlank(singlePriceAdjustment.getCustomProductName())) {
                     sapOrderItem.setProductAlias(singlePriceAdjustment.getCustomProductName());
@@ -317,7 +312,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 for (ProductOrderPriceAdjustment productOrderPriceAdjustment : placedOrder.getQuotePriceMatchAdjustments()) {
                     if (productOrderPriceAdjustment.hasPriceAdjustment()) {
                         sapOrderItem.addCondition(productOrderPriceAdjustment.deriveAdjustmentCondition(),
-                            productOrderPriceAdjustment.getAdjustmentDifference());
+                            productOrderPriceAdjustment.getAdjustmentValue());
                     }
                 }
             }
@@ -327,12 +322,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 if (productOrderAddOn.getAddOn().equals(product)) {
                     if (singleCustomPriceAdjustment != null &&
                         singleCustomPriceAdjustment.hasPriceAdjustment()) {
-                        singleCustomPriceAdjustment.setListPrice(new BigDecimal(productPriceCache.findByProduct(productOrderAddOn.getAddOn(),
-                                placedOrder.getSapCompanyConfigurationForProductOrder()).getBasePrice()));
                         if (singleCustomPriceAdjustment.getAdjustmentValue() != null) {
                             sapOrderItem.addCondition(
                                 singleCustomPriceAdjustment.deriveAdjustmentCondition(),
-                                singleCustomPriceAdjustment.getAdjustmentDifference());
+                                singleCustomPriceAdjustment.getAdjustmentValue());
                         }
                         if (StringUtils.isNotBlank(singleCustomPriceAdjustment.getCustomProductName())) {
                             sapOrderItem.setProductAlias(singleCustomPriceAdjustment.getCustomProductName());
@@ -342,7 +335,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                             .getQuotePriceAdjustments()) {
                             if (productOrderAddOnPriceAdjustment.hasPriceAdjustment()) {
                                 sapOrderItem.addCondition(productOrderAddOnPriceAdjustment.deriveAdjustmentCondition(),
-                                        productOrderAddOnPriceAdjustment.getAdjustmentDifference());
+                                        productOrderAddOnPriceAdjustment.getAdjustmentValue());
                             }
                         }
                     }

@@ -31,7 +31,6 @@ import org.broadinstitute.sap.entity.order.SAPOrderItem;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
-import org.hamcrest.Matchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -53,12 +52,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.*;
+import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.emptyOrNullString;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SapIntegrationServiceImplDBFreeTest {
@@ -180,14 +178,13 @@ public class SapIntegrationServiceImplDBFreeTest {
         final String customProductName = "Test custom material";
         final String customAddonProductName = "Test custom addon material";
         final ProductOrderPriceAdjustment customPriceAdjustment =
-                new ProductOrderPriceAdjustment(new BigDecimal(80), null, customProductName);
+                new ProductOrderPriceAdjustment(new BigDecimal("29.50"), null, customProductName);
 
-        customPriceAdjustment.setListPrice(new BigDecimal(priceList.findByKeyFields(primaryProduct.getPrimaryPriceItem()).getPrice()));
         conversionPdo.setCustomPriceAdjustment(customPriceAdjustment);
 
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
-            final ProductOrderAddOnPriceAdjustment customAdjustment = new ProductOrderAddOnPriceAdjustment(new BigDecimal(80),1, customAddonProductName);
-            customAdjustment.setListPrice(new BigDecimal(priceList.findByKeyFields(productOrderAddOn.getAddOn().getPrimaryPriceItem()).getPrice()));
+            final ProductOrderAddOnPriceAdjustment customAdjustment =
+                    new ProductOrderAddOnPriceAdjustment(new BigDecimal("39.50"),1, customAddonProductName);
             productOrderAddOn.setCustomPriceAdjustment(customAdjustment);
         }
         sapQuote = TestUtils.buildTestSapQuote("01234", BigDecimal.TEN, BigDecimal.TEN, conversionPdo,
@@ -214,13 +211,13 @@ public class SapIntegrationServiceImplDBFreeTest {
 
                 final ConditionValue foundCondition = item.getConditions().iterator().next();
                 assertThat(foundCondition.getValue(), equalTo(new BigDecimal("29.50")));
-                assertThat(foundCondition.getCondition(), equalTo(Condition.MARK_UP_LINE_ITEM));
+                assertThat(foundCondition.getCondition(), equalTo(Condition.PRICE_OVERRIDE));
             }
             else {
                 assertThat(item.getItemQuantity().doubleValue(), equalTo((new BigDecimal(1.0d)).doubleValue()));
                 final ConditionValue foundCondition = item.getConditions().iterator().next();
                 assertThat(foundCondition.getValue(), equalTo(new BigDecimal("39.50")));
-                assertThat(foundCondition.getCondition(), equalTo(Condition.MARK_UP_LINE_ITEM));
+                assertThat(foundCondition.getCondition(), equalTo(Condition.PRICE_OVERRIDE));
             }
         }
 
@@ -275,14 +272,14 @@ public class SapIntegrationServiceImplDBFreeTest {
             assertThat(sapOrderItem.getProductAlias(), is(equalTo(newProductAlias)));
         }
 
-        ProductOrderPriceAdjustment customAdjustment2 = new ProductOrderPriceAdjustment(new BigDecimal(65), null, null);
+        ProductOrderPriceAdjustment customAdjustment2 = new ProductOrderPriceAdjustment(new BigDecimal("14.50"), null, null);
         conversionPdo.setCustomPriceAdjustment(customAdjustment2);
         sapOrder = integrationService.initializeSAPOrder(sapQuote, conversionPdo, Option.NONE);
         assertThat(sapOrder.getOrderItems().size(), is(equalTo(1)));
         for (SAPOrderItem sapOrderItem : sapOrder.getOrderItems()) {
             assertThat(sapOrderItem.getConditions().size(), is(equalTo(1)));
             for (ConditionValue conditionValue : sapOrderItem.getConditions()) {
-                assertThat(conditionValue.getCondition(), is(equalTo(Condition.MARK_UP_LINE_ITEM)));
+                assertThat(conditionValue.getCondition(), is(equalTo(Condition.PRICE_OVERRIDE)));
                 assertThat(conditionValue.getValue(), is(equalTo(new BigDecimal("14.50"))));
             }
             assertThat(sapOrderItem.getProductAlias(), is(emptyOrNullString()));

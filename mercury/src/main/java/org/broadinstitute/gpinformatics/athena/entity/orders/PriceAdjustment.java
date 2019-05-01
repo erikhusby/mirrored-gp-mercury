@@ -17,25 +17,11 @@ public abstract class PriceAdjustment {
 
     public abstract Integer getAdjustmentQuantity();
 
-    public abstract BigDecimal getListPrice();
-
     public boolean hasPriceAdjustment() {
         return getAdjustmentValue() != null || StringUtils.isNotBlank(getCustomProductName()) || getAdjustmentQuantity() != null;
     }
 
     public Condition deriveAdjustmentCondition() {
-        if(getListPrice().compareTo(getAdjustmentValue()) <0) {
-            return Condition.MARK_UP_LINE_ITEM;
-        } else {
-            return Condition.DOLLAR_DISCOUNT_LINE_ITEM;
-        }
-    }
-
-    public BigDecimal getAdjustmentDifference() {
-        if(getListPrice().compareTo(getAdjustmentValue()) <0) {
-            return getAdjustmentValue().subtract(getListPrice());
-        } else {
-            return getListPrice().subtract(getAdjustmentValue());
-        }
+        return Condition.PRICE_OVERRIDE;
     }
 }
