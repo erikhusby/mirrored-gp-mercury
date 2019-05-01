@@ -104,7 +104,6 @@ import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.OrderCriteria;
 import org.broadinstitute.sap.entity.OrderValue;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
-import org.broadinstitute.sap.entity.order.SAPOrder;
 import org.broadinstitute.sap.entity.quote.FundingDetail;
 import org.broadinstitute.sap.entity.quote.FundingStatus;
 import org.broadinstitute.sap.entity.quote.QuoteHeader;
@@ -1257,22 +1256,22 @@ public class ProductOrderActionBeanTest {
         stubProductPriceCache.refreshCache();
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
 
-        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote, Collections.<String>emptySet()),
+        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote),
                 (double) (1573 * testOrder.getSamples().size() + 2000 * testOrder.getSamples().size()));
         testQuote.setQuoteItems(quoteItems);
 
-        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote, Collections.<String>emptySet()),
+        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote),
                 (double) (573 * testOrder.getSamples().size() + 1000 * testOrder.getSamples().size()));
 
         testOrder.updateAddOnProducts(Arrays.asList(addonNonSeqProduct, seqProduct));
 
-        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote, Collections.<String>emptySet()),
+        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote),
                 (double) (573 * testOrder.getSamples().size() + 1000 * testOrder.getSamples().size() + 2500 * testOrder
                         .getLaneCount()));
 
         testOrder.setProduct(seqProduct);
 
-        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote, Collections.<String>emptySet()),
+        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote),
                 (double) (573 * testOrder.getSamples().size() + 2500 * testOrder.getLaneCount() + 2500 * testOrder
                         .getLaneCount()));
 
@@ -1281,7 +1280,7 @@ public class ProductOrderActionBeanTest {
         abandonedSample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.ABANDONED);
 
         Assert.assertEquals(testOrder.getUnbilledSampleCount(), 74);
-        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote, Collections.<String>emptySet()),
+        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote),
                 (double) (573 * (testOrder.getSamples().size() - 1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder
                         .getLaneCount()));
 
@@ -1295,14 +1294,14 @@ public class ProductOrderActionBeanTest {
         Assert.assertEquals(testChildOrder.getUnbilledSampleCount(), 1);
         Assert.assertEquals(testOrder.getUnbilledSampleCount(), 74);
 
-        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote, Collections.<String>emptySet()),
+        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote),
                 (double) (573 * (testOrder.getSamples().size() - 1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder
                         .getLaneCount()
                 ));
 
         testChildOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
-        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote, Collections.<String>emptySet()),
+        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote),
                 (double) (573 * (testOrder.getSamples().size() - 1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder
                         .getLaneCount()
                           + 573 * testChildOrder.getSamples().size()
@@ -1537,8 +1536,8 @@ public class ProductOrderActionBeanTest {
         } else {
             Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenThrow(new SAPIntegrationException("Sap should not be called for Quote Server Quote"));
         }
-        stubProductPriceCache.refreshCache();
         if (quoteSource == ProductOrder.QuoteSourceType.SAP_SOURCE) {
+            stubProductPriceCache.refreshCache();
             Mockito.when(mockQuoteService.getAllPriceItems()).thenThrow(new QuoteServerException("Quote Server should not be called for SAP Quote"));
             Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuoteIdentifier)).thenThrow(new QuoteServerException("Quote Server should not be called for SAP Quote"));
         } else {
@@ -1754,10 +1753,10 @@ public class ProductOrderActionBeanTest {
                     return sapQuote;
                 }
             });
+            stubProductPriceCache.refreshCache();
         } else {
             Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString()))
                     .thenThrow(new SAPIntegrationException("SAP should not be called for Quote Server Quote"));
-            stubProductPriceCache.refreshCache();
             Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
             Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuote.getAlphanumericId())).thenReturn(testQuote);
 
@@ -2336,10 +2335,10 @@ public class ProductOrderActionBeanTest {
                                     BigDecimal.valueOf(800000), testOrder, quoteItemsMatchOrderProducts, "GP01");
                         }
                     });
+            stubProductPriceCache.refreshCache();
         } else {
             Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString()))
                     .thenThrow(new SAPIntegrationException("SAP should not be called for Quote Server quote"));
-            stubProductPriceCache.refreshCache();
             Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
             Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuoteIdentifier)).thenReturn(testQuote);
 
@@ -3731,10 +3730,10 @@ public class ProductOrderActionBeanTest {
             }
         }
 
-        Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(returnMaterials);
-        stubProductPriceCache.refreshCache();
 
         if (expectedSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
+            Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(returnMaterials);
+            stubProductPriceCache.refreshCache();
             if (quoteIsValid) {
                 Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenAnswer(new Answer<SapQuote>() {
                     @Override
@@ -3749,6 +3748,8 @@ public class ProductOrderActionBeanTest {
                         .thenThrow(new SAPIntegrationException("Quote is Invalid"));
             }
         } else {
+            Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString()))
+                    .thenThrow(new RuntimeException("SAP Should not be searched for here"));
             Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString()))
                     .thenThrow(new RuntimeException("SAP Should not be searched for here"));
         }
