@@ -181,7 +181,6 @@ public class ProductEjbDBFreeTest {
         testEjb.publishProductToSAP(testProduct);
 
         assertThat(testProduct.isSavedInSAP(), is(true));
-        assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockWrappedClient, Mockito.times(2)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(0)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 

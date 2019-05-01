@@ -393,10 +393,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
     @NotNull
     protected SAPMaterial initializeSapMaterialObject(Product product) throws SAPIntegrationException {
-        SAPCompanyConfiguration companyCode =
-//                (product.isExternalProduct() || product.isClinicalProduct()) ?
-//            SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES :
-            SAPCompanyConfiguration.BROAD;
+        SAPCompanyConfiguration companyCode = SAPCompanyConfiguration.BROAD;
         String productHeirarchy = SAPCompanyConfiguration.BROAD.getSalesOrganization();
 
         if (product.isExternalOnlyProduct() || product.isClinicalProduct()) {
