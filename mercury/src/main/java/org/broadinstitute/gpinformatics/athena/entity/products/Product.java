@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.sap.entity.Condition;
-import org.broadinstitute.sap.entity.DeliveryCondition;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hibernate.annotations.BatchSize;
@@ -58,6 +57,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * This entity represents all the stored information for a Mercury Project.
@@ -1077,20 +1077,17 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     }
 
     public String getReplacementPrices()  {
-        StringBuffer displayValues = new StringBuffer();
 
-        for (Map.Entry<String, SAPMaterial> stringSAPMaterialEntry : this.sapMaterials.entrySet()) {
-            for (Map.Entry<DeliveryCondition, BigDecimal> deliveryConditionBigDecimalEntry : stringSAPMaterialEntry
-                    .getValue().getPossibleDeliveryConditions().entrySet()) {
-                if(deliveryConditionBigDecimalEntry.getValue().compareTo(BigDecimal.ZERO)>0) {
-                    displayValues.append(deliveryConditionBigDecimalEntry.getKey().name()).append(" = ")
-                            .append(NumberFormat.getCurrencyInstance().format(deliveryConditionBigDecimalEntry.getValue()))
-                            .append("<br/>");
-                }
-            }
-        }
+        final String displayValues = sapMaterials.values().stream()
+                .map(sapMaterial -> sapMaterial.getPossibleDeliveryConditions().entrySet())
+                .map(entries -> entries.stream()
+                        .filter(entry -> entry.getValue().compareTo(BigDecimal.ZERO) > 0)
+                        .map(deliveryConditionEntry ->
+                                deliveryConditionEntry.getKey() + " = " +
+                                NumberFormat.getCurrencyInstance().format(deliveryConditionEntry.getValue())
+                        ).collect(Collectors.joining("<br/>"))).collect(Collectors.joining("<br/>"));
 
-        return displayValues.toString();
+        return displayValues;
     }
 
     public boolean isQuotePriceDifferent() {
