@@ -117,7 +117,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             setBaitSetName("TEST bait");
         }}, messages);
         // dbFree must explicitly do what Hibernate entity mapping would normally do.
-        entity.getLabVessel().getSampleInstanceEntities().add(entity);
+        entity.getLabVessel().addSampleInstanceEntity(entity);
 
         Assert.assertFalse(messages.hasErrors(), StringUtils.join(messages.getErrors(), "; "));
         Assert.assertTrue(CollectionUtils.isNotEmpty(entity.getLabVessel().getSampleInstancesV2()));
