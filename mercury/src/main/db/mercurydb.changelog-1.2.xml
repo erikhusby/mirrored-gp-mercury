@@ -2269,4 +2269,11 @@
                        constraintName="PK_COVERAGE_TYPE_AUD"
                        columnNames="rev, coverage_type_id"/>
     </changeSet>
+
+    <changeSet  id="GPLIM-5831-5" author="jowalsh">
+        <createIndex indexName="IX_COVERAGE_TYPE_AUD" tableName="COVERAGE_TYPE_AUD" schemaName="mercury">
+            <column name="COVERAGE_TYPE_ID"/>
+            <column name="REV"/>
+        </createIndex>
+    </changeSet>
 </databaseChangeLog>
