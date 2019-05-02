@@ -63,7 +63,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 
 import javax.annotation.Nonnull;
@@ -835,12 +834,6 @@ public class ProductOrderEjb {
             List<ProductOrderSample> productOrderSamples = new ArrayList<>(entry.getValue());
             addSamples(productOrder.getJiraTicketKey(), productOrderSamples, MessageReporter.UNUSED);
         }
-    }
-
-    public void updateOrderInSap(ProductOrder orderToModify, List<Product> allProductsOrdered,
-                                 List<String> effectivePricesForProducts, MessageCollection messageCollection,
-                                 boolean b) throws SAPIntegrationException {
-        updateOrderInSap(orderToModify, allProductsOrdered, messageCollection, b);
     }
 
     public static class NoSuchPDOException extends Exception {
