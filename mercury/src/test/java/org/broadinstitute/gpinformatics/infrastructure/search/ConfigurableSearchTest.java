@@ -240,15 +240,14 @@ public class ConfigurableSearchTest extends Arquillian {
         SearchInstance searchInstance = new SearchInstance();
         String entity = ColumnEntity.MERCURY_SAMPLE.getEntityName();
         ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entity);
-        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("LCSET",
+        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("Lab Batch",
                 configurableSearchDef);
         searchValue.setOperator(SearchInstance.Operator.EQUALS);
-        // Validate 'LCSET-' will be prepended
-        searchValue.setValues(Arrays.asList("6449"));
+        searchValue.setValues(Arrays.asList("LCSET-6449"));
 
         // Add columns
         searchInstance.getPredefinedViewColumns().add("PDO");
-        searchInstance.getPredefinedViewColumns().add("LCSET");
+        searchInstance.getPredefinedViewColumns().add("Lab Batch");
         searchInstance.getPredefinedViewColumns().add("Root Sample ID");
         searchInstance.getPredefinedViewColumns().add("Mercury Sample Tube Barcode");
         // Multi column
@@ -322,7 +321,7 @@ public class ConfigurableSearchTest extends Arquillian {
         // Verify data for sample 797366
         List<String> values = row.getRenderableCells();
         Assert.assertEquals( values.get(columnNumbersByHeader.get("PDO")),                                               "PDO-5115",    "Incorrect PDO Value");
-        Assert.assertEquals( values.get(columnNumbersByHeader.get("LCSET")),                                             "LCSET-6449",  "Incorrect LCSET Value");
+        Assert.assertEquals( values.get(columnNumbersByHeader.get("Lab Batch")),                                         "LCSET-6449",  "Incorrect LCSET Value");
         Assert.assertEquals( values.get(columnNumbersByHeader.get("Root Sample ID")),                                    "SM-74PK6",    "Incorrect Root Sample ID Value");
         Assert.assertEquals( values.get(columnNumbersByHeader.get("Mercury Sample Tube Barcode")),                       "0175567583",  "Incorrect Mercury Sample Tube Barcode Value");
         Assert.assertEquals( values.get(columnNumbersByHeader.get(Metadata.Key.GENDER.getDisplayName())),                "Male",        "Incorrect Gender Value");
