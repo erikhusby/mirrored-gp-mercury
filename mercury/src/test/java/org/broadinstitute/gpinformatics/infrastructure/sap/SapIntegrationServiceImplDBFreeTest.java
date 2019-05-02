@@ -179,14 +179,13 @@ public class SapIntegrationServiceImplDBFreeTest {
         final String customProductName = "Test custom material";
         final String customAddonProductName = "Test custom addon material";
         final ProductOrderPriceAdjustment customPriceAdjustment =
-                new ProductOrderPriceAdjustment(new BigDecimal(80), null, customProductName);
+                new ProductOrderPriceAdjustment(new BigDecimal("29.50"), null, customProductName);
 
-        customPriceAdjustment.setListPrice(new BigDecimal(priceList.findByKeyFields(primaryProduct.getPrimaryPriceItem()).getPrice()));
         conversionPdo.setCustomPriceAdjustment(customPriceAdjustment);
 
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
-            final ProductOrderAddOnPriceAdjustment customAdjustment = new ProductOrderAddOnPriceAdjustment(new BigDecimal(80),1, customAddonProductName);
-            customAdjustment.setListPrice(new BigDecimal(priceList.findByKeyFields(productOrderAddOn.getAddOn().getPrimaryPriceItem()).getPrice()));
+            final ProductOrderAddOnPriceAdjustment customAdjustment =
+                    new ProductOrderAddOnPriceAdjustment(new BigDecimal("39.50"),1, customAddonProductName);
             productOrderAddOn.setCustomPriceAdjustment(customAdjustment);
         }
         sapQuote = TestUtils.buildTestSapQuote("01234", 10d, 10d, conversionPdo,
@@ -213,13 +212,13 @@ public class SapIntegrationServiceImplDBFreeTest {
 
                 final ConditionValue foundCondition = item.getConditions().iterator().next();
                 assertThat(foundCondition.getValue(), equalTo(new BigDecimal("29.50")));
-                assertThat(foundCondition.getCondition(), equalTo(Condition.MARK_UP_LINE_ITEM));
+                assertThat(foundCondition.getCondition(), equalTo(Condition.PRICE_OVERRIDE));
             }
             else {
                 assertThat(item.getItemQuantity().doubleValue(), equalTo((new BigDecimal(1.0d)).doubleValue()));
                 final ConditionValue foundCondition = item.getConditions().iterator().next();
                 assertThat(foundCondition.getValue(), equalTo(new BigDecimal("39.50")));
-                assertThat(foundCondition.getCondition(), equalTo(Condition.MARK_UP_LINE_ITEM));
+                assertThat(foundCondition.getCondition(), equalTo(Condition.PRICE_OVERRIDE));
             }
         }
 
@@ -274,14 +273,14 @@ public class SapIntegrationServiceImplDBFreeTest {
             assertThat(sapOrderItem.getProductAlias(), is(equalTo(newProductAlias)));
         }
 
-        ProductOrderPriceAdjustment customAdjustment2 = new ProductOrderPriceAdjustment(new BigDecimal(65), null, null);
+        ProductOrderPriceAdjustment customAdjustment2 = new ProductOrderPriceAdjustment(new BigDecimal("14.50"), null, null);
         conversionPdo.setCustomPriceAdjustment(customAdjustment2);
         sapOrder = integrationService.initializeSAPOrder(sapQuote, conversionPdo, Option.NONE);
         assertThat(sapOrder.getOrderItems().size(), is(equalTo(1)));
         for (SAPOrderItem sapOrderItem : sapOrder.getOrderItems()) {
             assertThat(sapOrderItem.getConditions().size(), is(equalTo(1)));
             for (ConditionValue conditionValue : sapOrderItem.getConditions()) {
-                assertThat(conditionValue.getCondition(), is(equalTo(Condition.MARK_UP_LINE_ITEM)));
+                assertThat(conditionValue.getCondition(), is(equalTo(Condition.PRICE_OVERRIDE)));
                 assertThat(conditionValue.getValue(), is(equalTo(new BigDecimal("14.50"))));
             }
             assertThat(sapOrderItem.getProductAlias(), is(emptyOrNullString()));

@@ -2652,11 +2652,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return false;
     }
 
-    public void addQuoteAdjustment(Product product, BigDecimal effectivePrice, BigDecimal listPrice) {
+    public void addQuoteAdjustment(Product product, BigDecimal effectivePrice) {
 
         if(getProduct().equals(product)) {
             final ProductOrderPriceAdjustment quoteAdjustment = new ProductOrderPriceAdjustment();
-            quoteAdjustment.setListPrice(listPrice);
             quoteAdjustment.setAdjustmentValue(effectivePrice);
 
             quotePriceMatchAdjustments.add(quoteAdjustment);
@@ -2664,7 +2663,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             for (ProductOrderAddOn productOrderAddOn : getAddOns()) {
                 if(productOrderAddOn.getAddOn().equals(product)) {
                     final ProductOrderAddOnPriceAdjustment quoteAdjustment = new ProductOrderAddOnPriceAdjustment();
-                    quoteAdjustment.setListPrice(listPrice);
                     quoteAdjustment.setAdjustmentValue(effectivePrice);
 
                     productOrderAddOn.getQuotePriceAdjustments().add(quoteAdjustment);
