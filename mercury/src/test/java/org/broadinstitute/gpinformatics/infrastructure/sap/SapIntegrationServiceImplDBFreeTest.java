@@ -31,7 +31,6 @@ import org.broadinstitute.sap.entity.order.SAPOrderItem;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
-import org.hamcrest.Matchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -53,18 +52,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.*;
+import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.emptyOrNullString;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SapIntegrationServiceImplDBFreeTest {
 
     public static final String MOCK_USER_NAME = "Scott Matthews";
     public static final String SINGLE_SOURCE_PO_QUOTE_ID = "GPTest";
+    public static final String SAP_QUOTE_ID= "99923882";
     public static final String SINGLE_SOURCE_FUND_RES_QUOTE_ID = "GPFRQT";
     public static final String MULTIPLE_SOURCE_QUOTE_ID = "GPMultipleQtTest";
     public static final String MOCK_CUSTOMER_NUMBER = "0000123456";
@@ -163,7 +162,7 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         ProductOrder conversionPdo = ProductOrderTestFactory.createDummyProductOrder(10, jiraTicketKey);
 
-        conversionPdo.setQuoteId(testSingleSourceQuote.getAlphanumericId());
+        conversionPdo.setQuoteId("01234");
         conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         conversionPdo.addSapOrderDetail(new SapOrderDetail(SAP_ORDER_NUMBER, 10, testSingleSourceQuote.getAlphanumericId(),
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode()));
@@ -190,14 +189,14 @@ public class SapIntegrationServiceImplDBFreeTest {
             customAdjustment.setListPrice(new BigDecimal(priceList.findByKeyFields(productOrderAddOn.getAddOn().getPrimaryPriceItem()).getPrice()));
             productOrderAddOn.setCustomPriceAdjustment(customAdjustment);
         }
-        sapQuote = TestUtils.buildTestSapQuote("01234", BigDecimal.TEN, BigDecimal.TEN, conversionPdo,
+        sapQuote = TestUtils.buildTestSapQuote("01234", 10d, 10d, conversionPdo,
             TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS, "GP01");
 
         SAPOrder convertedOrder = integrationService.initializeSAPOrder(sapQuote, conversionPdo,
             Option.create(Option.Type.CREATING));
 
         assertThat(convertedOrder.getCompanyCode(), equalTo(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD));
-        assertThat(convertedOrder.getQuoteNumber(), equalTo(testSingleSourceQuote.getAlphanumericId()));
+        assertThat(convertedOrder.getQuoteNumber(), equalTo(sapQuote.getQuoteHeader().getQuoteNumber()));
         assertThat(convertedOrder.getExternalOrderNumber(), equalTo(conversionPdo.getBusinessKey()));
         assertThat(convertedOrder.getSapOrderNumber(), emptyOrNullString());
         assertThat(convertedOrder.getCreator(), equalTo(MOCK_USER_NAME));

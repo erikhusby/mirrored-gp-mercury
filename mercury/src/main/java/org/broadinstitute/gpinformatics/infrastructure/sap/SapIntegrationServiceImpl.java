@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -13,6 +12,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOnPriceAdjustment;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderPriceAdjustment;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
+import org.broadinstitute.gpinformatics.athena.entity.orders.SapQuoteItemReference;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -28,7 +28,6 @@ import org.broadinstitute.sap.entity.material.SAPChangeMaterial;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.entity.order.SAPOrder;
 import org.broadinstitute.sap.entity.order.SAPOrderItem;
-import org.broadinstitute.sap.entity.quote.QuoteItem;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
@@ -40,7 +39,6 @@ import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -50,6 +48,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.google.common.collect.MoreCollectors.toOptional;
 import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option.Type;
 import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option.create;
 import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option.isClosing;
@@ -274,17 +273,14 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         throws SAPIntegrationException {
         BigDecimal sampleCount = getSampleCount(placedOrder, product, additionalSampleCount, serviceOptions);
         if (sapQuote != null) {
-            SAPOrderItem sapOrderItem;
-            Collection<QuoteItem> quoteItems = sapQuote.getQuoteItemMap().get(product.getPartNumber());
-            if (CollectionUtils.isEmpty(quoteItems)) {
-                quoteItems = sapQuote.getQuoteItemByDescriptionMap().get(QuoteItem.DOLLAR_LIMIT_MATERIAL_DESCRIPTOR);
-            }
-            if (CollectionUtils.isNotEmpty(quoteItems)) {
-                if (quoteItems.size() == 1) {
-                    sapOrderItem = buildSapOrderItem(quoteItems.iterator().next(), sampleCount);
-                } else {
-                    throw new SAPIntegrationException("Could not determine the line item of the quote");
-                }
+
+            final Optional<SapQuoteItemReference> quoteItemReference = placedOrder.getQuoteReferences().stream()
+                    .filter(sapQuoteItemReference -> sapQuoteItemReference.getMaterialReference().equals(product))
+                    .collect(toOptional());
+            if(quoteItemReference.isPresent()) {
+                final SAPOrderItem sapOrderItem = new SAPOrderItem(product.getPartNumber(),
+                        Integer.valueOf(quoteItemReference.get().getQuoteLineReference()),
+                        product.getProductName(), sampleCount, null, null);
                 defineConditionsForOrderItem(placedOrder, product, sapOrderItem);
                 return sapOrderItem;
             }
@@ -345,32 +341,6 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 }
             }
         }
-    }
-
-    private SAPOrderItem buildSapOrderItem(QuoteItem quoteItem, BigDecimal sampleCount) {
-        return new SAPOrderItem(quoteItem.getMaterialNumber(), quoteItem.getQuoteItemNumber(),
-            quoteItem.getMaterialDescription(), sampleCount, null, null);
-    }
-
-    protected SAPOrderItem getOrderItem(SapQuote sapQuote, ProductOrder placedOrder, Product product,
-                                        int additionalSampleCount, boolean closingOrder, boolean forOrderValueQuery)
-        throws SAPIntegrationException {
-
-        Collection<QuoteItem> quoteItems = sapQuote.getQuoteItemMap().get(product.getPartNumber());
-
-        // todo: GPLIM-6224 line item should be stored so this method returns the correct one!
-        if (CollectionUtils.isEmpty(quoteItems)) {
-            return null;
-        }
-        QuoteItem quoteLineItem = quoteItems.iterator().next();
-        Option serviceOptions =
-            create(isClosing(closingOrder), isForValueQuery(forOrderValueQuery));
-        BigDecimal sampleCount = getSampleCount(placedOrder, product, additionalSampleCount, serviceOptions);
-        SAPOrderItem sapOrderItem =
-            new SAPOrderItem(quoteLineItem.getMaterialNumber(), quoteLineItem.getQuoteItemNumber(),
-                product.getProductName(), sampleCount, null, null);
-        defineConditionsForOrderItem(placedOrder, product, sapOrderItem);
-        return sapOrderItem;
     }
 
     @Override

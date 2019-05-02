@@ -37,6 +37,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -44,6 +45,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.sap.entity.quote.QuoteItem;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
@@ -308,6 +310,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Column(name="QUOTE_SOURCE")
     private QuoteSourceType quoteSource;
 
+    @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true,
+            mappedBy = "parentOrderDetail")
+    private Set<SapQuoteItemReference> quoteReferences = new HashSet<>();
 
     @Transient
     private Quote cachedQuote;
@@ -2717,4 +2722,78 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return latestSapOrderDetail() != null &&
                StringUtils.equals(latestSapOrderDetail().getQuoteId(), quoteId);
     }
+
+    public Set<SapQuoteItemReference> getQuoteReferences() {
+        return quoteReferences;
+    }
+
+    public void addQuoteReference(SapQuoteItemReference quoteItemReference) {
+        this.quoteReferences.add(quoteItemReference);
+        quoteItemReference.setParentOrderDetail(this);
+    }
+
+    public void addQuoteReferences(Collection<SapQuoteItemReference> references) {
+        if(CollectionUtils.isNotEmpty(references)) {
+            references.forEach(this::addQuoteReference);
+        } else {
+            this.quoteReferences.clear();
+        }
+    }
+
+    public void setQuoteReferences(Set<SapQuoteItemReference> quoteReferences) {
+        this.quoteReferences.clear();
+        addQuoteReferences(quoteReferences);
+    }
+
+    /**
+     * Given an SapQuote, this method will find the matching line items on the Quote for the products
+     * defined in the current product.
+     * @param sapQuote Quote object that defines the quote for which this order is associated
+     * @throws SAPInterfaceException
+     */
+    public void updateQuoteItems(SapQuote sapQuote) throws SAPInterfaceException {
+
+        Set<SapQuoteItemReference> updatedLineItemReferences = new HashSet<>();
+
+        if(product != null) {
+            updatedLineItemReferences.addAll(determineQuoteReferenceForProduct(sapQuote, product));
+        }
+        for (ProductOrderAddOn addOn : getAddOns()) {
+            updatedLineItemReferences.addAll(determineQuoteReferenceForProduct(sapQuote, addOn.getAddOn()));
+        }
+
+        setQuoteReferences(updatedLineItemReferences);
+    }
+
+    /**
+     * Helper method to compartmentalize the logic to find and validate the line item in the SAP quote
+     * which will match a given Product
+     * @param sapQuote Quote objec
+     * @param product
+     * @throws SAPInterfaceException
+     */
+    private Set<SapQuoteItemReference> determineQuoteReferenceForProduct(SapQuote sapQuote, Product product)
+            throws SAPInterfaceException {
+        Set<SapQuoteItemReference> updatedLineItemReferences = new HashSet<>();
+        Collection<QuoteItem> quoteItems = sapQuote.getQuoteItemMap().get(product.getPartNumber());
+        if (CollectionUtils.isEmpty(quoteItems)) {
+            quoteItems = sapQuote.getQuoteItemByDescriptionMap().get(QuoteItem.DOLLAR_LIMIT_MATERIAL_DESCRIPTOR);
+        }
+        if (CollectionUtils.isNotEmpty(quoteItems)) {
+            if (quoteItems.size() == 1) {
+                updatedLineItemReferences.add(new SapQuoteItemReference(
+                        product, quoteItems.iterator().next().getQuoteItemNumber().toString()));
+            } else {
+                throw new SAPInterfaceException("Could not determine a matching line item of the SAP quote "
+                                                + sapQuote.getQuoteHeader().getQuoteNumber()+" for "
+                                                + product.getDisplayName());
+            }
+        } else {
+            throw new SAPInterfaceException("Could not determine a matching line item of the SAP quote "
+                                            + sapQuote.getQuoteHeader().getQuoteNumber()+" for "
+                                            + product.getDisplayName());
+        }
+        return updatedLineItemReferences;
+    }
+
 }

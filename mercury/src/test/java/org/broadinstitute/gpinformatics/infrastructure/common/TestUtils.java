@@ -5,6 +5,7 @@ import functions.rfc.sap.document.sap_com.ZESDQUOTEHEADER;
 import functions.rfc.sap.document.sap_com.ZESDQUOTEITEM;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.sap.entity.material.SAPChangeMaterial;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
@@ -63,24 +64,27 @@ public class TestUtils {
     }
 
     @NotNull
-    public static SapQuote buildTestSapQuote(String testQuoteIdentifier, BigDecimal totalOpenOrderValue,
-                                             BigDecimal quoteTotal, ProductOrder billingOrder,
+    public static SapQuote buildTestSapQuote(String testQuoteIdentifier, double totalOpenOrderValue,
+                                             double quoteTotal, ProductOrder billingOrder,
                                              SapQuoteTestScenario quoteTestScenario, String salesorg)
             throws SAPIntegrationException {
+
+        billingOrder.setQuoteId(testQuoteIdentifier);
 
         ZESDQUOTEHEADER sapQHeader = ZESDQUOTEHEADER.Factory.newInstance();
         sapQHeader.setPROJECTNAME("TestProject");
         sapQHeader.setQUOTENAME(testQuoteIdentifier);
         sapQHeader.setQUOTESTATUS(FundingStatus.APPROVED.name());
         sapQHeader.setSALESORG(salesorg);
+        sapQHeader.setQUOTATION(testQuoteIdentifier);
         sapQHeader.setFUNDHEADERSTATUS(FundingStatus.APPROVED.name());
         sapQHeader.setCUSTOMER("");
         sapQHeader.setDISTCHANNEL("GE");
         sapQHeader.setFUNDTYPE(SapIntegrationClientImpl.FundingType.PURCHASE_ORDER.name());
         sapQHeader.setQUOTESTATUSTXT("");
-        sapQHeader.setQUOTETOTAL(quoteTotal);
-        sapQHeader.setSOTOTAL(totalOpenOrderValue);
-        sapQHeader.setQUOTEOPENVAL(quoteTotal.subtract(totalOpenOrderValue));
+        sapQHeader.setQUOTETOTAL(BigDecimal.valueOf(quoteTotal));
+        sapQHeader.setSOTOTAL(BigDecimal.valueOf(totalOpenOrderValue));
+        sapQHeader.setQUOTEOPENVAL(BigDecimal.valueOf(quoteTotal).subtract(BigDecimal.valueOf(totalOpenOrderValue)));
 
         QuoteHeader header = new QuoteHeader(sapQHeader);
 
@@ -121,6 +125,24 @@ public class TestUtils {
             });
 
             break;
+        case MATCH_QUOTE_ITEMS_AND_DOLLAR_LIMITED:
+            ZESDQUOTEITEM item = ZESDQUOTEITEM.Factory.newInstance();
+            item.setMAKTX(QuoteItem.DOLLAR_LIMIT_MATERIAL_DESCRIPTOR);
+            item.setMATNR("GP-001");
+            item.setQUOTEITEM(String.valueOf((quoteItems.size() + 1) * 10));
+            item.setQUOTATION(testQuoteIdentifier);
+
+            quoteItems.add(new QuoteItem(item));
+            allProductsOrdered.forEach(product -> {
+                ZESDQUOTEITEM lambdaItem = ZESDQUOTEITEM.Factory.newInstance();
+                lambdaItem.setMAKTX(product.getProductName());
+                lambdaItem.setMATNR(product.getPartNumber());
+                lambdaItem.setQUOTEITEM(String.valueOf((quoteItems.size() + 1) * 10));
+                lambdaItem.setQUOTATION(testQuoteIdentifier);
+
+                quoteItems.add(new QuoteItem(lambdaItem));
+            });
+            break;
         }
 
         final Set<FundingDetail> fundingDetailsCollection = new HashSet<>();
@@ -135,7 +157,14 @@ public class TestUtils {
 
         fundingDetailsCollection.add(new FundingDetail(sapFundDetail));
 
-        return new SapQuote(header, fundingDetailsCollection, Collections.emptySet(), quoteItems);
+        final SapQuote sapQuote = new SapQuote(header, fundingDetailsCollection, Collections.emptySet(), quoteItems);
+        try {
+            billingOrder.updateQuoteItems(sapQuote);
+        } catch (SAPInterfaceException e) {
+
+        }
+        billingOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
+        return sapQuote;
     }
 
     public static void mockMaterialSearch(SAPProductPriceCache productPriceCache,
@@ -148,6 +177,6 @@ public class TestUtils {
     }
 
     public enum SapQuoteTestScenario {
-       PRODUCTS_MATCH_QUOTE_ITEMS, DOLLAR_LIMITED, PRODUCTS_DIFFER;
+       PRODUCTS_MATCH_QUOTE_ITEMS, DOLLAR_LIMITED, MATCH_QUOTE_ITEMS_AND_DOLLAR_LIMITED, PRODUCTS_DIFFER;
     }
 }
