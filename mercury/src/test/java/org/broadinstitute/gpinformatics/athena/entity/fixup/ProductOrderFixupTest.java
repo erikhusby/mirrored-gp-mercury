@@ -35,6 +35,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
@@ -65,6 +66,7 @@ import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.ParameterExpression;
+import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
@@ -1795,5 +1797,32 @@ public class ProductOrderFixupTest extends Arquillian {
             }
             utx.rollback();
         }
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim5813RetroactiveQuoteSourceUpdate() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        final List<ProductOrder> allOrdersWithNoQuoteSource =
+                productOrderDao.findAll(ProductOrder.class, new GenericDao.GenericDaoCallback<ProductOrder>() {
+                    @Override
+                    public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> root) {
+
+                        CriteriaBuilder builder = productOrderDao.getEntityManager().getCriteriaBuilder();
+
+                        Predicate noSourcePredicate = builder.isNull(root.get(ProductOrder_.quoteSource));
+
+                        criteriaQuery.where(noSourcePredicate);
+                    }
+                });
+        allOrdersWithNoQuoteSource.forEach(productOrder -> {
+            productOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
+            System.out.println("Update quote source on "+ productOrder.getJiraTicketKey());
+        });
+        productOrderDao.persist(new FixupCommentary("GPLIM-5813 Retroactively set all Product orders created "
+                                                    + "prior to the SAP 2.0 launch to recognize that their quoute "
+                                                    + "comes from the Quote Server"));
+        commitTransaction();
     }
 }

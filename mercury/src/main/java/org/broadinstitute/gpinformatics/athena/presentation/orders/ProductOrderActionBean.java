@@ -135,7 +135,6 @@ import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.OrderValue;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.entity.quote.FundingStatus;
-import org.broadinstitute.sap.entity.quote.QuoteItem;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
@@ -168,7 +167,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -979,21 +977,11 @@ public class ProductOrderActionBean extends CoreActionBean {
             addGlobalValidationError(insufficientFundsMessage);
         }
 
-        // Validate Products are on the QUote
-        final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(editOrder);
-        // Filter out all products which are not explicitly referenced as a line item on the quote
-        final Set<Product> productsWithoutQuoteMatches = allProductsOrdered.stream()
-                .filter(testProduct -> !quote.getQuoteItemMap().keySet().contains(testProduct.getPartNumber())).collect(
-                        Collectors.toSet());
-        // Now check if there are any products that do not match the quote.
-        final Set<String> dollarLimitMaterials = quote.getQuoteItemByDescriptionMap().keySet().stream()
-                .filter(Objects::nonNull)
-                .filter(materialDescription -> materialDescription.contains(QuoteItem.DOLLAR_LIMIT_MATERIAL_DESCRIPTOR)).collect(
-                        Collectors.toSet());
-        // If at least one of the Products on the order does not match the quote line items, see if there is a
-        // dollar limited product on the quote.  If not, set a validation error letting the user that the products
-        // and the quotes must be inline
-        if(CollectionUtils.isNotEmpty(productsWithoutQuoteMatches) && CollectionUtils.isEmpty(dollarLimitMaterials)) {
+        // Validate Products are on the Quote and if they are, store the references to their line items on the order
+        try {
+            editOrder.updateQuoteItems(quote);
+        } catch (SAPInterfaceException e) {
+            logger.error(e);
             addGlobalValidationError("The products on your order (including add ons) do not seem to be represented on your quote.  Please revisit either your quote or your order selections");
         }
     }
@@ -1026,13 +1014,13 @@ public class ProductOrderActionBean extends CoreActionBean {
      * Retrieves and determines the monitary value of a subset of Open Orders within Mercury
      * @return total dollar amount of the monitary value of orders associated with the given quote
      */
-    double estimateSapOutstandingOrders(SapQuote foundQuote, int addedSampleCount, ProductOrder productOrder)
-            throws InvalidProductException, SAPIntegrationException {
+    double estimateSapOutstandingOrders(SapQuote foundQuote, int addedSampleCount, ProductOrder productOrder) {
 
         double value = 0d;
 
         if(productOrder == null) {
-            final Optional<BigDecimal> openSalesValue = Optional.ofNullable(foundQuote.getQuoteHeader().getSalesOrderTotal());
+            final Optional<BigDecimal> openSalesValue =
+                    Optional.ofNullable(foundQuote.getQuoteHeader().getSalesOrderTotal());
             if(openSalesValue.isPresent()) {
                 value = openSalesValue.get().doubleValue();
             }
@@ -1043,7 +1031,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             } catch (SAPIntegrationException e) {
                 logger.info("Attempting to calculate order from SAP yielded an error", e);
             }
-
 
             if (calculatedValues != null &&
                 calculatedValues.getPotentialOrderValue() != null) {
