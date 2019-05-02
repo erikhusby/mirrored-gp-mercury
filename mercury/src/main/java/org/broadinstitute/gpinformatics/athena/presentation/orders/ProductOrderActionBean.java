@@ -169,6 +169,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver.SAVE_SEARCH_DATA;
 
@@ -220,6 +222,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     public static final String GET_SAMPLE_DATA = "getSampleData";
     public static final String GET_SAMPLE_SUMMARY = "getSampleSummary";
     public static final String OPEN_CUSTOM_VIEW_ACTION = "openCustomView";
+
+    public static final List<String> EXCLUDED_QUOTES_FROM_VALUE = Stream.of("GP87U", "CRSPEVER", "GPSPGR7").collect(Collectors.toList());
 
     private String sampleSummary;
     private State state;
@@ -987,13 +991,13 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @return total dollar amount of the monitary value of orders associated with the given quote
      */
     double estimateOutstandingOrders(Quote foundQuote, int addedSampleCount, ProductOrder productOrder)
-            throws InvalidProductException{
+            throws InvalidProductException {
 
         //Creating a new array list to be able to remove items from it if need be
-        List<ProductOrder> ordersWithCommonQuote =
-                new ArrayList<>(productOrderDao.findOrdersWithCommonQuote(foundQuote.getAlphanumericId()));
-
-        Set<String> sapOrderIDsToExclude = new HashSet<>();
+        List<ProductOrder> ordersWithCommonQuote = new ArrayList<>();
+        if(!EXCLUDED_QUOTES_FROM_VALUE.contains(foundQuote.getAlphanumericId())) {
+            ordersWithCommonQuote.addAll(productOrderDao.findOrdersWithCommonQuote(foundQuote.getAlphanumericId()));
+        }
 
         double value = 0d;
 
@@ -1003,7 +1007,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             ordersWithCommonQuote.add(productOrder);
         }
 
-        return value + getValueOfOpenOrders(ordersWithCommonQuote, foundQuote, sapOrderIDsToExclude);
+        return value + getValueOfOpenOrders(ordersWithCommonQuote, foundQuote);
     }
 
     /**
@@ -1052,18 +1056,12 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param quote
      * @return Total dollar amount which equates to the monitary value of all orders given
      */
-    double getValueOfOpenOrders(List<ProductOrder> ordersWithCommonQuote, Quote quote,
-                                Collection<String> exclusionSapOrders)
+    double getValueOfOpenOrders(List<ProductOrder> ordersWithCommonQuote, Quote quote)
             throws InvalidProductException {
         double value = 0d;
 
         Set<ProductOrder> justParents = new HashSet<>();
-        for (ProductOrder order : ordersWithCommonQuote) {
-            if(order.isSavedInSAP() && exclusionSapOrders.contains(order.getSapOrderNumber())) {
-                continue;
-            }
-            justParents.add(order);
-        }
+        justParents.addAll(ordersWithCommonQuote);
 
         for (ProductOrder testOrder : justParents) {
             value += getOrderValue(testOrder, testOrder.getUnbilledSampleCount(), quote);
