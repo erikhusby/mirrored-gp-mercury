@@ -21,7 +21,7 @@ public abstract class PriceAdjustment {
         return getAdjustmentValue() != null || StringUtils.isNotBlank(getCustomProductName()) || getAdjustmentQuantity() != null;
     }
 
-    public Condition deriveAdjustmentCondition() {
+    public Condition getAdjustmentCondition() {
         return Condition.PRICE_OVERRIDE;
     }
 }

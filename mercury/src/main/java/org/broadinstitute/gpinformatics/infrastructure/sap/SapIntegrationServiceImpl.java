@@ -302,7 +302,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             if (singlePriceAdjustment != null && singlePriceAdjustment.hasPriceAdjustment()) {
 
                 if (singlePriceAdjustment.getAdjustmentValue() != null) {
-                    sapOrderItem.addCondition(singlePriceAdjustment.deriveAdjustmentCondition(),
+                    sapOrderItem.addCondition(singlePriceAdjustment.getAdjustmentCondition(),
                         singlePriceAdjustment.getAdjustmentValue());
                 }
                 if (StringUtils.isNotBlank(singlePriceAdjustment.getCustomProductName())) {
@@ -311,7 +311,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             } else {
                 for (ProductOrderPriceAdjustment productOrderPriceAdjustment : placedOrder.getQuotePriceMatchAdjustments()) {
                     if (productOrderPriceAdjustment.hasPriceAdjustment()) {
-                        sapOrderItem.addCondition(productOrderPriceAdjustment.deriveAdjustmentCondition(),
+                        sapOrderItem.addCondition(productOrderPriceAdjustment.getAdjustmentCondition(),
                             productOrderPriceAdjustment.getAdjustmentValue());
                     }
                 }
@@ -324,7 +324,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                         singleCustomPriceAdjustment.hasPriceAdjustment()) {
                         if (singleCustomPriceAdjustment.getAdjustmentValue() != null) {
                             sapOrderItem.addCondition(
-                                singleCustomPriceAdjustment.deriveAdjustmentCondition(),
+                                singleCustomPriceAdjustment.getAdjustmentCondition(),
                                 singleCustomPriceAdjustment.getAdjustmentValue());
                         }
                         if (StringUtils.isNotBlank(singleCustomPriceAdjustment.getCustomProductName())) {
@@ -334,7 +334,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                         for (ProductOrderAddOnPriceAdjustment productOrderAddOnPriceAdjustment : productOrderAddOn
                             .getQuotePriceAdjustments()) {
                             if (productOrderAddOnPriceAdjustment.hasPriceAdjustment()) {
-                                sapOrderItem.addCondition(productOrderAddOnPriceAdjustment.deriveAdjustmentCondition(),
+                                sapOrderItem.addCondition(productOrderAddOnPriceAdjustment.getAdjustmentCondition(),
                                         productOrderAddOnPriceAdjustment.getAdjustmentValue());
                             }
                         }
