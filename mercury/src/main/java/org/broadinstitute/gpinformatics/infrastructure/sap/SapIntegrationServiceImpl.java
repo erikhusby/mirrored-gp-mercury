@@ -47,6 +47,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option.Type;
 import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option.create;
@@ -411,21 +413,36 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     @Override
     public void publishProductInSAP(Product product) throws SAPIntegrationException {
         SAPChangeMaterial sapMaterial = SAPChangeMaterial.fromSAPMaterial(initializeSapMaterialObject(product));
-        if (isNewMaterial(product)) {
+        if (productPriceCache.findByProduct(product, sapMaterial.getCompanyCode()) == null) {
             getClient().createMaterial(sapMaterial);
         } else {
             getClient().changeMaterialDetails(sapMaterial);
         }
 
-        sapMaterial.setCompanyCode(SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES);
+        final List<SAPCompanyConfiguration> otherPlatformList =
+                Stream.of(SAPCompanyConfiguration.GPP, SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES).collect(
+                        Collectors.toList());
+        for (SAPCompanyConfiguration sapCompanyConfiguration : otherPlatformList) {
 
-        String materialName =
-                StringUtils.defaultString(product.getAlternateExternalName(), product.getName());
-        sapMaterial.setMaterialName(materialName);
-        if (productPriceCache.findByProduct(product, SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) == null) {
-            getClient().createMaterial(sapMaterial);
-        } else {
-            getClient().changeMaterialDetails(sapMaterial);
+            if (sapCompanyConfiguration == SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES ||
+                (sapCompanyConfiguration != SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES  &&
+                 sapMaterial.getProductHierarchy() == SAPCompanyConfiguration.BROAD.getSalesOrganization())) {
+                sapMaterial.setCompanyCode(sapCompanyConfiguration);
+
+                String materialName =
+                        null;
+                if (sapCompanyConfiguration == SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) {
+                    materialName = StringUtils.defaultString(product.getAlternateExternalName(), product.getName());
+                    sapMaterial.setMaterialName(materialName);
+                } else {
+                    sapMaterial.setMaterialName(product.getName());
+                }
+                if (productPriceCache.findByProduct(product, sapCompanyConfiguration) == null) {
+                    getClient().createMaterial(sapMaterial);
+                } else {
+                    getClient().changeMaterialDetails(sapMaterial);
+                }
+            }
         }
     }
 
