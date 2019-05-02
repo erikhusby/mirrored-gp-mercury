@@ -65,13 +65,12 @@ public class SampleInstanceEjb {
     public static final String BSP_METADATA = "Row #%d cannot overwrite sample data from BSP: %s.";
     public static final String ROOT_METADATA = "Row #%d cannot overwrite sample data from the root sample: %s.";
     public static final String DUPLICATE = "Row #%d duplicate value for %s.";
-    public static final String DUPLICATE_IN_TUBE = "Row #%d has a duplicate value for %s in tube %s.";
+    public static final String DUPLICATE_INDEX = "Row #%d has a duplicate value for " +
+            ExternalLibraryProcessor.Headers.MOLECULAR_BARCODE_NAME.getText() + " in tube %s.";
     public static final String DUPLICATE_S_M =
             "Row #%d repeats the combination of sample %s and index %s and indicates these tubes should not be pooled.";
-    public static final String INCONSISTENT_SAMPLE_DATA =
-            "Row #%d value for %s is not consistent with row #%d (Sample %s).";
-    public static final String INCONSISTENT_TUBE =
-            "Row #%d value for %s is not consistent with row #%d (Tube Barcode %s).";
+    public static final String INCONSISTENT_SAMPLE = "Row #%d value for %s is not consistent with sample in row #%d.";
+    public static final String INCONSISTENT_TUBE = "Row #%d value for %s is not consistent with tube in row #%d.";
     public static final String INVALID_CHARS = "Row #%d %s characters must only be %s";
     public static final String IS_SUCCESS = "Spreadsheet with %d rows successfully uploaded.";
     public static final String MISSING = "Row #%d is missing a value for %s.";

@@ -76,6 +76,34 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor.REQUIRED_VALUE_IS_MISSING;
+import static org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb.BAD_RANGE;
+import static org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb.DUPLICATE;
+import static org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb.DUPLICATE_INDEX;
+import static org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb.DUPLICATE_S_M;
+import static org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb.INCONSISTENT_SAMPLE;
+import static org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb.INCONSISTENT_TUBE;
+import static org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb.IS_SUCCESS;
+import static org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb.MISSING;
+import static org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb.NONNEGATIVE_DECIMAL;
+import static org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb.NONNEGATIVE_INTEGER;
+import static org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb.UNKNOWN;
+import static org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor.Headers.AGGREGATION_DATA_TYPE;
+import static org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor.Headers.BAIT;
+import static org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor.Headers.COLLABORATOR_SAMPLE_ID;
+import static org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor.Headers.CONCENTRATION;
+import static org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor.Headers.DATA_ANALYSIS_TYPE;
+import static org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor.Headers.FRAGMENT_SIZE;
+import static org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor.Headers.INDIVIDUAL_NAME;
+import static org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor.Headers.INSERT_SIZE_RANGE;
+import static org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor.Headers.LIBRARY_NAME;
+import static org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor.Headers.MOLECULAR_BARCODE_NAME;
+import static org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor.Headers.READ_LENGTH;
+import static org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor.Headers.REFERENCE_SEQUENCE;
+import static org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor.Headers.ROOT_SAMPLE_NAME;
+import static org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor.Headers.SEQUENCING_TECHNOLOGY;
+import static org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor.Headers.SEX;
+import static org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor.Headers.TUBE_BARCODE;
+import static org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor.Headers.VOLUME;
 import static org.broadinstitute.gpinformatics.mercury.test.LabEventTest.FCT_TICKET;
 import static org.mockito.Matchers.anyCollection;
 
@@ -105,7 +133,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             setBaitSetName("TEST bait");
         }}, messages);
         // dbFree must explicitly do what Hibernate entity mapping would normally do.
-        entity.getLabVessel().getSampleInstanceEntities().add(entity);
+        entity.getLabVessel().addSampleInstanceEntity(entity);
 
         Assert.assertFalse(messages.hasErrors(), StringUtils.join(messages.getErrors(), "; "));
         Assert.assertTrue(CollectionUtils.isNotEmpty(entity.getLabVessel().getSampleInstancesV2()));
@@ -127,14 +155,12 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 VarioskanParserTest.getSpreadsheet(file), OVERWRITE, processor, messageCollection, null);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
-        Assert.assertTrue(messageCollection.getInfos().iterator().next()
-                .startsWith(String.format(SampleInstanceEjb.IS_SUCCESS, 2)),
+        Assert.assertTrue(messageCollection.getInfos().iterator().next().startsWith(String.format(IS_SUCCESS, 2)),
                 StringUtils.join(messageCollection.getInfos(), "; "));
 
         // Checks SampleInstanceEntities that were created.
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), ". "));
-        Assert.assertTrue(messageCollection.getInfos().get(0)
-                .startsWith(String.format(SampleInstanceEjb.IS_SUCCESS, 2)),
+        Assert.assertTrue(messageCollection.getInfos().get(0).startsWith(String.format(IS_SUCCESS, 2)),
                 StringUtils.join(messageCollection.getInfos(), "; "));
         Assert.assertEquals(entities.size(), 2);
 
@@ -158,7 +184,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(entity.getMolecularIndexingScheme().getName(),
                     select(i, "Illumina_P5-Nijow_P7-Waren","Illumina_P5-Piwan_P7-Bidih"));
 
-            Assert.assertEquals(entity.getReagentDesign().getName(), "NewtonCheh_NatPepMDC_12genes3regions_Sep2011");
+            Assert.assertEquals(entity.getBaitName(), "NewtonCheh_NatPepMDC_12genes3regions_Sep2011");
 
             Assert.assertEquals(entity.getAggregationParticle(), select(i, "1", ""));
 
@@ -176,15 +202,15 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(entity.getAnalysisType().getBusinessKey(), "HybridSelection.Resequencing");
 
             Assert.assertEquals(entity.getReadLength1(), Arrays.asList(440, 101).get(i));
-            Assert.assertEquals(entity.getReadLength1().intValue(), new int[]{4, 2}[i]);
             Assert.assertEquals(entity.getAggregationParticle(), select(i, "1", ""));
             Assert.assertEquals(entity.getUmisPresent(), new Boolean[]{null, Boolean.TRUE}[i]);
 
             Assert.assertEquals(tube.getVolume(), new BigDecimal("0.60"));
+            Assert.assertEquals(tube.getConcentration(), new BigDecimal("4.44"));
+            // Tests fragment size.
             List<LabMetric> metrics = tube.getNearestMetricsOfType(LabMetric.MetricType.FINAL_LIBRARY_SIZE);
             Assert.assertEquals(metrics.size(), 1);
             Assert.assertEquals(metrics.get(0).getValue(), new BigDecimal("2"));
-            Assert.assertEquals(tube.getConcentration(), new BigDecimal("4.44"));
 
             Assert.assertEquals(entity.getInsertSize(), select(i, null, "31-31"));
 
@@ -309,86 +335,76 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         List<String> errors = new ArrayList<>(messageCollection.getErrors());
         List<String> warnings = new ArrayList<>(messageCollection.getWarnings());
 
-        List<String> expectedErrors = Arrays.asList(
-                "Row #3 " + String.format(REQUIRED_VALUE_IS_MISSING,
-                        ExternalLibraryProcessor.Headers.READ_LENGTH.getText()),
-                String.format(SampleInstanceEjb.INCONSISTENT_SAMPLE_DATA, 3,
-                        ExternalLibraryProcessor.Headers.COLLABORATOR_SAMPLE_ID.getText(), 2, "SM-748OO"),
-                String.format(SampleInstanceEjb.INCONSISTENT_SAMPLE_DATA, 3,
-                        ExternalLibraryProcessor.Headers.INDIVIDUAL_NAME.getText(), 2, "SM-748OO"),
-                String.format(SampleInstanceEjb.INCONSISTENT_SAMPLE_DATA, 3,
-                        ExternalLibraryProcessor.Headers.SEX.getText(), 2, "SM-748OO"),
-                String.format(SampleInstanceEjb.INCONSISTENT_SAMPLE_DATA, 3,
-                        ExternalLibraryProcessor.Headers.ROOT_SAMPLE_NAME.getText(), 2, "SM-748OO"),
-                String.format(SampleInstanceEjb.DUPLICATE_IN_TUBE, 3,
-                        ExternalLibraryProcessor.Headers.MOLECULAR_BARCODE_NAME.getText(), "01509634244"),
-                String.format(SampleInstanceEjb.INCONSISTENT_TUBE, 3,
-                        ExternalLibraryProcessor.Headers.VOLUME.getText(), 2, "01509634244"),
-                String.format(SampleInstanceEjb.INCONSISTENT_TUBE, 3,
-                        ExternalLibraryProcessor.Headers.FRAGMENT_SIZE.getText(), 2, "01509634244"),
-                String.format(SampleInstanceEjb.INCONSISTENT_TUBE, 3,
-                        ExternalLibraryProcessor.Headers.CONCENTRATION.getText(), 2, "01509634244"),
+        List<String> expectedErrors = new ArrayList<String>() {{
+            int row = 3;
+            int comparableRow = 2;
+            add("Row #" + row + " " + String.format(REQUIRED_VALUE_IS_MISSING, READ_LENGTH.getText()));
+            add(String.format(INCONSISTENT_SAMPLE, row, COLLABORATOR_SAMPLE_ID.getText(), comparableRow));
+            add(String.format(INCONSISTENT_SAMPLE, row, INDIVIDUAL_NAME.getText(), comparableRow));
+            add(String.format(INCONSISTENT_SAMPLE, row, SEX.getText(), comparableRow));
+            add(String.format(INCONSISTENT_SAMPLE, row, ROOT_SAMPLE_NAME.getText(), comparableRow));
+            add(String.format(DUPLICATE_INDEX, row, "01509634244"));
+            add(String.format(INCONSISTENT_TUBE, row, VOLUME.getText(), comparableRow));
+            add(String.format(INCONSISTENT_TUBE, row, FRAGMENT_SIZE.getText(), comparableRow));
+            add(String.format(INCONSISTENT_TUBE, row, CONCENTRATION.getText(), comparableRow));
 
-                String.format(SampleInstanceEjb.NONNEGATIVE_INTEGER, 4,
-                        ExternalLibraryProcessor.Headers.READ_LENGTH.getText()),
-                String.format(SampleInstanceEjb.MISSING, 4, ExternalLibraryProcessor.Headers.FRAGMENT_SIZE.getText()),
-                "Row #4 " + String.format(REQUIRED_VALUE_IS_MISSING,
-                        ExternalLibraryProcessor.Headers.REFERENCE_SEQUENCE.getText()),
-                "Row #4 " + String.format(REQUIRED_VALUE_IS_MISSING,
-                        ExternalLibraryProcessor.Headers.SEQUENCING_TECHNOLOGY.getText()),
-                String.format(SampleInstanceEjb.UNKNOWN, 4,
-                        ExternalLibraryProcessor.Headers.AGGREGATION_DATA_TYPE.getText(), "Mercury"),
+            row = 4;
+            add("Row #" + row + " " + String.format(REQUIRED_VALUE_IS_MISSING, REFERENCE_SEQUENCE.getText()));
+            add("Row #" + row + " " + String.format(REQUIRED_VALUE_IS_MISSING, SEQUENCING_TECHNOLOGY.getText()));
+            add(String.format(MISSING, row, VOLUME.getText()));
+            add(String.format(MISSING, row, FRAGMENT_SIZE.getText()));
+            add(String.format(MISSING, row, CONCENTRATION.getText()));
+            add(String.format(NONNEGATIVE_INTEGER, row, READ_LENGTH.getText()));
+            add(String.format(UNKNOWN, row, AGGREGATION_DATA_TYPE.getText(), "Mercury"));
 
-                "Row #5 " + String.format(REQUIRED_VALUE_IS_MISSING,
-                        ExternalLibraryProcessor.Headers.TUBE_BARCODE.getText()),
-                "Row #5 " + String.format(REQUIRED_VALUE_IS_MISSING,
-                        ExternalLibraryProcessor.Headers.READ_LENGTH.getText()),
-                "Row #5 " + String.format(REQUIRED_VALUE_IS_MISSING,
-                        ExternalLibraryProcessor.Headers.REFERENCE_SEQUENCE.getText()),
-                "Row #5 " + String.format(REQUIRED_VALUE_IS_MISSING,
-                        ExternalLibraryProcessor.Headers.SEQUENCING_TECHNOLOGY.getText()),
-                String.format(SampleInstanceEjb.UNKNOWN, 5, ExternalLibraryProcessor.Headers.BAIT.getText(), "Mercury"),
+            row = 5;
+            add("Row #" + row + " " + String.format(REQUIRED_VALUE_IS_MISSING, TUBE_BARCODE.getText()));
+            add("Row #" + row + " " + String.format(REQUIRED_VALUE_IS_MISSING, READ_LENGTH.getText()));
+            add("Row #" + row + " " + String.format(REQUIRED_VALUE_IS_MISSING, REFERENCE_SEQUENCE.getText()));
+            add("Row #" + row + " " + String.format(REQUIRED_VALUE_IS_MISSING, SEQUENCING_TECHNOLOGY.getText()));
+            add(String.format(UNKNOWN, row, BAIT.getText(), "Mercury"));
 
-                "Row #6 " + String.format(REQUIRED_VALUE_IS_MISSING,
-                        ExternalLibraryProcessor.Headers.LIBRARY_NAME.getText()),
-                "Row #6 " + String.format(REQUIRED_VALUE_IS_MISSING,
-                        ExternalLibraryProcessor.Headers.READ_LENGTH.getText()),
-                String.format(SampleInstanceEjb.MISSING, 6, ExternalLibraryProcessor.Headers.VOLUME.getText()),
-                String.format(SampleInstanceEjb.BAD_RANGE, 6,
-                        ExternalLibraryProcessor.Headers.INSERT_SIZE_RANGE.getText()),
+            row = 6;
+            add("Row #" + row + " " + String.format(REQUIRED_VALUE_IS_MISSING, LIBRARY_NAME.getText()));
+            add(String.format(MISSING, row, VOLUME.getText()));
 
-                String.format(SampleInstanceEjb.UNKNOWN, 7,
-                        ExternalLibraryProcessor.Headers.SEQUENCING_TECHNOLOGY.getText(), "Mercury"),
+            row = 7;
+            add(String.format(UNKNOWN, row, SEQUENCING_TECHNOLOGY.getText(), "Mercury"));
 
-                String.format(SampleInstanceEjb.DUPLICATE, 8, ExternalLibraryProcessor.Headers.LIBRARY_NAME.getText()),
-                String.format(SampleInstanceEjb.DUPLICATE_IN_TUBE, 8,
-                        ExternalLibraryProcessor.Headers.MOLECULAR_BARCODE_NAME.getText(), "01509634249"),
-                String.format(SampleInstanceEjb.INCONSISTENT_TUBE, 8,
-                        ExternalLibraryProcessor.Headers.VOLUME.getText(), 6, "01509634249"),
-                "Row #8 " + String.format(REQUIRED_VALUE_IS_MISSING,
-                        ExternalLibraryProcessor.Headers.READ_LENGTH.getText()),
-                String.format(SampleInstanceEjb.BAD_RANGE, 8,
-                        ExternalLibraryProcessor.Headers.INSERT_SIZE_RANGE.getText()),
+            row = 8;
+            comparableRow = 6;
+            add("Row #" + row + " " + String.format(REQUIRED_VALUE_IS_MISSING, READ_LENGTH.getText()));
+            add("Row #" + row + " " + String.format(REQUIRED_VALUE_IS_MISSING, DATA_ANALYSIS_TYPE.getText()));
+            add(String.format(DUPLICATE, row, LIBRARY_NAME.getText()));
+            add(String.format(DUPLICATE_INDEX, row, "01509634249"));
+            add(String.format(INCONSISTENT_TUBE, row, VOLUME.getText(), comparableRow));
+            add(String.format(BAD_RANGE, row, INSERT_SIZE_RANGE.getText()));
 
-                String.format(SampleInstanceEjb.NONNEGATIVE_INTEGER, 9,
-                        ExternalLibraryProcessor.Headers.READ_LENGTH.getText()),
-                String.format(SampleInstanceEjb.NONNEGATIVE_INTEGER, 9,
-                        ExternalLibraryProcessor.Headers.FRAGMENT_SIZE.getText()),
-                String.format(SampleInstanceEjb.NONNEGATIVE_DECIMAL, 9,
-                        ExternalLibraryProcessor.Headers.VOLUME.getText()),
-                String.format(SampleInstanceEjb.UNKNOWN, 9,
-                        ExternalLibraryProcessor.Headers.MOLECULAR_BARCODE_NAME.getText(), "Mercury")
-                );
+            row = 9;
+            add(String.format(NONNEGATIVE_INTEGER, row, READ_LENGTH.getText()));
+            add(String.format(NONNEGATIVE_INTEGER, row, FRAGMENT_SIZE.getText()));
+            add(String.format(NONNEGATIVE_DECIMAL, row, VOLUME.getText()));
+            add(String.format(UNKNOWN, row, MOLECULAR_BARCODE_NAME.getText(), "Mercury"));
+        }};
+
+        List<String> expectedWarnings = new ArrayList<String>() {{
+            int row = 3;
+            int comparableRow = 2;
+            add(String.format(INCONSISTENT_TUBE, row, INSERT_SIZE_RANGE.getText(), comparableRow));
+            add(String.format(DUPLICATE_S_M, row, "SM-748OO", "Illumina_P5-Nijow_P7-Waren"));
+
+            row = 4;
+            add(String.format(DUPLICATE_S_M, row, "SM-748OO", "Illumina_P5-Nijow_P7-Waren"));
+
+            row = 6;
+            add(String.format(DUPLICATE_S_M, row, "SM-748OO", "Illumina_P5-Nijow_P7-Waren"));
+
+            row = 8;
+            add(String.format(DUPLICATE_S_M, row, "SM-748OO", "Illumina_P5-Nijow_P7-Waren"));
+        } };
 
         Collection<String> unexpectedErrors = CollectionUtils.subtract(errors, expectedErrors);
         Collection<String> missingErrors = CollectionUtils.subtract(expectedErrors, errors);
-
-        List<String> expectedWarnings = Arrays.asList(
-                String.format(SampleInstanceEjb.DUPLICATE_S_M, 3, "SM-748OO", "Illumina_P5-Nijow_P7-Waren"),
-                String.format(SampleInstanceEjb.DUPLICATE_S_M, 4, "SM-748OO", "Illumina_P5-Nijow_P7-Waren"),
-                String.format(SampleInstanceEjb.DUPLICATE_S_M, 6, "SM-748OO", "Illumina_P5-Nijow_P7-Waren"),
-                String.format(SampleInstanceEjb.DUPLICATE_S_M, 8, "SM-748OO", "Illumina_P5-Nijow_P7-Waren"));
-
         Collection<String> unexpectedWarnings = CollectionUtils.subtract(warnings, expectedWarnings);
         Collection<String> missingWarnings = CollectionUtils.subtract(expectedWarnings, warnings);
 
@@ -401,7 +417,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         Assert.assertTrue(msg.isEmpty(), msg);
     }
-
 
     private <VESSEL extends LabVessel> void assertSampleInstanceEntitiesPresent(Collection<VESSEL> labVessels,
             Collection<SampleInstanceEntity> entities) {

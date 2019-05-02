@@ -276,8 +276,7 @@ public class ExternalLibraryProcessor extends TableProcessor {
                 }
                 // Errors if a tube has duplicate Molecular Index Scheme.
                 if (StringUtils.isNotBlank(barcode) && !uniqueTubeAndMis.add(barcode + " " + dto.getMisName())) {
-                    messages.addError(String.format(SampleInstanceEjb.DUPLICATE_IN_TUBE, dto.getRowNumber(),
-                            Headers.MOLECULAR_BARCODE_NAME.getText(), barcode));
+                    messages.addError(String.format(SampleInstanceEjb.DUPLICATE_INDEX, dto.getRowNumber(), barcode));
                 }
                 // Warns if the spreadsheet has duplicate combination of Broad Sample and Molecular Index Scheme.
                 // It's not an error as long as the tubes don't get pooled later on. This can't be known at
@@ -321,7 +320,8 @@ public class ExternalLibraryProcessor extends TableProcessor {
 
             // Compares the spreadsheet sample metadata to existing metadata to determine if there are updates.
             // Overwrite must be set to update Mercury metadata. Inherited metadata and BSP metadata cannot be updated.
-            if (mapSampleNameToFirstRow.get(dto.getSampleName()).equals(dto)) {
+            if (mapSampleNameToFirstRow.containsKey(dto.getSampleName()) &&
+                    mapSampleNameToFirstRow.get(dto.getSampleName()).equals(dto)) {
                 MercurySample mercurySample = sampleMap.get(dto.getSampleName());
                 SampleData sampleData = getFetchedData().get(dto.getSampleName());
                 SampleData rootSampleData = getFetchedData().get(dto.getRootSampleName());
@@ -427,12 +427,10 @@ public class ExternalLibraryProcessor extends TableProcessor {
         for (int index = 0; index < Math.max(getLibraryNames().size(), getSampleNames().size()); ++index) {
             SampleInstanceEjb.RowDto dto = new SampleInstanceEjb.RowDto(toRowNumber(index));
             dtos.add(dto);
-
             dto.setBarcode(get(getBarcodes(), index));
             if (StringUtils.isNotBlank(dto.getBarcode()) && !mapBarcodeToFirstRow.containsKey(dto.getBarcode())) {
                 mapBarcodeToFirstRow.put(dto.getBarcode(), dto);
             }
-            dto.setLibraryName(get(getLibraryNames(), index));
             dto.setSampleName(get(getSampleNames(), index));
             if (StringUtils.isBlank(dto.getSampleName())) {
                 // External library uploads do not require a sample name, but Mercury needs one so it uses the
@@ -444,29 +442,30 @@ public class ExternalLibraryProcessor extends TableProcessor {
                     !mapSampleNameToFirstRow.containsKey(dto.getSampleName())) {
                 mapSampleNameToFirstRow.put(dto.getSampleName(), dto);
             }
-            dto.setRootSampleName(get(getRootSampleNames(), index));
-            dto.setMisName(get(getMolecularBarcodeNames(), index));
-            dto.setBait(get(getBaits(), index));
-            dto.setAggregationParticle(get(getAggregationParticles(), index));
-            dto.setCollaboratorSampleId(get(getCollaboratorSampleIds(), index));
-            dto.setCollaboratorParticipantId(get(getCollaboratorParticipantIds(), index));
-            dto.setSex(get(getSexes(), index));
-            dto.setOrganism(get(getOrganisms(), index));
-            dto.setAnalysisTypeName(get(getDataAnalysisTypes(), index));
             dto.setAggregationDataType(get(getAggregationDataTypes(), index));
+            dto.setAggregationParticle(get(getAggregationParticles(), index));
+            dto.setAnalysisTypeName(get(getDataAnalysisTypes(), index));
+            dto.setBait(get(getBaits(), index));
+            dto.setCollaboratorParticipantId(get(getCollaboratorParticipantIds(), index));
+            dto.setCollaboratorSampleId(get(getCollaboratorSampleIds(), index));
+            dto.setConcentration(asNonNegativeBigDecimal(get(getConcentrations(), index),
+                    Headers.CONCENTRATION.getText(), dto.getRowNumber(), messages));
+            dto.setFragmentSize(asNonNegativeInteger(get(getFragmentSizes(), index),
+                    Headers.FRAGMENT_SIZE.getText(), dto.getRowNumber(), messages));
+            dto.setInsertSize(asIntegerRange(get(getInsertSizes(), index),
+                    Headers.INSERT_SIZE_RANGE.getText(), dto.getRowNumber(), messages));
+            dto.setLibraryName(get(getLibraryNames(), index));
+            dto.setMisName(get(getMolecularBarcodeNames(), index));
+            dto.setOrganism(get(getOrganisms(), index));
             dto.setReadLength(asNonNegativeInteger(get(getReadLengths(), index),
                     Headers.READ_LENGTH.getText(), dto.getRowNumber(), messages));
+            dto.setReferenceSequence(get(getReferenceSequences(), index));
+            dto.setRootSampleName(get(getRootSampleNames(), index));
+            dto.setSequencingTechnology(get(getSequencingTechnologies(), index));
+            dto.setSex(get(getSexes(), index));
             dto.setUmisPresent(get(getUmisPresents(), index));
             dto.setVolume(asNonNegativeBigDecimal(get(getVolumes(), index),
                     Headers.VOLUME.getText(), dto.getRowNumber(), messages));
-            dto.setFragmentSize(asNonNegativeInteger(get(getFragmentSizes(), index),
-                    Headers.FRAGMENT_SIZE.getText(), dto.getRowNumber(), messages));
-            dto.setConcentration(asNonNegativeBigDecimal(get(getConcentrations(), index),
-                    Headers.CONCENTRATION.getText(), dto.getRowNumber(), messages));
-            dto.setInsertSize(asIntegerRange(get(getInsertSizes(), index),
-                    Headers.INSERT_SIZE_RANGE.getText(), dto.getRowNumber(), messages));
-            dto.setReferenceSequence(get(getReferenceSequences(), index));
-            dto.setSequencingTechnology(get(getSequencingTechnologies(), index));
         }
         return dtos;
     }
@@ -489,9 +488,9 @@ public class ExternalLibraryProcessor extends TableProcessor {
         ).
                 filter(triple -> StringUtils.isNotBlank(triple.getLeft())).
                 filter(triple -> !Objects.equals(triple.getLeft(), triple.getMiddle())).
-                forEach(triple -> messages.addError(SampleInstanceEjb.INCONSISTENT_SAMPLE_DATA,
+                forEach(triple -> messages.addError(SampleInstanceEjb.INCONSISTENT_SAMPLE,
                         found.getRowNumber(), triple.getRight(),
-                        mapSampleNameToFirstRow.get(found.getSampleName()).getRowNumber(), found.getSampleName()));
+                        mapSampleNameToFirstRow.get(found.getSampleName()).getRowNumber()));
     }
 
     /**
@@ -523,31 +522,28 @@ public class ExternalLibraryProcessor extends TableProcessor {
         } else {
             if (found.getVolume() != null && !Objects.equals(found.getVolume(), expected.getVolume())) {
                 messages.addError(String.format(SampleInstanceEjb.INCONSISTENT_TUBE, found.getRowNumber(),
-                        Headers.VOLUME.getText(),
-                        mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber(), found.getBarcode()));
+                        Headers.VOLUME.getText(), mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber()));
             }
             if (found.getConcentration() != null &&
                     !Objects.equals(found.getConcentration(), expected.getConcentration())) {
                 messages.addError(String.format(SampleInstanceEjb.INCONSISTENT_TUBE, found.getRowNumber(),
-                        Headers.CONCENTRATION.getText(),
-                        mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber(), found.getBarcode()));
+                        Headers.CONCENTRATION.getText(), mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber()));
             }
             if (found.getFragmentSize() != null &&
                     !Objects.equals(found.getFragmentSize(), expected.getFragmentSize())) {
                 messages.addError(String.format(SampleInstanceEjb.INCONSISTENT_TUBE, found.getRowNumber(),
-                        Headers.FRAGMENT_SIZE.getText(),
-                        mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber(), found.getBarcode()));
+                        Headers.FRAGMENT_SIZE.getText(), mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber()));
             }
             // Issues warnings for mixed values that may be technically possible in a pooled tube.
             if (found.getInsertSize() != null && !Objects.equals(found.getInsertSize(), expected.getInsertSize())) {
                 messages.addWarning(String.format(SampleInstanceEjb.INCONSISTENT_TUBE, found.getRowNumber(),
-                        "Insert Size", mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber(),
-                        found.getBarcode()));
+                        Headers.INSERT_SIZE_RANGE.getText(),
+                        mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber()));
             }
             if (found.getReadLength() != null && !Objects.equals(found.getReadLength(), expected.getReadLength())) {
                 messages.addWarning(String.format(SampleInstanceEjb.INCONSISTENT_TUBE, found.getRowNumber(),
-                        "Read Length", mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber(),
-                        found.getBarcode()));
+                        Headers.READ_LENGTH.getText(), mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber()));
+
             }
         }
     }
@@ -731,21 +727,22 @@ public class ExternalLibraryProcessor extends TableProcessor {
             MercurySample mercurySample) {
 
         SampleInstanceEntity sampleInstanceEntity = new SampleInstanceEntity();
-        sampleInstanceEntity.setLabVessel(labVessel);
-        sampleInstanceEntity.setLibraryName(dto.getLibraryName());
         sampleInstanceEntity.setAggregationDataType(dto.getAggregationDataType());
         sampleInstanceEntity.setAggregationParticle(dto.getAggregationParticle());
         sampleInstanceEntity.setAnalysisType(analysisTypeMap.get(dto.getAnalysisTypeName()));
-        sampleInstanceEntity.setInsertSize(dto.getInsertSize());
-        sampleInstanceEntity.setMercurySample(mercurySample);
+        sampleInstanceEntity.setBaitName(dto.getBait());
         sampleInstanceEntity.setImpliedSampleName(dto.isImpliedSampleName());
+        sampleInstanceEntity.setInsertSize(dto.getInsertSize());
+        sampleInstanceEntity.setLabVessel(labVessel);
+        sampleInstanceEntity.setLibraryName(dto.getLibraryName());
+        sampleInstanceEntity.setMercurySample(mercurySample);
         sampleInstanceEntity.setMolecularIndexingScheme(getMolecularIndexingSchemeMap().get(dto.getMisName()));
         sampleInstanceEntity.setReadLength1(dto.getReadLength());
         sampleInstanceEntity.setReferenceSequence(getReferenceSequenceMap().get(dto.getReferenceSequence()));
         sampleInstanceEntity.setSequencerModel(IlluminaFlowcell.FlowcellType.getTypeForExternalUiName(
                 dto.getSequencingTechnology()));
-        sampleInstanceEntity.setUploadDate(new Date());
         sampleInstanceEntity.setUmisPresent(dto.getUmisPresent());
+        sampleInstanceEntity.setUploadDate(new Date());
         return sampleInstanceEntity;
     }
 
