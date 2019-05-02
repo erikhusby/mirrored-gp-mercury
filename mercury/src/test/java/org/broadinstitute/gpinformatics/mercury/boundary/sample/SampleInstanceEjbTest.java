@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
@@ -37,6 +38,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
@@ -160,7 +162,7 @@ public class SampleInstanceEjbTest extends Arquillian {
                     });
 
             // There should be no error messages.
-            Assert.assertTrue(messageCollection.getErrors().isEmpty(),
+            Assert.assertTrue(CollectionUtils.isEmpty(messageCollection.getErrors()),
                     "In " + filename + ": " + StringUtils.join(messageCollection.getErrors(), "; "));
 
             // The result entities are bulk fetched.
@@ -254,9 +256,7 @@ public class SampleInstanceEjbTest extends Arquillian {
                 Assert.assertTrue(testEquals(processor.getMolecularBarcodeNames(), i,
                         sampleInstanceEntity.getMolecularIndexingScheme() == null ?
                                 null : sampleInstanceEntity.getMolecularIndexingScheme().getName()), msg);
-                Assert.assertTrue(testEquals(processor.getBaits(), i,
-                        sampleInstanceEntity.getReagentDesign() == null ?
-                                null : sampleInstanceEntity.getReagentDesign().getDesignName()), msg);
+                Assert.assertTrue(testEquals(processor.getBaits(), i, sampleInstanceEntity.getBaitName()), msg);
                 Assert.assertTrue(testEquals(processor.getAggregationParticles(), i,
                         sampleInstanceEntity.getAggregationParticle()), msg);
                 Assert.assertTrue(testEquals(processor.getDataAnalysisTypes(), i,
@@ -273,13 +273,14 @@ public class SampleInstanceEjbTest extends Arquillian {
                     Assert.assertTrue(testEquals(processor.getVolumes(), i,
                             sampleInstanceEntity.getLabVessel().getVolume()), msg);
                 }
-                if (firstOccurrence || StringUtils.isNotBlank(
-                        SampleInstanceEjb.get(processor.getFragmentSizes(), i))) {
-                    // There should be only one fragment size.
-                    List<LabMetric> metrics = sampleInstanceEntity.getLabVessel().
-                            getNearestMetricsOfType(LabMetric.MetricType.FINAL_LIBRARY_SIZE);
-                    Assert.assertEquals(metrics.size(), 1, msg);
-                    Assert.assertTrue(testEquals(processor.getFragmentSizes(), i, metrics.get(0).getValue()), msg);
+                if (firstOccurrence || StringUtils.isNotBlank(SampleInstanceEjb.get(processor.getFragmentSizes(),i))) {
+                    LabMetric metric = null;
+                    for (LabMetric iterator : sampleInstanceEntity.getLabVessel().
+                            getNearestMetricsOfType(LabMetric.MetricType.FINAL_LIBRARY_SIZE)) {
+                        // just gets the last which is the most recent.
+                        metric = iterator;
+                    }
+                    Assert.assertTrue(testEquals(processor.getFragmentSizes(), i, metric.getValue()), msg);
                 }
                 if (firstOccurrence || StringUtils
                         .isNotBlank(SampleInstanceEjb.get(processor.getConcentrations(), i))) {
@@ -326,13 +327,15 @@ public class SampleInstanceEjbTest extends Arquillian {
             switch (testNumber) {
             case 0:
             case 2:
-                Assert.assertTrue(messageCollection.getErrors().isEmpty(), "at " + testNumber);
+                Assert.assertTrue(CollectionUtils.isEmpty(messageCollection.getErrors()),
+                        "at " + testNumber + " " + StringUtils.join(messageCollection.getErrors(), "; "));
                 break;
             case 1:
                 Assert.assertTrue(messageCollection.getErrors().contains(
                         String.format(SampleInstanceEjb.PREXISTING, 2)) &&
                                 messageCollection.getErrors().contains(
-                                        String.format(SampleInstanceEjb.PREXISTING, 3)), "at " + testNumber);
+                                        String.format(SampleInstanceEjb.PREXISTING, 3)),
+                        "at " + testNumber + " " + StringUtils.join(messageCollection.getErrors(), "; "));
                 break;
             }
 
@@ -374,8 +377,8 @@ public class SampleInstanceEjbTest extends Arquillian {
             case 0:
             case 1:
             case 3:
-                Assert.assertTrue(messageCollection.getErrors().isEmpty(), "at " + testNumber + ": " +
-                        StringUtils.join(messageCollection.getErrors(), " ; "));
+                Assert.assertTrue(CollectionUtils.isEmpty(messageCollection.getErrors()),
+                        "at " + testNumber + ": " + StringUtils.join(messageCollection.getErrors(), " ; "));
                 break;
             case 2:
                 List<String> failStrings = Arrays.asList(

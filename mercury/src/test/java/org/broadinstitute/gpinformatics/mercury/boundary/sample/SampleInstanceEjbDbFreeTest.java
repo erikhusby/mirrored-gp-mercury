@@ -362,7 +362,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             add("Row #" + row + " " + String.format(REQUIRED_VALUE_IS_MISSING, READ_LENGTH.getText()));
             add("Row #" + row + " " + String.format(REQUIRED_VALUE_IS_MISSING, REFERENCE_SEQUENCE.getText()));
             add("Row #" + row + " " + String.format(REQUIRED_VALUE_IS_MISSING, SEQUENCING_TECHNOLOGY.getText()));
-            add(String.format(UNKNOWN, row, BAIT.getText(), "Mercury"));
 
             row = 6;
             add("Row #" + row + " " + String.format(REQUIRED_VALUE_IS_MISSING, LIBRARY_NAME.getText()));

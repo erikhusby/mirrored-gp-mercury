@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class ExternalLibraryProcessor extends TableProcessor {
@@ -243,18 +244,26 @@ public class ExternalLibraryProcessor extends TableProcessor {
         Set<String> uniqueSampleAndMis = new HashSet<>();
 
         for (SampleInstanceEjb.RowDto dto : dtos) {
-            // If the sample appears in multiple spreadsheet rows, the first occurrence supplies all of the
-            // sample metadata and subsequent rows must be consistent (match the first, or be blank).
-            if (StringUtils.isNotBlank(dto.getSampleName())) {
-                consistentSampleData(mapSampleNameToFirstRow.get(dto.getSampleName()), dto, messages);
+            // At this point every row must have a sample name (possibly inferred from the library name)
+            // and a tube barcode.
+            if (StringUtils.isBlank(dto.getSampleName())) {
+                messages.addError(String.format(SampleInstanceEjb.MISSING, dto.getRowNumber(),
+                        dto.isImpliedSampleName() ? Headers.LIBRARY_NAME.getText() : Headers.LIBRARY_NAME.getText()));
+                continue;
             }
+            if (StringUtils.isBlank(dto.getBarcode())) {
+                // (The error has already been logged.)
+                continue;
+            }
+
+            // If the sample appears in multiple spreadsheet rows, the first occurrence supplies all of the
+            // sample metadata and subsequent rows must be consistent (match the first, or have blank metadata).
+            consistentSampleData(mapSampleNameToFirstRow.get(dto.getSampleName()), dto, messages);
 
             // If a tube appears multiple times in the upload, the vessel attributes must be consistent with
             // the first occurrence (match the first, or be blank).
             String barcode = dto.getBarcode();
-            if (StringUtils.isNotBlank(barcode)) {
-                consistentTubeData(mapBarcodeToFirstRow.get(barcode), dto, messages);
-            }
+            consistentTubeData(mapBarcodeToFirstRow.get(barcode), dto, messages);
 
             // Library name must be unique in each tube.
             if (!uniqueBarcodeAndLibrary.add(barcode + " " + dto.getLibraryName())) {
@@ -323,8 +332,8 @@ public class ExternalLibraryProcessor extends TableProcessor {
             if (mapSampleNameToFirstRow.containsKey(dto.getSampleName()) &&
                     mapSampleNameToFirstRow.get(dto.getSampleName()).equals(dto)) {
                 MercurySample mercurySample = sampleMap.get(dto.getSampleName());
-                SampleData sampleData = getFetchedData().get(dto.getSampleName());
-                SampleData rootSampleData = getFetchedData().get(dto.getRootSampleName());
+                SampleData sampleData = fetchedData.get(dto.getSampleName());
+                SampleData rootSampleData = fetchedData.get(dto.getRootSampleName());
                 // Metadata inherited from the root sample is used for spreadsheet validation
                 // only when the root sample exists and the sample metadata source is Mercury
                 // (including when the sample is new to Mercury and not in BSP).
@@ -424,13 +433,17 @@ public class ExternalLibraryProcessor extends TableProcessor {
 
     public List<SampleInstanceEjb.RowDto> makeDtos(MessageCollection messages) {
         List<SampleInstanceEjb.RowDto> dtos = new ArrayList<>();
-        for (int index = 0; index < Math.max(getLibraryNames().size(), getSampleNames().size()); ++index) {
+        for (int index = 0; index <
+                // Even unit test rows must have either library name, sample name, or tube barcode.
+                IntStream.of(getLibraryNames().size(), getSampleNames().size(), getBarcodes().size()).max().orElse(0);
+                ++index) {
             SampleInstanceEjb.RowDto dto = new SampleInstanceEjb.RowDto(toRowNumber(index));
             dtos.add(dto);
             dto.setBarcode(get(getBarcodes(), index));
             if (StringUtils.isNotBlank(dto.getBarcode()) && !mapBarcodeToFirstRow.containsKey(dto.getBarcode())) {
                 mapBarcodeToFirstRow.put(dto.getBarcode(), dto);
             }
+            dto.setLibraryName(get(getLibraryNames(), index));
             dto.setSampleName(get(getSampleNames(), index));
             if (StringUtils.isBlank(dto.getSampleName())) {
                 // External library uploads do not require a sample name, but Mercury needs one so it uses the
@@ -454,7 +467,6 @@ public class ExternalLibraryProcessor extends TableProcessor {
                     Headers.FRAGMENT_SIZE.getText(), dto.getRowNumber(), messages));
             dto.setInsertSize(asIntegerRange(get(getInsertSizes(), index),
                     Headers.INSERT_SIZE_RANGE.getText(), dto.getRowNumber(), messages));
-            dto.setLibraryName(get(getLibraryNames(), index));
             dto.setMisName(get(getMolecularBarcodeNames(), index));
             dto.setOrganism(get(getOrganisms(), index));
             dto.setReadLength(asNonNegativeInteger(get(getReadLengths(), index),
@@ -582,81 +594,43 @@ public class ExternalLibraryProcessor extends TableProcessor {
      */
     private void makeTubesAndSamples(List<SampleInstanceEjb.RowDto> dtos) {
         try {
-            // Creates/updates tubes. Sets tube volume and concentration.
-            dtos.stream().
-                    map(dto -> dto.getBarcode()).
-                    filter(s -> StringUtils.isNotBlank(s)).
-                    distinct().
-                    forEach(barcode ->
-                    {
-                        LabVessel labVessel = getLabVesselMap().get(barcode);
-                        if (labVessel == null) {
-                            labVessel = new BarcodedTube(barcode, BarcodedTube.BarcodedTubeType.MatrixTube);
-                            getLabVesselMap().put(barcode, labVessel);
-                        } else {
-                            // Tube is being re-uploaded, so clearing old samples is appropriate.
-                            labVessel.clearSamples();
-                        }
-                        SampleInstanceEjb.RowDto firstRowHavingTube = mapBarcodeToFirstRow.get(barcode);
-                        labVessel.setVolume(firstRowHavingTube.getVolume());
-                        labVessel.setConcentration(firstRowHavingTube.getConcentration());
-                        SampleInstanceEjb.addLibrarySize(labVessel, //xxx needed?
-                                new BigDecimal(firstRowHavingTube.getFragmentSize()));
-                    });
-
-            // Collects all of the root sample names.
-            Set<String> rootNames = dtos.stream().
-                    map(SampleInstanceEjb.RowDto::getRootSampleName).
-                    filter(rootName -> StringUtils.isNotBlank(rootName)).
-                    collect(Collectors.toSet());
-            // Creates/updates samples, sorted so that any of the samples that are referenced as root samples in
-            // the upload are created first.
-            dtos.stream().
-                    map(SampleInstanceEjb.RowDto::getSampleName).
-                    filter(sampleName -> StringUtils.isNotBlank(sampleName)).
-                    distinct().
-                    sorted((String o1, String o2) -> (rootNames.contains(o1) ? 0 : 1) - (rootNames.contains(o2) ? 0 : 1)).
-                    forEach(sampleName ->
-                    {
-                        MercurySample mercurySample = getSampleMap().get(sampleName);
-                        SampleData sampleData = getFetchedData().get(sampleName);
-                        if (mercurySample == null) {
-                            if (sampleData != null) {
-                                // Can really be only BSP sample data, since otherwise mercurySample would exist.
-                                mercurySample = new MercurySample(sampleName, sampleData.getMetadataSource());
-                                mercurySample.setSampleData(sampleData);
-                            }
-                        }
-                    });
+            // Creates/updates tubes. Sets tube volume, concentration, fragment size.
+            mapBarcodeToFirstRow.entrySet().forEach(mapEntry -> {
+                String barcode = mapEntry.getKey();
+                SampleInstanceEjb.RowDto row = mapEntry.getValue();
+                LabVessel labVessel = labVesselMap.get(barcode);
+                if (labVessel == null) {
+                    labVessel = new BarcodedTube(barcode, BarcodedTube.BarcodedTubeType.MatrixTube);
+                    labVesselMap.put(barcode, labVessel);
+                } else {
+                    // Tube is being re-uploaded, so clearing old samples is appropriate.
+                    labVessel.clearSamples();
+                }
+                labVessel.setVolume(row.getVolume());
+                labVessel.setConcentration(row.getConcentration());
+                SampleInstanceEjb.addLibrarySize(labVessel, new BigDecimal(row.getFragmentSize()));
+            });
 
             // Creates/updates samples.
-            dtos.stream().
-                    map(SampleInstanceEjb.RowDto::getSampleName).
-                    filter(StringUtils::isNotBlank).
-                    distinct().
-                    forEach(sampleName -> {
-                        MercurySample mercurySample = sampleMap.get(sampleName);
-                        if (mercurySample == null) {
-                            SampleData sampleData = getFetchedData().get(sampleName);
-                            MercurySample.MetadataSource source = (sampleData != null) ?
-                                    // If the mercurySample is null but there is fetched sampleData
-                                    // for the sample, assumes it must be a BSP sample.
-                                    MercurySample.MetadataSource.BSP : MercurySample.MetadataSource.MERCURY;
-                            mercurySample = new MercurySample(sampleName, source);
-                            sampleMap.put(sampleName, mercurySample);
-                        }
-                        if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
-                            SampleInstanceEjb.RowDto firstDto = mapSampleNameToFirstRow.get(sampleName);
-                            mercurySample.updateMetadata(makeSampleMetadata(firstDto, false, true));
-                        }
-                    });
+            mapSampleNameToFirstRow.entrySet().forEach(mapEntry -> {
+                String sampleName = mapEntry.getKey();
+                SampleInstanceEjb.RowDto row = mapEntry.getValue();
+                MercurySample mercurySample = sampleMap.get(sampleName);
+                if (mercurySample == null) {
+                    SampleData sampleData = fetchedData.get(sampleName);
+                    MercurySample.MetadataSource source = (sampleData == null) ?
+                            MercurySample.MetadataSource.MERCURY : sampleData.getMetadataSource();
+                    mercurySample = new MercurySample(sampleName, source);
+                    sampleMap.put(sampleName, mercurySample);
+                }
+                // The spreadsheet upload is allowed to update sample metadata if its source is Mercury.
+                if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+                    mercurySample.updateMetadata(makeSampleMetadata(row, false, true));
+                }
+            });
         } catch (Exception e) {
             log.error(e);
         }
-    }
-
-    /** Makes or updates a sample along with its sample metadata. */
-    private void createOrUpdateSample(SampleInstanceEjb.RowDto dto) {
     }
 
     /**
