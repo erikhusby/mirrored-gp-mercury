@@ -420,7 +420,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
 
         final List<SAPCompanyConfiguration> otherPlatformList =
-                Stream.of(SAPCompanyConfiguration.GPP, SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES).collect(
+                Stream.of(SAPCompanyConfiguration.GPP,
+                        SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES,
+                        SAPCompanyConfiguration.PRISM).collect(
                         Collectors.toList());
         for (SAPCompanyConfiguration sapCompanyConfiguration : otherPlatformList) {
 
