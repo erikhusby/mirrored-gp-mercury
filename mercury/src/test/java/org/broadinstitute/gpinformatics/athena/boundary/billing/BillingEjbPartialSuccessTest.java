@@ -75,6 +75,8 @@ import static org.hamcrest.Matchers.nullValue;
 @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
 @Dependent
 public class BillingEjbPartialSuccessTest extends Arquillian {
+    public static final String GOOD_WORK_ID = "1234";
+    public static final String SAP_DOCUMENT_ID = "000012345";
 
     public BillingEjbPartialSuccessTest() {
         super();
@@ -95,7 +97,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     @Inject
     private PriceListCache priceListCache;
 
-    public static final String GOOD_WORK_ID = "workItemId\t1000";
+
     final long time = (new Date()).getTime();
 
     public static final String SM_1234 = "SM-"+(new Date()).getTime();
@@ -460,7 +462,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                               ".java.lang.RuntimeException: Intentional Work Registration Failure!";
             }
         }
-        String successMessagePattern = "Work item \'" + GOOD_WORK_ID + "\' and SAP Document 'null' with completion date .*";
+        String successMessagePattern = String.format(BillingAdaptor.BILLING_LOG_TEXT_FORMAT, GOOD_WORK_ID,
+            BillingAdaptor.NOT_ELIGIBLE_FOR_SAP_INDICATOR, "", "", 0f, "", "", "").substring(0, 50) + ".*";
         assertThat(failMessage, notNullValue());
 
         assertThat(testLogHandler.messageMatches(failMessage), is(true));
@@ -558,9 +561,9 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                 new QuoteImportItem("QUOTE-1", priceItem, "priceType", ledgerItems, new Date(), product, productOrder);
         QuotePriceItem quotePriceItem = new QuotePriceItem();
 
-        adaptor.logBilling("1243", quoteImportItem, quotePriceItem, new HashSet<>(Arrays.asList("PDO-1", "PDO-2")),
-                "SAP123");
+        adaptor.logBilling(GOOD_WORK_ID, quoteImportItem, quotePriceItem, new HashSet<>(Arrays.asList("PDO-1", "PDO-2")),
+                SAP_DOCUMENT_ID);
         Assert.assertEquals(testLogHandler.getLogs().size(), 1);
         Assert.assertEquals(TestUtils.getFirst(testLogHandler.getLogs()).getLevel(), Level.INFO);
     }
-}
+ }
