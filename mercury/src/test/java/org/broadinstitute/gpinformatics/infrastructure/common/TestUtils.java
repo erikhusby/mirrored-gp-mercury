@@ -165,13 +165,14 @@ public class TestUtils {
         return sapQuote;
     }
 
-    public static SAPMaterial mockMaterialSearch(SapIntegrationClientImpl.SAPCompanyConfiguration copmanyConfig) {
+    public static SAPMaterial mockMaterialSearch(SapIntegrationClientImpl.SAPCompanyConfiguration copmanyConfig,
+                                                 Product testProduct) {
         SAPMaterial otherPlatformMaterial =
-                new SAPChangeMaterial("test", copmanyConfig, copmanyConfig.getDefaultWbs(), "test description", "50",
-                        SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                new SAPChangeMaterial(testProduct.getPartNumber(), copmanyConfig, copmanyConfig.getDefaultWbs(),
+                        testProduct.getName(), "50", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,
+                        "description", "", "", new Date(), new Date(),
                         Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
-                        (copmanyConfig == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES)?copmanyConfig.getSalesOrganization():
-        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
+                        testProduct.determineCompanyConfiguration().getSalesOrganization());
         return otherPlatformMaterial;
     }
 

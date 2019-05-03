@@ -57,6 +57,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyOrNullString;
+import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SapIntegrationServiceImplDBFreeTest {
@@ -483,10 +484,40 @@ public class SapIntegrationServiceImplDBFreeTest {
                 });
 
         materials.add(primaryMaterial);
-        materials.add(primaryExternalMaterial);
-        materials.add(primaryPrismMaterial);
-        materials.add(primaryGPPMaterial);
 
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD),
+                is(equalTo(primaryMaterial)));
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES),
+                is(nullValue()));
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.PRISM),
+                is(nullValue()));
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.GPP),
+                is(nullValue()));
+
+        materials.add(primaryExternalMaterial);
+        productPriceCache.refreshCache();
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD),
+                is(equalTo(primaryMaterial)));
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES),
+                is(equalTo(primaryExternalMaterial)));
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.PRISM),
+                is(nullValue()));
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.GPP),
+                is(nullValue()));
+
+        materials.add(primaryPrismMaterial);
+        productPriceCache.refreshCache();
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD),
+                is(equalTo(primaryMaterial)));
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES),
+                is(equalTo(primaryExternalMaterial)));
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.PRISM),
+                is(equalTo(primaryPrismMaterial)));
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.GPP),
+                is(nullValue()));
+
+        materials.add(primaryGPPMaterial);
+        productPriceCache.refreshCache();
         assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD),
                 is(equalTo(primaryMaterial)));
         assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES),
