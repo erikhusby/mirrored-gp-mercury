@@ -44,6 +44,9 @@ public class ExtractTransformRunner {
 
     private static Date previousNextTimeout = new Date(0);
 
+    // ETL must be enabled via (JMX immutable) system property at startup (System.getProperty())
+    private boolean isETLEnabled = Boolean.getBoolean("enableETL");
+
     @Resource
     TimerService timerService;
 
@@ -89,8 +92,7 @@ public class ExtractTransformRunner {
      */
     private boolean isEnabled() {
 
-        // ETL must be enabled via system property at startup (System.getProperty())
-        if( !Boolean.getBoolean("enableETL" ) ) {
+        if( !isETLEnabled ) {
             return false;
         }
 
