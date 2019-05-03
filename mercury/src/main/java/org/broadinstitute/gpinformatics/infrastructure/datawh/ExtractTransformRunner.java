@@ -82,13 +82,19 @@ public class ExtractTransformRunner {
     }
 
     /**
-     * Check Mercury configuration in the YAML file and see if the Data Warehouse system is enabled for this
+     * Check Mercury configuration in the YAML file and startup environment and see if the Data Warehouse system is enabled for this
      * environment.  If it is not, then the configuration will be null.
      *
      * @return true if it's an environment where ETL should be run
      */
     private boolean isEnabled() {
-        // Can't use @Inject for this object or we'll run into VFS protocol errors.
+
+        // ETL must be enabled via system property at startup (System.getProperty())
+        if( !Boolean.getBoolean("enableETL" ) ) {
+            return false;
+        }
+
+        // ETL must also be configured in mercury-config.yaml file
         EtlConfig etlConfig = (EtlConfig) MercuryConfiguration.getInstance().getConfig(EtlConfig.class, deployment);
         return AbstractConfig.isSupported(etlConfig);
     }
