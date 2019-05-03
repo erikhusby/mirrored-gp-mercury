@@ -76,6 +76,8 @@ public class SapIntegrationServiceImplDBFreeTest {
     private SAPProductPriceCache productPriceCache;
     private PriceListCache priceListCache;
     SapQuote sapQuote = null;
+    private SapIntegrationClientImpl mockIntegrationClient;
+
     @BeforeMethod
     public void setUp() throws Exception {
 
@@ -122,7 +124,7 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         integrationService.setBspUserList(mockUserList);
 
-        SapIntegrationClientImpl mockIntegrationClient = Mockito.mock(SapIntegrationClientImpl.class);
+        mockIntegrationClient = Mockito.mock(SapIntegrationClientImpl.class);
 
         Mockito.when(mockIntegrationClient.findQuoteDetails(Mockito.anyString())).thenAnswer(new Answer<SapQuote>() {
             @Override
@@ -158,7 +160,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         String jiraTicketKey= "PDO-SAP-test";
         Set<SAPMaterial> materials = new HashSet<>();
 
-        Mockito.when(integrationService.findProductsInSap()).thenReturn(materials);
+        Mockito.when(mockIntegrationClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(materials);
 
         ProductOrder conversionPdo = ProductOrderTestFactory.createDummyProductOrder(10, jiraTicketKey);
 
@@ -435,6 +437,68 @@ public class SapIntegrationServiceImplDBFreeTest {
         }
     }
 
+    public void testFindMaterialsCall() throws Exception {
+        Set<SAPMaterial> materials = new HashSet<>();
+        SapIntegrationClientImpl.SAPCompanyConfiguration broad = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+        final String primaryTestMaterialId = "p-test-something";
+
+        SAPMaterial primaryMaterial = new SAPMaterial(primaryTestMaterialId,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getDefaultWbs(), "test description",
+                "1000", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description",
+                "","",new Date(), new Date(), Collections.emptyMap(),
+                Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
+
+        SAPMaterial primaryExternalMaterial = new SAPMaterial(primaryTestMaterialId,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getDefaultWbs(), "test description",
+                "1000", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description",
+                "","",new Date(), new Date(), Collections.emptyMap(),
+                Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization());
+
+        SAPMaterial primaryPrismMaterial = new SAPMaterial(primaryTestMaterialId,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.PRISM,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.PRISM.getDefaultWbs(), "test description",
+                "1000", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description",
+                "","",new Date(), new Date(), Collections.emptyMap(),
+                Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.PRISM.getSalesOrganization());
+
+        SAPMaterial primaryGPPMaterial = new SAPMaterial(primaryTestMaterialId,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.GPP,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.GPP.getDefaultWbs(), "test description",
+                "1000", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description",
+                "","",new Date(), new Date(), Collections.emptyMap(),
+                Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.GPP.getSalesOrganization());
+
+        Mockito.when(mockIntegrationClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenAnswer(
+                new Answer<Set<SAPMaterial>>() {
+                    @Override
+                    public Set<SAPMaterial> answer(InvocationOnMock invocationOnMock) throws Throwable {
+                        return materials;
+                    }
+                });
+
+        materials.add(primaryMaterial);
+        materials.add(primaryExternalMaterial);
+        materials.add(primaryPrismMaterial);
+        materials.add(primaryGPPMaterial);
+
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD),
+                is(equalTo(primaryMaterial)));
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES),
+                is(equalTo(primaryExternalMaterial)));
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.PRISM),
+                is(equalTo(primaryPrismMaterial)));
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.GPP),
+                is(equalTo(primaryGPPMaterial)));
+
+
+    }
+
     private void addLedgerItems(ProductOrder order, int ledgerCount) {
         for (ProductOrderSample productOrderSample : order.getSamples()) {
             if(!productOrderSample.isCompletelyBilled()) {
@@ -455,8 +519,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         }
     }
 
-    @Test(enabled = false)
-    public static void addTestProductMaterialPrice(String primaryMaterialBasePrice, PriceList priceList,
+    private static void addTestProductMaterialPrice(String primaryMaterialBasePrice, PriceList priceList,
                                                    Set<SAPMaterial> materials,
                                                    Product primaryProduct, String quoteId) throws SAPIntegrationException {
         SapIntegrationClientImpl.SAPCompanyConfiguration broad = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;

@@ -6,7 +6,6 @@ import functions.rfc.sap.document.sap_com.ZESDQUOTEITEM;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.sap.entity.material.SAPChangeMaterial;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.entity.quote.FundingDetail;
@@ -17,7 +16,6 @@ import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jetbrains.annotations.NotNull;
-import org.mockito.Mockito;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -167,13 +165,14 @@ public class TestUtils {
         return sapQuote;
     }
 
-    public static void mockMaterialSearch(SAPProductPriceCache productPriceCache,
-                                          SapIntegrationClientImpl.SAPCompanyConfiguration copmanyConfig) {
+    public static SAPMaterial mockMaterialSearch(SapIntegrationClientImpl.SAPCompanyConfiguration copmanyConfig) {
         SAPMaterial otherPlatformMaterial =
                 new SAPChangeMaterial("test", copmanyConfig, copmanyConfig.getDefaultWbs(), "test description", "50",
                         SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
-                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
-        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.eq(copmanyConfig))).thenReturn(otherPlatformMaterial);
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
+                        (copmanyConfig == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES)?copmanyConfig.getSalesOrganization():
+        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
+        return otherPlatformMaterial;
     }
 
     public enum SapQuoteTestScenario {

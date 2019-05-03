@@ -60,6 +60,11 @@ import static org.broadinstitute.sap.services.SapIntegrationClientImpl.SAPEnviro
 @Default
 public class SapIntegrationServiceImpl implements SapIntegrationService {
 
+    public static final List<SAPCompanyConfiguration>
+            EXTENDED_PLATFORMS = Stream.of(SAPCompanyConfiguration.GPP,
+                    SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES,
+                    SAPCompanyConfiguration.PRISM).collect(
+                    Collectors.toList());
     private SapConfig sapConfig;
 
     private QuoteService quoteService;
@@ -378,25 +383,27 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     public void publishProductInSAP(Product product) throws SAPIntegrationException {
         SAPChangeMaterial sapMaterial = SAPChangeMaterial.fromSAPMaterial(initializeSapMaterialObject(product));
         if (productPriceCache.findByProduct(product, sapMaterial.getCompanyCode()) == null) {
+            log.debug("Creating product " + sapMaterial.getMaterialIdentifier());
             getClient().createMaterial(sapMaterial);
         } else {
+            log.debug("Updating product " + sapMaterial.getMaterialIdentifier());
             getClient().changeMaterialDetails(sapMaterial);
         }
 
-        final List<SAPCompanyConfiguration> otherPlatformList =
-                Stream.of(SAPCompanyConfiguration.GPP,
-                        SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES,
-                        SAPCompanyConfiguration.PRISM).collect(
-                        Collectors.toList());
-        for (SAPCompanyConfiguration sapCompanyConfiguration : otherPlatformList) {
 
-            if (sapCompanyConfiguration == SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES ||
+        for (SAPCompanyConfiguration sapCompanyConfiguration : EXTENDED_PLATFORMS) {
+
+            if (sapCompanyConfiguration == SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES
+                ||
                 (sapCompanyConfiguration != SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES  &&
-                 sapMaterial.getProductHierarchy() == SAPCompanyConfiguration.BROAD.getSalesOrganization())) {
+                 sapMaterial.getProductHierarchy().equals(SAPCompanyConfiguration.BROAD.getSalesOrganization()))) {
+
                 sapMaterial.setCompanyCode(sapCompanyConfiguration);
 
-                String materialName =
-                        null;
+                log.debug("Publishing to " + sapCompanyConfiguration.getSalesOrganization() + " for "
+                          + sapMaterial.getMaterialIdentifier());
+
+                String materialName = null;
                 if (sapCompanyConfiguration == SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) {
                     materialName = StringUtils.defaultString(product.getAlternateExternalName(), product.getName());
                     sapMaterial.setMaterialName(materialName);
@@ -404,8 +411,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                     sapMaterial.setMaterialName(product.getName());
                 }
                 if (productPriceCache.findByProduct(product, sapCompanyConfiguration) == null) {
+                    log.debug("Creating product " + sapMaterial.getMaterialIdentifier());
                     getClient().createMaterial(sapMaterial);
                 } else {
+                    log.debug("Updating product " + sapMaterial.getMaterialIdentifier());
                     getClient().changeMaterialDetails(sapMaterial);
                 }
             }
@@ -420,8 +429,13 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     @Override
     public Set<SAPMaterial> findProductsInSap() throws SAPIntegrationException {
         Set<SAPMaterial> materials = new HashSet<>();
-        materials.addAll(findMaterials(SAPCompanyConfiguration.BROAD));
-        materials.addAll(findMaterials(SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES));
+        final List<SAPCompanyConfiguration> extendedPlatformsPlusBroad = new ArrayList<>(EXTENDED_PLATFORMS);
+        extendedPlatformsPlusBroad.add(SAPCompanyConfiguration.BROAD);
+        for (SAPCompanyConfiguration sapCompanyConfiguration : extendedPlatformsPlusBroad) {
+            log.debug("finding for " + sapCompanyConfiguration.getSalesOrganization());
+            materials.addAll(findMaterials(sapCompanyConfiguration));
+        }
+
         return materials;
     }
 

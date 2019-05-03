@@ -69,7 +69,7 @@ public class SapMaterialFixupText extends Arquillian {
                     !p.getPartNumber().trim().equals(p.getPartNumber());
     }
 
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void testUpdateActiveProductsInSap() throws Exception {
         userBean.loginOSUser();
         utx.begin();
