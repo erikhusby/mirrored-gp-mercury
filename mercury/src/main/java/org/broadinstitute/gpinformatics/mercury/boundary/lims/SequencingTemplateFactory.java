@@ -550,21 +550,16 @@ public class SequencingTemplateFactory {
                     }
                     molecularIndexReadStructures.add(indexReadStructure);
                 } else {
-                    FlowcellDesignation.IndexType indexType = flowcellDesignation != null ?
-                            flowcellDesignation.getIndexType() : sampleInstance.getIndexType() != null ?
-                            sampleInstance.getIndexType() : FlowcellDesignation.IndexType.NONE;
-                    switch (indexType) {
-                    case DUAL:
+                    FlowcellDesignation.IndexType indexType = flowcellDesignation == null ?
+                            (sampleInstance.getIndexType() == null ? null : sampleInstance.getIndexType()) :
+                            flowcellDesignation.getIndexType();
+                    if (indexType != null && indexType == FlowcellDesignation.IndexType.DUAL) {
                         molecularIndexReadStructures.add(String.format("%dB%dB",
                                 sampleInstance.getIndexLength1() != null ? sampleInstance.getIndexLength1() : 8,
                                 sampleInstance.getIndexLength1() != null ? sampleInstance.getIndexLength1() : 8));
-                        break;
-                    case SINGLE:
+                    } else if (indexType != null && indexType == FlowcellDesignation.IndexType.SINGLE) {
                         molecularIndexReadStructures.add(String.format("%dB",
                                 sampleInstance.getIndexLength1() != null ? sampleInstance.getIndexLength1() : 8));
-                        break;
-                    case NONE:
-                        break;
                     }
                 }
                 // Gets UMIs from sampleInstance.
