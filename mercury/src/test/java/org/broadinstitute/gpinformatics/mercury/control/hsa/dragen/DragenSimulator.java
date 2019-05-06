@@ -1,15 +1,16 @@
-package org.broadinstitute.gpinformatics.mercury.boundary.hsa.dragen;
+package org.broadinstitute.gpinformatics.mercury.control.hsa.dragen;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.hsa.SampleSheetBuilder;
-import org.broadinstitute.gpinformatics.mercury.boundary.hsa.state.Task;
-import org.broadinstitute.gpinformatics.mercury.boundary.hsa.state.TaskResult;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.SampleSheetBuilder;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.TaskResult;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Random;
 
 public class DragenSimulator implements Dragen {
 
@@ -20,9 +21,9 @@ public class DragenSimulator implements Dragen {
         log.info("Dragen() " + commandLine);
         try {
             if (task instanceof DemultiplexTask) {
-                handleDemultiplex((DemultiplexTask) task);
+                return handleDemultiplex((DemultiplexTask) task);
             } else if (task instanceof AlignmentTask) {
-                handleAlignment((AlignmentTask) task);
+                return handleAlignment((AlignmentTask) task);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -32,8 +33,8 @@ public class DragenSimulator implements Dragen {
     }
 
     // TODO write alignment files for testing coverage
-    private void handleAlignment(AlignmentTask task) {
-
+    private TaskResult handleAlignment(AlignmentTask task) {
+        return new TaskResult(new Random().nextLong(), "Success", 0);
     }
 
     /**
@@ -68,7 +69,9 @@ public class DragenSimulator implements Dragen {
         try {
             File fastqFile = new File(reportsDir, "fastq_list.csv");
             FileUtils.writeStringToFile(fastqFile, sb.toString());
-            return new TaskResult("Success", 0);
+
+            long pid = new Random().nextLong();
+            return new TaskResult(pid, "Success", 0);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

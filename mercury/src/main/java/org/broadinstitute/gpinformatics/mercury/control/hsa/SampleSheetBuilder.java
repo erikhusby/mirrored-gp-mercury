@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury.boundary.hsa;
+package org.broadinstitute.gpinformatics.mercury.control.hsa;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.csv.CsvParser;
@@ -49,26 +49,17 @@ public class SampleSheetBuilder {
                 br, ',', SampleData.class, colToFieldMap, null, 0);
     }
 
-    public SampleSheet makeSampleSheet(IlluminaSequencingRun illuminaRun) {
+    public SampleSheet makeSampleSheet(IlluminaSequencingRun illuminaRun, VesselPosition vesselPosition, int laneNum) {
         RunCartridge flowcell = illuminaRun.getSampleCartridge();
-
-        Iterator<String> positionNames = flowcell.getVesselGeometry().getPositionNames();
-        short laneNum = 0;
 
         Data data = new Data();
         Header header = null;
-        while (positionNames.hasNext()) {
-            ++laneNum;
-            String positionName = positionNames.next();
-            VesselPosition vesselPosition = VesselPosition.getByName(positionName);
-
-            for (SampleInstanceV2 laneSampleInstance : flowcell.getContainerRole().getSampleInstancesAtPositionV2(
-                    vesselPosition)) {
-                data.addSample(laneSampleInstance, laneNum);
-                ProductOrderSample productOrderSample = laneSampleInstance.getSingleProductOrderSample();
-                if (productOrderSample != null) {
-                    header = createHeader(laneSampleInstance);
-                }
+        for (SampleInstanceV2 laneSampleInstance : flowcell.getContainerRole().getSampleInstancesAtPositionV2(
+                vesselPosition)) {
+            data.addSample(laneSampleInstance, laneNum);
+            ProductOrderSample productOrderSample = laneSampleInstance.getSingleProductOrderSample();
+            if (productOrderSample != null) {
+                header = createHeader(laneSampleInstance);
             }
         }
 
