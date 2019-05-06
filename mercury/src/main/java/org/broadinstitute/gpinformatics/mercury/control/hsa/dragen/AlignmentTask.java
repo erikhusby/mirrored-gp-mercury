@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury.boundary.hsa.dragen;
+package org.broadinstitute.gpinformatics.mercury.control.hsa.dragen;
 
 import java.io.File;
 import java.util.Objects;

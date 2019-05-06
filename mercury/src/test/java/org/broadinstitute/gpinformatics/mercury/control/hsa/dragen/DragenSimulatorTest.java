@@ -1,17 +1,17 @@
-package org.broadinstitute.gpinformatics.mercury.boundary.hsa.dragen;
+package org.broadinstitute.gpinformatics.mercury.control.hsa.dragen;
 
 import org.apache.commons.io.FileUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.hsa.SampleSheetBuilder;
-import org.broadinstitute.gpinformatics.mercury.boundary.hsa.engine.FiniteStateMachineEngine;
-import org.broadinstitute.gpinformatics.mercury.boundary.hsa.state.FiniteStateMachine;
-import org.broadinstitute.gpinformatics.mercury.boundary.hsa.state.State;
-import org.broadinstitute.gpinformatics.mercury.boundary.hsa.state.StateMachine;
-import org.broadinstitute.gpinformatics.mercury.boundary.hsa.state.StateNode;
-import org.broadinstitute.gpinformatics.mercury.boundary.hsa.state.Transition;
-import org.broadinstitute.gpinformatics.mercury.boundary.hsa.state.TransitionBean;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.SampleSheetBuilder;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.FiniteStateMachineEngine;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AlignmentState;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.DemultiplexState;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.GenericState;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Transition;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
@@ -19,10 +19,17 @@ import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
+import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
+import org.broadinstitute.gpinformatics.mercury.entity.run.RunChamber;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -45,8 +52,10 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -63,6 +72,7 @@ public class DragenSimulatorTest extends BaseEventTest {
     private File sampleSheetFile;
     private SampleSheetBuilder.SampleSheet sampleSheet;
     private HybridSelectionEntityBuilder hybridSelectionEntityBuilder;
+    private File runFolder;
 
     @BeforeMethod
     public void setUp() {
@@ -148,25 +158,13 @@ public class DragenSimulatorTest extends BaseEventTest {
         String runFileDirectory =
                 baseDirectory + File.separator + "SL-NVA" + File.separator
                 + runBarcode;
-        File runFolder = new File(runFileDirectory);
+        runFolder = new File(runFileDirectory);
         runFolder.mkdirs();
         SolexaRunBean testRunBean =
                 new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "SL-NVA", runFileDirectory, null);
 
         IlluminaSequencingRunFactory runFactory = new IlluminaSequencingRunFactory(EasyMock.createNiceMock(JiraCommentUtil.class));
         run = runFactory.build(testRunBean, hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell());
-
-        SampleSheetBuilder builder = new SampleSheetBuilder();
-        sampleSheet = builder.makeSampleSheet(run);
-        String sampleSheetCsv = sampleSheet.toCsv();
-
-        sampleSheetFile = new File(runFolder, "SampleSheet.csv");
-        try {
-            FileUtils.writeStringToFile(sampleSheetFile, sampleSheetCsv);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        System.out.println(sampleSheetFile.getPath());
     }
 
     @Test
@@ -194,7 +192,7 @@ public class DragenSimulatorTest extends BaseEventTest {
         runDemultiplexinginAndAlignment();
     }
 
-    public void runDemultiplexinginAndAlignment() throws IOException {
+    private void runDemultiplexinginAndAlignment() throws IOException {
         File runDir = new File(run.getRunDirectory());
         File outputDir = new File(baseDirectory, run.getRunName());
         if (outputDir.exists()) {
@@ -210,40 +208,66 @@ public class DragenSimulatorTest extends BaseEventTest {
         // Consider a sequencing run complete when an RTAComplete.txt file is created in its root run folder
         File rtaComplete = new File(runDir, "RTAComplete.txt");
 
-        StateMachine finiteStateMachine = new FiniteStateMachine();
+        FiniteStateMachine finiteStateMachine = new FiniteStateMachine();
 
-        State sequencingRunComplete = new StateNode("SequencingRunComplete");
+        State sequencingRunComplete = new GenericState("SequencingRunComplete");
         sequencingRunComplete.setStart(true);
+        sequencingRunComplete.setActive(true);
+        sequencingRunComplete.setTask(new WaitForFileTask(rtaComplete));
         states.add(sequencingRunComplete);
 
-        State demultiplex = new StateNode("Demultiplex");
-        states.add(demultiplex);
+        List<State> demultiplexStates = new ArrayList<>();
+        List<State> alignmentStates = new ArrayList<>();
 
-        Transition seqToDemux = new TransitionBean("Sequencing Complete To Demultiplexing");
-        seqToDemux.setTask(new WaitForFileTask(rtaComplete));
-        seqToDemux.setFromState(sequencingRunComplete);
-        seqToDemux.setToState(demultiplex);
-        transitions.add(seqToDemux);
+        RunCartridge flowcell = run.getSampleCartridge();
+        VesselPosition[] positionNames = flowcell.getVesselGeometry().getVesselPositions();
+        short laneNum = 0;
+        for (VesselPosition vesselPosition: positionNames) {
+            ++laneNum;
 
-        demultiplex.setOnEnter(new DemultiplexTask(runDir, outputDir, sampleSheetFile));
+            SampleSheetBuilder builder = new SampleSheetBuilder();
+            sampleSheet = builder.makeSampleSheet(run, vesselPosition, laneNum);
+            String sampleSheetCsv = sampleSheet.toCsv();
 
-        File reportsDir = new File(outputDir, "Reports");
-        File fastQList = new File(reportsDir, "fastq_list.csv");
+            sampleSheetFile = new File(runFolder, String.format("SampleSheet_%d.csv", laneNum));
+            try {
+                FileUtils.writeStringToFile(sampleSheetFile, sampleSheetCsv);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            System.out.println(sampleSheetFile.getPath());
 
-        // For each sample run Alignment
-        List<SampleSheetBuilder.SampleData> sampleData = SampleSheetBuilder.grabDataFromFile(sampleSheetFile);
-        for (SampleSheetBuilder.SampleData sample: sampleData) {
-            String fastQSampleId = sample.getSampleName();
+            IlluminaSequencingRunChamber sequencingRunChamber = run.getSequencingRunChamber(laneNum);
+            State demultiplex = new DemultiplexState("Demultiplex", sequencingRunChamber);
+            demultiplex.setTask(new DemultiplexTask(runDir, outputDir, sampleSheetFile));
+            states.add(demultiplex);
 
-            State alignment = new StateNode("Alignment");
-            states.add(alignment);
-            alignment.setOnEnter(new AlignmentTask(referenceFile, fastQList, fastQSampleId, outputDir,
-                    intermediateResults, fastQSampleId, fastQSampleId));
+            demultiplexStates.add(demultiplex);
 
-            Transition demuxToAlignment = new TransitionBean("Demultiplexing To Alignment: " + fastQSampleId);
-            demuxToAlignment.setFromState(demultiplex);
-            demuxToAlignment.setToState(alignment);
-            transitions.add(demuxToAlignment);
+            Transition seqToDemux = new Transition("Sequencing Complete To Demultiplexing");
+            seqToDemux.setFromState(sequencingRunComplete);
+            seqToDemux.setToState(demultiplex);
+            transitions.add(seqToDemux);
+
+            File reportsDir = new File(outputDir, "Reports");
+            File fastQList = new File(reportsDir, "fastq_list.csv");
+
+            // For each sample run Alignment
+            for (SampleInstanceV2 laneSampleInstance : flowcell.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition)) {
+                MercurySample mercurySample = laneSampleInstance.getRootOrEarliestMercurySample();
+                String fastQSampleId = mercurySample.getSampleKey();
+
+                State alignment = new AlignmentState("Alignment", mercurySample);
+                alignment.setTask(new AlignmentTask(referenceFile, fastQList, fastQSampleId, outputDir,
+                        intermediateResults, fastQSampleId, fastQSampleId));
+                states.add(alignment);
+
+                Transition demuxToAlignment = new Transition("Demultiplexing To Alignment: " + fastQSampleId);
+                demuxToAlignment.setFromState(demultiplex);
+                demuxToAlignment.setToState(alignment);
+                transitions.add(demuxToAlignment);
+                alignmentStates.add(alignment);
+            }
         }
 
         finiteStateMachine.setStates(states);
@@ -251,37 +275,26 @@ public class DragenSimulatorTest extends BaseEventTest {
 
         DragenAppContext appContext = new DragenAppContext(dragen);
         FiniteStateMachineEngine engine = new FiniteStateMachineEngine(appContext);
+        engine.setTaskManager(new TaskManager());
 
-        Thread executionThread = new Thread() {
-            public void run() {
-                engine.executeProcess(finiteStateMachine);
-            }
-        };
-        executionThread.start();
+        // File not created, state will still be in WaitForFile
+        engine.executeProcessDaoFree(finiteStateMachine);
+        Assert.assertEquals(Collections.singletonList(sequencingRunComplete), finiteStateMachine.getActiveStates());
 
-        // Wait a few seconds to create the RTAComplete.txt file
-        Thread createRTAComplete = new Thread() {
-            public void run() {
-                try {
-                    Thread.sleep(3000L);
-                    System.out.println("Creating RTA Complete File, should kick off demux");
-                    File rtaFile = new File(runDir, "RTAComplete.txt");
-                    rtaFile.createNewFile();
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        };
-        createRTAComplete.start();
+        File rtaFile = new File(runDir, "RTAComplete.txt");
+        rtaFile.createNewFile();
 
-        try {
-            executionThread.join(100000);
-        }
-        catch (InterruptedException ie) {
-        }
-        if (executionThread.isAlive()) {
-            fail("Thread should've completed by now.");
-        }
+        // Second execution will now see the file and transition to demultiplexing
+        engine.executeProcessDaoFree(finiteStateMachine);
+        Assert.assertEquals(demultiplexStates, finiteStateMachine.getActiveStates());
 
+        // Third execution will 'check' the pid's of the running demultiplexing tasks which won't exist. It'll assume
+        // they are complete and move on to alignment.
+        engine.executeProcessDaoFree(finiteStateMachine);
+        Assert.assertEquals(alignmentStates, finiteStateMachine.getActiveStates());
+
+        // Alignment ran so state machine should now be complete
+        engine.executeProcessDaoFree(finiteStateMachine);
+        Assert.assertEquals(true, finiteStateMachine.isComplete());
     }
 }
