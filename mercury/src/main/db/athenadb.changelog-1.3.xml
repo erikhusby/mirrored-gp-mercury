@@ -58,6 +58,8 @@
     </changeSet>
     <changeSet id="GPLIM-5815-RE-ADD-AUD-PK" author="scottmat">
         <addPrimaryKey tableName="SAP_QUOTE_ITEM_REFERENCE_AUD" columnNames="rev, SAP_QUOTE_ITEM_REFERENCE_ID" schemaName="ATHENA" constraintName="PK_SAP_QUOTE_ITEM_AUD" />
+    </changeSet>
+    <changeSet id="GPLIM-5815-ADD-AUD-IDX" author="">
         <createIndex tableName="SAP_QUOTE_ITEM_REFERENCE_AUD" indexName="IDX_SAP_QUOTE_ITEM_REV_AUD">
             <column name="SAP_QUOTE_ITEM_REFERENCE_ID"/>
             <column name="rev"/>
