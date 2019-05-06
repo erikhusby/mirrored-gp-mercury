@@ -134,7 +134,7 @@ public class MercurySampleFixupTest extends Arquillian {
         for (MercurySample mercurySample : mercurySamples) {
             Set<LabVessel> labVessels = mercurySample.getLabVessel();
             for (LabVessel labVessel : labVessels) {
-                labVessel.getMercurySamples().remove(mercurySample);
+                labVessel.removeSample(mercurySample);
             }
             mercurySampleDao.remove(mercurySample);
         }

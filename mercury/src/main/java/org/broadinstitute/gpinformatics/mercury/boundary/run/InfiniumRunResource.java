@@ -342,5 +342,9 @@ public class InfiniumRunResource {
         mapSerialNumberToMachineName.put("N0700", "Fiddler Pig");
         mapSerialNumberToMachineName.put("N588", "Fiffer Pig");
         mapSerialNumberToMachineName.put("N0588", "Fiffer Pig");
+        mapSerialNumberToMachineName.put("N1052", "BAF");
+        mapSerialNumberToMachineName.put("N01052", "BAF");
+        mapSerialNumberToMachineName.put("N1042", "BAE");
+        mapSerialNumberToMachineName.put("N01042", "BAE");
     }
 }

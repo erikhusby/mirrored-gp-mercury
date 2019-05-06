@@ -52,13 +52,10 @@ public class SampleInstanceEtlData {
         BucketEntry singleBucketentry = si.getSingleBucketEntry();
         if( singleBucketentry != null ) {
             sampleInstanceData.labBatch = singleBucketentry.getLabBatch();
-            // Will there ever NOT be a PDO sample found above in past transfers?
-            if( sampleInstanceData.pdoSample == null ) {
-                sampleInstanceData.pdoSample   = si.getProductOrderSampleForSingleBucket();
-                sampleInstanceData.pdo = singleBucketentry.getProductOrder();
-                if( sampleInstanceData.pdoSample != null ) {
-                    sampleInstanceData.pdoSampleId = sampleInstanceData.pdoSample.getMercurySample().getSampleKey();
-                }
+            sampleInstanceData.pdoSample   = si.getProductOrderSampleForSingleBucket();
+            sampleInstanceData.pdo = singleBucketentry.getProductOrder();
+            if( sampleInstanceData.pdoSample != null ) {
+                sampleInstanceData.pdoSampleId = sampleInstanceData.pdoSample.getMercurySample().getSampleKey();
             }
         } else {
             sampleInstanceData.labBatch = si.getSingleBatch();

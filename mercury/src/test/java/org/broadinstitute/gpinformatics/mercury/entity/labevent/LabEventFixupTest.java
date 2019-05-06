@@ -28,10 +28,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchFixUpTest;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.hibernate.SQLQuery;
@@ -1950,6 +1952,19 @@ public class LabEventFixupTest extends Arquillian {
             LabEvent labEvent = labEventDao.findById(LabEvent.class, Long.parseLong(id));
             labEvent.setManualOverrideLcSet(labBatch);
             System.out.println("Lab event " + labEvent.getLabEventId() + " manual override to " + batchId);
+            TransferTraverserCriteria transferTraverserCriteria = new LabBatchFixUpTest.ComputeLabBatchTtc(true);
+            for (LabVessel targetLabVessel : labEvent.getTargetLabVessels()) {
+                VesselContainer<?> containerRole = targetLabVessel.getContainerRole();
+                if (containerRole == null) {
+                    targetLabVessel.evaluateCriteria(transferTraverserCriteria,
+                            TransferTraverserCriteria.TraversalDirection.Descendants);
+                } else {
+                    for (VesselPosition vesselPosition : targetLabVessel.getVesselGeometry().getVesselPositions()) {
+                        containerRole.evaluateCriteria(vesselPosition, transferTraverserCriteria,
+                                TransferTraverserCriteria.TraversalDirection.Descendants, 0);
+                    }
+                }
+            }
         }
 
         labEventDao.persist(new FixupCommentary(jiraTicket + " manual override to " + batchId));
