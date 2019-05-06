@@ -53,4 +53,16 @@
                                  referencedColumnNames="rev_info_id"/>
 
     </changeSet>
+    <changeSet author="scottmat" id="GPLIM-5815-drop_aud_primary_key">
+        <dropPrimaryKey tableName="SAP_QUOTE_ITEM_REFERENCE_AUD" constraintName="PK_SAP_QUOTE_ITEM_AUD" schemaName="ATHENA" />
+    </changeSet>
+    <changeSet id="GPLIM-5815-RE-ADD-AUD-PK" author="scottmat">
+        <addPrimaryKey tableName="SAP_QUOTE_ITEM_REFERENCE_AUD" columnNames="rev, SAP_QUOTE_ITEM_REFERENCE_ID" schemaName="ATHENA" constraintName="PK_SAP_QUOTE_ITEM_AUD" />
+    </changeSet>
+    <changeSet id="GPLIM-5815-ADD-AUD-IDX" author="">
+        <createIndex tableName="SAP_QUOTE_ITEM_REFERENCE_AUD" indexName="IDX_SAP_QUOTE_ITEM_REV_AUD">
+            <column name="SAP_QUOTE_ITEM_REFERENCE_ID"/>
+            <column name="rev"/>
+        </createIndex>
+    </changeSet>
 </databaseChangeLog>
