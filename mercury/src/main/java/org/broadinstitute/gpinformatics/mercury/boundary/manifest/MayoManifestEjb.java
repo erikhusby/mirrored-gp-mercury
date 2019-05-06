@@ -539,7 +539,13 @@ public class MayoManifestEjb {
         // Makes the list of filenames that need to be processed.
         List<String> filenames;
         if (StringUtils.isNotBlank(forceReloadFilename)) {
-            filenames = Collections.singletonList(forceReloadFilename);
+            byte[] content = googleBucketDao.download(forceReloadFilename, messages);
+            if (content == null || content.length < 1) {
+                messages.addWarning(INVALID, "storage bucket file", forceReloadFilename);
+                filenames = Collections.emptyList();
+            } else {
+                filenames = Collections.singletonList(forceReloadFilename);
+            }
         } else {
             filenames = googleBucketDao.list(messages);
             // Removes the filenames already seen from those found in the bucket.
@@ -580,7 +586,7 @@ public class MayoManifestEjb {
     private Collection<ManifestSession> makeManifestSessions(String filename, String bucketName,
             MessageCollection messageCollection, Set<Object> newEntities) {
 
-        // Always persists the filename. If already persisted then uses the entity.
+        // Always persists the filename if the file exists. If already persisted then uses the entity.
         String qualifiedFilename = filename + FILE_DELIMITER + bucketName;
         ManifestFile manifestFile = findManifestFile(qualifiedFilename);
         if (manifestFile == null) {
