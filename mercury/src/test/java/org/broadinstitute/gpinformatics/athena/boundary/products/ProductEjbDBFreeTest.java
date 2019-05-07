@@ -21,8 +21,11 @@ import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -157,6 +160,7 @@ public class ProductEjbDBFreeTest {
 
 
     public void testPublishSSFToSAPCheckClientCalls() throws Exception {
+
         final SAPAccessControlEjb mockSapAccessControl = Mockito.mock(SAPAccessControlEjb.class);
         final AttributeArchetypeDao mockAttributeArchetypeDao = Mockito.mock(AttributeArchetypeDao.class);
         final AuditReaderDao mockAuditReaderDao = Mockito.mock(AuditReaderDao.class);
@@ -164,7 +168,9 @@ public class ProductEjbDBFreeTest {
         final SapIntegrationClientImpl mockWrappedClient = Mockito.mock(SapIntegrationClientImpl.class);
         sapService.setWrappedClient(mockWrappedClient);
         final ProductDao mockProductDao = Mockito.mock(ProductDao.class);
-        SAPProductPriceCache productPriceCache = Mockito.mock(SAPProductPriceCache.class);
+        Set<SAPMaterial> materialSet = new HashSet<>();
+        SAPProductPriceCache productPriceCache = new SAPProductPriceCache(sapService);
+        sapService.setProductPriceCache(productPriceCache);
         ProductEjb testEjb = new ProductEjb(mockProductDao, sapService, mockAuditReaderDao,
                 mockAttributeArchetypeDao, mockSapAccessControl, productPriceCache);
         sapService.setProductPriceCache(productPriceCache);
@@ -179,6 +185,7 @@ public class ProductEjbDBFreeTest {
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenThrow(new RuntimeException());
         testEjb.publishProductToSAP(testProduct);
+        Mockito.when(mockWrappedClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(materialSet);
 
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockWrappedClient, Mockito.times(4)).createMaterial(Mockito.any(SAPMaterial.class));
@@ -187,7 +194,7 @@ public class ProductEjbDBFreeTest {
         SapIntegrationClientImpl.SAPCompanyConfiguration broad = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
 
         // Mimic creating the product in Sales org GP01 for GP Platform
-        TestUtils.mockMaterialSearch(productPriceCache, broad);
+        materialSet.add(TestUtils.mockMaterialSearch(broad, testProduct));
 
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
@@ -198,13 +205,14 @@ public class ProductEjbDBFreeTest {
         Mockito.verify(mockWrappedClient, Mockito.times(7)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(1)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
-        Mockito.when(productPriceCache.productExists(Mockito.anyString())).thenReturn(Boolean.TRUE);
-
         //Loop through all company codes and mimic extending the product to those platforms
-        Arrays.stream(SapIntegrationClientImpl.SAPCompanyConfiguration.values()).forEach(configuration1 -> {
-            TestUtils.mockMaterialSearch(productPriceCache, configuration1);
+        final List<SapIntegrationClientImpl.SAPCompanyConfiguration> extendedPlatforms =
+                new ArrayList<>(SapIntegrationServiceImpl.EXTENDED_PLATFORMS);
+        extendedPlatforms.add(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        extendedPlatforms.forEach(configuration1 -> {
+            materialSet.add(TestUtils.mockMaterialSearch(configuration1, testProduct));
         });
-
+        productPriceCache.refreshCache();
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockWrappedClient, Mockito.times(7)).createMaterial(Mockito.any(SAPMaterial.class));
@@ -226,7 +234,10 @@ public class ProductEjbDBFreeTest {
         final SapIntegrationClientImpl mockWrappedClient = Mockito.mock(SapIntegrationClientImpl.class);
         sapService.setWrappedClient(mockWrappedClient);
         final ProductDao mockProductDao = Mockito.mock(ProductDao.class);
-        SAPProductPriceCache productPriceCache = Mockito.mock(SAPProductPriceCache.class);
+        Set<SAPMaterial> materialSet = new HashSet<>();
+        SAPProductPriceCache productPriceCache = new SAPProductPriceCache(sapService);
+        sapService.setProductPriceCache(productPriceCache);
+        Mockito.when(mockWrappedClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(materialSet);
         ProductEjb testEjb = new ProductEjb(mockProductDao, sapService, mockAuditReaderDao,
                 mockAttributeArchetypeDao, mockSapAccessControl, productPriceCache);
         sapService.setProductPriceCache(productPriceCache);
@@ -243,15 +254,20 @@ public class ProductEjbDBFreeTest {
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenThrow(new RuntimeException());
         testEjb.publishProductToSAP(testProduct);
+        Mockito.when(mockWrappedClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(materialSet);
+
 
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockWrappedClient, Mockito.times(2)).createMaterial(Mockito.any(SAPMaterial.class));
 
         //Loop through all company codes and mimic extending the product to those platforms
-        Arrays.stream(SapIntegrationClientImpl.SAPCompanyConfiguration.values()).forEach(configuration1 -> {
-            TestUtils.mockMaterialSearch(productPriceCache, configuration1);
+        final List<SapIntegrationClientImpl.SAPCompanyConfiguration> extendedPlatforms =
+                new ArrayList<>(SapIntegrationServiceImpl.EXTENDED_PLATFORMS);
+        extendedPlatforms.add(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        extendedPlatforms.forEach(configuration1 -> {
+            materialSet.add(TestUtils.mockMaterialSearch(configuration1, testProduct));
         });
-
+        productPriceCache.refreshCache();
 
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockWrappedClient, Mockito.times(2)).createMaterial(Mockito.any(SAPMaterial.class));
@@ -282,7 +298,10 @@ public class ProductEjbDBFreeTest {
         final SapIntegrationClientImpl mockWrappedClient = Mockito.mock(SapIntegrationClientImpl.class);
         sapService.setWrappedClient(mockWrappedClient);
         final ProductDao mockProductDao = Mockito.mock(ProductDao.class);
-        SAPProductPriceCache productPriceCache = Mockito.mock(SAPProductPriceCache.class);
+        Set<SAPMaterial> materialSet = new HashSet<>();
+        SAPProductPriceCache productPriceCache = new SAPProductPriceCache(sapService);
+        sapService.setProductPriceCache(productPriceCache);
+        Mockito.when(mockWrappedClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(materialSet);
         ProductEjb testEjb = new ProductEjb(mockProductDao, sapService, mockAuditReaderDao,
                 mockAttributeArchetypeDao, mockSapAccessControl, productPriceCache);
         sapService.setProductPriceCache(productPriceCache);
@@ -294,6 +313,8 @@ public class ProductEjbDBFreeTest {
         Product testProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "SGM-TEST-SAP");
         testProduct.setClinicalProduct(Boolean.TRUE);
         testProduct.setPrimaryPriceItem(new PriceItem("qsID", "testPlatform", "testCategory", "blockThisItem"));
+        Mockito.when(mockWrappedClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(materialSet);
+
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenThrow(new RuntimeException());
         testEjb.publishProductToSAP(testProduct);
@@ -308,10 +329,13 @@ public class ProductEjbDBFreeTest {
         Mockito.verify(mockWrappedClient, Mockito.times(0)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
         //Loop through all company codes and mimic extending the product to those platforms
-        Arrays.stream(SapIntegrationClientImpl.SAPCompanyConfiguration.values()).forEach(configuration1 -> {
-            TestUtils.mockMaterialSearch(productPriceCache, configuration1);
+        final List<SapIntegrationClientImpl.SAPCompanyConfiguration> extendedPlatforms =
+                new ArrayList<>(SapIntegrationServiceImpl.EXTENDED_PLATFORMS);
+        extendedPlatforms.add(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        extendedPlatforms.forEach(configuration1 -> {
+            materialSet.add(TestUtils.mockMaterialSearch(configuration1, testProduct));
         });
-
+        productPriceCache.refreshCache();
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockWrappedClient, Mockito.times(4)).createMaterial(Mockito.any(SAPMaterial.class));
@@ -322,7 +346,5 @@ public class ProductEjbDBFreeTest {
         Mockito.verify(mockWrappedClient, Mockito.times(4)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(4)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
     }
-
-
 }
 

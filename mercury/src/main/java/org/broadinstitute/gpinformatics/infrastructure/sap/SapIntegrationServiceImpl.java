@@ -41,13 +41,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.google.common.collect.MoreCollectors.toOptional;
 import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option.Type;
@@ -61,6 +60,9 @@ import static org.broadinstitute.sap.services.SapIntegrationClientImpl.SAPEnviro
 @Default
 public class SapIntegrationServiceImpl implements SapIntegrationService {
 
+    public static final Set<SAPCompanyConfiguration> EXTENDED_PLATFORMS =
+            EnumSet.of(SAPCompanyConfiguration.PRISM,SAPCompanyConfiguration.GPP,
+                    SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES);
     private SapConfig sapConfig;
 
     private QuoteService quoteService;
@@ -229,8 +231,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * @return JAXB representation of a Product Order
      * @throws SAPIntegrationException
      */
-    protected SAPOrder initializeSAPOrder(SapQuote sapQuote, ProductOrder placedOrder, Option serviceOptions)
-        throws SAPIntegrationException {
+    protected SAPOrder initializeSAPOrder(SapQuote sapQuote, ProductOrder placedOrder, Option serviceOptions) {
         ProductOrder orderToUpdate = placedOrder;
         String sapOrderNumber = null;
         if (!serviceOptions.hasOption(Type.CREATING)) {
@@ -250,8 +251,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     private List<SAPOrderItem> getOrderItems(SapQuote sapQuote, ProductOrder placedOrder, Product primaryProduct,
-                                             Option serviceOptions)
-        throws SAPIntegrationException {
+                                             Option serviceOptions) {
         List<SAPOrderItem> orderItems = new ArrayList<>();
         orderItems.add(getOrderItem(sapQuote, placedOrder, primaryProduct, 0, serviceOptions));
         for (ProductOrderAddOn addon : placedOrder.getAddOns()) {
@@ -270,8 +270,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * is expected of it.
      */
     protected SAPOrderItem getOrderItem(SapQuote sapQuote, ProductOrder placedOrder, Product product,
-                                        int additionalSampleCount, SapIntegrationService.Option serviceOptions)
-        throws SAPIntegrationException {
+                                        int additionalSampleCount, SapIntegrationService.Option serviceOptions) {
         BigDecimal sampleCount = getSampleCount(placedOrder, product, additionalSampleCount, serviceOptions);
         if (sapQuote != null) {
 
@@ -377,39 +376,47 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
     @Override
     public void publishProductInSAP(Product product) throws SAPIntegrationException {
-        SAPChangeMaterial sapMaterial = SAPChangeMaterial.fromSAPMaterial(initializeSapMaterialObject(product));
+        SAPMaterial sapMaterial = initializeSapMaterialObject(product);
         if (productPriceCache.findByProduct(product, sapMaterial.getCompanyCode()) == null) {
+            log.debug("Creating product " + sapMaterial.getMaterialIdentifier());
             getClient().createMaterial(sapMaterial);
         } else {
-            getClient().changeMaterialDetails(sapMaterial);
+            log.debug("Updating product " + sapMaterial.getMaterialIdentifier());
+            getClient().changeMaterialDetails(SAPChangeMaterial.fromSAPMaterial(sapMaterial));
         }
 
-        final List<SAPCompanyConfiguration> otherPlatformList =
-                Stream.of(SAPCompanyConfiguration.GPP,
-                        SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES,
-                        SAPCompanyConfiguration.PRISM).collect(
-                        Collectors.toList());
-        for (SAPCompanyConfiguration sapCompanyConfiguration : otherPlatformList) {
+        Set<SAPMaterial> extendedProducts = new HashSet<>();
+        for (SAPCompanyConfiguration sapCompanyConfiguration : EXTENDED_PLATFORMS) {
+            log.debug("Current company config is " + sapCompanyConfiguration.name());
+            SAPMaterial tempMaterial = null;
+            if(sapCompanyConfiguration == SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) {
+                tempMaterial = initializeSapMaterialObject(product);
+            } else {
 
-            if (sapCompanyConfiguration == SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES ||
-                (sapCompanyConfiguration != SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES  &&
-                 sapMaterial.getProductHierarchy() == SAPCompanyConfiguration.BROAD.getSalesOrganization())) {
-                sapMaterial.setCompanyCode(sapCompanyConfiguration);
-
-                String materialName =
-                        null;
-                if (sapCompanyConfiguration == SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) {
-                    materialName = StringUtils.defaultString(product.getAlternateExternalName(), product.getName());
-                    sapMaterial.setMaterialName(materialName);
+                if(!product.isExternalOnlyProduct() && !product.isClinicalProduct()) {
+                    log.debug("Saving material for " + sapCompanyConfiguration.name());
+                    tempMaterial = initializeSapMaterialObject(product);
                 } else {
-                    sapMaterial.setMaterialName(product.getName());
-                }
-                if (productPriceCache.findByProduct(product, sapCompanyConfiguration) == null) {
-                    getClient().createMaterial(sapMaterial);
-                } else {
-                    getClient().changeMaterialDetails(sapMaterial);
+                    log.debug("current product is either External or Clinical");
                 }
             }
+
+            if(tempMaterial != null) {
+                tempMaterial.setCompanyCode(sapCompanyConfiguration);
+                extendedProducts.add(tempMaterial);
+            }
+        }
+
+        for (SAPMaterial extendedProduct : extendedProducts) {
+
+            if (productPriceCache.findByProduct(product, extendedProduct.getCompanyCode()) == null) {
+                log.debug("Creating product " + extendedProduct.getMaterialIdentifier());
+                getClient().createMaterial(extendedProduct);
+            } else {
+                log.debug("Updating product " + extendedProduct.getMaterialIdentifier());
+                getClient().changeMaterialDetails(SAPChangeMaterial.fromSAPMaterial(extendedProduct));
+            }
+
         }
     }
 
@@ -421,8 +428,13 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     @Override
     public Set<SAPMaterial> findProductsInSap() throws SAPIntegrationException {
         Set<SAPMaterial> materials = new HashSet<>();
-        materials.addAll(findMaterials(SAPCompanyConfiguration.BROAD));
-        materials.addAll(findMaterials(SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES));
+        final List<SAPCompanyConfiguration> extendedPlatformsPlusBroad = new ArrayList<>(EXTENDED_PLATFORMS);
+        extendedPlatformsPlusBroad.add(SAPCompanyConfiguration.BROAD);
+        for (SAPCompanyConfiguration sapCompanyConfiguration : extendedPlatformsPlusBroad) {
+            log.debug("finding for " + sapCompanyConfiguration.getSalesOrganization());
+            materials.addAll(findMaterials(sapCompanyConfiguration));
+        }
+
         return materials;
     }
 
@@ -486,7 +498,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     protected OrderCriteria generateOrderCriteria(SapQuote sapQuote, ProductOrder productOrder, int addedSampleCount,
-                                                  SapIntegrationService.Option orderOption) throws SAPIntegrationException {
+                                                  SapIntegrationService.Option orderOption) {
 
         final Set<SAPOrderItem> sapOrderItems = new HashSet<>();
         final SAPOrderItem orderItem = getOrderItem(sapQuote, productOrder, productOrder.getProduct(), addedSampleCount,

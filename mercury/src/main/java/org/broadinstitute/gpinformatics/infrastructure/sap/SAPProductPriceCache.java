@@ -24,7 +24,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+
+import static com.google.common.collect.MoreCollectors.toOptional;
 
 @ApplicationScoped
 public class SAPProductPriceCache extends AbstractCache implements Serializable {
@@ -80,12 +83,12 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
                                          SapIntegrationClientImpl.SAPCompanyConfiguration companyCode) {
         SAPMaterial foundMaterial = null;
 
-        for (SAPMaterial sapMaterial : getSapMaterials()) {
-            if(StringUtils.equalsIgnoreCase(partNumber, sapMaterial.getMaterialIdentifier()) &&
-               sapMaterial.getCompanyCode() == companyCode) {
-                foundMaterial = sapMaterial;
-                break;
-            }
+        final Optional<SAPMaterial> optionalMaterial = getSapMaterials().stream()
+                .filter(material -> StringUtils.equalsIgnoreCase(partNumber, material.getMaterialIdentifier()) &&
+                                    material.getCompanyCode() == companyCode).collect(toOptional());
+
+        if(optionalMaterial.isPresent()) {
+            foundMaterial = optionalMaterial.get();
         }
 
         return foundMaterial;
