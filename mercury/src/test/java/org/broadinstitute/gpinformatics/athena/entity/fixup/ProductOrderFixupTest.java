@@ -1802,9 +1802,8 @@ public class ProductOrderFixupTest extends Arquillian {
     @Test(enabled = false)
     public void fixupGplim5813RetroactiveQuoteSourceUpdate() throws Exception {
         userBean.loginOSUser();
-        beginTransaction();
 
-        final List<ProductOrder> allOrdersWithNoQuoteSource =
+        final List<ProductOrder> allOrdersWithNoQuoteSourceCount =
                 productOrderDao.findAll(ProductOrder.class, new GenericDao.GenericDaoCallback<ProductOrder>() {
                     @Override
                     public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> root) {
@@ -1816,13 +1815,38 @@ public class ProductOrderFixupTest extends Arquillian {
                         criteriaQuery.where(noSourcePredicate);
                     }
                 });
-        allOrdersWithNoQuoteSource.forEach(productOrder -> {
-            productOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
-            System.out.println("Update quote source on "+ productOrder.getJiraTicketKey());
-        });
-        productOrderDao.persist(new FixupCommentary("GPLIM-5813 Retroactively set all Product orders created "
-                                                    + "prior to the SAP 2.0 launch to recognize that their quoute "
-                                                    + "comes from the Quote Server"));
-        commitTransaction();
+        int recordCount = allOrdersWithNoQuoteSourceCount.size();
+
+        int increment = 500;
+
+        int start = 0;
+        int max = increment-1;
+
+        while(max < recordCount) {
+            beginTransaction();
+
+            final List<ProductOrder> allOrdersWithNoQuoteSource =
+                    productOrderDao.findAll(ProductOrder.class, new GenericDao.GenericDaoCallback<ProductOrder>() {
+                        @Override
+                        public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> root) {
+
+                            CriteriaBuilder builder = productOrderDao.getEntityManager().getCriteriaBuilder();
+
+                            Predicate noSourcePredicate = builder.isNull(root.get(ProductOrder_.quoteSource));
+
+                            criteriaQuery.where(noSourcePredicate);
+                        }
+                    }, start, max);
+            allOrdersWithNoQuoteSource.forEach(productOrder -> {
+                productOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
+                System.out.println("Update quote source on " + productOrder.getJiraTicketKey());
+            });
+            productOrderDao.persist(new FixupCommentary("GPLIM-5813 Retroactively set all Product orders created "
+                                                        + "prior to the SAP 2.0 launch to recognize that their quoute "
+                                                        + "comes from the Quote Server"));
+            commitTransaction();
+            start += increment;
+            max += increment;
+        }
     }
 }
