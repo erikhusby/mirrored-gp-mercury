@@ -213,7 +213,7 @@ public class PlateMetadataActionBean extends CoreActionBean {
                                         MercurySample.MetadataSource.MERCURY, true);
                                 mercurySample.addMetadata(new HashSet<>(wellMetadata.getMetadata()));
                                 plateWell.setVolume(wellMetadata.getVolume());
-                                plateWell.getMercurySamples().add(mercurySample);
+                                plateWell.addSample(mercurySample);
                                 addSamples.add(new ProductOrderSample(wellSampleInfo.getSampleBarcode()));
                                 removeSamples.addAll(mapBySamples.get(plateBarcode));
                             } else {

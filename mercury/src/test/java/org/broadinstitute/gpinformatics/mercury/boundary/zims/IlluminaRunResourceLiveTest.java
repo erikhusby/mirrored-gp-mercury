@@ -93,7 +93,6 @@ public class IlluminaRunResourceLiveTest extends Arquillian {
     private static Invocation.Builder getBuilder(URL baseUrl, String runName) throws Exception {
         String url = RestServiceContainerTest.convertUrlToSecure(baseUrl) + IlluminaRunResourceTest.WEBSERVICE_URL;
         ClientBuilder clientBuilder = JaxRsUtils.getClientBuilderAcceptCertificate();
-//        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
         return clientBuilder.build().target(url)
                 .queryParam("runName", runName)
                 .request(MediaType.APPLICATION_JSON);

@@ -29,6 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesi
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PoolGroupType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ProductInfosType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReagentDesignType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ValidationErrorType;
@@ -597,5 +598,12 @@ public class LimsQueryResource {
     @Path("/fetchExpectedReagentDesignsForTubeBarcodes")
     public List<ReagentDesignType> fetchExpectedReagentDesignsForTubeBarcodes(@QueryParam("q") List<String> tubeBarcodes) {
         return limsQueries.fetchExpectedReagentDesignsForTubeBarcodes(tubeBarcodes);
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/fetchProductInfoForTubeBarcodes")
+    public List<ProductInfosType> fetchProductInfoForTubeBarcodes(@QueryParam("q") List<String> tubeBarcodes) {
+        return limsQueries.fetchProductInfoForTubeBarcodes(tubeBarcodes);
     }
 }

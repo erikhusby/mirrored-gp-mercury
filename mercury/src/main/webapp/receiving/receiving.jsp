@@ -19,6 +19,8 @@
                         {"bSortable": true} ,
                         {"bSortable": true} ,
                         {"bSortable": true} ,
+                        {"bSortable": true} ,
+                        {"bSortable": true} ,
                         {"bSortable": true}
                     ]
                 });
@@ -127,6 +129,8 @@
                                 <span id="count" class="sample-checkedCount"></span>
                             </th>
                             <th>Sample Info</th>
+                            <th>Well</th>
+                            <th>Barcode</th>
                             <th>Sample Kit</th>
                             <th>Status</th>
                             <th>Material Type</th>
@@ -140,6 +144,16 @@
                                                       value="${sampleData.sampleId}"/>
                                 </td>
                                 <td>${sampleData.sampleId}</td>
+                                <td>
+                                    ${actionBean.mapSampleToPositionAndBarcode.get(sampleData.sampleId).wellName}
+                                    <stripes:hidden name="mapSampleToPositionAndBarcode[${sampleData.sampleId}].wellName"
+                                                    value="${actionBean.mapSampleToPositionAndBarcode.get(sampleData.sampleId).wellName}"/>
+                                </td>
+                                <td>
+                                    ${actionBean.mapSampleToPositionAndBarcode.get(sampleData.sampleId).tubeBarcode}
+                                    <stripes:hidden name="mapSampleToPositionAndBarcode[${sampleData.sampleId}].tubeBarcode"
+                                                    value="${actionBean.mapSampleToPositionAndBarcode.get(sampleData.sampleId).tubeBarcode}"/>
+                                </td>
                                 <td>${sampleData.sampleKitId}</td>
                                 <td>${sampleData.sampleStatus}</td>
                                 <td>${sampleData.originalMaterialType}</td>
