@@ -7,7 +7,10 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
@@ -26,6 +29,17 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Path;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -422,6 +436,28 @@ public class ProductFixupTest extends Arquillian {
         System.out.println("Commercial statuses updated: "+ StringUtils.join(commercialStatusByProduct.keySet(), ", "));
 
         productDao.persist(new FixupCommentary(fixupReason));
+        utx.commit();
+    }
+
+    // ONLY RUN IN DEV!!
+    @Test(enabled = false)
+    public void testTruncatePartNumbers() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<Product> tooLarge = productDao.findAll(Product.class, new GenericDao.GenericDaoCallback<Product>() {
+            @Override
+            public void callback(CriteriaQuery<Product> criteriaQuery, Root<Product> root) {
+                CriteriaBuilder builder = productOrderDao.getEntityManager().getCriteriaBuilder();
+                Expression<Integer> length = builder.length(root.get(Product_.partNumber));
+                criteriaQuery.where(builder.greaterThan(length, Product.MAX_PART_NUMBER_LENGTH));
+            }
+        });
+        tooLarge.forEach(p -> {
+            String originalPartNumber = p.getPartNumber();
+            p.setPartNumber(StringUtils.left(originalPartNumber, Product.MAX_PART_NUMBER_LENGTH));
+        });
+        productDao.persist(new FixupCommentary("GPLIM-6286 Truncate partnumbers which are too long"));
         utx.commit();
     }
 }
