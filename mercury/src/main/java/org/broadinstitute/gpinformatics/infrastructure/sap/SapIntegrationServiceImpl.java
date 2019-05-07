@@ -41,13 +41,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.google.common.collect.MoreCollectors.toOptional;
 import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option.Type;
@@ -61,11 +60,9 @@ import static org.broadinstitute.sap.services.SapIntegrationClientImpl.SAPEnviro
 @Default
 public class SapIntegrationServiceImpl implements SapIntegrationService {
 
-    public static final List<SAPCompanyConfiguration>
-            EXTENDED_PLATFORMS = Stream.of(SAPCompanyConfiguration.PRISM,SAPCompanyConfiguration.GPP,
-                    SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES
-                    ).collect(
-                    Collectors.toList());
+    public static final Set<SAPCompanyConfiguration> EXTENDED_PLATFORMS =
+            EnumSet.of(SAPCompanyConfiguration.PRISM,SAPCompanyConfiguration.GPP,
+                    SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES);
     private SapConfig sapConfig;
 
     private QuoteService quoteService;
