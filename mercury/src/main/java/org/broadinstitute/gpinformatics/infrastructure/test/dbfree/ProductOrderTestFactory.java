@@ -129,9 +129,8 @@ public class ProductOrderTestFactory {
     }
 
     public static ProductOrder buildProductOrder(int maxSamples, String sampleSuffix, String workflow) {
-        return createDummyProductOrder(maxSamples, "PD0-1EE", workflow, 101, "Test RP",
-                rpSynopsis,
-                ResearchProject.IRB_ENGAGED, "P-" + workflow + "-1232", sampleSuffix, "ExExQuoteId");
+        return createDummyProductOrder(maxSamples, "PD0-1EE", workflow, 101, "Test RP", rpSynopsis,
+            ResearchProject.IRB_ENGAGED, ProductTestFactory.generateProductPartNumber(), sampleSuffix, "ExExQuoteId");
     }
 
     public static ProductOrder buildIceProductOrder(int maxSamples) {
@@ -226,8 +225,9 @@ public class ProductOrderTestFactory {
     public static ProductOrder createProductOrder(String... sampleNames) {
         UUID uuid = UUID.randomUUID();
         ProductFamily productFamily = new ProductFamily("Product Family " + uuid);
+        String partNumber = ProductTestFactory.generateProductPartNumber();
         Product product =
-                new Product("Product Name " + uuid, productFamily, "Product Description " + uuid, "P-X" + uuid,
+                new Product("Product Name " + uuid, productFamily, "Product Description " + uuid, partNumber,
                         new Date(), null, 0, 0, 0, 1, "Input requirements", "Deliverables", true, null,
                         false, "Aggregation Data Type");
 
