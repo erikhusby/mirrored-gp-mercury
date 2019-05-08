@@ -98,7 +98,6 @@ public class ProductActionBean extends CoreActionBean {
     @Inject
     private ProductEjb productEjb;
 
-    @Inject
     private ProductDao productDao;
 
     @Inject
@@ -317,6 +316,12 @@ public class ProductActionBean extends CoreActionBean {
         if (duplicatePriceItems != null) {
             addGlobalValidationError(
                     "Cannot save with duplicate price items: " + StringUtils.join(duplicatePriceItems, ", "));
+        }
+
+        if (editProduct.getPartNumber().length() > Product.MAX_PART_NUMBER_LENGTH) {
+            addValidationError("partNumber",
+                "Part number '" + editProduct.getPartNumber() + "' is larger than maximum allowed size of "
+                + Product.MAX_PART_NUMBER_LENGTH + " characters.'");
         }
 
         // check for existing name for create or name change on edit.
@@ -890,4 +895,8 @@ public class ProductActionBean extends CoreActionBean {
         this.suggestedValueSelections = suggestedValueSelections;
     }
 
+    @Inject
+    protected void setProductDao(ProductDao productDao) {
+        this.productDao = productDao;
+    }
 }
