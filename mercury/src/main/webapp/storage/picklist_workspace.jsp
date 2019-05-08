@@ -15,6 +15,21 @@
             <enhance:out escapeXml="false">var pickerDataJson = ${actionBean.pickerData};</enhance:out>
 
             /**
+             * Supports matrix 96 racks only
+             * Function index argument is 1 based to correlate with vessel count
+             */
+            getRackPosition = function(i) {
+                var rows = ["A", "B", "C", "D", "E", "F", "G", "H"];
+                var cols = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+                if( i < 1 || i > 96 ) {
+                    throw "Invalid matrix 96 position (" + i + "), must be in range 1-96";
+                } else {
+                    var zeroBased = i - 1;
+                    return rows[Math.floor(zeroBased/12)] + cols[zeroBased%12];
+                }
+            };
+
+            /**
              * Post back the checkbox state to add or remove batches
              */
             processBatches = function () {
@@ -58,17 +73,119 @@
             };
 
             /**
-             * Handles configuration and assignment of target racks
+             * Gets all robot pickable container data broken down by batch name
              */
-            handleTargets = function(evt){
-                alert( evt.delegateTarget.id);
+            getPickableDataByBatch = function(){
+                var batchPickerData = [];
+                for( var i = 0; i < pickerDataJson.length; i++ ) {
+                    var pickerDataRow = pickerDataJson[i];
+                    if( pickerDataRow.rackScannable ) {
+                        if( batchPickerData[pickerDataRow.batchName] == undefined ) {
+                            batchPickerData[pickerDataRow.batchName] = [];
+                        }
+                        batchPickerData[pickerDataRow.batchName].push(pickerDataRow);
+                    }
+                }
+                return batchPickerData;
+            }
+
+            /**
+             * Handles assignment of target rack barcodes
+             */
+            assignTargets = function(src){
+                var theInput = $j("#" + src.id);
+                var previousValue = theInput.data("previousValue");
+                var newValue = theInput.val();
+                if(newValue === "") {
+                    return;
+                } else {
+                    theInput.data("previousValue", newValue);
+                }
+                var table = $j("#tblPickList").DataTable();
+                racks:
+                    for( var j = 0; j < pickerDataJson.length; j++ ) {
+                        var batchRackData = pickerDataJson[j];
+                        vessels:
+                            for( var k = 0; k < batchRackData.pickerVessels.length ; k++ ) {
+                                var pickerVessel = batchRackData.pickerVessels[k];
+                                if( pickerVessel.targetVessel == previousValue ) {
+                                    pickerVessel.targetVessel = newValue;
+                                }
+                            }
+                        table.row("#" + batchRackData.sourceVessel + "|" + batchRackData.batchId ).data(batchRackData);
+                    }
+
+                table.draw();
+            };
+
+            /**
+             *  Builds HTML for target rack input
+             */
+            buildTargetInput = function(arrayIdx) {
+                var inputHTML = "" +
+                (arrayIdx+1).toString() + ": <input style='width:100px' placeholder='DEST" + (arrayIdx+1)
+                    + "' type='text' id='targetRack_DEST" + (arrayIdx+1) + "' name='targetRack[" + arrayIdx
+                    + "]' data-previous-value='DEST" + (arrayIdx+1) + "' onChange='assignTargets(this);'/>";
+                return inputHTML;
             };
 
             /**
              * Handles the layout of target rack barcode inputs
              */
             layoutTargets = function(evt){
-                alert( evt.delegateTarget.id);
+                var table = $j("#tblPickList").DataTable();
+                var targetBarcodesDiv = $j("#targetRackAssignments");
+                targetBarcodesDiv.empty();
+
+                var doBatchSplit = $j("#cbSplitRacks").prop( "checked" );
+                var tubesPerRack = Number( $j("#txtTubesPerRack").val() );
+                if( tubesPerRack !== tubesPerRack || tubesPerRack == 0 ) {
+                    alert( "Invalid tubes per rack value.");
+                    evt.delegateTarget.focus();
+                    return false;
+                }
+
+                var batchPickerData = getPickableDataByBatch();
+                var targetRackCount = 0;
+                var targetRackTubeCount = 0;
+                batches:
+                for( var batchName in batchPickerData ) {
+                    if( doBatchSplit || targetRackCount == 0 ) {
+                        targetRackTubeCount = 0;
+                        targetRackCount++;
+                    }
+                    var batchRacks = batchPickerData[batchName];
+                    racks:
+                    for( var j = 0; j < batchRacks.length; j++ ) {
+                        var batchRackData = batchRacks[j];
+                        vessels:
+                        for( var k = 0; k < batchRackData.pickerVessels.length ; k++ ) {
+                            var pickerVessel = batchRackData.pickerVessels[k];
+                            targetRackTubeCount++;
+
+                            if( targetRackTubeCount > tubesPerRack ) {
+                                targetRackTubeCount = 1;
+                                targetRackCount++;
+                            }
+
+                            pickerVessel.targetVessel = "DEST" + targetRackCount;
+                            pickerVessel.targetPosition = getRackPosition(targetRackTubeCount);
+                        }
+                        table.row("#" + batchRackData.sourceVessel + "|" + batchRackData.batchId ).data(batchRackData);
+                    }
+                }
+
+                table.draw();
+
+                // Build barcode inputs
+                for( var i = 0; i < targetRackCount; i += 2 ) {
+                    var paraDiv = targetBarcodesDiv.append( "<p>" );
+                    paraDiv.append( buildTargetInput(i) );
+                    paraDiv.append( "&nbsp;&nbsp;&nbsp;&nbsp;" );
+                    if( i + 1 < targetRackCount ) {
+                        paraDiv.append( buildTargetInput(i+1) );
+                    }
+                }
             }
 
             /**
@@ -79,6 +196,9 @@
                 if (pickerDataJson.length > 0) {
                     $j("#tblPickList").dataTable({
                         data: pickerDataJson,
+                        rowId: function(row) {
+                            return row.sourceVessel + "|" + row.batchId;
+                        },
                         paging: false,
                         scrollY: 480,
                         searching: false,
@@ -87,7 +207,27 @@
                             {data: "batchName", title: "SRS Batch"},
                             {data: "storageLocPath", title: "Storage Location"},
                             {data: "sourceVessel", title: "Rack Barcode"},
-                            {data: "targetRack", title: "Target Rack"},
+                            {data: "targetRack", // Never any real value here, just a placeholder
+                                name: "targetRack",
+                                render: function(data, type, row){
+                                    if(row.rackScannable) {
+                                        var racks = [];
+                                        vessels:
+                                            for( var k = 0; k < row.pickerVessels.length ; k++ ) {
+                                                var pickerVessel = row.pickerVessels[k];
+                                                if( pickerVessel.targetVessel != null ) {
+                                                    racks[pickerVessel.targetVessel] = pickerVessel.targetVessel;
+                                                }
+                                                var targets = Object.keys(racks);
+                                                if( targets.length > 0 ) {
+                                                    row.targetRack = targets.toString();
+                                                }
+                                            }
+                                        return row.targetRack;
+                                    } else {
+                                        return "(Not Robot Pickable}";
+                                    } },
+                                title: "Target Rack"},
                             {data: "totalVesselCount", title: "Total Samples"},
                             {data: "srsVesselCount", title: "Samples to Pull"}
                         ],
@@ -97,9 +237,7 @@
                         ]
                     });
                     $j("#divAssignTargets").css("display", "block");
-                    $j("#btnAssignTargets").click(handleTargets);
-                    $j("#txtTubesPerRack").change(layoutTargets);
-                    $j("#cbSplitRacks").change(layoutTargets);
+                    $j("#btnReBalance").click(layoutTargets);
                 } else {
                     $j("#divAssignTargets").css("display", "none");
                 }
@@ -137,8 +275,8 @@
                 <fieldset style="padding-left: 8px">
                     <legend>Target Racks</legend>
                     <p>Max Tubes per Rack:  <input type="text" name="tubesPerRack" id="txtTubesPerRack" style="width:40px;height:20px;padding:2px; margin:0px 0px 0px 8px"/></p>
-                    <p>Split Racks by Batch:  <input type="checkbox" name="splitRacks" id="cbSplitRacks" style="margin:0px 0px 0px 8px"/></p>
-<div id="divRackAssignments"></div>
+                    <p>Split Racks by Batch:  <input type="checkbox" name="splitRacks" id="cbSplitRacks" style="margin:0px 40px 0px 8px"/> <input type="button" id="btnReBalance" value="Re-Balance"/></p>
+                    <div id="targetRackAssignments"></div>
                 </fieldset></div>
         </div>
         </div><%--container-fluid--%>

@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
 
 import net.sourceforge.stripes.action.*;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocationDao;
@@ -106,6 +105,15 @@ public class PickWorkspaceActionBean extends CoreActionBean {
                     .collect(Collectors.toList());
         }
 
+        // Reset any targets that may have been assigned on the client side, a change hoses the layout
+        for( PickerDataRow row : pickerDataRows ) {
+            row.setTargetRack(null);
+            for( PickerVessel pickerVessel : row.getPickerVessels()) {
+                pickerVessel.setTargetPosition(null);
+                pickerVessel.setTargetVessel(null);
+            }
+        }
+
         for( LabBatch batchToAdd : batchListToAdd ) {
             pickerDataRows.addAll(getDataRowsForBatch(batchToAdd));
         }
@@ -198,22 +206,32 @@ public class PickWorkspaceActionBean extends CoreActionBean {
 
         for(LabVessel batchVessel : batchVessels ) {
             Triple<LabVessel,TubeFormation,StorageLocation> containerLoc = findVesselAndLocation( batchVessel );
+            LabVessel rackOrLooseTube = containerLoc.getLeft();
+            TubeFormation storedTubeFormation = containerLoc.getMiddle();
+            StorageLocation storageLocation = containerLoc.getRight();
             PickerDataRow pickerDataRow;
-            if( containerRows.containsKey( containerLoc.getLeft() ) ) {
-                pickerDataRow = containerRows.get(containerLoc.getLeft());
+            if( containerRows.containsKey( rackOrLooseTube ) ) {
+                pickerDataRow = containerRows.get(rackOrLooseTube);
             } else {
                 pickerDataRow = new PickerDataRow(batchToAdd.getLabBatchId(), batchToAdd.getBatchName());
-                LabVessel rack = containerLoc.getLeft();
-                pickerDataRow.setSourceVessel( rack.getLabel() );
-                if( containerLoc.getRight() != null ) {
-                    Long storageLocationId = containerLoc.getRight().getStorageLocationId();
+                pickerDataRow.setSourceVessel( rackOrLooseTube.getLabel() );
+                if( OrmUtil.proxySafeIsInstance(rackOrLooseTube, RackOfTubes.class) ) {
+                    RackOfTubes rack = OrmUtil.proxySafeCast(rackOrLooseTube, RackOfTubes.class);
+                    pickerDataRow.setRackScannable( rack.getRackType().isRackScannable()
+                        && rack.getRackType().name().startsWith("Matrix"));
+                } else {
+                    pickerDataRow.setRackScannable(false);
+                }
+                if( storageLocation != null ) {
+                    Long storageLocationId = storageLocation.getStorageLocationId();
                     pickerDataRow.setStorageLocId( storageLocationId );
                     pickerDataRow.setStorageLocPath(storageLocationDao.getLocationTrail(storageLocationId));
-                    TubeFormation formation = containerLoc.getMiddle();
-                    if( formation != null ) {
+                    if( storedTubeFormation != null ) {
+
+                        // Total sample count value - only need to do it once
                         int vesselCount = 0;
-                        for( LabVessel tube : formation.getContainerRole().getContainedVessels()){
-                            if( tube.getStorageLocation() != null && tube.getStorageLocation().getStorageLocationId().equals(storageLocationId) ) {
+                        for (LabVessel tube : storedTubeFormation.getContainerRole().getContainedVessels()) {
+                            if (tube.getStorageLocation() != null && tube.getStorageLocation().getStorageLocationId().equals(storageLocationId)) {
                                 vesselCount++;
                             }
                         }
@@ -225,9 +243,15 @@ public class PickWorkspaceActionBean extends CoreActionBean {
                 } else {
                     pickerDataRow.setStorageLocPath("(Not in Storage)");
                 }
-                containerRows.put( containerLoc.getLeft(), pickerDataRow );
+                containerRows.put( rackOrLooseTube, pickerDataRow );
             }
-            pickerDataRow.getTubeBarcodes().add(batchVessel.getLabel());
+
+            // For tube formations, build out the source lab vessel label and position
+            if( storedTubeFormation != null ) {
+                VesselPosition position = storedTubeFormation.getContainerRole().getPositionOfVessel(batchVessel);
+                PickerVessel pickerVessel = new PickerVessel(batchVessel.getLabel(), position.name());
+                pickerDataRow.getPickerVessels().add(pickerVessel);
+            }
         }
 
         return new ArrayList( containerRows.values() );
@@ -358,11 +382,12 @@ public class PickWorkspaceActionBean extends CoreActionBean {
         // RackOfTubes, StaticPlate, or BarcodedTube if loose
         String sourceVessel;
         // Contained vessel barcodes if applicable
-        List<String> tubeBarcodes;
+        List<PickerVessel> pickerVessels;
         String targetRack;
         String targetRackName;
         int totalVesselCount;
-        int srsVesselCount;
+        // Ability to pick on XL20
+        boolean rackScannable = true;
 
         // JSON
         PickerDataRow(){}
@@ -412,15 +437,15 @@ public class PickWorkspaceActionBean extends CoreActionBean {
             this.sourceVessel = sourceVessel;
         }
 
-        public List<String> getTubeBarcodes() {
-            if( tubeBarcodes == null ) {
-                tubeBarcodes = new ArrayList<>();
+        public List<PickerVessel> getPickerVessels() {
+            if( pickerVessels == null ) {
+                pickerVessels = new ArrayList<>();
             }
-            return tubeBarcodes;
+            return pickerVessels;
         }
 
-        public void setTubeBarcodes(List<String> tubeBarcodes) {
-            this.tubeBarcodes = tubeBarcodes;
+        public void setTubeBarcodes(List<PickerVessel> pickerVessels) {
+            this.pickerVessels = pickerVessels;
         }
 
         public String getTargetRack() {
@@ -448,15 +473,71 @@ public class PickWorkspaceActionBean extends CoreActionBean {
         }
 
         public int getSrsVesselCount() {
-            return getTubeBarcodes().size();
+            return getPickerVessels().size();
         }
 
         /**
          * JSON needs this to unmarshall, but value is read from tube list length
          **/
-//        public void setSrsVesselCount(int srsVesselCount) {
-//            //this.srsVesselCount = srsVesselCount;
-//        }
+        public void setSrsVesselCount(int srsVesselCount) {
+        }
+
+
+        public boolean getRackScannable() {
+            return rackScannable;
+        }
+
+        public void setRackScannable(boolean rackScannable) {
+            this.rackScannable = rackScannable;
+        }
+    }
+
+    public static class PickerVessel {
+        // BarcodedTube
+        String sourceVessel;
+        String sourcePosition;
+        String targetVessel;
+        String targetPosition;
+
+        // JSON
+        PickerVessel() {}
+
+        PickerVessel(String sourceVessel, String sourcePosition) {
+            this.sourceVessel = sourceVessel;
+            this.sourcePosition = sourcePosition;
+        }
+
+        public String getSourceVessel() {
+            return sourceVessel;
+        }
+
+        public void setSourceVessel(String sourceVessel) {
+            this.sourceVessel = sourceVessel;
+        }
+
+        public String getSourcePosition() {
+            return sourcePosition;
+        }
+
+        public void setSourcePosition(String sourcePosition) {
+            this.sourcePosition = sourcePosition;
+        }
+
+        public String getTargetVessel() {
+            return targetVessel;
+        }
+
+        public void setTargetVessel(String targetVessel) {
+            this.targetVessel = targetVessel;
+        }
+
+        public String getTargetPosition() {
+            return targetPosition;
+        }
+
+        public void setTargetPosition(String targetPosition) {
+            this.targetPosition = targetPosition;
+        }
     }
 
 }
