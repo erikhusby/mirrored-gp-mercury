@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
+import org.hamcrest.Matchers;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -50,6 +51,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 
 /**
  *
@@ -439,25 +442,16 @@ public class ProductFixupTest extends Arquillian {
         utx.commit();
     }
 
-    // ONLY RUN IN DEV!!
     @Test(enabled = false)
-    public void testTruncatePartNumbers() throws Exception {
+    public void gplim6286rename93114() throws Exception {
         userBean.loginOSUser();
         utx.begin();
 
-        List<Product> tooLarge = productDao.findAll(Product.class, new GenericDao.GenericDaoCallback<Product>() {
-            @Override
-            public void callback(CriteriaQuery<Product> criteriaQuery, Root<Product> root) {
-                CriteriaBuilder builder = productOrderDao.getEntityManager().getCriteriaBuilder();
-                Expression<Integer> length = builder.length(root.get(Product_.partNumber));
-                criteriaQuery.where(builder.greaterThan(length, Product.MAX_PART_NUMBER_LENGTH));
-            }
-        });
-        tooLarge.forEach(p -> {
-            String originalPartNumber = p.getPartNumber();
-            p.setPartNumber(StringUtils.left(originalPartNumber, Product.MAX_PART_NUMBER_LENGTH));
-        });
-        productDao.persist(new FixupCommentary("GPLIM-6286 Truncate partnumbers which are too long"));
+        Product wes010241Bad = productDao.findById(Product.class, 93114L);
+        assertThat(wes010241Bad.getPartNumber(), is("WES-010241 Express Somatic Human WES (Deep Coverage)"));
+        wes010241Bad.setPartNumber("WES-010241_BAD");
+
+        productDao.persist(new FixupCommentary("GPLIM-6286 Rename invalid part naame"));
         utx.commit();
     }
 }

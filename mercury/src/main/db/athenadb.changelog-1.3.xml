@@ -66,11 +66,4 @@
         </createIndex>
     </changeSet>
 
-<!--    Because of how test data is created, disable until refresh or this won't pass!-->
-<!--    <changeSet author="dryan" id="GPLIM-6286-1">-->
-<!--        <modifyDataType schemaName="ATHENA" tableName="PRODUCT" columnName="PART_NUMBER" newDataType="varchar(18)"/>-->
-<!--    </changeSet>-->
-<!--    <changeSet author="dryan" id="GPLIM-6286-2">-->
-<!--        <modifyDataType schemaName="ATHENA" tableName="PRODUCT_AUD" columnName="PART_NUMBER" newDataType="varchar(18)"/>-->
-<!--    </changeSet>-->
 </databaseChangeLog>
