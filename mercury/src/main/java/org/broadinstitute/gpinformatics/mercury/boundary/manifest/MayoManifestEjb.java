@@ -462,6 +462,10 @@ public class MayoManifestEjb {
         bean.setBucketList(googleBucketDao.test(bean.getMessageCollection()));
     }
 
+    public void rotateServiceAccountKey(MayoReceivingActionBean bean) {
+        googleBucketDao.rotateServiceAccountKey(bean.getMessageCollection());
+    }
+
     /**
      * Finds bucket filenames that have been processed but were not made into manifest sessions
      * and puts the list into the bean.

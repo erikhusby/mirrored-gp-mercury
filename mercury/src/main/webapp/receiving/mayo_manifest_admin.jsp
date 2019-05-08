@@ -88,6 +88,12 @@
                 </div>
             </c:if>
 
+            <div style="padding-top: 20px;">
+                <stripes:submit id="rotateKeyBtn" name="rotateKeyBtn" value="Rotate Service Account Key"
+                                class="btn btn-primary"
+                                title="Click to cause a new Google login key to be generated."/>
+            </div>
+
         </stripes:form>
     </stripes:layout-component>
 </stripes:layout-render>

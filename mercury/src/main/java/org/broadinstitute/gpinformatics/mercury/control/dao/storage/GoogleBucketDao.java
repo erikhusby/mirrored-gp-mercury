@@ -1,7 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.storage;
 
-import com.google.auth.Credentials;
-import com.google.auth.oauth2.GoogleCredentials;
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.services.iam.v1.Iam;
+import com.google.api.services.iam.v1.IamScopes;
+import com.google.api.services.iam.v1.model.CreateServiceAccountKeyRequest;
+import com.google.api.services.iam.v1.model.ServiceAccountKey;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.BaseServiceException;
 import com.google.cloud.storage.Blob;
@@ -13,6 +20,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.tools.ant.filters.StringInputStream;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 
 import javax.ejb.Stateful;
@@ -22,6 +30,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -38,15 +48,18 @@ import java.util.stream.Collectors;
 @Stateful
 public class GoogleBucketDao {
     private GoogleStorageConfig googleStorageConfig;
-    private Credentials credentials = null;
-    private Credentials writerCredentials = null;
+    private ServiceAccountCredentials credentials = null;
+    private ServiceAccountCredentials writerCredentials = null;
+    private File credentialFile = null;
     private static Log logger = LogFactory.getLog(GoogleBucketDao.class);
 
     public void setConfigGoogleStorageConfig(GoogleStorageConfig googleStorageConfig) {
         this.googleStorageConfig = googleStorageConfig;
     }
 
-    /** Returns a list of the files' blobIds in the bucket. */
+    /**
+     * Returns a list of the files' blobIds in the bucket.
+     */
     public List<String> list(MessageCollection messageCollection) {
         makeCredential(messageCollection);
         if (credentials == null) {
@@ -54,9 +67,10 @@ public class GoogleBucketDao {
         } else {
             try {
                 Storage storage = StorageOptions.newBuilder().setCredentials(credentials)
-                        .setProjectId(googleStorageConfig.getProject()).build().getService();
+                        .setProjectId(credentials.getProjectId()).build().getService();
                 Set<String> names = new HashSet<>();
-                storage.list(googleStorageConfig.getBucketName()).iterateAll().forEach(blob -> names.add(blob.getName()));
+                storage.list(googleStorageConfig.getBucketName()).iterateAll()
+                        .forEach(blob -> names.add(blob.getName()));
                 return names.stream().sorted().collect(Collectors.toList());
             } catch (BaseServiceException e) {
                 String msg = "Error getting file list from Google bucket. ";
@@ -77,7 +91,7 @@ public class GoogleBucketDao {
         } else {
             try {
                 Storage storage = StorageOptions.newBuilder().setCredentials(credentials)
-                        .setProjectId(googleStorageConfig.getProject()).build().getService();
+                        .setProjectId(credentials.getProjectId()).build().getService();
                 Blob blob = storage.get(BlobId.of(googleStorageConfig.getBucketName(), filename));
                 return (blob != null) ? blob.getContent() : null;
             } catch (BaseServiceException e) {
@@ -97,7 +111,7 @@ public class GoogleBucketDao {
         if (writerCredentials != null) {
             try {
                 Storage storage = StorageOptions.newBuilder().setCredentials(writerCredentials)
-                        .setProjectId(googleStorageConfig.getProject()).build().getService();
+                        .setProjectId(credentials.getProjectId()).build().getService();
                 BlobInfo blobInfo = BlobInfo.newBuilder(googleStorageConfig.getBucketName(), filename).
                         setContentType("text/plain").build();
                 Blob blob = storage.get(blobInfo.getBlobId());
@@ -116,14 +130,13 @@ public class GoogleBucketDao {
      */
     private void makeCredential(MessageCollection messages) {
         if (credentials == null) {
-            File credentialFile = new File(googleStorageConfig.getCredentialFile());
+            File homeDir = new File(System.getProperty("user.home"));
+            credentialFile = new File(homeDir, googleStorageConfig.getCredentialFilename());
             if (credentialFile.exists()) {
-                // The credential file is expected to contain the json service account key
-                // generated by page https://console.cloud.google.com/apis/credentials
                 try {
-                    credentials = GoogleCredentials.fromStream(new FileInputStream(credentialFile));
+                    credentials = ServiceAccountCredentials.fromStream(new FileInputStream(credentialFile));
                 } catch (FileNotFoundException e) {
-                    messages.addError("Credential file is missing: %s", googleStorageConfig.getCredentialFile());
+                    messages.addError("Credential file is missing: %s", credentialFile.getAbsolutePath());
                 } catch (IOException e) {
                     messages.addError("Credential file stream gives: %s", e.toString());
                 } catch (BaseServiceException e) {
@@ -132,7 +145,14 @@ public class GoogleBucketDao {
                     logger.error(msg, e);
                 }
             } else {
-                messages.addError("Credential file is missing: %s", googleStorageConfig.getCredentialFile());
+                messages.addError("Credential file is missing: %s", credentialFile.getAbsolutePath());
+            }
+        } else {
+            try {
+                credentials.refreshIfExpired();
+            } catch (IOException e) {
+                credentials = null;
+                makeCredential(messages);
             }
         }
     }
@@ -142,13 +162,13 @@ public class GoogleBucketDao {
      */
     private void makeWriterCredential(MessageCollection messages) {
         if (writerCredentials == null) {
-            File writerCredentialFile = new File(googleStorageConfig.getWriterCredentialFile());
+            File homeDir = new File(System.getProperty("user.home"));
+            File writerCredentialFile = new File(homeDir, googleStorageConfig.getWriterCredentialFilename());
             if (writerCredentialFile.exists()) {
                 try {
-                    writerCredentials = GoogleCredentials.fromStream(new FileInputStream(writerCredentialFile));
+                    writerCredentials = ServiceAccountCredentials.fromStream(new FileInputStream(writerCredentialFile));
                 } catch (FileNotFoundException e) {
-                    messages.addError("Writer credential file is missing: %s",
-                            googleStorageConfig.getWriterCredentialFile());
+                    messages.addError("Writer credential file is missing: %s", writerCredentialFile.getAbsolutePath());
                 } catch (IOException e) {
                     messages.addError("Writer credential file stream gives: %s", e.toString());
                 } catch (BaseServiceException e) {
@@ -157,21 +177,29 @@ public class GoogleBucketDao {
                     logger.error(msg, e);
                 }
             } else {
-                messages.addError("Writer credential file is missing: %s",
-                        googleStorageConfig.getWriterCredentialFile());
+                messages.addError("Writer credential file is missing: %s", writerCredentialFile.getAbsolutePath());
+            }
+        } else {
+            try {
+                writerCredentials.refreshIfExpired();
+            } catch (IOException e) {
+                writerCredentials = null;
+                makeWriterCredential(messages);
             }
         }
     }
 
-    /** Generates status messages while reading a bucket file and returns a list of all filenames. */
+    /**
+     * Generates status messages while reading a bucket file and returns a list of all filenames.
+     */
     public List<String> test(MessageCollection messageCollection) {
-        if (StringUtils.isBlank(googleStorageConfig.getCredentialFile()) ||
-                StringUtils.isBlank(googleStorageConfig.getProject()) ||
+        File homeDir = new File(System.getProperty("user.home"));
+        if (StringUtils.isBlank(googleStorageConfig.getCredentialFilename()) ||
                 StringUtils.isBlank(googleStorageConfig.getBucketName())) {
-            messageCollection.addError("mercury-config.yaml needs GoogleStorage credentialFile, project, bucketName.");
+            messageCollection.addError("mercury-config.yaml needs GoogleStorage credentialFile, bucketName.");
             return Collections.emptyList();
         }
-        File credentialFile = new File(googleStorageConfig.getCredentialFile());
+        File credentialFile = new File(homeDir, googleStorageConfig.getCredentialFilename());
         try {
             if (!credentialFile.exists() || !credentialFile.canRead() ||
                     StringUtils.isBlank(FileUtils.readFileToString(credentialFile))) {
@@ -185,7 +213,7 @@ public class GoogleBucketDao {
             return Collections.emptyList();
         }
         try {
-            credentials = GoogleCredentials.fromStream(new FileInputStream(credentialFile));
+            credentials = ServiceAccountCredentials.fromStream(new FileInputStream(credentialFile));
         } catch (Exception e) {
             messageCollection.addError("Exception when parsing credentialFile " + credentialFile.getAbsolutePath() +
                     " : " + e.toString());
@@ -197,19 +225,19 @@ public class GoogleBucketDao {
             return Collections.emptyList();
         }
         try {
-            ServiceAccountCredentials serviceAccountCredentials = (ServiceAccountCredentials) credentials;
             messageCollection.addInfo("Credential file has AuthenticationType: " + credentials.getAuthenticationType());
-            messageCollection.addInfo("Token server: " + serviceAccountCredentials.getTokenServerUri().toString());
-            messageCollection.addInfo("Account: " + serviceAccountCredentials.getAccount());
+            messageCollection.addInfo("Token server: " + credentials.getTokenServerUri().toString());
+            messageCollection.addInfo("Account: " + credentials.getAccount());
+            messageCollection.addInfo("Project: " + credentials.getProjectId());
         } catch (Exception e) {
             messageCollection.addError("Exception when extracting data from GoogleCredential: " + e.toString());
             return Collections.emptyList();
         }
         try {
             Storage storage = StorageOptions.newBuilder().setCredentials(credentials).
-                    setProjectId(googleStorageConfig.getProject()).build().getService();
+                    setProjectId(credentials.getProjectId()).build().getService();
             messageCollection.addInfo("Storage object service account: " +
-                    storage.getServiceAccount(googleStorageConfig.getProject()).toString());
+                    storage.getServiceAccount(credentials.getProjectId()).toString());
             messageCollection.addInfo("Storage object host: " + storage.getOptions().getHost().toString());
             List<String> filenames = new ArrayList<>();
             storage.list(googleStorageConfig.getBucketName()).iterateAll()
@@ -232,6 +260,63 @@ public class GoogleBucketDao {
             messageCollection.addError(msg + e.toString());
             logger.error(msg, e);
             return Collections.emptyList();
+        }
+    }
+
+    public void rotateServiceAccountKey(MessageCollection messages) {
+        makeCredential(messages);
+        if (credentials != null) {
+            try {
+                // Makes the necessary GoogleCredential ( != GoogleCredentials)
+                JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+                HttpTransport transport = GoogleNetHttpTransport.newTrustedTransport();
+                GoogleCredential credential = GoogleCredential.fromStream(new FileInputStream(credentialFile));
+                if (credential.createScopedRequired()) {
+                    credential = credential.createScoped(IamScopes.all());
+                }
+                Iam.Projects.ServiceAccounts serviceAccounts =
+                        new Iam.Builder(transport, jsonFactory, credential).build().projects().serviceAccounts();
+                String uniqueId = String.format("projects/%s/serviceAccounts/%s", credentials.getProjectId(),
+                        credentials.getAccount());
+                // Creates a new key and writes it to the credential file, overwriting the old key.
+                ServiceAccountKey newKey = serviceAccounts.keys().
+                        create(uniqueId, new CreateServiceAccountKeyRequest()).execute();
+                String newKeyJson = new String(Base64.getDecoder().decode(newKey.getPrivateKeyData()));
+                credentials = ServiceAccountCredentials.fromStream(new StringInputStream(newKeyJson));
+                // If credentials was created ok (i.e. no exceptions), writes the json to the credential file.
+                FileUtils.writeStringToFile(credentialFile, newKeyJson, "US-ASCII", false);
+            } catch (Exception e) {
+                String msg = "Failed to create new key for service account key rotation: ";
+                messages.addError(msg + e.toString());
+            }
+        } else {
+            boolean isProd = StringUtils.isBlank(googleStorageConfig.getWriterCredentialFilename()) ||
+                    "disabled".equalsIgnoreCase(googleStorageConfig.getWriterCredentialFilename());
+            boolean isDev = !isProd && googleStorageConfig.getWriterCredentialFilename().contains("dev_writer");
+            boolean isRc = !isProd && googleStorageConfig.getWriterCredentialFilename().contains("rc_writer");
+            assert(isProd || isDev || isRc); // If this fails fix the above so they match the new config names.
+            String loginAs = isProd ? "pmi-ops.org" :
+                    isDev ? "dev-reader administrator" :
+                            isRc ? "rc-reader administrator" : "[unknown]";
+            String filename = isProd ? "prod_reader.json" :
+                    isDev ? "dev_reader.json" :
+                            isRc ? "rc_reader.json" : "[unknown]";
+            String serviceAccountName = isProd ? "awardee-broad@all-of-us-rdr-stable.iam.gserviceaccount.com" :
+                    isDev ? "dev-reader@mercury-mayobucket-test-23591" :
+                            isRc ? "rc-reader@mercury-mayobucket-test-23591" : "[unknown]";
+            List<String> infos = Arrays.asList(
+                    "It appears the Google service account credential needs to be manually regenerated. ",
+                    "Using " + loginAs + " credentials login to GCP Console at https://console.cloud.google.com ",
+                    "Click the command prompt icon at the top right (\"Activate Cloud Shell\") to get a shell within the browser window. ",
+                    "At the prompt run: ",
+                    String.format("gcloud iam service-accounts keys create %s --iam-account %s", filename,
+                            serviceAccountName),
+                    "Then run: ",
+                    "cat " + filename,
+                    "Copy-paste the key into an editor and remove the line breaks found in the private_key element so that it is one long line. ",
+                    "Write the edited json to " + credentialFile.getAbsolutePath(),
+                    "No need to restart Mercury. Check using Mayo Manifest Admin -> Test Bucket Access");
+            messages.addInfos(infos);
         }
     }
 }

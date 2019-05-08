@@ -53,6 +53,7 @@ public class MayoReceivingActionBean extends RackScanActionBean {
     private static final String SCAN_BTN = "scanBtn";
     private static final String SAVE_BTN = "saveBtn";
     private static final String VIEW_MANIFEST_BTN = "viewManifestBtn";
+    private static final String ROTATE_KEY_BTN = "rotateKeyBtn";
 
     private MessageCollection messageCollection = new MessageCollection();
     private VesselGeometry vesselGeometry = null;
@@ -139,6 +140,13 @@ public class MayoReceivingActionBean extends RackScanActionBean {
     @HandlesEvent(TEST_ACCESS_BTN)
     public Resolution testAccess() {
         mayoManifestEjb.testAccess(this);
+        addMessages(messageCollection);
+        return new ForwardResolution(MANIFEST_ADMIN_PAGE);
+    }
+
+    @HandlesEvent(ROTATE_KEY_BTN)
+    public Resolution rotateServiceAccountKey() {
+        mayoManifestEjb.rotateServiceAccountKey(this);
         addMessages(messageCollection);
         return new ForwardResolution(MANIFEST_ADMIN_PAGE);
     }

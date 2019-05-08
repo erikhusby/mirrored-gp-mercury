@@ -5,8 +5,7 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.storage;
  * The yaml file section is determined by the subclass.
  */
 public interface GoogleStorageConfig {
-    public String getCredentialFile();
-    public String getWriterCredentialFile();
-    public String getProject();
+    public String getCredentialFilename();
+    public String getWriterCredentialFilename();
     public String getBucketName();
 }

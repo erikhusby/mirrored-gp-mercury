@@ -333,24 +333,20 @@ sap:
 
 MayoManifestGoogleStorage:
     DEV:
-        credentialFile: serviceAccountKeys/dev_reader.json
-        writerCredentialFile: serviceAccountKeys/dev_writer.json
-        project: mercury-mayobucket-test-23591
+        credentialFilename: serviceAccountKeys/dev_reader.json
+        writerCredentialFilename: serviceAccountKeys/dev_writer.json
         bucketName: dev_113959925643235198999
     TEST:
-        credentialFile: serviceAccountKeys/dev_reader.json
-        writerCredentialFile: serviceAccountKeys/dev_writer.json
-        project: mercury-mayobucket-test-23591
+        credentialFilename: serviceAccountKeys/dev_reader.json
+        writerCredentialFilename: serviceAccountKeys/dev_writer.json
         bucketName: dev_113959925643235198999
     QA:
-        credentialFile: serviceAccountKeys/rc_reader.json
-        writerCredentialFile: serviceAccountKeys/rc_writer.json
-        project: mercury-mayobucket-test-23591
+        credentialFilename: serviceAccountKeys/rc_reader.json
+        writerCredentialFilename: serviceAccountKeys/rc_writer.json
         bucketName: rc_113959925643235198999
     RC:
-        credentialFile: serviceAccountKeys/rc_reader.json
-        writerCredentialFile: serviceAccountKeys/rc_writer.json
-        project: mercury-mayobucket-test-23591
+        credentialFilename: serviceAccountKeys/rc_reader.json
+        writerCredentialFilename: serviceAccountKeys/rc_writer.json
         bucketName: rc_113959925643235198999
     PROD:
         # Do not use production Google storage config values when doing a data fixup involving
@@ -358,9 +354,8 @@ MayoManifestGoogleStorage:
         # cannot be configured here. Attempting access when not running from production Mercury
         # server will likely throw exceptions that can roll back hibernate commits.
         #
-        credentialFile: serviceAccountKeys/prod_reader.json
-        writerCredentialFile: DISABLED
-        project: all-of-us-rdr-stable
+        credentialFilename: serviceAccountKeys/prod_reader.json
+        writerCredentialFilename: DISABLED
         bucketName: genomics-broad-dryrun
 
 
