@@ -65,5 +65,4 @@
             <column name="rev"/>
         </createIndex>
     </changeSet>
-
 </databaseChangeLog>
