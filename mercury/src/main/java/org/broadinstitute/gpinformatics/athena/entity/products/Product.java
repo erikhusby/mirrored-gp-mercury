@@ -113,7 +113,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @Column(name = "REAGENT_DESIGN_KEY", nullable = true, length = 200)
     private String reagentDesignKey;
 
-    @Column(name = "PART_NUMBER", length = 18)
+    @Column(name = "PART_NUMBER")
     private String partNumber;
 
     private Date availabilityDate;
