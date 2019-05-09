@@ -90,7 +90,7 @@ public class OrspProjectDao {
                 cb.equal(orspProjectRoot.get(OrspProject_.projectKey), ids),
                 restrictType(orspProjectRoot),
                 orspProjectRoot.get(OrspProject_.status).in(OrspProject.USABLE_STATUSES)
-        ));
+            ));
         List<OrspProject> projects;
         try {
             projects = entityManager.createQuery(criteria).getResultList();

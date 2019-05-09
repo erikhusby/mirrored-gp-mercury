@@ -1,6 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
@@ -11,12 +14,20 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.persistence.criteria.CollectionJoin;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Root;
+import javax.transaction.UserTransaction;
+import java.util.Collection;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 
 @Test(groups = TestGroups.FIXUP)
 public class RegulatoryInfoFixupTest extends Arquillian {
@@ -31,6 +42,9 @@ public class RegulatoryInfoFixupTest extends Arquillian {
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
+
+    @Inject
+    private UserTransaction utx;
 
     /**
      * Change the identifier for IRB 1107004579 to ORSP-783, which is a reference to IRB 1107004579.
@@ -63,5 +77,25 @@ public class RegulatoryInfoFixupTest extends Arquillian {
 
         regulatoryInfoDao.persist(new FixupCommentary("Support-1823 change type to Not Human Subjects Research"));
 
+    }
+
+    @Test(enabled = false)
+    public void fixupSUPPORT_5356_SUPPORT_5357() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        String incorrectOrspIdentifier = "2169";
+        String correctOrspIdentifier = "ORSP-2169";
+
+        RegulatoryInfo orspToReplace =
+            regulatoryInfoDao.findByIdentifierAndType(incorrectOrspIdentifier, RegulatoryInfo.Type.IRB);
+
+        RegulatoryInfo orsp2169 =
+            regulatoryInfoDao.findByIdentifierAndType(correctOrspIdentifier, RegulatoryInfo.Type.IRB);
+
+        orspToReplace.getResearchProjects().forEach(researchProject -> researchProject.addRegulatoryInfo(orsp2169));
+
+        regulatoryInfoDao.persist(new FixupCommentary("SUPPORT-5356 SUPPORT-5357 add ORSP-2169 to projects."));
+        utx.commit();
     }
 }
