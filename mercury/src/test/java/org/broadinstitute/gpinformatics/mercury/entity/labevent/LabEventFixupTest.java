@@ -1433,9 +1433,16 @@ public class LabEventFixupTest extends Arquillian {
         String jiraTicket = lines.get(0);
         String eventType = lines.get(1);
 
-        for (String id : lines.subList(2, lines.size())) {
+        for (String line : lines.subList(2, lines.size())) {
+            String[] fields = WHITESPACE_PATTERN.split(line);
+            String id = fields[0];
+            String labBatchName = fields[1];
             LabEvent labEvent = labEventDao.findById(LabEvent.class, Long.parseLong(id));
+            LabBatch labBatch = labBatchDao.findByName(labBatchName);
             Assert.assertEquals(labEvent.getLabEventType().getName(), eventType);
+            boolean deleted = labEvent.removeLabBatch(labBatch);
+            System.out.println("Removing computed LCSET " + labBatch.getBatchName());
+            Assert.assertEquals(true, deleted);
             System.out.println("Deleting lab event " + labEvent.getLabEventId());
             labEventDao.remove(labEvent);
         }
