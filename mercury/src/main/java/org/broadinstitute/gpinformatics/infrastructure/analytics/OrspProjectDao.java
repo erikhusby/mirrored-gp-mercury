@@ -82,15 +82,15 @@ public class OrspProjectDao {
         return project;
     }
 
-    public List<OrspProject> findOrspProjectListByIdList(Collection<String> ids) {
+    public List<OrspProject> findOrspProjectListByIdList(List<String> ids) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<OrspProject> criteria = cb.createQuery(OrspProject.class);
         Root<OrspProject> orspProjectRoot = criteria.from(OrspProject.class);
-        criteria.select(orspProjectRoot).where(
-            cb.and(orspProjectRoot.get(OrspProject_.projectKey).in(ids),
+        criteria.select(orspProjectRoot).where(cb.and(
+                cb.equal(orspProjectRoot.get(OrspProject_.projectKey), ids),
                 restrictType(orspProjectRoot),
                 orspProjectRoot.get(OrspProject_.status).in(OrspProject.USABLE_STATUSES)
-            ));
+        ));
         List<OrspProject> projects;
         try {
             projects = entityManager.createQuery(criteria).getResultList();
