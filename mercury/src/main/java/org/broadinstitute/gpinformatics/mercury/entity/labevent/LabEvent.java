@@ -224,7 +224,7 @@ public class LabEvent {
     /**
      * The LabBatch inference for each position in a rack of pooled tubes.
      */
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labEvent", orphanRemoval = true)
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labEvent")
     @BatchSize(size = 20)
     @MapKeyEnumerated(EnumType.STRING)
     @MapKeyColumn(name = "VESSEL_POSITION")

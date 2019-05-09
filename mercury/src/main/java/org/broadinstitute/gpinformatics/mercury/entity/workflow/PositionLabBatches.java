@@ -33,7 +33,7 @@ public class PositionLabBatches {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_POSITION_LAB_BATCHES")
     private Long positionLabBatchesId;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST})
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinTable(schema = "mercury", name = "PLB_lab_batch"
             , joinColumns = {@JoinColumn(name = "POSITION_LAB_BATCH")}
             , inverseJoinColumns = {@JoinColumn(name = "LAB_BATCH")})
