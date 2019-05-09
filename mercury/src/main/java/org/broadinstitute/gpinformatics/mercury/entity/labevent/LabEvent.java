@@ -378,13 +378,6 @@ public class LabEvent {
         return found;
     }
 
-    public boolean removeLabBatch(LabBatch labBatch) {
-        if (computedLcSets.contains(labBatch)) {
-            return computedLcSets.remove(labBatch);
-        }
-        return false;
-    }
-
     public void addReagentVolume(Reagent reagent, BigDecimal volume) {
         labEventReagents.add(new LabEventReagent(this, reagent, volume));
     }
