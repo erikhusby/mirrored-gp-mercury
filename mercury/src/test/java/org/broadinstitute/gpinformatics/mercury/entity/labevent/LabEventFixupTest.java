@@ -1420,9 +1420,9 @@ public class LabEventFixupTest extends Arquillian {
      * be used for other similar fixups, without writing a new test.  Example contents of the file are:
      * GPLIM-4104
      * InfiniumHybridization
-     * 1278705
-     * 1278706
-     * 1278707
+     * 1278705 LCSET-1234
+     * 1278706 LCSET-1235
+     * 1278707 LCSET-1236
      */
     @Test(enabled = false)
     public void fixupGplim4104() throws Exception {
