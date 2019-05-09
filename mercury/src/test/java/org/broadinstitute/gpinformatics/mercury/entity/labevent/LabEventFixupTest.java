@@ -1420,7 +1420,7 @@ public class LabEventFixupTest extends Arquillian {
      * be used for other similar fixups, without writing a new test.  Example contents of the file are:
      * GPLIM-4104
      * InfiniumHybridization
-     * 1278705 LCSET-1234
+     * 1278705 LCSET-1234 LCSET-1235
      * 1278706 LCSET-1235
      * 1278707 LCSET-1236
      */
@@ -1436,13 +1436,14 @@ public class LabEventFixupTest extends Arquillian {
         for (String line : lines.subList(2, lines.size())) {
             String[] fields = WHITESPACE_PATTERN.split(line);
             String id = fields[0];
-            String labBatchName = fields[1];
             LabEvent labEvent = labEventDao.findById(LabEvent.class, Long.parseLong(id));
-            LabBatch labBatch = labBatchDao.findByName(labBatchName);
             Assert.assertEquals(labEvent.getLabEventType().getName(), eventType);
-            boolean deleted = labEvent.removeLabBatch(labBatch);
-            System.out.println("Removing computed LCSET " + labBatch.getBatchName());
-            Assert.assertEquals(true, deleted);
+            for (String labBatchName : Arrays.asList(fields).subList(1, fields.length)) {
+                LabBatch labBatch = labBatchDao.findByName(labBatchName);
+                boolean deleted = labEvent.removeLabBatch(labBatch);
+                System.out.println("Removing computed LCSET " + labBatch.getBatchName());
+                Assert.assertEquals(true, deleted);
+            }
             System.out.println("Deleting lab event " + labEvent.getLabEventId());
             labEventDao.remove(labEvent);
         }
