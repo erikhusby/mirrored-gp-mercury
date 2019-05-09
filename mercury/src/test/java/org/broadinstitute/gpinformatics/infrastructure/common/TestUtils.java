@@ -3,7 +3,10 @@ package org.broadinstitute.gpinformatics.infrastructure.common;
 import functions.rfc.sap.document.sap_com.ZESDFUNDINGDET;
 import functions.rfc.sap.document.sap_com.ZESDQUOTEHEADER;
 import functions.rfc.sap.document.sap_com.ZESDQUOTEITEM;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.sap.entity.material.SAPChangeMaterial;
@@ -16,6 +19,8 @@ import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jetbrains.annotations.NotNull;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -174,6 +179,47 @@ public class TestUtils {
                         Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
                         testProduct.determineCompanyConfiguration().getSalesOrganization());
         return otherPlatformMaterial;
+    }
+
+    // This is a utility method and NOT a test method.  Will FAIL with arguments as it should.
+    @Test(enabled = false)
+    public static void billSampleOut(ProductOrder productOrder, ProductOrderSample sample, int expected) {
+
+        billSamplesOut(productOrder, Collections.singleton(sample), expected);
+
+    }
+
+    @Test(enabled = false)
+    public static void billSamplesOut(ProductOrder productOrder, Collection<ProductOrderSample> samples, int expected) {
+        BillingSession billingSession = null;
+        for (ProductOrderSample sample : samples) {
+            LedgerEntry primaryItemSampleEntry = new LedgerEntry(sample,
+                    productOrder.getProduct().getPrimaryPriceItem(), new Date(), /*productOrder.getProduct(),*/ 1);
+            primaryItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+
+            LedgerEntry addonItemSampleEntry = new LedgerEntry(sample,
+                    productOrder.getAddOns().iterator().next().getAddOn().getPrimaryPriceItem(),
+                    new Date(), /*productOrder.getProduct(),*/ 1);
+            addonItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM);
+            sample.getLedgerItems().add(primaryItemSampleEntry);
+            sample.getLedgerItems().add(addonItemSampleEntry);
+
+            Assert.assertEquals(productOrder.getUnbilledSampleCount(), expected);
+
+            billingSession = new BillingSession(4L, sample.getLedgerItems());
+        }
+
+        Assert.assertEquals(productOrder.getUnbilledSampleCount(), expected);
+
+        for (LedgerEntry ledgerEntry : billingSession.getLedgerEntryItems()) {
+            ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
+        }
+
+        Assert.assertEquals(productOrder.getUnbilledSampleCount(), expected-samples.size());
+        billingSession.setBilledDate(new Date());
+        if(productOrder.isSavedInSAP()) {
+            productOrder.latestSapOrderDetail().addLedgerEntries(billingSession.getLedgerEntryItems());
+        }
     }
 
     public enum SapQuoteTestScenario {

@@ -245,7 +245,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         SAPOrder newOrder =
             new SAPOrder(sapCompanyConfiguration, orderToUpdate.getQuoteId(), userFullName, sapOrderNumber,
                 orderToUpdate.getJiraTicketKey(), orderToUpdate.getResearchProject().getJiraTicketKey(), null,
-                orderItems.toArray(new SAPOrderItem[0]));
+                orderItems.toArray(new SAPOrderItem[orderItems.size()]));
 
         return newOrder;
     }
