@@ -35,7 +35,7 @@ public abstract class Task {
     private Set<State> states = new HashSet<>();
 
     public Task() {
-        status = Status.WAITING;
+        status = Status.QUEUED;
     }
 
     public Task(Status status) {

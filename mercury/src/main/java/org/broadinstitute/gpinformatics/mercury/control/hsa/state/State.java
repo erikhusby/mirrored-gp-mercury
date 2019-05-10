@@ -12,9 +12,11 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import java.util.Optional;
+import java.util.Date;
+import java.util.List;
 
 @Entity
 @Audited
@@ -31,17 +33,26 @@ public abstract class State {
     @JoinColumn(name = "task")
     private Task task;
 
-    private String name;
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
+    @JoinColumn(name = "FINITE_STATE_MACHINE")
+    private FiniteStateMachine finiteStateMachine;
 
-    private boolean active;
+    private String stateName;
 
-    private boolean start;
+    private boolean alive;
+
+    private boolean startState;
+
+    private Date startTime;
+
+    private Date endTime;
 
     public State() {
     }
 
-    public State(String name) {
-        this.name = name;
+    public State(String stateName, FiniteStateMachine finiteStateMachine) {
+        this.stateName = stateName;
+        this.finiteStateMachine = finiteStateMachine;
     }
 
     public void setTask(Task task) {
@@ -52,38 +63,66 @@ public abstract class State {
         return task;
     }
 
-    public String getName() {
-        return name;
+    public String getStateName() {
+        return stateName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setStateName(String name) {
+        this.stateName = name;
     }
 
-    public boolean isStart() {
-        return start;
+    public boolean isStartState() {
+        return startState;
     }
 
-    public void setStart(boolean start) {
-        this.start = start;
+    public void setStartState(boolean start) {
+        this.startState = start;
     }
 
-    public boolean isActive() {
-        return active;
+    public boolean isAlive() {
+        return alive;
     }
 
-    public void setActive(boolean active) {
-        this.active = active;
+    public void setAlive(boolean active) {
+        this.alive = active;
+    }
+
+    public void setStartTime(Date startTime) {
+        this.startTime = startTime;
+    }
+
+    public Date getStartTime() {
+        return startTime;
+    }
+
+    public void setEndTime(Date endTime) {
+        this.endTime = endTime;
+    }
+
+    public Date getEndTime() {
+        return endTime;
+    }
+
+    public FiniteStateMachine getFiniteStateMachine() {
+        return finiteStateMachine;
+    }
+
+    public void setFiniteStateMachine(
+            FiniteStateMachine finiteStateMachine) {
+        this.finiteStateMachine = finiteStateMachine;
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this)
                 .append("stateId", stateId)
-                .append("name", name)
-                .append("active", active)
+                .append("stateName", stateName)
+                .append("finiteStateMachine", finiteStateMachine)
+                .append("alive", alive)
                 .append("task", task)
-                .append("start", start)
+                .append("startState", startState)
+                .append("startTime", startTime)
+                .append("end", endTime)
                 .toString();
     }
 }

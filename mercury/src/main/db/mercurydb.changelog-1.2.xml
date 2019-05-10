@@ -2269,4 +2269,315 @@
                        constraintName="PK_COVERAGE_TYPE_AUD"
                        columnNames="rev, coverage_type_id"/>
     </changeSet>
+
+    <changeSet id="GPLIM-6242-0" author="jowalsh">
+        <createTable tableName="FINITE_STATE_MACHINE" schemaName="mercury">
+            <column name="FINITE_STATE_MACHINE_ID" type="number(19,0)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="STATUS" type="VARCHAR2(50)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-1" author="jowalsh">
+        <createSequence sequenceName="SEQ_FINITE_STATE_MACHINE" schemaName="mercury" startValue="1" incrementBy="10"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-2" author="jowalsh">
+        <createTable tableName="FINITE_STATE_MACHINE_AUD" schemaName="mercury">
+            <column name="FINITE_STATE_MACHINE_ID" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="STATUS" type="VARCHAR2(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rev" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-3" author="jowalsh">
+        <addPrimaryKey schemaName="MERCURY" tableName="FINITE_STATE_MACHINE_AUD"
+                       constraintName="PK_FSM_AUD"
+                       columnNames="rev, FINITE_STATE_MACHINE_ID"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-4" author="jowalsh">
+        <createTable tableName="STATE" schemaName="mercury">
+            <column name="STATE_ID" type="number(19,0)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="DTYPE" type="varchar2(31)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="RUN_CHAMBER" type="number(19,0)"/>
+            <column name="MERCURY_SAMPLE" type="number(19,0)"/>
+            <column name="FINITE_STATE_MACHINE" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="STATE_NAME" type="VARCHAR2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ALIVE" type="number(1,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="START_STATE" type="number(1,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="START_TIME" type="timestamp"/>
+            <column name="END_TIME" type="timestamp"/>
+            <column name="TASK" type="number(19,0)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-5" author="jowalsh">
+        <createSequence sequenceName="SEQ_STATE" schemaName="mercury" startValue="1" incrementBy="10"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-6" author="jowalsh">
+        <addForeignKeyConstraint baseTableName="STATE" baseColumnNames="RUN_CHAMBER"
+                                 constraintName="fk_state_run_chamber"
+                                 referencedTableName="sequencing_run_chamber"
+                                 referencedColumnNames="sequencing_run_chamber_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-7" author="jowalsh">
+        <addForeignKeyConstraint baseTableName="STATE" baseColumnNames="MERCURY_SAMPLE"
+                                 constraintName="fk_state_mercury_sample"
+                                 referencedTableName="mercury_sample"
+                                 referencedColumnNames="mercury_sample_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-8" author="jowalsh">
+        <addForeignKeyConstraint baseTableName="STATE" baseColumnNames="FINITE_STATE_MACHINE"
+                                 constraintName="fk_state_state_machine"
+                                 referencedTableName="FINITE_STATE_MACHINE"
+                                 referencedColumnNames="FINITE_STATE_MACHINE_ID"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-9" author="jowalsh">
+        <createTable tableName="STATE_AUD" schemaName="mercury">
+            <column name="STATE_ID" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="DTYPE" type="varchar2(31)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="RUN_CHAMBER" type="number(19,0)"/>
+            <column name="MERCURY_SAMPLE" type="number(19,0)"/>
+            <column name="FINITE_STATE_MACHINE" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="STATE_NAME" type="VARCHAR2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ALIVE" type="number(1,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="START_STATE" type="number(1,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="START_TIME" type="timestamp"/>
+            <column name="END_TIME" type="timestamp"/>
+            <column name="TASK" type="number(19,0)"/>
+            <column name="rev" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-10" author="jowalsh">
+        <addPrimaryKey schemaName="MERCURY" tableName="STATE_AUD"
+                       constraintName="PK_STATE_AUD"
+                       columnNames="rev, STATE_ID"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-11" author="jowalsh">
+        <createIndex indexName="IX_STATE_AUD" tableName="STATE_AUD" schemaName="mercury">
+            <column name="STATE_ID"/>
+            <column name="REV"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-12" author="jowalsh">
+        <createTable tableName="TASK" schemaName="mercury">
+            <column name="TASK_ID" type="number(19,0)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="DTYPE" type="varchar2(31)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="STATUS" type="VARCHAR2(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="FILE_PATH" type="varchar2(255)"/>
+            <column name="PROCESS_ID" type="number(19,0)"/>
+            <column name="COMMAND_LINE_ARGUMENT" type="varchar2(550)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-13" author="jowalsh">
+        <createSequence sequenceName="SEQ_TASK" schemaName="mercury" startValue="1" incrementBy="10"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-14" author="jowalsh">
+        <createTable tableName="TASK_AUD" schemaName="mercury">
+            <column name="TASK_ID" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="DTYPE" type="varchar2(31)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="STATUS" type="VARCHAR2(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="PROCESS_ID" type="number(19,0)"/>
+            <column name="COMMAND_LINE_ARGUMENT" type="varchar2(550)"/>
+            <column name="FILE_PATH" type="varchar2(255)"/>
+            <column name="rev" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-15" author="jowalsh">
+        <addPrimaryKey schemaName="MERCURY" tableName="TASK_AUD"
+                       constraintName="PK_TASK_AUD"
+                       columnNames="rev, TASK_ID"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-16" author="jowalsh">
+        <createIndex indexName="IX_TASK_AUD" tableName="TASK_AUD" schemaName="mercury">
+            <column name="TASK_ID"/>
+            <column name="REV"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-17" author="jowalsh">
+        <addForeignKeyConstraint baseTableName="STATE" baseColumnNames="TASK"
+                                 constraintName="fk_state_task"
+                                 referencedTableName="TASK"
+                                 referencedColumnNames="TASK_ID"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-18" author="jowalsh">
+        <createTable tableName="TRANSITION" schemaName="mercury">
+            <column name="TRANSITION_ID" type="number(19,0)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="FROM_STATE" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="TO_STATE" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="TRANSITION_NAME" type="VARCHAR2(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="FINITE_STATE_MACHINE" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-19" author="jowalsh">
+        <createSequence sequenceName="SEQ_TRANSITION" schemaName="mercury" startValue="1" incrementBy="10"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-20" author="jowalsh">
+        <addForeignKeyConstraint baseTableName="TRANSITION" baseColumnNames="FROM_STATE"
+                                 constraintName="fk_trans_fstate"
+                                 referencedTableName="STATE"
+                                 referencedColumnNames="state_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-21" author="jowalsh">
+        <addForeignKeyConstraint baseTableName="TRANSITION" baseColumnNames="TO_STATE"
+                                 constraintName="fk_trans_tostate"
+                                 referencedTableName="STATE"
+                                 referencedColumnNames="state_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-22" author="jowalsh">
+        <addForeignKeyConstraint baseTableName="TRANSITION" baseColumnNames="FINITE_STATE_MACHINE"
+                                 constraintName="fk_trans_to_fsm"
+                                 referencedTableName="FINITE_STATE_MACHINE"
+                                 referencedColumnNames="FINITE_STATE_MACHINE_ID"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-23" author="jowalsh">
+        <createTable tableName="TRANSITION_AUD" schemaName="mercury">
+            <column name="TRANSITION_ID" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="FROM_STATE" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="TO_STATE" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="FINITE_STATE_MACHINE" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="TRANSITION_NAME" type="VARCHAR2(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rev" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-24" author="jowalsh">
+        <addPrimaryKey schemaName="MERCURY" tableName="TRANSITION_AUD"
+                       constraintName="PK_TRANSITION_AUD"
+                       columnNames="rev, TRANSITION_ID"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-25" author="jowalsh">
+        <createIndex indexName="IX_TRANSITION_AUD" tableName="TRANSITION_AUD" schemaName="mercury">
+            <column name="TRANSITION_ID"/>
+            <column name="REV"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-26" author="jowalsh">
+        <addColumn tableName="FINITE_STATE_MACHINE" schemaName="mercury">
+            <column name="DATE_QUEUED" type="timestamp" />
+        </addColumn>
+        <addColumn tableName="FINITE_STATE_MACHINE" schemaName="mercury">
+            <column name="DATE_STARTED" type="timestamp" />
+        </addColumn>
+        <addColumn tableName="FINITE_STATE_MACHINE" schemaName="mercury">
+            <column name="DATE_COMPLETED" type="timestamp" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-27" author="jowalsh">
+        <addColumn tableName="FINITE_STATE_MACHINE_AUD" schemaName="mercury">
+            <column name="DATE_QUEUED" type="timestamp" />
+        </addColumn>
+        <addColumn tableName="FINITE_STATE_MACHINE_AUD" schemaName="mercury">
+            <column name="DATE_STARTED" type="timestamp" />
+        </addColumn>
+        <addColumn tableName="FINITE_STATE_MACHINE_AUD" schemaName="mercury">
+            <column name="DATE_COMPLETED" type="timestamp" />
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

@@ -1,17 +1,37 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.dragen;
 
+import org.hibernate.envers.Audited;
+
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.io.File;
 import java.util.Objects;
 
+@Entity
+@Audited
 public class AlignmentTask extends ProcessTask {
 
-    private final File reference;
-    private final File fastQList;
-    private final String fastQSampleId;
-    private final File outputDir;
-    private final File intermediateResultsDir;
-    private final String outputFilePrefix;
-    private final String vcSampleName;
+    @Transient
+    private File reference;
+
+    @Transient
+    private File fastQList;
+
+    @Transient
+    private String fastQSampleId;
+
+    @Transient
+    private File outputDir;
+
+    @Transient
+    private File intermediateResultsDir;
+
+    @Transient
+    private String outputFilePrefix;
+
+    @Transient
+    private String vcSampleName;
 
     /**
      * Syntax
@@ -57,6 +77,9 @@ public class AlignmentTask extends ProcessTask {
                 build();
 
         setCommandLineArgument(dragenTaskBuilder);
+    }
+
+    public AlignmentTask() {
     }
 
     public File getReference() {

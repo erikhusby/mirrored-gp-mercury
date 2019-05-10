@@ -11,11 +11,18 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Transition;
 
+import javax.ejb.Stateless;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+@Stateless
 @Dependent
+@TransactionManagement(value= TransactionManagementType.BEAN)
 public class FiniteStateMachineEngine {
     private static final Log log = LogFactory.getLog(FiniteStateMachineEngine.class);
 
@@ -28,6 +35,8 @@ public class FiniteStateMachineEngine {
     @Inject
     private StateMachineDao stateMachineDao;
 
+    private static final AtomicBoolean busy = new AtomicBoolean(false);
+
     public FiniteStateMachineEngine() {
     }
 
@@ -36,11 +45,20 @@ public class FiniteStateMachineEngine {
     }
 
     public void resumeMachine(FiniteStateMachine stateMachine) {
-        if (stateMachine.getActiveStates().isEmpty()) {
-            throw new RuntimeException("No active states for " + stateMachine);
+
+        if (!busy.compareAndSet(false, true)) {
+            return;
         }
 
-        executeProcess(stateMachine);
+        try {
+            if (stateMachine.getActiveStates().isEmpty()) {
+                throw new RuntimeException("No active states for " + stateMachine);
+            }
+
+            executeProcess(stateMachine);
+        } finally {
+            busy.set(false);
+        }
     }
 
     public void executeProcess(FiniteStateMachine stateMachine) {
@@ -52,6 +70,11 @@ public class FiniteStateMachineEngine {
     @DaoFree
     public void executeProcessDaoFree(FiniteStateMachine stateMachine) {
         for (State state : stateMachine.getActiveStates()) {
+
+            if (state.isStartState() && stateMachine.getDateStarted() == null) {
+                stateMachine.setDateStarted(new Date());
+            }
+
             log.debug("Checking transitions from " + state);
             if (taskManager.isTaskComplete(state.getTask())) {
                 List<Transition> transitionsFromState = stateMachine.getTransitionsFromState(state);
@@ -59,9 +82,11 @@ public class FiniteStateMachineEngine {
                     log.info("Processing Transition " + transition);
                     State toState = transition.getToState();
                     taskManager.fireEvent(toState.getTask(), context);
-                    toState.setActive(true);
+                    toState.setAlive(true);
+                    toState.setStartTime(new Date());
                 }
-                state.setActive(false);
+                state.setAlive(false);
+                state.setEndTime(new Date());
             }
         }
 
@@ -73,5 +98,13 @@ public class FiniteStateMachineEngine {
     // For tests only
     public void setTaskManager(TaskManager taskManager) {
         this.taskManager = taskManager;
+    }
+
+    public void setContext(DragenAppContext context) {
+        this.context = context;
+    }
+
+    public DragenAppContext getContext() {
+        return context;
     }
 }

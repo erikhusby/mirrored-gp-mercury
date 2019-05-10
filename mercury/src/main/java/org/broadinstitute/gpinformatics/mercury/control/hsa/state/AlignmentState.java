@@ -10,7 +10,6 @@ import javax.persistence.Table;
 
 @Entity
 @Audited
-@Table(schema = "mercury")
 public class AlignmentState extends State {
 
     @ManyToOne
@@ -20,8 +19,8 @@ public class AlignmentState extends State {
     public AlignmentState() {
     }
 
-    public AlignmentState(String name, MercurySample mercurySample) {
-        super(name);
+    public AlignmentState(String name, FiniteStateMachine finiteStateMachine, MercurySample mercurySample) {
+        super(name, finiteStateMachine);
         this.mercurySample = mercurySample;
     }
 

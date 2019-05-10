@@ -7,10 +7,12 @@ import javax.persistence.Table;
 
 @Entity
 @Audited
-@Table(schema = "mercury")
 public class GenericState extends State {
 
-    public GenericState(String name) {
-        super(name);
+    public GenericState() {
+    }
+
+    public GenericState(String name, FiniteStateMachine finiteStateMachine) {
+        super(name, finiteStateMachine);
     }
 }

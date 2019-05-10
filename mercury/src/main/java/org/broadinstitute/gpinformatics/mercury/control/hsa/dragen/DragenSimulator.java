@@ -45,8 +45,8 @@ public class DragenSimulator implements Dragen {
     private TaskResult handleDemultiplex(DemultiplexTask task) throws IOException {
         File sampleSheet = task.getSampleSheet();
 
-        if (!sampleSheet.exists()) {
-            sampleSheet.createNewFile();
+        if (sampleSheet == null || !sampleSheet.exists()) {
+            return new TaskResult(new Random().nextLong(), "Success", 0);
         }
 
         File outputDir = task.getOutputDirectory();
