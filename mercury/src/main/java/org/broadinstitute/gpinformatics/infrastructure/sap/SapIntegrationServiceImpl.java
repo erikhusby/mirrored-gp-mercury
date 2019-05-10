@@ -182,9 +182,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 + additionalSampleCount;
         }
 
-        if (forOrderValueQuery) {
-            previousBilledCount = (int) ProductOrder.getBilledSampleCount(placedOrder, product);
-        }
+//        if (forOrderValueQuery) {
+//            previousBilledCount = (int) ProductOrder.getBilledSampleCount(placedOrder, product);
+//        }
         return BigDecimal.valueOf(sampleCount - previousBilledCount);
     }
 
@@ -428,7 +428,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
             if (sapCompanyConfiguration == SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES ||
                 (sapCompanyConfiguration != SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES  &&
-                 sapMaterial.getProductHierarchy() == SAPCompanyConfiguration.BROAD.getSalesOrganization())) {
+                 sapMaterial.getProductHierarchy().equals( SAPCompanyConfiguration.BROAD.getSalesOrganization()))) {
                 sapMaterial.setCompanyCode(sapCompanyConfiguration);
 
                 String materialName =

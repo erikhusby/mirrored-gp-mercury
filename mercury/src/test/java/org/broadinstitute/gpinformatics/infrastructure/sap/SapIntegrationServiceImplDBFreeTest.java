@@ -31,7 +31,6 @@ import org.broadinstitute.sap.entity.order.SAPOrderItem;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
-import org.hamcrest.Matchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -53,12 +52,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.*;
+import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.emptyOrNullString;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SapIntegrationServiceImplDBFreeTest {
@@ -414,7 +412,7 @@ public class SapIntegrationServiceImplDBFreeTest {
                     Option.create(Option.Type.ORDER_VALUE_QUERY)).doubleValue();
             assertThat(primarySampleCount, is(equalTo((double) countTestPDO.getSamples().size()+extraSamples)));
             assertThat(primaryClosingCount, is(equalTo(closingCount)));
-            assertThat(primaryOrderValueQueryCount, is(equalTo((double) countTestPDO.getSamples().size()+extraSamples - closingCount)));
+            assertThat(primaryOrderValueQueryCount, is(equalTo((double) countTestPDO.getSamples().size()+extraSamples)));
 
 
             for (ProductOrderAddOn addOn : countTestPDO.getAddOns()) {
@@ -429,7 +427,7 @@ public class SapIntegrationServiceImplDBFreeTest {
                         Option.create(Option.Type.ORDER_VALUE_QUERY)).doubleValue();
                 assertThat(addonSampleCount, is(equalTo((double) countTestPDO.getSamples().size()+extraSamples)));
                 assertThat(addonClosingCount, is(equalTo(closingCount)));
-                assertThat(addOnOrderValueQueryCount, is(equalTo((double) countTestPDO.getSamples().size()+extraSamples - closingCount)));
+                assertThat(addOnOrderValueQueryCount, is(equalTo((double) countTestPDO.getSamples().size()+extraSamples )));
             }
             addLedgerItems(countTestPDO, 1);
 
