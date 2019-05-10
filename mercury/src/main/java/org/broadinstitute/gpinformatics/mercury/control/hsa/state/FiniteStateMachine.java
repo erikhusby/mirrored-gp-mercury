@@ -13,6 +13,7 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,16 +28,23 @@ public class FiniteStateMachine {
     @Column(name = "FINITE_STATE_MACHINE_ID")
     private Long finiteStateMachineId;
 
-    @OneToMany(cascade = CascadeType.PERSIST)
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "finiteStateMachine")
     private List<State> states;
 
-    @OneToMany(cascade = CascadeType.PERSIST)
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "finiteStateMachine")
     private List<Transition> transitions;
 
     @Enumerated(EnumType.STRING)
     private Status status;
 
+    private Date dateQueued;
+
+    private Date dateStarted;
+
+    private Date dateCompleted;
+
     public FiniteStateMachine() {
+        dateQueued = new Date();
     }
 
     public List<State> getStates() {
@@ -56,7 +64,7 @@ public class FiniteStateMachine {
     }
 
     public State getStartState() {
-        return states.stream().filter(State::isStart).findFirst().get();
+        return states.stream().filter(State::isStartState).findFirst().get();
     }
 
     public List<Transition> getTransitionsFromState(State state) {
@@ -78,10 +86,34 @@ public class FiniteStateMachine {
     }
 
     public boolean isComplete() {
-        return states.stream().noneMatch(State::isActive);
+        return states.stream().noneMatch(State::isAlive);
+    }
+
+    public Date getDateQueued() {
+        return dateQueued;
+    }
+
+    public void setDateQueued(Date queuedTime) {
+        this.dateQueued = queuedTime;
+    }
+
+    public Date getDateStarted() {
+        return dateStarted;
+    }
+
+    public void setDateStarted(Date startedTime) {
+        this.dateStarted = startedTime;
+    }
+
+    public Date getDateCompleted() {
+        return dateCompleted;
+    }
+
+    public void setDateCompleted(Date completedTime) {
+        this.dateCompleted = completedTime;
     }
 
     public List<State> getActiveStates() {
-        return states.stream().filter(State::isActive).collect(Collectors.toList());
+        return states.stream().filter(State::isAlive).collect(Collectors.toList());
     }
 }

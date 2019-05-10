@@ -11,7 +11,6 @@ import javax.persistence.UniqueConstraint;
 
 @Entity
 @Audited
-@Table(schema = "mercury")
 public class ProcessTask extends Task {
 
     private String commandLineArgument;

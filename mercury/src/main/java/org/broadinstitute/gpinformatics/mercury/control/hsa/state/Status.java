@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.state;
 
 public enum Status {
-    WAITING("Waiting"),
+    QUEUED("Queued"),
     RUNNING("Running"),
     COMPLETE("Complete"),
-    STOPPED("Complete"),
+    STOPPED("Stopped"),
     FAILED("Failed");
 
     private final String statusName;

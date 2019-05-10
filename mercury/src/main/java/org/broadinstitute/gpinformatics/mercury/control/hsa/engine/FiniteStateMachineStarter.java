@@ -5,9 +5,14 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtility;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.StateMachineDao;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenAppContext;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenSimulator;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
@@ -27,12 +32,9 @@ import static javax.ejb.ConcurrencyManagementType.BEAN;
 @Startup
 @Singleton
 @ConcurrencyManagement(BEAN)
-public class StateMachineStarter {
+public class FiniteStateMachineStarter {
 
-    private static final Log log = LogFactory.getLog(StateMachineStarter.class);
-
-    @Inject
-    private Deployment deployment;
+    private static final Log log = LogFactory.getLog(FiniteStateMachineStarter.class);
 
     /**
      * Interval in minutes for the timer to fire off.
@@ -49,6 +51,9 @@ public class StateMachineStarter {
 
     @Inject
     private StateMachineDao stateMachineDao;
+
+    @Inject
+    private UserBean userBean;
 
     @Inject
     private FiniteStateMachineEngine engine;
@@ -71,6 +76,10 @@ public class StateMachineStarter {
      */
     @Timeout
     void findRuns(Timer timer) {
+        if (!isEnabled()) {
+            return;
+        }
+
         // Skips retries, indicated by a repeated nextTimeout value.
         Date nextTimeout = timer.getNextTimeout();
         if (nextTimeout.after(previousNextTimeout)) {
@@ -79,7 +88,13 @@ public class StateMachineStarter {
                 @Override
                 public void apply() {
                     //TODO User bean for audit trail
+
+                    userBean.login("seqsystem");
+                    // FOr testing
+                    DragenAppContext appContext = new DragenAppContext(new DragenSimulator());
+
                     for (FiniteStateMachine stateMachine: stateMachineDao.findByStatus(Status.RUNNING)) {
+                        engine.setContext(appContext);
                         engine.resumeMachine(stateMachine);
                     }
                 }
@@ -87,5 +102,15 @@ public class StateMachineStarter {
         } else {
             log.trace("Skipping dragen process watcher timer retry");
         }
+    }
+
+    /**
+     * Checks for system vairable useFiniteStateMachineStarter to see if its is enabled for this
+     * environment.
+     *
+     * @return true if it's an environment where the finite state machine starter should be run
+     */
+    private boolean isEnabled() {
+        return Boolean.getBoolean("useFiniteStateMachineStarter");
     }
 }

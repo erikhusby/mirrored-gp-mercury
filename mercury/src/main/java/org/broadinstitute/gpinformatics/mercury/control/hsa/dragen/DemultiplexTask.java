@@ -1,11 +1,24 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.dragen;
 
+import org.hibernate.envers.Audited;
+
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.io.File;
 import java.util.Objects;
 
+@Entity
+@Audited
 public class DemultiplexTask extends ProcessTask {
+
+    @Transient
     private File bclInputDirectory;
+
+    @Transient
     private File outputDirectory;
+
+    @Transient
     private File sampleSheet;
 
     /**
@@ -33,6 +46,9 @@ public class DemultiplexTask extends ProcessTask {
                 sampleSheet(sampleSheet).build();
 
         setCommandLineArgument(dragenTaskBuilder);
+    }
+
+    public DemultiplexTask() {
     }
 
     public File getBclInputDirectory() {

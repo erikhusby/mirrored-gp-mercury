@@ -12,7 +12,6 @@ import java.io.File;
 
 @Entity
 @Audited
-@Table(schema = "mercury", uniqueConstraints = {@UniqueConstraint(columnNames = {"FILE_PATH"})})
 public class WaitForFileTask extends Task {
 
     @Column(name = "FILE_PATH")

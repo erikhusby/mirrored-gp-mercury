@@ -9,8 +9,6 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AlignmentState;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.state.DemultiplexState;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;

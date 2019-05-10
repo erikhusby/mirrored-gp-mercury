@@ -12,10 +12,10 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import java.util.Optional;
 
 /**
  * Defines a transition between states in the finite state machine.
@@ -32,20 +32,26 @@ public class Transition {
     private Long transitionId;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST}, optional = false)
-    @Column(name = "FROM_STATE")
+    @JoinColumn(name = "FROM_STATE")
     private State fromState;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST}, optional = false)
-    @Column(name = "TO_STATE")
+    @JoinColumn(name = "TO_STATE")
     private State toState;
 
-    private String name;
+    @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST}, optional = false)
+    @JoinColumn(name = "FINITE_STATE_MACHINE")
+    private FiniteStateMachine finiteStateMachine;
+
+    @Column(name = "TRANSITION_NAME")
+    private String transitionName;
 
     public Transition() {
     }
 
-    public Transition(String name) {
-        this.name = name;
+    public Transition(String transitionName, FiniteStateMachine finiteStateMachine) {
+        this.transitionName = transitionName;
+        this.finiteStateMachine = finiteStateMachine;
     }
 
     public Long getTransitionId() {
@@ -68,12 +74,21 @@ public class Transition {
         this.toState = toState;
     }
 
-    public String getName() {
-        return name;
+    public String getTransitionName() {
+        return transitionName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setTransitionName(String name) {
+        this.transitionName = name;
+    }
+
+    public FiniteStateMachine getFiniteStateMachine() {
+        return finiteStateMachine;
+    }
+
+    public void setFiniteStateMachine(
+            FiniteStateMachine finiteStateMachine) {
+        this.finiteStateMachine = finiteStateMachine;
     }
 
     @Override
@@ -82,22 +97,24 @@ public class Transition {
         if ( !(other instanceof Transition) ) return false;
         Transition castOther = (Transition) other;
         return new EqualsBuilder().append(fromState, castOther.getFromState())
+                .append(finiteStateMachine, castOther.getFiniteStateMachine())
                 .append(transitionId, castOther.getTransitionId())
                 .append(toState, castOther.getToState())
-                .append(name, castOther.getName()).isEquals();
+                .append(transitionName, castOther.getTransitionName()).isEquals();
     }
 
     @Override
     public int hashCode() {
         return new HashCodeBuilder().append(getTransitionId()).append(getFromState()).append(getToState())
-                .append(getName()).toHashCode();
+                .append(getTransitionName()).append(getFiniteStateMachine()).toHashCode();
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this)
+                .append("finiteStateMachine", finiteStateMachine)
                 .append("transitionId", transitionId)
-                .append("name", name)
+                .append("transitionName", transitionName)
                 .append("fromState", fromState)
                 .append("toState", toState)
                 .toString();
