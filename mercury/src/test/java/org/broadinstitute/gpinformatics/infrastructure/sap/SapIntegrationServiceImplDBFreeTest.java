@@ -550,7 +550,7 @@ public class SapIntegrationServiceImplDBFreeTest {
                     Option.create(Option.Type.ORDER_VALUE_QUERY)).doubleValue();
             assertThat(primarySampleCount, is(equalTo((double) countTestPDO.getSamples().size()+extraSamples)));
             assertThat(primaryClosingCount, is(equalTo(closingCount)));
-            assertThat(primaryOrderValueQueryCount, is(equalTo((double) countTestPDO.getSamples().size()+extraSamples - closingCount)));
+            assertThat(primaryOrderValueQueryCount, is(equalTo((double) countTestPDO.getSamples().size()+extraSamples)));
 
 
             for (ProductOrderAddOn addOn : countTestPDO.getAddOns()) {
@@ -565,7 +565,7 @@ public class SapIntegrationServiceImplDBFreeTest {
                         Option.create(Option.Type.ORDER_VALUE_QUERY)).doubleValue();
                 assertThat(addonSampleCount, is(equalTo((double) countTestPDO.getSamples().size()+extraSamples)));
                 assertThat(addonClosingCount, is(equalTo(closingCount)));
-                assertThat(addOnOrderValueQueryCount, is(equalTo((double) countTestPDO.getSamples().size()+extraSamples - closingCount)));
+                assertThat(addOnOrderValueQueryCount, is(equalTo((double) countTestPDO.getSamples().size()+extraSamples )));
             }
             addLedgerItems(countTestPDO, 1);
 

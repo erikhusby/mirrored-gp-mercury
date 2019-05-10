@@ -184,9 +184,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 + additionalSampleCount;
         }
 
-        if (forOrderValueQuery) {
-            previousBilledCount = (int) ProductOrder.getBilledSampleCount(placedOrder, product);
-        }
+//        if (forOrderValueQuery) {
+//            previousBilledCount = (int) ProductOrder.getBilledSampleCount(placedOrder, product);
+//        }
         return BigDecimal.valueOf(sampleCount - previousBilledCount);
     }
 
@@ -385,17 +385,23 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             getClient().changeMaterialDetails(SAPChangeMaterial.fromSAPMaterial(sapMaterial));
         }
 
-        Set<SAPMaterial> extendedProducts = new HashSet<>();
-        for (SAPCompanyConfiguration sapCompanyConfiguration : EXTENDED_PLATFORMS) {
-            log.debug("Current company config is " + sapCompanyConfiguration.name());
-            SAPMaterial tempMaterial = null;
-            if(sapCompanyConfiguration == SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) {
-                tempMaterial = initializeSapMaterialObject(product);
-            } else {
+        final List<SAPCompanyConfiguration> otherPlatformList =
+                Stream.of(SAPCompanyConfiguration.GPP,
+                        SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES,
+                        SAPCompanyConfiguration.PRISM).collect(
+                        Collectors.toList());
+        for (SAPCompanyConfiguration sapCompanyConfiguration : otherPlatformList) {
 
-                if(!product.isExternalOnlyProduct() && !product.isClinicalProduct()) {
-                    log.debug("Saving material for " + sapCompanyConfiguration.name());
-                    tempMaterial = initializeSapMaterialObject(product);
+            if (sapCompanyConfiguration == SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES ||
+                (sapCompanyConfiguration != SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES  &&
+                 sapMaterial.getProductHierarchy().equals( SAPCompanyConfiguration.BROAD.getSalesOrganization()))) {
+                sapMaterial.setCompanyCode(sapCompanyConfiguration);
+
+                String materialName =
+                        null;
+                if (sapCompanyConfiguration == SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) {
+                    materialName = StringUtils.defaultString(product.getAlternateExternalName(), product.getName());
+                    sapMaterial.setMaterialName(materialName);
                 } else {
                     log.debug("current product is either External or Clinical");
                 }
