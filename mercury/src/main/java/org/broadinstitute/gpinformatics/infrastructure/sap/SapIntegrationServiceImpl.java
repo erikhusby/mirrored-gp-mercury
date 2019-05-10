@@ -140,6 +140,28 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         return wrappedClient;
     }
 
+    /**
+     * Helper method to generate the Quantity of SAP order line items based on the product order, product for the line
+     * item, and the context in which it is called.
+     *
+     * This method will be smart enough to support the varying needs for for line item quantity:
+     *  <ul>
+     *      <li>Creating a new order -- This will be the scenario with which we are attempting to create a new SAP
+     *          order.  the value should be the effective quantity for the product MINUS any billing that may have been
+     *          done on a previous order and the current order</li>
+     *      <li>Closing an order -- Similar to creating a new order, this scenario will set the line item quantity
+     *          to be the effective quantity for the product minusany billing that may have been done on the
+     *          current order</li>
+     *      <li>Order value query AND None --  This case will return the current state of the SAP Order.  The value will
+     *          match what Create was when it was first call in that it excludes the quantity of what was billed on any
+     *          previous orders</li>
+     *  </ul>
+     * @param placedOrder
+     * @param product
+     * @param additionalSampleCount
+     * @param serviceOptions
+     * @return
+     */
     public static BigDecimal getSampleCount(ProductOrder placedOrder, Product product, int additionalSampleCount,
                                             SapIntegrationService.Option serviceOptions) {
         double sampleCount = 0d;
@@ -157,9 +179,16 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         boolean forOrderValueQuery = serviceOptions.hasOption(Type.ORDER_VALUE_QUERY);
 
         for (SapOrderDetail sapOrderDetail : placedOrder.getSapReferenceOrders()) {
+
+            // If we are creating a new order, we want the SAP Order quantity to be :
+            // Non abandoned product order quantity MINUS anything that has been billed on this order previously
+
+            // If we are NOT creating a new order (General order update or order value query)
+            // then the current SAP order quantity will be:
+            // Non abandoned product order quantity MINUS anything that has been billed on a previous SAP order.
+
             if (sapOrderDetail.equals(placedOrder.latestSapOrderDetail()) && !creatingNewOrder) {
-                previousBilledCount = 0;
-                break;
+                continue;
             }
 
             final Map<Product, Double> numberOfBilledEntriesByProduct =
@@ -169,6 +198,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             }
         }
 
+
+        //When closing the SAP order, the SAP order quantity will become however much has been billed on the current
+        // order for the given product
         if (closingOrder && !placedOrder.isPriorToSAP1_5()) {
             if (!placedOrder.isSavedInSAP()) {
                 throw new InformaticsServiceException(
@@ -178,16 +210,22 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         } else if (product.getSupportsNumberOfLanes() && placedOrder.getLaneCount() > 0) {
             sampleCount += (adjustmentQuantity != null) ? adjustmentQuantity : placedOrder.getLaneCount();
         } else {
-            ProductOrder targetSapPdo = placedOrder;
             sampleCount += (adjustmentQuantity != null) ? adjustmentQuantity :
-                targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY)
+                placedOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY)
                 + additionalSampleCount;
         }
 
 //        if (forOrderValueQuery) {
 //            previousBilledCount = (int) ProductOrder.getBilledSampleCount(placedOrder, product);
 //        }
-        return BigDecimal.valueOf(sampleCount - previousBilledCount);
+        BigDecimal countResults = BigDecimal.valueOf(sampleCount);
+        if(!closingOrder) {
+            countResults = countResults.subtract(BigDecimal.valueOf(previousBilledCount));
+            if (countResults.compareTo(BigDecimal.ZERO) < 0) {
+                countResults = BigDecimal.ZERO;
+            }
+        }
+        return countResults;
     }
 
     /**
