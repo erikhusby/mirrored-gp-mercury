@@ -227,7 +227,8 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         conversionPdo.addSapOrderDetail(new SapOrderDetail("testsap001", conversionPdo.getTotalNonAbandonedCount(
                 ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),
-                conversionPdo.getQuoteId(), conversionPdo.getSapCompanyConfigurationForProductOrder().getCompanyCode()));
+                conversionPdo.getQuoteId(),
+                conversionPdo.getSapCompanyConfigurationForProductOrder(sapQuote).getCompanyCode()));
 
         SAPOrder convertedOrder2 = integrationService.initializeSAPOrder(sapQuote, conversionPdo, Option.create(Option.Type.CREATING));
         for(SAPOrderItem item:convertedOrder2.getOrderItems()) {
@@ -485,49 +486,63 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         materials.add(primaryMaterial);
 
-        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD),
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization()),
                 is(equalTo(primaryMaterial)));
-        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES),
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization()),
                 is(nullValue()));
-        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.PRISM),
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.PRISM.getSalesOrganization()),
                 is(nullValue()));
-        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.GPP),
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.GPP.getSalesOrganization()),
                 is(nullValue()));
 
         materials.add(primaryExternalMaterial);
         productPriceCache.refreshCache();
-        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD),
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization()),
                 is(equalTo(primaryMaterial)));
-        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES),
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization()),
                 is(equalTo(primaryExternalMaterial)));
-        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.PRISM),
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.PRISM.getSalesOrganization()),
                 is(nullValue()));
-        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.GPP),
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.GPP.getSalesOrganization()),
                 is(nullValue()));
 
         materials.add(primaryPrismMaterial);
         productPriceCache.refreshCache();
-        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD),
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization()),
                 is(equalTo(primaryMaterial)));
-        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES),
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization()),
                 is(equalTo(primaryExternalMaterial)));
-        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.PRISM),
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.PRISM.getSalesOrganization()),
                 is(equalTo(primaryPrismMaterial)));
-        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.GPP),
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.GPP.getSalesOrganization()),
                 is(nullValue()));
 
         materials.add(primaryGPPMaterial);
         productPriceCache.refreshCache();
-        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD),
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization()),
                 is(equalTo(primaryMaterial)));
-        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES),
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization()),
                 is(equalTo(primaryExternalMaterial)));
-        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.PRISM),
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.PRISM.getSalesOrganization()),
                 is(equalTo(primaryPrismMaterial)));
-        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId, SapIntegrationClientImpl.SAPCompanyConfiguration.GPP),
+        assertThat(productPriceCache.findByPartNumber(primaryTestMaterialId,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.GPP.getSalesOrganization()),
                 is(equalTo(primaryGPPMaterial)));
-
-
     }
 
     private void addLedgerItems(ProductOrder order, int ledgerCount) {

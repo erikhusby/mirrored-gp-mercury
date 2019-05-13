@@ -3189,7 +3189,7 @@ public class ProductOrderActionBeanTest {
                         new Date(),new Date(),
                         Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
-        productMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        productMaterial.updateCompanyConfiguration(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(productMaterial);
 
         for (ProductOrderAddOn addOn : pdo.getAddOns()) {
@@ -3207,7 +3207,7 @@ public class ProductOrderActionBeanTest {
                             BigDecimal.ONE,"", "", "",
                             new Date(), new Date(),
                             Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
-            addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            addonMaterial.updateCompanyConfiguration(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
             returnMaterials.add(addonMaterial);
         }
 
@@ -3474,7 +3474,7 @@ public class ProductOrderActionBeanTest {
                         BigDecimal.ONE, "", "", "", new Date(), new Date(),
                         Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
-        productMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        productMaterial.updateCompanyConfiguration(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(productMaterial);
 
         for (ProductOrderAddOn addOn : pdo.getAddOns()) {
@@ -3832,7 +3832,7 @@ public class ProductOrderActionBeanTest {
     }
 
     private static BigDecimal incrementOrderValue(BigDecimal potentialOrderValue, PriceList priceList,
-                                                 ProductOrder pdo, Product product) {
+                                                  ProductOrder pdo, Product product) {
         BigDecimal primaryMultiplier =
                 new BigDecimal(priceList.findByKeyFields(product.getPrimaryPriceItem()).getPrice());
         Optional<PriceAdjustment> primaryPriceAdjustment = Optional.ofNullable(pdo.getAdjustmentForProduct(

@@ -165,8 +165,7 @@ public class BillingCreditDbFreeTest {
             Mockito.any(QuotePriceItem.class), Mockito.any(Date.class), Mockito.anyDouble(), Mockito.anyString(),
             Mockito.anyString(), Mockito.anyString(), Mockito.any(BigDecimal.class))).thenReturn("workId-" + quoteId);
         SapIntegrationClientImpl.SAPCompanyConfiguration broad = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
-        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.any(
-            SapIntegrationClientImpl.SAPCompanyConfiguration.class)))
+        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.anyString()))
             .thenReturn(new SAPMaterial("test", broad, broad.getDefaultWbs(), "test description", "100",
                 SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(),
                 new Date(), Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
@@ -255,8 +254,7 @@ public class BillingCreditDbFreeTest {
                     .thenThrow(new RuntimeException("Quote server should not be called in this case"));
 
         } else {
-            Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.any(
-                    SapIntegrationClientImpl.SAPCompanyConfiguration.class)))
+            Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.anyString()))
                     .thenThrow(new RuntimeException("SAP Should not be called in this case"));
             Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString()))
                     .thenThrow(new RuntimeException("SAP Should not be called in this case"));
@@ -344,8 +342,7 @@ public class BillingCreditDbFreeTest {
                     .thenThrow(new RuntimeException("Quote server should not be called in this case"));
 
         } else {
-            Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.any(
-                    SapIntegrationClientImpl.SAPCompanyConfiguration.class)))
+            Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.anyString()))
                     .thenThrow(new RuntimeException("SAP Should not be called in this case"));
             Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString()))
                     .thenThrow(new RuntimeException("SAP Should not be called in this case"));
@@ -417,8 +414,7 @@ public class BillingCreditDbFreeTest {
                     .thenThrow(new RuntimeException("Quote server should not be called in this case"));
 
         } else {
-            Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.any(
-                    SapIntegrationClientImpl.SAPCompanyConfiguration.class)))
+            Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.anyString()))
                     .thenThrow(new RuntimeException("SAP Should not be called in this case"));
             Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString()))
                     .thenThrow(new RuntimeException("SAP Should not be called in this case"));
@@ -477,8 +473,7 @@ public class BillingCreditDbFreeTest {
                     .thenThrow(new RuntimeException("Quote server should not be called in this case"));
 
         } else {
-            Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.any(
-                    SapIntegrationClientImpl.SAPCompanyConfiguration.class)))
+            Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.anyString()))
                     .thenThrow(new RuntimeException("SAP Should not be called in this case"));
             Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString()))
                     .thenThrow(new RuntimeException("SAP Should not be called in this case"));
@@ -540,8 +535,7 @@ public class BillingCreditDbFreeTest {
                     .thenThrow(new RuntimeException("Quote server should not be called in this case"));
 
         } else {
-            Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.any(
-                    SapIntegrationClientImpl.SAPCompanyConfiguration.class)))
+            Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.anyString()))
                     .thenThrow(new RuntimeException("SAP Should not be called in this case"));
             Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString()))
                     .thenThrow(new RuntimeException("SAP Should not be called in this case"));

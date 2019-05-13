@@ -38,7 +38,6 @@ import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
@@ -238,16 +237,14 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             sapOrderNumber = orderToUpdate.getSapOrderNumber();
         }
 
-        SAPCompanyConfiguration sapCompanyConfiguration = orderToUpdate.getSapCompanyConfigurationForProductOrder();
+        SAPCompanyConfiguration sapCompanyConfiguration =
+                placedOrder.getSapCompanyConfigurationForProductOrder(sapQuote);
         String userFullName = bspUserList.getUserFullName(orderToUpdate.getCreatedBy());
         List<SAPOrderItem> orderItems = getOrderItems(sapQuote, placedOrder, placedOrder.getProduct(), serviceOptions);
 
-        SAPOrder newOrder =
-            new SAPOrder(sapCompanyConfiguration, orderToUpdate.getQuoteId(), userFullName, sapOrderNumber,
-                orderToUpdate.getJiraTicketKey(), orderToUpdate.getResearchProject().getJiraTicketKey(), null,
-                orderItems.toArray(new SAPOrderItem[0]));
-
-        return newOrder;
+        return new SAPOrder(sapCompanyConfiguration, orderToUpdate.getQuoteId(), userFullName, sapOrderNumber,
+            orderToUpdate.getJiraTicketKey(), orderToUpdate.getResearchProject().getJiraTicketKey(), null,
+            orderItems.toArray(new SAPOrderItem[0]));
     }
 
     private List<SAPOrderItem> getOrderItems(SapQuote sapQuote, ProductOrder placedOrder, Product primaryProduct,
@@ -377,7 +374,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     @Override
     public void publishProductInSAP(Product product) throws SAPIntegrationException {
         SAPMaterial sapMaterial = initializeSapMaterialObject(product);
-        if (productPriceCache.findByProduct(product, sapMaterial.getCompanyCode()) == null) {
+        if (productPriceCache.findByProduct(product,
+                SAPCompanyConfiguration.fromSalesOrgForMaterial(sapMaterial.getSalesOrg()).getSalesOrganization()) == null) {
             log.debug("Creating product " + sapMaterial.getMaterialIdentifier());
             getClient().createMaterial(sapMaterial);
         } else {
@@ -402,14 +400,16 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             }
 
             if(tempMaterial != null) {
-                tempMaterial.setCompanyCode(sapCompanyConfiguration);
+                tempMaterial.setSalesOrg(sapCompanyConfiguration.getSalesOrganization());
+                tempMaterial.setDistributionChannel(sapCompanyConfiguration.getDistributionChannel());
                 extendedProducts.add(tempMaterial);
             }
         }
 
         for (SAPMaterial extendedProduct : extendedProducts) {
 
-            if (productPriceCache.findByProduct(product, extendedProduct.getCompanyCode()) == null) {
+            if (productPriceCache.findByProduct(product,
+                    SAPCompanyConfiguration.fromSalesOrgForMaterial(extendedProduct.getSalesOrg()).getSalesOrganization()) == null) {
                 log.debug("Creating product " + extendedProduct.getMaterialIdentifier());
                 getClient().createMaterial(extendedProduct);
             } else {
@@ -421,8 +421,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     private boolean isNewMaterial(Product product) {
-        return (productPriceCache.findByProduct(product, SAPCompanyConfiguration.BROAD) == null)
-            && (productPriceCache.findByProduct(product, SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) == null);
+        return (productPriceCache.findByProduct(product,
+                SAPCompanyConfiguration.BROAD.getSalesOrganization()) == null)
+            && (productPriceCache.findByProduct(product,
+                SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization()) == null);
     }
 
     @Override
@@ -524,6 +526,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * @param companyProductOrder Product Order from which the company code is to be determined
      * @return an indicator that represents one of the configured companies within SAP
      */
+    @Deprecated
     public static SAPCompanyConfiguration determineCompanyCode(ProductOrder companyProductOrder)
             throws SAPIntegrationException
     {
@@ -537,18 +540,6 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
 
         return companyCode;
-    }
-
-    public static SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyCode(SapQuote quote) {
-        SapIntegrationClientImpl.SAPCompanyConfiguration sapCompanyConfiguration =
-                SapIntegrationClientImpl.SAPCompanyConfiguration
-                        .fromSalesOrgForMaterial(quote.getQuoteHeader().getSalesOrganization());
-
-        if(!Arrays.asList(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES,
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD).contains(sapCompanyConfiguration)) {
-            sapCompanyConfiguration = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
-        }
-        return sapCompanyConfiguration;
     }
 
     protected void setQuoteService(QuoteService quoteService) {

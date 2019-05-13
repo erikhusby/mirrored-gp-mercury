@@ -345,16 +345,17 @@ public class ProductOrderEjb {
 
         List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(editedProductOrder);
         try {
-            productPriceCache.determineIfProductsExist(allProductsOrdered, editedProductOrder.getSapCompanyConfigurationForProductOrder());
+            SapQuote sapQuote = editedProductOrder.getSapQuote(sapService);
+
+            productPriceCache.determineIfProductsExist(allProductsOrdered,
+                    sapQuote.getQuoteHeader().getSalesOrganization());
 
             final boolean quoteIdChange = editedProductOrder.isSavedInSAP() && !editedProductOrder.isLatestSapQuote();
 
             if ((!editedProductOrder.isSavedInSAP() && allowCreateOrder) || quoteIdChange) {
                 createOrderInSAP(editedProductOrder, quoteIdChange, allProductsOrdered, messageCollection, true);
 
-
             } else if (editedProductOrder.isSavedInSAP()) {
-
                 updateOrderInSap(editedProductOrder, allProductsOrdered, messageCollection,
                         CollectionUtils.containsAny(Arrays.asList(OrderStatus.Abandoned, OrderStatus.Completed),
                                 Collections.singleton(editedProductOrder.getOrderStatus()))
@@ -426,9 +427,10 @@ public class ProductOrderEjb {
         if(StringUtils.isNotBlank(orderToPublish.getSapOrderNumber())) {
             oldNumber = orderToPublish.getSapOrderNumber();
         }
+        SapQuote quote = orderToPublish.getSapQuote(sapService);
         orderToPublish.addSapOrderDetail(new SapOrderDetail(sapOrderIdentifier,0,
                 orderToPublish.getQuoteId(),
-                SapIntegrationServiceImpl.determineCompanyCode(orderToPublish).getCompanyCode()));
+                orderToPublish.getSapCompanyConfigurationForProductOrder(quote).getCompanyCode()));
 
         if(quoteIdChange ) {
             String body = "The SAP order " + oldNumber + " for PDO "+ orderToPublish.getBusinessKey()+

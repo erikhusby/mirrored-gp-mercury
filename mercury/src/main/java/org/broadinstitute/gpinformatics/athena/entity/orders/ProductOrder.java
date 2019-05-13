@@ -2584,6 +2584,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                     break;
                 }
             }
+            if(foundType == null) {
+                foundType = OrderAccessType.BROAD_PI_ENGAGED_WORK;
+            }
             return foundType;
         }
     }
@@ -2696,12 +2699,24 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     @NotNull
+    @Deprecated
     public SapIntegrationClientImpl.SAPCompanyConfiguration getSapCompanyConfigurationForProductOrder() {
         SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
         if ((getOrderType() == OrderAccessType.COMMERCIAL)) {
             companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES;
         }
         return companyCode;
+    }
+
+    public SapIntegrationClientImpl.SAPCompanyConfiguration getSapCompanyConfigurationForProductOrder(SapQuote quote) {
+        SapIntegrationClientImpl.SAPCompanyConfiguration sapCompanyConfiguration =
+                SapIntegrationClientImpl.SAPCompanyConfiguration
+                        .fromSalesOrgForMaterial(quote.getQuoteHeader().getSalesOrganization());
+        if(!EnumSet.of(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES).contains(sapCompanyConfiguration)) {
+            sapCompanyConfiguration = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+        }
+        return sapCompanyConfiguration;
     }
 
     public boolean hasSapQuote() {

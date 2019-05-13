@@ -764,7 +764,7 @@ public class ProductActionBean extends CoreActionBean {
 
     public boolean productInSAP(String partNumber, SapIntegrationClientImpl.SAPCompanyConfiguration companyCode) {
 
-        return productPriceCache.findByPartNumber(partNumber, companyCode) != null;
+        return productPriceCache.findByPartNumber(partNumber, companyCode.getSalesOrganization()) != null;
     }
 
     public ProductDao.Availability getAvailability() {
