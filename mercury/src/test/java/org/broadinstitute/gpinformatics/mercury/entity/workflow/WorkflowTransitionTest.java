@@ -336,7 +336,7 @@ public class WorkflowTransitionTest extends Arquillian {
     @Test
     public void testGermlineTransitions() throws IOException {
         Assert.assertEquals(germlineIssue.getStatus(), "On Hold");
-        germlineIssue.postTransition("Return to LC", null);
+        germlineIssue.postTransition("In LC", null);
 
         String picoPlate = "GermPico" + System.currentTimeMillis();
 
