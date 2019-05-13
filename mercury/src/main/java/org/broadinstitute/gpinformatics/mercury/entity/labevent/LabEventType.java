@@ -854,7 +854,7 @@ public enum LabEventType {
                     targetSection(SBSSection.ALL96).
                     sourceSection(SBSSection.ALL96).targetWellTypeGeometry(PlateWell.WellType.Well2000).
                     sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.Cryovial2018).sourceMassRemoved(true).
-                    reagentNames(new String[]{"AllPrep 96 PowerFecal DNA/RNA"}).
+                    reagentRequirements(new ReagentRequirements[]{new ReagentRequirements("AllPrep 96 PowerFecal DNA/RNA")}).
                     build(),
             MaterialType.OTHER_LYSATE, LibraryType.NONE_ASSIGNED),
     STOOL_BEAD_BEATING("BeadBeating",
