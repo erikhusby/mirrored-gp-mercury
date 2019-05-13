@@ -56,8 +56,8 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     private Map<String, AnalysisType> analysisTypeMap = new HashMap<>();
     private Map<String, MolecularIndexingScheme> molecularIndexingSchemeMap = new HashMap<>();
     private Map<String, ReferenceSequence> referenceSequenceMap = new HashMap<>();
-    private Map<String, IlluminaFlowcell.FlowcellType> sequencerModelMap = new HashMap<>();
     private Set<Object> entitiesToUpdate = new HashSet<>();
+    private List<String> validAggregationDataTypes = new ArrayList();
 
     // Maps adjusted header name to actual header name.
     protected Map<String, String> adjustedNames = new HashMap<>();
@@ -298,6 +298,7 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
             dto.setSex(get(getSexes(), index));
             dto.setVolume(asNonNegativeBigDecimal(get(getVolumes(), index),
                     VesselPooledTubesProcessor.Headers.VOLUME.getText(), dto.getRowNumber(), messages));
+            dto.setAggregationDataType(get(getAggregationDataTypes(), index));
         }
         return dtos;
     }
@@ -369,6 +370,17 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
                         "Concentration", mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber(),
                         found.getBarcode()));
             }
+            // Issues warnings for mixed values that may be technically possible in a pooled tube.
+            if (found.getInsertSize() != null && !Objects.equals(found.getInsertSize(), expected.getInsertSize())) {
+                messages.addWarning(String.format(SampleInstanceEjb.INCONSISTENT_TUBE, found.getRowNumber(),
+                        "Insert Size", mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber(),
+                        found.getBarcode()));
+            }
+            if (found.getReadLength() != null && !Objects.equals(found.getReadLength(), expected.getReadLength())) {
+                messages.addWarning(String.format(SampleInstanceEjb.INCONSISTENT_TUBE, found.getRowNumber(),
+                        "Read Length", mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber(),
+                        found.getBarcode()));
+            }
         }
     }
 
@@ -416,6 +428,11 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     }
 
     /**
+     * Does character set validation checks on the data.
+     */
+    abstract public void validateCharacterSet(List<SampleInstanceEjb.RowDto> dtos, MessageCollection messages);
+
+    /**
      * Does self-consistency and other validation checks on the data.
      * Entities fetched for the row data are accessed through maps referenced in the dtos.
      */
@@ -447,7 +464,7 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
                         getLabVesselMap().put(barcode, labVessel);
                     } else {
                         // Tube is being re-uploaded, so clearing old samples is appropriate.
-                        labVessel.getMercurySamples().clear();
+                        labVessel.clearSamples();
                     }
                     SampleInstanceEjb.RowDto firstRowHavingTube = mapBarcodeToFirstRow.get(barcode);
                     labVessel.setVolume(firstRowHavingTube.getVolume());
@@ -501,7 +518,7 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
 
             SampleInstanceEntity sampleInstanceEntity = makeSampleInstanceEntity(dto, labVessel, mercurySample);
 
-            labVessel.getSampleInstanceEntities().add(sampleInstanceEntity);
+            labVessel.addSampleInstanceEntity(sampleInstanceEntity);
             dto.setSampleInstanceEntity(sampleInstanceEntity);
             sampleInstanceEntities.add(sampleInstanceEntity);
         }
@@ -559,6 +576,7 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
             sampleInstanceEntity.setSampleLibraryName(dto.getLibraryName());
         }
         // An existing Sample Instance Entity gets rewritten.
+        sampleInstanceEntity.setAggregationDataType(dto.getAggregationDataType());
         sampleInstanceEntity.setAggregationParticle(dto.getAggregationParticle());
         sampleInstanceEntity.setAnalysisType(getAnalysisTypeMap().get(dto.getAnalysisTypeName()));
         sampleInstanceEntity.setComments(dto.getAdditionalSampleInformation() +
@@ -571,11 +589,12 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         sampleInstanceEntity.setMercurySample(mercurySample);
         sampleInstanceEntity.setMolecularIndexingScheme(getMolecularIndexingSchemeMap().get(dto.getMisName()));
         sampleInstanceEntity.setNumberLanes(dto.getNumberOfLanes());
-        sampleInstanceEntity.setReadLength(dto.getReadLength());
+        sampleInstanceEntity.setReadLength1(dto.getReadLength());
         sampleInstanceEntity.setReagentDesign(dto.getReagent());
         sampleInstanceEntity.setReferenceSequence(getReferenceSequenceMap().get(dto.getReferenceSequenceName()));
         sampleInstanceEntity.setRootSample(getSampleMap().get(dto.getRootSampleName()));
-        sampleInstanceEntity.setSequencerModel(getSequencerModelMap().get(dto.getSequencerModelName()));
+        sampleInstanceEntity.setSequencerModel(IlluminaFlowcell.FlowcellType.getTypeForExternalUiName(
+                dto.getSequencerModelName()));
         sampleInstanceEntity.setUploadDate(new Date());
         sampleInstanceEntity.setUmisPresent(dto.getUmisPresent());
         return sampleInstanceEntity;
@@ -834,6 +853,10 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return Collections.emptyList();
     }
 
+    public List<String> getAggregationDataTypes() {
+        return Collections.emptyList();
+    }
+
     public List<String> getReferenceSequences() {
         return Collections.emptyList();
     }
@@ -913,16 +936,20 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return analysisTypeMap;
     }
 
+    public List<String> getValidAggregationDataTypes() {
+        return validAggregationDataTypes;
+    }
+
+    public void setValidAggregationDataTypes(List<String> validAggregationDataTypes) {
+        this.validAggregationDataTypes = validAggregationDataTypes;
+    }
+
     public Map<String, MolecularIndexingScheme> getMolecularIndexingSchemeMap() {
         return molecularIndexingSchemeMap;
     }
 
     public Map<String, ReferenceSequence> getReferenceSequenceMap() {
         return referenceSequenceMap;
-    }
-
-    public Map<String, IlluminaFlowcell.FlowcellType> getSequencerModelMap() {
-        return sequencerModelMap;
     }
 
     /**

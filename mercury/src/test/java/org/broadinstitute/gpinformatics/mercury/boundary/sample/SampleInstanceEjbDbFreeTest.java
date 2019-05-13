@@ -4,6 +4,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
@@ -100,6 +101,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
     private JiraService jiraService = Mockito.mock(JiraService.class);
     private ReferenceSequenceDao referenceSequenceDao = Mockito.mock(ReferenceSequenceDao.class);
     private AnalysisTypeDao analysisTypeDao = Mockito.mock(AnalysisTypeDao.class);
+    private ProductDao productDao = Mockito.mock(ProductDao.class);
 
     enum TestType {EZPASS, NONPOOLED, POOLED, MULTIORGANISM, POOLEDTUBE, WALKUP};
 
@@ -107,17 +109,24 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
     public void testWalkupSequencing() throws Exception {
         SampleInstanceEjb sampleInstanceEjb = setMocks(TestType.WALKUP);
         MessageCollection messages = new MessageCollection();
-        sampleInstanceEjb.verifyAndPersistSubmission(new WalkUpSequencing() {{
+        SampleInstanceEntity entity = sampleInstanceEjb.verifyAndPersistSubmission(new WalkUpSequencing() {{
             setLibraryName("TEST_LIBRARY");
             setTubeBarcode("TEST_BARCODE");
-            setReadType("TEST_READ_TYPE");
-            setAnalysisType("TEST");
-            setLabName("TEST lab");
-            setBaitSetName("TEST_BAIT");
+            setAnalysisType("No_Analysis");
             setReadType("Paried End");
+            setBaitSetName("TEST bait");
         }}, messages);
+        // dbFree must explicitly do what Hibernate entity mapping would normally do.
+        entity.getLabVessel().addSampleInstanceEntity(entity);
 
         Assert.assertFalse(messages.hasErrors(), StringUtils.join(messages.getErrors(), "; "));
+        Assert.assertTrue(CollectionUtils.isNotEmpty(entity.getLabVessel().getSampleInstancesV2()));
+        for (SampleInstanceV2 sampleInstance : entity.getLabVessel().getSampleInstancesV2()) {
+            Assert.assertEquals(sampleInstance.getBaitName(), "TEST bait");
+            Assert.assertEquals(sampleInstance.getAnalysisType().getName(), "No_Analysis");
+            Assert.assertEquals(sampleInstance.getSampleLibraryName(), "TEST_LIBRARY");
+            Assert.assertTrue(sampleInstance.getPairedEndRead());
+        }
     }
 
     @Test
@@ -251,7 +260,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(tube.getConcentration(), new BigDecimal(select(i, "67.00", "68.00", "69.00")));
             Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
 
-            Assert.assertEquals(entity.getReadLength().intValue(), 76);
+            Assert.assertEquals(entity.getReadLength1().intValue(), 76);
             Assert.assertEquals(entity.getLibraryType(), "WholeGenomeShotgun");
             Assert.assertEquals(entity.getAggregationParticle(), "Microsporidia_RNASeq_Sanscrainte");
             Assert.assertEquals(entity.getAnalysisType().getBusinessKey(), "WholeGenomeShotgun.Resequencing");
@@ -317,7 +326,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(tube.getConcentration(), new BigDecimal("100.00"));
             Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
 
-            Assert.assertEquals(entity.getReadLength().intValue(), 151);
+            Assert.assertEquals(entity.getReadLength1().intValue(), 151);
             Assert.assertEquals(entity.getLibraryType(), "WholeGenomeShotgun");
             Assert.assertEquals(entity.getAggregationParticle(), "Microsporidia_RNASeq_Sanscrainte");
             Assert.assertEquals(entity.getAnalysisType().getBusinessKey(), "WholeGenomeShotgun.Resequencing");
@@ -384,7 +393,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(tube.getConcentration(), new BigDecimal("4444.00"));
             Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
 
-            Assert.assertEquals(entity.getReadLength().intValue(), 151);
+            Assert.assertEquals(entity.getReadLength1().intValue(), 151);
             Assert.assertEquals(entity.getLibraryType(), "WholeGenomeShotgun");
             Assert.assertEquals(entity.getAggregationParticle(), "Microsporidia_RNASeq_Sanscrainte");
             Assert.assertEquals(entity.getAnalysisType().getBusinessKey(), "WholeGenomeShotgun.Resequencing");
@@ -428,7 +437,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         for (int i = 0; i < entities.size(); ++i) {
             SampleInstanceEntity entity = entities.get(i);
 
-            String libraryName = select(i, "Jon Test 3a", "Jon Test 4b");
+            String libraryName = select(i, "Jon_Test_3a", "Jon_Test_4b");
             Assert.assertEquals(entity.getSampleLibraryName(), libraryName);
 
             Assert.assertNull(entity.getSequencerModel());
@@ -459,7 +468,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(tube.getVolume(), new BigDecimal("0.60"));
             Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
 
-            Assert.assertEquals(entity.getReadLength().intValue(), new int[]{4, 2}[i]);
+            Assert.assertEquals(entity.getReadLength1().intValue(), new int[]{4, 2}[i]);
             Assert.assertNull(entity.getLibraryType());
             Assert.assertEquals(entity.getAggregationParticle(), select(i, "1", ""));
             Assert.assertEquals(entity.getUmisPresent(), new Boolean[]{null, Boolean.TRUE}[i]);
@@ -471,6 +480,8 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(entity.getReagentDesign().getName(), "NewtonCheh_NatPepMDC_12genes3regions_Sep2011");
             Assert.assertEquals(entity.getMolecularIndexingScheme().getName(),
                     select(i, "Illumina_P5-Nijow_P7-Waren","Illumina_P5-Piwan_P7-Bidih"));
+
+            Assert.assertEquals(entity.getAggregationDataType(), select(i, "Exome", ""));
         }
         assertSampleInstanceEntitiesPresent(mapBarcodeToTube.values(), entities);
 
@@ -609,10 +620,14 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         errorIfMissing(errors, filename, "Row #5 " + String.format(REQUIRED_VALUE_IS_MISSING,
                 VesselPooledTubesProcessor.Headers.TUBE_BARCODE.getText()));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 5,
+                VesselPooledTubesProcessor.Headers.AGGREATION_DATA_TYPE.getText(), "Mercury"));
 
         errorIfMissing(errors, filename, "Row #6 " + String.format(REQUIRED_VALUE_IS_MISSING,
                 VesselPooledTubesProcessor.Headers.LIBRARY_NAME.getText()));
         errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MISSING, 6, "Volume"));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 6,
+                VesselPooledTubesProcessor.Headers.AGGREATION_DATA_TYPE.getText(), "Mercury"));
 
         errorIfMissing(errors, filename, "Row #7 " + String.format(REQUIRED_VALUE_IS_MISSING,
                 VesselPooledTubesProcessor.Headers.BROAD_SAMPLE_ID.getText()));
@@ -643,12 +658,29 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 9,
                 VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText(), "Mercury"));
 
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INVALID_CHARS, 10,
+                VesselPooledTubesProcessor.Headers.BROAD_SAMPLE_ID.getText(), SampleInstanceEjb.RESTRICTED_CHARS));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INVALID_CHARS, 10,
+                VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID.getText(), SampleInstanceEjb.RESTRICTED_CHARS));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INVALID_CHARS, 10,
+                VesselPooledTubesProcessor.Headers.DATA_AGGREGATOR.getText(), SampleInstanceEjb.RESTRICTED_CHARS));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INVALID_CHARS, 10,
+                VesselPooledTubesProcessor.Headers.LIBRARY_NAME.getText(), SampleInstanceEjb.RESTRICTED_CHARS));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INVALID_CHARS, 10,
+                VesselPooledTubesProcessor.Headers.COLLABORATOR_PARTICIPANT_ID.getText(),
+                SampleInstanceEjb.ALIAS_CHARS));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INVALID_CHARS, 10,
+                VesselPooledTubesProcessor.Headers.COLLABORATOR_SAMPLE_ID.getText(), SampleInstanceEjb.ALIAS_CHARS));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INVALID_CHARS, 10,
+                VesselPooledTubesProcessor.Headers.LSID.getText(), SampleInstanceEjb.ALIAS_CHARS));
+
         Assert.assertTrue(errors.isEmpty(), "Found unexpected errors: " + StringUtils.join(errors, "; "));
 
         Assert.assertTrue(warnings.contains("Row #2 Unknown header(s) \"Insert Size Range\"."));
         Assert.assertTrue(warnings.contains(String.format(SampleInstanceEjb.DUPLICATE_S_M, 6,
                 "SM-748OO", "Illumina_P5-Nijow_P7-Waren")));
-        Assert.assertEquals(warnings.size(), 2, "Found unexpected warnings: " + StringUtils.join(warnings, "; "));
+        Assert.assertTrue(warnings.get(2).startsWith("Row #7 value for Read Length is not consistent with row #6"));
+        Assert.assertEquals(warnings.size(), 3, "Found unexpected warnings: " + StringUtils.join(warnings, "; "));
     }
 
     @Test
@@ -902,7 +934,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             public ReagentDesign answer(InvocationOnMock invocation) throws Throwable {
                 String name = (String)invocation.getArguments()[0];
                 ReagentDesign reagentDesign = null;
-                if (StringUtils.isBlank(name) || name.equalsIgnoreCase("unknown")) {
+                if (StringUtils.isBlank(name) || name.equalsIgnoreCase("unknown") || name.startsWith("TEST ")) {
                     return null;
                 }
                 reagentDesign = new ReagentDesign();
@@ -911,12 +943,21 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             }
         });
 
+        // Product.aggregationDataType
+        Mockito.when(productDao.findAggregationDataTypes()).thenAnswer(new Answer<List<String>>() {
+            @Override
+            public List<String> answer(InvocationOnMock invocation) throws Throwable {
+                return Arrays.asList("10X_WGS", "16S", "CustomHybSel", "Custom_Selection", "Exome", "ExomePlus",
+                        "Jump", "PCR", "RNA", "RRBS", "ShortRangePCR", "WGS");
+            }
+        });
+
         // SampleInstanceEntity
         Mockito.when(sampleInstanceEntityDao.findByName(anyString())).thenReturn(null);
 
         return new SampleInstanceEjb(molecularIndexingSchemeDao, jiraService,
                 reagentDesignDao, labVesselDao, mercurySampleDao, sampleInstanceEntityDao,
-                analysisTypeDao, sampleDataFetcher, referenceSequenceDao);
+                analysisTypeDao, sampleDataFetcher, referenceSequenceDao, productDao);
     }
 
 }

@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.envers.Audited;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.persistence.Embedded;
@@ -23,9 +24,11 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Entity
 @Audited
@@ -55,30 +58,51 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         NO
     }
 
+    public enum LoadFromColumn {
+        YES,
+        NO
+    }
+
     /**
      * See the Google doc "Illumina Flowcell Suffix Guide".
      */
     public enum FlowcellType {
         MiSeqFlowcell("Flowcell1Lane", "MiSeq Flowcell", VesselGeometry.FLOWCELL1x1, "Illumina MiSeq", "^A\\w{4}$",
-                "MiSeq", CreateFields.IssueType.MISEQ, LabBatch.LabBatchType.MISEQ, CreateFct.YES),
+                "MiSeq", CreateFields.IssueType.MISEQ, LabBatch.LabBatchType.MISEQ, CreateFct.YES, "MiSeq",
+                LoadFromColumn.NO),
         HiSeqFlowcell("Flowcell8Lane", "HiSeq 2000 Flowcell", VesselGeometry.FLOWCELL1x8, "Illumina HiSeq 2000",
-                "^\\w+(AB|AC)..$", "HiSeq", CreateFields.IssueType.HISEQ_2000, LabBatch.LabBatchType.FCT, CreateFct.YES),
-        HiSeq2500Flowcell("Flowcell2Lane", "HiSeq 2500 Rapid Run Flowcell", VesselGeometry.FLOWCELL1x2, "Illumina HiSeq 2500",
-                "^\\w+(AD|AM|BC)..$", "HiSeq", CreateFields.IssueType.HISEQ_2500_RAPID_RUN, LabBatch.LabBatchType.FCT, CreateFct.YES),
-        HiSeq2500HighOutputFlowcell("Flowcell8Lane2500", "HiSeq 2500 High Output Flowcell", VesselGeometry.FLOWCELL1x8, "Illumina HiSeq 2500",
-                "^\\w+AN..$", "HiSeq", CreateFields.IssueType.HISEQ_2500_HIGH_OUTPUT, LabBatch.LabBatchType.FCT, CreateFct.YES),
+                "^\\w+(AB|AC)..$", "HiSeq", CreateFields.IssueType.HISEQ_2000, LabBatch.LabBatchType.FCT, CreateFct.YES,
+                "HiSeq 2000", LoadFromColumn.NO),
+        HiSeq2500Flowcell("Flowcell2Lane", "HiSeq 2500 Rapid Run Flowcell", VesselGeometry.FLOWCELL1x2,
+                "Illumina HiSeq 2500", "^\\w+(AD|AM|BC)..$", "HiSeq", CreateFields.IssueType.HISEQ_2500_RAPID_RUN,
+                LabBatch.LabBatchType.FCT, CreateFct.YES, "HiSeq 2500 Rapid Run", LoadFromColumn.NO),
+        HiSeq2500HighOutputFlowcell("Flowcell8Lane2500", "HiSeq 2500 High Output Flowcell", VesselGeometry.FLOWCELL1x8,
+                "Illumina HiSeq 2500", "^\\w+AN..$", "HiSeq", CreateFields.IssueType.HISEQ_2500_HIGH_OUTPUT,
+                LabBatch.LabBatchType.FCT, CreateFct.YES, "HiSeq 2500 High Output", LoadFromColumn.NO),
         HiSeq4000Flowcell("Flowcell8Lane4000", "HiSeq 4000 Flowcell", VesselGeometry.FLOWCELL1x8, "Illumina HiSeq 4000",
-                "^\\w+BB..$", "HiSeq", CreateFields.IssueType.HISEQ_4000, LabBatch.LabBatchType.FCT, CreateFct.YES),
+                "^\\w+BB..$", "HiSeq", CreateFields.IssueType.HISEQ_4000, LabBatch.LabBatchType.FCT, CreateFct.YES,
+                "HiSeq 4000", LoadFromColumn.NO),
         HiSeqX10Flowcell("Flowcell8LaneX10", "HiSeq X 10 Flowcell", VesselGeometry.FLOWCELL1x8, "Illumina HiSeq X 10",
-                "^\\w+(CC|AL)..$", "HiSeq", CreateFields.IssueType.HISEQ_X_10, LabBatch.LabBatchType.FCT, CreateFct.YES),
-        NovaSeqFlowcell("Flowcell2LaneNova", "NovaSeq Flowcell", VesselGeometry.FLOWCELL1x2, "Illumina NovaSeq",
-                "^\\w+DM..$", "NovaSeq", CreateFields.IssueType.NOVASEQ, LabBatch.LabBatchType.FCT, CreateFct.YES),
+                "^\\w+(CC|AL)..$", "HiSeq", CreateFields.IssueType.HISEQ_X_10, LabBatch.LabBatchType.FCT, CreateFct.YES,
+                "HiSeq X 10", LoadFromColumn.NO),
+        NovaSeqFlowcell("Flowcell2LaneNovaS2", "NovaSeq Flowcell S2", VesselGeometry.FLOWCELL1x2, "Illumina NovaSeq",
+                "^\\w+DM..$", "NovaSeq", CreateFields.IssueType.NOVASEQ, LabBatch.LabBatchType.FCT, CreateFct.YES,
+                "NovaSeq S2", LoadFromColumn.YES),
+        NovaSeqS1Flowcell("Flowcell2LaneNovaS1", "NovaSeq S1 Flowcell", VesselGeometry.FLOWCELL1x2, "Illumina NovaSeq",
+                "^\\w+DR..$", "NovaSeq", CreateFields.IssueType.NOVASEQ_S1, LabBatch.LabBatchType.FCT, CreateFct.YES,
+                "NovaSeq S1", LoadFromColumn.YES),
         NovaSeqS4Flowcell("Flowcell4LaneNova", "NovaSeq S4 Flowcell", VesselGeometry.FLOWCELL1x4, "Illumina NovaSeq",
-                "^\\w+DS..$", "NovaSeq", CreateFields.IssueType.NOVASEQ_S4, LabBatch.LabBatchType.FCT, CreateFct.YES),
+                "^\\w+DS..$", "NovaSeq", CreateFields.IssueType.NOVASEQ_S4, LabBatch.LabBatchType.FCT, CreateFct.YES,
+                "NovaSeq S4", LoadFromColumn.YES),
+        NovaSeqSPFlowcell("Flowcell2LaneNovaSP", "NovaSeq SP Flowcell", VesselGeometry.FLOWCELL1x2, "Illumina NovaSeq",
+                // NovaSeq S1 and SP have the same barcode suffix.
+                "^\\w+DR..$", "NovaSeq", CreateFields.IssueType.NOVASEQ_SP, LabBatch.LabBatchType.FCT, CreateFct.YES,
+                "NovaSeq SP", LoadFromColumn.YES),
         NextSeqFlowcell("Flowcell4LaneNextSeq", "NextSeq Flowcell", VesselGeometry.FLOWCELL1x4, "Illumina NextSeq",
-                "^\\w+BG..$", "NovaSeq", CreateFields.IssueType.NEXTSEQ, LabBatch.LabBatchType.FCT, CreateFct.YES),
+                "^\\w+BG..$", "NovaSeq", CreateFields.IssueType.NEXTSEQ, LabBatch.LabBatchType.FCT, CreateFct.YES,
+                "NextSeq", LoadFromColumn.NO),
         OtherFlowcell("FlowcellUnknown", "Unknown Flowcell", VesselGeometry.FLOWCELL1x2, "Unknown Model", ".*", null,
-                null, null, CreateFct.NO);
+                null, null, CreateFct.NO, "Unknown", LoadFromColumn.NO);
 
         /**
          * The sequencer model (think vendor/make/model)
@@ -124,9 +148,14 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
          */
         private CreateFct createFct;
 
+        /** The name used in the UI for External Library and Walkup sequencing. */
+        private String externalUiName;
+
+        private LoadFromColumn loadFromColumn;
+
         /**
          * Creates a FlowcellType with an automation name, display name, and geometry.
-         *  @param automationName    The name that will be supplied by automation scripts
+         * @param automationName    The name that will be supplied by automation scripts
          * @param displayName       The name that will be supplied by automation scripts
          * @param vesselGeometry    The vessel geometry
          * @param model             The sequencer model (think vendor/make/model).
@@ -135,10 +164,13 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
          * @param issueType         The Jira IssueType used when creating FCT tickets.
          * @param batchType         The type of batch to use for this flowcell type.
          * @param createFct         Whether to display on Create FCT page.
+         * @param externalUiName    The name used in the UI for External Library and Walkup sequencing.
+         * @param loadFromColumn    Indicates whether flowcell is loaded from one column or from one row.
          */
         FlowcellType(String automationName, String displayName, VesselGeometry vesselGeometry, String model,
                 String flowcellTypeRegex, String sequencingStationName, CreateFields.IssueType issueType,
-                LabBatch.LabBatchType batchType, CreateFct createFct) {
+                LabBatch.LabBatchType batchType, CreateFct createFct, String externalUiName,
+                @NotNull LoadFromColumn loadFromColumn) {
             this.automationName = automationName;
             this.displayName = displayName;
             this.vesselGeometry = vesselGeometry;
@@ -148,6 +180,8 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
             this.batchType = batchType;
             this.createFct = createFct;
             this.flowcellTypeRegex = Pattern.compile(flowcellTypeRegex);
+            this.externalUiName = externalUiName;
+            this.loadFromColumn = loadFromColumn;
         }
 
         /**
@@ -177,11 +211,15 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
 
         private static Map<String, FlowcellType> mapAutomationNameToType = new HashMap<>();
         private static Map<String, FlowcellType> mapDisplayNameToType = new HashMap<>();
+        private static Map<String, FlowcellType> mapExternalUiNameToType = new HashMap<>();
 
         static {
             for (FlowcellType plateType : EnumSet.allOf(FlowcellType.class)) {
                 mapAutomationNameToType.put(plateType.getAutomationName(), plateType);
                 mapDisplayNameToType.put(plateType.getDisplayName(), plateType);
+                if (plateType.getCreateFct() == CreateFct.YES) {
+                    mapExternalUiNameToType.put(plateType.getExternalUiName(), plateType);
+                }
             }
         }
 
@@ -243,8 +281,12 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
                 return HiSeqFlowcell;
             } else if (FlowcellType.NovaSeqFlowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
                 return NovaSeqFlowcell;
+            } else if (FlowcellType.NovaSeqS1Flowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
+                return NovaSeqS1Flowcell;
             } else if (FlowcellType.NovaSeqS4Flowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
                 return NovaSeqS4Flowcell;
+            } else if (FlowcellType.NovaSeqSPFlowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
+                return NovaSeqSPFlowcell;
             } else if (FlowcellType.NextSeqFlowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
                 return NextSeqFlowcell;
             }
@@ -270,12 +312,28 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
             return mapAutomationNameToType.get(automationName).issueType;
         }
 
+        public static FlowcellType getTypeForExternalUiName(String externalUiName) {
+            return mapExternalUiNameToType.get(externalUiName);
+        }
+
+        public static List<String> getExternalUiNames() {
+            return mapExternalUiNameToType.keySet().stream().sorted().collect(Collectors.toList());
+        }
+
         public LabBatch.LabBatchType getBatchType() {
             return batchType;
         }
 
         public CreateFct getCreateFct() {
             return createFct;
+        }
+
+        public String getExternalUiName() {
+            return externalUiName;
+        }
+
+        public boolean isLoadFromColumn() {
+            return loadFromColumn == LoadFromColumn.YES;
         }
     }
 

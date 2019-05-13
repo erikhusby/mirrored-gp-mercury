@@ -970,7 +970,7 @@
  <ModificationRecord Type="Object" Class ="ModificationRecord">
   <Timestamp Type="DateTime">20150923 15:26:06.091</Timestamp>
   <BatchID Type="UInt">2000015</BatchID>
-  <Instrument Type="String">qssp34099</Instrument>
+  <Instrument Type="String">qssp34733</Instrument>
   <Comment Type="String">eluate transfer</Comment>
   <InstrumentType Type="String">SamplePreparation</InstrumentType>
  </ModificationRecord>

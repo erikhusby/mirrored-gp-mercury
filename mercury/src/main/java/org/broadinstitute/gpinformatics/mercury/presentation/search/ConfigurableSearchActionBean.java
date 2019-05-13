@@ -9,6 +9,7 @@
  */
 package org.broadinstitute.gpinformatics.mercury.presentation.search;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
@@ -44,7 +45,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.search.SearchRequestBea
 import org.broadinstitute.gpinformatics.mercury.boundary.search.SearchValueBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

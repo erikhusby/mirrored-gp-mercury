@@ -89,6 +89,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 @SuppressWarnings("UnusedDeclaration")
@@ -173,6 +174,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus = OrderStatus.Draft;
 
+    @Enumerated(EnumType.STRING)
+    private Product.AggregationParticle defaultAggregationParticle;
     /**
      * Alphanumeric Id
      */
@@ -286,6 +289,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     @Column(name = "REAGENT_DESIGN_KEY", nullable = true, length = 200)
     private String reagentDesignKey;
+
+    @Column(name = "COVERAGE_TYPE_KEY", nullable = true, length = 200)
+    private String coverageTypeKey;
 
     @Transient
     private Quote cachedQuote;
@@ -828,6 +834,23 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public void setOrderStatus(OrderStatus orderStatus) {
         this.orderStatus = orderStatus;
+    }
+
+    @Transient
+    public String getAggregationParticleDisplayName() {
+        String displayValue = Product.AggregationParticle.DEFAULT_LABEL;
+        if (defaultAggregationParticle != null) {
+            displayValue = defaultAggregationParticle.getDisplayName();
+        }
+        return displayValue;
+    }
+
+    public Product.AggregationParticle getDefaultAggregationParticle() {
+        return defaultAggregationParticle;
+    }
+
+    public void setDefaultAggregationParticle(Product.AggregationParticle defaultAggregationParticle) {
+        this.defaultAggregationParticle = defaultAggregationParticle;
     }
 
     public String getComments() {
@@ -1597,6 +1620,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         public boolean canBill() {
             return EnumSet.of(Submitted, Abandoned, Completed).contains(this);
         }
+
+        /**
+         * @return true if an order can be closed from this state.
+         */
+        public boolean canClose() {
+            return EnumSet.of(Abandoned, Completed).contains(this);
+        }
         /**
          * @return true if an order can be billed from this state.
          */
@@ -2095,7 +2125,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return (filteredResults != null) ? Iterators.size(filteredResults.iterator()) : 0;
     }
 
-    public static double getUnbilledNonSampleCount(ProductOrder order, Product targetProduct, int totalCount) {
+    public static double getUnbilledNonSampleCount(ProductOrder order, Product targetProduct, double totalCount) {
+        double existingCount = getBilledSampleCount(order, targetProduct);
+        return totalCount - existingCount;
+    }
+
+    public static double getBilledSampleCount(ProductOrder order, Product targetProduct) {
         double existingCount = 0;
 
         for (ProductOrderSample targetSample : order.getSamples()) {
@@ -2108,7 +2143,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             }
 
         }
-        return totalCount - existingCount;
+        return existingCount;
     }
 
     public boolean isSavedInSAP() {
@@ -2243,6 +2278,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             this.orderType = orderType;
     }
 
+    public boolean isCommercial() {
+        return orderType == OrderAccessType.COMMERCIAL;
+    }
+
     public String getOrderTypeDisplay() {
 
         String displayName = getOrderType().getDisplayName();
@@ -2299,25 +2338,44 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         this.reagentDesignKey = reagentDesignKey;
     }
 
-    public static void checkQuoteValidity(Quote quote) throws QuoteServerException {
-        final Date todayTruncated = DateUtils.truncate(new Date(), Calendar.DATE);
-
-        checkQuoteValidity(quote, todayTruncated);
+    /**
+     * @return - If coverage type is set on the PDO then accept as override of the value on Product. Otherwise
+     * return the value on the product.
+     */
+    public String getCoverageTypeKey() {
+        if (product != null ) {
+            if (!StringUtils.isBlank(coverageTypeKey)) {
+                return coverageTypeKey;
+            } else {
+                return product.getCoverageTypeKey();
+            }
+        }
+        return coverageTypeKey;
     }
 
-    public static void checkQuoteValidity(Quote quote, Date todayTruncated) throws QuoteServerException {
-        for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel(true)) {
-            if (CollectionUtils.isNotEmpty(fundingLevel.getFunding())) {
-                for (Funding funding : fundingLevel.getFunding()) {
+    public void setCoverageTypeKey(String coverageTypeKey) {
+        this.coverageTypeKey = coverageTypeKey;
+    }
 
-                    if (funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                        if (!FundingLevel.isGrantActiveForDate(todayTruncated, funding)) {
-                            throw new QuoteServerException("The funding source " + funding.getGrantNumber() +
-                                                           " has expired making this quote currently unfunded.");
-                        }
-                    }
-                }
-            }
+    public static void checkQuoteValidity(Quote quote) throws QuoteServerException {
+        checkQuoteValidity(quote, new Date());
+    }
+
+    public static void checkQuoteValidity(Quote quote, Date date) throws QuoteServerException {
+        final Date todayTruncated = DateUtils.truncate(date, Calendar.DATE);
+        final Set<String> errors = new HashSet<>();
+        if (Objects.nonNull(quote)) {
+            quote.getFunding().stream()
+                .filter(Funding::isFundsReservation)
+                .filter(funding -> !FundingLevel.isGrantActiveForDate(todayTruncated, funding))
+                .forEach(funding -> {
+                    errors.add(String.format("The funding source %s has expired making this quote currently unfunded.",
+                        funding.getGrantNumber()));
+                });
+        }
+
+        if (CollectionUtils.isNotEmpty(errors)) {
+            throw new QuoteServerException(errors.toString());
         }
     }
 

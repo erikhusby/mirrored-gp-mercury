@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
@@ -33,7 +34,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.sample.WalkUpSequencing;
-import org.broadinstitute.gpinformatics.mercury.presentation.workflow.CreateFCTActionBean;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -44,15 +44,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
  * This class handles the external library creation from walkup sequencing web serivce calls, pooled tube
- * spreadsheet upload, and the various external library spreadsheet uploads.
+ * spreadsheet upload, and EZPass/New Tech external library spreadsheet uploads.
  * In all cases a SampleInstanceEntity and associated MercurySample and LabVessel are created or overwritten.
  */
 @Stateful
@@ -60,7 +58,7 @@ import java.util.Set;
 public class SampleInstanceEjb {
     // These are the only characters allowed in a library or sample name.
     public static final String RESTRICTED_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-_";
-    public static final String RESTRICTED_MESSAGE = "a-z, A-Z, 0-9, '.', '-', or '_'";
+    public static final String ALIAS_CHARS = RESTRICTED_CHARS + " @#&*()[]|;:<>,?/=+\"'";
 
     public static final String BAD_RANGE = "Row #%d %s must contain integer-integer (such as 225-350).";
     public static final String BSP_FORMAT = "Row #%d the new %s \"%s\" must not have a BSP sample name format.";
@@ -76,7 +74,7 @@ public class SampleInstanceEjb {
             "Row #%d value for %s is not consistent with row #%d (Sample %s).";
     public static final String INCONSISTENT_TUBE =
             "Row #%d value for %s is not consistent with row #%d (Tube Barcode %s).";
-    public static final String INVALID_CHARS = "Row #%d %s characters must only be " + RESTRICTED_CHARS;
+    public static final String INVALID_CHARS = "Row #%d %s characters must only be %s";
     public static final String IS_SUCCESS = "Spreadsheet with %d rows successfully uploaded.";
     public static final String MISSING = "Row #%d is missing a value for %s.";
     public static final String MUST_NOT_HAVE_BOTH = "Row #%d must not have both %s and %s.";
@@ -88,12 +86,6 @@ public class SampleInstanceEjb {
     public static final String PREXISTING_VALUES =
             "Row #%d values for %s already exist in Mercury; set the Overwrite checkbox to re-upload.";
     public static final String UNKNOWN = "Row #%d the value for %s is not in %s.";
-    /**
-     * A string of the available sequencer model names.
-     */
-    public static final String SEQUENCER_MODELS;
-
-    private static final Map<String, IlluminaFlowcell.FlowcellType> mapSequencerToFlowcellType = new HashMap<>();
     private static final Log log = LogFactory.getLog(SampleInstanceEjb.class);
 
     @Inject
@@ -132,13 +124,8 @@ public class SampleInstanceEjb {
     @Inject
     private Deployment deployment;
 
-    static {
-        for (IlluminaFlowcell.FlowcellType flowcellType : CreateFCTActionBean.FLOWCELL_TYPES) {
-            String sequencer = makeSequencerValue(flowcellType);
-            mapSequencerToFlowcellType.put(sequencer, flowcellType);
-        }
-        SEQUENCER_MODELS = "\"" + StringUtils.join(mapSequencerToFlowcellType.keySet(), "\", \"") + "\"";
-    }
+    @Inject
+    private ProductDao productDao;
 
     public SampleInstanceEjb() {
     }
@@ -149,7 +136,7 @@ public class SampleInstanceEjb {
     public SampleInstanceEjb(MolecularIndexingSchemeDao molecularIndexingSchemeDao, JiraService jiraService,
             ReagentDesignDao reagentDesignDao, LabVesselDao labVesselDao, MercurySampleDao mercurySampleDao,
             SampleInstanceEntityDao sampleInstanceEntityDao, AnalysisTypeDao analysisTypeDao,
-            SampleDataFetcher sampleDataFetcher, ReferenceSequenceDao referenceSequenceDao) {
+            SampleDataFetcher sampleDataFetcher, ReferenceSequenceDao referenceSequenceDao, ProductDao productDao) {
         this.molecularIndexingSchemeDao = molecularIndexingSchemeDao;
         this.jiraService = jiraService;
         this.reagentDesignDao = reagentDesignDao;
@@ -160,6 +147,7 @@ public class SampleInstanceEjb {
         this.sampleDataFetcher = sampleDataFetcher;
         this.reagentDesignDao = reagentDesignDao;
         this.referenceSequenceDao = referenceSequenceDao;
+        this.productDao = productDao;
     }
 
     /**
@@ -192,6 +180,8 @@ public class SampleInstanceEjb {
             } else {
                 // Makes maps of samples, vessels, and other primary entities.
                 makeEntityMaps(processor, rowDtos, messages);
+                // Validates the character set used in spreadsheet values that get passed on as-is.
+                processor.validateCharacterSet(rowDtos, messages);
                 // Validates the data.
                 processor.validateAllRows(rowDtos, overwrite, messages);
                 if (!messages.hasErrors()) {
@@ -227,7 +217,7 @@ public class SampleInstanceEjb {
     private void makeEntityMaps(ExternalLibraryProcessor processor, List<RowDto> rowDtos, MessageCollection messages) {
         Set<String> samplesToLookup = new HashSet<>();
         Set<String> barcodesToLookup = new HashSet<>();
-        Exception jiraException = null;
+        boolean lookupAggregationDataType = false;
 
         for (RowDto dto : rowDtos) {
             if (StringUtils.isNotBlank(dto.getSampleName())) {
@@ -261,31 +251,27 @@ public class SampleInstanceEjb {
                 }
             }
 
-            if (StringUtils.isNotBlank(dto.getSequencerModelName())) {
-                IlluminaFlowcell.FlowcellType sequencerModel = findFlowcellType(dto.getSequencerModelName());
-                if (sequencerModel != null) {
-                    processor.getSequencerModelMap().put(dto.getSequencerModelName(), sequencerModel);
-                }
-            }
-
             if (StringUtils.isNotBlank(dto.getAnalysisTypeName())) {
                 AnalysisType analysisType = analysisTypeDao.findByBusinessKey(dto.getAnalysisTypeName());
                 if (analysisType != null) {
                     processor.getAnalysisTypeMap().put(dto.getAnalysisTypeName(), analysisType);
                 }
             }
-
+            if (StringUtils.isNotBlank(dto.getAggregationDataType())) {
+                lookupAggregationDataType = true;
+            }
         }
         processor.getSampleMap().putAll(mercurySampleDao.findMapIdToMercurySample(samplesToLookup));
         processor.getLabVesselMap().putAll(labVesselDao.findByBarcodes(new ArrayList<>(barcodesToLookup)));
 
-        if (jiraException != null) {
-            messages.addError("Failed to lookup Jira tickets: " + jiraException.toString());
-        }
-
         // A sample data lookup is done on all samples and root samples. This returns either
         // Mercury and BSP metadata for each sample, depending on the sample metadata source.
         processor.getFetchedData().putAll(sampleDataFetcher.fetchSampleData(samplesToLookup));
+
+        // Fetches the valid aggregation data type values if they are needed.
+        if (lookupAggregationDataType) {
+            processor.setValidAggregationDataTypes(productDao.findAggregationDataTypes());
+        }
     }
 
     /**
@@ -295,7 +281,8 @@ public class SampleInstanceEjb {
      * @param walkUpSequencing the data from a walkup sequencing submission.
      * @param messages         collected errors, warnings, info to be passed back.
      */
-    public void verifyAndPersistSubmission(WalkUpSequencing walkUpSequencing, MessageCollection messages) {
+    public SampleInstanceEntity verifyAndPersistSubmission(WalkUpSequencing walkUpSequencing,
+            MessageCollection messages) {
         if (ExternalLibraryProcessor.asInteger(walkUpSequencing.getFragmentSize()) < 0) {
             messages.addError("Fragment Size must be a non-zero integer or blank");
         }
@@ -316,17 +303,9 @@ public class SampleInstanceEjb {
                             " version '" + walkUpSequencing.getReferenceVersion() + "'" : ""));
         }
 
-        ReagentDesign baitSet = null;
-        if (StringUtils.isNotBlank(walkUpSequencing.getBaitSetName())) {
-            baitSet = reagentDesignDao.findByBusinessKey(walkUpSequencing.getBaitSetName());
-            if (baitSet == null) {
-                messages.addError("Unknown Bait Reagent '" + walkUpSequencing.getBaitSetName() + "'");
-            }
-        }
-
         IlluminaFlowcell.FlowcellType sequencerModel = null;
         if (StringUtils.isNotBlank(walkUpSequencing.getIlluminaTech())) {
-            sequencerModel = SampleInstanceEjb.findFlowcellType(walkUpSequencing.getIlluminaTech());
+            sequencerModel = IlluminaFlowcell.FlowcellType.getTypeForExternalUiName(walkUpSequencing.getIlluminaTech());
             if (sequencerModel == null) {
                 messages.addError("Unknown Sequencing Technology '" + walkUpSequencing.getIlluminaTech() + "'");
             }
@@ -374,16 +353,18 @@ public class SampleInstanceEjb {
                 sampleInstanceEntity.setSampleLibraryName(walkUpSequencing.getLibraryName());
                 newEntities.add(sampleInstanceEntity);
             }
-            sampleInstanceEntity.setPairedEndRead(StringUtils.startsWithIgnoreCase(walkUpSequencing.getReadType(),
-                    "p"));
+            sampleInstanceEntity.setPairedEndRead(walkUpSequencing.isPairedEndRead());
             sampleInstanceEntity.setReferenceSequence(referenceSequence);
             sampleInstanceEntity.setUploadDate(walkUpSequencing.getSubmitDate());
-            sampleInstanceEntity.setReadLength(Math.max(
-                    ExternalLibraryProcessor.asInteger(walkUpSequencing.getReadLength()),
-                    ExternalLibraryProcessor.asInteger(walkUpSequencing.getReadLength2())));
+            sampleInstanceEntity.setReadLength1(ExternalLibraryProcessor.asInteger(walkUpSequencing.getReadLength1()));
+            sampleInstanceEntity.setReadLength2(ExternalLibraryProcessor.asInteger(walkUpSequencing.getReadLength2()));
+            sampleInstanceEntity.setIndexLength1(ExternalLibraryProcessor.asInteger(walkUpSequencing.getIndexLength1()));
+            sampleInstanceEntity.setIndexLength2(ExternalLibraryProcessor.asInteger(walkUpSequencing.getIndexLength2()));
+            sampleInstanceEntity.setIndexType(walkUpSequencing.getIndexType());
             sampleInstanceEntity.setNumberLanes(ExternalLibraryProcessor.asInteger(walkUpSequencing.getLaneQuantity()));
             sampleInstanceEntity.setComments(walkUpSequencing.getComments());
-            sampleInstanceEntity.setReagentDesign(baitSet);
+            // Assumes that bait set name has been validated by the walkup app and so any value is acceptable.
+            sampleInstanceEntity.setBaitName(walkUpSequencing.getBaitSetName());
             sampleInstanceEntity.setLabVessel(labVessel);
             sampleInstanceEntity.setMercurySample(mercurySample);
             sampleInstanceEntity.setSequencerModel(sequencerModel);
@@ -391,7 +372,9 @@ public class SampleInstanceEjb {
             sampleInstanceEntity.setAnalysisType(analysisType);
 
             sampleInstanceEntityDao.persistAll(newEntities);
+            return sampleInstanceEntity;
         }
+        return null;
     }
 
     private static Comparator<String> BY_ROW_NUMBER = new Comparator<String>() {
@@ -405,10 +388,6 @@ public class SampleInstanceEjb {
             return (o1Row == o2Row) ? o1.compareTo(o2) : (o1Row - o2Row);
         }
     };
-
-    private static IlluminaFlowcell.FlowcellType findFlowcellType(String sequencerModel) {
-        return mapSequencerToFlowcellType.get(sequencerModel);
-    }
 
     /**
      * Adds library size metric to the given lab vessel, but does not add the same value
@@ -435,15 +414,11 @@ public class SampleInstanceEjb {
         return (CollectionUtils.isNotEmpty(list) && list.size() > index) ? list.get(index) : null;
     }
 
-    /** Returns a string that can be used as a sequencer value in the spreadsheet. */
-    public static String makeSequencerValue(IlluminaFlowcell.FlowcellType flowcellType) {
-        return StringUtils.substringBeforeLast(flowcellType.getDisplayName(), "Flowcell").trim();
-    }
-
     /** Dto containing data from a spreadsheet row. */
     public static class RowDto {
         private String additionalAssemblyInformation;
         private String additionalSampleInformation;
+        private String aggregationDataType;
         private String aggregationParticle;
         private String analysisTypeName;
         private String bait;
@@ -728,6 +703,14 @@ public class SampleInstanceEjb {
             this.umisPresent = StringUtils.isBlank(umisPresent) ? null :
                     "yt1".contains(umisPresent.toLowerCase().subSequence(0, 1)) ?
                             Boolean.TRUE : Boolean.FALSE;
+        }
+
+        public String getAggregationDataType() {
+            return aggregationDataType;
+        }
+
+        public void setAggregationDataType(String aggregationDataType) {
+            this.aggregationDataType = aggregationDataType;
         }
     }
 }

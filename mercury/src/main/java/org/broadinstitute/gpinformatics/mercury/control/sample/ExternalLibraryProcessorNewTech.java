@@ -5,6 +5,7 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
 
@@ -165,6 +166,57 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
     }
 
     /**
+     * Adds an error message if a field contains some characters that it shouldn't. Fields that
+     * are entity keys (like analysisType), numerics, and categorical values are checked elsewhere.
+     */
+    @Override
+    public void validateCharacterSet(List<SampleInstanceEjb.RowDto> dtos, MessageCollection messages) {
+        for (SampleInstanceEjb.RowDto dto : dtos) {
+            if (!StringUtils.containsOnly(dto.getBarcode(), SampleInstanceEjb.RESTRICTED_CHARS)) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        Headers.TUBE_BARCODE.getText(), SampleInstanceEjb.RESTRICTED_CHARS));
+            }
+            if (StringUtils.isNotBlank(dto.getAggregationParticle()) &&
+                    !StringUtils.containsOnly(dto.getAggregationParticle(), SampleInstanceEjb.RESTRICTED_CHARS)) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        Headers.PROJECT_TITLE.getText(), SampleInstanceEjb.RESTRICTED_CHARS));
+            }
+            if (!StringUtils.containsOnly(dto.getCollaboratorParticipantId(), SampleInstanceEjb.ALIAS_CHARS)) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        Headers.INDIVIDUAL_NAME.getText(), SampleInstanceEjb.ALIAS_CHARS));
+            }
+            if (!StringUtils.containsOnly(dto.getCollaboratorSampleId(), SampleInstanceEjb.ALIAS_CHARS)) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        Headers.COLLABORATOR_SAMPLE_ID.getText(), SampleInstanceEjb.ALIAS_CHARS));
+            }
+            if (!StringUtils.containsOnly(dto.getLibraryName(), SampleInstanceEjb.RESTRICTED_CHARS)) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        Headers.LIBRARY_NAME.getText(), SampleInstanceEjb.RESTRICTED_CHARS));
+            }
+            if (StringUtils.isNotBlank(dto.getOrganism()) &&
+                    !StringUtils.containsOnly(dto.getOrganism(), SampleInstanceEjb.ALIAS_CHARS)) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        Headers.ORGANISM.getText(), SampleInstanceEjb.ALIAS_CHARS));
+            }
+            if (StringUtils.isNotBlank(dto.getAdditionalAssemblyInformation()) &&
+                    !StringUtils.containsOnly(dto.getAdditionalAssemblyInformation(), SampleInstanceEjb.ALIAS_CHARS)) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        Headers.ASSEMBLY_INFORMATION.getText(), SampleInstanceEjb.ALIAS_CHARS));
+            }
+            if (StringUtils.isNotBlank(dto.getAdditionalSampleInformation()) &&
+                    !StringUtils.containsOnly(dto.getAdditionalSampleInformation(), SampleInstanceEjb.ALIAS_CHARS)) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        Headers.ADDITIONAL_SAMPLE_INFORMATION.getText(), SampleInstanceEjb.ALIAS_CHARS));
+            }
+            if (StringUtils.isNotBlank(dto.getLibraryType()) &&
+                    !StringUtils.containsOnly(dto.getLibraryType(), SampleInstanceEjb.ALIAS_CHARS)) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        Headers.LIBRARY_TYPE.getText(), SampleInstanceEjb.ALIAS_CHARS));
+            }
+        }
+    }
+
+    /**
      * Does self-consistency and other validation checks on the data.
      * Entities fetched for the row data are accessed through maps referenced in the dtos.
      */
@@ -176,10 +228,6 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
             // Each library name may appear only once per tube in an upload.
             if (!barcodeAndLibraryKeys.add(dto.getLibraryName())) {
                 messages.addError(String.format(SampleInstanceEjb.DUPLICATE, dto.getRowNumber(), "Library Name"));
-            }
-            // The pipeline and elsewhere require a simple name so disallow chars that might cause trouble.
-            if (!StringUtils.containsOnly(dto.getLibraryName(), SampleInstanceEjb.RESTRICTED_CHARS)) {
-                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(), "Library Name"));
             }
 
             // Disallow a library name that could cause the sample to collide with an existing or future BSP sample.
@@ -212,12 +260,6 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
             if (getLabVesselMap().get(dto.getBarcode()) != null && !overwrite) {
                 messages.addError(String.format(SampleInstanceEjb.PREXISTING, dto.getRowNumber(),
                         ExternalLibraryProcessorEzPass.Headers.TUBE_BARCODE.getText(), dto.getBarcode()));
-            } else {
-                // The tube barcode character set is restricted.
-                if (!StringUtils.containsOnly(dto.getBarcode(), SampleInstanceEjb.RESTRICTED_CHARS)) {
-                    messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
-                            "Tube barcode"));
-                }
             }
             if (StringUtils.isNotBlank(dto.getBarcode())) {
                 consistentTubeData(mapBarcodeToFirstRow.get(dto.getBarcode()), dto, messages);
@@ -241,7 +283,7 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
             }
 
             if (StringUtils.isNotBlank(dto.getSequencerModelName()) &&
-                    getSequencerModelMap().get(dto.getSequencerModelName()) == null) {
+                    IlluminaFlowcell.FlowcellType.getTypeForExternalUiName(dto.getSequencerModelName()) == null) {
                 messages.addError(String.format(SampleInstanceEjb.UNKNOWN, dto.getRowNumber(),
                         "Sequencing Technology", "Mercury"));
             }

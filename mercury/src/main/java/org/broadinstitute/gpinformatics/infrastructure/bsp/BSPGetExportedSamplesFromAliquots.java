@@ -1,10 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
-import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
-import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
+import org.broadinstitute.gpinformatics.mercury.BSPJaxRsClient;
+import org.broadinstitute.gpinformatics.mercury.control.AbstractJaxRsClientService;
 
 import javax.enterprise.context.Dependent;
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.MultivaluedMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -13,7 +15,7 @@ import java.util.List;
  * Client to get exported sample from BSP.
  */
 @Dependent
-public class BSPGetExportedSamplesFromAliquots extends BSPJerseyClient {
+public class BSPGetExportedSamplesFromAliquots extends BSPJaxRsClient {
 
     public static class ExportedSample {
         private String lsid;
@@ -54,10 +56,11 @@ public class BSPGetExportedSamplesFromAliquots extends BSPJerseyClient {
     public List<ExportedSample> getExportedSamplesFromAliquots( Collection<String> sampleLsids,
             IsExported.ExternalSystem externalSystem) {
         String urlString = getUrl("sample/getexportedsamplesbyaliquot");
-        String queryString = makeQueryString("sample_lsids", sampleLsids);
-        queryString += "&export_destination=" + externalSystem;
+        MultivaluedMap<String, String> params = new MultivaluedHashMap<>();
+        params.addAll("sample_lsids", new ArrayList<>(sampleLsids));
+        params.add("export_destination", externalSystem.name());
         final List<ExportedSample> exportedSamples = new ArrayList<>();
-        post(urlString, queryString, ExtraTab.FALSE, new AbstractJerseyClientService.PostCallback() {
+        post(urlString, params, ExtraTab.FALSE, new AbstractJaxRsClientService.PostCallback() {
             @Override
             public void callback(String[] bspData) {
                 exportedSamples.add(new ExportedSample(bspData[0], bspData[1], bspData[2], bspData[3],

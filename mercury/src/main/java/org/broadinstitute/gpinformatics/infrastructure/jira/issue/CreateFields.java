@@ -1,15 +1,15 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.issue;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jira.NameableTypeJsonSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CreateJiraIssueFieldsSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Nameable;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.map.JsonSerializer;
-import org.codehaus.jackson.map.SerializerProvider;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -149,6 +149,8 @@ public class CreateFields extends UpdateFields {
         // jiraName is defined by JIRA and must not be based on Mercury Workflow.
         WHOLE_EXOME_HYBSEL("Whole Exome (HybSel)"),
         EXOME_EXPRESS("Exome Express"),
+        MICROBIAL("Microbial"),
+        GERMLINE_EXOME("Germline Exome"),
         CDNA_TRUSEQ_SS("cDNA TruSeq Strand Specific Large Insert"),
         CDNA_LASSO("Lasso"),
         PRODUCT_ORDER("Product Order"),
@@ -158,8 +160,11 @@ public class CreateFields extends UpdateFields {
         HISEQ_2500_HIGH_OUTPUT("HiSeq 2500 High Output"),
         HISEQ_4000("HiSeq 4000"),
         HISEQ_X_10("HiSeq X 10"),
-        NOVASEQ("NovaSeq"),
+        MALARIA("Malaria"),
+        NOVASEQ("NovaSeq S2"),
+        NOVASEQ_S1("NovaSeq S1"),
         NOVASEQ_S4("NovaSeq S4"),
+        NOVASEQ_SP("NovaSeq SP"),
         NEXTSEQ("NextSeq"),
         MISEQ("MiSeq"),
         MISEQ_16S("MiSeq16s"),

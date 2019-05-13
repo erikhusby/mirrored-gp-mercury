@@ -266,7 +266,7 @@ public class FlowcellDesignationFixupTest extends Arquillian {
                         // Find the latest flowcell designation prior to batch creation
                         for (FlowcellDesignation flowcellDesignation : flowcellDesignationList) {
                             if (flowcellDesignation.getStatus() == FlowcellDesignation.Status.IN_FCT
-                                    && flowcellDesignation.getLoadingTube().getLabel().equals(jiraData.getValue())
+                                    && flowcellDesignation.getStartingTube().getLabel().equals(jiraData.getValue())
                                     && flowcellDesignation.getCreatedOn().before(fctBatch.getCreatedOn())) {
                                 foundMatch = true;
                                 // ******************* THIS IS IT!  Assign designation to batch starting vessel.

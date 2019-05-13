@@ -288,6 +288,15 @@
                 </div>
 
                 <div class="view-control-group control-group">
+                    <label class="control-label label-form">Custom Aggregation Particle</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.aggregationParticleDisplayName}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-control-group control-group">
                     <label class="control-label label-form">Analysis Type</label>
                     <div class="controls">
                         <div class="form-value">
@@ -385,6 +394,18 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Coverage</label>
+                    <div class="controls">
+                        <div class="form-value">
+                            <c:if test="${!empty actionBean.editProduct.coverageTypeKey}">
+                                ${(actionBean.getCoverageType(actionBean.editProduct.coverageTypeKey)).displayName}
+                            </c:if>
+                        </div>
+                    </div>
+                </div>
+
             </fieldset>
         </div>
 

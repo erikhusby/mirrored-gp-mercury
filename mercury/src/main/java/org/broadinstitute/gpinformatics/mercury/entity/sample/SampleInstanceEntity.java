@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.annotations.BatchSize;
@@ -88,7 +89,19 @@ public class SampleInstanceEntity {
 
     private String libraryType;
     private String experiment;
-    private Integer readLength;
+
+    @Column(name = "READ_LENGTH1")
+    private Integer readLength1;
+
+    @Column(name = "READ_LENGTH2")
+    private Integer readLength2;
+
+    @Column(name = "INDEX_LENGTH1")
+    private Integer indexLength1;
+
+    @Column(name = "INDEX_LENGTH2")
+    private Integer indexLength2;
+
     private Date uploadDate;
     private Boolean pairedEndRead;
     private String comments;
@@ -96,6 +109,11 @@ public class SampleInstanceEntity {
     private String aggregationParticle;
     private String insertSize;
     private Boolean umisPresent;
+    private String aggregationDataType;
+    private String baitName;
+
+    @Enumerated(EnumType.STRING)
+    private FlowcellDesignation.IndexType indexType;
 
     @Enumerated(EnumType.STRING)
     private IlluminaFlowcell.FlowcellType sequencerModel;
@@ -190,12 +208,20 @@ public class SampleInstanceEntity {
         this.libraryType = libraryType;
     }
 
-    public Integer getReadLength() {
-        return readLength;
+    public Integer getReadLength1() {
+        return readLength1;
     }
 
-    public void setReadLength(Integer readLength) {
-        this.readLength = readLength;
+    public void setReadLength1(Integer readLength1) {
+        this.readLength1 = readLength1;
+    }
+
+    public Integer getReadLength2() {
+        return readLength2;
+    }
+
+    public void setReadLength2(Integer readLength2) {
+        this.readLength2 = readLength2;
     }
 
     public Date getUploadDate() {
@@ -292,5 +318,45 @@ public class SampleInstanceEntity {
 
     public void setUmisPresent(Boolean umisPresent) {
         this.umisPresent = umisPresent;
+    }
+
+    public String getAggregationDataType() {
+        return aggregationDataType;
+    }
+
+    public void setAggregationDataType(String aggregationDataType) {
+        this.aggregationDataType = aggregationDataType;
+    }
+
+    public FlowcellDesignation.IndexType getIndexType() {
+        return indexType;
+    }
+
+    public void setIndexType(FlowcellDesignation.IndexType indexType) {
+        this.indexType = indexType;
+    }
+
+    public Integer getIndexLength1() {
+        return indexLength1;
+    }
+
+    public void setIndexLength1(Integer indexLength1) {
+        this.indexLength1 = indexLength1;
+    }
+
+    public Integer getIndexLength2() {
+        return indexLength2;
+    }
+
+    public void setIndexLength2(Integer indexLength2) {
+        this.indexLength2 = indexLength2;
+    }
+
+    public String getBaitName() {
+        return baitName;
+    }
+
+    public void setBaitName(String baitName) {
+        this.baitName = baitName;
     }
 }

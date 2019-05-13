@@ -14,13 +14,15 @@ import org.apache.poi.hssf.usermodel.HSSFPalette;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.HSSFColor;
+import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.DataValidation;
+import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.HeaderValueRow;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb;
@@ -42,7 +44,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -57,6 +61,9 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
 
     @Inject
     private AnalysisTypeDao analysisTypeDao;
+
+    @Inject
+    private ProductDao productDao;
 
     /**
      * The types of spreadsheet that can be uploaded.
@@ -180,11 +187,12 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
                 map(ReferenceSequence::getName).
                 sorted().
                 collect(Collectors.toList()).toArray(new String[0]);
-        String[] validSequencingTechnology = Arrays.asList(IlluminaFlowcell.FlowcellType.values()).stream().
-                filter(flowcellType -> flowcellType.getCreateFct() == IlluminaFlowcell.CreateFct.YES).
-                map(flowcellType -> SampleInstanceEjb.makeSequencerValue(flowcellType)).
-                sorted().
-                collect(Collectors.toList()).toArray(new String[0]);
+        String[] validSequencingTechnology = IlluminaFlowcell.FlowcellType.getExternalUiNames().toArray(new String[0]);
+        String[] validAggregationDataTypes = (
+                new ArrayList<String>() {{
+                    add("");
+                    addAll(productDao.findAggregationDataTypes());
+                }}).toArray(new String[0]);
 
         // Makes the fixed up header names for the drowdown columns.
         String dataAnalysisTypeHeader = ExternalLibraryProcessor.fixupHeaderName(
@@ -193,6 +201,8 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
                 ExternalLibraryProcessorNewTech.Headers.REFERENCE_SEQUENCE.getText());
         String sequencingTechnologyHeader = ExternalLibraryProcessor.fixupHeaderName(
                 ExternalLibraryProcessorNewTech.Headers.SEQUENCING_TECHNOLOGY.getText());
+        String aggregationDataTypeHeader = ExternalLibraryProcessor.fixupHeaderName(
+                VesselPooledTubesProcessor.Headers.AGGREATION_DATA_TYPE.getText());
 
         HSSFWorkbook workbook = new HSSFWorkbook();
         HSSFSheet sheet1 = workbook.createSheet("samples");
@@ -217,8 +227,9 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         final int REF_SEQ_LIST_COLUMN = 0;
         final int ANALYSIS_LIST_COLUMN = 1;
         final int SEQ_TECH_LIST_COLUMN = 2;
-        final int numberValidationRows = 1 + Math.max(validSequencingTechnology.length,
-                Math.max(validAnalysisTypes.length, validReferenceSequence.length));
+        final int AGG_DATATYPE_LIST_COLUMN = 3;
+        final int numberValidationRows = 1 + Collections.max(Arrays.asList(validSequencingTechnology.length,
+                validAnalysisTypes.length, validReferenceSequence.length, validAggregationDataTypes.length));
         for (int index = 0; index < numberValidationRows; ++index) {
             sheet2.createRow(index);
         }
@@ -243,9 +254,16 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         for (String value : validSequencingTechnology) {
             rowIterator.next().createCell(SEQ_TECH_LIST_COLUMN).setCellValue(value);
         }
+        // Writes the aggregation data type values available in Mercury starting in the second row.
+        rowIterator = sheet2.rowIterator();
+        rowIterator.next();
+        for (String value : validAggregationDataTypes) {
+            rowIterator.next().createCell(AGG_DATATYPE_LIST_COLUMN).setCellValue(value);
+        }
         sheet2.autoSizeColumn(REF_SEQ_LIST_COLUMN);
         sheet2.autoSizeColumn(ANALYSIS_LIST_COLUMN);
         sheet2.autoSizeColumn(SEQ_TECH_LIST_COLUMN);
+        sheet2.autoSizeColumn(AGG_DATATYPE_LIST_COLUMN);
 
         // Writes the color coded headers in sheet1.
         int rowIndex = 0;
@@ -261,7 +279,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
                 // All the data in the header is currently ignored.
                 HSSFCellStyle style = workbook.createCellStyle();
                 style.setFillForegroundColor(colorMap.get(ExternalLibraryProcessor.DataPresence.IGNORED));
-                style.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
+                style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
                 cell.setCellStyle(style);
             }
             sheet1.createRow(rowIndex++).createCell(0).setCellValue(""); //a blank row
@@ -283,13 +301,13 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
                 Pair.of(ExternalLibraryProcessor.DataPresence.IGNORED, " Ignored "))) {
 
             HSSFCellStyle style = workbook.createCellStyle();
-            style.setBorderTop(colorRowIdx == 1 ? CellStyle.BORDER_THIN : CellStyle.BORDER_NONE);
-            style.setBorderTop(CellStyle.BORDER_NONE);
-            style.setBorderLeft(CellStyle.BORDER_THIN);
-            style.setBorderRight(CellStyle.BORDER_THIN);
-            style.setBorderBottom(CellStyle.BORDER_NONE);
+            style.setBorderTop(colorRowIdx == 1 ? BorderStyle.THIN : BorderStyle.NONE);
+            style.setBorderTop(BorderStyle.NONE);
+            style.setBorderLeft(BorderStyle.THIN);
+            style.setBorderRight(BorderStyle.THIN);
+            style.setBorderBottom(BorderStyle.NONE);
             if (pair.getLeft() != null) {
-                style.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
+                style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
                 style.setFillForegroundColor(colorMap.get(pair.getLeft()));
             }
             Row row = sheet1.getRow(colorRowIdx++);
@@ -298,8 +316,8 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
             cell.setCellStyle(style);
         }
         // Puts a border on the top and bottom color cells.
-        sheet1.getRow(1).getCell(colorColumnIdx).getCellStyle().setBorderTop(CellStyle.BORDER_THIN);
-        sheet1.getRow(colorRowIdx - 1).getCell(colorColumnIdx).getCellStyle().setBorderBottom(CellStyle.BORDER_THIN);
+        sheet1.getRow(1).getCell(colorColumnIdx).getCellStyle().setBorderTop(BorderStyle.THIN);
+        sheet1.getRow(colorRowIdx - 1).getCell(colorColumnIdx).getCellStyle().setBorderBottom(BorderStyle.THIN);
 
         // A blank row.
         sheet1.createRow(rowIndex++).createCell(0).setCellValue("");
@@ -309,7 +327,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         for (ExternalLibraryProcessor.DataPresence dataPresence : ExternalLibraryProcessor.DataPresence.values()) {
             HSSFCellStyle style = workbook.createCellStyle();
             style.setFillForegroundColor(colorMap.get(dataPresence));
-            style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+            style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             headerStyles.put(dataPresence, style);
         }
 
@@ -344,6 +362,10 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
                     dropdownRow.getCell(column).setCellValue(validSequencingTechnology[0]);
                     referenceColumn = (char)('A' + SEQ_TECH_LIST_COLUMN);
                     length = validSequencingTechnology.length + 1;
+                } else if (columnHeader.getText().equalsIgnoreCase(aggregationDataTypeHeader)) {
+                    dropdownRow.getCell(column).setCellValue(validAggregationDataTypes[0]);
+                    referenceColumn = (char)('A' + AGG_DATATYPE_LIST_COLUMN);
+                    length = validAggregationDataTypes.length + 1;
                 }
                 if (referenceColumn != null) {
                     // Uses a cell range that is a column on sheet2 that contains the dropdown list values.
