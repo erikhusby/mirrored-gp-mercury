@@ -230,27 +230,12 @@ public class ContainerActionBean extends RackScanActionBean {
      * If a check-out occurs after a check-in, do not report the check-in event
      */
     private LabEvent findLatestCheckInEvent(LabVessel labVessel ) {
-        LabEvent latestCheckInEvent = null;
-        List<LabEvent> inPlaceLabEvents;
-        if( rackOfTubes != null ) {
-            inPlaceLabEvents = labEventDao.findInPlaceByAncillaryVessel(rackOfTubes);
+        LabEvent latestStorageEvent = labVessel.getLatestStorageEvent();
+        if( latestStorageEvent.getLabEventType() == LabEventType.STORAGE_CHECK_IN ) {
+            return latestStorageEvent;
         } else {
-            inPlaceLabEvents = labEventDao.findInPlaceByVessel(labVessel);
+            return null;
         }
-        for (LabEvent labEvent : inPlaceLabEvents) {
-            if( labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_IN ) {
-                if (latestCheckInEvent == null) {
-                    latestCheckInEvent = labEvent;
-                } else if (labEvent.getEventDate().after(latestCheckInEvent.getEventDate())) {
-                    latestCheckInEvent = labEvent;
-                }
-            } else if ( labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_OUT ) {
-                if (latestCheckInEvent != null && latestCheckInEvent.getEventDate().before(labEvent.getEventDate())) {
-                    latestCheckInEvent = null;
-                }
-            }
-        }
-        return latestCheckInEvent;
     }
 
     /**

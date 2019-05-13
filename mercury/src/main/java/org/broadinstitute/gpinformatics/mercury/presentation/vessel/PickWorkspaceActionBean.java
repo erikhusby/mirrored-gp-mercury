@@ -271,56 +271,26 @@ public class PickWorkspaceActionBean extends CoreActionBean {
         } else if( OrmUtil.proxySafeIsInstance( tube, PlateWell.class ) ) {
             return Triple.of( OrmUtil.proxySafeCast( tube, PlateWell.class ).getPlate(), null, tubeLocation );
         }
-        // Still here?  Need to wade through containers and events to find latest checkin and rack
-        List<RackOfTubes> racks = new ArrayList<>();
+        LabEvent latestCheckInEvent;
+        LabEvent latestStorageEvent = tube.getLatestStorageEvent();
+        // Ignore check-out
+        if( latestStorageEvent != null && latestStorageEvent.getLabEventType() == LabEventType.STORAGE_CHECK_OUT ) {
+            latestCheckInEvent = null;
+        } else {
+            latestCheckInEvent = latestStorageEvent;
+        }
+
         // Most are 1:1 rack to tube formation
         TubeFormation singleTubeFormation = null;
-        for( LabVessel containerVessel : tube.getContainers() ) {
-            if (OrmUtil.proxySafeIsInstance(containerVessel, TubeFormation.class)) {
-                TubeFormation tubeFormation = OrmUtil.proxySafeCast(containerVessel, TubeFormation.class);
-                for (RackOfTubes rack : tubeFormation.getRacksOfTubes()) {
-                    if (rack.getStorageLocation() != null && tubeLocation.getStorageLocationId().equals(rack.getStorageLocation().getStorageLocationId())) {
-                        singleTubeFormation = tubeFormation;
-                        racks.add(rack);
-                    }
-                }
-            }
-        }
-        if( racks.isEmpty() ) {
-            // Ugh, no rack in same location?  TODO What else to do?
-            return Triple.of(tube, null, tubeLocation);
-        } else if( racks.size() == 1 ) {
-            // Skip the event logic, only one container still in same location as tube
-            return Triple.of(racks.get(0), singleTubeFormation, tubeLocation);
-        } else {
-            Set<LabEvent> inPlaceLabEvents = new HashSet<>();
-            LabEvent latestCheckInEvent = null;
-            for( RackOfTubes rack : racks ) {
-                inPlaceLabEvents.addAll( labEventDao.findInPlaceByAncillaryVessel(rack));
-            }
-            for (LabEvent labEvent : inPlaceLabEvents) {
-                if( labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_IN ) {
-                    if (latestCheckInEvent == null) {
-                        latestCheckInEvent = labEvent;
-                    } else if (labEvent.getEventDate().after(latestCheckInEvent.getEventDate())) {
-                        latestCheckInEvent = labEvent;
-                    }
-                } else if ( labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_OUT ) {
-                    if (latestCheckInEvent != null && latestCheckInEvent.getEventDate().before(labEvent.getEventDate())) {
-                        latestCheckInEvent = null;
-                    }
-                }
-            }
-            if( latestCheckInEvent != null ) {
-                if( OrmUtil.proxySafeIsInstance(latestCheckInEvent.getInPlaceLabVessel(), TubeFormation.class) ) {
-                    singleTubeFormation = OrmUtil.proxySafeCast(latestCheckInEvent.getInPlaceLabVessel(), TubeFormation.class);
-                } else {
-                    singleTubeFormation = null;
-                }
-                return Triple.of(latestCheckInEvent.getAncillaryInPlaceVessel(), singleTubeFormation, tubeLocation);
+        if( latestCheckInEvent != null ) {
+            if( OrmUtil.proxySafeIsInstance(latestCheckInEvent.getInPlaceLabVessel(), TubeFormation.class) ) {
+                singleTubeFormation = OrmUtil.proxySafeCast(latestCheckInEvent.getInPlaceLabVessel(), TubeFormation.class);
             } else {
-                return null;
+                singleTubeFormation = null;
             }
+            return Triple.of(latestCheckInEvent.getAncillaryInPlaceVessel(), singleTubeFormation, tubeLocation);
+        } else {
+            return null;
         }
 
     }

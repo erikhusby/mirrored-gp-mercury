@@ -323,6 +323,13 @@
                                     Pick Workspace
                                 </stripes:link>
                             </li>
+                            <li>
+                                <stripes:link id="bulkStorageOps"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.BulkStorageOpsActionBean"
+                                              event="view">
+                                    Bulk Storage Ops
+                                </stripes:link>
+                            </li>
                         </security:authorizeBlock>
                     </ul>
                 </li>
