@@ -73,8 +73,6 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         integrationService = new SapIntegrationServiceImpl();
 
-        String testUser = "Scott.G.MATThEws@GMail.CoM";
-
         BSPUserList mockUserList = Mockito.mock(BSPUserList.class);
         Mockito.when(mockUserList.getUserFullName(Mockito.anyLong())).thenReturn(MOCK_USER_NAME);
 

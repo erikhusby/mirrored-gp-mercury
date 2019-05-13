@@ -20,7 +20,6 @@ import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
-import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -182,14 +181,12 @@ public class TestUtils {
     }
 
     // This is a utility method and NOT a test method.  Will FAIL with arguments as it should.
-    @Test(enabled = false)
     public static void billSampleOut(ProductOrder productOrder, ProductOrderSample sample, int expected) {
 
         billSamplesOut(productOrder, Collections.singleton(sample), expected);
 
     }
 
-    @Test(enabled = false)
     public static void billSamplesOut(ProductOrder productOrder, Collection<ProductOrderSample> samples, int expected) {
         BillingSession billingSession = null;
         for (ProductOrderSample sample : samples) {

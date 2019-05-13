@@ -156,11 +156,13 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      *          match what Create was when it was first call in that it excludes the quantity of what was billed on any
      *          previous orders</li>
      *  </ul>
-     * @param placedOrder
-     * @param product
-     * @param additionalSampleCount
-     * @param serviceOptions
-     * @return
+     * @param placedOrder           Order from which the SAP order is created
+     * @param product               Product which is associate to the SAP order line item of which this sample count
+     *                              is being requested.
+     * @param additionalSampleCount Additional quantity to be added to the total sample count.  Typically used in the
+     *                              case of adding samples to an existing PDO
+     * @param serviceOptions        Enum to determine what scenario this sample count request is for.
+     * @return  Total count, based on scenario, to be used for the line item of an SAP order
      */
     public static BigDecimal getSampleCount(ProductOrder placedOrder, Product product, int additionalSampleCount,
                                             SapIntegrationService.Option serviceOptions) {
@@ -187,14 +189,13 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             // then the current SAP order quantity will be:
             // Non abandoned product order quantity MINUS anything that has been billed on a previous SAP order.
 
-            if (sapOrderDetail.equals(placedOrder.latestSapOrderDetail()) && !creatingNewOrder) {
-                continue;
-            }
+            if (!sapOrderDetail.equals(placedOrder.latestSapOrderDetail()) || creatingNewOrder) {
 
-            final Map<Product, Double> numberOfBilledEntriesByProduct =
-                sapOrderDetail.getNumberOfBilledEntriesByProduct();
-            if (numberOfBilledEntriesByProduct.containsKey(product)) {
-                previousBilledCount += numberOfBilledEntriesByProduct.get(product);
+                final Map<Product, Double> numberOfBilledEntriesByProduct =
+                        sapOrderDetail.getNumberOfBilledEntriesByProduct();
+                if (numberOfBilledEntriesByProduct.containsKey(product)) {
+                    previousBilledCount += numberOfBilledEntriesByProduct.get(product);
+                }
             }
         }
 
@@ -215,9 +216,6 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 + additionalSampleCount;
         }
 
-//        if (forOrderValueQuery) {
-//            previousBilledCount = (int) ProductOrder.getBilledSampleCount(placedOrder, product);
-//        }
         BigDecimal countResults = BigDecimal.valueOf(sampleCount);
         if(!closingOrder) {
             countResults = countResults.subtract(BigDecimal.valueOf(previousBilledCount));
@@ -283,7 +281,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         SAPOrder newOrder =
             new SAPOrder(sapCompanyConfiguration, orderToUpdate.getQuoteId(), userFullName, sapOrderNumber,
                 orderToUpdate.getJiraTicketKey(), orderToUpdate.getResearchProject().getJiraTicketKey(), null,
-                orderItems.toArray(new SAPOrderItem[orderItems.size()]));
+                orderItems.toArray(new SAPOrderItem[0]));
 
         return newOrder;
     }
