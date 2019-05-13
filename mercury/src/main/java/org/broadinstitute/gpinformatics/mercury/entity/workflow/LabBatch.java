@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
@@ -127,8 +128,8 @@ public class LabBatch {
      */
     public static final Comparator<LabBatch> byDateDesc = new Comparator<LabBatch>() {
         @Override
-        public int compare(LabBatch bucketEntryPrime, LabBatch bucketEntrySecond) {
-            return bucketEntrySecond.getCreatedOn().compareTo(bucketEntryPrime.getCreatedOn());
+        public int compare(LabBatch labBatchPrime, LabBatch labBatchSecond) {
+            return ObjectUtils.compare(labBatchSecond.getCreatedOn(), labBatchPrime.getCreatedOn());
         }
     };
 
@@ -169,7 +170,7 @@ public class LabBatch {
             , inverseJoinColumns = @JoinColumn(name = "REWORKS"))
     private Collection<LabVessel> reworks = new HashSet<>();
 
-    private Date createdOn;
+    private Date createdOn; // todo jmt, should be CREATED_DATE?
 
     private Boolean isValidationBatch;
 

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.issue;
 
-import org.codehaus.jackson.annotate.JsonProperty;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * @author Scott Matthews

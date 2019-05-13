@@ -1,10 +1,13 @@
 package org.broadinstitute.gpinformatics.athena.boundary.util;
 
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.apache.poi.common.usermodel.HyperlinkType;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CreationHelper;
+import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Hyperlink;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
@@ -119,10 +122,10 @@ public abstract class AbstractSpreadsheetExporter<T extends AbstractSpreadsheetE
     public static CellStyle buildHeaderStyle(Workbook wb, IndexedColors indexedColors) {
         CellStyle style = wb.createCellStyle();
         style.setFillForegroundColor(indexedColors.getIndex());
-        style.setFillPattern(CellStyle.SOLID_FOREGROUND);
-        style.setAlignment(CellStyle.ALIGN_CENTER);
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        style.setAlignment(HorizontalAlignment.CENTER);
         Font headerFont = wb.createFont();
-        headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
+        headerFont.setBold(true);
         style.setFont(headerFont);
         return style;
     }
@@ -139,7 +142,7 @@ public abstract class AbstractSpreadsheetExporter<T extends AbstractSpreadsheetE
     protected static CellStyle buildPreambleStyle(Workbook wb) {
         CellStyle style = wb.createCellStyle();
         Font headerFont = wb.createFont();
-        headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
+        headerFont.setBold(true);
         style.setFont(headerFont);
         return style;
     }
@@ -154,11 +157,11 @@ public abstract class AbstractSpreadsheetExporter<T extends AbstractSpreadsheetE
     protected CellStyle buildColorStyle(Workbook wb, IndexedColors foregroundColor, IndexedColors fontColor) {
         CellStyle style = wb.createCellStyle();
         style.setFillForegroundColor(foregroundColor.getIndex());
-        style.setFillPattern(CellStyle.SOLID_FOREGROUND);
-        style.setAlignment(CellStyle.ALIGN_LEFT);
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        style.setAlignment(HorizontalAlignment.LEFT);
         style.setWrapText(false);
         Font font = wb.createFont();
-        font.setBoldweight(Font.BOLDWEIGHT_BOLD);
+        font.setBold(true);
         font.setColor(fontColor.getIndex());
         style.setFont(font);
         return style;
@@ -167,7 +170,7 @@ public abstract class AbstractSpreadsheetExporter<T extends AbstractSpreadsheetE
     protected CellStyle buildColorCellStyle(Workbook wb, IndexedColors foregroundColor) {
         CellStyle style = wb.createCellStyle();
         style.setFillForegroundColor(foregroundColor.getIndex());
-        style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
         return style;
     }
 
@@ -305,7 +308,7 @@ public abstract class AbstractSpreadsheetExporter<T extends AbstractSpreadsheetE
         public void writeCellLink(String linkText, String url) {
             nextCell();
             currentCell.setCellValue(linkText);
-            Hyperlink link = workbook.getCreationHelper().createHyperlink(Hyperlink.LINK_URL);
+            Hyperlink link = workbook.getCreationHelper().createHyperlink(HyperlinkType.URL);
             link.setAddress(url);
             currentCell.setHyperlink(link);
             currentCell.setCellStyle(hyperlinkStyle);
@@ -333,10 +336,10 @@ public abstract class AbstractSpreadsheetExporter<T extends AbstractSpreadsheetE
         protected CellStyle buildHeaderStyle(IndexedColors indexedColors) {
             CellStyle style = workbook.createCellStyle();
             style.setFillForegroundColor(indexedColors.getIndex());
-            style.setFillPattern(CellStyle.SOLID_FOREGROUND);
-            style.setAlignment(CellStyle.ALIGN_CENTER);
+            style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            style.setAlignment(HorizontalAlignment.CENTER);
             Font headerFont = workbook.createFont();
-            headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
+            headerFont.setBold(true);
             style.setFont(headerFont);
             return style;
         }
@@ -347,26 +350,6 @@ public abstract class AbstractSpreadsheetExporter<T extends AbstractSpreadsheetE
         protected CellStyle buildWrappedHeaderStyle() {
             CellStyle style = buildHeaderStyle(IndexedColors.WHITE);
             style.setWrapText(true);
-            return style;
-        }
-
-        /**
-         * Creates a cell style for a header with text wrapping and the given background color.
-         *
-         * @param rgbColor    the background color for the style
-         * @return the cell style
-         */
-        protected CellStyle getWrappedHeaderStyle(byte[] rgbColor) {
-            CellStyle style = buildWrappedHeaderStyle();
-            ((XSSFCellStyle) style).setFillForegroundColor(new XSSFColor(rgbColor));
-            return style;
-        }
-
-        protected CellStyle getWrappedHeaderStyle(byte[] rgbColor, boolean vertical) {
-            CellStyle style = getWrappedHeaderStyle(rgbColor);
-            if (vertical) {
-                style.setRotation((short) 90);
-            }
             return style;
         }
     }

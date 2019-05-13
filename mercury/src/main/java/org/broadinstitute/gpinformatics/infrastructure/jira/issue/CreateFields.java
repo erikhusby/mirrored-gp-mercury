@@ -1,15 +1,15 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.issue;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jira.NameableTypeJsonSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CreateJiraIssueFieldsSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Nameable;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.map.JsonSerializer;
-import org.codehaus.jackson.map.SerializerProvider;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -164,6 +164,7 @@ public class CreateFields extends UpdateFields {
         NOVASEQ("NovaSeq S2"),
         NOVASEQ_S1("NovaSeq S1"),
         NOVASEQ_S4("NovaSeq S4"),
+        NOVASEQ_SP("NovaSeq SP"),
         NEXTSEQ("NextSeq"),
         MISEQ("MiSeq"),
         MISEQ_16S("MiSeq16s"),
