@@ -4408,6 +4408,11 @@
                 <name>384 Well Pond Pico</name>
                 <labEventTypes>THREE_84_WELL_POND_PICO</labEventTypes>
                 <optional>false</optional>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In Normalization</statusTransition>
+                    <endStatus>In Normalization</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Germline Exome Norm Transfer</name>
@@ -4416,8 +4421,8 @@
                 <ancestryEtlFlag>true</ancestryEtlFlag>
                 <jiraTransition>
                     <project>LCSET</project>
-                    <statusTransition>In Normalization</statusTransition>
-                    <endStatus>In Normalization</endStatus>
+                    <statusTransition>Ready for Selection</statusTransition>
+                    <endStatus>Ready for Selection</endStatus>
                 </jiraTransition>
             </workflowStepDefs>
         </workflowProcessDefVersions>
