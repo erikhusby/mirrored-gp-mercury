@@ -45,8 +45,9 @@ public class BSPRestService implements Serializable {
 
         // This is called in context of bettalims message handling which handles errors via RuntimeException.
         if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
+            String entity = response.readEntity(String.class);
             response.close();
-            throw new RuntimeException("GET to " + urlString + " returned: " + response.readEntity(String.class));
+            throw new RuntimeException("GET to " + urlString + " returned: " + entity);
         }
 
         SampleKitInfo sampleKitInfo = response.readEntity(SampleKitInfo.class);
@@ -63,8 +64,9 @@ public class BSPRestService implements Serializable {
 
         // This is called in context of bettalims message handling which handles errors via RuntimeException.
         if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
+            String entity = response.readEntity(String.class);
             response.close();
-            throw new RuntimeException("GET to " + urlString + " returned: " + response.readEntity(String.class));
+            throw new RuntimeException("GET to " + urlString + " returned: " + entity);
         }
 
         GetSampleDetails.SampleDetails sampleDetails = response.readEntity(GetSampleDetails.SampleDetails.class);
