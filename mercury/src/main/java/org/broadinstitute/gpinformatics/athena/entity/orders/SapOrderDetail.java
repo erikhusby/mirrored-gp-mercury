@@ -159,8 +159,7 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
             final ProductOrder productOrder = ledgerEntry.getProductOrderSample().getProductOrder();
             Product aggregatingProduct = null;
 
-            if(ledgerEntry.getPriceItemType() == LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM ||
-               ledgerEntry.getPriceItemType() == LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM) {
+            if(productOrder.getProduct().getPrimaryPriceItem().equals(ledgerEntry.getPriceItem())) {
                 aggregatingProduct = productOrder.getProduct();
             } else {
                 for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
