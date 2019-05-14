@@ -1,7 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
@@ -26,6 +28,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ConcentrationAndVolumeAndWeightType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ProductInfoType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ProductInfosType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReagentDesignType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SampleInfoType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
@@ -460,22 +464,7 @@ public class LimsQueries {
             reagentDesignType.setWasFound(true);
             Set<String> reagentDesigns = new HashSet<>();
             for (SampleInstanceV2 sampleInstanceV2: labVessel.getSampleInstancesV2()) {
-                ProductOrderSample pdoSampleForSingleBucket = sampleInstanceV2.getProductOrderSampleForSingleBucket();
-                if (pdoSampleForSingleBucket == null) {
-                    for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
-                        if (productOrderSample.getProductOrder().getProduct() != null) {
-                            String reagentDesignKey = productOrderSample.getProductOrder().getReagentDesignKey();
-                            if (StringUtils.isNotBlank(reagentDesignKey)) {
-                                reagentDesigns.add(reagentDesignKey);
-                            }
-                        }
-                    }
-                } else {
-                    String reagentDesignKey = pdoSampleForSingleBucket.getProductOrder().getReagentDesignKey();
-                    if (StringUtils.isNotBlank(reagentDesignKey)) {
-                        reagentDesigns.add(reagentDesignKey);
-                    }
-                }
+                fetchExpectedReagentDesignsForSample(sampleInstanceV2, reagentDesigns);
             }
             if (reagentDesigns.size() == 0) {
                 reagentDesignType.setHasErrors(true);
@@ -488,5 +477,104 @@ public class LimsQueries {
             }
         }
         return reagentDesignTypes;
+    }
+
+    public List<ProductInfosType> fetchProductInfoForTubeBarcodes(List<String> tubeBarcodes) {
+        List<ProductInfosType> productInfosTypeList = new ArrayList<>();
+        Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(tubeBarcodes);
+        for (Map.Entry<String, LabVessel> entry: mapBarcodeToVessel.entrySet()) {
+            ProductInfosType productInfosType = new ProductInfosType();
+            productInfosTypeList.add(productInfosType);
+            LabVessel labVessel = entry.getValue();
+            productInfosType.setTubeBarcode(entry.getKey());
+            if (labVessel == null) {
+                productInfosType.setError("Failed to find tube " + entry.getKey());
+                productInfosType.setHasErrors(true);
+                productInfosType.setWasFound(false);
+                continue;
+            }
+            productInfosType.setWasFound(true);
+            Set<Product> products = new HashSet<>();
+            Map<Product, ProductInfoType> mapProductToProductInfo = new HashMap<>();
+            Set<String> errors = new HashSet<>();
+            for (SampleInstanceV2 sampleInstanceV2: labVessel.getSampleInstancesV2()) {
+                ProductOrderSample pdoSampleForSingleBucket = sampleInstanceV2.getProductOrderSampleForSingleBucket();
+                if (pdoSampleForSingleBucket == null) {
+                    for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
+                        Product product = productOrderSample.getProductOrder().getProduct();
+                        if (product != null) {
+                            if (!mapProductToProductInfo.containsKey(product)) {
+                                ProductInfoType productInfoType = new ProductInfoType();
+                                productInfoType.setPartNumber(product.getPartNumber());
+                                productInfoType.setProductName(product.getProductName());
+                                productInfoType.setWorkflowName(product.getWorkflowName());
+                                productInfoType.setProductFamily(product.getProductFamily().getName());
+                                productInfosType.getProductInfoType().add(productInfoType);
+                                mapProductToProductInfo.put(product, productInfoType);
+                            }
+                            ProductInfoType productInfoType = mapProductToProductInfo.get(product);
+                            if (!StringUtils.isBlank(productOrderSample.getProductOrder().getCoverageTypeKey())) {
+                                String pdoCoverage = productOrderSample.getProductOrder().getCoverageTypeKey();
+                                productInfoType.setCoverageKey(pdoCoverage);
+                                if (productInfoType.getCoverageKey() != null &&
+                                    !productInfoType.getCoverageKey().equals(pdoCoverage)) {
+                                    errors.add("Found multiple coverages: " + pdoCoverage + " " +
+                                               productOrderSample.getProductOrder().getCoverageTypeKey());
+                                }
+                            }
+                            if (!StringUtils.isBlank(productOrderSample.getProductOrder().getReagentDesignKey())) {
+                                String reagentDesignKey = productOrderSample.getProductOrder().getReagentDesignKey();
+                                productInfoType.setReagentDesignKey(reagentDesignKey);
+                                if (productInfoType.getReagentDesignKey() != null &&
+                                    !productInfoType.getReagentDesignKey().equals(reagentDesignKey)) {
+                                    errors.add("Found multiple Reagent Designs: " + reagentDesignKey + " " +
+                                               productOrderSample.getProductOrder().getReagentDesignKey());
+                                }
+                            }
+                            productInfoType.setCoverageKey(productOrderSample.getProductOrder().getCoverageTypeKey());
+                            productInfoType.setReagentDesignKey(
+                                    productOrderSample.getProductOrder().getReagentDesignKey());
+                            products.add(product);
+                        }
+                    }
+                } else {
+                    ProductOrder productOrder = pdoSampleForSingleBucket.getProductOrder();
+                    Product product = productOrder.getProduct();
+                    ProductInfoType productInfoType = new ProductInfoType();
+                    productInfoType.setPartNumber(product.getPartNumber());
+                    productInfoType.setProductName(product.getProductName());
+                    productInfoType.setWorkflowName(product.getWorkflowName());
+                    productInfoType.setCoverageKey(product.getCoverageTypeKey());
+                    productInfoType.setReagentDesignKey(productOrder.getReagentDesignKey());
+                    productInfosType.getProductInfoType().add(productInfoType);
+                }
+            }
+
+            if (errors.size() > 1) {
+                String errMsg = StringUtils.join(errors, ',');
+                productInfosType.setError(errMsg);
+                productInfosType.setHasErrors(true);
+            }
+        }
+        return productInfosTypeList;
+    }
+
+    public static void fetchExpectedReagentDesignsForSample(SampleInstanceV2 sampleInstanceV2, Set<String> reagentDesigns) {
+        ProductOrderSample pdoSampleForSingleBucket = sampleInstanceV2.getProductOrderSampleForSingleBucket();
+        if (pdoSampleForSingleBucket == null) {
+            for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
+                if (productOrderSample.getProductOrder().getProduct() != null) {
+                    String reagentDesignKey = productOrderSample.getProductOrder().getReagentDesignKey();
+                    if (StringUtils.isNotBlank(reagentDesignKey)) {
+                        reagentDesigns.add(reagentDesignKey);
+                    }
+                }
+            }
+        } else {
+            String reagentDesignKey = pdoSampleForSingleBucket.getProductOrder().getReagentDesignKey();
+            if (StringUtils.isNotBlank(reagentDesignKey)) {
+                reagentDesigns.add(reagentDesignKey);
+            }
+        }
     }
 }

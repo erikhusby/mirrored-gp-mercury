@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -34,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -44,9 +44,6 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  */
 @Test(groups = TestGroups.STANDARD)
 public class ConfigurableListContainerTest extends Arquillian {
-
-    @Inject
-    private BSPSampleSearchService bspSampleSearchService;
 
     @Inject
     private LabBatchDao labBatchDao;
@@ -307,6 +304,43 @@ public class ConfigurableListContainerTest extends Arquillian {
         Assert.assertEquals(resultRow.getResultId(), "HJVHFADXX");
         Assert.assertEquals(resultRow.getRenderableCells().get(0), "HJVHFADXX");
         Assert.assertEquals(resultRow.getRenderableCells().get(1), "1109099877");
+    }
+
+    @Test
+    public void testLatestFingerprint() {
+        String entityName = ColumnEntity.MERCURY_SAMPLE.getEntityName();
+        ConfigurableSearchDefinition configurableSearchDef =
+                SearchDefinitionFactory.getForEntity(entityName);
+        SearchInstance searchInstance = new SearchInstance();
+
+        SearchInstance.SearchValue mercurySampleId = searchInstance.addTopLevelTerm(
+                "Mercury Sample ID", configurableSearchDef);
+        mercurySampleId.setOperator(SearchInstance.Operator.IN);
+        Map<String, String> mapSampleIdToPtId = new LinkedHashMap<String, String>() {{
+            put("SM-744ME", "PT-1PZXA");
+            put("SM-744MT", "PT-1PZXP");
+            put("SM-HM7QC", "CP-15203");
+        }};
+        mercurySampleId.setValues(new ArrayList<>(mapSampleIdToPtId.keySet()));
+
+        searchInstance.setPredefinedViewColumns(Arrays.asList("Mercury Sample ID", "Participant ID(s)",
+                "Passing Initial Fingerprint"));
+        searchInstance.establishRelationships(configurableSearchDef);
+        SearchContext context = buildSearchContext();
+        context.setSearchInstance(searchInstance);
+
+        ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
+                searchInstance,configurableSearchDef, null, 0, null, "ASC", entityName);
+
+        ConfigurableList.ResultList resultList = firstPageResults.getResultList();
+        Assert.assertEquals(resultList.getResultRows().size(), 3);
+        for (ConfigurableList.ResultRow resultRow : resultList.getResultRows()) {
+            Assert.assertEquals(resultRow.getRenderableCells().size(), 6);
+            String sampleId = resultRow.getRenderableCells().get(0);
+            String ptId = mapSampleIdToPtId.get(sampleId);
+            Assert.assertEquals(resultRow.getRenderableCells().get(1), ptId);
+            Assert.assertEquals(resultRow.getRenderableCells().get(2), "Y");
+        }
     }
 
     /**

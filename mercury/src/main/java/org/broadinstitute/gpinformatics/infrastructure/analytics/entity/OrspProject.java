@@ -41,7 +41,7 @@ public class OrspProject {
      * others, but they do not have meaning to Mercury and are more prone to change over time so are not worth
      * enumerating.
      */
-    private static final List<String> USABLE_STATUSES = Arrays.asList("Approved", "Completed");
+    public static final List<String> USABLE_STATUSES = Arrays.asList("Approved", "Completed");
     public static final String CONSENT_GROUP_PREFIX = "CG-";
 
     @Id

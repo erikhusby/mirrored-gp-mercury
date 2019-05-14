@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import com.sun.jersey.api.client.ClientResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.datawh.LabEventEtl.EventFactDto;
 import org.broadinstitute.gpinformatics.infrastructure.datawh.SequencingSampleFactEtl.SequencingRunDto;
@@ -83,9 +82,9 @@ public class ExtractTransformResource {
         extractTransform.initConfig();
         int recordCount = extractTransform.incrementalEtl(startDateTime, endDateTime);
         if (recordCount >= 0) {
-            return Response.status(ClientResponse.Status.OK).entity("created " + recordCount + " records").build();
+            return Response.status(Response.Status.OK).entity("created " + recordCount + " records").build();
         } else {
-            return Response.status(ClientResponse.Status.INTERNAL_SERVER_ERROR)
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("Problem running incremental etl").build();
         }
     }

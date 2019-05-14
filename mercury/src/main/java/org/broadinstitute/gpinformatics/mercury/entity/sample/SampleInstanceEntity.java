@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.annotations.BatchSize;
@@ -59,10 +60,6 @@ public class SampleInstanceEntity {
     @JoinColumn(name = "MERCURY_SAMPLE")
     private MercurySample mercurySample;
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "ROOT_SAMPLE")
-    private MercurySample rootSample;
-
     @OneToMany(mappedBy = "sampleInstanceEntity", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @BatchSize(size = 100)
     private Set<SampleInstanceEntityTsk> sampleInstanceEntityTsks = new HashSet<>();
@@ -83,31 +80,41 @@ public class SampleInstanceEntity {
     @JoinColumn(name = "REFERENCE_SEQUENCE")
     private ReferenceSequence referenceSequence;
 
-    @Column(unique = true)
-    private String sampleLibraryName;
-
-    private String libraryType;
+    private String libraryName;
     private String experiment;
-    private Integer readLength;
+
+    @Column(name = "READ_LENGTH1")
+    private Integer readLength1;
+
+    @Column(name = "READ_LENGTH2")
+    private Integer readLength2;
+
+    @Column(name = "INDEX_LENGTH1")
+    private Integer indexLength1;
+
+    @Column(name = "INDEX_LENGTH2")
+    private Integer indexLength2;
+
     private Date uploadDate;
     private Boolean pairedEndRead;
-    private String comments;
     private Integer numberLanes;
     private String aggregationParticle;
     private String insertSize;
     private Boolean umisPresent;
+    private String aggregationDataType;
+
+    /**
+     * Implied sample name means there was no explicit sample name provided in the upload and that the library
+     * name is used instead for Mercury internal purposes, but not sent to the pipeline.
+     */
+    private Boolean impliedSampleName;
+    private String baitName;
+
+    @Enumerated(EnumType.STRING)
+    private FlowcellDesignation.IndexType indexType;
 
     @Enumerated(EnumType.STRING)
     private IlluminaFlowcell.FlowcellType sequencerModel;
-
-    public void removeSubTasks() {
-        sampleInstanceEntityTsks.clear();
-    }
-
-    public void addSubTasks(SampleInstanceEntityTsk subTasks) {
-        sampleInstanceEntityTsks.add(subTasks);
-        subTasks.setSampleInstanceEntity(this);
-    }
 
     /** Returns the Jira dev sub tasks in the order they were created. */
     public List<String> getSubTasks() {
@@ -124,14 +131,6 @@ public class SampleInstanceEntity {
             subTaskNames.add(subTask.getSubTask());
         }
         return subTaskNames;
-    }
-
-    public MercurySample getRootSample() {
-        return rootSample;
-    }
-
-    public void setRootSample(MercurySample rootSample) {
-        this.rootSample = rootSample;
     }
 
     public void setLabVessel(LabVessel labVessel) {
@@ -162,8 +161,16 @@ public class SampleInstanceEntity {
         return this.mercurySample;
     }
 
-    public void setSampleLibraryName(String sampleLibraryName) {
-        this.sampleLibraryName = sampleLibraryName;
+    public Boolean getImpliedSampleName() {
+        return impliedSampleName;
+    }
+
+    public void setImpliedSampleName(Boolean impliedSampleName) {
+        this.impliedSampleName = impliedSampleName;
+    }
+
+    public void setLibraryName(String libraryName) {
+        this.libraryName = libraryName;
     }
 
     public String getExperiment() {
@@ -182,20 +189,21 @@ public class SampleInstanceEntity {
         this.referenceSequence = referenceSequence;
     }
 
-    public String getLibraryType() {
-        return libraryType;
+
+    public Integer getReadLength1() {
+        return readLength1;
     }
 
-    public void setLibraryType(String libraryType) {
-        this.libraryType = libraryType;
+    public void setReadLength1(Integer readLength1) {
+        this.readLength1 = readLength1;
     }
 
-    public Integer getReadLength() {
-        return readLength;
+    public Integer getReadLength2() {
+        return readLength2;
     }
 
-    public void setReadLength(Integer readLength) {
-        this.readLength = readLength;
+    public void setReadLength2(Integer readLength2) {
+        this.readLength2 = readLength2;
     }
 
     public Date getUploadDate() {
@@ -213,25 +221,15 @@ public class SampleInstanceEntity {
             }
         }
     }
-    public String getComments() {
-        return comments;
-    }
-
-    public void setComments(String comments) {
-        this.comments = comments;
-    }
 
     @Nonnull
     public LabVessel getLabVessel() {
         return labVessel;
     }
 
-    public String getSampleLibraryName() {
-        return sampleLibraryName;
-    }
-
-    public Set<SampleInstanceEntityTsk> getSampleInstanceEntityTsks() {
-        return sampleInstanceEntityTsks;
+    @Nonnull
+    public String getLibraryName() {
+        return libraryName;
     }
 
     public void setUploadDate(Date uploadDate) {
@@ -296,5 +294,44 @@ public class SampleInstanceEntity {
 
     public Long getSampleInstanceEntityId() {
         return sampleInstanceEntityId;
+
+    public String getAggregationDataType() {
+        return aggregationDataType;
+    }
+
+    public void setAggregationDataType(String aggregationDataType) {
+        this.aggregationDataType = aggregationDataType;
+    }
+
+    public FlowcellDesignation.IndexType getIndexType() {
+        return indexType;
+    }
+
+    public void setIndexType(FlowcellDesignation.IndexType indexType) {
+        this.indexType = indexType;
+    }
+
+    public Integer getIndexLength1() {
+        return indexLength1;
+    }
+
+    public void setIndexLength1(Integer indexLength1) {
+        this.indexLength1 = indexLength1;
+    }
+
+    public Integer getIndexLength2() {
+        return indexLength2;
+    }
+
+    public void setIndexLength2(Integer indexLength2) {
+        this.indexLength2 = indexLength2;
+    }
+
+    public String getBaitName() {
+        return baitName;
+    }
+
+    public void setBaitName(String baitName) {
+        this.baitName = baitName;
     }
 }

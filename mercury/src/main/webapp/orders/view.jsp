@@ -74,6 +74,7 @@
             font-size: 12px;
             font-style: oblique;
         }
+
         .ui-progressbar { height:15px}
         #sampleData_info {font-weight: bold}
     </style>
@@ -333,6 +334,7 @@ $j(document).ready(function () {
                 }
                 loadBspData(settings);
                 initColumnVisibility(settings);
+
 
 //                postLoadSampleInfo();
                 // Only show the fill kit detail information for sample initiation PDOs. With the collaboration portal, there
@@ -1697,6 +1699,21 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
     </div>
 </c:if>
 <div class="view-control-group control-group">
+    <label title="Applies to all samples in this order except for cases where samples were indivdually set."
+           class="control-label label-form">Custom Aggregation Particle</label>
+    <div class="controls">
+        <div class="form-value">${actionBean.editOrder.aggregationParticleDisplayName}</div>
+    </div>
+</div>
+<div class="view-control-group control-group">
+    <label class="control-label label-form">Coverage</label>
+    <div class="controls">
+        <div class="form-value">
+            ${actionBean.editOrder.coverageTypeKey}
+        </div>
+    </div>
+</div>
+<div class="view-control-group control-group">
     <label class="control-label label-form">Description</label>
 
     <div class="controls">
@@ -1820,14 +1837,6 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
                     <stripes:button name="setRisk" value="Set Risk" class="btn"
                                     style="margin-left:5px;" onclick="showRiskDialog()"/>
 
-                </security:authorizeBlock>
-                <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                    <c:if test="${actionBean.editOrder.product.supportsNumberOfLanes}">
-                        <stripes:link beanclass="${actionBean.class.name}" event="<%= ProductOrderActionBean.SQUID_COMPONENTS_ACTION %>">
-                            <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
-                            Build Squid Components
-                        </stripes:link>
-                    </c:if>
                 </security:authorizeBlock>
             </span>
 

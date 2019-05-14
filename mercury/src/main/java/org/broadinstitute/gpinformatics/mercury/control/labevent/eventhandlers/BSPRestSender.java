@@ -12,9 +12,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers;
 
 import com.rits.cloning.Cloner;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -42,10 +40,17 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.text.Format;
@@ -83,16 +88,20 @@ public class BSPRestSender implements Serializable {
     public TransferReturn postToBsp(BettaLIMSMessage message, String bspRestUrl) {
 
         String urlString = bspRestClient.getUrl(bspRestUrl);
-        WebResource webResource = bspRestClient.getWebResource(urlString);
+        WebTarget webTarget = bspRestClient.getWebResource(urlString);
 
         // Posts message to BSP using the specified REST url.
-        ClientResponse response = webResource.type(MediaType.APPLICATION_XML).post(ClientResponse.class, message);
+        Response response = webTarget.request().post(Entity.xml(message));
 
         // This is called in context of bettalims message handling which handles errors via RuntimeException.
-        if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
-            throw new RuntimeException("POST to " + urlString + " returned: " + response.getEntity(String.class));
+        if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
+            String entity = response.readEntity(String.class);
+            response.close();
+            throw new RuntimeException("POST to " + urlString + " returned: " + entity);
         }
-        return response.getEntity(TransferReturn.class);
+        TransferReturn transferReturn = response.readEntity(TransferReturn.class);
+        response.close();
+        return transferReturn;
     }
 
     private PlateCherryPickEvent plateTransferToCherryPick(PlateTransferEventType plateTransferEventType,
@@ -384,18 +393,25 @@ public class BSPRestSender implements Serializable {
      */
     public void postToBsp(String bspUsername, String filename, InputStream inputStream, String bspRestUrl) {
         String urlString = bspRestClient.getUrl(bspRestUrl);
-        WebResource webResource = bspRestClient.getWebResource(urlString).
+        WebTarget webTarget = bspRestClient.getWebResource(urlString).
                 queryParam("username", bspUsername).
                 queryParam("filename", filename);
 
-        ClientResponse response = webResource.post(ClientResponse.class, inputStream);
+        Response response = webTarget.request().post(Entity.entity(new StreamingOutput() {
+            @Override
+            public void write(OutputStream outputStream) throws IOException, WebApplicationException {
+                IOUtils.copy(inputStream, outputStream);
+            }
+        }, MediaType.APPLICATION_OCTET_STREAM_TYPE));
 
         // Handles errors by throwing RuntimeException.
-        if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
-            String msg = "POST to " + urlString + " returned: " + response.getEntity(String.class);
+        if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
+            String msg = "POST to " + urlString + " returned: " + response.readEntity(String.class);
             logger.error(msg);
+            response.close();
             throw new RuntimeException(msg);
         }
+        response.close();
     }
 
     /**
@@ -406,32 +422,36 @@ public class BSPRestSender implements Serializable {
      */
     public String createDisassociatedPlate(String receptacleType, String wellType) {
         String urlString = bspRestClient.getUrl(BSP_CREATE_DISSASSOC_PLATE_URL);
-        WebResource webResource = bspRestClient.getWebResource(urlString);
+        WebTarget webTarget = bspRestClient.getWebResource(urlString);
 
-        MultivaluedMap formData = new MultivaluedMapImpl();
+        MultivaluedMap<String, String> formData = new MultivaluedHashMap<>();
         formData.add("receptacleType", receptacleType);
         formData.add("wellType", wellType);
 
         // Posts message to BSP using the specified REST url.
-        ClientResponse response = webResource.type(MediaType.APPLICATION_FORM_URLENCODED).post(ClientResponse.class, formData);
+        Response response = webTarget.request().post(Entity.form(formData));
 
         // This is called in context of bettalims message handling which handles errors via RuntimeException.
-        if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
-            throw new RuntimeException("POST to " + urlString + " returned: " + response.getEntity(String.class));
+        String entity = response.readEntity(String.class);
+        response.close();
+        if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
+            throw new RuntimeException("POST to " + urlString + " returned: " + entity);
         } else {
-            return response.getEntity(String.class);
+            return entity;
         }
     }
 
     public GetSampleInfo.SampleInfos  getSampleInfo(String containerBarcode) {
         String urlString = bspRestClient.getUrl(BSP_CONTAINER_URL);
-        WebResource webResource = bspRestClient.getWebResource(urlString).queryParam("containerBarcode", containerBarcode);
-        ClientResponse response = webResource.get(ClientResponse.class);
-        if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
+        WebTarget webTarget = bspRestClient.getWebResource(urlString).queryParam("containerBarcode", containerBarcode);
+        Response response = webTarget.request().get();
+        if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
             logger.warn("Failed to find container info for " + containerBarcode);
             return null;
         } else {
-            return response.getEntity(GetSampleInfo.SampleInfos.class);
+            GetSampleInfo.SampleInfos sampleInfos = response.readEntity(GetSampleInfo.SampleInfos.class);
+            response.close();
+            return sampleInfos;
         }
     }
 

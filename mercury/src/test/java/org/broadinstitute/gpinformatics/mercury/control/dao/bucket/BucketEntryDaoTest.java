@@ -176,14 +176,14 @@ public class BucketEntryDaoTest extends StubbyContainerTest {
             productOrderSampleDao.persist(productOrderSample);
             mercurySample.addProductOrderSample(productOrderSample);
             tubeDao.persist(mercurySample);
-            vessel.getMercurySamples().add(mercurySample);
+            vessel.addSample(mercurySample);
             tubeDao.persist(vessel);
 //            tubeDao.flush();
         }
 
         testEntry = bucketEntryDao.findByVesselAndBucket(vessel, testBucket);
         if (testEntry == null) {
-            testEntry = new BucketEntry(vessel, testOrder, testBucket, BucketEntry.BucketEntryType.PDO_ENTRY, 0);
+            testEntry = new BucketEntry(vessel, testOrder, testBucket, BucketEntry.BucketEntryType.PDO_ENTRY);
         }
         bucketEntryDao.persist(testEntry);
         bucketEntryDao.flush();
@@ -203,11 +203,11 @@ public class BucketEntryDaoTest extends StubbyContainerTest {
 
         testBucket = bucketDao.findByName(BucketDaoTest.EXTRACTION_BUCKET_NAME);
         BarcodedTube anotherVessel = new BarcodedTube("A1324"+System.currentTimeMillis());
-        anotherVessel.getMercurySamples().add(new MercurySample("SM-1234"+System.currentTimeMillis(), MercurySample.MetadataSource.BSP));
+        anotherVessel.addSample(new MercurySample("SM-1234"+System.currentTimeMillis(), MercurySample.MetadataSource.BSP));
         productOrderDao.persist(anotherOrder);
 
         BucketEntry anotherEntry =
-            new BucketEntry(anotherVessel, anotherOrder, testBucket, BucketEntry.BucketEntryType.PDO_ENTRY, 0);
+            new BucketEntry(anotherVessel, anotherOrder, testBucket, BucketEntry.BucketEntryType.PDO_ENTRY);
         bucketEntryDao.persist(anotherEntry);
         bucketEntryDao.flush();
         List<Object[]> testCases = new ArrayList<>();
@@ -349,10 +349,6 @@ public class BucketEntryDaoTest extends StubbyContainerTest {
 
         BucketEntry retrievedEntry = bucketEntryDao.findByVesselAndPO(foundVessel, testOrder);
 
-        Assert.assertNotSame(24, retrievedEntry.getProductOrderRanking());
-
-        retrievedEntry.setProductOrderRanking(24);
-
         bucketEntryDao.flush();
         bucketEntryDao.clear();
 
@@ -362,7 +358,6 @@ public class BucketEntryDaoTest extends StubbyContainerTest {
         testOrder = productOrderDao.findByBusinessKey(testPoBusinessKey);
 
         BucketEntry newRetrievedEntry = bucketEntryDao.findByVesselAndPO(newFoundVessel, testOrder);
-        Assert.assertEquals(24, newRetrievedEntry.getProductOrderRanking().intValue());
 
         ProductOrder replacementOrder = productOrderDao.findByBusinessKey(testPoBusinessKey + "new");
         if(replacementOrder == null) {

@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignation
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ public class DesignationFctActionBean extends CoreActionBean implements Designat
     public static final String SUBMIT_TUBE_LCSETS_ACTION = "submitTubeLcsets";
     public static final List<FlowcellDesignation.Status> ONLY_QUEUED = Collections.singletonList(
             FlowcellDesignation.Status.QUEUED);
+    private boolean diversifySamplesFlag;
 
     @Inject
     private LabBatchEjb labBatchEjb;
@@ -115,7 +117,8 @@ public class DesignationFctActionBean extends CoreActionBean implements Designat
     @HandlesEvent(CREATE_FCT_ACTION)
     public Resolution createFct() {
 
-        List<MutablePair<String, String>> fctUrls = labBatchEjb.makeFcts(dtos, userBean.getLoginUserName(), this);
+        List<MutablePair<String, String>> fctUrls = labBatchEjb.makeFcts(dtos, userBean.getLoginUserName(),
+                (MessageReporter)this, diversifySamplesFlag);
 
         createdFcts.addAll(fctUrls);
         Collections.sort(createdFcts, new Comparator<MutablePair<String, String>>() {
@@ -167,5 +170,13 @@ public class DesignationFctActionBean extends CoreActionBean implements Designat
     public void setTubeLcsetAssignments(
             List<DesignationUtils.LcsetAssignmentDto> tubeLcsetAssignments) {
         this.tubeLcsetAssignments = tubeLcsetAssignments;
+    }
+
+    public boolean isDiversifySamplesFlag() {
+        return diversifySamplesFlag;
+    }
+
+    public void setDiversifySamplesFlag(boolean diversifySamplesFlag) {
+        this.diversifySamplesFlag = diversifySamplesFlag;
     }
 }

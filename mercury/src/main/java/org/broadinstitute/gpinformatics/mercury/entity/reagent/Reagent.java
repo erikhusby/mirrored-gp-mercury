@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventReagent;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
@@ -78,6 +79,13 @@ public abstract class Reagent {
     @BatchSize(size = 100)
     private Set<LabEventReagent> labEventReagents = new HashSet<>();
 
+    @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(schema = "MERCURY"
+            , joinColumns = {@JoinColumn(name = "REAGENT")}
+            ,inverseJoinColumns = {@JoinColumn(name = "METADATA")})
+    @BatchSize(size = 100)
+    private Set<Metadata> metadata = new HashSet<>();
+
     protected Reagent(@Nullable String reagentName, @Nullable String lot, @Nullable Date expiration) {
         this.name = reagentName;
         this.lot = lot;
@@ -125,5 +133,13 @@ public abstract class Reagent {
 
     public void setFirstUse(Date firstUse) {
         this.firstUse = firstUse;
+    }
+
+    public Set<Metadata> getMetadata() {
+        return metadata;
+    }
+
+    public void addMetadata(Set<Metadata> metadata) {
+        this.metadata.addAll(metadata);
     }
 }

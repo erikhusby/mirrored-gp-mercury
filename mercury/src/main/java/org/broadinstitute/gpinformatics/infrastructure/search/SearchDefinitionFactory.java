@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -14,7 +15,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -175,10 +175,17 @@ public class SearchDefinitionFactory {
         MAP_NAME_TO_DEF.put(ColumnEntity.EXTERNAL_LIBRARY.getEntityName(), configurableSearchDefinition);
     }
 
+    /**
+     * Prepends batch type from search term name to a numeric entry <br/>
+     * e.g converts user input 7786 to ARRAY-7786 for ARRAY term name
+     */
     static SearchTerm.Evaluator<Object> getBatchNameInputConverter(){
         return batchNameInputConverter;
     }
 
+    /**
+     * Prepends 'PDO-' to a numeric entry for PDO term
+     */
     static SearchTerm.Evaluator<Object> getPdoInputConverter(){
         return pdoConverter;
     }

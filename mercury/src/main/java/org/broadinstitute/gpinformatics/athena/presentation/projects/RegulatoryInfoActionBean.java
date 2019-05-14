@@ -18,6 +18,9 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @UrlBinding("/projects/regulatoryInfo.action")
 public class RegulatoryInfoActionBean extends CoreActionBean {
@@ -76,17 +79,35 @@ public class RegulatoryInfoActionBean extends CoreActionBean {
      */
     @HandlesEvent(REGULATORY_INFO_QUERY_ACTION)
     public Resolution queryRegulatoryInfoReturnHtmlSnippet() {
+        researchProjectKey = getContext().getRequest().getParameter("researchProjectKey");
+
         String query = q.trim();
+
         searchResults = regulatoryInfoDao.findByIdentifier(query);
         if (searchResults.isEmpty()) {
-            orspSearchResult = orspProjectDao.findByKey(query);
-            if (orspSearchResult != null) {
-                regulatoryInfoType = orspSearchResult.getType();
-                regulatoryInfoAlias = orspSearchResult.getName();
+            Optional<OrspProject> orspSearchResults = Optional.ofNullable(orspProjectDao.findByKey(query));
+            orspSearchResults.ifPresent(orspProject -> {
+                orspSearchResult = orspProject;
+                regulatoryInfoType = orspProject.getType();
+                regulatoryInfoAlias = orspProject.getName();
+            });
+        } else {
+            final Set<String> regulatoryInfoIdentifiers =
+                    searchResults.stream().map(RegulatoryInfo::getIdentifier).collect(Collectors.toSet());
+            final List<OrspProject> orspResults = orspProjectDao.findOrspProjectListByIdList(regulatoryInfoIdentifiers);
+            final Optional<Set<String>> orspResultNames = Optional.ofNullable(orspResults.stream().map(OrspProject::getName).collect(Collectors.toSet()));
+
+            if(orspResultNames.isPresent() && !orspResultNames.get().isEmpty()) {
+
+                searchResults.forEach(regulatoryInfo -> {
+                    regulatoryInfo.setUserEdit(orspResultNames.get().contains(regulatoryInfo.getIdentifier()));
+                });
+            } else {
+                searchResults.clear();
             }
         }
         regulatoryInfoIdentifier = query;
-        return new ForwardResolution("regulatory_info_dialog_sheet_2.jsp");
+        return new ForwardResolution("regulatory_info_dialog_sheet_2.jsp").addParameter("researchProjectKey", researchProjectKey);
     }
 
     /**
