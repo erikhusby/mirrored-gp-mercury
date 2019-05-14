@@ -60,10 +60,6 @@ public class SampleInstanceEntity {
     @JoinColumn(name = "MERCURY_SAMPLE")
     private MercurySample mercurySample;
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "ROOT_SAMPLE")
-    private MercurySample rootSample;
-
     @OneToMany(mappedBy = "sampleInstanceEntity", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @BatchSize(size = 100)
     private Set<SampleInstanceEntityTsk> sampleInstanceEntityTsks = new HashSet<>();
@@ -84,10 +80,7 @@ public class SampleInstanceEntity {
     @JoinColumn(name = "REFERENCE_SEQUENCE")
     private ReferenceSequence referenceSequence;
 
-    @Column(unique = true)
-    private String sampleLibraryName;
-
-    private String libraryType;
+    private String libraryName;
     private String experiment;
 
     @Column(name = "READ_LENGTH1")
@@ -104,12 +97,17 @@ public class SampleInstanceEntity {
 
     private Date uploadDate;
     private Boolean pairedEndRead;
-    private String comments;
     private Integer numberLanes;
     private String aggregationParticle;
     private String insertSize;
     private Boolean umisPresent;
     private String aggregationDataType;
+
+    /**
+     * Implied sample name means there was no explicit sample name provided in the upload and that the library
+     * name is used instead for Mercury internal purposes, but not sent to the pipeline.
+     */
+    private Boolean impliedSampleName;
     private String baitName;
 
     @Enumerated(EnumType.STRING)
@@ -117,15 +115,6 @@ public class SampleInstanceEntity {
 
     @Enumerated(EnumType.STRING)
     private IlluminaFlowcell.FlowcellType sequencerModel;
-
-    public void removeSubTasks() {
-        sampleInstanceEntityTsks.clear();
-    }
-
-    public void addSubTasks(SampleInstanceEntityTsk subTasks) {
-        sampleInstanceEntityTsks.add(subTasks);
-        subTasks.setSampleInstanceEntity(this);
-    }
 
     /** Returns the Jira dev sub tasks in the order they were created. */
     public List<String> getSubTasks() {
@@ -142,14 +131,6 @@ public class SampleInstanceEntity {
             subTaskNames.add(subTask.getSubTask());
         }
         return subTaskNames;
-    }
-
-    public MercurySample getRootSample() {
-        return rootSample;
-    }
-
-    public void setRootSample(MercurySample rootSample) {
-        this.rootSample = rootSample;
     }
 
     public void setLabVessel(LabVessel labVessel) {
@@ -180,8 +161,16 @@ public class SampleInstanceEntity {
         return this.mercurySample;
     }
 
-    public void setSampleLibraryName(String sampleLibraryName) {
-        this.sampleLibraryName = sampleLibraryName;
+    public Boolean getImpliedSampleName() {
+        return impliedSampleName;
+    }
+
+    public void setImpliedSampleName(Boolean impliedSampleName) {
+        this.impliedSampleName = impliedSampleName;
+    }
+
+    public void setLibraryName(String libraryName) {
+        this.libraryName = libraryName;
     }
 
     public String getExperiment() {
@@ -200,13 +189,6 @@ public class SampleInstanceEntity {
         this.referenceSequence = referenceSequence;
     }
 
-    public String getLibraryType() {
-        return libraryType;
-    }
-
-    public void setLibraryType(String libraryType) {
-        this.libraryType = libraryType;
-    }
 
     public Integer getReadLength1() {
         return readLength1;
@@ -239,25 +221,15 @@ public class SampleInstanceEntity {
             }
         }
     }
-    public String getComments() {
-        return comments;
-    }
-
-    public void setComments(String comments) {
-        this.comments = comments;
-    }
 
     @Nonnull
     public LabVessel getLabVessel() {
         return labVessel;
     }
 
-    public String getSampleLibraryName() {
-        return sampleLibraryName;
-    }
-
-    public Set<SampleInstanceEntityTsk> getSampleInstanceEntityTsks() {
-        return sampleInstanceEntityTsks;
+    @Nonnull
+    public String getLibraryName() {
+        return libraryName;
     }
 
     public void setUploadDate(Date uploadDate) {

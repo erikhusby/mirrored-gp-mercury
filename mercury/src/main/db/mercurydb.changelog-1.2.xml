@@ -2230,4 +2230,94 @@
         <dropColumn schemaName="mercury" tableName="BUCKET_ENTRY_AUD" columnName="product_order_ranking"/>
     </changeSet>
 
+
+    <changeSet id="GPLIM-5831-1" author="jowalsh">
+        <createTable tableName="COVERAGE_TYPE" schemaName="mercury">
+            <column name="COVERAGE_TYPE_ID" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="NAME" type="VARCHAR2(50)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="COVERAGE_TYPE" columnNames="NAME"
+                             constraintName="uk_coverage_type_name" schemaName="mercury"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-5831-2" author="jowalsh">
+        <createSequence sequenceName="SEQ_COVERAGE_TYPE" schemaName="mercury" startValue="1" incrementBy="10"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-5831-3" author="jowalsh">
+        <createTable tableName="COVERAGE_TYPE_AUD" schemaName="mercury">
+            <column name="COVERAGE_TYPE_ID" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="NAME" type="VARCHAR2(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rev" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="GPLIM-5831-4" author="jowalsh">
+        <addPrimaryKey schemaName="MERCURY" tableName="COVERAGE_TYPE_AUD"
+                       constraintName="PK_COVERAGE_TYPE_AUD"
+                       columnNames="rev, coverage_type_id"/>
+    </changeSet>
+
+    <changeSet  id="GPLIM-5831-5" author="jowalsh">
+        <createIndex indexName="IX_COVERAGE_TYPE_AUD" tableName="COVERAGE_TYPE_AUD" schemaName="mercury">
+            <column name="COVERAGE_TYPE_ID"/>
+            <column name="REV"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-6065-1" author="epolk">
+        <dropColumn columnName="COMMENTS" tableName="SAMPLE_INSTANCE_ENTITY"/>
+    </changeSet>
+    <changeSet id="GPLIM-6065-2" author="epolk">
+        <dropColumn columnName="COMMENTS" tableName="SAMPLE_INSTANCE_ENTITY_AUD"/>
+    </changeSet>
+    <changeSet id="GPLIM-6065-3" author="epolk">
+        <addColumn schemaName="mercury" tableName="SAMPLE_INSTANCE_ENTITY">
+            <column name="implied_sample_name" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6065-4" author="epolk">
+        <addColumn schemaName="mercury" tableName="SAMPLE_INSTANCE_ENTITY_AUD">
+            <column name="implied_sample_name" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6065-5" author="epolk">
+      <dropForeignKeyConstraint constraintName="FK_SAMPL_INST_ROOT_SAMPLE" baseTableName="SAMPLE_INSTANCE_ENTITY"/>
+    </changeSet>
+    <changeSet id="GPLIM-6065-6" author="epolk">
+        <dropColumn columnName="ROOT_SAMPLE" tableName="SAMPLE_INSTANCE_ENTITY"/>
+    </changeSet>
+    <changeSet id="GPLIM-6065-7" author="epolk">
+        <dropColumn columnName="ROOT_SAMPLE" tableName="SAMPLE_INSTANCE_ENTITY_AUD"/>
+    </changeSet>
+    <changeSet id="GPLIM-6065-8" author="epolk">
+        <dropColumn columnName="LIBRARY_TYPE" tableName="SAMPLE_INSTANCE_ENTITY"/>
+    </changeSet>
+    <changeSet id="GPLIM-6065-9" author="epolk">
+        <dropColumn columnName="LIBRARY_TYPE" tableName="SAMPLE_INSTANCE_ENTITY_AUD"/>
+    </changeSet>
+    <changeSet id="GPLIM-6065-10" author="epolk">
+        <dropUniqueConstraint constraintName="U_SAMPL_INST_LIBRARY_NAME" tableName="sample_instance_entity"/>
+    </changeSet>
+    <changeSet id="GPLIM-6065-11" author="epolk">
+        <renameColumn tableName="sample_instance_entity" oldColumnName="sample_library_name" newColumnName="library_name"/>
+        <renameColumn tableName="sample_instance_entity_aud" oldColumnName="sample_library_name" newColumnName="library_name"/>
+    </changeSet>
+    <changeSet id="GPLIM-6065-12" author="epolk">
+        <addUniqueConstraint constraintName="U_SAMPL_INST_TUBE_LIBRARY"
+	    tableName="sample_instance_entity" columnNames="lab_vessel, library_name"/>
+    </changeSet>
+
 </databaseChangeLog>

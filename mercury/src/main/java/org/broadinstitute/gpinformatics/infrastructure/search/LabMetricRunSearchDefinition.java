@@ -228,7 +228,7 @@ public class LabMetricRunSearchDefinition {
                 LabMetric labMetric = (LabMetric) entity;
                 for (SampleInstanceV2 sampleInstanceV2 : labMetric.getLabVessel().getSampleInstancesV2()) {
                     for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples() ) {
-                        results.add(productOrderSample.getProductOrder().getJiraTicketKey());
+                        results.add(productOrderSample.getProductOrder().getBusinessKey());
                     }
                 }
                 return results;

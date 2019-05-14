@@ -73,6 +73,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
@@ -485,6 +486,12 @@ public class ProductOrderActionBeanTest {
         actionBean.clearValidationErrors();
 
         pdo.setQuoteId("ScottInvalid");
+        Mockito.reset(mockQuoteService);
+        Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
+
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(Mockito.anyString()))
+                .thenThrow(new QuoteNotFoundException("Quote not found"));
+
         actionBean.doValidation(ProductOrderActionBean.PLACE_ORDER_ACTION);
 
         Assert.assertFalse(actionBean.getValidationErrors().isEmpty());
@@ -492,6 +499,16 @@ public class ProductOrderActionBeanTest {
         actionBean.clearValidationErrors();
 
         pdo.setQuoteId(null);
+        Mockito.reset(mockQuoteService);
+        Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
+
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(Mockito.anyString()))
+                .then(new Answer<Quote>() {
+                    @Override
+                    public Quote answer(InvocationOnMock invocationOnMock) throws Throwable {
+                        return stubQuoteService.getQuoteByAlphaId(pdo.getQuoteId());
+                    }
+                });
         actionBean.doValidation(ProductOrderActionBean.PLACE_ORDER_ACTION);
 
         Assert.assertFalse(actionBean.getValidationErrors().isEmpty());

@@ -862,8 +862,9 @@ public enum LabEventType {
                     targetSection(SBSSection.ALL96).
                     sourceSection(SBSSection.ALL96).targetWellTypeGeometry(PlateWell.WellType.Well2000).
                     sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.Cryovial2018).sourceMassRemoved(true).
+                    reagentRequirements(new ReagentRequirements[]{new ReagentRequirements("AllPrep 96 PowerFecal DNA/RNA")}).
                     build(),
-            LibraryType.NONE_ASSIGNED),
+            MaterialType.OTHER_LYSATE, LibraryType.NONE_ASSIGNED),
     STOOL_BEAD_BEATING("BeadBeating",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -880,7 +881,7 @@ public enum LabEventType {
                     StaticPlate.PlateType.Plate96RoundWellBlock2000).
                     targetSection(SBSSection.ALL96).
                     sourceSection(SBSSection.ALL96).build(),
-            LibraryType.NONE_ASSIGNED),
+            LibraryType.NONE_ASSIGNED, SourceHandling.DEPLETE),
     STOOL_IRS_ADDITION("StoolIRSAddition",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -897,7 +898,7 @@ public enum LabEventType {
                     StaticPlate.PlateType.Plate96RoundWellBlock2000).
                     targetSection(SBSSection.ALL96).
                     sourceSection(SBSSection.ALL96).build(),
-            LibraryType.NONE_ASSIGNED),
+            LibraryType.NONE_ASSIGNED, SourceHandling.DEPLETE),
     STOOL_FILTER_PLATE_TRANSFER("StoolFilterPlateTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
@@ -906,7 +907,7 @@ public enum LabEventType {
                     StaticPlate.PlateType.Plate96RNEasyWell1000).
                     targetSection(SBSSection.ALL96).
                     sourceSection(SBSSection.ALL96).build(),
-            LibraryType.NONE_ASSIGNED),
+            LibraryType.NONE_ASSIGNED, SourceHandling.DEPLETE),
     STOOL_RNA_CAPTURE_PLATE_TRANSFER("StoolRNACapturePlateTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
@@ -915,7 +916,7 @@ public enum LabEventType {
                     StaticPlate.PlateType.Plate96RoundWellBlock2000).
                     targetSection(SBSSection.ALL96).
                     sourceSection(SBSSection.ALL96).build(),
-            LibraryType.NONE_ASSIGNED),
+            LibraryType.NONE_ASSIGNED, SourceHandling.DEPLETE),
     STOOL_RNA_ISOLATION("StoolRNAIsolation",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
@@ -924,7 +925,7 @@ public enum LabEventType {
                     StaticPlate.PlateType.Plate96RNEasyWell1000).
                     targetSection(SBSSection.ALL96).
                     sourceSection(SBSSection.ALL96).build(),
-            LibraryType.NONE_ASSIGNED),
+            LibraryType.NONE_ASSIGNED, SourceHandling.DEPLETE),
     STOOL_DNA_ISOLATION("StoolDNAIsolation",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -941,7 +942,7 @@ public enum LabEventType {
                     StaticPlate.PlateType.Plate96Well200PCR).
                     targetSection(SBSSection.ALL96).
                     sourceSection(SBSSection.ALL96).build(),
-            MaterialType.RNA_TOTAL_RNA, LibraryType.NONE_ASSIGNED),
+            LibraryType.NONE_ASSIGNED, SourceHandling.DEPLETE),
     STOOL_DNA_FILTER_TO_ELUTION_PLATE("StoolDNAFilterToElutionPlate",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
@@ -950,7 +951,7 @@ public enum LabEventType {
                     StaticPlate.PlateType.Plate96Well200PCR).
                     targetSection(SBSSection.ALL96).
                     sourceSection(SBSSection.ALL96).build(),
-            MaterialType.RNA_TOTAL_RNA, LibraryType.NONE_ASSIGNED),
+            LibraryType.NONE_ASSIGNED, SourceHandling.DEPLETE),
     STOOL_RNA_FINAL_ELUTION("StoolRNAFinalElution",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
@@ -960,7 +961,7 @@ public enum LabEventType {
                     targetSection(SBSSection.ALL96).
                     sourceSection(SBSSection.ALL96).
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.MatrixTube075).build(),
-            MaterialType.RNA_TOTAL_RNA, LibraryType.NONE_ASSIGNED),
+            MaterialType.RNA_TOTAL_RNA, LibraryType.NONE_ASSIGNED, SourceHandling.DEPLETE),
     STOOL_DNA_ELUTION("StoolDNAElution",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
@@ -970,7 +971,7 @@ public enum LabEventType {
                     targetSection(SBSSection.ALL96).
                     sourceSection(SBSSection.ALL96).
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.MatrixTube075).build(),
-            MaterialType.DNA_GENOMIC, LibraryType.NONE_ASSIGNED),
+            MaterialType.DNA_DNA_GENOMIC, LibraryType.NONE_ASSIGNED, SourceHandling.DEPLETE),
 
     //ALL Prep Forward BSP
     ALL_PREP_TRANSFER_CRYOVIAL("AllPrepTransferCryovial",
@@ -3414,9 +3415,8 @@ public enum LabEventType {
                  VolumeConcUpdate volumeConcUpdate, ManualTransferDetails manualTransferDetails, LibraryType libraryType,
                  SourceHandling sourceHandling, boolean removeDestVolFromSource, boolean enableStockTypeSelection) {
         this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
-                pipelineTransformation, forwardMessage, volumeConcUpdate, manualTransferDetails, null, libraryType);
+                pipelineTransformation, forwardMessage, volumeConcUpdate, manualTransferDetails, null, libraryType, sourceHandling);
 
-        this.sourceHandling = sourceHandling;
         this.removeDestVolFromSource = removeDestVolFromSource;
         this.enableStockTypeSelection = enableStockTypeSelection;
     }

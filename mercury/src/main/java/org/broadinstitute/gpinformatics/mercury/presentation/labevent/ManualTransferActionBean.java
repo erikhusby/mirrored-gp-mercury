@@ -57,6 +57,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
@@ -1219,6 +1220,10 @@ public class ManualTransferActionBean extends RackScanActionBean {
                         manualTransferDetails.getTargetWellType() != PlateWell.WellType.None) {
                         addWellTypes(plateTransferEventType, plateTransferEventType.getPlate().getBarcode(),
                                 manualTransferDetails.getTargetVesselTypeGeometry(), manualTransferDetails.getTargetWellType());
+                        if (labEventType.getResultingMaterialType() != null) {
+                            addResultingMaterialType(labEventType.getResultingMaterialType(),
+                                    plateTransferEventType.getSourcePositionMap(), plateTransferEventType.getPositionMap());
+                        }
                     }
                     if (manualTransferDetails.sourceMassRemoved()) {
                         addMass(plateTransferEventType.getSourcePositionMap(), plateTransferEventType.getPositionMap());
@@ -1342,6 +1347,20 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     if (receptacleType.getPosition() != null &&
                         receptacleType.getPosition().equals(sourceReceptacle.getPosition())) {
                         receptacleType.setMass(sourceReceptacle.getMass());
+                    }
+                }
+            }
+        }
+    }
+
+    private void addResultingMaterialType(MaterialType resultingMaterialType, PositionMapType sourcePositionMap,
+                                          PositionMapType positionMapType) {
+        if (positionMapType != null) {
+            for (ReceptacleType receptacleType: positionMapType.getReceptacle()) {
+                for (ReceptacleType sourceReceptacle: sourcePositionMap.getReceptacle()) {
+                    if (receptacleType.getPosition() != null &&
+                        receptacleType.getPosition().equals(sourceReceptacle.getPosition())) {
+                        receptacleType.setMaterialType(resultingMaterialType.getDisplayName());
                     }
                 }
             }

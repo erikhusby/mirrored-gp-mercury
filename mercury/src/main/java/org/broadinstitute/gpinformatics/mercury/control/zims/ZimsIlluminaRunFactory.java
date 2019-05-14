@@ -189,6 +189,7 @@ public class ZimsIlluminaRunFactory {
                     }
                 }
                 sampleIds.add(sampleId);
+
                 LabVessel libraryVessel = flowcell.getNearestTubeAncestorsForLanes().get(vesselPosition);
                 if (flowcellDesignation == null) {
                     // Gets the flowcell designation from batch starting vessel.
@@ -438,11 +439,18 @@ public class ZimsIlluminaRunFactory {
 
             SampleData sampleData = mapSampleIdToDto.get(sampleInstanceDto.getSampleId());
             Boolean isPooledTube = sampleInstance.getIsPooledTube();
-            if (isPooledTube && sampleData instanceof MercurySampleData) {
+            if (sampleData instanceof MercurySampleData) {
                 MercurySampleData mercurySampleData = (MercurySampleData) sampleData;
-                mercurySampleData.setRootSampleId(sampleInstance.getMercuryRootSampleName());
-                mercurySampleData.setSampleId(sampleInstance.getNearestMercurySampleName());
+                if (isPooledTube) {
+                    mercurySampleData.setRootSampleId(sampleInstance.getMercuryRootSampleName());
+                    mercurySampleData.setSampleId(sampleInstance.getNearestMercurySampleName());
+                }
+                // Uses External Library root sample metadata if it is present.
+                if (StringUtils.isNotBlank(sampleInstance.getExternalRootSampleName())) {
+                    mercurySampleData.setRootSampleId(sampleInstance.getExternalRootSampleName());
+                }
             }
+
             TZDevExperimentData devExperimentData = sampleInstance.getTzDevExperimentData();
             WorkflowMetadata workflowMetadata = mapWorkflowToMetadata.get(sampleInstance.getWorkflowName());
             libraryBeans.add(createLibraryBean(sampleInstanceDto, productOrder, sampleData, lcSet,
@@ -468,8 +476,8 @@ public class ZimsIlluminaRunFactory {
                 molIndexSecheme = libraryBean.getMolecularIndexingScheme().getName();
             }
 
-            String consolidationKey =
-                    makeConsolidationKey(libraryBean.getSampleId(), molIndexSecheme);
+            String consolidationKey = makeConsolidationKey(molIndexSecheme,
+                    libraryBean.isImpliedSampleName() ? libraryBean.getLibrary() : libraryBean.getSampleId());
             if (!previouslySeenSampleAndMis.add(consolidationKey)) {
                 iter.remove();
             }
@@ -498,7 +506,7 @@ public class ZimsIlluminaRunFactory {
 
         //If this is an uploaded pooled tube, create the label based on the provided library name.
         if(isPooledTube) {
-            label = sampleInstanceDto.getSampleInstance().getSampleLibraryName();
+            label = sampleInstanceDto.getSampleInstance().getLibraryName();
             libraryCreationDate = dateFormat.format(sampleInstanceDto.getSampleInstance().getLibraryCreationDate());
         }
         else {
@@ -571,6 +579,7 @@ public class ZimsIlluminaRunFactory {
             expectedInsertSize = sampleInstanceDto.sampleInstance.getExpectedInsertSize();
         }
         String aggregationParticle = sampleInstanceDto.sampleInstance.getAggregationParticle();
+        Boolean isImpliedSampleName = sampleInstanceDto.sampleInstance.getImpliedSampleName();
         if (aggregationDataType == null) {
             aggregationDataType = sampleInstanceDto.sampleInstance.getAggregationDataType();
         }
@@ -634,7 +643,7 @@ public class ZimsIlluminaRunFactory {
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
                 catNames, productOrder, lcSet, sampleData, labWorkflow, libraryCreationDate, pdoSampleName,
                 metadataSourceForPipelineAPI, aggregationDataType, jiraService, submissionMetadataList,
-                Boolean.TRUE.equals(analyzeUmi), aggregationParticle);
+                Boolean.TRUE.equals(analyzeUmi), aggregationParticle, Boolean.TRUE.equals(isImpliedSampleName));
         if (isCrspLane) {
             crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, bait);
         }
