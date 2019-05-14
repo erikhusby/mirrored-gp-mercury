@@ -45,7 +45,7 @@ public class ProductOrderTestFactory {
         if (StringUtils.isNotBlank(quoteId)){
         PriceItem exExPriceItem =
                 new PriceItem(quoteId, PriceItem.PLATFORM_GENOMICS, PriceItem.CATEGORY_EXOME_SEQUENCING_ANALYSIS,
-                        PriceItem.NAME_EXOME_EXPRESS);
+                        PriceItem.NAME_EXOME_EXPRESS+dummyProduct.getPartNumber());
             dummyProduct.setPrimaryPriceItem(exExPriceItem);
         }
 
@@ -74,7 +74,7 @@ public class ProductOrderTestFactory {
         dummyAddOnProduct.setProductName("addOnProduct");
         PriceItem exExAddOnPriceItem =
                 new PriceItem(quoteId, PriceItem.PLATFORM_GENOMICS, PriceItem.CATEGORY_EXOME_SEQUENCING_ANALYSIS,
-                        PriceItem.NAME_STANDARD_WHOLE_EXOME);
+                        PriceItem.NAME_STANDARD_WHOLE_EXOME+dummyAddOnProduct.getPartNumber());
         dummyAddOnProduct.setPrimaryPriceItem(exExAddOnPriceItem);
 
 
