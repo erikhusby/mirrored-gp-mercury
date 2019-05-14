@@ -65,6 +65,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDeta
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.SapQuoteItemReference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.NameValueDefinitionValue;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefinitionValue;
@@ -963,6 +964,15 @@ public class ProductOrderActionBean extends CoreActionBean {
             addGlobalValidationError(unFundedMessage);
         }
 
+        // Validate Products are on the Quote and if they are, store the references to their line items on the order
+        try {
+            editOrder.updateQuoteItems(quote);
+        } catch (SAPInterfaceException e) {
+            logger.error(e);
+            addGlobalValidationError(
+                "The products on your order (including add ons) do not seem to be represented on your quote.  Please revisit either your quote or your order selections");
+        }
+
         BigDecimal fundsRemaining = quote.getQuoteHeader().fundsRemaining();
         double outstandingEstimate = estimateSapOutstandingOrders(quote, additionalSampleCount, editOrder);
         double valueOfCurrentOrder = 0;
@@ -975,14 +985,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                 quote.getQuoteHeader().getQuoteNumber()+" -- " + quote.getQuoteHeader().getProjectName() +
                 " to place a new Product order";
             addGlobalValidationError(insufficientFundsMessage);
-        }
-
-        // Validate Products are on the Quote and if they are, store the references to their line items on the order
-        try {
-            editOrder.updateQuoteItems(quote);
-        } catch (SAPInterfaceException e) {
-            logger.error(e);
-            addGlobalValidationError("The products on your order (including add ons) do not seem to be represented on your quote.  Please revisit either your quote or your order selections");
         }
     }
 
