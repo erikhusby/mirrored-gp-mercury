@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
@@ -72,12 +71,12 @@ public class SampleInstanceEntitySearchDefinition {
         terms.add(term);
 
         // Search on Library Name.
-        term = sampleInstanceEntityEvaluator("Library Name", SampleInstanceEntity::getSampleLibraryName);
+        term = sampleInstanceEntityEvaluator("Library Name", SampleInstanceEntity::getLibraryName);
         term.setCriteriaPaths(new ArrayList<SearchTerm.CriteriaPath>() {{
             add(new SearchTerm.CriteriaPath());
-            get(0).setPropertyName("sampleLibraryName");
+            get(0).setPropertyName("libraryName");
         }});
-        term.setDbSortPath("sampleLibraryName");
+        term.setDbSortPath("libraryName");
         terms.add(term);
 
         // Search on aggregation particle.
@@ -106,52 +105,58 @@ public class SampleInstanceEntitySearchDefinition {
         terms.add(term);
 
         // The display-only terms.
-        terms.add(sampleInstanceEntityEvaluator("Root Sample ID", sampleInstanceEntity -> {
-            MercurySample rootSample = sampleInstanceEntity.getRootSample();
-            return rootSample == null ? "" : rootSample.getSampleKey();
-        }));
-        terms.add(sampleInstanceEntityEvaluator("Molecular Barcode Name", sampleInstanceEntity -> {
-            MolecularIndexingScheme mis = sampleInstanceEntity.getMolecularIndexingScheme();
-            return mis == null ? "" : mis.getName();
-        }));
-        terms.add(sampleInstanceEntityEvaluator("Bait", sampleInstanceEntity -> {
-            ReagentDesign reagentDesign = sampleInstanceEntity.getReagentDesign();
-            return reagentDesign == null ? "" : reagentDesign.getDesignName();
-        }));
         terms.add(sampleDataEvaluator("Collaborator Sample ID", Metadata.Key.SAMPLE_ID,
                 SampleData::getCollaboratorsSampleName));
         terms.add(sampleDataEvaluator("Individual Name (Patient Id)", Metadata.Key.PATIENT_ID,
                 SampleData::getCollaboratorParticipantId));
         terms.add(sampleDataEvaluator("Sex", Metadata.Key.GENDER, SampleData::getGender));
         terms.add(sampleDataEvaluator("Organism", Metadata.Key.SPECIES, SampleData::getOrganism));
-        terms.add(sampleInstanceEntityEvaluator("Data Analysis Type", sampleInstanceEntity -> {
-            AnalysisType analysisType = sampleInstanceEntity.getAnalysisType();
-            return analysisType == null ? "" : analysisType.getBusinessKey();
+        terms.add(sampleInstanceEntityEvaluator("Molecular Barcode Name", sampleInstanceEntity -> {
+            MolecularIndexingScheme mis = sampleInstanceEntity.getMolecularIndexingScheme();
+            return mis == null ? "" : mis.getName();
         }));
-        terms.add(sampleInstanceEntityEvaluator("Desired Read Length", sampleInstanceEntity -> {
-            Integer value = sampleInstanceEntity.getReadLength();
-            return value == null ? "" : String.valueOf(value);
-        }));
+        terms.add(sampleInstanceEntityEvaluator("Bait", SampleInstanceEntity::getBaitName));
+        terms.add(sampleInstanceEntityEvaluator("Read Length 1", sampleInstanceEntity ->
+                sampleInstanceEntity.getReadLength1() == null ?
+                        "" : String.valueOf(sampleInstanceEntity.getReadLength1())));
+        terms.add(sampleInstanceEntityEvaluator("Read Length 2", sampleInstanceEntity ->
+                sampleInstanceEntity.getReadLength2() == null ?
+                        "" : String.valueOf(sampleInstanceEntity.getReadLength2())));
+        terms.add(sampleInstanceEntityEvaluator("Index Length 1", sampleInstanceEntity ->
+                sampleInstanceEntity.getIndexLength1() == null ?
+                        "" : String.valueOf(sampleInstanceEntity.getIndexLength1())));
+        terms.add(sampleInstanceEntityEvaluator("Index Length 2", sampleInstanceEntity ->
+                sampleInstanceEntity.getIndexLength2() == null ?
+                        "" : String.valueOf(sampleInstanceEntity.getIndexLength2())));
+        terms.add(sampleInstanceEntityEvaluator("Index type", sampleInstanceEntity ->
+                sampleInstanceEntity.getIndexType() == null ?
+                        "" : sampleInstanceEntity.getIndexType().getDisplayName()));
         terms.add(sampleInstanceEntityEvaluator("UMIs Present", sampleInstanceEntity ->
                 BooleanUtils.isTrue(sampleInstanceEntity.getUmisPresent()) ? "Y" : "N"));
+        terms.add(sampleInstanceEntityEvaluator("Paired End Read", sampleInstanceEntity ->
+                BooleanUtils.isTrue(sampleInstanceEntity.getPairedEndRead()) ? "Y" : "N"));
+        terms.add(sampleInstanceEntityEvaluator("Insert Size Range", SampleInstanceEntity::getInsertSize));
         terms.add(vesselEvaluator("Volume", tube ->
                 (tube.getVolume() == null) ? "" : tube.getVolume().toPlainString()));
+        terms.add(vesselEvaluator("Concentration (ng/uL)", tube ->
+                (tube.getConcentration() == null) ? "" : tube.getConcentration().toPlainString()));
         terms.add(vesselEvaluator("Fragment Size", tube -> {
             LabMetric metric = tube.findMostRecentLabMetric(LabMetric.MetricType.FINAL_LIBRARY_SIZE);
             return (metric == null) ? "" : metric.getValue().toPlainString();
         }));
-        terms.add(vesselEvaluator("Concentration (ng/uL)", tube ->
-                (tube.getConcentration() == null) ? "" : tube.getConcentration().toPlainString()));
-        terms.add(sampleInstanceEntityEvaluator("Insert Size Range", SampleInstanceEntity::getInsertSize));
         terms.add(sampleInstanceEntityEvaluator("Reference Sequence", sampleInstanceEntity -> {
             ReferenceSequence referenceSequence = sampleInstanceEntity.getReferenceSequence();
             return referenceSequence == null ? "" : referenceSequence.getBusinessKey();
         }));
         terms.add(sampleInstanceEntityEvaluator("Sequencing Technology", sampleInstanceEntity -> {
             IlluminaFlowcell.FlowcellType flowcellType = sampleInstanceEntity.getSequencerModel();
-            return flowcellType == null ? "" : flowcellType.getSequencerModel();
+            return flowcellType == null ? "" : flowcellType.getExternalUiName();
         }));
-
+        terms.add(sampleInstanceEntityEvaluator("Aggregation Data Type", SampleInstanceEntity::getAggregationDataType));
+        terms.add(sampleInstanceEntityEvaluator("Data Analysis Type", sampleInstanceEntity -> {
+            AnalysisType analysisType = sampleInstanceEntity.getAnalysisType();
+            return analysisType == null ? "" : analysisType.getBusinessKey();
+        }));
         return terms;
     }
 
@@ -167,7 +172,6 @@ public class SampleInstanceEntitySearchDefinition {
         });
         return term;
     }
-
     /** Returns the display term that references the labVessel. */
     public SearchTerm vesselEvaluator(String name, Function<LabVessel, String> valueExtractor) {
         SearchTerm term = new SearchTerm();
@@ -183,7 +187,7 @@ public class SampleInstanceEntitySearchDefinition {
     }
 
     /** Returns the display term for a sample metadata field. Handles both MercurySample and BSP sample metadata. */
-    public SearchTerm sampleDataEvaluator(String name, Metadata.Key key, Function<SampleData, String> bspFunction) {
+    private SearchTerm sampleDataEvaluator(String name, Metadata.Key key, Function<SampleData, String> bspFunction) {
         SearchTerm term = new SearchTerm();
         term.setName(name);
         term.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {

@@ -294,6 +294,7 @@ public class SampleInstanceEntity {
 
     public Long getSampleInstanceEntityId() {
         return sampleInstanceEntityId;
+    }
 
     public String getAggregationDataType() {
         return aggregationDataType;
