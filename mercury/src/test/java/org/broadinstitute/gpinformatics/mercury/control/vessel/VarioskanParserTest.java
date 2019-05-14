@@ -469,7 +469,7 @@ public class VarioskanParserTest {
 
     public static InputStream getSpreadsheet(String filename) {
         InputStream testSpreadSheetInputStream = getTestResource(filename);
-        Assert.assertNotNull(testSpreadSheetInputStream);
+        Assert.assertNotNull(testSpreadSheetInputStream, filename);
         return testSpreadSheetInputStream;
     }
 

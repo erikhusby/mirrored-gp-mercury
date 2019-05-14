@@ -238,43 +238,7 @@ public class SamplesPicoEndToEndTest {
             mapBarcodeToVessel.clear();
             mapBarcodeToVessel.put(picoStandardsPlate.getLabel(), picoStandardsPlate);
             mapBarcodeToVessel.put(microfluorPlate.getLabel(), microfluorPlate);
-            LabEvent picoStandardsTransferCol2Entity = labEventFactory.buildFromBettaLims(
-                    samplesPicoJaxbBuilder.getPicoStandardsTransferCol2Jaxb(), mapBarcodeToVessel);
-            labEventHandler.processEvent(picoStandardsTransferCol2Entity);
 
-            mapBarcodeToVessel.clear();
-            mapBarcodeToVessel.put(picoStandardsPlate.getLabel(), picoStandardsPlate);
-            mapBarcodeToVessel.put(microfluorPlate.getLabel(), microfluorPlate);
-            LabEvent picoStandardsTransferCol4Entity = labEventFactory.buildFromBettaLims(
-                    samplesPicoJaxbBuilder.getPicoStandardsTransferCol4Jaxb(), mapBarcodeToVessel);
-            labEventHandler.processEvent(picoStandardsTransferCol4Entity);
-
-            mapBarcodeToVessel.clear();
-            mapBarcodeToVessel.put(picoStandardsPlate.getLabel(), picoStandardsPlate);
-            mapBarcodeToVessel.put(microfluorPlate.getLabel(), microfluorPlate);
-            LabEvent picoStandardsTransferCol6Entity = labEventFactory.buildFromBettaLims(
-                    samplesPicoJaxbBuilder.getPicoStandardsTransferCol6Jaxb(), mapBarcodeToVessel);
-            labEventHandler.processEvent(picoStandardsTransferCol6Entity);
-
-            mapBarcodeToVessel.clear();
-            mapBarcodeToVessel.put(picoStandardsPlate.getLabel(), picoStandardsPlate);
-            mapBarcodeToVessel.put(microfluorPlate.getLabel(), microfluorPlate);
-            LabEvent picoStandardsTransferCol8Entity = labEventFactory.buildFromBettaLims(
-                    samplesPicoJaxbBuilder.getPicoStandardsTransferCol8Jaxb(), mapBarcodeToVessel);
-            labEventHandler.processEvent(picoStandardsTransferCol8Entity);
-
-            mapBarcodeToVessel.put(picoStandardsPlate.getLabel(), picoStandardsPlate);
-            mapBarcodeToVessel.put(microfluorPlate.getLabel(), microfluorPlate);
-            LabEvent picoStandardsTransferCol10Entity = labEventFactory.buildFromBettaLims(
-                    samplesPicoJaxbBuilder.getPicoStandardsTransferCol10Jaxb(), mapBarcodeToVessel);
-            labEventHandler.processEvent(picoStandardsTransferCol10Entity);
-
-            mapBarcodeToVessel.clear();
-            mapBarcodeToVessel.put(picoStandardsPlate.getLabel(), picoStandardsPlate);
-            mapBarcodeToVessel.put(microfluorPlate.getLabel(), microfluorPlate);
-            LabEvent picoStandardsTransferCol12Entity = labEventFactory.buildFromBettaLims(
-                    samplesPicoJaxbBuilder.getPicoStandardsTransferCol12Jaxb(), mapBarcodeToVessel);
-            labEventHandler.processEvent(picoStandardsTransferCol12Entity);
 
             //            Assert.assertEquals("Wrong number of sample instances", mapBarcodeToTube.size(),
             //                    microfluorPlate.getSampleInstances().size());

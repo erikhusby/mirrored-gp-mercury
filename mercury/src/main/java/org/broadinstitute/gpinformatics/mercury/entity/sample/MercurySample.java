@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -299,7 +300,10 @@ public class MercurySample extends AbstractSample {
         }
     }
 
-    /** Adds new metadata entries or updates existing ones, but does not remove existing entries. */
+    /**
+     * Adds new metadata entries or updates existing ones, but does not remove existing entries
+     * that aren't in the updates.
+     */
     public void updateMetadata(Set<Metadata> updates) {
         if (metadataSource == MetadataSource.MERCURY) {
             for (Metadata update : updates) {
@@ -310,7 +314,9 @@ public class MercurySample extends AbstractSample {
                         iterator.remove();
                     }
                 }
-                metadata.add(update);
+                if (StringUtils.isNotBlank(update.getValue())) {
+                    metadata.add(update);
+                }
             }
             setSampleData(new MercurySampleData(sampleKey, this.metadata, getReceivedDate()));
         } else {

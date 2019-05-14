@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePl
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.DenatureToDilutionTubeHandler;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 
 import java.util.ArrayList;
@@ -192,7 +193,9 @@ public class HiSeq2500JaxbBuilder {
     }
 
     public static boolean isNovaSeq(String flowcellBarcode) {
-        return flowcellBarcode.endsWith("DSXX");
+        IlluminaFlowcell.FlowcellType flowcellType =
+                IlluminaFlowcell.FlowcellType.getTypeForBarcodeStrict(flowcellBarcode);
+        return flowcellType == null ? false : flowcellType.isLoadFromColumn();
     }
 
     public ReceptaclePlateTransferEvent getFlowcellTransferJaxb() {

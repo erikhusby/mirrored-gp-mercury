@@ -203,7 +203,7 @@
                         <li>
                             <stripes:link id="externalLibraryUpload"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ExternalLibraryUploadActionBean"
-                                          event="view">Pooled Tube and External Library Upload</stripes:link>
+                                          event="view">Upload External Library Spreadsheet</stripes:link>
                         </li>
                         <li>
                             <stripes:link id="singleCellMetadataUpload"

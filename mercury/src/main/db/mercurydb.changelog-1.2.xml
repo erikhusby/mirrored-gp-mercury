@@ -2277,6 +2277,49 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="GPLIM-6065-1" author="epolk">
+        <dropColumn columnName="COMMENTS" tableName="SAMPLE_INSTANCE_ENTITY"/>
+    </changeSet>
+    <changeSet id="GPLIM-6065-2" author="epolk">
+        <dropColumn columnName="COMMENTS" tableName="SAMPLE_INSTANCE_ENTITY_AUD"/>
+    </changeSet>
+    <changeSet id="GPLIM-6065-3" author="epolk">
+        <addColumn schemaName="mercury" tableName="SAMPLE_INSTANCE_ENTITY">
+            <column name="implied_sample_name" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6065-4" author="epolk">
+        <addColumn schemaName="mercury" tableName="SAMPLE_INSTANCE_ENTITY_AUD">
+            <column name="implied_sample_name" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6065-5" author="epolk">
+      <dropForeignKeyConstraint constraintName="FK_SAMPL_INST_ROOT_SAMPLE" baseTableName="SAMPLE_INSTANCE_ENTITY"/>
+    </changeSet>
+    <changeSet id="GPLIM-6065-6" author="epolk">
+        <dropColumn columnName="ROOT_SAMPLE" tableName="SAMPLE_INSTANCE_ENTITY"/>
+    </changeSet>
+    <changeSet id="GPLIM-6065-7" author="epolk">
+        <dropColumn columnName="ROOT_SAMPLE" tableName="SAMPLE_INSTANCE_ENTITY_AUD"/>
+    </changeSet>
+    <changeSet id="GPLIM-6065-8" author="epolk">
+        <dropColumn columnName="LIBRARY_TYPE" tableName="SAMPLE_INSTANCE_ENTITY"/>
+    </changeSet>
+    <changeSet id="GPLIM-6065-9" author="epolk">
+        <dropColumn columnName="LIBRARY_TYPE" tableName="SAMPLE_INSTANCE_ENTITY_AUD"/>
+    </changeSet>
+    <changeSet id="GPLIM-6065-10" author="epolk">
+        <dropUniqueConstraint constraintName="U_SAMPL_INST_LIBRARY_NAME" tableName="sample_instance_entity"/>
+    </changeSet>
+    <changeSet id="GPLIM-6065-11" author="epolk">
+        <renameColumn tableName="sample_instance_entity" oldColumnName="sample_library_name" newColumnName="library_name"/>
+        <renameColumn tableName="sample_instance_entity_aud" oldColumnName="sample_library_name" newColumnName="library_name"/>
+    </changeSet>
+    <changeSet id="GPLIM-6065-12" author="epolk">
+        <addUniqueConstraint constraintName="U_SAMPL_INST_TUBE_LIBRARY"
+	    tableName="sample_instance_entity" columnNames="lab_vessel, library_name"/>
+    </changeSet>
+
     <changeSet id="GPLIM-6005-001" author="epolk">
         <dropNotNullConstraint columnName="research_project_id" schemaName="mercury" tableName="manifest_session"/>
     </changeSet>
@@ -2325,8 +2368,10 @@
     </changeSet>
     <changeSet id="GPLIM-6005-006" author="epolk">
         <addForeignKeyConstraint constraintName="fk_manifest_file_id"
-                                 baseTableSchemaName="mercury" baseTableName="manifest_session" baseColumnNames="manifest_file"
-                                 referencedTableSchemaName="mercury" referencedTableName="manifest_file" referencedColumnNames="manifest_file_id"/>
+                                 baseTableSchemaName="mercury" baseTableName="manifest_session"
+				 baseColumnNames="manifest_file"
+                                 referencedTableSchemaName="mercury" referencedTableName="manifest_file"
+				 referencedColumnNames="manifest_file_id"/>
     </changeSet>
     <changeSet id="GPLIM-6005-007" author="epolk">
         <createSequence schemaName="mercury" sequenceName="SEQ_MANIFEST_FILE" incrementBy="50"/>
@@ -2340,5 +2385,4 @@
         <addUniqueConstraint tableName="manifest_file" columnNames="qualified_filename"
                              constraintName="U_MANIFEST_FILE_FILENAME" schemaName="mercury" />
     </changeSet>
-
 </databaseChangeLog>
