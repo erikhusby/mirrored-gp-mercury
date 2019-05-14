@@ -181,9 +181,9 @@ public class WalkUpSequencing implements Serializable {
     }
 
     public FlowcellDesignation.IndexType getIndexType() {
-        return ExternalLibraryProcessor.isOneOf(isDualBarcoded, "no", "false") ? FlowcellDesignation.IndexType.SINGLE :
-                ExternalLibraryProcessor.isOneOf(isDualBarcoded, "yes", "true") ? FlowcellDesignation.IndexType.DUAL :
-                        FlowcellDesignation.IndexType.NONE;
+        return StringUtils.isBlank(isDualBarcoded) ? FlowcellDesignation.IndexType.NONE :
+                (isDualBarcoded.equals("no") || isDualBarcoded.equals("false")) ?
+                        FlowcellDesignation.IndexType.SINGLE : FlowcellDesignation.IndexType.DUAL;
     }
 
     public boolean isPairedEndRead() {

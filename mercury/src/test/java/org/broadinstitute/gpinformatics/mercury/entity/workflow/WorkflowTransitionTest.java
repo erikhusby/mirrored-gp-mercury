@@ -61,6 +61,8 @@ public class WorkflowTransitionTest extends Arquillian {
 
     private String exexJiraTicket = "LCSET-10343";
 
+    private String germlineTicket = "LCSET-15107";
+
     @Inject
     private JiraService jiraService;
 
@@ -78,6 +80,8 @@ public class WorkflowTransitionTest extends Arquillian {
 
     private JiraIssue exexIssue;
 
+    private JiraIssue germlineIssue;
+
     private BSPRestSender mockBspHandler;
 
     private BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
@@ -94,6 +98,7 @@ public class WorkflowTransitionTest extends Arquillian {
             crspIssue = resetJiraTicketState(crspJiraTicket);
             exexIssue = resetJiraTicketState(exexJiraTicket);
             crspIssue2 = resetJiraTicketState(crspJiraTicket2);
+            germlineIssue = resetJiraTicketState(germlineTicket);
         }
         if (labEventFactory != null && mockBspHandler == null){
             mockBspHandler = mock(BSPRestSender.class);
@@ -325,6 +330,43 @@ public class WorkflowTransitionTest extends Arquillian {
         jiraCommentUtil.postUpdate(labEvent);
         exexIssue = jiraService.getIssue(exexJiraTicket);
         Assert.assertEquals(exexIssue.getStatus(), "In Sequencing");
+    }
+
+
+    @Test
+    public void testGermlineTransitions() throws IOException {
+        Assert.assertEquals(germlineIssue.getStatus(), "On Hold");
+        germlineIssue.postTransition("Return to LC", null);
+
+        String picoPlate = "GermPico" + System.currentTimeMillis();
+
+        String srcPlate = "000006763218";
+        PlateTransferEventType plateTransferEventType = bettaLimsMessageTestFactory.buildPlateToPlate("384WellPondPico",
+                srcPlate, picoPlate);
+        BettaLIMSMessage message = new BettaLIMSMessage();
+        message.getPlateTransferEvent().add(plateTransferEventType);
+
+        List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
+        LabEvent labEvent = labEvents.get(0);
+        jiraCommentUtil.postUpdate(labEvent);
+        germlineIssue = jiraService.getIssue(germlineTicket);
+        Assert.assertEquals(germlineIssue.getStatus(), "In Normalization");
+
+        List<String> destBarcodes = Collections.singletonList("GermNorm" + System.currentTimeMillis());
+        String destRackBarcode = "CO-SomeDestRack";
+        PlateTransferEventType germlineExomeNormTransfer =
+                bettaLimsMessageTestFactory.buildPlateToRack("GermlineExomeNormTransfer", srcPlate,
+                        destRackBarcode, destBarcodes);
+        germlineExomeNormTransfer.setDisambiguator(2L);
+
+        message = new BettaLIMSMessage();
+        message.getPlateTransferEvent().add(germlineExomeNormTransfer);
+
+        labEvents = labEventFactory.buildFromBettaLims(message);
+        labEvent = labEvents.get(0);
+        jiraCommentUtil.postUpdate(labEvent);
+        germlineIssue = jiraService.getIssue(germlineTicket);
+        Assert.assertEquals(germlineIssue.getStatus(), "Ready for Selection");
     }
 
     @Test

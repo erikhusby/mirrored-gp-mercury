@@ -21,8 +21,8 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -46,7 +46,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequenci
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.IndexedPlateFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -142,9 +141,6 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     private StaticPlateDao staticPlateDao;
 
     @Inject
-    private IndexedPlateFactory indexedPlateFactory;
-
-    @Inject
     private ProductDao productDao;
 
     @Inject
@@ -176,9 +172,6 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
     @Inject
     private BucketEjb bucketEjb;
-
-    @Inject
-    private JiraService jiraService;
 
     @Inject
     private ProductOrderJiraUtil productOrderJiraUtil;
@@ -943,12 +936,15 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
         List<LabBatch> exExReworkLabBatches = new ArrayList<>();
         for (int i = 0; i < numExExLcsets; i++) {
+            ProductOrder productOrder = exExBuilderMapPairs.get(i).getRight().values().iterator().next().
+                    getMercurySamples().iterator().next().getProductOrderSamples().iterator().next().getProductOrder();
             exExReworkLabBatches.add(reworkBatch(exExTestPrefixes.get(i),
-                    exExBuilderMapPairs.get(i).getRight().values().iterator().next(),
-                    exExBuilderMapPairs.get(i).getLeft().getPondRegTubeBarcodes()));
+                    exExBuilderMapPairs.get(i).getLeft().getPondRegTubeBarcodes(), productOrder.getBusinessKey()));
         }
-        LabBatch crspReworkLabBatch = reworkBatch(crspTestPrefix, crspTube,
-                libraryConstructionCrspJaxbBuilder.getPondRegTubeBarcodes());
+        ProductOrder productOrder = crspTube.getMercurySamples().iterator().next().getProductOrderSamples().
+                iterator().next().getProductOrder();
+        LabBatch crspReworkLabBatch = reworkBatch(crspTestPrefix,
+                libraryConstructionCrspJaxbBuilder.getPondRegTubeBarcodes(), productOrder.getBusinessKey());
 
         List<String> reworkTestPrefixes = new ArrayList<>();
         List<String> reworkLabBatchNames = new ArrayList<>();
@@ -985,17 +981,16 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     }
 
     @Nonnull
-    private LabBatch reworkBatch(String crspTestPrefix, BarcodedTube crspTube, List<String> tubeBarcodes)
+    private LabBatch reworkBatch(String crspTestPrefix, List<String> tubeBarcodes, String productOrderKey)
             throws ValidationException {
-        ProductOrder crspProductOrder = crspTube.getMercurySamples().iterator().next().getProductOrderSamples().
-                iterator().next().getProductOrder();
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(productOrderKey);
         Map<String, BarcodedTube> mapBarcodeToCrspPond = barcodedTubeDao.findByBarcodes(tubeBarcodes);
         HashSet<LabVessel> crspPonds = new HashSet<LabVessel>(mapBarcodeToCrspPond.values());
         Collection<ReworkEjb.BucketCandidate> bucketCandidates = new HashSet<>();
         for (LabVessel crspPond : crspPonds) {
             bucketCandidates
                     .add(new ReworkEjb.BucketCandidate(crspPond.getLabel(), crspPond.getSampleNames().iterator().next(),
-                            crspProductOrder));
+                            productOrder));
         }
          reworkEjb.addAndValidateCandidates(bucketCandidates, "", "comment", "thompson", ICE_BUCKET);
 
@@ -1120,6 +1115,9 @@ public class BettaLimsMessageResourceTest extends Arquillian {
             // In JVM
             try {
                 bettalimsMessageResource.storeAndProcess(BettaLimsMessageTestFactory.marshal(bettaLIMSMessage));
+                BarcodedTubeDao barcodedTubeDao = ServiceAccessUtility.getBean(BarcodedTubeDao.class);
+                barcodedTubeDao.flush();
+                barcodedTubeDao.clear();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

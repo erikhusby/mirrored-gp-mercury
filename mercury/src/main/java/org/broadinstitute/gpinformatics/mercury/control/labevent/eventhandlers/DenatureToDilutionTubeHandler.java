@@ -11,7 +11,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -124,10 +123,8 @@ public class DenatureToDilutionTubeHandler extends AbstractEventHandler {
                 if (fctTicket.equals(fctLabBatch.getBusinessKey())) {
                     foundTicket = true;
                     String lane = null;
-                    // Only NovaSeq flowcells are known to be loaded from rows in the first column to each lane in order.
-                    if (fctLabBatch.getFlowcellType() != null &&
-                            (fctLabBatch.getFlowcellType() == IlluminaFlowcell.FlowcellType.NovaSeqFlowcell ||
-                                    fctLabBatch.getFlowcellType() == IlluminaFlowcell.FlowcellType.NovaSeqS4Flowcell)) {
+                    // If flowcell is loaded from tubes in one column, assigns the lane based on the row.
+                    if (fctLabBatch.getFlowcellType() != null && fctLabBatch.getFlowcellType().isLoadFromColumn()) {
                         lane = "LANE" + (transfer.getTargetPosition().name().charAt(0) - 'A' + 1);
                     }
                     LabBatchStartingVessel startingVessel = findStartingVessel(fctLabBatch, lane, denatureTube);

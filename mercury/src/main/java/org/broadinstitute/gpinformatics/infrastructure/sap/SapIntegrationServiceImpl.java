@@ -236,7 +236,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                     quote);
 
             BigDecimal sampleCount =
-                getSampleCount(placedOrder, product, additionalSampleCount, creatingNewOrder, closingOrder);
+                getSampleCount(placedOrder, product, additionalSampleCount, creatingNewOrder, closingOrder,
+                        false);
 
             final SAPOrderItem sapOrderItem = new SAPOrderItem(product.getPartNumber(), sampleCount);
 
@@ -311,24 +312,30 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product, int additionalSampleCount,
-                                        boolean closingOrder)
+                                        boolean closingOrder, boolean forOrderValueQuery)
             throws SAPIntegrationException {
 
         final SAPOrderItem sapOrderItem =
                 new SAPOrderItem(product.getPartNumber(), getSampleCount(placedOrder, product, additionalSampleCount,
-                        false, closingOrder));
+                        false, closingOrder, forOrderValueQuery));
         defineConditionsForOrderItem(placedOrder, product, sapOrderItem);
         return sapOrderItem;
     }
 
-
+    /**
+     * This appears to currently only be used for a single fixup test
+     * @param placedOrder
+     * @param product
+     * @param closingOrder
+     * @return
+     */
     public static BigDecimal getSampleCount(ProductOrder placedOrder, Product product, boolean closingOrder) {
 
-        return getSampleCount(placedOrder, product, 0, false, closingOrder);
+        return getSampleCount(placedOrder, product, 0, false, closingOrder, false);
     }
 
     public static BigDecimal getSampleCount(ProductOrder placedOrder, Product product, int additionalSampleCount,
-                                            boolean creatingNewOrder, boolean closingOrder) {
+                                            boolean creatingNewOrder, boolean closingOrder, boolean forOrderValueQuery) {
         double sampleCount = 0d;
 
         final PriceAdjustment adjustmentForProduct = placedOrder.getAdjustmentForProduct(product);
@@ -337,14 +344,15 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             adjustmentQuantity = adjustmentForProduct.getAdjustmentQuantity();
         }
 
-        int previousBilledCount = 0;
+        double previousBilledCount = 0;
 
         for (SapOrderDetail sapOrderDetail : placedOrder.getSapReferenceOrders()) {
             if(sapOrderDetail.equals(placedOrder.latestSapOrderDetail()) && !creatingNewOrder) {
+                previousBilledCount = 0;
                 break;
             }
 
-            final Map<Product, Integer> numberOfBilledEntriesByProduct =
+            final Map<Product, Double> numberOfBilledEntriesByProduct =
                     sapOrderDetail.getNumberOfBilledEntriesByProduct();
             if(numberOfBilledEntriesByProduct.containsKey(product)) {
                 previousBilledCount+= numberOfBilledEntriesByProduct.get(product);
@@ -361,6 +369,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         } else {
             ProductOrder targetSapPdo = placedOrder;
             sampleCount += (adjustmentQuantity != null)?adjustmentQuantity:targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY) + additionalSampleCount;
+        }
+
+        if(forOrderValueQuery) {
+            previousBilledCount = (int) ProductOrder.getBilledSampleCount(placedOrder, product);
         }
         return BigDecimal.valueOf(sampleCount-previousBilledCount);
     }
@@ -545,13 +557,13 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         final Set<SAPOrderItem> sapOrderItems = new HashSet<>();
         final Map<Condition, String> conditionStringMap = Collections.emptyMap();
         final SAPOrderItem orderItem = getOrderItem(productOrder, productOrder.getProduct(), addedSampleCount,
-            false);
+            false, forOrderValueQuery);
 
         sapOrderItems.add(orderItem);
 
         for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
             final SAPOrderItem orderSubItem = getOrderItem(productOrder, productOrderAddOn.getAddOn(), addedSampleCount,
-                false);
+                false, forOrderValueQuery);
             sapOrderItems.add(orderSubItem);
         }
 
