@@ -12,7 +12,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePl
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.DenatureToDilutionTubeHandler;
-import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 
 import java.util.ArrayList;
@@ -20,6 +19,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * @author Scott Matthews
@@ -56,6 +56,8 @@ public class HiSeq2500JaxbBuilder {
     private Map<String, String> tubeToPosition = new HashMap<>();
     private boolean columnWiseDilutionPositions = false;
     private Map<Integer, String> laneNumberToDenatureTube = new HashMap<>();
+    // A copy of data from IlluminaFlowcell.FlowcellType so gpuitest doesn't have to pull it in.
+    private final static Pattern novaSeqBarcodePattern = Pattern.compile("^\\w+(DM|DR|DS)..$");
 
     public HiSeq2500JaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                 String testPrefix, List<String> denatureTubeBarcodes, String denatureRackBarcode,
@@ -193,9 +195,7 @@ public class HiSeq2500JaxbBuilder {
     }
 
     public static boolean isNovaSeq(String flowcellBarcode) {
-        IlluminaFlowcell.FlowcellType flowcellType =
-                IlluminaFlowcell.FlowcellType.getTypeForBarcodeStrict(flowcellBarcode);
-        return flowcellType == null ? false : flowcellType.isLoadFromColumn();
+        return novaSeqBarcodePattern.matcher(flowcellBarcode).matches();
     }
 
     public ReceptaclePlateTransferEvent getFlowcellTransferJaxb() {
