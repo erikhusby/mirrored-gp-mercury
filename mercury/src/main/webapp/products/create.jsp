@@ -1,6 +1,6 @@
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
-<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.entity.products.Product" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -690,6 +690,22 @@
                             </div>
                         </div>
 
+                        <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                            <div class="control-group">
+                                <stripes:label for="aggregationParticle" name="customAggregationParticle"
+                                               class="control-label"/>
+                                <div class="controls">
+                                    <stripes:select style="width: auto;" id="customAggregationParticle"
+                                                    name="editProduct.defaultAggregationParticle"
+                                                    title="Select the custom aggregation particle which the pipleine will appended to their default aggregation. By default the pipeline aggregates on the research project.">
+                                        <stripes:option value=""><%=Product.AggregationParticle.DEFAULT_LABEL%></stripes:option>
+                                        <stripes:options-enumeration label="displayName"
+                                                                     enum="org.broadinstitute.gpinformatics.athena.entity.products.Product.AggregationParticle"/>
+                                    </stripes:select>
+                                </div>
+                            </div>
+                        </security:authorizeBlock>
+
                         <div class="control-group">
                             <stripes:label for="analysisTypeKey" name="Analysis Type" class="control-label"/>
                             <div class="controls">
@@ -781,6 +797,16 @@
                             </stripes:label>
                             <div class="controls">
                                 <stripes:checkbox id="analyzeUmi" name="editProduct.analyzeUmi" style="margin-top: 10px;"/>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <stripes:label for="coverageTypeKey" name="Coverage" class="control-label"/>
+                            <div class="controls">
+                                <stripes:select id="coverageTypeKey" name="editProduct.coverageTypeKey">
+                                    <stripes:option value="">Select One</stripes:option>
+                                    <stripes:options-collection collection="${actionBean.coverageTypes}" label="displayName" value="businessKey"/>
+                                </stripes:select>
                             </div>
                         </div>
                     </fieldset>

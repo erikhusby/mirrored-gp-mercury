@@ -26,11 +26,9 @@ import java.util.List;
 @RequestScoped
 public class SampleInstanceEntityDao extends GenericDao {
 
-    public SampleInstanceEntity findByName(String sampleLibraryName) {
-        return findSingle(SampleInstanceEntity.class, SampleInstanceEntity_.sampleLibraryName, sampleLibraryName );
-    }
-
-    /** Returns all sample instance entities having a matching mercury sample name. */
+    /**
+     * Returns all sample instance entities having a matching mercury sample name.
+     */
     public List<SampleInstanceEntity> findBySampleNames(Collection<String> sampleNames) {
         if (CollectionUtils.isEmpty(sampleNames)) {
             return Collections.emptyList();
@@ -48,7 +46,9 @@ public class SampleInstanceEntityDao extends GenericDao {
         });
     }
 
-    /** Returns all sample instance entities having a matching tube barcode. */
+    /**
+     * Returns all sample instance entities having a matching tube barcode.
+     */
     public List<SampleInstanceEntity> findByBarcodes(Collection<String> tubeBarcodes) {
         if (CollectionUtils.isEmpty(tubeBarcodes)) {
             return Collections.emptyList();
@@ -66,3 +66,4 @@ public class SampleInstanceEntityDao extends GenericDao {
         });
     }
 }
+

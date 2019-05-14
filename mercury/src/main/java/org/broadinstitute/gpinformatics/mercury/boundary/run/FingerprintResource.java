@@ -41,11 +41,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static java.util.Comparator.reverseOrder;
 
 /**
  * JAX-RS web service for fingerprints.
@@ -143,7 +146,7 @@ public class FingerprintResource {
     }
 
     @NotNull
-    private String getSmIdFromLsid(String lsid) {
+    public static String getSmIdFromLsid(String lsid) {
         return "SM-" + lsid.substring(lsid.lastIndexOf(':') + 1);
     }
 
@@ -215,7 +218,7 @@ public class FingerprintResource {
                         null, null, null, null, Collections.emptyList()));
             }
         }
-        fingerprints.sort((o1, o2) -> o2.getDateGenerated().compareTo(o1.getDateGenerated()));
+        fingerprints.sort(Comparator.comparing(FingerprintBean::getDateGenerated, Comparator.nullsLast(reverseOrder())));
 
         return new FingerprintsBean(fingerprints);
     }
@@ -302,39 +305,6 @@ public class FingerprintResource {
                 }
             }
         }
-
-        // todo jmt check concordance
-/*
-        List<DownloadGenotypes.GapGetGenotypesResult> gapResults = new ArrayList<>();
-        for (FingerprintCallsBean fingerprintCallsBean : fingerprintBean.getCalls()) {
-            gapResults.add(new DownloadGenotypes.GapGetGenotypesResult(fingerprintBean.getAliquotLsid(),
-                    sampleKey, fingerprintCallsBean.getRsid(), fingerprintCallsBean.getGenotype(),
-                    fingerprintBean.getPlatform()));
-        }
-        HaplotypeMap haplotypes = new HaplotypeMap(new File(
-                "\\\\iodine\\seq_references\\Homo_sapiens_assembly19\\v1\\Homo_sapiens_assembly19.haplotype_database.txt"));
-        DownloadGenotypes downloadGenotypes = new DownloadGenotypes();
-        List<DownloadGenotypes.SnpGenotype> snpGenotypes = downloadGenotypes.getGenotypesFromGap(gapResults, haplotypes);
-        downloadGenotypes.cleanupGenotypes(snpGenotypes, haplotypes);
-        File reference = new File(
-                "\\\\iodine\\seq_references\\Homo_sapiens_assembly19\\v1\\Homo_sapiens_assembly19.fasta");
-        File fpFile;
-        try (final ReferenceSequenceFile ref = ReferenceSequenceFileFactory.getReferenceSequenceFile(reference)) {
-            SequenceUtil.assertSequenceDictionariesEqual(ref.getSequenceDictionary(),
-                    haplotypes.getHeader().getSequenceDictionary());
-            SortedSet<VariantContext> variantContexts = downloadGenotypes.makeVariantContexts(snpGenotypes, sampleKey,
-                    haplotypes, ref);
-            fpFile = File.createTempFile("Fingerprint", ".vcf");
-            downloadGenotypes.writeVcf(variantContexts, fpFile, reference, ref.getSequenceDictionary(), sampleKey);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        picard.fingerprint.Fingerprint observedFp = new picard.fingerprint.Fingerprint(sampleKey, fpFile, "");
-        picard.fingerprint.Fingerprint expectedFp = new picard.fingerprint.Fingerprint(sampleKey, fpFile, "");
-        MatchResults matchResults = FingerprintChecker.calculateMatchResults(observedFp, expectedFp);
-        matchResults.getLOD();
-*/
 
         mercurySampleDao.flush();
         return "Stored fingerprint";

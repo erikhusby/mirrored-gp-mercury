@@ -1088,7 +1088,7 @@ public class BaseEventTest {
                             TransferTraverserCriteria.TraversalDirection.Descendants),
                     fileWriter,
                     Arrays.asList(TransferVisualizerV2.AlternativeIds.SAMPLE_ID,
-                            TransferVisualizerV2.AlternativeIds.LCSET));
+                            TransferVisualizerV2.AlternativeIds.INFERRED_LCSET));
             fileWriter.flush();
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -1140,8 +1140,6 @@ public class BaseEventTest {
         FlowcellDesignationEjb flowcellDesignationEjb = Mockito.mock(FlowcellDesignationEjb.class);
         Mockito.when(productOrderDao.findByBusinessKey(Mockito.anyString())).thenReturn(productOrder);
         Mockito.when(flowcellDesignationEjb.getFlowcellDesignations(Mockito.any(LabBatch.class))).
-                thenReturn(flowcellDesignations);
-        Mockito.when(flowcellDesignationEjb.getFlowcellDesignations(Mockito.any(Collection.class))).
                 thenReturn(flowcellDesignations);
         AttributeArchetypeDao attributeArchetypeDao = Mockito.mock(AttributeArchetypeDao.class);
         Mockito.when(attributeArchetypeDao.findWorkflowMetadata(Mockito.anyString())).then(new Answer<Object>() {

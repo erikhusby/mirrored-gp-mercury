@@ -466,7 +466,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
                         dto.getDesignationId());
                 Assert.assertNotNull(flowcellDesignation);
                 expectedDesignationIds.add(flowcellDesignation.getDesignationId());
-                Assert.assertFalse(dto.isAllocated());
+                Assert.assertFalse(dto.getAllocatedLanes() == dto.getNumberLanes());
                 Assert.assertNull(flowcellDesignation.getChosenLcset());
 
                 // Tests that a dto can be made from the persisted flowcell designation.
@@ -507,7 +507,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
                             messages.append(String.format(message, arguments)).append("\n");
                             return "";
                         }
-                    });
+                    }, false);
             Assert.assertFalse(messages.toString().contains(" invalid "), messages.toString());
 
             // Created the correct number of FCTs?
@@ -518,14 +518,14 @@ public class LabBatchEjbStandardTest extends Arquillian {
             int splitDtoCount = 0;
             for (DesignationDto dto : designationDtos) {
                 if (dto.getBarcode().equals(splitDtoBarcode)) {
-                    if (dto.isAllocated()) {
+                    if (dto.getAllocatedLanes() == dto.getNumberLanes()) {
                         Assert.assertEquals((int) dto.getNumberLanes(), 11);
                     } else {
                         ++splitDtoCount;
                         Assert.assertEquals((int) dto.getNumberLanes(), 6);
                     }
                 } else {
-                    Assert.assertTrue(dto.isAllocated());
+                    Assert.assertTrue(dto.getAllocatedLanes() == dto.getNumberLanes());
                 }
             }
             Assert.assertEquals(splitDtoCount, splitDtoBarcode == null ? 0 : 1);
@@ -577,117 +577,6 @@ public class LabBatchEjbStandardTest extends Arquillian {
                     StringUtils.join(CollectionUtils.disjunction(foundDesignationIds, expectedDesignationIds), ", "));
         }
     }
-
-    @Test(groups = TestGroups.STANDARD)
-    public void testContiguousLanes() throws Exception {
-        final List<DesignationDto> designationDtos = new ArrayList<>();
-        final StringBuilder messages = new StringBuilder();
-        final MessageReporter messageReporter = new MessageReporter() {
-            @Override
-            public String addMessage(String message, Object... arguments) {
-                messages.append(String.format(message, arguments)).append("\n");
-                return "";
-            }
-        };
-
-        // Sets up the loading tubes to be put on flowcell.
-        Iterator<BarcodedTube> tubeIterator = mapBarcodeToTube.values().iterator();
-        final BarcodedTube[] loadingTubes = {tubeIterator.next(), tubeIterator.next(), tubeIterator.next()};
-        final Integer[] numberLanes = {24, 24, 24};
-        boolean isClinical = false;
-
-        bucket = labBatchTestUtils.putTubesInSpecificBucket(LabBatchEJBTest.BUCKET_NAME,
-                BucketEntry.BucketEntryType.PDO_ENTRY, mapBarcodeToTube);
-
-        // Sets up an lcset.
-        List<Long> bucketIds = new ArrayList<>();
-        for (BarcodedTube barcodedTube : loadingTubes) {
-            for (BucketEntry bucketEntry : barcodedTube.getBucketEntries()) {
-                bucketIds.add(bucketEntry.getBucketEntryId());
-                isClinical = bucketEntry.getProductOrder().getResearchProject().getRegulatoryDesignation().
-                        isClinical();
-            }
-        }
-        LabBatch labBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
-                Workflow.AGILENT_EXOME_EXPRESS, bucketIds, Collections.<Long>emptyList(),
-                "Batch_" + System.currentTimeMillis(), "", new Date(), null, "epolk",
-                LabBatchEJBTest.BUCKET_NAME, MessageReporter.UNUSED, Collections.<String>emptyList());
-
-        Assert.assertEquals(labBatch.getLabBatchStartingVessels().size(), bucketIds.size());
-        String productName = "Exome Express v2";
-
-        // Makes action bean dtos that are queued designations.
-        for (int idx = 0; idx < loadingTubes.length; ++idx) {
-            DesignationDto dto = new DesignationDto();
-            dto.setBarcode(loadingTubes[idx].getLabel());
-            dto.setLcset(labBatch.getBatchName());
-            dto.setProduct(productName);
-            dto.setNumberSamples(1);
-            dto.setRegulatoryDesignation(isClinical ? DesignationUtils.CLINICAL : DesignationUtils.RESEARCH);
-            dto.setSequencerModel(IlluminaFlowcell.FlowcellType.HiSeqX10Flowcell);
-            dto.setIndexType(FlowcellDesignation.IndexType.DUAL);
-            dto.setReadLength(76);
-            dto.setLoadingConc(BigDecimal.TEN);
-            dto.setNumberLanes(numberLanes[idx]);
-            dto.setStatus(FlowcellDesignation.Status.QUEUED);
-            dto.setPoolTest(false);
-            dto.setPairedEndRead(true);
-            dto.setSelected(true);
-
-            designationDtos.add(dto);
-        }
-
-        // Creates FlowcellDesignations from the dtos.
-        Assert.assertFalse(designationDtos.isEmpty());
-        DesignationUtils.updateDesignationsAndDtos(designationDtos,
-                EnumSet.allOf(FlowcellDesignation.Status.class), flowcellDesignationEjb);
-
-        for (DesignationDto dto : designationDtos) {
-            dto.setSelected(true);
-        }
-
-        // Makes the FCTs.
-        List<MutablePair<String, String>> fctUrls = labBatchEJB.makeFcts(designationDtos, "epolk", messageReporter);
-        Assert.assertFalse(messages.toString().contains(" invalid "), messages.toString());
-        labBatchDao.flush();
-
-        // Accumulates a list of fct+lane and loading tube barcode.
-        List<Pair<String, String>> fctLaneBarcode = new ArrayList<>();
-        for (MutablePair<String, String> fctUrl : fctUrls) {
-            String fctName = fctUrl.getLeft();
-            LabBatch fctLabBatch = labBatchDao.findByName(fctName);
-            Assert.assertNotNull(fctLabBatch);
-
-            // Gets the per-lane allocations from the jira ticket.
-            JiraIssue jiraIssue = jiraService.getIssue(fctLabBatch.getJiraTicket().getTicketName());
-            Assert.assertNotNull(jiraIssue);
-            String laneInfo = (String) (jiraIssue.getField(LabBatch.TicketFields.LANE_INFO.getName()));
-            Assert.assertNotNull(laneInfo);
-            for (JiraLaneInfo laneInfoRow : FCTJiraFieldFactory.parseJiraLaneInfo(laneInfo)) {
-                Assert.assertEquals(laneInfoRow.getLcset(), labBatch.getBatchName());
-                Assert.assertEquals(laneInfoRow.getProductNames(), productName);
-                fctLaneBarcode.add(Pair.of(fctName + " " + laneInfoRow.getLane(), laneInfoRow.getLoadingVessel()));
-            }
-        }
-
-        // Iterates on flowcell lanes sorted by fct+lane and counts places where the loading tube barcode changes.
-        Collections.sort(fctLaneBarcode, new Comparator<Pair<String, String>>() {
-            @Override
-            public int compare(Pair<String, String> o1, Pair<String, String> o2) {
-                return o1.getLeft().compareTo(o2.getLeft());
-            }});
-        int barcodeChanges = 0;
-        String currentBarcode = "";
-        for (Pair<String, String> pair : fctLaneBarcode) {
-            //System.out.println(pair.getLeft() + " " + pair.getRight());
-            if (!currentBarcode.equals(pair.getRight())) {
-                ++barcodeChanges;
-            }
-            currentBarcode = pair.getRight();
-        }
-        Assert.assertEquals(barcodeChanges, loadingTubes.length, " tubes not allocated on contiguous flowcell lanes");
-    }
-
 
     /** Tests fct grouping of dto. */
     @Test(groups = TestGroups.STANDARD)
@@ -747,7 +636,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
         }
 
         // Should make no FCTs.
-        Assert.assertTrue(CollectionUtils.isEmpty(labBatchEJB.makeFcts(dtos, "epolk", messageReporter)));
+        Assert.assertTrue(CollectionUtils.isEmpty(labBatchEJB.makeFcts(dtos, "epolk", messageReporter, false)));
 
         // Should have no dto validation errors.
         Assert.assertFalse(messages.toString().contains(" invalid "), messages.toString());
@@ -846,7 +735,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
         for (DesignationDto dto : dtos) {
             dto.setSelected(true);
         }
-        return labBatchEJB.makeFcts(dtos, "epolk", messageReporter);
+        return labBatchEJB.makeFcts(dtos, "epolk", messageReporter, false);
     }
 
     /**

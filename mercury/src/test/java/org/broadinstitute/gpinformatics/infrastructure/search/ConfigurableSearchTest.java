@@ -240,15 +240,14 @@ public class ConfigurableSearchTest extends Arquillian {
         SearchInstance searchInstance = new SearchInstance();
         String entity = ColumnEntity.MERCURY_SAMPLE.getEntityName();
         ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entity);
-        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("LCSET",
+        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("Lab Batch",
                 configurableSearchDef);
         searchValue.setOperator(SearchInstance.Operator.EQUALS);
-        // Validate 'LCSET-' will be prepended
-        searchValue.setValues(Arrays.asList("6449"));
+        searchValue.setValues(Arrays.asList("LCSET-6449"));
 
         // Add columns
         searchInstance.getPredefinedViewColumns().add("PDO");
-        searchInstance.getPredefinedViewColumns().add("LCSET");
+        searchInstance.getPredefinedViewColumns().add("Lab Batch");
         searchInstance.getPredefinedViewColumns().add("Root Sample ID");
         searchInstance.getPredefinedViewColumns().add("Mercury Sample Tube Barcode");
         // Multi column
@@ -322,7 +321,7 @@ public class ConfigurableSearchTest extends Arquillian {
         // Verify data for sample 797366
         List<String> values = row.getRenderableCells();
         Assert.assertEquals( values.get(columnNumbersByHeader.get("PDO")),                                               "PDO-5115",    "Incorrect PDO Value");
-        Assert.assertEquals( values.get(columnNumbersByHeader.get("LCSET")),                                             "LCSET-6449",  "Incorrect LCSET Value");
+        Assert.assertEquals( values.get(columnNumbersByHeader.get("Lab Batch")),                                         "LCSET-6449",  "Incorrect LCSET Value");
         Assert.assertEquals( values.get(columnNumbersByHeader.get("Root Sample ID")),                                    "SM-74PK6",    "Incorrect Root Sample ID Value");
         Assert.assertEquals( values.get(columnNumbersByHeader.get("Mercury Sample Tube Barcode")),                       "0175567583",  "Incorrect Mercury Sample Tube Barcode Value");
         Assert.assertEquals( values.get(columnNumbersByHeader.get(Metadata.Key.GENDER.getDisplayName())),                "Male",        "Incorrect Gender Value");
@@ -449,7 +448,7 @@ public class ConfigurableSearchTest extends Arquillian {
         SearchInstance.SearchValue quoteSearchValue = searchInstance.addTopLevelTerm("Quote Identifier",
                 configurableSearchDefinition);
         quoteSearchValue.setOperator(SearchInstance.Operator.EQUALS);
-        quoteSearchValue.setValues(Collections.singletonList("GPSPIE8"));
+        quoteSearchValue.setValues(Collections.singletonList("GPE8X"));
 
         searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.QUOTE_IDENTIFIER_COLUMN_HEADER);
         searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.PDO_TICKET_COLUMN_HEADER);
@@ -522,7 +521,7 @@ public class ConfigurableSearchTest extends Arquillian {
             searchInstance.addTopLevelTerm(ProductOrderSearchDefinition.QUOTE_IDENTIFIER_COLUMN_HEADER,
                 configurableSearchDefinition);
         quoteSearchValue.setOperator(SearchInstance.Operator.EQUALS);
-        quoteSearchValue.setValues(Collections.singletonList("GPSPIE8"));
+        quoteSearchValue.setValues(Collections.singletonList("GPE8X"));
 
         searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.QUOTE_IDENTIFIER_COLUMN_HEADER);
         searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.PDO_TICKET_COLUMN_HEADER);
@@ -555,9 +554,9 @@ public class ConfigurableSearchTest extends Arquillian {
         }
 
         List<String> rowValues = row.getRenderableCells();
-        Assert.assertEquals(rowValues.get(colunnNumbersByHeader.get(ProductOrderSearchDefinition.PDO_TICKET_COLUMN_HEADER)), "Draft-220113 -- Johan Nilsson_Lund University_Heart Transplant_PCR-PLUS_FFPE_XXTimepoints", "Incorrect PDO found");
-        Assert.assertEquals(rowValues.get(colunnNumbersByHeader.get(ProductOrderSearchDefinition.QUOTE_IDENTIFIER_COLUMN_HEADER)), "GPSPIE8", "Incorrect quote found");
+        Assert.assertEquals(rowValues.get(colunnNumbersByHeader.get(ProductOrderSearchDefinition.PDO_TICKET_COLUMN_HEADER)), "Draft-121106 -- IBS-CACO_PICOallsamples_12.2.2014", "Incorrect PDO found");
+        Assert.assertEquals(rowValues.get(colunnNumbersByHeader.get(ProductOrderSearchDefinition.QUOTE_IDENTIFIER_COLUMN_HEADER)), "GPE8X", "Incorrect quote found");
 
-        Assert.assertTrue(rowValues.get(colunnNumbersByHeader.get(ProductOrderSearchDefinition.PRODUCTS_COLUMN_HEADER)).contains("XTNL-WGS-010307"), "Incorrect product part number found");
+        Assert.assertTrue(rowValues.get(colunnNumbersByHeader.get(ProductOrderSearchDefinition.PRODUCTS_COLUMN_HEADER)).contains("P-ESH-0016"), "Incorrect product part number found");
     }
 }

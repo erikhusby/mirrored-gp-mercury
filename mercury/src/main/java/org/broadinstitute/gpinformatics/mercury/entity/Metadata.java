@@ -303,6 +303,12 @@ public class Metadata {
         CELLS_PER_WELL(Category.SAMPLE, DataType.NUMBER, "Cells Per Well", Visibility.USER),
         POSITIVE_CONTROL(Category.SAMPLE, DataType.STRING, "Positive Control", Visibility.USER),
         NEGATIVE_CONTROL(Category.SAMPLE, DataType.STRING, "Negative Control", Visibility.USER),
+        ROOT_SAMPLE(Category.SAMPLE, DataType.STRING, "Root Sample", Visibility.USER),
+        SYNTHESIS_DATE(Category.REAGENT, DataType.DATE, "Synthesis Date", Visibility.USER),
+        MANUFACTURING_DATE(Category.REAGENT, DataType.DATE, "Manufacturing Date", Visibility.USER),
+        STORAGE_CONDITIONS(Category.REAGENT, DataType.STRING, "Storage Conditions", Visibility.USER),
+        MANUFACTURER_DESIGN_ID(Category.REAGENT, DataType.STRING, "Manufacturer Design ID", Visibility.USER);
+        NEGATIVE_CONTROL(Category.SAMPLE, DataType.STRING, "Negative Control", Visibility.USER),
         // Fingerprinting Metadata
         TOTAL_POSSIBLE_CALLS(Category.LAB_METRIC, DataType.NUMBER, "Total Calls", Visibility.USER),
         CALLS(Category.LAB_METRIC, DataType.NUMBER, "Calls", Visibility.USER),
