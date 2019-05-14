@@ -330,8 +330,7 @@ public class ProductActionBean extends CoreActionBean {
         }
 
         if(!editProduct.getPartNumber().equalsIgnoreCase(editProduct.getPartNumber().trim())) {
-            addValidationError("partNumber",
-                    "The entered Part Number should not have leading or trailing spaces");
+            editProduct.setPartNumber(editProduct.getPartNumber().trim());
         }
 
         // Check that the dates are consistent.

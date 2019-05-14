@@ -624,11 +624,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                 SapIntegrationClientImpl.SAPCompanyConfiguration companyCode =
                         SapIntegrationClientImpl.SAPCompanyConfiguration
                                 .fromSalesOrgForMaterial(salesOrganization);
-//                //if the Quote used is not a GP Quote, they must be ordering SSF Products.
-//                if(!Arrays.asList(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
-//                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES).contains(companyCode)) {
-//                    companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
-//                }
                 Optional<SAPMaterial> cachedProduct =
                         Optional.ofNullable(productPriceCache.findByPartNumber(editOrder.getProduct().getPartNumber(),
                                 salesOrganization));
