@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * @author Scott Matthews
@@ -55,6 +56,8 @@ public class HiSeq2500JaxbBuilder {
     private Map<String, String> tubeToPosition = new HashMap<>();
     private boolean columnWiseDilutionPositions = false;
     private Map<Integer, String> laneNumberToDenatureTube = new HashMap<>();
+    // A copy of data from IlluminaFlowcell.FlowcellType so gpuitest doesn't have to pull it in.
+    private final static Pattern novaSeqBarcodePattern = Pattern.compile("^\\w+(DM|DR|DS)..$");
 
     public HiSeq2500JaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                 String testPrefix, List<String> denatureTubeBarcodes, String denatureRackBarcode,
@@ -192,7 +195,7 @@ public class HiSeq2500JaxbBuilder {
     }
 
     public static boolean isNovaSeq(String flowcellBarcode) {
-        return flowcellBarcode.endsWith("DSXX");
+        return novaSeqBarcodePattern.matcher(flowcellBarcode).matches();
     }
 
     public ReceptaclePlateTransferEvent getFlowcellTransferJaxb() {

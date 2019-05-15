@@ -306,6 +306,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Column(name = "REAGENT_DESIGN_KEY", nullable = true, length = 200)
     private String reagentDesignKey;
 
+    @Column(name = "COVERAGE_TYPE_KEY", nullable = true, length = 200)
+    private String coverageTypeKey;
+
     @Enumerated(EnumType.STRING)
     @Column(name="QUOTE_SOURCE")
     private QuoteSourceType quoteSource;
@@ -2368,6 +2371,25 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public void setReagentDesignKey(String reagentDesignKey) {
         this.reagentDesignKey = reagentDesignKey;
+    }
+
+    /**
+     * @return - If coverage type is set on the PDO then accept as override of the value on Product. Otherwise
+     * return the value on the product.
+     */
+    public String getCoverageTypeKey() {
+        if (product != null ) {
+            if (!StringUtils.isBlank(coverageTypeKey)) {
+                return coverageTypeKey;
+            } else {
+                return product.getCoverageTypeKey();
+            }
+        }
+        return coverageTypeKey;
+    }
+
+    public void setCoverageTypeKey(String coverageTypeKey) {
+        this.coverageTypeKey = coverageTypeKey;
     }
 
     public static void checkQuoteValidity(Quote quote) throws QuoteServerException {

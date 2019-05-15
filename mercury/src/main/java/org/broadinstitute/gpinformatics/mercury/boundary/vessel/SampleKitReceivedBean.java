@@ -95,22 +95,53 @@ public class SampleKitReceivedBean {
     })
     public static class KitInfo {
         private String kitId;
-        private List<String> samples;
+        private List<SampleBarcodes> sampleBarcodes;
+        private String receptacleType;
 
         public KitInfo() {
         }
 
-        public KitInfo(String kitId, List<String> samples) {
+        public KitInfo(String kitId, String receptacleType, List<SampleBarcodes> sampleBarcodes) {
             this.kitId = kitId;
-            this.samples = samples;
+            this.receptacleType = receptacleType;
+            this.sampleBarcodes = sampleBarcodes;
         }
 
         public String getKitId() {
             return kitId;
         }
 
-        public List<String> getSamples() {
-            return samples;
+        public List<SampleBarcodes> getSampleBarcodes() {
+            return sampleBarcodes;
+        }
+
+        public String getReceptacleType() {
+            return receptacleType;
+        }
+    }
+
+    @XmlAccessorType(XmlAccessType.FIELD)
+    @XmlType(name = "sampleBarcodes", propOrder = {
+
+    })
+    public static class SampleBarcodes {
+        private String sampleBarcode;
+        private String externalBarcode;
+
+        public SampleBarcodes() {
+        }
+
+        public SampleBarcodes(String sampleBarcode, String externalBarcode) {
+            this.sampleBarcode = sampleBarcode;
+            this.externalBarcode = externalBarcode;
+        }
+
+        public String getSampleBarcode() {
+            return sampleBarcode;
+        }
+
+        public String getExternalBarcode() {
+            return externalBarcode;
         }
     }
 

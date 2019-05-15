@@ -42,6 +42,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.CoverageTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
@@ -115,6 +116,9 @@ public class ProductActionBean extends CoreActionBean {
 
     @Inject
     private AnalysisTypeDao analysisTypeDao;
+
+    @Inject
+    private CoverageTypeDao coverageTypeDao;
 
     @Inject
     private ReagentDesignDao reagentDesignDao;
@@ -725,6 +729,27 @@ public class ProductActionBean extends CoreActionBean {
     public Collection<DisplayableItem> getAnalysisTypes() {
         return makeDisplayableItemCollection(analysisTypeDao.findAll());
     }
+
+    /**
+     * Get the list of available analysis types.
+     *
+     * @return List of strings representing the analysis types
+     */
+    public Collection<DisplayableItem> getCoverageTypes() {
+        return makeDisplayableItemCollection(coverageTypeDao.findAll());
+    }
+
+    /**
+     * Get the coverage type.
+     *
+     * @param businessKey the businessKey
+     *
+     * @return UI helper object {@link DisplayableItem} representing the coverage type
+     */
+    public DisplayableItem getCoverageType(String businessKey) {
+        return getDisplayableItemInfo(businessKey, coverageTypeDao);
+    }
+
 
     /**
      * Get the list of research projects for controls.
