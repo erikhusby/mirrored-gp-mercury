@@ -98,6 +98,7 @@ public class ProductActionBean extends CoreActionBean {
     @Inject
     private ProductEjb productEjb;
 
+    @Inject
     private ProductDao productDao;
 
     @Inject
@@ -895,8 +896,4 @@ public class ProductActionBean extends CoreActionBean {
         this.suggestedValueSelections = suggestedValueSelections;
     }
 
-    @Inject
-    protected void setProductDao(ProductDao productDao) {
-        this.productDao = productDao;
-    }
 }
