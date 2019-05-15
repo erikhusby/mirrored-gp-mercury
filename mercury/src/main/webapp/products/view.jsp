@@ -34,7 +34,7 @@
                 <div class="controls">
                     <div class="form-value">
                         <img src="${ctxpath}/images/pdficon_small.png" alt="">
-                        <stripes:link beanclass="${actionBean.class.name}" event="downloadProductDescriptions">
+                        <stripes:link id="partNumber" beanclass="${actionBean.class.name}" event="downloadProductDescriptions">
                             ${actionBean.editProduct.partNumber}
                             <stripes:param name="editProduct.partNumber" value="${actionBean.editProduct.partNumber}"/>
                         </stripes:link>
