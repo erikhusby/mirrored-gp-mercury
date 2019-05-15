@@ -65,7 +65,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDeta
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
-import org.broadinstitute.gpinformatics.athena.entity.orders.SapQuoteItemReference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.NameValueDefinitionValue;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefinitionValue;
@@ -115,6 +114,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
@@ -319,8 +319,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private CoverageTypeDao coverageTypeDao;
-
-    private SapIntegrationService sapService;
 
     private List<ProductOrderListEntry> displayedProductOrderListEntries;
 
@@ -835,7 +833,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                             validateGrantEndDate(funding.getGrantEndDate(),
                                         funding.getDisplayName(), quote.get().getAlphanumericId());
                         });
-
+                }
                 validateQuoteDetails(quote.orElseThrow(() -> new QuoteServerException("A quote was not found for " +
                                                                                       editOrder.getQuoteId())), 0);
             }
@@ -2623,27 +2621,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         String priceTitle = "researchListPrice";
         if(sapQuote != null &&
            StringUtils.equals(sapQuote.getQuoteHeader().getSalesOrganization(),
-               SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization())) {
+                   SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization())) {
             priceTitle = "externalListPrice";
 
-        }
-            if (productEntity.isExternalOnlyProduct()) {
-                priceTitle = "externalListPrice";
-            }
-            if(productEntity.isClinicalProduct()) {
-                priceTitle = "clinicalPrice";
-            }
-            productInfo.put("productAgp", productEntity.getDefaultAggregationParticle());
-            BigDecimal priceForFormat = null;
-            if (sapQuote != null) {
-                priceForFormat =
-                    new BigDecimal(
-                        productPriceCache.findByPartNumber(productEntity.getPartNumber(), companyCode).getBasePrice());
-            } else {
-                priceForFormat =
-                    new BigDecimal(priceListCache.findByKeyFields(productEntity.getPrimaryPriceItem()).getPrice());
-            }
-            productInfo.put(priceTitle, NumberFormat.getCurrencyInstance().format(priceForFormat));
         }
         if (productEntity.isExternalOnlyProduct()) {
             priceTitle = "externalListPrice";
@@ -2661,9 +2641,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                     new BigDecimal(priceListCache.findByKeyFields(productEntity.getPrimaryPriceItem()).getPrice());
         }
         productInfo.put(priceTitle, NumberFormat.getCurrencyInstance().format(priceForFormat));
-        }
+    }
 
-        @HandlesEvent("getSupportsNumberOfLanes")
+    @HandlesEvent("getSupportsNumberOfLanes")
     public Resolution getSupportsNumberOfLanes() throws Exception {
         JSONObject item = new JSONObject();
 
