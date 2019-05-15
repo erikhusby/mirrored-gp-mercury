@@ -83,6 +83,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public static final String EXOME_EXPRESS = "Exome Express";
     public static final String EXOME = "Exome";
     public static final String INFINIUM = "Infinium";
+    public static final int MAX_PART_NUMBER_LENGTH = 18;
 
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT", schema = "athena", sequenceName = "SEQ_PRODUCT")
@@ -112,9 +113,9 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @Column(name = "REAGENT_DESIGN_KEY", nullable = true, length = 200)
     private String reagentDesignKey;
 
-
     @Column(name = "PART_NUMBER")
     private String partNumber;
+
     private Date availabilityDate;
     private Date discontinuedDate;
     private Integer expectedCycleTimeSeconds;
