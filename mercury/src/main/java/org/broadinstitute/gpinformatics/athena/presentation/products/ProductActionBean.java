@@ -162,7 +162,7 @@ public class ProductActionBean extends CoreActionBean {
     @ValidateNestedProperties({
             @Validate(field = "productName", required = true, maxlength = 255, on = {SAVE_ACTION},
                     label = "Product Name"),
-            @Validate(field = "partNumber", required = true, maxlength = 255, on = {SAVE_ACTION},
+            @Validate(field = "partNumber", required = true, maxlength = 18, on = {SAVE_ACTION},
                     label = "Part Number"),
             @Validate(field = "description", required = true, maxlength = 2000, on = {SAVE_ACTION},
                     label = "Description"),
