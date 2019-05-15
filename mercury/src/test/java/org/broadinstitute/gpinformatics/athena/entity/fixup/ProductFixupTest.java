@@ -451,7 +451,7 @@ public class ProductFixupTest extends Arquillian {
         assertThat(wes010241Bad.getPartNumber(), is("WES-010241 Express Somatic Human WES (Deep Coverage)"));
         wes010241Bad.setPartNumber("WES-010241_BAD");
 
-        productDao.persist(new FixupCommentary("GPLIM-6286 Rename invalid part naame"));
+        productDao.persist(new FixupCommentary("GPLIM-6286 Rename invalid partNumber"));
         utx.commit();
     }
 }
