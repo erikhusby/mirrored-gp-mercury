@@ -20,6 +20,7 @@ public class MayoManifestConfig extends AbstractConfig implements Serializable, 
     private String credentialFilename;
     private String writerCredentialFilename;
     private String bucketName;
+    private String dailyCredentialRenewal;
 
     public MayoManifestConfig() {
     }
@@ -54,5 +55,14 @@ public class MayoManifestConfig extends AbstractConfig implements Serializable, 
 
     public void setBucketName(String bucketName) {
         this.bucketName = bucketName;
+    }
+
+    @Override
+    public String getDailyCredentialRenewal() {
+        return dailyCredentialRenewal;
+    }
+
+    public void setDailyCredentialRenewal(String dailyCredentialRenewal) {
+        this.dailyCredentialRenewal = dailyCredentialRenewal;
     }
 }

@@ -8,4 +8,5 @@ public interface GoogleStorageConfig {
     public String getCredentialFilename();
     public String getWriterCredentialFilename();
     public String getBucketName();
+    public String getDailyCredentialRenewal();
 }

@@ -18,9 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.util.MessageCollection;
-import org.broadinstitute.gpinformatics.infrastructure.parsers.GenericTableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.csv.CsvParser;
-import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoReceivingActionBean;
@@ -32,7 +30,6 @@ import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -47,13 +44,11 @@ import java.util.stream.Stream;
  */
 @Dependent
 public class MayoManifestImportProcessor {
-    private static final String DETAILS_SHEETNAME = "Details";
     public static final String CANNOT_PARSE = "Manifest file %s cannot be parsed due to %s.";
     public static final String DUPLICATE_HEADER = "Manifest file %s has duplicate header %s.";
     public static final String INVALID_DATA = "Manifest file %s has invalid values for %s.";
     public static final String MISSING_DATA = "Manifest file %s is missing required values for %s.";
     public static final String MISSING_HEADER = "Manifest file %s is missing header %s.";
-    public static final String MISSING_SHEET = "Manifest file %s does not have a %s sheet and will not be used.";
     public static final String UNKNOWN_UNITS = "Manifest file %s has unknown units in headers: %s.";
     public static final String UNKNOWN_HEADER = "Manifest file %s has unknown headers: %s.";
 
@@ -196,30 +191,12 @@ public class MayoManifestImportProcessor {
     static List<List<String>> parseAsCellGrid(byte[] content, String filename, MessageCollection messages) {
         List<List<String>> cellGrid = new ArrayList<>();
         try {
-            if (isExcel(filename)) {
-                // Parses file as an Excel spreadsheet. Uses the "Details" sheet if it exists.
-                if (PoiSpreadsheetParser.getWorksheetNames(new ByteArrayInputStream(content)).stream().
-                        filter(DETAILS_SHEETNAME::equals).
-                        findFirst().isPresent()) {
-                    // Makes a cell grid without expecting a specific sheet layout or headers.
-                    GenericTableProcessor processor = new GenericTableProcessor();
-                    processor.setHeaderNamesSupplier(() -> Collections.emptyList());
-                    PoiSpreadsheetParser parser = new PoiSpreadsheetParser(
-                            Collections.singletonMap(DETAILS_SHEETNAME, processor));
-                    parser.processUploadFile(new ByteArrayInputStream(content));
-                    processor.removeBlankRows();
-                    cellGrid.addAll(processor.getHeaderAndDataRows());
-                } else {
-                    messages.addInfo(MISSING_SHEET, filename, DETAILS_SHEETNAME);
-                }
-            } else {
-                // Parses file as a .csv spreadsheet.
-                CsvParser.parseToCellGrid(new ByteArrayInputStream(content)).
-                        stream().
-                        filter(line -> line != null && !StringUtils.isAllBlank(line)).
-                        map(Arrays::asList).
-                        forEach(cellGrid::add);
-            }
+            // Parses file as a .csv spreadsheet.
+            CsvParser.parseToCellGrid(new ByteArrayInputStream(content)).
+                    stream().
+                    filter(line -> line != null && !StringUtils.isAllBlank(line)).
+                    map(Arrays::asList).
+                    forEach(cellGrid::add);
         } catch(Exception e) {
             messages.addWarning(CANNOT_PARSE, filename, e.toString());
         }
@@ -247,7 +224,6 @@ public class MayoManifestImportProcessor {
             List<String> unknownUnits = new ArrayList<>();
             List<String> unknownHeaders = new ArrayList<>();
             initHeaders(cellGrid.get(0), unknownUnits, unknownHeaders);
-            fixupDates(cellGrid.subList(1, cellGrid.size()), filename);
 
             // Finds missing required headers.
             List<String> missingHeaders = Arrays.asList(Header.values()).stream().
@@ -334,31 +310,6 @@ public class MayoManifestImportProcessor {
     }
 
 
-    /**
-     * Extracts the rack barcodes from the spreadsheet data.
-     */
-    @NotNull
-    Set<String> extractManifestKeys(List<List<String>> cellGrid) {
-        Set<String> manifestKeys = new HashSet<>();
-        if (CollectionUtils.isNotEmpty(cellGrid)) {
-            // Cleanup values, i.e. removes characters that may present a problem later.
-            for (List<String> row : cellGrid) {
-                for (int i = 0; i < row.size(); ++i) {
-                    row.set(i, cleanupValue(row.get(i)));
-                }
-            }
-            // Makes headers from the first row in the cell grid.
-            initHeaders(cellGrid.get(0), null, null);
-            for (List<String> row : cellGrid.subList(1, cellGrid.size())) {
-                String manifestKey = MayoReceivingActionBean.makeManifestKey(sheetHeaders, row);
-                if (StringUtils.isNotBlank(manifestKey)) {
-                    manifestKeys.add(manifestKey);
-                }
-            }
-        }
-        return manifestKeys;
-    }
-
     private void initHeaders(List<String> headerRow, @Nullable List<String> unknownUnits,
             @Nullable List<String> unknownHeaders) {
         sheetHeaders.clear();
@@ -404,26 +355,6 @@ public class MayoManifestImportProcessor {
     }
 
     /**
-     * Converts Excel internal date representation into a date string. Updates the value in-place.
-     */
-    private void fixupDates(List<List<String>> dataRows, String filename) {
-        if (isExcel(filename)) {
-            for (List<String> columns : dataRows) {
-                for (int columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
-                    Header header = sheetHeaders.get(columnIndex);
-                    if (header != null) {
-                        String value = columns.get(columnIndex);
-                        if (header.isDate() && StringUtils.isNotBlank(value) && NumberUtils.isParsable(value)) {
-                            // Makes a date string when the column is an Excel internal date representation.
-                            columns.set(columnIndex, PoiSpreadsheetParser.convertDoubleStringToDateString(value));
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /**
      * Returns the string stripped of control characters, line breaks, and >7-bit ascii
      * (which become upside-down ? characters in the database).
      */
@@ -433,12 +364,5 @@ public class MayoManifestImportProcessor {
                 replaceAll("\\?","").
                 replaceAll("[\\p{C}\\p{Zl}\\p{Zp}]", "").
                 trim();
-    }
-
-    /**
-     * Determines if the file is an Excel spreadsheet.
-     */
-    private static boolean isExcel(String filename) {
-        return filename.endsWith("xls") || filename.endsWith("xlsx");
     }
 }

@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
 import com.google.common.collect.Multimap;
 import org.apache.commons.lang.WordUtils;
-import org.apache.commons.lang3.CharUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.bsp.client.util.MessageCollection;
@@ -20,7 +19,6 @@ import java.util.stream.Stream;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class MayoManifestImportProcessorDbFreeTest {
-    private static final String EXCEL = "filename.xlsx";
     private static final String CSV = "filename.csv";
 
     public void testHeaderParsing1() throws Exception {
@@ -193,16 +191,6 @@ public class MayoManifestImportProcessorDbFreeTest {
                     String.format(MayoManifestImportProcessor.CANNOT_PARSE, CSV, "QQQ").split("QQQ")[0]),
                     StringUtils.join(messages.getWarnings()));
 
-            // Can't read it as Excel either.
-            processor = new MayoManifestImportProcessor();
-            messages.clearAll();
-            Assert.assertTrue(processor.makeManifestRecords(processor.parseAsCellGrid(content, EXCEL, messages),
-                    EXCEL, messages).isEmpty());
-            Assert.assertFalse(messages.hasErrors(), StringUtils.join(messages.getErrors()));
-            Assert.assertEquals(messages.getWarnings().size(), 1, StringUtils.join(messages.getWarnings()));
-            Assert.assertTrue(messages.getWarnings().get(0).startsWith(
-                    String.format(MayoManifestImportProcessor.CANNOT_PARSE, EXCEL, "QQQ").split("QQQ")[0]),
-                    StringUtils.join(messages.getWarnings()));
         } catch (Exception e) {
             Assert.fail("Should not have thrown exception");
         }

@@ -336,18 +336,22 @@ MayoManifestGoogleStorage:
         credentialFilename: serviceAccountKeys/dev_reader.json
         writerCredentialFilename: serviceAccountKeys/dev_writer.json
         bucketName: dev_113959925643235198999
+        dailyCredentialRenewal: false
     TEST:
         credentialFilename: serviceAccountKeys/dev_reader.json
         writerCredentialFilename: serviceAccountKeys/dev_writer.json
         bucketName: dev_113959925643235198999
+        dailyCredentialRenewal: false
     QA:
         credentialFilename: serviceAccountKeys/rc_reader.json
         writerCredentialFilename: serviceAccountKeys/rc_writer.json
         bucketName: rc_113959925643235198999
+        dailyCredentialRenewal: false
     RC:
         credentialFilename: serviceAccountKeys/rc_reader.json
         writerCredentialFilename: serviceAccountKeys/rc_writer.json
         bucketName: rc_113959925643235198999
+        dailyCredentialRenewal: false
     PROD:
         # Do not use production Google storage config values when doing a data fixup involving
         # ManifestSessions or Mayo accessioning. Production storage uses IP whitelisting which
@@ -357,7 +361,7 @@ MayoManifestGoogleStorage:
         credentialFilename: serviceAccountKeys/prod_reader.json
         writerCredentialFilename: DISABLED
         bucketName: genomics-broad-dryrun
-
+        dailyCredentialRenewal: true
 
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 mercury:

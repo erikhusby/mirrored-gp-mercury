@@ -266,12 +266,6 @@ public final class PoiSpreadsheetParser {
         // todo jmt this could all be replaced with return new HSSFDataFormatter().formatCellValue( cell );
     }
 
-    public static String convertDoubleStringToDateString(String numericValue) {
-        Cell cell = (new HSSFWorkbook()).createSheet().createRow(0).createCell(0, Cell.CELL_TYPE_NUMERIC);
-        cell.setCellValue(Double.parseDouble(numericValue));
-        return DATE_FORMATTER.format(cell.getDateCellValue());
-    }
-
     /**
      * Get the names of all the worksheets in the tracker file.
      *

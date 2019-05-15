@@ -111,7 +111,7 @@ public class GoogleBucketDao {
         if (writerCredentials != null) {
             try {
                 Storage storage = StorageOptions.newBuilder().setCredentials(writerCredentials)
-                        .setProjectId(credentials.getProjectId()).build().getService();
+                        .setProjectId(writerCredentials.getProjectId()).build().getService();
                 BlobInfo blobInfo = BlobInfo.newBuilder(googleStorageConfig.getBucketName(), filename).
                         setContentType("text/plain").build();
                 Blob blob = storage.get(blobInfo.getBlobId());
@@ -196,7 +196,7 @@ public class GoogleBucketDao {
         File homeDir = new File(System.getProperty("user.home"));
         if (StringUtils.isBlank(googleStorageConfig.getCredentialFilename()) ||
                 StringUtils.isBlank(googleStorageConfig.getBucketName())) {
-            messageCollection.addError("mercury-config.yaml needs GoogleStorage credentialFile, bucketName.");
+            messageCollection.addError("mercury-config.yaml is missing MayoManifestGoogleStorage configuration.");
             return Collections.emptyList();
         }
         File credentialFile = new File(homeDir, googleStorageConfig.getCredentialFilename());
@@ -206,6 +206,9 @@ public class GoogleBucketDao {
                 messageCollection.addError("Credential file " + credentialFile.getAbsolutePath() +
                         " is missing, unreadable, or empty.");
                 return Collections.emptyList();
+            } else if (!credentialFile.canWrite()) {
+                messageCollection.addError("Credential file " + credentialFile.getAbsolutePath() +
+                        " must be writable by Mercury.");
             }
         } catch (Exception e) {
             messageCollection.addError("Exception when reading credentialFile " + credentialFile.getAbsolutePath() +
@@ -265,9 +268,11 @@ public class GoogleBucketDao {
 
     public void rotateServiceAccountKey(MessageCollection messages) {
         makeCredential(messages);
+        // If Mercury can successfully login, Mercury can generate a new credential (the json "key")
+        // and then write it to the configured filename.
+        // If Mercury cannot login, a message is output explaining how to manually create a credential file.
         if (credentials != null) {
             try {
-                // Makes the necessary GoogleCredential ( != GoogleCredentials)
                 JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
                 HttpTransport transport = GoogleNetHttpTransport.newTrustedTransport();
                 GoogleCredential credential = GoogleCredential.fromStream(new FileInputStream(credentialFile));
@@ -286,37 +291,33 @@ public class GoogleBucketDao {
                 // If credentials was created ok (i.e. no exceptions), writes the json to the credential file.
                 FileUtils.writeStringToFile(credentialFile, newKeyJson, "US-ASCII", false);
             } catch (Exception e) {
-                String msg = "Failed to create new key for service account key rotation: ";
+                String msg = "Failed to create new key for the service account: ";
                 messages.addError(msg + e.toString());
             }
         } else {
-            boolean isProd = StringUtils.isBlank(googleStorageConfig.getWriterCredentialFilename()) ||
-                    "disabled".equalsIgnoreCase(googleStorageConfig.getWriterCredentialFilename());
-            boolean isDev = !isProd && googleStorageConfig.getWriterCredentialFilename().contains("dev_writer");
-            boolean isRc = !isProd && googleStorageConfig.getWriterCredentialFilename().contains("rc_writer");
-            assert(isProd || isDev || isRc); // If this fails fix the above so they match the new config names.
-            String loginAs = isProd ? "pmi-ops.org" :
-                    isDev ? "dev-reader administrator" :
-                            isRc ? "rc-reader administrator" : "[unknown]";
-            String filename = isProd ? "prod_reader.json" :
-                    isDev ? "dev_reader.json" :
-                            isRc ? "rc_reader.json" : "[unknown]";
+            boolean isProd = googleStorageConfig.getCredentialFilename().contains("/prod_");
+            boolean isDev = googleStorageConfig.getCredentialFilename().contains("/dev_");
+            boolean isRc = googleStorageConfig.getCredentialFilename().contains("/rc_");
+            assert(isProd || isDev || isRc);
+            String loginAs = isProd ? "pmi-ops.org" : isRc ? "rc-reader" : "dev-reader";
             String serviceAccountName = isProd ? "awardee-broad@all-of-us-rdr-stable.iam.gserviceaccount.com" :
-                    isDev ? "dev-reader@mercury-mayobucket-test-23591" :
-                            isRc ? "rc-reader@mercury-mayobucket-test-23591" : "[unknown]";
-            List<String> infos = Arrays.asList(
-                    "It appears the Google service account credential needs to be manually regenerated. ",
-                    "Using " + loginAs + " credentials login to GCP Console at https://console.cloud.google.com ",
-                    "Click the command prompt icon at the top right (\"Activate Cloud Shell\") to get a shell within the browser window. ",
-                    "At the prompt run: ",
-                    String.format("gcloud iam service-accounts keys create %s --iam-account %s", filename,
-                            serviceAccountName),
-                    "Then run: ",
-                    "cat " + filename,
-                    "Copy-paste the key into an editor and remove the line breaks found in the private_key element so that it is one long line. ",
-                    "Write the edited json to " + credentialFile.getAbsolutePath(),
-                    "No need to restart Mercury. Check using Mayo Manifest Admin -> Test Bucket Access");
-            messages.addInfos(infos);
+                    isRc ? "rc-reader@mercury-mayobucket-test-23591" : "dev-reader@mercury-mayobucket-test-23591";
+            String msg = "If no other Google credential errors exist, the Google service account credential " +
+                    "needs to be manually regenerated. Use these steps: " +
+                    "Login with your \"" + loginAs + "\" role account to " +
+                    "the Google Cloud Console at https://console.cloud.google.com. " +
+                    "Click the command prompt icon at the top right (\"Activate Cloud Shell\") " +
+                    "to get a shell within the browser window. At the prompt run: " +
+                    "\"gcloud iam service-accounts keys create newKey.json --iam-account " + serviceAccountName +
+                    "\" to generate a new credential (a json file). " +
+                    "Then run: \"cat newKey.json\" to output the json file to the shell window. " +
+                    "Copy-paste the json from the shell window into an editor on your computer. " +
+                    "Remove any line breaks found in \"private_key\" element so that it is one long line. " +
+                    "Write the edited json to " + credentialFile.getAbsolutePath() +
+                    " on the server where Mercury is running. Change the file permissions to allow Mercury to " +
+                    "write the file in the future. No need to restart Mercury. " +
+                    "To check if it was successful click Mercury -> Admin -> Mayo Manifest Admin -> Test Bucket Access";
+            messages.addError(msg);
         }
     }
 }
