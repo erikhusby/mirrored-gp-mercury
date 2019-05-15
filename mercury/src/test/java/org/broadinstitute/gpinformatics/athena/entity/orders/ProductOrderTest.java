@@ -149,6 +149,7 @@ public class ProductOrderTest {
                 .ignoreProperty("analyzeUmiOverride")
                 .ignoreProperty("reagentDesignKey")
                 .ignoreProperty("defaultAggregationParticle")
+                .ignoreProperty("coverageTypeKey")
                 .ignoreProperty("quoteSource")
                 .ignoreProperty("quoteReferences")
                 .build();

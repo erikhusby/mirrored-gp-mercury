@@ -113,6 +113,10 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @Column(name = "REAGENT_DESIGN_KEY", nullable = true, length = 200)
     private String reagentDesignKey;
 
+    @Column(name = "COVERAGE_TYPE_KEY", nullable = true, length = 200)
+    private String coverageTypeKey;
+
+
     @Column(name = "PART_NUMBER")
     private String partNumber;
 
@@ -257,6 +261,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
         clonedProduct.setAggregationDataType(productToClone.getAggregationDataType());
         clonedProduct.setAnalysisTypeKey(productToClone.getAnalysisTypeKey());
+        clonedProduct.setCoverageTypeKey(productToClone.getCoverageTypeKey());
         clonedProduct.setReagentDesignKey(productToClone.getReagentDesignKey());
         clonedProduct.setBaitLocked(productToClone.getBaitLocked());
         clonedProduct.setPositiveControlResearchProject(productToClone.getPositiveControlResearchProject());
@@ -561,6 +566,14 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public void setReagentDesignKey(String reagentDesignKey) {
         this.reagentDesignKey = reagentDesignKey;
+    }
+
+    public String getCoverageTypeKey() {
+        return coverageTypeKey;
+    }
+
+    public void setCoverageTypeKey(String covereageTypeKey) {
+        this.coverageTypeKey = covereageTypeKey;
     }
 
     public boolean isPdmOrderableOnly() {

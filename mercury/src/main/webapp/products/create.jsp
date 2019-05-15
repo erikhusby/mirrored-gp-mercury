@@ -814,6 +814,16 @@
                                 <stripes:checkbox id="analyzeUmi" name="editProduct.analyzeUmi" style="margin-top: 10px;"/>
                             </div>
                         </div>
+
+                        <div class="control-group">
+                            <stripes:label for="coverageTypeKey" name="Coverage" class="control-label"/>
+                            <div class="controls">
+                                <stripes:select id="coverageTypeKey" name="editProduct.coverageTypeKey">
+                                    <stripes:option value="">Select One</stripes:option>
+                                    <stripes:options-collection collection="${actionBean.coverageTypes}" label="displayName" value="businessKey"/>
+                                </stripes:select>
+                            </div>
+                        </div>
                     </fieldset>
                 </div>
             </div>

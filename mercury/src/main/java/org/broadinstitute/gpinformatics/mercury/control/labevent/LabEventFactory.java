@@ -439,7 +439,7 @@ public class LabEventFactory implements Serializable {
                                                 if (mercurySample == null) {
                                                     mercurySample = new MercurySample(smId,MercurySample.MetadataSource.BSP);
                                                 }
-                                                vessel.getMercurySamples().add(mercurySample);
+                                                vessel.addSample(mercurySample);
                                             }
                                         }
                                     }
@@ -512,6 +512,7 @@ public class LabEventFactory implements Serializable {
                 labEvent.getDisambiguator()))) {
             labEvent.setDisambiguator(labEvent.getDisambiguator() + 1L);
         }
+        labEvent.computeLabBatches();
         if (persistEntities) {
             labEventDao.persist(labEvent);
             labEventDao.flush();

@@ -709,6 +709,16 @@ public class LabVesselSearchDefinition {
             searchTerm.setDisplayExpression(DisplayExpression.SPECIES);
             searchTerms.add(searchTerm);
         }
+        {
+            SearchTerm searchTerm = buildLabVesselBspTerm(BSPSampleSearchColumn.GENDER);
+            searchTerm.setDisplayExpression(DisplayExpression.GENDER);
+            searchTerms.add(searchTerm);
+        }
+        {
+            SearchTerm searchTerm = buildLabVesselBspTerm(BSPSampleSearchColumn.PARTICIPANT_ID);
+            searchTerm.setDisplayExpression(DisplayExpression.PATIENT);
+            searchTerms.add(searchTerm);
+        }
         return searchTerms;
     }
 

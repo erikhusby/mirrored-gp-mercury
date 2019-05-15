@@ -43,7 +43,7 @@ public class ProductOrderSearchDefinition {
     public static final String SUBMITTER_NAME_COLUMN_HEADER = "Product Order Submitter Name";
     public static final String ORDER_STATUS_COLUMN_HEADER = "Order Status";
     public static final String RESEARCH_PROJECT_COLUMN_HEADER = "Research Project";
-    public static final String LCSETS_COLUMN_HEADER = "LCSET";
+    public static final String LCSETS_COLUMN_HEADER = "Lab Batch";
     public static final String PDO_TICKET_COLUMN_HEADER = "PDO Ticket";
     public static final String PRODUCT_ORDER_SAMPLES_COLUMN_HEADER = "Product Order Sample(s)";
     public static final String SAP_ORDER_ID_COLUMN_HEADER = "SAP Order Id";
@@ -425,7 +425,6 @@ public class ProductOrderSearchDefinition {
         // of which the product order is created
         SearchTerm lcsetTerm = new SearchTerm();
         lcsetTerm.setName(LCSETS_COLUMN_HEADER);
-        lcsetTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getBatchNameInputConverter());
 
         SearchTerm.CriteriaPath lcsetVesselPath = new SearchTerm.CriteriaPath();
         SearchTerm.CriteriaPath lcsetReworkPath = new SearchTerm.CriteriaPath();

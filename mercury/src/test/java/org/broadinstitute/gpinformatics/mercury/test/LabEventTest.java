@@ -1285,10 +1285,10 @@ public class LabEventTest extends BaseEventTest {
     private TubeFormation getTubeFormation(String unique) {
         HashMap<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
         BarcodedTube p1 = new BarcodedTube("P1" + unique);
-        p1.getMercurySamples().add(new MercurySample("SM-P1" + unique, MercurySample.MetadataSource.MERCURY));
+        p1.addSample(new MercurySample("SM-P1" + unique, MercurySample.MetadataSource.MERCURY));
         mapPositionToTube.put(VesselPosition.A01, p1);
         BarcodedTube p2 = new BarcodedTube("P2" + unique);
-        p2.getMercurySamples().add(new MercurySample("SM-P2" + unique, MercurySample.MetadataSource.MERCURY));
+        p2.addSample(new MercurySample("SM-P2" + unique, MercurySample.MetadataSource.MERCURY));
         mapPositionToTube.put(VesselPosition.A02, p2);
         LabBatch labBatch = new LabBatch("LCSET-" + unique, new HashSet<LabVessel>(mapPositionToTube.values()),
                 LabBatch.LabBatchType.WORKFLOW);

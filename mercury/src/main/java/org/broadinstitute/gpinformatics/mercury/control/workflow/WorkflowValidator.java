@@ -140,6 +140,9 @@ public class WorkflowValidator {
                                                                   Set<String> eventNames) {
         List<WorkflowValidationError> validationErrors = new ArrayList<>();
         for (SampleInstanceV2 sampleInstance : sampleInstances) {
+            if (sampleInstance.isReagentOnly()) {
+                continue;
+            }
             String workflowName = sampleInstance.getWorkflowName();
             LabBatch effectiveBatch = sampleInstance.getSingleBatch();
 

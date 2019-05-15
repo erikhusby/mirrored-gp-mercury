@@ -1,8 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.samples;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -94,6 +96,9 @@ public class MercurySampleData implements SampleData {
                 break;
             case BROAD_PARTICIPANT_ID:
                 this.broadPatientId = value;
+                break;
+            case ROOT_SAMPLE:
+                this.rootSampleId = value;
             }
         }
     }
@@ -196,6 +201,18 @@ public class MercurySampleData implements SampleData {
     }
 
     /**
+     * Merges in metadata from a metadata inheritance root. Existing values are overwritten.
+     */
+    public void mergeInheritedMetadata(SampleData other) {
+        if (other != null) {
+            collaboratorSampleId = other.getCollaboratorsSampleName();
+            patientId = other.getCollaboratorParticipantId();
+            gender = other.getGender();
+            species = other.getOrganism();
+        }
+    }
+
+    /**
      * A sample may have a root MetadataSource of BSP (i.e. BspSampleData), but have aliquots that are managed by
      * Mercury.  This class returns Mercury quant information.
      */
@@ -261,8 +278,8 @@ public class MercurySampleData implements SampleData {
     }
 
     /**
-     * For clinical samples, the root id is considered
-     * the same thing as the sample id.
+     * For clinical samples, the root id is considered the same thing as the sample id,
+     * so return the sample id as default when the root metadata is not explicitly set.
      */
     @Override
     public String getRootSample() {
