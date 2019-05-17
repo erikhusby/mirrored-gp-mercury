@@ -1003,7 +1003,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     }
 
     public void addSapMaterial(SAPMaterial material) {
-        this.sapMaterials.put(material.getCompanyCode().getSalesOrganization(), material);
+        this.sapMaterials.put(material.getSalesOrg(), material);
     }
 
     public Map<String, SAPMaterial> getSapMaterials() {
@@ -1230,11 +1230,11 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         final SapIntegrationClientImpl.SAPCompanyConfiguration companyCode =
                 product.determineCompanyConfiguration();
         Optional<SAPMaterial> primaryProduct = Optional.ofNullable(productPriceCache.findByPartNumber(product.getPartNumber(),
-                companyCode));
+                companyCode.getSalesOrganization()));
         primaryProduct.ifPresent(product::addSapMaterial);
         if(companyCode == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD) {
             Optional<SAPMaterial> llcVersion = Optional.ofNullable(productPriceCache.findByPartNumber(product.getPartNumber(),
-                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES));
+                    companyCode.getSalesOrganization()));
             llcVersion.ifPresent(product::addSapMaterial);
         }
     }

@@ -630,14 +630,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                 SapIntegrationClientImpl.SAPCompanyConfiguration companyCode =
                         SapIntegrationClientImpl.SAPCompanyConfiguration
                                 .fromSalesOrgForMaterial(salesOrganization);
-                //if the Quote used is not a GP Quote, they must be ordering SSF Products.
-                if(!Arrays.asList(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
-                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES).contains(companyCode)) {
-                    companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
-                }
                 Optional<SAPMaterial> cachedProduct =
                         Optional.ofNullable(productPriceCache.findByPartNumber(editOrder.getProduct().getPartNumber(),
-                                companyCode ));
+                                salesOrganization));
                 if(!cachedProduct.isPresent()) {
                     addGlobalValidationError("The product you selected " +
                                              editOrder.getProduct().getDisplayName() + " is invalid for your quote " +
@@ -2580,12 +2575,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         if(StringUtils.isNotBlank(quoteIdentifier)) {
             if(StringUtils.isNumeric(quoteIdentifier)) {
                 sapQuote = sapService.findSapQuote(quoteIdentifier);
-                if(Arrays.asList(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES,
-                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD).contains(
-                        SapIntegrationClientImpl.SAPCompanyConfiguration.fromSalesOrgForMaterial(sapQuote.getQuoteHeader().getSalesOrganization())
-                )) {
+//                if(Arrays.asList(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES,
+//                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD).contains(
+//                        SapIntegrationClientImpl.SAPCompanyConfiguration.fromSalesOrgForMaterial(sapQuote.getQuoteHeader().getSalesOrganization())
+//                )) {
                    companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.fromSalesOrgForMaterial(sapQuote.getQuoteHeader().getSalesOrganization());
-                }
+//                }
             }
         }
 
@@ -2596,7 +2591,9 @@ public class ProductOrderActionBean extends CoreActionBean {
             productInfo.put("addOns", supportsGetAddOns(productEntity, sapQuote, companyCode));
 
             productInfo.put("clinicalProduct", productEntity.isClinicalProduct());
-            productInfo.put("externalProduct", productEntity.isExternalOnlyProduct());
+            productInfo.put("externalProduct", productEntity.isExternalOnlyProduct() ||
+                                               (companyCode == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES &&
+                                                !productEntity.isClinicalProduct()));
             productInfo.put("productName", productEntity.getName());
             productInfo.put("baitLocked", productEntity.getBaitLocked());
             addProductPriceToJson(productEntity, sapQuote, companyCode, productInfo);
@@ -2623,7 +2620,6 @@ public class ProductOrderActionBean extends CoreActionBean {
            StringUtils.equals(sapQuote.getQuoteHeader().getSalesOrganization(),
                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization())) {
             priceTitle = "externalListPrice";
-
         }
         if (productEntity.isExternalOnlyProduct()) {
             priceTitle = "externalListPrice";
@@ -2634,8 +2630,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         productInfo.put("productAgp", productEntity.getDefaultAggregationParticle());
         BigDecimal priceForFormat = null;
         if (sapQuote != null) {
-            priceForFormat =
-                    new BigDecimal(productPriceCache.findByPartNumber(productEntity.getPartNumber(),companyCode ).getBasePrice());
+            priceForFormat = new BigDecimal(productPriceCache.findByPartNumber(productEntity.getPartNumber(),
+                    companyCode.getSalesOrganization()).getBasePrice());
         } else {
             priceForFormat =
                     new BigDecimal(priceListCache.findByKeyFields(productEntity.getPrimaryPriceItem()).getPrice());
@@ -3074,14 +3070,13 @@ public class ProductOrderActionBean extends CoreActionBean {
             QuotePriceItem priceListItem = null;
             BigDecimal formatedPrice = null;
 
-            if (product.getPrimaryPriceItem() != null) {
-                priceListItem = priceListCache.findByKeyFields(product.getPrimaryPriceItem());
-                formatedPrice = new BigDecimal(priceListItem.getPrice());
+            if (sapQuote != null) {
+                formatedPrice = new BigDecimal(productPriceCache.findByProduct(product,
+                        sapQuote.getQuoteHeader().getSalesOrganization()).getBasePrice());
             } else {
-
-                if (sapQuote != null) {
-                    formatedPrice = new BigDecimal(productPriceCache.findByProduct(product,
-                            SapIntegrationServiceImpl.determineCompanyCode(sapQuote)).getBasePrice());
+                if (product.getPrimaryPriceItem() != null) {
+                    priceListItem = priceListCache.findByKeyFields(product.getPrimaryPriceItem());
+                    formatedPrice = new BigDecimal(priceListItem.getPrice());
                 }
             }
 
@@ -3592,17 +3587,14 @@ public class ProductOrderActionBean extends CoreActionBean {
                         if(editOrder.getProduct() != null) {
                             Optional<SAPMaterial> cachedProduct =
                                     Optional.ofNullable(productPriceCache.findByProduct(editOrder.getProduct(),
-                                            SapIntegrationClientImpl.SAPCompanyConfiguration.fromSalesOrgForMaterial(
-                                                    quote.getQuoteHeader().getSalesOrganization())));
+                                            quote.getQuoteHeader().getSalesOrganization()));
                             canSwitch = cachedProduct.isPresent();
                             offendingProduct = editOrder.getProduct().getDisplayName();
                             final Iterator<ProductOrderAddOn> addOnIterator = editOrder.getAddOns().iterator();
                             while (addOnIterator.hasNext() && canSwitch) {
                                 final Product addOn = addOnIterator.next().getAddOn();
                                 Optional<SAPMaterial> cachedAddon = Optional.ofNullable(productPriceCache.findByProduct(
-                                        addOn,
-                                        SapIntegrationClientImpl.SAPCompanyConfiguration.fromSalesOrgForMaterial(
-                                                quote.getQuoteHeader().getSalesOrganization())));
+                                        addOn, quote.getQuoteHeader().getSalesOrganization()));
                                 canSwitch = cachedAddon.isPresent();
                                 offendingProduct = addOn.getDisplayName();
                             }

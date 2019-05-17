@@ -435,6 +435,12 @@ public class ProductOrderEjbTest {
         productPriceCache.refreshCache();
 
         MessageCollection messageCollection = new MessageCollection();
+
+        Mockito.when(mockSapService.findSapQuote(Mockito.anyString()))
+                .thenReturn(TestUtils.buildTestSapQuote(conversionPdo.getQuoteId(),
+                        10000,1000000,conversionPdo,
+                        TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,companyCode.getSalesOrganization()));
+
         productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, true);
         conversionPdo.setPriorToSAP1_5(Boolean.TRUE);
 
@@ -520,7 +526,7 @@ public class ProductOrderEjbTest {
                 Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
                 companyCode.getSalesOrganization());
 
-        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        primaryMaterial.updateCompanyConfiguration(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(
                 primaryMaterial);
         priceList.add(new QuotePriceItem(conversionPdo.getProduct().getPrimaryPriceItem().getCategory(),
@@ -547,6 +553,11 @@ public class ProductOrderEjbTest {
         productPriceCache.refreshCache();
 
         Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
+        Mockito.when(mockSapService.findSapQuote(Mockito.anyString()))
+                .thenReturn(TestUtils.buildTestSapQuote(conversionPdo.getQuoteId(),
+                        10000,1000000,conversionPdo,
+                        TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,companyCode.getSalesOrganization()));
+
 
         productOrderEjb.publishProductOrderToSAP(conversionPdo, new MessageCollection(), true);
         conversionPdo.setPriorToSAP1_5(true);
@@ -600,7 +611,7 @@ public class ProductOrderEjbTest {
                 Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
                 companyCode.getSalesOrganization());
 
-        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        primaryMaterial.updateCompanyConfiguration(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(
                 primaryMaterial);
         priceList.add(new QuotePriceItem(conversionPdo.getProduct().getPrimaryPriceItem().getCategory(),
@@ -628,6 +639,10 @@ public class ProductOrderEjbTest {
         productPriceCache.refreshCache();
 
         Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
+        Mockito.when(mockSapService.findSapQuote(Mockito.anyString()))
+                .thenReturn(TestUtils.buildTestSapQuote(conversionPdo.getQuoteId(),
+                        10000,1000000,conversionPdo,
+                        TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,companyCode.getSalesOrganization()));
 
         productOrderEjb.publishProductOrderToSAP(conversionPdo, new MessageCollection(), true);
 
@@ -706,6 +721,11 @@ public class ProductOrderEjbTest {
         Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
         Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
         productPriceCache.refreshCache();
+        Mockito.when(mockSapService.findSapQuote(Mockito.anyString()))
+                .thenReturn(TestUtils.buildTestSapQuote(conversionPdo.getQuoteId(),
+                        10000,1000000,conversionPdo,
+                        TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,companyCode.getSalesOrganization()));
+
 
         Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
 
@@ -791,6 +811,13 @@ public class ProductOrderEjbTest {
         conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
         MessageCollection messageCollection = new MessageCollection();
+
+        Mockito.when(mockSapService.findSapQuote(Mockito.anyString()))
+                .thenReturn(TestUtils.buildTestSapQuote(conversionPdo.getQuoteId(),
+                        10000,1000000,conversionPdo,
+                        TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,companyCode.getSalesOrganization()));
+
+
         productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, true);
         assertThat(conversionPdo.getSapOrderNumber(), is(notNullValue()));
 
@@ -932,6 +959,12 @@ public class ProductOrderEjbTest {
         conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
         MessageCollection messageCollection = new MessageCollection();
+
+        Mockito.when(mockSapService.findSapQuote(Mockito.anyString()))
+                .thenReturn(TestUtils.buildTestSapQuote(conversionPdo.getQuoteId(),
+                        10000,1000000,conversionPdo,
+                        TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,companyCode.getSalesOrganization()));
+
         productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, true);
         assertThat(conversionPdo.getSapOrderNumber(), is(notNullValue()));
 
@@ -1031,6 +1064,12 @@ public class ProductOrderEjbTest {
                                 Collections.emptyMap(), Collections.emptyMap(),
                                 SAPMaterial.MaterialStatus.ENABLED, companyCode.getSalesOrganization());
             returnMaterials.add(addonMaterial);
+
+            Mockito.when(mockSapService.findSapQuote(Mockito.anyString()))
+                    .thenReturn(TestUtils.buildTestSapQuote(conversionPdo.getQuoteId(),
+                            10000,1000000,conversionPdo,
+                            TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,companyCode.getSalesOrganization()));
+
             priceList.add(new QuotePriceItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory(),
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(), "10", "test",

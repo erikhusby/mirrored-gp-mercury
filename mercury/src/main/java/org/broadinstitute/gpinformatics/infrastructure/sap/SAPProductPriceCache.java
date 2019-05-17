@@ -80,12 +80,12 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
     }
 
     public SAPMaterial findByPartNumber(String partNumber,
-                                         SapIntegrationClientImpl.SAPCompanyConfiguration companyCode) {
+                                        String salesOrg) {
         SAPMaterial foundMaterial = null;
 
         final Optional<SAPMaterial> optionalMaterial = getSapMaterials().stream()
                 .filter(material -> StringUtils.equalsIgnoreCase(partNumber, material.getMaterialIdentifier()) &&
-                                    material.getCompanyCode() == companyCode).collect(toOptional());
+                                    material.getSalesOrg().equals(salesOrg)).collect(toOptional());
 
         if(optionalMaterial.isPresent()) {
             foundMaterial = optionalMaterial.get();
@@ -94,20 +94,18 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
         return foundMaterial;
     }
 
-    public SAPMaterial findByProduct(Product product, SapIntegrationClientImpl.SAPCompanyConfiguration companyCode) {
-        SAPMaterial foundMaterial = findByPartNumber(product.getPartNumber(), companyCode);
+    public SAPMaterial findByProduct(Product product, String salesOrganization) {
 
-        return foundMaterial;
+        return findByPartNumber(product.getPartNumber(), salesOrganization);
     }
 
 
-    public void determineIfProductsExist(Collection<Product> products,
-                                         SapIntegrationClientImpl.SAPCompanyConfiguration companyCode)
+    public void determineIfProductsExist(Collection<Product> products, String salesOrganization)
             throws InvalidProductException {
         List<String> missingProducts = new ArrayList<>();
 
         for( Product product:products) {
-            SAPMaterial foundMaterial = findByProduct(product, companyCode);
+            SAPMaterial foundMaterial = findByProduct(product, salesOrganization);
             if(foundMaterial == null) {
                 missingProducts.add(product.getPartNumber());
             }
@@ -119,22 +117,15 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
         }
     }
 
-
-    @Deprecated
-    public static PriceItem determinePriceItemByCompanyCode(Product product,
-                                                            SapIntegrationClientImpl.SAPCompanyConfiguration companyCode) {
-        return product.getPrimaryPriceItem();
-    }
-
     public String getEffectivePrice(Product product, SapIntegrationClientImpl.SAPCompanyConfiguration companyCode,
                                     Quote orderQuote) throws InvalidProductException {
 
-        final SAPMaterial cachedMaterial = findByProduct(product, companyCode);
+        final SAPMaterial cachedMaterial = findByProduct(product, companyCode.getSalesOrganization());
         if(cachedMaterial == null) {
             throw new InvalidProductException("The material "+product.getName()+" does not exist in SAP");
         }
 
-        final PriceItem determinePriceItemByCompanyCode = determinePriceItemByCompanyCode(product, companyCode);
+        final PriceItem determinePriceItemByCompanyCode = product.getPrimaryPriceItem();
         String price = cachedMaterial.getBasePrice();
         QuoteItem foundMatchingQuoteItem = orderQuote.findCachedQuoteItem(determinePriceItemByCompanyCode.getPlatform(),
                 determinePriceItemByCompanyCode.getCategory(), determinePriceItemByCompanyCode.getName());
@@ -147,6 +138,11 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
         return price;
     }
 
+    /**
+     * This is only used in a fixup test.  There doesnt' appear to be a case for this anymore.
+     *
+     */
+    @Deprecated
     public List<String> getEffectivePricesForProducts(List<Product> products, ProductOrder productOrder,
                                                       Quote orderQuote)
             throws InvalidProductException, SAPIntegrationException {

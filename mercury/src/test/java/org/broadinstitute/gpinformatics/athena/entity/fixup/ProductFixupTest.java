@@ -370,7 +370,8 @@ public class ProductFixupTest extends Arquillian {
             final QuotePriceItem byKeyFields = priceListCache.findByKeyFields(currentProduct.getPrimaryPriceItem());
             if(byKeyFields != null) {
                 BigDecimal qsPrice = new BigDecimal(byKeyFields.getPrice());
-                final SAPMaterial material = productPriceCache.findByProduct(currentProduct, configuration);
+                final SAPMaterial material = productPriceCache.findByProduct(currentProduct,
+                        configuration.getSalesOrganization());
                 if (material != null) {
                     BigDecimal sapPrice = new BigDecimal(material.getBasePrice());
                     if (sapPrice.compareTo(qsPrice) != 0) {

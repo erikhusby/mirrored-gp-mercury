@@ -191,6 +191,7 @@ public class ProductEjbDBFreeTest {
         // Mimic creating the product in Sales org GP01 for GP Platform
         materialSet.add(TestUtils.mockMaterialSearch(broad, testProduct));
 
+        productPriceCache.refreshCache();
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
         /*
