@@ -7,7 +7,10 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
@@ -19,6 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
+import org.hamcrest.Matchers;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -26,6 +30,17 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Path;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -36,6 +51,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 
 /**
  *
@@ -423,6 +440,19 @@ public class ProductFixupTest extends Arquillian {
         System.out.println("Commercial statuses updated: "+ StringUtils.join(commercialStatusByProduct.keySet(), ", "));
 
         productDao.persist(new FixupCommentary(fixupReason));
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void gplim6286rename93114() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        Product wes010241Bad = productDao.findById(Product.class, 93114L);
+        assertThat(wes010241Bad.getPartNumber(), is("WES-010241 Express Somatic Human WES (Deep Coverage)"));
+        wes010241Bad.setPartNumber("WES-010241_BAD");
+
+        productDao.persist(new FixupCommentary("GPLIM-6286 Rename invalid partNumber"));
         utx.commit();
     }
 }

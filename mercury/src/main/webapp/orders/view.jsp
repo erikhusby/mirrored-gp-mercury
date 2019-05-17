@@ -1733,6 +1733,14 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
     </div>
 </div>
 <div class="view-control-group control-group">
+    <label class="control-label label-form">Coverage</label>
+    <div class="controls">
+        <div class="form-value">
+            ${actionBean.editOrder.coverageTypeKey}
+        </div>
+    </div>
+</div>
+<div class="view-control-group control-group">
     <label class="control-label label-form">Description</label>
 
     <div class="controls">

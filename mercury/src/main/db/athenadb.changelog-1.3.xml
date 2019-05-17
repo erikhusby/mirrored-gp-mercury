@@ -25,8 +25,8 @@
                                  referencedColumnNames="PRODUCT_ID" baseTableSchemaName="ATHENA"
                                  referencedTableSchemaName="ATHENA" />
         <addForeignKeyConstraint baseTableName="SAP_QUOTE_ITEM_REFERENCE" baseColumnNames="PARENT_PRODUCT_ORDER"
-                                 constraintName="FK_SAP_QUOTE_ITEM_ORDER" referencedTableName="SAP_ORDER_DETAIL"
-                                 referencedColumnNames="SAP_ORDER_DETAIL_ID" referencedTableSchemaName="ATHENA"
+                                 constraintName="FK_SAP_QUOTE_ITEM_ORDER" referencedTableName="PRODUCT_ORDER"
+                                 referencedColumnNames="PRODUCT_ORDER_ID" referencedTableSchemaName="ATHENA"
                                  baseTableSchemaName="ATHENA"/>
 
     </changeSet>

@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -333,6 +334,20 @@ public enum DisplayExpression {
             SampleData sampleData = (SampleData) entity;
             return sampleData.getOrganism();
         }
+    }),
+    PATIENT(SampleData.class, new SearchTerm.Evaluator<String>() {
+        @Override
+        public String evaluate(Object entity, SearchContext context) {
+            SampleData sampleData = (SampleData) entity;
+            return sampleData.getPatientId();
+        }
+    }),
+    GENDER(SampleData.class, new SearchTerm.Evaluator<String>() {
+        @Override
+        public String evaluate(Object entity, SearchContext context) {
+            SampleData sampleData = (SampleData) entity;
+            return sampleData.getGender();
+        }
     });
 
     private final Class<?> expressionClass;
@@ -408,6 +423,10 @@ public enum DisplayExpression {
                 sampleInstances.addAll(labVessel.getSampleInstancesV2());
             }
             return (List<T>) new ArrayList<>(sampleInstances);
+
+        } else if (OrmUtil.proxySafeIsInstance(rowObject, MercurySample.class) && expressionClass.isAssignableFrom(SampleData.class)) {
+            MercurySample mercurySample = (MercurySample) rowObject;
+            return (List<T>) mercurySampleToSampleData(context, Collections.singletonList(mercurySample));
 
         } else if (OrmUtil.proxySafeIsInstance(rowObject, Reagent.class)) {
             Reagent reagent = (Reagent) rowObject;

@@ -1677,6 +1677,22 @@
                     </div>
                 </div>
 
+                <c:if test="${not empty actionBean.editOrder.product}">
+                    <div class="control-group">
+                        <stripes:label for="coverageTypeKey" class="control-label">
+                            Coverage
+                        </stripes:label>
+                        <div class="controls">
+                            <stripes:select name="editOrder.coverageTypeKey" id="coverageTypeKey"
+                                            value="${actionBean.editOrder.coverageTypeKey}">
+                                <stripes:option value="">Select One</stripes:option>
+                                <stripes:options-collection collection="${actionBean.coverageTypes}" label="displayName" value="businessKey"/>
+                            </stripes:select>
+                        </div>
+                    </div>
+                </c:if>
+
+
             <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
                 <div class="control-group">
                     <stripes:label for="customAggregationParticle" class="control-label"/>

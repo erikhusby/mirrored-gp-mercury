@@ -114,11 +114,14 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
+import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.CoverageTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -313,6 +316,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private ReagentDesignDao reagentDesignDao;
+
+    @Inject
+    private CoverageTypeDao coverageTypeDao;
 
     private List<ProductOrderListEntry> displayedProductOrderListEntries;
 
@@ -957,6 +963,15 @@ public class ProductOrderActionBean extends CoreActionBean {
             addGlobalValidationError(unFundedMessage);
         }
 
+        // Validate Products are on the Quote and if they are, store the references to their line items on the order
+        try {
+            editOrder.updateQuoteItems(quote);
+        } catch (SAPInterfaceException e) {
+            logger.error(e);
+            addGlobalValidationError(
+                "The products on your order (including add ons) do not seem to be represented on your quote.  Please revisit either your quote or your order selections");
+        }
+
         BigDecimal fundsRemaining = quote.getQuoteHeader().fundsRemaining();
         double outstandingEstimate = estimateSapOutstandingOrders(quote, additionalSampleCount, editOrder);
         double valueOfCurrentOrder = 0;
@@ -969,14 +984,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                 quote.getQuoteHeader().getQuoteNumber()+" -- " + quote.getQuoteHeader().getProjectName() +
                 " to place a new Product order";
             addGlobalValidationError(insufficientFundsMessage);
-        }
-
-        // Validate Products are on the Quote and if they are, store the references to their line items on the order
-        try {
-            editOrder.updateQuoteItems(quote);
-        } catch (SAPInterfaceException e) {
-            logger.error(e);
-            addGlobalValidationError("The products on your order (including add ons) do not seem to be represented on your quote.  Please revisit either your quote or your order selections");
         }
     }
 
@@ -4090,6 +4097,17 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     public Collection<DisplayableItem> getReagentDesigns() {
         return makeDisplayableItemCollection(reagentDesignDao.findAll());
+    }
+
+    /**
+     * Get the list of available coverages.
+     *
+     * @param businessKey the businessKey
+     *
+     * @return UI helper object {@link DisplayableItem} representing the coverage
+     */
+    public Collection<DisplayableItem> getCoverageTypes() {
+        return makeDisplayableItemCollection(coverageTypeDao.findAll());
     }
 
     @Inject

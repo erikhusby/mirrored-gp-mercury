@@ -496,7 +496,8 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="partNumber" name="editProduct.partNumber" class="defaultText input-xxlarge"
-                            title="Enter the part number of the new product"
+                                      title="Enter the part number of the new product"
+                                      maxlength="<%=String.valueOf(Product.MAX_PART_NUMBER_LENGTH)%>"
                                       readonly="${actionBean.productInSAP(actionBean.editProduct.partNumber,
                                                                           actionBean.editProduct.determineCompanyConfiguration())}"/>
                     </div>
@@ -811,6 +812,16 @@
                             </stripes:label>
                             <div class="controls">
                                 <stripes:checkbox id="analyzeUmi" name="editProduct.analyzeUmi" style="margin-top: 10px;"/>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <stripes:label for="coverageTypeKey" name="Coverage" class="control-label"/>
+                            <div class="controls">
+                                <stripes:select id="coverageTypeKey" name="editProduct.coverageTypeKey">
+                                    <stripes:option value="">Select One</stripes:option>
+                                    <stripes:options-collection collection="${actionBean.coverageTypes}" label="displayName" value="businessKey"/>
+                                </stripes:select>
                             </div>
                         </div>
                     </fieldset>

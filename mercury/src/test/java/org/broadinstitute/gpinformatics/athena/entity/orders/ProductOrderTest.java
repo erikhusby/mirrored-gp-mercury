@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -41,7 +40,6 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
@@ -151,6 +149,7 @@ public class ProductOrderTest {
                 .ignoreProperty("analyzeUmiOverride")
                 .ignoreProperty("reagentDesignKey")
                 .ignoreProperty("defaultAggregationParticle")
+                .ignoreProperty("coverageTypeKey")
                 .ignoreProperty("quoteSource")
                 .ignoreProperty("quoteReferences")
                 .build();
@@ -375,11 +374,11 @@ public class ProductOrderTest {
 
         Assert.assertEquals(testProductOrder.getUnbilledSampleCount(), 2);
 
-        billSampleOut(testProductOrder, sample1, 2);
+        TestUtils.billSampleOut(testProductOrder, sample1, 2);
 
         Assert.assertEquals(testProductOrder.getUnbilledSampleCount(), 1);
 
-        billSampleOut(testProductOrder, sample2, 1);
+        TestUtils.billSampleOut(testProductOrder, sample2, 1);
 
         Assert.assertEquals(testProductOrder.getUnbilledSampleCount(), 0);
     }
@@ -513,47 +512,6 @@ public class ProductOrderTest {
         testProductOrder.addSapOrderDetail(orderDetail2);
         assertThat(testProductOrder.latestSapOrderDetail(), is(not(nullValue())));
         assertThat(testProductOrder.getSapOrderNumber(), is(equalTo(sapOrderNumber+"2")));
-    }
-
-    // This is a utility method and NOT a test method.  Will FAIL with arguments as it should.
-    @Test(enabled = false)
-    public static void billSampleOut(ProductOrder productOrder, ProductOrderSample sample, int expected) {
-
-        billSamplesOut(productOrder, Collections.singleton(sample), expected);
-
-    }
-
-    @Test(enabled = false)
-    public static void billSamplesOut(ProductOrder productOrder, Collection<ProductOrderSample> samples, int expected) {
-        BillingSession billingSession = null;
-        for (ProductOrderSample sample : samples) {
-            LedgerEntry primaryItemSampleEntry = new LedgerEntry(sample,
-                    productOrder.getProduct().getPrimaryPriceItem(), new Date(), /*productOrder.getProduct(),*/ 1);
-            primaryItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
-
-            LedgerEntry addonItemSampleEntry = new LedgerEntry(sample,
-                    productOrder.getAddOns().iterator().next().getAddOn().getPrimaryPriceItem(),
-                    new Date(), /*productOrder.getProduct(),*/ 1);
-            addonItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM);
-            sample.getLedgerItems().add(primaryItemSampleEntry);
-            sample.getLedgerItems().add(addonItemSampleEntry);
-
-            Assert.assertEquals(productOrder.getUnbilledSampleCount(), expected);
-
-            billingSession = new BillingSession(4L, sample.getLedgerItems());
-        }
-
-        Assert.assertEquals(productOrder.getUnbilledSampleCount(), expected);
-
-        for (LedgerEntry ledgerEntry : billingSession.getLedgerEntryItems()) {
-            ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
-        }
-
-        Assert.assertEquals(productOrder.getUnbilledSampleCount(), expected-samples.size());
-        billingSession.setBilledDate(new Date());
-        if(productOrder.isSavedInSAP()) {
-            productOrder.latestSapOrderDetail().addLedgerEntries(billingSession.getLedgerEntryItems());
-        }
     }
 
     public void testQuoteGrantValidityWithUnallocatedFundingSources() throws Exception{

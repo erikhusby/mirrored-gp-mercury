@@ -15,7 +15,6 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -103,9 +102,6 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     private LabVesselDao labVesselDao;
 
     @Inject
-    private MiSeqReagentKitDao miSeqReagentKitDao;
-
-    @Inject
     private MercurySampleDao mercurySampleDao;
 
     @Inject
@@ -142,13 +138,16 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     private ReagentDesignDao reagentDesignDao;
 
     @Inject
-    private JiraService jiraService;
-
-    @Inject
     private ProductOrderJiraUtil productOrderJiraUtil;
 
     @Inject
     private BucketEjb bucketEjb;
+
+    @Inject
+    private BettaLimsMessageResource bettaLimsMessageResource;
+
+    @Inject
+    private MiSeqReagentKitDao reagentKitDao;
 
     private Date runDate;
     private String flowcellBarcode;
@@ -169,12 +168,6 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     public static final String LANES_SEQUENCED = "2,3";
     public static final String ACTUAL_READ_STRUCTURE = "101T8B8B101T";
     public static final String SETUP_READ_STRUCTURE = "71T8B8B101T";
-
-    @Inject
-    private BettaLimsMessageResource bettaLimsMessageResource;
-
-    @Inject
-    private MiSeqReagentKitDao reagentKitDao;
 
     @Deployment
     public static WebArchive buildMercuryWar() {

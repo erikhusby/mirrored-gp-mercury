@@ -209,6 +209,8 @@ public class BillingSessionFixupTest extends Arquillian {
         final String sampleToFind = "SM-G9JXF";
         final String workCompleteDate = "3/25/2019";
 
+        final String billingSessionId = "BILL-15292";
+
         final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("mm/dd/YYYY");
 
         final ProductOrder orderToModify = productOrderDao.findByBusinessKey(productOrderKey);
@@ -216,6 +218,7 @@ public class BillingSessionFixupTest extends Arquillian {
         final List<ProductOrderSample> notCompletelyBilldSamples = orderToModify.getSamples().stream()
                 .filter(productOrderSample -> StringUtils.equals(productOrderSample.getSampleKey(), sampleToFind))
                 .collect(Collectors.toList());
+        BillingSession updateSession = billingSessionDao.findByBusinessKey(billingSessionId);
 
         Assert.assertEquals(notCompletelyBilldSamples.size(), 1);
 
@@ -232,6 +235,7 @@ public class BillingSessionFixupTest extends Arquillian {
                 try {
                     ledgerEntry.setWorkCompleteDate(simpleDateFormat.parse(workCompleteDate));
                     ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
+                    ledgerEntry.setBillingSession(updateSession);
                 } catch (ParseException e) {
                     throw new RuntimeException(e);
                 }

@@ -88,7 +88,7 @@ public class ArrayPlatingEntityBuilder {
                 arrayPlatingPlate.getContainerRole().getMapPositionToVessel().put(position, well);
                 well.addToContainer(arrayPlatingPlate.getContainerRole());
                 BucketEntry infiniumBucket = new BucketEntry(well, pdo,
-                        new Bucket("TestBucket"), BucketEntry.BucketEntryType.PDO_ENTRY, 1);
+                        new Bucket("TestBucket"), BucketEntry.BucketEntryType.PDO_ENTRY);
                 infiniumBucket.setLabBatch(arrayBatch);
                 well.addBucketEntry(infiniumBucket);
 

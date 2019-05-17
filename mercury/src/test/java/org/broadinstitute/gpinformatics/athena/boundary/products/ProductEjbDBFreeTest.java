@@ -175,13 +175,8 @@ public class ProductEjbDBFreeTest {
                 mockAttributeArchetypeDao, mockSapAccessControl, productPriceCache);
         sapService.setProductPriceCache(productPriceCache);
 
-        SAPAccessControl noControl = new SAPAccessControl();
-        SAPAccessControl blockControl = new SAPAccessControl();
-        blockControl.setDisabledItems(Collections.singleton(new AccessItem("blockThisItem")));
-
         Product testProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "SGM-TEST-SAP");
         testProduct.setPrimaryPriceItem(new PriceItem("qsID", "testPlatform", "testCategory", "blockThisItem"));
-
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenThrow(new RuntimeException());
         testEjb.publishProductToSAP(testProduct);

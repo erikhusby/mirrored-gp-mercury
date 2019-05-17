@@ -171,7 +171,7 @@ public class BspNewRootHandler extends AbstractEventHandler {
             for (int i = 0; i < samples.size(); i++) {
                 KitSample kitSample = samples.get(i);
                 // Indicate new root on MercurySample
-                labVessels.get(i).getMercurySamples().add(new MercurySample(kitSample.getBspSampleId(),
+                labVessels.get(i).addSample(new MercurySample(kitSample.getBspSampleId(),
                         MercurySample.MetadataSource.BSP, true));
             }
         } catch (IOException e) {

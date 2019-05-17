@@ -34,7 +34,7 @@
                 <div class="controls">
                     <div class="form-value">
                         <img src="${ctxpath}/images/pdficon_small.png" alt="">
-                        <stripes:link beanclass="${actionBean.class.name}" event="downloadProductDescriptions">
+                        <stripes:link id="partNumber" beanclass="${actionBean.class.name}" event="downloadProductDescriptions">
                             ${actionBean.editProduct.partNumber}
                             <stripes:param name="editProduct.partNumber" value="${actionBean.editProduct.partNumber}"/>
                         </stripes:link>
@@ -401,6 +401,18 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Coverage</label>
+                    <div class="controls">
+                        <div class="form-value">
+                            <c:if test="${!empty actionBean.editProduct.coverageTypeKey}">
+                                ${(actionBean.getCoverageType(actionBean.editProduct.coverageTypeKey)).displayName}
+                            </c:if>
+                        </div>
+                    </div>
+                </div>
+
             </fieldset>
         </div>
 
