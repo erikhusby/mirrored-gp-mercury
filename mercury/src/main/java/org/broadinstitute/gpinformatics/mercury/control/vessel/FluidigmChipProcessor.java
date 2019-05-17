@@ -2,20 +2,18 @@ package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import com.opencsv.CSVReader;
 import com.opencsv.bean.ColumnPositionMappingStrategy;
-import com.opencsv.bean.CsvToBean;
-import com.opencsv.bean.MappingStrategy;
+import com.opencsv.bean.concurrent.OrderedObject;
+import com.opencsv.bean.concurrent.ProcessCsvLine;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 
-import java.beans.IntrospectionException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Serializable;
-import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -25,6 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.LinkedBlockingQueue;
 
 
 /**
@@ -80,7 +79,6 @@ public class FluidigmChipProcessor {
     }
 
     private List<FluidigmDataRow> processDataRows(BufferedReader reader, FluidigmRun fluidigmRun) throws Exception {
-        PublicProcessLineCsvToBean<FluidigmDataRow> csvToBean = new PublicProcessLineCsvToBean<>();
         ColumnPositionMappingStrategy<FluidigmDataRow> strat = new ColumnPositionMappingStrategy<>();
         strat.setType(FluidigmDataRow.class);
         strat.setColumnMapping(COLUMNS);
@@ -101,7 +99,11 @@ public class FluidigmChipProcessor {
             if (rowData[0].equals("Dose Meter Reading Data")) {
                 break;
             }
-            FluidigmDataRow fluidigmDataRow = csvToBean.processLine(strat, rowData);
+            LinkedBlockingQueue<OrderedObject<FluidigmDataRow>> orderedObjects = new LinkedBlockingQueue<>();
+            ProcessCsvLine<FluidigmDataRow> fluidigmDataRowProcessCsvLine = new ProcessCsvLine<>(
+                    csvReader.getLinesRead(), strat, null, null, rowData, orderedObjects, new LinkedBlockingQueue<>(), true);
+            fluidigmDataRowProcessCsvLine.run();
+            FluidigmDataRow fluidigmDataRow = orderedObjects.iterator().next().getElement();
             if (fluidigmDataRow.getId() == null || fluidigmDataRow.getId().isEmpty()) {
                 continue;
             }
@@ -740,17 +742,4 @@ public class FluidigmChipProcessor {
         }
     }
 
-
-    /**
-     * Wrapper to make the protected processLine method public in order to better control opencsv reader
-     * @param <T> object to be created from line.
-     */
-    private static class PublicProcessLineCsvToBean<T> extends CsvToBean<T> {
-
-        @Override
-        public T processLine(MappingStrategy<T> mapper, String[] line) throws IllegalAccessException,
-                InvocationTargetException, InstantiationException, IntrospectionException {
-            return super.processLine(mapper, line);
-        }
-    }
 }
