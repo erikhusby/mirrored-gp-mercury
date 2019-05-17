@@ -49,8 +49,8 @@ public class ConcordanceCalculatorTest extends Arquillian {
                 new GregorianCalendar(2019, Calendar.FEBRUARY, 7, 12, 25, 01).getTime());
 
         ConcordanceCalculator concordanceCalculator = new ConcordanceCalculator();
-        double lodScore = concordanceCalculator.calculateLodScore(fingerprint1, mercurySample1.getSampleKey(),
-                fingerprint2, mercurySample2.getSampleKey());
+        double lodScore = concordanceCalculator.calculateLodScore(fingerprint1,
+                fingerprint2);
         Assert.assertTrue(lodScore > 20.0);
         concordanceCalculator.done();
     }
@@ -60,7 +60,7 @@ public class ConcordanceCalculatorTest extends Arquillian {
         ConcordanceCalculator concordanceCalculator = new ConcordanceCalculator();
         MercurySample mercurySample1 = mercurySampleDao.findBySampleKey(SAMPLE_KEY);
         Fingerprint fingerprint1 = fingerprintDao.findBySampleAndDateGenerated(mercurySample1, DATE_GENERATED);
-        double lodScore = concordanceCalculator.calculateHapMapConcordance(fingerprint1, mercurySample1.getSampleKey(),
+        double lodScore = concordanceCalculator.calculateHapMapConcordance(fingerprint1,
                 controlDao.findByCollaboratorParticipantId("NA12878"));
         Assert.assertTrue(lodScore > 20.0);
         concordanceCalculator.done();

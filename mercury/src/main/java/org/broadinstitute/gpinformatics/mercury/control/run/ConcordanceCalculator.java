@@ -18,12 +18,16 @@ import picard.fingerprint.MatchResults;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 
+/**
+ * Calculates a LOD score for concordance between fingerprints.
+ */
 public class ConcordanceCalculator {
     // todo jmt OS-specific configuration, or require mount on Windows / MacOs?
     private HaplotypeMap haplotypes = new HaplotypeMap(new File(
@@ -32,26 +36,38 @@ public class ConcordanceCalculator {
             "\\\\iodine\\seq_references\\Homo_sapiens_assembly19\\v1\\Homo_sapiens_assembly19.fasta");
     private ReferenceSequenceFile ref = ReferenceSequenceFileFactory.getReferenceSequenceFile(reference);
 
-    public double calculateLodScore(Fingerprint observerdFingerprint, String observedSampleId,
-                Fingerprint expectedFingerprint, String expectedSampleId) {
-        picard.fingerprint.Fingerprint observedFp = getFingerprint(observerdFingerprint, observedSampleId);
-        picard.fingerprint.Fingerprint expectedFp = getFingerprint(expectedFingerprint, expectedSampleId);
+    public double calculateLodScore(Fingerprint observedFingerprint, Fingerprint expectedFingerprint) {
+        picard.fingerprint.Fingerprint observedFp = getFingerprint(observedFingerprint,
+                observedFingerprint.getMercurySample().getSampleKey());
+        picard.fingerprint.Fingerprint expectedFp = getFingerprint(expectedFingerprint,
+                expectedFingerprint.getMercurySample().getSampleKey());
+
         FingerprintChecker fingerprintChecker = new FingerprintChecker(haplotypes);
         Map<String, picard.fingerprint.Fingerprint> mapSampleToObservedFp =
                 fingerprintChecker.loadFingerprints(observedFp.getSource(), observedFp.getSample());
         Map<String, picard.fingerprint.Fingerprint> mapSampleToExpectedFp =
                 fingerprintChecker.loadFingerprints(expectedFp.getSource(), expectedFp.getSample());
-        MatchResults matchResults = FingerprintChecker.calculateMatchResults(
-                mapSampleToObservedFp.get(observedFp.getSample()),
-                mapSampleToExpectedFp.get(expectedFp.getSample()));
+
+        picard.fingerprint.Fingerprint observedFp1 = mapSampleToObservedFp.get(observedFp.getSample());
+        picard.fingerprint.Fingerprint expectedFp1 = mapSampleToExpectedFp.get(expectedFp.getSample());
+        MatchResults matchResults = FingerprintChecker.calculateMatchResults( observedFp1, expectedFp1);
+        try {
+            Files.delete(observedFp1.getSource());
+            Files.delete(expectedFp1.getSource());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         return matchResults.getLOD();
     }
 
-    public double calculateHapMapConcordance(Fingerprint fingerprint, String sampleId, Control control) {
-        // todo jmt most recent passed
+    public double calculateHapMapConcordance(Fingerprint fingerprint, Control control) {
         MercurySample concordanceMercurySample = control.getConcordanceMercurySample();
+        if (concordanceMercurySample == null) {
+            throw new RuntimeException("No concordance sample configured for " + control.getCollaboratorParticipantId());
+        }
+        // todo jmt most recent passed
         Fingerprint controlFp = concordanceMercurySample.getFingerprints().iterator().next();
-        return calculateLodScore(fingerprint, sampleId, controlFp, concordanceMercurySample.getSampleKey());
+        return calculateLodScore(fingerprint, controlFp);
     }
 
     @NotNull
@@ -66,7 +82,7 @@ public class ConcordanceCalculator {
                 fingerprint.getSnpList().getName(),
                 fingerprint.getDateGenerated().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime(),
                 Gender.valueOf(fingerprint.getGender().name()), calls));
-        for (FpGenotype fpGenotype : fingerprint.getFpGenotypes()) {
+        for (FpGenotype fpGenotype : fingerprint.getFpGenotypesOrdered()) {
             calls.add(new Fingerprints.Call(fpGenotype.getSnp().getRsId(),
                     fpGenotype.getGenotype().equals("--") ? Fingerprints.Genotype.NO_CALL : Fingerprints.Genotype.valueOf(fpGenotype.getGenotype()),
                     fpGenotype.getCallConfidence().toString(), null,null));
