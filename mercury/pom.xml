@@ -8,7 +8,7 @@
     file as well until such a time that we reconfigure the mercury structure to have a dependant project or something
      that can inherit this version setting. -->
 
-    <version>1.109-SNAPSHOT</version>
+    <version>1.112-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -2430,7 +2430,7 @@ nodePrinter.print(webapp)
             <plugin>
                 <groupId>com.amashchenko.maven.plugin</groupId>
                 <artifactId>gitflow-maven-plugin</artifactId>
-                <version>1.11.0</version>
+                <version>1.12.0</version>
                 <configuration>
                     <verbose>true</verbose>
                     <!-- Do not run the unit tests during the finish goals -->

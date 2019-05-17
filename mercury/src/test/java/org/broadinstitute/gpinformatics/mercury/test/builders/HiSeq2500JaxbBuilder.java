@@ -17,11 +17,9 @@ import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.regex.Pattern;
 
 /**
  * @author Scott Matthews
@@ -58,6 +56,8 @@ public class HiSeq2500JaxbBuilder {
     private Map<String, String> tubeToPosition = new HashMap<>();
     private boolean columnWiseDilutionPositions = false;
     private Map<Integer, String> laneNumberToDenatureTube = new HashMap<>();
+    // A copy of data from IlluminaFlowcell.FlowcellType so gpuitest doesn't have to pull it in.
+    private final static Pattern novaSeqBarcodePattern = Pattern.compile("^\\w+(DM|DR|DS)..$");
 
     public HiSeq2500JaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                 String testPrefix, List<String> denatureTubeBarcodes, String denatureRackBarcode,
@@ -116,14 +116,10 @@ public class HiSeq2500JaxbBuilder {
                 bettaLimsMessageTestFactory.addMessage(messageList, flowcellTransferJaxb);
             } else {
                 cherryPicks.clear();
-                Set<Integer> laneNumbers = new HashSet<>();
+                int laneNumber = 0;
+                // Accepts tubes arranged in either a row or a column.
                 for (ReceptacleType receptacleType : dilutionTransferJaxb.getPositionMap().get(0).getReceptacle()) {
-                    int laneNumber = "-ABCDEFGH".indexOf(receptacleType.getPosition().substring(0, 1));
-                    if (!laneNumbers.add(laneNumber)) {
-                        throw new RuntimeException("Dilution tube positions must be in one column (found " +
-                                dilutionTransferJaxb.getPositionMap().get(0).getReceptacle().stream().
-                                        map(ReceptacleType::getPosition).collect(Collectors.joining(", ")) + ")");
-                    }
+                    ++laneNumber;
                     cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(dilutionRackBarcode,
                             receptacleType.getPosition(), flowcellBarcode, "LANE" + laneNumber));
                 }
@@ -134,7 +130,7 @@ public class HiSeq2500JaxbBuilder {
                         Collections.singletonList(flowcellBarcode), cherryPicks);
                 QtpJaxbBuilder.fixupPositionMap(tubeToPosition, flowcellTransferCherryPickJaxb.getSourcePositionMap());
                 flowcellTransferCherryPickJaxb.getPlate().get(0).setPhysType(
-                        "Flowcell" + flowcellLanes + (flowcellBarcode.endsWith("DSXX") ? "LaneNova" : "Lane"));
+                        "Flowcell" + flowcellLanes + (isNovaSeq(flowcellBarcode) ? "LaneNova" : "Lane"));
                 flowcellTransferCherryPickJaxb.getPlate().get(0).setSection("ALL8");
                 bettaLimsMessageTestFactory.addMessage(messageList, flowcellTransferCherryPickJaxb);
             }
@@ -196,6 +192,10 @@ public class HiSeq2500JaxbBuilder {
         bettaLimsMessageTestFactory.addMessage(messageList, flowcellLoad);
 
         return this;
+    }
+
+    public static boolean isNovaSeq(String flowcellBarcode) {
+        return novaSeqBarcodePattern.matcher(flowcellBarcode).matches();
     }
 
     public ReceptaclePlateTransferEvent getFlowcellTransferJaxb() {

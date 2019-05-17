@@ -108,6 +108,13 @@ public enum BSPSampleSearchColumn {
             LOCATION, CONTAINER_NAME, COLLABORATOR_PARTICIPANT_ID, COLLABORATOR_SAMPLE_ID
     };
 
+    public static final BSPSampleSearchColumn[] EXTERNAL_LIBRARY_COLUMNS = {
+        BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID,
+        BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID,
+        BSPSampleSearchColumn.GENDER,
+        BSPSampleSearchColumn.SPECIES,
+    };
+
     public static boolean isQuantColumn(BSPSampleSearchColumn bspSampleSearchColumn) {
         for (BSPSampleSearchColumn quantDataColumn : QUANT_DATA_COLUMNS) {
             if (quantDataColumn.equals(bspSampleSearchColumn)) {

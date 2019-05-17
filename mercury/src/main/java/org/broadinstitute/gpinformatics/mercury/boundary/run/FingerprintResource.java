@@ -146,7 +146,7 @@ public class FingerprintResource {
     }
 
     @NotNull
-    private String getSmIdFromLsid(String lsid) {
+    public static String getSmIdFromLsid(String lsid) {
         return "SM-" + lsid.substring(lsid.lastIndexOf(':') + 1);
     }
 

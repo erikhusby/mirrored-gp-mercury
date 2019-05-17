@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
@@ -27,20 +26,22 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.PositionLabBatches;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A transient class returned by LabVessel.getSampleInstances.  It accumulates information encountered
@@ -49,7 +50,7 @@ import java.util.Set;
 public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
 
     /**
-     * Allows LabEvent.computeLcSets to choose the nearest match if there are multiple.
+     * Allows LabEvent.computeLabBatches to choose the nearest match if there are multiple.
      */
     public static class LabBatchDepth {
         private final int depth;
@@ -94,7 +95,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private List<MercurySample> mercurySamples = new ArrayList<>();
     private List<Reagent> reagents = new ArrayList<>();
     private boolean isPooledTube;
-    private String sampleLibraryName;
+    private String libraryName;
     private Integer readLength1;
     private Integer readLength2;
     private String aggregationParticle;
@@ -123,6 +124,8 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private int depth;
     private List<String> devConditions = new ArrayList<>();
     private TZDevExperimentData tzDevExperimentData = null;
+    private Boolean impliedSampleName = null;
+    private String externalRootSampleName = null;
     private Boolean pairedEndRead;
     private FlowcellDesignation.IndexType indexType;
     private Integer indexLength1;
@@ -147,10 +150,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
      * Constructs a sample instance from a LabVessel and an external library.
      */
     public SampleInstanceV2(LabVessel labVessel, SampleInstanceEntity sampleInstanceEntity) {
-        if(sampleInstanceEntity.getRootSample() == null) {
-            sampleInstanceEntity.setRootSample(sampleInstanceEntity.getMercurySample());
-        }
-        rootMercurySamples.add(sampleInstanceEntity.getRootSample());
+        rootMercurySamples.add(sampleInstanceEntity.getMercurySample());
         initiateSampleInstanceV2(labVessel);
         applyVesselChanges(labVessel, sampleInstanceEntity);
     }
@@ -213,7 +213,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         tzDevExperimentData = other.getTzDevExperimentData();
         devConditions = other.getDevConditions();
         isPooledTube = other.getIsPooledTube();
-        sampleLibraryName = other.getSampleLibraryName();
+        libraryName = other.getLibraryName();
         readLength1 = other.getReadLength1();
         readLength2 = other.getReadLength2();
         baitName = other.getBaitName();
@@ -224,6 +224,8 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         referenceSequence = other.getReferenceSequence();
         umisPresent = other.getUmisPresent();
         expectedInsertSize = other.getExpectedInsertSize();
+        impliedSampleName = other.getImpliedSampleName();
+        externalRootSampleName = other.getExternalRootSampleName();
         pairedEndRead = other.getPairedEndRead();
         indexType = other.getIndexType();
         indexLength1 = other.getIndexLength1();
@@ -557,8 +559,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             MercurySample mercurySample = sampleInstanceEntity.getMercurySample();
             mergePooledTubeDevConditions(sampleInstanceEntity.getExperiment(), sampleInstanceEntity.getSubTasks());
             mergeMolecularIndex(sampleInstanceEntity.getMolecularIndexingScheme());
-            mergeRootSamples(sampleInstanceEntity.getRootSample());
-            mergeSampleLibraryName(sampleInstanceEntity.getSampleLibraryName());
+            mergeLibraryName(sampleInstanceEntity.getLibraryName());
             mergeReadLength(sampleInstanceEntity);
             aggregationParticle = sampleInstanceEntity.getAggregationParticle();
             aggregationDataType = sampleInstanceEntity.getAggregationDataType();
@@ -572,6 +573,8 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             baitName = (reagentDesign != null && reagentDesign.getReagentType() == ReagentDesign.ReagentType.BAIT) ?
                     reagentDesign.getDesignName() : sampleInstanceEntity.getBaitName();
             mercurySamples.add(mercurySample);
+            impliedSampleName = sampleInstanceEntity.getImpliedSampleName();
+            externalRootSampleName = sampleInstanceEntity.getMercurySample().getSampleData().getRootSample();
             pairedEndRead = sampleInstanceEntity.getPairedEndRead();
             indexType = sampleInstanceEntity.getIndexType();
             readLength1 = sampleInstanceEntity.getReadLength1();
@@ -623,15 +626,17 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         }
 
         for (MercurySample mercurySample : labVessel.getMercurySamples()) {
-            allProductOrderSamples.addAll(mercurySample.getProductOrderSamples());
+            allProductOrderSamples.addAll(mercurySample.getProductOrderSamples().stream().
+                    sorted(Comparator.comparing(o -> o.getProductOrder().getProductOrderId() == null ? 0L : o.getProductOrder().getProductOrderId())).
+                    collect(Collectors.toList()));
         }
     }
 
     /**
      * Applies a LabEvent, specifically computed LCSets.
      */
-    public void applyEvent(LabEvent labEvent, LabVessel labVessel) {
-        LabEventType labEventType = labEvent.getLabEventType();
+    public void applyEvent(LabVessel.VesselEvent vesselEvent, LabVessel labVessel) {
+        LabEventType labEventType = vesselEvent.getLabEvent().getLabEventType();
         if (labEventType.getPipelineTransformation() == LabEventType.PipelineTransformation.PCR) {
             if (firstPcrVessel == null && labVessel != null) {
                 firstPcrVessel = labVessel;
@@ -642,25 +647,21 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             materialType = resultingMaterialType;
         }
 
-        if (labEvent.getManualOverrideLcSet() != null) {
-            singleWorkflowBatch = labEvent.getManualOverrideLcSet();
+        if (vesselEvent.getLabEvent().getManualOverrideLcSet() != null) {
+            singleWorkflowBatch = vesselEvent.getLabEvent().getManualOverrideLcSet();
             setSingleBucketEntry(labEventType, singleWorkflowBatch);
         }
         // Multiple workflow batches need help.
         // Avoid overwriting a singleWorkflowBatch set by applyVesselChanges.
         else if (singleWorkflowBatch == null) {
-            Set<LabBatch> computedLcsets = labEvent.getComputedLcSets();
+            Set<LabBatch> computedLcsets = vesselEvent.getLabEvent().getComputedLcSets();
             // A single computed LCSET can help resolve ambiguity of multiple bucket entries.
             if (computedLcsets.size() != 1) {
                 // Didn't get a single LCSET for the entire event, see if there's one for the vessel.
-                LabVessel targetLabVessel = labEvent.getTargetLabVessels().iterator().next();
-                VesselContainer<?> containerRole = targetLabVessel.getContainerRole();
-                if (containerRole != null) {
-                    Set<LabBatch> posLabBatches = labEvent.getMapPositionToLcSets().get(
-                            containerRole.getPositionOfVessel(labVessel));
-                    if (posLabBatches != null) {
-                        computedLcsets = posLabBatches;
-                    }
+                PositionLabBatches posLabBatches = vesselEvent.getLabEvent().getMapPositionToLcSets().get(
+                        vesselEvent.getTargetPosition());
+                if (posLabBatches != null && !posLabBatches.getLabBatchSet().isEmpty()) {
+                    computedLcsets = posLabBatches.getLabBatchSet();
                 }
             }
             if (computedLcsets.size() == 1) {
@@ -705,13 +706,6 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         this.readLength2 = sampleInstanceEntity.getReadLength2();
     }
 
-    private void mergeRootSamples(MercurySample mercurySample)
-    {
-        if(mercurySample != null) {
-            this.rootMercurySamples.add(mercurySample);
-        }
-    }
-
     public List<String> getDevConditions() { return devConditions; }
 
     public boolean getIsPooledTube() {
@@ -735,12 +729,12 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         return readLength2;
     }
 
-    public String getSampleLibraryName() {
-        return sampleLibraryName;
+    public String getLibraryName() {
+        return libraryName;
     }
 
-    public void mergeSampleLibraryName(String sampleLibraryName) {
-        this.sampleLibraryName = sampleLibraryName;
+    public void mergeLibraryName(String libraryName) {
+        this.libraryName = libraryName;
     }
 
     /**
@@ -858,6 +852,14 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             throw new RuntimeException(String.format("Found %s metadata sources",metadataSources.size()));
         }
         return metadataSources.iterator().next();
+    }
+
+    public Boolean getImpliedSampleName() {
+        return impliedSampleName;
+    }
+
+    public String getExternalRootSampleName() {
+        return externalRootSampleName;
     }
 
     // todo jmt should these methods use nearest sample?

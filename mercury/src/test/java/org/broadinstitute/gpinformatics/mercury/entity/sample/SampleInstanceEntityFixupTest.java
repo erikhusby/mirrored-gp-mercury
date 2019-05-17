@@ -80,7 +80,7 @@ public class SampleInstanceEntityFixupTest extends Arquillian {
             boolean found = false;
             for (SampleInstanceEntity sampleInstanceEntity : sampleInstanceEntities) {
                 if (fields[1].equals(sampleInstanceEntity.getLabVessel().getLabel()) &&
-                        fields[2].equals(sampleInstanceEntity.getSampleLibraryName()) &&
+                        fields[2].equals(sampleInstanceEntity.getLibraryName()) &&
                         fields[3].equals(sampleInstanceEntity.getExperiment()) &&
                         fields[4].equals(sampleInstanceEntity.getAggregationParticle())) {
                     Assert.assertFalse(found, "multiple matches for " + line);
@@ -123,7 +123,7 @@ public class SampleInstanceEntityFixupTest extends Arquillian {
                         " from vessel " + labVessel.getLabel());
                 mercurySample.removeSampleFromVessels(Collections.singletonList(labVessel));
             }
-            System.out.println("Deleting SampleInstanceEntity for " + sampleInstanceEntity.getSampleLibraryName());
+            System.out.println("Deleting SampleInstanceEntity for " + sampleInstanceEntity.getLibraryName());
             sampleInstanceEntityDao.remove(sampleInstanceEntity);
         });
 

@@ -25,6 +25,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleKitReceive
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptResource;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.BSPRestService;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueSpecialization;
@@ -86,6 +87,64 @@ public class ReceiveSamplesEjb {
         this.bspRestService = bspRestService;
         this.labVesselDao = labVesselDao;
         this.queueEjb = queueEjb;
+    }
+
+    /**
+     * Handles the receipt validation, and the receiving of the samples passed in.  Utilizes the current user's username
+     * to make sure they have the correct BSP privileges to do the receipt.
+     *
+     *
+     * @param sampleKitBarcode  SK Barcode to receive
+     * @param sampleIds         Selected sample ids to receive
+     * @param wellAndTubes      Well/Tube pairs from rack scan for associated selected samples
+     * @param bspUser           The currently logged in user.
+     * @param messageCollection Messages to send back to the user.
+     *
+     * @return SampleKitReceiptResponse received from BSP.
+     */
+    public SampleKitReceivedBean receiveByKitScan(String sampleKitBarcode, List<String> sampleIds,
+                                                  List<WellAndSourceTubeType> wellAndTubes, BspUser bspUser,
+                                                  MessageCollection messageCollection) {
+
+        SampleKitReceivedBean receiptResponse = null;
+
+        // Validate first, if there are no errors receive first in BSP, then do the mercury receipt work.
+        validateForReceipt(sampleIds, messageCollection, bspUser.getUsername());
+
+        if (!messageCollection.hasErrors()) {
+
+            receiptResponse = bspRestService.receiveByKitScan(sampleKitBarcode, wellAndTubes, bspUser.getUsername());
+
+            Map<String, String> mapBarcodeToWell = wellAndTubes.stream()
+                    .collect(Collectors.toMap(WellAndSourceTubeType::getTubeBarcode, WellAndSourceTubeType::getWellName));
+
+            if (receiptResponse.isSuccess()) {
+                for (SampleKitReceivedBean.KitInfo kitInfo: receiptResponse.getReceivedSamplesPerKit()) {
+
+                    Map<String, String> sampleToType = receiptResponse.getTubeTypePerSample()
+                            .stream().collect(Collectors.toMap(SampleKitReceivedBean.TubeTypePerSample::getSampleId,
+                                    SampleKitReceivedBean.TubeTypePerSample::getTubeType));
+                    List<ChildVesselBean> childVesselBeans = new ArrayList<>();
+                    ParentVesselBean parentVesselBean = new ParentVesselBean(kitInfo.getKitId(), null,
+                            kitInfo.getReceptacleType(), childVesselBeans);
+                    for (SampleKitReceivedBean.SampleBarcodes barcode : kitInfo.getSampleBarcodes()) {
+                        String tubeType = sampleToType.get(barcode.getSampleBarcode());
+                        String well = mapBarcodeToWell.get(barcode.getExternalBarcode());
+                        childVesselBeans.add(new ChildVesselBean(
+                                barcode.getExternalBarcode(), barcode.getSampleBarcode(), tubeType,well));
+                    }
+                    List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
+                    parentVesselBeans.add(parentVesselBean);
+                    SampleReceiptBean sampleReceiptBean = new SampleReceiptBean(new Date(), kitInfo.getKitId(),
+                            parentVesselBeans, bspUser.getUsername());
+                    sampleReceiptResource.notifyOfReceipt(sampleReceiptBean);
+                }
+            } else {
+                messageCollection.addErrors(receiptResponse.getMessages());
+            }
+        }
+
+        return receiptResponse;
     }
 
     /**
@@ -200,9 +259,9 @@ public class ReceiveSamplesEjb {
                             .stream().collect(Collectors.toMap(SampleKitReceivedBean.TubeTypePerSample::getSampleId,
                                     SampleKitReceivedBean.TubeTypePerSample::getTubeType));
                     List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
-                    for (String barcode : kit.getSamples()) {
-                        String tubeType = sampleToType.get(barcode);
-                        parentVesselBeans.add(new ParentVesselBean(null, barcode, tubeType,null));
+                    for (SampleKitReceivedBean.SampleBarcodes barcodes : kit.getSampleBarcodes()) {
+                        String tubeType = sampleToType.get(barcodes.getSampleBarcode());
+                        parentVesselBeans.add(new ParentVesselBean(null, barcodes.getSampleBarcode(), tubeType,null));
                     }
 
                     addToPicoQueueIfNecessary(kit.getSamples(), messageCollection);

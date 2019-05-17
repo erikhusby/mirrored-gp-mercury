@@ -2,11 +2,14 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.reagent;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme_;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -100,6 +103,10 @@ public class MolecularIndexingSchemeDao extends GenericDao {
         } catch (NoResultException ignored) {
         }
         return molecularIndexingScheme;
+    }
+
+    public List<MolecularIndexingScheme> findByNames(Collection<String> names) {
+        return findListByList(MolecularIndexingScheme.class, MolecularIndexingScheme_.name, new HashSet<>(names));
     }
 
     public List<MolecularIndexingScheme> findAllIlluminaSchemes() {

@@ -16,8 +16,10 @@ import org.testng.annotations.Test;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
+import javax.inject.Inject;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -35,6 +37,9 @@ import static org.hamcrest.Matchers.startsWith;
  */
 @Test(groups = TestGroups.STANDARD)
 public class LimsQueryResourceTest extends RestServiceContainerTest {
+
+    @Inject
+    private LimsQueryResource limsQueryResource;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -651,5 +656,37 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(getResponseContent(caught),
                 startsWith(
                         "Incompatible vessel types: [000006893901]"));
+    }
+
+    @Test
+    public void testVerifyChipTypes() {
+        /*
+        Chip Type Infinium-MethylationEPIC
+        */
+        String ampPlateInf = "000017236009";
+        String chipBarcodeInf = "203027390034";
+        /*
+        Chip Type Multi-EthnicGlobal
+        */
+        String ampPlateME = "000016899009";
+        String chipBarcodeME = "200803750060";
+        /*
+        Chip type GSA
+         */
+        String ampPlateGSA = "000017296709";
+        String chipBarcodeGSA = "202995720243";
+
+        boolean resultPos = limsQueryResource.verifyChipTypes(ampPlateME, Collections.singletonList(chipBarcodeME));
+        Assert.assertTrue(resultPos);
+
+        resultPos = limsQueryResource.verifyChipTypes(ampPlateInf, Collections.singletonList(chipBarcodeInf));
+        Assert.assertTrue(resultPos);
+
+        resultPos = limsQueryResource.verifyChipTypes(ampPlateGSA, Collections.singletonList(chipBarcodeGSA));
+        Assert.assertTrue(resultPos);
+
+        boolean resultNeg = limsQueryResource.verifyChipTypes(ampPlateInf, Collections.singletonList(chipBarcodeME));
+        Assert.assertFalse(resultNeg);
+
     }
 }

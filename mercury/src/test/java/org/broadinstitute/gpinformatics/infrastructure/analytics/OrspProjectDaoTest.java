@@ -36,6 +36,7 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.collection.IsIn.isIn;
 
 @Test(groups = TestGroups.STANDARD)
@@ -101,14 +102,14 @@ public class OrspProjectDaoTest extends Arquillian {
         assertThat(orspProjects, hasItem(OrspProjectMatcher.orspProjectWithKey("ORSP-799")));
         assertThat(orspProjects, hasItem(OrspProjectMatcher.orspProjectWithKey("ORSP-1761")));
 
-        // for SC-10244 (even though ORSP-1769 is "Closed")
-        assertThat(orspProjects, hasItem(OrspProjectMatcher.orspProjectWithKey("ORSP-1769")));
+        // for SC-10244  ORSP-1769 is "Closed" and closed items are not to be returned.
+        assertThat(orspProjects, not(hasItem(OrspProjectMatcher.orspProjectWithKey("ORSP-1769"))));
         assertThat(orspProjects, hasItem(OrspProjectMatcher.orspProjectWithKey("ORSP-1733")));
 
         // for SC-10364
         assertThat(orspProjects, hasItem(OrspProjectMatcher.orspProjectWithKey("ORSP-641")));
 
-        assertThat(orspProjects, hasSize(5));
+        assertThat(orspProjects, hasSize(4));
     }
 
     private static class OrspProjectMatcher extends BaseMatcher<OrspProject> {
