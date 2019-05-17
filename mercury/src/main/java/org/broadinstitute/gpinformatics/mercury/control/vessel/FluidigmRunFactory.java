@@ -5,16 +5,23 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.SnpDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.SnpListDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
+import org.broadinstitute.gpinformatics.mercury.control.run.ConcordanceCalculator;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FpGenotype;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Snp;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SnpList;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
@@ -30,8 +37,10 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -52,6 +61,12 @@ public class FluidigmRunFactory {
 
     @Inject
     private SnpListDao snpListDao;
+
+    @Inject
+    private ControlDao controlDao;
+
+    @Inject
+    private SampleDataFetcher sampleDataFetcher;
 
     public Pair<StaticPlate, LabMetricRun> createFluidigmChipRun(InputStream inputStream, Long decidingUser, MessageCollection messageCollection) {
         FluidigmChipProcessor fluidigmChipProcessor = new FluidigmChipProcessor();
@@ -103,8 +118,14 @@ public class FluidigmRunFactory {
             }
         }
 
+        Set<MercurySample> mercurySamples = new HashSet<>();
+        for (SampleInstanceV2 sampleInstanceV2 : staticPlate.getContainerRole().getSampleInstancesV2()) {
+            mercurySamples.add(sampleInstanceV2.getRootOrEarliestMercurySample());
+        }
+        sampleDataFetcher.fetchSampleDataForSamples(mercurySamples, BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID);
+
         LabMetricRun run = createFluidigmRunDaoFree(fluidigmRun, staticPlate, decidingUser,
-                traverserResult, mapAssayToSnp, snpList);
+                traverserResult, mapAssayToSnp, snpList, controlDao.findAllActive());
 
         if (!messageCollection.hasErrors()) {
             labMetricRunDao.persist(run);
@@ -117,7 +138,8 @@ public class FluidigmRunFactory {
                                                  StaticPlate ifcChip, Long decidingUser,
                                                  StaticPlate.TubeFormationByWellCriteria.Result traverserResult,
                                                  Map<String, Snp> mapAssayToSnp,
-                                                 SnpList snpList) {
+                                                 SnpList snpList,
+                                                 List<Control> controls) {
         LabMetricRun labMetricRun = new LabMetricRun(fluidigmRun.buildRunName(), fluidigmRun.getRunDate(),
                 LabMetric.MetricType.FLUIDIGM_FINGERPRINTING);
         labMetricRun.getMetadata().add(new Metadata(Metadata.Key.INSTRUMENT_NAME,
@@ -226,6 +248,7 @@ public class FluidigmRunFactory {
         Map<PlateWell, Gender> mapPlateWellToGender =
                 generateGenderAndConfidenceMetric(labMetricRun, mapAssayToSnp, mapLabVesselToRecords);
 
+        ConcordanceCalculator concordanceCalculator = new ConcordanceCalculator();
         for (Map.Entry<PlateWell, Gender> entry: mapPlateWellToGender.entrySet()) {
             PlateWell plateWell = entry.getKey();
             MercurySample mercurySample =
@@ -240,10 +263,26 @@ public class FluidigmRunFactory {
             Fingerprint.Gender gender = Fingerprint.Gender.byAbbreviation(entry.getValue().getSymbol());
             Fingerprint fingerprint = new Fingerprint(mercurySample, disposition, platform, genomeBuild,
                     fluidigmRun.getRunDate(), snpList, gender, null);
-        }
+            for (FluidigmChipProcessor.FluidigmDataRow fluidigmDataRow : mapLabVesselToRecords.get(plateWell)) {
+                Genotype genotype = parseGenotype(fluidigmDataRow);
+                fingerprint.addFpGenotype(new FpGenotype(fingerprint, mapAssayToSnp.get(fluidigmDataRow.getAssayName()),
+                        (genotype.getAllele1() == null ? "-" : genotype.getAllele1()) +
+                                (genotype.getAllele2() == null ? "-" : genotype.getAllele2()),
+                        new BigDecimal(fluidigmDataRow.getConfidence())));
+            }
 
-        //TODO
-        calculateHapMapConcordance(labMetricRun, mapAssayToSnp, mapLabVesselToRecords);
+            String collaboratorParticipantId = mercurySample.getSampleData().getCollaboratorParticipantId();
+            Optional<Control> optionalControl = controls.stream().
+                    filter(control -> control.getCollaboratorParticipantId().equals(collaboratorParticipantId)).
+                    findFirst();
+            if (optionalControl.isPresent()) {
+                double lodScore = concordanceCalculator.calculateHapMapConcordance(fingerprint, optionalControl.get());
+                // todo jmt common date for all metrics?
+                plateWell.addMetric(new LabMetric(new BigDecimal(lodScore), LabMetric.MetricType.HAPMAP_CONCORDANCE_LOD,
+                        LabMetric.LabUnit.NUMBER, plateWell.getVesselPosition().name(), new Date()));
+            }
+        }
+        concordanceCalculator.done();
 
         return labMetricRun;
     }
@@ -269,12 +308,12 @@ public class FluidigmRunFactory {
             for (FluidigmChipProcessor.FluidigmDataRow row: entry.getValue()) {
                 Genotype genotype = parseGenotype(row);
                 if (!mapAssayToSnp.get(row.getAssayName()).isFailed() &&
-                    !mapAssayToSnp.get(row.getAssayName()).isGender()) {
+                        !mapAssayToSnp.get(row.getAssayName()).isGender()) {
                     totalPossibleCalls++;
                     boolean userCall = genotype.isUserCall();
                     if (!userCall) {
                         if (genotype.getConfidence() >= threshold &&
-                            genotype.getAllele1() != null && genotype.getAllele2() != null) {
+                                genotype.getAllele1() != null && genotype.getAllele2() != null) {
                             calls++;
                         }
                     } else {

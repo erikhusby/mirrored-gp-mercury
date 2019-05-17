@@ -1520,16 +1520,21 @@ public enum LabEventType {
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, StaticPlate.PlateType.Eppendorf96,
-                    StaticPlate.PlateType.Fluidigm96_96AccessArrayIFC).reagentNames(new String[]{}).
+                    StaticPlate.PlateType.Fluidigm96_96AccessArrayIFC).
                     sourceSection(SBSSection.ALL96).targetSection(SBSSection.P384COLS7_12BYROW).
                     machineNames(new String[]{"HX10412", "HX10411", "HX10327", "HX10322"}).
-                    reagentNames(new String[]{"LSP Oligo Plate", "ASP Oligo Plate", "H2O", "2X", "1X Low TE"}).build(),
+                    reagentRequirements(new ReagentRequirements[]{
+                            new ReagentRequirements("LSP Oligo Plate"),
+                            new ReagentRequirements("ASP Oligo Plate"),
+                            new ReagentRequirements("H2O"),
+                            new ReagentRequirements("2X"),
+                            new ReagentRequirements("1X Low TE")}).build(),
             LibraryType.NONE_ASSIGNED),
     FINGERPRINTING_FC1_LOADED("FingerprintingFC1Loaded",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_EVENT, StaticPlate.PlateType.Eppendorf96,
-                    StaticPlate.PlateType.Fluidigm96_96AccessArrayIFC).reagentNames(new String[]{}).
+                    StaticPlate.PlateType.Fluidigm96_96AccessArrayIFC).reagentRequirements(new ReagentRequirements[]{}).
                     machineNames(new String[]{"FC60317", "FC60308", "FC60306", "FC60187"}).build(),
             LibraryType.NONE_ASSIGNED),
 

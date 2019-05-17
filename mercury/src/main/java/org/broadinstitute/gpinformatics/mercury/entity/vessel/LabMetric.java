@@ -236,6 +236,7 @@ public class LabMetric implements Comparable<LabMetric> {
         FLUIDIGM_FINGERPRINTING("Fluidigm Fingerprinting", false, Category.QUALITY, LabUnit.NUMBER, null),
         FLUIDIGM_GENDER("Fluidigm Gender", false, Category.PERCENTAGE, LabUnit.GENDER, null),
         AUTOCALL_CONFIDENCE("Autocall Confidence", false, Category.DNA_LENGTH, LabUnit.NUMBER, null),
+        HAPMAP_CONCORDANCE_LOD("HapMap Concordance LOD", false, Category.QUALITY, LabUnit.NUMBER, null),
         CALL_RATE_Q17("Q17 Call Rate", false, Category.PERCENTAGE, LabUnit.PERCENTAGE, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {

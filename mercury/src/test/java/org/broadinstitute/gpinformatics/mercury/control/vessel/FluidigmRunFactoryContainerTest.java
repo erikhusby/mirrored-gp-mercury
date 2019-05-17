@@ -1,9 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -15,7 +16,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -29,7 +32,6 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -66,17 +68,25 @@ public class FluidigmRunFactoryContainerTest extends Arquillian {
 
         String failSampleId = null;
         String passFemaleSmId = null;
+        String posControlSmId = null;
         for (VesselPosition vesselPosition : RackOfTubes.RackType.Matrix96.getVesselGeometry().getVesselPositions()) {
             BarcodedTube barcodedTube = new BarcodedTube(platerackBarcodearcode + vesselPosition.toString());
             barcodedTube.setVolume(new BigDecimal("75"));
             String sm = "SM-" + vesselPosition.name() + platerackBarcodearcode;
-            barcodedTube.addSample(new MercurySample(sm, MercurySample.MetadataSource.MERCURY));
+            MercurySample mercurySample = new MercurySample(sm, MercurySample.MetadataSource.MERCURY);
+            barcodedTube.addSample(mercurySample);
             mapPositionToTube.put(vesselPosition, barcodedTube);
 
             if (vesselPosition == VesselPosition.A01) {
                 passFemaleSmId = sm;
-            }
-            if (vesselPosition == VesselPosition.H09) {
+            } else if (vesselPosition == VesselPosition.A05) {
+                // The positive control is in A05
+                BspSampleData sampleData = new BspSampleData(new HashMap<BSPSampleSearchColumn, String>() {{
+                    put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, "NA12878");
+                }});
+                mercurySample.setSampleData(sampleData);
+                posControlSmId = sm;
+            } else if (vesselPosition == VesselPosition.H09) {
                 // Fails in the test upload due to bad call rate
                 failSampleId = sm;
             }
@@ -105,7 +115,7 @@ public class FluidigmRunFactoryContainerTest extends Arquillian {
         csv = csv.replace("1/3/2018 2:41:43 PM", date);
         testSpreadSheet.close();
 
-        FileUtils.writeStringToFile(new File("/Users/jowalsh/Documents/TestData/Fingerprints/Fingerprints.txt"), csv);
+//        FileUtils.writeStringToFile(new File("/Users/jowalsh/Documents/TestData/Fingerprints/Fingerprints.txt"), csv);
 
         InputStream uploadStream = new ByteArrayInputStream(csv.getBytes());
         MessageCollection messageCollection = new MessageCollection();
@@ -128,5 +138,15 @@ public class FluidigmRunFactoryContainerTest extends Arquillian {
         Fingerprint failFp = failMercurySample.getFingerprints().iterator().next();
         Assert.assertEquals(failFp.getDisposition(), Fingerprint.Disposition.FAIL);
         Assert.assertEquals(failFp.getGender(), Fingerprint.Gender.MALE);
+
+        PlateWell plateWell = fluidigmChipRun.getKey().getContainerRole().getVesselAtPosition(VesselPosition.A05);
+        boolean found = false;
+        for (LabMetric metric : plateWell.getMetrics()) {
+            if (metric.getName() == LabMetric.MetricType.HAPMAP_CONCORDANCE_LOD) {
+                found = true;
+                Assert.assertEquals(metric.getValue().compareTo(new BigDecimal("30")), 1);
+            }
+        }
+        Assert.assertTrue(found);
     }
 }
