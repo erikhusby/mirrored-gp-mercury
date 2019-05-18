@@ -75,7 +75,7 @@ public class SapMaterialFixupText extends Arquillian {
         utx.begin();
 
         Map<Boolean, List<Product>> partNumbersByPartNumberValidity =
-            productDao.findProducts(ProductDao.Availability.CURRENT_OR_FUTURE, ProductDao.TopLevelOnly.NO,
+            productDao.findProducts(ProductDao.Availability.ALL, ProductDao.TopLevelOnly.NO,
                 ProductDao.IncludePDMOnly.YES).stream().collect(Collectors.partitioningBy(validPartNumber()));
 
         final List<String> partNumbersToUpdate =
