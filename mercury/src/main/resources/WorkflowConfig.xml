@@ -3855,7 +3855,10 @@
                     <targetSection>ALL96</targetSection>
                     <sourceMassRemoved>true</sourceMassRemoved>
                     <targetWellTypeString>WellType.Well2000</targetWellTypeString>
-                    <reagentNames>AllPrep 96 PowerFecal DNA/RNA"</reagentNames>
+                    <reagentRequirements>
+                        <reagentName>AllPrep 96 PowerFecal DNA/RNA</reagentName>
+                        <expirationDateIncluded>true</expirationDateIncluded>
+                    </reagentRequirements>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
