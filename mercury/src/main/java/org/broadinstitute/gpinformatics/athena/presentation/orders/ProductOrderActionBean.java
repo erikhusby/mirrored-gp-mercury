@@ -2017,8 +2017,16 @@ public class ProductOrderActionBean extends CoreActionBean {
                         if (editOrder != null && editOrder.getRegulatoryInfos().contains(regulatoryInfo)) {
                             regulatoryInfoJson.put("selected", true);
                         }
-                        final OrspProject orspRegInfo = orspProjectDao.findByKey(regulatoryInfo.getIdentifier());
-                        regulatoryInfoJson.put("userEdit", orspRegInfo == null);
+                        final Optional<OrspProject> orspRegInfo = Optional.ofNullable(orspProjectDao.findByKey(regulatoryInfo.getIdentifier()));
+
+                        boolean userEdit = true;
+                        if(orspRegInfo.isPresent()) {
+                            final RegulatoryInfo comparisonRegInfo = new RegulatoryInfo(orspRegInfo.get().getName(),
+                                    orspRegInfo.get().getType(), orspRegInfo.get().getProjectKey());
+
+                            userEdit = !regulatoryInfo.equals(comparisonRegInfo);
+                        }
+                        regulatoryInfoJson.put("userEdit", userEdit);
                         values.put(regulatoryInfoJson);
                     }
                     item.put("value", values);
