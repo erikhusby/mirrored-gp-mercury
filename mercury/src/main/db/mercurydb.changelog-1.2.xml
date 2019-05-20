@@ -2385,4 +2385,44 @@
         <addUniqueConstraint tableName="manifest_file" columnNames="qualified_filename"
                              constraintName="U_MANIFEST_FILE_FILENAME" schemaName="mercury" />
     </changeSet>
+    <changeSet id="GPLIM-6005-010" author="epolk">
+        <createTable schemaName="mercury" tableName="manifest_vessel_labels">
+            <column name="manifest_session" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="vessel_labels" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey constraintName="pk_manifest_vessel_labels" tableName="manifest_vessel_labels"
+                       columnNames="manifest_session, vessel_labels"/>
+    </changeSet>
+    <changeSet id="GPLIM-6005-011" author="epolk">
+        <createTable schemaName="mercury" tableName="manifest_vessel_labels_aud">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="manifest_session" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="vessel_labels" type="varchar(255)"/>
+        </createTable>
+        <addPrimaryKey constraintName="pk_manifest_vessl_labl_aud" tableName="manifest_vessel_labels_aud"
+                       columnNames="rev, manifest_session, vessel_labels"/>
+    </changeSet>
+    <changeSet id="GPLIM-6005-012" author="epolk">
+        <createIndex indexName="ix_manifest_vessl_lbl_aud" tableName="manifest_vessel_labels_aud">
+            <column name="manifest_session"/>
+            <column name="rev"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-6005-013" author="epolk">
+        <createIndex indexName="ix_manifest_vessel_labels" tableName="manifest_vessel_labels">
+            <column name="vessel_labels"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

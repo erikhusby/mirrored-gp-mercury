@@ -2,21 +2,21 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.manifest;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestFile;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestFile_;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession_;
-import org.hibernate.criterion.MatchMode;
-import org.hibernate.criterion.Restrictions;
 
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
+import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.ParameterExpression;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import javax.persistence.criteria.SetJoin;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -91,7 +91,7 @@ public class ManifestSessionDao extends GenericDao {
     }
 
     /**
-     * Returns the manifests sorted by modified date, most recent first.
+     * Returns the manifests with the given sessionPrefix, sorted by modified date, most recent first.
      */
     public List<ManifestSession> getSessionsByPrefix(String prefix) {
         return findList(ManifestSession.class, ManifestSession_.sessionPrefix, prefix).stream().
@@ -101,13 +101,44 @@ public class ManifestSessionDao extends GenericDao {
     }
 
     /**
-     * Returns all of the qualifiedFilename that end with the suffix, without making entities.
+     * Returns the manifests for the given vessel label, sorted by modified date, most recent first.
      */
-    public List<String> getQualifiedFilenames(String suffix) {
-        CriteriaQuery<String> query = getCriteriaBuilder().createQuery(String.class);
-        Root<ManifestFile> root = query.from(ManifestFile.class);
-        query.select(root.get(ManifestFile_.qualifiedFilename));
-        query.where(getCriteriaBuilder().like(root.get(ManifestFile_.qualifiedFilename), "%" + suffix));
-        return getEntityManager().createQuery(query).getResultList();
+    public List<ManifestSession> getSessionsByVesselLabel(String label) {
+        CriteriaBuilder builder = getCriteriaBuilder();
+        CriteriaQuery<ManifestSession> query = builder.createQuery(ManifestSession.class);
+        Root<ManifestSession> root = query.from(ManifestSession.class);
+        SetJoin<ManifestSession, String> vesselLabels = root.join(ManifestSession_.vesselLabels);
+        ParameterExpression<String> param = builder.parameter(String.class);
+        query.where(builder.equal(vesselLabels, param));
+        TypedQuery<ManifestSession> manifestQuery = getEntityManager().createQuery(query);
+        manifestQuery.setParameter(param, label);
+        return manifestQuery.getResultList().stream().
+                sorted((o1, o2) ->
+                        o2.getUpdateData().getModifiedDate().compareTo(o1.getUpdateData().getModifiedDate())).
+                collect(Collectors.toList());
+    }
+
+    /**
+     * Returns all of the filenames in the given namespace.
+     */
+    public List<String> getFilenamesForNamespace(String namespace) {
+        return ((List<String>)getEntityManager().createNativeQuery(
+                "SELECT qualified_filename FROM manifest_file " +
+                " WHERE qualified_filename LIKE '" + namespace + ManifestFile.NAMESPACE_DELIMITER + "%' " +
+                " ORDER BY 1 ").
+                getResultList()).stream().
+                map(ManifestFile::extractFilename).
+                collect(Collectors.toList());
+    }
+
+    /**
+     * Returns all of the filenames in the given namespace that are not associated with a manifestSession.
+     */
+    public List<String> getFailedFilenames(String namespace) {
+        return getEntityManager().createNativeQuery("SELECT qualified_filename FROM manifest_file " +
+                " WHERE NOT EXISTS (SELECT 1 FROM manifest_session WHERE manifest_file_id = manifest_file) " +
+                " AND qualified_filename LIKE '" + namespace + ManifestFile.NAMESPACE_DELIMITER + "%' " +
+                " ORDER BY 1 ").
+                getResultList();
     }
 }

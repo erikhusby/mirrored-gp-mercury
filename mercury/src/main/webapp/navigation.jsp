@@ -240,7 +240,7 @@
                                 beanclass="org.broadinstitute.gpinformatics.mercury.presentation.run.GenotypingChipTypeActionBean"
                                 event="list">Manage Genotyping Chip Types</stripes:link></li>
                         <li><stripes:link
-                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoReceivingActionBean"
+                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoSampleReceiptActionBean"
                                 event="storageUtilities">Mayo Manifest Admin</stripes:link></li>
                         <security:authorizeBlock roles="<%= roles(Developer) %>">
                             <li><stripes:link
@@ -341,8 +341,13 @@
                                       event="bySkId">Receive By SK-ID</stripes:link>
                     </li>
                     <li>
+                        <stripes:link id="mayoPackageReceipt"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoPackageReceiptActionBean"
+                                      event="view">Mayo Package Receipt</stripes:link>
+                    </li>
+                    <li>
                         <stripes:link id="mayoSampleReceipt"
-                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoReceivingActionBean"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoSampleReceiptActionBean"
                                       event="view">Mayo Sample Receipt</stripes:link>
                     </li>
                 </ul>

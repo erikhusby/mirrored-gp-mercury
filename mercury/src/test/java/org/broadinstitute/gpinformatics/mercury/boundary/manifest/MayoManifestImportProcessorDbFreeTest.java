@@ -71,8 +71,8 @@ public class MayoManifestImportProcessorDbFreeTest {
                     String message = String.format(MayoManifestImportProcessor.MISSING_HEADER, CSV,
                             dropThisHeader.getText());
                     MessageCollection messageCollection = parseAndReturnErrorsAndWarnings(headerString, false);
-                    Assert.assertTrue(messageCollection.getWarnings().contains(message),
-                            "Warnings " + StringUtils.join(messageCollection.getWarnings(), " ; "));
+                    Assert.assertTrue(messageCollection.getErrors().contains(message),
+                            StringUtils.join(messageCollection.getErrors(), " ; "));
                 });
 
         // Duplicate headers.
@@ -130,13 +130,13 @@ public class MayoManifestImportProcessorDbFreeTest {
                 mapToObj(n -> String.format("%08d", n)).collect(Collectors.joining(","));
         MayoManifestImportProcessor processor = new MayoManifestImportProcessor();
         MessageCollection messageCollection = new MessageCollection();
-        Multimap<String, ManifestRecord> records = processor.makeManifestRecords(
+        List<ManifestRecord> records = processor.makeManifestRecords(
                 processor.parseAsCellGrid(content.getBytes(), CSV, messageCollection), CSV, messageCollection);
         Assert.assertTrue(expectSuccess && !messageCollection.hasErrors() && !messageCollection.hasWarnings() ||
                 !expectSuccess && (messageCollection.hasErrors() || messageCollection.hasWarnings()),
                 headerString + " has Errors " + StringUtils.join(messageCollection.getErrors(), " ; ") +
                         " and Warnings " + StringUtils.join(messageCollection.getWarnings()));
-        Assert.assertEquals(records.values().size(), expectSuccess ? 1 : 0,
+        Assert.assertEquals(records.size(), expectSuccess ? 1 : 0,
                 headerString + " has Errors " + StringUtils.join(messageCollection.getErrors(), " ; ") +
                         " and Warnings " + StringUtils.join(messageCollection.getWarnings()));
         return messageCollection;
@@ -160,11 +160,11 @@ public class MayoManifestImportProcessorDbFreeTest {
         }
         MayoManifestImportProcessor processor = new MayoManifestImportProcessor();
         MessageCollection messages = new MessageCollection();
-        Multimap<String, ManifestRecord> records = processor.makeManifestRecords(
+        List<ManifestRecord> records = processor.makeManifestRecords(
                 processor.parseAsCellGrid(builder.toString().getBytes(), CSV, messages), CSV, messages);
         Assert.assertFalse(messages.hasErrors(), StringUtils.join(messages.getErrors()));
-        Assert.assertEquals(records.values().size(), 1);
-        ManifestRecord record = records.values().iterator().next();
+        Assert.assertEquals(records.size(), 1);
+        ManifestRecord record = records.iterator().next();
         Assert.assertEquals(record.getMetadataByKey(Metadata.Key.CONCENTRATION).getStringValue(), "103.87");
     }
 
@@ -212,8 +212,8 @@ public class MayoManifestImportProcessorDbFreeTest {
                 (headers + values.replace("PK001", "")).getBytes(), CSV, messages), CSV, messages).isEmpty());
         String expected = String.format(MayoManifestImportProcessor.MISSING_DATA, CSV,
                 MayoManifestImportProcessor.Header.PACKAGE_ID.getText());
-        Assert.assertFalse(messages.hasErrors(), StringUtils.join(messages.getErrors(), "; "));
-        Assert.assertTrue(messages.getWarnings().contains(expected), StringUtils.join(messages.getWarnings()));
+        Assert.assertTrue(messages.getErrors().contains(expected), StringUtils.join(messages.getErrors()));
+        Assert.assertFalse(messages.hasWarnings(), StringUtils.join(messages.getWarnings(), "; "));
 
         processor = new MayoManifestImportProcessor();
         messages.clearAll();
@@ -254,10 +254,10 @@ public class MayoManifestImportProcessorDbFreeTest {
             String[] expectations = triple.getRight().split(",");
             String content = String.format(headers, units) + String.format(data, dataValues);
             List<List<String>> cellGrid = processor.parseAsCellGrid(content.getBytes(), CSV, messages);
-            Multimap<String, ManifestRecord> records = processor.makeManifestRecords(cellGrid, CSV, messages);
+            List<ManifestRecord> records = processor.makeManifestRecords(cellGrid, CSV, messages);
             Assert.assertFalse(messages.hasErrors(), StringUtils.join(messages.getErrors()));
             Assert.assertFalse(messages.hasWarnings(), StringUtils.join(messages.getWarnings()));
-            ManifestRecord record = records.values().iterator().next();
+            ManifestRecord record = records.iterator().next();
             Assert.assertEquals(record.getMetadataByKey(Metadata.Key.VOLUME).getValue(),
                     expectations[0], triple.toString());
             Assert.assertEquals(record.getMetadataByKey(Metadata.Key.CONCENTRATION).getValue(),
@@ -288,11 +288,14 @@ public class MayoManifestImportProcessorDbFreeTest {
                 "2nd Visit,Whole Blood,The Study Title,TRK001,theContact,email4@email.org,Other,a few\n";
 
         List<List<String>> cellGrid = processor.parseAsCellGrid(content.getBytes(), CSV, messageCollection);
-        Multimap<String, ManifestRecord> records = processor.makeManifestRecords(cellGrid, CSV, messageCollection);
+        List<ManifestRecord> records = processor.makeManifestRecords(cellGrid, CSV, messageCollection);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors()));
-        Assert.assertEquals(records.keySet().size(), 2);
-        Assert.assertEquals(records.get("B001").size(), 2);
-        Assert.assertEquals(records.get("B002").size(), 2);
+        Assert.assertEquals(records.stream().
+                map(manifestRecord -> manifestRecord.getMetadataByKey(Metadata.Key.BOX_ID).getValue()).
+                filter(value -> value.equals("B001")).count(), 2);
+        Assert.assertEquals(records.stream().
+                map(manifestRecord -> manifestRecord.getMetadataByKey(Metadata.Key.BOX_ID).getValue()).
+                filter(value -> value.equals("B002")).count(), 2);
     }
 
 }

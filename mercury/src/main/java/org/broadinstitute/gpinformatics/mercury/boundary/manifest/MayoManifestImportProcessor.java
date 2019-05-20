@@ -11,8 +11,6 @@
 
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -21,7 +19,6 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.csv.CsvParser;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
-import org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoReceivingActionBean;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +43,7 @@ import java.util.stream.Stream;
 public class MayoManifestImportProcessor {
     public static final String CANNOT_PARSE = "Manifest file %s cannot be parsed due to %s.";
     public static final String DUPLICATE_HEADER = "Manifest file %s has duplicate header %s.";
+    public static final String INCONSISTENT = "Manifest file %s has inconsistent values for %s.";
     public static final String INVALID_DATA = "Manifest file %s has invalid values for %s.";
     public static final String MISSING_DATA = "Manifest file %s is missing required values for %s.";
     public static final String MISSING_HEADER = "Manifest file %s is missing header %s.";
@@ -206,13 +204,11 @@ public class MayoManifestImportProcessor {
     /**
      * Makes ManifestRecords from the spreadsheet data which is given as an unstructured cell grid per sheet.
      * One ManifestRecord is made for each spreadsheet data row.
-     * Returns a map of manifest key to corresponding ManifestRecords.
      */
     @NotNull
-    Multimap<String, ManifestRecord> makeManifestRecords(List<List<String>> cellGrid, String filename,
-            MessageCollection messages) {
-        Multimap<String, ManifestRecord> records = HashMultimap.create();
+    List<ManifestRecord> makeManifestRecords(List<List<String>> cellGrid, String filename, MessageCollection messages) {
 
+        List<ManifestRecord> records = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(cellGrid)) {
             // Cleans up headers and values by removing characters that may present a problem later.
             for (List<String> columns : cellGrid) {
@@ -240,6 +236,7 @@ public class MayoManifestImportProcessor {
 
             Set<String> badValues = new HashSet<>();
             Set<String> missingValues = new HashSet<>();
+            Set<String> packageIds = new HashSet<>();
             if (missingHeaders.isEmpty() && unknownUnits.isEmpty() && unknownHeaders.isEmpty() &&
                     duplicateHeaders.isEmpty()) {
                 // Validates the data before attempting to persist ManifestRecords.
@@ -252,6 +249,9 @@ public class MayoManifestImportProcessor {
                                 if (header.hasUnits() && !NumberUtils.isParsable(value)) {
                                     badValues.add(header.getText());
                                 }
+                                if (header == Header.PACKAGE_ID) {
+                                    packageIds.add(value);
+                                }
                             } else if (header.isRequired()) {
                                 missingValues.add(header.getText());
                             }
@@ -260,25 +260,26 @@ public class MayoManifestImportProcessor {
 
                 }
             }
-            if (filename != null && messages != null) {
-                if (!missingHeaders.isEmpty()) {
-                    messages.addWarning(MISSING_HEADER, filename, StringUtils.join(missingHeaders, ", "));
-                }
-                if (!unknownHeaders.isEmpty()) {
-                    messages.addWarning(UNKNOWN_HEADER, filename, StringUtils.join(unknownHeaders, ", "));
-                }
-                if (!unknownUnits.isEmpty()) {
-                    messages.addWarning(UNKNOWN_UNITS, filename, StringUtils.join(unknownUnits, ", "));
-                }
-                if (!duplicateHeaders.isEmpty()) {
-                    messages.addWarning(DUPLICATE_HEADER, filename, StringUtils.join(duplicateHeaders, ", "));
-                }
-                if (!missingValues.isEmpty()) {
-                    messages.addWarning(MISSING_DATA, filename, StringUtils.join(missingValues, ", "));
-                }
-                if (!badValues.isEmpty()) {
-                    messages.addWarning(INVALID_DATA, filename, StringUtils.join(badValues, ", "));
-                }
+            if (!missingHeaders.isEmpty()) {
+                messages.addError(MISSING_HEADER, filename, StringUtils.join(missingHeaders, ", "));
+            }
+            if (!unknownHeaders.isEmpty()) {
+                messages.addWarning(UNKNOWN_HEADER, filename, StringUtils.join(unknownHeaders, ", "));
+            }
+            if (!unknownUnits.isEmpty()) {
+                messages.addError(UNKNOWN_UNITS, filename, StringUtils.join(unknownUnits, ", "));
+            }
+            if (!duplicateHeaders.isEmpty()) {
+                messages.addError(DUPLICATE_HEADER, filename, StringUtils.join(duplicateHeaders, ", "));
+            }
+            if (!missingValues.isEmpty()) {
+                messages.addError(MISSING_DATA, filename, StringUtils.join(missingValues, ", "));
+            }
+            if (!badValues.isEmpty()) {
+                messages.addError(INVALID_DATA, filename, StringUtils.join(badValues, ", "));
+            }
+            if (packageIds.size() > 1) {
+                messages.addError(String.format(INCONSISTENT, filename, StringUtils.join(packageIds, ", ")));
             }
 
             if (missingHeaders.isEmpty() && unknownUnits.isEmpty() && unknownHeaders.isEmpty() &&
@@ -286,6 +287,7 @@ public class MayoManifestImportProcessor {
                 // Makes a ManifestRecord for each row of data.
                 for (List<String> row : cellGrid.subList(1, cellGrid.size())) {
                     ManifestRecord manifestRecord = new ManifestRecord();
+                    records.add(manifestRecord);
                     for (int columnIndex = 0; columnIndex < sheetHeaders.size(); ++columnIndex) {
                         Header header = sheetHeaders.get(columnIndex);
                         if (header != null && !header.isIgnored()) {
@@ -301,8 +303,6 @@ public class MayoManifestImportProcessor {
                             }
                         }
                     }
-                    String manifestKey = MayoReceivingActionBean.makeManifestKey(sheetHeaders, row);
-                    records.put(manifestKey, manifestRecord);
                 }
             }
         }

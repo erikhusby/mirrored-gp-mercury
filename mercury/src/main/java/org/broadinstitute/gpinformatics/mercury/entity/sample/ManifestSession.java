@@ -8,6 +8,7 @@ import com.google.common.collect.Multimaps;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
@@ -26,7 +27,9 @@ import org.hibernate.envers.NotAudited;
 
 import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
@@ -38,9 +41,11 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.OrderColumn;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -116,9 +121,13 @@ public class ManifestSession implements Updatable {
     @Column(name = "RECEIPT_TICKET")
     private String receiptTicket;
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
+    @OneToOne
     @JoinColumn(name = "MANIFEST_FILE")
     private ManifestFile manifestFile;
+
+    @ElementCollection
+    @CollectionTable(name = "MANIFEST_VESSEL_LABELS", joinColumns=@JoinColumn(name="MANIFEST_SESSION"))
+    private Set<String> vesselLabels;
 
     /**
      * For JPA.
@@ -691,6 +700,22 @@ public class ManifestSession implements Updatable {
         return updateData;
     }
 
+    public ManifestFile getManifestFile() {
+        return manifestFile;
+    }
+
+    public void setManifestFile(ManifestFile manifestFile) {
+        this.manifestFile = manifestFile;
+    }
+
+    public Set<String> getVesselLabels() {
+        return vesselLabels;
+    }
+
+    public void setVesselLabels(Set<String> vesselLabels) {
+        this.vesselLabels = vesselLabels;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)
@@ -700,11 +725,4 @@ public class ManifestSession implements Updatable {
                 .toString();
     }
 
-    public ManifestFile getManifestFile() {
-        return manifestFile;
-    }
-
-    public void setManifestFile(ManifestFile manifestFile) {
-        this.manifestFile = manifestFile;
-    }
 }
