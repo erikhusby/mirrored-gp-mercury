@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.google.common.collect.MoreCollectors.toOptional;
 import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option.Type;
@@ -408,19 +409,24 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @Override
-    public void publishProductInSAP(Product product) throws SAPIntegrationException {
+    public void publishProductInSAP(Product product, boolean extendProductsToOtherPlatforms,
+                                    boolean onlyUpdateMaterial) throws SAPIntegrationException {
+
         SAPMaterial sapMaterial = initializeSapMaterialObject(product);
-        if (productPriceCache.findByProduct(product,
-                SAPCompanyConfiguration.fromSalesOrgForMaterial(sapMaterial.getSalesOrg()).getSalesOrganization()) == null) {
-            log.debug("Creating product " + sapMaterial.getMaterialIdentifier());
-            getClient().createMaterial(sapMaterial);
-        } else {
-            log.debug("Updating product " + sapMaterial.getMaterialIdentifier());
-            getClient().changeMaterialDetails(SAPChangeMaterial.fromSAPMaterial(sapMaterial));
-        }
+
+        applyMaterialUpdate(product, onlyUpdateMaterial, sapMaterial);
 
         Set<SAPMaterial> extendedProducts = new HashSet<>();
-        for (SAPCompanyConfiguration sapCompanyConfiguration : EXTENDED_PLATFORMS) {
+
+        Set<SAPCompanyConfiguration> platformsToExtend = EXTENDED_PLATFORMS
+                .stream()
+                .filter(companyConfiguration ->
+                                extendProductsToOtherPlatforms ||
+                                StringUtils.equals(SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization(),
+                                        companyConfiguration.getSalesOrganization()))
+                .collect(Collectors.toSet());
+
+        for (SAPCompanyConfiguration sapCompanyConfiguration : platformsToExtend) {
             log.debug("Current company config is " + sapCompanyConfiguration.name());
             SAPMaterial tempMaterial = null;
                 if (sapCompanyConfiguration == SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) {
@@ -443,16 +449,32 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
 
         for (SAPMaterial extendedProduct : extendedProducts) {
+            applyMaterialUpdate(product, onlyUpdateMaterial, extendedProduct);
+        }
+    }
 
-            if (productPriceCache.findByProduct(product,
-                    SAPCompanyConfiguration.fromSalesOrgForMaterial(extendedProduct.getSalesOrg()).getSalesOrganization()) == null) {
+    /**
+     * Helper method to encapsulate the previously duplicated logic of determining if a product should be created or
+     * updated
+     * @param product               The Mercury product which is intended to be saved to SAP and represented as a
+     *                              Material
+     * @param onlyUpdateMaterial    Flag to help determine if Mercury should should attempt to create a new Material
+     *                              if the Product it is not found in SAP.  When true, do not create material
+     * @param extendedProduct       Flag to help determine if Mercury should extend the resulting Material to platforms
+     *                              other than GP SSF or GP LLC product list.  True means we wish to extend the product
+     * @throws SAPIntegrationException
+     */
+    private void applyMaterialUpdate(Product product, boolean onlyUpdateMaterial, SAPMaterial extendedProduct)
+            throws SAPIntegrationException {
+        if (productPriceCache.findByProduct(product,
+                SAPCompanyConfiguration.fromSalesOrgForMaterial(extendedProduct.getSalesOrg()).getSalesOrganization()) == null) {
+            if (!onlyUpdateMaterial) {
                 log.debug("Creating product " + extendedProduct.getMaterialIdentifier());
                 getClient().createMaterial(extendedProduct);
-            } else {
-                log.debug("Updating product " + extendedProduct.getMaterialIdentifier());
-                getClient().changeMaterialDetails(SAPChangeMaterial.fromSAPMaterial(extendedProduct));
             }
-
+        } else {
+            log.debug("Updating product " + extendedProduct.getMaterialIdentifier());
+            getClient().changeMaterialDetails(SAPChangeMaterial.fromSAPMaterial(extendedProduct));
         }
     }
 

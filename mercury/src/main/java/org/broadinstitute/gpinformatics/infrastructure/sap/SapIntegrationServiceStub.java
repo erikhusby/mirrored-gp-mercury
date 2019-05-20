@@ -47,7 +47,7 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     }
 
     @Override
-    public void publishProductInSAP(Product product) throws SAPIntegrationException {
+    public void publishProductInSAP(Product product, boolean extendProductsToOtherPlatforms, boolean onlyUpdateMaterial) throws SAPIntegrationException {
         
     }
 

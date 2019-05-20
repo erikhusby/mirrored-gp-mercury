@@ -75,7 +75,7 @@ public class SapMaterialFixupText extends Arquillian {
         utx.begin();
 
         Map<Boolean, List<Product>> partNumbersByPartNumberValidity =
-            productDao.findProducts(ProductDao.Availability.ALL, ProductDao.TopLevelOnly.NO,
+            productDao.findProducts(ProductDao.Availability.CURRENT_OR_FUTURE, ProductDao.TopLevelOnly.NO,
                 ProductDao.IncludePDMOnly.YES).stream().collect(Collectors.partitioningBy(validPartNumber()));
 
         final List<String> partNumbersToUpdate =
@@ -90,7 +90,21 @@ public class SapMaterialFixupText extends Arquillian {
         productDao.persist(control);
 
         // publish products. will create or update them in SAP
-        productEjb.publishProductsToSAP(partNumbersByPartNumberValidity.get(true));
+        productEjb.publishProductsToSAP(partNumbersByPartNumberValidity.get(true), true, false);
+
+
+
+        Map<Boolean, List<Product>> allProductsByPartNumberValidity =
+                productDao.findProducts(ProductDao.Availability.ALL, ProductDao.TopLevelOnly.NO,
+                        ProductDao.IncludePDMOnly.YES).stream().collect(Collectors.partitioningBy(validPartNumber()));
+
+        List<Product> onlyDisabledProducts = allProductsByPartNumberValidity.get(true)
+                .stream()
+                .filter(product -> !partNumbersByPartNumberValidity.get(true).contains(product))
+                .collect(Collectors.toList());
+
+        productEjb.publishProductsToSAP(onlyDisabledProducts, false, true);
+
 
         // restore blacklist;
         control.setDisabledItems(disabledItems);

@@ -66,10 +66,14 @@ public interface SapIntegrationService {
      * 
      * For an existing product, this method will also allow Mercury to update that product with any changes made within
      * Mercury
-     * @param product The Product information to be reflected in SAP
+     * @param product                           The Product information to be reflected in SAP
+     * @param extendProductsToOtherPlatforms    Flag to help determine if Mercury should extend the resulting Material to platforms
+     *                                          other than GP SSF or GP LLC product list.  True means we wish to extend the product
+     * @param onlyUpdateMaterial                Flag to help determine if Mercury should should attempt to create a new Material
+     *                                          if the Product it is not found in SAP.  When true, do not create material
      * @throws SAPIntegrationException
      */
-    void publishProductInSAP(Product product) throws SAPIntegrationException;
+    void publishProductInSAP(Product product, boolean extendProductsToOtherPlatforms, boolean onlyUpdateMaterial) throws SAPIntegrationException;
     
     Set<SAPMaterial> findProductsInSap() throws SAPIntegrationException;
 
