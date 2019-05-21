@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
-import com.google.common.collect.Multimap;
 import org.apache.commons.lang.WordUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Triple;

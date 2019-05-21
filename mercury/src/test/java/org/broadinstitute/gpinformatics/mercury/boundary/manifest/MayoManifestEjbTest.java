@@ -91,7 +91,7 @@ public class MayoManifestEjbTest extends Arquillian {
     }
 
     @Test
-    public void testLoadAndReloadManifestFiles() throws Exception {
+    public void testLoadAndReloadManifestFiles() {
         mayoManifestEjb.getUserBean().loginTestUser();
         MessageCollection messageCollection = new MessageCollection();
         String testDigits = DATE_FORMAT.format(new Date());
@@ -113,8 +113,7 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
 
         // Compares manifest records to test data spreadsheet.
-        String manifestKey = MayoSampleReceiptActionBean.getManifestKey(rackBarcode);
-        List<ManifestSession> sessions = manifestSessionDao.getSessionsByPrefix(manifestKey);
+        List<ManifestSession> sessions = manifestSessionDao.getSessionsByVesselLabel(rackBarcode);
         Assert.assertEquals(sessions.size(), 1);
         Assert.assertEquals(sessions.iterator().next().getRecords().size(), cellGrid.size() - 1);
         validateManifest(sessions.iterator().next(), cellGrid);
@@ -123,7 +122,7 @@ public class MayoManifestEjbTest extends Arquillian {
         mayoManifestEjb.pullAll(bean);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
-        Assert.assertEquals(manifestSessionDao.getSessionsByPrefix(manifestKey).size(), 1);
+        Assert.assertEquals(manifestSessionDao.getSessionsByVesselLabel(rackBarcode).size(), 1);
 
         // Tests Mayo Admin UI "pull one file". A forced reload will make a new manifest session.
         // In this case it will have the same filename and content.
@@ -131,7 +130,7 @@ public class MayoManifestEjbTest extends Arquillian {
         mayoManifestEjb.pullOne(bean);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors()));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
-        sessions = manifestSessionDao.getSessionsByPrefix(MayoSampleReceiptActionBean.getManifestKey(rackBarcode));
+        sessions = manifestSessionDao.getSessionsByVesselLabel(rackBarcode);
         // There should now be another manifest sessions for the rackBarcode.
         Assert.assertEquals(sessions.size(), 2, "For rack " + rackBarcode);
         validateManifest(sessions.iterator().next(), cellGrid);
@@ -147,7 +146,7 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors()));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
         // A lookup by rack barcode should return the latest one, identified by a higher manifestSessionId
-        sessions = manifestSessionDao.getSessionsByPrefix(MayoSampleReceiptActionBean.getManifestKey(rackBarcode));
+        sessions = manifestSessionDao.getSessionsByVesselLabel(rackBarcode);
         Assert.assertEquals(sessions.size(), 3, "For rack " + rackBarcode);
         validateManifest(sessions.iterator().next(), cellGrid);
         long sessionId3 = sessions.iterator().next().getManifestSessionId();
@@ -168,7 +167,7 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
 
         // There should now be another manifest sessions for the rackBarcode.
-        sessions = manifestSessionDao.getSessionsByPrefix(MayoSampleReceiptActionBean.getManifestKey(rackBarcode));
+        sessions = manifestSessionDao.getSessionsByVesselLabel(rackBarcode);
         Assert.assertEquals(sessions.size(), 4, "For rack " + rackBarcode);
         // The head of the list should have the most recent upload.
         validateManifest(sessions.iterator().next(), cellGrid2);
@@ -187,10 +186,10 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
 
         // There should now be another manifest sessions for the rackBarcode.
-        sessions = manifestSessionDao.getSessionsByPrefix(MayoSampleReceiptActionBean.getManifestKey(rackBarcode));
+        sessions = manifestSessionDao.getSessionsByVesselLabel(rackBarcode);
         Assert.assertEquals(sessions.size(), 5, "For rack " + rackBarcode);
         // The head of the list should have the most recent upload.
-        validateManifest(sessions.iterator().next(), cellGrid);
+        validateManifest(sessions.iterator().next(), cellGrid3);
     }
 
     @Test
@@ -209,12 +208,7 @@ public class MayoManifestEjbTest extends Arquillian {
         int boxIndex = headers.indexOf(Header.BOX_ID);
         int tubeIndex = headers.indexOf(Header.MATRIX_ID);
         int positionIndex = headers.indexOf(Header.WELL_POSITION);
-        String[] rackBarcode = cellGrid.subList(1, cellGrid.size()).stream().map(row -> row.get(boxIndex)).
-                collect(Collectors.toList()).toArray(new String[0]);
-        String[] tubeBarcode = cellGrid.subList(1, cellGrid.size()).stream().map(row -> row.get(tubeIndex)).
-                collect(Collectors.toList()).toArray(new String[0]);
-        String[] tubePosition = cellGrid.subList(1, cellGrid.size()).stream().map(row -> row.get(positionIndex)).
-                collect(Collectors.toList()).toArray(new String[0]);
+
         String filename = packageId + ".csv";
         googleBucketDao.upload(filename, makeContent(cellGrid), messageCollection);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
@@ -237,128 +231,128 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
 
         MayoSampleReceiptActionBean bean = new MayoSampleReceiptActionBean();
-        int testIdx = 0;
         // Fails to accession when the rack scan has a tube that is not in the manifest.
-        // Fudged cellGrid puts two tubes in the rack scan.
-        List<List<String>> fudgedGrid = new ArrayList<>(cellGrid);
-        int fudgedRowIdx = testIdx + 2;
-        fudgedGrid.get(fudgedRowIdx).set(boxIndex, rackBarcode[testIdx]);
-        fudgedGrid.get(fudgedRowIdx).set(positionIndex, "G10");
+        // Makes a rack scan from the first row in the manifest and puts two tubes in that rack.
+        List<List<String>> rackScanGrid = new ArrayList<>();
+        rackScanGrid.add(cellGrid.get(0)); //headers
+        rackScanGrid.add(cellGrid.get(1));
+        rackScanGrid.add(cellGrid.get(1));
+        rackScanGrid.get(2).set(tubeIndex, rackScanGrid.get(2).get(tubeIndex) + "a");
+        rackScanGrid.get(2).set(positionIndex, "G10");
         bean.setMessageCollection(messageCollection);
-        bean.setRackBarcode(rackBarcode[testIdx]);
-        bean.setRackScan(makeRackScan(fudgedGrid, rackBarcode[testIdx]));
+        String rackBarcode = rackScanGrid.get(1).get(boxIndex);
+        bean.setRackBarcode(rackBarcode);
+        bean.setRackScan(makeRackScan(rackScanGrid, rackBarcode));
         messageCollection.clearAll();
         mayoManifestEjb.receive(bean);
-        if (!messageCollection.hasErrors()) {
-	    messageCollection.clearAll();
-            mayoManifestEjb.accession(bean);
-        }
-        Assert.assertTrue(messageCollection.getErrors().contains(
-                String.format(MayoManifestEjb.TUBE_NOT_IN_MANIFEST, tubeBarcode[testIdx + 1])),
+        Assert.assertTrue(messageCollection.getErrors().contains(String.format(MayoManifestEjb.WRONG_TUBE_IN_POSITION,
+                "G10", rackScanGrid.get(2).get(tubeIndex),"no tube")),
                 StringUtils.join(messageCollection.getErrors()));
-        // Checks that the rack receipt worked (but not accessioned).
-        validateEntities(fudgedGrid, rackBarcode[testIdx], true);
-        Long rackId = labVesselDao.findByIdentifier(rackBarcode[testIdx]).getLabVesselId();
-        Long tubeId = labVesselDao.findByIdentifier(tubeBarcode[testIdx]).getLabVesselId();
-        Long tube2Id = labVesselDao.findByIdentifier(tubeBarcode[testIdx + 1]).getLabVesselId();
+        // Checks that the rack was received.
+        validateEntities(rackScanGrid, rackBarcode, true);
 
         // A re-receipt is allowed with the same result, and no change to the entities.
+        Long rackId = labVesselDao.findByIdentifier(rackBarcode).getLabVesselId();
+        Long tubeId = labVesselDao.findByIdentifier(rackScanGrid.get(1).get(tubeIndex)).getLabVesselId();
+        Long tube2Id = labVesselDao.findByIdentifier(rackScanGrid.get(2).get(tubeIndex)).getLabVesselId();
         messageCollection.clearAll();
         mayoManifestEjb.receive(bean);
-        if (!messageCollection.hasErrors()) {
-	    messageCollection.clearAll();
-            mayoManifestEjb.accession(bean);
-        }
-        Assert.assertTrue(messageCollection.getErrors().size() == 1 && messageCollection.getErrors().contains(
-                String.format(MayoManifestEjb.TUBE_NOT_IN_MANIFEST, tubeBarcode[testIdx + 1])),
+        Assert.assertTrue(messageCollection.getErrors().contains(String.format(MayoManifestEjb.WRONG_TUBE_IN_POSITION,
+                "G10", rackScanGrid.get(2).get(tubeIndex),"no tube")),
                 StringUtils.join(messageCollection.getErrors()));
-        validateEntities(fudgedGrid, rackBarcode[testIdx], true);
-        Assert.assertEquals(labVesselDao.findByIdentifier(rackBarcode[testIdx]).getLabVesselId(), rackId);
-        Assert.assertEquals(labVesselDao.findByIdentifier(tubeBarcode[testIdx]).getLabVesselId(), tubeId);
-        Assert.assertEquals(labVesselDao.findByIdentifier(tubeBarcode[testIdx + 1]).getLabVesselId(), tube2Id);
-        testIdx += 2;
+        validateEntities(rackScanGrid, rackBarcode, true);
+        Assert.assertEquals(labVesselDao.findByIdentifier(rackBarcode).getLabVesselId(), rackId);
+        Assert.assertEquals(labVesselDao.findByIdentifier(rackScanGrid.get(1).get(tubeIndex)).getLabVesselId(), tubeId);
+        Assert.assertEquals(labVesselDao.findByIdentifier(rackScanGrid.get(2).get(tubeIndex)).getLabVesselId(), tube2Id);
 
         // Fails to accession when the rack scan is missing a tube that is in the manifest.
         bean.setMessageCollection(messageCollection);
-        bean.setRackBarcode(rackBarcode[testIdx]);
-        bean.setRackScan(new LinkedHashMap<>());
+        rackScanGrid = new ArrayList<>();
+        rackScanGrid.add(cellGrid.get(0)); //headers
+        rackScanGrid.add(cellGrid.get(2));
+        String expectedTube = rackScanGrid.get(1).get(tubeIndex);
+        rackScanGrid.get(1).set(tubeIndex, "123412341234");
+        rackBarcode = rackScanGrid.get(1).get(boxIndex);
+        bean.setRackBarcode(rackBarcode);
+        bean.setRackScan(makeRackScan(rackScanGrid, rackBarcode));
         messageCollection.clearAll();
         mayoManifestEjb.receive(bean);
-        if (!messageCollection.hasErrors()) {
-	    messageCollection.clearAll();
-            mayoManifestEjb.accession(bean);
-        }
-        Assert.assertTrue(messageCollection.getErrors().contains(
-                String.format(MayoManifestEjb.TUBE_NOT_IN_RACKSCAN, tubeBarcode[testIdx])),
+        Assert.assertTrue(messageCollection.getErrors().contains(String.format(MayoManifestEjb.WRONG_TUBE_IN_POSITION,
+                "A01", "123412341234", expectedTube)),
                 StringUtils.join(messageCollection.getErrors()));
-        ++testIdx;
 
         // Fails to accession when the tube is in the wrong rack scan position.
-        bean.setRackBarcode(rackBarcode[testIdx]);
-        bean.setRackScan(new LinkedHashMap<>());
-        bean.getRackScan().put("B01", tubeBarcode[testIdx]);
+        rackScanGrid = new ArrayList<>();
+        rackScanGrid.add(cellGrid.get(0)); //headers
+        rackScanGrid.add(cellGrid.get(3));
+        rackScanGrid.get(1).set(positionIndex, "B02");
+        rackBarcode = rackScanGrid.get(1).get(boxIndex);
+        bean.setRackBarcode(rackBarcode);
+        bean.setRackScan(makeRackScan(rackScanGrid, rackBarcode));
         messageCollection.clearAll();
         mayoManifestEjb.receive(bean);
-        if (!messageCollection.hasErrors()) {
-	    messageCollection.clearAll();
-            mayoManifestEjb.accession(bean);
-        }
-        Assert.assertTrue(messageCollection.getErrors().contains(
-                String.format(MayoManifestEjb.WRONG_POSITION, tubeBarcode[testIdx], "A01", "B01")),
+        Assert.assertTrue(messageCollection.getErrors().contains(String.format(MayoManifestEjb.WRONG_TUBE_IN_POSITION,
+                "A01", "no tube", rackScanGrid.get(1).get(tubeIndex))),
                 StringUtils.join(messageCollection.getErrors()));
-        ++testIdx;
+        Assert.assertTrue(messageCollection.getErrors().contains(String.format(MayoManifestEjb.WRONG_TUBE_IN_POSITION,
+                "B02", rackScanGrid.get(1).get(tubeIndex), "no tube")),
+                StringUtils.join(messageCollection.getErrors()));
 
         // Does a successful accession.
-        bean.setRackBarcode(rackBarcode[testIdx]);
-        bean.setRackScan(makeRackScan(cellGrid, rackBarcode[testIdx]));
+        rackScanGrid = new ArrayList<>();
+        rackScanGrid.add(cellGrid.get(0)); //headers
+        rackScanGrid.add(cellGrid.get(4));
+        rackBarcode = rackScanGrid.get(1).get(boxIndex);
+        bean.setRackBarcode(rackBarcode);
+        bean.setRackScan(makeRackScan(rackScanGrid, rackBarcode));
+        messageCollection.clearAll();
         mayoManifestEjb.validateAndScan(bean);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
         messageCollection.clearAll();
         mayoManifestEjb.receive(bean);
-        if (!messageCollection.hasErrors()) {
-	    messageCollection.clearAll();
-            mayoManifestEjb.accession(bean);
-        }
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
-        validateEntities(cellGrid, rackBarcode[testIdx], false);
+        messageCollection.clearAll();
+        mayoManifestEjb.lookupManifestSession(bean);
+        mayoManifestEjb.accession(bean);
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
+        validateEntities(cellGrid, rackBarcode, false);
 
         // A re-accessioning is disallowed by the action bean.
         messageCollection.clearAll();
         mayoManifestEjb.validateAndScan(bean);
         Assert.assertTrue(messageCollection.getErrors().contains(
-                String.format(MayoManifestEjb.ALREADY_ACCESSIONED, tubeBarcode[testIdx])),
+                String.format(MayoManifestEjb.ALREADY_ACCESSIONED, rackScanGrid.get(1).get(tubeIndex))),
                 StringUtils.join(messageCollection.getErrors(), "; "));
         // But re-accessioning from the Mayo Admin UI is ok.
         messageCollection.clearAll();
         mayoManifestEjb.receive(bean);
-        if (!messageCollection.hasErrors()) {
-	    messageCollection.clearAll();
-            mayoManifestEjb.accession(bean);
-        }
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
-        validateEntities(cellGrid, rackBarcode[testIdx], false);
-        ++testIdx;
+        messageCollection.clearAll();
+        mayoManifestEjb.lookupManifestSession(bean);
+        mayoManifestEjb.accession(bean);
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
+        validateEntities(cellGrid, rackBarcode, false);
 
         // Validation should fail when the rack barcode exists and is not for a rack vessel.
-        String badRackBarcode = tubeBarcode[0];
+        String badRackBarcode = cellGrid.get(1).get(tubeIndex);
         bean.setRackBarcode(badRackBarcode);
-        bean.setRackScan(new LinkedHashMap<>());
-        bean.getRackScan().put(tubePosition[testIdx], tubeBarcode[testIdx]);
+        Assert.assertEquals(bean.getRackScan().size(), 1);
         messageCollection.clearAll();
         mayoManifestEjb.validateAndScan(bean);
         Assert.assertTrue(messageCollection.getErrors().contains(
                 String.format(MayoManifestEjb.NOT_A_RACK, badRackBarcode)),
                 StringUtils.join(messageCollection.getErrors(), "; "));
-        ++testIdx;
 
         // Validation should fail when the tube barcode is not for a tube vessel.
-        String badTubeBarcode = rackBarcode[0];
-        bean.setRackBarcode(rackBarcode[testIdx]);
+        String badTubeBarcode = cellGrid.get(1).get(boxIndex);
+        bean.setRackBarcode(rackBarcode);
         bean.setRackScan(new LinkedHashMap<>());
-        bean.getRackScan().put(tubePosition[testIdx], badTubeBarcode);
+        bean.getRackScan().put("A01", badTubeBarcode);
         messageCollection.clearAll();
         mayoManifestEjb.validateAndScan(bean);
         Assert.assertTrue(messageCollection.getErrors().contains(
@@ -394,8 +388,11 @@ public class MayoManifestEjbTest extends Arquillian {
         pkgBean.setTrackingNumber("TRK" + testDigits);
         messageCollection.clearAll();
         mayoManifestEjb.lookupManifestSession(pkgBean);
-        mayoManifestEjb.receive(pkgBean);
         Assert.assertNotNull(pkgBean.getManifestSessionId());
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
+        messageCollection.clearAll();
+        mayoManifestEjb.receive(pkgBean);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
 
@@ -407,10 +404,11 @@ public class MayoManifestEjbTest extends Arquillian {
         bean.setRackScan(makeRackScan(cellGrid, rackBarcodes[0]));
         messageCollection.clearAll();
         mayoManifestEjb.receive(bean);
-        if (!messageCollection.hasErrors()) {
-	    messageCollection.clearAll();
-            mayoManifestEjb.accession(bean);
-        }
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
+        messageCollection.clearAll();
+        mayoManifestEjb.lookupManifestSession(bean);
+        mayoManifestEjb.accession(bean);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
         // Should be in Mercury now as rack, tubes, samples.
@@ -423,10 +421,11 @@ public class MayoManifestEjbTest extends Arquillian {
         bean.setRackScan(makeRackScan(cellGrid, rackBarcodes[1]));
         messageCollection.clearAll();
         mayoManifestEjb.receive(bean);
-        if (!messageCollection.hasErrors()) {
-	    messageCollection.clearAll();
-            mayoManifestEjb.accession(bean);
-        }
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
+        messageCollection.clearAll();
+        mayoManifestEjb.lookupManifestSession(bean);
+        mayoManifestEjb.accession(bean);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
         validateEntities(cellGrid, rackBarcodes[1], false);
@@ -448,10 +447,8 @@ public class MayoManifestEjbTest extends Arquillian {
         googleBucketDao.upload(filename, makeContent(cellGrid), messageCollection);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
-        Assert.assertTrue(CollectionUtils.isEmpty(manifestSessionDao.getSessionsByPrefix(
-                MayoSampleReceiptActionBean.getManifestKey(packageId))));
-        Assert.assertTrue(CollectionUtils.isEmpty(manifestSessionDao.getSessionsByPrefix(
-                MayoSampleReceiptActionBean.getManifestKey(rackBarcode))));
+        Assert.assertTrue(CollectionUtils.isEmpty(manifestSessionDao.getSessionsByPrefix(packageId)));
+        Assert.assertTrue(CollectionUtils.isEmpty(manifestSessionDao.getSessionsByVesselLabel(rackBarcode)));
 
         // Rack receipt is done before the package receipt. This represents a lab user mistake.
 
@@ -462,11 +459,12 @@ public class MayoManifestEjbTest extends Arquillian {
         messageCollection.clearAll();
         mayoManifestEjb.receive(bean);
         Assert.assertEquals(findSamplesInRack(bean.getRackBarcode()).size(), 0);
-        if (!messageCollection.hasErrors()) {
-            messageCollection.clearAll();
-            mayoManifestEjb.accession(bean);
-        }
-        // No errors, but a warning about the missing manifest should be given.
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
+        mayoManifestEjb.lookupManifestSession(bean);
+        messageCollection.clearAll();
+        mayoManifestEjb.accession(bean);
+        // A message about the missing manifest should be given.
         Assert.assertNull(bean.getManifestSessionId());
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertTrue(messageCollection.getWarnings().contains(
@@ -494,7 +492,7 @@ public class MayoManifestEjbTest extends Arquillian {
         bean.setRackBarcode(rackBarcode);
         bean.setRackScan(makeRackScan(cellGrid, rackBarcode));
         messageCollection.clearAll();
-	    messageCollection.clearAll();
+        mayoManifestEjb.lookupManifestSession(bean);
         mayoManifestEjb.accession(bean);
         List<String> samples = findSamplesInRack(bean.getRackBarcode());
         Assert.assertEquals(samples.size(), sampleCount);
@@ -505,10 +503,11 @@ public class MayoManifestEjbTest extends Arquillian {
     }
 
     private List<String> findSamplesInRack(String rackBarcode) {
-        Assert.assertNotNull(rackBarcode);
+        Assert.assertTrue(StringUtils.isNotBlank(rackBarcode));
         LabVessel vessel = labVesselDao.findByIdentifier(rackBarcode);
         Assert.assertTrue(vessel != null && OrmUtil.proxySafeIsInstance(vessel, RackOfTubes.class));
         RackOfTubes rack = OrmUtil.proxySafeCast(vessel, RackOfTubes.class);
+        Assert.assertTrue(CollectionUtils.isNotEmpty(rack.getTubeFormations()));
         return rack.getTubeFormations().iterator().next().
                 getContainerRole().getContainedVessels().stream().
                 flatMap(barcodedTube -> barcodedTube.getSampleNames().stream()).
@@ -559,10 +558,11 @@ public class MayoManifestEjbTest extends Arquillian {
         bean.setRackScan(makeRackScan(cellGrid, rackBarcode));
         messageCollection.clearAll();
         mayoManifestEjb.receive(bean);
-        if (!messageCollection.hasErrors()) {
-	    messageCollection.clearAll();
-            mayoManifestEjb.accession(bean);
-        }
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " ; "));
+        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), " ; "));
+        messageCollection.clearAll();
+        mayoManifestEjb.lookupManifestSession(bean);
+        mayoManifestEjb.accession(bean);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " ; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), " ; "));
         validateEntities(cellGrid, rackBarcode, false);
@@ -606,6 +606,7 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
 
         messageCollection.clearAll();
+        mayoManifestEjb.lookupManifestSession(bean);
         mayoManifestEjb.accession(bean);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
@@ -698,6 +699,7 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
 
         messageCollection.clearAll();
+        mayoManifestEjb.lookupManifestSession(bean);
         mayoManifestEjb.accession(bean);
         Assert.assertTrue(messageCollection.getErrors().contains(String.format(MayoManifestEjb.INVALID,
                 "manifest", packageId)), StringUtils.join(messageCollection.getErrors(), "; "));
@@ -809,41 +811,38 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertNotNull(rack.getJiraTickets());
         JiraTicket jiraTicket = rack.getJiraTickets().stream().
                 filter(t -> t.getTicketName().startsWith(CreateFields.ProjectType.RECEIPT_PROJECT.getKeyPrefix())).
-                sorted(Comparator.comparing(JiraTicket::getTicketName).reversed()).
-                findFirst().orElse(null);
+                max(Comparator.comparing(JiraTicket::getTicketName)).orElse(null);
         Assert.assertNotNull(jiraTicket, "Rack " + rack.getLabel());
-        JiraIssue jiraIssue = jiraService.getIssue(jiraTicket.getTicketId());
-        Assert.assertNotNull(jiraIssue, "Rack " + rack.getLabel() + " Ticket " + jiraTicket.getTicketId());
+        JiraIssue jiraIssue = jiraService.getIssue(jiraTicket.getTicketName());
+        Assert.assertNotNull(jiraIssue, "Rack " + rack.getLabel() + " Ticket " + jiraTicket.getTicketName());
         Assert.assertEquals(jiraIssue.getStatus(), receiptOnly ? "Received" : "Accessioned");
         Map<String, String> jiraFields = extractJiraFields(jiraService, jiraIssue, jiraTicket);
+        Assert.assertEquals(jiraIssue.getSummary(), rack.getLabel());
         if (receiptOnly) {
-            Assert.assertEquals(jiraIssue.getSummary(),
-                    String.format(MayoManifestEjb.QUARANTINED_RCT_TITLE, rack.getLabel()));
             Assert.assertNull(jiraFields.get("Samples"));
         } else {
-            Assert.assertEquals(jiraIssue.getSummary(), String.format(MayoManifestEjb.RCT_TITLE, rack.getLabel()));
             String expectedValue = materialTypes.stream().distinct().sorted().
                     map(type -> String.format("%d %s",
                             materialTypes.stream().filter(countedType -> countedType.equals(type)).count(), type)).
                     collect(Collectors.joining(", "));
             Assert.assertEquals(jiraFields.get("MaterialTypeCounts"), expectedValue,
-                    " Ticket " + jiraTicket.getTicketId());
+                    " Ticket " + jiraTicket.getTicketName());
             Assert.assertEquals(jiraFields.get("Samples"), sampleIds.stream().sorted().collect(Collectors.joining(" ")),
-                    " Ticket " + jiraTicket.getTicketId());
+                    " Ticket " + jiraTicket.getTicketName());
             Assert.assertTrue(StringUtils.isNotBlank(jiraFields.get("ShipmentCondition")),
-                    " Ticket " + jiraTicket.getTicketId());
+                    " Ticket " + jiraTicket.getTicketName());
             Assert.assertTrue(jiraFields.get("TrackingNumber").startsWith("Tk-"),
-                    " Ticket " + jiraTicket.getTicketId());
+                    " Ticket " + jiraTicket.getTicketName());
             Assert.assertTrue(jiraFields.get("RequestingPhysician").startsWith("Dr "),
-                    " Ticket " + jiraTicket.getTicketId());
+                    " Ticket " + jiraTicket.getTicketName());
             String deliveryMethod = jiraFields.get("KitDeliveryMethod");
             Assert.assertTrue(deliveryMethod == null || deliveryMethod.equals("FedEx") ||
-                    deliveryMethod.equals("Local Courier"),
-                    " Ticket " + jiraTicket.getTicketId() + " KitDeliveryMethod " + deliveryMethod);
+                            deliveryMethod.equals("Local Courier"),
+                    " Ticket " + jiraTicket.getTicketName() + " KitDeliveryMethod " + deliveryMethod);
             String receiptType = jiraFields.get("ReceiptType");
             Assert.assertTrue(receiptType == null || (receiptType.startsWith("Clinical ") &&
-                    (receiptType.endsWith("Genomes") || receiptType.endsWith("Exomes"))),
-                    " Ticket " + jiraTicket.getTicketId() + " ReceiptType " + receiptType);
+                            (receiptType.endsWith("Genomes") || receiptType.endsWith("Exomes"))),
+                    " Ticket " + jiraTicket.getTicketName() + " ReceiptType " + receiptType);
         }
     }
 
@@ -868,7 +867,7 @@ public class MayoManifestEjbTest extends Arquillian {
                         map(item -> ((Map) item).get("value")).
                         collect(Collectors.joining(", "));
             } else {
-                Assert.fail("Ticket " + jiraTicket.getTicketId() + " " + mapEntry.getKey() + " is unparsable.");
+                Assert.fail("Ticket " + jiraTicket.getTicketName() + " " + mapEntry.getKey() + " is unparsable.");
             }
             jiraFields.put(REVERSE_JIRA_DEFINITION_MAP.get(mapEntry.getKey()), value);
         }
@@ -877,7 +876,7 @@ public class MayoManifestEjbTest extends Arquillian {
 
     private byte[] makeContent (List<List<String>> cellGrid) {
         return cellGrid.stream().
-                map(list -> list.stream().collect(Collectors.joining(","))).
+                map(list -> String.join(",", list)).
                 collect(Collectors.joining("\n")).
                 getBytes();
     }

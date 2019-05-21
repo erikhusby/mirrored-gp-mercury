@@ -191,6 +191,7 @@ public class MayoSampleReceiptActionBean extends RackScanActionBean {
      */
     @HandlesEvent(REACCESSION_BTN)
     public Resolution reaccession() {
+        mayoManifestEjb.lookupManifestSession(this);
         mayoManifestEjb.accession(this);
         addMessages(messageCollection);
         return new ForwardResolution(MANIFEST_ADMIN_PAGE);

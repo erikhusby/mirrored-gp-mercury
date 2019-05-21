@@ -1,11 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
@@ -24,6 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormation
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket_;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestFile;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestFile_;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
@@ -74,16 +77,11 @@ public class MayoManifestEjb {
     public static final String NOT_A_RACK = "Rack %s matches an existing vessel but it is not a rack.";
     public static final String NOT_A_TUBE = "Tube %s matches an existing vessel but it is not a tube.";
     public static final String OVERWRITING = "Previously uploaded rack %s will be overwritten.";
-    public static final String RACK_NOT_IN_MANIFEST = "Manifest does not contain rack(s) %s.";
+    public static final String RACK_NOT_IN_MANIFEST = "Manifest %s does not contain rack(s) %s.";
     public static final String REACCESSIONED = "Samples have been re-accessioned: %s";
-    public static final String TUBE_NOT_IN_MANIFEST = "Some rack scan tubes are not in the manifest: %s";
-    public static final String TUBE_NOT_IN_RACKSCAN = "Some manifest tubes are not in the rack scan: %s";
     public static final String UNKNOWN_WELL = "Manifest contains unknown well position: %s.";
     public static final String UNKNOWN_WELL_SCAN = "Rack scan contains unknown well position: %s.";
-    public static final String WRONG_POSITION = "Tube %s has manifest position %s but rack scan position %s.";
-
-    public static final String RCT_TITLE = "Mayo rack %s";
-    public static final String QUARANTINED_RCT_TITLE = "Quarantined Mayo rack %s";
+    public static final String WRONG_TUBE_IN_POSITION = "Rack position %s has %s but manifest has %s.";
 
     public static final Map<String, CustomFieldDefinition> JIRA_DEFINITION_MAP =
             new HashMap<String, CustomFieldDefinition>() {{
@@ -202,19 +200,21 @@ public class MayoManifestEjb {
 
     public void receive(MayoPackageReceiptActionBean bean) {
         // Generates a warning if the manifest is missing.
-        if (bean.getManifestSessionId() == null) {
+        ManifestSession manifestSession = bean.getManifestSessionId() == null ? null :
+                manifestSessionDao.find(bean.getManifestSessionId());
+        if (manifestSession == null) {
             bean.getMessageCollection().addWarning(String.format(MayoManifestEjb.INVALID, "manifest",
                     bean.getPackageBarcode()));
         } else {
             // A received package is represented only by an RCT ticket.
             // Generates warnings if the manifest and the scanned rack barcodes do not match.
             Set<String> rackBarcodes = new HashSet<>(Arrays.asList(StringUtils.split(bean.getRackBarcodeString())));
-            Set<String> manifestBarcodes = manifestSessionDao.find(bean.getManifestSessionId()).getVesselLabels();
+            Set<String> manifestBarcodes = manifestSession.getVesselLabels();
             String unexpectedRacks = CollectionUtils.subtract(rackBarcodes, manifestBarcodes).stream().
                     sorted().collect(Collectors.joining(" "));
             if (StringUtils.isNotBlank(unexpectedRacks)) {
                 bean.getMessageCollection().addError(String.format(MayoManifestEjb.RACK_NOT_IN_MANIFEST,
-                        unexpectedRacks));
+                        manifestSession.getSessionName(), unexpectedRacks));
             }
             String missingRacks = CollectionUtils.subtract(manifestBarcodes, rackBarcodes).stream().
                     sorted().collect(Collectors.joining(" "));
@@ -223,9 +223,10 @@ public class MayoManifestEjb {
                         manifestBarcodes));
             }
         }
-        JiraTicket jiraTicket = makeOrUpdateRct(bean);
+        JiraTicket jiraTicket = makePackageRct(bean);
         if (jiraTicket != null) {
             bean.setRctUrl(jiraTicket.getBrowserUrl());
+            manifestSession.setReceiptTicket(jiraTicket.getTicketName());
             labVesselDao.persist(jiraTicket);
         }
     }
@@ -290,7 +291,7 @@ public class MayoManifestEjb {
         tubeFormation.addRackOfTubes(rack);
 
         // Makes a receipt-only ticket.
-        JiraTicket jiraTicket = makeOrUpdateRct(bean, null, null, null, null, null, null);
+        JiraTicket jiraTicket = makeRackRct(bean, rack, null, null, null, null, null);
         if (jiraTicket != null) {
             // Doesn't persist any entities if Jira fails.
             newEntities.add(jiraTicket);
@@ -305,7 +306,7 @@ public class MayoManifestEjb {
         ManifestSession manifestSession = bean.getManifestSessionId() == null ? null :
                 manifestSessionDao.find(bean.getManifestSessionId());
         if (manifestSession == null) {
-            bean.getMessageCollection().addWarning(INVALID, "manifest", bean.getManifestKey());
+            bean.getMessageCollection().addWarning(INVALID, "manifest", bean.getRackBarcode());
             return;
         }
         LabVessel vessel = bean.getRackBarcode() == null ? null : labVesselDao.findByIdentifier(bean.getRackBarcode());
@@ -330,32 +331,26 @@ public class MayoManifestEjb {
 
         List<ManifestRecord> manifestRecords = manifestSession.findRecordsByKey(rack.getLabel(), Metadata.Key.BOX_ID);
         if (CollectionUtils.isEmpty(manifestRecords)) {
-            bean.getMessageCollection().addError("Manifest " + manifestSession.getSessionName() + " (from file " +
-                    manifestSession.getManifestFile().getQualifiedFilename() + ") does not contain rack " +
+            bean.getMessageCollection().addError(RACK_NOT_IN_MANIFEST, manifestSession.getSessionName(),
                     rack.getLabel());
             return;
         }
 
         TubeFormation tubeFormation = rack.getTubeFormations().iterator().next();
-        // Uses the received rack's tubes and positions, not a rack scan.
-        Map<String, VesselPosition> tubeToPosition = tubeFormation.getContainerRole().getMapPositionToVessel().
+        Map<VesselPosition, String> rackPositions = tubeFormation.getContainerRole().getMapPositionToVessel().
                 entrySet().stream().
                 filter(mapEntry -> mapEntry.getValue() != null).
-                collect(Collectors.toMap(mapEntry -> mapEntry.getValue().getLabel(), mapEntry -> mapEntry.getKey()));
-
-        List<Object> newEntities = new ArrayList<>();
-        Map<String, BarcodedTube> tubeMap = new HashMap<>();
-        Map<String, MercurySample> sampleMap = new HashMap<>();
-        List<String> materialTypes = new ArrayList<>();
+                collect(Collectors.toMap(mapEntry -> mapEntry.getKey(), mapEntry -> mapEntry.getValue().getLabel()));
+        Map<VesselPosition, String> manifestPositions = new HashMap<>();
         Multimap<String, Metadata> sampleMetadata = HashMultimap.create();
-        Map<String, VesselPosition> manifestPositions = new HashMap<>();
         Map<String, String> sampleToTube = new HashMap<>();
         Map<String, String> tubeToSample = new HashMap<>();
+        List<String> materialTypes = new ArrayList<>();
         String packageBarcode = null;
         String trackingId = null;
 
         // Finds the manifest records for this rack.
-        for (ManifestRecord manifestRecord : manifestSession.findRecordsByKey(rack.getLabel(), Metadata.Key.BOX_ID)) {
+        for (ManifestRecord manifestRecord : manifestRecords) {
             // Uses the tube barcode for the MercurySample.sampleKey.
             String sampleName = manifestRecord.getValueByKey(Metadata.Key.BROAD_2D_BARCODE);
             sampleMetadata.putAll(sampleName, manifestRecord.getMetadata());
@@ -373,34 +368,38 @@ public class MayoManifestEjb {
             if (position == null) {
                 bean.getMessageCollection().addError(UNKNOWN_WELL, positionName);
             } else {
-                manifestPositions.put(tubeBarcode, position);
+                manifestPositions.put(position, tubeBarcode);
             }
             sampleToTube.put(sampleName, tubeBarcode);
             tubeToSample.put(tubeBarcode, sampleName);
         }
-        if (tubeToSample.isEmpty()) {
-            bean.getMessageCollection().addError(RACK_NOT_IN_MANIFEST, rack.getLabel());
-        }
+
         // The rack scan's tube barcodes and positions must match the manifest.
-        Set<String> tubeBarcodes = tubeToPosition.keySet();
-        if (!CollectionUtils.isEqualCollection(tubeBarcodes, manifestPositions.keySet())) {
-            String missingFromManifest = StringUtils.join(
-                    CollectionUtils.subtract(tubeBarcodes, manifestPositions.keySet()), " ");
-            if (StringUtils.isNotBlank(missingFromManifest)) {
-                bean.getMessageCollection().addError(TUBE_NOT_IN_MANIFEST, missingFromManifest);
+        Map<String, Pair<String, String>> mismatches = new HashMap<>();
+        rackPositions.entrySet().forEach(mapEntry -> {
+            VesselPosition rackPosition = mapEntry.getKey();
+            String rackTube = mapEntry.getValue();
+            String manifestTube = manifestPositions.get(rackPosition);
+            if (!Objects.equal(rackTube, manifestTube)) {
+                mismatches.put(rackPosition.name(), Pair.of(rackTube, manifestTube));
             }
-            String missingFromRackscan = StringUtils.join(
-                    CollectionUtils.subtract(manifestPositions.keySet(), tubeBarcodes), " ");
-            if (StringUtils.isNotBlank(missingFromRackscan)) {
-                bean.getMessageCollection().addError(TUBE_NOT_IN_RACKSCAN, missingFromRackscan);
-            }
-        } else {
-            tubeBarcodes.stream().
-                    filter(tube -> !tubeToPosition.get(tube).equals(manifestPositions.get(tube))).
-                    forEachOrdered(tube -> bean.getMessageCollection().addError(WRONG_POSITION, tube,
-                            manifestPositions.get(tube), tubeToPosition.get(tube)));
-        }
-        // Creates or updates samples. It's all-or-nothing depending on manifest errors.
+        });
+        CollectionUtils.subtract(manifestPositions.keySet(), rackPositions.keySet()).forEach(manifestPosition -> {
+            String manifestTube = manifestPositions.get(manifestPosition);
+            mismatches.put(manifestPosition.name(), Pair.of(null, manifestTube));
+        });
+        mismatches.keySet().stream().sorted().forEach(position -> {
+            String rackTube = mismatches.get(position).getLeft();
+            String manifestTube = mismatches.get(position).getRight();
+            bean.getMessageCollection().addError(WRONG_TUBE_IN_POSITION, position,
+                    StringUtils.isBlank(rackTube) ? "no tube" : rackTube,
+                    StringUtils.isBlank(manifestTube) ? "no tube" : manifestTube);
+        });
+
+        // Creates or updates samples. Does not do partial accessioning; either the whole rack or none.
+        Map<String, MercurySample> sampleMap = new HashMap<>();
+        Map<String, BarcodedTube> tubeMap = new HashMap<>();
+        List<Object> newEntities = new ArrayList<>();
         if (!bean.getMessageCollection().hasErrors() && !sampleToTube.isEmpty()) {
             sampleMap = mercurySampleDao.findMapIdToMercurySample(sampleMetadata.keySet());
             for (String sampleName : sampleMetadata.keySet()) {
@@ -429,7 +428,7 @@ public class MayoManifestEjb {
             }
         }
 
-        JiraTicket jiraTicket = makeOrUpdateRct(bean, rack, tubeMap.keySet(), sampleMap.keySet(),
+        JiraTicket jiraTicket = makeRackRct(bean, rack, tubeMap.keySet(), sampleMap.keySet(),
                 materialTypes, packageBarcode, trackingId);
         if (jiraTicket != null) {
             // Doesn't persist any entities if Jira fails.
@@ -514,7 +513,7 @@ public class MayoManifestEjb {
      * The bean is updated with the result.
      */
     public void lookupManifestSession(MayoPackageReceiptActionBean bean) {
-        ManifestSession manifestSession = null;
+        ManifestSession manifestSession;
         assert(StringUtils.isNotBlank(bean.getPackageBarcode()));
         // If manifest(s) already exist, pick the most recent one.
         manifestSession = manifestSessionDao.getSessionsByPrefix(bean.getPackageBarcode()).stream().
@@ -634,7 +633,8 @@ public class MayoManifestEjb {
         return manifestSessionDao.findSingle(ManifestFile.class, ManifestFile_.qualifiedFilename, qualifiedFilename);
     }
 
-    private JiraTicket makeOrUpdateRct(MayoPackageReceiptActionBean bean) {
+    /** Makes a new RCT in Jira for the Mayo package. */
+    private JiraTicket makePackageRct(MayoPackageReceiptActionBean bean) {
         String title = bean.getPackageBarcode();
         CustomField titleField = new CustomField(new CustomFieldDefinition("summary", "Summary", true), title);
 
@@ -648,20 +648,35 @@ public class MayoManifestEjb {
             // todo emp change to "Racks" when Jira field is added.
             add(new CustomField(JIRA_DEFINITION_MAP.get("Samples"), bean.getRackCount() + " Racks: " +
                     bean.getRackBarcodeString()));
+            add(new CustomField(JIRA_DEFINITION_MAP.get("MaterialTypeCounts"), " "));
+            add(new CustomField(JIRA_DEFINITION_MAP.get("RequestingPhysician"), " "));
         }};
 
+        JiraTicket jiraTicket = null;
+        JiraIssue jiraIssue;
         try {
-            JiraIssue jiraIssue = jiraService.createIssue(CreateFields.ProjectType.RECEIPT_PROJECT,
-                    userBean.getLoginUserName(), CreateFields.IssueType.RECEIPT, title, customFieldList);
-            // Re-writes the RCT title which for some reason gets ignored in createIssue.
-            jiraService.updateIssue(jiraIssue.getKey(), Collections.singleton(titleField));
-            JiraTicket jiraTicket = new JiraTicket(jiraService, jiraIssue.getKey());
-            bean.setRctUrl(jiraTicket.getBrowserUrl());
+            ManifestSession manifestSession = bean.getManifestSessionId() == null ? null :
+                    manifestSessionDao.find(bean.getManifestSessionId());
+            if (manifestSession == null || StringUtils.isBlank(manifestSession.getReceiptTicket())) {
+                jiraTicket = labVesselDao.findSingle(JiraTicket.class, JiraTicket_.ticketId,
+                        manifestSession.getReceiptTicket());
+            }
+            if (jiraTicket == null) {
+                jiraIssue = jiraService.createIssue(CreateFields.ProjectType.RECEIPT_PROJECT,
+                        userBean.getLoginUserName(), CreateFields.IssueType.RECEIPT, title, customFieldList);
+                // Re-writes the RCT title which for some reason gets ignored in createIssue.
+                jiraService.updateIssue(jiraIssue.getKey(), Collections.singleton(titleField));
+                jiraTicket = new JiraTicket(jiraService, jiraIssue.getKey());
+            } else {
+                // If a reference to a previous RCT exists, updates the RCT. There won't be a reference if a
+                // previous RCT was made without a manifest. That RCT just gets abandoned and a new one is made.
+                jiraIssue = jiraService.getIssue(manifestSession.getReceiptTicket());
+                customFieldList.add(titleField);
+                jiraService.updateIssue(jiraIssue.getKey(), customFieldList);
+            }
 
-            // Writes a comment and transition that depends on if samples are known.
-            boolean isQuarantined = StringUtils.isNotBlank(bean.getQuarantineReason()) &&
-                    bean.getManifestSessionId() == null;
-            if (isQuarantined) {
+            // Writes a comment if there was some error.
+            if (StringUtils.isNotBlank(bean.getQuarantineReason()) && bean.getManifestSessionId() == null) {
                 String comment = "Quarantine reason: ";
                 if (StringUtils.isNotBlank(bean.getQuarantineReason())) {
                     comment += bean.getQuarantineReason();
@@ -683,7 +698,7 @@ public class MayoManifestEjb {
         }
     }
 
-    private JiraTicket makeOrUpdateRct(MayoSampleReceiptActionBean bean, @Nullable RackOfTubes rack,
+    private JiraTicket makeRackRct(MayoSampleReceiptActionBean bean, @NotNull RackOfTubes rack,
             @Nullable Collection<String> tubes, @Nullable Collection<String> samples,
             @Nullable List<String> materialTypes, @Nullable String packageId, @Nullable String trackingNumber) {
 
@@ -700,24 +715,22 @@ public class MayoManifestEjb {
         CustomField titleField = new CustomField(new CustomFieldDefinition("summary", "Summary", true), title);
 
         List<CustomField> customFieldList = new ArrayList<CustomField>() {{
-            if (CollectionUtils.isNotEmpty(materialTypes)) {
-                add(new CustomField(JIRA_DEFINITION_MAP.get("MaterialTypeCounts"), materialTypes.isEmpty() ?
-                        (tubeBarcodes.size() + " unknown type") :
-                        // Counts each type of material, then for each material type grouping makes a string
-                        // of the count and the material type, e.g. "3 Fresh Frozen Blood, 2 Dried Blood"
-                        materialTypes.stream().
-                                collect(Collectors.groupingBy(Function.identity(), Collectors.counting())).
-                                entrySet().stream().
-                                sorted(Comparator.comparing(Map.Entry<String, Long>::getKey)).
-                                map(mapEntry -> String.format("%d %s", mapEntry.getValue(), mapEntry.getKey())).
-                                collect(Collectors.joining(", "))));
-            }
+            add(new CustomField(JIRA_DEFINITION_MAP.get("MaterialTypeCounts"), CollectionUtils.isEmpty(materialTypes) ?
+                    (tubeBarcodes.size() + " unknown type") :
+                    // Counts each type of material, then for each material type grouping makes a string
+                    // of the count and the material type, e.g. "3 Fresh Frozen Blood, 2 Dried Blood"
+                    materialTypes.stream().
+                            collect(Collectors.groupingBy(Function.identity(), Collectors.counting())).
+                            entrySet().stream().
+                            sorted(Comparator.comparing(Map.Entry<String, Long>::getKey)).
+                            map(mapEntry -> String.format("%d %s", mapEntry.getValue(), mapEntry.getKey())).
+                            collect(Collectors.joining(", "))));
             if (isAccessioned) {
                 add(new CustomField(JIRA_DEFINITION_MAP.get("Samples"), StringUtils.join(sampleNames, " ")));
             }
-            if (StringUtils.isNotBlank(trackingNumber)) {
-                add(new CustomField(JIRA_DEFINITION_MAP.get("TrackingNumber"), trackingNumber));
-            }
+            add(new CustomField(JIRA_DEFINITION_MAP.get("TrackingNumber"), StringUtils.trimToEmpty(trackingNumber)));
+            add(new CustomField(JIRA_DEFINITION_MAP.get("ShipmentCondition"), " "));
+            add(new CustomField(JIRA_DEFINITION_MAP.get("RequestingPhysician"), " "));
         }};
 
         JiraTicket jiraTicket = null;
@@ -745,7 +758,7 @@ public class MayoManifestEjb {
             } else {
                 // Updates the existing ticket.
                 isUpdate = true;
-                jiraIssue = jiraService.getIssue(jiraTicket.getTicketId());
+                jiraIssue = jiraService.getIssue(jiraTicket.getTicketName());
                 issueStatus = jiraIssue.getStatus();
                 customFieldList.add(titleField);
                 jiraService.updateIssue(jiraIssue.getKey(), customFieldList);
