@@ -259,12 +259,14 @@ public class ReceiveSamplesEjb {
                             .stream().collect(Collectors.toMap(SampleKitReceivedBean.TubeTypePerSample::getSampleId,
                                     SampleKitReceivedBean.TubeTypePerSample::getTubeType));
                     List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
+                    List<String> sampleBarcodesReceived = new ArrayList<>();
                     for (SampleKitReceivedBean.SampleBarcodes barcodes : kit.getSampleBarcodes()) {
+                        sampleBarcodesReceived.add(barcodes.getSampleBarcode());
                         String tubeType = sampleToType.get(barcodes.getSampleBarcode());
                         parentVesselBeans.add(new ParentVesselBean(null, barcodes.getSampleBarcode(), tubeType,null));
                     }
 
-                    addToPicoQueueIfNecessary(kit.getSamples(), messageCollection);
+                    addToPicoQueueIfNecessary(sampleBarcodesReceived, messageCollection);
 
                     SampleReceiptBean sampleReceiptBean = new SampleReceiptBean(new Date(), kit.getKitId(),
                             parentVesselBeans, bspUser.getUsername());

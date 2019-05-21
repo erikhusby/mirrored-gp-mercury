@@ -25,7 +25,7 @@
             <tr>
                 <th>Tube Vessel Barcode</th><th>Sample ID</th><th>Mercury Storage Location</th>
                 <th>BSP Storage Location</th><th>Collection</th><th>Sample Data Source System</th><th>Queue Status</th>
-                <th>Completed On</th><th>Completed By</th>
+                <th>Completed On</th>
             </tr>
             </thead>
             <tbody>
@@ -41,7 +41,6 @@
                     <td>${actionBean.labVesselIdToMercurySample[queueEntity.labVessel.labVesselId].metadataSource.displayName}</td>
                     <td>${queueEntity.queueStatus.name}</td>
                     <td>${queueEntity.completedOn}</td>
-                    <td>${actionBean.userIdToUsername[queueEntity.completedBy].fullName}</td>
                 </tr>
             </c:forEach>
             </tbody>

@@ -11,13 +11,21 @@
 
 package org.broadinstitute.gpinformatics.mercury;
 
+import org.broadinstitute.bsp.client.queue.CompletedSamples;
+import org.broadinstitute.bsp.client.response.ExomeExpressCheckResponse;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJaxRsClientService;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * This contains common code used by all clients of BSP rest, ie: non-broadcore) services.
@@ -31,14 +39,14 @@ public class BSPRestClient extends AbstractJaxRsClientService {
 
     private static final long serialVersionUID = 5472586820069306030L;
 
-    private static final Log logger = LogFactory.getLog(BSPRestClient.class);
-
     @Inject
     private BSPConfig bspConfig;
 
+    @SuppressWarnings("unused")
     public BSPRestClient() {
     }
 
+    @SuppressWarnings("unused")
     public BSPRestClient(BSPConfig bspConfig) {
         this.bspConfig = bspConfig;
     }
@@ -61,23 +69,24 @@ public class BSPRestClient extends AbstractJaxRsClientService {
     }
 
     public ExomeExpressCheckResponse callExomeExpressCheck(List<String> barcodes) {
-        WebResource webResource = getWebResource(getUrl(EXOMEEXPRESS_CHECK_IS_EXEX));
-        webResource.addFilter(new LoggingFilter(System.out));
-        return webResource.type(MediaType.APPLICATION_JSON).post(ExomeExpressCheckResponse.class, new ListWrapper(barcodes));
+        WebTarget webResource = getJaxRsClient().target(getUrl(EXOMEEXPRESS_CHECK_IS_EXEX));
+        Response post = webResource.request().post(Entity.entity(new ListWrapper(barcodes), MediaType.APPLICATION_JSON_TYPE));
+        return post.readEntity(ExomeExpressCheckResponse.class);
     }
 
     public void informUsersOfPicoCompletion(List<String> sampleIds) {
-        WebResource webResource = getWebResource(getUrl(SEND_PICO_MESSAGE));
-        webResource.type(MediaType.APPLICATION_JSON_TYPE).post(String.class, new CompletedSamples(sampleIds));
+        WebTarget webResource = getJaxRsClient().target(getUrl(SEND_PICO_MESSAGE));
+        webResource.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.entity(new CompletedSamples(sampleIds), MediaType.APPLICATION_JSON_TYPE));
     }
 
     @XmlRootElement
     public static class ListWrapper {
+        @SuppressWarnings("unused")
         public ListWrapper() {
             this(Collections.emptyList());
         }
 
-        public ListWrapper(List<String> list) {
+        ListWrapper(List<String> list) {
             this.list = list.toArray(new String[0]);
         }
 

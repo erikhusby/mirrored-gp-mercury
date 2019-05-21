@@ -214,10 +214,22 @@ public class SampleDataFetcher implements Serializable {
         Map<String, MercurySample> sampleMap = mercurySampleDao.findMapIdToMercurySample(sampleNames);
         sampleNames.stream().forEach(sampleName -> {
             MercurySample mercurySample = sampleMap.get(sampleName);
+
             if (mercurySample == null || mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
                 bsp.add(sampleName);
             } else {
-                mercury.add(mercurySample);
+                switch (mercurySample.getMetadataSource()) {
+                    case CRSP_PORTAL:
+                    case MERCURY:
+                        mercury.add(mercurySample);
+                        break;
+                    case BSP:
+                        bsp.add(sampleName);
+                        break;
+                    default:
+                        throw new IllegalStateException(
+                                String.format("Unknown sample data source %s for sample %s", mercurySample.getMetadataSource(), sampleName));
+                }
             }
         });
         return Pair.of(mercury, bsp);
@@ -229,31 +241,6 @@ public class SampleDataFetcher implements Serializable {
      */
     public Map<String, GetSampleDetails.SampleInfo> fetchSampleDetailsByBarcode(@Nonnull Collection<String> barcodes) {
         return bspSampleDataFetcher.fetchSampleDetailsByBarcode(barcodes);
-    }
-
-    private void buildSampleCollectionsBySource(Collection<String> aliquotIds,
-                                                Collection<MercurySample> mercurySamplesWithMercurySource,
-                                                Collection<String> sampleIdsWithBspSource) {
-        Map<String, MercurySample> allMercurySamples = mercurySampleDao.findMapIdToMercurySample(aliquotIds);
-        Map<String, MercurySample.MetadataSource> sourceBySampleId =
-                sampleDataSourceResolver.resolve(aliquotIds, allMercurySamples);
-        for (Map.Entry<String, MercurySample.MetadataSource> entry : sourceBySampleId.entrySet()) {
-            String sampleId = entry.getKey();
-            MercurySample.MetadataSource metadataSource = entry.getValue();
-
-            switch (metadataSource) {
-            case CRSP_PORTAL:
-            case MERCURY:
-                mercurySamplesWithMercurySource.add(allMercurySamples.get(sampleId));
-                break;
-            case BSP:
-                sampleIdsWithBspSource.add(sampleId);
-                break;
-            default:
-                throw new IllegalStateException(
-                        String.format("Unknown sample data source %s for sample %s", metadataSource, sampleId));
-            }
-        }
     }
 
     /**

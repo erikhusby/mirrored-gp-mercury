@@ -17,12 +17,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Logic for overriding default handling for enqueueing for the Pico Queue.
@@ -107,7 +105,7 @@ public class PicoEnqueueOverride extends AbstractEnqueueOverride {
             if (!barcodes.isEmpty()) {
                 ExomeExpressCheckResponse response = bspRestClientImpl.callExomeExpressCheck(barcodes);
 
-                if (response.containsAnyExomeExpressSamples()) {
+                if (response != null && response.containsAnyExomeExpressSamples()) {
                     queuePriority = QueuePriority.EXOME_EXPRESS;
                 }
             }

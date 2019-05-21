@@ -197,4 +197,14 @@ public class QueueGrouping {
     public void setQueueSpecialization(QueueSpecialization queueSpecialization) {
         this.queueSpecialization = queueSpecialization;
     }
+
+    public long getRemainingEntities() {
+        int remainingEntities = 0;
+        for (QueueEntity queueEntity : getQueuedEntities()) {
+            if (queueEntity.getQueueStatus() != QueueStatus.Completed) {
+                remainingEntities++;
+            }
+        }
+        return remainingEntities;
+    }
 }

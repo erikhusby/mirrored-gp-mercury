@@ -41,9 +41,6 @@ public class QueueEntity {
     @ManyToOne(targetEntity = LabVessel.class)
     private LabVessel labVessel;
 
-    @Column(name = "completed_by")
-    private Long completedBy;
-
     @Column(name = "completed_on")
     private Date completedOn;
 
@@ -86,14 +83,6 @@ public class QueueEntity {
 
     public void setLabVessel(LabVessel labVessel) {
         this.labVessel = labVessel;
-    }
-
-    public Long getCompletedBy() {
-        return completedBy;
-    }
-
-    public void setCompletedBy(Long completedBy) {
-        this.completedBy = completedBy;
     }
 
     public Date getCompletedOn() {

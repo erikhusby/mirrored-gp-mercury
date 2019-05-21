@@ -12,7 +12,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.util.MessageCollection;
-import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -30,7 +29,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueuePriority;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueSpecialization;
-import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueStatus;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -122,8 +120,8 @@ public class QueueActionBean extends CoreActionBean {
 
                         totalInQueue++;
                         entitiesInQueueByPriority.put(queuePriority, entitiesInQueueByPriority.get(queuePriority) + 1);
-                        remainingEntities.put(queueGrouping.getQueueGroupingId(),
-                                remainingEntities.get(queueGrouping.getQueueGroupingId()) + 1);
+                        remainingEntities.put(grouping.getQueueGroupingId(),
+                                remainingEntities.get(grouping.getQueueGroupingId()) + 1);
                         break;
                     default:
                 }
@@ -149,9 +147,6 @@ public class QueueActionBean extends CoreActionBean {
         labVesselIdToSampleId = new HashMap<>();
         labVesselIdToMercurySample = new HashMap<>();
         for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
-            if (queueEntity.getCompletedBy() != null) {
-                userIds.add(queueEntity.getCompletedBy());
-            }
             labVessels.add(queueEntity.getLabVessel());
         }
 
