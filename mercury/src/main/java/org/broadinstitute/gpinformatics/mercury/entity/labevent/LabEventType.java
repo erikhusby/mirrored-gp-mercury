@@ -990,7 +990,7 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED, TranslateBspMessage.SECTION_TO_CHERRY),
-    TENX_EXTRACTION_SILINE_CLEANUP("10XExtractionSilineCleanup",
+    TENX_EXTRACTION_SILANE_CLEANUP("10XExtractionSilaneCleanup",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),

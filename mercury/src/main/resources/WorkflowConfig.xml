@@ -4215,9 +4215,9 @@
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Siline Cleanup</name>
-                <labEventTypes>TENX_EXTRACTION_SILINE_CLEANUP</labEventTypes>
-                <workflowQualifier>TENX_EXTRACTION_SILINE_CLEANUP</workflowQualifier>
+                <name>Silane Cleanup</name>
+                <labEventTypes>TENX_EXTRACTION_SILANE_CLEANUP</labEventTypes>
+                <workflowQualifier>TENX_EXTRACTION_SILANE_CLEANUP</workflowQualifier>
                 <instructions>
                     Scan in source plate (consolidated plate) and final plate (&quot;cDNA&quot; plate).
                 </instructions>
@@ -4230,9 +4230,9 @@
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>cDNA Amplification</name>
-                <labEventTypes>TENX_EXTRACTION_CDNA_AMPLIFICATION</labEventTypes>
-                <workflowQualifier>TENX_EXTRACTION_CDNA_AMPLIFICATION</workflowQualifier>
+                <name>cDNA Cleanup</name>
+                <labEventTypes>TENX_EXTRACTION_CDNA_CLEANUP</labEventTypes>
+                <workflowQualifier>TENX_EXTRACTION_CDNA_CLEANUP</workflowQualifier>
                 <instructions>
                     Scan in source barcode (&quot;cDNA Amp&quot; plate) and scan in new matrix rack (&quot;cDNA&quot; rack) barcodes and tube IDs
                 </instructions>
