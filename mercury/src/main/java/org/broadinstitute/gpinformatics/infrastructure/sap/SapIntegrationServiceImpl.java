@@ -345,7 +345,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         } else {
             for (ProductOrderAddOn productOrderAddOn : placedOrder.getAddOns()) {
                 final ProductOrderAddOnPriceAdjustment singleCustomPriceAdjustment = productOrderAddOn.getSingleCustomPriceAdjustment();
-                if (productOrderAddOn.getAddOn().equals(product)) {
+                final Product addOn = productOrderAddOn.getAddOn();
+                if (addOn.equals(product)) {
                     if (singleCustomPriceAdjustment != null &&
                         singleCustomPriceAdjustment.hasPriceAdjustment()) {
                         if (singleCustomPriceAdjustment.getAdjustmentValue() != null) {
@@ -366,6 +367,12 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                         }
                     }
                 }
+            }
+        }
+        if(StringUtils.isBlank(sapOrderItem.getProductAlias())) {
+            if (placedOrder.getOrderType() == ProductOrder.OrderAccessType.COMMERCIAL &&
+                StringUtils.isNotBlank(product.getAlternateExternalName())) {
+                sapOrderItem.setProductAlias(product.getAlternateExternalName());
             }
         }
     }
