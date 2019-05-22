@@ -1887,10 +1887,14 @@ nodePrinter.print(webapp)
             <version>2.16.0</version>
         </dependency>
 -->
+        <!--
+        Use the following command to store picard-private.jar in prodinfosvn, get the version from https://github.com/broadinstitute/picard-private/releases
+        ~releng/mvndeployfile.groovy /seq/software/picard/current/bin/picard-private.jar org.broadinstitute picard-private-all 1.1408
+        -->
         <dependency>
             <groupId>org.broadinstitute</groupId>
             <artifactId>picard-private-all</artifactId>
-            <version>21e938027233911b1eaa0a2ffc94efc817c14489</version>
+            <version>1.1408</version>
         </dependency>
 
         <dependency>
