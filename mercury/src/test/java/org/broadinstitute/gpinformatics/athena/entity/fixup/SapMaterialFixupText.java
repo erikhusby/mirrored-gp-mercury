@@ -100,7 +100,8 @@ public class SapMaterialFixupText extends Arquillian {
 
         List<Product> onlyDisabledProducts = allProductsByPartNumberValidity.get(true)
                 .stream()
-                .filter(product -> !partNumbersByPartNumberValidity.get(true).contains(product))
+                .filter(product -> !partNumbersByPartNumberValidity.get(true).contains(product) &&
+                                   (product.isClinicalProduct() || product.isExternalProduct()))
                 .collect(Collectors.toList());
 
         productEjb.publishProductsToSAP(onlyDisabledProducts, false, true);
