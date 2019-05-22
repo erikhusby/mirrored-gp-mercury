@@ -94,8 +94,8 @@ public class ConcordanceCalculator {
             downloadGenotypes.OUTPUT = fpFile;
             downloadGenotypes.SAMPLE_ALIAS = sampleKey;
 
-            List<DownloadGenotypes.SnpGenotype> snpGenotypes = DownloadGenotypes.mercuryResultsToGenotypes(
-                    fingerprints, haplotypes, 0.0);
+            List<DownloadGenotypes.SnpGenotype> snpGenotypes = DownloadGenotypes.mercuryResultsToGenotypes( 
+                    fingerprints, haplotypes, null, null, 0.0);
             List<DownloadGenotypes.SnpGenotype> consistentGenotypes = DownloadGenotypes.cleanupGenotypes(snpGenotypes,
                     haplotypes);
             SequenceUtil.assertSequenceDictionariesEqual(ref.getSequenceDictionary(),
