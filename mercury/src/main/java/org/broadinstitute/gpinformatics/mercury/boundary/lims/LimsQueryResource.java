@@ -6,11 +6,21 @@ import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
 import edu.mit.broad.prodinfo.thrift.lims.PlateTransfer;
 import edu.mit.broad.prodinfo.thrift.lims.PoolGroup;
 import edu.mit.broad.prodinfo.thrift.lims.WellAndSourceTube;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.Strings;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
+import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
@@ -19,6 +29,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
@@ -45,9 +57,15 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -56,12 +74,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.zip.GZIPInputStream;
 
 /**
  * @author breilly
  */
 @Path("/limsQuery")
 public class LimsQueryResource {
+
+    private static final Log log = LogFactory.getLog(LimsQueryResource.class);
 
     @Inject
     private ThriftService thriftService;
@@ -89,6 +110,15 @@ public class LimsQueryResource {
 
     @Inject
     private WorkflowValidator workflowValidator;
+
+    @Inject
+    private ProductEjb productEjb;
+
+    @Inject
+    private AttributeArchetypeDao attributeArchetypeDao;
+
+    @Inject
+    private InfiniumStarterConfig infiniumStarterConfig;
 
     public LimsQueryResource() {
     }
@@ -605,5 +635,139 @@ public class LimsQueryResource {
     @Path("/fetchProductInfoForTubeBarcodes")
     public List<ProductInfosType> fetchProductInfoForTubeBarcodes(@QueryParam("q") List<String> tubeBarcodes) {
         return limsQueries.fetchProductInfoForTubeBarcodes(tubeBarcodes);
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/verifyChipTypes")
+    public boolean verifyChipTypes(@QueryParam("plateBarcode") String plateBarcode, @QueryParam("chip") List<String> chips) {
+
+        List<String> fileOutput;
+        String fileChipType;
+
+        LabVessel labVessel = labVesselDao.findByIdentifier(plateBarcode);
+        if (labVessel == null) {
+            throw new ResourceException("Failed to find Sample Plate" + plateBarcode,
+                    Response.Status.INTERNAL_SERVER_ERROR);
+        }
+
+        GenotypingChip chipType = null;
+        for (SampleInstanceV2 sampleInstanceV2: labVessel.getSampleInstancesV2()) {
+            ProductOrderSample pdoSampleForSingleBucket = sampleInstanceV2.getProductOrderSampleForSingleBucket();
+            if (pdoSampleForSingleBucket == null) {
+                for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
+                    chipType = findChipType(productOrderSample.getProductOrder(), new Date());
+                    // this may be NA12878, so continue looping, and hope to find a non-null single bucket
+                }
+            } else {
+                chipType = findChipType(pdoSampleForSingleBucket.getProductOrder(), new Date());
+                if (chipType != null) {
+                    break;
+                }
+            }
+        }
+
+        if (chipType == null) {
+            throw new ResourceException("Found no array product orders ", Response.Status.INTERNAL_SERVER_ERROR);
+        }
+        String PDOChipType = chipType.getChipName();
+        List<String> PDOChipTypeList = parseChipName(PDOChipType);
+
+        String dataPathStr = infiniumStarterConfig.getDecodeDataPath();
+        File dataPath = new File(dataPathStr);
+
+        for (String chip: chips) {
+            String fileName = String.format("%s_R01C01_01.dmap.gz", chip);
+            File targetFolder = new File(dataPath, chip);
+            File targetFile = new File(targetFolder, fileName);
+            if (!targetFile.exists()){
+                StringBuilder retryFileName = new StringBuilder(fileName).deleteCharAt(fileName.length() - 10);
+                targetFile = new File(targetFolder, retryFileName.toString());
+                if (!targetFile.exists()){
+                    throw new ResourceException("Failed to find target DMAP File " + targetFile,
+                            Response.Status.INTERNAL_SERVER_ERROR);
+                }
+            }
+
+            GZIPInputStream DMAP = null;
+            try {
+                DMAP = createReader(targetFile, "Cp1252");
+            }
+            catch (IOException e) {
+                log.error("Failed to unzip file", e);
+            }
+            finally {
+                if (DMAP == null) {
+                    throw new ResourceException("Failed to unzip DMAP File " + targetFile,
+                            Response.Status.INTERNAL_SERVER_ERROR);
+                }
+            }
+
+            fileOutput = Strings.process(DMAP);
+            if (fileOutput == null){
+                throw new ResourceException("Failed to parse DMAP File " + targetFile,
+                        Response.Status.INTERNAL_SERVER_ERROR);
+            } else if (fileOutput.size() < 4){
+                throw new ResourceException("Unexpected DMAP File output size " + fileOutput.size(),
+                        Response.Status.INTERNAL_SERVER_ERROR);
+            }
+
+            fileChipType = fileOutput.get(4);
+
+            for (String PDOKeyword:PDOChipTypeList){
+                if (PDOKeyword.length() > 3){
+                    if (fileChipType.contains(PDOKeyword)){
+                        return true;
+                    }
+                }
+            }
+
+        }
+        return false;
+    }
+
+    private GenotypingChip findChipType(ProductOrder productOrder, Date effectiveDate) {
+        GenotypingChip chip = null;
+        Pair<String, String> chipFamilyAndName = productEjb.getGenotypingChip(productOrder,
+                effectiveDate);
+        if (chipFamilyAndName.getLeft() != null && chipFamilyAndName.getRight() != null) {
+            chip = attributeArchetypeDao.findGenotypingChip(chipFamilyAndName.getLeft(),
+                    chipFamilyAndName.getRight());
+            if (chip == null) {
+                throw new ResourceException("Chip " + chipFamilyAndName.getRight() + " is not configured",
+                        Response.Status.INTERNAL_SERVER_ERROR);
+            }
+        }
+        return chip;
+    }
+
+    private static GZIPInputStream createReader(File f, String encoding) throws IOException {
+
+        try {
+            InputStream in = new FileInputStream(f);
+            if (f.getName ().endsWith (".gz")) {
+                return new GZIPInputStream(in, 10240);
+            }
+        }
+        catch (UnsupportedEncodingException e) {
+            throw new RuntimeException("Missing encoding "+encoding, e);
+        }
+        return null;
+    }
+
+    private List<String> parseChipName(String name){
+
+        List<String> phrases;
+        if (name.contains("-")||name.contains("_")){
+            phrases = Arrays.asList(name.split("\\s*_\\s*|\\s*-\\s*"));
+        }
+        else {
+            phrases = Collections.singletonList(name);
+        }
+        return phrases;
+    }
+
+    public void setInfiniumStarterConfig(InfiniumStarterConfig infiniumStarterConfig) {
+        this.infiniumStarterConfig = infiniumStarterConfig;
     }
 }

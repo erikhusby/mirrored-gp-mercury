@@ -26,6 +26,7 @@ import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Displays the workflow for a batch, with matched events.
@@ -89,6 +90,7 @@ public class BatchWorkflowActionBean extends CoreActionBean {
     @Inject
     private WorkflowMatcher workflowMatcher;
     private List<WorkflowMatcher.WorkflowEvent> workflowEvents;
+    private WorkflowMatcher.WorkflowEvent expectedWorkflowEvent;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -110,6 +112,12 @@ public class BatchWorkflowActionBean extends CoreActionBean {
         // Set relationship between steps and process
         effectiveWorkflowDef.buildLabEventGraph();
         workflowEvents = workflowMatcher.match(effectiveWorkflowDef, labBatch);
+        Optional<WorkflowMatcher.WorkflowEvent> expectedEventOpt = workflowEvents.stream()
+                .filter(events -> events.getLabEvents() == null)
+                .findFirst();
+        if (expectedEventOpt.isPresent()) {
+            expectedWorkflowEvent = expectedEventOpt.get();
+        }
     }
 
     @HandlesEvent(BATCH_EVENT_ACTION)
@@ -270,5 +278,13 @@ public class BatchWorkflowActionBean extends CoreActionBean {
 
     public void setAnchorIndex(Integer anchorIndex) {
         this.anchorIndex = anchorIndex;
+    }
+
+    public WorkflowMatcher.WorkflowEvent getExpectedWorkflowEvent() {
+        return expectedWorkflowEvent;
+    }
+
+    public void setExpectedWorkflowEvent(WorkflowMatcher.WorkflowEvent expectedWorkflowEvent) {
+        this.expectedWorkflowEvent = expectedWorkflowEvent;
     }
 }
