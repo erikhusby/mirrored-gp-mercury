@@ -384,10 +384,10 @@ public class ConfigurableSearchDao extends GenericDao {
             // The value conversion expression may decide to remove the value, e.g.
             // Search across projects = Yes, means don't include project in search
             return null;
-        } else if (searchValue.getSearchTerm().getInClause() != null) {
+        } else if (searchValue.getSearchTerm().getExternalDataExpression() != null) {
             // todo jmt push values to a temp table, to avoid Oracle 32K limit and avoid polluting statement cache with constants
             criterion = createInCriterion(searchValue,
-                    searchValue.getSearchTerm().getInClause().generate(searchValue.getValues()));
+                    searchValue.getSearchTerm().getExternalDataExpression().generate(searchValue.getValues()));
         } else if (propertyValues.get(0) instanceof List) {
             //noinspection unchecked
             criterion = createInCriterion(searchValue, (List<Object>) propertyValues.get(0));

@@ -359,12 +359,11 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     private Boolean rackScanSupported = Boolean.FALSE;
 
     // Interface that allows construction of IN clause from arbitrary source
-    // todo jmt rename
-    interface InClause {
+    interface ExternalDataExpression {
         List<Object> generate(List<String> parameters);
     }
 
-    private InClause inClause;
+    private ExternalDataExpression externalDataExpression;
 
     /**
      * Evaluate the expression that returns constrained values, e.g. list of phenotypes
@@ -851,12 +850,12 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         return Collections.emptyList();
     }
 
-    public InClause getInClause() {
-        return inClause;
+    public ExternalDataExpression getExternalDataExpression() {
+        return externalDataExpression;
     }
 
-    public void setInClause(InClause inClause) {
-        this.inClause = inClause;
+    public void setExternalDataExpression(ExternalDataExpression externalDataExpression) {
+        this.externalDataExpression = externalDataExpression;
     }
 
     private SearchContext addTermToContext(SearchContext context ){

@@ -777,7 +777,10 @@ public class LabMetricSearchDefinition {
 
         SearchTerm workRequestTerm = new SearchTerm();
         workRequestTerm.setName("Work Request ID");
-        workRequestTerm.setInClause(values -> runBspSearch(values, "Fullfilled Samples - Work Request ID"));
+        workRequestTerm.setExternalDataExpression(values -> {
+            SearchItem searchItem = new SearchItem("Fullfilled Samples - Work Request ID", "EQUALS", values);
+            return runBspSearch(searchItem);
+        });
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList("metricsVessel", "mercurySamples" ));
         criteriaPath.setPropertyName("sampleKey");
@@ -786,7 +789,12 @@ public class LabMetricSearchDefinition {
 
         SearchTerm collectionTerm = new SearchTerm();
         collectionTerm.setName("Collection");
-        collectionTerm.setInClause(values -> runBspSearch(values, "Group / Collection"));
+        collectionTerm.setExternalDataExpression(values -> {
+            SearchItem group = new SearchItem("Group / Collection", "EQUALS", values);
+            SearchItem collection = new SearchItem("Collection", "EQUALS", values);
+            group.setChildren(Collections.singletonList(collection));
+            return runBspSearch(group);
+        });
         collectionTerm.setConstrainedValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
             @Override
             public List<ConstrainedValue> evaluate(Object entity, SearchContext context) {
@@ -801,6 +809,7 @@ public class LabMetricSearchDefinition {
         criteriaPath.setCriteria(Arrays.asList("metricsVessel", "mercurySamples" ));
         criteriaPath.setPropertyName("sampleKey");
         collectionTerm.setCriteriaPaths(Collections.singletonList(criteriaPath));
+        collectionTerm.setNewDetachedCriteria(true);
 
         SearchTerm groupTerm = new SearchTerm();
         List<SearchTerm.CriteriaPath> blankCriteriaPaths = new ArrayList<>();
@@ -819,24 +828,27 @@ public class LabMetricSearchDefinition {
             }
         });
         groupTerm.setDependentSearchTerms(Collections.singletonList(collectionTerm));
+        groupTerm.setSearchValueConversionExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, SearchContext context) {
+                return "NoHibernateCriteria";
+            }
+        });
         searchTerms.add(groupTerm);
 
         return searchTerms;
     }
 
     @NotNull
-    private List<Object> runBspSearch(List<String> values, String searchTermName) {
+    private List<Object> runBspSearch(SearchItem searchItem) {
         BSPConfig bspConfig = ServiceAccessUtility.getBean(BSPConfig.class);
         SearchManager searchManager = new SearchManager(bspConfig.getHost(), bspConfig.getPort(),
                 bspConfig.getLogin(), bspConfig.getPassword());
         Search search = new Search();
         search.setEntityName("Sample");
-        SearchItem searchItem = new SearchItem();
-        searchItem.setName(searchTermName);
-        searchItem.setOperator("EQUALS");
-        searchItem.setValues(values);
         search.setSearchItems(Collections.singletonList(searchItem));
         search.setViewColumns(Collections.singletonList("Sample ID"));
+        search.setMaxResults(1000000);
         SearchResponse searchResponse = searchManager.runSearch(search);
         return searchResponse.getResult().getRows().stream().map(
                 strings -> strings.get(0)).collect(Collectors.toList());
