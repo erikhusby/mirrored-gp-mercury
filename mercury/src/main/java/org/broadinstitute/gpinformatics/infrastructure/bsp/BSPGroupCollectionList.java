@@ -1,9 +1,13 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.bsp.client.collection.BspGroupCollectionManager;
+import org.broadinstitute.bsp.client.collection.Group;
 import org.broadinstitute.bsp.client.collection.SampleCollection;
 import org.broadinstitute.bsp.client.response.AllCollectionsResponse;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
@@ -14,6 +18,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -29,6 +34,8 @@ public class BSPGroupCollectionList extends AbstractCache implements Serializabl
     private final BSPManagerFactory bspManagerFactory;
 
     private Map<Long, SampleCollection> collections;
+    private Map<Long, Group> groups;
+    private Multimap<Long, SampleCollection> mapGroupIdToCollections;
 
     /**
      * @return map of bsp collections, keyed by collection ID.
@@ -38,6 +45,13 @@ public class BSPGroupCollectionList extends AbstractCache implements Serializabl
             refreshCache();
         }
         return collections;
+    }
+
+    public synchronized Map<Long, Group> getGroups() {
+        if (groups == null) {
+            refreshCache();
+        }
+        return groups;
     }
 
     /**
@@ -79,6 +93,10 @@ public class BSPGroupCollectionList extends AbstractCache implements Serializabl
         }
 
         return results;
+    }
+
+    public Collection<SampleCollection> collectionsForGroup(Long groupId) {
+        return mapGroupIdToCollections.get(groupId);
     }
 
     private static boolean anyFieldMatches(String lowerQuery, SampleCollection collection) {
@@ -131,12 +149,18 @@ public class BSPGroupCollectionList extends AbstractCache implements Serializabl
         // Use a LinkedHashMap since (1) it preserves the insertion order of its elements, so
         // our entries stay sorted and (2) it has lower overhead than a TreeMap.
         Map<Long, SampleCollection> collectionsMap = new LinkedHashMap<>(allCollections.size());
+        Map<Long, Group> groupsMap = new LinkedHashMap<>();
+        Multimap<Long, SampleCollection> mapGroupIdToCollectionsLocal = ArrayListMultimap.create();
         for (SampleCollection collection : allCollections) {
             collectionsMap.put(collection.getCollectionId(), collection);
+            groupsMap.put(collection.getGroup().getGroupId(), collection.getGroup());
+            mapGroupIdToCollectionsLocal.put(collection.getGroup().getGroupId(), collection);
         }
 
         // Create an immutable map since this is an application scoped object that's returned directly to the caller.
         // We don't want to allow one thread to affect another by modifying this.
         collections = ImmutableMap.copyOf(collectionsMap);
+        groups = ImmutableMap.copyOf(groupsMap);
+        mapGroupIdToCollections = ImmutableMultimap.copyOf(mapGroupIdToCollectionsLocal);
     }
 }

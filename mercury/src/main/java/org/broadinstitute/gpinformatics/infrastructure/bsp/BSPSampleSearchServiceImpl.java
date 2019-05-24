@@ -42,14 +42,7 @@ public class BSPSampleSearchServiceImpl extends AbstractJaxRsClientService imple
     protected void customizeClient(Client client) {
         specifyHttpAuthCredentials(client, bspConfig);
     }
-    private static List<List<String>> chopped(List<String> list, final int maxLength) {
-            List<List<String>> parts = new ArrayList<>();
-            final int N = list.size();
-            for (int i = 0; i < N; i += maxLength) {
-                parts.add(new ArrayList<>(list.subList(i, Math.min(N, i + maxLength))));
-            }
-            return parts;
-        }
+
     @Override
     public List<Map<BSPSampleSearchColumn, String>> runSampleSearch(Collection<String> sampleIDs,
                                                                     final BSPSampleSearchColumn... queryColumns) {

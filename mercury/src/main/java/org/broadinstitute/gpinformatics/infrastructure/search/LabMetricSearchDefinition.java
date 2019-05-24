@@ -1,13 +1,20 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.broadinstitute.bsp.client.search.Search;
+import org.broadinstitute.bsp.client.search.SearchItem;
+import org.broadinstitute.bsp.client.search.SearchManager;
+import org.broadinstitute.bsp.client.search.SearchResponse;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGroupCollectionList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.AncestorLabMetricPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabMetricSampleDataAddRowsListener;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -17,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -30,6 +38,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Builds ConfigurableSearchDefinition for lab metric user defined search logic  <br />
@@ -116,6 +125,8 @@ public class LabMetricSearchDefinition {
 
         searchTerms = srchDef.buildLabMetricMetadata();
         mapGroupSearchTerms.put("Metadata", searchTerms);
+
+        mapGroupSearchTerms.put("BSP", buildBsp());
 
         List<ConfigurableSearchDefinition.CriteriaProjection> criteriaProjections = new ArrayList<>();
 
@@ -761,4 +772,68 @@ public class LabMetricSearchDefinition {
         return searchTerms;
     }
 
+    private List<SearchTerm> buildBsp() {
+        List<SearchTerm> searchTerms = new ArrayList<>();
+
+        SearchTerm workRequestTerm = new SearchTerm();
+        workRequestTerm.setName("Work Request ID");
+        workRequestTerm.setInClause(values -> runBspSearch(values, "Fullfilled Samples - Work Request ID"));
+        SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("metricsVessel", "mercurySamples" ));
+        criteriaPath.setPropertyName("sampleKey");
+        workRequestTerm.setCriteriaPaths(Collections.singletonList(criteriaPath));
+        searchTerms.add(workRequestTerm);
+
+        SearchTerm collectionTerm = new SearchTerm();
+        collectionTerm.setName("Collection");
+        collectionTerm.setInClause(values -> runBspSearch(values, "Group / Collection"));
+        collectionTerm.setConstrainedValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
+            @Override
+            public List<ConstrainedValue> evaluate(Object entity, SearchContext context) {
+                BSPGroupCollectionList groupCollectionList = ServiceAccessUtility.getBean(BSPGroupCollectionList.class);
+                return groupCollectionList.getGroups().values().stream().map(
+                        group -> new ConstrainedValue(Long.toString(group.getGroupId()), group.getGroupName())).
+                        collect(Collectors.toList());
+            }
+        });
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("metricsVessel", "mercurySamples" ));
+        criteriaPath.setPropertyName("sampleKey");
+        collectionTerm.setCriteriaPaths(Collections.singletonList(criteriaPath));
+
+        SearchTerm groupTerm = new SearchTerm();
+        groupTerm.setName("Group / Collection");
+        groupTerm.setConstrainedValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
+            @Override
+            public List<ConstrainedValue> evaluate(Object entity, SearchContext context) {
+                BSPGroupCollectionList groupCollectionList = ServiceAccessUtility.getBean(BSPGroupCollectionList.class);
+                Long groupId = Long.valueOf(context.getSearchValue().getParent().getValues().get(0));
+                return groupCollectionList.collectionsForGroup(groupId).stream().map(coll ->
+                        new ConstrainedValue(Long.toString(coll.getCollectionId()), coll.getCollectionName())).
+                        collect(Collectors.toList());
+            }
+        });
+        groupTerm.setDependentSearchTerms(Collections.singletonList(collectionTerm));
+        searchTerms.add(groupTerm);
+
+        return searchTerms;
+    }
+
+    @NotNull
+    private List<Object> runBspSearch(List<String> values, String searchTermName) {
+        BSPConfig bspConfig = ServiceAccessUtility.getBean(BSPConfig.class);
+        SearchManager searchManager = new SearchManager(bspConfig.getHost(), bspConfig.getPort(),
+                bspConfig.getLogin(), bspConfig.getPassword());
+        Search search = new Search();
+        search.setEntityName("Sample");
+        SearchItem searchItem = new SearchItem();
+        searchItem.setName(searchTermName);
+        searchItem.setOperator("EQUALS");
+        searchItem.setValues(values);
+        search.setSearchItems(Collections.singletonList(searchItem));
+        search.setViewColumns(Collections.singletonList("Sample ID"));
+        SearchResponse searchResponse = searchManager.runSearch(search);
+        return searchResponse.getResult().getRows().stream().map(
+                strings -> strings.get(0)).collect(Collectors.toList());
+    }
 }
