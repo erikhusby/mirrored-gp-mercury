@@ -791,8 +791,9 @@ public class LabMetricSearchDefinition {
             @Override
             public List<ConstrainedValue> evaluate(Object entity, SearchContext context) {
                 BSPGroupCollectionList groupCollectionList = ServiceAccessUtility.getBean(BSPGroupCollectionList.class);
-                return groupCollectionList.getGroups().values().stream().map(
-                        group -> new ConstrainedValue(Long.toString(group.getGroupId()), group.getGroupName())).
+                Long groupId = Long.valueOf(context.getSearchValue().getParent().getValues().get(0));
+                return groupCollectionList.collectionsForGroup(groupId).stream().map(coll ->
+                        new ConstrainedValue(Long.toString(coll.getCollectionId()), coll.getCollectionName())).
                         collect(Collectors.toList());
             }
         });
@@ -802,14 +803,18 @@ public class LabMetricSearchDefinition {
         collectionTerm.setCriteriaPaths(Collections.singletonList(criteriaPath));
 
         SearchTerm groupTerm = new SearchTerm();
+        List<SearchTerm.CriteriaPath> blankCriteriaPaths = new ArrayList<>();
+        SearchTerm.CriteriaPath blankCriteriaPath = new SearchTerm.CriteriaPath();
+        blankCriteriaPath.setCriteria(new ArrayList<String>());
+        blankCriteriaPaths.add(blankCriteriaPath);
+        groupTerm.setCriteriaPaths(blankCriteriaPaths);
         groupTerm.setName("Group / Collection");
         groupTerm.setConstrainedValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
             @Override
             public List<ConstrainedValue> evaluate(Object entity, SearchContext context) {
                 BSPGroupCollectionList groupCollectionList = ServiceAccessUtility.getBean(BSPGroupCollectionList.class);
-                Long groupId = Long.valueOf(context.getSearchValue().getParent().getValues().get(0));
-                return groupCollectionList.collectionsForGroup(groupId).stream().map(coll ->
-                        new ConstrainedValue(Long.toString(coll.getCollectionId()), coll.getCollectionName())).
+                return groupCollectionList.getGroups().values().stream().map(
+                        group -> new ConstrainedValue(Long.toString(group.getGroupId()), group.getGroupName())).
                         collect(Collectors.toList());
             }
         });
