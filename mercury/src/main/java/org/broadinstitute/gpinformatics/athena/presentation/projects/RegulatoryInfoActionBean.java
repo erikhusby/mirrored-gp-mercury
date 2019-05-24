@@ -105,7 +105,7 @@ public class RegulatoryInfoActionBean extends CoreActionBean {
                 if(orspResultValidResults.isPresent() && !orspResultValidResults.get().isEmpty()) {
 
                     searchResults.forEach(regulatoryInfo -> {
-                        regulatoryInfo.setUserEdit(orspResultValidResults.get().contains(regulatoryInfo));
+                        regulatoryInfo.setUserEdit(!orspResultValidResults.get().contains(regulatoryInfo));
                     });
                 } else {
                     searchResults.clear();
