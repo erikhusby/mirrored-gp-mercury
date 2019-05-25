@@ -1817,26 +1817,19 @@ public class ProductOrderFixupTest extends Arquillian {
                 });
         int recordCount = allOrdersWithNoQuoteSourceCount.size();
 
+        int iterator = 500;
         int start = 0;
         int max = 500;
+        if(recordCount < max) {
+            max = recordCount;
+        }
 
-        while(recordCount > 0) {
+        while(max <= recordCount) {
             System.out.println("total record count is " + recordCount);
 
             beginTransaction();
 
-            final List<ProductOrder> allOrdersWithNoQuoteSource =
-                    productOrderDao.findAll(ProductOrder.class, new GenericDao.GenericDaoCallback<ProductOrder>() {
-                        @Override
-                        public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> root) {
-
-                            CriteriaBuilder builder = productOrderDao.getEntityManager().getCriteriaBuilder();
-
-                            Predicate noSourcePredicate = builder.isNull(root.get(ProductOrder_.quoteSource));
-
-                            criteriaQuery.where(noSourcePredicate);
-                        }
-                    }, start, max);
+            final List<ProductOrder> allOrdersWithNoQuoteSource = allOrdersWithNoQuoteSourceCount.subList(start, max);
             allOrdersWithNoQuoteSource.forEach(productOrder -> {
                 productOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
                 System.out.println("Update quote source on " + productOrder.getJiraTicketKey());
@@ -1846,19 +1839,19 @@ public class ProductOrderFixupTest extends Arquillian {
                                                         + "comes from the Quote Server"));
             commitTransaction();
 
-            allOrdersWithNoQuoteSourceCount =
-                    productOrderDao.findAll(ProductOrder.class, new GenericDao.GenericDaoCallback<ProductOrder>() {
-                        @Override
-                        public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> root) {
+            start += iterator;
+            System.out.println("Start is now " + start);
+            if(recordCount >= start) {
+                if(recordCount<= max +iterator) {
+                    max = recordCount;
+                } else {
 
-                            CriteriaBuilder builder = productOrderDao.getEntityManager().getCriteriaBuilder();
-
-                            Predicate noSourcePredicate = builder.isNull(root.get(ProductOrder_.quoteSource));
-
-                            criteriaQuery.where(noSourcePredicate);
-                        }
-                    });
-            recordCount = allOrdersWithNoQuoteSourceCount.size();
+                    max += iterator;
+                }
+            } else {
+                max += iterator;
+            }
+            System.out.println("Max is now " + max);
         }
     }
 }
