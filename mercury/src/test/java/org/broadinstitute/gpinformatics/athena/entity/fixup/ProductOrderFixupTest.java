@@ -1803,7 +1803,7 @@ public class ProductOrderFixupTest extends Arquillian {
     public void fixupGplim5813RetroactiveQuoteSourceUpdate() throws Exception {
         userBean.loginOSUser();
 
-        final List<ProductOrder> allOrdersWithNoQuoteSourceCount =
+        List<ProductOrder> allOrdersWithNoQuoteSourceCount =
                 productOrderDao.findAll(ProductOrder.class, new GenericDao.GenericDaoCallback<ProductOrder>() {
                     @Override
                     public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> root) {
@@ -1817,12 +1817,12 @@ public class ProductOrderFixupTest extends Arquillian {
                 });
         int recordCount = allOrdersWithNoQuoteSourceCount.size();
 
-        int increment = 500;
-
         int start = 0;
-        int max = increment-1;
+        int max = 500;
 
-        while(max < recordCount) {
+        while(recordCount > 0) {
+            System.out.println("total record count is " + recordCount);
+
             beginTransaction();
 
             final List<ProductOrder> allOrdersWithNoQuoteSource =
@@ -1845,8 +1845,20 @@ public class ProductOrderFixupTest extends Arquillian {
                                                         + "prior to the SAP 2.0 launch to recognize that their quoute "
                                                         + "comes from the Quote Server"));
             commitTransaction();
-            start += increment;
-            max += increment;
+
+            allOrdersWithNoQuoteSourceCount =
+                    productOrderDao.findAll(ProductOrder.class, new GenericDao.GenericDaoCallback<ProductOrder>() {
+                        @Override
+                        public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> root) {
+
+                            CriteriaBuilder builder = productOrderDao.getEntityManager().getCriteriaBuilder();
+
+                            Predicate noSourcePredicate = builder.isNull(root.get(ProductOrder_.quoteSource));
+
+                            criteriaQuery.where(noSourcePredicate);
+                        }
+                    });
+            recordCount = allOrdersWithNoQuoteSourceCount.size();
         }
     }
 }
