@@ -91,19 +91,27 @@ public class ManifestSessionDao extends GenericDao {
     }
 
     /**
-     * Returns the manifests with the given sessionPrefix, sorted by modified date, most recent first.
+     * Returns the most recent manifest with the given sessionPrefix.
+     */
+    public ManifestSession getSessionByPrefix(String prefix) {
+        return getSessionsByPrefix(prefix).stream().findFirst().orElse(null);
+    }
+
+    /**
+     * Returns all manifests with the given sessionPrefix sorted by age, newest first.
      */
     public List<ManifestSession> getSessionsByPrefix(String prefix) {
-        return findList(ManifestSession.class, ManifestSession_.sessionPrefix, prefix).stream().
+        return findList(ManifestSession.class, ManifestSession_.sessionPrefix, prefix).
+                stream().
                 sorted((o1, o2) ->
                         o2.getUpdateData().getModifiedDate().compareTo(o1.getUpdateData().getModifiedDate())).
                 collect(Collectors.toList());
     }
 
     /**
-     * Returns the manifests for the given vessel label, sorted by modified date, most recent first.
+     * Returns the most recent manifest for the given vessel label.
      */
-    public List<ManifestSession> getSessionsByVesselLabel(String label) {
+    public ManifestSession getSessionByVesselLabel(String label) {
         CriteriaBuilder builder = getCriteriaBuilder();
         CriteriaQuery<ManifestSession> query = builder.createQuery(ManifestSession.class);
         Root<ManifestSession> root = query.from(ManifestSession.class);
@@ -115,7 +123,7 @@ public class ManifestSessionDao extends GenericDao {
         return manifestQuery.getResultList().stream().
                 sorted((o1, o2) ->
                         o2.getUpdateData().getModifiedDate().compareTo(o1.getUpdateData().getModifiedDate())).
-                collect(Collectors.toList());
+                findFirst().orElse(null);
     }
 
     /**

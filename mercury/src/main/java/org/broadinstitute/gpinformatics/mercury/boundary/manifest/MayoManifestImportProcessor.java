@@ -359,10 +359,16 @@ public class MayoManifestImportProcessor {
      * (which become upside-down ? characters in the database).
      */
     public static String cleanupValue(String value) {
+        return cleanupValue(value, "");
+    }
+
+    /** Replaces control characters and non-7-bit ascii characters with the replacementChar. */
+    public static String cleanupValue(String value, String replacementChar) {
         return org.apache.commons.codec.binary.StringUtils.newStringUsAscii(
                 org.apache.commons.codec.binary.StringUtils.getBytesUsAscii(value)).
-                replaceAll("\\?","").
-                replaceAll("[\\p{C}\\p{Zl}\\p{Zp}]", "").
+                replaceAll("\\?", replacementChar).
+                replaceAll("[\\p{C}\\p{Zl}\\p{Zp}]", replacementChar).
                 trim();
     }
+
 }

@@ -21,6 +21,23 @@
     </script>
 
     <stripes:layout-component name="content">
+        <style type="text/css">
+            div.inputGroup {
+                display: table;
+            }
+            div.inputGroup > div.inputRow {
+                display: table-row;
+            }
+            div.inputGroup > div.inputRow > div.labelCol {
+                display: table-cell;
+            }
+            div.inputGroup > div.inputRow > div.valueCol {
+                display: table-cell;
+                padding-left: 10px;
+                padding-top: 10px;
+            }
+        </style>
+
 
         <!-- Shows the manifest file contents. -->
         <c:if test="${!actionBean.getManifestCellGrid().isEmpty()}">
@@ -51,36 +68,44 @@
             <stripes:hidden name="filename" value="${actionBean.filename}"/>
             <stripes:hidden name="manifestSessionId" value="${actionBean.manifestSessionId}"/>
 
-
-            <!-- User entered values that go into the RCT ticket. -->
-            <table style="padding-top: 20px;" cellpadding="5">
-                <tr>
-                    <td>Shipment Condition</td>
-                    <td><stripes:textarea style="min-width: 50em" rows="2" id="shipmentCondition" name="shipmentCondition"/></td>
-                </tr>
-                <tr>
-                    <td>Reason to Quarantine</td>
-                    <td><stripes:select id="quarantineReason" class="multiEditSelect" name="quarantineReason">
-                        <stripes:option value="" label=""/>
-                        <stripes:option value="Package damage" label="Package damage"/>
-                        <stripes:option value="Unreadable barcode" label="UnreaLocal Courier"/>
-                    </stripes:select>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Tracking number</td>
-                    <td><stripes:text style="min-width: 40em" id="shippingAcknowledgement" name="shippingAcknowledgement"/></td>
-                </tr>
-                <tr>
-                    <td>Delivery Method</td>
-                    <td><stripes:select id="deliveryMethod" class="multiEditSelect" name="deliveryMethod">
-                        <stripes:option value="None" label="None"/>
-                        <stripes:option value="FedEx" label="FedEx"/>
-                        <stripes:option value="Local Courier" label="Local Courier"/>
-                    </stripes:select>
-                    </td>
-                </tr>
-            </table>
+            <div class="inputGroup">
+                <div class="inputRow">
+                    <div class="labelCol">Shipment Conditions</div>
+                    <div class="valueCol">
+                        <stripes:textarea style="min-width: 50em" rows="2" id="shipmentCondition" name="shipmentCondition"/>
+                    </div>
+                </div>
+                <div class="inputRow">
+                    <div class="labelCol">Tracking number</div>
+                    <div class="valueCol">
+                        <stripes:text style="min-width: 40em" id="shippingAcknowledgement" name="shippingAcknowledgement"/>
+                    </div>
+                </div>
+                <div class="inputRow">
+                    <div class="labelCol">Delivery Method</div>
+                    <div class="valueCol">
+                        <stripes:select id="deliveryMethod" class="multiEditSelect" name="deliveryMethod">
+                            <stripes:option value="None" label="None"/>
+                            <stripes:option value="FedEx" label="FedEx"/>
+                            <stripes:option value="Local Courier" label="Local Courier"/>
+                        </stripes:select>
+                    </div>
+                </div>
+                <c:forEach items="${actionBean.rackBarcodes}" var="barcode" varStatus="item">
+                    <stripes:hidden id="quarantineBarcode_${item.index}" name="quarantineBarcode[${item.index}]" value="${barcode}"/>
+                    <div class="inputRow">
+                        <div class="labelCol">Quarantine rack ${barcode}</div>
+                        <div class="valueCol">
+                            <stripes:select id="quarantineReason_${item.index}" class="multiEditSelect"
+                                            name="quarantineReason[${item.index}]">
+                                <stripes:option value="" label=""/>
+                                <stripes:option value="Package damage" label="Package damage"/>
+                                <stripes:option value="Unreadable barcode" label="Unreadable barcode"/>
+                            </stripes:select>
+                        </div>
+                    </div>
+                </c:forEach>
+            </div>
 
             <div style="padding-top: 20px;">
                 <span>

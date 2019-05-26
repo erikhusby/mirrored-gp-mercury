@@ -2368,10 +2368,9 @@
     </changeSet>
     <changeSet id="GPLIM-6005-006" author="epolk">
         <addForeignKeyConstraint constraintName="fk_manifest_file_id"
-                                 baseTableSchemaName="mercury" baseTableName="manifest_session"
-				 baseColumnNames="manifest_file"
-                                 referencedTableSchemaName="mercury" referencedTableName="manifest_file"
-				 referencedColumnNames="manifest_file_id"/>
+                                 baseTableSchemaName="mercury" referencedTableSchemaName="mercury"
+                                 baseTableName="manifest_session" baseColumnNames="manifest_file"
+                                 referencedTableName="manifest_file" referencedColumnNames="manifest_file_id"/>
     </changeSet>
     <changeSet id="GPLIM-6005-007" author="epolk">
         <createSequence schemaName="mercury" sequenceName="SEQ_MANIFEST_FILE" incrementBy="50"/>
@@ -2423,6 +2422,68 @@
         <createIndex indexName="ix_manifest_vessel_labels" tableName="manifest_vessel_labels">
             <column name="vessel_labels"/>
         </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-6005-014" author="epolk">
+        <addForeignKeyConstraint constraintName="fk_manifest_vessel_lbl"
+                                 baseTableSchemaName="mercury" referencedTableSchemaName="mercury"
+                                 baseTableName="manifest_vessel_labels" baseColumnNames="manifest_session"
+                                 referencedTableName="manifest_session" referencedColumnNames="manifest_session_id"/>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-6005-015" author="epolk">
+        <createTable schemaName="mercury" tableName="quarantined">
+            <column name="quarantined_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="item_source" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="item_type" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="item" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reason" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey constraintName="pk_quarantined" tableName="quarantined"
+                       columnNames="quarantined_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-6005-016" author="epolk">
+        <createSequence schemaName="mercury" sequenceName="SEQ_QUARANTINED" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6005-017" author="epolk">
+        <createTable schemaName="mercury" tableName="quarantined_aud">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quarantined_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="item_source" type="varchar(255)"/>
+            <column name="item_type" type="varchar(255)"/>
+            <column name="item" type="varchar(255)"/>
+            <column name="reason" type="varchar(255)"/>
+        </createTable>
+        <addPrimaryKey constraintName="pk_quarantined_aud" tableName="quarantined_aud"
+                       columnNames="rev, quarantined_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-6005-018" author="epolk">
+        <createIndex indexName="ix_quarantined_aud" tableName="quarantined_aud">
+            <column name="quarantined_id"/>
+            <column name="rev"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-6005-019" author="epolk">
+        <addUniqueConstraint tableName="quarantined" columnNames="item_source, item_type, item"
+                             constraintName="u_quarantined" schemaName="mercury" />
     </changeSet>
 
 </databaseChangeLog>

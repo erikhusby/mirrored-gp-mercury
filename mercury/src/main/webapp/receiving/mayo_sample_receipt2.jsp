@@ -39,16 +39,12 @@
 
             <div style="padding-top: 20px;">
                 <span>
-                    <c:if test="${actionBean.messageCollection.hasErrors()}">
-                        <stripes:submit id="receiveRackBtn" name="receiveRackBtn" value="Receive" class="btn btn-primary"
-                                        title="Receives the rack and tubes."/>
-                    </c:if>
                     <c:if test="${!actionBean.messageCollection.hasErrors()}">
-                        <stripes:submit id="accessionBtn" name="accessionBtn" value="Accession" class="btn btn-primary"
-                                        title="Receives the rack and tubes and accessions the samples."/>
+                        <stripes:submit id="saveBtn" name="saveBtn" value="Save" class="btn btn-primary"
+                                        title="Accessions the rack, tubes, and samples."/>
                     </c:if>
                     <span style="margin-left: 20px;">
-                <stripes:submit id="cancelBtn" name="cancelBtn" value="Cancel" class="btn btn-primary"/>
+                        <stripes:submit id="cancelBtn" name="cancelBtn" value="Cancel" class="btn btn-primary"/>
                     </span>
                 </span>
             </div>

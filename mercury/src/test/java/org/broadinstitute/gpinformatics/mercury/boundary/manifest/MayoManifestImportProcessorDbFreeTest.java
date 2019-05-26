@@ -80,40 +80,40 @@ public class MayoManifestImportProcessorDbFreeTest {
                 MayoManifestImportProcessor.Header.PACKAGE_ID.getText() + ", " +
                         MayoManifestImportProcessor.Header.SAMPLE_ID.getText());
         MessageCollection messageCollection = parseAndReturnErrorsAndWarnings(headers + ",PackageId,SampleId", false);
-        Assert.assertTrue(messageCollection.getWarnings().contains(message),
-                "Warnings " + StringUtils.join(messageCollection.getWarnings(), " ; "));
+        Assert.assertTrue(messageCollection.getErrors().contains(message),
+                "Errors: " + StringUtils.join(messageCollection.getErrors(), " ; "));
 
         message = String.format(MayoManifestImportProcessor.DUPLICATE_HEADER, CSV,
                 MayoManifestImportProcessor.Header.STUDY.getText());
         messageCollection = parseAndReturnErrorsAndWarnings(headers + ",Study", false);
-        Assert.assertTrue(messageCollection.getWarnings().contains(message),
-                "Warnings " + StringUtils.join(messageCollection.getWarnings(), " ; "));
+        Assert.assertTrue(messageCollection.getErrors().contains(message),
+                "Errors: " + StringUtils.join(messageCollection.getErrors(), " ; "));
 
         // Bad units in the headers.
         // Tests failure to make manifest records and also that the missing header message is given.
         message = String.format(MayoManifestImportProcessor.UNKNOWN_UNITS, CSV,
                 MayoManifestImportProcessor.Header.VOLUME.getText());
         messageCollection = parseAndReturnErrorsAndWarnings(StringUtils.replace(headers, "(ul)", "(oz)"), false);
-        Assert.assertTrue(messageCollection.getWarnings().contains(message),
-                "Warnings " + StringUtils.join(messageCollection.getWarnings(), " ; "));
+        Assert.assertTrue(messageCollection.getErrors().contains(message),
+                "Errors: " + StringUtils.join(messageCollection.getErrors(), " ; "));
 
         message = String.format(MayoManifestImportProcessor.UNKNOWN_UNITS, CSV,
                 MayoManifestImportProcessor.Header.VOLUME.getText());
         messageCollection = parseAndReturnErrorsAndWarnings(StringUtils.replace(headers, "(ul)", ""), false);
-        Assert.assertTrue(messageCollection.getWarnings().contains(message),
-                "Warnings " + StringUtils.join(messageCollection.getWarnings(), " ; "));
+        Assert.assertTrue(messageCollection.getErrors().contains(message),
+                "Errors: " + StringUtils.join(messageCollection.getErrors(), " ; "));
 
         message = String.format(MayoManifestImportProcessor.UNKNOWN_UNITS, CSV,
                 MayoManifestImportProcessor.Header.CONCENTRATION.getText());
         messageCollection = parseAndReturnErrorsAndWarnings(StringUtils.replace(headers, "(ng/ul)", "mmol"), false);
-        Assert.assertTrue(messageCollection.getWarnings().contains(message),
-                "Warnings " + StringUtils.join(messageCollection.getWarnings(), " ; "));
+        Assert.assertTrue(messageCollection.getErrors().contains(message),
+                "Errors: " + StringUtils.join(messageCollection.getErrors(), " ; "));
 
         message = String.format(MayoManifestImportProcessor.UNKNOWN_UNITS, CSV,
                 MayoManifestImportProcessor.Header.MASS.getText());
         messageCollection = parseAndReturnErrorsAndWarnings(StringUtils.replace(headers, "(ng)", ""), false);
-        Assert.assertTrue(messageCollection.getWarnings().contains(message),
-                "Warnings " + StringUtils.join(messageCollection.getWarnings(), " ; "));
+        Assert.assertTrue(messageCollection.getErrors().contains(message),
+                "Errors: " + StringUtils.join(messageCollection.getErrors(), " ; "));
 
         // Unknown headers.
         String unknown = "SurpiseMe";
@@ -204,12 +204,21 @@ public class MayoManifestImportProcessorDbFreeTest {
                 "2nd Visit,Whole Blood,The Study Title,TRK001,theContact,email1@email.org,The Name,all";
         MessageCollection messages = new MessageCollection();
         MayoManifestImportProcessor processor;
+        String expected;
+
+        // OK as is.
+        processor = new MayoManifestImportProcessor();
+        messages.clearAll();
+        Assert.assertEquals(processor.makeManifestRecords(processor.parseAsCellGrid(
+                (headers + values).getBytes(), CSV, messages), CSV, messages).size(), 1);
+        Assert.assertFalse(messages.hasErrors(), StringUtils.join(messages.getErrors(), "; "));
+        Assert.assertFalse(messages.hasWarnings(), StringUtils.join(messages.getWarnings(), "; "));
 
         processor = new MayoManifestImportProcessor();
         messages.clearAll();
         Assert.assertTrue(processor.makeManifestRecords(processor.parseAsCellGrid(
                 (headers + values.replace("PK001", "")).getBytes(), CSV, messages), CSV, messages).isEmpty());
-        String expected = String.format(MayoManifestImportProcessor.MISSING_DATA, CSV,
+        expected = String.format(MayoManifestImportProcessor.MISSING_DATA, CSV,
                 MayoManifestImportProcessor.Header.PACKAGE_ID.getText());
         Assert.assertTrue(messages.getErrors().contains(expected), StringUtils.join(messages.getErrors()));
         Assert.assertFalse(messages.hasWarnings(), StringUtils.join(messages.getWarnings(), "; "));
@@ -220,8 +229,7 @@ public class MayoManifestImportProcessorDbFreeTest {
                 (headers + values.replace(",0.01,", ",NaN,")).getBytes(), CSV, messages), CSV, messages).isEmpty());
         expected = String.format(MayoManifestImportProcessor.INVALID_DATA,
                 CSV, MayoManifestImportProcessor.Header.VOLUME.getText());
-        Assert.assertFalse(messages.hasErrors(), StringUtils.join(messages.getErrors(), "; "));
-        Assert.assertTrue(messages.getWarnings().contains(expected), StringUtils.join(messages.getWarnings()));
+        Assert.assertTrue(messages.getErrors().contains(expected), StringUtils.join(messages.getErrors()));
 
         processor = new MayoManifestImportProcessor();
         messages.clearAll();
@@ -229,8 +237,7 @@ public class MayoManifestImportProcessorDbFreeTest {
                 (headers + values.replace(",1.01,", ",zero,")).getBytes(), CSV, messages), CSV, messages).isEmpty());
         expected = String.format(MayoManifestImportProcessor.INVALID_DATA,
                 CSV, MayoManifestImportProcessor.Header.CONCENTRATION.getText());
-        Assert.assertFalse(messages.hasErrors(), StringUtils.join(messages.getErrors(), "; "));
-        Assert.assertTrue(messages.getWarnings().contains(expected), StringUtils.join(messages.getWarnings()));
+        Assert.assertTrue(messages.getErrors().contains(expected), StringUtils.join(messages.getErrors()));
     }
 
     public void testUnits() throws Exception {

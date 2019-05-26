@@ -27,14 +27,13 @@ import java.util.stream.Collectors;
 @UrlBinding(MayoSampleReceiptActionBean.ACTION_BEAN_URL)
 public class MayoSampleReceiptActionBean extends RackScanActionBean {
     public static final String ACTION_BEAN_URL = "/receiving/mayo_sample_receipt.action";
-
+    // Events from Sample Receipt page 1
     private static final String PAGE1 = "mayo_sample_receipt1.jsp";
     private static final String SCAN_BTN = "scanBtn";
-
+    // Events from Sample Receipt page 2
     private static final String PAGE2 = "mayo_sample_receipt2.jsp";
-    private static final String RECEIVE_BTN = "receiveBtn";
-    private static final String ACCESSION_BTN = "accessionBtn";
-
+    private static final String SAVE_BTN = "saveBtn";
+    // Events from Mayo Manifest Admin page
     private static final String MANIFEST_ADMIN_PAGE = "mayo_manifest_admin.jsp";
     private static final String STORAGE_UTILITIES = "storageUtilities";
     private static final String TEST_ACCESS_BTN = "testAccessBtn";
@@ -58,7 +57,7 @@ public class MayoSampleReceiptActionBean extends RackScanActionBean {
     @Inject
     private MayoManifestEjb mayoManifestEjb;
 
-    @Validate(required = true, on = {SCAN_BTN, RECEIVE_BTN, ACCESSION_BTN, REACCESSION_BTN})
+    @Validate(required = true, on = {SCAN_BTN, SAVE_BTN, REACCESSION_BTN})
     private String rackBarcode;
 
     @Validate(required = true, on = {VIEW_FILE_BTN, PULL_ONE_BTN})
@@ -71,39 +70,27 @@ public class MayoSampleReceiptActionBean extends RackScanActionBean {
 
     @HandlesEvent(SCAN_BTN)
     public Resolution scanEvent() throws ScannerException {
-        // Performs the rack scan and validates it.
+        // Performs the rack scan and validates it for accessioning.
         runRackScan(false);
         if (rackScan == null || rackScan.isEmpty()) {
             messageCollection.addError("The rack scan is empty.");
             addMessages(messageCollection);
             return new ForwardResolution(PAGE1);
         } else {
-            mayoManifestEjb.validateAndScan(this);
+            mayoManifestEjb.validateForAccessioning(this);
             addMessages(messageCollection);
             return new ForwardResolution(PAGE2);
         }
-    }
-
-    @HandlesEvent(RECEIVE_BTN)
-    public Resolution receiveEvent() {
-        reconstructScan();
-        mayoManifestEjb.receive(this);
-        addMessages(messageCollection);
-        return new ForwardResolution(PAGE1);
     }
 
     /**
      * Makes receipt artifacts for the rack and tubes and accessions
      * samples if a ManifestSession is found and the data matches up.
      */
-    @HandlesEvent(ACCESSION_BTN)
+    @HandlesEvent(SAVE_BTN)
     public Resolution accessionEvent() {
         reconstructScan();
-        mayoManifestEjb.receive(this);
-        if (!messageCollection.hasErrors()) {
-            mayoManifestEjb.lookupManifestSession(this);
-            mayoManifestEjb.accession(this);
-        }
+        mayoManifestEjb.accession(this);
         addMessages(messageCollection);
         return new ForwardResolution(PAGE1);
     }
@@ -135,7 +122,7 @@ public class MayoSampleReceiptActionBean extends RackScanActionBean {
     @HandlesEvent(SHOW_BUCKETLIST_BTN)
     public Resolution showBucketList() {
         final byte[] bytes = bucketList.stream().sorted().collect(Collectors.joining("\n")).getBytes();
-        Resolution resolution = (request, response) -> {
+        return (request, response) -> {
             response.setContentType("application/text");
             response.setContentLength(bytes.length);
             response.setHeader("Expires:", "0"); // eliminates browser caching
@@ -144,14 +131,13 @@ public class MayoSampleReceiptActionBean extends RackScanActionBean {
             outStream.write(bytes);
             outStream.flush();
         };
-        return resolution;
     }
 
     @HandlesEvent(SHOW_FAILED_FILES_LIST_BTN)
     public Resolution showFailedFilesList() {
         mayoManifestEjb.getFailedFiles(this);
         final byte[] bytes = failedFilesList.stream().sorted().collect(Collectors.joining("\n")).getBytes();
-        Resolution resolution = (request, response) -> {
+        return (request, response) -> {
             response.setContentType("application/text");
             response.setContentLength(bytes.length);
             response.setHeader("Expires:", "0"); // eliminates browser caching
@@ -160,7 +146,6 @@ public class MayoSampleReceiptActionBean extends RackScanActionBean {
             outStream.write(bytes);
             outStream.flush();
         };
-        return resolution;
     }
 
     /**
@@ -185,14 +170,12 @@ public class MayoSampleReceiptActionBean extends RackScanActionBean {
     }
 
     /**
-     * Re-accessions the rack and its tubes using the most recent manifest.
-     * Any tube or position changes must be fixed up before running this because
-     * the tubes used are the ones that Mercury has in the specified rack.
+     * Updates sample metadata using the specified manifest file.
+     * The tubes used are the ones that Mercury has in the specified rack.
      */
     @HandlesEvent(REACCESSION_BTN)
-    public Resolution reaccession() {
-        mayoManifestEjb.lookupManifestSession(this);
-        mayoManifestEjb.accession(this);
+    public Resolution updateMetadata() {
+        mayoManifestEjb.updateSampleMetadata(this);
         addMessages(messageCollection);
         return new ForwardResolution(MANIFEST_ADMIN_PAGE);
     }

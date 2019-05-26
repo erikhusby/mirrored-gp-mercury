@@ -82,6 +82,20 @@ public class GoogleBucketDao {
     }
 
     /**
+     * Returns true if file exists.
+     */
+    public boolean exists(String filename, MessageCollection messageCollection) {
+        makeCredential(messageCollection);
+        if (credentials != null) {
+            Storage storage = StorageOptions.newBuilder().setCredentials(credentials)
+                    .setProjectId(credentials.getProjectId()).build().getService();
+            Blob blob = storage.get(BlobId.of(googleStorageConfig.getBucketName(), filename));
+            return blob != null && blob.exists();
+        }
+        return false;
+    }
+
+    /**
      * Reads and returns content of a file as bytes, or null if no such file.
      */
     public byte[] download(String filename, MessageCollection messageCollection) {
