@@ -2881,8 +2881,8 @@ public class ProductOrderActionBeanTest {
         JSONObject fundingDetails = (JSONObject) quoteFundingJson.getJSONArray("fundingDetails").get(0);
 
         assertThat(fundingDetails.get("grantTitle"), equalTo("CO-1234"));
-        assertThat(fundingDetails.get("grantEndDate"), equalTo(DateUtils.getDate(oneWeek)));
-        assertThat(fundingDetails.get("activeGrant"), is(true));
+        assertThat(fundingDetails.get("fundsReservationEndDate"), equalTo(DateUtils.getDate(oneWeek)));
+        assertThat(fundingDetails.get("activeCostObject"), is(true));
         assertThat(fundingDetails.get("daysTillExpire"), equalTo(7l));
     }
 
@@ -2914,8 +2914,8 @@ public class ProductOrderActionBeanTest {
         JSONObject fundingDetails = (JSONObject) quoteFundingJson.getJSONArray("fundingDetails").get(0);
 
         assertThat(fundingDetails.get("grantTitle"), equalTo("CO-1234"));
-        assertThat(fundingDetails.get("grantEndDate"), equalTo(DateUtils.getDate(oneHeckOfALongTime)));
-        assertThat(fundingDetails.get("activeGrant"), is(true));
+        assertThat(fundingDetails.get("fundsReservationEndDate"), equalTo(DateUtils.getDate(oneHeckOfALongTime)));
+        assertThat(fundingDetails.get("activeCostObject"), is(true));
         assertThat(fundingDetails.get("daysTillExpire"), equalTo(365242L));
     }
 
@@ -2972,7 +2972,7 @@ public class ProductOrderActionBeanTest {
 
 //        assertThat(fundingDetails.get("fundsReservationNumber"), equalTo("CO-1234"));
         assertThat(fundingDetails.get("fundsReservationEndDate"), equalTo(DateUtils.getDate(oneWeek)));
-        assertThat(fundingDetails.get("activeGrant"), is(true));
+        assertThat(fundingDetails.get("activeCostObject"), is(true));
         assertThat(fundingDetails.get("daysTillExpire"), equalTo(7L));
 
         assertThat(quoteFundingJson.getString("status"), equalTo(FundingStatus.SUBMITTED.getStatusText()));

@@ -1127,48 +1127,61 @@
                     ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
                 var fundingDetails = data.fundingDetails;
 
-                if((data.status !== ((data.quoteType === "Quote Server Quote")?"Funded":"Approved" ))  ||
+                if((data.status != ((data.quoteType == "Quote Server Quote")?"Funded":"Approved" ))  ||
                     Number(data.outstandingEstimate.replace(/[^0-9\.]+/g,"")) > Number(data.fundsRemaining.replace(/[^0-9\.]+/g,""))) {
                     quoteWarning = true;
                 }
                 if(fundingDetails) {
                     fundsRemainingNotification += '<br><B>Funding Information</b>';
                 }
-
+                fundsRemainingNotification+='<ul>';
                 for(var detailIndex in fundingDetails) {
-                    fundsRemainingNotification += '<br>' + (detailIndex+1) +") " +fundingDetails[detailIndex].fundingType
-                        + ": " + fundingDetails[detailIndex].fundingStatus;
+                    fundsRemainingNotification += '<li>' + fundingDetails[detailIndex].fundingType;
+                    if(["FUNDS_RESERVATION", "Funds Reservation"].indexOf(fundingDetails[detailIndex].fundingType) !== -1) {
+                        fundsRemainingNotification += ' [<B>';
+                        if(fundingDetails[detailIndex].fundsReservationNumber !== undefined && fundingDetails[detailIndex].fundsReservationNumber !== null) {
+                            fundsRemainingNotification += fundingDetails[detailIndex].fundsReservationNumber + ',';
+                        }
+                        fundsRemainingNotification += ' CO -- '+fundingDetails[detailIndex].costObject+ '</B>] ';
+                    } else {
+                        fundsRemainingNotification += ' [<B>'+ fundingDetails[detailIndex].purchaseOrderNumber + '</B>] ';
+                    }
+                    fundsRemainingNotification += ": " + fundingDetails[detailIndex].fundingStatus;
 
-                    if(fundingDetails[detailIndex].fundingStatus !== ((data.quoteType === "Quote Server Quote")?"Active":"Approved")) {
+                    if(["Approved","Active"].indexOf(fundingDetails[detailIndex].fundingStatus) === -1) {
                         quoteWarning = true;
                     }
 
-                    if(fundingDetails[detailIndex].fundingType === "FUNDS_RESERVATION") {
-                        fundsRemainingNotification += '<br>'+fundingDetails[detailIndex].fundsReservationNumber;
+                    if(fundingDetails[detailIndex].fundingType &&
+                        ["FUNDS_RESERVATION", "Funds Reservation"].indexOf(fundingDetails[detailIndex].fundingType) !== -1) {
 
-                        if (fundingDetails[detailIndex].activeGrant) {
-                            fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].fundsReservationEndDate;
-                            if (fundingDetails[detailIndex].daysTillExpire < 45) {
-                                fundsRemainingNotification += ' in ' + fundingDetails[detailIndex].daysTillExpire +
-                                    ' days. If it is likely this work will not be completed by then, please work on updating the ' +
-                                    'Funding Source so Billing Errors can be avoided.';
+                        if (fundingDetails[detailIndex].activeCostObject !== 'undefined' && fundingDetails[detailIndex].activeCostObject !== null) {
+                            if (fundingDetails[detailIndex].activeCostObject) {
+                                fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].fundsReservationEndDate;
+                                if (fundingDetails[detailIndex].daysTillExpire !== 'undefined' &&
+                                    fundingDetails[detailIndex].daysTillExpire < 45) {
+                                    fundsRemainingNotification += ' in ' + fundingDetails[detailIndex].daysTillExpire +
+                                        ' days. If it is likely this work will not be completed by then, please work on updating the ' +
+                                        'Funding Source so Billing Errors can be avoided.';
+                                    quoteWarning = true;
+                                }
+                            } else {
+                                fundsRemainingNotification += ' -- Has Expired '
+
+                                if (fundingDetails[detailIndex].fundsReservationEndDate) {
+                                    fundsRemainingNotification += fundingDetails[detailIndex].fundsReservationEndDate;
+                                }
                                 quoteWarning = true;
                             }
-                        } else {
-                            fundsRemainingNotification += ' -- Has Expired ' + fundingDetails[detailIndex].fundsReservationEndDate;
-                            quoteWarning = true;
-                        }
-                    } else {
-                        if(fundingDetails[detailIndex].purchaseOrderNumber) {
-                            fundsRemainingNotification += '<BR>' + fundingDetails[detailIndex].purchaseOrderNumber;
                         }
                     }
-                    if(data.quoteType==="SAP Quote") {
+                    if(fundingDetails[detailIndex].fundingSplit !== 'undefined') {
                         fundsRemainingNotification += '<br>funding split percentage=' + fundingDetails[detailIndex].fundingSplit + ' ';
                     }
 
                     fundsRemainingNotification += '<br>';
                 }
+                fundsRemainingNotification+='<ul>';
                 $j("#fundsRemaining").html(fundsRemainingNotification);
             } else {
                 $j("#fundsRemaining").html('Error: ' + data.error);
@@ -1181,6 +1194,7 @@
                 $j("#fundsRemaining").removeClass("alert alert-error");
             }
         }
+
 
         function formatUser(item) {
             return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
