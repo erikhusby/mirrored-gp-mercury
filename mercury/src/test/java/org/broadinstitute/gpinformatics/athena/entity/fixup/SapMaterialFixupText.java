@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessStatus;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
@@ -90,7 +91,7 @@ public class SapMaterialFixupText extends Arquillian {
         productDao.persist(control);
 
         // publish products. will create or update them in SAP
-        productEjb.publishProductsToSAP(partNumbersByPartNumberValidity.get(true), true, false);
+        productEjb.publishProductsToSAP(partNumbersByPartNumberValidity.get(true), true, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
 
 
 
@@ -104,7 +105,7 @@ public class SapMaterialFixupText extends Arquillian {
                                    (product.isClinicalProduct() || product.isExternalProduct()))
                 .collect(Collectors.toList());
 
-        productEjb.publishProductsToSAP(onlyDisabledProducts, false, true);
+        productEjb.publishProductsToSAP(onlyDisabledProducts, false, SapIntegrationService.PublishType.UPDATE_ONLY);
 
 
         // restore blacklist;

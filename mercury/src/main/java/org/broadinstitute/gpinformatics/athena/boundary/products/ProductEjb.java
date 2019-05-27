@@ -314,15 +314,25 @@ public class ProductEjb {
     /**
      * This method has the responsibility to take the given product and attempt to publish it to SAP
      * @param productToPublish A product which needs to have its information either created or updated in SAP
-     * @param extendProductsToOtherPlatforms
-     * @param onlyUpdateMaterial
      * @throws SAPIntegrationException
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public void publishProductToSAP(Product productToPublish, boolean extendProductsToOtherPlatforms,
-                                    boolean onlyUpdateMaterial) throws SAPIntegrationException {
+    public void publishProductToSAP(Product productToPublish) throws SAPIntegrationException {
+        publishProductToSAP(productToPublish, true, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
+    }
+
+    /**
+     * This method has the responsibility to take the given product and attempt to publish it to SAP
+     * @param productToPublish A product which needs to have its information either created or updated in SAP
+     * @param extendProductsToOtherPlatforms
+     * @param publishType
+     * @throws SAPIntegrationException
+     */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    private void publishProductToSAP(Product productToPublish, boolean extendProductsToOtherPlatforms,
+                                    SapIntegrationService.PublishType publishType) throws SAPIntegrationException {
         try {
-            sapService.publishProductInSAP(productToPublish, extendProductsToOtherPlatforms, onlyUpdateMaterial);
+            sapService.publishProductInSAP(productToPublish, extendProductsToOtherPlatforms, publishType);
             productToPublish.setSavedInSAP(true);
 
         } catch (SAPIntegrationException e) {
@@ -334,17 +344,28 @@ public class ProductEjb {
      * This method has the responsibility of taking the products passed to it and attempting to publish them to SAP.
      * @param productsToPublish a collection of products which needs to have their information either created or
      *                          updated in SAP
+     * @throws SAPIntegrationException
+     */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void publishProductsToSAP(Collection<Product> productsToPublish) throws ValidationException {
+        publishProductsToSAP(productsToPublish, true, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
+    }
+
+    /**
+     * This method has the responsibility of taking the products passed to it and attempting to publish them to SAP.
+     * @param productsToPublish a collection of products which needs to have their information either created or
+     *                          updated in SAP
      * @param extendProductsToOtherPlatforms
-     * @param onlyUpdateMaterial
+     * @param publishType
      * @throws SAPIntegrationException
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void publishProductsToSAP(Collection<Product> productsToPublish, boolean extendProductsToOtherPlatforms,
-                                     boolean onlyUpdateMaterial) throws ValidationException {
+                                      SapIntegrationService.PublishType publishType) throws ValidationException {
         List<String> errorMessages = new ArrayList<>();
         for (Product productToPublish : productsToPublish) {
             try {
-                publishProductToSAP(productToPublish, extendProductsToOtherPlatforms, onlyUpdateMaterial);
+                publishProductToSAP(productToPublish, extendProductsToOtherPlatforms, publishType);
             } catch (SAPIntegrationException e) {
                 errorMessages.add(productToPublish.getPartNumber() + ": " + e.getMessage());
                 log.error(e.getMessage());

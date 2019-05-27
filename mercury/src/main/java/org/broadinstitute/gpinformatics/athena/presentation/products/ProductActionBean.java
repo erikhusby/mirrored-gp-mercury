@@ -479,7 +479,7 @@ public class ProductActionBean extends CoreActionBean {
                 criteria, operators, values, genotypingChipInfo, externalPriceItemTokenInput);
         addMessage("Product \"" + editProduct.getProductName() + "\" has been saved");
             try {
-                productEjb.publishProductToSAP(editProduct, true, false);
+                productEjb.publishProductToSAP(editProduct);
             } catch (SAPIntegrationException e) {
                 addGlobalValidationError("Unable to update the product in SAP. " + e.getMessage());
             }
@@ -496,7 +496,7 @@ public class ProductActionBean extends CoreActionBean {
             selectedProducts =
                     productDao.findListByList(Product.class, Product_.partNumber, selectedProductPartNumbers);
             try {
-                productEjb.publishProductsToSAP(selectedProducts, true, false);
+                productEjb.publishProductsToSAP(selectedProducts);
             } catch (ValidationException e) {
                 addGlobalValidationError("Unable to publish some of the products to SAP. " + e.getMessage("<br/>"));
             }
@@ -507,7 +507,7 @@ public class ProductActionBean extends CoreActionBean {
     @HandlesEvent(PUBLISH_TO_SAP)
     public Resolution publishToSap() {
         try {
-            productEjb.publishProductToSAP(editProduct, true, false);
+            productEjb.publishProductToSAP(editProduct);
             addMessage("Product \"" + editProduct.getProductName() + "\" Successfully published to SAP");
         } catch (SAPIntegrationException e) {
             addGlobalValidationError("Unable to publish the product to SAP. " + e.getMessage());

@@ -409,20 +409,40 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @Override
-    public void publishProductInSAP(Product product, boolean extendProductsToOtherPlatforms,
-                                    boolean onlyUpdateMaterial) throws SAPIntegrationException {
+    public void publishProductInSAP(Product product) throws SAPIntegrationException {
 
+        publishProductInSAP(product, true, PublishType.CREATE_AND_UPDATE);
+    }
+
+    /**
+     * With the introduction of a direct communication to SAP from Mercury, we will do away with Price Items for a
+     * representation of the price of work.  Products are now directly reflected in the System which manages our
+     * financial records (SAP).  This method will allow Mercury to create a representation of a Product within SAP
+     * for the purpose of tracking projected and actual work
+     *
+     * For an existing product, this method will also allow Mercury to update that product with any changes made within
+     * Mercury
+     * @param product                           The Product information to be reflected in SAP
+     * @param extendProductsToOtherPlatforms    Flag to help determine if Mercury should extend the resulting Material to platforms
+     *                                          other than GP SSF or GP LLC product list.  True means we wish to extend the product
+     * @param publishType                Flag to help determine if Mercury should should attempt to create a new Material
+     *                                          if the Product it is not found in SAP.  When true, do not create material
+     * @throws SAPIntegrationException
+     */
+    @Override
+    public void publishProductInSAP(Product product, boolean extendProductsToOtherPlatforms,
+                                    PublishType publishType) throws SAPIntegrationException {
         SAPMaterial sapMaterial = initializeSapMaterialObject(product);
 
-        applyMaterialUpdate(product, onlyUpdateMaterial, sapMaterial);
+        applyMaterialUpdate(product, publishType, sapMaterial);
 
         Set<SAPMaterial> extendedProducts = new HashSet<>();
 
         Set<SAPCompanyConfiguration> platformsToExtend = EXTENDED_PLATFORMS
                 .stream()
                 .filter(companyConfiguration ->
-                                extendProductsToOtherPlatforms ||
-                                StringUtils.equals(SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization(),
+                        extendProductsToOtherPlatforms ||
+                        StringUtils.equals(SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization(),
                                         companyConfiguration.getSalesOrganization()))
                 .collect(Collectors.toSet());
 
@@ -449,7 +469,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
 
         for (SAPMaterial extendedProduct : extendedProducts) {
-            applyMaterialUpdate(product, onlyUpdateMaterial, extendedProduct);
+            applyMaterialUpdate(product, publishType, extendedProduct);
         }
     }
 
@@ -458,17 +478,17 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * updated
      * @param product               The Mercury product which is intended to be saved to SAP and represented as a
      *                              Material
-     * @param onlyUpdateMaterial    Flag to help determine if Mercury should should attempt to create a new Material
+     * @param publishType    Flag to help determine if Mercury should should attempt to create a new Material
      *                              if the Product it is not found in SAP.  When true, do not create material
      * @param extendedProduct       Flag to help determine if Mercury should extend the resulting Material to platforms
      *                              other than GP SSF or GP LLC product list.  True means we wish to extend the product
      * @throws SAPIntegrationException
      */
-    private void applyMaterialUpdate(Product product, boolean onlyUpdateMaterial, SAPMaterial extendedProduct)
+    private void applyMaterialUpdate(Product product, PublishType publishType, SAPMaterial extendedProduct)
             throws SAPIntegrationException {
         if (productPriceCache.findByProduct(product,
                 SAPCompanyConfiguration.fromSalesOrgForMaterial(extendedProduct.getSalesOrg()).getSalesOrganization()) == null) {
-            if (!onlyUpdateMaterial) {
+            if (publishType != PublishType.UPDATE_ONLY) {
                 log.debug("Creating product " + extendedProduct.getMaterialIdentifier());
                 getClient().createMaterial(extendedProduct);
             }
