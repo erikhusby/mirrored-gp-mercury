@@ -1024,35 +1024,28 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     }
 
     public String getSapCommercialCharge() {
-
         String commercialDisplayCharge = "";
-        if (determineCompanyConfiguration()
-            == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) {
-            final BigDecimal feeByCondition = getFeeByCondition(Condition.COMMERCIAL_CHARGE);
-            if(feeByCondition.compareTo(BigDecimal.ZERO) > 0) {
-                commercialDisplayCharge = NumberFormat.getCurrencyInstance().format(
-                        feeByCondition);
-            }
+        BigDecimal feeByCondition = getFeeByCondition(Condition.COMMERCIAL_CHARGE);
+        if (feeByCondition.compareTo(BigDecimal.ZERO) > 0) {
+            commercialDisplayCharge = NumberFormat.getCurrencyInstance().format(
+                feeByCondition);
         }
         return commercialDisplayCharge;
     }
 
     public String getSapSSFIntercompanyCharge() {
         String interCompanyDisplayCharge = "";
-        if (determineCompanyConfiguration()
-                          == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) {
-            final BigDecimal feeByCondition = getFeeByCondition(Condition.INTERCOMPANY_FEE);
-            if(feeByCondition.compareTo(BigDecimal.ZERO)>0) {
-                interCompanyDisplayCharge = NumberFormat.getCurrencyInstance().format(
-                        feeByCondition);
-            }
+        BigDecimal feeByCondition = getFeeByCondition(Condition.INTERCOMPANY_FEE);
+        if (feeByCondition.compareTo(BigDecimal.ZERO) > 0) {
+            interCompanyDisplayCharge = NumberFormat.getCurrencyInstance().format(
+                feeByCondition);
         }
         return interCompanyDisplayCharge;
     }
 
     public String getSapSSFFullPrice() {
-        final BigDecimal sapFullPrice =
-                getSapFullPrice(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
+        BigDecimal sapFullPrice =
+            getSapFullPrice(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
         String format = "";
         if(sapFullPrice.compareTo(BigDecimal.ZERO) > 0) {
             format = NumberFormat.getCurrencyInstance().format(sapFullPrice);
@@ -1072,8 +1065,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     private BigDecimal getRawLLCFullPrice() {
         BigDecimal sapFullLLCPrice = getSapFullPrice(
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization());
-        sapFullLLCPrice = sapFullLLCPrice.add(getFeeByCondition(Condition.COMMERCIAL_CHARGE))
-                .add(getFeeByCondition(Condition.CLINICAL_CHARGE));
+            sapFullLLCPrice = sapFullLLCPrice.add(getFeeByCondition(Condition.CLINICAL_CHARGE));
         return sapFullLLCPrice;
     }
 
@@ -1092,7 +1084,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public String getReplacementPrices()  {
 
-        final String displayValues = sapMaterials.values().stream()
+        final String displayValues = sapMaterials.values().stream().filter(sapMaterial -> !sapMaterial
+            .getPossibleDeliveryConditions().isEmpty())
                 .map(sapMaterial -> sapMaterial.getPossibleDeliveryConditions().entrySet())
                 .map(entries -> entries.stream()
                         .filter(entry -> entry.getValue().compareTo(BigDecimal.ZERO) > 0)
@@ -1227,16 +1220,17 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     }
 
     public static void setMaterialOnProduct(Product product, SAPProductPriceCache productPriceCache) {
-        final SapIntegrationClientImpl.SAPCompanyConfiguration companyCode =
-                product.determineCompanyConfiguration();
-        Optional<SAPMaterial> primaryProduct = Optional.ofNullable(productPriceCache.findByPartNumber(product.getPartNumber(),
-                companyCode.getSalesOrganization()));
-        primaryProduct.ifPresent(product::addSapMaterial);
-        if(companyCode == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD) {
-            Optional<SAPMaterial> llcVersion = Optional.ofNullable(productPriceCache.findByPartNumber(product.getPartNumber(),
-                    companyCode.getSalesOrganization()));
-            llcVersion.ifPresent(product::addSapMaterial);
-        }
-    }
+            SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = product.determineCompanyConfiguration();
+            Optional.ofNullable(
+                productPriceCache.findByPartNumber(product.getPartNumber(),
+                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization()))
+                .ifPresent(product::addSapMaterial);
 
+            if (!product.isClinicalProduct() && !product.isExternalOnlyProduct()) {
+                Optional.ofNullable(
+                    productPriceCache.findByPartNumber(product.getPartNumber(), companyCode.getSalesOrganization()))
+                    .ifPresent(product::addSapMaterial);
+            }
+        }
 }
+
