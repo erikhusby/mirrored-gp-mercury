@@ -1063,10 +1063,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     }
 
     private BigDecimal getRawLLCFullPrice() {
-        BigDecimal sapFullLLCPrice = getSapFullPrice(
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization());
-            sapFullLLCPrice = sapFullLLCPrice.add(getFeeByCondition(Condition.CLINICAL_CHARGE));
-        return sapFullLLCPrice;
+        return getFeeByCondition(Condition.CLINICAL_CHARGE)
+            .add(getFeeByCondition(Condition.COMMERCIAL_CHARGE).add(getFeeByCondition(Condition.INTERCOMPANY_FEE)));
     }
 
     private BigDecimal getSapFullPrice(String salesOrg) {
