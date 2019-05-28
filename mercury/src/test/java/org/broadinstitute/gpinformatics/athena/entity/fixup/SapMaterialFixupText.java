@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessStatus;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
@@ -75,7 +76,7 @@ public class SapMaterialFixupText extends Arquillian {
         utx.begin();
 
         Map<Boolean, List<Product>> partNumbersByPartNumberValidity =
-            productDao.findProducts(ProductDao.Availability.ALL, ProductDao.TopLevelOnly.NO,
+            productDao.findProducts(ProductDao.Availability.CURRENT_OR_FUTURE, ProductDao.TopLevelOnly.NO,
                 ProductDao.IncludePDMOnly.YES).stream().collect(Collectors.partitioningBy(validPartNumber()));
 
         final List<String> partNumbersToUpdate =
@@ -90,7 +91,22 @@ public class SapMaterialFixupText extends Arquillian {
         productDao.persist(control);
 
         // publish products. will create or update them in SAP
-        productEjb.publishProductsToSAP(partNumbersByPartNumberValidity.get(true));
+        productEjb.publishProductsToSAP(partNumbersByPartNumberValidity.get(true), true, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
+
+
+
+        Map<Boolean, List<Product>> allProductsByPartNumberValidity =
+                productDao.findProducts(ProductDao.Availability.ALL, ProductDao.TopLevelOnly.NO,
+                        ProductDao.IncludePDMOnly.YES).stream().collect(Collectors.partitioningBy(validPartNumber()));
+
+        List<Product> onlyDisabledProducts = allProductsByPartNumberValidity.get(true)
+                .stream()
+                .filter(product -> !partNumbersByPartNumberValidity.get(true).contains(product) &&
+                                   (product.isClinicalProduct() || product.isExternalProduct()))
+                .collect(Collectors.toList());
+
+        productEjb.publishProductsToSAP(onlyDisabledProducts, false, SapIntegrationService.PublishType.UPDATE_ONLY);
+
 
         // restore blacklist;
         control.setDisabledItems(disabledItems);

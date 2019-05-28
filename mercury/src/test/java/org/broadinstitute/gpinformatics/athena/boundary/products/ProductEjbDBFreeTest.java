@@ -55,19 +55,23 @@ public class ProductEjbDBFreeTest {
         testEjb.publishProductToSAP(testProduct);
 
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockSapService, Mockito.times(1)).publishProductInSAP(testProduct);
+        Mockito.verify(mockSapService, Mockito.times(1)).publishProductInSAP(testProduct,
+                true, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
 
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockSapService, Mockito.times(2)).publishProductInSAP(testProduct);
+        Mockito.verify(mockSapService, Mockito.times(2)).publishProductInSAP(testProduct,
+                true, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
 
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockSapService, Mockito.times(3)).publishProductInSAP(testProduct);
+        Mockito.verify(mockSapService, Mockito.times(3)).publishProductInSAP(testProduct,
+                true, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
 
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockSapService, Mockito.times(4)).publishProductInSAP(testProduct);
+        Mockito.verify(mockSapService, Mockito.times(4)).publishProductInSAP(testProduct,
+                true, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
     }
 
     public void testPublishClinicalToSAP() throws Exception {
@@ -93,20 +97,24 @@ public class ProductEjbDBFreeTest {
         testEjb.publishProductToSAP(testProduct);
 
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockSapService, Mockito.times(1)).publishProductInSAP(testProduct);
+        Mockito.verify(mockSapService, Mockito.times(1)).publishProductInSAP(testProduct,
+                true, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
 
 
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockSapService, Mockito.times(2)).publishProductInSAP(testProduct);
+        Mockito.verify(mockSapService, Mockito.times(2)).publishProductInSAP(testProduct,
+                true, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
 
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockSapService, Mockito.times(3)).publishProductInSAP(testProduct);
+        Mockito.verify(mockSapService, Mockito.times(3)).publishProductInSAP(testProduct,
+                true, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
 
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockSapService, Mockito.times(4)).publishProductInSAP(testProduct);
+        Mockito.verify(mockSapService, Mockito.times(4)).publishProductInSAP(testProduct,
+                true, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
 
 
         Product testProduct2 = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "P-CLIATEST-SAP");
@@ -137,20 +145,24 @@ public class ProductEjbDBFreeTest {
         testEjb.publishProductToSAP(testProduct);
 
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockSapService, Mockito.times(1)).publishProductInSAP(testProduct);
+        Mockito.verify(mockSapService, Mockito.times(1)).publishProductInSAP(testProduct,
+                true, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
 
 
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockSapService, Mockito.times(2)).publishProductInSAP(testProduct);
+        Mockito.verify(mockSapService, Mockito.times(2)).publishProductInSAP(testProduct,
+                true, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
 
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockSapService, Mockito.times(3)).publishProductInSAP(testProduct);
+        Mockito.verify(mockSapService, Mockito.times(3)).publishProductInSAP(testProduct,
+                true, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
 
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockSapService, Mockito.times(4)).publishProductInSAP(testProduct);
+        Mockito.verify(mockSapService, Mockito.times(4)).publishProductInSAP(testProduct,
+                true, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
 
 
         Product testProduct2 = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "P-CLIATEST-SAP");
@@ -218,6 +230,109 @@ public class ProductEjbDBFreeTest {
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockWrappedClient, Mockito.times(7)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(9)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
+    }
+
+    public void testPublishSSFToSAPCheckClientCollectionCalls() throws Exception {
+
+        final SAPAccessControlEjb mockSapAccessControl = Mockito.mock(SAPAccessControlEjb.class);
+        final AttributeArchetypeDao mockAttributeArchetypeDao = Mockito.mock(AttributeArchetypeDao.class);
+        final AuditReaderDao mockAuditReaderDao = Mockito.mock(AuditReaderDao.class);
+        final SapIntegrationServiceImpl sapService = new SapIntegrationServiceImpl();
+        final SapIntegrationClientImpl mockWrappedClient = Mockito.mock(SapIntegrationClientImpl.class);
+        sapService.setWrappedClient(mockWrappedClient);
+        final ProductDao mockProductDao = Mockito.mock(ProductDao.class);
+        Set<SAPMaterial> materialSet = new HashSet<>();
+        SAPProductPriceCache productPriceCache = new SAPProductPriceCache(sapService);
+        sapService.setProductPriceCache(productPriceCache);
+        ProductEjb testEjb = new ProductEjb(mockProductDao, sapService, mockAuditReaderDao,
+                mockAttributeArchetypeDao, mockSapAccessControl, productPriceCache);
+        sapService.setProductPriceCache(productPriceCache);
+
+        Product testProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "SGM-TEST-SAP");
+        testProduct.setPrimaryPriceItem(new PriceItem("qsID", "testPlatform", "testCategory", "blockThisItem"));
+
+        Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenThrow(new RuntimeException());
+        Mockito.when(mockWrappedClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(materialSet);
+
+        testEjb.publishProductsToSAP(Collections.singleton(testProduct), true, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
+        assertThat(testProduct.isSavedInSAP(), is(true));
+        Mockito.verify(mockWrappedClient, Mockito.times(4)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(0)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
+
+        testEjb.publishProductsToSAP(Collections.singleton(testProduct), true, SapIntegrationService.PublishType.CREATE_ONLY);
+        assertThat(testProduct.isSavedInSAP(), is(true));
+        Mockito.verify(mockWrappedClient, Mockito.times(8)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(0)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
+
+        testEjb.publishProductsToSAP(Collections.singleton(testProduct), false, SapIntegrationService.PublishType.CREATE_ONLY);
+        assertThat(testProduct.isSavedInSAP(), is(true));
+        Mockito.verify(mockWrappedClient, Mockito.times(10)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(0)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
+
+        testEjb.publishProductsToSAP(Collections.singleton(testProduct), true, SapIntegrationService.PublishType.UPDATE_ONLY);
+        assertThat(testProduct.isSavedInSAP(), is(true));
+        Mockito.verify(mockWrappedClient, Mockito.times(10)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(0)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
+
+        SapIntegrationClientImpl.SAPCompanyConfiguration broad = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+
+        // Mimic creating the product in Sales org GP01 for GP Platform
+        materialSet.add(TestUtils.mockMaterialSearch(broad, testProduct));
+
+        productPriceCache.refreshCache();
+        /*
+            Since we are mimicking that the product has been published to only one Platform, it will call ChangeMaterial
+            for that one, and create material for the other 3
+         */
+        testEjb.publishProductsToSAP(Collections.singleton(testProduct), true, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
+        assertThat(testProduct.isSavedInSAP(), is(true));
+        Mockito.verify(mockWrappedClient, Mockito.times(13)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(1)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
+
+        testEjb.publishProductsToSAP(Collections.singleton(testProduct), true, SapIntegrationService.PublishType.CREATE_ONLY);
+        assertThat(testProduct.isSavedInSAP(), is(true));
+        Mockito.verify(mockWrappedClient, Mockito.times(16)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(1)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
+
+        testEjb.publishProductsToSAP(Collections.singleton(testProduct), false, SapIntegrationService.PublishType.CREATE_ONLY);
+        assertThat(testProduct.isSavedInSAP(), is(true));
+        Mockito.verify(mockWrappedClient, Mockito.times(17)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(1)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
+
+        testEjb.publishProductsToSAP(Collections.singleton(testProduct), true, SapIntegrationService.PublishType.UPDATE_ONLY);
+        assertThat(testProduct.isSavedInSAP(), is(true));
+        Mockito.verify(mockWrappedClient, Mockito.times(17)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(2)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
+
+        //Loop through all company codes and mimic extending the product to those platforms
+        final List<SapIntegrationClientImpl.SAPCompanyConfiguration> extendedPlatforms =
+                new ArrayList<>(SapIntegrationServiceImpl.EXTENDED_PLATFORMS);
+        extendedPlatforms.add(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        extendedPlatforms.forEach(configuration1 -> {
+            materialSet.add(TestUtils.mockMaterialSearch(configuration1, testProduct));
+        });
+        productPriceCache.refreshCache();
+        testEjb.publishProductsToSAP(Collections.singleton(testProduct), true, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
+        assertThat(testProduct.isSavedInSAP(), is(true));
+        Mockito.verify(mockWrappedClient, Mockito.times(17)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(6)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
+
+        testEjb.publishProductsToSAP(Collections.singleton(testProduct), true, SapIntegrationService.PublishType.UPDATE_ONLY);
+        assertThat(testProduct.isSavedInSAP(), is(true));
+        Mockito.verify(mockWrappedClient, Mockito.times(17)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(10)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
+        testEjb.publishProductsToSAP(Collections.singleton(testProduct), true, SapIntegrationService.PublishType.CREATE_ONLY);
+        assertThat(testProduct.isSavedInSAP(), is(true));
+        Mockito.verify(mockWrappedClient, Mockito.times(17)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(10)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
+        testEjb.publishProductsToSAP(Collections.singleton(testProduct), false, SapIntegrationService.PublishType.UPDATE_ONLY);
+        assertThat(testProduct.isSavedInSAP(), is(true));
+        Mockito.verify(mockWrappedClient, Mockito.times(17)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(12)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
+        testEjb.publishProductsToSAP(Collections.singleton(testProduct), false, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
+        assertThat(testProduct.isSavedInSAP(), is(true));
+        Mockito.verify(mockWrappedClient, Mockito.times(17)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(14)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
     }
 
     public void testPublishClinicalToSAPCheckClientCalls() throws Exception {

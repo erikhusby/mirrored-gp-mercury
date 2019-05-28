@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.google.common.collect.MoreCollectors.toOptional;
 import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option.Type;
@@ -409,18 +410,43 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
     @Override
     public void publishProductInSAP(Product product) throws SAPIntegrationException {
+
+        publishProductInSAP(product, true, PublishType.CREATE_AND_UPDATE);
+    }
+
+    /**
+     * With the introduction of a direct communication to SAP from Mercury, we will do away with Price Items for a
+     * representation of the price of work.  Products are now directly reflected in the System which manages our
+     * financial records (SAP).  This method will allow Mercury to create a representation of a Product within SAP
+     * for the purpose of tracking projected and actual work
+     *
+     * For an existing product, this method will also allow Mercury to update that product with any changes made within
+     * Mercury
+     * @param product                           The Product information to be reflected in SAP
+     * @param extendProductsToOtherPlatforms    Flag to help determine if Mercury should extend the resulting Material to platforms
+     *                                          other than GP SSF or GP LLC product list.  True means we wish to extend the product
+     * @param publishType                Flag to help determine if Mercury should should attempt to create a new Material
+     *                                          if the Product it is not found in SAP.  When true, do not create material
+     * @throws SAPIntegrationException
+     */
+    @Override
+    public void publishProductInSAP(Product product, boolean extendProductsToOtherPlatforms,
+                                    PublishType publishType) throws SAPIntegrationException {
         SAPMaterial sapMaterial = initializeSapMaterialObject(product);
-        if (productPriceCache.findByProduct(product,
-                SAPCompanyConfiguration.fromSalesOrgForMaterial(sapMaterial.getSalesOrg()).getSalesOrganization()) == null) {
-            log.debug("Creating product " + sapMaterial.getMaterialIdentifier());
-            getClient().createMaterial(sapMaterial);
-        } else {
-            log.debug("Updating product " + sapMaterial.getMaterialIdentifier());
-            getClient().changeMaterialDetails(SAPChangeMaterial.fromSAPMaterial(sapMaterial));
-        }
+
+        applyMaterialUpdate(product, publishType, sapMaterial);
 
         Set<SAPMaterial> extendedProducts = new HashSet<>();
-        for (SAPCompanyConfiguration sapCompanyConfiguration : EXTENDED_PLATFORMS) {
+
+        Set<SAPCompanyConfiguration> platformsToExtend = EXTENDED_PLATFORMS
+                .stream()
+                .filter(companyConfiguration ->
+                        extendProductsToOtherPlatforms ||
+                        StringUtils.equals(SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization(),
+                                        companyConfiguration.getSalesOrganization()))
+                .collect(Collectors.toSet());
+
+        for (SAPCompanyConfiguration sapCompanyConfiguration : platformsToExtend) {
             log.debug("Current company config is " + sapCompanyConfiguration.name());
             SAPMaterial tempMaterial = null;
                 if (sapCompanyConfiguration == SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) {
@@ -443,16 +469,34 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
 
         for (SAPMaterial extendedProduct : extendedProducts) {
+            applyMaterialUpdate(product, publishType, extendedProduct);
+        }
+    }
 
-            if (productPriceCache.findByProduct(product,
-                    SAPCompanyConfiguration.fromSalesOrgForMaterial(extendedProduct.getSalesOrg()).getSalesOrganization()) == null) {
+    /**
+     * Helper method to encapsulate the previously duplicated logic of determining if a product should be created or
+     * updated
+     * @param product               The Mercury product which is intended to be saved to SAP and represented as a
+     *                              Material
+     * @param publishType    Flag to help determine if Mercury should should attempt to create a new Material
+     *                              if the Product it is not found in SAP.  When true, do not create material
+     * @param extendedProduct       Flag to help determine if Mercury should extend the resulting Material to platforms
+     *                              other than GP SSF or GP LLC product list.  True means we wish to extend the product
+     * @throws SAPIntegrationException
+     */
+    private void applyMaterialUpdate(Product product, PublishType publishType, SAPMaterial extendedProduct)
+            throws SAPIntegrationException {
+        if (productPriceCache.findByProduct(product,
+                SAPCompanyConfiguration.fromSalesOrgForMaterial(extendedProduct.getSalesOrg()).getSalesOrganization()) == null) {
+            if (publishType != PublishType.UPDATE_ONLY) {
                 log.debug("Creating product " + extendedProduct.getMaterialIdentifier());
                 getClient().createMaterial(extendedProduct);
-            } else {
+            }
+        } else {
+            if (publishType != PublishType.CREATE_ONLY) {
                 log.debug("Updating product " + extendedProduct.getMaterialIdentifier());
                 getClient().changeMaterialDetails(SAPChangeMaterial.fromSAPMaterial(extendedProduct));
             }
-
         }
     }
 

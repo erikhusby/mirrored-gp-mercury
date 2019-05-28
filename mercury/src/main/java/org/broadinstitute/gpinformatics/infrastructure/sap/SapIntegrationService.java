@@ -66,11 +66,14 @@ public interface SapIntegrationService {
      * 
      * For an existing product, this method will also allow Mercury to update that product with any changes made within
      * Mercury
-     * @param product The Product information to be reflected in SAP
+     * @param product                           The Product information to be reflected in SAP
      * @throws SAPIntegrationException
      */
     void publishProductInSAP(Product product) throws SAPIntegrationException;
-    
+
+    void publishProductInSAP(Product product, boolean extendProductsToOtherPlatforms,
+                             PublishType publishType) throws SAPIntegrationException;
+
     Set<SAPMaterial> findProductsInSap() throws SAPIntegrationException;
 
     OrderCalculatedValues calculateOpenOrderValues(int addedSampleCount, SapQuote sapQuote, ProductOrder productOrder) throws SAPIntegrationException;
@@ -168,5 +171,9 @@ public interface SapIntegrationService {
                 .append(options)
                 .toHashCode();
         }
+    }
+
+    public enum PublishType {
+        CREATE_ONLY, UPDATE_ONLY, CREATE_AND_UPDATE
     }
 }
