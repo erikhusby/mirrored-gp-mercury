@@ -10,11 +10,22 @@ import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
+import java.util.Arrays;
+import java.util.List;
 
 @Audited
 @Entity
 @Table(schema = "mercury", name = "QUARANTINED", uniqueConstraints = @UniqueConstraint(columnNames = {"ITEM"}))
 public class Quarantined {
+    // Non-user selectable quarantine reasons.
+    public static final String MISMATCH = "Wrong tube or position";
+    public static final String MISSING_MANIFEST = "Missing manifest";
+    // User selectable quarantine reasons.
+    private static final List<String> RACK_REASONS = Arrays.asList(
+            "Unreadable barcode",
+            "Damaged"
+    );
+
     public enum ItemSource {MAYO};
     public enum ItemType {PACKAGE, RACK};
 
@@ -80,5 +91,9 @@ public class Quarantined {
 
     public void setReason(String reason) {
         this.reason = reason;
+    }
+
+    public static List<String> getRackReasons() {
+        return RACK_REASONS;
     }
 }

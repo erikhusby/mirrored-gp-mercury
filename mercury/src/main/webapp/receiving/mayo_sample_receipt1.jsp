@@ -13,32 +13,39 @@
             }
             div.inputGroup > div.control-group > .control-label {
                 display: table-cell;
+                vertical-align: middle;
+                padding-top: 20px;
+                padding-right: 20px;
             }
             div.inputGroup > div.control-group > div.controls {
                 display: table-cell;
-                padding-left: 10px;
-                padding-top: 10px;
+                vertical-align: middle;
+                padding-top: 20px;
             }
         </style>
 
         <%@ include file="/vessel/rack_scanner_list_with_sim_part1.jsp" %>
 
         <stripes:form beanclass="${actionBean.class.name}" id="rackScanForm" class="form-horizontal">
-            <!-- Captures the rack barcode. -->
-            <div class="control-group">
-                Rack Barcode:
-                <span style="padding-left: 10px">
-                    <stripes:text id="rackBarcode" name="rackBarcode"/>
-                </span>
+            <div class="inputGroup">
+                <!-- Captures the rack barcode. -->
+                <div class="control-group">
+                    <div class="control-label">Rack Barcode</div>
+                    <div class="controls">
+                        <stripes:text id="rackBarcode" name="rackBarcode"/>
+                    </div>
+                </div>
+
+                <!-- Selectors for the rack scan lab & scanner, and the Scan button. -->
+                <stripes:layout-render name="/vessel/rack_scanner_list_with_sim_part2.jsp" bean="${actionBean}"/>
+
+                <div class="control-group">
+                    <div class="control-label"/>
+                    <div class="controls">
+                        <stripes:submit value="Rack Scan" id="scanBtn" name="scanBtn" class="btn btn-primary"/>
+                    </div>
+                </div>
             </div>
-
-            <!-- Selectors for the rack scan lab & scanner, and the Scan button. -->
-            <stripes:layout-render name="/vessel/rack_scanner_list_with_sim_part2.jsp" bean="${actionBean}"/>
-
-            <div class="control-group">
-                <stripes:submit value="Rack Scan" id="scanBtn" name="scanBtn" class="btn btn-primary"/>
-            </div>
-
         </stripes:form>
     </stripes:layout-component>
 </stripes:layout-render>

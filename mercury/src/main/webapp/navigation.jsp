@@ -399,6 +399,11 @@
                                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.MetricsViewActionBean"
                                       event="view">Plate Map Metrics</stripes:link>
                     </li>
+                    <li>
+                        <stripes:link id="mayoQuarantines"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoPackageReceiptActionBean"
+                                      event="viewQuarantines">Mayo Quarantines</stripes:link>
+                    </li>
                 </ul>
             </li>
         </ul>

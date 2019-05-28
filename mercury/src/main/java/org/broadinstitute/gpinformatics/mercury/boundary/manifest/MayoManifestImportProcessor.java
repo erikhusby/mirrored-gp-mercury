@@ -192,7 +192,7 @@ public class MayoManifestImportProcessor {
             // Parses file as a .csv spreadsheet.
             CsvParser.parseToCellGrid(new ByteArrayInputStream(content)).
                     stream().
-                    filter(line -> line != null && !StringUtils.isAllBlank(line)).
+                    filter(line -> StringUtils.isNotBlank(StringUtils.join(line))).
                     map(Arrays::asList).
                     forEach(cellGrid::add);
         } catch(Exception e) {

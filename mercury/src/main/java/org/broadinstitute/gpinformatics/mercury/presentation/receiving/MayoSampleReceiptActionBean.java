@@ -10,6 +10,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.MayoManifestEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.infrastructure.QuarantinedDao;
+import org.broadinstitute.gpinformatics.mercury.entity.infrastructure.Quarantined;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
 
 import javax.inject.Inject;
@@ -30,6 +32,7 @@ public class MayoSampleReceiptActionBean extends RackScanActionBean {
     // Events from Sample Receipt page 1
     private static final String PAGE1 = "mayo_sample_receipt1.jsp";
     private static final String SCAN_BTN = "scanBtn";
+    private static final String SAVE_QUARANTINE_BTN = "saveQuarantineBtn";
     // Events from Sample Receipt page 2
     private static final String PAGE2 = "mayo_sample_receipt2.jsp";
     private static final String SAVE_BTN = "saveBtn";
@@ -51,13 +54,18 @@ public class MayoSampleReceiptActionBean extends RackScanActionBean {
     private List<String> bucketList = new ArrayList<>();
     private List<String> failedFilesList = new ArrayList<>();
     private Long manifestSessionId;
-    private String quarantineReason;
     private String rctUrl;
+
+    @Validate(required = true, on = SAVE_QUARANTINE_BTN)
+    private String quarantineReason;
 
     @Inject
     private MayoManifestEjb mayoManifestEjb;
 
-    @Validate(required = true, on = {SCAN_BTN, SAVE_BTN, REACCESSION_BTN})
+    @Inject
+    private QuarantinedDao quarantinedDao;
+
+    @Validate(required = true, on = {SCAN_BTN, SAVE_QUARANTINE_BTN, SAVE_BTN, REACCESSION_BTN})
     private String rackBarcode;
 
     @Validate(required = true, on = {VIEW_FILE_BTN, PULL_ONE_BTN})
@@ -74,13 +82,20 @@ public class MayoSampleReceiptActionBean extends RackScanActionBean {
         runRackScan(false);
         if (rackScan == null || rackScan.isEmpty()) {
             messageCollection.addError("The rack scan is empty.");
-            addMessages(messageCollection);
-            return new ForwardResolution(PAGE1);
         } else {
             mayoManifestEjb.validateForAccessioning(this);
-            addMessages(messageCollection);
-            return new ForwardResolution(PAGE2);
         }
+        addMessages(messageCollection);
+        return new ForwardResolution(messageCollection.hasErrors() ? PAGE1 : PAGE2);
+    }
+
+    @HandlesEvent(SAVE_QUARANTINE_BTN)
+    public Resolution saveQuarantine() throws ScannerException {
+        quarantinedDao.addOrUpdate(Quarantined.ItemSource.MAYO, Quarantined.ItemType.RACK, rackBarcode,
+                quarantineReason);
+        messageCollection.addInfo(MayoManifestEjb.QUARANTINED, rackBarcode, quarantineReason);
+        addMessages(messageCollection);
+        return new ForwardResolution(PAGE1);
     }
 
     /**
@@ -308,4 +323,7 @@ public class MayoSampleReceiptActionBean extends RackScanActionBean {
         this.rctUrl = rctUrl;
     }
 
+    public List<String> getRackReasons() {
+        return Quarantined.getRackReasons();
+    }
 }

@@ -248,7 +248,7 @@ public class MayoManifestEjbTest extends Arquillian {
             // Simulates the lab user quarantining the 2nd rack for a reason.
             String quarantinedRack = barcodes[1];
             pkgBean.setQuarantineBarcodes(Arrays.asList(quarantinedRack));
-            pkgBean.setQuarantineReasons(Arrays.asList(QuarantinedDao.RACK_REASONS.get(0)));
+            pkgBean.setQuarantineReasons(Arrays.asList(Quarantined.getRackReasons().get(0)));
             messageCollection.clearAll();
             mayoManifestEjb.packageReceipt(pkgBean);
             Assert.assertNotNull(pkgBean.getManifestSessionId());
@@ -257,11 +257,11 @@ public class MayoManifestEjbTest extends Arquillian {
                     StringUtils.join(messageCollection.getWarnings(), "; "));
 
             // The 2nd rack should now be quarantined.
-            Quarantined quarantined = quarantinedDao.findItems(ItemSource.MAYO, ItemType.RACK).stream().
+            Quarantined quarantined = quarantinedDao.findItems(ItemSource.MAYO).stream().
                     filter(quarantinedItem -> quarantinedItem.getItem().equals(quarantinedRack)).
                     findFirst().orElse(null);
             Assert.assertNotNull(quarantined);
-            Assert.assertEquals(quarantined.getReason(), QuarantinedDao.RACK_REASONS.get(0));
+            Assert.assertEquals(quarantined.getReason(), Quarantined.getRackReasons().get(0));
         }
 
         // Further package receipt is disallowed after success.
@@ -273,11 +273,12 @@ public class MayoManifestEjbTest extends Arquillian {
             pkgBean.setRackCount(String.valueOf(barcodes.length));
             pkgBean.parseBarcodeString();
             messageCollection.clearAll();
-            mayoManifestEjb.packageLookupOrLinkup(pkgBean);
+            boolean canContinue = mayoManifestEjb.packageLookupOrLinkup(pkgBean);
             Assert.assertTrue(messageCollection.getErrors().contains(String.format(MayoManifestEjb.ALREADY_RECEIVED,
                     packageId)), StringUtils.join(messageCollection.getErrors(), "; "));
             Assert.assertFalse(messageCollection.hasWarnings(),
                     StringUtils.join(messageCollection.getWarnings(), "; "));
+            Assert.assertFalse(canContinue);
         }
 
         // Fails to accession when the rack has an additional tube that is not in the manifest.
@@ -446,13 +447,14 @@ public class MayoManifestEjbTest extends Arquillian {
         messageCollection.clearAll();
         pkgBean.parseBarcodeString();
         messageCollection.clearAll();
-        mayoManifestEjb.packageLookupOrLinkup(pkgBean);
+        boolean canContinue = mayoManifestEjb.packageLookupOrLinkup(pkgBean);
         Assert.assertNull(pkgBean.getManifestSessionId());
         Assert.assertTrue(StringUtils.isBlank(pkgBean.getFilename()));
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
-        Assert.assertTrue(messageCollection.getWarnings().contains(
+        Assert.assertTrue(messageCollection.getErrors().contains(
                 String.format(MayoManifestEjb.MISSING_MANIFEST, packageId)),
                 StringUtils.join(messageCollection.getErrors()));
+        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
+        Assert.assertTrue(canContinue);
 
         pkgBean.setShipmentCondition("Just fine.");
         pkgBean.setDeliveryMethod("FedEx");
@@ -466,13 +468,15 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertTrue(StringUtils.isNotBlank(pkgBean.getRctUrl()));
         Assert.assertNull(manifestSession.getManifestFile());
         Assert.assertTrue(CollectionUtils.isEmpty(manifestSession.getRecords()));
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertTrue(messageCollection.getErrors().contains(
+                String.format(MayoManifestEjb.QUARANTINED, pkgBean.getPackageBarcode(), Quarantined.MISSING_MANIFEST)),
+                StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
 
         // The package rack should have been quarantined.
         Quarantined quarantined = quarantinedDao.findItem(ItemSource.MAYO, ItemType.PACKAGE, packageId);
         Assert.assertNotNull(quarantined);
-        Assert.assertEquals(quarantined.getReason(), QuarantinedDao.MISSING_MANIFEST);
+        Assert.assertEquals(quarantined.getReason(), Quarantined.MISSING_MANIFEST);
 
         // Fails to accession because the manifest is not linked to the package.
         MayoSampleReceiptActionBean bean = new MayoSampleReceiptActionBean();
@@ -494,6 +498,7 @@ public class MayoManifestEjbTest extends Arquillian {
         googleBucketDao.upload(filename, makeContent(cellGrid), messageCollection);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
+        manifestSessionDao.flush();
 
         // Links the package to the manifest file.
         // The ActionBean will only supply a packageId and filename for the link up operation.
@@ -502,13 +507,13 @@ public class MayoManifestEjbTest extends Arquillian {
         pkgBean2.setPackageBarcode(packageId);
         pkgBean2.setFilename(filename);
         messageCollection.clearAll();
-        mayoManifestEjb.packageLookupOrLinkup(pkgBean2);
+        boolean canContinue2 = mayoManifestEjb.packageLookupOrLinkup(pkgBean2);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
-        ManifestSession manifestSession2 = manifestSessionDao.find(pkgBean2.getManifestSessionId());
+        ManifestSession manifestSession2 = manifestSessionDao.getSessionByPrefix(packageId);
         CollectionUtils.isEqualCollection(manifestSession2.getVesselLabels(), manifestSession.getVesselLabels());
         Assert.assertEquals(manifestSession2.getReceiptTicket(), manifestSession.getReceiptTicket());
-        Assert.assertEquals(manifestSessionDao.getSessionsByPrefix(packageId), manifestSession2);
+        Assert.assertTrue(canContinue);
 
         // The package should have been unquarantined.
         Assert.assertNull(quarantinedDao.findItem(ItemSource.MAYO, ItemType.PACKAGE, packageId));

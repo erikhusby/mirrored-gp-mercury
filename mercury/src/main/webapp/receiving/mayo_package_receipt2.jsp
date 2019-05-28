@@ -4,21 +4,20 @@
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoPackageReceiptActionBean"/>
 <stripes:layout-render name="/layout.jsp" pageTitle="Mayo Package Receipt" sectionTitle="Mayo Package Receipt">
 
-    <script type="text/javascript">
-
-        function showHideFunction() {
-            if ($j('#manifestContents').style.display === 'none') {
-                $j('#manifestContents').css('display', 'block');
-            } else {
-                $j('#manifestContents').css('display', 'none');
+    <stripes:layout-component name="extraHead">
+        <script type="text/javascript">
+            function showIt() {
+                $j("#manifestContents").show();
+                $j("#showBtn").hide();
+                $j("#hideBtn").show();
             }
-        }
-
-        $j(document).ready(function () {
-
-        });
-
-    </script>
+            function hideIt() {
+                $j("#manifestContents").hide();
+                $j("#showBtn").show();
+                $j("#hideBtn").hide();
+            }
+        </script>
+    </stripes:layout-component>
 
     <stripes:layout-component name="content">
         <style type="text/css">
@@ -28,23 +27,25 @@
             div.inputGroup > div.inputRow {
                 display: table-row;
             }
-            div.inputGroup > div.inputRow > div.labelCol {
+            div.inputGroup > div.inputRow > div.firstCol {
                 display: table-cell;
             }
-            div.inputGroup > div.inputRow > div.valueCol {
+            div.inputGroup > div.inputRow > div.secondCol {
                 display: table-cell;
                 padding-left: 10px;
                 padding-top: 10px;
             }
         </style>
 
-
         <!-- Shows the manifest file contents. -->
         <c:if test="${!actionBean.getManifestCellGrid().isEmpty()}">
-            <p>Found matching manifest file: ${actionBean.filename}</p>
-
-            <button onclick="showHideFunction()">Show/Hide Manifest Content</button>
-
+            <div>
+                <span>Found manifest file: ${actionBean.filename}</span>
+                <span style="padding-left: 15px;">
+                    <button id="showBtn" onclick="showIt()">Show</button>
+                    <button id="hideBtn" onclick="hideIt()" style="display: none;">Hide</button>
+                </span>
+            </div>
             <div id="manifestContents" style="padding-top: 10px; display: none";>
                 <table id="manifestCellGrid" border="2">
                     <tbody>
@@ -70,20 +71,20 @@
 
             <div class="inputGroup">
                 <div class="inputRow">
-                    <div class="labelCol">Shipment Conditions</div>
-                    <div class="valueCol">
+                    <div class="firstCol">Shipment Conditions</div>
+                    <div class="secondCol">
                         <stripes:textarea style="min-width: 50em" rows="2" id="shipmentCondition" name="shipmentCondition"/>
                     </div>
                 </div>
                 <div class="inputRow">
-                    <div class="labelCol">Tracking number</div>
-                    <div class="valueCol">
-                        <stripes:text style="min-width: 40em" id="shippingAcknowledgement" name="shippingAcknowledgement"/>
+                    <div class="firstCol">Tracking number</div>
+                    <div class="secondCol">
+                        <stripes:text id="trackingNumber" name="trackingNumber"/>
                     </div>
                 </div>
                 <div class="inputRow">
-                    <div class="labelCol">Delivery Method</div>
-                    <div class="valueCol">
+                    <div class="firstCol">Delivery Method</div>
+                    <div class="secondCol">
                         <stripes:select id="deliveryMethod" class="multiEditSelect" name="deliveryMethod">
                             <stripes:option value="None" label="None"/>
                             <stripes:option value="FedEx" label="FedEx"/>
@@ -91,16 +92,16 @@
                         </stripes:select>
                     </div>
                 </div>
+                <p style="padding-top: 20px;">To quarantine a rack, select a reason:</p>
                 <c:forEach items="${actionBean.rackBarcodes}" var="barcode" varStatus="item">
-                    <stripes:hidden id="quarantineBarcode_${item.index}" name="quarantineBarcode[${item.index}]" value="${barcode}"/>
+                    <stripes:hidden id="quarantineBarcodes_${item.index}" name="quarantineBarcodes[${item.index}]" value="${barcode}"/>
                     <div class="inputRow">
-                        <div class="labelCol">Quarantine rack ${barcode}</div>
-                        <div class="valueCol">
-                            <stripes:select id="quarantineReason_${item.index}" class="multiEditSelect"
-                                            name="quarantineReason[${item.index}]">
-                                <stripes:option value="" label=""/>
-                                <stripes:option value="Package damage" label="Package damage"/>
-                                <stripes:option value="Unreadable barcode" label="Unreadable barcode"/>
+                        <div class="firstCol" style="float: right;">${barcode}</div>
+                        <div class="secondCol">
+                            <stripes:select id="quarantineReasons_${item.index}" name="quarantineReasons[${item.index}]"
+                                            style="vertical-align: bottom;">
+                                <stripes:option value=""/>
+                                <stripes:options-collection collection="${actionBean.rackReasons}"/>
                             </stripes:select>
                         </div>
                     </div>
@@ -109,7 +110,7 @@
 
             <div style="padding-top: 20px;">
                 <span>
-                    <stripes:submit id="receivePkgBtn" name="receivePkgBtn" value="Receive" class="btn btn-primary"
+                    <stripes:submit id="saveBtn" name="saveBtn" value="Receive" class="btn btn-primary"
                                     title="Receives the package."/>
                     <span style="margin-left: 20px;">
                         <stripes:submit id="cancelBtn" name="cancelBtn" value="Cancel" class="btn btn-primary"/>

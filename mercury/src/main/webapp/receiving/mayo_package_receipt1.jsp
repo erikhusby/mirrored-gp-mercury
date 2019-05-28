@@ -3,17 +3,14 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoPackageReceiptActionBean"/>
 <script type="text/javascript">
-    function toReceive() {
-        $j(".myclass.relinkMode").css('display','none');
-        $j(".myclass.receiveMode").css('display','block');
-    }
-    function toRelink() {
-        $j(".myclass.relinkMode").css('display','block');
-        $j(".myclass.receiveMode").css('display','none');
-    }
-    $j(document).ready(function () {
-        toReceive();
-    });
+    function receive() {
+        $j(".relinkMode").css('display', 'none');
+        $j(".receiveMode").css('display', 'block');
+    };
+    function relink() {
+        $j(".relinkMode").css('display', 'block');
+        $j(".receiveMode").css('display', 'none');
+    };
 </script>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Mayo Package Receipt" sectionTitle="Mayo Package Receipt">
@@ -25,56 +22,61 @@
             div.inputGroup > div.inputRow {
                 display: table-row;
             }
-            div.inputGroup > div.inputRow > div.labelCol {
+            div.inputGroup > div.inputRow > div.firstCol {
                 display: table-cell;
+                width: 10em;
             }
-            div.inputGroup > div.inputRow > div.valueCol {
+            div.inputGroup > div.inputRow > div.controls {
                 display: table-cell;
-                padding-left: 10px;
                 padding-top: 10px;
             }
         </style>
 
         <stripes:form beanclass="${actionBean.class.name}" id="rackScanForm" class="form-horizontal">
+            <div style="padding: 20px;">
+                <span>
+                    <input type="radio" id="receiveId" onchange="receive()" name="mode"
+                           style="display:inline;" checked="checked">
+                    <label for="receiveId" style="display:inline;">Receive</label>
+                </span>
+                <span style="padding-left: 20px;">
+                    <input type="radio" id="relinkId" onchange="relink()" name="mode"
+                           style="display:inline;">
+                    <label for="relinkId" style="display:inline;">Link to manifest</label>
+                </span>
+            </div>
             <div class="inputGroup">
                 <div class="inputRow">
-                    <div class="labelCol">Package ID</div>
-                    <div class="valueCol">
+                    <div class="firstCol">Package ID</div>
+                    <div class="control-group controls">
                         <stripes:text id="packageBarcode" name="packageBarcode"/>
                     </div>
                 </div>
-                <div class="inputRow">
-                    <div class="labelCol"></div>
-                    <div class="valueCol">
-                        <input type="radio" onchange="toReceive()" id="receive" value="receive"
-                               name="Receive" style="display:inline;">
-                        <input type="radio" onchange="toRelink()" id="relink" value="relink"
-                               name="Relink" style="display:inline;">
-                    </div>
+            </div>
+            <div class="inputGroup">
                 <div class="inputRow receiveMode">
-                    <div class="labelCol">Number of racks</div>
-                    <div class="valueCol">
+                    <div class="firstCol">Number of racks</div>
+                    <div class="control-group controls">
                         <stripes:text id="rackCount" name="rackCount"/>
                     </div>
                 </div>
                 <div class="inputRow receiveMode">
-                    <div class="labelCol">Rack barcodes</div>
-                    <div class="valueCol">
-                        <stripes:textarea rows="10" id="rackBarcodeString" name="rackBarcodeString"/>
+                    <div class="firstCol">Rack barcodes</div>
+                    <div class="control-group controls">
+                        <stripes:textarea rows="5" id="rackBarcodeString" name="rackBarcodeString"/>
                     </div>
                 </div>
-                <div class="inputRow relinkMode">
-                    <div class="labelCol">Manifest filename</div>
-                    <div class="valueCol">
+                <div class="inputRow relinkMode" style="display: none;">
+                    <div class="firstCol">Manifest filename</div>
+                    <div class="control-group controls">
                         <stripes:text id="filename" name="filename"/>
                     </div>
                 </div>
-                <div class="inputRow">
-                    <div class="labelCol">
-                        <stripes:submit id="page1ContinueBtn" name="page1ContinueBtn" value="Continue" class="btn btn-primary"/>
-                    </div>
-                </div>
+            </div>
+            <div style="padding-top: 20px;">
+                <stripes:submit id="page1ContinueBtn" name="page1ContinueBtn" value="Continue" class="btn btn-primary"/>
             </div>
         </stripes:form>
+
     </stripes:layout-component>
 </stripes:layout-render>
