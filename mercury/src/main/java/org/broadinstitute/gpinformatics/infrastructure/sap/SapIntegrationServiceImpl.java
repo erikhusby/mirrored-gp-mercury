@@ -493,8 +493,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 getClient().createMaterial(extendedProduct);
             }
         } else {
-            log.debug("Updating product " + extendedProduct.getMaterialIdentifier());
-            getClient().changeMaterialDetails(SAPChangeMaterial.fromSAPMaterial(extendedProduct));
+            if (publishType != PublishType.CREATE_ONLY) {
+                log.debug("Updating product " + extendedProduct.getMaterialIdentifier());
+                getClient().changeMaterialDetails(SAPChangeMaterial.fromSAPMaterial(extendedProduct));
+            }
         }
     }
 
