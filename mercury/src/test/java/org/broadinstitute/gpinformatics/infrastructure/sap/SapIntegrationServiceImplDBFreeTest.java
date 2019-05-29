@@ -232,14 +232,9 @@ public class SapIntegrationServiceImplDBFreeTest {
             if(item.getProductIdentifier().equals(primaryProduct.getPartNumber())) {
                 assertThat(item.getItemQuantity().doubleValue(), equalTo(
                         (new BigDecimal(conversionPdo.getSamples().size())).doubleValue()));
-                assertThat(item.getProductAlias(), is(nullValue()));
-                assertThat(item.getItemQuantity().doubleValue(), equalTo(new BigDecimal(conversionPdo.getSamples().size()).doubleValue()));
             }
-            else {
-
-                assertThat(item.getProductAlias(), is(nullValue()));
-                assertThat(item.getItemQuantity().doubleValue(), equalTo(new BigDecimal(conversionPdo.getSamples().size()).doubleValue()));
-            }
+            assertThat(item.getProductAlias(), is(nullValue()));
+            assertThat(item.getItemQuantity().doubleValue(), equalTo(new BigDecimal(conversionPdo.getSamples().size()).doubleValue()));
         }
 
 
