@@ -4147,9 +4147,11 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluator>
-                    <!--TODO Need these-->
                     <materialTypes>CELLS_PELLET_FROZEN</materialTypes>
-                    <materialTypes>CELLS_PELLET_FROZEN</materialTypes>
+                    <materialTypes>CELL_SUSPENSION</materialTypes>
+                    <materialTypes>TISSUE_FRESH_TISSUE</materialTypes>
+                    <materialTypes>TISSUE_FRESH_FROZEN_TISSUE</materialTypes>
+                    <materialTypes>NUCLEI_SUSPENSION</materialTypes>
                     <workflows>10X Extraction</workflows>
                 </bucketEntryEvaluator>
             </workflowStepDefs>
