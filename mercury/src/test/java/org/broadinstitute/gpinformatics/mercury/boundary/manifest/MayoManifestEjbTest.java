@@ -237,7 +237,7 @@ public class MayoManifestEjbTest extends Arquillian {
             pkgBean.setRackCount(String.valueOf(barcodes.length));
             pkgBean.parseBarcodeString();
             messageCollection.clearAll();
-            mayoManifestEjb.packageLookupOrLinkup(pkgBean);
+            mayoManifestEjb.packageReceiptLookup(pkgBean);
             Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
             Assert.assertFalse(messageCollection.hasWarnings(),
                     StringUtils.join(messageCollection.getWarnings(), "; "));
@@ -273,7 +273,7 @@ public class MayoManifestEjbTest extends Arquillian {
             pkgBean.setRackCount(String.valueOf(barcodes.length));
             pkgBean.parseBarcodeString();
             messageCollection.clearAll();
-            boolean canContinue = mayoManifestEjb.packageLookupOrLinkup(pkgBean);
+            boolean canContinue = mayoManifestEjb.packageReceiptLookup(pkgBean);
             Assert.assertTrue(messageCollection.getErrors().contains(String.format(MayoManifestEjb.ALREADY_RECEIVED,
                     packageId)), StringUtils.join(messageCollection.getErrors(), "; "));
             Assert.assertFalse(messageCollection.hasWarnings(),
@@ -447,7 +447,7 @@ public class MayoManifestEjbTest extends Arquillian {
         messageCollection.clearAll();
         pkgBean.parseBarcodeString();
         messageCollection.clearAll();
-        boolean canContinue = mayoManifestEjb.packageLookupOrLinkup(pkgBean);
+        boolean canContinue = mayoManifestEjb.packageReceiptLookup(pkgBean);
         Assert.assertNull(pkgBean.getManifestSessionId());
         Assert.assertTrue(StringUtils.isBlank(pkgBean.getFilename()));
         Assert.assertTrue(messageCollection.getErrors().contains(
@@ -507,13 +507,12 @@ public class MayoManifestEjbTest extends Arquillian {
         pkgBean2.setPackageBarcode(packageId);
         pkgBean2.setFilename(filename);
         messageCollection.clearAll();
-        boolean canContinue2 = mayoManifestEjb.packageLookupOrLinkup(pkgBean2);
+        mayoManifestEjb.linkPackageToManifest(pkgBean2);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
         ManifestSession manifestSession2 = manifestSessionDao.getSessionByPrefix(packageId);
         CollectionUtils.isEqualCollection(manifestSession2.getVesselLabels(), manifestSession.getVesselLabels());
         Assert.assertEquals(manifestSession2.getReceiptTicket(), manifestSession.getReceiptTicket());
-        Assert.assertTrue(canContinue);
 
         // The package should have been unquarantined.
         Assert.assertNull(quarantinedDao.findItem(ItemSource.MAYO, ItemType.PACKAGE, packageId));

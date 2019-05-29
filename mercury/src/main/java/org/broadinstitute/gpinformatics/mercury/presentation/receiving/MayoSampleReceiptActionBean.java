@@ -32,7 +32,6 @@ public class MayoSampleReceiptActionBean extends RackScanActionBean {
     // Events from Sample Receipt page 1
     private static final String PAGE1 = "mayo_sample_receipt1.jsp";
     private static final String SCAN_BTN = "scanBtn";
-    private static final String SAVE_QUARANTINE_BTN = "saveQuarantineBtn";
     // Events from Sample Receipt page 2
     private static final String PAGE2 = "mayo_sample_receipt2.jsp";
     private static final String SAVE_BTN = "saveBtn";
@@ -56,16 +55,13 @@ public class MayoSampleReceiptActionBean extends RackScanActionBean {
     private Long manifestSessionId;
     private String rctUrl;
 
-    @Validate(required = true, on = SAVE_QUARANTINE_BTN)
-    private String quarantineReason;
-
     @Inject
     private MayoManifestEjb mayoManifestEjb;
 
     @Inject
     private QuarantinedDao quarantinedDao;
 
-    @Validate(required = true, on = {SCAN_BTN, SAVE_QUARANTINE_BTN, SAVE_BTN, REACCESSION_BTN})
+    @Validate(required = true, on = {SCAN_BTN, SAVE_BTN, REACCESSION_BTN})
     private String rackBarcode;
 
     @Validate(required = true, on = {VIEW_FILE_BTN, PULL_ONE_BTN})
@@ -87,15 +83,6 @@ public class MayoSampleReceiptActionBean extends RackScanActionBean {
         }
         addMessages(messageCollection);
         return new ForwardResolution(messageCollection.hasErrors() ? PAGE1 : PAGE2);
-    }
-
-    @HandlesEvent(SAVE_QUARANTINE_BTN)
-    public Resolution saveQuarantine() throws ScannerException {
-        quarantinedDao.addOrUpdate(Quarantined.ItemSource.MAYO, Quarantined.ItemType.RACK, rackBarcode,
-                quarantineReason);
-        messageCollection.addInfo(MayoManifestEjb.QUARANTINED, rackBarcode, quarantineReason);
-        addMessages(messageCollection);
-        return new ForwardResolution(PAGE1);
     }
 
     /**
@@ -180,17 +167,6 @@ public class MayoSampleReceiptActionBean extends RackScanActionBean {
     @HandlesEvent(PULL_ONE_BTN)
     public Resolution pullOne() {
         mayoManifestEjb.pullOne(this);
-        addMessages(messageCollection);
-        return new ForwardResolution(MANIFEST_ADMIN_PAGE);
-    }
-
-    /**
-     * Updates sample metadata using the specified manifest file.
-     * The tubes used are the ones that Mercury has in the specified rack.
-     */
-    @HandlesEvent(REACCESSION_BTN)
-    public Resolution updateMetadata() {
-        mayoManifestEjb.updateSampleMetadata(this);
         addMessages(messageCollection);
         return new ForwardResolution(MANIFEST_ADMIN_PAGE);
     }
@@ -307,15 +283,7 @@ public class MayoSampleReceiptActionBean extends RackScanActionBean {
         this.manifestSessionId = manifestSessionId;
     }
 
-    public String getQuarantineReason() {
-        return quarantineReason;
-    }
-
-    public void setQuarantineReason(String quarantineReason) {
-        this.quarantineReason = quarantineReason;
-    }
-
-    public String getRctUrl() {
+   public String getRctUrl() {
         return rctUrl;
     }
 

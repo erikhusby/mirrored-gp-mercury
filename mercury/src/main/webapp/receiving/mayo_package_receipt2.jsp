@@ -35,9 +35,13 @@
                 padding-left: 10px;
                 padding-top: 10px;
             }
+            text, textarea, .firstCol, .secondCol, span, select, option, p {
+                font-size: 12px;
+                font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            }
         </style>
 
-        <!-- Shows the manifest file contents. -->
+        <!-- The manifest file in a grid. -->
         <c:if test="${!actionBean.getManifestCellGrid().isEmpty()}">
             <div>
                 <span>Found manifest file: ${actionBean.filename}</span>
@@ -92,9 +96,12 @@
                         </stripes:select>
                     </div>
                 </div>
-                <p style="padding-top: 20px;">To quarantine a rack, select a reason:</p>
+                <div style="padding-top: 20px;">
+                    <p>To quarantine a rack, select a reason:</p>
+                </div>
                 <c:forEach items="${actionBean.rackBarcodes}" var="barcode" varStatus="item">
-                    <stripes:hidden id="quarantineBarcodes_${item.index}" name="quarantineBarcodes[${item.index}]" value="${barcode}"/>
+                    <stripes:hidden id="quarantineBarcodes_${item.index}" name="quarantineBarcodes[${item.index}]"
+                                    value="${barcode}"/>
                     <div class="inputRow">
                         <div class="firstCol" style="float: right;">${barcode}</div>
                         <div class="secondCol">

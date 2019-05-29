@@ -22,6 +22,10 @@
                 vertical-align: middle;
                 padding-top: 20px;
             }
+            text, textarea, .control-label, .controls {
+                font-size: 12px;
+                font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            }
         </style>
 
         <%@ include file="/vessel/rack_scanner_list_with_sim_part1.jsp" %>

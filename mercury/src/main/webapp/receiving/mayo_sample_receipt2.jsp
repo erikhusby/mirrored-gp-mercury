@@ -4,6 +4,13 @@
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoSampleReceiptActionBean"/>
 <stripes:layout-render name="/layout.jsp" pageTitle="Mayo Sample Receipt" sectionTitle="Mayo Sample Receipt">
     <stripes:layout-component name="content">
+        <style type="text/css">
+            p, th, td {
+                font-size: 12px;
+                font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            }
+        </style>
+
         <stripes:form beanclass="${actionBean.class.name}" id="saveForm" class="form-horizontal">
             <!-- The hidden variables to pass back to the action bean. -->
             <stripes:hidden name="rackBarcode" value="${actionBean.rackBarcode}"/>

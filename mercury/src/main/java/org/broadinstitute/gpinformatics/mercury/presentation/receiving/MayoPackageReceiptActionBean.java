@@ -34,7 +34,9 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
     private static final String PAGE1 = "mayo_package_receipt1.jsp";
     private static final String PAGE2 = "mayo_package_receipt2.jsp";
     private static final String QUARANTINED_PAGE = "mayo_quarantines.jsp";
-    private static final String PAGE1_CONTINUE_BTN = "page1ContinueBtn";
+    private static final String CONTINUE_BTN = "continueBtn";
+    private static final String LINK_PACKAGE_BTN = "linkPkgBtn";
+    private static final String UPDATE_METADATA_BTN = "updateMetadataBtn";
     private static final String SAVE_BTN = "saveBtn";
     private static final String CANCEL_BTN = "cancelBtn";
     private static final String VIEW_QUARANTINES = "viewQuarantines";
@@ -48,8 +50,11 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
     private MessageCollection messageCollection = new MessageCollection();
     private List<List<String>> manifestCellGrid = new ArrayList<>();
 
-    @Validate(required = true, on = {PAGE1_CONTINUE_BTN, SAVE_BTN})
+    @Validate(required = true, on = {CONTINUE_BTN, LINK_PACKAGE_BTN, SAVE_BTN})
     private String packageBarcode;
+
+    @Validate(required = true, on = {LINK_PACKAGE_BTN, UPDATE_METADATA_BTN})
+    private String filename;
 
     @Validate(required = true, on = {SAVE_BTN})
     private String shipmentCondition;
@@ -63,7 +68,6 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
     private String rackCount;
     private String rackBarcodeString;
     private Long manifestSessionId;
-    private String filename;
     private String rctUrl;
     private List<String> rackBarcodes = Collections.emptyList();
     private List<String> quarantineBarcodes = new ArrayList<>();
@@ -76,43 +80,61 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
         return new ForwardResolution(PAGE1);
     }
 
-    @HandlesEvent(PAGE1_CONTINUE_BTN)
-    public Resolution page1Continue() {
+    @HandlesEvent(CONTINUE_BTN)
+    public Resolution receiptContinue() {
         // Parses, then rewrites the barcode string to normalize the whitespace.
         parseBarcodeString();
         rackBarcodeString = StringUtils.join(rackBarcodes, " ");
-        if (StringUtils.isNotBlank(rackBarcodeString)) {
-            if (CollectionUtils.isEmpty(rackBarcodes)) {
-                addValidationError(rackBarcodeString, "Cannot parse rack barcode(s)");
-            } else if (StringUtils.isBlank(rackCount) || !NumberUtils.isDigits(rackCount)) {
-                addValidationError(rackBarcodeString, "Number of racks is required");
-            } else if (rackBarcodes.size() != Integer.parseInt(rackCount)) {
-                // If a rack barcode is unreadable the lab tech should type in a non-barcode like "u" or "unreadable".
-                addValidationError(rackBarcodeString, "Number of rack barcodes does not match the number of racks.");
-            }
-            // Errors any duplicate rack barcodes.
-            Map<String, Long> countingMap = rackBarcodes.stream().
-                    collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
-            String duplicates = countingMap.entrySet().stream().
-                    filter(mapEntry -> mapEntry.getValue() > 1).
-                    map(mapEntry -> mapEntry.getKey()).
-                    collect(Collectors.joining(", "));
-            if (!duplicates.isEmpty()) {
-                addValidationError(rackBarcodeString, "Found duplicate rack barcodes: " + duplicates);
-            }
-        } else if (StringUtils.isNotBlank(filename)) {
-            addValidationError(packageBarcode, "Either rack barcodes or a manifest filename is required.");
+        if (StringUtils.isBlank(rackBarcodeString)) {
+            addValidationError(rackBarcodeString, "One or more rack barcodes are required.");
+        } else if (CollectionUtils.isEmpty(rackBarcodes)) {
+            addValidationError(rackBarcodeString, "Cannot parse rack barcode(s)");
+        } else if (StringUtils.isBlank(rackCount) || !NumberUtils.isDigits(rackCount)) {
+            addValidationError(rackBarcodeString, "Number of racks is required");
+        } else if (rackBarcodes.size() != Integer.parseInt(rackCount)) {
+            addValidationError(rackBarcodeString, "Number of rack barcodes does not match the number of racks.");
+        }
+        // Errors any duplicate rack barcodes.
+        Map<String, Long> countingMap = rackBarcodes.stream().
+                collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+        String duplicates = countingMap.entrySet().stream().
+                filter(mapEntry -> mapEntry.getValue() > 1).
+                map(Map.Entry::getKey).
+                collect(Collectors.joining(", "));
+        if (!duplicates.isEmpty()) {
+            addValidationError(rackBarcodeString, "Found duplicate rack barcodes: " + duplicates);
         }
         if (!getValidationErrors().isEmpty()) {
             return new ForwardResolution(PAGE1);
         }
 
-        // If rack barcodes were given, does the manifest lookup for a package receipt.
-        // Otherwise it's a manifest link up that uses the filename.
-        boolean isPackageReceipt = StringUtils.isNotBlank(rackBarcodeString);
-        boolean canContinue = mayoManifestEjb.packageLookupOrLinkup(this);
+        // Looks up a manifest for the package id and does validation.
+        boolean canContinue = mayoManifestEjb.packageReceiptLookup(this);
         addMessages(messageCollection);
-        return canContinue && isPackageReceipt ? new ForwardResolution(PAGE2) : new ForwardResolution(PAGE1);
+        return canContinue ? new ForwardResolution(PAGE2) : new ForwardResolution(PAGE1);
+    }
+
+    @HandlesEvent(LINK_PACKAGE_BTN)
+    public Resolution linkPackageBtn() {
+        if (StringUtils.isNotBlank(filename)) {
+            addValidationError(filename, "Manifest filename is required.");
+            return new ForwardResolution(PAGE1);
+        }
+        // Updates the ManifestSession using the specified manifest file and does validation.
+        mayoManifestEjb.linkPackageToManifest(this);
+        addMessages(messageCollection);
+        return new ForwardResolution(PAGE1);
+    }
+
+    @HandlesEvent(UPDATE_METADATA_BTN)
+    public Resolution updateMetadataBtn() {
+        if (StringUtils.isNotBlank(filename)) {
+            addValidationError(filename, "Manifest filename is required.");
+            return new ForwardResolution(PAGE1);
+        }
+        mayoManifestEjb.updateMetadata(this);
+        addMessages(messageCollection);
+        return new ForwardResolution(PAGE1);
     }
 
     @HandlesEvent(SAVE_BTN)
