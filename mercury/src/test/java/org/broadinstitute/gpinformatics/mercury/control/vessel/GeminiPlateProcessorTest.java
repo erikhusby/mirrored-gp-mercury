@@ -121,7 +121,7 @@ public class GeminiPlateProcessorTest {
             Assert.assertEquals(right.size(), 4);
             GeminiPlateProcessor plateProcessor = right.get(0);
             Assert.assertEquals(plateProcessor.getMessages().size(), 0);
-            Assert.assertEquals(plateProcessor.getPlateWellResults().size(), 384);
+            Assert.assertEquals(plateProcessor.getPlateWellResults().size(), 192);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
