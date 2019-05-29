@@ -1437,6 +1437,7 @@ public class ProductOrderActionBeanTest {
 
         Product primaryProduct = new Product();
         primaryProduct.setPartNumber("P-Test_primary");
+        primaryProduct.setProductName("primary product name");
         primaryProduct.setPrimaryPriceItem(new PriceItem("primary", "Genomics Platform", "Primary testing size",
                 "Thousand dollar Genome price"));
         primaryProduct
@@ -1444,6 +1445,7 @@ public class ProductOrderActionBeanTest {
 
         Product addonNonSeqProduct = new Product();
         addonNonSeqProduct.setPartNumber("ADD-NON-SEQ");
+        addonNonSeqProduct.setProductName("Non Seq Addon Product Name");
         addonNonSeqProduct.setPrimaryPriceItem(new PriceItem("Secondary", "Genomics Platform",
                 "secondary testing size", "Extraction price"));
         addonNonSeqProduct.setProductFamily(
@@ -1451,12 +1453,14 @@ public class ProductOrderActionBeanTest {
 
         Product seqProduct = new Product();
         seqProduct.setPartNumber("ADD-SEQ");
+        seqProduct.setProductName("Seq addon product name");
         seqProduct.setPrimaryPriceItem(new PriceItem("Third", "Genomics Platform", "Seq Testing Size",
                 "Put it on the sequencer"));
         seqProduct.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.SEQUENCE_ONLY.getFamilyName()));
 
         Product dummyProduct1 = new Product();
         dummyProduct1.setPartNumber("ADD-DMY-0001");
+        dummyProduct1.setProductName("dummy addon product name");
         dummyProduct1.setPrimaryPriceItem(new PriceItem("fourth", "Genomics Platform", "Testing Size",
                 "extra 1"));
         dummyProduct1.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.EXOME.getFamilyName()));
@@ -2593,6 +2597,7 @@ public class ProductOrderActionBeanTest {
 
         Product primaryProduct = new Product();
         primaryProduct.setPartNumber("P-Test_primary");
+        primaryProduct.setProductName("Test primary product");
         primaryProduct.setPrimaryPriceItem(new PriceItem("primary", "Genomics Platform", "Primary testing size",
                 "Thousand dollar Genome price"));
         primaryProduct.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.WHOLE_GENOME.getFamilyName()));

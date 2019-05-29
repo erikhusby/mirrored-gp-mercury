@@ -964,25 +964,26 @@ public class ProductOrderActionBean extends CoreActionBean {
         // Validate Products are on the Quote and if they are, store the references to their line items on the order
         try {
             editOrder.updateQuoteItems(quote);
+
+            BigDecimal fundsRemaining = quote.getQuoteHeader().fundsRemaining();
+            double outstandingEstimate = estimateSapOutstandingOrders(quote, additionalSampleCount, editOrder);
+            double valueOfCurrentOrder = 0;
+
+            if ((fundsRemaining.compareTo(BigDecimal.ZERO) <= 0)
+                || (fundsRemaining.compareTo(BigDecimal.valueOf(outstandingEstimate + valueOfCurrentOrder))<0)) {
+                String insufficientFundsMessage =
+                        "Insufficient funds are available on " +
+                        //todo replace the following with a helper method for quote display
+                        quote.getQuoteHeader().getQuoteNumber()+" -- " + quote.getQuoteHeader().getProjectName() +
+                        " to place a new Product order";
+                addGlobalValidationError(insufficientFundsMessage);
+            }
         } catch (SAPInterfaceException e) {
             logger.error(e);
             addGlobalValidationError(
                 "The products on your order (including add ons) do not seem to be represented on your quote.  Please revisit either your quote or your order selections");
         }
 
-        BigDecimal fundsRemaining = quote.getQuoteHeader().fundsRemaining();
-        double outstandingEstimate = estimateSapOutstandingOrders(quote, additionalSampleCount, editOrder);
-        double valueOfCurrentOrder = 0;
-
-        if ((fundsRemaining.compareTo(BigDecimal.ZERO) <= 0)
-            || (fundsRemaining.compareTo(BigDecimal.valueOf(outstandingEstimate + valueOfCurrentOrder))<0)) {
-            String insufficientFundsMessage =
-                "Insufficient funds are available on " +
-                //todo replace the following with a helper method for quote display
-                quote.getQuoteHeader().getQuoteNumber()+" -- " + quote.getQuoteHeader().getProjectName() +
-                " to place a new Product order";
-            addGlobalValidationError(insufficientFundsMessage);
-        }
     }
 
     /**

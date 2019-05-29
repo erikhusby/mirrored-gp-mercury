@@ -5,6 +5,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
+import com.google.common.collect.MoreCollectors;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -2810,9 +2811,20 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private Set<SapQuoteItemReference> determineQuoteReferenceForProduct(SapQuote sapQuote, Product product)
             throws SAPInterfaceException {
         Set<SapQuoteItemReference> updatedLineItemReferences = new HashSet<>();
-        Collection<QuoteItem> quoteItems = sapQuote.getQuoteItemMap().get(product.getPartNumber());
+        List<QuoteItem> quoteItems = new ArrayList<>();
+        Optional<Collection<QuoteItem>> quoteItemsForProduct = Optional.ofNullable(sapQuote.getQuoteItemMap().get(product.getPartNumber()));
+        quoteItemsForProduct.ifPresent(quoteItems::addAll);
         if (CollectionUtils.isEmpty(quoteItems)) {
-            quoteItems = sapQuote.getQuoteItemByDescriptionMap().get(QuoteItem.DOLLAR_LIMIT_MATERIAL_DESCRIPTOR);
+
+            final Set<String> quoteItemDescriptions = sapQuote.getQuoteItemByDescriptionMap().keySet();
+            final Optional<String> singleDescriptorResult = quoteItemDescriptions.stream()
+                    .filter(description -> description.contains(QuoteItem.DOLLAR_LIMIT_MATERIAL_DESCRIPTOR)).collect(
+                            MoreCollectors.toOptional());
+
+            singleDescriptorResult.ifPresent(singleDollarLimitDescriptor ->{
+                    quoteItems.addAll(sapQuote.getQuoteItemByDescriptionMap().get(singleDollarLimitDescriptor));
+            });
+
         }
         if (CollectionUtils.isNotEmpty(quoteItems)) {
             if (quoteItems.size() == 1) {

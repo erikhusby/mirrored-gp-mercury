@@ -108,8 +108,8 @@ public class TestUtils {
             break;
         case DOLLAR_LIMITED:
             ZESDQUOTEITEM sapItem = ZESDQUOTEITEM.Factory.newInstance();
-            sapItem.setMAKTX(QuoteItem.DOLLAR_LIMIT_MATERIAL_DESCRIPTOR);
-            sapItem.setMATNR("GP-001");
+            sapItem.setMAKTX((salesorg.equals("GP01"))?"GP01 Generic Material-Dollar Limited":"GP02 Generic Material-Dollar Limited");
+            sapItem.setMATNR("GP01-001");
             sapItem.setQUOTEITEM(String.valueOf((quoteItems.size() + 1) * 10));
             sapItem.setQUOTATION(testQuoteIdentifier);
 
@@ -130,7 +130,7 @@ public class TestUtils {
         case MATCH_QUOTE_ITEMS_AND_DOLLAR_LIMITED:
             ZESDQUOTEITEM item = ZESDQUOTEITEM.Factory.newInstance();
             item.setMAKTX(QuoteItem.DOLLAR_LIMIT_MATERIAL_DESCRIPTOR);
-            item.setMATNR("GP-001");
+            item.setMATNR("GP01-001");
             item.setQUOTEITEM(String.valueOf((quoteItems.size() + 1) * 10));
             item.setQUOTATION(testQuoteIdentifier);
 
