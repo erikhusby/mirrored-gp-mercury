@@ -1803,7 +1803,7 @@ public class ProductOrderFixupTest extends Arquillian {
     public void fixupGplim5813RetroactiveQuoteSourceUpdate() throws Exception {
         userBean.loginOSUser();
 
-        final List<ProductOrder> allOrdersWithNoQuoteSourceCount =
+        List<ProductOrder> allOrdersWithNoQuoteSourceCount =
                 productOrderDao.findAll(ProductOrder.class, new GenericDao.GenericDaoCallback<ProductOrder>() {
                     @Override
                     public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> root) {
@@ -1817,26 +1817,19 @@ public class ProductOrderFixupTest extends Arquillian {
                 });
         int recordCount = allOrdersWithNoQuoteSourceCount.size();
 
-        int increment = 500;
-
+        int iterator = 500;
         int start = 0;
-        int max = increment-1;
+        int max = 500;
+        if(recordCount < max) {
+            max = recordCount;
+        }
 
-        while(max < recordCount) {
+        while(max <= recordCount) {
+            System.out.println("total record count is " + recordCount);
+
             beginTransaction();
 
-            final List<ProductOrder> allOrdersWithNoQuoteSource =
-                    productOrderDao.findAll(ProductOrder.class, new GenericDao.GenericDaoCallback<ProductOrder>() {
-                        @Override
-                        public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> root) {
-
-                            CriteriaBuilder builder = productOrderDao.getEntityManager().getCriteriaBuilder();
-
-                            Predicate noSourcePredicate = builder.isNull(root.get(ProductOrder_.quoteSource));
-
-                            criteriaQuery.where(noSourcePredicate);
-                        }
-                    }, start, max);
+            final List<ProductOrder> allOrdersWithNoQuoteSource = allOrdersWithNoQuoteSourceCount.subList(start, max);
             allOrdersWithNoQuoteSource.forEach(productOrder -> {
                 productOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
                 System.out.println("Update quote source on " + productOrder.getJiraTicketKey());
@@ -1845,8 +1838,20 @@ public class ProductOrderFixupTest extends Arquillian {
                                                         + "prior to the SAP 2.0 launch to recognize that their quoute "
                                                         + "comes from the Quote Server"));
             commitTransaction();
-            start += increment;
-            max += increment;
+
+            start += iterator;
+            System.out.println("Start is now " + start);
+            if(recordCount >= start) {
+                if(recordCount<= max +iterator) {
+                    max = recordCount;
+                } else {
+
+                    max += iterator;
+                }
+            } else {
+                max += iterator;
+            }
+            System.out.println("Max is now " + max);
         }
     }
 }
