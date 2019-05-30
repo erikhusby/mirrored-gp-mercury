@@ -426,4 +426,33 @@ public class LedgerEntryFixupTest extends Arquillian {
                                                         StringUtils.join(workItemsToUpdate,",")
                                                         + " Found in Ledger entries, with " + StringUtils.join(newWorkItems, ",")));
     }
+
+    @Test(enabled = false)
+    public void support5409ReverseIncorrectQuantity() {
+        userBean.loginOSUser();
+
+        String workItem = "328674";
+        LedgerEntry entryToCorrect= ledgerEntryFixupDao.findSingle(LedgerEntry.class, LedgerEntry_.workItem, workItem);
+        String quote = "MMMOXY";
+        Assert.assertEquals(entryToCorrect.getQuoteId(), quote);
+
+        Quote quoteByAlphaId = null;
+        try {
+            quoteByAlphaId = quoteService.getQuoteByAlphaId(entryToCorrect.getQuoteId());
+        } catch (QuoteServerException | QuoteNotFoundException e) {
+            Assert.fail();
+        }
+        String fixupMessage = String.format("SUPPORT-5409 Reverse samples billed in Quotes (workItem %s, Quote %s)", workItem, quote);
+
+        final String correction = quoteService.registerNewSAPWork(quoteByAlphaId,
+                QuotePriceItem.convertMercuryPriceItem(entryToCorrect.getPriceItem()), null,
+                entryToCorrect.getWorkCompleteDate(), -1.75,
+                "https://gpinfojira.broadinstitute.org/jira/browse/SUPPORT-5409",
+                "correction", "SUPPORT-5409", null);
+
+        String messageWithCorrection = String.format("%s %s", fixupMessage, correction);
+        System.out.println(messageWithCorrection);
+        ledgerEntryFixupDao.persist(new FixupCommentary(messageWithCorrection));
+    }
+
 }
