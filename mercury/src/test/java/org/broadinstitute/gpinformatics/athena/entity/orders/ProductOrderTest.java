@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import com.google.common.collect.MoreCollectors;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
@@ -20,7 +21,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderT
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
-import org.broadinstitute.sap.entity.quote.QuoteItem;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hamcrest.CoreMatchers;
@@ -674,11 +674,10 @@ public class ProductOrderTest {
             final Set<SapQuoteItemReference> quoteReferences = quoteTestOrder.getQuoteReferences();
             assertThat(quoteReferences, is(not(empty())));
 
-            final Set<SapQuoteItemReference> collectionOfPrimaryProductReferences =
+            final SapQuoteItemReference primaryProductReference =
                     quoteReferences.stream().filter(sapQuoteItemReference -> sapQuoteItemReference.getMaterialReference().equals(quoteTestOrder.getProduct())).collect(
-                    Collectors.toSet());
-            assertThat(collectionOfPrimaryProductReferences.size(), is(equalTo(1)));
-            assertThat(collectionOfPrimaryProductReferences.iterator().next().getQuoteLineReference(),
+                            MoreCollectors.onlyElement());
+            assertThat(primaryProductReference.getQuoteLineReference(),
                     is(equalTo(sapQuote.getQuoteItemMap().get(quoteTestOrder.getProduct().getPartNumber()).iterator().next().getQuoteItemNumber().toString())));
 
             quoteTestOrder.getAddOns().forEach(productOrderAddOn -> {
@@ -733,20 +732,18 @@ public class ProductOrderTest {
             final Set<SapQuoteItemReference> quoteReferences = quoteTestOrder.getQuoteReferences();
             assertThat(quoteReferences, is(not(empty())));
 
-            final Set<SapQuoteItemReference> collectionOfPrimaryProductReferences =
+            final SapQuoteItemReference primaryProductReferences =
                     quoteReferences.stream().filter(sapQuoteItemReference -> sapQuoteItemReference.getMaterialReference().equals(quoteTestOrder.getProduct())).collect(
-                            Collectors.toSet());
-            assertThat(collectionOfPrimaryProductReferences.size(), is(equalTo(1)));
-            assertThat(collectionOfPrimaryProductReferences.iterator().next().getQuoteLineReference(),
-                    is(equalTo(dollarLimitQuote.getQuoteItemByDescriptionMap().get(QuoteItem.DOLLAR_LIMIT_MATERIAL_DESCRIPTOR).iterator().next().getQuoteItemNumber().toString())));
+                            MoreCollectors.onlyElement());
+            assertThat(primaryProductReferences.getQuoteLineReference(),
+                    is(equalTo(dollarLimitQuote.getQuoteItemByDescriptionMap().get("GP01 Generic Material-Dollar Limited").iterator().next().getQuoteItemNumber().toString())));
 
             quoteTestOrder.getAddOns().forEach(productOrderAddOn -> {
-                final Set<SapQuoteItemReference> collectionOfAddOnProductReferences = quoteReferences.stream().filter(sapQuoteItemReference ->
+                final SapQuoteItemReference addOnProductReferences = quoteReferences.stream().filter(sapQuoteItemReference ->
                         sapQuoteItemReference.getMaterialReference().equals(productOrderAddOn.getAddOn())).collect(
-                        Collectors.toSet());
-                assertThat(collectionOfAddOnProductReferences.size(), is(equalTo(1)));
-                assertThat(collectionOfAddOnProductReferences.iterator().next().getQuoteLineReference(),
-                        is(equalTo(dollarLimitQuote.getQuoteItemByDescriptionMap().get(QuoteItem.DOLLAR_LIMIT_MATERIAL_DESCRIPTOR).iterator().next().getQuoteItemNumber().toString())));
+                        MoreCollectors.onlyElement());
+                assertThat(addOnProductReferences.getQuoteLineReference(),
+                        is(equalTo(dollarLimitQuote.getQuoteItemByDescriptionMap().get("GP01 Generic Material-Dollar Limited").iterator().next().getQuoteItemNumber().toString())));
             });
         } catch (SAPInterfaceException e) {
             Assert.fail();
