@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.billing.fixup;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.MoreCollectors;
 import com.google.common.collect.Multimap;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -15,6 +16,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -50,7 +52,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -432,23 +436,33 @@ public class LedgerEntryFixupTest extends Arquillian {
         userBean.loginOSUser();
 
         String workItem = "328674";
-        LedgerEntry entryToCorrect= ledgerEntryFixupDao.findSingle(LedgerEntry.class, LedgerEntry_.workItem, workItem);
+        List <LedgerEntry> entryToCorrect= ledgerEntryFixupDao.findList(LedgerEntry.class, LedgerEntry_.workItem, workItem);
         String quote = "MMMOXY";
-        Assert.assertEquals(entryToCorrect.getQuoteId(), quote);
+        entryToCorrect.forEach(ledgerEntry -> Assert.assertEquals(ledgerEntry.getQuoteId(), quote));
+
+        final Optional<String> collectedWorkItem =
+                entryToCorrect.stream().map(LedgerEntry::getWorkItem).collect(MoreCollectors.toOptional());
+
+        final Optional<PriceItem> collectedPriceItem =
+                entryToCorrect.stream().map(LedgerEntry::getPriceItem).collect(MoreCollectors.toOptional());
+        final Optional<Date> collectedWorkCompleteDate =
+                entryToCorrect.stream().map(LedgerEntry::getWorkCompleteDate).collect(MoreCollectors.toOptional());
 
         Quote quoteByAlphaId = null;
         try {
-            quoteByAlphaId = quoteService.getQuoteByAlphaId(entryToCorrect.getQuoteId());
+            quoteByAlphaId = quoteService.getQuoteByAlphaId(quote);
         } catch (QuoteServerException | QuoteNotFoundException e) {
             Assert.fail();
         }
         String fixupMessage = String.format("SUPPORT-5409 Reverse samples billed in Quotes (workItem %s, Quote %s)", workItem, quote);
 
         final String correction = quoteService.registerNewSAPWork(quoteByAlphaId,
-                QuotePriceItem.convertMercuryPriceItem(entryToCorrect.getPriceItem()), null,
-                entryToCorrect.getWorkCompleteDate(), -1.75,
+                QuotePriceItem.convertMercuryPriceItem(collectedPriceItem.orElseThrow(RuntimeException::new)), null,
+                collectedWorkCompleteDate.orElseThrow(RuntimeException::new), -1.75,
                 "https://gpinfojira.broadinstitute.org/jira/browse/SUPPORT-5409",
                 "correction", "SUPPORT-5409", null);
+
+        entryToCorrect.forEach(ledgerEntry -> ledgerEntry.setWorkItem(""));
 
         String messageWithCorrection = String.format("%s %s", fixupMessage, correction);
         System.out.println(messageWithCorrection);
