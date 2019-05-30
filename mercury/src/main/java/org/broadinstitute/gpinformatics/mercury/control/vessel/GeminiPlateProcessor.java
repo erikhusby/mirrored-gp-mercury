@@ -31,7 +31,9 @@ import java.util.stream.Collectors;
 public class GeminiPlateProcessor extends TableProcessor {
 
     private static final String GROUP_PREFIX = "Group: ";
-    private static final Pattern BARCODE_PATTERN = Pattern.compile(GROUP_PREFIX + "([0-9,]+)");
+
+    // Duplicate BC will contain a (1) at the end for the bottom half of the quadrant (b1, b2, ...)
+    private static final Pattern BARCODE_PATTERN = Pattern.compile(GROUP_PREFIX + "([0-9,]+)\\(*[0-9]*\\)*");
     private static final String UNKNOWNS_GROUP = "Group: Unknowns_NoDiln";
     public static final String DATE_PREFIX = "Original Filename: .*; Date Last Saved: ";
     public static final String DATE_REGEX = DATE_PREFIX + "(.*)";
@@ -156,7 +158,9 @@ public class GeminiPlateProcessor extends TableProcessor {
             }
 
             BigDecimal concentration = fetchConcentration(dataRow);
-
+            if (concentration.compareTo(BigDecimal.ZERO) < 0) {
+                concentration = BigDecimal.ZERO;
+            }
             String barcode = fetchBarcode(dataRow);
             if (barcode == null) {
                 addDataMessage("Failed to parse barcode.", dataRowIndex);
