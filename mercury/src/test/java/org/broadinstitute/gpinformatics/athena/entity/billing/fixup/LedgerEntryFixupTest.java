@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.billing.fixup;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.MoreCollectors;
 import com.google.common.collect.Multimap;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -54,7 +53,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -431,7 +432,7 @@ public class LedgerEntryFixupTest extends Arquillian {
                                                         + " Found in Ledger entries, with " + StringUtils.join(newWorkItems, ",")));
     }
 
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void support5409ReverseIncorrectQuantity() {
         userBean.loginOSUser();
 
@@ -440,13 +441,10 @@ public class LedgerEntryFixupTest extends Arquillian {
         String quote = "MMMOXY";
         entryToCorrect.forEach(ledgerEntry -> Assert.assertEquals(ledgerEntry.getQuoteId(), quote));
 
-        final Optional<String> collectedWorkItem =
-                entryToCorrect.stream().map(LedgerEntry::getWorkItem).collect(MoreCollectors.toOptional());
-
-        final Optional<PriceItem> collectedPriceItem =
-                entryToCorrect.stream().map(LedgerEntry::getPriceItem).collect(MoreCollectors.toOptional());
-        final Optional<Date> collectedWorkCompleteDate =
-                entryToCorrect.stream().map(LedgerEntry::getWorkCompleteDate).collect(MoreCollectors.toOptional());
+        final Set<PriceItem> collectedPriceItem =
+                entryToCorrect.stream().map(LedgerEntry::getPriceItem).collect(Collectors.toSet());
+        final Set<Date> collectedWorkCompleteDate =
+                entryToCorrect.stream().map(LedgerEntry::getWorkCompleteDate).collect(Collectors.toSet());
 
         Quote quoteByAlphaId = null;
         try {
@@ -457,12 +455,15 @@ public class LedgerEntryFixupTest extends Arquillian {
         String fixupMessage = String.format("SUPPORT-5409 Reverse samples billed in Quotes (workItem %s, Quote %s)", workItem, quote);
 
         final String correction = quoteService.registerNewSAPWork(quoteByAlphaId,
-                QuotePriceItem.convertMercuryPriceItem(collectedPriceItem.orElseThrow(RuntimeException::new)), null,
-                collectedWorkCompleteDate.orElseThrow(RuntimeException::new), -1.75,
+                QuotePriceItem.convertMercuryPriceItem(collectedPriceItem.iterator().next()), null,
+                collectedWorkCompleteDate.iterator().next(), -1.75,
                 "https://gpinfojira.broadinstitute.org/jira/browse/SUPPORT-5409",
                 "correction", "SUPPORT-5409", null);
 
-        entryToCorrect.forEach(ledgerEntry -> ledgerEntry.setWorkItem(""));
+        final Map<ProductOrderSample, List<LedgerEntry>> ledgersByProductOrderSample =
+                entryToCorrect.stream().collect(Collectors.groupingBy(LedgerEntry::getProductOrderSample));
+
+        ledgersByProductOrderSample.forEach((productOrderSample, ledgerEntries) -> productOrderSample.getLedgerItems().removeAll(ledgerEntries));
 
         String messageWithCorrection = String.format("%s %s", fixupMessage, correction);
         System.out.println(messageWithCorrection);
