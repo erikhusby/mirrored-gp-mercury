@@ -110,6 +110,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
@@ -1546,10 +1547,11 @@ public class ProductOrderActionBean extends CoreActionBean {
                         org.apache.commons.lang3.time.DateUtils.truncate(new Date(), Calendar.DATE);
 
                 if ( ! StringUtils.isNumeric(quoteIdentifier)) {
+                    quoteSource = ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName();
                     Quote quote = quoteService.getQuoteByAlphaId(quoteIdentifier);
                     final QuoteFunding quoteFunding = quote.getQuoteFunding();
                     double fundsRemaining = Double.parseDouble(quoteFunding.getFundsRemaining());
-                    item.put("quoteType", ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName());
+                    item.put("quoteType", quoteSource);
                     item.put("fundsRemaining", NumberFormat.getCurrencyInstance().format(fundsRemaining));
                     item.put("status", quote.getApprovalStatus().getValue());
 
@@ -1616,7 +1618,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                     item.put("fundingDetails", fundingDetails);
                 } else if (StringUtils.isNumeric(quoteIdentifier)) {
                     SapQuote quote = sapService.findSapQuote(quoteIdentifier);
-                    item.put("quoteType", ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName());
+                    quoteSource = ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName();
+                    item.put("quoteType", quoteSource);
                     item.put("fundsRemaining",
                         NumberFormat.getCurrencyInstance().format(quote.getQuoteHeader().fundsRemaining()));
 
@@ -1689,6 +1692,12 @@ public class ProductOrderActionBean extends CoreActionBean {
                 }
             }
 
+        } catch (QuoteNotFoundException ex) {
+            try {
+                item.put("error", String.format("%s '%s' not found", quoteSource, quoteIdentifier));
+            } catch (JSONException e) {
+                // Don't really care if this gets an exception.
+            }
         } catch (Exception ex) {
             logger.error("Error occured calculating quote funding", ex);
             try {
