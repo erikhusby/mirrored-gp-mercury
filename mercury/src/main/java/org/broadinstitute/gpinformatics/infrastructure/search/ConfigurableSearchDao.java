@@ -1,9 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.BulkQueryParameter;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
@@ -55,7 +58,9 @@ public class ConfigurableSearchDao extends GenericDao {
      * for more information. Where possible, check this value before calling oracle to avoid running into the
      * internal error.
      */
-    public static final int IN_QUERY_TOTAL_SIZE = 32768;
+    private static final int IN_QUERY_TOTAL_SIZE = 32768;
+
+    private static final Log log = LogFactory.getLog(ConfigurableSearchDao.class);
 
     /**
      * From a search definition, an instance, and sorting definition, build Hibernate criteria
@@ -238,6 +243,20 @@ public class ConfigurableSearchDao extends GenericDao {
                                     detachedCriteria));
                         }
 
+                        if (searchValue.getSearchTerm().getExternalDataExpression() != null) {
+                            log.info("Fetching external data expression for " + searchValue.getSearchTerm().getName());
+                            List<Object> objectList = searchValue.getSearchTerm().getExternalDataExpression().generate(searchValue.getValues());
+                            log.info("Storing bulk query parameters " + objectList.size());
+                            for (int i = 0; i < objectList.size(); i++) {
+                                Object o = objectList.get(i);
+                                getEntityManager().persist(new BulkQueryParameter((String) o));
+                                if (i == objectList.size() - 1 || i % 40 == 0) {
+                                    getEntityManager().flush();
+                                }
+                            }
+                            log.info("Finished storing bulk query parameters " + objectList.size());
+                        }
+
                         // Create the base search criterion using operator and value(s)
                         // Note:  Regardless of depth of any nested criteria paths,
                         //    the criterion property name is attached to the root criteria path
@@ -245,7 +264,7 @@ public class ConfigurableSearchDao extends GenericDao {
 
                         createCriteria( configurableSearchDefinition,
                                 mapPathToCriteria, criteriaPath,
-                                detachedCriteria, criterion );
+                                detachedCriteria, criterion, searchValue );
 
                     } else {
                         Criterion criterion = buildCriterion(searchValue, criteriaPath);
@@ -385,9 +404,7 @@ public class ConfigurableSearchDao extends GenericDao {
             // Search across projects = Yes, means don't include project in search
             return null;
         } else if (searchValue.getSearchTerm().getExternalDataExpression() != null) {
-            // todo jmt push values to a temp table, to avoid Oracle 32K limit and avoid polluting statement cache with constants
-            criterion = createInCriterion(searchValue,
-                    searchValue.getSearchTerm().getExternalDataExpression().generate(searchValue.getValues()));
+            return null;
         } else if (propertyValues.get(0) instanceof List) {
             //noinspection unchecked
             criterion = createInCriterion(searchValue, (List<Object>) propertyValues.get(0));
@@ -542,14 +559,16 @@ public class ConfigurableSearchDao extends GenericDao {
      * @param criteriaPath      holds list of steps in criteria path
      * @param parentCriteria    the criteria that will be attached to the result entity
      * @param searchValueCriterion    The criterion to be added to the lowest depth of the criteria
+     * @param searchValue   for external data expresssion
      * @return the end of the criteria path
      */
     private DetachedCriteria createCriteria(
-                ConfigurableSearchDefinition configurableSearchDefinition,
-                Map<String, DetachedCriteria> mapPathToCriteria,
-                SearchTerm.CriteriaPath criteriaPath,
-                DetachedCriteria parentCriteria,
-                Criterion searchValueCriterion) {
+            ConfigurableSearchDefinition configurableSearchDefinition,
+            Map<String, DetachedCriteria> mapPathToCriteria,
+            SearchTerm.CriteriaPath criteriaPath,
+            DetachedCriteria parentCriteria,
+            Criterion searchValueCriterion,
+            SearchInstance.SearchValue searchValue) {
 
         // Logic allows for nesting subqueries recursively
         boolean isNestedSubquery = criteriaPath.getNestedCriteriaPath() != null;
@@ -590,7 +609,7 @@ public class ConfigurableSearchDao extends GenericDao {
                     .setProjection(Projections.property(nestedCriteriaProj.getSuperProperty()));
 
             nestedSubCriteria = createCriteria(configurableSearchDefinition, mapPathToCriteria,
-                    nestedSubCriteriaPath, nestedSubCriteria, searchValueCriterion);
+                    nestedSubCriteriaPath, nestedSubCriteria, searchValueCriterion, searchValue);
 
             // Append the subquery to the parent criteria
             String parentProp = criteriaPath.getCriteria().get(criteriaPath.getCriteria().size() - 1);
@@ -598,7 +617,15 @@ public class ConfigurableSearchDao extends GenericDao {
 
         } else {
             // Add criterion to last criteria in chain
-            parentCriteria.add(searchValueCriterion);
+            if (searchValue.getSearchTerm().getExternalDataExpression() == null) {
+                parentCriteria.add(searchValueCriterion);
+            } else {
+                DetachedCriteria nestedSubCriteria = DetachedCriteria
+                        .forClass(BulkQueryParameter.class)
+                        .setProjection(Projections.property("param"));
+                String parentProp = criteriaPath.getPropertyName();
+                parentCriteria.add(Subqueries.propertyIn(parentProp, nestedSubCriteria));
+            }
         }
 
         return parentCriteria;

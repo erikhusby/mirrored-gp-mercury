@@ -850,6 +850,9 @@ public class LabMetricSearchDefinition {
         search.setViewColumns(Collections.singletonList("Sample ID"));
         search.setMaxResults(1000000);
         SearchResponse searchResponse = searchManager.runSearch(search);
+        if (!searchResponse.isSuccess()) {
+            throw new RuntimeException("Failed to fetch from BSP " + searchResponse.getMessages().get(0));
+        }
         return searchResponse.getResult().getRows().stream().map(
                 strings -> strings.get(0)).collect(Collectors.toList());
     }
