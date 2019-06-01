@@ -26,7 +26,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * Handles receipt of a Mayo package.
+ * Handles receipt of a Mayo package. Also handles the Mayo Manifest Admin functionality.
  */
 @UrlBinding(MayoPackageReceiptActionBean.ACTION_BEAN_URL)
 public class MayoPackageReceiptActionBean extends CoreActionBean {
@@ -65,8 +65,12 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
     @Validate(required = true, on = {SAVE_BTN})
     private String trackingNumber;
 
-    private String rackCount;
+    @Validate(required = true, on = {CONTINUE_BTN, SAVE_BTN})
     private String rackBarcodeString;
+
+    @Validate(required = true, on = {CONTINUE_BTN})
+    private String rackCount;
+
     private Long manifestSessionId;
     private String rctUrl;
     private List<String> rackBarcodes = Collections.emptyList();
@@ -84,7 +88,7 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
     public Resolution receiptContinue() {
         // Parses, then rewrites the barcode string to normalize the whitespace.
         parseBarcodeString();
-        rackBarcodeString = StringUtils.join(rackBarcodes, " ");
+        rackBarcodeString = StringUtils.join(rackBarcodes, "\n");
         if (StringUtils.isBlank(rackBarcodeString)) {
             addValidationError(rackBarcodeString, "One or more rack barcodes are required.");
         } else if (CollectionUtils.isEmpty(rackBarcodes)) {
@@ -116,7 +120,7 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
 
     @HandlesEvent(LINK_PACKAGE_BTN)
     public Resolution linkPackageBtn() {
-        if (StringUtils.isNotBlank(filename)) {
+        if (StringUtils.isBlank(filename)) {
             addValidationError(filename, "Manifest filename is required.");
             return new ForwardResolution(PAGE1);
         }
@@ -128,7 +132,7 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
 
     @HandlesEvent(UPDATE_METADATA_BTN)
     public Resolution updateMetadataBtn() {
-        if (StringUtils.isNotBlank(filename)) {
+        if (StringUtils.isBlank(filename)) {
             addValidationError(filename, "Manifest filename is required.");
             return new ForwardResolution(PAGE1);
         }
@@ -139,6 +143,7 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
 
     @HandlesEvent(SAVE_BTN)
     public Resolution saveEvent() {
+        parseBarcodeString();
         mayoManifestEjb.packageReceipt(this);
         addMessages(messageCollection);
         return new ForwardResolution(PAGE1);

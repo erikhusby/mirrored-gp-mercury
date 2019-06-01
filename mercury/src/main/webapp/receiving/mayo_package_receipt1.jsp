@@ -8,21 +8,21 @@
         $j(".receiveMode").css('display', 'block');
         $j(".pkgIdInput").show();
         $j("#linkPkgBtn").hide();
-        $j("#updateBtn").hide();
+        $j("#updateMetadataBtn").hide();
     };
     function relinkIt() {
         $j(".relinkMode").css('display', 'block');
         $j(".receiveMode").css('display', 'none');
         $j(".pkgIdInput").show();
         $j("#linkPkgBtn").show();
-        $j("#updateBtn").hide();
+        $j("#updateMetadataBtn").hide();
     };
     function updateIt() {
         $j(".relinkMode").css('display', 'block');
         $j(".receiveMode").css('display', 'none');
         $j(".pkgIdInput").hide();
         $j("#linkPkgBtn").hide();
-        $j("#updateBtn").show();
+        $j("#updateMetadataBtn").show();
     };
 </script>
 

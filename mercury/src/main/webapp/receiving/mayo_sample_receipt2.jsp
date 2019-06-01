@@ -17,8 +17,6 @@
             <c:forEach items="${actionBean.rackScanEntries}" var="mapEntry" varStatus="item">
                 <stripes:hidden name="rackScanEntries[${item.index}]" value="${mapEntry}"/>
             </c:forEach>
-            <stripes:hidden name="filename" value="${actionBean.filename}"/>
-            <stripes:hidden name="manifestSessionId" value="${actionBean.manifestSessionId}"/>
 
             <!-- Displays the scan result as a table of positions. -->
             <p>The tubes in rack ${actionBean.rackBarcode}</p>

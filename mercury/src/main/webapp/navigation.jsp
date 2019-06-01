@@ -240,8 +240,8 @@
                                 beanclass="org.broadinstitute.gpinformatics.mercury.presentation.run.GenotypingChipTypeActionBean"
                                 event="list">Manage Genotyping Chip Types</stripes:link></li>
                         <li><stripes:link
-                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoSampleReceiptActionBean"
-                                event="storageUtilities">Mayo Manifest Admin</stripes:link></li>
+                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoAdminActionBean"
+                                event="view">Mayo Manifest Admin</stripes:link></li>
                         <security:authorizeBlock roles="<%= roles(Developer) %>">
                             <li><stripes:link
                                     beanclass="org.broadinstitute.gpinformatics.mercury.presentation.admin.BillingSessionAccessActionBean"

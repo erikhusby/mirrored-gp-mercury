@@ -1,7 +1,7 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
 <stripes:useActionBean var="actionBean"
-                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoSampleReceiptActionBean"/>
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoAdminActionBean"/>
 <stripes:layout-render name="/layout.jsp" pageTitle="Mayo Manifest Admin" sectionTitle="Mayo Manifest Admin">
     <stripes:layout-component name="content">
         <stripes:form beanclass="${actionBean.class.name}" id="manifestAdminForm" class="form-horizontal">
@@ -9,7 +9,9 @@
             <div style="padding-top: 20px;">
                 <stripes:submit id="testAccessBtn" name="testAccessBtn" value="Test Bucket Access"
                                 class="btn btn-primary"
-                                title="Click to read bucket storage and report status."/>
+                                title="Logs the status of step-by-step access to the configured bucket storage."/>
+
+                <!-- After doing the test access, a list of files is obtained and can be downloaded as a txt file. -->
                 <c:if test="${fn:length(actionBean.bucketList) > 0}">
                     <c:forEach items="${actionBean.bucketList}" var="filename" varStatus="item">
                         <stripes:hidden name="bucketList[${item.index}]" value="${filename}"/>
@@ -18,43 +20,30 @@
                     <span style="margin-left: 20px;">
                         <stripes:submit id="showBucketListBtn" name="showBucketListBtn" value="Show Filename List"
                                         class="btn btn-primary"
-                                        title="Click to view a sorted list of all filenames in the bucket."/>
+                                        title="Provides a download txt file of all filenames in the bucket."/>
                     </span>
                 </c:if>
             </div>
 
-            <!-- Shows files that were read in but failed to make manifests. -->
+            <!-- Shows files that were read in but were not made into new manifests. -->
             <div style="padding-top: 20px;">
                 <stripes:submit id="showFailedFilesListBtn" name="showFailedFilesListBtn" value="Show Failed Files"
                                 class="btn btn-primary"
-                                title="Click to get a txt file download of manifest bucket files that were read in but failed to make manifests."/>
+                                title="Makes a download txt file of any filenames that were read in and their content was not a valid manifest."/>
             </div>
 
-            <!-- Loads all new manifest files. -->
+            <!-- Loads all new files and makes new manifests out of the valid ones with new package barcodes. -->
             <div style="padding-top: 20px;">
                 <stripes:submit id="pullAllFilesBtn" name="pullAllFilesBtn" value="Pull All New Manifest Files"
                                 class="btn btn-primary"
-                                title="Click to find new manifest files and save them in Mercury."/>
+                                title="Finds any new manifest files and saves them in Mercury."/>
             </div>
 
-            <!-- Re-accessions a rack. -->
+            <!-- Loads the specified file and makes a new manifest if valid and with a new package barcode. -->
             <div style="padding-top: 20px;">
-                <span>
-                    <stripes:submit id="reaccessionBtn" name="reaccessionBtn" value="Re-accession the Rack"
-                                    class="btn btn-primary"
-                                    title="Click to redo an existing accession using the most recent manifest file."/>
-                    <span style="margin-left: 20px;">
-                        Rack barcode:
-                        <stripes:text id="rackBarcode" name="rackBarcode"/>
-                    </span>
-                </span>
-            </div>
-
-            <!-- Loads a new version of the given manifest file. -->
-            <div style="padding-top: 20px;">
-                <stripes:submit id="pullFileBtn" name="pullFileBtn" value="Reload and Reprocess A Manifest File"
+                <stripes:submit id="pullFileBtn" name="pullFileBtn" value="Pull One Manifest File"
                                 class="btn btn-primary"
-                                title="Click to re-read the given manifest file and save it in Mercury."/>
+                                title="Reads or re-reads the specified manifest file and saves or updates it in Mercury."/>
                 <span style="margin-left: 20px;">
                     Filename:
                     <stripes:text id="filename" name="filename"/>
@@ -88,10 +77,20 @@
                 </div>
             </c:if>
 
-            <div style="padding-top: 20px;">
-                <stripes:submit id="rotateKeyBtn" name="rotateKeyBtn" value="Rotate Service Account Key"
-                                class="btn btn-primary"
-                                title="Click to cause a new Google login key to be generated."/>
+            <div style="padding-top: 20px; width: 45em;">
+                <div style="float:left;">
+                    <stripes:submit id="rotateKeyBtn" name="rotateKeyBtn" value="Rotate Service Account Key"
+                                    class="btn btn-primary"
+                                    title="Click to cause a new Google login key to be generated."/>
+                </div>
+                <div style="float:right; width: 25em;">
+                    <span>
+                        <stripes:checkbox id="rotateAcknowledgement" name="rotateAcknowledgement"/>
+                        <stripes:label for="rotateAcknowledgement">
+                            I acknowledge that rotating (changing) the service account key will affect all other Mercury instances that use this Google storage bucket.
+                        </stripes:label>
+                    </span>
+                </div>
             </div>
 
         </stripes:form>

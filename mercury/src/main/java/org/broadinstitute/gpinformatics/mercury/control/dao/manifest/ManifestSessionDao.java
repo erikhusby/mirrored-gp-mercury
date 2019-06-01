@@ -94,18 +94,11 @@ public class ManifestSessionDao extends GenericDao {
      * Returns the most recent manifest with the given sessionPrefix.
      */
     public ManifestSession getSessionByPrefix(String prefix) {
-        return getSessionsByPrefix(prefix).stream().findFirst().orElse(null);
-    }
-
-    /**
-     * Returns all manifests with the given sessionPrefix sorted by age, newest first.
-     */
-    public List<ManifestSession> getSessionsByPrefix(String prefix) {
         return findList(ManifestSession.class, ManifestSession_.sessionPrefix, prefix).
                 stream().
                 sorted((o1, o2) ->
                         o2.getUpdateData().getModifiedDate().compareTo(o1.getUpdateData().getModifiedDate())).
-                collect(Collectors.toList());
+                findFirst().orElse(null);
     }
 
     /**

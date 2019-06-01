@@ -22,7 +22,7 @@
                 vertical-align: middle;
                 padding-top: 20px;
             }
-            text, textarea, .control-label, .controls {
+            text, textarea, .control-label, .controls, select, option, option-collection {
                 font-size: 12px;
                 font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
             }

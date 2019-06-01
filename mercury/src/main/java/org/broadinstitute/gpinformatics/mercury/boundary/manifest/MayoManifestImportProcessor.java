@@ -46,6 +46,7 @@ public class MayoManifestImportProcessor {
     public static final String INCONSISTENT = "Manifest file %s has inconsistent values for %s.";
     public static final String INVALID_DATA = "Manifest file %s has invalid values for %s.";
     public static final String MISSING_DATA = "Manifest file %s is missing required values for %s.";
+    // The next one is used in gpuitest. If you change it here, change it there too.
     public static final String MISSING_HEADER = "Manifest file %s is missing header %s.";
     public static final String UNKNOWN_UNITS = "Manifest file %s has unknown units in headers: %s.";
     public static final String UNKNOWN_HEADER = "Manifest file %s has unknown headers: %s.";

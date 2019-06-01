@@ -63,6 +63,7 @@ public class GoogleCredentialRenewer {
                     getConfig(MayoManifestConfig.class, deployment);
             googleBucketDao.setConfigGoogleStorageConfig(mayoManifestConfig);
 
+            // The yaml config parameter must be set to true in order for this to run.
             if ("true".equals(mayoManifestConfig.getDailyCredentialRenewal())) {
                 MessageCollection messageCollection = new MessageCollection();
                 googleBucketDao.rotateServiceAccountKey(messageCollection);
