@@ -239,7 +239,6 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
         PriceList prices;
         try {
             prices = JaxRsUtils.getAndCheck(resource.request(MediaType.APPLICATION_XML), PriceList.class);
-
         } catch (WebApplicationException e) {
             throw new QuoteNotFoundException("Could not find price list at " + url);
         }
