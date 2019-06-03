@@ -33,6 +33,10 @@
                 font-size: 12px;
             }
 
+            .move-right {
+                float: right;
+            }
+
             #analyzebtnid .ui-icon-waiting {
                 background-image: url("${ctxpath}/images/spinner.gif");
                 background-position: 0 center;

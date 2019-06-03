@@ -9,8 +9,13 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentra
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
 import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -99,7 +104,7 @@ public class BspNewRootHandler extends AbstractEventHandler {
     }
 
     private void createBspKit(List<LabVessel> labVessels, String receptacleType, String materialType,
-            String collabSampleSuffix, String tumorNormal) {
+            String collabSampleSuffix, String tumorNormal, List<String> backupReceptacles) {
 
         // Get data from BSP
         List<String> sampleNames = new ArrayList<>();
@@ -154,6 +159,7 @@ public class BspNewRootHandler extends AbstractEventHandler {
             multipartFormDataOutput.addFormData("receptacleType", receptacleType, MediaType.TEXT_PLAIN_TYPE);
             multipartFormDataOutput.addFormData("datasetName", "NewRoots", MediaType.TEXT_PLAIN_TYPE);
             multipartFormDataOutput.addFormData("domain", "VIRAL", MediaType.TEXT_PLAIN_TYPE);
+            multipartFormDataOutput.addFormData("backupReceptacles", backupReceptacles, MediaType.APPLICATION_JSON_TYPE);
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             workbook.write(byteArrayOutputStream);
             multipartFormDataOutput.addFormData("spreadsheet",
@@ -236,9 +242,25 @@ public class BspNewRootHandler extends AbstractEventHandler {
             }
         }
 
+        // Check for receptacles to be marked as backup
+        List<String> backupReceptacles = new ArrayList<>();
+        if (stationEvent instanceof PlateCherryPickEvent) {
+            PlateCherryPickEvent plateCherryPickEvent = (PlateCherryPickEvent) stationEvent;
+            for (PositionMapType positionMapType: plateCherryPickEvent.getPositionMap()) {
+                for (ReceptacleType receptacle: positionMapType.getReceptacle()) {
+                    for (MetadataType metadataType: receptacle.getMetadata()) {
+                        if (metadataType.getName().equals(Metadata.Key.MARK_BACKUP.getDisplayName()) &&
+                                metadataType.getValue().equals(Boolean.TRUE.toString())) {
+                            backupReceptacles.add(receptacle.getBarcode());
+                        }
+                    }
+                }
+            }
+        }
+
         createBspKit(new ArrayList<>(labVessels), receptacleType,
                 labEventType.getResultingMaterialType().getDisplayName(), labEventType.getCollabSampleSuffix(),
-                labEventType.getMetadataValue());
+                labEventType.getMetadataValue(), backupReceptacles);
     }
 
 }
