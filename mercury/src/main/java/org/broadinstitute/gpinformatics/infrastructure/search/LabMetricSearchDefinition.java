@@ -814,7 +814,7 @@ public class LabMetricSearchDefinition {
         SearchTerm groupTerm = new SearchTerm();
         List<SearchTerm.CriteriaPath> blankCriteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath blankCriteriaPath = new SearchTerm.CriteriaPath();
-        blankCriteriaPath.setCriteria(new ArrayList<String>());
+        blankCriteriaPath.setCriteria(new ArrayList<>());
         blankCriteriaPaths.add(blankCriteriaPath);
         groupTerm.setCriteriaPaths(blankCriteriaPaths);
         groupTerm.setName("Group / Collection");

@@ -50,7 +50,7 @@ public class LabMetricSearchTest extends Arquillian {
         userTransaction.begin();
         ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
                 searchInstance, searchDef, null, 0, null, "DSC", entityName);
-        Assert.assertEquals(firstPageResults.getResultList().getResultRows().size(), 20);
+        Assert.assertEquals(firstPageResults.getResultList().getResultRows().size(), 38);
         userTransaction.rollback();
     }
 
@@ -69,7 +69,7 @@ public class LabMetricSearchTest extends Arquillian {
         child.setTermName("Collection");
         child.setOperator(SearchInstance.Operator.EQUALS);
         child.setValues(Collections.singletonList("19255"));
-//        child.setValues(Collections.singletonList("26238"));
+//        child.setValues(Collections.singletonList("26238"));  // 100K samples
         children.add(child);
         searchValue.setChildren(children);
 

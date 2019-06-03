@@ -250,7 +250,7 @@ public class ConfigurableSearchDao extends GenericDao {
                             for (int i = 0; i < objectList.size(); i++) {
                                 Object o = objectList.get(i);
                                 getEntityManager().persist(new BulkQueryParameter((String) o));
-                                if (i == objectList.size() - 1 || i % 40 == 0) {
+                                if (i == objectList.size() - 1 || i % 50 == 0) {
                                     getEntityManager().flush();
                                 }
                             }
