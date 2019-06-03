@@ -110,7 +110,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
@@ -1692,12 +1691,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                 }
             }
 
-        } catch (QuoteNotFoundException ex) {
-            try {
-                item.put("error", String.format("%s '%s' not found", quoteSource, quoteIdentifier));
-            } catch (JSONException e) {
-                // Don't really care if this gets an exception.
-            }
         } catch (Exception ex) {
             logger.error("Error occured calculating quote funding", ex);
             try {

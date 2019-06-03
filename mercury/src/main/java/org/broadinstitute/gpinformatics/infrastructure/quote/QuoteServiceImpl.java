@@ -8,8 +8,6 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-import org.broadinstitute.gpinformatics.infrastructure.ServerDownException;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJaxRsClientService;
 import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.owasp.encoder.Encode;
@@ -19,8 +17,6 @@ import javax.annotation.Nonnull;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
-import javax.ws.rs.ClientErrorException;
-import javax.ws.rs.ServiceUnavailableException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -304,17 +300,14 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
 
         final String ENCODING = "UTF-8";
 
-        String quoteUrl;
         try {
-            quoteUrl = url + URLEncoder.encode(id, ENCODING);
-            WebTarget resource = getJaxRsClient().target(quoteUrl);
+            WebTarget resource = getJaxRsClient().target(url + URLEncoder.encode(id, ENCODING));
 
             Quotes quotes = JaxRsUtils.getAndCheck(resource.request(MediaType.APPLICATION_XML), Quotes.class);
             if (! CollectionUtils.isEmpty(quotes.getQuotes())) {
                 quote = quotes.getQuotes().get(0);
             } else {
-                String displayUrl = StringUtils.defaultIfBlank(quoteUrl, url);
-                throw new QuoteNotFoundException("Could not find quote " + Encode.forHtml(id) + " at " + displayUrl);
+                throw new QuoteNotFoundException("Could not find quote " + Encode.forHtml(id) + " at " + url);
             }
         } catch (WebApplicationException e) {
             throw new QuoteNotFoundException("Could not find quote " + Encode.forHtml(id) + " at " + url);
@@ -348,8 +341,7 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
     }
 
     @Override
-    public PriceList getPlatformPriceItems(QuotePlatformType quotePlatformType)
-        throws QuoteServerException, QuoteNotFoundException, ServerDownException {
+    public PriceList getPlatformPriceItems(QuotePlatformType quotePlatformType) throws QuoteServerException, QuoteNotFoundException {
         PriceList platformPrices = new PriceList();
 
         // get all the priceItems and then filter by platform name.
