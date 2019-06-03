@@ -432,10 +432,10 @@ public class LedgerEntryFixupTest extends Arquillian {
                                                         + " Found in Ledger entries, with " + StringUtils.join(newWorkItems, ",")));
     }
 
-    @Test(enabled = true)
-    public void support5409ReverseIncorrectQuantity() {
+    @Test(enabled = false)
+    public void support5409ReverseIncorrectQuantity() throws Exception {
         userBean.loginOSUser();
-
+        utx.begin();
         String workItem = "328674";
         List <LedgerEntry> entryToCorrect= ledgerEntryFixupDao.findList(LedgerEntry.class, LedgerEntry_.workItem, workItem);
         String quote = "MMMOXY";
@@ -468,6 +468,7 @@ public class LedgerEntryFixupTest extends Arquillian {
         String messageWithCorrection = String.format("%s %s", fixupMessage, correction);
         System.out.println(messageWithCorrection);
         ledgerEntryFixupDao.persist(new FixupCommentary(messageWithCorrection));
+        utx.commit();
     }
 
 }
