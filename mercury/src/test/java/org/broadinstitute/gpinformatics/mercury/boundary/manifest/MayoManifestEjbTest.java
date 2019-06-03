@@ -122,7 +122,7 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertEquals(manifestSession.getRecords().size(), cellGrid.size() - 1);
         validateManifest(manifestSession, cellGrid);
 
-        // Once it's read a file should not be re-read.
+        // Once a file is read it should not be read again.
         messageCollection.clearAll();
         mayoManifestEjb.pullAll(bean);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
@@ -130,9 +130,9 @@ public class MayoManifestEjbTest extends Arquillian {
         ManifestSession manifestSession2 = manifestSessionDao.getSessionByPrefix(packageId);
         Assert.assertEquals(manifestSession, manifestSession2);
 
-        // Tests Mayo Admin UI "pull one file". A forced reload should make a new manifest session
-        // provided the previous one has no receipt ticket nor linked vessel labels.
-        // In this case it will have the same filename and content.
+        // Tests Mayo Admin UI "pull one file". This should load the file despite it being read before.
+        // A new manifestSession is created since the previous one has no receipt ticket.
+        // It will have the same filename and content.
         bean.setFilename(filename);
         messageCollection.clearAll();
         mayoManifestEjb.pullOne(bean);
@@ -141,10 +141,10 @@ public class MayoManifestEjbTest extends Arquillian {
         ManifestSession session2 = manifestSessionDao.getSessionByPrefix(packageId);
         validateManifest(session2, cellGrid);
 
-        // Two manifest files with identical content should be treated as two Mercury manifest sessions
-        // having the same key, provided the previous one has no receipt ticket nor linked vessel labels.
-        // In this case it has a different filename but the same content.
-        // This tests when Mayo folks update a manifest file by writing a new file to the storage bucket.
+        // Test that nothing breaks if Mayo folks write a different manifest file to the storage bucket
+        // that has the same content as an earlier file.
+        // Since the package hasn't been received yet, Mercury should persist it in a new manifest session
+        // and a lookup using the package id shoujld return the most recent spreadsheet data.
         String filename3 = StringUtils.replace(filename, ".csv", "a.csv");
         googleBucketDao.upload(filename3, makeContent(cellGrid), messageCollection);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
@@ -153,22 +153,20 @@ public class MayoManifestEjbTest extends Arquillian {
         mayoManifestEjb.pullAll(bean);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors()));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
-        // A lookup should return the latest one, identified by a higher manifestSessionId
+        // A lookup should return the latest manifestSession, identified by a higher manifestSessionId
         messageCollection.clearAll();
         ManifestSession session3 = manifestSessionDao.getSessionByPrefix(packageId);
         validateManifest(session3, cellGrid);
         Assert.assertTrue(session3.getManifestSessionId() > session2.getManifestSessionId(), packageId);
 
-        // Makes an identical spreadsheet except for a different collaborator sample id
-        // and overwrites an existing storage file.
-        // This tests when Mayo folks update a manifest file by writing the same file to the storage bucket.
+        // Tests a sample metadata update that uses the same file filename with different content,
+        // in this case a different collaborator sample id value. Normally Mercury would ignore the
+        // file because the filename was already processed, but this test does an admin load to get it.
         List<List<String>> cellGrid4 = makeCellGrid(testDigits, packageId, "B", ImmutableMap.of(rackBarcode, 4));
         messageCollection.clearAll();
         googleBucketDao.upload(filename3, makeContent(cellGrid4), messageCollection);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
-
-        // A force reload is necessary for Mercury to pick up the changes.
         bean.setFilename(filename3);
         messageCollection.clearAll();
         mayoManifestEjb.pullOne(bean);
@@ -178,10 +176,11 @@ public class MayoManifestEjbTest extends Arquillian {
         ManifestSession session4 = manifestSessionDao.getSessionByPrefix(packageId);
         validateManifest(session4, cellGrid4);
 
-        // Assigns a receipt ticket and vessel label to the manifestSession.
+        // Simulates a package receipt by putting a receipt ticket and vessel label on the manifestSession.
         session4.setReceiptTicket("RCT-test");
         session4.setVesselLabels(Collections.singleton("rack1"));
-        // Verifies that a new session is not created when the manifest file is updated.
+
+        // Verifies that a new session does not get created when the manifest file is updated (different filename).
         List<List<String>> cellGrid5 = makeCellGrid(testDigits, packageId, "C", ImmutableMap.of(rackBarcode, 4));
         String filename5 = StringUtils.replace(filename, ".csv", "b.csv");
         messageCollection.clearAll();
@@ -190,19 +189,19 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
         messageCollection.clearAll();
         mayoManifestEjb.pullAll(bean);
-        // Because the existing manifestSession had manifestRecords the error message is "already linked".
-        Assert.assertTrue(messageCollection.getErrors().contains(
-                String.format(MayoManifestEjb.ALREADY_LINKED, packageId)),
-                StringUtils.join(messageCollection.getErrors()));
-        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
-        // Should not have made a new manifest for the packageId.
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        // There should be a warning about the package being already linked.
+        Assert.assertTrue(messageCollection.getWarnings().contains(
+                String.format(MayoManifestEjb.SKIPPING_LINKED, filename5, packageId)),
+                StringUtils.join(messageCollection.getWarnings()));
+        // There should not be a new manifestSession when looking up by packageId.
         messageCollection.clearAll();
         Assert.assertEquals(manifestSessionDao.getSessionByPrefix(packageId).getManifestSessionId(),
                 session4.getManifestSessionId());
     }
 
     @Test
-    public void testAccessionFailAndSucess() throws Exception {
+    public void testAccessionFailAndSuccess() throws Exception {
         mayoManifestEjb.getUserBean().loginTestUser();
         MessageCollection messageCollection = new MessageCollection();
         String testDigits = DATE_FORMAT.format(new Date());
@@ -381,7 +380,8 @@ public class MayoManifestEjbTest extends Arquillian {
             Assert.assertNotNull(quarantinedDao.findItem(ItemSource.MAYO, ItemType.RACK, barcodes[2]));
         }
 
-        // Successfully accessions the racks.
+        // Suppose the rack tubes were rearranged so taht all the tube errors got fixed up.
+        // The racks should be successfully accessioned.
         for (String barcode : barcodes) {
             MayoSampleReceiptActionBean bean = new MayoSampleReceiptActionBean();
             bean.setMessageCollection(messageCollection);
@@ -402,7 +402,12 @@ public class MayoManifestEjbTest extends Arquillian {
             validateEntities(cellGrid, barcode);
         }
 
-        // A re-accessioning is disallowed.
+        // After a successful accessioning the racks should no longer be quarantined.
+        Assert.assertNull(quarantinedDao.findItem(ItemSource.MAYO, ItemType.RACK, barcodes[0]));
+        Assert.assertNull(quarantinedDao.findItem(ItemSource.MAYO, ItemType.RACK, barcodes[1]));
+        Assert.assertNull(quarantinedDao.findItem(ItemSource.MAYO, ItemType.RACK, barcodes[2]));
+
+        // Tests that a re-accessioning is disallowed.
         MayoSampleReceiptActionBean bean = new MayoSampleReceiptActionBean();
         bean.setMessageCollection(messageCollection);
         bean.setRackBarcode(barcodes[0]);
@@ -415,11 +420,6 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertTrue(messageCollection.getErrors().contains(
                 String.format(MayoManifestEjb.ALREADY_ACCESSIONED, existingVessels)),
                 StringUtils.join(messageCollection.getErrors(), "; "));
-
-        // After a successful accessioning the racks should no longer be quarantined.
-        Assert.assertNull(quarantinedDao.findItem(ItemSource.MAYO, ItemType.RACK, barcodes[0]));
-        Assert.assertNull(quarantinedDao.findItem(ItemSource.MAYO, ItemType.RACK, barcodes[1]));
-        Assert.assertNull(quarantinedDao.findItem(ItemSource.MAYO, ItemType.RACK, barcodes[2]));
     }
 
     @Test
@@ -459,7 +459,7 @@ public class MayoManifestEjbTest extends Arquillian {
         messageCollection.clearAll();
         mayoManifestEjb.packageReceipt(pkgBean);
 
-        // There should be a manifestSession, linked to an RCT, but having no manifestFile nor manifestRecords.
+        // There should be a manifestSession, linked to an RCT, but with no manifestFile nor manifestRecords.
         ManifestSession manifestSession = manifestSessionDao.getSessionByPrefix(packageId);
         Assert.assertNotNull(manifestSession);
         Assert.assertTrue(StringUtils.isNotBlank(manifestSession.getReceiptTicket()));
@@ -471,12 +471,12 @@ public class MayoManifestEjbTest extends Arquillian {
                 StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
 
-        // The package rack should have been quarantined.
+        // The package should have been quarantined for the missing manifest.
         Quarantined quarantined = quarantinedDao.findItem(ItemSource.MAYO, ItemType.PACKAGE, packageId);
         Assert.assertNotNull(quarantined);
         Assert.assertEquals(quarantined.getReason(), Quarantined.MISSING_MANIFEST);
 
-        // Fails to accession because the manifest is not linked to the package.
+        // Fails to accession a rack since there is no manifest.
         MayoSampleReceiptActionBean bean = new MayoSampleReceiptActionBean();
         bean.setMessageCollection(messageCollection);
         bean.setRackBarcode(barcodes[0]);
@@ -498,22 +498,23 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
         manifestSessionDao.flush();
 
-        // Mayo admin load all manifest files and load one manifest file should fail due to "already received"
-        // (it would be "already linked" if there were manifest records on the existing manifest).
+        // Since the package is already received, the existing manifest session will need to be updated and
+        // not supplanted by a new manifestSession for the file. The lab user needs to Link Manifest To Package.
+        // Tests that a admin "load all files" and "load one file" should fail due to "already received".
         MayoAdminActionBean adminBean = new MayoAdminActionBean();
         adminBean.setMessageCollection(messageCollection);
         messageCollection.clearAll();
         mayoManifestEjb.pullAll(adminBean);
-        Assert.assertTrue(messageCollection.getErrors().contains(
-                String.format(MayoManifestEjb.ALREADY_RECEIVED, packageId)),
-                StringUtils.join(messageCollection.getErrors()));
-        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertTrue(messageCollection.getWarnings().contains(
+                String.format(MayoManifestEjb.SKIPPING_RECEIVED, filename, packageId)),
+                StringUtils.join(messageCollection.getWarnings()));
         Assert.assertEquals(manifestSessionDao.getSessionByPrefix(packageId).getManifestSessionId(),
                 manifestSession.getManifestSessionId());
         Assert.assertTrue(manifestSessionDao.getSessionByPrefix(packageId).getRecords().isEmpty());
 
-        // Links the package to the manifest file.
-        // The ActionBean will only supply a packageId and filename for the link up operation.
+        // Tests that the new manifest file can be linked to the recieved package.
+        // The ActionBean should only supply a packageId and filename for the link up operation.
         MayoPackageReceiptActionBean pkgBean2 = new MayoPackageReceiptActionBean();
         pkgBean2.setMessageCollection(messageCollection);
         pkgBean2.setPackageBarcode(packageId);
@@ -523,13 +524,13 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
         ManifestSession manifestSession2 = manifestSessionDao.getSessionByPrefix(packageId);
+        // The manifestSession should still have the info put there by the package receipt.
         CollectionUtils.isEqualCollection(manifestSession2.getVesselLabels(), manifestSession.getVesselLabels());
         Assert.assertEquals(manifestSession2.getReceiptTicket(), manifestSession.getReceiptTicket());
-
-        // The package should have been unquarantined.
+        // The package should no longer be unquarantined.
         Assert.assertNull(quarantinedDao.findItem(ItemSource.MAYO, ItemType.PACKAGE, packageId));
 
-        // Accessioning can now occur.
+        // Accessions a rack and validates the entity info matches the manifest file's spreadsheet.
         MayoSampleReceiptActionBean bean2 = new MayoSampleReceiptActionBean();
         bean2.setMessageCollection(messageCollection);
         bean2.setRackBarcode(barcodes[0]);
@@ -563,7 +564,7 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
 
-        // Tests access and obtains filelist. The list should include the file that was just written.
+        // Tests access and obtains a file listing. The list should include the file that was just written.
         messageCollection.clearAll();
         mayoManifestEjb.testAccess(bean);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
@@ -571,12 +572,12 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertTrue(messageCollection.hasInfos());
         Assert.assertTrue(bean.getBucketList().contains(filename));
 
-        // Tests that the file did not fail.
+        // Tests that the file is not on the list of file failures (i.e. it was made into a manifest session).
         messageCollection.clearAll();
         mayoManifestEjb.getFailedFiles(bean);
         Assert.assertFalse(bean.getFailedFilesList().contains(filename));
 
-        // Reads the file by its filename.
+        // Reads the file by its filename and compares the displayed content to the spreadsheet.
         bean.setFilename(filename);
         bean.getManifestCellGrid().clear();
         messageCollection.clearAll();
