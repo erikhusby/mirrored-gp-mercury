@@ -215,7 +215,7 @@
 
         <jboss.socket.https>8443</jboss.socket.https>
 
-        <bspclient.version>1.3.153</bspclient.version>
+        <bspclient.version>[1.3,)</bspclient.version>
 
 	<mercuryCloverDatabase>${project.build.directory}/clover/clover.db</mercuryCloverDatabase>
 
@@ -1654,7 +1654,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>lims</groupId>
             <artifactId>limsThrift</artifactId>
-            <version>1.0-20160719.173735-65</version>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
