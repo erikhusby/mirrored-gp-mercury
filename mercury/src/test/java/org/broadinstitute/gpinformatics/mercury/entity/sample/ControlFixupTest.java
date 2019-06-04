@@ -29,7 +29,7 @@ public class ControlFixupTest extends Arquillian {
                 org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV, "dev");
     }
 
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void gplim6080ControlFingerprintFixup() {
         // Plate CO-28400592_04101019
         // http://gapdev.broadinstitute.org:8080/esp/ViewFluidigmPlate.action?packetId=1200050
@@ -53,7 +53,12 @@ public class ControlFixupTest extends Arquillian {
                 mapCollabIdToFpSample.values());
         List<Control> controls = controlDao.findAllActiveControlsByType(Control.ControlType.POSITIVE);
         for (Control control : controls) {
-            MercurySample mercurySample = mapIdToMercurySample.get(control.getCollaboratorParticipantId());
+            String sampleId = mapCollabIdToFpSample.get(control.getCollaboratorParticipantId());
+            if (sampleId == null) {
+                // Some controls don't start with NA
+                continue;
+            }
+            MercurySample mercurySample = mapIdToMercurySample.get(sampleId);
             Assert.assertNotNull(mercurySample);
             System.out.println("Setting " + control.getCollaboratorParticipantId() + " to " +
                     mercurySample.getSampleKey());
