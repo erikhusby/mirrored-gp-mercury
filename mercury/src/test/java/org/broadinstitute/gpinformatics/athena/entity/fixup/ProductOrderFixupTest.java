@@ -100,7 +100,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
@@ -169,7 +169,7 @@ public class ProductOrderFixupTest extends Arquillian {
     // When you run this on prod, change to PROD and prod.
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(PROD, "prod");
+        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
     /**
@@ -1818,6 +1818,7 @@ public class ProductOrderFixupTest extends Arquillian {
 
             ProductOrder orderToOpen = productOrderDao.findByBusinessKey(line);
             orderToOpen.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+            System.out.println("Changed the status of product order " + line + " to " + ProductOrder.OrderStatus.Submitted.getDisplayName());
         }
 
         productOrderDao.persist(new FixupCommentary(fixupLines.get(0)));
