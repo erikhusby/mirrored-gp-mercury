@@ -18,6 +18,7 @@ public class GeminiPlateProcessorTest {
     public static final String PLATING_PICO = "GeminiPlatingPico.xls";
     public static final String DUPLICATE_96_PICO = "Gemini96DuplicatePond.xls";
     public static final String NEXOME_PICO = "GeminiNexomePico.xls";
+    public static final String NEXOME_4_PLATE_PICO = "GeminiNexome4Plate.xlsx";
 
     @Test
     public void testPlatingPicoGemini() {
@@ -99,6 +100,25 @@ public class GeminiPlateProcessorTest {
             Assert.assertEquals(left.getRunName(), NEXOME_PICO);
             List<GeminiPlateProcessor> right = pair.getRight();
             Assert.assertEquals(right.size(), 2);
+            GeminiPlateProcessor plateProcessor = right.get(0);
+            Assert.assertEquals(plateProcessor.getMessages().size(), 0);
+            Assert.assertEquals(plateProcessor.getPlateWellResults().size(), 192);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    public void testNexome4PlatePico() {
+        InputStream inputStream = VarioskanParserTest.getTestResource(NEXOME_4_PLATE_PICO);
+        try {
+            Workbook workbook = WorkbookFactory.create(inputStream);
+            Pair<GeminiPlateProcessor.GeminiRunInfo, List<GeminiPlateProcessor>> pair =
+                    GeminiPlateProcessor.parse(workbook, NEXOME_4_PLATE_PICO);
+            GeminiPlateProcessor.GeminiRunInfo left = pair.getLeft();
+            Assert.assertEquals(left.getRunName(), NEXOME_4_PLATE_PICO);
+            List<GeminiPlateProcessor> right = pair.getRight();
+            Assert.assertEquals(right.size(), 4);
             GeminiPlateProcessor plateProcessor = right.get(0);
             Assert.assertEquals(plateProcessor.getMessages().size(), 0);
             Assert.assertEquals(plateProcessor.getPlateWellResults().size(), 192);

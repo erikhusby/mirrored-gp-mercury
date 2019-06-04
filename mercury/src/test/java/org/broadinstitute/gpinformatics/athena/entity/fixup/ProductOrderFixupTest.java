@@ -1623,7 +1623,7 @@ public class ProductOrderFixupTest extends Arquillian {
      * @throws ProductOrderEjb.NoSuchPDOException
      * @throws SAPInterfaceException
      */
-    public void abandonSamplesForSapOrder(String pdoKey, List<String> sampleList, String abandonReason)
+    private void abandonSamplesForSapOrder(String pdoKey, List<String> sampleList, String abandonReason)
             throws ProductOrderEjb.SampleDeliveryStatusChangeException, QuoteNotFoundException, QuoteServerException,
             InvalidProductException, SAPIntegrationException, IOException, ProductOrderEjb.NoSuchPDOException,
             SAPInterfaceException {
@@ -1712,7 +1712,7 @@ public class ProductOrderFixupTest extends Arquillian {
      * @throws QuoteNotFoundException
      * @throws InvalidProductException
      */
-    public boolean isOrderEligibleForSAP(ProductOrder editedProductOrder, Date effectiveDate)
+    private boolean isOrderEligibleForSAP(ProductOrder editedProductOrder, Date effectiveDate)
             throws QuoteServerException, QuoteNotFoundException, InvalidProductException {
         Quote orderQuote = editedProductOrder.getQuote(quoteService);
         SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();

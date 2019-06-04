@@ -1006,6 +1006,12 @@ public class ManualTransferActionBean extends RackScanActionBean {
                         messageCollection.addInfo(message);
                     } else if (!allowKnownDestinations){
                         messageCollection.addError(message);
+                    } else {
+                        if (labEventType != LabEventType.DEV) {
+                            messageCollection.addError(message);
+                        } else {
+                            messageCollection.addWarning(message);
+                        }
                     }
                     if (expectedEmpty != null) {
                         if (labVessel.getTransfersTo().isEmpty()) {

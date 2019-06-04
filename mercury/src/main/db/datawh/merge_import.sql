@@ -1701,47 +1701,16 @@ AS
         product_order_id, batch_name, lcset_sample_name, sample_name,
         lab_event_id, lab_event_type, station_name, event_date,
         lab_vessel_id, position,
-        'N' as split_on_rehyb
+        CASE WHEN lab_event_type IN (
+                                'InfiniumHybridization',
+                                'InfiniumPostHybridizationHybOvenLoaded',
+                                'InfiniumHybChamberLoaded',
+                                'InfiniumXStain',
+                                'InfiniumAutocallSomeStarted',
+                                'InfiniumAutoCallAllStarted' ) THEN 'Y'
+            ELSE 'N' END as split_on_rehyb
       FROM im_array_process
-      WHERE is_delete = 'F'
-      UNION ALL
-      SELECT LINE_NUMBER, ETL_DATE,
-        product_order_id, batch_name, lcset_sample_name, sample_name,
-        lab_event_id, lab_event_type, station_name, event_date,
-        lab_vessel_id, position,
-        'N' as split_on_rehyb
-      FROM im_event_fact
-      WHERE is_delete = 'F'
-            AND product_order_id  IS NOT NULL
-            AND lcset_sample_name IS NOT NULL
-            AND NVL(batch_name, 'NONE') <> 'NONE'
-            AND lab_event_type IN (
-        'InfiniumAmplification',
-        'InfiniumPostFragmentationHybOvenLoaded',
-        'InfiniumFragmentation',
-        'InfiniumPrecipitation',
-        'InfiniumPostPrecipitationHeatBlockLoaded',
-        'InfiniumPrecipitationIsopropanolAddition',
-        'InfiniumResuspension',
-        'InfiniumPostResuspensionHybOven' )
-      UNION ALL
-      SELECT LINE_NUMBER, ETL_DATE,
-        product_order_id, batch_name, lcset_sample_name, sample_name,
-        lab_event_id, lab_event_type, station_name, event_date,
-        lab_vessel_id, position,
-        'Y' as split_on_rehyb
-      FROM im_event_fact
-      WHERE is_delete = 'F'
-            AND product_order_id  IS NOT NULL
-            AND lcset_sample_name IS NOT NULL
-            AND NVL(batch_name, 'NONE') <> 'NONE'
-            AND lab_event_type IN (
-        'InfiniumHybridization',
-        'InfiniumPostHybridizationHybOvenLoaded',
-        'InfiniumHybChamberLoaded',
-        'InfiniumXStain',
-        'InfiniumAutocallSomeStarted',
-        'InfiniumAutoCallAllStarted' ) )
+      WHERE is_delete = 'F' )
       LOOP
         -- Find initial base row (multiple if chip rehyb)
         BEGIN
@@ -1749,8 +1718,7 @@ AS
           SELECT ROWID
           BULK COLLECT INTO V_ROWID_ARR
           FROM array_process_flow
-          WHERE product_order_id  = new.product_order_id
-                AND lcset_sample_name = new.lcset_sample_name
+          WHERE lcset_sample_name = new.lcset_sample_name
                 AND batch_name = new.batch_name;
 
           IF V_ROWID_ARR.COUNT = 0 THEN
@@ -1771,8 +1739,7 @@ AS
             BEGIN
               SELECT ROWID INTO V_THE_ROWID
               FROM array_process_flow
-              WHERE product_order_id  = new.product_order_id
-                    AND lcset_sample_name = new.lcset_sample_name
+              WHERE lcset_sample_name = new.lcset_sample_name
                     AND batch_name = new.batch_name
                     AND NVL(chip, V_CHIP_BARCODE)  = V_CHIP_BARCODE
                     AND ROWNUM = 1;
