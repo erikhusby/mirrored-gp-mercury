@@ -1666,6 +1666,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                                                     > 0);
                                             fundingInfo.put("daysTillExpire", DateUtils
                                                     .getNumDaysBetween(todayTruncated, grantDateEnd.get()));
+                                            fundingInfo.put("costObject", fundingDetail.getCostObject());
                                         } else {
                                             fundingInfo.put("fundsReservationEndDate", "No funds Reservation end date found");
                                             fundingInfo.put("activeCostObject", "unable to determine if the cost Object is active");
