@@ -43,6 +43,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option;
@@ -117,37 +118,105 @@ public class SapIntegrationServiceImplDBFreeTest {
         ProductOrder conversionPdo = ProductOrderTestFactory.createDummyProductOrder(10, jiraTicketKey);
         conversionPdo.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
 
-        conversionPdo.setQuoteId("01234");
+        conversionPdo.setQuoteId(SAP_QUOTE_ID);
         conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         conversionPdo.addSapOrderDetail(new SapOrderDetail(SAP_ORDER_NUMBER, 10, SAP_QUOTE_ID,
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode()));
 
         final Product primaryProduct = conversionPdo.getProduct();
+        primaryProduct.setAlternateExternalName(primaryProduct.getProductName() + "_external");
         addTestProductMaterialPrice(primaryMaterialBasePrice, priceList, materials, primaryProduct,
                 SAP_QUOTE_ID);
 
         for (ProductOrderAddOn addOn : conversionPdo.getAddOns()) {
-            addTestProductMaterialPrice(addonMaterialPrice, priceList, materials, addOn.getAddOn(),
+            final Product addOnProduct = addOn.getAddOn();
+            addOnProduct.setAlternateExternalName(addOnProduct.getProductName() + "_external");
+            addTestProductMaterialPrice(addonMaterialPrice, priceList, materials, addOnProduct,
                     SAP_QUOTE_ID);
         }
 
-        final String customProductName = "Test custom material";
-        final String customAddonProductName = "Test custom addon material";
-        final ProductOrderPriceAdjustment customPriceAdjustment =
-                new ProductOrderPriceAdjustment(new BigDecimal("29.50"), null, customProductName);
+        sapQuote = TestUtils.buildTestSapQuote(SAP_QUOTE_ID, 10d, 10d, conversionPdo,
+                TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS, "GP02");
+        conversionPdo.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
 
-        conversionPdo.setCustomPriceAdjustment(customPriceAdjustment);
+        SAPOrder convertedOrder = integrationService.initializeSAPOrder(sapQuote, conversionPdo,
+                Option.create(Option.Type.CREATING));
+
+        assertThat(convertedOrder.getCompanyCode(), equalTo(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES));
+        assertThat(convertedOrder.getQuoteNumber(), equalTo(sapQuote.getQuoteHeader().getQuoteNumber()));
+        assertThat(convertedOrder.getExternalOrderNumber(), equalTo(conversionPdo.getBusinessKey()));
+        assertThat(convertedOrder.getSapOrderNumber(), emptyOrNullString());
+        assertThat(convertedOrder.getCreator(), equalTo(MOCK_USER_NAME));
+        assertThat(convertedOrder.getResearchProjectNumber(), equalTo(conversionPdo.getResearchProject().getBusinessKey()));
+
+        // HashSet order not deterministic. Tested at line 393 assertThat(convertedOrder.getOrderItems().size(), equalTo(conversionPdo.getAddOns().size()+1));
+
+        for(SAPOrderItem item:convertedOrder.getOrderItems()) {
+
+            if(item.getProductIdentifier().equals(primaryProduct.getPartNumber())) {
+                assertThat(item.getItemQuantity().doubleValue(), equalTo(
+                        (new BigDecimal(conversionPdo.getSamples().size())).doubleValue()));
+                assertThat(item.getProductAlias(), equalTo(primaryProduct.getAlternateExternalName()));
+                assertThat(item.getItemQuantity().doubleValue(), equalTo(new BigDecimal(conversionPdo.getSamples().size()).doubleValue()));
+            }
+            else {
+                final Map<String, String> alternateNameByPartNumber = conversionPdo.getAddOns().stream().map(ProductOrderAddOn::getAddOn)
+                        .collect(Collectors.toMap(Product::getPartNumber, Product::getAlternateExternalName));
+
+                assertThat(item.getProductAlias(), equalTo(alternateNameByPartNumber.get(item.getProductIdentifier())));
+                assertThat(item.getItemQuantity().doubleValue(), equalTo(new BigDecimal(conversionPdo.getSamples().size()).doubleValue()));
+            }
+        }
+
+        final String customExternalProductName = "Test custom external material";
+        final String customExternalAddonProductName = "Test custom external addon material";
+        final ProductOrderPriceAdjustment customExternalPriceAdjustment =
+                new ProductOrderPriceAdjustment(null, null, customExternalProductName);
+
+        conversionPdo.setCustomPriceAdjustment(customExternalPriceAdjustment);
 
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
             final ProductOrderAddOnPriceAdjustment customAdjustment =
-                    new ProductOrderAddOnPriceAdjustment(new BigDecimal("39.50"),1, customAddonProductName);
+                    new ProductOrderAddOnPriceAdjustment(null,1, customExternalAddonProductName);
             productOrderAddOn.setCustomPriceAdjustment(customAdjustment);
         }
-        sapQuote = TestUtils.buildTestSapQuote("01234", 10d, 10d, conversionPdo,
-            TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS, "GP01");
 
-        SAPOrder convertedOrder = integrationService.initializeSAPOrder(sapQuote, conversionPdo,
-            Option.create(Option.Type.CREATING));
+        convertedOrder = integrationService.initializeSAPOrder(sapQuote, conversionPdo,
+                Option.create(Option.Type.ORDER_VALUE_QUERY));
+
+
+        for(SAPOrderItem item:convertedOrder.getOrderItems()) {
+
+            if(item.getProductIdentifier().equals(primaryProduct.getPartNumber())) {
+                assertThat(item.getItemQuantity().doubleValue(), equalTo(
+                        (new BigDecimal(conversionPdo.getSamples().size())).doubleValue()));
+                assertThat(item.getProductAlias(), equalTo(customExternalProductName));
+                assertThat(item.getItemQuantity().doubleValue(), equalTo(new BigDecimal(conversionPdo.getSamples().size()).doubleValue()));
+            }
+            else {
+                final Map<String, String> alternateNameByPartNumber = conversionPdo.getAddOns().stream().map(ProductOrderAddOn::getAddOn)
+                        .collect(Collectors.toMap(Product::getPartNumber, Product::getAlternateExternalName));
+
+                assertThat(item.getProductAlias(), equalTo(customExternalAddonProductName));
+                assertThat(item.getItemQuantity().doubleValue(), equalTo(1.0d));
+            }
+        }
+
+
+
+        sapQuote = TestUtils.buildTestSapQuote(SAP_QUOTE_ID, 10d, 10d, conversionPdo,
+                TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS, "GP01");
+        conversionPdo.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
+        conversionPdo.clearCustomPriceAdjustment();
+        for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
+            final ProductOrderAddOnPriceAdjustment customAdjustment =
+                    new ProductOrderAddOnPriceAdjustment(null,1, customExternalAddonProductName);
+            productOrderAddOn.clearCustomPriceAdjustment();
+        }
+
+        convertedOrder = integrationService.initializeSAPOrder(sapQuote, conversionPdo,
+                Option.create(Option.Type.CREATING));
+
 
         assertThat(convertedOrder.getCompanyCode(), equalTo(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD));
         assertThat(convertedOrder.getQuoteNumber(), equalTo(sapQuote.getQuoteHeader().getQuoteNumber()));
@@ -163,8 +232,44 @@ public class SapIntegrationServiceImplDBFreeTest {
             if(item.getProductIdentifier().equals(primaryProduct.getPartNumber())) {
                 assertThat(item.getItemQuantity().doubleValue(), equalTo(
                         (new BigDecimal(conversionPdo.getSamples().size())).doubleValue()));
-                assertThat(item.getProductAlias(), equalTo(customProductName));
+            }
+            assertThat(item.getProductAlias(), is(nullValue()));
+            assertThat(item.getItemQuantity().doubleValue(), equalTo(new BigDecimal(conversionPdo.getSamples().size()).doubleValue()));
+        }
 
+
+
+
+        final String customProductName = "Test custom material";
+        final String customAddonProductName = "Test custom addon material";
+        final ProductOrderPriceAdjustment customPriceAdjustment =
+                new ProductOrderPriceAdjustment(new BigDecimal("29.50"), null, customProductName);
+
+        conversionPdo.setCustomPriceAdjustment(customPriceAdjustment);
+
+        for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
+            final ProductOrderAddOnPriceAdjustment customAdjustment =
+                    new ProductOrderAddOnPriceAdjustment(new BigDecimal("39.50"),1, customAddonProductName);
+            productOrderAddOn.setCustomPriceAdjustment(customAdjustment);
+        }
+        convertedOrder = integrationService.initializeSAPOrder(sapQuote, conversionPdo,
+                Option.create(Option.Type.CREATING));
+        assertThat(convertedOrder.getCompanyCode(), equalTo(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD));
+        assertThat(convertedOrder.getQuoteNumber(), equalTo(sapQuote.getQuoteHeader().getQuoteNumber()));
+        assertThat(convertedOrder.getExternalOrderNumber(), equalTo(conversionPdo.getBusinessKey()));
+        assertThat(convertedOrder.getSapOrderNumber(), emptyOrNullString());
+        assertThat(convertedOrder.getCreator(), equalTo(MOCK_USER_NAME));
+        assertThat(convertedOrder.getResearchProjectNumber(), equalTo(conversionPdo.getResearchProject().getBusinessKey()));
+
+        // HashSet order not deterministic. Tested at line 393 assertThat(convertedOrder.getOrderItems().size(), equalTo(conversionPdo.getAddOns().size()+1));
+
+        for(SAPOrderItem item:convertedOrder.getOrderItems()) {
+
+            if(item.getProductIdentifier().equals(primaryProduct.getPartNumber())) {
+                assertThat(item.getItemQuantity().doubleValue(), equalTo(
+                        (new BigDecimal(conversionPdo.getSamples().size())).doubleValue()));
+                assertThat(item.getProductAlias(), equalTo(customProductName));
+                assertThat(item.getItemQuantity().doubleValue(), equalTo(new BigDecimal(conversionPdo.getSamples().size()).doubleValue()));
                 final ConditionValue foundCondition = item.getConditions().iterator().next();
                 assertThat(foundCondition.getValue(), equalTo(new BigDecimal("29.50")));
                 assertThat(foundCondition.getCondition(), equalTo(Condition.PRICE_OVERRIDE));
@@ -341,7 +446,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         ProductOrder productOrder = ProductOrderTestFactory.createDummyProductOrder(10, jiraTicketKey);
         productOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
 
-        productOrder.setQuoteId("01234");
+        productOrder.setQuoteId(SAP_QUOTE_ID);
 
         addTestProductMaterialPrice("100", priceList, materials, productOrder.getProduct(),
                 SAP_QUOTE_ID);
