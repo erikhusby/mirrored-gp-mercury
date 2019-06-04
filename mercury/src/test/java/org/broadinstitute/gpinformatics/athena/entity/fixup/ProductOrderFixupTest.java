@@ -100,7 +100,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
@@ -169,7 +169,7 @@ public class ProductOrderFixupTest extends Arquillian {
     // When you run this on prod, change to PROD and prod.
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+        return DeploymentBuilder.buildMercuryWar(PROD, "prod");
     }
 
     /**
@@ -1796,5 +1796,31 @@ public class ProductOrderFixupTest extends Arquillian {
             }
             utx.rollback();
         }
+    }
+
+    /**
+     * Useful for cases when an order has been completed by billing all of the primary product, but then still needs to
+     * bill add-onds.   The structure of the file is as follows:
+     * <ol><li>SUPPORT-XXXX  reason for updating order status</li>
+     * <li>PDO-xxx1</li>
+     * <li>PDO-xxx2</li>
+     * <li>PDO-xxx3</li></ol>
+     * @throws Exception
+     */
+    @Test(enabled = false)
+    public void reOpenProductOrder() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("ReOpenProductOrders.txt"));
+
+        for(String line: fixupLines.subList(1, fixupLines.size())) {
+
+            ProductOrder orderToOpen = productOrderDao.findByBusinessKey(line);
+            orderToOpen.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+        }
+
+        productOrderDao.persist(new FixupCommentary(fixupLines.get(0)));
+        commitTransaction();
     }
 }
