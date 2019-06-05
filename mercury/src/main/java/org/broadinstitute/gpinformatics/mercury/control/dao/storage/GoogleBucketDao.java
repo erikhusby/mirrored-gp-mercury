@@ -304,6 +304,7 @@ public class GoogleBucketDao {
                 credentials = ServiceAccountCredentials.fromStream(new StringInputStream(newKeyJson));
                 // If credentials was created ok (i.e. no exceptions), writes the json to the credential file.
                 FileUtils.writeStringToFile(credentialFile, newKeyJson, "US-ASCII", false);
+                messages.addInfo("Wrote new service account key to " + credentialFile.getAbsolutePath());
             } catch (Exception e) {
                 String msg = "Failed to create new key for the service account: ";
                 messages.addError(msg + e.toString());

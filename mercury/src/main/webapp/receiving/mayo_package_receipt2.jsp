@@ -100,12 +100,11 @@
                     <p>To quarantine a rack, select a reason:</p>
                 </div>
                 <c:forEach items="${actionBean.rackBarcodes}" var="barcode" varStatus="item">
-                    <stripes:hidden id="quarantineBarcodes_${item.index}" name="quarantineBarcodes[${item.index}]"
-                                    value="${barcode}"/>
+                    <stripes:hidden name="rackBarcodes[${item.index}]" value="${barcode}"/>
                     <div class="inputRow">
                         <div class="firstCol" style="float: right;">${barcode}</div>
                         <div class="secondCol">
-                            <stripes:select id="quarantineReasons_${item.index}" name="quarantineReasons[${item.index}]"
+                            <stripes:select id="quarantine_${item.index}" name="quarantineBarcodeAndReason['${barcode}']"
                                             style="vertical-align: bottom;">
                                 <stripes:option value=""/>
                                 <stripes:options-collection collection="${actionBean.rackReasons}"/>

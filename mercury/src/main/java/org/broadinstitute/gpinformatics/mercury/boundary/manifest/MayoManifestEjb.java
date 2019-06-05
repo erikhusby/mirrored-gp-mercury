@@ -156,9 +156,10 @@ public class MayoManifestEjb {
     }
 
     /**
-     * Finds the ManifestSession for the package id, reading files from the storage bucket
-     * and making Manifest Sessions from any valid new ones.
-     * @return true if receipt can continue; false if errors prevent continuing.
+     * Finds the ManifestSession for the package id, either an existing one for the package, or
+     * makes a new one from a manifest file in the storage bucket.
+     *
+     * @return boolean indicating if the package has already been received.
      */
     public boolean packageReceiptLookup(MayoPackageReceiptActionBean bean) {
         ManifestSession manifestSession = manifestSessionDao.getSessionByPrefix(bean.getPackageBarcode());
@@ -174,24 +175,18 @@ public class MayoManifestEjb {
                 // Keeps the one ManifestSession that matches the package barcode.
                 manifestSession = processNewManifestFiles(bean.getMessageCollection(), null, bean.getRackBarcodes()).
                         stream().
-                        filter(session -> session != null).
                         filter(session -> session.getSessionPrefix().equals(bean.getPackageBarcode())).
                         findFirst().orElse(null);
             }
         }
-        boolean canProceed = true;
+        boolean isAlreadyReceived = false;
         if (manifestSession == null) {
             // Generates a warning if the manifest is missing. The package can still be received.
             bean.getMessageCollection().addError(MISSING_MANIFEST, bean.getPackageBarcode());
-        } else if (CollectionUtils.isNotEmpty(manifestSession.getRecords()) && !bean.getPackageBarcode().equals(
-                manifestSession.getRecords().get(0).getMetadataByKey(Metadata.Key.PACKAGE_ID).getValue())) {
-            // Errors if the packageId doesn't match the manifest content.
-            bean.getMessageCollection().addError(NOT_IN_MANIFEST, "Package ID", bean.getPackageBarcode());
-            canProceed = false;
         } else if (StringUtils.isNotBlank(manifestSession.getReceiptTicket())) {
             // Errors if the package has already been received.
             bean.getMessageCollection().addError(ALREADY_RECEIVED, bean.getPackageBarcode());
-            canProceed = false;
+            isAlreadyReceived = true;
         } else {
             bean.setManifestSessionId(manifestSession.getManifestSessionId());
             bean.setFilename(manifestSession.getManifestFile() == null ? null :
@@ -214,7 +209,7 @@ public class MayoManifestEjb {
                 }
             }
         }
-        return canProceed;
+        return isAlreadyReceived;
     }
 
     /**
@@ -404,18 +399,14 @@ public class MayoManifestEjb {
                     manifestSession.getManifestFile().getNamespaceFilename().getRight());
         }
         // The individual racks can be separately quarantined by the lab user.
-        // Currently these are unquarantined by either a successful accessioning.
-        if (CollectionUtils.isNotEmpty(bean.getQuarantineReasons())) {
-            for (int i = 0; i < bean.getQuarantineBarcodes().size(); ++i) {
-                String rackBarcode = bean.getQuarantineBarcodes().get(i);
-                String reason = bean.getQuarantineReasons().get(i);
-                if (StringUtils.isNotBlank(reason)) {
-                    quarantinedDao
-                            .addOrUpdate(Quarantined.ItemSource.MAYO, Quarantined.ItemType.RACK, rackBarcode, reason);
-                    comments.add("Rack " + rackBarcode + " is quarantined due to " + reason);
-                }
-            }
-        }
+        // Currently these are unquarantined by a successful accessioning.
+        bean.getQuarantineBarcodeAndReason().forEach((barcode, reason) -> {
+            if (StringUtils.isNotBlank(reason)) {
+                quarantinedDao.addOrUpdate(Quarantined.ItemSource.MAYO, Quarantined.ItemType.RACK,
+                        barcode, reason);
+                bean.getMessageCollection().addInfo(QUARANTINED, barcode, reason);
+                comments.add("Rack " + barcode + " is quarantined due to " + reason);
+            }});
         JiraTicket jiraTicket = makePackageRct(bean, comments);
         if (jiraTicket != null) {
             newEntities.add(jiraTicket);
@@ -664,7 +655,9 @@ public class MayoManifestEjb {
      * when the package has not been received yet.
      */
     public void pullAll(MayoAdminActionBean bean) {
-        processNewManifestFiles(bean.getMessageCollection(), null, null);
+        processNewManifestFiles(bean.getMessageCollection(), null, null).forEach(session ->
+                bean.getMessageCollection().addInfo(MANIFEST_CREATED,
+                        session.getManifestFile().getNamespaceFilename().getRight()));
     }
 
     /**
@@ -672,7 +665,9 @@ public class MayoManifestEjb {
      * if the package has not been received yet.
      */
     public void pullOne(MayoAdminActionBean bean) {
-        processNewManifestFiles(bean.getMessageCollection(), bean.getFilename(), null);
+        processNewManifestFiles(bean.getMessageCollection(), bean.getFilename(), null).forEach(session ->
+                bean.getMessageCollection().addInfo(MANIFEST_CREATED,
+                        session.getManifestFile().getNamespaceFilename().getRight()));
     }
 
     /**
@@ -700,19 +695,14 @@ public class MayoManifestEjb {
         List<ManifestSession> manifestSessions = new ArrayList<>();
 
         // Makes the list of filenames that need to be processed, excluding the filenames already handled.
-        List<String> filenames;
+        List<String> filenames = new ArrayList<>();
         if (StringUtils.isBlank(loadOneFilename)) {
-            filenames = googleBucketDao.list(messages);
+            filenames.addAll(googleBucketDao.list(messages));
             filenames.sort(Comparator.naturalOrder());
             filenames.removeAll(manifestSessionDao.getFilenamesForNamespace(mayoManifestConfig.getBucketName()));
-        } else {
-            // Only one filename, only if the file exists in the bucket.
-            if (googleBucketDao.exists(loadOneFilename, messages)) {
-                filenames = Collections.singletonList(loadOneFilename);
-            } else {
-                messages.addError(NO_SUCH_FILE, loadOneFilename);
-                return manifestSessions;
-            }
+        } else if (googleBucketDao.exists(loadOneFilename, messages)) {
+            // Processes just the specified filename and only if the file exists.
+            filenames.add(loadOneFilename);
         }
         // Makes the manifest sessions.
         Set<Object> newEntities = new HashSet<>();
@@ -785,7 +775,6 @@ public class MayoManifestEjb {
                         if (CollectionUtils.isNotEmpty(rackBarcodes)) {
                             manifestSession.setVesselLabels(new HashSet<>(rackBarcodes));
                         }
-                        messages.addInfo(MANIFEST_CREATED, filename);
                         newEntities.add(manifestSession);
                         return manifestSession;
                     }

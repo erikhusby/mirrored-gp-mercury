@@ -224,14 +224,13 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
 
-        // Receives the package.
+        // Receives the package successfully.
         {
             MayoPackageReceiptActionBean pkgBean = new MayoPackageReceiptActionBean();
             pkgBean.setMessageCollection(messageCollection);
             pkgBean.setPackageBarcode(packageId);
             pkgBean.setRackBarcodeString(StringUtils.join(barcodes, " "));
             pkgBean.setRackCount(String.valueOf(barcodes.length));
-            pkgBean.parseBarcodeString();
             messageCollection.clearAll();
             mayoManifestEjb.packageReceiptLookup(pkgBean);
             Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
@@ -241,10 +240,9 @@ public class MayoManifestEjbTest extends Arquillian {
             pkgBean.setShipmentCondition("Pristine.");
             pkgBean.setDeliveryMethod("None");
             pkgBean.setTrackingNumber("TRK" + testDigits);
-            // Simulates the lab user quarantining the 2nd rack for a reason.
-            String quarantinedRack = barcodes[1];
-            pkgBean.setQuarantineBarcodes(Arrays.asList(quarantinedRack));
-            pkgBean.setQuarantineReasons(Arrays.asList(Quarantined.getRackReasons().get(0)));
+
+            // Quarantines the 2nd rack during the package receipt.
+            pkgBean.setQuarantineBarcodeAndReason(ImmutableMap.of(barcodes[1], Quarantined.getRackReasons().get(0)));
             messageCollection.clearAll();
             mayoManifestEjb.packageReceipt(pkgBean);
             Assert.assertNotNull(pkgBean.getManifestSessionId());
@@ -252,9 +250,9 @@ public class MayoManifestEjbTest extends Arquillian {
             Assert.assertFalse(messageCollection.hasWarnings(),
                     StringUtils.join(messageCollection.getWarnings(), "; "));
 
-            // The 2nd rack should now be quarantined.
+            // Checks that the 2nd rack is quarantined.
             Quarantined quarantined = quarantinedDao.findItems(ItemSource.MAYO).stream().
-                    filter(quarantinedItem -> quarantinedItem.getItem().equals(quarantinedRack)).
+                    filter(quarantinedItem -> quarantinedItem.getItem().equals(barcodes[1])).
                     findFirst().orElse(null);
             Assert.assertNotNull(quarantined);
             Assert.assertEquals(quarantined.getReason(), Quarantined.getRackReasons().get(0));
@@ -267,14 +265,13 @@ public class MayoManifestEjbTest extends Arquillian {
             pkgBean.setPackageBarcode(packageId);
             pkgBean.setRackBarcodeString(StringUtils.join(barcodes, " "));
             pkgBean.setRackCount(String.valueOf(barcodes.length));
-            pkgBean.parseBarcodeString();
             messageCollection.clearAll();
-            boolean canContinue = mayoManifestEjb.packageReceiptLookup(pkgBean);
+            boolean isAlreadyReceived = mayoManifestEjb.packageReceiptLookup(pkgBean);
             Assert.assertTrue(messageCollection.getErrors().contains(String.format(MayoManifestEjb.ALREADY_RECEIVED,
                     packageId)), StringUtils.join(messageCollection.getErrors(), "; "));
             Assert.assertFalse(messageCollection.hasWarnings(),
                     StringUtils.join(messageCollection.getWarnings(), "; "));
-            Assert.assertFalse(canContinue);
+            Assert.assertTrue(isAlreadyReceived);
         }
 
         // Fails to accession when the rack has an additional tube that is not in the manifest.
@@ -442,16 +439,14 @@ public class MayoManifestEjbTest extends Arquillian {
         pkgBean.setRackBarcodeString(StringUtils.join(barcodes, " "));
         pkgBean.setRackCount(String.valueOf(barcodes.length));
         messageCollection.clearAll();
-        pkgBean.parseBarcodeString();
-        messageCollection.clearAll();
-        boolean canContinue = mayoManifestEjb.packageReceiptLookup(pkgBean);
+        boolean isAlreadyReceived = mayoManifestEjb.packageReceiptLookup(pkgBean);
         Assert.assertNull(pkgBean.getManifestSessionId());
         Assert.assertTrue(StringUtils.isBlank(pkgBean.getFilename()));
         Assert.assertTrue(messageCollection.getErrors().contains(
                 String.format(MayoManifestEjb.MISSING_MANIFEST, packageId)),
                 StringUtils.join(messageCollection.getErrors()));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
-        Assert.assertTrue(canContinue);
+        Assert.assertFalse(isAlreadyReceived);
         // (package receipt page2)
         pkgBean.setShipmentCondition("Just fine.");
         pkgBean.setDeliveryMethod("FedEx");

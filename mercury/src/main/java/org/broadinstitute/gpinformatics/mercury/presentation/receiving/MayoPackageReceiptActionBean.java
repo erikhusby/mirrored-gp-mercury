@@ -20,6 +20,7 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -68,14 +69,13 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
     @Validate(required = true, on = {CONTINUE_BTN, SAVE_BTN})
     private String rackBarcodeString;
 
-    @Validate(required = true, on = {CONTINUE_BTN})
+    @Validate(required = true, minvalue = 1, on = {CONTINUE_BTN})
     private String rackCount;
 
     private Long manifestSessionId;
     private String rctUrl;
     private List<String> rackBarcodes = Collections.emptyList();
-    private List<String> quarantineBarcodes = new ArrayList<>();
-    private List<String> quarantineReasons = new ArrayList<>();
+    private Map<String, String> quarantineBarcodeAndReason = new HashMap<>();
     private List<Quarantined> quarantined = new ArrayList<>();
 
     @DefaultHandler
@@ -86,9 +86,6 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
 
     @HandlesEvent(CONTINUE_BTN)
     public Resolution receiptContinue() {
-        // Parses, then rewrites the barcode string to normalize the whitespace.
-        parseBarcodeString();
-        rackBarcodeString = StringUtils.join(rackBarcodes, "\n");
         if (StringUtils.isBlank(rackBarcodeString)) {
             addValidationError(rackBarcodeString, "One or more rack barcodes are required.");
         } else if (CollectionUtils.isEmpty(rackBarcodes)) {
@@ -113,9 +110,9 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
         }
 
         // Looks up a manifest for the package id and does validation.
-        boolean canContinue = mayoManifestEjb.packageReceiptLookup(this);
+        boolean isAlreadyReceived = mayoManifestEjb.packageReceiptLookup(this);
         addMessages(messageCollection);
-        return canContinue ? new ForwardResolution(PAGE2) : new ForwardResolution(PAGE1);
+        return isAlreadyReceived ? new ForwardResolution(PAGE1) : new ForwardResolution(PAGE2);
     }
 
     @HandlesEvent(LINK_PACKAGE_BTN)
@@ -143,7 +140,6 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
 
     @HandlesEvent(SAVE_BTN)
     public Resolution saveEvent() {
-        parseBarcodeString();
         mayoManifestEjb.packageReceipt(this);
         addMessages(messageCollection);
         return new ForwardResolution(PAGE1);
@@ -157,12 +153,6 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
             return (comparison == 0) ?  q1.getQuarantinedId().compareTo(q2.getQuarantinedId()) : comparison;
         });
         return new ForwardResolution(QUARANTINED_PAGE);
-    }
-
-    /** Parses the rack barcode entry string into individual rack barcodes. */
-    public void parseBarcodeString() {
-        rackBarcodes = Arrays.asList(StringUtils.split(
-                MayoManifestImportProcessor.cleanupValue(rackBarcodeString, " ")));
     }
 
     public MessageCollection getMessageCollection() {
@@ -218,7 +208,10 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
     }
 
     public void setRackBarcodeString(String rackBarcodeString) {
-        this.rackBarcodeString = rackBarcodeString;
+        // Parses, then rewrites the barcode string to normalize the whitespace.
+        rackBarcodes = Arrays.asList(StringUtils.split(
+                MayoManifestImportProcessor.cleanupValue(rackBarcodeString, " ")));
+        this.rackBarcodeString = StringUtils.join(rackBarcodes, "\n");
     }
 
     public String getShipmentCondition() {
@@ -261,20 +254,12 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
         this.rackBarcodes = rackBarcodes;
     }
 
-    public List<String> getQuarantineBarcodes() {
-        return quarantineBarcodes;
+    public Map<String, String> getQuarantineBarcodeAndReason() {
+        return quarantineBarcodeAndReason;
     }
 
-    public void setQuarantineBarcodes(List<String> quarantineBarcodes) {
-        this.quarantineBarcodes = quarantineBarcodes;
-    }
-
-    public List<String> getQuarantineReasons() {
-        return quarantineReasons;
-    }
-
-    public void setQuarantineReasons(List<String> quarantineReasons) {
-        this.quarantineReasons = quarantineReasons;
+    public void setQuarantineBarcodeAndReason(Map<String, String> quarantineBarcodeAndReason) {
+        this.quarantineBarcodeAndReason = quarantineBarcodeAndReason;
     }
 
     public List<Quarantined> getQuarantined() {
