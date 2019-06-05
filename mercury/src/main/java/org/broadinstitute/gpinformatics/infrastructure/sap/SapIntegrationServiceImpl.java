@@ -538,13 +538,11 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                                                           ProductOrder productOrder) throws SAPIntegrationException {
         OrderCalculatedValues orderCalculatedValues = null;
         OrderCriteria potentialOrderCriteria = null;
-        if (productOrder != null && productOrder.getProduct() != null && productsFoundInSap(productOrder)) {
             potentialOrderCriteria = generateOrderCriteria(sapQuote, productOrder, addedSampleCount,
                 create(Type.ORDER_VALUE_QUERY));
-        }
 
         orderCalculatedValues =
-            getClient().calculateOrderValues(sapQuote, potentialOrderCriteria);
+            getClient().calculateOrderValues(sapQuote.getQuoteHeader().getQuoteNumber(), potentialOrderCriteria);
         return orderCalculatedValues;
     }
 
@@ -590,21 +588,21 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                                                   SapIntegrationService.Option orderOption) {
 
         final Set<SAPOrderItem> sapOrderItems = new HashSet<>();
-        final SAPOrderItem orderItem = getOrderItem(sapQuote, productOrder, productOrder.getProduct(), addedSampleCount,
-            orderOption);
+        String sapOrderNumber=null;
+        if (productOrder != null && productOrder.getProduct() != null) {
+            SAPOrderItem orderItem = getOrderItem(sapQuote, productOrder, productOrder.getProduct(), addedSampleCount,
+                orderOption);
+            sapOrderItems.add(orderItem);
 
-        sapOrderItems.add(orderItem);
-
-        for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
-            final SAPOrderItem orderSubItem = getOrderItem(sapQuote, productOrder, productOrderAddOn.getAddOn(), addedSampleCount,
-                    orderOption);
-            sapOrderItems.add(orderSubItem);
+            for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
+                final SAPOrderItem orderSubItem =
+                    getOrderItem(sapQuote, productOrder, productOrderAddOn.getAddOn(), addedSampleCount,
+                        orderOption);
+                sapOrderItems.add(orderSubItem);
+            }
+            sapOrderNumber = productOrder.getSapOrderNumber();
         }
-
-        OrderCriteria orderCriteria = null;
-
-        //todo  The customer number is no longer necessary for the order criteria.
-        orderCriteria = new OrderCriteria(productOrder.getSapOrderNumber(), sapOrderItems);
+        OrderCriteria orderCriteria = new OrderCriteria(sapOrderNumber, sapOrderItems);
         return orderCriteria;
     }
 

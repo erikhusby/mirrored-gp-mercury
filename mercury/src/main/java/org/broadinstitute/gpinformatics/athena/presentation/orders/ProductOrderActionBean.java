@@ -1015,36 +1015,19 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @return total dollar amount of the monitary value of orders associated with the given quote
      */
     double estimateSapOutstandingOrders(SapQuote foundQuote, int addedSampleCount, ProductOrder productOrder) {
-
         double value = 0d;
-
-        if(productOrder == null) {
-            final Optional<BigDecimal> openSalesValue =
-                    Optional.ofNullable(foundQuote.getQuoteHeader().getSalesOrderTotal());
-            if(openSalesValue.isPresent()) {
-                value = openSalesValue.get().doubleValue();
+        try {
+            OrderCalculatedValues calculatedValues =
+                sapService.calculateOpenOrderValues(addedSampleCount, foundQuote, productOrder);
+            String sapOrderNumber = null;
+            if (productOrder != null) {
+                sapOrderNumber = productOrder.getSapOrderNumber();
             }
-        } else {
-            OrderCalculatedValues calculatedValues = null;
-            try {
-                calculatedValues = sapService.calculateOpenOrderValues(addedSampleCount, foundQuote, productOrder);
-            } catch (SAPIntegrationException e) {
-                logger.info("Attempting to calculate order from SAP yielded an error", e);
+            if (calculatedValues != null) {
+                value = calculatedValues.calculateTotalOpenOrderValue(sapOrderNumber).doubleValue();
             }
-
-            if (calculatedValues != null &&
-                calculatedValues.getPotentialOrderValue() != null) {
-
-                value += calculatedValues.getPotentialOrderValue().doubleValue();
-
-                for (OrderValue orderValue : calculatedValues.getValue()) {
-
-                    if (productOrder == null || (productOrder != null && !StringUtils
-                            .equals(orderValue.getSapOrderID(), productOrder.getSapOrderNumber()))) {
-                        value += orderValue.getValue().doubleValue();
-                    }
-                }
-            }
+        } catch (SAPIntegrationException e) {
+            logger.info("Attempting to calculate order from SAP yielded an error", e);
         }
         return value;
     }
