@@ -11,6 +11,9 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.LongDateTimeAdapter;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
+import org.broadinstitute.sap.entity.quote.SapQuote;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 
 import javax.annotation.Nonnull;
 import javax.xml.bind.annotation.XmlElementWrapper;
@@ -286,7 +289,7 @@ public class ProductOrderData {
      * @return the populated {@link ProductOrder}
      */
     public ProductOrder toProductOrder(ProductOrderDao productOrderDao, ResearchProjectDao researchProjectDao,
-                                       ProductDao productDao)
+                                       ProductDao productDao, SapIntegrationService sapIntegrationService)
             throws DuplicateTitleException, NoSamplesException, ApplicationValidationException,
             InvalidProductException {
 
@@ -306,12 +309,30 @@ public class ProductOrderData {
         if (!StringUtils.isBlank(productName)) {
             productOrder.setProduct(productDao.findByName(productName));
         }
-        if(productOrder.getProduct().isClinicalProduct() || productOrder.getProduct().isExternalOnlyProduct()) {
-            productOrder.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
-        } else {
-            productOrder.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
-        }
 
+        if (StringUtils.isNumeric(quoteId)) {
+            try {
+                SapQuote sapQuote = sapIntegrationService.findSapQuote(quoteId);
+                final ProductOrder.OrderAccessType orderType =
+                        ProductOrder.OrderAccessType.fromSalesOrg(sapQuote.getQuoteHeader().getSalesOrganization());
+
+                if((productOrder.getProduct().isExternalProduct() || productOrder.getProduct().isClinicalProduct()) &&
+                   orderType != ProductOrder.OrderAccessType.COMMERCIAL) {
+                    throw new InvalidProductException("Broad PI Engaged quotes cannot be used for Commercial or Clinical Products");
+                } else {
+
+                    productOrder.setOrderType(orderType);
+                }
+            } catch (SAPIntegrationException e) {
+                throw new InvalidProductException( "Unable to get Quote information from SAP",e);
+            }
+        } else {
+            if(productOrder.getProduct().isLLCProduct()) {
+                productOrder.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
+            } else {
+                productOrder.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
+            }
+        }
         if (!StringUtils.isBlank(researchProjectId)) {
             ResearchProject researchProject =
                     researchProjectDao.findByBusinessKey(researchProjectId);

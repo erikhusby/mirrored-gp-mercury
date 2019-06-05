@@ -640,15 +640,27 @@ public class ProductOrderActionBean extends CoreActionBean {
                                              ".  Please check either the selected product or the quote you are using.");
                 }
 
-                final ProductOrder.OrderAccessType orderType =
-                        ProductOrder.OrderAccessType.fromSalesOrg(sapQuote.getQuoteHeader().getSalesOrganization());
+                if (editOrder.hasSapQuote()) {
+                    final ProductOrder.OrderAccessType orderType =
+                            ProductOrder.OrderAccessType.fromSalesOrg(sapQuote.getQuoteHeader().getSalesOrganization());
 
-                if((editOrder.getProduct().isExternalProduct() || editOrder.getProduct().isClinicalProduct()) &&
-                   orderType != ProductOrder.OrderAccessType.COMMERCIAL) {
-                    addGlobalValidationError("Broad PI Engaged quotes cannot be used for Commercial or Clinical Products");
+                    if((editOrder.getProduct().isExternalProduct() || editOrder.getProduct().isClinicalProduct()) &&
+                       orderType != ProductOrder.OrderAccessType.COMMERCIAL) {
+                        addGlobalValidationError("Broad PI Engaged quotes cannot be used for Commercial or Clinical Products");
+                    } else {
+
+                        editOrder.setOrderType(orderType);
+                    }
+                } else if(editOrder.hasQuoteServerQuote()) {
+                    Optional<Product> typeDeterminant = Optional.ofNullable(editOrder.getProduct());
+                    typeDeterminant.ifPresent(product -> {
+                        if(product.isLLCProduct()) {
+                            editOrder.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
+                        } else {
+                            editOrder.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
+                        }
+                    });
                 }
-
-                editOrder.setOrderType(orderType);
 
             }
         }
@@ -1969,13 +1981,13 @@ public class ProductOrderActionBean extends CoreActionBean {
             saveType = ProductOrder.SaveType.CREATING;
         }
 
-        if (editOrder.getProduct() != null && editOrder.hasSapQuote()) {
-            final SapQuote sapQuote = editOrder.getSapQuote(sapService);
-            final ProductOrder.OrderAccessType orderType =
-                    ProductOrder.OrderAccessType.fromSalesOrg(sapQuote.getQuoteHeader().getSalesOrganization());
-
-            editOrder.setOrderType(orderType);
-        }
+//        if (editOrder.getProduct() != null && editOrder.hasSapQuote()) {
+//            final SapQuote sapQuote = editOrder.getSapQuote(sapService);
+//            final ProductOrder.OrderAccessType orderType =
+//                    ProductOrder.OrderAccessType.fromSalesOrg(sapQuote.getQuoteHeader().getSalesOrganization());
+//
+//            editOrder.setOrderType(orderType);
+//        }
 
         if (editOrder.isRegulatoryInfoEditAllowed()) {
             updateRegulatoryInformation();
