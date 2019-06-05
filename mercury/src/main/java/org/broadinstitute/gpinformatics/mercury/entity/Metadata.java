@@ -308,7 +308,7 @@ public class Metadata {
         MANUFACTURING_DATE(Category.REAGENT, DataType.DATE, "Manufacturing Date", Visibility.USER),
         STORAGE_CONDITIONS(Category.REAGENT, DataType.STRING, "Storage Conditions", Visibility.USER),
         MANUFACTURER_DESIGN_ID(Category.REAGENT, DataType.STRING, "Manufacturer Design ID", Visibility.USER),
-        MARK_BACKUP(Category.SAMPLE, DataType.BOOLEAN, "Mark Backup", Visibility.USER);
+        MARK_STOCK(Category.SAMPLE, DataType.BOOLEAN, "Mark Stock", Visibility.USER);
 
 
         private final Category category;

@@ -724,7 +724,9 @@ public enum LabEventType {
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.FluidX_6mL).
                     targetVolume(true).
                     requireSingleParticipant(true).
-                    destinationMarkBackup(true).
+                    destinationMarkStockOptions(new MarkStock[] {
+                            MarkStock.ActiveStock, MarkStock.BackupStock
+                    }).
                     build(),
             LibraryType.NONE_ASSIGNED, "_P", Metadata.Key.TUMOR_NORMAL, "Tumor", MaterialType.PLASMA_PLASMA,
             SourceHandling.DEPLETE),
@@ -2814,6 +2816,23 @@ public enum LabEventType {
         NONE
     }
 
+    public enum MarkStock {
+        ActiveStock("Active"),
+        BackupStock("Backup"),
+        ReservedStock("Reserved");
+
+
+        private final String displayName;
+
+        MarkStock(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
+
     private TranslateBspMessage translateBspMessage = TranslateBspMessage.NONE;
 
     @XmlAccessorType(XmlAccessType.FIELD)
@@ -2853,8 +2872,8 @@ public enum LabEventType {
         /** Whether to allow entry of target mass. */
         private boolean sourceMassRemoved;
 
-        /** Whether to mark receptacle as a backup*/
-        private boolean destinationMarkBackup;
+        /** Options to mark destination receptacles as Backup, Active, or Reserved Stock*/
+        private MarkStock[] destinationMarkStock = {};
 
         /** For containers that don't have barcodes (e.g. flipper racks), the prefix to the synthetic barcode. */
         private String targetContainerPrefix;
@@ -2935,7 +2954,7 @@ public enum LabEventType {
             targetSection = builder.targetSection;
             targetVolume = builder.targetVolume;
             sourceMassRemoved = builder.sourceMassRemoved;
-            destinationMarkBackup = builder.destinationMarkBackup;
+            destinationMarkStock = builder.destinationMarkStock;
             targetContainerPrefix = builder.targetContainerPrefix;
             numEvents = builder.numEvents;
             machineNames = builder.machineNames;
@@ -2972,7 +2991,7 @@ public enum LabEventType {
             private BarcodedTube.BarcodedTubeType targetBarcodedTubeType;
             private boolean targetVolume;
             private boolean sourceMassRemoved;
-            private boolean destinationMarkBackup;
+            private MarkStock[] destinationMarkStock = {};
             private String targetContainerPrefix;
             private LabEventType secondaryEvent;
             private LabEventType repeatedEvent;
@@ -3059,8 +3078,8 @@ public enum LabEventType {
                 return this;
             }
 
-            public Builder destinationMarkBackup(boolean destinationMarkBackup) {
-                this.destinationMarkBackup = destinationMarkBackup;
+            public Builder destinationMarkStockOptions(MarkStock[] markStock) {
+                this.destinationMarkStock = markStock;
                 return this;
             }
 
@@ -3193,8 +3212,8 @@ public enum LabEventType {
             return sourceMassRemoved;
         }
 
-        public boolean destinationMarkBackup() {
-            return destinationMarkBackup;
+        public MarkStock[] getDestinationMarkStock() {
+            return destinationMarkStock;
         }
 
         public String getTargetContainerPrefix() {

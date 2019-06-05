@@ -146,7 +146,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
     private Map<VesselPosition, Boolean> mapPositionToDepleteFlag;
 
-    private Map<VesselPosition, Boolean> mapPositionToBackupFlag;
+    private Map<VesselPosition, LabEventType.MarkStock> mapPositionToMarkStock;
 
     private Map<Integer, Boolean> depleteAll;
 
@@ -1185,8 +1185,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
                         plateCherryPickEvent.getSourcePlate().addAll(firstPlateCherryPickEventType.getSourcePlate());
                         plateCherryPickEvent.getSourcePositionMap().addAll(firstPlateCherryPickEventType.getSourcePositionMap());
                     }
-                    if (manualTransferDetails.destinationMarkBackup() && plateCherryPickEvent.getPositionMap().size() == 1) {
-                        addMarkBackupMetadata(plateCherryPickEvent.getPositionMap().get(0));
+                    if (plateCherryPickEvent.getPositionMap().size() == 1) {
+                        addMarkStockMetadata(plateCherryPickEvent.getPositionMap().get(0));
                     }
                     bettaLIMSMessage.getPlateCherryPickEvent().add((PlateCherryPickEvent) stationEvent);
                 } else if (stationEvent instanceof ReceptaclePlateTransferEvent) {
@@ -1279,17 +1279,17 @@ public class ManualTransferActionBean extends RackScanActionBean {
      * User can mark a sample as a backup individually on a well level.
      * @param positionMapType - position map to update receptacle metadata tag.
      */
-    private void addMarkBackupMetadata(PositionMapType positionMapType) {
-        if (mapPositionToBackupFlag == null) {
+    private void addMarkStockMetadata(PositionMapType positionMapType) {
+        if (mapPositionToMarkStock == null) {
             return;
         }
         for (ReceptacleType receptacleType: positionMapType.getReceptacle()) {
             VesselPosition vesselPosition = VesselPosition.getByName(receptacleType.getPosition());
-            if (mapPositionToBackupFlag.containsKey(vesselPosition)) {
+            if (mapPositionToMarkStock.containsKey(vesselPosition)) {
                 MetadataType backupMetadata = new MetadataType();
-                Boolean markBackup = mapPositionToBackupFlag.get(vesselPosition);
-                backupMetadata.setName(Metadata.Key.MARK_BACKUP.getDisplayName());
-                backupMetadata.setValue(String.valueOf(markBackup));
+                LabEventType.MarkStock markBackup = mapPositionToMarkStock.get(vesselPosition);
+                backupMetadata.setName(Metadata.Key.MARK_STOCK.getDisplayName());
+                backupMetadata.setValue(markBackup.name());
                 receptacleType.getMetadata().add(backupMetadata);
             }
         }
@@ -1481,13 +1481,12 @@ public class ManualTransferActionBean extends RackScanActionBean {
         this.mapPositionToDepleteFlag = mapPositionToDepleteFlag;
     }
 
-    public Map<VesselPosition, Boolean> getMapPositionToBackupFlag() {
-        return mapPositionToBackupFlag;
+    public Map<VesselPosition, LabEventType.MarkStock> getMapPositionToMarkStock() {
+        return mapPositionToMarkStock;
     }
 
-    public void setMapPositionToBackupFlag(
-            Map<VesselPosition, Boolean> mapPositionToBackupFlag) {
-        this.mapPositionToBackupFlag = mapPositionToBackupFlag;
+    public void setMapPositionToMarkStock(Map<VesselPosition, LabEventType.MarkStock> mapPositionToMarkStock) {
+        this.mapPositionToMarkStock = mapPositionToMarkStock;
     }
 
     public Map<Integer, Boolean> getDepleteAll() {

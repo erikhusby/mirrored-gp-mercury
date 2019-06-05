@@ -33,8 +33,9 @@
                 font-size: 12px;
             }
 
-            .move-right {
-                float: right;
+            select.markStock {
+                width: 75px;
+                font-size: 12px;
             }
 
             #analyzebtnid .ui-icon-waiting {

@@ -16,7 +16,7 @@ plate / rack.
 <%--@elvariable id="stationEventIndex" type="java.lang.Integer"--%>
 <%--@elvariable id="source" type="java.lang.Boolean"--%>
 <%--@elvariable id="massRemoved" type="java.lang.Boolean"--%>
-<c:set var="destinationMarkBackup" value="${not source and actionBean.labEventType.manualTransferDetails.destinationMarkBackup()}"/>
+<c:set var="destinationMarkStock" value="${not source and not empty actionBean.labEventType.manualTransferDetails.destinationMarkStock}"/>
 <style>
     .btn {
         background-image:none;
@@ -159,13 +159,11 @@ plate / rack.
                                         name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}[0].receptacle[${receptacleIndex}].materialType"
                                         value="${actionBean.labEventTypeByIndex(stationEventIndex).resultingMaterialType.displayName}"/>
                             </c:if>
-                            <c:if test="${destinationMarkBackup}">
+                            <c:if test="${destinationMarkStock}">
                                 </br>
-                                 <input type="${(destinationMarkBackup eq 'true') ? 'checkbox' : 'hidden'}"
-                                       id="${source ? 'src' : 'dest'}RcpBackupChk${stationEventIndex}_${receptacleIndex}"
-                                       name="mapPositionToBackupFlag[${geometry.vesselPositions[receptacleIndex]}]"
-                                       class="clearable smalltext move-right" autocomplete="off"
-                                        <c:if test="${actionBean.mapPositionToBackupFlag[geometry.vesselPositions[receptacleIndex]]}"> checked="checked" </c:if>> Backup?
+                                <stripes:select name="mapPositionToMarkStock[${geometry.vesselPositions[receptacleIndex]}]" class="markStock">
+                                    <stripes:options-collection label="displayName"  collection="${actionBean.manualTransferDetails.destinationMarkStock}" />
+                                </stripes:select>
                             </c:if>
                             </br>
                             <button data-position="${rowName}${columnName}" id="${rowName}${columnName}_${source ? 'src' : 'dest'}_RcpBcd${stationEventIndex}_${receptacleIndex}" type="button" class= "${source ? 'src' : 'dest'}_col_${columnStatus.index} ${source ? 'src' : 'dest'}_row_${rowStatus.index} btn btn-primary btn-xs" disabled tabindex="-1">Select</button>

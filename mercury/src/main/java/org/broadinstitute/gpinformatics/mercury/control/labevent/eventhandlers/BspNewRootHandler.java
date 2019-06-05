@@ -39,6 +39,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -104,7 +105,7 @@ public class BspNewRootHandler extends AbstractEventHandler {
     }
 
     private void createBspKit(List<LabVessel> labVessels, String receptacleType, String materialType,
-            String collabSampleSuffix, String tumorNormal, List<String> backupReceptacles) {
+            String collabSampleSuffix, String tumorNormal, Map<String, String> mapBarcodeToStockType) {
 
         // Get data from BSP
         List<String> sampleNames = new ArrayList<>();
@@ -159,7 +160,7 @@ public class BspNewRootHandler extends AbstractEventHandler {
             multipartFormDataOutput.addFormData("receptacleType", receptacleType, MediaType.TEXT_PLAIN_TYPE);
             multipartFormDataOutput.addFormData("datasetName", "NewRoots", MediaType.TEXT_PLAIN_TYPE);
             multipartFormDataOutput.addFormData("domain", "VIRAL", MediaType.TEXT_PLAIN_TYPE);
-            multipartFormDataOutput.addFormData("backupReceptacles", backupReceptacles, MediaType.APPLICATION_JSON_TYPE);
+            multipartFormDataOutput.addFormData("mapBarcodeToStockType", mapBarcodeToStockType, MediaType.APPLICATION_JSON_TYPE);
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             workbook.write(byteArrayOutputStream);
             multipartFormDataOutput.addFormData("spreadsheet",
@@ -243,15 +244,14 @@ public class BspNewRootHandler extends AbstractEventHandler {
         }
 
         // Check for receptacles to be marked as backup
-        List<String> backupReceptacles = new ArrayList<>();
-        if (stationEvent instanceof PlateCherryPickEvent) {
-            PlateCherryPickEvent plateCherryPickEvent = (PlateCherryPickEvent) stationEvent;
+        Map<String, String> mapBarcodeToStockType = new HashMap<>();
+        if (OrmUtil.proxySafeIsInstance(stationEvent, PlateCherryPickEvent.class)) {
+            PlateCherryPickEvent plateCherryPickEvent = OrmUtil.proxySafeCast(stationEvent, PlateCherryPickEvent.class);
             for (PositionMapType positionMapType: plateCherryPickEvent.getPositionMap()) {
                 for (ReceptacleType receptacle: positionMapType.getReceptacle()) {
                     for (MetadataType metadataType: receptacle.getMetadata()) {
-                        if (metadataType.getName().equals(Metadata.Key.MARK_BACKUP.getDisplayName()) &&
-                                metadataType.getValue().equals(Boolean.TRUE.toString())) {
-                            backupReceptacles.add(receptacle.getBarcode());
+                        if (metadataType.getName().equals(Metadata.Key.MARK_STOCK.getDisplayName())) {
+                            mapBarcodeToStockType.put(receptacle.getBarcode(), metadataType.getValue());
                         }
                     }
                 }
@@ -260,7 +260,7 @@ public class BspNewRootHandler extends AbstractEventHandler {
 
         createBspKit(new ArrayList<>(labVessels), receptacleType,
                 labEventType.getResultingMaterialType().getDisplayName(), labEventType.getCollabSampleSuffix(),
-                labEventType.getMetadataValue(), backupReceptacles);
+                labEventType.getMetadataValue(), mapBarcodeToStockType);
     }
 
 }
