@@ -116,6 +116,7 @@ public class ContainerActionBeanTest {
         LabEvent labEvent2 = new LabEvent(LabEventType.STORAGE_CHECK_OUT, checkoutDate, "UnitTest", 1L, 1L, "UnitTest");
         labEvent2.setInPlaceLabVessel(rearrayFormation);
         labEvent2.setAncillaryInPlaceVessel(newRearrayRack);
+        labEvent2.setStorageLocation(storageLocation);
         rearrayFormation.addInPlaceEvent(labEvent2);
 
         actionBean.buildPositionMappingForInStorage();
@@ -152,6 +153,7 @@ public class ContainerActionBeanTest {
         LabEvent labEvent = new LabEvent(labEventType, new Date(), "UnitTest", 1L, 1L, "UnitTest");
         labEvent.setInPlaceLabVessel(tubeFormation);
         labEvent.setAncillaryInPlaceVessel(rackOfTubes);
+        labEvent.setStorageLocation(storageLocation);
         tubeFormation.addInPlaceEvent(labEvent);
         return labEvent;
     }

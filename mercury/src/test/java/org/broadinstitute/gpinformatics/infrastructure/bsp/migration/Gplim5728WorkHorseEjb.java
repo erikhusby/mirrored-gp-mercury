@@ -5,13 +5,13 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocationDao;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample_;
 import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
-import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
@@ -23,7 +23,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.broadinstitute.gpinformatics.mercury.presentation.storage.StorageLocationActionBean;
 
 import javax.ejb.TransactionManagement;
 import javax.enterprise.context.RequestScoped;
@@ -44,7 +43,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import static javax.ejb.TransactionManagementType.BEAN;
 
@@ -245,7 +243,7 @@ public class Gplim5728WorkHorseEjb {
                         if( rs.next() ) {
                             String sampleId = rs.getString(1);
                             addSampleToVessel( storedVessel, receptacleId, sampleId, labelToBspReceptaclIdMap);
-                            createCheckInEvent(storedVessel, null, new Date(), labelToBspReceptaclIdMap.size());
+                            createCheckInEvent(storedVessel, null, new Date(), labelToBspReceptaclIdMap.size(), storedVessel.getStorageLocation());
                             tubeCount++;
                         } else {
                             // Sanity test
@@ -273,7 +271,7 @@ public class Gplim5728WorkHorseEjb {
             storageLocationDao.persist( new FixupCommentary("GPLIM-5728 phase 2 - Migrate BSP Storage location container contents " + status ) );
             //storageLocationDao.flush();
 
-            processPhaseTwoLog.write( "======== FINISHED MIGRATING STORED CONTAINER CONTENTS BATCH =============\n" );
+            processPhaseTwoLog.write( "======== FINISHED BUILDING STORED CONTAINER CONTENTS BATCH ENTITIES =============\n" );
             processPhaseTwoLog.write(SimpleDateFormat.getDateTimeInstance().format(new Date()));
             processPhaseTwoLog.write( "\n\n");
             processPhaseTwoLog.flush();
@@ -283,9 +281,9 @@ public class Gplim5728WorkHorseEjb {
 
             storageLocationDao.clear();
 
-            processPhaseTwoLog.write( "======== FINISHED MIGRATING STORED CONTAINER CONTENTS BATCH =============\n" );
+            processPhaseTwoLog.write( "======== FLUSHED AND COMITTED STORED CONTAINER CONTENTS BATCH ENTITIES =============\n" );
             processPhaseTwoLog.write(SimpleDateFormat.getDateTimeInstance().format(new Date()));
-            processPhaseTwoLog.write( "\n\n");
+            processPhaseTwoLog.write( "======== BATCH COMPLETE =========\n\n");
             processPhaseTwoLog.flush();
         } catch ( Exception ex ) {
             try {
@@ -346,7 +344,8 @@ public class Gplim5728WorkHorseEjb {
             ResultSet rs = stmt.executeQuery("SELECT sc.storage_container_id, \n"
                                              + "       sc.parent_strg_container_id, \n"
                                              + "       sc.storage_container_name, \n"
-                                             + "       NVL( st.type_name, 'Unspecified' ) as storage_type \n"
+                                             + "       NVL( st.type_name, 'Unspecified' ) as storage_type, \n"
+                                             + "       sc.capacity \n"
                                              + "  FROM bsp_storage_container sc, \n"
                                              + "       bsp_storage_container_type st \n"
                                              + " WHERE sc.archived = 0 \n"
@@ -378,7 +377,8 @@ public class Gplim5728WorkHorseEjb {
             stmt = conn.prepareStatement("SELECT sc.storage_container_id, \n"
                                          + "       sc.parent_strg_container_id, \n"
                                          + "       sc.storage_container_name, \n"
-                                         + "       NVL( st.type_name, 'Unspecified' ) as storage_type \n"
+                                         + "       NVL( st.type_name, 'Unspecified' ) as storage_type, \n"
+                                         + "       sc.capacity \n"
                                          + "  FROM bsp_storage_container sc, \n"
                                          + "       bsp_storage_container_type st \n"
                                          + " WHERE sc.archived = 0 \n"
@@ -419,6 +419,7 @@ public class Gplim5728WorkHorseEjb {
         Long bspParentPk;
         String bspName;
         String bspStorageType;
+        Integer storageCapacity;
         StorageLocation.LocationType mercuryLocationType;
         StorageLocation mercuryStorageLocation;
         StorageLocation mercuryParentStorageLocation;
@@ -440,6 +441,11 @@ public class Gplim5728WorkHorseEjb {
             bspName = rs.getString( 3 );
             bspStorageType = rs.getString( 4 );
 
+            storageCapacity = rs.getInt( 5 );
+            if( rs.wasNull() ) {
+                storageCapacity = 0;
+            }
+
             mercuryLocationType = pkMap.getMercuryLocationTypeFromBspType( bspStorageType );
             if( mercuryLocationType == null ) {
                 // Should get a match, bad logic?  Die!
@@ -459,6 +465,7 @@ public class Gplim5728WorkHorseEjb {
                 mercuryStorageLocation = new StorageLocation( bspName, mercuryLocationType, mercuryParentStorageLocation  );
             }
 
+            mercuryStorageLocation.setStorageCapacity(storageCapacity);
             storageLocationDao.persist(mercuryStorageLocation);
             pkMap.addBspToMercuryLocationPk(bspPk, mercuryStorageLocation);
         }
@@ -496,6 +503,17 @@ public class Gplim5728WorkHorseEjb {
         StaticPlate staticPlate = null;
         Map<VesselPosition, BarcodedTube> mapPositionToTube = null;
 
+        // Initialize these variables so even if the container is empty, it gets a storage event assigned to it after the contents loop
+        if ( OrmUtil.proxySafeIsInstance( storedContainer, RackOfTubes.class  ) ) {
+            // Initialize variables representing rack of tubes
+            rackOfTubes = OrmUtil.proxySafeCast( storedContainer, RackOfTubes.class );
+            mapPositionToTube = new HashMap<>();
+        } else if ( OrmUtil.proxySafeIsInstance( storedContainer, StaticPlate.class  ) ) {
+            // Initialize variables representing static plate
+            staticPlate = OrmUtil.proxySafeCast( storedContainer, StaticPlate.class );
+        }
+
+        // Container contents loop
         while (true) {
             // ***** Begin column data fetching
             if (!rs.next()) {
@@ -534,13 +552,7 @@ public class Gplim5728WorkHorseEjb {
 
             // Different logic for different container types, but a result set applies to only one container
             Pair<Class<? extends LabVessel>, Object> classAndType = BspMigrationMapping.getMercuryVesselType(tubeType);
-            if (storedContainer instanceof RackOfTubes) {
-                // Initialize variables representing rack of tubes
-                if (rackOfTubes == null) {
-                    rackOfTubes = (RackOfTubes) storedContainer;
-                    mapPositionToTube = new HashMap<>();
-                }
-
+            if ( rackOfTubes != null ) {
                 if (classAndType == null || !classAndType.getLeft().equals(BarcodedTube.class)) {
                     // Log it and carry on, skipping contents
                     out.write("Rack of tubes cannot contain other than BarcodedTube, rack " + rackLabel + ", Sample "
@@ -584,18 +596,12 @@ public class Gplim5728WorkHorseEjb {
                 // Add sample to tube
                 addSampleToVessel( containedVessel, tubeId, smId, labelToBspReceptaclIdMap);
 
-
-            } else if (storedContainer instanceof StaticPlate) {
-
-                // Initialize variables representing static plate
-                if (staticPlate == null) {
-                    staticPlate = (StaticPlate) storedContainer;
-                }
+            } else if ( staticPlate != null ) {
 
                 if (classAndType == null || !classAndType.getLeft().equals(PlateWell.class)) {
                     // Log it and carry on, skipping contents
                     out.write("Static plate cannot contain other than plate wells, plate " + rackLabel + ", Sample "
-                              + smId + ", ignoring.\n");
+                            + smId + ", ignoring.\n");
                     continue;
                 }
 
@@ -612,24 +618,18 @@ public class Gplim5728WorkHorseEjb {
                 // Wells don't have storage location attached
 
                 // Add sample to well
-                addSampleToVessel( well, tubeId, smId, labelToBspReceptaclIdMap);
-
+                addSampleToVessel(well, tubeId, smId, labelToBspReceptaclIdMap);
             }
 
             childCount++;
 
-        } // End of container contents
+        } // End of container contents loop
 
         // Clean up DB resources
         closeResource(rs);
 
-        // Don't do anything if no contents
-        if (childCount == 0) {
-            return 0;
-        }
-
         if ( rackOfTubes != null ) {
-            // Persist the tube formation
+            // Persist the tube formation - might be empty, but not a problem
             TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, rackOfTubes.getRackType());
             TubeFormation mercuryTubeFormation =
                     storageLocationDao.findSingle(TubeFormation.class, LabVessel_.label, tubeFormation.getLabel());
@@ -640,13 +640,14 @@ public class Gplim5728WorkHorseEjb {
             }
             tubeFormation.addRackOfTubes(rackOfTubes);
 
-            // Add entry for rack
-            labelToBspReceptaclIdMap.add( new String[]{RACK, rackOfTubes.getLabel(), tubeFormation.getLabel(), containerId.toString(), EMPTY, EMPTY});
+            // Add entry for rack - containerId is null if rack is empty
+            labelToBspReceptaclIdMap.add( new String[]{RACK, rackOfTubes.getLabel(), tubeFormation.getLabel(), ( containerId==null?"(NULL)":containerId.toString() ), EMPTY, EMPTY});
 
-            createCheckInEvent(tubeFormation, rackOfTubes, eventdate, labelToBspReceptaclIdMap.size());
+            createCheckInEvent(tubeFormation, rackOfTubes, eventdate, labelToBspReceptaclIdMap.size(), storedContainer.getStorageLocation());
         } else if (staticPlate != null) {
-            labelToBspReceptaclIdMap.add( new String[]{PLATE, staticPlate.getLabel(), EMPTY, containerId.toString(), EMPTY, EMPTY});
-            createCheckInEvent(staticPlate, null, eventdate, labelToBspReceptaclIdMap.size());
+            // Add entry for plate - containerId is null if plate is empty
+            labelToBspReceptaclIdMap.add( new String[]{PLATE, staticPlate.getLabel(), EMPTY, ( containerId==null?"(NULL)":containerId.toString() ), EMPTY, EMPTY});
+            createCheckInEvent(staticPlate, null, eventdate, labelToBspReceptaclIdMap.size(), storedContainer.getStorageLocation());
         }
 
         return childCount;
@@ -840,10 +841,11 @@ public class Gplim5728WorkHorseEjb {
 
     }
 
-    private void createCheckInEvent( LabVessel inPlaceVessel, RackOfTubes rack, Date eventdate, int disambiguator) {
+    private void createCheckInEvent( LabVessel inPlaceVessel, RackOfTubes rack, Date eventdate, int disambiguator, StorageLocation storageLocation) {
         LabEvent checkInEvent = new LabEvent(LabEventType.STORAGE_CHECK_IN, eventdate, "Mercury", Long.valueOf(disambiguator), userBean.getBspUser().getUserId(),"Mercury");
         checkInEvent.setInPlaceLabVessel(inPlaceVessel);
         checkInEvent.setAncillaryInPlaceVessel(rack);
+        checkInEvent.setStorageLocation(storageLocation);
         storageLocationDao.persist(checkInEvent);
     }
 

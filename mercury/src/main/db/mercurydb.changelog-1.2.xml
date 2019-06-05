@@ -1960,4 +1960,12 @@
             <column name="ANCILLARY_IN_PLACE_VESSEL" type="NUMBER(19,0)"/>
         </addColumn>
     </changeSet>
+`````````````````````````````````````````````````````````````````    <changeSet id="GPLIM-5728-2" author="jsacco">
+        <addColumn tableName="STORAGE_LOCATION">
+            <column name="STORAGE_CAPACITY" type="NUMBER(10,0)" defaultValue="0"/>
+        </addColumn>
+        <addColumn tableName="STORAGE_LOCATION_AUD">
+            <column name="STORAGE_CAPACITY" type="NUMBER(10,0)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

@@ -1,7 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
 
 import net.sourceforge.stripes.action.*;
+import net.sourceforge.stripes.validation.ValidationError;
+import net.sourceforge.stripes.validation.ValidationErrors;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
+import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.StreamCreatedSpreadsheetUtil;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
@@ -12,10 +19,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableListActionBean;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 
 import javax.inject.Inject;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
@@ -29,13 +39,13 @@ import java.util.stream.Collectors;
 @UrlBinding(value = PickWorkspaceActionBean.ACTION_BEAN_URL)
 public class PickWorkspaceActionBean extends CoreActionBean {
 
-
-    private static final Logger logger = Logger.getLogger(PickWorkspaceActionBean.class.getName());
+    protected static final Log log = LogFactory.getLog(ConfigurableListActionBean.class);
     public static final String ACTION_BEAN_URL = "/vessel/pickWorkspace.action";
 
     // Events
     private static final String EVT_INIT = "init";
     private static final String EVT_PROCESS_BATCHES = "processBatches";
+    private static final String EVT_DOWNLOAD_XFER_FILE = "buildXferFile";
 
     // UI Resolutions
     private static final String UI_DEFAULT = "/storage/picklist_workspace.jsp";
@@ -55,6 +65,11 @@ public class PickWorkspaceActionBean extends CoreActionBean {
     private List<BatchSelectionData> batchSelectionList = Collections.EMPTY_LIST;
     private List<PickerDataRow> pickerDataRows = Collections.EMPTY_LIST;
 
+    /* These come in from UI but aren't used */
+    //private String tubesPerRack;
+    //private boolean splitRacks;
+    //private String[] targetRack;
+
     /**
      * Initial landing - user needs to select or create an existing workspace
      */
@@ -72,7 +87,7 @@ public class PickWorkspaceActionBean extends CoreActionBean {
     }
 
     /**
-     * Add or remove SRS batch vessels
+     * Add or remove SRS batch vessels based upon user selections
      */
     @HandlesEvent(EVT_PROCESS_BATCHES)
     public Resolution eventProcessBatches(){
@@ -119,8 +134,103 @@ public class PickWorkspaceActionBean extends CoreActionBean {
         }
 
         return new ForwardResolution(UI_DEFAULT);
+    }
 
-        //return new StreamingResolution("text/json", getPickerData());
+    /**
+     * Downloads the CSV robot transfer file
+     */
+    @HandlesEvent(EVT_DOWNLOAD_XFER_FILE)
+    public Resolution buildTransferFile(){
+
+        // These two for collecting conflicts
+        Map<String,List<String>> tubeToBatches = new HashMap();
+        Map<String,String> tubeToRack = new HashMap();
+
+        // This for collection source-destination picker file - 5 element array:
+        // { sourceRack, sourcePosition, sourceTube, targetRack, targetPosition }
+        List<String[]> sourceTargetPickList = new ArrayList<>();
+
+        if( pickerDataRows == null || pickerDataRows.isEmpty() ){
+            addGlobalValidationError("Cannot continue - No vessels selected");
+        } else {
+            // Validations should be OK, it's also done pre-submit on client side
+            batch_rack:
+            for (PickerDataRow row : pickerDataRows) {
+                if (!row.getRackScannable()) {
+                    continue;
+                }
+                String sourceRackLabel = row.getSourceVessel();
+                for (PickerVessel vessel : row.getPickerVessels()) {
+                    String sourcePosition = vessel.getSourcePosition();
+                    String sourceTubeLabel = vessel.getSourceVessel();
+                    String targetRackLabel = vessel.getTargetVessel();
+                    String targetPosition = vessel.getTargetPosition();
+
+                    sourceTargetPickList.add( new String[]{ sourceRackLabel, sourcePosition, sourceTubeLabel, targetRackLabel, targetPosition } );
+
+                    if (targetRackLabel == null || targetRackLabel.trim().isEmpty() || targetRackLabel.startsWith("DEST")
+                            || targetPosition == null || targetPosition.trim().isEmpty() ) {
+                        addGlobalValidationError("Cannot continue - Target rack barcodes are unassigned");
+                        break batch_rack;
+                    }
+                    String tubeBarcode = vessel.getSourceVessel();
+                    if( tubeToBatches.containsKey(tubeBarcode) ) {
+                        tubeToBatches.get(tubeBarcode).add(row.getBatchName());
+                    } else {
+                        tubeToRack.put(tubeBarcode, row.getSourceVessel());
+                        List<String> batchList = new ArrayList<>();
+                        batchList.add(row.getBatchName());
+                        tubeToBatches.put(tubeBarcode,batchList);
+                    }
+                }
+            }
+        }
+
+        if( getContext().getValidationErrors().isEmpty() ) {
+            byte[] comma = ",".getBytes();
+            byte[] crlf = {0x0D, 0x0A};
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            try {
+                for( String[] srcTarg : sourceTargetPickList ) {
+                    out.write(srcTarg[0].getBytes());
+                    out.write(comma);
+                    out.write(srcTarg[1].getBytes());
+                    out.write(comma);
+                    out.write(srcTarg[2].getBytes());
+                    out.write(comma);
+                    out.write(srcTarg[3].getBytes());
+                    out.write(comma);
+                    out.write(srcTarg[4].getBytes());
+                    out.write(crlf);
+                }
+            } catch (IOException ioEx) {
+                log.error("Failed to create download", ioEx);
+                addGlobalValidationError("Cannot continue - Failure creating download: " + ioEx.getMessage() );
+            }
+
+            if( getContext().getValidationErrors().isEmpty() ) {
+                setFileDownloadHeaders("application/octet-stream", "SRS_Pick.csv");
+                StreamingResolution stream = new StreamingResolution("application/octet-stream",
+                        new ByteArrayInputStream(out.toByteArray()));
+                return stream;
+            }
+        }
+
+        // Still here means validation errors
+        /* ******** See https://github.com/johnculviner/jquery.fileDownload to do this via jQuery ajax *****
+        ValidationErrors errs = getContext().getValidationErrors();
+        StringBuilder msg = new StringBuilder();
+        msg.append("<p>");
+        for( ValidationError err : errs.get(ValidationErrors.GLOBAL_ERROR) ){
+            msg.append(err.getMessage(Locale.getDefault())).append("<br/>");
+        }
+        msg.append("</p>");
+        StreamingResolution stream = new StreamingResolution("text/html",
+                msg.toString());
+        return stream;
+        ** for now just recycle to batch page with errors   */
+
+        return new ForwardResolution(UI_DEFAULT);
     }
 
     /**
@@ -165,7 +275,7 @@ public class PickWorkspaceActionBean extends CoreActionBean {
         try {
             return mapper.writer().writeValueAsString(pickerDataRows);
         } catch (IOException e) {
-            logger.log(Level.SEVERE, e.getMessage(), e);
+            log.error( e.getMessage(), e );
             // TODO Implement JSON error handling
             return "{}";
         }
@@ -188,6 +298,22 @@ public class PickWorkspaceActionBean extends CoreActionBean {
             addGlobalValidationError(e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    public int getRackCount(){
+        Set<String> racks = new HashSet<>();
+        for( PickerDataRow row : pickerDataRows ) {
+            racks.add(row.getSourceVessel());
+        }
+        return racks.size();
+    }
+
+    public int getPickSampleCount(){
+        int count = 0;
+        for( PickerDataRow row : pickerDataRows ) {
+            count += row.getSrsVesselCount();
+        }
+        return count;
     }
 
     /**

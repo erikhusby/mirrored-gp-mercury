@@ -231,7 +231,7 @@ public class ContainerActionBean extends RackScanActionBean {
      */
     private LabEvent findLatestCheckInEvent(LabVessel labVessel ) {
         LabEvent latestStorageEvent = labVessel.getLatestStorageEvent();
-        if( latestStorageEvent.getLabEventType() == LabEventType.STORAGE_CHECK_IN ) {
+        if( latestStorageEvent != null && latestStorageEvent.getLabEventType() == LabEventType.STORAGE_CHECK_IN ) {
             return latestStorageEvent;
         } else {
             return null;
@@ -802,6 +802,7 @@ public class ContainerActionBean extends RackScanActionBean {
                 }
                 PlateEventType plateEventType = buildPlateEventFromPost(LabEventType.STORAGE_CHECK_OUT);
                 LabEvent labEvent = labEventFactory.buildFromBettaLims(plateEventType);
+                labEvent.setStorageLocation(storageLocation);
 
                 storageLocationDao.persist(labEvent);
                 storageLocationDao.flush();
@@ -834,10 +835,12 @@ public class ContainerActionBean extends RackScanActionBean {
                     addGlobalValidationError("Failed to find lab vessel: %s", barcode);
                 } else {
                     if (OrmUtil.proxySafeIsInstance(labVessel, BarcodedTube.class)) {
+                        StorageLocation storageLocation = labVessel.getStorageLocation();
                         labVessel.setStorageLocation(null);
                         LabEvent checkInEvent = new LabEvent(LabEventType.STORAGE_CHECK_OUT, new Date(), LabEvent.UI_PROGRAM_NAME
                                 , 1L, userId, LabEvent.UI_PROGRAM_NAME );
                         checkInEvent.setInPlaceLabVessel(labVessel);
+                        checkInEvent.setStorageLocation(storageLocation);
                         storageLocationDao.persist(checkInEvent);
                         addMessage("Vessel " + labVessel.getLabel() + " removed from storage.");
                     } else {

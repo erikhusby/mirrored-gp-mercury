@@ -692,7 +692,7 @@ public abstract class LabVessel implements Serializable {
     }
 
     public Set<LabEvent> getInPlaceEventsWithContainers() {
-        Set<LabEvent> totalInPlaceEventsSet = Collections.unmodifiableSet(inPlaceLabEvents);
+        Set<LabEvent> totalInPlaceEventsSet = Collections.unmodifiableSet(getInPlaceLabEvents());
         for (LabVessel vesselContainer : getContainers()) {
             totalInPlaceEventsSet = Sets.union(totalInPlaceEventsSet, vesselContainer.getInPlaceEventsWithContainers());
         }

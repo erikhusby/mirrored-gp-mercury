@@ -324,10 +324,17 @@
                                 </stripes:link>
                             </li>
                             <li>
-                                <stripes:link id="bulkStorageOps"
+                                <stripes:link id="bulkCheckOut"
                                               beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.BulkStorageOpsActionBean"
-                                              event="view">
-                                    Bulk Storage Ops
+                                              event="initCheckOut">
+                                    Bulk Check-Out
+                                </stripes:link>
+                            </li>
+                            <li>
+                                <stripes:link id="bulkCheckIn"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.BulkStorageOpsActionBean"
+                                              event="initCheckIn">
+                                    Bulk Check-In
                                 </stripes:link>
                             </li>
                         </security:authorizeBlock>

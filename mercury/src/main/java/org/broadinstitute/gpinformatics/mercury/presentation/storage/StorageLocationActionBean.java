@@ -94,8 +94,7 @@ public class StorageLocationActionBean extends CoreActionBean {
         List<StorageLocation> childNodeStorageLocations;
         StorageLocation parentNodeStorageLocation = null;
         if (id.equals(ROOT_NODE)) {
-            childNodeStorageLocations = storageLocationDao.findByLocationTypes(
-                    StorageLocation.LocationType.getTopLevelLocationTypes());
+            childNodeStorageLocations = storageLocationDao.findRootLocations();
         } else {
             long parentId = Long.parseLong(id);
             parentNodeStorageLocation = storageLocationDao.findById(StorageLocation.class, parentId);
@@ -108,8 +107,7 @@ public class StorageLocationActionBean extends CoreActionBean {
 
     @HandlesEvent(LOAD_TREE_ACTION)
     public Resolution loadTree() throws Exception {
-        List<StorageLocation> rootStorageLocations = storageLocationDao.findByLocationTypes(
-                StorageLocation.LocationType.getTopLevelLocationTypes());
+        List<StorageLocation> rootStorageLocations = storageLocationDao.findRootLocations();
         String storageJson = generateJsonFromRoots(null, rootStorageLocations, false);
         return new StreamingResolution("text", new StringReader(storageJson));
     }
@@ -153,8 +151,7 @@ public class StorageLocationActionBean extends CoreActionBean {
             throw new RuntimeException("Failed to find storage location with barcode: " + storageId);
         } else {
             //Add all other top level locations as well
-            List<StorageLocation> rootStorageLocations = storageLocationDao.findByLocationTypes(
-                    StorageLocation.LocationType.getTopLevelLocationTypes());
+            List<StorageLocation> rootStorageLocations = storageLocationDao.findRootLocations();
             Collections.sort(rootStorageLocations, new StorageLocation.StorageLocationLabelComparator());
             for (StorageLocation rootStorageLocation : rootStorageLocations) {
                 ObjectNode rootNode = null;
@@ -376,7 +373,6 @@ public class StorageLocationActionBean extends CoreActionBean {
         ObjectNode root = mapper.createObjectNode();
         ArrayNode arrayNode = mapper.createArrayNode();
         for (StorageLocation storageLocation: childStorageLocations) {
-
             ObjectNode rootNode = generateJSON(storageLocation, mapper.createObjectNode(), ajax);
             arrayNode.add(rootNode);
         }

@@ -3,12 +3,14 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.storage;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation_;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
+import org.omg.Dynamic.Parameter;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.Query;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,6 +49,18 @@ public class StorageLocationDao extends GenericDao {
         });
     }
 
+    /**
+     * A root location is basically a top level storage unit - no parent
+     */
+    public List<StorageLocation> findRootLocations() {
+        return findAll(StorageLocation.class, new GenericDaoCallback<StorageLocation>() {
+            @Override
+            public void callback(CriteriaQuery<StorageLocation> criteriaQuery, Root<StorageLocation> root) {
+                criteriaQuery.where(getCriteriaBuilder().isNull(root.get(StorageLocation_.parentStorageLocation)));
+            }
+        });
+    }
+
     public List<StorageLocation> findByLocationTypes(List<StorageLocation.LocationType> locationTypes) {
         List<StorageLocation> resultList = new ArrayList<>();
         for (StorageLocation.LocationType locationType: locationTypes) {
@@ -66,5 +80,15 @@ public class StorageLocationDao extends GenericDao {
                                                                  + "CONNECT BY PRIOR parent_storage_location = storage_location_id");
         qry.setParameter( 1, storageLocationId );
         return qry.getSingleResult().toString();
+    }
+
+    public int getStoredVesselCount( StorageLocation location ) {
+        CriteriaBuilder cb = getCriteriaBuilder();
+        CriteriaQuery<Long> cq = cb.createQuery(Long.class);
+        Root<LabVessel> root = cq.from( LabVessel.class );
+        Predicate p = cb.equal(root.get(LabVessel_.storageLocation), location.getStorageLocationId());
+        cq.select( cb.count( root ) );
+        cq.where(p);
+        return getEntityManager().createQuery(cq).getSingleResult().intValue();
     }
 }

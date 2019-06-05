@@ -64,7 +64,7 @@ public class StorageLocationActionBeanTest {
         deliFridge = createNewStorage(StorageLocation.LocationType.REFRIGERATOR, "Deli Fridge", 2, 4);
         deliFridge.setStorageLocationId(FRIDGE_ID);
         deliFridge.setBarcode("DeliFridgeBarcode");
-        when(mockStorageLocationDao.findByLocationTypes(StorageLocation.LocationType.getTopLevelLocationTypes())).
+        when(mockStorageLocationDao.findRootLocations()).
                 thenReturn(Arrays.asList(freezer, deliFridge));
         when(mockStorageLocationDao.findByBarcode(deliFridge.getBarcode())).thenReturn(deliFridge);
         when(mockStorageLocationDao.findById(StorageLocation.class, FREEZER_ID)).thenReturn(freezer);

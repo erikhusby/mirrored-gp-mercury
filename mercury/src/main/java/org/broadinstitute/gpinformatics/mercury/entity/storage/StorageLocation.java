@@ -231,6 +231,8 @@ public class StorageLocation {
 
     private String barcode;
 
+    private Integer storageCapacity = new Integer(0);
+
     public StorageLocation() {
     }
 
@@ -298,6 +300,14 @@ public class StorageLocation {
 
     public void setBarcode(String barcode) {
         this.barcode = barcode;
+    }
+
+    public Integer getStorageCapacity() {
+        return storageCapacity;
+    }
+
+    public void setStorageCapacity(Integer capacity) {
+        this.storageCapacity = capacity;
     }
 
     /**

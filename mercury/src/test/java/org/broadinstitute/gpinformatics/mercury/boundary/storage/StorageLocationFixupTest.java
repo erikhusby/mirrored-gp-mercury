@@ -168,7 +168,7 @@ public class StorageLocationFixupTest extends Arquillian {
             Long tfRackId = new Long(row[7].toString());
             String rackBarcodes = (String) row[10];
             if( formationId < Long.MAX_VALUE ) {
-                assignRackToEvent(labEventId, tfRackId);
+                assignRackToEvent(labEventId, tfRackId, logWriter);
                 logWriter.println("The single rack " + rackBarcodes + " for formation " + formationBarcode
                                   + " was assigned to event " + labEventId);
             }
@@ -184,7 +184,7 @@ public class StorageLocationFixupTest extends Arquillian {
             Long storageLocationCount = new Long(row[9].toString());
             String rackBarcodes = (String) row[10];
             if (formationId < Long.MAX_VALUE && eventCount == 1) {
-                assignRackToEvent(labEventId, stRackId);
+                assignRackToEvent(labEventId, stRackId, logWriter);
                 if( storageLocationCount == 1 ) {
                     logWriter.println("\tThe only rack in storage from " + rackBarcodes + " for formation " + formationBarcode
                                       + " was assigned to event " + labEventId );
@@ -198,44 +198,44 @@ public class StorageLocationFixupTest extends Arquillian {
 
         // Third pass is too gnarly - tube formations have multiple racks, zero or more locations, multiple events
         // 89ba34c873166f549938e4f67fc01e6b 0000007863318 not stored
-        assignRackToEvent(2445597L, "000007863318");
-        assignRackToEvent(2445601L, "000007863318");
+        assignRackToEvent(2445597L, "000007863318", logWriter);
+        assignRackToEvent(2445601L, "000007863318", logWriter);
         // 4984d49c44276e567cfa2d04e40046f8  CO-26240832 not stored
-        assignRackToEvent(2700322L, "CO-26243836");
-        assignRackToEvent(2700509L, "CO-26243836");
+        assignRackToEvent(2700322L, "CO-26243836", logWriter);
+        assignRackToEvent(2700509L, "CO-26243836", logWriter);
         //ace33f7bc43eebcadecf19926b4f7362
-        assignRackToEvent(2749690L, "CO-26391033"); // CO-26391033 overwritten by CO-26205654 - added one tube
+        assignRackToEvent(2749690L, "CO-26391033", logWriter); // CO-26391033 overwritten by CO-26205654 - added one tube
         // bb961b7dce0591fb15d611c80868bce4
             // 3 newest events all within 4 minutes - rack CO-26379405 layout in storage matches formation
-            assignRackToEvent(2993888L, "CO-26379405");
-            assignRackToEvent(2993893L, "CO-26379405");
-            assignRackToEvent(2993894L, "CO-26379405");
+            assignRackToEvent(2993888L, "CO-26379405", logWriter);
+            assignRackToEvent(2993893L, "CO-26379405", logWriter);
+            assignRackToEvent(2993894L, "CO-26379405", logWriter);
             // Old events - rack CO-25344129 reused for different formation storage
-            assignRackToEvent(2773314L, "CO-25344129");
-            assignRackToEvent(2777869L, "CO-25344129");
+            assignRackToEvent(2773314L, "CO-25344129", logWriter);
+            assignRackToEvent(2777869L, "CO-25344129", logWriter);
         // 6a91871544f174680838204b57fb8a3e - both overwritten by a newer event on rack
-        assignRackToEvent(2796589L, "CO-26641653");
-        assignRackToEvent(2813519L, "CO-26641653");
+        assignRackToEvent(2796589L, "CO-26641653", logWriter);
+        assignRackToEvent(2813519L, "CO-26641653", logWriter);
 
         // 815572fb1d15232f3598c40b4ef49d16 use the only rack created before event
-        assignRackToEvent(2885563L, "CO-26769506" );
+        assignRackToEvent(2885563L, "CO-26769506", logWriter );
 
         // ff4d896cf506b768ffe31017059e5c9e Not even in storage any longer, use only rack created before event
-        assignRackToEvent(2924300L, "CO-26863282");
-        assignRackToEvent(2925482L, "CO-26863282");
-        assignRackToEvent(2925485L, "CO-26863282");
+        assignRackToEvent(2924300L, "CO-26863282", logWriter );
+        assignRackToEvent(2925482L, "CO-26863282", logWriter );
+        assignRackToEvent(2925485L, "CO-26863282", logWriter );
 
         // 0df14981e80d4f94fbae3f030b12cab1 None in storage any longer, use rack created ascending
-        assignRackToEvent(3244376L, "CO-27643389");
-        assignRackToEvent(3244702L, "CO-27734889");
+        assignRackToEvent(3244376L, "CO-27643389", logWriter );
+        assignRackToEvent(3244702L, "CO-27734889", logWriter );
 
         // 2b1c8bbb5a76771ba1fabc21fb09d536 None in storage any longer, use random of 2 racks
-        assignRackToEvent(3312371L, "CO-24743873");
-        assignRackToEvent(3312674L, "CO-27503541");
+        assignRackToEvent(3312371L, "CO-24743873", logWriter );
+        assignRackToEvent(3312674L, "CO-27503541", logWriter );
 
         // d6d21d6f020f42c56a3611b7451215b1 None in storage any longer, use the only rack (empty) in storage
-        assignRackToEvent(3312372L, "CO-26596279");
-        assignRackToEvent(3312673L, "CO-26596279");
+        assignRackToEvent(3312372L, "CO-26596279", logWriter );
+        assignRackToEvent(3312673L, "CO-26596279", logWriter );
 
         storageLocationDao.persist(new FixupCommentary("GPLIM-6012 org.broadinstitute.gpinformatics.mercury.boundary.storage.StorageLocationFixupTest.fixupGplim6012BackfillInPlaceRacks()"));
         logWriter.println("***** Flushing persistence context *****" );
@@ -249,16 +249,26 @@ public class StorageLocationFixupTest extends Arquillian {
         logWriter.close();
     }
 
-    private void assignRackToEvent( Long labEventId, Long rackId ) {
+    private void assignRackToEvent( Long labEventId, Long rackId, PrintWriter logWriter ) {
         LabEvent event = storageLocationDao.findSingle(LabEvent.class, LabEvent_.labEventId, labEventId);
         LabVessel rack = storageLocationDao.findSingle(LabVessel.class, LabVessel_.labVesselId, rackId);
         event.setAncillaryInPlaceVessel(rack);
+        if( rack == null ) {
+            logWriter.println("\tNo rack found with ID " + rackId + ", storage location not assigned to event " + labEventId );
+        } else {
+            event.setStorageLocation(rack.getStorageLocation());
+        }
     }
 
-    private void assignRackToEvent( Long labEventId, String rackBarcode ) {
+    private void assignRackToEvent( Long labEventId, String rackBarcode, PrintWriter logWriter ) {
         LabEvent event = storageLocationDao.findSingle(LabEvent.class, LabEvent_.labEventId, labEventId);
         LabVessel rack = storageLocationDao.findSingle(LabVessel.class, LabVessel_.label, rackBarcode);
         event.setAncillaryInPlaceVessel(rack);
+        if( rack == null ) {
+            logWriter.println("\tNo rack found with label " + rackBarcode + ", storage location not assigned to event " + labEventId );
+        } else {
+            event.setStorageLocation(rack.getStorageLocation());
+        }
     }
 
     private static StorageLocation buildStorageLocation(StorageLocation parent, StorageLocationDto dto) {

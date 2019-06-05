@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -329,6 +330,23 @@ public class LabEventSearchDefinition {
                 }
                 return result?"Yes":"No";
 
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("SRS Location");
+        searchTerm.setHelpText("Storage location for a check-in/check-out event");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                LabEvent labEvent = (LabEvent) entity;
+                StorageLocation storageLocation = labEvent.getStorageLocation();
+                if( storageLocation != null ) {
+                    return storageLocation.buildLocationTrail();
+                } else {
+                    return "";
+                }
             }
         });
         searchTerms.add(searchTerm);
