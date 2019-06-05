@@ -234,6 +234,12 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @Column(name = "BAIT_LOCKED")
     private Boolean baitLocked;
 
+    @Column(name = "OFFERED_AS_COMMERCIAL")
+    private Boolean offeredAsCommercialProduct = Boolean.FALSE;
+
+    @Column(name="DISABLED")
+    private Boolean disabled = Boolean.FALSE;
+
     /**
      * Helper method to allow the quick creation of a new Product based on the contents of an existing product
      *
@@ -986,6 +992,30 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public void setBaitLocked(Boolean baitLocked) {
         this.baitLocked = baitLocked;
+    }
+
+    public Boolean getOfferedAsCommercialProduct() {
+        return offeredAsCommercialProduct;
+    }
+
+    public void setOfferedAsCommercialProduct(Boolean offeredAsCommercialProduct) {
+        this.offeredAsCommercialProduct = offeredAsCommercialProduct;
+    }
+
+    public Boolean getDisabled() {
+        return disabled;
+    }
+
+    public void setDisabled(Boolean disabled) {
+        this.disabled = disabled;
+    }
+
+    public boolean isLLCProduct() {
+        return externalOnlyProduct || clinicalProduct;
+    }
+
+    public boolean isSSFProduct() {
+        return !isLLCProduct();
     }
 
     public SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyConfiguration () {

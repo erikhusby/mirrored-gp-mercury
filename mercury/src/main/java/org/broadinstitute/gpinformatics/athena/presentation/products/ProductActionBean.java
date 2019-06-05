@@ -175,6 +175,8 @@ public class ProductActionBean extends CoreActionBean {
     private Product editProduct;
 
     private boolean productUsedInOrders = false;
+    private boolean productUsedInLLCOrders = false;
+
     private List<String> suggestedValueSelections = new ArrayList();
 
     public ProductActionBean() {
@@ -287,10 +289,17 @@ public class ProductActionBean extends CoreActionBean {
             }
 
             List<ProductOrder> productOrderList = null;
+            List<ProductOrder> llcProductOrderList = null;
             if (editProduct.getProductId() != null) {
                 productOrderList = productDao.findList(ProductOrder.class, ProductOrder_.product, editProduct);
+                llcProductOrderList = productOrderList.stream()
+                        .filter(productOrder -> productOrder.getOrderType() == ProductOrder.OrderAccessType.COMMERCIAL)
+                        .collect(
+                                Collectors.toList());
+
             }
-            productUsedInOrders = !CollectionUtils.isEmpty(productOrderList);
+            productUsedInOrders = CollectionUtils.isNotEmpty(productOrderList);
+            productUsedInLLCOrders = CollectionUtils.isNotEmpty(llcProductOrderList);
         }
     }
 
@@ -869,6 +878,9 @@ public class ProductActionBean extends CoreActionBean {
         return productUsedInOrders;
     }
 
+    public boolean isProductUsedInLLCOrders() {
+        return productUsedInLLCOrders;
+    }
 
     public List<String> getCriteriaSelectionValues() {
         return criteriaSelectionValues;

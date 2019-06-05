@@ -449,7 +449,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         for (SAPCompanyConfiguration sapCompanyConfiguration : platformsToExtend) {
             log.debug("Current company config is " + sapCompanyConfiguration.name());
             SAPMaterial tempMaterial = null;
-                if (sapCompanyConfiguration == SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) {
+            if (sapCompanyConfiguration == SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) {
+
                 tempMaterial = initializeSapMaterialObject(product);
             } else {
 
@@ -488,13 +489,25 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             throws SAPIntegrationException {
         if (productPriceCache.findByProduct(product,
                 SAPCompanyConfiguration.fromSalesOrgForMaterial(extendedProduct.getSalesOrg()).getSalesOrganization()) == null) {
-            if (publishType != PublishType.UPDATE_ONLY) {
+            if (publishType != PublishType.UPDATE_ONLY && !product.getDisabled()) {
+
+                //TODO SGM Unsure about this
+                if(product.isSSFProduct() && !product.getOfferedAsCommercialProduct() &&
+                   StringUtils.equals(extendedProduct.getSalesOrg(),SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization())) {
+                    return;
+                }
                 log.debug("Creating product " + extendedProduct.getMaterialIdentifier());
                 getClient().createMaterial(extendedProduct);
             }
         } else {
             if (publishType != PublishType.CREATE_ONLY) {
                 log.debug("Updating product " + extendedProduct.getMaterialIdentifier());
+                if(product.getDisabled() ||
+                   (product.isSSFProduct() &&
+                    !product.getOfferedAsCommercialProduct())
+                ) {
+                    extendedProduct.setStatus(SAPMaterial.MaterialStatus.DISABLED);
+                }
                 getClient().changeMaterialDetails(SAPChangeMaterial.fromSAPMaterial(extendedProduct));
             }
         }
