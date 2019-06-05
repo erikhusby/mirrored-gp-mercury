@@ -1797,4 +1797,31 @@ public class ProductOrderFixupTest extends Arquillian {
             utx.rollback();
         }
     }
+
+    /**
+     * Useful for cases when an order has been completed by billing all of the primary product, but then still needs to
+     * bill add-onds.   The structure of the file is as follows:
+     * <ol><li>SUPPORT-XXXX  reason for updating order status</li>
+     * <li>PDO-xxx1</li>
+     * <li>PDO-xxx2</li>
+     * <li>PDO-xxx3</li></ol>
+     * @throws Exception
+     */
+    @Test(enabled = false)
+    public void reOpenProductOrder() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("ReOpenProductOrders.txt"));
+
+        for(String line: fixupLines.subList(1, fixupLines.size())) {
+
+            ProductOrder orderToOpen = productOrderDao.findByBusinessKey(line);
+            orderToOpen.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+            System.out.println("Changed the status of product order " + line + " to " + ProductOrder.OrderStatus.Submitted.getDisplayName());
+        }
+
+        productOrderDao.persist(new FixupCommentary(fixupLines.get(0)));
+        commitTransaction();
+    }
 }
