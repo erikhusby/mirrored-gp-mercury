@@ -354,7 +354,7 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT, RackOfTubes.RackType.Matrix96Anonymous,
-                    RackOfTubes.RackType.Matrix96Anonymous).build(),
+                    RackOfTubes.RackType.Matrix96Anonymous).sourceContainerPrefix("DevSrc").targetContainerPrefix("DevDest").build(),
             LibraryType.NONE_ASSIGNED),
 
     // Sage

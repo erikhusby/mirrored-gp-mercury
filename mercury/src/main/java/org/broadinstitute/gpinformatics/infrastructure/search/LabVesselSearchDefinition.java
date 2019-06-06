@@ -700,6 +700,11 @@ public class LabVesselSearchDefinition {
             searchTerms.add(searchTerm);
         }
         {
+            SearchTerm searchTerm = buildLabVesselBspTerm(BSPSampleSearchColumn.MATERIAL_TYPE);
+            searchTerm.setDisplayExpression(DisplayExpression.MATERIAL_TYPE);
+            searchTerms.add(searchTerm);
+        }
+        {
             SearchTerm searchTerm = buildLabVesselBspTerm(BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE);
             searchTerm.setDisplayExpression(DisplayExpression.ORIGINAL_MATERIAL_TYPE);
             searchTerms.add(searchTerm);
