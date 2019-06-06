@@ -1,11 +1,14 @@
 package org.broadinstitute.gpinformatics.infrastructure;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPSampleDataFetcherImpl;
@@ -14,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleDataFetcher;
 
 import javax.annotation.Nonnull;
@@ -29,12 +33,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Dependent
 public class SampleDataFetcher implements Serializable {
-
-    @Inject
-    private SampleDataSourceResolver sampleDataSourceResolver;
 
     @Inject
     private BSPSampleDataFetcher bspSampleDataFetcher;
@@ -58,11 +61,9 @@ public class SampleDataFetcher implements Serializable {
     }
 
     public SampleDataFetcher(@Nonnull MercurySampleDao mercurySampleDao,
-                             @Nonnull SampleDataSourceResolver sampleDataSourceResolver,
-                             @Nonnull BSPSampleDataFetcher bspSampleDataFetcher,
-                             @Nonnull MercurySampleDataFetcher mercurySampleDataFetcher) {
+            @Nonnull BSPSampleDataFetcher bspSampleDataFetcher,
+            @Nonnull MercurySampleDataFetcher mercurySampleDataFetcher) {
         this.mercurySampleDao = mercurySampleDao;
-        this.sampleDataSourceResolver = sampleDataSourceResolver;
         this.bspSampleDataFetcher = bspSampleDataFetcher;
         this.mercurySampleDataFetcher = mercurySampleDataFetcher;
     }
@@ -104,20 +105,70 @@ public class SampleDataFetcher implements Serializable {
     }
 
     public Map<String, SampleData> fetchSampleData(@Nonnull Collection<String> sampleNames,
-                                                   BSPSampleSearchColumn... bspSampleSearchColumns) {
+                                                   BSPSampleSearchColumn[] bspSampleSearchColumns) {
+        Pair<Set<MercurySample>, Set<String>> pair = partitionSamples(sampleNames);
+        return fetchSampleData(pair.getLeft(), pair.getRight(), Collections.emptyMap(), bspSampleSearchColumns);
+    }
 
-        Collection<String> sampleIdsWithBspSource = new ArrayList<>();
-        Collection<MercurySample> mercurySamplesWithMercurySource = new ArrayList<>();
+    private Map<String, SampleData> fetchSampleData(Collection<MercurySample> mercuryFetches, Set<String> bspFetches,
+            Map<String, ProductOrderSample> quantOverrides, BSPSampleSearchColumn[] bspSampleSearchColumns) {
 
-        buildSampleCollectionsBySource(sampleNames, mercurySamplesWithMercurySource, sampleIdsWithBspSource);
-
-        Map<String, SampleData> sampleData = new HashMap<>();
-        if (!sampleIdsWithBspSource.isEmpty()) {
-            Map<String, BspSampleData> bspSampleData = bspSampleDataFetcher.fetchSampleData(sampleIdsWithBspSource,
-                    bspSampleSearchColumns);
-            sampleData.putAll(bspSampleData);
+        // Looks for metadata inheritance roots. Mercury samples that have Mercury metadata source and have
+        // a metadata ROOT_SAMPLE (not the chain of custody root) in Mercury or BSP will inherit the root's
+        // Collaborator Sample Id, Collaborator Participant Id, Sex, and Organism.
+        Map<String, String> mercurySampleToInheritanceRoot = new HashMap<>();
+        for (MercurySample sample : mercuryFetches) {
+            if (sample.getMetadata() != null) {
+                sample.getMetadata().stream().
+                        filter(metadata -> metadata.getKey() == Metadata.Key.ROOT_SAMPLE).
+                        map(Metadata::getValue).
+                        filter(value -> !sample.getSampleKey().equals(value)).
+                        findFirst().
+                        ifPresent(value -> mercurySampleToInheritanceRoot.put(sample.getSampleKey(), value));
+            }
         }
-        sampleData.putAll(mercurySampleDataFetcher.fetchSampleData(mercurySamplesWithMercurySource));
+        // Fetches the BSP sample metadata.
+        Map<String, BspSampleData> bspSampleData = bspSampleDataFetcher.fetchSampleData(
+                Stream.concat(bspFetches.stream(), mercurySampleToInheritanceRoot.values().stream()).
+                        filter(BSPUtil::isInBspFormatOrBareId).
+                        collect(Collectors.toSet()),
+                bspSampleSearchColumns);
+        // Overrides the BSP quant values if the product indicates it.
+        bspSampleData.keySet().stream().
+                filter(quantOverrides::containsKey).
+                forEach(sampleId ->
+                        bspSampleData.get(sampleId).overrideWithMercuryQuants(quantOverrides.get(sampleId)));
+
+        // The remaining inheritance roots that may be in Mercury.
+        Set<MercurySample> remainingInheritanceRoots = (Set<MercurySample>)mercurySampleDao.findMapIdToMercurySample(
+                CollectionUtils.subtract(mercurySampleToInheritanceRoot.values(), bspSampleData.keySet())).
+                values().stream().
+                filter(mercurySample -> mercurySample != null).
+                collect(Collectors.toSet());
+
+        // Collects sampleData of the Mercury source samples and any Mercury roots.
+        Map<String, MercurySampleData> mercurySampleData = mercurySampleDataFetcher.fetchSampleData(
+                CollectionUtils.union(mercuryFetches, remainingInheritanceRoots));
+
+        // Merges in metadata for samples inheriting from their root sample.
+        mercurySampleData.entrySet().stream().
+                forEach(mapEntry -> {
+                    String inheritanceRoot = mercurySampleToInheritanceRoot.get(mapEntry.getKey());
+                    MercurySampleData sampleData = mapEntry.getValue();
+                    if (bspSampleData.get(inheritanceRoot) != null) {
+                        sampleData.mergeInheritedMetadata(bspSampleData.get(inheritanceRoot));
+                    } else if (mercurySampleData.get(inheritanceRoot) != null) {
+                        sampleData.mergeInheritedMetadata(mercurySampleData.get(inheritanceRoot));
+                    }
+                });
+
+        // Returns a map of the requested Mercury and BSP sample names with any sampleData found (null if not found).
+        Map<String, SampleData> sampleData = new HashMap<>();
+        mercuryFetches.stream().
+                map(MercurySample::getSampleKey).
+                forEach(sampleName -> sampleData.put(sampleName, mercurySampleData.get(sampleName)));
+        bspFetches.stream().
+                forEach(bspName -> sampleData.put(bspName, bspSampleData.get(bspName)));
         return sampleData;
     }
 
@@ -150,21 +201,26 @@ public class SampleDataFetcher implements Serializable {
      * Given a list of aliquot IDs, return a map of aliquot IDs to stock IDs.
      */
     public Map<String, String> getStockIdByAliquotId(Collection<String> aliquotIds) {
+        Pair<Set<MercurySample>, Set<String>> pair = partitionSamples(aliquotIds);
+        Map<String, String> map = new HashMap<>(mercurySampleDataFetcher.getStockIdByAliquotId(pair.getLeft()));
+        map.putAll(bspSampleDataFetcher.getStockIdByAliquotId(pair.getRight()));
+        return map;
+    }
 
-        Collection<MercurySample> mercurySamplesWithMercurySource = new ArrayList<>();
-        Collection<String> sampleIdsWithBspSource = new ArrayList<>();
-
-        buildSampleCollectionsBySource(aliquotIds, mercurySamplesWithMercurySource, sampleIdsWithBspSource);
-
-        Map<String, String> stockIdByAliquotId = new HashMap<>();
-        if (!mercurySamplesWithMercurySource.isEmpty()) {
-            stockIdByAliquotId.putAll(mercurySampleDataFetcher.getStockIdByAliquotId(mercurySamplesWithMercurySource));
-        }
-        if (!sampleIdsWithBspSource.isEmpty()) {
-            stockIdByAliquotId.putAll(bspSampleDataFetcher.getStockIdByAliquotId(sampleIdsWithBspSource));
-        }
-
-        return stockIdByAliquotId;
+    /** Partitions the sampleNames into MercurySample lookups and BSP sample lookups. */
+    private Pair<Set<MercurySample>, Set<String>> partitionSamples (Collection<String> sampleNames) {
+        Set<String> bsp = new HashSet<>();
+        Set<MercurySample> mercury = new HashSet<>();
+        Map<String, MercurySample> sampleMap = mercurySampleDao.findMapIdToMercurySample(sampleNames);
+        sampleNames.stream().forEach(sampleName -> {
+            MercurySample mercurySample = sampleMap.get(sampleName);
+            if (mercurySample == null || mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                bsp.add(sampleName);
+            } else {
+                mercury.add(mercurySample);
+            }
+        });
+        return Pair.of(mercury, bsp);
     }
 
     /**
@@ -173,30 +229,6 @@ public class SampleDataFetcher implements Serializable {
      */
     public Map<String, GetSampleDetails.SampleInfo> fetchSampleDetailsByBarcode(@Nonnull Collection<String> barcodes) {
         return bspSampleDataFetcher.fetchSampleDetailsByBarcode(barcodes);
-    }
-
-    private void buildSampleCollectionsBySource(Collection<String> aliquotIds,
-                                                Collection<MercurySample> mercurySamplesWithMercurySource,
-                                                Collection<String> sampleIdsWithBspSource) {
-        Map<String, MercurySample> allMercurySamples = mercurySampleDao.findMapIdToMercurySample(aliquotIds);
-        Map<String, MercurySample.MetadataSource> sourceBySampleId =
-                sampleDataSourceResolver.resolve(aliquotIds, allMercurySamples);
-        for (Map.Entry<String, MercurySample.MetadataSource> entry : sourceBySampleId.entrySet()) {
-            String sampleId = entry.getKey();
-            MercurySample.MetadataSource metadataSource = entry.getValue();
-
-            switch (metadataSource) {
-            case MERCURY:
-                mercurySamplesWithMercurySource.add(allMercurySamples.get(sampleId));
-                break;
-            case BSP:
-                sampleIdsWithBspSource.add(sampleId);
-                break;
-            default:
-                throw new IllegalStateException(
-                        String.format("Unknown sample data source %s for sample %s", metadataSource, sampleId));
-            }
-        }
     }
 
     /**
@@ -217,12 +249,29 @@ public class SampleDataFetcher implements Serializable {
     public Map<String, SampleData> fetchSampleDataForSamples(Collection<? extends AbstractSample> samples,
                                                              BSPSampleSearchColumn... bspSampleSearchColumns) {
         Map<String, SampleData> sampleData = new HashMap<>();
-
         Collection<MercurySample> mercurySamplesWithMercurySource = new ArrayList<>();
-        Collection<String> sampleIdsWithBspSource = new ArrayList<>();
-
         Set<String> bspSourceSampleNames = new HashSet<>(samples.size());
         Map<String, ProductOrderSample> needsQuantOverride = new HashMap<>();
+
+        // Finds the ProductOrderSamples in the input AbstractSamples that don't have a linked
+        // MercurySample and links them to a MercurySample having the PDO sample name.
+        Map<String, MercurySample> mercurySampleMap = mercurySampleDao.findMapIdToMercurySample(
+                samples.stream().
+                        filter(sample -> !sample.isHasBspSampleDataBeenInitialized() &&
+                                OrmUtil.proxySafeIsInstance(sample, ProductOrderSample.class)).
+                        map(sample -> OrmUtil.proxySafeCast(sample, ProductOrderSample.class)).
+                        filter(pdoSample -> pdoSample.getMercurySample() == null).
+                        map(ProductOrderSample::getName).
+                        collect(Collectors.toList()));
+        if (!mercurySampleMap.isEmpty()) {
+            samples.stream().
+                    filter(sample -> mercurySampleMap.containsKey(sample.getSampleKey()) &&
+                            OrmUtil.proxySafeIsInstance(sample, ProductOrderSample.class)).
+                    forEach(sample ->
+                            OrmUtil.proxySafeCast(sample, ProductOrderSample.class).
+                                    setMercurySample(mercurySampleMap.get(sample.getSampleKey())));
+        }
+
         for (AbstractSample sample : samples) {
             if (sample.isHasBspSampleDataBeenInitialized()) {
                 // sample.getSampleKey() can be a pdo sample name that is a barcode.
@@ -263,24 +312,8 @@ public class SampleDataFetcher implements Serializable {
                 }
             }
         }
-        if (!bspSourceSampleNames.isEmpty() || !mercurySamplesWithMercurySource.isEmpty()) {
-
-            buildSampleCollectionsBySource(bspSourceSampleNames, mercurySamplesWithMercurySource, sampleIdsWithBspSource);
-
-            if (!sampleIdsWithBspSource.isEmpty()) {
-                for (Map.Entry<String, BspSampleData> entry : bspSampleDataFetcher.fetchSampleData(
-                        sampleIdsWithBspSource, bspSampleSearchColumns).entrySet()) {
-                    BspSampleData bspSampleData = entry.getValue();
-                    // Overrides the BSP quant values if the product indicated it.
-                    ProductOrderSample productOrderSample = needsQuantOverride.get(entry.getKey());
-                    if (productOrderSample != null) {
-                        bspSampleData.overrideWithMercuryQuants(productOrderSample);
-                    }
-                    sampleData.put(entry.getKey(), bspSampleData);
-                }
-            }
-            sampleData.putAll(mercurySampleDataFetcher.fetchSampleData(mercurySamplesWithMercurySource));
-        }
+        sampleData.putAll(fetchSampleData(mercurySamplesWithMercurySource, bspSourceSampleNames,
+                needsQuantOverride, bspSampleSearchColumns));
         return sampleData;
     }
 

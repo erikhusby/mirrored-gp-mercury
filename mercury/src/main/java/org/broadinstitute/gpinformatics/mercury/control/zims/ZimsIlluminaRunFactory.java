@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.control.zims;
 
 import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -27,6 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchety
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.Aligner;
+import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
@@ -189,15 +189,14 @@ public class ZimsIlluminaRunFactory {
                     }
                 }
                 sampleIds.add(sampleId);
+
                 LabVessel libraryVessel = flowcell.getNearestTubeAncestorsForLanes().get(vesselPosition);
                 if (flowcellDesignation == null) {
-                    // Only need one designation since all of them constituting this flowcell will have been
-                    // grouped by and therefore have the same flowcell parameters.
-                    List<FlowcellDesignation> flowcellDesignations =
-                            flowcellDesignationEjb.getFlowcellDesignations(Collections.singleton(libraryVessel));
-                    if (CollectionUtils.isNotEmpty(flowcellDesignations)) {
-                        flowcellDesignation = flowcellDesignations.get(0);
-                    }
+                    // Gets the flowcell designation from batch starting vessel.
+                    flowcellDesignation = laneSampleInstance.getAllBatchVessels(LabBatch.LabBatchType.FCT).stream().
+                            filter(lbsVessel -> lbsVessel.getFlowcellDesignation() != null).
+                            map(LabBatchStartingVessel::getFlowcellDesignation).
+                            findFirst().orElse(null);
                 }
                 boolean isCrspLane;
                 if (mixedLaneOk && singleBucketEntry != null) {
@@ -440,11 +439,18 @@ public class ZimsIlluminaRunFactory {
 
             SampleData sampleData = mapSampleIdToDto.get(sampleInstanceDto.getSampleId());
             Boolean isPooledTube = sampleInstance.getIsPooledTube();
-            if (isPooledTube && sampleData instanceof MercurySampleData) {
+            if (sampleData instanceof MercurySampleData) {
                 MercurySampleData mercurySampleData = (MercurySampleData) sampleData;
-                mercurySampleData.setRootSampleId(sampleInstance.getMercuryRootSampleName());
-                mercurySampleData.setSampleId(sampleInstance.getNearestMercurySampleName());
+                if (isPooledTube) {
+                    mercurySampleData.setRootSampleId(sampleInstance.getMercuryRootSampleName());
+                    mercurySampleData.setSampleId(sampleInstance.getNearestMercurySampleName());
+                }
+                // Uses External Library root sample metadata if it is present.
+                if (StringUtils.isNotBlank(sampleInstance.getExternalRootSampleName())) {
+                    mercurySampleData.setRootSampleId(sampleInstance.getExternalRootSampleName());
+                }
             }
+
             TZDevExperimentData devExperimentData = sampleInstance.getTzDevExperimentData();
             WorkflowMetadata workflowMetadata = mapWorkflowToMetadata.get(sampleInstance.getWorkflowName());
             libraryBeans.add(createLibraryBean(sampleInstanceDto, productOrder, sampleData, lcSet,
@@ -470,8 +476,8 @@ public class ZimsIlluminaRunFactory {
                 molIndexSecheme = libraryBean.getMolecularIndexingScheme().getName();
             }
 
-            String consolidationKey =
-                    makeConsolidationKey(libraryBean.getSampleId(), molIndexSecheme);
+            String consolidationKey = makeConsolidationKey(molIndexSecheme,
+                    libraryBean.isImpliedSampleName() ? libraryBean.getLibrary() : libraryBean.getSampleId());
             if (!previouslySeenSampleAndMis.add(consolidationKey)) {
                 iter.remove();
             }
@@ -500,7 +506,7 @@ public class ZimsIlluminaRunFactory {
 
         //If this is an uploaded pooled tube, create the label based on the provided library name.
         if(isPooledTube) {
-            label = sampleInstanceDto.getSampleInstance().getSampleLibraryName();
+            label = sampleInstanceDto.getSampleInstance().getLibraryName();
             libraryCreationDate = dateFormat.format(sampleInstanceDto.getSampleInstance().getLibraryCreationDate());
         }
         else {
@@ -545,10 +551,6 @@ public class ZimsIlluminaRunFactory {
                         String[] referenceSequenceValues = referenceSequenceKeys.iterator().next().split("\\|");
                         referenceSequence = referenceSequenceValues[0];
                         referenceSequenceVersion = referenceSequenceValues[1];
-                        if (ReferenceSequence.NO_REFERENCE_SEQUENCE.equals(referenceSequence)) {
-                            referenceSequence = null;
-                            referenceSequenceVersion = null;
-                        }
                         aggregationDataType = aggregationDataTypes.iterator().next();
                         if (positiveControlProjects.size() == 1) {
                             positiveControlProject = positiveControlProjects.iterator().next();
@@ -565,9 +567,6 @@ public class ZimsIlluminaRunFactory {
             }
         }
 
-        // default to the passed in bait name, but override if there is product specified version.
-        String bait = baitName;
-
         // These items are pulled off the project, product, or SampleInstanceEntity.
         String aligner = null;
         Boolean analyzeUmi = sampleInstanceDto.sampleInstance.getUmisPresent();
@@ -580,6 +579,7 @@ public class ZimsIlluminaRunFactory {
             expectedInsertSize = sampleInstanceDto.sampleInstance.getExpectedInsertSize();
         }
         String aggregationParticle = sampleInstanceDto.sampleInstance.getAggregationParticle();
+        Boolean isImpliedSampleName = sampleInstanceDto.sampleInstance.getImpliedSampleName();
         if (aggregationDataType == null) {
             aggregationDataType = sampleInstanceDto.sampleInstance.getAggregationDataType();
         }
@@ -587,6 +587,8 @@ public class ZimsIlluminaRunFactory {
             referenceSequence = sampleInstanceDto.sampleInstance.getReferenceSequence().getName();
             referenceSequenceVersion = sampleInstanceDto.sampleInstance.getReferenceSequence().getVersion();
         }
+
+        String bait = baitName;
 
         if (productOrder != null) {
             Product product = productOrder.getProduct();
@@ -599,7 +601,6 @@ public class ZimsIlluminaRunFactory {
             if (analysisType == null) {
                 analysisType = product.getAnalysisTypeKey();
             }
-            // If there was no bait on the actual samples, use the one defined on the product or pdo if unlocked.
             if (bait == null) {
                 bait = productOrder.getReagentDesignKey();
             }
@@ -621,6 +622,9 @@ public class ZimsIlluminaRunFactory {
             referenceSequence = null;
             referenceSequenceVersion = null;
         }
+        if (AnalysisType.NO_ANALYSIS.equals(analysisType)) {
+            analysisType = null;
+        }
 
         List<SubmissionMetadata> submissionMetadataList = new ArrayList<>();
             if (workflowMetadata != null) {
@@ -639,7 +643,7 @@ public class ZimsIlluminaRunFactory {
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
                 catNames, productOrder, lcSet, sampleData, labWorkflow, libraryCreationDate, pdoSampleName,
                 metadataSourceForPipelineAPI, aggregationDataType, jiraService, submissionMetadataList,
-                Boolean.TRUE.equals(analyzeUmi), aggregationParticle);
+                Boolean.TRUE.equals(analyzeUmi), aggregationParticle, Boolean.TRUE.equals(isImpliedSampleName));
         if (isCrspLane) {
             crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, bait);
         }

@@ -121,9 +121,8 @@ public class Bucket {
      */
     public BucketEntry addEntry(ProductOrder productOrder, LabVessel vessel, BucketEntry.BucketEntryType entryType,
                                 Date date) {
-        int productOrderRanking = getBucketEntries().size() + 1;
         BucketEntry newEntry =
-                new BucketEntry(vessel, productOrder, this, entryType, productOrderRanking, date);
+                new BucketEntry(vessel, productOrder, this, entryType, date);
         bucketEntries.add(newEntry);
         vessel.addBucketEntry(newEntry);
         return newEntry;

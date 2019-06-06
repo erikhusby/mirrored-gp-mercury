@@ -31,7 +31,10 @@ import java.util.stream.Collectors;
 public class GeminiPlateProcessor extends TableProcessor {
 
     private static final String GROUP_PREFIX = "Group: ";
-    private static final Pattern BARCODE_PATTERN = Pattern.compile(GROUP_PREFIX + "([0-9,]+)");
+
+    // Duplicate BC will contain a (1) at the end for the bottom half of the quadrant (b1, b2, ...)
+    private static final Pattern BARCODE_PATTERN = Pattern.compile(GROUP_PREFIX + "([0-9,]+)\\(*[0-9]*\\)*");
+    private static final String UNKNOWNS_GROUP = "Group: Unknowns_NoDiln";
     public static final String DATE_PREFIX = "Original Filename: .*; Date Last Saved: ";
     public static final String DATE_REGEX = DATE_PREFIX + "(.*)";
     private static final Pattern RUN_START_PATTERN = Pattern.compile(DATE_REGEX);
@@ -96,6 +99,14 @@ public class GeminiPlateProcessor extends TableProcessor {
                     GeminiPlateProcessor plateProcessor =
                             fetchPlateWellResultsForPlate(plateBarcodes, sheet, row.getRowNum());
                     results.add(plateProcessor);
+                } else if (UNKNOWNS_GROUP.matches(cell.getStringCellValue())) {
+                    // Initial Pico Protocol is being run which has plate barcode column
+                    row = rowIterator.next();
+                    GeminiPlateProcessor geminiPlateProcessor = new GeminiPlateProcessor(sheet, null, row.getRowNum());
+                    PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.emptyMap());
+                    parser.processRows(sheet, geminiPlateProcessor);
+                    results.add(geminiPlateProcessor);
+                    break;
                 }
             }
         }
@@ -147,7 +158,9 @@ public class GeminiPlateProcessor extends TableProcessor {
             }
 
             BigDecimal concentration = fetchConcentration(dataRow);
-
+            if (concentration.compareTo(BigDecimal.ZERO) < 0) {
+                concentration = BigDecimal.ZERO;
+            }
             String barcode = fetchBarcode(dataRow);
             if (barcode == null) {
                 addDataMessage("Failed to parse barcode.", dataRowIndex);
@@ -166,6 +179,9 @@ public class GeminiPlateProcessor extends TableProcessor {
      * Barcodes stored in duplicate on table or one per read.
      */
     private String fetchBarcode(Map<String, String> dataRow) {
+        if (barcodes == null) {
+            return StringUtils.leftPad(dataRow.get(Headers.PLATE_BARCODE.getText()), 12, '0');
+        }
         if (barcodes.size() == 1) {
             return barcodes.get(0);
         }
@@ -232,7 +248,8 @@ public class GeminiPlateProcessor extends TableProcessor {
         MEAN_CONC_WITH_BR("MeanConc with BR"),
         MEAN_CONC_WITH_HS("MeanConc with HS"),
         VALUES("Values"),
-        MEAN_RESULT("MeanResult");
+        MEAN_RESULT("MeanResult"),
+        PLATE_BARCODE("Plate Barcode");
 
         private final String text;
         private final boolean requiredHeader;
