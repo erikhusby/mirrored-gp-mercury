@@ -114,8 +114,13 @@ public class MayoManifestEjbTest extends Arquillian {
         bean.setMessageCollection(messageCollection);
         messageCollection.clearAll();
         mayoManifestEjb.pullAll(bean);
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
-        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
+        // This test should ignore errors and warnings about files put there by some other test or instance.
+        List<String> errors = messageCollection.getErrors().stream().
+                filter(msg -> msg.contains(packageId)).collect(Collectors.toList());
+        List<String> warnings = messageCollection.getWarnings().stream().
+                filter(msg -> msg.contains(packageId)).collect(Collectors.toList());
+        Assert.assertTrue(errors.isEmpty(), StringUtils.join(errors, "; "));
+        Assert.assertTrue(warnings.isEmpty(), StringUtils.join(warnings, "; "));
 
         // Compares manifest records to test data spreadsheet.
         ManifestSession manifestSession = manifestSessionDao.getSessionByPrefix(packageId);
@@ -125,8 +130,12 @@ public class MayoManifestEjbTest extends Arquillian {
         // Once a file is read it should not be read again.
         messageCollection.clearAll();
         mayoManifestEjb.pullAll(bean);
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
-        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
+        errors = messageCollection.getErrors().stream().
+                filter(msg -> msg.contains(packageId)).collect(Collectors.toList());
+        warnings = messageCollection.getWarnings().stream().
+                filter(msg -> msg.contains(packageId)).collect(Collectors.toList());
+        Assert.assertTrue(errors.isEmpty(), StringUtils.join(errors, "; "));
+        Assert.assertTrue(warnings.isEmpty(), StringUtils.join(warnings, "; "));
         ManifestSession manifestSession2 = manifestSessionDao.getSessionByPrefix(packageId);
         Assert.assertEquals(manifestSession, manifestSession2);
 
@@ -151,8 +160,12 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
         messageCollection.clearAll();
         mayoManifestEjb.pullAll(bean);
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors()));
-        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
+        errors = messageCollection.getErrors().stream().
+                filter(msg -> msg.contains(packageId)).collect(Collectors.toList());
+        warnings = messageCollection.getWarnings().stream().
+                filter(msg -> msg.contains(packageId)).collect(Collectors.toList());
+        Assert.assertTrue(errors.isEmpty(), StringUtils.join(errors, "; "));
+        Assert.assertTrue(warnings.isEmpty(), StringUtils.join(warnings, "; "));
         // A lookup should return the latest manifestSession, identified by a higher manifestSessionId
         messageCollection.clearAll();
         ManifestSession session3 = manifestSessionDao.getSessionByPrefix(packageId);
@@ -189,11 +202,14 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
         messageCollection.clearAll();
         mayoManifestEjb.pullAll(bean);
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        errors = messageCollection.getErrors().stream().
+                filter(msg -> msg.contains(packageId)).collect(Collectors.toList());
+        warnings = messageCollection.getWarnings().stream().
+                filter(msg -> msg.contains(packageId)).collect(Collectors.toList());
+        Assert.assertTrue(errors.isEmpty(), StringUtils.join(errors, "; "));
         // There should be a warning about the package being already linked.
-        Assert.assertTrue(messageCollection.getWarnings().contains(
-                String.format(MayoManifestEjb.SKIPPING_LINKED, filename5, packageId)),
-                StringUtils.join(messageCollection.getWarnings()));
+        Assert.assertTrue(warnings.contains(String.format(MayoManifestEjb.SKIPPING_LINKED, filename5, packageId)),
+                StringUtils.join(warnings, "; "));
         // There should not be a new manifestSession when looking up by packageId.
         messageCollection.clearAll();
         Assert.assertEquals(manifestSessionDao.getSessionByPrefix(packageId).getManifestSessionId(),
@@ -500,10 +516,14 @@ public class MayoManifestEjbTest extends Arquillian {
         adminBean.setMessageCollection(messageCollection);
         messageCollection.clearAll();
         mayoManifestEjb.pullAll(adminBean);
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
-        Assert.assertTrue(messageCollection.getWarnings().contains(
-                String.format(MayoManifestEjb.SKIPPING_RECEIVED, filename, packageId)),
-                StringUtils.join(messageCollection.getWarnings()));
+        // This test should ignore errors and warnings about files put there by some other test or instance.
+        List<String> errors = messageCollection.getErrors().stream().
+                filter(msg -> msg.contains(packageId)).collect(Collectors.toList());
+        List<String> warnings = messageCollection.getWarnings().stream().
+                filter(msg -> msg.contains(packageId)).collect(Collectors.toList());
+        Assert.assertTrue(errors.isEmpty(), StringUtils.join(errors, "; "));
+        Assert.assertTrue(warnings.contains(String.format(MayoManifestEjb.SKIPPING_RECEIVED, filename, packageId)),
+                StringUtils.join(warnings, "; "));
         Assert.assertEquals(manifestSessionDao.getSessionByPrefix(packageId).getManifestSessionId(),
                 manifestSession.getManifestSessionId());
         Assert.assertTrue(manifestSessionDao.getSessionByPrefix(packageId).getRecords().isEmpty());
@@ -692,6 +712,7 @@ public class MayoManifestEjbTest extends Arquillian {
         String deliveryMethod = jiraFields.get("KitDeliveryMethod");
         Assert.assertTrue(deliveryMethod == null || deliveryMethod.equals("FedEx") ||
                         deliveryMethod.equals("Local Courier"), " Ticket " + ticketName);
+        Assert.assertTrue(jiraFields.get("Racks").contains(rackBarcode));
     }
 
     /** Extracts the Jira ticket field values and maps them by their JIRA_DEFINITION_MAP.key (not customfield_nnn) */

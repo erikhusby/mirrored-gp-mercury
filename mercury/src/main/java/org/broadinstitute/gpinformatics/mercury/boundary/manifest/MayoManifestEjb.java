@@ -107,7 +107,7 @@ public class MayoManifestEjb {
     public static final Map<String, CustomFieldDefinition> JIRA_DEFINITION_MAP =
             new HashMap<String, CustomFieldDefinition>() {{
                 put("MaterialTypeCounts", new CustomFieldDefinition("customfield_15660", "Material Type Counts", true));
-                put("Samples", new CustomFieldDefinition("customfield_12662", "Sample IDs", false));
+                put("Racks", new CustomFieldDefinition("customfield_18060", "Rack IDs", false));
                 put("ShipmentCondition", new CustomFieldDefinition("customfield_15661", "Shipment Condition", false));
                 put("TrackingNumber", new CustomFieldDefinition("customfield_15663", "Tracking Number", false));
                 put("KitDeliveryMethod", new CustomFieldDefinition("customfield_13767", "Kit Delivery Method", false));
@@ -811,9 +811,7 @@ public class MayoManifestEjb {
             if (StringUtils.isNotBlank(bean.getDeliveryMethod()) && !JIRA_NONE.equals(bean.getDeliveryMethod())) {
                 add(new CustomField(bean.getDeliveryMethod(), JIRA_DEFINITION_MAP.get("KitDeliveryMethod")));
             }
-            // todo emp change to "Racks" when Jira field is added.
-            add(new CustomField(JIRA_DEFINITION_MAP.get("Samples"), bean.getRackCount() + " Racks:\n" +
-                    bean.getRackBarcodeString()));
+            add(new CustomField(JIRA_DEFINITION_MAP.get("Racks"), bean.getRackBarcodeString()));
             add(new CustomField(JIRA_DEFINITION_MAP.get("RequestingPhysician"), " "));
             add(new CustomField(JIRA_DEFINITION_MAP.get("MaterialTypeCounts"), " "));
         }};
