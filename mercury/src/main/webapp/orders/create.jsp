@@ -1281,7 +1281,7 @@
                 url: "${ctxpath}/orders/order.action?openCustomView=",
                 data: {
                     'customizationJsonString': JSON.stringify(customizationValues),
-                    'quoteIdentifier':$j("#quote")
+                    'quoteIdentifier': $j("#quote").val()
                 },
                 datatype: 'html',
                 success: function (html) {
