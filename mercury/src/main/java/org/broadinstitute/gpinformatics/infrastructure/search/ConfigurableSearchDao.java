@@ -71,6 +71,8 @@ public class ConfigurableSearchDao extends GenericDao {
      * @param orderDirection               ASC or DSC (ignored if orderPath is null, otherwise required)
      * @return Hibernate criteria
      */
+    // Transaction is required to load BSP samples into a global temporary table
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public Criteria buildCriteria(
             ConfigurableSearchDefinition configurableSearchDefinition, SearchInstance searchInstance, String orderPath,
             String orderDirection) {

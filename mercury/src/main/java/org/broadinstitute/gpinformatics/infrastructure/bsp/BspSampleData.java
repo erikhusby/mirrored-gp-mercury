@@ -58,19 +58,10 @@ public class BspSampleData implements SampleData {
     public static final String COLLABORATOR_PARTICIPANT_ID = "collaboratorParticipantId";
     public static final String VOLUME = "volume";
     public static final String CONCENTRATION = "concentration";
-    public static final String PICO_DATE = "picoDate";
-    public static final String TOTAL = "total";
-    public static final String HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH = "hasSampleKitUploadRackscanMismatch";
-    public static final String COMPLETELY_BILLED = "completelyBilled";
-    public static final String PACKAGE_DATE = "packageDate";
-    public static final String RECEIPT_DATE = "receiptDate";
     public static final String SUPPORTS_NUMBER_OF_LANES = "supportsNumberOfLanes";
     public static final String JSON_RIN_KEY = "rin";
-    public static final String JSON_RQS_KEY = "rqs";
-    public static final String JSON_DV200_KEY = "dv200";
     public static final String SAMPLE_TYPE = "sampleType";
     public static final String MATERIAL_TYPE = "materialType";
-    public static final String SAMPLE_KIT_ID = "sampleKitId";
 
     private final Map<BSPSampleSearchColumn, String> columnToValue;
 

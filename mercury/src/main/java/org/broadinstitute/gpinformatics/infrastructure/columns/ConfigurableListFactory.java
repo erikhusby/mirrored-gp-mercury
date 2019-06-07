@@ -357,6 +357,9 @@ public class ConfigurableListFactory {
         List<ColumnTabulation> columnTabulations = new ArrayList<>();
         for (String columnName : columnNameList) {
             SearchTerm searchTerm = configurableSearchDef.getSearchTerm(columnName);
+            if (searchTerm == null) {
+                throw new RuntimeException("Failed to find " + columnName);
+            }
             columnTabulations.add(searchTerm);
             if (searchTerm.getJoinFetchPaths() != null) {
                 joinFetchPaths.addAll(searchTerm.getJoinFetchPaths());

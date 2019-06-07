@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -15,9 +16,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -34,14 +37,14 @@ import java.util.TreeSet;
 public enum DisplayExpression {
 
     // SampleInstance
-    ROOT_SAMPLE_ID(SampleInstanceV2.class, new SearchTerm.Evaluator<String>() {
+    ROOT_SAMPLE_ID("Root Sample ID", SampleInstanceV2.class, new SearchTerm.Evaluator<String>() {
         @Override
         public String evaluate(Object entity, SearchContext context) {
             SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
             return sampleInstanceV2.getRootOrEarliestMercurySampleName();
         }
     }),
-    ROOT_TUBE_BARCODE(SampleInstanceV2.class, new SearchTerm.Evaluator<Set<String>>() {
+    ROOT_TUBE_BARCODE("Root Tube Barcode", SampleInstanceV2.class, new SearchTerm.Evaluator<Set<String>>() {
         @Override
         public Set<String> evaluate(Object entity, SearchContext context) {
             SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
@@ -55,14 +58,14 @@ public enum DisplayExpression {
             return results;
         }
     }),
-    NEAREST_SAMPLE_ID(SampleInstanceV2.class, new SearchTerm.Evaluator<String>() {
+    NEAREST_SAMPLE_ID("Nearest Sample ID", SampleInstanceV2.class, new SearchTerm.Evaluator<String>() {
         @Override
         public String evaluate(Object entity, SearchContext context) {
             SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
             return sampleInstanceV2.getNearestMercurySampleName();
         }
     }),
-    LCSET(SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
+    LCSET("LCSET", SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
         @Override
         public List<String> evaluate(Object entity, SearchContext context) {
             SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
@@ -76,7 +79,7 @@ public enum DisplayExpression {
             return results;
         }
     }),
-    ARRAY(SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
+    ARRAY("ARRAY", SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
         @Override
         public List<String> evaluate(Object entity, SearchContext context) {
             SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
@@ -90,7 +93,7 @@ public enum DisplayExpression {
             return results;
         }
     }),
-    XTR(SampleInstanceV2.class, new SearchTerm.Evaluator<Set<String>>() {
+    XTR("XTR", SampleInstanceV2.class, new SearchTerm.Evaluator<Set<String>>() {
         @Override
         public Set<String> evaluate(Object entity, SearchContext context) {
             SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
@@ -104,7 +107,7 @@ public enum DisplayExpression {
             return results;
         }
     }),
-    PDO(SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
+    PDO("PDO", SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
         @Override
         public List<String> evaluate(Object entity, SearchContext context) {
             SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
@@ -116,7 +119,7 @@ public enum DisplayExpression {
             return results;
         }
     }),
-    PROCEED_IF_OOS(SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
+    PROCEED_IF_OOS("Proceed if OOS", SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
         @Override
         public List<String> evaluate(Object entity, SearchContext context) {
             SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
@@ -133,7 +136,7 @@ public enum DisplayExpression {
             return results;
         }
     }),
-    RESEARCH_PROJECT(SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
+    RESEARCH_PROJECT("Research Project", SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
         @Override
         public List<String> evaluate(Object entity, SearchContext context) {
             SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
@@ -148,7 +151,7 @@ public enum DisplayExpression {
             return results;
         }
     }),
-    REGULATORY_DESIGNATION(SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
+    REGULATORY_DESIGNATION("Regulatory Designation", SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
         @Override
         public List<String> evaluate(Object entity, SearchContext context) {
             List<String> results = new ArrayList<>();
@@ -171,7 +174,7 @@ public enum DisplayExpression {
             return results;
         }
     }),
-    PRODUCT_NAME(SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
+    PRODUCT_NAME("Product", SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
         @Override
         public List<String> evaluate(Object entity, SearchContext context) {
             SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
@@ -189,7 +192,7 @@ public enum DisplayExpression {
             return results;
         }
     }),
-    MOLECULAR_INDEX(SampleInstanceV2.class, new SearchTerm.Evaluator<String>() {
+    MOLECULAR_INDEX("Molecular Index", SampleInstanceV2.class, new SearchTerm.Evaluator<String>() {
         @Override
         public String evaluate(Object entity, SearchContext context) {
             SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
@@ -197,7 +200,7 @@ public enum DisplayExpression {
             return molecularIndexingScheme == null ? null : molecularIndexingScheme.getName();
         }
     }),
-    UNIQUE_MOLECULAR_IDENTIFIER(SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
+    UNIQUE_MOLECULAR_IDENTIFIER("Unique Molecular Identifier", SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
         @Override
         public List<String> evaluate(Object entity, SearchContext context) {
             List<String> results = new ArrayList<>();
@@ -208,7 +211,7 @@ public enum DisplayExpression {
             return results;
         }
     }),
-    BAIT_OR_CAT_NAME(SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
+    BAIT_OR_CAT_NAME("Bait/CAT Name", SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
         @Override
         public List<String> evaluate(Object entity, SearchContext context) {
             List<String> results = new ArrayList<>();
@@ -219,14 +222,14 @@ public enum DisplayExpression {
             return results;
         }
     }),
-    BAIT_REAGENTS(SampleInstanceV2.class, new SearchTerm.Evaluator<Set<DesignedReagent>>() {
+    BAIT_REAGENTS("Bait Reagents", SampleInstanceV2.class, new SearchTerm.Evaluator<Set<DesignedReagent>>() {
         @Override
         public Set<DesignedReagent> evaluate(Object entity, SearchContext context) {
             SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
             return sampleInstanceV2.getDesignReagents();
         }
     }),
-    METADATA(SampleInstanceV2.class, new SearchTerm.Evaluator<String>() {
+    METADATA(null, SampleInstanceV2.class, new SearchTerm.Evaluator<String>() {
         @Override
         public String evaluate(Object entity, SearchContext context) {
             SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
@@ -249,7 +252,7 @@ public enum DisplayExpression {
             return null;
         }
     }),
-    REAGENT_METADATA(Reagent.class, new SearchTerm.Evaluator<String>() {
+    REAGENT_METADATA(null, Reagent.class, new SearchTerm.Evaluator<String>() {
         @Override
         public String evaluate(Object entity, SearchContext context) {
             Reagent reagent = (Reagent) entity;
@@ -264,7 +267,7 @@ public enum DisplayExpression {
             return null;
         }
     }),
-    METADATA_SOURCE(SampleInstanceV2.class, new SearchTerm.Evaluator<String>() {
+    METADATA_SOURCE("Metadata Source", SampleInstanceV2.class, new SearchTerm.Evaluator<String>() {
         @Override
         public String evaluate(Object entity, SearchContext context) {
             SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
@@ -276,17 +279,17 @@ public enum DisplayExpression {
     }),
 
     // SampleData
-    STOCK_SAMPLE(SampleData.class, new SearchTerm.Evaluator<String>() {
+    STOCK_SAMPLE("Stock Sample ID", SampleData.class, new SearchTerm.Evaluator<String>() {
         @Override
         public String evaluate(Object entity, SearchContext context) {
             SampleData sampleData = (SampleData) entity;
             return sampleData.getStockSample();
         }
-    }),
-    COLLABORATOR_SAMPLE_ID(SampleData.class, new SearchTerm.Evaluator<String>() {
+    }, BSPSampleSearchColumn.STOCK_SAMPLE),
+    COLLABORATOR_SAMPLE_ID("Collaborator Sample ID", SampleData.class, new SearchTerm.Evaluator<String>() {
         @Override
         public String evaluate(Object entity, SearchContext context) {
-            
+
             SampleData sampleData = (SampleData) entity;
             String collaboratorsSampleName = "";
             if (!context.getUserBean().isViewer()) {
@@ -294,8 +297,8 @@ public enum DisplayExpression {
             }
             return collaboratorsSampleName;
         }
-    }),
-    COLLABORATOR_PARTICIPANT_ID(SampleData.class, new SearchTerm.Evaluator<String>() {
+    }, BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID),
+    COLLABORATOR_PARTICIPANT_ID("Collaborator Participant ID", SampleData.class, new SearchTerm.Evaluator<String>() {
         @Override
         public String evaluate(Object entity, SearchContext context) {
 
@@ -306,63 +309,72 @@ public enum DisplayExpression {
             }
             return collaboratorParticipantId;
         }
-    }),
-    SAMPLE_TYPE(SampleData.class, new SearchTerm.Evaluator<String>() {
+    }, BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID),
+    SAMPLE_TYPE("Tumor / Normal", SampleData.class, new SearchTerm.Evaluator<String>() {
         @Override
         public String evaluate(Object entity, SearchContext context) {
             SampleData sampleData = (SampleData) entity;
             return sampleData.getSampleType();
         }
-    }),
-    COLLECTION(SampleData.class, new SearchTerm.Evaluator<String>() {
+    }, BSPSampleSearchColumn.SAMPLE_TYPE),
+    COLLECTION("Collection", SampleData.class, new SearchTerm.Evaluator<String>() {
         @Override
         public String evaluate(Object entity, SearchContext context) {
             SampleData sampleData = (SampleData) entity;
             return sampleData.getCollection();
         }
-    }),
-    ORIGINAL_MATERIAL_TYPE(SampleData.class, new SearchTerm.Evaluator<String>() {
+    }, BSPSampleSearchColumn.COLLECTION),
+    ORIGINAL_MATERIAL_TYPE("Original Material Type", SampleData.class, new SearchTerm.Evaluator<String>() {
         @Override
         public String evaluate(Object entity, SearchContext context) {
             SampleData sampleData = (SampleData) entity;
             return sampleData.getOriginalMaterialType();
         }
-    }),
-    MATERIAL_TYPE(SampleData.class, new SearchTerm.Evaluator<String>() {
+    }, BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE),
+    MATERIAL_TYPE("Material Type", SampleData.class, new SearchTerm.Evaluator<String>() {
         @Override
         public String evaluate(Object entity, SearchContext context) {
             SampleData sampleData = (SampleData) entity;
             return sampleData.getMaterialType();
         }
-    }),
-    SPECIES(SampleData.class, new SearchTerm.Evaluator<String>() {
+    }, BSPSampleSearchColumn.MATERIAL_TYPE),
+    SPECIES("Species", SampleData.class, new SearchTerm.Evaluator<String>() {
         @Override
         public String evaluate(Object entity, SearchContext context) {
             SampleData sampleData = (SampleData) entity;
             return sampleData.getOrganism();
         }
-    }),
-    PATIENT(SampleData.class, new SearchTerm.Evaluator<String>() {
+    }, BSPSampleSearchColumn.SPECIES),
+    PATIENT("Participant ID", SampleData.class, new SearchTerm.Evaluator<String>() {
         @Override
         public String evaluate(Object entity, SearchContext context) {
             SampleData sampleData = (SampleData) entity;
             return sampleData.getPatientId();
         }
-    }),
-    GENDER(SampleData.class, new SearchTerm.Evaluator<String>() {
+    }, BSPSampleSearchColumn.PARTICIPANT_ID),
+    GENDER("Gender", SampleData.class, new SearchTerm.Evaluator<String>() {
         @Override
         public String evaluate(Object entity, SearchContext context) {
             SampleData sampleData = (SampleData) entity;
             return sampleData.getGender();
         }
-    });
+    }, BSPSampleSearchColumn.GENDER);
 
+    private final String columnName;
     private final Class<?> expressionClass;
     private final SearchTerm.Evaluator<?> evaluator;
+    // todo jmt the mapping between BspSampleData method and BSPSampleSearchColumn belongs in that package, not here.
+    private BSPSampleSearchColumn bspSampleSearchColumn;
 
-    DisplayExpression(Class<?> expressionClass, SearchTerm.Evaluator<?> evaluator) {
+    DisplayExpression(String columnName, Class<?> expressionClass, SearchTerm.Evaluator<?> evaluator) {
+        this.columnName = columnName;
         this.expressionClass = expressionClass;
         this.evaluator = evaluator;
+    }
+
+    DisplayExpression(String columnName, Class<SampleData> expressionClass, SearchTerm.Evaluator<?> evaluator, BSPSampleSearchColumn bspSampleSearchColumn) {
+        this(columnName, expressionClass, evaluator);
+        this.bspSampleSearchColumn = bspSampleSearchColumn;
     }
 
     public Class<?> getExpressionClass() {
@@ -373,8 +385,12 @@ public enum DisplayExpression {
         return evaluator;
     }
 
+    public BSPSampleSearchColumn getBspSampleSearchColumn() {
+        return bspSampleSearchColumn;
+    }
+
     /**
-     * Navigates from an entity in a row to the entity on which to evaulate an expression.  The list returned from
+     * Navigates from an entity in a row to the entity on which to evaluate an expression.  The list returned from
      * this must be ordered deterministically.
      * @param rowObject object from result row
      * @param expressionClass class against which expression will be evaluated
@@ -392,16 +408,8 @@ public enum DisplayExpression {
         } else if (OrmUtil.proxySafeIsInstance(rowObject, LabVessel.class) && expressionClass.isAssignableFrom(SampleData.class)) {
             // LabVessel to SampleData
             LabVessel labVessel = (LabVessel) rowObject;
-            List<MercurySample> mercurySamples = new ArrayList<>();
-            for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
-                if (mercurySample != null) {
-                    mercurySamples.add(mercurySample);
-                }
-            }
-
-            List<SampleData> results = mercurySampleToSampleData(context, mercurySamples);
-            return (List<T>) results;
+            List<MercurySample> mercurySamples = sampleInstancesToMercurySamples(labVessel.getSampleInstancesV2());
+            return (List<T>) mercurySampleToSampleData(context, mercurySamples);
 
         } else if (OrmUtil.proxySafeIsInstance(rowObject, LabEvent.class) && expressionClass.isAssignableFrom(SampleInstanceV2.class)) {
             // LabEvent to SampleInstance
@@ -412,15 +420,19 @@ public enum DisplayExpression {
             // LabEvent to SampleData
             LabEvent labEvent = (LabEvent) rowObject;
             Set<SampleInstanceV2> sampleInstances = labEventToSampleInstances(labEvent);
-
-            List<MercurySample> mercurySamples = new ArrayList<>();
-            for (SampleInstanceV2 sampleInstance : sampleInstances) {
-                MercurySample mercurySample = sampleInstance.getRootOrEarliestMercurySample();
-                if (mercurySample != null) {
-                    mercurySamples.add(mercurySample);
-                }
-            }
+            List<MercurySample> mercurySamples = sampleInstancesToMercurySamples(sampleInstances);
             return (List<T>) mercurySampleToSampleData(context, mercurySamples);
+
+        } else if (OrmUtil.proxySafeIsInstance(rowObject, LabMetric.class) && expressionClass.isAssignableFrom(SampleData.class)) {
+            // LabMetric to SampleData
+            LabMetric labMetric = (LabMetric) rowObject;
+            List<MercurySample> mercurySamples = sampleInstancesToMercurySamples(labMetric.getLabVessel().getSampleInstancesV2());
+            return (List<T>) mercurySampleToSampleData(context, mercurySamples);
+
+        } else if (OrmUtil.proxySafeIsInstance(rowObject, LabMetric.class) && expressionClass.isAssignableFrom(SampleInstanceV2.class)) {
+            // LabMetric to SampleInstance
+            LabMetric labMetric = (LabMetric) rowObject;
+            return (List<T>) new ArrayList<>(labMetric.getLabVessel().getSampleInstancesV2());
 
         } else if (OrmUtil.proxySafeIsInstance(rowObject, MercurySample.class) && expressionClass.isAssignableFrom(SampleInstanceV2.class)) {
             // MercurySample to SampleInstance
@@ -443,6 +455,18 @@ public enum DisplayExpression {
         }
     }
 
+    @NotNull
+    private static List<MercurySample> sampleInstancesToMercurySamples(Set<SampleInstanceV2> sampleInstances) {
+        List<MercurySample> mercurySamples = new ArrayList<>();
+        for (SampleInstanceV2 sampleInstance : sampleInstances) {
+            MercurySample mercurySample = sampleInstance.getRootOrEarliestMercurySample();
+            if (mercurySample != null) {
+                mercurySamples.add(mercurySample);
+            }
+        }
+        return mercurySamples;
+    }
+
 
     private static List<SampleData> mercurySampleToSampleData(SearchContext context, List<MercurySample> mercurySamples) {
         List<SampleData> results = new ArrayList<>();
@@ -456,7 +480,7 @@ public enum DisplayExpression {
         return results;
     }
 
-    private static <T> Set<SampleInstanceV2> labEventToSampleInstances(LabEvent labEvent) {
+    private static Set<SampleInstanceV2> labEventToSampleInstances(LabEvent labEvent) {
         LabVessel labVessel = labEvent.getInPlaceLabVessel();
         if (labVessel == null) {
             Set<LabVessel> labVessels;
@@ -481,4 +505,7 @@ public enum DisplayExpression {
             return labVessel.getSampleInstancesV2();
         }
     }
-}
+
+    public String getColumnName() {
+        return columnName;
+    }}

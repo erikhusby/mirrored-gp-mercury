@@ -8,12 +8,15 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGroupCollectionList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.AncestorLabMetricPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
+import org.broadinstitute.gpinformatics.infrastructure.columns.DisplayExpression;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabMetricSampleDataAddRowsListener;
+import org.broadinstitute.gpinformatics.infrastructure.columns.SampleDataFetcherAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -160,8 +163,11 @@ public class LabMetricSearchDefinition {
                     @Override
                     public Map<String, ConfigurableList.AddRowsListener> getAddRowsListeners() {
                         Map<String, ConfigurableList.AddRowsListener> listeners = new HashMap<>();
+                        // todo jmt collapse to one?
                         listeners.put(LabMetricSampleDataAddRowsListener.class.getSimpleName(),
                                 new LabMetricSampleDataAddRowsListener());
+                        listeners.put(SampleDataFetcherAddRowsListener.class.getSimpleName(),
+                                new SampleDataFetcherAddRowsListener());
                         return listeners;
                     }
                 });
@@ -515,7 +521,7 @@ public class LabMetricSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName(MultiRefTerm.BSP_PARTICIPANT.getTermRefName());
+        searchTerm.setName(MultiRefTerm.BSP_PARTICIPANT.getTermRefName()); // todo jmt
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public List<String> evaluate(Object entity, SearchContext context) {
@@ -714,7 +720,7 @@ public class LabMetricSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName(MultiRefTerm.BSP_MATERIAL.getTermRefName());
+        searchTerm.setName(MultiRefTerm.BSP_MATERIAL.getTermRefName()); // todo jmt
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
@@ -781,11 +787,12 @@ public class LabMetricSearchDefinition {
             SearchItem searchItem = new SearchItem("Fullfilled Samples - Work Request ID", "EQUALS", values);
             return runBspSearch(searchItem);
         });
-        SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList("metricsVessel", "mercurySamples" ));
-        criteriaPath.setPropertyName("sampleKey");
-        workRequestTerm.setCriteriaPaths(Collections.singletonList(criteriaPath));
+        SearchTerm.CriteriaPath sampleKeyCriteriaPath = new SearchTerm.CriteriaPath();
+        sampleKeyCriteriaPath.setCriteria(Arrays.asList("metricsVessel", "mercurySamples" ));
+        sampleKeyCriteriaPath.setPropertyName("sampleKey");
+        workRequestTerm.setCriteriaPaths(Collections.singletonList(sampleKeyCriteriaPath));
         searchTerms.add(workRequestTerm);
+        // todo jmt needs a display expression
 
         SearchTerm collectionTerm = new SearchTerm();
         collectionTerm.setName("Collection");
@@ -805,10 +812,7 @@ public class LabMetricSearchDefinition {
                         collect(Collectors.toList());
             }
         });
-        criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList("metricsVessel", "mercurySamples" ));
-        criteriaPath.setPropertyName("sampleKey");
-        collectionTerm.setCriteriaPaths(Collections.singletonList(criteriaPath));
+        collectionTerm.setCriteriaPaths(Collections.singletonList(sampleKeyCriteriaPath));
         collectionTerm.setNewDetachedCriteria(true);
 
         SearchTerm groupTerm = new SearchTerm();
@@ -834,13 +838,55 @@ public class LabMetricSearchDefinition {
                 return "NoHibernateCriteria";
             }
         });
+        // todo jmt are both terms being displayed as result columns?
         searchTerms.add(groupTerm);
+
+        SearchTerm collabSampleTerm = new SearchTerm();
+        collabSampleTerm.setName(DisplayExpression.COLLABORATOR_SAMPLE_ID.getColumnName());
+        collabSampleTerm.setExternalDataExpression(values -> {
+            SearchItem searchItem = new SearchItem("Collaborator Sample ID", "EQUALS", values);
+            return runBspSearch(searchItem);
+        });
+        collabSampleTerm.setCriteriaPaths(Collections.singletonList(sampleKeyCriteriaPath));
+        collabSampleTerm.setDisplayExpression(DisplayExpression.COLLABORATOR_SAMPLE_ID);
+        searchTerms.add(collabSampleTerm);
+
+        SearchTerm collabParticipantTerm = new SearchTerm();
+        collabParticipantTerm.setName(DisplayExpression.COLLABORATOR_PARTICIPANT_ID.getColumnName());
+        collabParticipantTerm.setExternalDataExpression(values -> {
+            SearchItem searchItem = new SearchItem("Collaborator Participant ID", "EQUALS", values);
+            return runBspSearch(searchItem);
+        });
+        collabParticipantTerm.setCriteriaPaths(Collections.singletonList(sampleKeyCriteriaPath));
+        collabParticipantTerm.setDisplayExpression(DisplayExpression.COLLABORATOR_PARTICIPANT_ID);
+        searchTerms.add(collabParticipantTerm);
+
+        // todo jmt break into groups: Sample Repository, Sample Processing
+        Set<String> termNames = searchTerms.stream().map(SearchTerm::getName).collect(Collectors.toSet());
+        for (DisplayExpression displayExpression : DisplayExpression.values()) {
+            String columnName = displayExpression.getColumnName();
+            if (columnName != null && !termNames.contains(columnName)) {
+                SearchTerm searchTerm = new SearchTerm();
+                searchTerm.setName(columnName);
+                searchTerm.setDisplayExpression(displayExpression);
+                BSPSampleSearchColumn bspSampleSearchColumn = displayExpression.getBspSampleSearchColumn();
+                if (bspSampleSearchColumn != null) {
+                    searchTerm.setAddRowsListenerHelper(new SearchTerm.Evaluator<Object>() {
+                        @Override
+                        public Object evaluate(Object entity, SearchContext context) {
+                            return bspSampleSearchColumn;
+                        }
+                    });
+                }
+                searchTerms.add(searchTerm);
+            }
+        }
 
         return searchTerms;
     }
 
     @NotNull
-    private List<Object> runBspSearch(SearchItem searchItem) {
+    private static List<Object> runBspSearch(SearchItem searchItem) {
         BSPConfig bspConfig = ServiceAccessUtility.getBean(BSPConfig.class);
         SearchManager searchManager = new SearchManager(bspConfig.getHost(), bspConfig.getPort(),
                 bspConfig.getLogin(), bspConfig.getPassword());

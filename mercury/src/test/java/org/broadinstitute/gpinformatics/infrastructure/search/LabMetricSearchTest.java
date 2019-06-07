@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -28,6 +29,9 @@ public class LabMetricSearchTest extends Arquillian {
     @Inject
     private UserTransaction userTransaction;
 
+    @Inject
+    private UserBean userBean;
+
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
@@ -44,9 +48,24 @@ public class LabMetricSearchTest extends Arquillian {
         searchValue.setValues(Collections.singletonList("WR-49038"));
 
         searchInstance.getPredefinedViewColumns().add("Nearest Sample ID");
+        searchInstance.getPredefinedViewColumns().add("Participant ID");
+        searchInstance.getPredefinedViewColumns().add("Collaborator Sample ID");
+        searchInstance.getPredefinedViewColumns().add("Collaborator Participant ID");
+//        searchInstance.getPredefinedViewColumns().add("Sample Kit WR ID");
+//        searchInstance.getPredefinedViewColumns().add("PICO ticket");
+        searchInstance.getPredefinedViewColumns().add("Original Material Type");
+        searchInstance.getPredefinedViewColumns().add("Material Type");
+        searchInstance.getPredefinedViewColumns().add("Tumor / Normal");
+        searchInstance.getPredefinedViewColumns().add("Root Sample ID");
+//        searchInstance.getPredefinedViewColumns().add("PM");
+        searchInstance.getPredefinedViewColumns().add("Volume");
         searchInstance.getPredefinedViewColumns().add("Metric Value");
+        searchInstance.getPredefinedViewColumns().add("Metric Total ng");
 
         searchInstance.establishRelationships(searchDef);
+        SearchContext evalContext = new SearchContext();
+        evalContext.setUserBean(userBean);
+        searchInstance.setEvalContext(evalContext);
         userTransaction.begin();
         ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
                 searchInstance, searchDef, null, 0, null, "DSC", entityName);
