@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -288,7 +289,7 @@ public class BucketEntryDaoTest extends StubbyContainerTest {
     }
 
     @Test
-    public void testFindDuplicate() {
+    public void testFindDuplicate() throws SAPInterfaceException {
 
         BarcodedTube vesselToDupe = tubeDao.findByBarcode(barcodeKey);
         ProductOrder testDupeOrder = productOrderDao.findByBusinessKey(testPoBusinessKey + "dupe");
@@ -341,7 +342,7 @@ public class BucketEntryDaoTest extends StubbyContainerTest {
     }
 
     @Test
-    public void testUpdateEntry() {
+    public void testUpdateEntry() throws SAPInterfaceException {
 
         BarcodedTube foundVessel = tubeDao.findByBarcode(barcodeKey);
 

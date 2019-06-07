@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentra
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
@@ -298,7 +299,7 @@ public class WorkflowTest {
     }
 
     @Test
-    public void testExtractionBucketWithExtractionAddOn() {
+    public void testExtractionBucketWithExtractionAddOn() throws SAPInterfaceException {
         BarcodedTube barcodedTube = new BarcodedTube("00001234");
         MercurySample mercurySample = createNewMercurySample("SM-1234", MaterialType.CELLS_PELLET_FROZEN,
                 MercurySample.MetadataSource.MERCURY);
@@ -349,7 +350,7 @@ public class WorkflowTest {
     }
 
     @Test
-    public void testExtractionBucketWithWrongMaterialTypeButHasExtractionAddOn() {
+    public void testExtractionBucketWithWrongMaterialTypeButHasExtractionAddOn() throws SAPInterfaceException {
         BarcodedTube barcodedTube = new BarcodedTube("00001234");
         MercurySample mercurySample = createNewMercurySample("SM-1234", MaterialType.DNA,
                 MercurySample.MetadataSource.MERCURY);
@@ -371,7 +372,7 @@ public class WorkflowTest {
     }
 
     @Test
-    public void testExtractionBucketWithWrongMaterialTypeAndWrongExtractionAddOn() {
+    public void testExtractionBucketWithWrongMaterialTypeAndWrongExtractionAddOn() throws SAPInterfaceException {
         BarcodedTube barcodedTube = new BarcodedTube("00001234");
         MercurySample mercurySample = createNewMercurySample("SM-1234", MaterialType.DNA,
                 MercurySample.MetadataSource.MERCURY);
@@ -529,7 +530,7 @@ public class WorkflowTest {
         assertThat(actualValues, contains(expectedValues.toArray()));
     }
 
-    public void testFindParentWorkflowAddonsWithWorkflow() {
+    public void testFindParentWorkflowAddonsWithWorkflow() throws SAPInterfaceException {
         List<ProductWorkflowDef> productWorkflowDefs = workflowConfig.getProductWorkflowDefs();
         List<String> expectedValues = new ArrayList<>(productWorkflowDefs.size());
         List<String> actualValues = new ArrayList<>(productWorkflowDefs.size());

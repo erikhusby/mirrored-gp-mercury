@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
@@ -51,7 +52,8 @@ public class LabBatchTestUtils {
     }
 
     protected Bucket putTubesInSpecificBucket(String bucketName, BucketEntry.BucketEntryType bucketEntryType,
-                                                     LinkedHashMap<String, BarcodedTube> mapBarcodeToTube) {
+                                              LinkedHashMap<String, BarcodedTube> mapBarcodeToTube)
+        throws SAPInterfaceException {
         Bucket bucket = initializeBucket(bucketName);
 
         ProductOrder stubTestPDO = ProductOrderTestFactory.createDummyProductOrder(LabBatchEJBTest.STUB_TEST_PDO_KEY);

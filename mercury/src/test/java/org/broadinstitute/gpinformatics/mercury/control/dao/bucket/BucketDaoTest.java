@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProj
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderTest;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -98,7 +99,7 @@ public class BucketDaoTest extends StubbyContainerTest {
     }
 
     @Test
-    public void testUpdateBucket() {
+    public void testUpdateBucket() throws SAPInterfaceException {
 
         Bucket retrievedBucket = bucketDao.findByName(extractionTestBucketName);
         ProductOrder testOrder = ProductOrderTestFactory.createDummyProductOrder();

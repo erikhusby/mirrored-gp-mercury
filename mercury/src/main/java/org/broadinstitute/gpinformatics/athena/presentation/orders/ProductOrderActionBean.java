@@ -2099,7 +2099,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         try {
             editOrder.updateData(project, product, addOnProducts, stringToSampleListExisting(sampleList));
-        } catch (InvalidProductException e) {
+        } catch (InvalidProductException | SAPInterfaceException e) {
             addGlobalValidationError(e.getMessage());
         }
 

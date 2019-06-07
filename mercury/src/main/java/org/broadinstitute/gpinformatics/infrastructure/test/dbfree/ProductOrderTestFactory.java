@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 
@@ -77,8 +78,11 @@ public class ProductOrderTestFactory {
                         PriceItem.NAME_STANDARD_WHOLE_EXOME+dummyAddOnProduct.getPartNumber());
         dummyAddOnProduct.setPrimaryPriceItem(exExAddOnPriceItem);
 
-
-        productOrder.updateAddOnProducts(Collections.singletonList(dummyAddOnProduct));
+        try {
+            productOrder.updateAddOnProducts(Collections.singletonList(dummyAddOnProduct));
+        } catch (SAPInterfaceException e) {
+            throw new RuntimeException(e);
+        }
 
         return productOrder;
 

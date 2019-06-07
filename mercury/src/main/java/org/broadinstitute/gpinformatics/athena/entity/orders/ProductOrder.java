@@ -46,6 +46,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.entity.quote.QuoteItem;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
@@ -353,7 +354,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      *
      * @return A new Product Order which has certain elements copied from the original order
      */
-    public static ProductOrder cloneProductOrder(ProductOrder toClone, boolean shareSapOrder) {
+    public static ProductOrder cloneProductOrder(ProductOrder toClone, boolean shareSapOrder) throws SAPInterfaceException {
 
         final ProductOrder cloned = new ProductOrder(toClone.getCreatedBy(),
                 "Clone " + toClone.getChildOrders().size() + ": " + toClone.getTitle(),
@@ -672,7 +673,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public void updateData(ResearchProject researchProject, Product product, List<Product> addOnProducts,
-                           List<ProductOrderSample> samples) throws InvalidProductException {
+                           List<ProductOrderSample> samples) throws InvalidProductException, SAPInterfaceException {
         updateAddOnProducts(addOnProducts);
         this.clearCustomPriceAdjustment();
         setProduct(product);
@@ -781,7 +782,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return ImmutableList.copyOf(addOns);
     }
 
-    public void updateAddOnProducts(List<Product> addOnList) {
+    public void updateAddOnProducts(List<Product> addOnList) throws SAPInterfaceException {
 
         //make the existing Addons Accessible in a map for later comparison
         Map<Product, ProductOrderAddOn> existingAddonMap = new HashMap<>();
@@ -805,8 +806,18 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 if (addOn.getSapMaterials() != null && (addOn.isClinicalProduct() || addOn.isExternalOnlyProduct())) {
                     final ProductOrderAddOnPriceAdjustment customPriceAdjustment =
                             new ProductOrderAddOnPriceAdjustment();
-                    customPriceAdjustment.setAdjustmentValue(new BigDecimal(addOn.getSapMaterials().get(getOrderType().salesOrg).getBasePrice()));
+                    Map<String, SAPMaterial> sapMaterials = addOn.getSapMaterials();
+                    SAPMaterial sapMaterial=null;
+                    if (sapMaterials.containsKey(getOrderType().getSalesOrg())) {
+                        sapMaterial = sapMaterials.get(getOrderType().salesOrg);
+                    }
+                    if (sapMaterial == null) {
+                        throw new SAPInterfaceException(String.format("Addon '%s' has not been properly set up in SAP",
+                            addOn.getName()));
+                    }
+                    customPriceAdjustment.setAdjustmentValue(new BigDecimal(sapMaterial.getBasePrice()));
                     pdoAddOn.setCustomPriceAdjustment(customPriceAdjustment);
+
                 }
             }
             addOns.add(pdoAddOn);

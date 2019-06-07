@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
@@ -170,7 +171,7 @@ public class LabBatchEJBTest extends StubbyContainerTest {
     }
 
     @Test
-    public void testCreateLabBatchAndRemoveFromBucket() throws ValidationException {
+    public void testCreateLabBatchAndRemoveFromBucket() throws ValidationException, SAPInterfaceException {
         putTubesInBucket(BucketEntry.BucketEntryType.PDO_ENTRY);
 
         HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube.values());
@@ -210,7 +211,7 @@ public class LabBatchEJBTest extends StubbyContainerTest {
     }
 
     @Test
-    public void testCreateXTRLabBatchAndRemoveFromBucket() throws ValidationException {
+    public void testCreateXTRLabBatchAndRemoveFromBucket() throws ValidationException, SAPInterfaceException {
         this.bucket = labBatchTestUtils.putTubesInSpecificBucket(EXTRACTION_TO_DNA_BUCKET, BucketEntry.BucketEntryType.PDO_ENTRY,
                 mapBarcodeToTube);
 
@@ -250,7 +251,8 @@ public class LabBatchEJBTest extends StubbyContainerTest {
     }
 
     @Test
-    public void testCreateLabBatchAndRemoveFromBucketExistingTicket() throws ValidationException {
+    public void testCreateLabBatchAndRemoveFromBucketExistingTicket() throws ValidationException,
+        SAPInterfaceException {
         putTubesInBucket(BucketEntry.BucketEntryType.PDO_ENTRY);
 
         String expectedTicketId =
@@ -283,7 +285,7 @@ public class LabBatchEJBTest extends StubbyContainerTest {
     }
 
     @Test
-    public void testCreateXTRLabBatchAndRemoveFromBucketExistingTicket() throws ValidationException {
+    public void testCreateXTRLabBatchAndRemoveFromBucketExistingTicket() throws ValidationException, SAPInterfaceException {
         this.bucket = labBatchTestUtils.putTubesInSpecificBucket(EXTRACTION_TO_DNA_BUCKET, BucketEntry.BucketEntryType.PDO_ENTRY,
                 mapBarcodeToTube);
 
@@ -316,7 +318,7 @@ public class LabBatchEJBTest extends StubbyContainerTest {
         }
     }
 
-    private void putTubesInBucket(BucketEntry.BucketEntryType bucketEntryType) {
+    private void putTubesInBucket(BucketEntry.BucketEntryType bucketEntryType) throws SAPInterfaceException {
         bucket = labBatchTestUtils.putTubesInSpecificBucket(BUCKET_NAME, bucketEntryType,
                 mapBarcodeToTube);
     }
