@@ -4,6 +4,7 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Nonnull;
@@ -43,7 +44,8 @@ public class ProductDao extends GenericDao implements Serializable {
     public enum Availability {
         ALL,
         CURRENT,
-        CURRENT_OR_FUTURE
+        CURRENT_OR_FUTURE,
+        EXPIRED
     }
 
     public enum TopLevelOnly {
@@ -107,35 +109,41 @@ public class ProductDao extends GenericDao implements Serializable {
 
         for (String searchTerm : searchTerms) {
             Predicate searchTermsLike = cb.or(
-                    cb.like(cb.lower(productNameExpression), '%' + searchTerm.toLowerCase() + '%'),
-                    cb.like(cb.lower(partNumberExpression), '%' + searchTerm.toLowerCase() + '%')
+                cb.like(cb.lower(productNameExpression), '%' + searchTerm.toLowerCase() + '%'),
+                cb.like(cb.lower(partNumberExpression), '%' + searchTerm.toLowerCase() + '%')
             );
             predicateList.add(cb.and(searchTermsLike));
         }
 
         switch (availability) {
 
-            case CURRENT:
-                // there is an availability date
-                predicateList.add(cb.isNotNull(product.get(Product_.availabilityDate)));
-                // and it is in the past
-                predicateList.add(cb.lessThan(product.get(Product_.availabilityDate), Calendar.getInstance().getTime()));
+        case CURRENT:
+            // there is an availability date
+            predicateList.add(cb.isNotNull(product.get(Product_.availabilityDate)));
+            // and it is in the past
+            predicateList.add(cb.lessThan(product.get(Product_.availabilityDate), Calendar.getInstance().getTime()));
 
-                // fall through to get the discontinued date!
+            // fall through to get the discontinued date!
 
-            case CURRENT_OR_FUTURE:
+        case CURRENT_OR_FUTURE:
 
-                // the discontinued date is null or in the future
-                predicateList.add(
-                        cb.or( cb.isNull(product.get(Product_.discontinuedDate)),
-                                cb.greaterThan(product.get(Product_.discontinuedDate), Calendar.getInstance().getTime()))
-                );
+            // the discontinued date is null or in the future
+            predicateList.add(
+                cb.or(cb.isNull(product.get(Product_.discontinuedDate)),
+                    cb.greaterThan(product.get(Product_.discontinuedDate), Calendar.getInstance().getTime()))
+            );
 
-                break;
+            break;
 
-            case ALL:
-            default:
-                break;
+        case EXPIRED:
+            predicateList.add(
+                cb.lessThanOrEqualTo(product.get(Product_.discontinuedDate), DateUtils.getStartOfDay())
+            );
+            break;
+
+        case ALL:
+        default:
+            break;
 
         }
 
@@ -145,11 +153,11 @@ public class ProductDao extends GenericDao implements Serializable {
 
         if (includePDMOnly == IncludePDMOnly.NO) {
             predicateList.add(cb.equal(product.get(Product_.pdmOrderableOnly), false));
-        } else if(includePDMOnly == IncludePDMOnly.WITH_GP_PM) {
+        } else if (includePDMOnly == IncludePDMOnly.WITH_GP_PM) {
             predicateList.add(cb.or(cb.equal(product.get(Product_.pdmOrderableOnly), false),
-                    cb.and(cb.equal(product.get(Product_.pdmOrderableOnly), true),
-                            cb.equal(product.get(Product_.externalOnlyProduct), true))
-                    )
+                cb.and(cb.equal(product.get(Product_.pdmOrderableOnly), true),
+                    cb.equal(product.get(Product_.externalOnlyProduct), true))
+                )
             );
         }
 
