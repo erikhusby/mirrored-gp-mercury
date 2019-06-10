@@ -111,6 +111,7 @@ public class SampleInstanceEntitySearchDefinition {
                 SampleData::getCollaboratorParticipantId));
         terms.add(sampleDataEvaluator("Sex", Metadata.Key.GENDER, SampleData::getGender));
         terms.add(sampleDataEvaluator("Organism", Metadata.Key.SPECIES, SampleData::getOrganism));
+        terms.add(sampleDataEvaluator("Root Sample", Metadata.Key.ROOT_SAMPLE, SampleData::getRootSample));
         terms.add(sampleInstanceEntityEvaluator("Molecular Barcode Name", sampleInstanceEntity -> {
             MolecularIndexingScheme mis = sampleInstanceEntity.getMolecularIndexingScheme();
             return mis == null ? "" : mis.getName();
