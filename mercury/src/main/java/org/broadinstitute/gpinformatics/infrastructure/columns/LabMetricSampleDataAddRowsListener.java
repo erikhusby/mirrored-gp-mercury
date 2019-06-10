@@ -4,7 +4,6 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
-import org.broadinstitute.gpinformatics.infrastructure.search.LabMetricSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -30,8 +29,8 @@ public class LabMetricSampleDataAddRowsListener implements ConfigurableList.AddR
     private boolean shouldFetchFromBsp(Map<Integer,ColumnTabulation> columnTabulations ) {
         for (ColumnTabulation columnTabulation : columnTabulations.values()) {
             String name = columnTabulation.getName();
-            if (name.equals(LabMetricSearchDefinition.MultiRefTerm.BSP_MATERIAL.getTermRefName()) ||
-                    name.equals(LabMetricSearchDefinition.MultiRefTerm.BSP_PARTICIPANT.getTermRefName())) {
+            if (name.equals(DisplayExpression.ORIGINAL_MATERIAL_TYPE.getColumnName()) ||
+                    name.equals(DisplayExpression.COLLABORATOR_PARTICIPANT_ID.getColumnName())) {
                 return true;
             }
         }

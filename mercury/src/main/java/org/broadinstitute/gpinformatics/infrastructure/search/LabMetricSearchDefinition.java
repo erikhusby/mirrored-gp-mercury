@@ -72,9 +72,7 @@ public class LabMetricSearchDefinition {
     // TODO: JMS Create a shared interface that this implements then use this as a registry of all term names
     public enum MultiRefTerm {
         METRIC_RUN_ID("Metric Run ID"),
-        METRIC_TUBES_ONLY("Only Show Metrics for Tubes"),
-        BSP_PARTICIPANT("Collaborator Patient ID"),
-        BSP_MATERIAL("Original Material Type");
+        METRIC_TUBES_ONLY("Only Show Metrics for Tubes");
 
         MultiRefTerm(String termRefName ) {
             this.termRefName = termRefName;
@@ -124,12 +122,16 @@ public class LabMetricSearchDefinition {
         mapGroupSearchTerms.put("Vessels/Buckets", searchTerms);
 
         searchTerms = srchDef.buildLabMetricIds();
-        mapGroupSearchTerms.put("IDs", searchTerms);
+        mapGroupSearchTerms.put("Metric Attributes", searchTerms);
 
         searchTerms = srchDef.buildLabMetricMetadata();
-        mapGroupSearchTerms.put("Metadata", searchTerms);
+        mapGroupSearchTerms.put("Metric Metadata", searchTerms);
 
         mapGroupSearchTerms.put("BSP", buildBsp());
+        mapGroupSearchTerms.put("Sample Repository", listByType(mapGroupSearchTerms.values(),
+                DisplayExpression.ExpressionGroup.SAMPLE_REPOSITORY));
+        mapGroupSearchTerms.put("Sample Processing", listByType(mapGroupSearchTerms.values(),
+                DisplayExpression.ExpressionGroup.SAMPLE_PROCESSING));
 
         List<ConfigurableSearchDefinition.CriteriaProjection> criteriaProjections = new ArrayList<>();
 
@@ -521,27 +523,6 @@ public class LabMetricSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName(MultiRefTerm.BSP_PARTICIPANT.getTermRefName()); // todo jmt
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public List<String> evaluate(Object entity, SearchContext context) {
-                LabMetric labMetric = (LabMetric) entity;
-                List<String> patientIds = new ArrayList<>();
-                LabMetricSampleDataAddRowsListener rowsListener = (LabMetricSampleDataAddRowsListener) context.
-                        getRowsListener(LabMetricSampleDataAddRowsListener.class.getSimpleName());
-
-                for (SampleInstanceV2 sampleInstanceV2 : labMetric.getLabVessel().getSampleInstancesV2()) {
-                    for (MercurySample mercurySample : sampleInstanceV2.getRootMercurySamples()) {
-                        patientIds.add(rowsListener.getMapSampleIdToData().get(mercurySample.getSampleKey()).
-                                getCollaboratorParticipantId());
-                    }
-                }
-                return patientIds;
-            }
-        });
-        searchTerms.add(searchTerm);
-
-        searchTerm = new SearchTerm();
         searchTerm.setName("Volume");
         searchTerm.setValueType(ColumnValueType.TWO_PLACE_DECIMAL);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
@@ -633,109 +614,6 @@ public class LabMetricSearchDefinition {
                 } else {
                     return null;
                 }
-            }
-        });
-        searchTerms.add(searchTerm);
-
-        searchTerm = new SearchTerm();
-        searchTerm.setName("Root Sample ID");
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public List<String> evaluate(Object entity, SearchContext context) {
-                List<String> rootSampleIds = new ArrayList<>();
-                LabMetric labMetric = (LabMetric) entity;
-                for (SampleInstanceV2 sampleInstanceV2 : labMetric.getLabVessel().getSampleInstancesV2()) {
-                    rootSampleIds.add(sampleInstanceV2.getMercuryRootSampleName());
-                }
-
-                return rootSampleIds;
-            }
-        });
-        searchTerms.add(searchTerm);
-
-        searchTerm = new SearchTerm();
-        searchTerm.setName("Nearest Sample ID");
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public List<String> evaluate(Object entity, SearchContext context) {
-                List<String> results = new ArrayList<>();
-                LabMetric labMetric = (LabMetric) entity;
-                for (SampleInstanceV2 sampleInstanceV2 : labMetric.getLabVessel().getSampleInstancesV2()) {
-                    results.add(sampleInstanceV2.getNearestMercurySampleName());
-                }
-
-                return results;
-            }
-        });
-        searchTerms.add(searchTerm);
-
-        searchTerm = new SearchTerm();
-        searchTerm.setName("Product");
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Set<String> evaluate(Object entity, SearchContext context) {
-                LabMetric labMetric = (LabMetric) entity;
-                Set <String> results = new HashSet<>();
-                for (SampleInstanceV2 sampleInstanceV2: labMetric.getLabVessel().getSampleInstancesV2()) {
-                    ProductOrderSample pdoSampleForSingleBucket =
-                            sampleInstanceV2.getProductOrderSampleForSingleBucket();
-                    if (pdoSampleForSingleBucket == null) {
-                        for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
-                            if (productOrderSample.getProductOrder().getProduct() != null) {
-                                results.add(productOrderSample.getProductOrder().getProduct().getName());
-                            }
-                        }
-                    } else {
-                        results.add(pdoSampleForSingleBucket.getProductOrder().getProduct().getName());
-                    }
-                }
-                return results;
-            }
-        });
-        searchTerms.add(searchTerm);
-
-        searchTerm = new SearchTerm();
-        searchTerm.setName("Proceed if OOS");
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Set<String> evaluate(Object entity, SearchContext context) {
-                Set<String> results = new HashSet<>();
-                LabMetric labMetric = (LabMetric) entity;
-                for (SampleInstanceV2 sampleInstanceV2 : labMetric.getLabVessel().getSampleInstancesV2()) {
-                    List<ProductOrderSample> allProductOrderSamples = sampleInstanceV2.getAllProductOrderSamples();
-                    if (!allProductOrderSamples.isEmpty()) {
-                        ProductOrderSample productOrderSample = allProductOrderSamples.get(
-                                allProductOrderSamples.size() - 1);
-                        ProductOrderSample.ProceedIfOutOfSpec proceedIfOutOfSpec =
-                                productOrderSample.getProceedIfOutOfSpec();
-                        if (proceedIfOutOfSpec == null) {
-                            proceedIfOutOfSpec = ProductOrderSample.ProceedIfOutOfSpec.NO;
-                        }
-                        results.add(proceedIfOutOfSpec.getDisplayName());
-                    }
-                }
-                return results;
-            }
-        });
-        searchTerms.add(searchTerm);
-
-        searchTerm = new SearchTerm();
-        searchTerm.setName(MultiRefTerm.BSP_MATERIAL.getTermRefName()); // todo jmt
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Set<String> evaluate(Object entity, SearchContext context) {
-                LabMetric labMetric = (LabMetric) entity;
-                Set<String> materialTypes = new HashSet<>();
-                LabMetricSampleDataAddRowsListener rowsListener = (LabMetricSampleDataAddRowsListener) context.
-                        getRowsListener(LabMetricSampleDataAddRowsListener.class.getSimpleName());
-
-                for (SampleInstanceV2 sampleInstanceV2 : labMetric.getLabVessel().getSampleInstancesV2()) {
-                    for (MercurySample mercurySample : sampleInstanceV2.getRootMercurySamples()) {
-                        materialTypes.add(rowsListener.getMapSampleIdToData().get(mercurySample.getSampleKey()).
-                                getOriginalMaterialType());
-                    }
-                }
-                return materialTypes;
             }
         });
         searchTerms.add(searchTerm);
@@ -861,9 +739,15 @@ public class LabMetricSearchDefinition {
         collabParticipantTerm.setDisplayExpression(DisplayExpression.COLLABORATOR_PARTICIPANT_ID);
         searchTerms.add(collabParticipantTerm);
 
-        // todo jmt break into groups: Sample Repository, Sample Processing
-        Set<String> termNames = searchTerms.stream().map(SearchTerm::getName).collect(Collectors.toSet());
-        for (DisplayExpression displayExpression : DisplayExpression.values()) {
+        return searchTerms;
+    }
+
+    private List<SearchTerm> listByType(Collection<List<SearchTerm>> existingSearchTerms,
+                                        DisplayExpression.ExpressionGroup expressionGroup) {
+        List<SearchTerm> searchTerms = new ArrayList<>();
+        Set<String> termNames = existingSearchTerms.stream().flatMap(Collection::stream).map(SearchTerm::getName).
+                collect(Collectors.toSet());
+        for (DisplayExpression displayExpression : DisplayExpression.listByGroup(expressionGroup)) {
             String columnName = displayExpression.getColumnName();
             if (columnName != null && !termNames.contains(columnName)) {
                 SearchTerm searchTerm = new SearchTerm();
@@ -881,7 +765,6 @@ public class LabMetricSearchDefinition {
                 searchTerms.add(searchTerm);
             }
         }
-
         return searchTerms;
     }
 

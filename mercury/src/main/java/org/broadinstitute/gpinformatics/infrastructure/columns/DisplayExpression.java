@@ -389,6 +389,34 @@ public enum DisplayExpression {
         return bspSampleSearchColumn;
     }
 
+    public String getColumnName() {
+        return columnName;
+    }
+
+    public enum ExpressionGroup {
+        SAMPLE_REPOSITORY,
+        SAMPLE_PROCESSING
+    }
+
+    public static List<DisplayExpression> listByGroup(ExpressionGroup expressionGroup) {
+        List<DisplayExpression> displayExpressions = new ArrayList<>();
+        for (DisplayExpression displayExpression : DisplayExpression.values()) {
+            switch (expressionGroup) {
+            case SAMPLE_REPOSITORY:
+                if (displayExpression.getExpressionClass().equals(SampleData.class)) {
+                    displayExpressions.add(displayExpression);
+                }
+                break;
+            case SAMPLE_PROCESSING:
+                if (displayExpression.getExpressionClass().equals(SampleInstanceV2.class)) {
+                    displayExpressions.add(displayExpression);
+                }
+                break;
+            }
+        }
+        return displayExpressions;
+    }
+
     /**
      * Navigates from an entity in a row to the entity on which to evaluate an expression.  The list returned from
      * this must be ordered deterministically.
@@ -506,6 +534,4 @@ public enum DisplayExpression {
         }
     }
 
-    public String getColumnName() {
-        return columnName;
-    }}
+}
