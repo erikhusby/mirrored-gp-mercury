@@ -468,7 +468,7 @@ public class BspSampleData implements SampleData {
     }
 
     public String getPlasticBarcode() {
-        return getValue(BSPSampleSearchColumn.RACE);
+        return getValue(BSPSampleSearchColumn.MANUFACTURER_BARCODE);
     }
 
     /**
