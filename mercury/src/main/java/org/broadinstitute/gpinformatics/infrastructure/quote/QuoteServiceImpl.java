@@ -17,6 +17,7 @@ import javax.annotation.Nonnull;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
+import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -264,6 +265,10 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
         Quotes quotes;
         try {
             quotes = JaxRsUtils.getAndCheck(resource.request(MediaType.APPLICATION_XML), Quotes.class);
+        } catch (InternalServerErrorException e) {
+            String errorMessage = "Quote server not available " + url;
+            log.error(errorMessage, e);
+            throw new QuoteServerException(errorMessage);
         } catch (WebApplicationException e) {
             throw new QuoteNotFoundException("Could not find quotes for sequencing at " + url);
         }
@@ -299,15 +304,22 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
 
         final String ENCODING = "UTF-8";
 
+        String quoteUrl;
         try {
-            WebTarget resource = getJaxRsClient().target(url + URLEncoder.encode(id, ENCODING));
+            quoteUrl = url + URLEncoder.encode(id, ENCODING);
+            WebTarget resource = getJaxRsClient().target(quoteUrl);
 
             Quotes quotes = JaxRsUtils.getAndCheck(resource.request(MediaType.APPLICATION_XML), Quotes.class);
             if (! CollectionUtils.isEmpty(quotes.getQuotes())) {
                 quote = quotes.getQuotes().get(0);
             } else {
-                throw new QuoteNotFoundException("Could not find quote " + Encode.forHtml(id) + " at " + url);
+                String displayUrl = StringUtils.defaultIfBlank(quoteUrl, url);
+                throw new QuoteNotFoundException("Could not find quote " + Encode.forHtml(id) + " at " + displayUrl);
             }
+        } catch (InternalServerErrorException e) {
+            String errorMessage = "Quote server not available " + url;
+            log.error(errorMessage, e);
+            throw new QuoteServerException(errorMessage);
         } catch (WebApplicationException e) {
             throw new QuoteNotFoundException("Could not find quote " + Encode.forHtml(id) + " at " + url);
         } catch (UnsupportedEncodingException e) {
@@ -332,6 +344,10 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
         Quotes quotes;
         try {
             quotes = JaxRsUtils.getAndCheck(resource.request(MediaType.APPLICATION_XML), Quotes.class);
+        } catch (InternalServerErrorException e) {
+            String errorMessage = "Quote server not available " + url;
+            log.error(errorMessage, e);
+            throw new QuoteServerException(errorMessage);
         } catch (WebApplicationException e) {
             throw new QuoteNotFoundException("Could not find any quotes at " + url);
         }
@@ -362,6 +378,10 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
             GenericType<Document> document  = new GenericType<Document>() {};
             Document doc = JaxRsUtils.getAndCheck(resource.request(MediaType.APPLICATION_XML), document);
             return Funding.getFundingSet(doc);
+        } catch (InternalServerErrorException e) {
+            String errorMessage = "Quote server not available " + url;
+            log.error(errorMessage, e);
+            throw new QuoteServerException(errorMessage);
         } catch (WebApplicationException e) {
             throw new QuoteNotFoundException("Could not find any quotes at " + url);
         }
@@ -425,6 +445,10 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
             if(priceList == null) {
                 throw new QuoteServerException("No results returned when looking for price items :" + orderedPriceItemNames);
             }
+        } catch (InternalServerErrorException e) {
+            String errorMessage = "Quote server not available";
+            log.error(errorMessage, e);
+            throw new QuoteServerException(errorMessage);
         } catch (WebApplicationException e) {
             final String priceFindErrorMessage = "Could not find specific billing prices for the given work complete dates::";
             log.error(priceFindErrorMessage+urlString, e);
