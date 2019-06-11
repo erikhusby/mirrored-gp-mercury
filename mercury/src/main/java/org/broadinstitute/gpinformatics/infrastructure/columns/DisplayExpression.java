@@ -183,11 +183,11 @@ public enum DisplayExpression {
             if (pdoSampleForSingleBucket == null) {
                 for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
                     if (productOrderSample.getProductOrder().getProduct() != null) {
-                        results.add(productOrderSample.getProductOrder().getProduct().getDisplayName());
+                        results.add(productOrderSample.getProductOrder().getProduct().getName());
                     }
                 }
             } else {
-                results.add(pdoSampleForSingleBucket.getProductOrder().getProduct().getDisplayName());
+                results.add(pdoSampleForSingleBucket.getProductOrder().getProduct().getName());
             }
             return results;
         }

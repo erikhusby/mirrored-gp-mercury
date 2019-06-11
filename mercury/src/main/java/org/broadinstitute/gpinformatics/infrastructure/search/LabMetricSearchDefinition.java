@@ -72,7 +72,8 @@ public class LabMetricSearchDefinition {
     // TODO: JMS Create a shared interface that this implements then use this as a registry of all term names
     public enum MultiRefTerm {
         METRIC_RUN_ID("Metric Run ID"),
-        METRIC_TUBES_ONLY("Only Show Metrics for Tubes");
+        METRIC_TUBES_ONLY("Only Show Metrics for Tubes"),
+        BSP_PARTICIPANT("Collaborator Patient ID");
 
         MultiRefTerm(String termRefName ) {
             this.termRefName = termRefName;
@@ -726,7 +727,7 @@ public class LabMetricSearchDefinition {
             return runBspSearch(searchItem);
         });
         collabSampleTerm.setCriteriaPaths(Collections.singletonList(sampleKeyCriteriaPath));
-        collabSampleTerm.setDisplayExpression(DisplayExpression.COLLABORATOR_SAMPLE_ID);
+        initBspTerm(collabSampleTerm, DisplayExpression.COLLABORATOR_SAMPLE_ID);
         searchTerms.add(collabSampleTerm);
 
         SearchTerm collabParticipantTerm = new SearchTerm();
@@ -736,10 +737,26 @@ public class LabMetricSearchDefinition {
             return runBspSearch(searchItem);
         });
         collabParticipantTerm.setCriteriaPaths(Collections.singletonList(sampleKeyCriteriaPath));
-        collabParticipantTerm.setDisplayExpression(DisplayExpression.COLLABORATOR_PARTICIPANT_ID);
+        initBspTerm(collabParticipantTerm, DisplayExpression.COLLABORATOR_PARTICIPANT_ID);
         searchTerms.add(collabParticipantTerm);
 
+        // This is a display-only duplicate of collab PT ID, for backwards compatibility
+        SearchTerm collabPatientTerm = new SearchTerm();
+        collabPatientTerm.setName(MultiRefTerm.BSP_PARTICIPANT.getTermRefName());
+        initBspTerm(collabPatientTerm, DisplayExpression.COLLABORATOR_PARTICIPANT_ID);
+        searchTerms.add(collabPatientTerm);
+
         return searchTerms;
+    }
+
+    private void initBspTerm(SearchTerm collabPatientTerm, DisplayExpression displayExpression) {
+        collabPatientTerm.setDisplayExpression(displayExpression);
+        collabPatientTerm.setAddRowsListenerHelper(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, SearchContext context) {
+                return displayExpression.getBspSampleSearchColumn();
+            }
+        });
     }
 
     private List<SearchTerm> listByType(Collection<List<SearchTerm>> existingSearchTerms,
