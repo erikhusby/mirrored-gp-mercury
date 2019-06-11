@@ -20,6 +20,8 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -27,6 +29,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
@@ -142,6 +146,8 @@ public class LabBatchEjb {
     private BSPExportsService bspExportsService;
 
     private SequencingTemplateFactory sequencingTemplateFactory;
+
+    private AppConfig appConfig;
 
     private static final VesselPosition[] VESSEL_POSITIONS = {VesselPosition.LANE1, VesselPosition.LANE2,
             VesselPosition.LANE3, VesselPosition.LANE4, VesselPosition.LANE5, VesselPosition.LANE6,
@@ -935,6 +941,19 @@ public class LabBatchEjb {
                 throw new RuntimeException(e);
             }
         }
+
+        SearchContext context = new SearchContext();
+        context.setBaseSearchURL(appConfig.getHost());
+        Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
+
+        Map<String, String[]> terms = new HashMap<>();
+        terms.put("LCSET", new String[]{newBatch.getJiraTicket().getTicketName()});
+        CustomField mercuryUrlField = new CustomField(
+                submissionFields, LabBatch.TicketFields.MERCURY_UDS,
+                SearchDefinitionFactory.buildDrillDownLink(newBatch.getJiraTicket().getTicketName(),
+                        ColumnEntity.LAB_VESSEL, "LCSET Drill Down", terms, context));
+        jiraIssue.updateIssue(Collections.singleton(mercuryUrlField));
+
         return mapBarcodeToTube;
     }
 
@@ -1518,5 +1537,10 @@ public class LabBatchEjb {
     @Inject
     public void setSequencingTemplateFactory(SequencingTemplateFactory sequencingTemplateFactory) {
         this.sequencingTemplateFactory = sequencingTemplateFactory;
+    }
+
+    @Inject
+    public void setAppConfig(AppConfig appConfig) {
+        this.appConfig = appConfig;
     }
 }
