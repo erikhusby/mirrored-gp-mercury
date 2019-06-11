@@ -35,6 +35,12 @@ public class MathUtils {
                || (Math.abs(actual - expected) <= 5 * Math.ulp(expected));
     }
 
+    public static boolean isSame(BigDecimal actual, BigDecimal expected) {
+        return actual == null && expected == null ||
+                actual != null && expected != null &&
+                        scaleTwoDecimalPlaces(actual).equals(scaleTwoDecimalPlaces(expected));
+    }
+
     /**
      * Mercury uses a (semi) standard scaling of BigDecimal values to 2 decimal places.
      */

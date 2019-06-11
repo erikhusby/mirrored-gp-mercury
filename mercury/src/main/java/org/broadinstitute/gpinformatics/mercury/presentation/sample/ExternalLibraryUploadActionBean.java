@@ -15,30 +15,24 @@ import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.DataValidation;
+import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
-import org.broadinstitute.gpinformatics.infrastructure.parsers.HeaderValueRow;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.ReferenceSequenceDao;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor;
-import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorEzPass;
-import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorNewTech;
-import org.broadinstitute.gpinformatics.mercury.control.sample.VesselPooledTubesProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,13 +43,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @UrlBinding(value = "/sample/ExternalLibraryUpload.action")
 public class ExternalLibraryUploadActionBean extends CoreActionBean {
     private static final String SESSION_LIST_PAGE = "/sample/externalLibraryUpload.jsp";
     private static final String DOWNLOAD_TEMPLATE = "downloadTemplate";
-    public static final String ACCESSION = "uploadSamples";
+    private static final String UPLOAD = "upload";
     private boolean overWriteFlag;
 
     @Inject
@@ -64,41 +57,13 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
     @Inject
     private ProductDao productDao;
 
-    /**
-     * The types of spreadsheet that can be uploaded.
-     */
-    public enum SpreadsheetType {
-        PooledMultiOrganismLibraries("New Tech Libraries", ExternalLibraryProcessorNewTech.class),
-        EzPassLibraries("EZ Pass Libraries", ExternalLibraryProcessorEzPass.class),
-        PooledTubes("Pooled Dev Tubes", VesselPooledTubesProcessor.class);
-
-        private String displayName;
-        private Class processor;
-
-        SpreadsheetType(String displayName, Class processor) {
-            this.displayName = displayName;
-            this.processor = processor;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
-
-        public Class getProcessor() {
-            return processor;
-        }
-    }
-
-    @Validate(required = true, on = {ACCESSION, DOWNLOAD_TEMPLATE})
-    private SpreadsheetType spreadsheetType;
-
     @Inject
     private ReferenceSequenceDao referenceSequenceDao;
 
     @Inject
     private SampleInstanceEjb sampleInstanceEjb;
 
-    @Validate(required = true, on = {ACCESSION})
+    @Validate(required = true, on = {UPLOAD})
     private FileBean samplesSpreadsheet;
 
     @DefaultHandler
@@ -107,7 +72,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
-    @HandlesEvent(ACCESSION)
+    @HandlesEvent(UPLOAD)
     public Resolution accession() {
         InputStream inputStream = null;
         try {
@@ -116,54 +81,30 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
             addMessage("Cannot upload spreadsheet: " + e);
         }
 
-        Class processorClass = spreadsheetType.getProcessor();
-        ExternalLibraryProcessor processor;
-        try {
-            processor = (ExternalLibraryProcessor) processorClass.getConstructor().newInstance();
-        } catch (Exception e) {
-            throw new RuntimeException("Cannot instantiate " + processorClass.getCanonicalName() + ": " + e);
-        }
-
+        ExternalLibraryProcessor processor = new ExternalLibraryProcessor();
         MessageCollection messageCollection = new MessageCollection();
         sampleInstanceEjb.doExternalUpload(inputStream, overWriteFlag, processor, messageCollection, null);
         addMessages(messageCollection);
+        setOverWriteFlag(false);
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
     @HandlesEvent(DOWNLOAD_TEMPLATE)
     public Resolution template() {
-        HeaderValueRow[] headerValueRows = null;
-        ColumnHeader[] columnHeaders;
-        if (spreadsheetType.getProcessor().equals(VesselPooledTubesProcessor.class)) {
-            columnHeaders = VesselPooledTubesProcessor.Headers.values();
-        } else if (spreadsheetType.getProcessor().equals(ExternalLibraryProcessorEzPass.class)) {
-            headerValueRows = ExternalLibraryProcessorEzPass.HeaderValueRows.values();
-            columnHeaders = ExternalLibraryProcessorEzPass.Headers.values();
-        } else if (spreadsheetType.getProcessor().equals(ExternalLibraryProcessorNewTech.class)) {
-            headerValueRows = ExternalLibraryProcessorNewTech.HeaderValueRows.values();
-            columnHeaders = ExternalLibraryProcessorNewTech.Headers.values();
-        } else {
-            throw new RuntimeException("Unsupported processor type: " +
-                    spreadsheetType.getProcessor().getCanonicalName());
-        }
         try {
-            ByteArrayOutputStream stream = templateSpreadsheet(headerValueRows, columnHeaders);
+            ByteArrayOutputStream stream = templateSpreadsheet(ExternalLibraryProcessor.Headers.values());
             final byte[] bytes = stream.toByteArray();
             IOUtils.closeQuietly(stream);
 
-            Resolution resolution = new Resolution() {
-                @Override
-                public void execute(HttpServletRequest request, HttpServletResponse response) throws Exception {
-                    response.setContentType("application/ms-excel");
-                    response.setContentLength(bytes.length);
-                    response.setHeader("Expires:", "0"); // eliminates browser caching
-                    response.setHeader("Content-Disposition", "attachment; filename=testxls.xls");
-                    OutputStream outStream = response.getOutputStream();
-                    outStream.write(bytes);
-                    outStream.flush();
-                }
+            return (request, response) -> {
+                response.setContentType("application/ms-excel");
+                response.setContentLength(bytes.length);
+                response.setHeader("Expires:", "0"); // eliminates browser caching
+                response.setHeader("Content-Disposition", "attachment; filename=testxls.xls");
+                OutputStream outStream = response.getOutputStream();
+                outStream.write(bytes);
+                outStream.flush();
             };
-            return resolution;
 
         } catch (IOException e) {
             addMessage("Cannot generate spreadsheet: " + e.toString());
@@ -174,38 +115,29 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
     /**
      * Makes a template spreadsheet containing headers.
      */
-    private ByteArrayOutputStream templateSpreadsheet(HeaderValueRow[] headerValues, ColumnHeader[] columnHeaders)
-            throws IOException {
+    private ByteArrayOutputStream templateSpreadsheet(ColumnHeader[] columnHeaders) throws IOException {
 
         // Makes data for the dropdown lists.
         String[] validAnalysisTypes = analysisTypeDao.findAll().stream().
                 map(AnalysisType::getBusinessKey).
                 sorted().
-                collect(Collectors.toList()).toArray(new String[0]);
+                toArray(String[]::new);
         String[] validReferenceSequence = referenceSequenceDao.findAllCurrent().stream().
                 map(ReferenceSequence::getName).
                 sorted().
-                collect(Collectors.toList()).toArray(new String[0]);
-        String[] validSequencingTechnology = Arrays.asList(IlluminaFlowcell.FlowcellType.values()).stream().
-                filter(flowcellType -> flowcellType.getCreateFct() == IlluminaFlowcell.CreateFct.YES).
-                map(flowcellType -> SampleInstanceEjb.makeSequencerValue(flowcellType)).
-                sorted().
-                collect(Collectors.toList()).toArray(new String[0]);
+                toArray(String[]::new);
+        String[] validSequencingTechnology = IlluminaFlowcell.FlowcellType.getExternalUiNames().toArray(new String[0]);
         String[] validAggregationDataTypes = (
                 new ArrayList<String>() {{
                     add("");
                     addAll(productDao.findAggregationDataTypes());
                 }}).toArray(new String[0]);
 
-        // Makes the fixed up header names for the drowdown columns.
-        String dataAnalysisTypeHeader = ExternalLibraryProcessor.fixupHeaderName(
-                ExternalLibraryProcessorNewTech.Headers.DATA_ANALYSIS_TYPE.getText());
-        String referenceSequenceHeader = ExternalLibraryProcessor.fixupHeaderName(
-                ExternalLibraryProcessorNewTech.Headers.REFERENCE_SEQUENCE.getText());
-        String sequencingTechnologyHeader = ExternalLibraryProcessor.fixupHeaderName(
-                ExternalLibraryProcessorNewTech.Headers.SEQUENCING_TECHNOLOGY.getText());
-        String aggregationDataTypeHeader = ExternalLibraryProcessor.fixupHeaderName(
-                VesselPooledTubesProcessor.Headers.AGGREATION_DATA_TYPE.getText());
+        // Makes the header names for the drowdown columns.
+        String dataAnalysisTypeHeader = ExternalLibraryProcessor.Headers.DATA_ANALYSIS_TYPE.getText();
+        String referenceSequenceHeader = ExternalLibraryProcessor.Headers.REFERENCE_SEQUENCE.getText();
+        String sequencingTechnologyHeader = ExternalLibraryProcessor.Headers.SEQUENCING_TECHNOLOGY.getText();
+        String aggregationDataTypeHeader = ExternalLibraryProcessor.Headers.AGGREGATION_DATA_TYPE.getText();
 
         HSSFWorkbook workbook = new HSSFWorkbook();
         HSSFSheet sheet1 = workbook.createSheet("samples");
@@ -214,16 +146,19 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
 
         // Makes a mapping from type of data presence to the cell's background color.
         Map<ExternalLibraryProcessor.DataPresence, Short> colorMap = new HashMap<>();
-        colorMap.put(ExternalLibraryProcessor.DataPresence.REQUIRED, HSSFColor.RED.index);
-        colorMap.put(ExternalLibraryProcessor.DataPresence.ONCE_PER_TUBE, HSSFColor.PINK.index);
-        colorMap.put(ExternalLibraryProcessor.DataPresence.OPTIONAL, HSSFColor.TAN.index);
-        colorMap.put(ExternalLibraryProcessor.DataPresence.IGNORED, HSSFColor.GREY_25_PERCENT.index);
+        colorMap.put(ExternalLibraryProcessor.DataPresence.REQUIRED, HSSFColor.HSSFColorPredefined.RED.getIndex());
+        colorMap.put(ExternalLibraryProcessor.DataPresence.ONCE_PER_TUBE,
+                HSSFColor.HSSFColorPredefined.PINK.getIndex());
+        colorMap.put(ExternalLibraryProcessor.DataPresence.OPTIONAL, HSSFColor.HSSFColorPredefined.TAN.getIndex());
+        colorMap.put(ExternalLibraryProcessor.DataPresence.IGNORED,
+                HSSFColor.HSSFColorPredefined.GREY_25_PERCENT.getIndex());
         // Tweaks the colors for better appearance in Excel.
         HSSFPalette palette = workbook.getCustomPalette();
-        palette.setColorAtIndex(HSSFColor.RED.index, (byte)255, (byte)64, (byte)64);
-        palette.setColorAtIndex(HSSFColor.PINK.index, (byte)255, (byte)160, (byte)148);
-        palette.setColorAtIndex(HSSFColor.TAN.index, (byte)255, (byte)220, (byte)240);
-        palette.setColorAtIndex(HSSFColor.GREY_25_PERCENT.index, (byte)200, (byte)195, (byte)190);
+        palette.setColorAtIndex(HSSFColor.HSSFColorPredefined.RED.getIndex(), (byte)255, (byte)64, (byte)64);
+        palette.setColorAtIndex(HSSFColor.HSSFColorPredefined.PINK.getIndex(), (byte)255, (byte)160, (byte)148);
+        palette.setColorAtIndex(HSSFColor.HSSFColorPredefined.TAN.getIndex(), (byte)255, (byte)220, (byte)240);
+        palette.setColorAtIndex(HSSFColor.HSSFColorPredefined.GREY_25_PERCENT.getIndex(),
+                (byte)200, (byte)195, (byte)190);
 
         // Puts the dropdown list content in sheet2. This sheet only holds the lists of
         // possible values for dropdowns in sheet1, so its appearance is not important.
@@ -269,72 +204,18 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         sheet2.autoSizeColumn(AGG_DATATYPE_LIST_COLUMN);
 
         // Writes the color coded headers in sheet1.
-        int rowIndex = 0;
-        // A blank row.
-        sheet1.createRow(rowIndex++).createCell(0).setCellValue("");
-
-        // Writes rows of headerValue pairs, if any.
-        if (headerValues != null) {
-            for (HeaderValueRow headerValue : headerValues) {
-                Row row = sheet1.createRow(rowIndex++);
-                Cell cell = row.createCell(0);
-                cell.setCellValue(headerValue.getText());
-                // All the data in the header is currently ignored.
-                HSSFCellStyle style = workbook.createCellStyle();
-                style.setFillForegroundColor(colorMap.get(ExternalLibraryProcessor.DataPresence.IGNORED));
-                style.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
-                cell.setCellStyle(style);
-            }
-            sheet1.createRow(rowIndex++).createCell(0).setCellValue(""); //a blank row
-        }
-
-        // Writes the color coded headers in successive rows in a sheet1 column.
-        final int colorColumnIdx = 3;
-        final int maxColorRow = 5;
-        // Either uses the existing header-value rows, or creates some blank ones.
-        while(rowIndex < maxColorRow + 2) {
-            sheet1.createRow(rowIndex++);
-        }
-        int colorRowIdx = 1;
-        for (Pair<ExternalLibraryProcessor.DataPresence, String> pair : Arrays.asList(
-                Pair.of((ExternalLibraryProcessor.DataPresence)null, "Cell color indicates:"),
-                Pair.of(ExternalLibraryProcessor.DataPresence.REQUIRED, " Required "),
-                Pair.of(ExternalLibraryProcessor.DataPresence.ONCE_PER_TUBE, " Required Once per Tube "),
-                Pair.of(ExternalLibraryProcessor.DataPresence.OPTIONAL, " Optional "),
-                Pair.of(ExternalLibraryProcessor.DataPresence.IGNORED, " Ignored "))) {
-
-            HSSFCellStyle style = workbook.createCellStyle();
-            style.setBorderTop(colorRowIdx == 1 ? CellStyle.BORDER_THIN : CellStyle.BORDER_NONE);
-            style.setBorderTop(CellStyle.BORDER_NONE);
-            style.setBorderLeft(CellStyle.BORDER_THIN);
-            style.setBorderRight(CellStyle.BORDER_THIN);
-            style.setBorderBottom(CellStyle.BORDER_NONE);
-            if (pair.getLeft() != null) {
-                style.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
-                style.setFillForegroundColor(colorMap.get(pair.getLeft()));
-            }
-            Row row = sheet1.getRow(colorRowIdx++);
-            Cell cell = row.createCell(colorColumnIdx);
-            cell.setCellValue(pair.getRight());
-            cell.setCellStyle(style);
-        }
-        // Puts a border on the top and bottom color cells.
-        sheet1.getRow(1).getCell(colorColumnIdx).getCellStyle().setBorderTop(CellStyle.BORDER_THIN);
-        sheet1.getRow(colorRowIdx - 1).getCell(colorColumnIdx).getCellStyle().setBorderBottom(CellStyle.BORDER_THIN);
-
-        // A blank row.
-        sheet1.createRow(rowIndex++).createCell(0).setCellValue("");
 
         // Makes the style elements to be used with the header row cells.
         Map<ExternalLibraryProcessor.DataPresence, HSSFCellStyle> headerStyles = new HashMap<>();
         for (ExternalLibraryProcessor.DataPresence dataPresence : ExternalLibraryProcessor.DataPresence.values()) {
             HSSFCellStyle style = workbook.createCellStyle();
             style.setFillForegroundColor(colorMap.get(dataPresence));
-            style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+            style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             headerStyles.put(dataPresence, style);
         }
 
         // Writes a row of header names in cells colored according to the column header properties.
+        int rowIndex = 0;
         Row headerRow = sheet1.createRow(rowIndex++);
         Row dropdownRow = sheet1.createRow(rowIndex);
         int column = 0;
@@ -346,11 +227,12 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
                 cell.setCellValue(headerName);
 
                 ExternalLibraryProcessor.DataPresence dataPresence =
-                        ((ColumnHeader.Ignorable) columnHeader).getDataPresenceIndicator();
-                cell.setCellStyle(headerStyles.get(dataPresence));
-
-                // If this cell is reference sequence, analysis type, or sequencing technology,
-                // puts a dropdown lists of valid values in the corresponding cell of the next row.
+                        ((ColumnHeader.Ignorable)columnHeader).getDataPresenceIndicator();
+                if (headerStyles.containsKey(dataPresence)) {
+                    cell.setCellStyle(headerStyles.get(dataPresence));
+                }
+                // If this cell requires a categorical value, puts a dropdown lists of valid values
+                // in the corresponding cell of the next row.
                 Character referenceColumn = null;
                 int length = 0;
                 if (columnHeader.getText().equalsIgnoreCase(referenceSequenceHeader)) {
@@ -387,6 +269,30 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
                 ++column;
             }
         }
+
+        // A couple blank rows.
+        sheet1.createRow(rowIndex++).createCell(0).setCellValue("");
+        sheet1.createRow(rowIndex++).createCell(0).setCellValue("");
+
+        // Writes a color coding key.
+        int colorColumnIdx = 0;
+        for (Pair<ExternalLibraryProcessor.DataPresence, String> pair : Arrays.asList(
+                Pair.of((ExternalLibraryProcessor.DataPresence)null, "Header color indicates:"),
+                Pair.of(ExternalLibraryProcessor.DataPresence.REQUIRED, " Required value"),
+                Pair.of(ExternalLibraryProcessor.DataPresence.ONCE_PER_TUBE, " Required Once per Tube "),
+                Pair.of(ExternalLibraryProcessor.DataPresence.OPTIONAL, " Optional value"),
+                Pair.of((ExternalLibraryProcessor.DataPresence)null, "(please delete these rows before uploading)"))) {
+
+            HSSFCellStyle style = workbook.createCellStyle();
+            if (pair.getLeft() != null) {
+                style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                style.setFillForegroundColor(colorMap.get(pair.getLeft()));
+            }
+            Row row = sheet1.createRow(rowIndex++);
+            Cell cell = row.createCell(colorColumnIdx);
+            cell.setCellValue(pair.getRight());
+            cell.setCellStyle(style);
+        }
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         workbook.write(stream);
         return stream;
@@ -402,13 +308,5 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
 
     public boolean isOverWriteFlag() {
         return overWriteFlag;
-    }
-
-    public SpreadsheetType getSpreadsheetType() {
-        return spreadsheetType;
-    }
-
-    public void setSpreadsheetType(SpreadsheetType spreadsheetType) {
-        this.spreadsheetType = spreadsheetType;
     }
 }

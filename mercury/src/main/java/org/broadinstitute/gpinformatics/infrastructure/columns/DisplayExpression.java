@@ -8,7 +8,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -19,6 +21,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -215,6 +219,13 @@ public enum DisplayExpression {
             return results;
         }
     }),
+    BAIT_REAGENTS(SampleInstanceV2.class, new SearchTerm.Evaluator<Set<DesignedReagent>>() {
+        @Override
+        public Set<DesignedReagent> evaluate(Object entity, SearchContext context) {
+            SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
+            return sampleInstanceV2.getDesignReagents();
+        }
+    }),
     METADATA(SampleInstanceV2.class, new SearchTerm.Evaluator<String>() {
         @Override
         public String evaluate(Object entity, SearchContext context) {
@@ -234,6 +245,31 @@ public enum DisplayExpression {
                         return meta.getValue();
                     }
                 }
+            }
+            return null;
+        }
+    }),
+    REAGENT_METADATA(Reagent.class, new SearchTerm.Evaluator<String>() {
+        @Override
+        public String evaluate(Object entity, SearchContext context) {
+            Reagent reagent = (Reagent) entity;
+            SearchTerm searchTerm = context.getSearchTerm();
+            String metaName = searchTerm.getName();
+            Metadata.Key key = Metadata.Key.fromDisplayName(metaName);
+            for( Metadata meta : reagent.getMetadata()){
+                if( meta.getKey() == key ) {
+                    return meta.getValue();
+                }
+            }
+            return null;
+        }
+    }),
+    METADATA_SOURCE(SampleInstanceV2.class, new SearchTerm.Evaluator<String>() {
+        @Override
+        public String evaluate(Object entity, SearchContext context) {
+            SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
+            if (!sampleInstanceV2.isReagentOnly()) {
+                return sampleInstanceV2.getRootOrEarliestMercurySample().getMetadataSource().getDisplayName();
             }
             return null;
         }
@@ -290,6 +326,34 @@ public enum DisplayExpression {
         public String evaluate(Object entity, SearchContext context) {
             SampleData sampleData = (SampleData) entity;
             return sampleData.getOriginalMaterialType();
+        }
+    }),
+    MATERIAL_TYPE(SampleData.class, new SearchTerm.Evaluator<String>() {
+        @Override
+        public String evaluate(Object entity, SearchContext context) {
+            SampleData sampleData = (SampleData) entity;
+            return sampleData.getMaterialType();
+        }
+    }),
+    SPECIES(SampleData.class, new SearchTerm.Evaluator<String>() {
+        @Override
+        public String evaluate(Object entity, SearchContext context) {
+            SampleData sampleData = (SampleData) entity;
+            return sampleData.getOrganism();
+        }
+    }),
+    PATIENT(SampleData.class, new SearchTerm.Evaluator<String>() {
+        @Override
+        public String evaluate(Object entity, SearchContext context) {
+            SampleData sampleData = (SampleData) entity;
+            return sampleData.getPatientId();
+        }
+    }),
+    GENDER(SampleData.class, new SearchTerm.Evaluator<String>() {
+        @Override
+        public String evaluate(Object entity, SearchContext context) {
+            SampleData sampleData = (SampleData) entity;
+            return sampleData.getGender();
         }
     });
 
@@ -367,6 +431,13 @@ public enum DisplayExpression {
             }
             return (List<T>) new ArrayList<>(sampleInstances);
 
+        } else if (OrmUtil.proxySafeIsInstance(rowObject, MercurySample.class) && expressionClass.isAssignableFrom(SampleData.class)) {
+            MercurySample mercurySample = (MercurySample) rowObject;
+            return (List<T>) mercurySampleToSampleData(context, Collections.singletonList(mercurySample));
+
+        } else if (OrmUtil.proxySafeIsInstance(rowObject, Reagent.class)) {
+            Reagent reagent = (Reagent) rowObject;
+            return (List<T>) Arrays.asList(reagent);
         } else {
             throw new RuntimeException("Unexpected combination " + rowObject.getClass() + " to " + expressionClass);
         }

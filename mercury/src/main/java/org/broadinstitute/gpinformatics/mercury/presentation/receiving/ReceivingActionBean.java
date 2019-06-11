@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.control.vessel.BSPRestService;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
 
 import javax.inject.Inject;
@@ -91,6 +92,8 @@ public class ReceivingActionBean extends RackScanActionBean {
     private boolean showRackScan;
 
     private List<SampleData> sampleRows;
+
+    private Map<String, WellAndSourceTubeType> mapSampleToPositionAndBarcode;
 
     private List<Map<String, String>> sampleCollaboratorRows;
 
@@ -451,6 +454,18 @@ public class ReceivingActionBean extends RackScanActionBean {
                     BSPSampleSearchColumn.SAMPLE_KIT, BSPSampleSearchColumn.SAMPLE_STATUS);
 
             sampleRows = checkStatusOfSamples(mapIdToSampleData.values());
+
+            mapSampleToPositionAndBarcode = new HashMap<>();
+            for (SampleData sampleData: sampleRows) {
+                for (Map.Entry<VesselPosition, GetSampleDetails.SampleInfo> entry: scanPositionToSampleInfo.entrySet()) {
+                    if (entry.getValue().getSampleId().equals(sampleData.getSampleId())) {
+                        WellAndSourceTubeType wellAndTube = new WellAndSourceTubeType();
+                        wellAndTube.setWellName(entry.getKey().name());
+                        wellAndTube.setTubeBarcode(entry.getValue().getManufacturerBarcode());
+                        mapSampleToPositionAndBarcode.put(sampleData.getSampleId(), wellAndTube);
+                    }
+                }
+            }
         }
 
 
@@ -473,23 +488,19 @@ public class ReceivingActionBean extends RackScanActionBean {
     }
 
     @HandlesEvent(RECEIVE_KIT_TO_BSP)
-    public Resolution receiveToBspByKitScan() throws JAXBException {
+    public Resolution receiveToBspByKitScan() {
         if (sampleInfos == null) {
             messageCollection.addError("Error occurred when posting rack scan data");
             return null;
         }
 
-        List<String> sampleIds = sampleInfos.stream()
-                .map(GetSampleDetails.SampleInfo::getSampleId)
-                .filter(sm -> selectedSampleIds.contains(sm))
+        List<WellAndSourceTubeType> selectedWellsAndBarcodes = mapSampleToPositionAndBarcode.entrySet().stream()
+                .filter(e -> selectedSampleIds.contains(e.getKey()))
+                .map(Map.Entry::getValue)
                 .collect(Collectors.toList());
 
-        SampleKitInfo sampleKitDetails = bspRestService.getSampleKitDetails(rackBarcode);
-        Map<String, SampleKitInfo> sampleKitInfoMap = new HashMap<>();
-        sampleKitInfoMap.put(rackBarcode, sampleKitDetails);
-
-        SampleKitReceiptResponse response = receiveSamplesEjb.receiveSamples(sampleKitInfoMap, sampleIds,
-                getUserBean().getBspUser(), messageCollection);
+        SampleKitReceivedBean response = receiveSamplesEjb.receiveByKitScan(rackBarcode, selectedSampleIds,
+                selectedWellsAndBarcodes, getUserBean().getBspUser(), messageCollection);
 
         for (String error : response.getMessages()) {
             addGlobalValidationError(error);
@@ -497,7 +508,8 @@ public class ReceivingActionBean extends RackScanActionBean {
 
         addMessages(messageCollection);
         if (!messageCollection.hasErrors()) {
-            addMessage("Sucessfully received samples in BSP");
+            String containerId = response.getReceivedSamplesPerKit().get(0).getKitId();
+            addMessage("Sucessfully received samples in BSP and placed into: " + containerId);
         }
 
         return new ForwardResolution(RECEIVING_PAGE);
@@ -614,5 +626,14 @@ public class ReceivingActionBean extends RackScanActionBean {
 
     public void setAllSampleIds(List<String> allSampleIds) {
         this.allSampleIds = allSampleIds;
+    }
+
+    public Map<String, WellAndSourceTubeType> getMapSampleToPositionAndBarcode() {
+        return mapSampleToPositionAndBarcode;
+    }
+
+    public void setMapSampleToPositionAndBarcode(
+            Map<String, WellAndSourceTubeType> mapSampleToPositionAndBarcode) {
+        this.mapSampleToPositionAndBarcode = mapSampleToPositionAndBarcode;
     }
 }

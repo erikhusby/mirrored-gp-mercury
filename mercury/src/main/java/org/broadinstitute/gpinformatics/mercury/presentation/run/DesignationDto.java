@@ -73,7 +73,7 @@ public class DesignationDto implements Cloneable, FctDto {
             setLoadingConc(flowcellDesignation.getLoadingConc());
             setDesignationId(flowcellDesignation.getDesignationId());
             setPriority(flowcellDesignation.getPriority());
-            setBarcode(flowcellDesignation.getLoadingTube().getLabel());
+            setBarcode(flowcellDesignation.getStartingTube().getLabel());
         }
     }
 

@@ -3820,8 +3820,9 @@
                 <name>Initial Scan</name>
                 <labEventTypes>IN_PLACE</labEventTypes>
                 <workflowQualifier>ALL_PREP_INITIAL_SCAN</workflowQualifier>
-                <instructions>Scan parent source CO-ID. Press "validate barcodes" to cross check against samples in XTR ticket.
-                    Ensure control samples have been added to Mercury. Eppendorf 12x8 Box Well Format
+                <instructions>Use Eppendorf 12x8 Box Well Format CO-ID barcode. Ensure control samples have been added to Mercury.
+                    Scan all samples into container. Press "validate barcodes" to verify correct samples have been consolidated before pressing "cross check"
+                    to complete transfer.
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_EVENT</messageType>
@@ -3834,10 +3835,8 @@
                 <name>Prep Reagents</name>
                 <labEventTypes>PREP</labEventTypes>
                 <workflowQualifier>Reagents</workflowQualifier>
-                <instructions>Heat Buffer PW1 to 55C for 30 minutes or more
-                    - prime heated buffer PW1 with 1:100 of BME (10ul BME per 1ml of PW1). Aliquot based off # of samples.
-                    - Add required EtOH to RPE, AW1, and AW2. Plate Buffer EB in a PCR plate and heat to 70C prior to DNA Elution.
-                    - Prepare reagent S-Blocks for all Bravo protocols.
+                <instructions>Heat Buffer PM1 to 55C for 30 minutes or more - prime heated buffer PM1 with 1:100 of BME (10ul BME per 1ml of Pm1).
+                    Add required EtOH to RPE, AW1, and AW2. Plate Buffer EB in a PCR plate and heat to 70C prior to DNA Elution.
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -3856,13 +3855,19 @@
                     <targetSection>ALL96</targetSection>
                     <sourceMassRemoved>true</sourceMassRemoved>
                     <targetWellTypeString>WellType.Well2000</targetWellTypeString>
+                    <reagentRequirements>
+                        <reagentName>AllPrep 96 PowerFecal DNA/RNA</reagentName>
+                        <expirationDateIncluded>true</expirationDateIncluded>
+                    </reagentRequirements>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Bead Beating</name>
                 <labEventTypes>IN_PLACE</labEventTypes>
                 <workflowQualifier>ALL_PREP_BEAD_BEATING</workflowQualifier>
-                <instructions>Shake PowerBead plate @ 20 Hz for 5 minutes. Once complete, rotate samples 180 degrees and repeat step.
+                <instructions>
+                    Ensure PowerBead mat is sealed tight. Shake PowerBead plate @ 20 Hz for 5 minutes.
+                    Once complete, rotate samples 180 degrees and repeat step.
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_EVENT</messageType>
@@ -3878,11 +3883,11 @@
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Transfer Supernatent to IRS S-Block</name>
+                <name>Transfer Supernatant to IRS S-Block</name>
                 <labEventTypes>STOOL_SUPERNATENT_TRANSFER</labEventTypes>
                 <workflowQualifier>ALLPREP_TO_S_BLOCK</workflowQualifier>
-                <instructions>Scan container ID on bead plate and container ID on IRS S-Block . Transfer ~650ul for supernatant.
-                    - Seal and vortex gently (no splashing)
+                <instructions>
+                    Scan container ID on PowerBead plate and container ID on IRS S-Block. Transfer ~650ul for supernatant and mix with pipette x10.
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_TRANSFER_EVENT</messageType>
@@ -3891,13 +3896,6 @@
                     <targetVesselTypeGeometryString>PlateType.Plate96RoundWellBlock2000</targetVesselTypeGeometryString>
                     <targetSection>ALL96</targetSection>
                 </manualTransferDetails>
-            </workflowStepDefs>
-            <workflowStepDefs>
-                <name>Incubate</name>
-                <labEventTypes>INCUBATE</labEventTypes>
-                <workflowQualifier>IRS1</workflowQualifier>
-                <instructions>Incubate for 1 min at room temperature.
-                </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Centrifuge IRS Lysate S-Block</name>
@@ -4408,6 +4406,11 @@
                 <name>384 Well Pond Pico</name>
                 <labEventTypes>THREE_84_WELL_POND_PICO</labEventTypes>
                 <optional>false</optional>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In Normalization</statusTransition>
+                    <endStatus>In Normalization</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Germline Exome Norm Transfer</name>
@@ -4416,8 +4419,8 @@
                 <ancestryEtlFlag>true</ancestryEtlFlag>
                 <jiraTransition>
                     <project>LCSET</project>
-                    <statusTransition>In Normalization</statusTransition>
-                    <endStatus>In Normalization</endStatus>
+                    <statusTransition>Ready for Selection</statusTransition>
+                    <endStatus>Ready for Selection</endStatus>
                 </jiraTransition>
             </workflowStepDefs>
         </workflowProcessDefVersions>

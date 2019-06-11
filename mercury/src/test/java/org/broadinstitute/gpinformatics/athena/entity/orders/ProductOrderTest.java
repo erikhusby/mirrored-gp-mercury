@@ -145,6 +145,7 @@ public class ProductOrderTest {
                 .ignoreProperty("analyzeUmiOverride")
                 .ignoreProperty("reagentDesignKey")
                 .ignoreProperty("defaultAggregationParticle")
+                .ignoreProperty("coverageTypeKey")
                 .build();
         tester.testBean(ProductOrder.class, configuration);
 

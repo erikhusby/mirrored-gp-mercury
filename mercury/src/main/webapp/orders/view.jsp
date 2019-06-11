@@ -1706,6 +1706,14 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
     </div>
 </div>
 <div class="view-control-group control-group">
+    <label class="control-label label-form">Coverage</label>
+    <div class="controls">
+        <div class="form-value">
+            ${actionBean.editOrder.coverageTypeKey}
+        </div>
+    </div>
+</div>
+<div class="view-control-group control-group">
     <label class="control-label label-form">Description</label>
 
     <div class="controls">
@@ -1829,14 +1837,6 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
                     <stripes:button name="setRisk" value="Set Risk" class="btn"
                                     style="margin-left:5px;" onclick="showRiskDialog()"/>
 
-                </security:authorizeBlock>
-                <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                    <c:if test="${actionBean.editOrder.product.supportsNumberOfLanes}">
-                        <stripes:link beanclass="${actionBean.class.name}" event="<%= ProductOrderActionBean.SQUID_COMPONENTS_ACTION %>">
-                            <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
-                            Build Squid Components
-                        </stripes:link>
-                    </c:if>
                 </security:authorizeBlock>
             </span>
 
