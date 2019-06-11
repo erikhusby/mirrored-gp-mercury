@@ -980,8 +980,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         } catch (SAPInterfaceException e) {
             logger.error(e);
-            addGlobalValidationError(
-                "The products on your order (including add ons) do not seem to be represented on your quote.  Please revisit either your quote or your order selections");
+            addGlobalValidationError(e.getMessage());
         }
 
     }
