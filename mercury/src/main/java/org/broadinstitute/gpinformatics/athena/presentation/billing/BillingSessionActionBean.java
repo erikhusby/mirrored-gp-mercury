@@ -12,6 +12,7 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
@@ -266,6 +267,9 @@ public class BillingSessionActionBean extends CoreActionBean {
                 });
             }
         });
+        if (!billingDestinationMap.isEmpty()) {
+            messageReporter.addMessage("Click links to view quote.");
+        }
 
         return errorsInBilling;
     }
