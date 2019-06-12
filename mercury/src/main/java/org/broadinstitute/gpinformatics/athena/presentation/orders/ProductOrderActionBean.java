@@ -1003,8 +1003,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         } catch (SAPInterfaceException e) {
             logger.error(e);
-            addGlobalValidationError(
-                "The products on your order (including add ons) do not seem to be represented on your quote.  Please revisit either your quote or your order selections");
+            addGlobalValidationError(e.getMessage());
         }
 
     }
@@ -1689,6 +1688,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                                                     > 0);
                                             fundingInfo.put("daysTillExpire", DateUtils
                                                     .getNumDaysBetween(todayTruncated, grantDateEnd.get()));
+                                            fundingInfo.put("costObject", fundingDetail.getCostObject());
                                         } else {
                                             fundingInfo.put("fundsReservationEndDate", "No funds Reservation end date found");
                                             fundingInfo.put("activeCostObject", "unable to determine if the cost Object is active");

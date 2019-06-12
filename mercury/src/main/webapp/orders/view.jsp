@@ -912,7 +912,7 @@ function updateFunds(data) {
             if(["FUNDS_RESERVATION", "Funds Reservation"].indexOf(fundingDetails[detailIndex].fundingType) !== -1) {
                 fundsRemainingNotification += ' [<B>';
                 if(fundingDetails[detailIndex].fundsReservationNumber !== undefined && fundingDetails[detailIndex].fundsReservationNumber !== null) {
-                    fundsRemainingNotification += fundingDetails[detailIndex].fundsReservationNumber + ',';
+                    fundsRemainingNotification += 'FR -- '+fundingDetails[detailIndex].fundsReservationNumber + ',';
                 }
                 fundsRemainingNotification += ' CO -- '+fundingDetails[detailIndex].costObject+ '</B>] ';
             } else {
