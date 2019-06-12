@@ -104,6 +104,104 @@ public class BSPRestSender implements Serializable {
         return transferReturn;
     }
 
+    /**
+     * Creates a copy of the passed PlateCherryPickEvent without any Mercury only samples. This copies the PlateCherryPickEvent,
+     * clears the CherryPickSourceType, adds the valid BSP sources from the passed PlateCherryPickEvent and then removes
+     * any sources and destinations from the corresponding PositionMapType for non-BSP samples.
+     *
+     * @param plateCherryPickEvent Cherry pick event to copy over with BSP samples only.
+     * @param labEvents            List of LabEvents within the message.
+     *
+     * @return A copy of the PlateCherryPickEvent with only BSP samples.
+     */
+    private PlateCherryPickEvent filterMercuryOnlySamples(PlateCherryPickEvent plateCherryPickEvent,
+                                                          List<LabEvent> labEvents) {
+        Cloner cloner = new Cloner();
+        PlateCherryPickEvent plateCherryPickEventCopy = cloner.deepClone(plateCherryPickEvent);
+
+        // Clearing cherry picks to add back in only the transfers of valid BSP sources.
+        plateCherryPickEventCopy.getSource().clear();
+
+        // Find the corresponding event entity
+        LabEvent targetEvent = null;
+        for (LabEvent labEvent : labEvents) {
+            if (Objects.equals(labEvent.getStationEventType(), plateCherryPickEvent)) {
+                targetEvent = labEvent;
+                break;
+            }
+        }
+        assert targetEvent != null;
+
+        // Remove tubes that don't have a BSP chain of custody
+        LabVessel sourceLabVessel = targetEvent.getSourceLabVessels().iterator().next();
+
+        Map<VesselPosition, ReceptacleType> mapSourcePosToReceptacle = buildMapPosToReceptacle(plateCherryPickEventCopy.getSourcePositionMap());
+        Map<VesselPosition, ReceptacleType> mapDestPosToReceptacle = buildMapPosToReceptacle(plateCherryPickEventCopy.getPositionMap());
+        List<ReceptacleType> removeSources = new ArrayList<>();
+        List<ReceptacleType> removeDests = new ArrayList<>();
+        boolean atLeastOneTransfer = false;
+
+        List<VesselPosition> cherryPickSourcesToAdd = new ArrayList<>();
+
+        // Loop through all of the sources in the sourcePositionMap. Remove all sources that aren't BSP metadata source
+        //  and the associated CherryPickSourceType if there is one.
+        for (ReceptacleType sourceReceptacleType : plateCherryPickEvent.getSourcePositionMap().get(0).getReceptacle()) {
+            VesselPosition sourceVesselPosition = VesselPosition.valueOf(sourceReceptacleType.getPosition());
+
+            Set<SampleInstanceV2> sampleInstances = sourceLabVessel.getContainerRole().getSampleInstancesAtPositionV2(
+                    sourceVesselPosition);
+            Set<MercurySample.MetadataSource> metadataSources = new HashSet<>();
+
+            for (SampleInstanceV2 sampleInstance : sampleInstances) {
+                // NA12878 samples, that fill up partial fingerprint plates to 48 wells, are reagents
+                if (!sampleInstance.isReagentOnly()) {
+                    MercurySample rootMercurySample = sampleInstance.getRootOrEarliestMercurySample();
+                    // if root is null, assume it's an old BSP sample that was received before Mercury existed
+                    metadataSources.add(rootMercurySample == null ? MercurySample.MetadataSource.BSP :
+                            rootMercurySample.getMetadataSource());
+                }
+            }
+
+            if (metadataSources.size() > 1) {
+                throw new RuntimeException("Expected 1 metadata source, found " + metadataSources.size());
+            } else if (metadataSources.size() == 1) {
+
+                MercurySample.MetadataSource metadataSource = metadataSources.iterator().next();
+                if (metadataSource == MercurySample.MetadataSource.BSP) {
+                    cherryPickSourcesToAdd.add(sourceVesselPosition);
+                } else {
+                    removeSources.add(mapSourcePosToReceptacle.get(sourceVesselPosition));
+                }
+            }
+        }
+
+        // Loop through the cherry picks to add in any sources and note the destinations that need to be removed from the positionMap afterwards.
+        for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
+            VesselPosition sourceVesselPosition = VesselPosition.valueOf(cherryPickSourceType.getWell());
+            // If the source position is in the list of adding, then add the cherry pick.
+            if (cherryPickSourcesToAdd.contains(sourceVesselPosition)) {
+                atLeastOneTransfer = true;
+                plateCherryPickEventCopy.getSource().add(cloner.deepClone(cherryPickSourceType));
+            } else {
+                // If reached then the source position was NOT in the list of being added and we need to add the destination
+                //  position of the cherry pick for removal from destination positionType.
+                ReceptacleType destReceptacleType = mapDestPosToReceptacle.get(VesselPosition.getByName(cherryPickSourceType.getDestinationWell()));
+                if (destReceptacleType != null) {
+                    removeDests.add(destReceptacleType);
+                }
+            }
+        }
+
+        if (plateCherryPickEventCopy.getSourcePositionMap() != null && !plateCherryPickEventCopy.getSourcePositionMap().isEmpty()) {
+            plateCherryPickEventCopy.getSourcePositionMap().get(0).getReceptacle().removeAll(removeSources);
+        }
+        if (plateCherryPickEventCopy.getPositionMap() != null && !plateCherryPickEventCopy.getPositionMap().isEmpty()) {
+            plateCherryPickEventCopy.getPositionMap().get(0).getReceptacle().removeAll(removeDests);
+        }
+
+        return atLeastOneTransfer ? plateCherryPickEventCopy : null;
+    }
+
     private PlateCherryPickEvent plateTransferToCherryPick(PlateTransferEventType plateTransferEventType,
             List<LabEvent> labEvents) {
         // Convert the section transfer to a cherry pick, because this gives us control over transferring
@@ -330,9 +428,18 @@ public class BSPRestSender implements Serializable {
                     labEventType.getForwardMessage() == LabEventType.ForwardMessage.BSP_APPLY_SM_IDS) {
 
                 addSourceHandlingException(labEventType, plateCherryPickEvent.getSourcePlate(), plateCherryPickEvent.getSourcePositionMap());
-                // todo jmt method to filter out clinical samples
-                copy.getPlateCherryPickEvent().add(plateCherryPickEvent);
-                atLeastOneEvent = true;
+
+                PlateCherryPickEvent plateCherryPickEventCopy = filterMercuryOnlySamples(plateCherryPickEvent,
+                        labEvents);
+                // Note that filterMercuryOnlySamples() will remove any non-bsp samples, so if it contained only crsp samples, this will be null.
+                if (plateCherryPickEventCopy != null) {
+                    List<LabEvent> labEventList = labEvents.stream().
+                            filter(le -> Objects.equals(le.getStationEventType(), plateCherryPickEventCopy)).
+                            collect(Collectors.toList());
+
+                    copy.getPlateCherryPickEvent().add(plateCherryPickEventCopy);
+                    atLeastOneEvent = true;
+                }
             }
         }
         for (PlateTransferEventType plateTransferEventType : message.getPlateTransferEvent()) {
@@ -358,20 +465,7 @@ public class BSPRestSender implements Serializable {
                     List<LabEvent> labEventList = labEvents.stream().
                             filter(le -> Objects.equals(le.getStationEventType(), plateTransferEventType)).
                             collect(Collectors.toList());
-                    boolean mercury = false;
-                    for (LabEvent labEvent : labEventList) {
-                        for (LabVessel labVessel : labEvent.getSourceLabVessels()) {
-                            for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                                if (sampleInstanceV2.getRootOrEarliestMercurySample().getMetadataSource() ==
-                                        MercurySample.MetadataSource.MERCURY) {
-                                    // Don't support mixed MERCURY and BSP (engineer must change to
-                                    // TranslateBspMessage.SECTION_TO_CHERRY if necessary).
-                                    mercury = true;
-                                    break;
-                                }
-                            }
-                        }
-                    }
+                    boolean mercury = areSourceLabVesselsMercurySourced(labEventList);
 
                     if (!mercury) {
                         copy.getPlateTransferEvent().add(plateTransferEventType);
@@ -391,6 +485,31 @@ public class BSPRestSender implements Serializable {
             }
         }
         return atLeastOneEvent ? copy : null;
+    }
+
+    /**
+     * From a LabEvent, return whether any of the source lab vessels had a MetadataSource of Mercury.
+     *
+     * @param labEventList List of LabEvent objects to check
+     *
+     * @return Whether any of the lab events had source vessels that were from Mercury.
+     */
+    private boolean areSourceLabVesselsMercurySourced(List<LabEvent> labEventList) {
+        boolean mercury = false;
+        for (LabEvent labEvent : labEventList) {
+            for (LabVessel labVessel : labEvent.getSourceLabVessels()) {
+                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                    MercurySample earliestMercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
+                    if (earliestMercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+                        // Don't support mixed MERCURY and BSP (engineer must change to
+                        // TranslateBspMessage.SECTION_TO_CHERRY if necessary).
+                        mercury = true;
+                        break;
+                    }
+                }
+            }
+        }
+        return mercury;
     }
 
     /**
