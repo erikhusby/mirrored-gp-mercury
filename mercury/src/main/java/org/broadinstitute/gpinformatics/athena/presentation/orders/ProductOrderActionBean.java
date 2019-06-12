@@ -3656,7 +3656,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                                                                               + " the selected product or the quote you"
                                                                               + " are using.",
                                             orderProduct.getDisplayName(),quote.getQuoteHeader().getQuoteNumber(),
-                                            SapIntegrationClientImpl.SAPCompanyConfiguration.fromSalesOrgForMaterial(salesOrganization).name());
+                                            SapIntegrationClientImpl.SAPCompanyConfiguration.fromSalesOrgForMaterial(salesOrganization).getDisplayName());
                                     addGlobalValidationError(errorMessage);
                                 }
                             };
