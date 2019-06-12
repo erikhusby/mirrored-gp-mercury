@@ -642,7 +642,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
                 if (editOrder.hasSapQuote()) {
                     final ProductOrder.OrderAccessType orderType =
-                            ProductOrder.OrderAccessType.fromSalesOrg(sapQuote.getQuoteHeader().getSalesOrganization());
+                            ProductOrder.OrderAccessType.fromSalesOrg(salesOrganization);
 
                     if((editOrder.getProduct().isExternalProduct() || editOrder.getProduct().isClinicalProduct()) &&
                        orderType != ProductOrder.OrderAccessType.COMMERCIAL) {
@@ -3637,29 +3637,34 @@ public class ProductOrderActionBean extends CoreActionBean {
 
                     sapQuote.ifPresent(quote -> {
                         boolean canSwitch = true;
-                        String offendingProduct = "";
-                        if(editOrder.getProduct() != null) {
-                            Optional<SAPMaterial> cachedProduct =
-                                    Optional.ofNullable(productPriceCache.findByProduct(editOrder.getProduct(),
-                                            quote.getQuoteHeader().getSalesOrganization()));
-                            canSwitch = cachedProduct.isPresent();
-                            offendingProduct = editOrder.getProduct().getDisplayName();
-                            final Iterator<ProductOrderAddOn> addOnIterator = editOrder.getAddOns().iterator();
-                            while (addOnIterator.hasNext() && canSwitch) {
-                                final Product addOn = addOnIterator.next().getAddOn();
-                                Optional<SAPMaterial> cachedAddon = Optional.ofNullable(productPriceCache.findByProduct(
-                                        addOn, quote.getQuoteHeader().getSalesOrganization()));
-                                canSwitch = cachedAddon.isPresent();
-                                offendingProduct = addOn.getDisplayName();
-                            }
-                            if (!canSwitch) {
-                                addGlobalValidationError(
-                                        "The Quote you are attempting to switch to is not compatible with "
-                                        + offendingProduct);
-                            }
-                        }
 
-                        editOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
+                        String salesOrganization = quote.getQuoteHeader().getSalesOrganization();
+
+                        Optional<List<Product>> allProductsOrdered = Optional.ofNullable(ProductOrder.getAllProductsOrdered(editOrder));
+
+                        if(allProductsOrdered.isPresent()) {
+                            final List<Product> products = allProductsOrdered.get();
+                                for (Product orderProduct : products) {
+
+                                Optional<SAPMaterial> materialForSalesOrg = Optional.ofNullable(productPriceCache
+                                        .findByProduct(orderProduct, salesOrganization));
+                                if(!materialForSalesOrg.isPresent()) {
+                                    canSwitch = false;
+                                    final String errorMessage = String.format("%s is invalid for your quote %s because "
+                                                                              + "the product is not available for that quotes sales"
+                                                                              + " organization (%s).  Please check either"
+                                                                              + " the selected product or the quote you"
+                                                                              + " are using.",
+                                            orderProduct.getDisplayName(),quote.getQuoteHeader().getQuoteNumber(),
+                                            SapIntegrationClientImpl.SAPCompanyConfiguration.fromSalesOrgForMaterial(salesOrganization).name());
+                                    addGlobalValidationError(errorMessage);
+                                }
+                            };
+                        };
+
+                        if(canSwitch) {
+                            editOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
+                        }
                     });
 
                 } catch (SAPIntegrationException e) {
