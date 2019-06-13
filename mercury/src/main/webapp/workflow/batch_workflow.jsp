@@ -61,6 +61,7 @@
                 });
 
                 function queryUser(actualEvent, expectedEvent, formEvent) {
+                    console.log(actualEvent);
                     if (actualEvent !== expectedEvent) {
                         if (!confirm("Expect next workflow step to be: " + expectedEvent +
                             ". Are you sure you want to proceed?")) {
