@@ -617,7 +617,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder.updateCustomSettings(productCustomizations);
         }
 
-        updateAndValidateQuoteSource();
         if(editOrder.getProduct() != null) {
 
             if(editOrder.hasSapQuote()) {
@@ -2122,7 +2121,11 @@ public class ProductOrderActionBean extends CoreActionBean {
             Product.setMaterialOnProduct(addOnProduct, productPriceCache);
         }
 
+        List<Product> allProducts = new ArrayList<>(addOnProducts);
+        allProducts.add(product);
+
         try {
+            updateAndValidateQuoteSource(allProducts);
             editOrder.updateData(project, product, addOnProducts, stringToSampleListExisting(sampleList));
         } catch (InvalidProductException e) {
             addGlobalValidationError(e.getMessage());
@@ -3629,46 +3632,43 @@ public class ProductOrderActionBean extends CoreActionBean {
      * order (primary and add ons) are offered in the sales org of the quote.  If not, show an error that the quote is
      * not compatible with the selected products
      */
-    void updateAndValidateQuoteSource() {
+    void updateAndValidateQuoteSource(List<Product> products) throws InvalidProductException {
         if (StringUtils.isNotBlank(editOrder.getQuoteId())) {
             if (StringUtils.isNumeric(editOrder.getQuoteId())) {
                 try {
                     Optional<SapQuote> sapQuote = Optional.ofNullable(sapService.findSapQuote(editOrder.getQuoteId()));
 
-                    sapQuote.ifPresent(quote -> {
+                    if(sapQuote.isPresent()) {
+                        SapQuote quote = sapQuote.get();
                         boolean canSwitch = true;
 
                         String salesOrganization = quote.getQuoteHeader().getSalesOrganization();
 
-                        Optional<List<Product>> allProductsOrdered = Optional.ofNullable(ProductOrder.getAllProductsOrdered(editOrder));
+                        for (Product orderProduct : products) {
 
-                        if(allProductsOrdered.isPresent()) {
-                            final List<Product> products = allProductsOrdered.get();
-                                for (Product orderProduct : products) {
+                            Optional<SAPMaterial> materialForSalesOrg = Optional.ofNullable(productPriceCache
+                                    .findByProduct(orderProduct, salesOrganization));
+                            if (!materialForSalesOrg.isPresent()) {
+                                canSwitch = false;
+                                final String errorMessage = String.format("%s is invalid for your quote %s because "
+                                                                          + "the product is not available for that quotes sales"
+                                                                          + " organization (%s).  Please check either"
+                                                                          + " the selected product or the quote you"
+                                                                          + " are using.",
+                                        orderProduct.getDisplayName(), quote.getQuoteHeader().getQuoteNumber(),
+                                        SapIntegrationClientImpl.SAPCompanyConfiguration
+                                                .fromSalesOrgForMaterial(salesOrganization).getDisplayName());
+                                throw new InvalidProductException(errorMessage);
+                            }
+                        }
 
-                                Optional<SAPMaterial> materialForSalesOrg = Optional.ofNullable(productPriceCache
-                                        .findByProduct(orderProduct, salesOrganization));
-                                if(!materialForSalesOrg.isPresent()) {
-                                    canSwitch = false;
-                                    final String errorMessage = String.format("%s is invalid for your quote %s because "
-                                                                              + "the product is not available for that quotes sales"
-                                                                              + " organization (%s).  Please check either"
-                                                                              + " the selected product or the quote you"
-                                                                              + " are using.",
-                                            orderProduct.getDisplayName(),quote.getQuoteHeader().getQuoteNumber(),
-                                            SapIntegrationClientImpl.SAPCompanyConfiguration.fromSalesOrgForMaterial(salesOrganization).getDisplayName());
-                                    addGlobalValidationError(errorMessage);
-                                }
-                            };
-                        };
-
-                        if(canSwitch) {
+                        if (canSwitch) {
                             editOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
                         }
-                    });
+                    }
 
                 } catch (SAPIntegrationException e) {
-                    addGlobalValidationError("The quote you are attempting to switch to is invalid.");
+                    throw new InvalidProductException("The quote you are attempting to switch to is invalid.");
                 }
             } else {
                 editOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
