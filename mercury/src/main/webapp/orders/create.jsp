@@ -1184,7 +1184,7 @@
                 fundsRemainingNotification+='<ul>';
                 $j("#fundsRemaining").html(fundsRemainingNotification);
             } else {
-                $j("#fundsRemaining").html('Error: ' + data.error);
+                $j("#fundsRemaining").text('Error: ' + data.error);
                 quoteWarning = true;
             }
 

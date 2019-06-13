@@ -1756,7 +1756,7 @@ public class ProductOrderActionBeanTest {
         testOrder.setProduct(primaryProduct);
         testOrder.setQuoteId(testQuote.getAlphanumericId());
         testOrder.setQuoteSource(quoteSource);
-        actionBean.setQuoteSource(quoteSource.getDisplayName());
+        actionBean.setQuoteSource(quoteSource);
 
         List<ProductOrderSample> sampleList = new ArrayList<>();
         final int sampleTestSize = 75;
@@ -2880,7 +2880,7 @@ public class ProductOrderActionBeanTest {
         testQuote.setQuoteFunding(quoteFunding);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
         actionBean.setQuoteIdentifier(quoteId);
-        actionBean.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName());
+        actionBean.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
 
         JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
         JSONObject fundingDetails = (JSONObject) quoteFundingJson.getJSONArray("fundingDetails").get(0);
@@ -2912,9 +2912,9 @@ public class ProductOrderActionBeanTest {
         Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
         actionBean.setQuoteIdentifier(quoteId);
         actionBean.setQuoteService(mockQuoteService);
-        actionBean.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName());
+        actionBean.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
 
-        actionBean.setQuoteSource(testOrder.getQuoteSource().getDisplayName());
+        actionBean.setQuoteSource(testOrder.getQuoteSource());
         JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
         JSONObject fundingDetails = (JSONObject) quoteFundingJson.getJSONArray("fundingDetails").get(0);
 
@@ -2970,7 +2970,7 @@ public class ProductOrderActionBeanTest {
 
 
         actionBean.setQuoteIdentifier(quoteId);
-        actionBean.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName());
+        actionBean.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
 
         JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
         JSONObject fundingDetails = (JSONObject) quoteFundingJson.getJSONArray("fundingDetails").get(0);
@@ -3012,7 +3012,7 @@ public class ProductOrderActionBeanTest {
         testQuote.setQuoteFunding(quoteFunding);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
         actionBean.setQuoteIdentifier(quoteId);
-        actionBean.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName());
+        actionBean.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
 
         JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
         JSONArray fundingDetails = quoteFundingJson.getJSONArray("fundingDetails");
@@ -3064,7 +3064,7 @@ public class ProductOrderActionBeanTest {
         });
 
         actionBean.setQuoteIdentifier(quoteId);
-        actionBean.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName());
+        actionBean.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
 
         JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
         JSONArray fundingDetails = quoteFundingJson.getJSONArray("fundingDetails");
@@ -3094,7 +3094,7 @@ public class ProductOrderActionBeanTest {
         testQuote.setQuoteFunding(quoteFunding);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
         actionBean.setQuoteIdentifier(quoteId);
-        actionBean.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName());
+        actionBean.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
 
         JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
         assertThat(quoteFundingJson.getString("error"), is("Unable to complete evaluating order values:  null"));
@@ -3127,7 +3127,7 @@ public class ProductOrderActionBeanTest {
         });
 
         actionBean.setQuoteIdentifier(quoteId);
-        actionBean.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName());
+        actionBean.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
 
         JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
         assertThat(quoteFundingJson.getString("error"), is("This quote has no active Funding Sources."));

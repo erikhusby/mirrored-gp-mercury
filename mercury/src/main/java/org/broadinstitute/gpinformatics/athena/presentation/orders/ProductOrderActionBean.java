@@ -227,7 +227,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private String sampleSummary;
     private State state;
-    private String quoteSource;
+    private ProductOrder.QuoteSourceType quoteSource;
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -1544,11 +1544,15 @@ public class ProductOrderActionBean extends CoreActionBean {
                 final Date todayTruncated =
                         org.apache.commons.lang3.time.DateUtils.truncate(new Date(), Calendar.DATE);
 
-                if ( ! StringUtils.isNumeric(quoteIdentifier)) {
+                quoteSource = StringUtils.isNumeric(quoteIdentifier) ?
+                    ProductOrder.QuoteSourceType.SAP_SOURCE :
+                    ProductOrder.QuoteSourceType.QUOTE_SERVER;
+                if ( ! quoteSource.isSapType()) {
+
                     Quote quote = quoteService.getQuoteByAlphaId(quoteIdentifier);
                     final QuoteFunding quoteFunding = quote.getQuoteFunding();
                     double fundsRemaining = Double.parseDouble(quoteFunding.getFundsRemaining());
-                    item.put("quoteType", ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName());
+                    item.put("quoteType", quoteSource.getDisplayName());
                     item.put("fundsRemaining", NumberFormat.getCurrencyInstance().format(fundsRemaining));
                     item.put("status", quote.getApprovalStatus().getValue());
 
@@ -1613,9 +1617,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                         });
                     }
                     item.put("fundingDetails", fundingDetails);
-                } else if (StringUtils.isNumeric(quoteIdentifier)) {
+                } else if (quoteSource.isSapType()) {
                     SapQuote quote = sapService.findSapQuote(quoteIdentifier);
-                    item.put("quoteType", ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName());
+                    item.put("quoteType", quoteSource.getDisplayName());
                     item.put("fundsRemaining",
                         NumberFormat.getCurrencyInstance().format(quote.getQuoteHeader().fundsRemaining()));
 
@@ -4179,11 +4183,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         return Arrays.asList(ProductOrder.QuoteSourceType.values());
     }
 
-    public String getQuoteSource() {
+    public ProductOrder.QuoteSourceType getQuoteSource() {
         return quoteSource;
     }
 
-    public void setQuoteSource(String quoteSource) {
+    public void setQuoteSource(ProductOrder.QuoteSourceType quoteSource) {
         this.quoteSource = quoteSource;
     }
 }
