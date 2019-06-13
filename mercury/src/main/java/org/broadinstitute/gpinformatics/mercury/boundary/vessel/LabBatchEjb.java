@@ -58,6 +58,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
@@ -90,6 +91,7 @@ import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -881,8 +883,6 @@ public class LabBatchEjb {
      * <li>add control tubes</li>
      * <li>add sample tubes (e.g. clinical samples that displaced research samples)</li>
      * <li>remove sample tubes (e.g. research samples displaced by clinical samples)</li>
-     * <li>update rack layout in BSP (controls are not added through automation)</li>
-     * <li>auto-export from BSP to Mercury</li>
      * </ul>
      * @param lcsetName name of batch to update
      * @param controlBarcodes positive and negative control tubes
@@ -941,19 +941,6 @@ public class LabBatchEjb {
                 throw new RuntimeException(e);
             }
         }
-
-        SearchContext context = new SearchContext();
-        context.setBaseSearchURL(appConfig.getHost());
-        Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
-
-        Map<String, String[]> terms = new HashMap<>();
-        terms.put("LCSET", new String[]{newBatch.getJiraTicket().getTicketName()});
-        CustomField mercuryUrlField = new CustomField(
-                submissionFields, LabBatch.TicketFields.MERCURY_UDS,
-                SearchDefinitionFactory.buildDrillDownLink(newBatch.getJiraTicket().getTicketName(),
-                        ColumnEntity.LAB_VESSEL, "LCSET Drill Down", terms, context));
-        jiraIssue.updateIssue(Collections.singleton(mercuryUrlField));
-
         return mapBarcodeToTube;
     }
 
@@ -1038,6 +1025,38 @@ public class LabBatchEjb {
                 response.close();
                 throw new RuntimeException("Failed to update layout in BSP.");
             }
+        }
+    }
+
+    public void linkLcsetToUds(String lcsetName, LinkedHashMap<String, String> rackScan) {
+        try {
+            SearchContext context = new SearchContext();
+            StringBuffer baseSearchURL = new StringBuffer();
+            baseSearchURL.append(appConfig.getUrl());
+            context.setBaseSearchURL(baseSearchURL);
+            Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
+
+            Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(rackScan.values());
+            HashMap<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
+            for (Map.Entry<String, String> positionBarcodeEntry : rackScan.entrySet()) {
+                mapPositionToTube.put(VesselPosition.getByName(positionBarcodeEntry.getKey()),
+                        mapBarcodeToTube.get(positionBarcodeEntry.getValue()));
+            }
+
+            TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
+            barcodedTubeDao.persist(tubeFormation);
+
+            LabBatch labBatch = labBatchDao.findByName(lcsetName);
+            Map<String, String[]> terms = new HashMap<>();
+            terms.put("Container Barcode", new String[]{tubeFormation.getLabel()});
+            CustomField mercuryUrlField = new CustomField(
+                    submissionFields, LabBatch.TicketFields.MERCURY_UDS,
+                    SearchDefinitionFactory.buildDrillDownLink(labBatch.getJiraTicket().getTicketName(),
+                            ColumnEntity.LAB_VESSEL, "LCSET Drill Down", terms, context));
+            JiraIssue jiraIssue = jiraService.getIssue(labBatch.getJiraTicket().getTicketName());
+            jiraIssue.updateIssue(Collections.singleton(mercuryUrlField));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 

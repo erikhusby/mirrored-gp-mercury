@@ -241,6 +241,9 @@ public class LabVesselSearchDefinition {
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection( "sequencingRun", "labVesselId",
                 "runCartridge", SequencingRun.class));
 
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection( "container", "labVesselId",
+                "containers", LabVessel.class));
+
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
                 ColumnEntity.LAB_VESSEL, criteriaProjections, mapGroupSearchTerms);
 
@@ -295,6 +298,29 @@ public class LabVesselSearchDefinition {
             }
         });
         searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Container Barcode");
+        searchTerm.setDbSortPath("label");
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("container", "containers"));
+        criteriaPath.setPropertyName("label");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> results = new HashSet<>();
+                for (LabVessel container : ((LabVessel) entity).getContainers()) {
+                    // todo jmt rack barcode
+                    results.add(container.getLabel());
+                }
+                return results;
+            }
+        });
+        searchTerms.add(searchTerm);
+        // todo jmt result column for position in container
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Plate Name");
