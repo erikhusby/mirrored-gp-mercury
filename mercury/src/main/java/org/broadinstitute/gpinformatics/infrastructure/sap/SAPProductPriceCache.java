@@ -85,7 +85,7 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
 
         final Optional<SAPMaterial> optionalMaterial = getSapMaterials().stream()
                 .filter(material -> StringUtils.equalsIgnoreCase(partNumber, material.getMaterialIdentifier()) &&
-                                    material.getSalesOrg().equals(salesOrg)).collect(toOptional());
+                                    StringUtils.equals(material.getSalesOrg(),salesOrg)).collect(toOptional());
 
         if(optionalMaterial.isPresent()) {
             foundMaterial = optionalMaterial.get();

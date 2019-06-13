@@ -3643,6 +3643,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                         boolean canSwitch = true;
 
                         String salesOrganization = quote.getQuoteHeader().getSalesOrganization();
+                        final Optional<SapIntegrationClientImpl.SAPCompanyConfiguration> sapCompanyConfiguration =
+                                Optional.ofNullable(SapIntegrationClientImpl.SAPCompanyConfiguration
+                                        .fromSalesOrgForMaterial(salesOrganization));
 
                         for (Product orderProduct : products) {
 
@@ -3656,8 +3659,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                                                                           + " the selected product or the quote you"
                                                                           + " are using.",
                                         orderProduct.getDisplayName(), quote.getQuoteHeader().getQuoteNumber(),
-                                        SapIntegrationClientImpl.SAPCompanyConfiguration
-                                                .fromSalesOrgForMaterial(salesOrganization).getDisplayName());
+                                        sapCompanyConfiguration.orElse(SapIntegrationClientImpl.SAPCompanyConfiguration.UNKNOWN).getDisplayName());
                                 throw new InvalidProductException(errorMessage);
                             }
                         }
