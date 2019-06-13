@@ -33,6 +33,11 @@
                 font-size: 12px;
             }
 
+            select.markStock {
+                width: 75px;
+                font-size: 12px;
+            }
+
             #analyzebtnid .ui-icon-waiting {
                 background-image: url("${ctxpath}/images/spinner.gif");
                 background-position: 0 center;
