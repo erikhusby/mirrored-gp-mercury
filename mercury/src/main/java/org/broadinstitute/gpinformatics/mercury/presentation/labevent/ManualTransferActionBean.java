@@ -150,6 +150,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
     private Map<VesselPosition, Boolean> mapPositionToDepleteFlag;
 
+    private Map<VesselPosition, LabEventType.MarkStock> mapPositionToMarkStock;
+
     private Map<Integer, Boolean> depleteAll;
 
     @Inject
@@ -222,6 +224,10 @@ public class ManualTransferActionBean extends RackScanActionBean {
             int numEvents = manualTransferDetails.getNumEvents();
             if (manualTransferDetails.getSecondaryEvent() != null) {
                 numEvents++;
+            }
+
+            if (manualTransferDetails.getTargetSections() != null) {
+                numEvents = manualTransferDetails.getTargetSections().length;
             }
 
             for (int i = 0; i < numEvents; i++) {
@@ -975,6 +981,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     } else {
                         messageCollection.addInfo(direction.getText() + " " + barcode + " is not in the database");
                     }
+                } else if (expectedEmpty != null && expectedEmpty) {
+                    messageCollection.addError(direction.getText() + " " + barcode + " is not empty");
                 } else {
                     messageCollection.addInfo(direction.getText() + " " + barcode + " is in the database");
                     returnMapBarcodeToVessel.put(labVessel.getLabel(), labVessel);
@@ -1222,6 +1230,25 @@ public class ManualTransferActionBean extends RackScanActionBean {
                         plateTransferEventType.setSourcePlate(firstPlateTransferEventType.getSourcePlate());
                         plateTransferEventType.setSourcePositionMap(firstPlateTransferEventType.getSourcePositionMap());
                     }
+                    if (manualTransferDetails.getTargetSections() != null) {
+                        if (eventIndex > 0) {
+                            // copy destination from primary
+                            if (plateTransferEventType.getSourcePlate() == null
+                                || plateTransferEventType.getSourcePlate().getBarcode() == null) {
+                                iterator.remove();
+                                continue;
+                            } else {
+                                PlateTransferEventType firstPlateTransferEventType =
+                                        (PlateTransferEventType) stationEvents.get(0);
+                                PlateType firstPlate = firstPlateTransferEventType.getPlate();
+                                PlateType plateType = new PlateType();
+                                plateType.setBarcode(firstPlate.getBarcode());
+                                plateType.setPhysType(firstPlate.getPhysType());
+                                plateTransferEventType.setPlate(plateType);
+                            }
+                        }
+                        plateTransferEventType.getPlate().setSection(manualTransferDetails.getTargetSections()[eventIndex].getSectionName());
+                    }
                     if (manualTransferDetails.getTargetWellType() != null &&
                         manualTransferDetails.getTargetWellType() != PlateWell.WellType.None) {
                         addWellTypes(plateTransferEventType, plateTransferEventType.getPlate().getBarcode(),
@@ -1306,7 +1333,9 @@ public class ManualTransferActionBean extends RackScanActionBean {
                         plateCherryPickEvent.getSourcePlate().addAll(firstPlateCherryPickEventType.getSourcePlate());
                         plateCherryPickEvent.getSourcePositionMap().addAll(firstPlateCherryPickEventType.getSourcePositionMap());
                     }
-
+                    if (plateCherryPickEvent.getPositionMap().size() == 1) {
+                        addMarkStockMetadata(plateCherryPickEvent.getPositionMap().get(0));
+                    }
                     bettaLIMSMessage.getPlateCherryPickEvent().add((PlateCherryPickEvent) stationEvent);
                 } else if (stationEvent instanceof ReceptaclePlateTransferEvent) {
                     bettaLIMSMessage.getReceptaclePlateTransferEvent().add((ReceptaclePlateTransferEvent) stationEvent);
@@ -1390,6 +1419,26 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 depleteMeta.setName(Metadata.Key.DEPLETE_WELL.getDisplayName());
                 depleteMeta.setValue(String.valueOf(depleteFlag));
                 receptacleType.getMetadata().add(depleteMeta);
+            }
+        }
+    }
+
+    /**
+     * User can mark a sample as a backup individually on a well level.
+     * @param positionMapType - position map to update receptacle metadata tag.
+     */
+    private void addMarkStockMetadata(PositionMapType positionMapType) {
+        if (mapPositionToMarkStock == null) {
+            return;
+        }
+        for (ReceptacleType receptacleType: positionMapType.getReceptacle()) {
+            VesselPosition vesselPosition = VesselPosition.getByName(receptacleType.getPosition());
+            if (mapPositionToMarkStock.containsKey(vesselPosition)) {
+                MetadataType backupMetadata = new MetadataType();
+                LabEventType.MarkStock markBackup = mapPositionToMarkStock.get(vesselPosition);
+                backupMetadata.setName(Metadata.Key.MARK_STOCK.getDisplayName());
+                backupMetadata.setValue(markBackup.name());
+                receptacleType.getMetadata().add(backupMetadata);
             }
         }
     }
@@ -1593,6 +1642,14 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
     public void setMapPositionToDepleteFlag(Map<VesselPosition, Boolean> mapPositionToDepleteFlag) {
         this.mapPositionToDepleteFlag = mapPositionToDepleteFlag;
+    }
+
+    public Map<VesselPosition, LabEventType.MarkStock> getMapPositionToMarkStock() {
+        return mapPositionToMarkStock;
+    }
+
+    public void setMapPositionToMarkStock(Map<VesselPosition, LabEventType.MarkStock> mapPositionToMarkStock) {
+        this.mapPositionToMarkStock = mapPositionToMarkStock;
     }
 
     public Map<Integer, Boolean> getDepleteAll() {

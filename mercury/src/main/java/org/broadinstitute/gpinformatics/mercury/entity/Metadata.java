@@ -308,7 +308,9 @@ public class Metadata {
         MANUFACTURING_DATE(Category.REAGENT, DataType.DATE, "Manufacturing Date", Visibility.USER),
         STORAGE_CONDITIONS(Category.REAGENT, DataType.STRING, "Storage Conditions", Visibility.USER),
         MANUFACTURER_DESIGN_ID(Category.REAGENT, DataType.STRING, "Manufacturer Design ID", Visibility.USER),
-        STOCK_TYPE(Category.SAMPLE, DataType.STRING, "Stock Type", Visibility.USER);    // Used to pass stock type value to BSP.
+        STOCK_TYPE(Category.SAMPLE, DataType.STRING, "Stock Type", Visibility.USER),    // Used to pass stock type value to BSP.
+        MARK_STOCK(Category.SAMPLE, DataType.BOOLEAN, "Mark Stock", Visibility.USER);
+
 
         private final Category category;
         private final DataType dataType;

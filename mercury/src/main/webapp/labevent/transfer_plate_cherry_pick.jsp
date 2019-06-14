@@ -17,7 +17,7 @@ plate / rack.
 <%--@elvariable id="stationEventIndex" type="java.lang.Integer"--%>
 <%--@elvariable id="source" type="java.lang.Boolean"--%>
 <%--@elvariable id="massRemoved" type="java.lang.Boolean"--%>
-
+<c:set var="destinationMarkStock" value="${not source and not empty actionBean.labEventType.manualTransferDetails.destinationMarkStock}"/>
 <style>
     .btn {
         background-image:none;
@@ -207,6 +207,12 @@ plate / rack.
                                 <input type="hidden"
                                         name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}[0].receptacle[${receptacleIndex}].materialType"
                                         value="${actionBean.labEventTypeByIndex(stationEventIndex).resultingMaterialType.displayName}"/>
+                            </c:if>
+                            <c:if test="${destinationMarkStock}">
+                                </br>
+                                <stripes:select name="mapPositionToMarkStock[${geometry.vesselPositions[receptacleIndex]}]" class="markStock">
+                                    <stripes:options-collection label="displayName"  collection="${actionBean.manualTransferDetails.destinationMarkStock}" />
+                                </stripes:select>
                             </c:if>
                             </br>
                             <button data-position="${geometry.vesselPositions[receptacleIndex]}" id="${rowName}${columnName}_${source ? 'src' : 'dest'}_RcpBcd${stationEventIndex}_${receptacleIndex}" type="button" class= "${source ? 'src' : 'dest'}_col_${columnStatus.index} ${source ? 'src' : 'dest'}_row_${rowStatus.index} btn btn-primary btn-xs" disabled tabindex="-1">Select</button>

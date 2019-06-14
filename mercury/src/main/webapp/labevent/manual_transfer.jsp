@@ -33,6 +33,11 @@
                 font-size: 12px;
             }
 
+            select.markStock {
+                width: 75px;
+                font-size: 12px;
+            }
+
             #analyzebtnid .ui-icon-waiting {
                 background-image: url("${ctxpath}/images/spinner.gif");
                 background-position: 0 center;
@@ -398,17 +403,21 @@
                             </div>
                         </c:if>
                         <c:forEach items="${actionBean.stationEvents}" var="stationEvent" varStatus="stationEventStatus">
+                            <c:set var="isMultiSource" value="${not empty actionBean.manualTransferDetails.targetSections and stationEvent.class.simpleName == 'PlateTransferEventType'}"/>
                             <input type="hidden" name="stationEvents[${stationEventStatus.index}].eventType"
                                     value="${actionBean.stationEvents[stationEventStatus.index].eventType}"/>
                             <input type="hidden" name="eventClass[${stationEventStatus.index}]"
                                             value="${actionBean.stationEvents[0].class.simpleName}"/>
                             <c:if test="${fn:length(actionBean.stationEvents) > 1}">
-                                ${stationEventStatus.index + 1}
+                                <c:if test="${not isMultiSource}">
+                                    ${stationEventStatus.index + 1}
+                                </c:if>
                                 <input type="hidden" name="stationEvents[${stationEventStatus.index}].metadata[0].name" value="MessageNum"/>
                                 <input type="hidden" name="stationEvents[${stationEventStatus.index}].metadata[0].value" value="${stationEventStatus.index + 1}"/>
                             </c:if>
+
                             <c:choose>
-                                <c:when test="${stationEvent.class.simpleName == 'PlateTransferEventType' or stationEvent.class.simpleName == 'PlateEventType' or stationEvent.class.simpleName == 'PlateCherryPickEvent'}">
+                                <c:when test="${empty actionBean.manualTransferDetails.targetSections and (stationEvent.class.simpleName == 'PlateTransferEventType' or stationEvent.class.simpleName == 'PlateEventType' or stationEvent.class.simpleName == 'PlateCherryPickEvent')}">
                                     <c:set var="plateTransfer" value="${stationEvent}"/>
                                     <%--@elvariable id="plateTransfer" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType"--%>
                                     <c:if test="${stationEvent.class.simpleName == 'PlateTransferEventType' or stationEvent.class.simpleName == 'PlateCherryPickEvent'}">
@@ -502,6 +511,44 @@
                                     </c:choose>
 
                                 </c:when> <%-- end PlateTransferEventType or PlateEventType--%>
+
+                                <c:when test="${isMultiSource}">
+                                    <c:set var="plateTransfer" value="${stationEvent}"/>
+                                    <c:set var="firstPlateTransfer" value="${actionBean.stationEvents[0]}"/>
+                                    <%--@elvariable id="plateTransfer" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType"--%>
+                                    <%--@elvariable id="firstPlateTransfer" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType"--%>
+                                    <c:if test="${stationEventStatus.first}">
+                                        <h4>Plate Transfer</h4>
+                                    </c:if>
+                                    <h5>Source ${stationEventStatus.index + 1}</h5>
+
+                                    <c:set var="stationEvent" value="${stationEvent}" scope="request"/>
+                                    <c:set var="plate" value="${plateTransfer.sourcePlate}" scope="request"/>
+                                    <c:set var="positionMap" value="${plateTransfer.sourcePositionMap}" scope="request"/>
+                                    <c:set var="stationEventIndex" value="${stationEventStatus.index}" scope="request"/>
+                                    <c:set var="vesselTypeGeometry" value="${actionBean.manualTransferDetails.sourceVesselTypeGeometry}" scope="request"/>
+                                    <c:set var="section" value="${actionBean.manualTransferDetails.sourceSection}" scope="request"/>
+                                    <c:set var="source" value="${true}" scope="request"/>
+                                    <c:set var="tableName" value="sourceTable" scope="request"/>
+                                    <c:set var="transferType" value="${actionBean.stationEvents[stationEventStatus.index].eventType}"/>
+
+                                    <jsp:include page="transfer_plate.jsp"/>
+
+                                    <c:if test="${stationEventStatus.last}">
+                                        <h5>Destination</h5>
+
+                                        <c:set var="stationEvent" value="${firstPlateTransfer}" scope="request"/>
+                                        <c:set var="plate" value="${firstPlateTransfer.plate}" scope="request"/>
+                                        <c:set var="positionMap" value="${firstPlateTransfer.positionMap}" scope="request"/>
+                                        <c:set var="stationEventIndex" value="0" scope="request"/>
+                                        <c:set var="vesselTypeGeometry" value="${actionBean.manualTransferDetails.targetVesselTypeGeometry}" scope="request"/>
+                                        <c:set var="eventType" value="${firstPlateTransfer.eventType}" scope="request"/>
+                                        <c:set var="displaySection" value="false" scope="request"/>
+                                        <c:set var="source" value="${false}" scope="request"/>
+
+                                        <jsp:include page="transfer_plate.jsp"/>
+                                    </c:if>
+                                </c:when> <%-- end multi source PlateTransferEventType to single destination --%>
 
                                 <c:when test="${stationEvent.class.simpleName == 'ReceptacleTransferEventType'}">
                                     <c:set var="receptacleTransfer" value="${stationEvent}"/>
