@@ -337,6 +337,11 @@
                                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.ReceivingActionBean"
                                       event="bySkId">Receive By SK-ID</stripes:link>
                     </li>
+                    <li>
+                        <stripes:link id="receiveDDP"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.ReceivingActionBean"
+                                      event="receiveDDP">Receive DDP Samples</stripes:link>
+                    </li>
                 </ul>
             </li>
         </ul>

@@ -123,13 +123,17 @@ public class SampleReceiptResource {
      * @return string indicating success
      */
     public String notifyOfReceipt(SampleReceiptBean sampleReceiptBean) {
+        return notifyOfReceipt(sampleReceiptBean, MercurySample.MetadataSource.BSP);
+    }
+
+    public String notifyOfReceipt(SampleReceiptBean sampleReceiptBean, MercurySample.MetadataSource metadataSource) {
         List<ParentVesselBean> parentVesselBeans = sampleReceiptBean.getParentVesselBeans();
 
         // todo jmt the SAMPLE_RECEIPT event seems to be used by this web service and by a BettaLIMS message.
         // Process is only interested in the primary vessels
         List<LabVessel> labVessels = labVesselFactory.buildLabVessels(parentVesselBeans,
                 sampleReceiptBean.getReceivingUserName(), sampleReceiptBean.getReceiptDate(),
-                LabEventType.SAMPLE_RECEIPT, MercurySample.MetadataSource.BSP).getLeft();
+                LabEventType.SAMPLE_RECEIPT, metadataSource).getLeft();
 
         // If the kit has already been partially registered, append a timestamp to make a unique batch name.
         Format simpleDateFormat = FastDateFormat.getInstance("yyyyMMddHHmmssSSSS");

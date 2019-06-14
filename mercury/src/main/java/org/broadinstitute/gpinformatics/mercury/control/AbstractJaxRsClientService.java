@@ -15,6 +15,7 @@ import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.ClientRequestContext;
+import javax.ws.rs.client.ClientRequestFilter;
 import javax.ws.rs.client.ClientResponseContext;
 import javax.ws.rs.client.ClientResponseFilter;
 import javax.ws.rs.client.Entity;
@@ -51,6 +52,13 @@ public abstract class AbstractJaxRsClientService implements Serializable {
      */
     protected void specifyHttpAuthCredentials(Client client, LoginAndPassword loginAndPassword) {
         client.register(new BasicAuthentication(loginAndPassword.getLogin(), loginAndPassword.getPassword()));
+    }
+
+    protected void specifyAuthorizationToken(Client client, TokenGenerator tokenGenerator) {
+        client.register((ClientRequestFilter) clientRequestContext -> {
+            MultivaluedMap<String, Object> headers = clientRequestContext.getHeaders();
+            headers.add("Authorization", "Bearer " + tokenGenerator.generateToken());
+        });
     }
 
     /**

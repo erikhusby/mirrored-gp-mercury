@@ -19,10 +19,15 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
+import org.broadinstitute.gpinformatics.infrastructure.ddp.DDPRestClient;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.DDPKitInfo;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleInfo;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleKitInfo;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleKitReceivedBean;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.BSPRestService;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -39,6 +44,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -63,6 +69,10 @@ public class ReceivingActionBean extends RackScanActionBean {
     public static final String RECEIVE_BY_SCAN_AND_LINK = "receiveByScanAndLink";
     public static final String FIND_SK_ACTION = "findSkId";
     public static final String FIND_COLLABORATOR_ACTION = "findCollaborator";
+    public static final String RECEIVE_FOR_DDP_ACTION = "receiveDDP";
+    public static final String RECEIVE_DDP_SAMPLE_PAGE = "/receiving/receive_ddp_samples.jsp";
+    public static final String SEARCH_BY_DDP_SAMPLE_ACTION = "findByDdpScan";
+    public static final String RECEIVE_DDP_SAMPLE_TO_MERCURY = "receiveDdpSampleToMercury";
 
     @Inject
     protected BSPSampleDataFetcher bspSampleDataFetcher;
@@ -72,6 +82,12 @@ public class ReceivingActionBean extends RackScanActionBean {
 
     @Inject
     protected ReceiveSamplesEjb receiveSamplesEjb;
+
+    @Inject
+    private DDPRestClient ddpRestClient;
+
+    @Inject
+    private LabVesselDao labVesselDao;
 
     @Validate(required = true, on = {FIRE_RACK_SCAN, FIND_SK_ACTION})
     private String rackBarcode;
@@ -102,10 +118,13 @@ public class ReceivingActionBean extends RackScanActionBean {
     private List<String> allSampleIds = new ArrayList<>();
 
     private String sampleIds;
+    private String ddpBarcodes;
     private SampleKitInfo sampleKitInfo;
 
     private Map<String, String> mapSampleToCollaborator;
     private Map<String, BspSampleData> mapIdToSampleData;
+
+    private List<DDPKitInfo> ddpKitInfos;
 
     @DefaultHandler
     @HandlesEvent(BY_KIT_SCAN_ACTION)
@@ -123,6 +142,12 @@ public class ReceivingActionBean extends RackScanActionBean {
     public Resolution byScanAndLink() {
         return new ForwardResolution(RECEIVE_BY_SCAN_AND_LINK_PAGE);
     }
+
+    @HandlesEvent(RECEIVE_FOR_DDP_ACTION)
+    public Resolution receiveDdpSamples() {
+        return new ForwardResolution(RECEIVE_DDP_SAMPLE_PAGE);
+    }
+
 
     @ValidationMethod(on = {FIND_SK_ACTION, FIRE_RACK_SCAN}, priority = 0)
     public void validateSampleKitInformation() {
@@ -232,6 +257,93 @@ public class ReceivingActionBean extends RackScanActionBean {
         if (selectedSampleIds == null || selectedSampleIds.size() == 0) {
             addGlobalValidationError("Must check at least one sample.");
         }
+    }
+
+    @ValidationMethod(on = SEARCH_BY_DDP_SAMPLE_ACTION)
+    public void validateSearchByDdpSample() {
+        if (ddpBarcodes == null) {
+            addValidationError("ddpBarcodes", "Enter at least one barcode.");
+        }
+    }
+
+    @HandlesEvent(SEARCH_BY_DDP_SAMPLE_ACTION)
+    public Resolution searchByDdpSample() {
+        showLayout = true;
+        Set<String> splitBarcodes = new HashSet<>(Arrays.asList(ddpBarcodes.trim().split("\\s+")));
+        Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(new ArrayList<>(splitBarcodes));
+
+        List<String> unreceivedTubes = mapBarcodeToVessel.entrySet().stream()
+                .filter(entry -> entry.getValue() == null)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
+        if (unreceivedTubes.isEmpty()) {
+            showLayout = false;
+            messageCollection.addInfo("All samples are already received.");
+        } else {
+            Map<String, Boolean> mapBarcodeToStatus = ddpRestClient.areKitsRegistered(unreceivedTubes);
+
+            Set<String> unknownDdpBarcodes = mapBarcodeToStatus.entrySet().stream()
+                    .filter(keypair -> keypair.getValue() != null && !keypair.getValue())
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toSet());
+
+            unknownDdpBarcodes.forEach(barcode ->
+                    messageCollection.addError("Barcode is not known to DSM " + barcode));
+
+            unreceivedTubes.removeAll(unknownDdpBarcodes);
+
+            ddpKitInfos = new ArrayList<>();
+            for (String barcode : unreceivedTubes) {
+                Optional<DDPKitInfo> optKitInfo = ddpRestClient.getKitInfo(barcode);
+                if (!optKitInfo.isPresent()) {
+                    messageCollection.addError("Failed to get info from DSM about " + barcode);
+                } else {
+                    DDPKitInfo kit = optKitInfo.get();
+                    BarcodedTube.BarcodedTubeType barcodedTubeType =
+                            BarcodedTube.BarcodedTubeType.getByAutomationName(kit.getReceptacleName());
+                    if (barcodedTubeType == null) {
+                        messageCollection.addError("Invalid Receptacle Type: " + kit.getReceptacleName());
+                    }
+
+                    if (StringUtils.isBlank(kit.getCollaboratorParticipantId())) {
+                        messageCollection.addError("Collaborator Participant ID cannot be blank");
+                    }
+                    if (StringUtils.isBlank(kit.getCollaboratorSampleId())) {
+                        messageCollection.addError("Collaborator Sample ID cannot be blank");
+                    }
+
+                    ddpKitInfos.add(kit);
+                }
+            }
+        }
+        if (messageCollection.hasErrors()) {
+            showLayout = false;
+        }
+        addMessages(messageCollection);
+        return new ForwardResolution(RECEIVE_DDP_SAMPLE_PAGE);
+    }
+
+    @HandlesEvent(RECEIVE_DDP_SAMPLE_TO_MERCURY)
+    public Resolution receiveDdpSamplesToMercurySubmit() throws JAXBException {
+        List<DDPKitInfo> ddpSamplesToReceive = ddpKitInfos.stream()
+                .filter(kit -> selectedSampleIds.contains(kit.getManufacturerBarcode()))
+                .collect(Collectors.toList());
+
+        MessageCollection messageCollection = new MessageCollection();
+        Map<String, DDPKitInfo> mapSampleToKit =
+                receiveSamplesEjb.receiveDDPSamples(ddpSamplesToReceive, getUserBean().getBspUser(), messageCollection);
+
+        if (!messageCollection.hasErrors()) {
+            for (Map.Entry<String, DDPKitInfo> entry: mapSampleToKit.entrySet()) {
+                String manufacturerBarcode = entry.getValue().getManufacturerBarcode();
+                messageCollection.addInfo(
+                        "Received: " + manufacturerBarcode + " created GS-ID: " + entry.getKey());
+            }
+        }
+
+        addMessages(messageCollection);
+        return new ForwardResolution(RECEIVE_DDP_SAMPLE_PAGE);
     }
 
     @HandlesEvent(RECEIVE_BY_SAMPLE_TO_BSP)
@@ -635,5 +747,21 @@ public class ReceivingActionBean extends RackScanActionBean {
     public void setMapSampleToPositionAndBarcode(
             Map<String, WellAndSourceTubeType> mapSampleToPositionAndBarcode) {
         this.mapSampleToPositionAndBarcode = mapSampleToPositionAndBarcode;
+    }
+
+    public String getDdpBarcodes() {
+        return ddpBarcodes;
+    }
+
+    public void setDdpBarcodes(String ddpBarcodes) {
+        this.ddpBarcodes = ddpBarcodes;
+    }
+
+    public List<DDPKitInfo> getDdpKitInfos() {
+        return ddpKitInfos;
+    }
+
+    public void setDdpKitInfos(List<DDPKitInfo> ddpKitInfos) {
+        this.ddpKitInfos = ddpKitInfos;
     }
 }

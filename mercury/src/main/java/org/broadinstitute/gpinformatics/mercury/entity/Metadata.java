@@ -307,7 +307,9 @@ public class Metadata {
         SYNTHESIS_DATE(Category.REAGENT, DataType.DATE, "Synthesis Date", Visibility.USER),
         MANUFACTURING_DATE(Category.REAGENT, DataType.DATE, "Manufacturing Date", Visibility.USER),
         STORAGE_CONDITIONS(Category.REAGENT, DataType.STRING, "Storage Conditions", Visibility.USER),
-        MANUFACTURER_DESIGN_ID(Category.REAGENT, DataType.STRING, "Manufacturer Design ID", Visibility.USER);
+        MANUFACTURER_DESIGN_ID(Category.REAGENT, DataType.STRING, "Manufacturer Design ID", Visibility.USER),
+        SAMPLE_COLLECTION(Category.SAMPLE, DataType.STRING, "Sample Collection", Visibility.USER),
+        ORGANISM_CLASSIFICATION_ID(Category.SAMPLE, DataType.NUMBER, "Organism Classification ID", Visibility.USER);
 
         private final Category category;
         private final DataType dataType;

@@ -2320,4 +2320,8 @@
 	    tableName="sample_instance_entity" columnNames="lab_vessel, library_name"/>
     </changeSet>
 
+    <changeSet id="GPLIM-6289-1" author="jowalsh">
+        <createSequence schemaName="mercury" sequenceName="SEQ_GS_SAMPLE" startValue="1111" incrementBy="50"/>
+    </changeSet>
+
 </databaseChangeLog>

@@ -16,6 +16,8 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptResource;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.GenomicsSampleDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.BSPRestService;
 import org.mockito.Mockito;
 import org.testng.Assert;
@@ -57,6 +59,9 @@ public class ReceiveSamplesEjbDBFreeTest {
     private String sample3Kit2;
     private String sample4Kit2;
     private String sample5Kit1;
+
+    private GenomicsSampleDao genomicsSampleDao;
+    private MercurySampleDao mercurySampleDao;
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() throws Exception {
@@ -101,6 +106,9 @@ public class ReceiveSamplesEjbDBFreeTest {
         pos3Kit2 = new ProductOrderSample(sample3Kit2);
         pos4Kit2 = new ProductOrderSample(sample4Kit2);
         pos5Kit1 = new ProductOrderSample(sample5Kit1);
+
+        genomicsSampleDao = Mockito.mock(GenomicsSampleDao.class);
+        mercurySampleDao = Mockito.mock(MercurySampleDao.class);
     }
 
     /**
@@ -141,7 +149,7 @@ public class ReceiveSamplesEjbDBFreeTest {
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
         ReceiveSamplesEjb testEjb = new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao,
-                testUserList, sampleReceiptResource, bspRestService);
+                testUserList, sampleReceiptResource, bspRestService, genomicsSampleDao, mercurySampleDao);
 
         MessageCollection validationResults = new MessageCollection();
 
@@ -192,7 +200,7 @@ public class ReceiveSamplesEjbDBFreeTest {
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
         ReceiveSamplesEjb testEjb = new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao,
-                testUserList, sampleReceiptResource, bspRestService);
+                testUserList, sampleReceiptResource, bspRestService, genomicsSampleDao, mercurySampleDao);
 
         MessageCollection validationResults = new MessageCollection();
 
@@ -259,7 +267,7 @@ public class ReceiveSamplesEjbDBFreeTest {
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
         ReceiveSamplesEjb testEjb = new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao,
-                testUserList, sampleReceiptResource, bspRestService);
+                testUserList, sampleReceiptResource, bspRestService, genomicsSampleDao, mercurySampleDao);
 
         MessageCollection validationResults = new MessageCollection();
 
@@ -329,7 +337,7 @@ public class ReceiveSamplesEjbDBFreeTest {
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
         ReceiveSamplesEjb testEjb = new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao,
-                testUserList, sampleReceiptResource, bspRestService);
+                testUserList, sampleReceiptResource, bspRestService, genomicsSampleDao, mercurySampleDao);
 
         MessageCollection validationResults = new MessageCollection();
 
@@ -430,7 +438,7 @@ public class ReceiveSamplesEjbDBFreeTest {
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
         ReceiveSamplesEjb testEjb = new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao,
-                testUserList, sampleReceiptResource, bspRestService);
+                testUserList, sampleReceiptResource, bspRestService, genomicsSampleDao, mercurySampleDao);
 
         MessageCollection validationResults = new MessageCollection();
 

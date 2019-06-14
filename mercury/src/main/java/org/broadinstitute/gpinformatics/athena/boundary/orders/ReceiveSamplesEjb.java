@@ -15,13 +15,18 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.DDPKitInfo;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleInfo;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleKitInfo;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleKitReceivedBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptResource;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.GenomicsSampleDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.BSPRestService;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
 
 import javax.ejb.Stateful;
@@ -29,7 +34,9 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.xml.bind.JAXBException;
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -56,6 +63,8 @@ public class ReceiveSamplesEjb {
     private BSPUserList bspUserList;
     private SampleReceiptResource sampleReceiptResource;
     private BSPRestService bspRestService;
+    private GenomicsSampleDao genomicsSampleDao;
+    private MercurySampleDao mercurySampleDao;
 
     public ReceiveSamplesEjb() {
     }
@@ -66,13 +75,17 @@ public class ReceiveSamplesEjb {
                              ProductOrderSampleDao productOrderSampleDao,
                              BSPUserList bspUserList,
                              SampleReceiptResource sampleReceiptResource,
-                             BSPRestService bspRestService) {
+                             BSPRestService bspRestService,
+                             GenomicsSampleDao genomicsSampleDao,
+                             MercurySampleDao mercurySampleDao) {
         this.receiptService = receiptService;
         this.managerFactory = managerFactory;
         this.productOrderSampleDao = productOrderSampleDao;
         this.bspUserList = bspUserList;
         this.sampleReceiptResource = sampleReceiptResource;
         this.bspRestService = bspRestService;
+        this.genomicsSampleDao = genomicsSampleDao;
+        this.mercurySampleDao = mercurySampleDao;
     }
 
     /**
@@ -232,6 +245,64 @@ public class ReceiveSamplesEjb {
         }
 
         return sampleKitReceivedBean;
+    }
+
+    /**
+     * For samples that arrive from DSM. Must create a new lab vessel with a new Sample ID called a GS-ID
+     */
+    public Map<String, DDPKitInfo> receiveDDPSamples(List<DDPKitInfo> ddpKitInfos, BspUser bspUser,
+                                                     MessageCollection messageCollection) {
+        List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
+        Map<String, DDPKitInfo> mapSampleToKit = new HashMap<>();
+
+        for (DDPKitInfo ddpKitInfo: ddpKitInfos) {
+            String tubeType = ddpKitInfo.getReceptacleName();
+            String gsId = genomicsSampleDao.fetchNextGenomicsSampleId();
+            parentVesselBeans.add(new ParentVesselBean(ddpKitInfo.getManufacturerBarcode(), gsId, tubeType,null));
+            mapSampleToKit.put(gsId, ddpKitInfo);
+        }
+
+        String kitId = "DDPKit" + System.currentTimeMillis();
+
+        SampleReceiptBean sampleReceiptBean = new SampleReceiptBean(new Date(), kitId, parentVesselBeans,
+                bspUser.getUsername());
+
+        sampleReceiptResource.notifyOfReceipt(sampleReceiptBean, MercurySample.MetadataSource.MERCURY);
+
+        mercurySampleDao.flush();
+
+        Set<String> sampleKeys = mapSampleToKit.keySet();
+        List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(sampleKeys);
+        List<String> foundSamples = mercurySamples.stream().map(MercurySample::getSampleKey).collect(Collectors.toList());
+        List<String> missingSamples =
+                sampleKeys.stream().filter(sample -> !foundSamples.contains(sample)).collect(Collectors.toList());
+        for (String sample: missingSamples) {
+            messageCollection.addError("Failed to create Mercury Sample for " + sample);
+        }
+
+        for (MercurySample mercurySample: mercurySamples) {
+            DDPKitInfo ddpKitInfo = mapSampleToKit.get(mercurySample.getSampleKey());
+
+            Metadata materialTypeMetadata = new Metadata(Metadata.Key.MATERIAL_TYPE, ddpKitInfo.getMaterialInfo());
+            Metadata genderMetadata = new Metadata(Metadata.Key.GENDER, ddpKitInfo.getGender());
+
+            Metadata collabParticipantMetadata = new Metadata(
+                    Metadata.Key.PATIENT_ID, ddpKitInfo.getCollaboratorParticipantId());
+
+            Metadata collabSampleMetadata = new Metadata(
+                    Metadata.Key.SAMPLE_ID, ddpKitInfo.getCollaboratorSampleId());
+
+            Metadata collectionMetata = new Metadata(
+                    Metadata.Key.SAMPLE_COLLECTION, ddpKitInfo.getSampleCollectionBarcode());
+
+            Metadata organismClassificationMetadata = new Metadata(
+                    Metadata.Key.ORGANISM_CLASSIFICATION_ID, new BigDecimal(ddpKitInfo.getOrganismClassificationId()));
+
+            mercurySample.addMetadata(new HashSet<>(Arrays.asList(materialTypeMetadata, genderMetadata,
+                    collabParticipantMetadata, collabSampleMetadata, collectionMetata, organismClassificationMetadata)));
+        }
+
+        return mapSampleToKit;
     }
 
     /**

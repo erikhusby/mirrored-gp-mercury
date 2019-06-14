@@ -270,6 +270,21 @@ infiniumStarter:
         login: mercury-pipeline
         passwordFileName: mercury-pipeline-prod-passwords.properties
 
+ddp:
+
+    DEV:
+        host: dsm-dev.datadonationplatform.org
+        jwtSecretFilename: mercury-ddp-dev-secret.properties
+
+    QA:
+        host: dsm-dev.datadonationplatform.org
+        jwtSecretFilename: mercury-ddp-qa-secret.properties
+
+    PROD:
+        host: dsm.datadonationplatform.org
+        jwtSecretFilename: mercury-ddp-prod-secret.properties
+
+
 decoder:
 
     DEV:
@@ -352,6 +367,7 @@ mercury:
       infiniumStarter: DEV
       sap:  RC
       decoder: DEV
+      ddp: DEV
 
 
     AUTO_BUILD:
@@ -373,6 +389,7 @@ mercury:
       infiniumStarter: DEV
       sap:  RC
       decoder: DEV
+      ddp: DEV
 
     TEST:
 
@@ -393,6 +410,7 @@ mercury:
       infiniumStarter: DEV
       sap:  RC
       decoder: DEV
+      ddp: DEV
 
     QA:
       app:      QA
@@ -412,6 +430,7 @@ mercury:
       infiniumStarter: QA
       sap:  RC
       decoder: QA
+      ddp: QA
 
     RC:
 
@@ -432,6 +451,7 @@ mercury:
       infiniumStarter: QA
       sap:  RC
       decoder: QA
+      ddp: QA
 
 
     PROD:
@@ -453,4 +473,5 @@ mercury:
       infiniumStarter: PROD
       sap:  PROD
       decoder: PROD
+      ddp: PROD
 
