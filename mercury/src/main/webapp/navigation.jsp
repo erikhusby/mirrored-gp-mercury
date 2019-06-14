@@ -303,7 +303,7 @@
                                 roles="<%= roles(LabManager, PDM, GPProjectManager, PM, Developer, LabUser) %>">
                             <li>
                                 <stripes:link id="pickFromStorage"
-                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.PickerActionBean"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.storage.PickerActionBean"
                                               event="view">
                                     Create Pick List From Storage
                                 </stripes:link>
@@ -311,28 +311,35 @@
                             <li class="divider"></li>
                             <li>
                                 <stripes:link id="srsBatch"
-                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.SRSBatchActionBean"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.storage.SRSBatchActionBean"
                                               event="view">
                                     SRS Batch Management
                                 </stripes:link>
                             </li>
                             <li>
                                 <stripes:link id="pickWorkspace"
-                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.PickWorkspaceActionBean"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.storage.PickWorkspaceActionBean"
                                               event="view">
                                     Pick Workspace
                                 </stripes:link>
                             </li>
                             <li>
                                 <stripes:link id="bulkCheckOut"
-                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.BulkStorageOpsActionBean"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.storage.BulkStorageOpsActionBean"
                                               event="initCheckOut">
                                     Bulk Check-Out
                                 </stripes:link>
                             </li>
                             <li>
+                                <stripes:link id="rackSpaceFinder"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.storage.StorageAllocationActionBean"
+                                              event="evtInit">
+                                    Rack Space Finder
+                                </stripes:link>
+                            </li>
+                            <li>
                                 <stripes:link id="bulkCheckIn"
-                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.BulkStorageOpsActionBean"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.storage.BulkStorageOpsActionBean"
                                               event="initCheckIn">
                                     Bulk Check-In
                                 </stripes:link>

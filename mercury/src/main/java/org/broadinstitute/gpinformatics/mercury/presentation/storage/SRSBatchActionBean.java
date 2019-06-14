@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
+package org.broadinstitute.gpinformatics.mercury.presentation.storage;
 
 
 import net.sourceforge.stripes.action.DefaultHandler;
@@ -34,7 +34,7 @@ public class SRSBatchActionBean extends CoreActionBean {
     public static final String CREATE_BATCH = CoreActionBean.CREATE + SRS_BATCH;
     public static final String EDIT_BATCH = CoreActionBean.EDIT + SRS_BATCH;
 
-    public static final String ACTION_BEAN_URL = "/vessel/srs.action";
+    public static final String ACTION_BEAN_URL = "/storage/srs.action";
     private static final String VIEW_PAGE = "/storage/srs_batch.jsp";
     public static final String SRS_BATCH_PARAMETER = "labBatch";
 

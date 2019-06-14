@@ -2,8 +2,8 @@
 <%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
 
 <stripes:useActionBean var="actionBean"
-                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.BulkStorageOpsActionBean"/>
-<stripes:layout-render name="/layout.jsp" pageTitle="SRS Bulk Check-In" sectionTitle="SRS Bulk Check-In" showCreate="false">
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.storage.BulkStorageOpsActionBean"/>
+<stripes:layout-render name="/layout.jsp" pageTitle="SRS Bulk Check-In" sectionTitle="SRS Bulk Check-In" showCreate="false" dataTablesVersion = "1.10">
 
     <stripes:layout-component name="extraHead">
         <link rel="stylesheet"
@@ -72,24 +72,18 @@
              * Returns the added element or null if additional validation (duplicate barcode) fails
              */
             var addBarcodeFeedbackElement = function(barcode){
-                var feedbackListElement = $j("#feedbackList");
-                var feedbackElement = null;
+                var feedbackListTblApi = $j("#feedbackList").DataTable();
+                var feedbackRow = null;
 
                 // Check for duplicates
-                if( feedbackListElement.data("barcodeList")[barcode] != undefined ) {
+                if( feedbackListTblApi.row( "#" + barcode ).length > 0 ) {
                     showFadingFeedback("warning", "Ignoring duplicate barcode");
                 } else {
-                    var responseId;
-                    do {
-                        // 10,000 should be good, but check for duplicates anyways
-                        responseId = "resp_" + Math.ceil( Math.random() * 10000 );
-                    } while ( $j( "#" + responseId, $j(feedbackElement) ).length > 0 );
-                    feedbackListElement.data("barcodeList")[barcode] = barcode;
-                    feedbackElement = feedbackListElement.append('<li id="' + responseId + '" style="width:100%;padding-bottom: 12px">Processing ' + barcode + ' <img src="/Mercury/images/spinner.gif" width="16px" height="16px"/></li>');
-                    feedbackElement = $j( "#" + responseId, $j(feedbackElement) );
+                    $j("#statusOutput").css("display","block");
+                    feedbackListTblApi.row.add({ barcode: barcode, feedbackMsg: "Processing...", status: "info"}).draw();
+                    feedbackRow = feedbackListTblApi.row( "#" + barcode );
                 }
-
-                return feedbackElement;
+                return feedbackRow;
             };
 
             /**
@@ -162,22 +156,22 @@
                 formData.push({name: "storageLocationId", value: storageLocationId});
                 formData.push({name: "<csrf:tokenname/>", value: "<csrf:tokenvalue/>" });
 
-                var feedbackElement = addBarcodeFeedbackElement(barcode);
+                var feedbackRow = addBarcodeFeedbackElement(barcode);
 
-                // null if pre-validation fails
-                if( feedbackElement != null ) {
-                    $j("#statusOutput").css("display","block");
-                    $j.ajax("/Mercury/vessel/bulkStorageOps.action", {
-                        context: feedbackElement,
+                // Row is null if pre-validation fails
+                if( feedbackRow != null ) {
+                    $j.ajax("/Mercury/storage/bulkStorageOps.action", {
+                        context: feedbackRow,
                         dataType: "html",
                         data: formData,
                         complete: function (response, status) {
                             if (status != "success") {
-                                $(this).html('<span style="width:100%; padding: 6px 30px 6px 12px" class="alert-danger" role="alert">An error occurred: ' + response.responseText + '</span>');
+                                this.data().status = "danger";
+                                this.data().feedbackMsg = "An error occurred: " + response.responseText;
                             } else {
                                 var obj = JSON.parse( response.responseText );
-                                $(this).html('<span style="width:100%; padding: 6px 30px 6px 12px" class="alert-' +  obj.feedbackLevel + '" role="alert">' + obj.feedbackMessage + '</span>');
-                                if( obj.feedbackLevel == 'success') {
+                                this.data(obj);
+                                if( obj.status == 'success') {
                                     locElement.remove();
                                 }
                             }
@@ -288,8 +282,45 @@
              * Sets up event listeners for checkout (READY stage)
              */
             $j(document).ready(function () {
+                var renderAlert = function(data, type, row, meta) {
+                    if (type == "display") {
+                        return "<div style=\"display:inline-block;width:100%\" class=\"alert-" + row.status + "\">" + data + "</div>";
+                    } else {
+                        return data;
+                    }
+                };
                 $j("#txtBarcodeScan").change(doVesselAction);
-                $j("#feedbackList").data("barcodeList", []);
+                $j("#feedbackList").dataTable({
+                    data: [],
+                    rowId: function(row) {
+                        return row.barcode;
+                    },
+                    paging: false,
+                    scrollY: 480,
+                    searching: false,
+                    info: false,
+                    ordering: false,
+                    columns: [
+                        {
+                            data: "barcode",
+                            render: renderAlert,
+                            title: "Barcode",
+                            width: "140px"
+                        },{
+                            data: "feedbackMsg",
+                            render: renderAlert,
+                            title: "Check-In&nbsp;Status"
+                        }
+                    ],
+                    columnDefs: [
+                        {targets: [0,1], className: "dt-head-left"}
+                    ],
+                    buttons: [
+                        'excel',
+                        'pdf',
+                        'print'
+                    ]
+                });
             } );
             </c:if>
         </script>
@@ -330,7 +361,8 @@
                 <c:if test="${actionBean.checkInPhase eq 'READY'}">
                     <div class="span6" id="statusOutput" style="display:none">
                     <fieldset><legend>Action Outcome(s)</legend>
-                        <ol id="feedbackList"></ol></fieldset>
+                        <table id="feedbackList" class="display compact" width="100%"></table>
+                    </fieldset>
                     </div>
                 </c:if>
         </div>

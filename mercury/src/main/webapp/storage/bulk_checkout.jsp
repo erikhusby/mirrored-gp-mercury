@@ -1,7 +1,7 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
-                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.BulkStorageOpsActionBean"/>
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.storage.BulkStorageOpsActionBean"/>
 <stripes:layout-render name="/layout.jsp" pageTitle="SRS Bulk Check-Out" sectionTitle="SRS Bulk Check-Out" showCreate="false">
 
     <stripes:layout-component name="extraHead">
@@ -31,13 +31,8 @@
                     showFadingFeedback("warning", "Ignoring duplicate barcode");
                     return null;
                 } else {
-                    var responseId;
-                    do {
-                        // 10,000 should be good, but check for duplicates anyways
-                        responseId = "resp_" + Math.ceil( Math.random() * 10000 );
-                    } while ( $j( "#" + responseId, $j(feedbackElement) ).length > 0 );
-
                     listElement.data("barcodeList")[barcode] = barcode;
+                    var responseId = "resp_" + barcode;
                     var feedbackElement = listElement.append('<li id="' + responseId + '" style="width:100%;padding-bottom: 12px">Processing ' + barcode + ' <img src="/Mercury/images/spinner.gif" width="16px" height="16px"/></li>');
                     return $j( "#" + responseId, $j(feedbackElement) );
                 }
@@ -66,16 +61,16 @@
                 var listElement = addBarcodeFeedbackElement(barcode);
                 if( listElement != null ) {
                     $j("#statusOutput").css("display","block");
-                    $j.ajax("/Mercury/vessel/bulkStorageOps.action", {
+                    $j.ajax("/Mercury/storage/bulkStorageOps.action", {
                         context: listElement,
                         dataType: "html",
                         data: formData,
                         complete: function (response, status) {
                             if (status != "success") {
-                                $(this).html('<span style="width:100%; padding: 6px 30px 6px 12px" class="alert-danger" role="alert">An error occurred: ' + response.responseText + '</span>');
+                                this.html('<span style="width:100%; padding: 6px 30px 6px 12px" class="alert-danger" role="alert">An error occurred: ' + response.responseText + '</span>');
                             } else {
                                 var obj = JSON.parse( response.responseText );
-                                $(this).html('<span style="width:100%; padding: 6px 30px 6px 12px" class="alert-' +  obj.feedbackLevel + '" role="alert">' + obj.feedbackMessage + '</span>');
+                                this.html('<span style="width:100%; padding: 6px 30px 6px 12px" class="alert-' +  obj.status + '" role="alert">' + obj.feedbackMsg + '</span>');
                             }
                         }
                     });

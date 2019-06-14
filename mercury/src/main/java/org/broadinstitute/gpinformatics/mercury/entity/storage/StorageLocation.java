@@ -3,30 +3,8 @@ package org.broadinstitute.gpinformatics.mercury.entity.storage;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Table;
-import javax.persistence.Transient;
-import javax.persistence.UniqueConstraint;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import javax.persistence.*;
+import java.util.*;
 
 /**
  * Stores location of vessels in the lab. Self references to Parent Location allow for deeply
@@ -36,6 +14,8 @@ import java.util.Set;
 @Audited
 @Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(name = "U_STORAGE_BARCODE",columnNames = {"BARCODE"}))
 public class StorageLocation {
+
+    public static final StorageLocationLabelComparator BY_LABEL_COMPARATOR = new StorageLocationLabelComparator();
 
     public enum LocationType {
         REFRIGERATOR("Refrigerator", ExpectParentLocation.FALSE),
@@ -171,6 +151,13 @@ public class StorageLocation {
             }
         }
 
+        /**
+         * Getter required for stripes bean logic
+         */
+        public String getName(){
+            return name();
+        }
+
         public String getDisplayName() {
             return displayName;
         }
@@ -279,6 +266,13 @@ public class StorageLocation {
 
     public Set<StorageLocation> getChildrenStorageLocation() {
         return childrenStorageLocation;
+    }
+
+    public List<StorageLocation> getSortedChildLocations() {
+        List<StorageLocation> sortedList = new ArrayList<>();
+        sortedList.addAll(getChildrenStorageLocation());
+        sortedList.sort(BY_LABEL_COMPARATOR);
+        return sortedList;
     }
 
     public void setChildrenStorageLocation(

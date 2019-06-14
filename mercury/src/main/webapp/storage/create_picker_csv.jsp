@@ -1,7 +1,7 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
-                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.PickerActionBean" />
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.storage.PickerActionBean" />
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Create Picker CSV"
                        sectionTitle="Create Picker CSV" showCreate="false">
@@ -42,7 +42,7 @@
                     <div class="controls">
                         <stripes:select name="searchType" id="searchType">
                             <stripes:options-enumeration
-                                    enum="org.broadinstitute.gpinformatics.mercury.presentation.vessel.PickerActionBean.SearchType"
+                                    enum="org.broadinstitute.gpinformatics.mercury.presentation.storage.PickerActionBean.SearchType"
                                     label="displayName"/>
                         </stripes:select>
                     </div>

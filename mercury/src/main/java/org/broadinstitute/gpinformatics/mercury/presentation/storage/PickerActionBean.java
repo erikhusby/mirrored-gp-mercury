@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
+package org.broadinstitute.gpinformatics.mercury.presentation.storage;
 
 
 import net.sourceforge.stripes.action.DefaultHandler;
@@ -20,7 +20,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao
 import org.broadinstitute.gpinformatics.mercury.entity.storage.NotInStorageException;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
@@ -59,8 +58,8 @@ public class PickerActionBean extends CoreActionBean {
 
     private static final Logger logger = Logger.getLogger(PickerActionBean.class.getName());
 
-    public static final String ACTION_BEAN_URL = "/vessel/picker.action";
-    private static final String VIEW_PAGE = "/vessel/create_picker_csv.jsp";
+    public static final String ACTION_BEAN_URL = "/storage/picker.action";
+    private static final String VIEW_PAGE = "/storage/create_picker_csv.jsp";
     private static final String SEARCH_ACTION = "search";
 
     @Inject

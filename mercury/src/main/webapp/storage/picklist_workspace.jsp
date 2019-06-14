@@ -2,7 +2,7 @@
 <%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
 
 <stripes:useActionBean var="actionBean"
-                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.PickWorkspaceActionBean"/>
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.storage.PickWorkspaceActionBean"/>
 <stripes:layout-render name="/layout.jsp" pageTitle="SRS Workspace" sectionTitle="SRS Workspace" showCreate="false" dataTablesVersion = "1.10">
 
     <stripes:layout-component name="extraHead">
@@ -368,7 +368,7 @@
     <stripes:layout-component name="content">
         <div class="container-fluid">
         <div class="row-fluid">
-            <stripes:form id="formPickType" name="formPickType" action="/vessel/pickWorkspace.action"><input type="hidden" name="batchSelectionList" id="batchSelectionList" /><input type="hidden" name="pickerData" id="pickerData" />
+            <stripes:form id="formPickType" name="formPickType" action="/storage/pickWorkspace.action"><input type="hidden" name="batchSelectionList" id="batchSelectionList" /><input type="hidden" name="pickerData" id="pickerData" />
             <div class="span3">
                 <fieldset>
                     <legend>Batches</legend>
@@ -397,7 +397,7 @@
                     <p>Max Tubes per Rack:  <input type="text" name="tubesPerRack" id="txtTubesPerRack" style="width:40px;height:20px;padding:2px; margin:0px 0px 0px 8px"/></p>
                     <p>Split Racks by Batch:  <input type="checkbox" name="splitRacks" value="true" id="cbSplitRacks" style="margin:0px 40px 0px 8px"/> <input type="button" id="btnReBalance" value="Re-Balance"/></p>
                     <ol id="targetRackAssignments"></ol>
-                    <p><form id="formBuildXferFile" name="formBuildXferFile" action="/Mercury/vessel/pickWorkspace.action"><input type="hidden" name="pickerData" id="xferPickerData"/><input type="submit" name="buildXferFile" id="btnBuildXferFile" value="Build Transfer File" style="width:120px"/></form></p>
+                    <p><form id="formBuildXferFile" name="formBuildXferFile" action="/Mercury/storage/pickWorkspace.action"><input type="hidden" name="pickerData" id="xferPickerData"/><input type="submit" name="buildXferFile" id="btnBuildXferFile" value="Build Transfer File" style="width:120px"/></form></p>
                 </fieldset></div>
         </div>
         </div><%--container-fluid--%>

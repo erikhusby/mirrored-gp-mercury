@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
+package org.broadinstitute.gpinformatics.mercury.presentation.storage;
 
 import net.sourceforge.stripes.action.*;
 import org.apache.commons.lang3.tuple.Pair;
@@ -23,7 +23,7 @@ import java.util.logging.Logger;
 public class BulkStorageOpsActionBean extends CoreActionBean {
 
     private static final Logger logger = Logger.getLogger(BulkStorageOpsActionBean.class.getName());
-    public static final String ACTION_BEAN_URL = "/vessel/bulkStorageOps.action";
+    public static final String ACTION_BEAN_URL = "/storage/bulkStorageOps.action";
 
     private static final long MILLIS_PER_DAY = ( 1000 * 60 * 60 * 24 );
     // Wizard functionality for check-in flow
@@ -170,7 +170,7 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
 
         for( StorageLocation location : locations ){
             int capacity = location.getStorageCapacity();
-            int storedCount = storageLocationDao.getStoredVesselCount( location );
+            int storedCount = storageLocationDao.getStoredContainerCount( location );
 
             String locationPath = storageLocPaths.get(location.getStorageLocationId());
             if( locationPath == null ) {
@@ -290,10 +290,16 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
         return buildAjaxOutcome(statusMessage);
     }
 
+    /**
+     * Produce JSON feedback output to be handled in the client <br/>
+     * { barcode: "", feedbackMsg: "", status: "" } <br/>
+     * Status value matches bootstrap UI types (primary,secondary,success,danger,warning,info,light,dark)
+     */
     private StreamingResolution buildAjaxOutcome( Pair<String,String> statusMessage ) {
         JsonObject result = Json.createObjectBuilder()
-                .add("feedbackLevel", statusMessage.getLeft())
-                .add( "feedbackMessage", statusMessage.getRight())
+                .add( "barcode", barcode )
+                .add( "status", statusMessage.getLeft() )
+                .add( "feedbackMsg", statusMessage.getRight() )
                 .build();
         return new StreamingResolution("text/json", result.toString() );
     }
@@ -310,8 +316,8 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
         tube.setStorageLocation(null);
         LabEvent checkOutEvent = createStorageEvent( LabEventType.STORAGE_CHECK_OUT, tube, storageLocation,null );
         storageLocationDao.persist(checkOutEvent);
-        return Pair.of("success", "Vessel barcode " + barcode
-                + " checked out of 'loose' location " + locationTrail + ".");
+        return Pair.of("success", "Checked out vessel barcode " + barcode
+                + " from 'loose' location " + locationTrail + ".");
     }
 
     private Pair<String, String> doCheckOut( StaticPlate plate ) {
@@ -320,7 +326,7 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
         plate.setStorageLocation(null);
         LabEvent checkOutEvent = createStorageEvent( LabEventType.STORAGE_CHECK_OUT, plate, storageLocation, null );
         storageLocationDao.persist(checkOutEvent);
-        return Pair.of("success", "Plate barcode " + barcode + locationTrail + ".");
+        return Pair.of("success", "Checked out plate barcode " + barcode + " from " + locationTrail + ".");
     }
 
     private Pair<String, String> doCheckOut( RackOfTubes rack ) {
@@ -375,9 +381,8 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
         }
 
 
-        return Pair.of("success", "Rack barcode " + barcode
-                + " and all tubes checked out of location "
-                + locationTrail + ".");
+        return Pair.of("success", "Checked out rack barcode " + barcode
+                + " and all tubes from " + locationTrail + ".");
     }
 
     /**

@@ -2,7 +2,7 @@
 <%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
 
 <stripes:useActionBean var="actionBean"
-                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.SRSBatchActionBean"/>
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.storage.SRSBatchActionBean"/>
 <c:set var="stage" scope="page" value="${actionBean.stage}"/>
 <stripes:layout-render name="/layout.jsp" pageTitle="SRS Batch Management" sectionTitle="SRS Batch Management" showCreate="true" dataTablesVersion="1.10">
     <stripes:layout-component name="extraHead">
@@ -70,7 +70,7 @@
     <stripes:layout-component name="content">
         <div class="container-fluid">
         <div class="row-fluid">
-            <stripes:form id="formBatch" name="formBatch" action="/vessel/srs.action">
+            <stripes:form id="formBatch" name="formBatch" action="/storage/srs.action">
                 <c:choose>
 
                     <c:when test = "${stage eq 'SEARCHING'}">
@@ -131,7 +131,7 @@
                 </c:forEach>
                 </tbody>
             </table>
-            <form id="formRemove" name="formRemove" action="${ctxpath}/vessel/srs.action?evtRemove=" method="post">
+            <form id="formRemove" name="formRemove" action="${ctxpath}/storage/srs.action?evtRemove=" method="post">
                 <input type="button" id="btnDeleteChecked" value="Delete Checked"/>
                 <input type="hidden" name="batchId" id="batchIdRemove" value="${actionBean.batchId}"/>
                 <input type="hidden" name="<csrf:tokenname/>" value="<csrf:tokenvalue/>"/>

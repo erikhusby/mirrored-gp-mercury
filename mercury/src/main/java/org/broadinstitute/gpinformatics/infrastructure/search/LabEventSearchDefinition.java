@@ -318,8 +318,8 @@ public class LabEventSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("SRS Location");
-        searchTerm.setHelpText("Storage location for a check-in/check-out event");
+        searchTerm.setName("Event SRS Location");
+        searchTerm.setHelpText("Only applies to storage check-in/check-out events");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public String evaluate(Object entity, SearchContext context) {

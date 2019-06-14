@@ -80,7 +80,7 @@
         }
     }
 
-    $("#ajaxScanForm").submit(function (e) {
+    $j("#ajaxScanForm").submit(function (e) {
         e.preventDefault();
         var formData = new FormData();
         formData.append("labToFilterBy", $j('#selectLab').val());

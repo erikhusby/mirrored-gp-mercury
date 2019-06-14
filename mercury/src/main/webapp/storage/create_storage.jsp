@@ -36,32 +36,38 @@
                 <div class="control-group">
                     <stripes:label for="storageUnitName" name="Unit Name" class="control-label"/>
                     <div class="controls">
-                        <stripes:text id="storageUnitName" name="name"/>
+                        <c:choose><c:when test="${actionBean.readyForDetails}"><div style="padding-top:5px"><stripes:hidden id="storageUnitName" name="name"/>${actionBean.name}</div></c:when>
+                        <c:otherwise><stripes:text id="storageUnitName" name="name"/></c:otherwise></c:choose>
                     </div>
                 </div>
                 <div class="control-group">
                     <stripes:label for="storageUnitTypeName" name="Unit Type" class="control-label"/>
                     <div class="controls">
-                        <stripes:select id="storageUnitTypeName" name="storageUnitTypeName">
-                            <stripes:options-collection collection="${actionBean.creatableLocationTypes}"
-                                                        label="displayName" value="displayName"/>
-                        </stripes:select>
+                        <c:choose><c:when test="${actionBean.readyForDetails}"><div style="padding-top:5px"><stripes:hidden id="storageUnitTypeName" name="storageUnitTypeName"/>${actionBean.storageUnitTypeName}</div></c:when>
+                            <c:otherwise><stripes:select id="storageUnitTypeName" name="storageUnitTypeName">
+                                <stripes:options-collection collection="${actionBean.creatableLocationTypes}"
+                                                            label="displayName" value="name"/>
+                            </stripes:select></c:otherwise></c:choose>
                     </div>
                 </div>
+                <c:if test="${not actionBean.readyForDetails}">
                 <div class="control-group">
                     <div class="controls">
                         <stripes:submit id="chooseStorageType" name="chooseStorageType" value="Select Type" class="btn"/>
                     </div>
                 </div>
+                </c:if>
 
                 <c:if test="${actionBean.readyForDetails}">
                     <c:choose>
                         <c:when test="${actionBean.locationType.moveable}">
                             <div class="control-group">
                                 <stripes:label for="slots" name="Number Of Slots" class="control-label"/>
-                                <div class="controls">
-                                    <stripes:text id="slots" name="slots"/>
-                                </div>
+                                <div class="controls"><stripes:text id="slots" name="slots"/></div>
+                            </div>
+                            <div class="control-group">
+                                <stripes:label for="storageCapacity" name="Slot Capacity" class="control-label"/>
+                                <div class="controls"><stripes:text id="slotStorageCapacity" name="slotStorageCapacity"/></div>
                             </div>
                             <div class="control-group">
                                 <stripes:label for="storageName" class="control-label"/>

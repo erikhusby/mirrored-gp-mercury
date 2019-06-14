@@ -3,14 +3,18 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.storage;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation_;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
-import org.omg.Dynamic.Parameter;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.Query;
-import javax.persistence.criteria.*;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,15 +54,19 @@ public class StorageLocationDao extends GenericDao {
     }
 
     /**
-     * A root location is basically a top level storage unit - no parent
+     * A root location is basically a top level storage unit - no parent <br/>
+     * A lot of display usage so sorting by label logic is applied
      */
     public List<StorageLocation> findRootLocations() {
-        return findAll(StorageLocation.class, new GenericDaoCallback<StorageLocation>() {
+        List<StorageLocation> freezerList =
+        findAll(StorageLocation.class, new GenericDaoCallback<StorageLocation>() {
             @Override
             public void callback(CriteriaQuery<StorageLocation> criteriaQuery, Root<StorageLocation> root) {
                 criteriaQuery.where(getCriteriaBuilder().isNull(root.get(StorageLocation_.parentStorageLocation)));
             }
         });
+        freezerList.sort(StorageLocation.BY_LABEL_COMPARATOR);
+        return freezerList;
     }
 
     public List<StorageLocation> findByLocationTypes(List<StorageLocation.LocationType> locationTypes) {
@@ -82,10 +90,37 @@ public class StorageLocationDao extends GenericDao {
         return qry.getSingleResult().toString();
     }
 
-    public int getStoredVesselCount( StorageLocation location ) {
+    /**
+     * Find count of racks and plates in a location
+     */
+    public int getStoredContainerCount(StorageLocation location ) {
+        int count = 0;
+        CriteriaBuilder cb = getCriteriaBuilder();
+
+        CriteriaQuery<Long> cq = cb.createQuery(Long.class);
+        Root<RackOfTubes> rackRoot = cq.from( RackOfTubes.class );
+        Predicate p = cb.equal(rackRoot.get(LabVessel_.storageLocation), location.getStorageLocationId());
+        cq.select( cb.count( rackRoot ) );
+        cq.where(p);
+        count += getEntityManager().createQuery(cq).getSingleResult().intValue();
+
+        cq = cb.createQuery(Long.class);
+        Root<StaticPlate> plateRoot = cq.from( StaticPlate.class );
+        p = cb.equal(plateRoot.get(LabVessel_.storageLocation), location.getStorageLocationId());
+        cq.select( cb.count( plateRoot ) );
+        cq.where(p);
+        count += getEntityManager().createQuery(cq).getSingleResult().intValue();
+
+        return count;
+    }
+
+    /**
+     * Find count of tubes in a location (mostly relevant for LOOSE location type)
+     */
+    public int getStoredTubeCount(StorageLocation location ) {
         CriteriaBuilder cb = getCriteriaBuilder();
         CriteriaQuery<Long> cq = cb.createQuery(Long.class);
-        Root<LabVessel> root = cq.from( LabVessel.class );
+        Root<BarcodedTube> root = cq.from( BarcodedTube.class );
         Predicate p = cb.equal(root.get(LabVessel_.storageLocation), location.getStorageLocationId());
         cq.select( cb.count( root ) );
         cq.where(p);

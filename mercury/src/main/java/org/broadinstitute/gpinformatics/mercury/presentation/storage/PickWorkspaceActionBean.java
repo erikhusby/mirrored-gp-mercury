@@ -1,14 +1,11 @@
-package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
+package org.broadinstitute.gpinformatics.mercury.presentation.storage;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.sourceforge.stripes.action.*;
-import net.sourceforge.stripes.validation.ValidationError;
-import net.sourceforge.stripes.validation.ValidationErrors;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
-import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.StreamCreatedSpreadsheetUtil;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
@@ -20,16 +17,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableListActionBean;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.type.TypeReference;
 
 import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -40,7 +33,7 @@ import java.util.stream.Collectors;
 public class PickWorkspaceActionBean extends CoreActionBean {
 
     protected static final Log log = LogFactory.getLog(ConfigurableListActionBean.class);
-    public static final String ACTION_BEAN_URL = "/vessel/pickWorkspace.action";
+    public static final String ACTION_BEAN_URL = "/storage/pickWorkspace.action";
 
     // Events
     private static final String EVT_INIT = "init";
@@ -331,7 +324,7 @@ public class PickWorkspaceActionBean extends CoreActionBean {
         Map<LabVessel, PickerDataRow> containerRows = new HashMap<>();
 
         for(LabVessel batchVessel : batchVessels ) {
-            Triple<LabVessel,TubeFormation,StorageLocation> containerLoc = findVesselAndLocation( batchVessel );
+            Triple<LabVessel, TubeFormation,StorageLocation> containerLoc = findVesselAndLocation( batchVessel );
             LabVessel rackOrLooseTube = containerLoc.getLeft();
             TubeFormation storedTubeFormation = containerLoc.getMiddle();
             StorageLocation storageLocation = containerLoc.getRight();
