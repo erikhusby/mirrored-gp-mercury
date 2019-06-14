@@ -45,6 +45,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.AbstractBatchJiraFieldFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -148,6 +149,8 @@ public class LabBatchEjb {
     private BSPExportsService bspExportsService;
 
     private SequencingTemplateFactory sequencingTemplateFactory;
+
+    private TubeFormationDao tubeFormationDao;
 
     private AppConfig appConfig;
 
@@ -1044,15 +1047,24 @@ public class LabBatchEjb {
             }
 
             TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
-            barcodedTubeDao.persist(tubeFormation);
+            TubeFormation byDigest = tubeFormationDao.findByDigest(tubeFormation.getDigest());
+            if (byDigest == null) {
+                barcodedTubeDao.persist(tubeFormation);
+            }
+            // todo jmt create in-plate event
 
             LabBatch labBatch = labBatchDao.findByName(lcsetName);
             Map<String, String[]> terms = new HashMap<>();
             terms.put("Container Barcode", new String[]{tubeFormation.getLabel()});
-            CustomField mercuryUrlField = new CustomField(
-                    submissionFields, LabBatch.TicketFields.MERCURY_UDS,
-                    SearchDefinitionFactory.buildDrillDownLink(labBatch.getJiraTicket().getTicketName(),
-                            ColumnEntity.LAB_VESSEL, "LCSET Drill Down", terms, context));
+            StringBuilder linkBuilder = new StringBuilder();
+            SearchDefinitionFactory.buildDrillDownHref(
+                    ColumnEntity.LAB_VESSEL,
+                    "GLOBAL|GLOBAL_LAB_VESSEL_SEARCH_INSTANCES|LCSET Drill Down",
+                    terms, linkBuilder, appConfig.getUrl());
+            String link = linkBuilder.toString();
+            link = StringUtils.replaceEachRepeatedly(link, new String[]{"[", "]", "{", "}", " ", "\"", "|"},
+                    new String[]{"%5B", "%5D", "%7B", "%7D", "%20", "%22", "%7C"});
+            CustomField mercuryUrlField = new CustomField( submissionFields, LabBatch.TicketFields.MERCURY_UDS, link);
             JiraIssue jiraIssue = jiraService.getIssue(labBatch.getJiraTicket().getTicketName());
             jiraIssue.updateIssue(Collections.singleton(mercuryUrlField));
         } catch (IOException e) {
@@ -1556,6 +1568,11 @@ public class LabBatchEjb {
     @Inject
     public void setSequencingTemplateFactory(SequencingTemplateFactory sequencingTemplateFactory) {
         this.sequencingTemplateFactory = sequencingTemplateFactory;
+    }
+
+    @Inject
+    public void setTubeFormationDao(TubeFormationDao tubeFormationDao) {
+        this.tubeFormationDao = tubeFormationDao;
     }
 
     @Inject
