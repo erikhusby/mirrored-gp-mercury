@@ -90,6 +90,8 @@ public class LabVesselSearchDefinition {
             LabEventType.INFINIUM_HYBRIDIZATION);
 
     public static final List<LabEventType> FLOWCELL_LAB_EVENT_TYPES = new ArrayList<>();
+    private static final String CONTAINER_BARCODE = "Container Barcode";
+
     static {
         FLOWCELL_LAB_EVENT_TYPES.add(LabEventType.FLOWCELL_TRANSFER);
         FLOWCELL_LAB_EVENT_TYPES.add(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER);
@@ -300,7 +302,7 @@ public class LabVesselSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("Container Barcode");
+        searchTerm.setName(CONTAINER_BARCODE);
         searchTerm.setDbSortPath("label");
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();
@@ -320,7 +322,6 @@ public class LabVesselSearchDefinition {
             }
         });
         searchTerms.add(searchTerm);
-        // todo jmt result column for position in container
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Plate Name");
@@ -1426,8 +1427,18 @@ public class LabVesselSearchDefinition {
                 LabVessel labVessel = (LabVessel) entity;
                 Set<String> results = new HashSet<>();
 
+                List<String> containerBarcodes = null;
+                for (SearchInstance.SearchValue searchValue : context.getSearchInstance().getSearchValues()) {
+                    if (searchValue.getSearchTerm().getName().equals(CONTAINER_BARCODE)) {
+                        containerBarcodes = searchValue.getValues();
+                        break;
+                    }
+                }
+
                 for (LabVessel container : labVessel.getContainers()) {
-                    results.add(container.getContainerRole().getPositionOfVessel(labVessel).toString());
+                    if (containerBarcodes == null || containerBarcodes.contains(container.getLabel())) {
+                        results.add(container.getContainerRole().getPositionOfVessel(labVessel).toString());
+                    }
                 }
                 return results;
             }
