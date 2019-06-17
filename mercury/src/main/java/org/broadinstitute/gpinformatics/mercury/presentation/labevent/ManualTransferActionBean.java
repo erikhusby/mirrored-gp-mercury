@@ -1329,7 +1329,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     if (plateCherryPickEvent.getPositionMap().size() == 1) {
                         addMarkStockMetadata(plateCherryPickEvent.getPositionMap().get(0));
                     }
-                    bettaLIMSMessage.getPlateCherryPickEvent().add(plateCherryPickEvent);
+                    bettaLIMSMessage.getPlateCherryPickEvent().add((PlateCherryPickEvent)stationEvent);
                 } else if (stationEvent instanceof ReceptaclePlateTransferEvent) {
                     bettaLIMSMessage.getReceptaclePlateTransferEvent().add((ReceptaclePlateTransferEvent) stationEvent);
                 } else if (stationEvent instanceof ReceptacleTransferEventType) {
