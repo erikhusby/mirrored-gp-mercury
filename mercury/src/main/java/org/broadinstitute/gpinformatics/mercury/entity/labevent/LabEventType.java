@@ -354,8 +354,9 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP_APPLY_SM_IDS, VolumeConcUpdate.BSP_AND_MERCURY,
             new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT, RackOfTubes.RackType.values(),
-                    RackOfTubes.RackType.values()).sourceVolume(true).targetVolume(true).requireSingleParticipant(true)
-                .build(), LibraryType.NONE_ASSIGNED, SourceHandling.TERMINATE_DEPLETED, true, true),
+                    RackOfTubes.RackType.values()).sourceVolume(true).targetVolume(true).requireSingleParticipant(true).
+                    destinationMarkStockOptions(new MarkStock[] {MarkStock.ActiveStock, MarkStock.BackupStock, MarkStock.ReservedStock}).build(),
+            LibraryType.NONE_ASSIGNED, SourceHandling.TERMINATE_DEPLETED, true),
 
     // Dev Samples
     DEV("DevCherryPick",
@@ -2883,8 +2884,6 @@ public enum LabEventType {
 
     private boolean removeDestVolFromSource;
 
-    private boolean enableStockTypeSelection;
-
     /**
      * Determines what metadata is added to messages forwarded to BSP.
      */
@@ -3521,12 +3520,11 @@ public enum LabEventType {
                  SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
                  PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
                  VolumeConcUpdate volumeConcUpdate, ManualTransferDetails manualTransferDetails, LibraryType libraryType,
-                 SourceHandling sourceHandling, boolean removeDestVolFromSource, boolean enableStockTypeSelection) {
+                 SourceHandling sourceHandling, boolean removeDestVolFromSource) {
         this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
                 pipelineTransformation, forwardMessage, volumeConcUpdate, manualTransferDetails, null, libraryType, sourceHandling);
 
         this.removeDestVolFromSource = removeDestVolFromSource;
-        this.enableStockTypeSelection = enableStockTypeSelection;
     }
 
     LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
@@ -3699,11 +3697,6 @@ public enum LabEventType {
      * @return true if we expect the transfers to remove the destination volume from the source.
      */
     public boolean removeDestVolFromSource() { return removeDestVolFromSource; }
-
-    /**
-     * @return true if the event is expected to mark destination samples as Active Stock in BSP.
-     */
-    public boolean enableStockTypeSelection() { return enableStockTypeSelection; }
 
     /**
      * Check whether this event type expects to deplete all sources (if there are any transfers).

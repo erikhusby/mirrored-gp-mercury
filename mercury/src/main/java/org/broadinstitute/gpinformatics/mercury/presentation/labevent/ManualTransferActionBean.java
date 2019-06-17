@@ -1293,14 +1293,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
                         addDepleteMetadata(plateCherryPickEvent.getSourcePositionMap().get(0), depleteAll);
                     }
 
-                    if (labEventType.enableStockTypeSelection()) {
-                        if(StringUtils.isBlank(getSelectedStockType())) {
-                            addGlobalValidationError("No Stock Type selected to assign to destination samples.");
-                            // Might need to change to be using "addGlobalValidationError" instead. it didn't catch this exception
-                        } else {
-                            addSelectedStockMetadata(plateCherryPickEvent.getPositionMap().get(0), getSelectedStockType());
-                        }
-                    }
                     // If there was a selected geometry then we have to specifically set the tube type in the message.
                     if (selectedSourceGeometry != null &&
                         (labEventType.getManualTransferDetails() != null && labEventType.getManualTransferDetails().getSourceVesselTypeGeometries() != null & labEventType.getManualTransferDetails().getSourceVesselTypeGeometries().length > 1)) {
@@ -1321,7 +1313,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     }
 
                     VesselTypeGeometry selectedTargetGeometry = getSelectedTargetGeometry();
-                    if (selectedTargetGeometry == null && labEventType.getManualTransferDetails() != null && manualTransferDetails.getTargetVesselTypeGeometry() != null) {
+                    if (selectedTargetGeometry == null && labEventType.getManualTransferDetails() != null
+                        && manualTransferDetails.getTargetVesselTypeGeometry() != null) {
                         selectedTargetGeometry = manualTransferDetails.getTargetVesselTypeGeometry();
                     }
                     cleanupPositionMap(plateCherryPickEvent.getPositionMap().get(0), plateCherryPickEvent.getPlate().get(0),
@@ -1336,7 +1329,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     if (plateCherryPickEvent.getPositionMap().size() == 1) {
                         addMarkStockMetadata(plateCherryPickEvent.getPositionMap().get(0));
                     }
-                    bettaLIMSMessage.getPlateCherryPickEvent().add((PlateCherryPickEvent) stationEvent);
+                    bettaLIMSMessage.getPlateCherryPickEvent().add(plateCherryPickEvent);
                 } else if (stationEvent instanceof ReceptaclePlateTransferEvent) {
                     bettaLIMSMessage.getReceptaclePlateTransferEvent().add((ReceptaclePlateTransferEvent) stationEvent);
                 } else if (stationEvent instanceof ReceptacleTransferEventType) {
@@ -1440,21 +1433,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 backupMetadata.setValue(markBackup.name());
                 receptacleType.getMetadata().add(backupMetadata);
             }
-        }
-    }
-
-    /**
-     * Adds selected stock type to the metadata for all of the given position map entrees.
-     *
-     * @param positionMapType   - position map to update receptacle metadata tag.
-     * @param selectedStockType - Stock type selected.
-     */
-    private void addSelectedStockMetadata(PositionMapType positionMapType, String selectedStockType) {
-        for (ReceptacleType receptacleType: positionMapType.getReceptacle()) {
-            MetadataType metadataType = new MetadataType();
-            metadataType.setName(Metadata.Key.STOCK_TYPE.getDisplayName());
-            metadataType.setValue(String.valueOf(selectedStockType));
-            receptacleType.getMetadata().add(metadataType);
         }
     }
 

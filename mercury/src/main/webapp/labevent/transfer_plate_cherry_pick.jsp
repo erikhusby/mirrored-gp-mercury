@@ -72,22 +72,6 @@ plate / rack.
 <%-- todo jmt id is not unique --%>
 <div class="control-group vessel-container" id="container0" data-direction="${source ? "src" : "dest"}" data-event-index="${stationEventIndex}">
 
-    <c:if test="${!source and actionBean.labEventType.enableStockTypeSelection()}">
-        <p class="control-group">
-            <stripes:label for="markStockType" style="padding-right:30px;">Select a stock type to mark destinations:</stripes:label>
-            <c:forEach items="<%= StockSampleType.values()%>" var="stockType">
-                <stripes:label for="markStockType">${stockType.name}</stripes:label>
-
-                <input type="radio" id="selectedStockType${stationEventIndex}"
-                       name="selectedStockType"
-                       class="clearable smalltext" autocomplete="off"
-                       value="${stockType.name}"
-                       <c:if test="${stockType.name == actionBean.selectedStockType}">checked</c:if>
-                />
-            </c:forEach>
-        </p>
-    </c:if>
-
     <c:if test="${!source}">
         <p class="control-group">
             <label for="updateAllDestinationVolumes">Update All Destination Volumes:</label><input type="text" id="updateAllDestinationVolumes"/>
