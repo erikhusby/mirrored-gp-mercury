@@ -308,7 +308,7 @@ public class Metadata {
         MANUFACTURING_DATE(Category.REAGENT, DataType.DATE, "Manufacturing Date", Visibility.USER),
         STORAGE_CONDITIONS(Category.REAGENT, DataType.STRING, "Storage Conditions", Visibility.USER),
         MANUFACTURER_DESIGN_ID(Category.REAGENT, DataType.STRING, "Manufacturer Design ID", Visibility.USER),
-
+        MARK_STOCK(Category.SAMPLE, DataType.STRING, "Mark Stock", Visibility.USER),
         PACKAGE_ID(Category.SAMPLE, DataType.STRING, "Package ID", Visibility.USER),
         BOX_ID(Category.SAMPLE, DataType.STRING, "Box ID", Visibility.NONE),
         WELL_POSITION(Category.SAMPLE, DataType.STRING, "Well Location", Visibility.NONE),

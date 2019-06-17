@@ -322,9 +322,15 @@ public class DesignationActionBean extends CoreActionBean implements Designation
             // External upload will already have values for some designation parameters.
             SampleInstanceV2 sampleInstance = loadingTubeToSampleInstance.get(loadingTube);
             if (sampleInstance != null) {
-                newDto.setReadLength(sampleInstance.getReadLength1());
-                newDto.setPairedEndRead(sampleInstance.getPairedEndRead());
-                newDto.setIndexType(sampleInstance.getIndexType());
+                if (sampleInstance.getReadLength1() != null) {
+                    newDto.setReadLength(sampleInstance.getReadLength1());
+                }
+                if (sampleInstance.getPairedEndRead() != null) {
+                    newDto.setPairedEndRead(sampleInstance.getPairedEndRead());
+                }
+                if (sampleInstance.getIndexType() != null) {
+                    newDto.setIndexType(sampleInstance.getIndexType());
+                }
             }
             // Persists the lcset choice made by the user.
             for (DesignationUtils.LcsetAssignmentDto assignmentDto : tubeLcsetAssignments) {
