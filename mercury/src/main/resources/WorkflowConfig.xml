@@ -3855,6 +3855,7 @@
                     <targetSection>ALL96</targetSection>
                     <sourceMassRemoved>true</sourceMassRemoved>
                     <targetWellTypeString>WellType.Well2000</targetWellTypeString>
+                    <sourceBarcodedTubeTypeString>BarcodedTubeType.Cryovial2018</sourceBarcodedTubeTypeString>
                     <reagentRequirements>
                         <reagentName>AllPrep 96 PowerFecal DNA/RNA</reagentName>
                         <expirationDateIncluded>true</expirationDateIncluded>
@@ -3987,6 +3988,7 @@
                     <sourceSection>ALL96</sourceSection>
                     <targetVesselTypeGeometryString>RackType.Matrix96SlotRack075</targetVesselTypeGeometryString>
                     <targetSection>ALL96</targetSection>
+                    <targetBarcodedTubeTypeString>BarcodedTubeType.MatrixTube075</targetBarcodedTubeTypeString>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -4027,6 +4029,7 @@
                     <sourceSection>ALL96</sourceSection>
                     <targetVesselTypeGeometryString>RackType.Matrix96SlotRack075</targetVesselTypeGeometryString>
                     <targetSection>ALL96</targetSection>
+                    <targetBarcodedTubeTypeString>BarcodedTubeType.MatrixTube075</targetBarcodedTubeTypeString>
                 </manualTransferDetails>
             </workflowStepDefs>
         </workflowProcessDefVersions>
