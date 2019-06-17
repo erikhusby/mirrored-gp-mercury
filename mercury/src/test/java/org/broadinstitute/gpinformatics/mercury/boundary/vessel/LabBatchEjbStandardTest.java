@@ -684,6 +684,13 @@ public class LabBatchEjbStandardTest extends Arquillian {
         Assert.assertTrue(messages.toString().contains("has invalid regulatory designation (Clinical and Research)"),
                 messages.toString());
 
+        // Should handle non-unique product name (same name on two products).
+        messages.setLength(0);
+        list = designationErrorHelper(messages, messageReporter,
+                Pair.of("RNA-010415 Stranded, Long Insert Transcriptome (50M) v1", DesignationUtils.RESEARCH),
+                Pair.of("RNA-010415 Stranded, Long Insert Transcriptome (50M) v1", DesignationUtils.RESEARCH));
+        Assert.assertEquals(list.size(), 1, messages.toString());
+
         // Makes Genome mixed designation FCT just fine.
         messages.setLength(0);
         list = designationErrorHelper(messages, messageReporter,
