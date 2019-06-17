@@ -30,7 +30,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashSet;
@@ -50,7 +49,6 @@ public class GoogleBucketDao {
     private GoogleStorageConfig googleStorageConfig;
     private ServiceAccountCredentials credentials = null;
     private ServiceAccountCredentials writerCredentials = null;
-    private File credentialFile = null;
     private static Log logger = LogFactory.getLog(GoogleBucketDao.class);
 
     public void setConfigGoogleStorageConfig(GoogleStorageConfig googleStorageConfig) {
@@ -61,10 +59,7 @@ public class GoogleBucketDao {
      * Returns a list of the files' blobIds in the bucket.
      */
     public List<String> list(MessageCollection messageCollection) {
-        makeCredential(messageCollection);
-        if (credentials == null) {
-            return Collections.emptyList();
-        } else {
+        if (makeCredential(false, messageCollection)) {
             try {
                 Storage storage = StorageOptions.newBuilder().setCredentials(credentials)
                         .setProjectId(credentials.getProjectId()).build().getService();
@@ -78,6 +73,8 @@ public class GoogleBucketDao {
                 logger.error(msg, e);
                 return Collections.emptyList();
             }
+        } else {
+            return Collections.emptyList();
         }
     }
 
@@ -85,12 +82,15 @@ public class GoogleBucketDao {
      * Returns true if file exists.
      */
     public boolean exists(String filename, MessageCollection messageCollection) {
-        makeCredential(messageCollection);
-        if (credentials != null) {
-            Storage storage = StorageOptions.newBuilder().setCredentials(credentials)
-                    .setProjectId(credentials.getProjectId()).build().getService();
-            Blob blob = storage.get(BlobId.of(googleStorageConfig.getBucketName(), filename));
-            return blob != null && blob.exists();
+        if (makeCredential(false, messageCollection)) {
+            try {
+                Storage storage = StorageOptions.newBuilder().setCredentials(credentials)
+                        .setProjectId(credentials.getProjectId()).build().getService();
+                Blob blob = storage.get(BlobId.of(googleStorageConfig.getBucketName(), filename));
+                return blob != null && blob.exists();
+            } catch (BaseServiceException e) {
+                messageCollection.addError("Error looking for " + filename + ": " + e.getMessage());
+            }
         }
         return false;
     }
@@ -99,10 +99,7 @@ public class GoogleBucketDao {
      * Reads and returns content of a file as bytes, or null if no such file.
      */
     public byte[] download(String filename, MessageCollection messageCollection) {
-        makeCredential(messageCollection);
-        if (credentials == null) {
-            return null;
-        } else {
+        if (makeCredential(false, messageCollection)) {
             try {
                 Storage storage = StorageOptions.newBuilder().setCredentials(credentials)
                         .setProjectId(credentials.getProjectId()).build().getService();
@@ -114,6 +111,8 @@ public class GoogleBucketDao {
                 logger.error(msg, e);
                 return null;
             }
+        } else {
+            return null;
         }
     }
 
@@ -121,8 +120,7 @@ public class GoogleBucketDao {
      * Writes a file to the bucket for Arquillian testing.
      */
     public void upload(String filename, byte[] content, MessageCollection messageCollection) {
-        makeWriterCredential(messageCollection);
-        if (writerCredentials != null) {
+        if (makeCredential(true, messageCollection)) {
             try {
                 Storage storage = StorageOptions.newBuilder().setCredentials(writerCredentials)
                         .setProjectId(writerCredentials.getProjectId()).build().getService();
@@ -141,16 +139,33 @@ public class GoogleBucketDao {
 
     /**
      * Authorizes Google Storage access for Mercury as a service account.
+     * @param forWriting should only be true when writing files to the test bucket for unit testing.
+     * @return false if there was a credential error, true if ok.
      */
-    private void makeCredential(MessageCollection messages) {
-        if (credentials == null) {
+    private boolean makeCredential(boolean forWriting, MessageCollection messages) {
+        boolean credentialOk = false;
+        File file = null;
+        ServiceAccountCredentials serviceAccountCredentials = forWriting ? writerCredentials : credentials;
+        if (serviceAccountCredentials == null) {
             File homeDir = new File(System.getProperty("user.home"));
-            credentialFile = new File(homeDir, googleStorageConfig.getCredentialFilename());
-            if (credentialFile.exists()) {
+            String filename = forWriting ?
+                    googleStorageConfig.getWriterCredentialFilename() : googleStorageConfig.getCredentialFilename();
+            file = new File(homeDir, filename);
+            if (file.exists()) {
                 try {
-                    credentials = ServiceAccountCredentials.fromStream(new FileInputStream(credentialFile));
+                    serviceAccountCredentials = ServiceAccountCredentials.fromStream(new FileInputStream(file));
+                    if (serviceAccountCredentials == null) {
+                        messages.addError("Error making Google Service Account credentials from file.");
+                    } else {
+                        if (forWriting) {
+                            writerCredentials = serviceAccountCredentials;
+                        } else {
+                            credentials = serviceAccountCredentials;
+                        }
+                        credentialOk = true;
+                    }
                 } catch (FileNotFoundException e) {
-                    messages.addError("Credential file is missing: %s", credentialFile.getAbsolutePath());
+                    messages.addError("Credential file is missing: %s", file.getAbsolutePath());
                 } catch (IOException e) {
                     messages.addError("Credential file stream gives: %s", e.toString());
                 } catch (BaseServiceException e) {
@@ -159,48 +174,34 @@ public class GoogleBucketDao {
                     logger.error(msg, e);
                 }
             } else {
-                messages.addError("Credential file is missing: %s", credentialFile.getAbsolutePath());
-            }
-        } else {
-            try {
-                credentials.refreshIfExpired();
-            } catch (IOException e) {
-                credentials = null;
-                makeCredential(messages);
+                messages.addError("Credential file is missing: %s", file.getAbsolutePath());
             }
         }
-    }
-
-    /**
-     * Authorizes Google Storage access for Mercury as a service account.
-     */
-    private void makeWriterCredential(MessageCollection messages) {
-        if (writerCredentials == null) {
-            File homeDir = new File(System.getProperty("user.home"));
-            File writerCredentialFile = new File(homeDir, googleStorageConfig.getWriterCredentialFilename());
-            if (writerCredentialFile.exists()) {
-                try {
-                    writerCredentials = ServiceAccountCredentials.fromStream(new FileInputStream(writerCredentialFile));
-                } catch (FileNotFoundException e) {
-                    messages.addError("Writer credential file is missing: %s", writerCredentialFile.getAbsolutePath());
-                } catch (IOException e) {
-                    messages.addError("Writer credential file stream gives: %s", e.toString());
-                } catch (BaseServiceException e) {
-                    String msg = "Error getting Google Service Account credentials. ";
-                    messages.addError(msg + e.toString());
-                    logger.error(msg, e);
+        if (credentialOk) {
+            try {
+                // The credential is tested and it's valid if no exception is thrown.
+                if (StringUtils.isNotBlank(StorageOptions.newBuilder().
+                        setCredentials(serviceAccountCredentials).
+                        setProjectId(serviceAccountCredentials.getProjectId()).
+                        build().getService().
+                        getServiceAccount(serviceAccountCredentials.getProjectId()).toString())) {
+                    return credentialOk;
                 }
-            } else {
-                messages.addError("Writer credential file is missing: %s", writerCredentialFile.getAbsolutePath());
-            }
-        } else {
-            try {
-                writerCredentials.refreshIfExpired();
-            } catch (IOException e) {
-                writerCredentials = null;
-                makeWriterCredential(messages);
+            } catch (Exception e) {
+                if (forWriting) {
+                    writerCredentials = null;
+                } else {
+                    credentials = null;
+                }
+                credentialOk = false;
+                String msg = "The Google Service Account credential failed: ";
+                logger.error(msg, e);
+                messages.addError(msg + e.toString());
+                messages.addError("It is likely that the Google service account credential " +
+                        "needs to be manually regenerated. " + regenerationMessage(file.getAbsolutePath()));
             }
         }
+        return credentialOk;
     }
 
     /**
@@ -256,7 +257,10 @@ public class GoogleBucketDao {
             messageCollection.addInfo("Storage object service account: " +
                     storage.getServiceAccount(credentials.getProjectId()).toString());
             messageCollection.addInfo("Storage object host: " + storage.getOptions().getHost().toString());
-            List<String> filenames = new ArrayList<>();
+            // Reading a non-existent file should return null. If it throws, there's a problem.
+            storage.get(BlobId.of(googleStorageConfig.getBucketName(), "ProbablyDoesNotExist"));
+            // Tries to get a file listing.
+             List<String> filenames = new ArrayList<>();
             storage.list(googleStorageConfig.getBucketName()).iterateAll()
                     .forEach(blob -> filenames.add(blob.getName()));
             messageCollection.addInfo("List of bucket " + googleStorageConfig.getBucketName() +
@@ -280,12 +284,15 @@ public class GoogleBucketDao {
         }
     }
 
+    /**
+     * Generates a new credential (the json "key") for Mercury to access the Google storage bucket
+     * and writes the new credential to the configured filename, overwriting the existing old credential.
+     * If there's a problem a message is output explaining how to manually create the credential file.
+     */
     public void rotateServiceAccountKey(MessageCollection messages) {
-        makeCredential(messages);
-        // If Mercury can successfully login, Mercury can generate a new credential (the json "key")
-        // and then write it to the configured filename.
-        // If Mercury cannot login, a message is output explaining how to manually create a credential file.
-        if (credentials != null) {
+        if (makeCredential(false, messages)) {
+            File homeDir = new File(System.getProperty("user.home"));
+            File credentialFile = new File(homeDir, googleStorageConfig.getCredentialFilename());
             try {
                 JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
                 HttpTransport transport = GoogleNetHttpTransport.newTrustedTransport();
@@ -302,37 +309,46 @@ public class GoogleBucketDao {
                         create(uniqueId, new CreateServiceAccountKeyRequest()).execute();
                 String newKeyJson = new String(Base64.getDecoder().decode(newKey.getPrivateKeyData()));
                 credentials = ServiceAccountCredentials.fromStream(new StringInputStream(newKeyJson));
-                // If credentials was created ok (i.e. no exceptions), writes the json to the credential file.
-                FileUtils.writeStringToFile(credentialFile, newKeyJson, "US-ASCII", false);
-                messages.addInfo("Wrote new service account key to " + credentialFile.getAbsolutePath());
+                // The credential is tested and it's valid if no exception is thrown.
+                if (StringUtils.isNotBlank(StorageOptions.newBuilder().
+                        setCredentials(credentials).setProjectId(credentials.getProjectId()).
+                        build().getService().
+                        getServiceAccount(credentials.getProjectId()).toString())) {
+
+                    // Writes the json to the credential file.
+                    FileUtils.writeStringToFile(credentialFile, newKeyJson, "US-ASCII", false);
+                    messages.addInfo("Wrote new service account key to " + credentialFile.getAbsolutePath());
+                }
             } catch (Exception e) {
                 String msg = "Failed to create new key for the service account: ";
                 messages.addError(msg + e.toString());
+                messages.addError("It is likely that the Google service account credential " +
+                        "needs to be manually regenerated. " + regenerationMessage(credentialFile.getAbsolutePath()));
             }
-        } else {
-            boolean isProd = googleStorageConfig.getCredentialFilename().contains("/prod_");
-            boolean isDev = googleStorageConfig.getCredentialFilename().contains("/dev_");
-            boolean isRc = googleStorageConfig.getCredentialFilename().contains("/rc_");
-            assert(isProd || isDev || isRc);
-            String loginAs = isProd ? "pmi-ops.org" : isRc ? "rc-reader" : "dev-reader";
-            String serviceAccountName = isProd ? "awardee-broad@all-of-us-rdr-stable.iam.gserviceaccount.com" :
-                    isRc ? "rc-reader@mercury-mayobucket-test-23591" : "dev-reader@mercury-mayobucket-test-23591";
-            String msg = "If no other Google credential errors exist, the Google service account credential " +
-                    "needs to be manually regenerated. Use these steps: " +
-                    "Login with your \"" + loginAs + "\" role account to " +
-                    "the Google Cloud Console at https://console.cloud.google.com. " +
-                    "Click the command prompt icon at the top right (\"Activate Cloud Shell\") " +
-                    "to get a shell within the browser window. At the prompt run: " +
-                    "\"gcloud iam service-accounts keys create newKey.json --iam-account " + serviceAccountName +
-                    "\" to generate a new credential (a json file). " +
-                    "Then run: \"cat newKey.json\" to output the json file to the shell window. " +
-                    "Copy-paste the json from the shell window into an editor on your computer. " +
-                    "Remove any line breaks found in \"private_key\" element so that it is one long line. " +
-                    "Write the edited json to " + credentialFile.getAbsolutePath() +
-                    " on the server where Mercury is running. Change the file permissions to allow Mercury to " +
-                    "write the file in the future. No need to restart Mercury. " +
-                    "To check if it was successful click Mercury -> Admin -> Mayo Manifest Admin -> Test Bucket Access";
-            messages.addError(msg);
         }
+    }
+
+    private String regenerationMessage(String absolutePath) {
+        boolean isProd = googleStorageConfig.getCredentialFilename().contains("/prod_");
+        boolean isDev = googleStorageConfig.getCredentialFilename().contains("/dev_");
+        boolean isRc = googleStorageConfig.getCredentialFilename().contains("/rc_");
+        assert (isProd || isDev || isRc);
+        String loginAs = isProd ? "pmi-ops.org" : isRc ? "rc-reader" : "dev-reader";
+        String serviceAccountName = isProd ? "awardee-broad@all-of-us-rdr-stable.iam.gserviceaccount.com" :
+                isRc ? "rc-reader@mercury-mayobucket-test-23591" : "dev-reader@mercury-mayobucket-test-23591";
+        return "To regenerate the Google credential: " +
+                "Login with your \"" + loginAs + "\" role account to " +
+                "the Google Cloud Console at https://console.cloud.google.com. " +
+                "Click the command prompt icon at the top right (\"Activate Cloud Shell\") " +
+                "to get a shell within the browser window. At the prompt run: " +
+                "\"gcloud iam service-accounts keys create newKey.json --iam-account " + serviceAccountName +
+                "\" to generate a new credential (a json file). " +
+                "Then run: \"cat newKey.json\" to output the json file to the shell window. " +
+                "Copy-paste the json from the shell window into an editor on your computer. " +
+                "Remove any line breaks found in \"private_key\" element so that it is one long line. " +
+                "Write the edited json to " + absolutePath +
+                " on the server where Mercury is running. Change the file permissions to allow Mercury to " +
+                "write the file in the future. No need to restart Mercury. " +
+                "To check if it was successful click Mercury -> Admin -> Mayo Manifest Admin -> Test Bucket Access";
     }
 }

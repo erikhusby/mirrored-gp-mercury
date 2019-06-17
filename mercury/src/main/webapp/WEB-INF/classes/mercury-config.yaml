@@ -353,11 +353,7 @@ MayoManifestGoogleStorage:
         bucketName: rc_113959925643235198999
         dailyCredentialRenewal: false
     PROD:
-        # Do not use production Google storage config values when doing a data fixup involving
-        # ManifestSessions or Mayo accessioning. Production storage uses IP whitelisting which
-        # cannot be configured here. Attempting access when not running from production Mercury
-        # server will likely throw exceptions that can roll back hibernate commits.
-        #
+        # FYI the production storage bucket uses IP whitelisting which can only be configured by VUMC admins.
         credentialFilename: serviceAccountKeys/prod_reader.json
         writerCredentialFilename: DISABLED
         bucketName: genomics-broad-dryrun
