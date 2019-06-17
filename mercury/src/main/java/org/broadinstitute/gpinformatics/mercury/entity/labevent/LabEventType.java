@@ -2909,7 +2909,8 @@ public enum LabEventType {
     public enum MarkStock {
         ActiveStock("Active"),
         BackupStock("Backup"),
-        ReservedStock("Reserved");
+        ReservedStock("Reserved"),
+        None("Not Stock");
 
 
         private final String displayName;
