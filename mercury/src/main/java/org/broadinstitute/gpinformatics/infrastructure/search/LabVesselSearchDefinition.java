@@ -73,6 +73,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * Builds ConfigurableSearchDefinition for lab vessel user defined search logic
@@ -307,6 +308,10 @@ public class LabVesselSearchDefinition {
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList("container", "containers"));
+        criteriaPath.setPropertyName("label");
+        criteriaPaths.add(criteriaPath);
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("container", "containers", "racksOfTubes"));
         criteriaPath.setPropertyName("label");
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
@@ -1425,8 +1430,8 @@ public class LabVesselSearchDefinition {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
                 LabVessel labVessel = (LabVessel) entity;
-                Set<String> results = new HashSet<>();
 
+                // If the user searched on a specific container, display only positions in that container
                 List<String> containerBarcodes = null;
                 for (SearchInstance.SearchValue searchValue : context.getSearchInstance().getSearchValues()) {
                     if (searchValue.getSearchTerm().getName().equals(CONTAINER_BARCODE)) {
@@ -1435,8 +1440,16 @@ public class LabVesselSearchDefinition {
                     }
                 }
 
+                Set<String> rackBarcodes = null;
+                Set<String> results = new HashSet<>();
                 for (LabVessel container : labVessel.getContainers()) {
-                    if (containerBarcodes == null || containerBarcodes.contains(container.getLabel())) {
+                    if (OrmUtil.proxySafeIsInstance(container, TubeFormation.class)) {
+                        TubeFormation tubeFormation = OrmUtil.proxySafeCast(container, TubeFormation.class);
+                        rackBarcodes = tubeFormation.getRacksOfTubes().stream().map(LabVessel::getLabel).
+                                collect(Collectors.toSet());
+                    }
+                    if (containerBarcodes == null || containerBarcodes.contains(container.getLabel()) ||
+                            (rackBarcodes != null && !Collections.disjoint(rackBarcodes, containerBarcodes))) {
                         results.add(container.getContainerRole().getPositionOfVessel(labVessel).toString());
                     }
                 }
