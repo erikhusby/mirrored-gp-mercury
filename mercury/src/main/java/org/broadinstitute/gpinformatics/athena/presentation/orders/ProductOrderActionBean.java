@@ -227,7 +227,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private String sampleSummary;
     private State state;
-    private String quoteSource;
+    private ProductOrder.QuoteSourceType quoteSource;
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -980,8 +980,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         } catch (SAPInterfaceException e) {
             logger.error(e);
-            addGlobalValidationError(
-                "The products on your order (including add ons) do not seem to be represented on your quote.  Please revisit either your quote or your order selections");
+            addGlobalValidationError(e.getMessage());
         }
 
     }
@@ -1015,37 +1014,26 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @return total dollar amount of the monitary value of orders associated with the given quote
      */
     double estimateSapOutstandingOrders(SapQuote foundQuote, int addedSampleCount, ProductOrder productOrder) {
-
         double value = 0d;
-
-        if(productOrder == null) {
-            final Optional<BigDecimal> openSalesValue =
-                    Optional.ofNullable(foundQuote.getQuoteHeader().getSalesOrderTotal());
+        Optional<BigDecimal> openSalesValue = Optional.empty();
+        if (productOrder == null) {
+            openSalesValue = Optional.ofNullable(foundQuote.getQuoteHeader().getSalesOrderTotal());
             if(openSalesValue.isPresent()) {
                 value = openSalesValue.get().doubleValue();
             }
-        } else {
-            OrderCalculatedValues calculatedValues = null;
+        }
+        if (!openSalesValue.isPresent()){
             try {
-                calculatedValues = sapService.calculateOpenOrderValues(addedSampleCount, foundQuote, productOrder);
+                OrderCalculatedValues calculatedValues =
+                    sapService.calculateOpenOrderValues(addedSampleCount, foundQuote, productOrder);
+                if (calculatedValues != null) {
+                    value = calculatedValues.calculateTotalOpenOrderValue(productOrder.getSapOrderNumber()).doubleValue();
+                }
             } catch (SAPIntegrationException e) {
                 logger.info("Attempting to calculate order from SAP yielded an error", e);
             }
-
-            if (calculatedValues != null &&
-                calculatedValues.getPotentialOrderValue() != null) {
-
-                value += calculatedValues.getPotentialOrderValue().doubleValue();
-
-                for (OrderValue orderValue : calculatedValues.getValue()) {
-
-                    if (productOrder == null || (productOrder != null && !StringUtils
-                            .equals(orderValue.getSapOrderID(), productOrder.getSapOrderNumber()))) {
-                        value += orderValue.getValue().doubleValue();
-                    }
-                }
-            }
         }
+
         return value;
     }
 
@@ -1545,11 +1533,15 @@ public class ProductOrderActionBean extends CoreActionBean {
                 final Date todayTruncated =
                         org.apache.commons.lang3.time.DateUtils.truncate(new Date(), Calendar.DATE);
 
-                if ( ! StringUtils.isNumeric(quoteIdentifier)) {
+                quoteSource = StringUtils.isNumeric(quoteIdentifier) ?
+                    ProductOrder.QuoteSourceType.SAP_SOURCE :
+                    ProductOrder.QuoteSourceType.QUOTE_SERVER;
+                if ( ! quoteSource.isSapType()) {
+
                     Quote quote = quoteService.getQuoteByAlphaId(quoteIdentifier);
                     final QuoteFunding quoteFunding = quote.getQuoteFunding();
                     double fundsRemaining = Double.parseDouble(quoteFunding.getFundsRemaining());
-                    item.put("quoteType", ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName());
+                    item.put("quoteType", quoteSource.getDisplayName());
                     item.put("fundsRemaining", NumberFormat.getCurrencyInstance().format(fundsRemaining));
                     item.put("status", quote.getApprovalStatus().getValue());
 
@@ -1614,9 +1606,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                         });
                     }
                     item.put("fundingDetails", fundingDetails);
-                } else if (StringUtils.isNumeric(quoteIdentifier)) {
+                } else if (quoteSource.isSapType()) {
                     SapQuote quote = sapService.findSapQuote(quoteIdentifier);
-                    item.put("quoteType", ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName());
+                    item.put("quoteType", quoteSource.getDisplayName());
                     item.put("fundsRemaining",
                         NumberFormat.getCurrencyInstance().format(quote.getQuoteHeader().fundsRemaining()));
 
@@ -4180,11 +4172,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         return Arrays.asList(ProductOrder.QuoteSourceType.values());
     }
 
-    public String getQuoteSource() {
+    public ProductOrder.QuoteSourceType getQuoteSource() {
         return quoteSource;
     }
 
-    public void setQuoteSource(String quoteSource) {
+    public void setQuoteSource(ProductOrder.QuoteSourceType quoteSource) {
         this.quoteSource = quoteSource;
     }
 }

@@ -99,6 +99,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("UnusedDeclaration")
 @Entity
@@ -2831,9 +2832,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 updatedLineItemReferences.add(new SapQuoteItemReference(
                         product, quoteItems.iterator().next().getQuoteItemNumber().toString()));
             } else {
-                throw new SAPInterfaceException("Could not determine a matching line item of the SAP quote "
-                                                + sapQuote.getQuoteHeader().getQuoteNumber()+" for "
-                                                + product.getDisplayName());
+                List<Integer> lineItems =
+                    quoteItems.stream().map(QuoteItem::getQuoteItemNumber).sorted().collect(Collectors.toList());
+                throw new SAPInterfaceException(String.format(
+                    "Product '%s' found on multiple line items in quote '%s' %s. Please contact the project manager or billing contact to correct this.",
+                    product.getPartNumber(), sapQuote.getQuoteHeader().getQuoteNumber(), lineItems.toString()));
             }
         } else {
             throw new SAPInterfaceException("Could not determine a matching line item of the SAP quote "

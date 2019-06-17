@@ -1184,7 +1184,7 @@
                 fundsRemainingNotification+='<ul>';
                 $j("#fundsRemaining").html(fundsRemainingNotification);
             } else {
-                $j("#fundsRemaining").html('Error: ' + data.error);
+                $j("#fundsRemaining").text('Error: ' + data.error);
                 quoteWarning = true;
             }
 
@@ -1281,7 +1281,7 @@
                 url: "${ctxpath}/orders/order.action?openCustomView=",
                 data: {
                     'customizationJsonString': JSON.stringify(customizationValues),
-                    'quoteIdentifier':$j("#quote")
+                    'quoteIdentifier': $j("#quote").val()
                 },
                 datatype: 'html',
                 success: function (html) {
