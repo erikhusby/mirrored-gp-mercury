@@ -468,7 +468,7 @@ public class ProductOrderActionBeanTest {
         if (quoteSource == ProductOrder.QuoteSourceType.SAP_SOURCE) {
             stubProductPriceCache.refreshCache();
             Mockito.when(mockQuoteService.getAllPriceItems()).thenThrow(new QuoteServerException("Quote Server should not be called for SAP Source"));
-            Mockito.when(mockSapClient.calculateOrderValues(Mockito.any(SapQuote.class), Mockito.any(OrderCriteria.class)))
+            Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(OrderCriteria.class)))
                     .thenReturn(new OrderCalculatedValues(BigDecimal.valueOf(pdo.getSamples().size()*10),Collections.emptySet()));
             Mockito.when(mockQuoteService.getQuoteByAlphaId(Mockito.anyString()))
                     .thenThrow(new QuoteServerException("Quote Server should not be called for SAP Source"));
@@ -479,7 +479,7 @@ public class ProductOrderActionBeanTest {
             Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapMockQuote);
         } else {
             Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
-            Mockito.when(mockSapClient.calculateOrderValues(Mockito.any(SapQuote.class), Mockito.any(OrderCriteria.class)))
+            Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(OrderCriteria.class)))
                     .thenThrow(new SAPIntegrationException("SAP Should not be thrown for SAP source"));
             Mockito.when(mockQuoteService.getQuoteByAlphaId(Mockito.anyString()))
                     .then(new Answer<Quote>() {
@@ -1604,7 +1604,7 @@ public class ProductOrderActionBeanTest {
         }
 
         if (quoteSource == ProductOrder.QuoteSourceType.SAP_SOURCE) {
-            Mockito.when(mockSapClient.calculateOrderValues(Mockito.any(SapQuote.class),
+            Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(),
                     Mockito.any(OrderCriteria.class))).thenAnswer(new Answer<OrderCalculatedValues>() {
                 @Override
                 public OrderCalculatedValues answer(InvocationOnMock invocationOnMock) throws Throwable {
@@ -1622,7 +1622,7 @@ public class ProductOrderActionBeanTest {
                 }
             });
         } else {
-            Mockito.when(mockSapClient.calculateOrderValues(Mockito.any(SapQuote.class),
+            Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(),
                     Mockito.any(OrderCriteria.class)))
                     .thenThrow(new SAPIntegrationException("Sap Should not be called for Quote Server Quote"));
 
@@ -1787,7 +1787,7 @@ public class ProductOrderActionBeanTest {
             Mockito.when(mockQuoteService.getAllPriceItems()).thenThrow(new QuoteServerException("Quote Server should not be called for SAP Quote"));
             Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuote.getAlphanumericId())).thenThrow(new QuoteServerException("Quote Server should not be called for SAP Quote"));
 
-            Mockito.when(mockSapClient.calculateOrderValues(Mockito.any(SapQuote.class),
+            Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(),
                     Mockito.any(OrderCriteria.class))).thenAnswer(new Answer<OrderCalculatedValues>() {
                         @Override
                         public OrderCalculatedValues answer(InvocationOnMock invocationOnMock) throws Throwable {
@@ -1813,7 +1813,7 @@ public class ProductOrderActionBeanTest {
             Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
             Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuote.getAlphanumericId())).thenReturn(testQuote);
 
-            Mockito.when(mockSapClient.calculateOrderValues(Mockito.any(SapQuote.class),
+            Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(),
                     Mockito.any(OrderCriteria.class))).thenThrow(new SAPIntegrationException("SAP should not be called for Quote Server Quote"));
             Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString()))
                     .thenThrow(new SAPIntegrationException("SAP should not be called for Quote Server Quote"));
@@ -2027,7 +2027,7 @@ public class ProductOrderActionBeanTest {
             Mockito.when(mockQuoteService.getAllPriceItems()).thenThrow(new QuoteServerException("Quote server should not be called for SAP Quote"));
             Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuote.getAlphanumericId())).thenThrow(new QuoteServerException("Quote server should not be called for SAP Quote"));
 
-            Mockito.when(mockSapClient.calculateOrderValues(Mockito.any(SapQuote.class),
+            Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(),
                 Mockito.any(OrderCriteria.class))).thenReturn(testCalculatedValues);
         } else {
             Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenThrow(new SAPIntegrationException("Sap should not be called for Quote Server Quote"));
@@ -2035,7 +2035,7 @@ public class ProductOrderActionBeanTest {
             Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
             Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuote.getAlphanumericId())).thenReturn(testQuote);
 
-            Mockito.when(mockSapClient.calculateOrderValues(Mockito.any(SapQuote.class),
+            Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(),
                 Mockito.any(OrderCriteria.class)))
                     .thenThrow(new SAPIntegrationException("Sap should not be called for Quote Server Quote"));
         }
@@ -2081,11 +2081,11 @@ public class ProductOrderActionBeanTest {
                                 BigDecimal.valueOf(calculatedSecondOrderValue))));
 
         if (quoteSource == ProductOrder.QuoteSourceType.SAP_SOURCE) {
-            Mockito.when(mockSapClient.calculateOrderValues(Mockito.any(SapQuote.class), 
+            Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(),
                 Mockito.any(OrderCriteria.class))).thenReturn(testCalculatedValues);
         } else {
             Mockito
-                .when(mockSapClient.calculateOrderValues(Mockito.any(SapQuote.class), Mockito.any(OrderCriteria.class)))
+                .when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(OrderCriteria.class)))
                 .thenThrow(new SAPIntegrationException("Sap should not be called for Quote Server Quote"));
         }
 
@@ -2111,10 +2111,10 @@ public class ProductOrderActionBeanTest {
                         BigDecimal.valueOf(calculatedSecondOrderValue))));
 
         if (quoteSource == ProductOrder.QuoteSourceType.SAP_SOURCE) {
-            Mockito.when(mockSapClient.calculateOrderValues(Mockito.any(SapQuote.class), 
+            Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(),
                 Mockito.any(OrderCriteria.class))).thenReturn(testCalculatedValues);
         } else {
-            Mockito.when(mockSapClient.calculateOrderValues(Mockito.any(SapQuote.class), 
+            Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(),
                 Mockito.any(OrderCriteria.class)))
                     .thenThrow(new SAPIntegrationException("sap should not be called for quote server quote"));
         }
@@ -2140,10 +2140,10 @@ public class ProductOrderActionBeanTest {
 
 
         if (quoteSource == ProductOrder.QuoteSourceType.SAP_SOURCE) {
-            Mockito.when(mockSapClient.calculateOrderValues(Mockito.any(SapQuote.class), 
+            Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(),
                 Mockito.any(OrderCriteria.class))).thenReturn(testCalculatedValues);
         } else {
-            Mockito.when(mockSapClient.calculateOrderValues(Mockito.any(SapQuote.class),
+            Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(),
                 Mockito.any(OrderCriteria.class)))
                     .thenThrow(new SAPIntegrationException("sap should not be called for quote server quote"));
         }
@@ -2176,12 +2176,12 @@ public class ProductOrderActionBeanTest {
         if (quoteSource == ProductOrder.QuoteSourceType.SAP_SOURCE) {
             Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuote.getAlphanumericId()))
                 .thenThrow(new QuoteServerException("Quote server should not be thrown for Quote Server Quote"));
-            Mockito.when(mockSapClient.calculateOrderValues(Mockito.any(SapQuote.class),
+            Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(),
                 Mockito.any(OrderCriteria.class))).thenReturn(testCalculatedValues);
         } else {
             Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuote.getAlphanumericId()))
                 .thenThrow(new QuoteServerException("Quote server should not be thrown for Quote Server Quote"));
-            Mockito.when(mockSapClient.calculateOrderValues(Mockito.any(SapQuote.class),
+            Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(),
                 Mockito.any(OrderCriteria.class)))
                 .thenThrow(new SAPIntegrationException("sap should not be called for quote server quote"));
         }
@@ -2209,10 +2209,10 @@ public class ProductOrderActionBeanTest {
                                 BigDecimal.valueOf(calculatedSecondOrderValue))));
 
         if (quoteSource == ProductOrder.QuoteSourceType.SAP_SOURCE) {
-            Mockito.when(mockSapClient.calculateOrderValues(Mockito.any(SapQuote.class),
+            Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(),
                 Mockito.any(OrderCriteria.class))).thenReturn(testCalculatedValues);
         } else {
-            Mockito.when(mockSapClient.calculateOrderValues(Mockito.any(SapQuote.class),
+            Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(),
                 Mockito.any(OrderCriteria.class)))
                 .thenThrow(new SAPIntegrationException("sap should not be called for quote server quote"));
         }
@@ -2382,7 +2382,7 @@ public class ProductOrderActionBeanTest {
             Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuoteIdentifier))
                     .thenThrow(new QuoteServerException("Quote server should not be called for SAP Quote"));
 
-            Mockito.when(mockSapClient.calculateOrderValues(Mockito.any(SapQuote.class),
+            Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(),
                 Mockito.any(OrderCriteria.class))).thenAnswer(new Answer<OrderCalculatedValues>() {
                 @Override
                 public OrderCalculatedValues answer(InvocationOnMock invocationOnMock) throws Throwable {
@@ -2405,7 +2405,7 @@ public class ProductOrderActionBeanTest {
             Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
             Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuoteIdentifier)).thenReturn(testQuote);
 
-            Mockito.when(mockSapClient.calculateOrderValues(Mockito.any(SapQuote.class),
+            Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(),
                 Mockito.any(OrderCriteria.class)))
                 .thenThrow(new SAPIntegrationException("SAP should not be called for Quote Server quote"));
 
@@ -3221,7 +3221,7 @@ public class ProductOrderActionBeanTest {
         stubProductPriceCache.refreshCache();
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
         Mockito.when(mockProductOrderDao.findOrdersWithCommonQuote(Mockito.anyString())).thenReturn((Collections.singletonList(pdo)));
-        Mockito.when(mockSapClient.calculateOrderValues(Mockito.any(SapQuote.class),
+        Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(),
             Mockito.any(OrderCriteria.class)))
             .thenAnswer(new Answer<OrderCalculatedValues>() {
                     @Override
@@ -3504,7 +3504,7 @@ public class ProductOrderActionBeanTest {
         stubProductPriceCache.refreshCache();
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
         Mockito.when(mockProductOrderDao.findOrdersWithCommonQuote(Mockito.anyString())).thenReturn((Collections.singletonList(pdo)));
-        Mockito.when(mockSapClient.calculateOrderValues(Mockito.any(SapQuote.class), Mockito.any(OrderCriteria.class)))
+        Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(OrderCriteria.class)))
                 .thenAnswer(new Answer<OrderCalculatedValues>() {
                     @Override
                     public OrderCalculatedValues answer(InvocationOnMock invocationOnMock) throws Throwable {

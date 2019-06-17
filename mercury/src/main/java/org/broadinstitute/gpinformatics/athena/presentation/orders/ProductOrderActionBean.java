@@ -1014,37 +1014,26 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @return total dollar amount of the monitary value of orders associated with the given quote
      */
     double estimateSapOutstandingOrders(SapQuote foundQuote, int addedSampleCount, ProductOrder productOrder) {
-
         double value = 0d;
-
-        if(productOrder == null) {
-            final Optional<BigDecimal> openSalesValue =
-                    Optional.ofNullable(foundQuote.getQuoteHeader().getSalesOrderTotal());
+        Optional<BigDecimal> openSalesValue = Optional.empty();
+        if (productOrder == null) {
+            openSalesValue = Optional.ofNullable(foundQuote.getQuoteHeader().getSalesOrderTotal());
             if(openSalesValue.isPresent()) {
                 value = openSalesValue.get().doubleValue();
             }
-        } else {
-            OrderCalculatedValues calculatedValues = null;
+        }
+        if (!openSalesValue.isPresent()){
             try {
-                calculatedValues = sapService.calculateOpenOrderValues(addedSampleCount, foundQuote, productOrder);
+                OrderCalculatedValues calculatedValues =
+                    sapService.calculateOpenOrderValues(addedSampleCount, foundQuote, productOrder);
+                if (calculatedValues != null) {
+                    value = calculatedValues.calculateTotalOpenOrderValue(productOrder.getSapOrderNumber()).doubleValue();
+                }
             } catch (SAPIntegrationException e) {
                 logger.info("Attempting to calculate order from SAP yielded an error", e);
             }
-
-            if (calculatedValues != null &&
-                calculatedValues.getPotentialOrderValue() != null) {
-
-                value += calculatedValues.getPotentialOrderValue().doubleValue();
-
-                for (OrderValue orderValue : calculatedValues.getValue()) {
-
-                    if (productOrder == null || (productOrder != null && !StringUtils
-                            .equals(orderValue.getSapOrderID(), productOrder.getSapOrderNumber()))) {
-                        value += orderValue.getValue().doubleValue();
-                    }
-                }
-            }
         }
+
         return value;
     }
 
