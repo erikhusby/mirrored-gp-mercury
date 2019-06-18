@@ -435,20 +435,20 @@ public class ProductFixupTest extends Arquillian {
         userBean.loginOSUser();
         utx.begin();
 
-        final Set<Long> badProductIds = Stream.of(133054L, 133053L).collect(Collectors.toSet());
-//        final Set<Long> badProductIds = Stream.of(133055L).collect(Collectors.toSet());
+        final Set<Long> badProductIds = Stream.of(133054L, 133055L, 133053L).collect(Collectors.toSet());
 
         final List<Product> badProducts = productDao.findListByList(Product.class, Product_.productId, badProductIds);
 
-        Assert.assertEquals(badProducts.size(), 2,"There should be 3 products found");
+        Assert.assertEquals(badProducts.size(), 3,"There should be 3 products found");
 
         final Iterator<Product> productIterator = badProducts.iterator();
 
         while(productIterator.hasNext()) {
-            final Product next = productIterator.next();
-            String productToRemove = next.getDisplayName();
-            productDao.remove(next);
-            System.out.println("Removed product " + productToRemove);
+            final Product removedProduct = productIterator.next();
+            String nameOfRemovedProduct = removedProduct.getDisplayName();
+            removedProduct.getAddOns().clear();
+            productDao.remove(removedProduct);
+            System.out.println("Removed product " + nameOfRemovedProduct);
         }
 
         productDao.persist(new FixupCommentary("GPLIM-6397: Removing duplicate products to assist in Designation Creation"));
