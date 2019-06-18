@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
@@ -32,8 +33,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -423,5 +428,35 @@ public class ProductFixupTest extends Arquillian {
 
         productDao.persist(new FixupCommentary(fixupReason));
         utx.commit();
+    }
+
+    @Test(enabled=false)
+    public void gplim6397RemoveBadProducts() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        final Set<Long> badProductIds = Stream.of(133054L, 133053L).collect(Collectors.toSet());
+//        final Set<Long> badProductIds = Stream.of(133055L).collect(Collectors.toSet());
+
+        final List<Product> badProducts = productDao.findListByList(Product.class, Product_.productId, badProductIds);
+
+        Assert.assertEquals(badProducts.size(), 2,"There should be 3 products found");
+
+        final Iterator<Product> productIterator = badProducts.iterator();
+
+        while(productIterator.hasNext()) {
+            final Product next = productIterator.next();
+            String productToRemove = next.getDisplayName();
+            productDao.remove(next);
+            System.out.println("Removed product " + productToRemove);
+        }
+
+        productDao.persist(new FixupCommentary("GPLIM-6397: Removing duplicate products to assist in Designation Creation"));
+
+        utx.commit();
+
+        final List<Product> doubleCheck = productDao.findListByList(Product.class, Product_.productId, badProductIds);
+        Assert.assertEquals(doubleCheck.size(), 0, "The products should have been removed");
+
     }
 }
