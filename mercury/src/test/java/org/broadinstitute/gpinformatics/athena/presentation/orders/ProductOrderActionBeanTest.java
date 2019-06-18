@@ -135,6 +135,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -3764,8 +3765,10 @@ public class ProductOrderActionBeanTest {
         addPriceItemForProduct(quote, priceList, quoteItems, pdo.getProduct(),
                 pricedMoreThanQuote.toString(), "20", pricedMoreThanQuote.toString());
 
-        for (SapIntegrationClientImpl.SAPCompanyConfiguration companyCode : SapIntegrationClientImpl.SAPCompanyConfiguration
-                .values()) {
+        EnumSet<SapIntegrationClientImpl.SAPCompanyConfiguration> sapCompanyConfigurations =
+            EnumSet.complementOf(EnumSet.of(SapIntegrationClientImpl.SAPCompanyConfiguration.UNKNOWN));
+
+        for (SapIntegrationClientImpl.SAPCompanyConfiguration companyCode : sapCompanyConfigurations) {
             Optional<String> defaultWbs = Optional.ofNullable(companyCode.getDefaultWbs());
             final SAPMaterial productMaterial =
                     new SAPMaterial(pdo.getProduct().getPartNumber(),
