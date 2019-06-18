@@ -143,10 +143,10 @@ public class GoogleBucketDao {
      * @return false if there was a credential error, true if ok.
      */
     private boolean makeCredential(boolean forWriting, MessageCollection messages) {
-        boolean credentialOk = false;
         File file = null;
         ServiceAccountCredentials serviceAccountCredentials = forWriting ? writerCredentials : credentials;
-        if (serviceAccountCredentials == null) {
+        boolean credentialOk = serviceAccountCredentials != null;
+        if (!credentialOk) {
             File homeDir = new File(System.getProperty("user.home"));
             String filename = forWriting ?
                     googleStorageConfig.getWriterCredentialFilename() : googleStorageConfig.getCredentialFilename();
@@ -177,9 +177,9 @@ public class GoogleBucketDao {
                 messages.addError("Credential file is missing: %s", file.getAbsolutePath());
             }
         }
+        // If the credential seems ok, test that it works. It's valid if no exception is thrown.
         if (credentialOk) {
             try {
-                // The credential is tested and it's valid if no exception is thrown.
                 if (StringUtils.isNotBlank(StorageOptions.newBuilder().
                         setCredentials(serviceAccountCredentials).
                         setProjectId(serviceAccountCredentials.getProjectId()).
@@ -197,6 +197,7 @@ public class GoogleBucketDao {
                 String msg = "The Google Service Account credential failed: ";
                 logger.error(msg, e);
                 messages.addError(msg + e.toString());
+                // Issues a recovery message since the credential file was ok but the credential failed.
                 messages.addError("It is likely that the Google service account credential " +
                         "needs to be manually regenerated. " + regenerationMessage(file.getAbsolutePath()));
             }
@@ -309,7 +310,7 @@ public class GoogleBucketDao {
                         create(uniqueId, new CreateServiceAccountKeyRequest()).execute();
                 String newKeyJson = new String(Base64.getDecoder().decode(newKey.getPrivateKeyData()));
                 credentials = ServiceAccountCredentials.fromStream(new StringInputStream(newKeyJson));
-                // The credential is tested and it's valid if no exception is thrown.
+                // The credential is tested. It's valid if no exception is thrown.
                 if (StringUtils.isNotBlank(StorageOptions.newBuilder().
                         setCredentials(credentials).setProjectId(credentials.getProjectId()).
                         build().getService().
@@ -322,6 +323,7 @@ public class GoogleBucketDao {
             } catch (Exception e) {
                 String msg = "Failed to create new key for the service account: ";
                 messages.addError(msg + e.toString());
+                // Issues a recovery message since the previous credential was ok but the new credential failed.
                 messages.addError("It is likely that the Google service account credential " +
                         "needs to be manually regenerated. " + regenerationMessage(credentialFile.getAbsolutePath()));
             }
