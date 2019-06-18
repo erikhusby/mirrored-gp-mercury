@@ -949,7 +949,7 @@ public enum LabEventType {
             LibraryType.NONE_ASSIGNED, SourceHandling.DEPLETE),
     STOOL_RNA_FINAL_ELUTION("StoolRNAFinalElution",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP_APPLY_SM_IDS, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
                     StaticPlate.PlateType.Plate96Well200PCR,
                     RackOfTubes.RackType.Matrix96SlotRack075).
@@ -959,7 +959,7 @@ public enum LabEventType {
             MaterialType.RNA_TOTAL_RNA, LibraryType.NONE_ASSIGNED, SourceHandling.DEPLETE),
     STOOL_DNA_ELUTION("StoolDNAElution",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP_APPLY_SM_IDS, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
                     StaticPlate.PlateType.Plate96RNEasyWell1000,
                     RackOfTubes.RackType.Matrix96SlotRack075).
