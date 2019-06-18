@@ -41,56 +41,125 @@
         var datasets = platemap.datasets;
         var legend = $(legend);
         var metricNames = $.map(platemap.datasets, function(val, i) {
-            return val.plateMapMetrics.displayName;
+            return val.displayMetrics.displayName;
         });
         var metricsListBox = this.buildMetricsSelectList(metricNames, $(metric));
-        var metadataSelector = $(metadata);
         var plateMetadataSelector = $(plateMetadata);
+        var cellMetadataSelector = $(metadata);
         plugin.attachMetadata(null, platemap.plateMetadata, plateMetadataSelector);
-        $.each(platemap.emptyWells, function (idx, well) {
-            var wellIdTag = '#' + platemap.label + "_" + well;
-            var wellElem = $(wellIdTag);
-            wellElem.attr('class', 'noSample');
-        });
+
+        var cellIdPrefix = (platemap.label === null) ? "#" : '#' + platemap.label + "_";
+
+        // Status
+        if( platemap.wellStatusMap != null ) {
+            $.each(platemap.wellStatusMap, function (idx, well) {
+                var wellIdTag = cellIdPrefix + idx;
+                var wellElem = $(wellIdTag);
+                switch (well) {
+                    case "Empty":
+                        wellElem.attr('class', 'metricCell noSample');
+                        break;
+                    case "Blacklisted":
+                        wellElem.attr('class', 'metricCell blacklisted');
+                        break;
+                    case "Abandoned":
+                        wellElem.attr('class', 'metricCell abandoned');
+                        break;
+                    default:
+                        wellElem.attr('class', 'metricCell');
+                }
+            });
+        }
+
         metricsListBox.change(function() {
             var selectedMetric = this.value;
             var datasetList = $.grep(datasets, function(e){
-                return e.plateMapMetrics.displayName === selectedMetric;
+                return e.displayMetrics.displayName === selectedMetric;
             });
             // Clear all cells and legend
             var wells = $(".metricCell");
-            var plateWells = $.grep(wells, function (e) {
-                var id = $(e).attr('id');
-                return id.indexOf(platemap.label) != -1;
-            });
-            $.each(plateWells, function () {
+            $.each(wells, function () {
                 $(this).text("");
+                $(this).unbind('mouseenter mouseleave');
                 $(this).css("background-color", "");
+            });
+
+            // Attach metadata to each cell
+            $.each( platemap.wellMetadataMap, function( cell, metavals ) {
+                plugin.attachMetadata($(cellIdPrefix + cell), metavals, cellMetadataSelector);
             });
             legend.empty();
             if (datasetList.length === 1){
                 var dataset = datasetList[0];
                 plugin.log(dataset);
-                var chartType = dataset.plateMapMetrics.chartType;
+                var chartType = dataset.displayMetrics.chartType;
                 plugin.buildLegend(legend, dataset.options);
                 $.each(dataset.wellData, function (idx, wellData) {
-                    var wellIdTag = '#' + platemap.label + "_" + wellData.well;
+                    var wellIdTag = cellIdPrefix + wellData.well;
                     var wellElem = $(wellIdTag);
-                    plugin.attachMetadata(wellElem, wellData.metadata, metadataSelector);
-                    if (dataset.plateMapMetrics.displayValue)
+                    if (dataset.displayMetrics.displayValue)
                         wellElem.text(wellData.value);
                     if (chartType === 'Category') {
                         for (var i = 0; i < dataset.options.length; i++) {
                             var option = dataset.options[i];
-                            var evalFunction = dataset.plateMapMetrics.evalType;
+                            var evalFunction = dataset.displayMetrics.evalType;
                             if (plugin[evalFunction](wellData.value, option.value)) {
                                 wellElem.css('background-color', option.color);
                                 break;
                             }
                         }
+                    } else if (chartType === 'Duplicate') {
+                        var duplicateOption = dataset.options[0];
+                        var goodOption = dataset.options[1];
+                        var noneOption = dataset.options[2];
+                        var thisWellVal = wellData.value;
+                        var foundDupe = false;
+                        var noValue = thisWellVal === "";
+                        if (!noValue) {
+                            $.each(dataset.wellData, function (idx, otherWellData) {
+                                var otherWellId = cellIdPrefix + otherWellData.well;
+                                if (wellIdTag !== otherWellId) {
+                                    var otherWellList = otherWellData.value.split(" ");
+                                    var thisWellList = thisWellVal.split(" ");
+                                    for (var i = 0; i < thisWellList.length; i++) {
+                                        thisWellVal = thisWellList[i];
+                                        for (var j = 0; j < otherWellList.length; j++) {
+                                            var thatWellVal = otherWellList[j];
+                                            if (thisWellVal === thatWellVal) {
+                                                wellElem.css('background-color', duplicateOption.color);
+                                                foundDupe = true;
+                                                var wellMetadata = platemap.wellMetadataMap[wellData.well];
+                                                plugin.highlightOnHover(wellElem, otherWellId, wellMetadata, cellMetadataSelector);
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        } else {
+                            wellElem.css('background-color', noneOption.color);
+                        }
+                        if (!foundDupe && !noValue) {
+                            wellElem.css('background-color', goodOption.color);
+                            wellElem.css('border-top', '1px solid #ccc');
+                        }
                     }
                 });
             }
+        });
+    };
+
+    Plugin.prototype.highlightOnHover = function(wellElement, otherWellId, metadataList, metadataSelector) {
+        wellElement.hover(function() { // Mouse Enter
+            $(this).css('border', '1px solid #F00');
+            $(otherWellId).css('border', '1px solid #F00');
+            metadataMouseEnter(wellElement, metadataSelector);
+        }, function() { // Mouse Leave
+            $(this).css('border', '');
+            $(this).css('border-top', '1px solid #ccc');
+            $(otherWellId).css('border', '');
+            $(otherWellId).css('border-top', '1px solid #ccc');
+            metadataMouseLeave(metadataSelector);
         });
     };
 
@@ -105,6 +174,7 @@
     Plugin.prototype.buildLegend = function(legend, options) {
         legend.empty();
         var legendList = $('<ul></ul>').addClass('legend');
+        if( !options ) return;
         for (var i = 0; i < options.length; i++) {
             var option = options[i];
             var li = $('<li></li>');
@@ -119,21 +189,14 @@
 
     Plugin.prototype.attachMetadata = function(wellElem, metadataList, metadataSelector) {
         if (wellElem != null) {
+            wellElem.data("metadata", metadataList);
             wellElem.hover(function(){
-                metadataSelector.empty();
-                if (metadataList != undefined) {
-                    $.each(metadataList, function (idx, metadata) {
-                        var dt = $('<dt></dt>').text(metadata.label);
-                        var dd = $('<dd></dd>').text(metadata.value);
-                        metadataSelector.append(dt);
-                        metadataSelector.append(dd);
-                    });
-                }
+                metadataMouseEnter(wellElem, metadataList, metadataSelector);
             }, function () {
-                metadataSelector.empty();
+                metadataMouseLeave(metadataSelector);
             });
         } else {
-            if (metadataList != undefined) {
+            if (metadataList !== undefined) {
                 $.each(metadataList, function (idx, metadata) {
                     var dt = $('<dt></dt>').text(metadata.label);
                     var dd = $('<dd></dd>').text(metadata.value);
@@ -143,6 +206,28 @@
             }
         }
     };
+
+    function metadataMouseEnter(wellElem, metadataList, metadataSelector) {
+        if (metadataSelector === undefined) {
+            return;
+        }
+        metadataSelector.empty();
+        var metadata = wellElem.data("metadata");
+        if (metadata !== undefined) {
+            $.each(metadataList, function (idx, metadata) {
+                if( metadata.label ) {
+                    var dt = $('<dt></dt>').text(metadata.label);
+                    var dd = $('<dd></dd>').text(metadata.value);
+                    metadataSelector.append(dt);
+                    metadataSelector.append(dd);
+                }
+            });
+        }
+    }
+
+    function metadataMouseLeave(metadataSelector) {
+        metadataSelector.empty();
+    }
 
     Plugin.prototype.greaterThanOrEqual = function(a, b) {
         return Number(a) >= Number(b);

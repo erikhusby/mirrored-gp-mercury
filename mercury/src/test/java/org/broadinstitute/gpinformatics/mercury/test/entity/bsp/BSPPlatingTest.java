@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.test.entity.bsp;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestOptions;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestResult;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestService;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.ControlWell;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -14,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,22 +23,20 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.ST
 
 
 @Test(groups = TestGroups.STUBBY)
+@Dependent
 public class BSPPlatingTest  {
 
-    //@Inject
-    BSPPlatingRequestService platingService;
-
-    public BSPPlatingTest() {
-    }
+    public BSPPlatingTest() {}
 
     /**
-     * Don't want to hammer on BSP all the time, so disabling, but turn on
+     * Don't want to hammer on BSP all the time, so disabling, but turn on <br />
+     * TODO:  Don't turn on until either set to STANDARD and needs to extend Arquillian or STUBBY and needs to extend StubbyContainerTest
      *
      * @throws Exception any errors
      */
     @Test(groups = {STUBBY}, enabled = false)
+    @Dependent
     public void testIssueBSPPlating() throws Exception {
-        platingService = new BSPPlatingRequestServiceImpl();
 
         Map<MercurySample, AliquotParameters> starterMap = new HashMap<>();
 
@@ -62,7 +60,10 @@ public class BSPPlatingTest  {
         List<BSPPlatingRequest> bspRequests = bspSampleFactory.buildBSPPlatingRequests(starterMap);
 
         List<ControlWell> controls = new ArrayList<>();
+
+        // Only works because no CDI dependencies in stub
         BSPPlatingRequestService bspPlatingService = new BSPPlatingRequestServiceStub();
+
         BSPPlatingRequestOptions options = bspPlatingService.getBSPPlatingRequestDefaultOptions();
 
         BSPPlatingRequestResult platingResult = bspPlatingService.issueBSPPlatingRequest(options, bspRequests,

@@ -11,7 +11,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.ThreadEntityManager;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -20,6 +20,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.persistence.PersistenceUnitUtil;
 import javax.transaction.UserTransaction;
@@ -35,14 +36,19 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
 
 
-@Test(groups = TestGroups.STUBBY, enabled = true)
-public class ProductOrderDaoTest extends ContainerTest {
+@Test(groups = TestGroups.STUBBY, enabled = true, singleThreaded = true)
+@Dependent
+public class ProductOrderDaoTest extends StubbyContainerTest {
+
+    public ProductOrderDaoTest(){}
 
     @Inject
     private ThreadEntityManager entityManager;
@@ -290,4 +296,18 @@ public class ProductOrderDaoTest extends ContainerTest {
         assertThat(status.getNumberAbandoned(), is(greaterThanOrEqualTo(2)));
         assertThat(status.getNumberInProgress(), is(equalTo(1)));
     }
+
+    public void testUpdateQuoteAfterOrderSaved() {
+        ProductOrder newOrder = ProductOrderDBTestFactory.createTestProductOrder(researchProjectDao, productDao);
+        newOrder.setQuoteId("");
+        productOrderDao.persist(newOrder);
+        productOrderDao.flush();
+        productOrderDao.clear();
+        newOrder = productOrderDao.findByBusinessKey(newOrder.getBusinessKey());
+
+        assertThat(newOrder.getQuoteId(), nullValue());
+        newOrder.setQuoteId("newquote");
+        assertThat(newOrder.getQuoteId(), not(nullValue()));
+    }
+
 }

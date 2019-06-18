@@ -15,7 +15,9 @@
                 $j("#owner").tokenInput(
                         "${ctxpath}/projects/project.action?usersAutocomplete=", {
                             hintText: "Type a name",
+                            <enhance:out escapeXml="false">
                             prePopulate: ${actionBean.ensureStringResult(actionBean.owner.completeData)},
+                            </enhance:out>
                             tokenDelimiter: "${actionBean.owner.separator}",
                             resultsFormatter: formatInput,
                             autoSelectFirstResult: true
@@ -26,7 +28,9 @@
                         "${ctxpath}/orders/order.action?productAutocomplete=", {
                             hintText: "Type a Product name or Part Number   ",
                             resultsFormatter: formatInput,
+                            <enhance:out escapeXml="false">
                             prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
+                            </enhance:out>
                             tokenDelimiter: "${actionBean.productTokenInput.separator}",
                             autoSelectFirstResult: true
                         }
@@ -39,6 +43,7 @@
                         {"bSortable": false},                           // checkbox
                         {"bSortable": true, "sType": "html"},           // Name
                         {"bSortable": true, "sType": "title-jira"},     // ID
+                        {"bSortable": true},                            // Order Type
                         {"bSortable": true},                            // Product
                         {"bSortable": true},                            // Product Family
                         {"bSortable": true},                            // Status
@@ -255,15 +260,6 @@
                     <stripes:submit name="startBilling" value="Start Billing Session" class="btn" style="margin-right:30px;"/>
                 </security:authorizeBlock>
 
-                <security:authorizeBlock roles="<%= roles(Developer, PDM, BillingManager) %>">
-                    <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" class="btn" style="margin-right:5px;"/>
-                </security:authorizeBlock>
-
-                <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                    <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.UploadTrackerActionBean" event="view">
-                        Upload Billing Tracker
-                    </stripes:link>
-                </security:authorizeBlock>
             </div>
 
             <table id="productOrderList" class="table simple">
@@ -274,6 +270,7 @@
                         </th>
                         <th>Name</th>
                         <th style="min-width: 55px;">ID</th>
+                        <th style="...">Order Type</th>
                         <th style="min-width: 80px;">Product</th>
                         <th>Product Family</th>
                         <th width="80">Status</th>
@@ -319,6 +316,18 @@
                                         </a>
                                     </c:otherwise>
                                 </c:choose>
+                            </td>
+                            <td>
+                                <c:if test="${order.product != null}">
+                                    <c:choose>
+                                        <c:when test="${order.product.clinicalProduct}">
+                                            Clinical (2000)
+                                        </c:when>
+                                        <c:otherwise>
+                                            ${order.orderType.displayName}
+                                        </c:otherwise>
+                                    </c:choose>
+                                </c:if>
                             </td>
                             <td>${order.productName}</td>
                             <td>${order.productFamilyName}</td>

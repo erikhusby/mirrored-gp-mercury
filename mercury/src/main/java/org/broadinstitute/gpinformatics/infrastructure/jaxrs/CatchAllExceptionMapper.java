@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.jaxrs;
 
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
@@ -13,14 +14,9 @@ import javax.ws.rs.ext.Provider;
 @Provider
 public class CatchAllExceptionMapper implements ExceptionMapper<Exception> {
 
-    private Log log;
+    private Log log = LogFactory.getLog(this.getClass());
 
     public CatchAllExceptionMapper() {}
-
-    @Inject
-    public CatchAllExceptionMapper(Log log) {
-        this.log = log;
-    }
 
     @Override
     public Response toResponse(Exception e) {

@@ -1,7 +1,6 @@
--- --------------------------------
--- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4934
--- Add call rate threshold to mercury DW ETL
--- --------------------------------
+-- GPLIM-6212 requires indexes on array_process_flow table
+DROP INDEX IDX_ARRAY_PROCESS_FLOW_PDO_ETL;
 
-ALTER TABLE IM_PRODUCT_ORDER ADD CALL_RATE_THRESHOLD VARCHAR2(12);
-ALTER TABLE PRODUCT_ORDER ADD CALL_RATE_THRESHOLD VARCHAR2(12);
+CREATE INDEX IDX_ARRAY_PROCESS_FLOW_ETL
+ON ARRAY_PROCESS_FLOW( BATCH_NAME, LCSET_SAMPLE_NAME );
+

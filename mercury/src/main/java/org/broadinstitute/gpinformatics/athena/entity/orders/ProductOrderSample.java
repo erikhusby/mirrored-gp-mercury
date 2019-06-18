@@ -1,20 +1,20 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerProcessor;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValidation;
-import org.broadinstitute.gpinformatics.athena.presentation.orders.BillingLedgerActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
@@ -89,7 +89,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     @Index(name = "ix_pos_product_order")
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(insertable = false, updatable = false)
+    @JoinColumn(insertable = false, updatable = false, name = "PRODUCT_ORDER")
     private ProductOrder productOrder;
 
     @OneToMany(mappedBy = "productOrderSample", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
@@ -118,7 +118,10 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     Set<SampleReceiptValidation> sampleReceiptValidations = new HashSet<>();
 
     @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name="MERCURY_SAMPLE")
     private MercurySample mercurySample;
+
+    private String aggregationParticle;
 
     /**
      * Detach this ProductOrderSample from all other objects so it can be removed, most importantly MercurySample whose
@@ -155,11 +158,13 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     public Product getProductForPriceItem(PriceItem priceItem) {
         Product result = getProductOrder().getProduct();
-        if(getProductOrder().getProduct().getPrimaryPriceItem().equals(priceItem)) {
+        if(getProductOrder().getProduct().getPrimaryPriceItem().equals(priceItem) ||
+           priceItem.equals(getProductOrder().getProduct().getExternalPriceItem())) {
             result = getProductOrder().getProduct();
         } else {
             for(ProductOrderAddOn addOn:getProductOrder().getAddOns()) {
-                if(addOn.getAddOn().getPrimaryPriceItem().equals(priceItem)) {
+                if(addOn.getAddOn().getPrimaryPriceItem().equals(priceItem) ||
+                   priceItem.equals(addOn.getAddOn().getExternalPriceItem())) {
                     result = addOn.getAddOn();
                     break;
                 }
@@ -357,6 +362,49 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          */
         Map<PriceItem, Double> primaryAndReplacementQuantities = new HashMap<>();
         Map<PriceItem, Double> addOnQuantities = new HashMap<>();
+        collectLedgerEntryDetails(primaryAndReplacementQuantities, addOnQuantities);
+
+        for (Map.Entry<PriceItem, Double> entry : primaryAndReplacementQuantities.entrySet()) {
+            PriceItem priceItem = entry.getKey();
+            Double quantity = entry.getValue();
+
+            // Include add-on quantities if this price item was accidentally billed as an add-on as well as a primary.
+            if (addOnQuantities.containsKey(priceItem)) {
+                quantity += addOnQuantities.get(priceItem);
+            }
+            if (quantity > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public List<String> completelyBilledDetails() {
+
+        /*
+         * Gather the net quantity billed to each price item by price item type. Separate Maps are used because they
+         * contribute to this calculation in different ways. This is like {@link getLedgerQuantities}, but only counts
+         * quantities actually billed and also separates the quantities depending on price item type.
+         */
+        Map<PriceItem, Double> primaryAndReplacementQuantities = new HashMap<>();
+        Map<PriceItem, Double> addOnQuantities = new HashMap<>();
+
+        List<String> results = new ArrayList<>();
+
+        collectLedgerEntryDetails(primaryAndReplacementQuantities, addOnQuantities);
+        for (Map.Entry<PriceItem, Double> priceItemDoubleEntry : primaryAndReplacementQuantities.entrySet()) {
+            results.add("Billed "+priceItemDoubleEntry.getValue() + " samples for " + priceItemDoubleEntry.getKey().getDisplayName());
+        }
+
+        for (Map.Entry<PriceItem, Double> addOnPriceItemDoubleEntry : addOnQuantities.entrySet()) {
+            results.add("Billed "+addOnPriceItemDoubleEntry.getValue() + " samples for " + addOnPriceItemDoubleEntry.getKey().getDisplayName());
+        }
+
+        return results;
+    }
+
+    public void collectLedgerEntryDetails(Map<PriceItem, Double> primaryAndReplacementQuantities,
+                                          Map<PriceItem, Double> addOnQuantities) {
         for (LedgerEntry item : ledgerItems) {
             if (item.isBilled()) {
 
@@ -382,20 +430,6 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
                 }
             }
         }
-
-        for (Map.Entry<PriceItem, Double> entry : primaryAndReplacementQuantities.entrySet()) {
-            PriceItem priceItem = entry.getKey();
-            Double quantity = entry.getValue();
-
-            // Include add-on quantities if this price item was accidentally billed as an add-on as well as a primary.
-            if (addOnQuantities.containsKey(priceItem)) {
-                quantity += addOnQuantities.get(priceItem);
-            }
-            if (quantity > 0) {
-                return true;
-            }
-        }
-        return false;
     }
 
     @Override
@@ -634,6 +668,20 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         return billableLedgerItems;
     }
 
+    public Set<LedgerEntry> getBilledLedgerItems() {
+        Set<LedgerEntry> billedEntries = new HashSet<>();
+
+        if(CollectionUtils.isNotEmpty(getLedgerItems())) {
+            for (LedgerEntry ledgerEntry : getLedgerItems()) {
+                if(StringUtils.equals(ledgerEntry.getBillingMessage(), BillingSession.SUCCESS)) {
+                    billedEntries.add(ledgerEntry);
+                }
+            }
+
+        }
+        return billedEntries;
+    }
+
     /**
      * Go through each ledger item and and construct the messages.
      *
@@ -663,7 +711,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     public void autoBillSample(Date completedDate, double quantity) {
         Date now = new Date();
         Map<PriceItem, LedgerQuantities> ledgerQuantitiesMap = getLedgerQuantities();
-        PriceItem priceItem = getProductOrder().getProduct().getPrimaryPriceItem();
+        PriceItem priceItem = getProductOrder().determinePriceItemByCompanyCode(getProductOrder().getProduct());
 
         LedgerQuantities quantities = ledgerQuantitiesMap.get(priceItem);
         if (quantities == null) {
@@ -1030,10 +1078,12 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
             }
             Date now = new Date();
             if (now.before(ledgerUpdate.getWorkCompleteDate())) {
-                throw new IllegalArgumentException(BillingTrackerProcessor
-                        .makeCompletedDateFutureErrorMessage(ledgerUpdate.getSampleName(),
-                                new SimpleDateFormat(BillingLedgerActionBean.DATE_FORMAT)
-                                        .format(ledgerUpdate.getWorkCompleteDate())));
+                final String futureErrorMessage =
+                        String.format("Sample %s cannot have a completed date of %s because it is in the future.",
+                                ledgerUpdate.getSampleName(),
+                                new SimpleDateFormat(LedgerEntry.BILLING_LEDGER_DATE_FORMAT)
+                                        .format(ledgerUpdate.getWorkCompleteDate()));
+                throw new IllegalArgumentException( futureErrorMessage);
             }
 
 
@@ -1307,7 +1357,11 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         && !isCompletelyBilled();
     }
 
-    public boolean canBeSubmitted() {
-        return !(getProductOrder().isDraft() || getDeliveryStatus().isAbandoned());
+    public String getAggregationParticle() {
+        return aggregationParticle;
+    }
+
+    public void setAggregationParticle(String aggregationParticle) {
+        this.aggregationParticle = aggregationParticle;
     }
 }

@@ -8,6 +8,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -30,6 +31,7 @@ public class ProductOrderKitPerson {
      * ever only need the ID, you should write a specific projection query in the DAO
      */
     @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name="PRODUCT_ORDER_KIT")
     private ProductOrderKit productOrderKit;
 
     /** Person ID is BSP User ID. */

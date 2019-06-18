@@ -2,10 +2,11 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
@@ -22,6 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 import org.easymock.EasyMock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -39,6 +41,11 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Scott Matthews
@@ -97,8 +104,13 @@ public class LabBatchEjbDBFreeTest {
 
 
         labBatchEJB = new LabBatchEjb();
-        labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
+        labBatchEJB.setJiraService(JiraServiceTestProducer.stubInstance());
 
+        SequencingTemplateFactory sequencingTemplateFactory = mock(SequencingTemplateFactory.class);
+        SequencingTemplateType sequencingTemplateType = new SequencingTemplateType();
+        sequencingTemplateType.setReadStructure("76T8B8B76T");
+        when(sequencingTemplateFactory.getSequencingTemplate(any(LabBatch.class), anyBoolean())).thenReturn(sequencingTemplateType);
+        labBatchEJB.setSequencingTemplateFactory(sequencingTemplateFactory);
 
         tubeDao = EasyMock.createMock(LabVesselDao.class);
         EasyMock.expect(tubeDao.findByIdentifier(EasyMock.eq("SM-423"))).andReturn(mapBarcodeToTube.get("R111111"));
@@ -111,14 +123,14 @@ public class LabBatchEjbDBFreeTest {
 
         mockJira = EasyMock.createMock(JiraTicketDao.class);
         EasyMock.expect(mockJira.fetchByName(testLCSetKey))
-                .andReturn(new JiraTicket(JiraServiceProducer.stubInstance(), testLCSetKey)).times(0, 1);
+                .andReturn(new JiraTicket(JiraServiceTestProducer.stubInstance(), testLCSetKey)).times(0, 1);
         EasyMock.expect(mockJira.fetchByName(testFCTKey))
-                .andReturn(new JiraTicket(JiraServiceProducer.stubInstance(), testFCTKey)).times(0, 1);
+                .andReturn(new JiraTicket(JiraServiceTestProducer.stubInstance(), testFCTKey)).times(0, 1);
 
         labBatchDao = EasyMock.createNiceMock(LabBatchDao.class);
         labBatchEJB.setLabBatchDao(labBatchDao);
 
-        Mockito.when(productOrderDao.findByBusinessKey(Mockito.anyString())).thenAnswer(new Answer<Object>() {
+        when(productOrderDao.findByBusinessKey(Mockito.anyString())).thenAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 String businessKey = (String)invocationOnMock.getArguments()[0];
@@ -206,7 +218,7 @@ public class LabBatchEjbDBFreeTest {
     public void testCreateLabBatchWithVessels() throws Exception {
 
         LabBatch testBatch =
-                labBatchEJB.createLabBatch(LabBatch.LabBatchType.WORKFLOW, Workflow.ICE_EXOME_EXPRESS.getWorkflowName(),
+                labBatchEJB.createLabBatch(LabBatch.LabBatchType.WORKFLOW, Workflow.ICE_EXOME_EXPRESS,
                         testLCSetKey,null,null,"","scottmat",new HashSet<>(mapBarcodeToTube.values()),
                         Collections.<LabVessel>emptySet());
         for (LabVessel labVessel : mapBarcodeToTube.values()) {

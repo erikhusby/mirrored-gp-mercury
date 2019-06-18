@@ -167,7 +167,7 @@
         <oracle.version>6-11.2.0.1.0</oracle.version>
         <postgresql.version>9.1-901.jdbc4</postgresql.version>
 
-        <jbossas_7.version>7.1.1.Final</jbossas_7.version>
+        <wildfly.version>10.0.0.Final</wildfly.version>
 
         <!-- In order to ignore the UI tests by default but turn them on in the Tests.UI profile, we need to do this
         by using properties. The Tests.UI profile basically reverses these properties. Doing this from the command line
@@ -311,7 +311,7 @@
                 <dependency>
                     <groupId>org.jboss.as</groupId>
                     <artifactId>jboss-as-arquillian-container-managed</artifactId>
-                    <version>${jbossas_7.version}</version>
+                    <version>${wildfly.version}</version>
                     <scope>test</scope>
                 </dependency>
                 <dependency>
@@ -327,7 +327,7 @@
                         <configuration>
                             <argLine>-Xmx2048m</argLine>
                             <systemProperties>
-                                <jboss.version>${jbossas_7.version}</jboss.version>
+                                <jboss.version>${wildfly.version}</jboss.version>
                             </systemProperties>
                         </configuration>
                     </plugin>
@@ -345,7 +345,7 @@
                                         <artifactItem>
                                             <groupId>org.jboss.as</groupId>
                                             <artifactId>jboss-as-dist</artifactId>
-                                            <version>${jbossas_7.version}</version>
+                                            <version>${wildfly.version}</version>
                                             <type>zip</type>
                                             <overWrite>false</overWrite>
                                             <outputDirectory>${project.build.directory}</outputDirectory>
@@ -372,7 +372,7 @@
                 <dependency>
                     <groupId>org.jboss.as</groupId>
                     <artifactId>jboss-as-arquillian-container-remote</artifactId>
-                    <version>${jbossas_7.version}</version>
+                    <version>${wildfly.version}</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>

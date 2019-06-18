@@ -15,9 +15,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -25,6 +26,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.io.IOException;
@@ -38,8 +40,31 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 
-@Test(groups = TestGroups.ALTERNATIVES)
+@Test(groups = TestGroups.ALTERNATIVES, singleThreaded = true)
+@Dependent
 public class BatchToJiraTest extends Arquillian {
+
+    public BatchToJiraTest(){}
+
+    /**
+     * Need this here because Arquillian CDI enricher does something strange with scopes <br/>
+     * batchEjb proxy for ThreadEntityManager and PreferenceDao proxy for ThreadEntityManager in WorkflowconfigProducer collide:  <br />
+     * WFLYEJB0034: EJB Invocation failed on component ThreadEntityManager for method public javax.persistence.EntityManager org.broadinstitute.gpinformatics.infrastructure.jpa.ThreadEntityManager.getEntityManager(): javax.ejb.ConcurrentAccessTimeoutException: WFLYEJB0228: EJB 3.1 FR 4.3.14.1 concurrent access timeout on ThreadEntityManager - could not obtain lock within 5000 MILLISECONDS
+     * ...
+     * 	at org.broadinstitute.gpinformatics.infrastructure.jpa.ThreadEntityManager$Proxy$_$$_Weld$EnterpriseProxy$.getEntityManager(Unknown Source)
+     * 	at org.broadinstitute.gpinformatics.infrastructure.jpa.ThreadEntityManager$Proxy$_$$_WeldClientProxy.getEntityManager(Unknown Source)
+     * 	at org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao.getEntityManager(GenericDao.java:121)
+     * 	at org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao.getCriteriaBuilder(GenericDao.java:132)
+     * 	at org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao.findSingleSafely(GenericDao.java:242)
+     * 	at org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao.findSingle(GenericDao.java:277)
+     * 	at org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao.getGlobalPreference(PreferenceDao.java:118)
+     *  ...
+     *  at org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao$Proxy$_$$_WeldClientProxy.getGlobalPreference(Unknown Source)
+     * 	at org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowConfigProducer.loadFromPrefs(WorkflowConfigProducer.java:81)
+     * 	at org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowConfigProducer.produce(WorkflowConfigProducer.java:58)
+     */
+    @Inject
+    private WorkflowConfig workflowConfig;
 
     @Inject
     private LabBatchEjb batchEjb;
@@ -56,7 +81,7 @@ public class BatchToJiraTest extends Arquillian {
     @Inject
     private UserTransaction transaction;
 
-    @BeforeMethod(groups = TestGroups.ALTERNATIVES)
+    @BeforeMethod
     public void setUp() throws Exception {
         if (transaction == null) {
             return;
@@ -64,7 +89,7 @@ public class BatchToJiraTest extends Arquillian {
         transaction.begin();
     }
 
-    @AfterMethod(groups = TestGroups.ALTERNATIVES)
+    @AfterMethod
     public void tearDown() throws Exception {
         // Skip if no injections, since we're not running in container.
         if (transaction == null) {
@@ -121,7 +146,7 @@ public class BatchToJiraTest extends Arquillian {
         ProductOrder stubTestPDO = ProductOrderTestFactory.createDummyProductOrder(LabBatchEJBTest.STUB_TEST_PDO_KEY);
 
         Bucket bucket = new Bucket("Test");
-        batch.addBucketEntry(new BucketEntry(tube1, stubTestPDO, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, 1));
+        batch.addBucketEntry(new BucketEntry(tube1, stubTestPDO, bucket, BucketEntry.BucketEntryType.PDO_ENTRY));
 
         batchEjb.batchToJira("andrew", null, batch, CreateFields.IssueType.EXOME_EXPRESS, CreateFields.ProjectType.LCSET_PROJECT);
 
@@ -135,7 +160,7 @@ public class BatchToJiraTest extends Arquillian {
         // now try it with SM-02 as a rework
         // FIXME find a different way to do this.  This method, addReworkToBatch, is not a production used method.
         reworkEjb.addReworkToBatch(batch, tube2Label, "scottmat");
-        batch.addBucketEntry(new BucketEntry(tube2, stubTestPDO, bucket, BucketEntry.BucketEntryType.REWORK_ENTRY, 1));
+        batch.addBucketEntry(new BucketEntry(tube2, stubTestPDO, bucket, BucketEntry.BucketEntryType.REWORK_ENTRY));
         batchEjb.batchToJira("andrew", null, batch, CreateFields.IssueType.EXOME_EXPRESS, CreateFields.ProjectType.LCSET_PROJECT);
 
         ticket = jiraService.getIssue(batch.getJiraTicket().getTicketId());

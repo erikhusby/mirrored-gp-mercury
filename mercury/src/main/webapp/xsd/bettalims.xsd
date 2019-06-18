@@ -3,6 +3,9 @@
     <!--targetNamespace="http://genome.wi.mit.edu/coral.xsd"--> <!-- xmlns="http://genome.wi.mit.edu/coral.xsd" -->
 
     <xs:complexType name="plateType">
+        <xs:sequence>
+            <xs:element name="metadata" type="metadataType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
         <xs:attribute name="physType" type="xs:NCName" use="required"/>
         <xs:attribute name="barcode" type="xs:NMTOKEN" use="required"/>
         <xs:attribute name="section" type="xs:NMTOKEN" use="required"/>
@@ -245,6 +248,7 @@
         <xs:attribute name="concentration" type="xs:decimal" use="optional"/>
         <xs:attribute name="fragmentSize" type="xs:decimal" use="optional"/>
         <xs:attribute name="receptacleWeight" type="xs:decimal" use="optional"/>
+        <xs:attribute name="mass" type="xs:decimal" use="optional"/>
     </xs:complexType>
 
     <xs:complexType name="lcSampleType">

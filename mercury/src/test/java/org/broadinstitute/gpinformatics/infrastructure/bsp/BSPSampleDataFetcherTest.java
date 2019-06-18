@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPSampleDataFetcherImpl;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -20,7 +21,7 @@ public class BSPSampleDataFetcherTest {
     BSPSampleSearchService sampleSearchService = BSPSampleSearchServiceProducer.testInstance();
 
     public void testBSPSampleDataFetcher() {
-        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(sampleSearchService);
+        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcherImpl(sampleSearchService);
         SampleData bspSampleData = fetcher.fetchSingleSampleFromBSP("SM-1T7HE");
 
         assertEquals(bspSampleData.getCollaboratorName(), "Herman Taylor");
@@ -34,18 +35,18 @@ public class BSPSampleDataFetcherTest {
     }
 
     public void testGetStockIdForAliquotId() {
-        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(sampleSearchService);
+        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcherImpl(sampleSearchService);
 
         Assert.assertEquals(fetcher.getStockIdForAliquotId("SM-1T7HE"), "SM-1KXW2");
     }
 
     public void testGetStockIdForAliquotIdNoPrefix() {
-        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(sampleSearchService);
+        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcherImpl(sampleSearchService);
         Assert.assertEquals(fetcher.getStockIdForAliquotId("1T7HE"), "SM-1KXW2");
     }
 
     public void testPooledSampleWithMultipleRoots() {
-        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(sampleSearchService);
+        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcherImpl(sampleSearchService);
         SampleData bspSampleData = fetcher.fetchSingleSampleFromBSP("SM-41YNK");
 
         assertTrue(bspSampleData.isSampleReceived());
@@ -59,7 +60,7 @@ public class BSPSampleDataFetcherTest {
     }
 
     public void testFetchSingleColumn()  {
-        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(sampleSearchService);
+        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcherImpl(sampleSearchService);
         String sampleName = "SM-1T7HE";
         Map<String, ? extends SampleData> bspSampleData = fetcher.fetchSampleData(Arrays.asList(sampleName),
                 BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
@@ -93,7 +94,7 @@ public class BSPSampleDataFetcherTest {
          */
         BSPConfig bspConfig = new BSPConfig(Deployment.PROD);
         BSPSampleDataFetcher fetcher =
-                new BSPSampleDataFetcher(sampleSearchService, bspConfig);
+                new BSPSampleDataFetcherImpl(sampleSearchService, bspConfig);
         String bareSampleId = "1T7HE";
         String sampleId = "SM-" + bareSampleId;
         Map<String, BspSampleData> sampleDataBySampleId =

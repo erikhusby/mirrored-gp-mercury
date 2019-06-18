@@ -35,11 +35,6 @@
                 <input type='hidden' name="dateRangeSelector" value="14"/> <!-- Set to "custom" otherwise dates are not saved. -->
                 <input type='hidden' name="lcsetsBarcodes" value="${actionBean.lcsetsBarcodes}"/>
                 <input type='hidden' name="tubeLcsetSelectionCount" value="${actionBean.tubeLcsetAssignments.size()}"/>
-
-                <input type='hidden' name="showQueued" value="${actionBean.showQueued}"/>
-                <input type='hidden' name="showProcessed" value="${actionBean.showProcessed}"/>
-                <input type='hidden' name="showAbandoned" value="${actionBean.showAbandoned}"/>
-                <input type='hidden' name="append" value="${actionBean.append}"/>
             </c:if>
 
             <c:forEach items="${actionBean.dtos}" var="dto" varStatus="item">

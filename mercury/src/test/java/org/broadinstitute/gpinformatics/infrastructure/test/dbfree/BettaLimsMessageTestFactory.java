@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -42,6 +43,7 @@ import java.util.Map;
 @SuppressWarnings("FeatureEnvy")
 public class BettaLimsMessageTestFactory {
     public static final int NUMBER_OF_RACK_COLUMNS = 12;
+    public static final int NUMBER_OF_RACK_ROWS = 8;
     public static final String HISEQ_SEQUENCING_STATION_MACHINE_NAME = "SL-HBU";
     public static final String MISEQ_SEQUENCING_STATION_MACHINE_NAME = "SL-MAA";
 
@@ -133,14 +135,24 @@ public class BettaLimsMessageTestFactory {
         return buildWellName(NUMBER_OF_RACK_COLUMNS, positionNumber, wellNameType);
     }
 
-    public String buildWellName(int numberOfRackColums, int positionNumber, WellNameType wellNameType) {
+    /** Builds row-wise (A1, A2, A3...) or column-wise (A1, B1, C1...) depending on columnWise. */
+    public String buildWellName(int positionNumber, WellNameType wellNameType, boolean columnWise) {
+        return buildWellName(NUMBER_OF_RACK_COLUMNS, NUMBER_OF_RACK_ROWS, positionNumber, wellNameType, columnWise);
+    }
+
+    public String buildWellName(int numberOfRackColumns, int positionNumber, WellNameType wellNameType) {
+        return buildWellName(numberOfRackColumns, NUMBER_OF_RACK_ROWS, positionNumber, wellNameType, false);
+    }
+
+    /** Builds row-wise (A1, A2, A3...) or column-wise (A1, B1, C1...) depending on columnWise. */
+    public String buildWellName(int numberOfRackColumns, int numberOfRackRows, int positionNumber,
+            WellNameType wellNameType, boolean columnWise) {
+        // minorIndex moves faster than majorIndex.
+        int minorIndex = (positionNumber - 1) % (columnWise ? numberOfRackRows : numberOfRackColumns);
+        int majorIndex = (positionNumber - 1) / (columnWise ? numberOfRackRows : numberOfRackColumns);
         @SuppressWarnings("NumericCastThatLosesPrecision")
-        char row = (char) ('A' + (positionNumber / numberOfRackColums));
-        int column = positionNumber % numberOfRackColums;
-        if (column == 0) {
-            column = numberOfRackColums;
-            row--;
-        }
+        char row = (char) ('A' + (columnWise ? minorIndex : majorIndex));
+        int column = 1 + (columnWise ? majorIndex : minorIndex);
         String columnString = String.valueOf(column);
         if (wellNameType == WellNameType.LONG) {
             if (columnString.length() == 1) {
@@ -214,6 +226,26 @@ public class BettaLimsMessageTestFactory {
         plateTransferEvent.setSourcePlate(buildRack(sourceRackBarcode));
 
         plateTransferEvent.setPositionMap(buildPositionMap(targetRackBarcode, targetTubeBarcodes));
+        plateTransferEvent.setPlate(buildRack(targetRackBarcode));
+
+        return plateTransferEvent;
+    }
+
+    public PlateTransferEventType buildRackToRack(String eventType, String sourceRackBarcode, Map<String, String> sourceTubeBarcodesToWellNames,
+                                                  String targetRackBarcode, List<String> targetTubeBarcodes) {
+        PlateTransferEventType plateTransferEvent = new PlateTransferEventType();
+        setStationEventData(eventType, plateTransferEvent);
+
+        plateTransferEvent.setSourcePositionMap(buildPositionMap(sourceRackBarcode, sourceTubeBarcodesToWellNames));
+        plateTransferEvent.setSourcePlate(buildRack(sourceRackBarcode));
+        // Create a map of the destination barcodes matched to source positions.
+        Map<String, String> destinationTubeBarcodesToWellNames = new HashMap<>();
+        Iterator<String> destinationIterator = targetTubeBarcodes.iterator();
+        for (String sourceWell : sourceTubeBarcodesToWellNames.values()) {
+            destinationTubeBarcodesToWellNames.put(destinationIterator.next(), sourceWell);
+        }
+
+        plateTransferEvent.setPositionMap(buildPositionMap(targetRackBarcode, destinationTubeBarcodesToWellNames));
         plateTransferEvent.setPlate(buildRack(targetRackBarcode));
 
         return plateTransferEvent;

@@ -13,7 +13,6 @@ import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
@@ -37,7 +36,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -133,7 +131,7 @@ public class WorkflowValidator {
             String body = renderTemplate(labVessel.getLabel(), eventNames, startTime, operator, station,  validationErrors);
             String eventTypesJoin = StringUtils.join(eventNames, ',');
             emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), Collections.<String>emptyList(),
-                    "Workflow validation failure for " + eventTypesJoin, body, false);
+                    "Workflow validation failure for " + eventTypesJoin, body, false, true);
         }
     }
 
@@ -142,6 +140,9 @@ public class WorkflowValidator {
                                                                   Set<String> eventNames) {
         List<WorkflowValidationError> validationErrors = new ArrayList<>();
         for (SampleInstanceV2 sampleInstance : sampleInstances) {
+            if (sampleInstance.isReagentOnly()) {
+                continue;
+            }
             String workflowName = sampleInstance.getWorkflowName();
             LabBatch effectiveBatch = sampleInstance.getSingleBatch();
 
@@ -289,7 +290,7 @@ public class WorkflowValidator {
             String body = renderTemplate(labVessels.iterator().next().getLabel(), eventTypeName, startTime, operator,
                     station, validationErrors);
             emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), Collections.<String>emptyList(),
-                    "Workflow validation failure for " + stationEventType.getEventType(), body, false);
+                    "Workflow validation failure for " + stationEventType.getEventType(), body, false, true);
         }
     }
 
@@ -324,7 +325,10 @@ public class WorkflowValidator {
     public List<WorkflowValidationError> validateWorkflow(Collection<LabVessel> labVessels, String eventType) {
         List<WorkflowValidationError> validationErrors = new ArrayList<>();
 
-        for (LabVessel labVessel : labVessels) { // todo jmt can this be null?
+        for (LabVessel labVessel : labVessels) {
+            if (labVessel == null) {
+                continue;
+            }
             Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
             validationErrors.addAll(
                     validateSampleInstances(labVessel, sampleInstances, Collections.singleton(eventType)));

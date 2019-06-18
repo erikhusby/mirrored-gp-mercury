@@ -67,7 +67,7 @@ public class CaliperPlateProcessor {
         //Should match 384 Well only, not Ladders
         CsvToBeanFilter columnStartsWithFilter = new ColumnMatchesFilter(1, "[A-P]\\d{2}");
         dataRows = CsvParser.parseCsvStreamToBeanByMapping(
-                inputStream, ',', CaliperDataRow.class, COL_TO_FIELD_MAP, columnStartsWithFilter);
+                inputStream, ',', CaliperDataRow.class, COL_TO_FIELD_MAP, columnStartsWithFilter, 0);
 
         List<PlateWellResultMarker> plateWellResultMarkers = new ArrayList<>();
         CaliperRun caliperRun = new CaliperRun(plateWellResultMarkers);

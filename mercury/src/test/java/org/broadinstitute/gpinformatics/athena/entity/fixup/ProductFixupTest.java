@@ -1,16 +1,29 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.sap.entity.SAPMaterial;
+import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -20,8 +33,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -40,7 +57,16 @@ public class ProductFixupTest extends Arquillian {
     ProductDao productDao;
 
     @Inject
+    ProductOrderDao productOrderDao;
+
+    @Inject
     private UserBean userBean;
+
+    @Inject
+    private SAPProductPriceCache productPriceCache;
+
+    @Inject
+    private PriceListCache priceListCache;
 
     @Inject
     private UserTransaction utx;
@@ -59,8 +85,8 @@ public class ProductFixupTest extends Arquillian {
 
         Product exExProduct = productDao.findByPartNumber("P-EX-0002");
 
-        if (exExProduct.getWorkflow() != Workflow.AGILENT_EXOME_EXPRESS) {
-            exExProduct.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+        if (exExProduct.getWorkflowName() != Workflow.AGILENT_EXOME_EXPRESS) {
+            exExProduct.setWorkflowName(Workflow.AGILENT_EXOME_EXPRESS);
             productDao.persist(exExProduct);
         }
     }
@@ -69,7 +95,7 @@ public class ProductFixupTest extends Arquillian {
     public void addHybridSelectionWorkflowName() {
 
         Product hybSelProject = productDao.findByPartNumber("P-EX-0001");
-            hybSelProject.setWorkflow(Workflow.HYBRID_SELECTION);
+            hybSelProject.setWorkflowName(Workflow.HYBRID_SELECTION);
 
         productDao.persist(hybSelProject);
     }
@@ -80,11 +106,11 @@ public class ProductFixupTest extends Arquillian {
         List<Product> wgProducts = new ArrayList<>(3);
 
         Product wholeGenomeProduct1 = productDao.findByPartNumber("P-WG-0001");
-            wholeGenomeProduct1.setWorkflow(Workflow.WHOLE_GENOME);
+            wholeGenomeProduct1.setWorkflowName(Workflow.WHOLE_GENOME);
         Product wholeGenomeProduct2 = productDao.findByPartNumber("P-WG-0002");
-            wholeGenomeProduct2.setWorkflow(Workflow.WHOLE_GENOME);
+            wholeGenomeProduct2.setWorkflowName(Workflow.WHOLE_GENOME);
         Product wholeGenomeProduct3 = productDao.findByPartNumber("P-WG-0003");
-            wholeGenomeProduct3.setWorkflow(Workflow.WHOLE_GENOME);
+            wholeGenomeProduct3.setWorkflowName(Workflow.WHOLE_GENOME);
 
         Collections.addAll(wgProducts, wholeGenomeProduct1, wholeGenomeProduct2, wholeGenomeProduct3);
 
@@ -262,4 +288,175 @@ public class ProductFixupTest extends Arquillian {
         productDao.persist(new FixupCommentary("SUPPORT-3393 cloning products for new WGS products"));
         utx.commit();
 
-    }}
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/ProductCloningInfo.txt, so it
+     * can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-XXXX auto creating new products as clones of previous products
+     * P-EX-1123[\t]P-EX-1134[\t]new cloned product for the old product
+     * P-EX-1124[\t]P-EX-1135[\t]new cloned product for the other old product
+     *
+     */
+    @Test(enabled = false)
+    public void supportCloneProductsToNew() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ProductCloningInfo.txt"));
+        String fixupReason = lines.get(0);
+        Assert.assertTrue(StringUtils.isNotBlank(fixupReason), "A fixup reason needs to be defined");
+        final List<String> cloningProductsLines = lines.subList(1, lines.size());
+        Assert.assertTrue(CollectionUtils.isNotEmpty(cloningProductsLines),
+                "Lines representing the old and new products needd to be defined in order for this fixup to be run");
+        final List<String> newProducts = new ArrayList<>();
+
+        final Map<String, Pair<String, String>> partNumbersToClone = new HashMap<>();
+
+        for (String cloningProduct : cloningProductsLines) {
+            final String[] splitLine = cloningProduct.split("\t");
+            Assert.assertTrue(splitLine.length == 3, "There appear to be more inputs than there should be on the row matching: " +cloningProduct);
+            Assert.assertTrue(StringUtils.isNotBlank(splitLine[0]), "The value of the originating Product part number needs to be set for all lines");
+            Assert.assertTrue(StringUtils.isNotBlank(splitLine[1]), "The value for the new product part number needs to be set on all lines");
+            Assert.assertTrue(StringUtils.isNotBlank(splitLine[2]), "The value for the new product name needs to be set on all lines");
+            partNumbersToClone.put(splitLine[0], Pair.of(splitLine[1], splitLine[2]));
+            newProducts.add(splitLine[1]);
+        }
+
+        final List<Product> productsToClone = productDao.findByPartNumbers(new ArrayList<String>(partNumbersToClone.keySet()));
+
+        for (Product productToClone : productsToClone) {
+
+            final String productName = partNumbersToClone.get(productToClone.getPartNumber()).getRight();
+            final String partNumber = partNumbersToClone.get(productToClone.getPartNumber()).getLeft();
+
+            Product clonedProduct = Product.cloneProduct(productToClone, productName, partNumber);
+
+            productDao.persist(clonedProduct);
+        }
+
+        final String loggedChanges = ".  Adding: " + newProducts + " from: " +
+                                     StringUtils.join(partNumbersToClone.keySet(), ",");
+        System.out.println("Proof of execution: " + loggedChanges);
+        productDao.persist(new FixupCommentary(fixupReason));
+        utx.commit();
+
+    }
+
+    @Test(enabled = false)
+    public void testPriceDifferences() throws Exception {
+        List<Product> allProducts =
+                productDao.findProducts(ProductDao.Availability.CURRENT, ProductDao.TopLevelOnly.NO,
+                        ProductDao.IncludePDMOnly.YES);
+
+        List<String> errors = new ArrayList<>();
+        for (Product currentProduct : allProducts) {
+            SapIntegrationClientImpl.SAPCompanyConfiguration configuration = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+            if(currentProduct.isExternalOnlyProduct() || currentProduct.isClinicalProduct()) {
+                configuration = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES;
+            }
+            final QuotePriceItem byKeyFields = priceListCache.findByKeyFields(currentProduct.getPrimaryPriceItem());
+            if(byKeyFields != null) {
+                BigDecimal qsPrice = new BigDecimal(byKeyFields.getPrice());
+                final SAPMaterial material = productPriceCache.findByProduct(currentProduct, configuration);
+                if (material != null) {
+                    BigDecimal sapPrice = new BigDecimal(material.getBasePrice());
+                    if (sapPrice.compareTo(qsPrice) != 0) {
+                        errors.add("Price for " + currentProduct.getPartNumber() + " sold in " + configuration
+                                .getCompanyCode() + " does not match SAP: QS price is " +
+                                   qsPrice.toString() + " and SAP price is " + sapPrice.toString());
+                    }
+                }
+            }
+        }
+        System.out.println(StringUtils.join(errors,"\n"));
+    }
+
+    /**
+     *
+     * This test makes use of an input file "mercury/src/test/resources/testdata/changeProductCommercialStatus.txt"
+     * to get the products which are to have their commercial status updated.
+     *
+     * File format will be a summary on line 1, followed by one or more lines indicating the Part number and true/false
+     *      indicating if the product will be Sold as commercial only.  The lines are tab delimited:
+     * SUPPORT-5166 Change the commercial status for products
+     * P-EX-0001\tTRUE
+     * P-EX-0001 FALSE
+     *
+     *
+     * @throws Exception
+     */
+    @Test(enabled=false)
+    public void fixupChangeProductCommercialStatus() throws Exception {
+
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("changeProductCommercialStatus.txt"));
+        String fixupReason = lines.get(0);
+        Assert.assertTrue(StringUtils.isNotBlank(fixupReason), "A fixup reason needs to be defined");
+        final List<String> productsWithCommercialStatuses = lines.subList(1, lines.size());
+        Assert.assertTrue(CollectionUtils.isNotEmpty(productsWithCommercialStatuses));
+
+        Map<String, Boolean> commercialStatusByProduct = new HashMap<>();
+
+        for (String productsWithStatus : productsWithCommercialStatuses) {
+            final String[] splitProductsFromStatus = productsWithStatus.split("\t");
+            Assert.assertTrue(splitProductsFromStatus.length == 2, "Either one of the items in the line is missing or they are not separated by a tab");
+            Assert.assertTrue(StringUtils.isNotBlank(splitProductsFromStatus[0])&&
+                              StringUtils.isNotBlank(splitProductsFromStatus[1]),"Either the product or the commercial status has not been set");
+
+            commercialStatusByProduct.put(splitProductsFromStatus[0], Boolean.valueOf(splitProductsFromStatus[1]));
+        }
+
+        final List<Product> productsToUpdate = productDao.findByPartNumbers(new ArrayList<>(commercialStatusByProduct.keySet()));
+
+        for (Product product : productsToUpdate) {
+            product.setExternalOnlyProduct(commercialStatusByProduct.get(product.getPartNumber()));
+
+            final List<ProductOrder> ordersWithCommonProduct =
+                    productOrderDao.findOrdersWithCommonProduct(product.getPartNumber());
+
+            for (ProductOrder productOrder : ordersWithCommonProduct) {
+                productOrder.setOrderType((commercialStatusByProduct.get(product.getPartNumber()))?
+                        ProductOrder.OrderAccessType.COMMERCIAL: ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
+            }
+            productDao.persist(product);
+        }
+
+        System.out.println("Commercial statuses updated: "+ StringUtils.join(commercialStatusByProduct.keySet(), ", "));
+
+        productDao.persist(new FixupCommentary(fixupReason));
+        utx.commit();
+    }
+
+    @Test(enabled=false)
+    public void gplim6397RemoveBadProducts() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        final Set<Long> badProductIds = Stream.of(133054L, 133055L, 133053L).collect(Collectors.toSet());
+
+        final List<Product> badProducts = productDao.findListByList(Product.class, Product_.productId, badProductIds);
+
+        Assert.assertEquals(badProducts.size(), 3,"There should be 3 products found");
+
+        final Iterator<Product> productIterator = badProducts.iterator();
+
+        while(productIterator.hasNext()) {
+            final Product removedProduct = productIterator.next();
+            String nameOfRemovedProduct = removedProduct.getDisplayName();
+            removedProduct.getAddOns().clear();
+            productDao.remove(removedProduct);
+            System.out.println("Removed product " + nameOfRemovedProduct);
+        }
+
+        productDao.persist(new FixupCommentary("GPLIM-6397: Removing duplicate products to assist in Designation Creation"));
+
+        utx.commit();
+
+        final List<Product> doubleCheck = productDao.findListByList(Product.class, Product_.productId, badProductIds);
+        Assert.assertEquals(doubleCheck.size(), 0, "The products should have been removed");
+
+    }
+}

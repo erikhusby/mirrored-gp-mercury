@@ -1,16 +1,21 @@
 package org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers;
 
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.multipart.FormDataBodyPart;
-import com.sun.jersey.multipart.FormDataMultiPart;
-import com.sun.jersey.multipart.MultiPart;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentration;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
 import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -20,14 +25,21 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataOutput;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +51,7 @@ import static org.broadinstitute.gpinformatics.mercury.control.labevent.eventhan
  * Creates a new root sample in BSP, e.g. for Blood Biopsy plasma and buffy coat samples, so they can have
  * different collaborator sample ID suffixes.
  */
+@Dependent
 public class BspNewRootHandler extends AbstractEventHandler {
 
     @Inject
@@ -46,6 +59,11 @@ public class BspNewRootHandler extends AbstractEventHandler {
 
     @Inject
     private BSPSampleDataFetcher bspSampleDataFetcher;
+
+    @Inject
+    private BSPSetVolumeConcentration bspSetVolumeConcentration;
+
+    private static final Log logger = LogFactory.getLog(BspNewRootHandler.class);
 
     /** Mirrors definition in BSP KitResource. */
     @XmlRootElement
@@ -87,7 +105,7 @@ public class BspNewRootHandler extends AbstractEventHandler {
     }
 
     private void createBspKit(List<LabVessel> labVessels, String receptacleType, String materialType,
-            String collabSampleSuffix, String tumorNormal) {
+            String collabSampleSuffix, String tumorNormal, Map<String, String> mapBarcodeToStockType) {
 
         // Get data from BSP
         List<String> sampleNames = new ArrayList<>();
@@ -126,34 +144,41 @@ public class BspNewRootHandler extends AbstractEventHandler {
                     bspSampleData.getGender(),
                     labVessel.getLabel(),
                     originalRoots.toString(),
-                    labVessel.getVolume() == null ? "" : labVessel.getVolume()};
+                    labVessel.getVolume() == null ? "" : labVessel.getVolume()
+            };
         }
 
         // Call BSP KitResource web service
         String sheetName = "Sample Submission Form";
         Workbook workbook = SpreadsheetCreator.createSpreadsheet(sheetName, rows);
         String urlString = bspRestClient.getUrl(BSP_KIT_REST_URL);
-        WebResource webResource = bspRestClient.getWebResource(urlString);
-        try (FormDataMultiPart formDataMultiPart = new FormDataMultiPart()) {
-            formDataMultiPart.field("collection", collection);
-            formDataMultiPart.field("materialType", materialType);
-            formDataMultiPart.field("receptacleType", receptacleType);
-            formDataMultiPart.field("datasetName", "NewRoots");
-            formDataMultiPart.field("domain", "VIRAL");
+        WebTarget webTarget = bspRestClient.getWebResource(urlString);
+        MultipartFormDataOutput multipartFormDataOutput = new MultipartFormDataOutput();
+        try /*(FormDataMultiPart formDataMultiPart = new FormDataMultiPart())*/ {
+            multipartFormDataOutput.addFormData("collection", collection, MediaType.TEXT_PLAIN_TYPE);
+            multipartFormDataOutput.addFormData("materialType", materialType, MediaType.TEXT_PLAIN_TYPE);
+            multipartFormDataOutput.addFormData("receptacleType", receptacleType, MediaType.TEXT_PLAIN_TYPE);
+            multipartFormDataOutput.addFormData("datasetName", "NewRoots", MediaType.TEXT_PLAIN_TYPE);
+            multipartFormDataOutput.addFormData("domain", "VIRAL", MediaType.TEXT_PLAIN_TYPE);
+            multipartFormDataOutput.addFormData("mapBarcodeToStockType", mapBarcodeToStockType, MediaType.APPLICATION_JSON_TYPE);
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             workbook.write(byteArrayOutputStream);
-            MultiPart multiPart = formDataMultiPart.bodyPart(
-                    new FormDataBodyPart("spreadsheet", new ByteArrayInputStream(byteArrayOutputStream.toByteArray()),
-                            MediaType.APPLICATION_OCTET_STREAM_TYPE));
-            CreateKitReturn createKitReturn = webResource.type(MediaType.MULTIPART_FORM_DATA_TYPE).post(
-                    CreateKitReturn.class, multiPart);
+            multipartFormDataOutput.addFormData("spreadsheet",
+                    new ByteArrayInputStream(byteArrayOutputStream.toByteArray()),
+                    MediaType.APPLICATION_OCTET_STREAM_TYPE);
+            GenericEntity<MultipartFormDataOutput> entity = new GenericEntity<MultipartFormDataOutput>(
+                    multipartFormDataOutput) { };
+
+            CreateKitReturn createKitReturn = JaxRsUtils.postAndCheck(webTarget.request(MediaType.TEXT_XML),
+                    Entity.entity(multipartFormDataOutput, MediaType.MULTIPART_FORM_DATA_TYPE),
+                    CreateKitReturn.class);
 
             // Set new sampleIds on vessels
             List<KitSample> samples = createKitReturn.getSamples();
             for (int i = 0; i < samples.size(); i++) {
                 KitSample kitSample = samples.get(i);
                 // Indicate new root on MercurySample
-                labVessels.get(i).getMercurySamples().add(new MercurySample(kitSample.getBspSampleId(),
+                labVessels.get(i).addSample(new MercurySample(kitSample.getBspSampleId(),
                         MercurySample.MetadataSource.BSP, true));
             }
         } catch (IOException e) {
@@ -165,12 +190,24 @@ public class BspNewRootHandler extends AbstractEventHandler {
     public void handleEvent(LabEvent targetEvent, StationEventType stationEvent) {
         Set<LabVessel> labVessels = new LinkedHashSet<>();
         String receptacleType = null;
+        Set<LabVessel> sourceLabVessels = new LinkedHashSet<>();
+        LabEventType labEventType = targetEvent.getLabEventType();
+        // If SourceHandling 'DEPLETE' or 'TERMINATE_DEPLETED' flag is set on the lab event type.
+        Boolean terminatingDepleted = labEventType.depleteSources() || labEventType.terminateDepletedSources();
 
         for (VesselToVesselTransfer vesselToVesselTransfer : targetEvent.getVesselToVesselTransfers()) {
             BarcodedTube barcodedTube = OrmUtil.proxySafeCast(vesselToVesselTransfer.getTargetVessel(), BarcodedTube.class);
             receptacleType = barcodedTube.getTubeType().getDisplayName();
             labVessels.add(barcodedTube);
+
+            // Only build this if necessary.
+            if (terminatingDepleted) {
+                BarcodedTube sourceBarcodedTube =
+                        OrmUtil.proxySafeCast(vesselToVesselTransfer.getSourceVessel(), BarcodedTube.class);
+                sourceLabVessels.add(sourceBarcodedTube);
+            }
         }
+
 
         for (CherryPickTransfer cherryPickTransfer : targetEvent.getCherryPickTransfers()) {
             LabVessel labVessel = cherryPickTransfer.getTargetVesselContainer().getVesselAtPosition(
@@ -178,12 +215,52 @@ public class BspNewRootHandler extends AbstractEventHandler {
             BarcodedTube barcodedTube = OrmUtil.proxySafeCast(labVessel, BarcodedTube.class);
             receptacleType = barcodedTube.getTubeType().getDisplayName();
             labVessels.add(barcodedTube);
+
+            // Only build this if necessary.
+            if (terminatingDepleted) {
+                LabVessel sourceLabVessel = cherryPickTransfer.getSourceVesselContainer().getVesselAtPosition(
+                        cherryPickTransfer.getSourcePosition());
+                BarcodedTube sourceBarcodedTube = OrmUtil.proxySafeCast(sourceLabVessel, BarcodedTube.class);
+                sourceLabVessels.add(sourceBarcodedTube);
+            }
         }
 
-        LabEventType labEventType = targetEvent.getLabEventType();
+        // If either 'DEPLETE' or 'TERMINATE_DEPLETED' flag is set, then we need to call BSP to update.
+        if (terminatingDepleted) {
+
+            for (LabVessel sourceLabVessel : sourceLabVessels) {
+
+                // If the event is set with 'DEPLETE' we need to set the volume to zero.
+                if (labEventType.depleteSources()) {
+                    sourceLabVessel.setVolume(BigDecimal.ZERO);
+                }
+                String result = bspSetVolumeConcentration.setVolumeAndConcentration(sourceLabVessel.getLabel(),
+                        BigDecimal.ZERO, sourceLabVessel.getConcentration(),
+                        sourceLabVessel.getReceptacleWeight(), BSPSetVolumeConcentration.TerminateAction.TERMINATE_DEPLETED);
+                if (!result.equals(BSPSetVolumeConcentration.RESULT_OK)) {
+                    logger.error(result);
+                }
+            }
+        }
+
+        // Check for receptacles to be marked as backup
+        Map<String, String> mapBarcodeToStockType = new HashMap<>();
+        if (OrmUtil.proxySafeIsInstance(stationEvent, PlateCherryPickEvent.class)) {
+            PlateCherryPickEvent plateCherryPickEvent = OrmUtil.proxySafeCast(stationEvent, PlateCherryPickEvent.class);
+            for (PositionMapType positionMapType: plateCherryPickEvent.getPositionMap()) {
+                for (ReceptacleType receptacle: positionMapType.getReceptacle()) {
+                    for (MetadataType metadataType: receptacle.getMetadata()) {
+                        if (metadataType.getName().equals(Metadata.Key.MARK_STOCK.getDisplayName())) {
+                            mapBarcodeToStockType.put(receptacle.getBarcode(), metadataType.getValue());
+                        }
+                    }
+                }
+            }
+        }
+
         createBspKit(new ArrayList<>(labVessels), receptacleType,
                 labEventType.getResultingMaterialType().getDisplayName(), labEventType.getCollabSampleSuffix(),
-                labEventType.getMetadataValue());
+                labEventType.getMetadataValue(), mapBarcodeToStockType);
     }
 
 }

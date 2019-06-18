@@ -15,7 +15,8 @@ plate / rack.
 <%--@elvariable id="section" type="org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection"--%>
 <%--@elvariable id="stationEventIndex" type="java.lang.Integer"--%>
 <%--@elvariable id="source" type="java.lang.Boolean"--%>
-
+<%--@elvariable id="massRemoved" type="java.lang.Boolean"--%>
+<c:set var="destinationMarkStock" value="${not source and not empty actionBean.labEventType.manualTransferDetails.destinationMarkStock}"/>
 <style>
     .btn {
         background-image:none;
@@ -87,6 +88,13 @@ plate / rack.
                 </stripes:select>
             </c:otherwise>
         </c:choose>
+            <c:if test="${source and massRemoved}">
+                <label for="${source ? 'src' : 'dst'}PltMass${stationEventIndex}">Mass To Remove</label>
+                <input type="text" id="${source ? 'src' : 'dst'}PltMass${stationEventIndex}" autocomplete="off"
+                       name="massesRemoved[${stationEventIndex}]"
+                       value="${actionBean.massesRemoved[stationEventIndex]}" class="barcode"/>
+
+            </c:if>
         </div>
     </c:if>
     <c:if test="${not empty positionMap}">
@@ -140,7 +148,8 @@ plate / rack.
                             <c:if test="${volumeType == 'text'}">
                                 </br>
                             </c:if>
-                            <input type="${volumeType}"
+                            <input type="${volumeType}" id="${source ? 'src' : 'dest'}RcpVol${stationEventIndex}_${receptacleIndex}"
+                                    id="${source ? 'src' : 'dest'}RcpVol${stationEventIndex}_${receptacleIndex}"
                                     name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}[0].receptacle[${receptacleIndex}].volume"
                                     value="${actionBean.findReceptacleAtPosition(positionMap[0], geometry.vesselPositions[receptacleIndex]).volume}"
                                     class="clearable smalltext" autocomplete="off" placeholder="volume"/>
@@ -149,6 +158,12 @@ plate / rack.
                                 <input type="hidden"
                                         name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}[0].receptacle[${receptacleIndex}].materialType"
                                         value="${actionBean.labEventTypeByIndex(stationEventIndex).resultingMaterialType.displayName}"/>
+                            </c:if>
+                            <c:if test="${destinationMarkStock}">
+                                </br>
+                                <stripes:select name="mapPositionToMarkStock[${geometry.vesselPositions[receptacleIndex]}]" class="markStock">
+                                    <stripes:options-collection label="displayName"  collection="${actionBean.manualTransferDetails.destinationMarkStock}" />
+                                </stripes:select>
                             </c:if>
                             </br>
                             <button data-position="${rowName}${columnName}" id="${rowName}${columnName}_${source ? 'src' : 'dest'}_RcpBcd${stationEventIndex}_${receptacleIndex}" type="button" class= "${source ? 'src' : 'dest'}_col_${columnStatus.index} ${source ? 'src' : 'dest'}_row_${rowStatus.index} btn btn-primary btn-xs" disabled tabindex="-1">Select</button>

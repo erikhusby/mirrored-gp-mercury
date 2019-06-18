@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
@@ -58,7 +58,7 @@ import static org.hamcrest.Matchers.equalTo;
 public class LCSetJiraFieldFactoryTest {
 
     private List<String> pdoNames;
-    private Workflow workflow;
+    private String workflow;
     private Map<String, BarcodedTube> mapBarcodeToTube;
     private String rpSynopsis;
     private Map<String, CustomFieldDefinition> jiraFieldDefs;
@@ -116,7 +116,7 @@ public class LCSetJiraFieldFactoryTest {
             mercurySample.addProductOrderSample(currentProductOrderSample);
             mercurySample.addLabVessel(bspAliquot);
             bucket.addEntry(currentProductOrderSample.getProductOrder(), bspAliquot,
-                    BucketEntry.BucketEntryType.PDO_ENTRY, Workflow.AGILENT_EXOME_EXPRESS);
+                    BucketEntry.BucketEntryType.PDO_ENTRY, new Date());
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
 
@@ -128,7 +128,7 @@ public class LCSetJiraFieldFactoryTest {
                 .setManualOnRisk(new RiskCriterion(RiskCriterion.RiskCriteriaType.FFPE, Operator.IS, "true"),
                         "Test risk on the final sample to ensure proper display");
 
-        jiraFieldDefs = JiraServiceProducer.stubInstance().getCustomFields();
+        jiraFieldDefs = JiraServiceTestProducer.stubInstance().getCustomFields();
 
     }
 
@@ -157,7 +157,7 @@ public class LCSetJiraFieldFactoryTest {
         int numSamples = testBatch.getStartingBatchLabVessels().size();
 
         AbstractBatchJiraFieldFactory testBuilder = AbstractBatchJiraFieldFactory.getInstance(
-                CreateFields.ProjectType.LCSET_PROJECT, testBatch, productOrderDao, workflowConfig);
+                CreateFields.ProjectType.LCSET_PROJECT, testBatch, null, productOrderDao, workflowConfig);
 
         Assert.assertEquals(testBuilder.generateDescription(),
                 "1 sample with material types [] from MyResearchProject PDO-7\n5 samples with material types [] from MyResearchProject PDO-999\n");
@@ -198,7 +198,7 @@ public class LCSetJiraFieldFactoryTest {
             if (fieldDefinitionName.equals(LabBatch.TicketFields.PROTOCOL.getName())) {
 
                 ProductWorkflowDef workflowDef = workflowConfig.getWorkflow(
-                        testProductOrder.getProduct().getWorkflow());
+                        testProductOrder.getProduct().getWorkflowName());
 
                 Assert.assertEquals(
                         workflowDef.getName() + ":" + workflowDef.getEffectiveVersion(testBatch.getCreatedOn())
@@ -213,11 +213,18 @@ public class LCSetJiraFieldFactoryTest {
             }
             if (fieldDefinitionName.equals(LabBatch.TicketFields.RISK_CATEGORIZED_SAMPLES.getName())) {
 
-                Assert.assertEquals(field.getValue(),
-                        "*"+testProductOrder.getSamples().get(testProductOrder.getSamples().size()-2).getRiskItems().iterator().next().getRiskCriterion().getCalculationString()+"*\n"
-                        +testProductOrder.getSamples().get(testProductOrder.getSamples().size()-2).getName()+"\n"
-                        +"*"+testProductOrder.getSamples().get(testProductOrder.getSamples().size()-1).getRiskItems().iterator().next().getRiskCriterion().getCalculationString()+"*\n"
-                        +testProductOrder.getSamples().get(testProductOrder.getSamples().size()-1).getName()+"\n");
+                // Multiple risk items returned in field value are in a non-deterministic order
+                String pdoSampleRisk = "*"+testProductOrder.getSamples().get(testProductOrder.getSamples().size()-1).getRiskItems().iterator().next().getRiskCriterion().getCalculationString()+"*\n"
+                        +testProductOrder.getSamples().get(testProductOrder.getSamples().size()-1).getName()+"\n";
+                int length = pdoSampleRisk.length();
+                Assert.assertTrue(field.getValue().toString().contains(pdoSampleRisk));
+
+                pdoSampleRisk = "*"+testProductOrder.getSamples().get(testProductOrder.getSamples().size()-2).getRiskItems().iterator().next().getRiskCriterion().getCalculationString()+"*\n"
+                        +testProductOrder.getSamples().get(testProductOrder.getSamples().size()-2).getName()+"\n";
+                length += pdoSampleRisk.length();
+                Assert.assertTrue(field.getValue().toString().contains(pdoSampleRisk));
+
+                Assert.assertEquals( length, field.getValue().toString().length());
             }
 
             if (fieldDefinitionName.equals(LabBatch.TicketFields.REWORK_SAMPLES.getName())) {
@@ -245,14 +252,12 @@ public class LCSetJiraFieldFactoryTest {
         reworks.add(tube2);
 
         LabBatch batch = new LabBatch("test", newTubes, LabBatch.LabBatchType.WORKFLOW);
-        batch.addBucketEntry(new BucketEntry(tube1, testProductOrder, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, 1));
+        batch.addBucketEntry(new BucketEntry(tube1, testProductOrder, bucket, BucketEntry.BucketEntryType.PDO_ENTRY));
 
         batch.addReworks(reworks);
-        batch.addBucketEntry(new BucketEntry(tube2, testProductOrder, bucket, BucketEntry.BucketEntryType.REWORK_ENTRY,
-                1));
+        batch.addBucketEntry(new BucketEntry(tube2, testProductOrder, bucket, BucketEntry.BucketEntryType.REWORK_ENTRY));
 
-        String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch);
-
+        String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch, true);
         assertThat(actualText.trim(), equalTo(expectedText.trim()));
     }
 
@@ -267,17 +272,14 @@ public class LCSetJiraFieldFactoryTest {
 
         LabBatch batch = new LabBatch("test", newTubes, LabBatch.LabBatchType.WORKFLOW);
         batch.addBucketEntry(new BucketEntry(tube, testProductOrder, new Bucket("Test"),
-                BucketEntry.BucketEntryType.PDO_ENTRY, 1));
+                BucketEntry.BucketEntryType.PDO_ENTRY));
 
-        String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch);
-
+        String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch, true);
         assertThat(actualText.trim(), equalTo(sampleKey.trim()));
     }
 
     @Test
     public void test_sample_field_text_with_reworks_and_multiple_samples_per_tube() {
-        String expectedText = "SM-1\nSM-3\nSM-2\nSM-4";
-
         Set<LabVessel> newTubes = new HashSet<>();
         Set<LabVessel> reworks = new HashSet<>();
         LabVessel tube1 = new BarcodedTube("000012");
@@ -289,6 +291,7 @@ public class LCSetJiraFieldFactoryTest {
                 new LabEvent(LabEventType.EXTRACT_CELL_SUSP_TO_MATRIX, new Date(),"test", 1L, 1L,"Test"));
         new VesselToVesselTransfer(sourceTube12, tube1,
                 new LabEvent(LabEventType.EXTRACT_CELL_SUSP_TO_MATRIX, new Date(),"test", 2L, 1L,"Test"));
+        tube1.addSample(new MercurySample("SM-5", MercurySample.MetadataSource.BSP));
 
         LabVessel tube2 = new BarcodedTube("000033");
         LabVessel sourceTube21 = new BarcodedTube("0000331");
@@ -304,16 +307,18 @@ public class LCSetJiraFieldFactoryTest {
         reworks.add(tube2);
 
         LabBatch batch = new LabBatch("test", newTubes, LabBatch.LabBatchType.WORKFLOW);
-        batch.addBucketEntry(new BucketEntry(tube1, testProductOrder, bucket, BucketEntry.BucketEntryType.PDO_ENTRY,
-                1));
+        batch.addBucketEntry(new BucketEntry(tube1, testProductOrder, bucket, BucketEntry.BucketEntryType.PDO_ENTRY));
 
         batch.addReworks(reworks);
-        batch.addBucketEntry(new BucketEntry(tube2, testProductOrder, bucket, BucketEntry.BucketEntryType.REWORK_ENTRY,
-                1));
+        batch.addBucketEntry(new BucketEntry(tube2, testProductOrder, bucket, BucketEntry.BucketEntryType.REWORK_ENTRY));
 
-        String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch);
+        // Test nearest sample names.
+        String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch, true);
+        assertThat(actualText, equalTo("SM-5\nSM-2\nSM-4\n"));
 
-        assertThat(actualText.trim(), equalTo(expectedText.trim()));
+        // Test earliest sample names.
+        assertThat(AbstractBatchJiraFieldFactory.buildSamplesListString(batch, false),
+                equalTo("SM-1\nSM-3\nSM-2\nSM-4\n"));
     }
 
     @Test
@@ -336,11 +341,9 @@ public class LCSetJiraFieldFactoryTest {
 
         LabBatch batch = new LabBatch("test", newTubes, LabBatch.LabBatchType.WORKFLOW);
         batch.addBucketEntry(new BucketEntry(tube, testProductOrder, new Bucket("test"),
-                BucketEntry.BucketEntryType.PDO_ENTRY, 1));
+                BucketEntry.BucketEntryType.PDO_ENTRY));
 
-        String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch);
-
+        String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch, true);
         assertThat(actualText.trim(), equalTo(expectedText.trim()));
     }
-
 }

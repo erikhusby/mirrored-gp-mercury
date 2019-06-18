@@ -15,9 +15,11 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public enum MaterialType implements Displayable {
     // These MaterialTypes already exist in the database.
@@ -37,6 +39,7 @@ public enum MaterialType implements Displayable {
     BODILY_FLUID_PLEURAL_EFFUSION("Bodily Fluid:Pleural Effusion"),
     BODILY_FLUID_SALIVA("Bodily Fluid:Saliva"),
     BODILY_FLUID_URINE("Bodily Fluid:Urine"),
+    BODILY_FLUID_CEREBROSPINAL_FLUID("Bodily Fluid:Cerebrospinal Fluid"),
     CELLS_ALLPROTECT_REAGENT_PRESERVED("Cells:Allprotect Reagent Preserved"),
     CELLS_CELL_LINE_VIABLE("Cells:Cell Line, Viable"),
     CELLS_CELL_PELLET_FROZEN_LESIONAL_CELLS("Cells:Cell Pellet Frozen - Lesional Cells"),
@@ -133,6 +136,7 @@ public enum MaterialType implements Displayable {
     WHOLE_ORGANISM_RNALATER_PRESERVED("Whole Organism:RNAlater Preserved"),
     WHOLE_ORGANISM_SINGLE_ETOH("Whole Organism:Single, ETOH"),
     WHOLE_ORGANISM_SINGLE_FROZEN("Whole Organism:Single, Frozen"),
+    NUCLEI_SUSPENSION("Nuclei Suspension"),
     NONE("");
 
     private final String displayName;
@@ -151,7 +155,7 @@ public enum MaterialType implements Displayable {
                 return materialType;
             }
         }
-        throw new RuntimeException("Unknown MaterialType");
+        throw new RuntimeException(String.format("Unknown MaterialType %s", displayName));
     }
 
     public static boolean isValid(String displayName) {
@@ -168,6 +172,10 @@ public enum MaterialType implements Displayable {
         return isValid;
     }
 
+    public static Stream<MaterialType> stream() {
+        return Arrays.stream(MaterialType.values());
+    }
+
     @Override
     public String getDisplayName() {
         return displayName;
@@ -179,5 +187,9 @@ public enum MaterialType implements Displayable {
             displayNames.add(materialType.getDisplayName());
         }
         return displayNames;
+    }
+
+    public boolean containsIgnoringCase(String text) {
+        return this.getDisplayName().toUpperCase().contains(text.toUpperCase());
     }
 }

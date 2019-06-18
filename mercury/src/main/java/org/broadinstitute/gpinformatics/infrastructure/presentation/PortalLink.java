@@ -2,11 +2,13 @@ package org.broadinstitute.gpinformatics.infrastructure.presentation;
 
 import org.broadinstitute.gpinformatics.infrastructure.portal.PortalConfig;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 /**
  * This class is used to generate Portal links for the UI.
  */
+@Dependent
 public class PortalLink {
     private static final String LOAD_REQ =
             "/CRSP/public/Requisition.action?get=&key=";

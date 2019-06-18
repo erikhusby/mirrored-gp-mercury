@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.testng.Assert;
 
 import java.util.ArrayList;
@@ -71,13 +72,15 @@ public class ArrayPlatingEntityBuilder {
     /**
      * Infinium ArrayPlatingDilution is followed up by bucketing of all plate wells in InfiniumBucket events
      * @param pdo The PDO to assign to the bucket
+     * @param arrayBatch The batch to assign to the bucket
      */
-    public void bucketPlateWells( ProductOrder pdo) {
+    public void bucketPlateWells( ProductOrder pdo, LabBatch arrayBatch ) {
         if( arrayPlatingPlate == null ) {
             throw new IllegalStateException("Builder not invoked");
         }
 
         int count = 0;
+
         for(VesselPosition position : arrayPlatingPlate.getVesselGeometry().getVesselPositions() ) {
             if( count < mapBarcodeToTube.size() ) {
                 PlateWell well = new PlateWell(arrayPlatingPlate, position);
@@ -85,17 +88,19 @@ public class ArrayPlatingEntityBuilder {
                 arrayPlatingPlate.getContainerRole().getMapPositionToVessel().put(position, well);
                 well.addToContainer(arrayPlatingPlate.getContainerRole());
                 BucketEntry infiniumBucket = new BucketEntry(well, pdo,
-                        new Bucket("TestBucket"), BucketEntry.BucketEntryType.PDO_ENTRY, 1);
+                        new Bucket("TestBucket"), BucketEntry.BucketEntryType.PDO_ENTRY);
+                infiniumBucket.setLabBatch(arrayBatch);
                 well.addBucketEntry(infiniumBucket);
 
                 LabEvent bucketEvent = new LabEvent(LabEventType.INFINIUM_BUCKET, new Date(),
                         "BSP", 1L, 1L, "BSP");
                 bucketEvent.setInPlaceLabVessel(well);
-                well.getInPlaceLabEvents().add(bucketEvent);
+                well.addInPlaceEvent(bucketEvent);
                 count++;
             } else {
                 break;
             }
         }
+
     }
 }

@@ -12,6 +12,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -30,8 +31,11 @@ public class SampleReceiptValidation {
     @SequenceGenerator(name = "SEQ_SAMP_REC_VALIDATION", schema = "athena", sequenceName = "SEQ_SAMP_REC_VALIDATION")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_SAMP_REC_VALIDATION")
     private Long validationId;
+
     @ManyToOne(cascade = {CascadeType.PERSIST})
+    @JoinColumn(name = "PRODUCT_ORDER_SAMPLE")
     private ProductOrderSample productOrderSample;
+
     @Column(name = "validation_type", length = 255, nullable = false)
     @Enumerated(EnumType.STRING)
     private SampleValidationType validationType;

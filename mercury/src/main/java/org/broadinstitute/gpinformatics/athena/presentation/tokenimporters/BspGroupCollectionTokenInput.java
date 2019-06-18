@@ -6,15 +6,16 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGroupCollectionLis
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.json.JSONException;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.text.MessageFormat;
 
 /**
  * Token Input support for BSP Groups and Collections.
  */
+@Dependent
 public class BspGroupCollectionTokenInput extends TokenInput<SampleCollection> {
 
-    @Inject
     private BSPGroupCollectionList bspCollectionList;
 
     public BspGroupCollectionTokenInput() {
@@ -44,5 +45,10 @@ public class BspGroupCollectionTokenInput extends TokenInput<SampleCollection> {
     @Override
     protected SampleCollection getById(String key) {
         return StringUtils.isNumeric(key) ? bspCollectionList.getById(Long.valueOf(key)) : null;
+    }
+
+    @Inject
+    public void setBspCollectionList(BSPGroupCollectionList bspCollectionList) {
+        this.bspCollectionList = bspCollectionList;
     }
 }

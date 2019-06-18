@@ -11,11 +11,11 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.math.BigDecimal;
-import java.util.Comparator;
 import java.util.Date;
 
 /**
@@ -36,13 +36,15 @@ public class FlowcellDesignation {
 
     @Nonnull
     @ManyToOne
-    private LabVessel loadingTube;
+    @JoinColumn(name = "STARTING_TUBE" )
+    private LabVessel startingTube;
 
     /**
      * The designation's lcset chosen by the user, i.e. there was no single
      * LCSET returned after walking the chain of custody.
      */
     @ManyToOne
+    @JoinColumn(name = "CHOSEN_LCSET" )
     private LabBatch chosenLcset;
 
     @Enumerated(EnumType.STRING)
@@ -136,11 +138,11 @@ public class FlowcellDesignation {
     public FlowcellDesignation() {
     }
 
-    public FlowcellDesignation(@Nonnull LabVessel loadingTube, LabBatch chosenLcset,
+    public FlowcellDesignation(@Nonnull LabVessel startingTube, LabBatch chosenLcset,
             IndexType indexType, boolean poolTest, IlluminaFlowcell.FlowcellType sequencerModel,
             Integer numberLanes, Integer readLength, BigDecimal loadingConc, boolean pairedEndRead,
             Status status, Priority priority) {
-        this.loadingTube = loadingTube;
+        this.startingTube = startingTube;
         this.chosenLcset = chosenLcset;
         this.createdOn = new Date();
         this.indexType = indexType;
@@ -155,12 +157,12 @@ public class FlowcellDesignation {
     }
 
     @Nonnull
-    public LabVessel getLoadingTube() {
-        return loadingTube;
+    public LabVessel getStartingTube() {
+        return startingTube;
     }
 
-    public void setLoadingTube(@Nonnull LabVessel loadingTube) {
-        this.loadingTube = loadingTube;
+    public void setStartingTube(@Nonnull LabVessel startingTube) {
+        this.startingTube = startingTube;
     }
 
     @Nonnull
@@ -255,12 +257,4 @@ public class FlowcellDesignation {
     public void setPairedEndRead(boolean pairedEndRead) {
         this.pairedEndRead = pairedEndRead;
     }
-
-    public static final Comparator<? super FlowcellDesignation> BY_DATE_DESC = new Comparator<FlowcellDesignation>() {
-        @Override
-        public int compare(FlowcellDesignation o1, FlowcellDesignation o2) {
-            return o2.getCreatedOn().compareTo(o1.getCreatedOn());
-        }
-    };
-
 }

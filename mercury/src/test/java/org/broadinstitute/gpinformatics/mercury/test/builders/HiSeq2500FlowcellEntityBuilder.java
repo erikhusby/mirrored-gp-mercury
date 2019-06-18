@@ -95,10 +95,12 @@ public class HiSeq2500FlowcellEntityBuilder {
             //DenatureToDilution
             LabEventTest.validateWorkflow("DenatureToDilutionTransfer", denatureRack);
 
-            LabEvent dilutionTransferEntity =
-                    labEventFactory.buildFromBettaLims(dilutionJaxb, new HashMap<String, LabVessel>() {{
-                        put(denatureRack.getContainerRole().getVesselAtPosition(VesselPosition.A01).getLabel(),
-                                denatureRack.getContainerRole().getVesselAtPosition(VesselPosition.A01));
+            LabEvent dilutionTransferEntity = labEventFactory.buildFromBettaLims(dilutionJaxb,
+                    new HashMap<String, LabVessel>() {{
+                        for (Entry<VesselPosition, BarcodedTube> mapEntry :
+                                denatureRack.getContainerRole().getMapPositionToVessel().entrySet()) {
+                            put(mapEntry.getValue().getLabel(), mapEntry.getValue());
+                        }
                         put(denatureRack.getLabel(), denatureRack);
                     }});
             labEventFactory.getEventHandlerSelector().applyEventSpecificHandling(dilutionTransferEntity, dilutionJaxb);
@@ -205,26 +207,23 @@ public class HiSeq2500FlowcellEntityBuilder {
         }
 
         int reagentsSize = 0;
-        switch (Workflow.findByName(workflowName)) {
-        case NONE:
-            reagentsSize = 0;
-            break;
-        case WHOLE_GENOME:
-        case PCR_FREE:
-        case PCR_PLUS:
-        case PCR_FREE_HYPER_PREP:
-        case PCR_PLUS_HYPER_PREP:
-        case CELL_FREE_HYPER_PREP:
-        case TRU_SEQ_STRAND_SPECIFIC_CRSP:
+        switch (workflowName) {
+        case Workflow.WHOLE_GENOME:
+        case Workflow.PCR_FREE:
+        case Workflow.PCR_PLUS:
+        case Workflow.PCR_FREE_HYPER_PREP:
+        case Workflow.PCR_PLUS_HYPER_PREP:
+        case Workflow.CELL_FREE_HYPER_PREP:
+        case Workflow.TRU_SEQ_STRAND_SPECIFIC_CRSP:
             reagentsSize = 1;
             break;
-        case AGILENT_EXOME_EXPRESS:
-        case HYBRID_SELECTION:
+        case Workflow.AGILENT_EXOME_EXPRESS:
+        case Workflow.HYBRID_SELECTION:
             reagentsSize = 2;
             break;
-        case ICE_EXOME_EXPRESS:
-        case ICE_EXOME_EXPRESS_HYPER_PREP:
-        case ICE:
+        case Workflow.ICE_EXOME_EXPRESS:
+        case Workflow.ICE_EXOME_EXPRESS_HYPER_PREP:
+        case Workflow.ICE:
             reagentsSize = 3;
         }
 

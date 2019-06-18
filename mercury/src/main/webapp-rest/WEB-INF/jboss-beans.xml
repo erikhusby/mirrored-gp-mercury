@@ -1,9 +1,0 @@
-
-<deployment xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-            xsi:schemaLocation="urn:jboss:bean-deployer"
-            xmlns="urn:jboss:bean-deployer:2.0">
-
-    <bean name="org.jboss.netty.internal.LoggerConfigurator"
-          class="org.jboss.netty.container.microcontainer.NettyLoggerConfigurator" />
-
-    </deployment>

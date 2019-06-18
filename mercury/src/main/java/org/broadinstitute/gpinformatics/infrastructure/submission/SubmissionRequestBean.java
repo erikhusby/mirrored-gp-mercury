@@ -1,19 +1,25 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.util.List;
 
-@XmlRootElement()
+// setting the access order to alphabetical helps the tests pass more reliably.
+@JsonPropertyOrder(alphabetic = true)
+@JsonSerialize(include=JsonSerialize.Inclusion.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class SubmissionRequestBean implements Serializable {
-
     private static final long serialVersionUID = -2195569074348464285L;
+
+    @JsonProperty(value = "onPremOrCloudSubmissions")
     private List<SubmissionBean> submissions;
 
     public SubmissionRequestBean() {
@@ -21,14 +27,11 @@ public class SubmissionRequestBean implements Serializable {
 
     public SubmissionRequestBean(List<SubmissionBean> submissionBeans) {
         setSubmissions(submissionBeans);
-
     }
 
     public List<SubmissionBean> getSubmissions() {
         return submissions;
     }
-
-    @XmlElement
     public void setSubmissions(List<SubmissionBean> submissions) {
         this.submissions = submissions;
     }

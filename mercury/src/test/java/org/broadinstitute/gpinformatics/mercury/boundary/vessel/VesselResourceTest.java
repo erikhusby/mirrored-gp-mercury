@@ -1,7 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
-import com.sun.jersey.core.util.MultivaluedMapImpl;
-import org.apache.http.cookie.SM;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.generated.RegisterTubeBean;
@@ -13,7 +11,7 @@ import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
-import javax.validation.constraints.Null;
+import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.util.Collection;
@@ -42,8 +40,8 @@ public class VesselResourceTest extends Arquillian {
     /**
      * Convenience wrapper around method invocation.
      */
-    private Response registerTubes(@Nonnull Collection<String> matrixBarcodes, @Null String tubeType) {
-        MultivaluedMap<String, String> multivaluedMap = new MultivaluedMapImpl();
+    private Response registerTubes(@Nonnull Collection<String> matrixBarcodes, String tubeType) {
+        MultivaluedMap<String, String> multivaluedMap = new MultivaluedHashMap<>();
         for (String matrixBarcode : matrixBarcodes) {
             multivaluedMap.add("barcodes", matrixBarcode);
         }

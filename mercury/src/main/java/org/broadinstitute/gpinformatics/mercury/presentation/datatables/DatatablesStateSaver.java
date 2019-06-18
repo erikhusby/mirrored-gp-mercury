@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.presentation.datatables;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -21,8 +22,8 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.NameValueDefini
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.codehaus.jackson.map.ObjectMapper;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Collection;
@@ -33,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@Dependent
 public class DatatablesStateSaver {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private PreferenceEjb preferenceEjb;

@@ -34,7 +34,7 @@ import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 /**
@@ -57,7 +57,11 @@ public class WorkflowTransitionTest extends Arquillian {
 
     private String crspJiraTicket = "LCSET-10359";
 
+    private String crspJiraTicket2 = "LCSET-11762";
+
     private String exexJiraTicket = "LCSET-10343";
+
+    private String germlineTicket = "LCSET-15107";
 
     @Inject
     private JiraService jiraService;
@@ -72,7 +76,11 @@ public class WorkflowTransitionTest extends Arquillian {
 
     private JiraIssue crspIssue;
 
+    private JiraIssue crspIssue2;
+
     private JiraIssue exexIssue;
+
+    private JiraIssue germlineIssue;
 
     private BSPRestSender mockBspHandler;
 
@@ -89,10 +97,12 @@ public class WorkflowTransitionTest extends Arquillian {
             genomeIssue = resetJiraTicketState(genomeJiraTicket);
             crspIssue = resetJiraTicketState(crspJiraTicket);
             exexIssue = resetJiraTicketState(exexJiraTicket);
+            crspIssue2 = resetJiraTicketState(crspJiraTicket2);
+            germlineIssue = resetJiraTicketState(germlineTicket);
         }
         if (labEventFactory != null && mockBspHandler == null){
             mockBspHandler = mock(BSPRestSender.class);
-            doNothing().when(mockBspHandler).postToBsp(any(BettaLIMSMessage.class), any(String.class));
+            doReturn(null).when(mockBspHandler).postToBsp(any(BettaLIMSMessage.class), any(String.class));
             labEventFactory.setBspRestSender(mockBspHandler);
             bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
         }
@@ -322,6 +332,43 @@ public class WorkflowTransitionTest extends Arquillian {
         Assert.assertEquals(exexIssue.getStatus(), "In Sequencing");
     }
 
+
+    @Test
+    public void testGermlineTransitions() throws IOException {
+        Assert.assertEquals(germlineIssue.getStatus(), "On Hold");
+        germlineIssue.postTransition("In LC", null);
+
+        String picoPlate = "GermPico" + System.currentTimeMillis();
+
+        String srcPlate = "000006763218";
+        PlateTransferEventType plateTransferEventType = bettaLimsMessageTestFactory.buildPlateToPlate("384WellPondPico",
+                srcPlate, picoPlate);
+        BettaLIMSMessage message = new BettaLIMSMessage();
+        message.getPlateTransferEvent().add(plateTransferEventType);
+
+        List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
+        LabEvent labEvent = labEvents.get(0);
+        jiraCommentUtil.postUpdate(labEvent);
+        germlineIssue = jiraService.getIssue(germlineTicket);
+        Assert.assertEquals(germlineIssue.getStatus(), "In Normalization");
+
+        List<String> destBarcodes = Collections.singletonList("GermNorm" + System.currentTimeMillis());
+        String destRackBarcode = "CO-SomeDestRack";
+        PlateTransferEventType germlineExomeNormTransfer =
+                bettaLimsMessageTestFactory.buildPlateToRack("GermlineExomeNormTransfer", srcPlate,
+                        destRackBarcode, destBarcodes);
+        germlineExomeNormTransfer.setDisambiguator(2L);
+
+        message = new BettaLIMSMessage();
+        message.getPlateTransferEvent().add(germlineExomeNormTransfer);
+
+        labEvents = labEventFactory.buildFromBettaLims(message);
+        labEvent = labEvents.get(0);
+        jiraCommentUtil.postUpdate(labEvent);
+        germlineIssue = jiraService.getIssue(germlineTicket);
+        Assert.assertEquals(germlineIssue.getStatus(), "Ready for Selection");
+    }
+
     @Test
     public void testPcrFreePondRegistration() throws IOException {
         Assert.assertEquals(genomeIssue.getStatus(), "On Hold");
@@ -342,6 +389,82 @@ public class WorkflowTransitionTest extends Arquillian {
         jiraCommentUtil.postUpdate(labEvent);
         genomeIssue = jiraService.getIssue(genomeJiraTicket);
         Assert.assertEquals(genomeIssue.getStatus(), "Norm and Pool");
+    }
+
+    @Test
+    public void testShearingAliquotTransitionsToInPlating() throws IOException {
+        Assert.assertEquals(genomeIssue.getStatus(), "On Hold");
+        crspIssue.postTransition("Return to Open", null);
+
+        String sourceRackBarcode = "ShearingAliquotCrspTestSourceRack";
+        List<String> sourceTube = Collections.singletonList("1125699450");
+        String destRackBarcode = "ShearingAliquotCrspTest" + timestampFormat.format(new Date());
+        List<String> shearingAliquotTube = Arrays.asList("ShearingAliquotTubeCrspTest" +  timestampFormat.format(new Date()));
+
+        PlateTransferEventType plateTransferEventType = bettaLimsMessageTestFactory
+                .buildRackToRack(LabEventType.SHEARING_ALIQUOT.getName(), sourceRackBarcode, sourceTube,
+                        destRackBarcode, shearingAliquotTube);
+
+        BettaLIMSMessage message = new BettaLIMSMessage();
+        message.getPlateTransferEvent().add(plateTransferEventType);
+        List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
+        LabEvent labEvent = labEvents.get(0);
+        jiraCommentUtil.postUpdate(labEvent);
+        crspIssue = jiraService.getIssue(crspJiraTicket);
+        Assert.assertEquals(crspIssue.getStatus(), "In Plating");
+    }
+
+    /**
+     * Test condition where lab pools multiple LCSETs and one LCSET is a rework that they haven't
+     * Re-opened and transitioned properly. Should attempt that LCSET, fail with a log, but still
+     * transition the other LCSET.
+     * LCSET-11762 - Will be put to closed and it'll attempt to transition before LCSET-10359, but ensure
+     * that LCSET-10359 goes through.
+     * @throws IOException
+     */
+    @Test
+    public void testMultipleWhereFirstInWrongState() throws IOException {
+        Assert.assertEquals(crspIssue.getStatus(), "On Hold");
+        Assert.assertEquals(crspIssue2.getStatus(), "On Hold");
+
+        crspIssue.postTransition("In Library Construction", null);
+        crspIssue = jiraService.getIssue(crspJiraTicket);
+        Assert.assertEquals(crspIssue.getStatus(), "In LC");
+
+        crspIssue2.postTransition("Closed", null);
+        crspIssue2 = jiraService.getIssue(crspJiraTicket2);
+        Assert.assertEquals(crspIssue2.getStatus(), "Closed");
+
+        String sourceRackBarcode = "IcePoolingSource" + timestampFormat.format(new Date());
+        String targetRackBarcode = "IcePoolingDest" + timestampFormat.format(new Date());
+        String targetTubeBarcode = "IcePoolingTransfer" + timestampFormat.format(new Date());
+        String target2TubeBarcode = "IcePoolingTransfer2" + timestampFormat.format(new Date());
+
+        List<List<String>> sourceTubeBarcodes = new ArrayList<>();
+        sourceTubeBarcodes.add(Arrays.asList("0214238488", "0219064840"));
+
+        List<List<String>> targetTubeBarcodes = new ArrayList<>();
+        targetTubeBarcodes.add(Arrays.asList(targetTubeBarcode, target2TubeBarcode));
+
+        BettaLimsMessageTestFactory.CherryPick cherryPick = new BettaLimsMessageTestFactory.CherryPick(sourceRackBarcode,
+                "A01", targetRackBarcode, "A01");
+        BettaLimsMessageTestFactory.CherryPick cherryPick2 = new BettaLimsMessageTestFactory.CherryPick(sourceRackBarcode,
+                "A02", targetRackBarcode, "A02");
+        PlateCherryPickEvent plateCherryPickEvent =
+                bettaLimsMessageTestFactory.buildCherryPick(LabEventType.ICE_POOLING_TRANSFER.getName(),
+                        Arrays.asList(sourceRackBarcode), sourceTubeBarcodes, Arrays.asList(targetRackBarcode),
+                        targetTubeBarcodes, Arrays.asList(cherryPick, cherryPick2));
+
+        BettaLIMSMessage message = new BettaLIMSMessage();
+        message.getPlateCherryPickEvent().add(plateCherryPickEvent);
+        List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
+        LabEvent labEvent = labEvents.get(0);
+        jiraCommentUtil.postUpdate(labEvent);
+        crspIssue = jiraService.getIssue(crspJiraTicket);
+        Assert.assertEquals(crspIssue.getStatus(), "In Plex Pooling");
+
+        crspIssue2 = jiraService.getIssue(crspJiraTicket2);
+        Assert.assertEquals(crspIssue2.getStatus(), "Closed");
     }
 
     private JiraIssue resetJiraTicketState(String ticketKey) throws IOException {

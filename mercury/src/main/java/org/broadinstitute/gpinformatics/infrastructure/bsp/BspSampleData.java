@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 
 import javax.annotation.Nonnull;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -69,6 +70,7 @@ public class BspSampleData implements SampleData {
     public static final String JSON_DV200_KEY = "dv200";
     public static final String SAMPLE_TYPE = "sampleType";
     public static final String MATERIAL_TYPE = "materialType";
+    public static final String SAMPLE_KIT_ID = "sampleKitId";
 
     private final Map<BSPSampleSearchColumn, String> columnToValue;
 
@@ -376,6 +378,8 @@ public class BspSampleData implements SampleData {
         return getValue(BSPSampleSearchColumn.STOCK_TYPE);
     }
 
+    public String getReceptacleType() { return getValue(BSPSampleSearchColumn.RECEPTACLE_TYPE); }
+
     /**
      * This method returns true when the sample is received using the following logic:
      * <ol>
@@ -413,6 +417,16 @@ public class BspSampleData implements SampleData {
     @Override
     public String getSampleId() {
         return getValue(BSPSampleSearchColumn.SAMPLE_ID);
+    }
+
+    @Override
+    public String getSampleKitId() {
+        return getValue(BSPSampleSearchColumn.SAMPLE_KIT);
+    }
+
+    @Override
+    public String getSampleStatus() {
+        return getValue(BSPSampleSearchColumn.SAMPLE_STATUS);
     }
 
     @Override
@@ -509,32 +523,43 @@ public class BspSampleData implements SampleData {
         MercurySample mercurySample = productOrderSample.getMercurySample();
         if (mercurySample != null) {
             MercurySampleData.QuantData quantData = new MercurySampleData.QuantData(mercurySample);
-            columnToValue.put(BSPSampleSearchColumn.VOLUME, String.valueOf(quantData.getVolume()));
-            columnToValue.put(BSPSampleSearchColumn.CONCENTRATION, String.valueOf(quantData.getConcentration()));
+            if (quantData.getVolume() != null) {
+                columnToValue.put(BSPSampleSearchColumn.VOLUME, String.valueOf(quantData.getVolume()));
+            }
+            if (quantData.getConcentration() != null) {
+                columnToValue.put(BSPSampleSearchColumn.CONCENTRATION, String.valueOf(quantData.getConcentration()));
+            }
             if (quantData.getPicoRunDate() != null) {
                 columnToValue.put(BSPSampleSearchColumn.PICO_RUN_DATE,
                         FastDateFormat.getInstance(BSP_DATE_FORMAT_STRING).format(quantData.getPicoRunDate()));
             }
-            columnToValue.put(BSPSampleSearchColumn.TOTAL_DNA, String.valueOf(quantData.getTotalDna()));
+            if (quantData.getTotalDna() != null) {
+                columnToValue.put(BSPSampleSearchColumn.TOTAL_DNA, String.valueOf(quantData.getTotalDna()));
+            }
         }
     }
 
     public void overrideWithQuants(Collection<LabMetric> labMetrics) {
         for (LabMetric labMetric : labMetrics) {
-            if (labMetric.getUnits() == LabMetric.LabUnit.NG_PER_UL ||
-                    labMetric.getUnits() == LabMetric.LabUnit.UG_PER_ML) {
+            if (labMetric.getName().getCategory() == LabMetric.MetricType.Category.CONCENTRATION) {
                 columnToValue.put(BSPSampleSearchColumn.CONCENTRATION, String.valueOf(labMetric.getValue()));
-            } else if (labMetric.getUnits() == LabMetric.LabUnit.ML) {
-                columnToValue.put(BSPSampleSearchColumn.VOLUME, String.valueOf(labMetric.getValue()));
-            } else if (labMetric.getUnits() == LabMetric.LabUnit.UG ||
-                    labMetric.getUnits() == LabMetric.LabUnit.MG) {
-                columnToValue.put(BSPSampleSearchColumn.TOTAL_DNA, String.valueOf(labMetric.getTotalNg()));
-            }
-            if (labMetric.getLabMetricRun() != null) {
-                columnToValue.put(BSPSampleSearchColumn.PICO_RUN_DATE,
-                        FastDateFormat.getInstance(BSP_DATE_FORMAT_STRING)
-                                .format(labMetric.getLabMetricRun().getRunDate()));
+                if (labMetric.getTotalNg() != null) {
+                    columnToValue.put(BSPSampleSearchColumn.TOTAL_DNA, String.valueOf(convertNgToUg(labMetric.getTotalNg())));
+                }
+                columnToValue.put(BSPSampleSearchColumn.VOLUME, String.valueOf(labMetric.getLabVessel().getVolume()));
+                if (labMetric.getLabMetricRun() != null) {
+                    columnToValue.put(BSPSampleSearchColumn.PICO_RUN_DATE,
+                            FastDateFormat.getInstance(BSP_DATE_FORMAT_STRING)
+                                    .format(labMetric.getLabMetricRun().getRunDate()));
+                }
             }
         }
+    }
+
+    // todo jmt may need framework for unit conversion
+    private static final BigDecimal ONE_THOUSAND = new BigDecimal("1000");
+
+    private static BigDecimal convertNgToUg(BigDecimal ng) {
+        return ng.divide(ONE_THOUSAND);
     }
 }

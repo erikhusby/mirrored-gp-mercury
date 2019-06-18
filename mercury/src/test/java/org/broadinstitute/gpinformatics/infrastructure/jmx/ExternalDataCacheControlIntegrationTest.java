@@ -2,9 +2,12 @@ package org.broadinstitute.gpinformatics.infrastructure.jmx;
 
 
 import org.broadinstitute.gpinformatics.infrastructure.common.TestLogHandler;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mocks.ExplodingCache;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -14,8 +17,10 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+
 @Test(groups = TestGroups.STANDARD)
-public class ExternalDataCacheControlIntegrationTest extends ContainerTest {
+public class ExternalDataCacheControlIntegrationTest extends Arquillian {
 
     private static final String EXPECTED_LOG_MESSAGE_REGEX = ".*" + ExplodingCache.class.getName() + ".*";
 
@@ -25,11 +30,16 @@ public class ExternalDataCacheControlIntegrationTest extends ContainerTest {
     private TestLogHandler testLogHandler;
     private Logger cacheControlLogger;
 
+    @Deployment
+    public static WebArchive buildMercuryWar() {
+        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+    }
+
     @BeforeTest
     public void setUpTestLogger() {
         cacheControlLogger = Logger.getLogger(ExternalDataCacheControl.class.getName());
         cacheControlLogger.setLevel(Level.ALL);
-        testLogHandler = new TestLogHandler();
+        testLogHandler = TestLogHandler.newInstance();
         cacheControlLogger.addHandler(testLogHandler);
         testLogHandler.setLevel(Level.ALL);
     }

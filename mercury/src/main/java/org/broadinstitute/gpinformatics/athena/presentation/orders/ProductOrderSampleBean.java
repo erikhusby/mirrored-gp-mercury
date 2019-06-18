@@ -11,6 +11,8 @@
 
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -20,10 +22,11 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.presentation.SampleLink;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver;
-import org.codehaus.jackson.annotate.JsonProperty;
 
 import java.text.Format;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 
 public class ProductOrderSampleBean {
@@ -32,7 +35,7 @@ public class ProductOrderSampleBean {
     public static final String RECORDS_TOTAL = "recordsTotal";
     public static final String DATA_FIELD = "data";
     public static final String SAMPLE_DATA_ROW_COUNT = "rowsWithSampleData";
-    public static final String SAMPLES_NOT_RECEIVED = "rowsWithSampleData";
+    public static final String SAMPLES_NOT_RECEIVED = "numberSamplesNotReceived";
     public static final String UNIQUE_ROW_IDENTIFIER = "rowId";
     public static final String SAMPLE_ID = "ID";
     public static final String PRODUCT_ORDER_SAMPLE_ID = "PRODUCT_ORDER_SAMPLE_ID";
@@ -49,8 +52,10 @@ public class ProductOrderSampleBean {
     public static final String VOLUME = "Volume";
     public static final String YIELD_AMOUNT = "Yield Amount";
     public static final String RACKSCAN_MISMATCH = "Rackscan Mismatch";
+    public static final String RACKSCAN_MISMATCH_DETAILS = "Rackscan Mismatch Details";
     public static final String CONCENTRATION = "Concentration";
     public static final String BILLED = "Billed";
+    public static final String BILLED_DETAILS = "Billed Details";
     public static final String RECEIVED_DATE = "Received Date";
     public static final String SHIPPED_DATE = "Shipped Date";
     public static final String ON_RISK = "On Risk";
@@ -61,6 +66,10 @@ public class ProductOrderSampleBean {
     public static final String COMMENT = "Comment";
     public static final String ROW_ID_PREFIX = "sampleId-";
     public static final String POSITION = "#";
+
+    public static final List<String> SLOW_COLUMNS = Arrays
+        .asList(ProductOrderSampleBean.MATERIAL_TYPE, ProductOrderSampleBean.RECEIVED_DATE,
+            ProductOrderSampleBean.SHIPPED_DATE);
 
     @JsonProperty(COLLABORATOR_SAMPLE_ID)
     private String collaboratorSampleId = "";
@@ -106,8 +115,12 @@ public class ProductOrderSampleBean {
     private Double concentration;
     @JsonProperty(RACKSCAN_MISMATCH)
     private boolean hasSampleKitUploadRackscanMismatch;
+    @JsonProperty(RACKSCAN_MISMATCH_DETAILS)
+    private String sampleKitUploadRackscanMismatchDetails;
     @JsonProperty(BILLED)
     private boolean completelyBilled;
+    @JsonProperty(BILLED_DETAILS)
+    private String completelyBilledDetails;
     @JsonProperty(RECEIVED_DATE)
     private String receiptDate = "";
     @JsonProperty(SHIPPED_DATE)
@@ -118,13 +131,16 @@ public class ProductOrderSampleBean {
     private String onRiskDetails = "";
 
     private ProductOrderSample sample;
+    @JsonProperty("includeSampleData")
     private boolean includeSampleData;
+    private boolean initialLoad;
     private DatatablesStateSaver preferenceSaver;
     private SampleLink sampleLink;
 
     public ProductOrderSampleBean(ProductOrderSample sample, boolean includeSampleData,
-                                  DatatablesStateSaver preferenceSaver, SampleLink sampleLink) {
+                                  boolean initialLoad, DatatablesStateSaver preferenceSaver, SampleLink sampleLink) {
         this.sample = sample;
+        this.initialLoad = initialLoad;
         this.preferenceSaver = preferenceSaver;
         this.sampleLink = sampleLink;
         this.includeSampleData = includeSampleData;
@@ -149,13 +165,25 @@ public class ProductOrderSampleBean {
         if (preferenceSaver.showColumn(POSITION)) {
             position = sample.getSamplePosition() + 1;
         }
+        if (initialLoad) {
+            if (preferenceSaver.showColumn(BILLED_DETAILS)) {
+                completelyBilled = sample.isCompletelyBilled();
+                if(sample.isCompletelyBilled()) {
+                    completelyBilledDetails =
+                            buildBeenBilledDiv(sample, sample.getSampleKey() + "<BR>\n" +
+                                                       StringUtils.join(sample.completelyBilledDetails(), "<br>\n"));
+                }
+            }
+            if (preferenceSaver.showColumn(ON_RISK)) {
+                onRisk = sample.isOnRisk();
+                riskString = onRisk ? buildRiskDiv(sample) : "";
+            }
+        }
+
         if (!includeSampleData) {
             return;
         }
 
-        if (preferenceSaver.showColumn(BILLED)) {
-            completelyBilled = sample.isCompletelyBilled();
-        }
         if (preferenceSaver.showColumn(COMMENT)) {
             comment = sample.getSampleComment();
         }
@@ -166,10 +194,6 @@ public class ProductOrderSampleBean {
         }
         if (preferenceSaver.showColumn(STATUS)) {
             status = sample.getDeliveryStatus().getDisplayName();
-        }
-        if (preferenceSaver.showColumn(ON_RISK)) {
-            onRisk = sample.isOnRisk();
-            riskString = onRisk ? buildRiskDiv(sample) : "";
         }
 
         if (preferenceSaver.showColumn(SHIPPED_DATE)) {
@@ -223,8 +247,13 @@ public class ProductOrderSampleBean {
             if (preferenceSaver.showColumn(PICO_RUN_DATE)) {
                 picoDate = formatPicoRunDate(sampleData.getPicoRunDate(), "");
             }
-            if (preferenceSaver.showColumn(RACKSCAN_MISMATCH)) {
+            if (preferenceSaver.showColumn(RACKSCAN_MISMATCH_DETAILS)) {
                 hasSampleKitUploadRackscanMismatch = sampleData.getHasSampleKitUploadRackscanMismatch();
+                if(sampleData.getHasSampleKitUploadRackscanMismatch()) {
+                    sampleKitUploadRackscanMismatchDetails =
+                            buildCheckColumnDiv(sample, "Rack Scan Mismatched for",
+                                    sample.getBusinessKey() + " has a rack scan mismatch");
+                }
             }
             if (preferenceSaver.showColumn(RECEIVED_DATE)) {
                 receiptDate = sample.getFormattedReceiptDate();
@@ -232,11 +261,21 @@ public class ProductOrderSampleBean {
         }
     }
 
+    private String buildBeenBilledDiv(ProductOrderSample sample, String billedDetailData) {
+        String billedDiv = buildCheckColumnDiv(sample, "Billed details for", billedDetailData);
+        return billedDiv;
+    }
+
     private String buildRiskDiv(ProductOrderSample sample) {
-        String riskDiv = String.format(
-                "<div class=\"onRisk\" title=\"On Risk Details for %s\" rel=\"popover\" data-trigger=\"hover\" data-placement=\"left\" data-html=\"true\" data-content=\"<div style='text-align: left; white-space: normal; word-break: break-word;'>%s</div>\"><img src=\"/Mercury/images/check.png\">...</div>",
-                sample.getSampleKey(), sample.getRiskString());
+        String riskDiv = buildCheckColumnDiv(sample, "On Risk Details for", sample.getRiskString());
         return riskDiv;
+    }
+
+    private String buildCheckColumnDiv(ProductOrderSample sample, final String titlePrefix, String detailData) {
+        return String.format(
+                "<div class=\"onRisk\" title=\"" + titlePrefix
+                + " %s\" rel=\"popover\" data-trigger=\"hover\" data-placement=\"left\" data-html=\"true\" data-content=\"<div style='text-align: left; white-space: normal; word-break: break-word;'>%s</div>\"><img src=\"/Mercury/images/check.png\">...</div>",
+                    sample.getSampleKey(), detailData);
     }
 
     private static String formatPicoRunDate(Date picoRunDate, String defaultReturn) {

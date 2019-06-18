@@ -8,10 +8,8 @@ import javax.annotation.Nonnull;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
+import java.util.Collection;
 import java.util.List;
-
-import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_.product;
 
 /**
  * Represents a table row in Create FCT page.
@@ -21,6 +19,7 @@ public class CreateFctDto implements FctDto, Cloneable {
     private String lcset;
     private String additionalLcsets;
     private int numberLanes = 0;
+    private int numberLanesAllocated;
     private BigDecimal loadingConc;
     private String eventDate;
     private int readLength = 1;
@@ -30,8 +29,6 @@ public class CreateFctDto implements FctDto, Cloneable {
     private String lcsetUrl;
     private String regulatoryDesignation;
     private int numberSamples;
-    private boolean allocated = false;
-    private int allocationOrder = 0;
 
     public CreateFctDto() {
     }
@@ -52,6 +49,7 @@ public class CreateFctDto implements FctDto, Cloneable {
         this.lcsetUrl = lcsetUrl;
         this.regulatoryDesignation = regulatoryDesignation;
         this.numberSamples = numberSamples;
+        this.numberLanesAllocated = 0;
     }
 
 
@@ -60,6 +58,7 @@ public class CreateFctDto implements FctDto, Cloneable {
         this.lcset = lcset;
         this.loadingConc = loadingConc;
         this.numberLanes = numberLanes;
+        this.numberLanesAllocated = 0;
     }
 
     /**
@@ -67,8 +66,8 @@ public class CreateFctDto implements FctDto, Cloneable {
      * this type of dto is only used in the CreateFCT page that can only do complete flowcell fills.
      */
     @Override
-    public CreateFctDto split(int allocatedLanes) {
-        throw new RuntimeException("Expected to only do complete flowcell fills.");
+    public CreateFctDto split() {
+        throw new RuntimeException("CreateFCT only supports complete flowcell fills.");
     }
 
     @Override
@@ -185,29 +184,28 @@ public class CreateFctDto implements FctDto, Cloneable {
         this.numberSamples = numberSamples;
     }
 
-    /** Indicates if dto was allocated to a flowcell. */
-    @Override
-    public boolean isAllocated() {
-        return allocated;
+    public int getPriorityValue() {
+        return 0;
     }
 
     @Override
-    public void setAllocated(boolean allocated) {
-        this.allocated = allocated;
+    public int getAllocatedLanes() {
+        return numberLanesAllocated;
     }
 
-    /** Indicates the order in which multiple dtos are allocated to a flowcell. */
     @Override
-    public int getAllocationOrder() {
-        return allocationOrder;
+    public void setAllocatedLanes(int allocatedLanes) {
+        numberLanesAllocated = allocatedLanes;
     }
 
-    public static final Comparator BY_BARCODE = new Comparator() {
-        @Override
-        public int compare(Object o1, Object o2) {
-            return ((CreateFctDto)o1).getBarcode().compareTo(((CreateFctDto)o2).getBarcode());
-        }
-    };
+    /**
+     * Returns true if designation may be combined with others on a flowcell.
+     * @param groupDtos the dtos to test against.
+     */
+    @Override
+    public <DTO_TYPE extends FctDto> boolean isCompatible(Collection<DTO_TYPE> groupDtos) {
+        return true;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -218,31 +216,27 @@ public class CreateFctDto implements FctDto, Cloneable {
             return false;
         }
 
-        CreateFctDto createFctDto = (CreateFctDto) o;
+        CreateFctDto that = (CreateFctDto) o;
 
-        if (!barcode.equals(createFctDto.barcode)) {
+        if (!getBarcode().equals(that.getBarcode())) {
             return false;
         }
-        if (!lcset.equals(createFctDto.lcset)) {
+        if (getLcset() != null ? !getLcset().equals(that.getLcset()) : that.getLcset() != null) {
             return false;
         }
-        if (!eventDate.equals(createFctDto.eventDate)) {
+        if (getEventDate() != null ? !getEventDate().equals(that.getEventDate()) : that.getEventDate() != null) {
             return false;
         }
-        if (!tubeType.equals(createFctDto.tubeType)) {
-            return false;
-        }
-        return getProduct().equals(createFctDto.getProduct());
+        return getTubeType() != null ? getTubeType().equals(that.getTubeType()) : that.getTubeType() == null;
 
     }
 
     @Override
     public int hashCode() {
-        int result = barcode.hashCode();
-        result = 31 * result + lcset.hashCode();
-        result = 31 * result + eventDate.hashCode();
-        result = 31 * result + tubeType.hashCode();
-        result = 31 * result + product.hashCode();
+        int result = getBarcode().hashCode();
+        result = 31 * result + (getLcset() != null ? getLcset().hashCode() : 0);
+        result = 31 * result + (getEventDate() != null ? getEventDate().hashCode() : 0);
+        result = 31 * result + (getTubeType() != null ? getTubeType().hashCode() : 0);
         return result;
     }
 }

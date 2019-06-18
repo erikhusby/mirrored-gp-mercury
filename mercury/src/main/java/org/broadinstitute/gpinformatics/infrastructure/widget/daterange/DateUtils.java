@@ -18,6 +18,7 @@ import java.text.DateFormat;
 import java.text.Format;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -499,6 +500,17 @@ public class DateUtils {
     }
 
     /**
+     * Get the date "monthCount" ago or until now.
+     * @param monthCount how many months ahead or behinde (negative number)
+     * @return
+     */
+    public static Date getByMonthOffset(int monthCount) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.MONTH, monthCount);
+        return calendar.getTime();
+    }
+
+    /**
      * Get the Date for the start of the day.
      * 
      * @return first possible millisecond of the day
@@ -570,20 +582,17 @@ public class DateUtils {
 
     /**
      * Returns the number of days between the two dates.  First it zeroes outs the time so it compares midnight to midnight. 
-     * 
+     *
      * @param startDate Earlier date to compare
      * @param endDate Later date to compare
      */
-    public static int getNumDaysBetween(Date startDate, Date endDate) {
+    public static long getNumDaysBetween(Date startDate, Date endDate) {
 
         if (org.apache.commons.lang3.time.DateUtils.isSameDay(startDate, endDate)) {
             return 0;
         }
-        
-        Date start = getStartOfDay(startDate);
-        Date end = getStartOfDay(endDate);
 
-        return (int)( (end.getTime() - start.getTime()) / MILLISECONDS_IN_DAY);
+        return ChronoUnit.DAYS.between(startDate.toInstant(),endDate.toInstant());
     }
 
     public static Date parseXmlDate(String s) {

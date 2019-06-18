@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.labevent;
 
+import net.sourceforge.stripes.action.FileBean;
 import net.sourceforge.stripes.mock.MockRoundtrip;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
@@ -8,6 +9,9 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.*;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.DBSPuncherFileParserTest;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.LimsFileType;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -18,10 +22,16 @@ import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+
+import static org.broadinstitute.gpinformatics.mercury.control.vessel.DBSPuncherFileParserTest.SINGLE_WELL_FILE;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Database free test of action bean.
@@ -45,10 +55,27 @@ public class ManualTransferActionBeanTest {
         PlateEventType plateEventType = (PlateEventType) stationEvents.get(0);
 
         int numReagentFields = 0;
-        for (int i : manualTransferDetails.getReagentFieldCounts()) {
-            numReagentFields += i;
+        for (LabEventType.ReagentRequirements reagentRequirements : manualTransferDetails.getReagentRequirements()) {
+            numReagentFields += reagentRequirements.getFieldCount();
         }
+
         Assert.assertEquals(plateEventType.getReagent().size(), numReagentFields);
+    }
+
+    public void testDBSSamplePunch() throws IOException {
+        String eventType = "DBSSamplePunch";
+        ManualTransferActionBean actionBean = chooseEvent(eventType);
+        Assert.assertEquals(actionBean.isParseLimsFile(), true);
+        actionBean.setLimsFileType(LimsFileType.DBS_PUNCHER);
+        FileBean mockFileBean = mock(FileBean.class);
+        when(mockFileBean.getInputStream()).thenReturn(VarioskanParserTest.getTestResource(SINGLE_WELL_FILE));
+        actionBean.setLimsUploadFile(mockFileBean);
+        actionBean.parseLimsFile();
+        List<StationEventType> stationEvents = actionBean.getStationEvents();
+        PlateTransferEventType plateTransferEventType =
+                (PlateTransferEventType) stationEvents.iterator().next();
+        Assert.assertEquals(plateTransferEventType.getPlate().getBarcode(), "012345678912");
+        Assert.assertEquals(plateTransferEventType.getSourcePositionMap().getReceptacle().size(), 1);
     }
 
     /**
@@ -87,12 +114,12 @@ public class ManualTransferActionBeanTest {
         actionBean.setContext(new CoreActionBeanContext());
 
         // The action bean needs the user, to set the operator field in the event
-        UserBean userBean = Mockito.mock(UserBean.class);
+        UserBean userBean = mock(UserBean.class);
         BspUser qaDudeUser = new BSPUserList.QADudeUser(RoleType.PM.name(), 1L);
-        Mockito.when(userBean.getBspUser()).thenReturn(qaDudeUser);
+        when(userBean.getBspUser()).thenReturn(qaDudeUser);
         actionBean.setUserBean(userBean);
 
-        LabVesselDao labVesselDao = Mockito.mock(LabVesselDao.class);
+        LabVesselDao labVesselDao = mock(LabVesselDao.class);
         actionBean.setLabVesselDao(labVesselDao);
 
         // Set reagent
@@ -106,7 +133,7 @@ public class ManualTransferActionBeanTest {
         PlateType sourcePlate = plateTransferEventType.getSourcePlate();
         String sourceBarcode = "SourceRack";
         sourcePlate.setBarcode(sourceBarcode);
-        Mockito.when(labVesselDao.findByIdentifier(sourceBarcode)).thenReturn(
+        when(labVesselDao.findByIdentifier(sourceBarcode)).thenReturn(
                 new StaticPlate(sourceBarcode, StaticPlate.PlateType.Plate96Well200));
 
         // Add a tube
@@ -115,7 +142,7 @@ public class ManualTransferActionBeanTest {
         receptacleType.setPosition("A01");
         final String tubeBarcode = "tube1";
         receptacleType.setBarcode(tubeBarcode);
-        Mockito.when(labVesselDao.findByBarcodes(Arrays.asList(tubeBarcode))).thenReturn(
+        when(labVesselDao.findByBarcodes(Arrays.asList(tubeBarcode))).thenReturn(
                 new HashMap<String, LabVessel>() {{
                     put(tubeBarcode, new BarcodedTube(tubeBarcode, BarcodedTube.BarcodedTubeType.MatrixTube075));
                 }});
@@ -131,8 +158,6 @@ public class ManualTransferActionBeanTest {
         PlateType destPlateType = plateTransferEventType.getPlate();
         String destBarcode = "DestPlate";
         destPlateType.setBarcode(destBarcode);
-        Mockito.when(labVesselDao.findByIdentifier(destBarcode)).thenReturn(
-                new StaticPlate(destBarcode, StaticPlate.PlateType.Plate96Well200));
         actionBean.setStationEvents(stationEvents);
 
         BettaLIMSMessage bettaLIMSMessage = actionBean.buildBettaLIMSMessage();
@@ -155,12 +180,12 @@ public class ManualTransferActionBeanTest {
         actionBean.setContext(new CoreActionBeanContext());
 
         // The action bean needs the user, to set the operator field in the event
-        UserBean userBean = Mockito.mock(UserBean.class);
+        UserBean userBean = mock(UserBean.class);
         BspUser qaDudeUser = new BSPUserList.QADudeUser(RoleType.PM.name(), 1L);
-        Mockito.when(userBean.getBspUser()).thenReturn(qaDudeUser);
+        when(userBean.getBspUser()).thenReturn(qaDudeUser);
         actionBean.setUserBean(userBean);
 
-        LabVesselDao labVesselDao = Mockito.mock(LabVesselDao.class);
+        LabVesselDao labVesselDao = mock(LabVesselDao.class);
         actionBean.setLabVesselDao(labVesselDao);
 
         // Set reagent
@@ -177,7 +202,7 @@ public class ManualTransferActionBeanTest {
 
         final String tubeBarcode = "tube1";
         receptacleType.setBarcode(tubeBarcode);
-        Mockito.when(labVesselDao.findByBarcodes(Arrays.asList(tubeBarcode))).thenReturn(
+        when(labVesselDao.findByBarcodes(Arrays.asList(tubeBarcode))).thenReturn(
                 new HashMap<String, LabVessel>() {{
                     put(tubeBarcode, new BarcodedTube(tubeBarcode, BarcodedTube.BarcodedTubeType.MatrixTube075));
                 }});
@@ -214,12 +239,12 @@ public class ManualTransferActionBeanTest {
         actionBean.setContext(new CoreActionBeanContext());
 
         // The action bean needs the user, to set the operator field in the event
-        UserBean userBean = Mockito.mock(UserBean.class);
+        UserBean userBean = mock(UserBean.class);
         BspUser qaDudeUser = new BSPUserList.QADudeUser(RoleType.PM.name(), 1L);
-        Mockito.when(userBean.getBspUser()).thenReturn(qaDudeUser);
+        when(userBean.getBspUser()).thenReturn(qaDudeUser);
         actionBean.setUserBean(userBean);
 
-        LabVesselDao labVesselDao = Mockito.mock(LabVesselDao.class);
+        LabVesselDao labVesselDao = mock(LabVesselDao.class);
         actionBean.setLabVesselDao(labVesselDao);
 
         // Tubes and reagents are only set for validation purposes.
@@ -236,7 +261,7 @@ public class ManualTransferActionBeanTest {
         receptacleType.setPosition("A02");
         final String tubeBarcode = "tube1";
         receptacleType.setBarcode(tubeBarcode);
-        Mockito.when(labVesselDao.findByBarcodes(Arrays.asList(tubeBarcode))).thenReturn(
+        when(labVesselDao.findByBarcodes(Arrays.asList(tubeBarcode))).thenReturn(
                 new HashMap<String, LabVessel>() {{
                     put(tubeBarcode, new BarcodedTube(tubeBarcode, BarcodedTube.BarcodedTubeType.MatrixTube075));
                 }});

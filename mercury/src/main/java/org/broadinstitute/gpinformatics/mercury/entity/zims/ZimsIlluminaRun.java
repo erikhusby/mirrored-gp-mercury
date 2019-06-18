@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.entity.zims;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRead;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonProperty;
 
 import javax.xml.bind.annotation.XmlElement;
 import java.text.ParseException;

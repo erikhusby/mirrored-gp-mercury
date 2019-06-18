@@ -1,12 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
-import org.broadinstitute.gpinformatics.infrastructure.quote.*;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Set;
@@ -34,7 +32,7 @@ public class QuoteServiceTest {
         System.out.println(fetchedQuote.getQuoteFunding().getFundsRemaining());
         String workBatchId =
             service.registerNewWork(quote, quotePriceItem, null, new Date(), 0.0001,
-                    "http://www.MercuryTesting", "paramName", "paramValue");
+                    "http://www.MercuryTesting", "paramName", "paramValue", null);
         System.out.println(fetchedQuote.getQuoteFunding().getFundsRemaining());
 
         Assert.assertNotNull(workBatchId);

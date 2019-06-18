@@ -6,8 +6,8 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -18,7 +18,7 @@ import java.util.Set;
  */
 // MLC @ApplicationScoped breaks the test, as does @javax.ejb.Singleton.  @javax.inject.Singleton is the CDI version
 // and does appear to work.  Much to learn about CDI still...
-@Singleton
+@ApplicationScoped
 public class QuoteFundingList extends AbstractCache {
 
     private Set<Funding> fundingList;

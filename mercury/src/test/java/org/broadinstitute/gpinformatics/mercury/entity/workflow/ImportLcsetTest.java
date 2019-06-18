@@ -42,12 +42,13 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Imports Squid LCSETs from labopsjira, to allow testing of messages.
+ * Imports Squid LCSETs from labopsjira, to allow testing of messages. <br />
+ * Wildfly rejects deploying with non-existing persistence unit - uncomment attribute if running
  */
 @Test(groups = TestGroups.STANDARD)
 public class ImportLcsetTest extends Arquillian {
 
-    @PersistenceContext(unitName = "squid_pu")
+    //@PersistenceContext(unitName = "squid_pu")
     private EntityManager entityManager;
 
     @Inject
@@ -346,7 +347,7 @@ public class ImportLcsetTest extends Arquillian {
                     }
 
                     bucketEntries.add(new BucketEntry(barcodedTube, foundProductOrder, shearingBucket,
-                            BucketEntry.BucketEntryType.PDO_ENTRY, 1));
+                            BucketEntry.BucketEntryType.PDO_ENTRY));
 
                     // Create a transfer from each sample to its dev aliquots.
                     List<String> devTubeList = mapSampleToListDevTubes.get(row.getSampleBarcode());

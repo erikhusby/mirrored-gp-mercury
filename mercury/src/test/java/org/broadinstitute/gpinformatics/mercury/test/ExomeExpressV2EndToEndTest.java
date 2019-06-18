@@ -7,10 +7,10 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentration;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentrationProducer;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentrationStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
@@ -89,7 +89,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
 
         BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
-        BSPSetVolumeConcentration bspSetVolumeConcentration = BSPSetVolumeConcentrationProducer.stubInstance();
+        BSPSetVolumeConcentration bspSetVolumeConcentration =  new BSPSetVolumeConcentrationStub();
         LabEventFactory labEventFactory = new LabEventFactory(testUserList, bspSetVolumeConcentration);
 
         labEventFactory.setEventHandlerSelector(getLabEventFactory().getEventHandlerSelector());
@@ -112,7 +112,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
 
 
         LabBatchEjb labBatchEJB = new LabBatchEjb();
-        labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
+        labBatchEJB.setJiraService(JiraServiceTestProducer.stubInstance());
 
         LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
         labBatchEJB.setTubeDao(tubeDao);
@@ -235,7 +235,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
                                                     picoPlatingEntityBuilder.getNormalizationBarcode());
         exexJaxbBuilder.invoke();
 
-        //TODO SGM   SHould this validate be on the tube formation?
+        //TODO Should this validate be on the tube formation?
 //        LabEventTest.validateWorkflow(LabEventType.SHEARING_TRANSFER.getName(),
 //                                      picoPlatingEntityBuilder.getNormBarcodeToTubeMap().values());
         PlateTransferEventType plateToShearXfer = exexJaxbBuilder.getShearTransferEventJaxb();

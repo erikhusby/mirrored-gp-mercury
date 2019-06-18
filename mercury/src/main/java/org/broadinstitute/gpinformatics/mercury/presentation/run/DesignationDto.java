@@ -10,7 +10,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -25,6 +27,7 @@ public class DesignationDto implements Cloneable, FctDto {
     private FlowcellDesignation.IndexType indexType;
     private FlowcellDesignation.Priority priority;
     private Integer numberLanes;
+    private int numberLanesAllocated;
     private Integer readLength;
     private BigDecimal loadingConc;
     private Boolean poolTest;
@@ -38,11 +41,11 @@ public class DesignationDto implements Cloneable, FctDto {
     private String tubeType;
     private String tubeDate;
     private String regulatoryDesignation;
+    private boolean groupByRegulatoryDesignation;
     private int numberSamples;
 
     private Long designationId;
-    private boolean allocated = false;
-    private int allocationOrder = 0;
+    private int priorityValue = 0;
 
     public final static String DELIMITER = "<br/>";
 
@@ -50,7 +53,8 @@ public class DesignationDto implements Cloneable, FctDto {
         createdOn = new Date();
         status = FlowcellDesignation.Status.UNSAVED;
         priority = FlowcellDesignation.Priority.NORMAL;
-        indexType = FlowcellDesignation.IndexType.DUAL;
+        groupByRegulatoryDesignation = true;
+        numberLanesAllocated = 0;
     }
 
     public DesignationDto(FlowcellDesignation flowcellDesignation) {
@@ -69,7 +73,7 @@ public class DesignationDto implements Cloneable, FctDto {
             setLoadingConc(flowcellDesignation.getLoadingConc());
             setDesignationId(flowcellDesignation.getDesignationId());
             setPriority(flowcellDesignation.getPriority());
-            setBarcode(flowcellDesignation.getLoadingTube().getLabel());
+            setBarcode(flowcellDesignation.getStartingTube().getLabel());
         }
     }
 
@@ -88,31 +92,23 @@ public class DesignationDto implements Cloneable, FctDto {
     }
 
     /**
-     * Splits dto into two so that the orignal gets the allocated lane count and
+     * Splits dto into two so that the original gets the allocated lane count and
      * the new one gets the unallocated lane count.
      *
-     * @param allocatedLanes the new number of lanes on This.
      * @return  a new dto like This but with null entity id and a lane count of the unallocated number of lanes.
      */
     @Override
-    public DesignationDto split(int allocatedLanes) {
+    public DesignationDto split() {
         try {
             DesignationDto splitDto = (DesignationDto)this.clone();
             splitDto.setDesignationId(null);
-            splitDto.setAllocated(false);
-            splitDto.setNumberLanes(this.getNumberLanes() - allocatedLanes);
-            setNumberLanes(allocatedLanes);
+            splitDto.setAllocatedLanes(0);
+            splitDto.setNumberLanes(numberLanes - numberLanesAllocated);
+            setNumberLanes(numberLanesAllocated);
             return splitDto;
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);
         }
-    }
-
-
-    /** Defines how designations may be combined on a flowcell. */
-    public String fctGrouping() {
-        return "FctGrouping{" + getSequencerModel() + ", " + calculateCycles() + " cycles, " +
-               getReadLength() + " readLength, " + getIndexType() + " index, " + getRegulatoryDesignation() + "}";
     }
 
     /** Calculates the number of cycles from read length, paired end read, and index type. */
@@ -179,7 +175,7 @@ public class DesignationDto implements Cloneable, FctDto {
 
     public void setPriority(FlowcellDesignation.Priority priority) {
         this.priority = priority;
-        allocationOrder = (priority == FlowcellDesignation.Priority.HIGH ? 1 :
+        priorityValue = (priority == FlowcellDesignation.Priority.HIGH ? 1 :
                 priority == FlowcellDesignation.Priority.LOW ? -1 : 0);
     }
 
@@ -303,11 +299,6 @@ public class DesignationDto implements Cloneable, FctDto {
         this.designationId = designationId;
     }
 
-    @Override
-    public boolean isAllocated() {
-        return allocated;
-    }
-
     public String getChosenLcset() {
         return chosenLcset;
     }
@@ -324,15 +315,60 @@ public class DesignationDto implements Cloneable, FctDto {
         this.pairedEndRead = pairedEndRead;
     }
 
-    @Override
-    public void setAllocated(boolean allocated) {
-        this.allocated = allocated;
+    public int getPriorityValue() {
+        return priorityValue;
+    }
+
+    public boolean getGroupByRegulatoryDesignation() {
+        return groupByRegulatoryDesignation;
+    }
+
+    public void setGroupByRegulatoryDesignation(boolean groupByRegulatoryDesignation) {
+        this.groupByRegulatoryDesignation = groupByRegulatoryDesignation;
     }
 
     @Override
-    public int getAllocationOrder() {
-        return allocationOrder;
+    public int getAllocatedLanes() {
+        return numberLanesAllocated;
     }
+
+    @Override
+    public void setAllocatedLanes(int allocatedLanes) {
+        numberLanesAllocated = allocatedLanes;
+    }
+
+    /**
+     * Returns true if designation may be combined with others on a flowcell.
+     * @param groupDtos the dtos to test against.
+     */
+    @Override
+    public <DTO_TYPE extends FctDto> boolean isCompatible(Collection<DTO_TYPE> groupDtos) {
+        for (FctDto dto : groupDtos) {
+            DesignationDto groupDto = (DesignationDto)dto;
+            if (!getSequencerModel().equals(groupDto.getSequencerModel()) ||
+                    calculateCycles() != groupDto.calculateCycles() ||
+                    !getReadLength().equals(groupDto.getReadLength()) ||
+                    !getIndexType().equals(groupDto.getIndexType()) ||
+                    (getGroupByRegulatoryDesignation() &&
+                            groupDto.getGroupByRegulatoryDesignation() &&
+                            !getRegulatoryDesignation().equals(groupDto.getRegulatoryDesignation()))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** Orders by highest priority, then by highest number of lanes, then by barcode. */
+    public static final Comparator<FctDto> BY_ALLOCATION_ORDER = (f1, f2) -> {
+        if (f2.getPriorityValue() != f1.getPriorityValue()) {
+            return f2.getPriorityValue() - f1.getPriorityValue();
+        }
+        if (f2.getNumberLanes() != null && f1.getNumberLanes() != null &&
+                !f2.getNumberLanes().equals(f1.getNumberLanes())) {
+            return f2.getNumberLanes().compareTo(f1.getNumberLanes());
+        }
+        return f1.getBarcode() != null ? f1.getBarcode().compareTo(f2.getBarcode()) : 0;
+    };
 
     @Override
     public boolean equals(Object o) {

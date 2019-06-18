@@ -12,11 +12,13 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
@@ -33,6 +35,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -46,6 +49,8 @@ import static org.hamcrest.Matchers.nullValue;
  */
 @Test(groups = TestGroups.FIXUP)
 public class SampleMetadataFixupTest extends Arquillian {
+    private static final Pattern TAB_PATTERN = Pattern.compile("\\t");
+
     @Inject
     private MercurySampleDao mercurySampleDao;
 
@@ -250,6 +255,35 @@ public class SampleMetadataFixupTest extends Arquillian {
     }
 
     /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/UpdateSampleMetadata.txt, so
+     * it can be used for other similar fixups, without writing a new test.
+     * Line 1 is the fixup commentary.
+     * Line 2 and subsequent are SampleId\tMetadata.Key\tOld value\tNew value.
+     * Note: currently, each sample can appear only once in the file; if there are multiple lines for the same sample,
+     * all but the last are ignored.
+     * Example contents of the file are:
+     * CRSP-538
+     * SM-CEM8Z	TUMOR_NORMAL	NA	Normal
+     * SM-CEM9C	TUMOR_NORMAL	NA	Normal
+     */
+    @Test(enabled = false)
+    public void testCrsp538Fixup() throws Exception {
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("UpdateSampleMetadata.txt"));
+        String fixupComment = lines.get(0);
+
+        Map<String, MetaDataFixupItem> fixupItems = new HashMap<>();
+        for (String line : lines.subList(1, lines.size())) {
+            String[] fields = TAB_PATTERN.split(line);
+            if (fields.length != 4) {
+                throw new RuntimeException("Expected four tab separated fields in " + line);
+            }
+            fixupItems.putAll(MetaDataFixupItem.mapOf(fields[0], Metadata.Key.valueOf(fields[1]), fields[2], fields[3]));
+        }
+
+        updateMetadataAndValidate(fixupItems, fixupComment);
+    }
+
+    /**
      * Perform actual fixup and validate.
      */
     private void updateMetadataAndValidate(@Nonnull Map<String, MetaDataFixupItem> fixupItems,
@@ -371,8 +405,12 @@ class MetaDataFixupItem {
         }
 
         Metadata metadataRecord = findMetadataRecord(mercurySample);
-
-        if (metadataRecord != null && metadataRecord.getValue() != null) {
+        if (metadataRecord == null) {
+            metadataRecord = new Metadata(metadataKey, newValue);
+            mercurySample.getMetadata().add(metadataRecord);
+            log.info(String.format("Successfully created metadata for sample '%s': '[%s, %s]", sampleKey,
+                    metadataRecord.getKey(), metadataRecord.getValue()));
+        } else if (metadataRecord.getValue() != null) {
             metadataRecord.setStringValue(newValue);
             log.info(String.format("Successfully updated metadata for sample '%s': '[%s, %s]", sampleKey,
                     metadataRecord.getKey(), metadataRecord.getValue()));

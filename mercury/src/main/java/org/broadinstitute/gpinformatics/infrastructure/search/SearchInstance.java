@@ -9,12 +9,16 @@
  */
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
+import org.owasp.encoder.Encode;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -27,6 +31,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -394,10 +399,10 @@ public class SearchInstance implements Serializable {
         }
 
         public Object evalHeaderExpression(Object root, SearchContext context) {
-            // If the header is an expression, evaluate it.
             if (getSearchTerm().getViewHeaderExpression() == null) {
-                return getSearchTerm().getName();
+                return getSearchTerm().evalViewHeaderExpression(root, context);
             } else {
+                // The header is an expression, evaluate it.
                 context = addValueToContext(context);
                 return getSearchTerm().getViewHeaderExpression().evaluate(root, context);
             }
@@ -516,6 +521,11 @@ public class SearchInstance implements Serializable {
         @Override
         public String evalUiDisplayOutputExpression(Object value, SearchContext context) {
             return evalUiOutputExpression(value, context);
+        }
+
+        @Override
+        public boolean mustEscape() {
+            return getSearchTerm().mustEscape();
         }
 
         @Override
@@ -748,6 +758,11 @@ public class SearchInstance implements Serializable {
     private List<String> predefinedViewColumns = new ArrayList<>();
 
     /**
+     * Map of view column indexes to any optional parameters associated
+     */
+    private Map<Integer,ResultParamValues> viewColumnParamMap = new HashMap<>();
+
+    /**
      * List of columns names that the user wants to download
      */
     private List<String> predefinedDownloadColumns = new ArrayList<>();
@@ -777,7 +792,15 @@ public class SearchInstance implements Serializable {
     /**
      * Should a custom ancestor/descendant traversal be enlisted?
      */
+    private String customTraversalOptionConfig;
+
+    /**
+     * customTraversalOptionConfig has been digested into name and params
+     */
+    @XmlTransient
     private String customTraversalOptionName;
+    @XmlTransient
+    private ResultParamValues customTraversalOptionParams;
 
     private boolean excludeInitialEntitiesFromResults = false;
 
@@ -855,6 +878,30 @@ public class SearchInstance implements Serializable {
         return searchValue;
     }
 
+    private Pair<String,ResultParamValues> splitTermAndParams(String nameAndParams ) {
+        // Quick JSON test
+        int index = nameAndParams.indexOf("{");
+        if (index < 0) {
+            return Pair.of(nameAndParams, null);
+        } else {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode root = mapper.readTree(nameAndParams);
+                ResultParamValues resultParams = new ResultParamValues(
+                        root.get("paramType").textValue(),
+                        root.get("entityName").textValue(),
+                        root.get("elementName").textValue());
+                for(Iterator<JsonNode> iter = root.get("paramValues").elements(); iter.hasNext(); ) {
+                    JsonNode input = iter.next();
+                    resultParams.addParamValue( input.get("name").textValue(), input.get("value").textValue() );
+                }
+                return Pair.of(resultParams.getElementName(), resultParams);
+            } catch( Exception je ) {
+                throw new RuntimeException( "Fail parsing result column options", je);
+            }
+        }
+    }
+
     /**
      * A SearchInstance built top-down by Stripes, or one fetched from a preference,
      * doesn't have parent relationships or SearchTerms, so this method sets them up.
@@ -866,6 +913,17 @@ public class SearchInstance implements Serializable {
         buildTraversalOptions(configurableSearchDefinition);
         // Context as passed through processing needs a reference to the SearchInstance
         getEvalContext().setColumnEntityType(configurableSearchDefinition.getResultEntity());
+
+        // Don't overwrite result params from any session SearchInstances (sorting)
+        if( viewColumnParamMap.size() == 0 ) {
+            for (int i = 0; i < predefinedViewColumns.size(); i++) {
+                Pair<String, ResultParamValues> nameAndParams = splitTermAndParams(predefinedViewColumns.get(i));
+                viewColumnParamMap.put(i, nameAndParams.getRight());
+                if (nameAndParams.getRight() != null && nameAndParams.getRight().getUserColumnName() != null) {
+                    predefinedViewColumns.set(i, nameAndParams.getLeft());
+                }
+            }
+        }
     }
 
     /**
@@ -1131,7 +1189,7 @@ public class SearchInstance implements Serializable {
             }
         }
         if (searchInstance == null) {
-            throw new RuntimeException("No saved search instance named '" + searchName + "' is available");
+            throw new RuntimeException("No saved search instance named '" + Encode.forHtml(searchName) + "' is available");
         }
         searchInstance.establishRelationships(configurableSearchDef);
         searchInstance.postLoad();
@@ -1156,6 +1214,14 @@ public class SearchInstance implements Serializable {
 
     public void setPredefinedViewColumns(List<String> predefinedViewColumns) {
         this.predefinedViewColumns = predefinedViewColumns;
+    }
+
+    public Map<Integer,ResultParamValues> getViewColumnParamMap() {
+        return viewColumnParamMap;
+    }
+
+    public ResultParamValues getTraverserParams() {
+        return customTraversalOptionParams;
     }
 
     public List<String> getPredefinedDownloadColumns() {
@@ -1194,16 +1260,38 @@ public class SearchInstance implements Serializable {
         this.orderByList = orderByList;
     }
 
+    /**
+     * "ancestorOptionEnabled" --> TRUE/FALSE
+     * "descendantOptionEnabled" --> TRUE/FALSE
+     */
     public Map<String,Boolean> getTraversalEvaluatorValues(){
         return traversalEvaluatorValues;
     }
 
-    public String getCustomTraversalOptionName(){
-        return customTraversalOptionName==null?"none":customTraversalOptionName;
+    public void setCustomTraversalOptionConfig( String customTraversalOptionConfig ) {
+        this.customTraversalOptionConfig = customTraversalOptionConfig;
     }
 
-    public void setCustomTraversalOptionName(String name){
-        this.customTraversalOptionName = name;
+
+    public String getCustomTraversalOptionName(){
+        if( customTraversalOptionName == null ) {
+            if( customTraversalOptionConfig == null || customTraversalOptionConfig.isEmpty() ) {
+                customTraversalOptionName = "none";  // ConfigurableSearchDefinition returns null by name and quietly ignores
+            } else {
+                Pair<String,ResultParamValues> nameAndParams = splitTermAndParams(customTraversalOptionConfig);
+                customTraversalOptionName = nameAndParams.getLeft();
+                customTraversalOptionParams = nameAndParams.getRight();
+            }
+        }
+        return customTraversalOptionName;
+    }
+
+    public ResultParamValues getCustomTraversalOptionParams(){
+        if( customTraversalOptionName == null ) {
+           // Force a split of name and params
+            getCustomTraversalOptionName();
+        }
+        return customTraversalOptionParams;
     }
 
     public boolean getExcludeInitialEntitiesFromResults(){

@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularInd
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,6 +18,7 @@ import java.util.Map;
  * have been retrieved from the database or created de novo. New schemes are not
  * persisted.
  */
+@Dependent
 public class MolecularIndexingSchemeFactory {
 
     @Inject
@@ -105,7 +107,8 @@ public class MolecularIndexingSchemeFactory {
             throw new NullPointerException("The index sequence must not be null.");
         }
 
-        return this.findOrCreateIndexingScheme(new ArrayList<IndexPositionPair>(){{add(new IndexPositionPair(position, indexSequence));}});
+        return this.findOrCreateIndexingScheme(new ArrayList<IndexPositionPair>(){{add(new IndexPositionPair(position, indexSequence));}},
+                false);
     }
 
     /**
@@ -130,23 +133,25 @@ public class MolecularIndexingSchemeFactory {
         }
 
         return this.findOrCreateIndexingScheme(
-                getPairArray(baseScheme, new IndexPositionPair(position, indexSequence)));
+                getPairArray(baseScheme, new IndexPositionPair(position, indexSequence)), false);
     }
 
     /**
      * Finds a {@link MolecularIndexingScheme} in the database with the given index/
      * position pairs, if one exists, or creates a new scheme if one does not.
      *
-     * The array of position/index pairs must not be empty or null. Throws
+     * @param indexPositionPairs The array of position/index pairs. Must not be empty or null.
+     * @param createIndexes If true, creates a new index from an unknown sequence. If false, throws
      * IllegalArgumentException if any of the sequences in the pair array don't have a
      * corresponding MolecularIndex in the database.
      */
-    public MolecularIndexingScheme findOrCreateIndexingScheme(List<IndexPositionPair> indexPositionPairs) {
+    public MolecularIndexingScheme findOrCreateIndexingScheme(List<IndexPositionPair> indexPositionPairs,
+            boolean createIndexes) {
         MolecularIndexingScheme cachedScheme = cachedSchemes.get(indexPositionPairs);
         if(cachedScheme != null) {
             return cachedScheme;
         }
-        MolecularIndexingScheme foundScheme = this.findIndexingScheme(indexPositionPairs);
+        MolecularIndexingScheme foundScheme = findIndexingScheme(indexPositionPairs);
         if (foundScheme != null) {
             cachedSchemes.put(indexPositionPairs, foundScheme);
             return foundScheme;
@@ -156,8 +161,13 @@ public class MolecularIndexingSchemeFactory {
         for (IndexPositionPair pair : indexPositionPairs) {
             MolecularIndex index = this.indexDao.findBySequence(pair.getSequence());
             if (index == null) {
-                throw new IllegalArgumentException(
-                        "The sequence " + pair.getSequence() + " does not correspond to a known component index.");
+                if (createIndexes) {
+                    index = new MolecularIndex(pair.getSequence());
+                    indexDao.persist(index);
+                } else {
+                    throw new IllegalArgumentException(
+                            "The sequence " + pair.getSequence() + " does not correspond to a known component index.");
+                }
             }
             positionIndexMap.put(pair.getPositionHint(), index);
         }
@@ -177,7 +187,7 @@ public class MolecularIndexingSchemeFactory {
         this.schemeDao = dao;
     }
 
-    private MolecularIndexingScheme findIndexingScheme(List<IndexPositionPair> indexPositionPairs) {
+    public MolecularIndexingScheme findIndexingScheme(List<IndexPositionPair> indexPositionPairs) {
         if (indexPositionPairs == null) {
             throw new NullPointerException("The list of index/position pairs must not be null.");
         }

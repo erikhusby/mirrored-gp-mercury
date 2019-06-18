@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.testng.Assert;
@@ -12,6 +12,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.ArrayList;
@@ -21,7 +22,10 @@ import java.util.Set;
 
 
 @Test(enabled = true, groups = TestGroups.STUBBY)
-public class ProductOrderSampleDaoTest extends ContainerTest {
+@Dependent
+public class ProductOrderSampleDaoTest extends StubbyContainerTest {
+
+    public ProductOrderSampleDaoTest(){}
 
     @Inject
     ProductOrderDao productOrderDao;
@@ -109,7 +113,13 @@ public class ProductOrderSampleDaoTest extends ContainerTest {
             returnedSampleNames.add(productOrderSample.getName());
         }
 
-        Assert.assertEquals(returnedSampleNames,sampleNamesSubset);
+        Assert.assertEquals(sampleNamesSubset.size(), returnedSampleNames.size());
+
+        for( String returnedID : returnedSampleNames ) {
+            Assert.assertTrue( sampleNamesSubset.contains(returnedID), "Returned sample " + returnedID + " not in list of expected samples" );
+        }
+
+
     }
 
     @Test(groups = TestGroups.STUBBY, enabled = true)

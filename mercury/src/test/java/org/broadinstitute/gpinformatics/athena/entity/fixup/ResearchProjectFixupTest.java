@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -12,6 +13,9 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.ReferenceSequenceDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
+import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -50,6 +54,9 @@ public class ResearchProjectFixupTest extends Arquillian {
 
     @Inject
     private BSPUserList bspUserList;
+
+    @Inject
+    private ReferenceSequenceDao referenceSequenceDao;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -291,5 +298,44 @@ public class ResearchProjectFixupTest extends Arquillian {
         utx.commit();
     }
 
+    /**
+     * Updates the research project's reference sequence and version.
+     * Takes input from a file for maximum reuse. Expected format is
+     * <pre>
+     * SUPPORT-1234 The fixup commentary string
+     * RP-1234 Homo_sapiens_assembly19|1     [the delimiter and version is optional]
+     * RP-5678 Homo_sapiens_assembly19|2
+     * </pre>
+     * Assertion will fail if reference sequence string is not in the database.
+     * @throws Exception
+     */
+    @Test(enabled = false)
+    public void changeRefSeq() throws Exception {
+        final String filename = "RefSeqUpdate.txt";
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource(filename));
+        Assert.assertTrue(CollectionUtils.size(fixupLines) >= 2, filename + " is missing content.");
+        String fixupReason = fixupLines.get(0).trim();
+        Assert.assertTrue(StringUtils.isNotBlank(fixupReason), "Missing fixup reason.");
 
+        userBean.loginOSUser();
+        utx.begin();
+        for (String line : fixupLines.subList(1, fixupLines.size())) {
+            String[] tokens = line.split(" ", 2);
+            Assert.assertEquals(tokens.length, 2, "Unexpected format in line \"" + line + "\".");
+            Assert.assertTrue(StringUtils.isNotBlank(tokens[0]), "Missing RP-id in line \"" + line + "\".");
+            Assert.assertTrue(StringUtils.isNotBlank(tokens[1]), "Missing reference sequence in line \"" + line + "\".");
+            ReferenceSequence referenceSequence = StringUtils.contains(tokens[1], ReferenceSequence.SEPARATOR) ?
+                    referenceSequenceDao.findByBusinessKey(tokens[1]) :
+                    referenceSequenceDao.findCurrent(tokens[1]);
+            Assert.assertNotNull(referenceSequence, "No such reference sequence \"" + tokens[1] + "\".");
+
+            ResearchProject researchProject = rpDao.findByBusinessKey(tokens[0]);
+            Assert.assertNotNull(researchProject, "No such project \"" + tokens[0] + "\".");
+            System.out.println("Changing " + researchProject.getJiraTicketKey() + " ref seq to " +
+                    referenceSequence.getBusinessKey());
+            researchProject.setReferenceSequenceKey(referenceSequence.getBusinessKey());
+        }
+        rpDao.persist(new FixupCommentary(fixupReason));
+        utx.commit();
+    }
 }

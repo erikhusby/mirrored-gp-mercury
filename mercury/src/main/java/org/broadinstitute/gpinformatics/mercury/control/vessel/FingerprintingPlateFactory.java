@@ -25,6 +25,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleDataFetcher;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -40,6 +41,7 @@ import java.util.Set;
 /**
  * Control class supporting FingerprintingSpreadsheetActionBean
  */
+@Dependent
 public class FingerprintingPlateFactory {
     /** String for the FP spreadsheet that identifies a filler tube. */
     public static final String NA12878 = "NA12878";
@@ -121,7 +123,7 @@ public class FingerprintingPlateFactory {
                             if (OrmUtil.proxySafeIsInstance(reagent, ControlReagent.class)) {
                                 ControlReagent controlReagent = OrmUtil.proxySafeCast(reagent, ControlReagent.class);
                                 if (controlReagent.getControl().getType() == Control.ControlType.POSITIVE) {
-                                    sampleName = NA12878;
+                                    sampleName = controlReagent.getControl().getCollaboratorParticipantId();
                                     positiveControl = true;
                                 } else if (controlReagent.getControl().getType() == Control.ControlType.NEGATIVE) {
                                     sampleName = NEGATIVE_CONTROL;

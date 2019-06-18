@@ -1,14 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.GenericType;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.ClientConfig;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldJsonParser;
@@ -29,13 +25,20 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Iss
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
-import org.broadinstitute.gpinformatics.mercury.control.AbstractJsonJerseyClientService;
-import org.codehaus.jackson.map.ObjectMapper;
+import org.broadinstitute.gpinformatics.mercury.control.AbstractJsonJaxRsClientService;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
+import org.jboss.resteasy.client.jaxrs.internal.ClientInvocation;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -50,8 +53,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Impl
-public class JiraServiceImpl extends AbstractJsonJerseyClientService implements JiraService {
+@Default
+@Dependent
+public class JiraServiceImpl extends AbstractJsonJaxRsClientService implements JiraService {
 
     @Inject
     private JiraConfig jiraConfig;
@@ -74,11 +78,6 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     }
 
     @Override
-    protected void customizeConfig(ClientConfig clientConfig) {
-        supportJson(clientConfig);
-    }
-
-    @Override
     protected void customizeClient(Client client) {
         specifyHttpAuthCredentials(client, jiraConfig);
     }
@@ -91,6 +90,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     }
 
     // Temporary container class to get ticket ID (key) from the server.
+    @JsonIgnoreProperties(ignoreUnknown = true)
     private static class JiraIssueData {
         private String key;
 
@@ -158,7 +158,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
          * {"fields":{"description":"Description created from Mercury","project":{"key":"LCSET"},"customfield_10020":"doofus","customfield_10011":"9999","summary":"Summary created from Mercury","issuetype":{"name":"Whole Exome (HybSel)"}}}
          */
 
-        WebResource webResource = getJerseyClient().resource(urlString);
+        WebTarget webResource = getJaxRsClient().target(urlString);
 
         JiraIssueData data = post(webResource, issueRequest, new GenericType<JiraIssueData>() {
         });
@@ -176,48 +176,49 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     public JiraIssue getIssueInfo(String key, String... fields) throws IOException {
         String urlString = getBaseUrl() + "/issue/" + key;
 
-        StringBuilder fieldList = new StringBuilder("summary,description,duedate,created,reporter,subtasks,status,parent");
-
-        if (null != fields) {
-            for (String currField : fields) {
-                fieldList.append(",").append(currField);
-            }
-        }
+        String[] defaultFields = {"summary", "description", "duedate", "created", "reporter", "subtasks", "status", "parent"};
 
         try {
-                WebResource webResource = getJerseyClient().resource(urlString).queryParam("fields", fieldList.toString());
-
-                String queryResponse = webResource.get(String.class);
-
-                JiraSearchIssueData data = parseSearch(queryResponse, fields);
-
-                JiraIssue issueResult = new JiraIssue(key, this);
-                issueResult.setSummary(data.summary);
-                issueResult.setStatus(data.status);
-                if( data.description != null ) {
-                    issueResult.setDescription(data.description);
-                }
-                if( data.dueDate != null ) {
-                    issueResult.setDueDate(data.dueDate);
-                }
-                issueResult.setCreated(data.created);
-                issueResult.setReporter(data.reporter);
-
-                if( data.subTasks != null ) {
-                    issueResult.setSubTasks(data.subTasks);
-                }
-                issueResult.setParent(data.parent);
-                issueResult.setConditions(data.subTaskSummaries, data.subTaskKeys);
-
-                if (null != fields) {
-                    for (String currField : fields) {
-                        issueResult.addFieldValue(currField, data.extraFields.get(currField));
-                    }
-                }
-             return issueResult;
+            WebTarget target = getJaxRsClient().target(urlString);
+            for (String field : defaultFields) {
+                target = target.queryParam("fields", field);
             }
-        catch (Exception ex)
-        {
+
+            if (null != fields) {
+                for (String currField : fields) {
+                    target = target.queryParam("fields", currField);
+                }
+            }
+
+            String queryResponse = JaxRsUtils.getAndCheck(target.request(), String.class);
+
+            JiraSearchIssueData data = parseSearch(queryResponse, fields);
+
+            JiraIssue issueResult = new JiraIssue(key, this);
+            issueResult.setSummary(data.summary);
+            issueResult.setStatus(data.status);
+            if (data.description != null) {
+                issueResult.setDescription(data.description);
+            }
+            if (data.dueDate != null) {
+                issueResult.setDueDate(data.dueDate);
+            }
+            issueResult.setCreated(data.created);
+            issueResult.setReporter(data.reporter);
+
+            if (data.subTasks != null) {
+                issueResult.setSubTasks(data.subTasks);
+            }
+            issueResult.setParent(data.parent);
+            issueResult.setConditions(data.subTaskSummaries, data.subTaskKeys);
+
+            if (null != fields) {
+                for (String currField : fields) {
+                    issueResult.addFieldValue(currField, data.extraFields.get(currField));
+                }
+            }
+            return issueResult;
+        } catch (Exception ex) {
             return null;
         }
     }
@@ -229,9 +230,10 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         }
         String urlString = getBaseUrl() + "/user/picker";
 
-        WebResource webResource = getJerseyClient().resource(urlString).queryParam("query", key);
-        ClientResponse response = webResource.type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
-        JiraUserResponse jiraUserResponse = response.getEntity(JiraUserResponse.class);
+        WebTarget webResource = getJaxRsClient().target(urlString).queryParam("query", key);
+        Response response = webResource.request().accept(MediaType.APPLICATION_JSON_TYPE).get();
+        JiraUserResponse jiraUserResponse = response.readEntity(JiraUserResponse.class);
+        response.close();
 
         return jiraUserResponse.getJiraUsers();
     }
@@ -350,7 +352,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     @Override
     public void updateIssue(String key, Collection<CustomField> customFields) throws IOException {
         UpdateIssueRequest request = new UpdateIssueRequest(key, customFields);
-        WebResource webResource = getJerseyClient().resource(request.getUrl(getBaseUrl()));
+        WebTarget webResource = getJaxRsClient().target(request.getUrl(getBaseUrl()));
         put(webResource, request);
     }
 
@@ -377,7 +379,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         log.debug("addComment URL is " + urlString);
 
-        WebResource webResource = getJerseyClient().resource(urlString);
+        WebTarget webResource = getJaxRsClient().target(urlString);
 
         // don't really care about the response, not sure why JIRA sends us back so much stuff...
         post(webResource, addCommentRequest, new GenericType<AddCommentResponse>() {
@@ -410,13 +412,13 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         String urlString = getBaseUrl() + "/issueLink";
 
-        WebResource webResource = getJerseyClient().resource(urlString);
+        WebTarget webResource = getJaxRsClient().target(urlString);
         post(webResource, linkRequest);
     }
 
     @Override
     public void addWatcher(String key, String watcherId) throws IOException {
-        WebResource webResource = getJerseyClient().resource(getBaseUrl() + "/issue/" + key + "/watchers");
+        WebTarget webResource = getJaxRsClient().target(getBaseUrl() + "/issue/" + key + "/watchers");
         post(webResource, String.format("%s", watcherId));
     }
 
@@ -427,11 +429,11 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         String urlString = getBaseUrl() + "/issue/createmeta";
 
-        String jsonResponse = getJerseyClient().resource(urlString)
+        String jsonResponse = JaxRsUtils.getAndCheck(getJaxRsClient().target(urlString)
                 .queryParam("projectKeys", project.getProjectType().getKeyPrefix())
                 .queryParam("issuetypeName", issueType.getJiraName())
                 .queryParam("expand", "projects.issuetypes.fields")
-                .get(String.class);
+                .request(), String.class);
         return CustomFieldJsonParser.parseRequiredFields(jsonResponse);
     }
 
@@ -439,7 +441,13 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     public Map<String, CustomFieldDefinition> getCustomFields(String... fieldNames) throws IOException {
         String urlString = getBaseUrl() + "/field";
 
-        String jsonResponse = getJerseyClient().resource(urlString).get(String.class);
+        Response response = getJaxRsClient().target(urlString).request().get();
+        String jsonResponse = response.readEntity(String.class);
+        response.close();
+        if (response.getStatus() >= 300) {
+            ClientInvocation.handleErrorStatus(response);
+        }
+
         Map<String, CustomFieldDefinition> customFieldDefinitionMap = CustomFieldJsonParser
                 .parseCustomFields(jsonResponse);
 
@@ -470,11 +478,10 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     public IssueTransitionListResponse findAvailableTransitions(String jiraIssueKey) {
         String urlString = getBaseUrl() + "/issue/" + jiraIssueKey + "/transitions";
 
-        WebResource webResource =
-                getJerseyClient().resource(urlString).queryParam("expand", "transitions.fields");
+        WebTarget webResource =
+                getJaxRsClient().target(urlString).queryParam("expand", "transitions.fields");
 
-        return get(webResource, new GenericType<IssueTransitionListResponse>() {
-        });
+        return get(webResource, new GenericType<IssueTransitionListResponse>() {});
     }
 
     @Override
@@ -506,7 +513,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         IssueTransitionRequest jiraIssueTransition = new IssueTransitionRequest(transition, customFields, comment);
 
         String urlString = getBaseUrl() + "/issue/" + jiraIssueKey + "/transitions";
-        WebResource webResource = getJerseyClient().resource(urlString);
+        WebTarget webResource = getJaxRsClient().target(urlString);
         post(webResource, jiraIssueTransition);
     }
 
@@ -516,9 +523,9 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     public boolean isValidUser(String username) {
         String urlString = getBaseUrl() + "/user/search";
 
-        String jsonResponse = getJerseyClient().resource(urlString).
+        String jsonResponse = JaxRsUtils.getAndCheck(getJaxRsClient().target(urlString).
                 queryParam("username", username).
-                queryParam("maxResults", "1000").get(String.class);
+                queryParam("maxResults", "1000").request(), String.class);
         try {
             @SuppressWarnings("unchecked")
             List<Map<String, String>> response = new ObjectMapper().readValue(jsonResponse, List.class);
@@ -545,14 +552,14 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
             fieldIds.add(customFieldDefinition.getJiraCustomFieldId());
         }
 
-        String fieldArgs = StringUtils.join(fieldIds, ",");
-        String url = getBaseUrl() + "/issue/" + jiraIssueKey + "?fields=" + fieldArgs;
+        String url = getBaseUrl() + "/issue/" + jiraIssueKey;
         log.debug(url);
-        WebResource webResource =
-                getJerseyClient().resource(getBaseUrl() + "/issue/" + jiraIssueKey).queryParam("fields", fieldArgs);
+        WebTarget target = getJaxRsClient().target(getBaseUrl() + "/issue/" + jiraIssueKey);
+        for (String fieldId : fieldIds) {
+            target = target.queryParam("fields", fieldId);
+        }
 
-        return get(webResource, new GenericType<IssueFieldsResponse>() {
-        });
+        return get(target, new GenericType<IssueFieldsResponse>() {});
     }
 
     @Override
@@ -561,7 +568,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         String url = getBaseUrl() + "/issueLink/" + jiraIssueLinkId;
         log.debug(url);
-        WebResource webResource = getJerseyClient().resource(url);
+        WebTarget webResource = getJaxRsClient().target(url);
 
         delete(webResource);
     }
@@ -570,8 +577,8 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     public String getResolution(String jiraIssueKey) throws IOException {
         String url = getBaseUrl() + "/issue/" + jiraIssueKey;
         log.debug(url);
-        WebResource webResource =
-                getJerseyClient().resource(getBaseUrl() + "/issue/" + jiraIssueKey).queryParam("fields", "resolution");
+        WebTarget webResource =
+                getJaxRsClient().target(getBaseUrl() + "/issue/" + jiraIssueKey).queryParam("fields", "resolution");
 
         IssueResolutionResponse issueResolutionResponse = get(webResource, new GenericType<IssueResolutionResponse>() {
         });

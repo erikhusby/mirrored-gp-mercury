@@ -4,11 +4,13 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.infrastructure.search.LabMetricSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -21,8 +23,29 @@ public class LabMetricSampleDataAddRowsListener implements ConfigurableList.AddR
 
     private Map<String, SampleData> mapSampleIdToData;
 
+    /**
+     * If no BSP related columns in requested result columns, then skip the overhead of performing
+     * SampleInstancesV2 traversal and related BSP service access
+     */
+    private boolean shouldFetchFromBsp(Map<Integer,ColumnTabulation> columnTabulations ) {
+        for (ColumnTabulation columnTabulation : columnTabulations.values()) {
+            String name = columnTabulation.getName();
+            if (name.equals(LabMetricSearchDefinition.MultiRefTerm.BSP_MATERIAL.getTermRefName()) ||
+                    name.equals(LabMetricSearchDefinition.MultiRefTerm.BSP_PARTICIPANT.getTermRefName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
-    public void addRows(List<?> entityList, SearchContext context, List<ColumnTabulation> nonPluginTabulations) {
+    public void addRows(List<?> entityList, SearchContext context, Map<Integer,ColumnTabulation> nonPluginTabulations) {
+
+        if( !shouldFetchFromBsp(nonPluginTabulations)) {
+            mapSampleIdToData = Collections.EMPTY_MAP;
+            return;
+        }
+
         List<LabMetric> labMetrics = (List<LabMetric>) entityList;
         Set<MercurySample> mercurySamples = new HashSet<>();
         for (LabMetric labMetric : labMetrics) {

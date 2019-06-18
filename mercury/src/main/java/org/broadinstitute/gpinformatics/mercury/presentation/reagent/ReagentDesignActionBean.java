@@ -13,6 +13,7 @@ package org.broadinstitute.gpinformatics.mercury.presentation.reagent;
 
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.FileBean;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.RedirectResolution;
@@ -24,9 +25,13 @@ import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import net.sourceforge.stripes.validation.ValidationState;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.reagent.ReagentDesignImportFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
@@ -47,6 +52,7 @@ import java.util.Map;
  */
 @UrlBinding("/reagent/design.action")
 public class ReagentDesignActionBean extends CoreActionBean {
+    private static final Log log = LogFactory.getLog(ReagentDesignActionBean.class);
 
     public static final String CREATE_DESIGN = CoreActionBean.CREATE + "Reagent Design";
     private static final String EDIT_DESIGN = CoreActionBean.EDIT + "Reagent Design";
@@ -59,6 +65,7 @@ public class ReagentDesignActionBean extends CoreActionBean {
     private static final String SAVE_BARCODE_ACTION = "saveBarcode";
     private static final String ASSIGN_BARCODE_ACTION = "assignBarcode";
     private static final String BARCODE_REAGENT_ACTION = "barcodeReagent";
+    public static final String UPLOAD_CSV_EVENT = "uploadCsv";
 
     @Inject
     private ReagentDesignDao reagentDesignDao;
@@ -68,6 +75,9 @@ public class ReagentDesignActionBean extends CoreActionBean {
 
     @Inject
     private LabVesselDao labVesselDao;
+
+    @Inject
+    private ReagentDesignImportFactory reagentDesignImportFactory;
 
     public ReagentDesignActionBean() {
         super(CREATE_DESIGN, EDIT_DESIGN, DESIGN_PARAMETER);
@@ -96,6 +106,9 @@ public class ReagentDesignActionBean extends CoreActionBean {
 
     private List<String> allBarcodes;
     private String q;
+
+    @Validate(required = true, on = UPLOAD_CSV_EVENT)
+    private FileBean probeFile;
 
     /**
      * Initialize the product with the passed in key for display in the form
@@ -202,6 +215,25 @@ public class ReagentDesignActionBean extends CoreActionBean {
                 .addParameter("reagentDesign", reagentDesign);
     }
 
+    @HandlesEvent(UPLOAD_CSV_EVENT)
+    public Resolution uploadProbeCsv() {
+        try {
+            MessageCollection messageCollection = new MessageCollection();
+            List<BarcodedTube> barcodedTubes = reagentDesignImportFactory.buildTubesFromSpreadsheet(
+                    probeFile.getInputStream(), messageCollection);
+            if (messageCollection.hasErrors()) {
+                addMessages(messageCollection);
+            } else {
+                barcodedTubeDao.persistAll(barcodedTubes);
+                addMessage("Uploaded " + barcodedTubes.size() + " tubes");
+            }
+        } catch (Exception e) {
+            log.error("Error uploading probe file", e);
+            addGlobalValidationError(e.getMessage());
+        }
+        return new ForwardResolution(REAGENT_BARCODE_PAGE);
+    }
+
     private List<String> barcodeAsList() {
         return Arrays.asList(barcode.trim().split("\\W"));
     }
@@ -260,5 +292,13 @@ public class ReagentDesignActionBean extends CoreActionBean {
 
     public void setReagentDesignTokenInput(ReagentDesignTokenInput reagentDesignTokenInput) {
         this.reagentDesignTokenInput = reagentDesignTokenInput;
+    }
+
+    public FileBean getProbeFile() {
+        return probeFile;
+    }
+
+    public void setProbeFile(FileBean probeFile) {
+        this.probeFile = probeFile;
     }
 }

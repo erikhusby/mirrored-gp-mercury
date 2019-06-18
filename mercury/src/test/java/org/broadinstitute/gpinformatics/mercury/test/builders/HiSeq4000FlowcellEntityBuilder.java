@@ -123,10 +123,6 @@ public class HiSeq4000FlowcellEntityBuilder {
         // asserts
         stripTube = (StripTube) TestUtils.getFirst(stripTubeTransferEntity.getTargetLabVessels());
         Assert.assertNotNull(stripTube);
-        Assert.assertEquals(
-                stripTube.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.TUBE1).size(),
-                catchSampleInstanceCount,
-                "Wrong number of samples in strip tube well");
 
         // FlowcellTransfer
         LabEventTest.validateWorkflow("FlowcellTransfer", stripTube);

@@ -52,11 +52,18 @@ public class ProductDao extends GenericDao implements Serializable {
     }
 
     public enum IncludePDMOnly {
+        WITH_GP_PM,
         YES,
         NO;
 
-        public static IncludePDMOnly toIncludePDMOnly(boolean bool) {
-           return IncludePDMOnly.valueOf(BooleanUtils.toStringYesNo(bool).toUpperCase());
+        public static IncludePDMOnly toIncludePDMOnly(boolean bool, boolean gpPMRole) {
+            IncludePDMOnly includePDMOnly = NO;
+            if(gpPMRole) {
+                includePDMOnly = WITH_GP_PM;
+            } else {
+                includePDMOnly = IncludePDMOnly.valueOf(BooleanUtils.toStringYesNo(bool).toUpperCase());
+            }
+            return includePDMOnly;
         }
     }
 
@@ -138,6 +145,12 @@ public class ProductDao extends GenericDao implements Serializable {
 
         if (includePDMOnly == IncludePDMOnly.NO) {
             predicateList.add(cb.equal(product.get(Product_.pdmOrderableOnly), false));
+        } else if(includePDMOnly == IncludePDMOnly.WITH_GP_PM) {
+            predicateList.add(cb.or(cb.equal(product.get(Product_.pdmOrderableOnly), false),
+                    cb.and(cb.equal(product.get(Product_.pdmOrderableOnly), true),
+                            cb.equal(product.get(Product_.externalOnlyProduct), true))
+                    )
+            );
         }
 
         Predicate[] predicates = new Predicate[predicateList.size()];
@@ -200,7 +213,7 @@ public class ProductDao extends GenericDao implements Serializable {
         return findProducts(
                 Availability.CURRENT,
                 TopLevelOnly.YES,
-                IncludePDMOnly.toIncludePDMOnly(canIncludePdmProducts()), searchTerms);
+                IncludePDMOnly.toIncludePDMOnly(canIncludePdmProducts(), userBean.isGPPMUser()), searchTerms);
     }
 
     private boolean canIncludePdmProducts() {
@@ -224,7 +237,7 @@ public class ProductDao extends GenericDao implements Serializable {
     public List<Product> searchProductsForAddOnsInProductEdit(Product topLevelProduct, Collection<String> searchTerms) {
         List<Product> products = findProducts(
                 ProductDao.Availability.CURRENT_OR_FUTURE, TopLevelOnly.NO,
-                IncludePDMOnly.toIncludePDMOnly(canIncludePdmProducts()), searchTerms);
+                IncludePDMOnly.toIncludePDMOnly(canIncludePdmProducts(), userBean.isGPPMUser()), searchTerms);
 
         // remove top level product from the list if it's showing up there
         products.remove(topLevelProduct);
@@ -238,5 +251,17 @@ public class ProductDao extends GenericDao implements Serializable {
                 criteriaQuery.where(getCriteriaBuilder().isNotNull(root.get(Product_.analysisTypeKey)));
             }
         });
+    }
+
+    // todo emp this should be replaced with a call to PipelineDataTypeDao when GPLIM-5521 is deployed.
+    public List<String> findAggregationDataTypes() {
+        CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
+        CriteriaQuery<String> criteriaQuery = criteriaBuilder.createQuery(String.class);
+        Root<Product> root = criteriaQuery.from(Product.class);
+        criteriaQuery.select(root.get(Product_.aggregationDataType)).
+                where(criteriaBuilder.isNotNull(root.get(Product_.aggregationDataType))).
+                distinct(true).
+                orderBy(criteriaBuilder.asc(root.get(Product_.aggregationDataType)));
+        return getEntityManager().createQuery(criteriaQuery).getResultList();
     }
 }

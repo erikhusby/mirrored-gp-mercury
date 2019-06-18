@@ -176,6 +176,9 @@ public class CrspPicoJaxbBuilder {
         // ShearingAliquot
         String shearingRackBarcode = "sr" + testPrefix;
         List<String> shearingTubes = new ArrayList<>();
+        for (int rackPosition = 1; rackPosition <= postFpTubes.size(); rackPosition++) {
+            shearingTubes.add("sat" + testPrefix + rackPosition);
+        }
         sourceVolumes.clear();
         for (String postFpTube : postFpTubes) {
             BigDecimal volume = mapBarcodeToVolume.get(postFpTube);

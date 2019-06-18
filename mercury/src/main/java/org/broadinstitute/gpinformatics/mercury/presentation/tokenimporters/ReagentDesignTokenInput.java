@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign_;
 import org.json.JSONException;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.text.MessageFormat;
 import java.util.List;
@@ -27,6 +28,7 @@ import java.util.List;
  * @author hrafal
  */
 // FIXME: update this code and its caller to use TokenInput<> instead.
+@Dependent
 public class ReagentDesignTokenInput extends TokenInput<ReagentDesign> {
 
     @Inject

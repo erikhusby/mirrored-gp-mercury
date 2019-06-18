@@ -4,7 +4,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
@@ -20,6 +19,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Tra
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import java.io.IOException;
 import java.util.Arrays;
@@ -30,19 +30,20 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Dummy implementation that writes calls
- * to {@link #addComment(String, String)}  and
- * {@link #addComment(String, String, Visibility.Type, Visibility.Value)}
- * to a logger.
+ * Dummy implementation that writes calls to {@link #addComment(String, String)}  and
+ * {@link #addComment(String, String, Visibility.Type, Visibility.Value)} to a logger. <br />
+ * Injected as an alternate into all TestGroups.STUBBY tests
  */
-@Stub
+@Dependent
 @Alternative
 public class JiraServiceStub implements JiraService {
+
+    public JiraServiceStub(){}
 
     /**
      * Controls the suffix of the new batch name e.g. "LCSET-123"
      */
-    private static String createdIssueSuffix = "-123";
+    public static String createdIssueSuffix = "-123";
 
     private Log logger = LogFactory.getLog(JiraServiceStub.class);
 

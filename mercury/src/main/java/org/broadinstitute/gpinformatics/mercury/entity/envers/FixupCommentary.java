@@ -34,6 +34,10 @@ public class FixupCommentary implements Serializable {
     public FixupCommentary() {
     }
 
+    public Long getFixupCommentaryId(){
+        return fixupCommentaryId;
+    }
+
     public FixupCommentary(String reason) {
         this.reason = reason;
     }

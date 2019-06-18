@@ -16,12 +16,11 @@ import org.hibernate.envers.Audited;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
 /**
- * Reagent for BaitDesigns.
- * Ponds are then hybridized to RNA "Baits" which are complementary to genomic regions of interest.
- * These baits are single stranded and biotinylated.
+ * An instance of a Reagent that is a ReagentDesign (currently either a bait or a CAT).
  */
 @Entity
 @Audited
@@ -30,6 +29,7 @@ public class DesignedReagent extends Reagent {
     // In production code, the reagentDesign will always exist first, so there's no need for cascade, but in tests
     // DesignedReagent and ReagentDesign are created at the same time.
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "REAGENT_DESIGN")
     private ReagentDesign reagentDesign;
 
     public DesignedReagent(ReagentDesign reagentDesign) {

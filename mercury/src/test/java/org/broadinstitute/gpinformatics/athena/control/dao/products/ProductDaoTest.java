@@ -6,7 +6,7 @@ import org.apache.commons.collections4.Predicate;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.testng.Assert;
@@ -15,6 +15,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.Calendar;
@@ -22,11 +23,16 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDaoTest.DateSpec.*;
+import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDaoTest.DateSpec.FUTURE;
+import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDaoTest.DateSpec.NULL;
+import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDaoTest.DateSpec.PAST;
 
 
 @Test(groups = TestGroups.STUBBY)
-public class ProductDaoTest extends ContainerTest {
+@Dependent
+public class ProductDaoTest extends StubbyContainerTest {
+
+    public ProductDaoTest(){}
 
     @Inject
     private ProductDao dao;
@@ -246,6 +252,8 @@ public class ProductDaoTest extends ContainerTest {
      */
     @Test(dataProvider = "availability")
     public void testFindAvailableProducts(DatesAndAvailability datesAndAvailability) {
+
+        System.out.println("Calling with " + datesAndAvailability.toString());
 
         Product product = datesAndAvailability.createDatesAndAvailabilityProduct();
         dao.persist(product);

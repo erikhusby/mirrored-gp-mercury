@@ -1,17 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.squid;
 
-import com.sun.jersey.api.client.UniformInterfaceException;
-import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestInput;
-import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestOutput;
-import edu.mit.broad.prodinfo.bean.generated.CreateProjectOptions;
-import edu.mit.broad.prodinfo.bean.generated.CreateWorkRequestOptions;
-import edu.mit.broad.prodinfo.bean.generated.ExecutionTypes;
-import edu.mit.broad.prodinfo.bean.generated.OligioGroups;
-import edu.mit.broad.prodinfo.bean.generated.SampleReceptacleGroup;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 
 import javax.annotation.Nonnull;
+import javax.ws.rs.WebApplicationException;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 
@@ -65,17 +58,6 @@ public interface SquidConnector extends Serializable {
      * @param squidWSUrl            URL to the instance of Squid that will be called when updating squid
      */
     SquidResponse saveReadStructure(@Nonnull ReadStructureRequest readStructureData,
-                           @Nonnull String squidWSUrl) throws UniformInterfaceException;
+                           @Nonnull String squidWSUrl) throws WebApplicationException;
 
-    CreateProjectOptions getProjectCreationOptions() throws UniformInterfaceException;
-
-    CreateWorkRequestOptions getWorkRequestOptions(String executionType) throws UniformInterfaceException;
-
-    ExecutionTypes getProjectExecutionTypes() throws UniformInterfaceException;
-
-    OligioGroups getOligioGroups() throws UniformInterfaceException;
-
-    SampleReceptacleGroup getGroupReceptacles(String groupName) throws UniformInterfaceException;
-
-    AutoWorkRequestOutput createSquidWorkRequest(AutoWorkRequestInput input) throws UniformInterfaceException;
 }

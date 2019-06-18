@@ -1,7 +1,11 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
+import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
+
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -29,13 +33,15 @@ public interface QuoteService extends Serializable {
      * @return The work item id created by the quote server.
      */
     public String registerNewWork(
-        Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
-        double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue);
+            Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
+            double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue,
+            BigDecimal priceAdjustment);
 
 
     public String registerNewSAPWork(
             Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
-            double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue);
+            double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue,
+            BigDecimal priceAdjustment);
     /**
      * Get the quote for a particular quote identifier.
      *
@@ -80,4 +86,7 @@ public interface QuoteService extends Serializable {
      *  Method to return a list of all quotes
      */
     public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException;
+
+    PriceList getPriceItemsForDate(List<QuoteImportItem> targetedPriceItemCriteria)
+            throws QuoteServerException, QuoteNotFoundException;
 }

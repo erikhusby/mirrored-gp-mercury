@@ -12,11 +12,15 @@
 package org.broadinstitute.gpinformatics.infrastructure.parsers.poi;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
+import org.broadinstitute.gpinformatics.infrastructure.parsers.HeaderValueRow;
+import org.broadinstitute.gpinformatics.infrastructure.parsers.HeaderValueRowTableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -30,8 +34,10 @@ import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.emptyCollectionOf;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 
@@ -39,6 +45,7 @@ import static org.hamcrest.Matchers.not;
 public class PoiSpreadsheetParserTest {
     private static final String POI_TEST_XLS = "poi-test.xls";
     private static final String POI_TEST_XLSX = "poi-test.xlsx";
+    private static final String POI_TEST_HEADER_ROWS = "poi-test-preHeaderRows.xlsx";
     private static final String POI_TEST_TRAILING_BLANK_LINES = "poi-test-trailing-blank-lines.xlsx";
     private static final String POI_TEST_INTERVENING_BLANK_LINES = "poi-test-intervening-blank-lines.xlsx";
 
@@ -65,6 +72,12 @@ public class PoiSpreadsheetParserTest {
         assertThat(testProcessor.getMessages(), emptyCollectionOf(String.class));
         for (Map<String, String> spreadsheetRowValues : testProcessor.getSpreadsheetValues()) {
             PoiSpreadsheetValidator.validateSpreadsheetRow(spreadsheetRowValues, TestHeaders.class);
+            // Header names and values should be trimmed of leading and trailing spaces.
+            for (String headerName : spreadsheetRowValues.keySet()) {
+                Assert.assertEquals(headerName, headerName.trim());
+            }
+            String value = spreadsheetRowValues.get("testname");
+            Assert.assertEquals(value, value.trim());
         }
     }
 
@@ -82,6 +95,27 @@ public class PoiSpreadsheetParserTest {
     public void testParseAndValidateExcelFileTooManyRowsPasses(InputStream testFileInputStream) throws Exception {
         PoiSpreadsheetParser.processSingleWorksheet(testFileInputStream, testProcessor);
         assertThat(testProcessor.getMessages(), emptyCollectionOf(String.class));
+        assertThat(testProcessor.getWarnings(), emptyCollectionOf(String.class));
+    }
+
+    @Test
+    public void testPreHeaderRows() throws Exception {
+        FileInputStream fileInputStream = new FileInputStream(TestUtils.getTestData(POI_TEST_HEADER_ROWS));
+        TestHeaderValueRowProcessor processor = new TestHeaderValueRowProcessor();
+        assertThat(processor.getHeaderRowIndex(), equalTo(-1));
+        processor.setHeaderRowIndex(7);
+        PoiSpreadsheetParser.processSingleWorksheet(fileInputStream, processor);
+        assertThat(processor.getMessages(), emptyCollectionOf(String.class));
+        assertThat(processor.getWarnings().iterator().next(),
+                containsString(String.format(TableProcessor.UNKNOWN_HEADER, "")));
+        assertThat(processor.getHeaderValueMap().get("Collaborator Information"), equalTo("XYZ Collection"));
+        assertThat(processor.getHeaderValueMap().get("First Name:"), equalTo("Abel"));
+        assertThat(processor.getHeaderValueMap().get("Last Name:"), equalTo("Baker"));
+        assertThat(processor.getHeaderValueMap().get("Organization:"), equalTo("The Organization"));
+        assertThat(processor.spreadsheetValues.get(0).get("stringData2"), is("1234"));
+        assertThat(processor.spreadsheetValues.get(1).get("stringData2"), is("5678"));
+        assertThat(processor.spreadsheetValues.get(2).get("stringData2"), is("9012"));
+        assertThat(processor.spreadsheetValues.get(3).get("stringData2"), is("3456"));
         assertThat(testProcessor.getWarnings(), emptyCollectionOf(String.class));
     }
 
@@ -165,7 +199,7 @@ public class PoiSpreadsheetParserTest {
         }
 
         @Override
-        public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
+        public void processRowDetails(Map<String, String> dataRow, int dataRowNumber, boolean requiredValuesPresent) {
             spreadsheetValues.add(dataRow);
         }
 
@@ -181,6 +215,131 @@ public class PoiSpreadsheetParserTest {
 
         public List<Map<String, String>> getSpreadsheetValues() {
             return spreadsheetValues;
+        }
+    }
+
+    private static class TestHeaderValueRowProcessor extends HeaderValueRowTableProcessor {
+        private final List<Map<String, String>> spreadsheetValues = new ArrayList<>();
+
+        enum MyColumnHeaders implements ColumnHeader {
+            rowCount,
+            stringData1,
+            stringData2;
+
+            @Override
+            public String getText() {
+                return name();
+            }
+
+            @Override
+            public boolean isRequiredHeader() {
+                return !name().equals("rowCount");
+            }
+
+            @Override
+            public boolean isRequiredValue() {
+                return !name().equals("rowCount");
+            }
+
+            @Override
+            public boolean isDateColumn() {
+                return false;
+            }
+
+            @Override
+            public boolean isStringColumn() {
+                return true;
+            }
+        }
+
+        enum MyHeaderValueRow implements HeaderValueRow {
+            collaboratorInfo("Collaborator Information"),
+            firstName("First Name:"),
+            lastName("Last Name:"),
+            organization("Organization:");
+
+            private final String text;
+
+            MyHeaderValueRow(String text) {
+                this.text = text;
+            }
+
+            @Override
+            public String getText() {
+                return text;
+            }
+
+            @Override
+            public boolean isRequiredHeader() {
+                return true;
+            }
+
+            @Override
+            public boolean isRequiredValue() {
+                return !name().equals("collaboratorInfo");
+            }
+
+            @Override
+            public boolean isDateColumn() {
+                return false;
+            }
+
+            @Override
+            public boolean isStringColumn() {
+                return true;
+            }
+        }
+
+        private TestHeaderValueRowProcessor() {
+            super(null);
+        }
+
+        @Override
+        public List<String> getHeaderNames() {
+            return new ArrayList<String>() {{
+                for (ColumnHeader columnHeader : MyColumnHeaders.values()) {
+                    add(columnHeader.getText());
+                }
+            }};
+        }
+
+        @Override
+        public void processHeader(List<String> headers, int row) {
+            validateHeaderValueRows();
+            assertThat(getMessages().size(), is(0));
+        }
+
+        @Override
+        public void processRowDetails(Map<String, String> dataRow, int dataRowNumber, boolean requiredValuesPresent) {
+            spreadsheetValues.add(dataRow);
+        }
+
+        @Override
+        protected ColumnHeader[] getColumnHeaders() {
+            return MyColumnHeaders.values();
+        }
+
+        @Override
+        public void close() {
+        }
+
+        @Override
+        public HeaderValueRow[] getHeaderValueRows() {
+            return MyHeaderValueRow.values();
+        }
+
+        @Override
+        public List<String> getHeaderValueNames() {
+            return new ArrayList<String>() {{
+               for (HeaderValueRow headerValueRow : MyHeaderValueRow.values()) {
+                   add(headerValueRow.getText());
+               }
+            }};
+        }
+
+        @Override
+        public int findHeaderRow(Sheet worksheet) {
+            return 0;
         }
     }
 
