@@ -478,11 +478,11 @@ public class ReworkEjbTest extends Arquillian {
         if (pBucket == null) {
 
             pBucket = new Bucket(bucketName);
+            bucketDao.persist(pBucket);
         }
 
         existingReworks = reworkEjb.getVesselsForRework("Pico/Plating Bucket").size();
 
-        bucketDao.persist(pBucket);
         resetExExProductWorkflow();
     }
 
@@ -1097,8 +1097,8 @@ public class ReworkEjbTest extends Arquillian {
             for (BucketEntry currentEntry : currentTube.getBucketEntries()) {
                 currentEntry.setStatus(BucketEntry.Status.Archived);
             }
-            barcodedTubeDao.persist(currentTube);
         }
+        barcodedTubeDao.flush();
 
     }
 
@@ -1177,8 +1177,8 @@ public class ReworkEjbTest extends Arquillian {
             for (BucketEntry currentEntry : currentTube.getBucketEntries()) {
                 currentEntry.setStatus(BucketEntry.Status.Archived);
             }
-            barcodedTubeDao.persist(currentTube);
         }
+        barcodedTubeDao.flush();
 
     }
 
@@ -1235,8 +1235,8 @@ public class ReworkEjbTest extends Arquillian {
             for (BucketEntry currentEntry : currentTube.getBucketEntries()) {
                 currentEntry.setStatus(BucketEntry.Status.Archived);
             }
-            barcodedTubeDao.persist(currentTube);
         }
+        barcodedTubeDao.flush();
 
     }
 
@@ -1299,8 +1299,8 @@ public class ReworkEjbTest extends Arquillian {
             for (BucketEntry currentEntry : currentTube.getBucketEntries()) {
                 currentEntry.setStatus(BucketEntry.Status.Archived);
             }
-            barcodedTubeDao.persist(currentTube);
         }
+        barcodedTubeDao.flush();
 
     }
 
@@ -1445,7 +1445,7 @@ public class ReworkEjbTest extends Arquillian {
             Thread.sleep(2L);
             bucketEntries.add(pBucket.addEntry(exExProductOrder2, barcodedTubeDao.findByBarcode(currEntry.getKey()),
                                                BucketEntry.BucketEntryType.PDO_ENTRY));
-            bucketDao.persist(pBucket);
+            bucketDao.flush();
             for (BucketEntry bucketEntry : bucketEntries) {
                 bucketEntryIds.add(bucketEntry.getBucketEntryId());
             }

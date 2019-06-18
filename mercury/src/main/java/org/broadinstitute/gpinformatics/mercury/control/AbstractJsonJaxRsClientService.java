@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
@@ -52,18 +51,17 @@ public abstract class AbstractJsonJaxRsClientService extends AbstractJaxRsClient
 
         log.trace("POST request: " + request);
 
-        try {
-            Response response = setJsonMimeTypes(webResource).post(Entity.json(request));
-            T ret = response.readEntity(responseGenericType);
-            log.trace("POST response: " + ret);
+        Response response = setJsonMimeTypes(webResource).post(Entity.json(request));
+        if (response.getStatus() >= 300) {
+            String message = response.readEntity(String.class);
+            log.error("POST request: " + request);
             response.close();
-            JaxRsUtils.throwIfError(response);
-            return ret;
-        } catch (WebApplicationException e) {
-            //TODO   Change to a more defined exception to give the option to set in throws or even catch
-            log.error("POST request: " + request, e);
-            throw new RuntimeException(e.getResponse().readEntity(String.class), e);
+            throw new RuntimeException(message);
         }
+        T ret = response.readEntity(responseGenericType);
+        log.trace("POST response: " + ret);
+        response.close();
+        return ret;
     }
 
     /**
@@ -75,15 +73,14 @@ public abstract class AbstractJsonJaxRsClientService extends AbstractJaxRsClient
 
         log.trace("POST request: " + request);
 
-        try {
-            Response response = setJsonMimeTypes(webResource).post(Entity.json(request));
+        Response response = setJsonMimeTypes(webResource).post(Entity.json(request));
+        if (response.getStatus() >= 300) {
+            log.error("POST request: " + request);
+            String message = response.readEntity(String.class);
             response.close();
-            JaxRsUtils.throwIfError(response);
-        } catch (WebApplicationException e) {
-            //TODO  Change to a more defined exception to give the option to set in throws or even catch
-            log.error("POST request: " + request, e);
-            throw new RuntimeException(e.getResponse().readEntity(String.class), e);
+            throw new RuntimeException(message);
         }
+        response.close();
     }
 
     /**
@@ -93,40 +90,43 @@ public abstract class AbstractJsonJaxRsClientService extends AbstractJaxRsClient
     protected void put(WebTarget webResource, Object requestPojo) throws IOException {
         String request = writeValue(requestPojo);
         log.trace("PUT request: " + request);
-        try {
-            Response response = setJsonMimeTypes(webResource).put(Entity.json(request));
+        Response response = setJsonMimeTypes(webResource).put(Entity.json(request));
+        if (response.getStatus() >= 300) {
+            log.error("PUT request: " + request);
+            String message = response.readEntity(String.class);
             response.close();
-        } catch (WebApplicationException e) {
-            //TODO Change to a more defined exception to give the option to set in throws or even catch
-            log.error("PUT request: " + request, e);
-            throw new RuntimeException(e.getResponse().readEntity(String.class), e);
+            throw new RuntimeException(message);
         }
+        response.close();
     }
 
     /**
      * Return a JSON representation of the response to a GET issued to the specified {@link WebTarget}
      */
     protected <T> T get(WebTarget webResource, GenericType<T> genericType) {
-        try {
-            return JaxRsUtils.getAndCheck(setJsonMimeTypes(webResource), genericType);
-        } catch (WebApplicationException e) {
-            //TODO Change to a more defined exception to give the option to set in throws or even catch
-            log.error("GET request" + webResource.getUri(), e);
-            throw new RuntimeException(e.getResponse().readEntity(String.class), e);
+        Response response = setJsonMimeTypes(webResource).get();
+        if (response.getStatus() >= 300) {
+            log.error("GET request" + webResource.getUri());
+            String message = response.readEntity(String.class);
+            response.close();
+            throw new RuntimeException(message);
         }
+        T t = response.readEntity(genericType);
+        response.close();
+        return t;
     }
 
     /**
      * Return a JSON representation of the response to a GET issued to the specified {@link WebTarget}
      */
     protected void delete(WebTarget webResource) {
-        try {
-            Response response = setJsonMimeTypes(webResource).delete();
+        Response response = setJsonMimeTypes(webResource).delete();
+        if (response.getStatus() >= 300) {
+            log.error("DELETE request" + webResource.getUri());
+            String message = response.readEntity(String.class);
             response.close();
-        } catch (WebApplicationException e) {
-            //TODO Change to a more defined exception to give the option to set in throws or even catch
-            log.error("DELETE request" + webResource.getUri(), e);
-            throw new RuntimeException(e.getResponse().readEntity(String.class), e);
+            throw new RuntimeException(message);
         }
+        response.close();
     }
 }
