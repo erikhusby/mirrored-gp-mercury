@@ -195,7 +195,7 @@ public class ProductEjbDBFreeTest {
         Mockito.when(mockWrappedClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(materialSet);
 
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(4)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(3)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(0)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
         SapIntegrationClientImpl.SAPCompanyConfiguration broad = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
@@ -203,6 +203,7 @@ public class ProductEjbDBFreeTest {
         // Mimic creating the product in Sales org GP01 for GP Platform
         materialSet.add(TestUtils.mockMaterialSearch(broad, testProduct));
 
+        testProduct.setOfferedAsCommercialProduct(true);
         productPriceCache.refreshCache();
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
@@ -210,7 +211,7 @@ public class ProductEjbDBFreeTest {
             Since we are mimicking that the product has been published to only one Platform, it will call ChangeMaterial
             for that one, and create material for the other 12
          */
-        Mockito.verify(mockWrappedClient, Mockito.times(7)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(6)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(1)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
         //Loop through all company codes and mimic extending the product to those platforms
@@ -223,12 +224,12 @@ public class ProductEjbDBFreeTest {
         productPriceCache.refreshCache();
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(7)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(6)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(5)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(7)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(6)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(9)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
     }
 
@@ -256,28 +257,29 @@ public class ProductEjbDBFreeTest {
 
         testEjb.publishProductsToSAP(Collections.singleton(testProduct), true, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(4)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(3)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(0)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
         testEjb.publishProductsToSAP(Collections.singleton(testProduct), true, SapIntegrationService.PublishType.CREATE_ONLY);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(8)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(6)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(0)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
         testEjb.publishProductsToSAP(Collections.singleton(testProduct), false, SapIntegrationService.PublishType.CREATE_ONLY);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(10)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(7)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(0)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
         testEjb.publishProductsToSAP(Collections.singleton(testProduct), true, SapIntegrationService.PublishType.UPDATE_ONLY);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(10)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(7)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(0)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
         SapIntegrationClientImpl.SAPCompanyConfiguration broad = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
 
         // Mimic creating the product in Sales org GP01 for GP Platform
         materialSet.add(TestUtils.mockMaterialSearch(broad, testProduct));
+        testProduct.setOfferedAsCommercialProduct(true);
 
         productPriceCache.refreshCache();
         /*
@@ -286,22 +288,22 @@ public class ProductEjbDBFreeTest {
          */
         testEjb.publishProductsToSAP(Collections.singleton(testProduct), true, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(13)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(10)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(1)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
         testEjb.publishProductsToSAP(Collections.singleton(testProduct), true, SapIntegrationService.PublishType.CREATE_ONLY);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(16)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(13)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(1)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
         testEjb.publishProductsToSAP(Collections.singleton(testProduct), false, SapIntegrationService.PublishType.CREATE_ONLY);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(17)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(14)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(1)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
         testEjb.publishProductsToSAP(Collections.singleton(testProduct), true, SapIntegrationService.PublishType.UPDATE_ONLY);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(17)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(14)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(2)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
         //Loop through all company codes and mimic extending the product to those platforms
@@ -314,24 +316,24 @@ public class ProductEjbDBFreeTest {
         productPriceCache.refreshCache();
         testEjb.publishProductsToSAP(Collections.singleton(testProduct), true, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(17)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(14)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(6)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
 
         testEjb.publishProductsToSAP(Collections.singleton(testProduct), true, SapIntegrationService.PublishType.UPDATE_ONLY);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(17)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(14)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(10)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
         testEjb.publishProductsToSAP(Collections.singleton(testProduct), true, SapIntegrationService.PublishType.CREATE_ONLY);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(17)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(14)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(10)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
         testEjb.publishProductsToSAP(Collections.singleton(testProduct), false, SapIntegrationService.PublishType.UPDATE_ONLY);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(17)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(14)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(12)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
         testEjb.publishProductsToSAP(Collections.singleton(testProduct), false, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
         assertThat(testProduct.isSavedInSAP(), is(true));
-        Mockito.verify(mockWrappedClient, Mockito.times(17)).createMaterial(Mockito.any(SAPMaterial.class));
+        Mockito.verify(mockWrappedClient, Mockito.times(14)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(14)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
     }
 

@@ -91,20 +91,6 @@
                         }
                     );
 
-                    $j("#externalPriceItem").tokenInput(
-                        "${ctxpath}/products/product.action?externalPriceItemAutocomplete=&product=${actionBean.editProduct.businessKey}", {
-                            hintText: "Type an External Price Item name",
-                            <enhance:out escapeXml="false">
-                            prePopulate: ${actionBean.ensureStringResult(actionBean.externalPriceItemTokenInput.completeData)},
-                            </enhance:out>
-                            resultsFormatter: formatInput,
-                            tokenLimit: 1,
-                            tokenDelimiter: "${actionBean.externalPriceItemTokenInput.separator}",
-                            preventDuplicates: true,
-                            autoSelectFirstResult: true
-                        }
-                    );
-
                     $j("#addOns").tokenInput(
                         "${ctxpath}/products/product.action?addOnsAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                             hintText: "Type a Product name",
@@ -445,6 +431,23 @@
                                 </c:if>
                             </div>
                         </div>
+
+                        <c:if test="${actionBean.editProduct.SSFProduct}">
+
+                            <div class="control-group">
+                                <stripes:label for="offeredAsCommercialProduct" class="control-label">
+                                    Allow for Commercial Orders
+                                </stripes:label>
+                                <div class="controls">
+                                    <stripes:checkbox id="offeredAsCommercialProduct" name="editProduct.offeredAsCommercialProduct" style="margin-top: 10px;" disabled="${actionBean.productUsedInOrders}"/>
+                                    <c:if test="${actionBean.productUsedInLLCOrders}">
+                                        <stripes:hidden name="editProduct.offeredAsCommercialProduct" value="${actionBean.editProduct.offeredAsCommercialProduct}" />
+                                    </c:if>
+                                </div>
+                            </div>
+                        </c:if>
+
+
                     </security:authorizeBlock>
 
                     <div class="control-group">

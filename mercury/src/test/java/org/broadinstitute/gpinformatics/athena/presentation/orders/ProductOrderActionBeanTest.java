@@ -3824,15 +3824,16 @@ public class ProductOrderActionBeanTest {
 
         actionBean.setEditOrder(pdo);
 
-        actionBean.updateAndValidateQuoteSource();
-
-        if(!quoteMatchSalesOrg || !quoteIsValid) {
-            Assert.assertFalse(actionBean.getValidationErrors().isEmpty(),
-                    "Validation Errors should be thrown in this scneario");
-        } else {
+        try {
+            actionBean.updateAndValidateQuoteSource(ProductOrder.getAllProductsOrdered(pdo));
+            if(quoteMatchSalesOrg && quoteIsValid) {
                 Assert.assertEquals(pdo.getQuoteSource(), expectedSourceType);
                 Assert.assertTrue(actionBean.getValidationErrors().isEmpty(),
                         "No validations should have been thrown in this scenario");
+            } else {
+                Assert.fail("An exception should have been thrown in this case.");
+            }
+        } catch (InvalidProductException e) {
         }
     }
 

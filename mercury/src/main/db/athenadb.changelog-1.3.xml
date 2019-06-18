@@ -65,4 +65,15 @@
             <column name="rev"/>
         </createIndex>
     </changeSet>
+
+    <changeSet id="GPLIM-6362-add-commercial-flag" author="scottmat">
+        <addColumn tableName="PRODUCT" schemaName="ATHENA">
+            <column name="OFFERED_AS_COMMERCIAL" type="number(1,0)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6362-add-commercial-flag-to-audit" author="scottmat">
+        <addColumn tableName="PRODUCT_AUD" schemaName="ATHENA">
+            <column name="OFFERED_AS_COMMERCIAL" type="number(1,0)" />
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
