@@ -158,8 +158,6 @@ public class ManualTransferActionBeanTest {
         PlateType destPlateType = plateTransferEventType.getPlate();
         String destBarcode = "DestPlate";
         destPlateType.setBarcode(destBarcode);
-        when(labVesselDao.findByIdentifier(destBarcode)).thenReturn(
-                new StaticPlate(destBarcode, StaticPlate.PlateType.Plate96Well200));
         actionBean.setStationEvents(stationEvents);
 
         BettaLIMSMessage bettaLIMSMessage = actionBean.buildBettaLIMSMessage();
