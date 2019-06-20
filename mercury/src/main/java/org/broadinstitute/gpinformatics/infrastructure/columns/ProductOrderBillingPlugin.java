@@ -199,19 +199,18 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
      *                through the search process
      * @return Anchor link to the quote definition on the quote server
      */
-    public static String getQuoteLink(QuoteImportItem importItem, SearchContext context) {
+    private String getQuoteLink(QuoteImportItem importItem, SearchContext context) {
 
         StringBuffer quoteLink = new StringBuffer();
-        String quoteId = importItem.getQuoteId();
-        if(StringUtils.isNotBlank(quoteId)) {
+        if(StringUtils.isNotBlank(importItem.getQuoteId())) {
             if(context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB) {
                 quoteLink.append("<a class=\"external\" target=\"QUOTE\" href=\"");
                 if(importItem.isSapOrder()) {
-                    quoteLink.append(context.getSapQuoteLink().sapUrl(quoteId));
+                    quoteLink.append(context.getSapQuoteLink().sapUrl(importItem.getQuoteId()));
                 } else {
-                    quoteLink.append(context.getQuoteLink().quoteUrl(quoteId));
+                    quoteLink.append(context.getQuoteLink().quoteUrl(importItem.getQuoteId()));
                 }
-                quoteLink.append("\">").append(quoteId).append("</a>");
+                quoteLink.append("\">").append(importItem).append("</a>");
             } else {
                 quoteLink.append(importItem);
             }
