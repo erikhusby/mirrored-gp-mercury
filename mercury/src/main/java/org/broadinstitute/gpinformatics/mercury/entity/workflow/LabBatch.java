@@ -556,7 +556,7 @@ public class LabBatch {
         SAMPLES_ON_RISK("Samples On Risk", true),
         RISK_CATEGORIZED_SAMPLES("Risk Categorized Samples", true),
         REWORK_SAMPLES("Rework Samples",true),
-        MERCURY_UDS("Mercury UDS",true),
+        PLATE_MAP_UDS("Plate Map UDS",true),
 
         ISSUE_TYPE_MAP("Issue Type", false),
         ISSUE_TYPE_NAME("name", false),

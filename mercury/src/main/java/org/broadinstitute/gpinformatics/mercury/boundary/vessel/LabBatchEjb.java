@@ -1051,7 +1051,7 @@ public class LabBatchEjb {
             if (byDigest == null) {
                 barcodedTubeDao.persist(tubeFormation);
             }
-            // todo jmt create in-plate event
+            // todo jmt create in-plate event?
 
             LabBatch labBatch = labBatchDao.findByName(lcsetName);
             Map<String, String[]> terms = new HashMap<>();
@@ -1059,12 +1059,12 @@ public class LabBatchEjb {
             StringBuilder linkBuilder = new StringBuilder();
             SearchDefinitionFactory.buildDrillDownHref(
                     ColumnEntity.LAB_VESSEL,
-                    "GLOBAL|GLOBAL_LAB_VESSEL_SEARCH_INSTANCES|LCSET Drill Down",
+                    "GLOBAL|GLOBAL_LAB_VESSEL_SEARCH_INSTANCES|Plate Map Drill Down",
                     terms, linkBuilder, appConfig.getUrl());
             String link = linkBuilder.toString();
             link = StringUtils.replaceEachRepeatedly(link, new String[]{"[", "]", "{", "}", " ", "\"", "|"},
                     new String[]{"%5B", "%5D", "%7B", "%7D", "%20", "%22", "%7C"});
-            CustomField mercuryUrlField = new CustomField( submissionFields, LabBatch.TicketFields.MERCURY_UDS, link);
+            CustomField mercuryUrlField = new CustomField( submissionFields, LabBatch.TicketFields.PLATE_MAP_UDS, link);
             JiraIssue jiraIssue = jiraService.getIssue(labBatch.getJiraTicket().getTicketName());
             jiraIssue.updateIssue(Collections.singleton(mercuryUrlField));
         } catch (IOException e) {
