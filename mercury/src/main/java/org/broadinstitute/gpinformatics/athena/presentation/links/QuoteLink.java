@@ -12,12 +12,8 @@ import javax.inject.Inject;
 public class QuoteLink {
     private static final String QUOTE_DETAILS = "/quotes/quote/Quote.action?viewQuote=&quote.identifier=";
 
-    private QuoteConfig quoteConfig;
-
     @Inject
-    public QuoteLink(QuoteConfig quoteConfig) {
-        this.quoteConfig = quoteConfig;
-    }
+    private QuoteConfig quoteConfig;
 
     public String quoteUrl(String quoteId) {
         return quoteConfig.getUrl() + QUOTE_DETAILS + quoteId;
