@@ -443,6 +443,117 @@ public class LabMetricFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void fixupSupport3463() throws Exception {
+        long[] wrongLabMetricIds = new long[]{
+                335907L,
+                335908L,
+                335909L,
+                335910L,
+                335911L,
+                335912L,
+                335913L,
+                335914L,
+                335915L,
+                335916L,
+                335917L,
+                335918L,
+                335919L,
+                335920L,
+                335921L,
+                335922L,
+                335923L,
+                335924L,
+                335925L,
+                335926L,
+                335927L,
+                335928L,
+                335929L,
+                335930L,
+                335931L,
+                335932L,
+                335933L,
+                335934L,
+                335935L,
+                335936L,
+                335937L,
+                335938L,
+                335939L,
+                335940L,
+                335941L,
+                335942L,
+                335943L,
+                335944L,
+                335945L,
+                335946L,
+                335947L,
+                335948L,
+                335949L,
+                335950L,
+                335951L,
+                335952L,
+                335953L,
+                335954L,
+                335955L,
+                335956L,
+                335957L,
+                335958L,
+                335959L,
+                335960L,
+                335961L,
+                335962L,
+                335963L,
+                335964L,
+                335965L,
+                335966L,
+                335967L,
+                335968L,
+                335969L,
+                335970L,
+                335971L,
+                335972L,
+                335973L,
+                335974L,
+                335975L,
+                335976L,
+                335977L,
+                335978L,
+                335979L,
+                335980L,
+                335981L,
+                335982L,
+                335983L,
+                335984L,
+                335985L,
+                335986L,
+                335987L,
+                335988L,
+                335989L,
+                335990L,
+                335991L,
+                335992L,
+                335993L,
+                335994L,
+                335995L,
+                335996L,
+                335997L,
+                335998L,
+                335999L
+        };
+        userBean.loginOSUser();
+        utx.begin();
+        for (long metricId : wrongLabMetricIds) {
+            LabMetric labMetric = labVesselDao.findById(LabMetric.class, metricId);
+            Assert.assertEquals(labMetric.getName(), LabMetric.MetricType.SHEARING_PICO);
+            Assert.assertEquals(labMetric.getCreatedDate().toString(), "2017-07-26 15:05:00.245");
+            System.out.println("Deleting LabMetric " + labMetric.getLabMetricId());
+            labVesselDao.remove(labMetric);
+        }
+        dao.persist(new FixupCommentary("SUPPORT-3463 delete shearing metric"));
+        dao.flush();
+        utx.commit();
+    }
+
     private void deleteRun(String runName, String reason) {
         LabMetricRun labMetricRun = dao.findByName(runName);
         for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
