@@ -132,7 +132,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.datatables.Datatabl
 import org.broadinstitute.gpinformatics.mercury.presentation.datatables.State;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
-import org.broadinstitute.sap.entity.OrderValue;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.entity.quote.FundingStatus;
 import org.broadinstitute.sap.entity.quote.SapQuote;
@@ -167,6 +166,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -2114,8 +2114,12 @@ public class ProductOrderActionBean extends CoreActionBean {
             Product.setMaterialOnProduct(addOnProduct, productPriceCache);
         }
 
-        List<Product> allProducts = new ArrayList<>(addOnProducts);
-        allProducts.add(product);
+        List<Product> allProducts = new ArrayList<>();
+
+        addOnProducts.stream().filter(Objects::nonNull).forEach(allProducts::add);
+        if(product !=null) {
+            allProducts.add(product);
+        }
 
         try {
             updateAndValidateQuoteSource(allProducts);
@@ -3642,18 +3646,22 @@ public class ProductOrderActionBean extends CoreActionBean {
 
                         for (Product orderProduct : products) {
 
-                            Optional<SAPMaterial> materialForSalesOrg = Optional.ofNullable(productPriceCache
-                                    .findByProduct(orderProduct, salesOrganization));
-                            if (!materialForSalesOrg.isPresent()) {
-                                canSwitch = false;
-                                final String errorMessage = String.format("%s is invalid for your quote %s because "
-                                                                          + "the product is not available for that quotes sales"
-                                                                          + " organization (%s).  Please check either"
-                                                                          + " the selected product or the quote you"
-                                                                          + " are using.",
-                                        orderProduct.getDisplayName(), quote.getQuoteHeader().getQuoteNumber(),
-                                        sapCompanyConfiguration.orElse(SapIntegrationClientImpl.SAPCompanyConfiguration.UNKNOWN).getDisplayName());
-                                throw new InvalidProductException(errorMessage);
+                            Optional<Product> currentProduct = Optional.ofNullable(orderProduct);
+
+                            if (currentProduct.isPresent()) {
+                                Optional<SAPMaterial> materialForSalesOrg = Optional.ofNullable(productPriceCache
+                                        .findByProduct(currentProduct.get(), salesOrganization));
+                                if (!materialForSalesOrg.isPresent()) {
+                                    canSwitch = false;
+                                    final String errorMessage = String.format("%s is invalid for your quote %s because "
+                                                                              + "the product is not available for that quotes sales"
+                                                                              + " organization (%s).  Please check either"
+                                                                              + " the selected product or the quote you"
+                                                                              + " are using.",
+                                            currentProduct.get().getDisplayName(), quote.getQuoteHeader().getQuoteNumber(),
+                                            sapCompanyConfiguration.orElse(SapIntegrationClientImpl.SAPCompanyConfiguration.UNKNOWN).getDisplayName());
+                                    throw new InvalidProductException(errorMessage);
+                                }
                             }
                         }
 
