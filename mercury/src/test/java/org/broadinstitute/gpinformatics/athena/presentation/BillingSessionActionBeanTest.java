@@ -1,7 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.presentation;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import net.sourceforge.stripes.mock.MockRoundtrip;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingAdaptor;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
@@ -31,6 +33,7 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
@@ -40,6 +43,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.emptyCollectionOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
@@ -113,13 +117,7 @@ public class BillingSessionActionBeanTest {
 
     @DataProvider(name = "billingMessageProvider")
     public Iterator<Object[]> billingMessageProvider() throws SAPIntegrationException {
-        billingSessionActionBean = new BillingSessionActionBean();
-        quoteServerConfig = QuoteConfig.produce(Deployment.DEV);
-        QuoteLink quoteLink = new QuoteLink(quoteServerConfig);
-        billingSessionActionBean.setQuoteLink(quoteLink);
-        sapConfig = SapConfig.produce(Deployment.DEV);
-        SapQuoteLink sapQuoteLink = new SapQuoteLink(sapConfig);
-        billingSessionActionBean.setSapQuoteLink(sapQuoteLink);
+        initBillingSessionActionBean();
         String qsQuoteId = "GPP1234";
         String sapQuoteId = "2700001";
         String sapQuoteId2 = "2700002";
@@ -158,6 +156,16 @@ public class BillingSessionActionBeanTest {
         testCases.add(new Object[]{Arrays.asList(sapQuoteImportItem, quoteServerImportItem, sapQuoteImportItem2)});
 
         return testCases.iterator();
+    }
+
+    public void initBillingSessionActionBean() {
+        billingSessionActionBean = new BillingSessionActionBean();
+        quoteServerConfig = QuoteConfig.produce(Deployment.DEV);
+        QuoteLink quoteLink = new QuoteLink(quoteServerConfig);
+        billingSessionActionBean.setQuoteLink(quoteLink);
+        sapConfig = SapConfig.produce(Deployment.DEV);
+        SapQuoteLink sapQuoteLink = new SapQuoteLink(sapConfig);
+        billingSessionActionBean.setSapQuoteLink(sapQuoteLink);
     }
 
 
@@ -199,5 +207,83 @@ public class BillingSessionActionBeanTest {
             assertThat(stringMessageReporter.getMessages(), hasItem(startsWith(messageStartsWith)));
             assertThat(stringMessageReporter.getMessages(), hasItem(containsString(url)));
         }));
+    }
+
+    public void testGetQuoteLinkSap() throws Exception {
+        initBillingSessionActionBean();
+        QuoteImportItem quoteImportItem = getQuoteImportItem("01234", ProductOrder.QuoteSourceType.SAP_SOURCE);
+        Multimap<ProductOrder.QuoteSourceType, String> quoteLink =
+            billingSessionActionBean.getQuoteLink(quoteImportItem);
+        Collection<String> strings = quoteLink.get(ProductOrder.QuoteSourceType.SAP_SOURCE);
+        assertThat(strings.size(), is(1));
+        assertThat(quoteLink.get(ProductOrder.QuoteSourceType.QUOTE_SERVER), emptyCollectionOf(String.class));
+
+    }
+
+
+    public void testGetQuoteLinkQsQuote() throws Exception {
+        initBillingSessionActionBean();
+        QuoteImportItem quoteImportItem = getQuoteImportItem("QS-1", ProductOrder.QuoteSourceType.QUOTE_SERVER);
+        Multimap<ProductOrder.QuoteSourceType, String> quoteLink = billingSessionActionBean.getQuoteLink(quoteImportItem);
+
+        Collection<String> strings = quoteLink.get(ProductOrder.QuoteSourceType.QUOTE_SERVER);
+        assertThat(strings.size(), is(1));
+        assertThat(quoteLink.get(ProductOrder.QuoteSourceType.SAP_SOURCE), emptyCollectionOf(String.class));
+    }
+
+    public void testGetQuoteLinkQsAndSapQuote() throws Exception {
+        initBillingSessionActionBean();
+        QuoteImportItem quoteImportItem = getQuoteImportItem("QS-1", ProductOrder.QuoteSourceType.QUOTE_SERVER);
+
+        Multimap<ProductOrder.QuoteSourceType, String> quoteLink =
+            billingSessionActionBean.getQuoteLink(quoteImportItem);
+        quoteImportItem = getQuoteImportItem("1234", ProductOrder.QuoteSourceType.SAP_SOURCE);
+
+        quoteLink.putAll(billingSessionActionBean.getQuoteLink(quoteImportItem));
+        Collection<String> strings = quoteLink.get(ProductOrder.QuoteSourceType.QUOTE_SERVER);
+
+        assertThat(strings.size(), is(1));
+        strings = strings = quoteLink.get(ProductOrder.QuoteSourceType.SAP_SOURCE);
+
+        assertThat(strings.size(), is(1));
+    }
+
+    public void testGetQuoteLinkNoQsAndTwoSapQuote() throws Exception {
+        initBillingSessionActionBean();
+        QuoteImportItem quoteImportItem = getQuoteImportItem("1234", ProductOrder.QuoteSourceType.SAP_SOURCE);
+
+        Multimap<ProductOrder.QuoteSourceType, String> quoteLink = billingSessionActionBean.getQuoteLink(quoteImportItem);
+        quoteImportItem = getQuoteImportItem("2345", ProductOrder.QuoteSourceType.SAP_SOURCE);
+
+        quoteLink.putAll(billingSessionActionBean.getQuoteLink(quoteImportItem));
+
+        assertThat(quoteLink.get(ProductOrder.QuoteSourceType.QUOTE_SERVER), emptyCollectionOf(String.class));
+
+        Collection<String> strings = quoteLink.get(ProductOrder.QuoteSourceType.SAP_SOURCE);
+
+        assertThat(strings.size(), is(2));
+    }
+
+    public void testGetQuoteLinkNoQsAndTwoSapIdenticalQuote() throws Exception {
+        initBillingSessionActionBean();
+        QuoteImportItem quoteImportItem = getQuoteImportItem("1234", ProductOrder.QuoteSourceType.SAP_SOURCE);
+
+        Multimap<ProductOrder.QuoteSourceType, String> quoteLink = billingSessionActionBean.getQuoteLink(quoteImportItem);
+        quoteImportItem = getQuoteImportItem("1234", ProductOrder.QuoteSourceType.SAP_SOURCE);
+
+        quoteLink.putAll(billingSessionActionBean.getQuoteLink(quoteImportItem));
+
+        assertThat(quoteLink.get(ProductOrder.QuoteSourceType.QUOTE_SERVER), emptyCollectionOf(String.class));
+
+        Collection<String> strings = quoteLink.get(ProductOrder.QuoteSourceType.SAP_SOURCE);
+
+        assertThat(strings.size(), is(1));
+    }
+
+    public QuoteImportItem getQuoteImportItem(String quoteId, ProductOrder.QuoteSourceType quoteServer) {
+        ProductOrder pdo = ProductOrderTestFactory.createDummyProductOrder("PDO-1234");
+        pdo.setQuoteSource(quoteServer);
+        pdo.setQuoteId(quoteId);
+        return new QuoteImportItem(quoteId, new PriceItem(), null, Collections.emptyList(), new Date(), null, pdo);
     }
 }

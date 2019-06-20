@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.presentation.billing;
 
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import net.sourceforge.stripes.action.ActionBeanContext;
 import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.Before;
@@ -12,7 +14,6 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
@@ -29,15 +30,12 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.athena.presentation.links.SapQuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.columns.ProductOrderBillingPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
-import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
-import org.broadinstitute.gpinformatics.mercury.presentation.datatables.Search;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -234,21 +232,8 @@ public class BillingSessionActionBean extends CoreActionBean {
             if (billingResult.isError()) {
                 errorsInBilling = true;
                 addGlobalValidationError(billingResult.getErrorMessage());
-
             } else {
-                SearchContext context = new SearchContext();
-                context.setResultCellTargetPlatform(SearchContext.ResultCellTargetPlatform.WEB);
-                context.setQuoteLink(quoteLink);
-                context.setSapQuoteLink(sapQuoteLink);
-
-                ProductOrder.QuoteSourceType quoteSourceType = ProductOrder.QuoteSourceType.SAP_SOURCE;
-                boolean isSapOrder = billingResult.getQuoteImportItem().isSapOrder();
-                if (!isSapOrder) {
-                    quoteSourceType = ProductOrder.QuoteSourceType.QUOTE_SERVER;
-                }
-
-                String quoteLink = ProductOrderBillingPlugin.getQuoteLink(billingResult.getQuoteImportItem(), context);
-                billingDestinationMap.put(quoteSourceType, quoteLink);
+                billingDestinationMap.putAll(getQuoteLink(billingResult.getQuoteImportItem()));
             }
         }
         billingDestinationMap.asMap().entrySet().stream().collect(
@@ -274,6 +259,20 @@ public class BillingSessionActionBean extends CoreActionBean {
         return errorsInBilling;
     }
 
+    public Multimap<ProductOrder.QuoteSourceType, String> getQuoteLink(QuoteImportItem quoteImportItem) {
+        Multimap<ProductOrder.QuoteSourceType, String> quoteMap = HashMultimap.create();
+        StringBuffer quoteLinkBuffer = new StringBuffer("<a class='external' target='QUOTE' href='");
+        ProductOrder.QuoteSourceType quoteSourceType = ProductOrder.QuoteSourceType.SAP_SOURCE;
+        if (quoteImportItem.isSapOrder()) {
+            quoteLinkBuffer.append(sapQuoteLink.sapUrl(quoteImportItem.getQuoteId()));
+        } else {
+            quoteLinkBuffer.append(quoteLink.quoteUrl(quoteImportItem.getQuoteId()));
+            quoteSourceType = ProductOrder.QuoteSourceType.QUOTE_SERVER;
+        }
+        quoteLinkBuffer.append("'>").append(quoteImportItem.getQuoteId()).append("</a>");
+        quoteMap.put(quoteSourceType, quoteLinkBuffer.toString());
+        return quoteMap;
+    }
 
     @HandlesEvent("endSession")
     public Resolution endSession() {
