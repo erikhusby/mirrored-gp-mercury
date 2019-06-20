@@ -92,7 +92,6 @@ import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -1031,7 +1030,12 @@ public class LabBatchEjb {
         }
     }
 
-    public void linkLcsetToUds(String lcsetName, LinkedHashMap<String, String> rackScan) {
+    /**
+     * In the LCSET ticket, set a field that links back to a User Defined Search that shows a plate map.
+     * @param lcsetName which LCSET to update
+     * @param rackScan  the positions of the tubes after the positive control is added
+     */
+    public void linkLcsetToUds(String lcsetName, Map<String, String> rackScan) {
         try {
             SearchContext context = new SearchContext();
             StringBuffer baseSearchURL = new StringBuffer();
