@@ -1829,16 +1829,17 @@ public class ProductOrderFixupTest extends Arquillian {
 
     private void addOrspToPdo(String pdoKey, String orspId) throws Exception {
         final ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoKey);
+        Assert.assertNotNull(productOrder);
         final Optional<RegulatoryInfo> foundInfo = productOrder.getResearchProject().getRegulatoryInfos().stream()
                 .filter(regulatoryInfo -> StringUtils.equals(regulatoryInfo.getIdentifier(), orspId)).collect(
                         MoreCollectors.toOptional());
 
-        foundInfo.ifPresent(regulatoryInfo -> {
-            productOrder.setSkipRegulatoryReason(null);
-            productOrder.addRegulatoryInfo(regulatoryInfo);
-            System.out.println(String.format("Added %s to order %s", regulatoryInfo.getIdentifier(),
-                    productOrder.getJiraTicketKey()));
-        });
+        Assert.assertTrue(foundInfo.isPresent());
+
+        productOrder.setSkipRegulatoryReason(null);
+        productOrder.addRegulatoryInfo(foundInfo.get());
+
+        System.out.println(String.format("Added %s to order %s", foundInfo.get(), productOrder.getJiraTicketKey()));
     }
 
     /**
