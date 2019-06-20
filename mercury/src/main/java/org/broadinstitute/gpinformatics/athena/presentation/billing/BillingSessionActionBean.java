@@ -266,7 +266,8 @@ public class BillingSessionActionBean extends CoreActionBean {
         if (quoteImportItem.isSapOrder()) {
             quoteLinkBuffer.append(sapQuoteLink.sapUrl(quoteImportItem.getQuoteId()));
         } else {
-            quoteLinkBuffer.append(quoteLink.quoteUrl(quoteImportItem.getQuoteId()));
+            String workItem = Optional.ofNullable(quoteImportItem.getSingleWorkItem()).orElse("");
+            quoteLinkBuffer.append(quoteLink.workUrl(quoteImportItem.getQuoteId(), workItem));
             quoteSourceType = ProductOrder.QuoteSourceType.QUOTE_SERVER;
         }
         quoteLinkBuffer.append("'>").append(quoteImportItem.getQuoteId()).append("</a>");
