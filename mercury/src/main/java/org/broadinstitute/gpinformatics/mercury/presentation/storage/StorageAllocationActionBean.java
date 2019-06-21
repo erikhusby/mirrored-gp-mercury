@@ -7,10 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -107,10 +104,22 @@ public class StorageAllocationActionBean extends CoreActionBean {
     }
 
     /**
-     * Freezer list for initial accordion layout
+     * Freezer list for initial accordion layout filtered by applicability to storage allocation capacity logic
      */
     public List<StorageLocation> getRootLocations(){
-        return storageLocationDao.findRootLocations();
+        List<StorageLocation> rootLocations = storageLocationDao.findRootLocations();
+        for(Iterator<StorageLocation> iter = rootLocations.iterator(); iter.hasNext(); ) {
+            StorageLocation storageLocation = iter.next();
+            if( storageLocation.getLocationType() != StorageLocation.LocationType.FREEZER
+                    && storageLocation.getLocationType() != StorageLocation.LocationType.REFRIGERATOR ) {
+                // Allocation valid only for freezers and fridges
+                iter.remove();
+            } else if (storageLocation.getLabel().equals("BSP LN2 2")){
+                // Allocation useless for Cryostraw LN2 tank
+                iter.remove();
+            }
+        }
+        return rootLocations;
     }
 
     public void setStorageLocationId(Long storageLocationId) {

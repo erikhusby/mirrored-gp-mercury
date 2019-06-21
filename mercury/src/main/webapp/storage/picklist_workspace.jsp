@@ -174,7 +174,7 @@
                 var doBatchSplit = $j("#cbSplitRacks").prop( "checked" );
                 var tubesPerRack = Number( $j("#txtTubesPerRack").val() );
                 if( tubesPerRack !== tubesPerRack || tubesPerRack == 0 ) {
-                    alert( "Invalid tubes per rack value.");
+                    showAlertDialog( "Error", "Invalid tubes per rack value.");
                     evt.delegateTarget.focus();
                     return false;
                 }
