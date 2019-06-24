@@ -476,8 +476,8 @@ public class MetricsViewActionBean extends RackScanActionBean {
                 addOption("Fail", "-3", RED).
                 addOption("Not Comparable", String.valueOf(Integer.MIN_VALUE), YELLOW).build();
 
-        List<Options> hapMapConcordanceOptions = new OptionsBuilder().addOption(">= 90", "90", GREEN).
-                addOption(">= 85", "85", YELLOW).
+        List<Options> hapMapConcordanceOptions = new OptionsBuilder().addOption(">= 98", "98", GREEN).
+                addOption(">= 95", "95", YELLOW).
                 addOption("Fail", "0", RED).build();
 
         List<Options> emptyOptions = new OptionsBuilder().build();
