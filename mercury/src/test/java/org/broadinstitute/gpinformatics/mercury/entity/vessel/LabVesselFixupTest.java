@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
@@ -91,6 +92,9 @@ public class LabVesselFixupTest extends Arquillian {
 
     @Inject
     private ReagentDesignDao reagentDesignDao;
+
+    @Inject
+    private IlluminaFlowcellDao illuminaFlowcellDao;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -1759,12 +1763,8 @@ public class LabVesselFixupTest extends Arquillian {
             if(fields.length != 3) {
                 throw new RuntimeException("Expected three white-space separated fields in " + flowcellUpdateLines.get(i));
             }
-            LabVessel labVessel = labVesselDao.findByIdentifier(fields[0]);
-            if (!OrmUtil.proxySafeIsInstance(labVessel, IlluminaFlowcell.class)) {
-                throw new RuntimeException("Expect label to belong to an Illumina Flowcell");
-            }
-
-            IlluminaFlowcell illuminaFlowcell = OrmUtil.proxySafeCast(labVessel, IlluminaFlowcell.class);
+            IlluminaFlowcell illuminaFlowcell = illuminaFlowcellDao.findByBarcode(fields[0]);
+            Assert.assertNotNull(illuminaFlowcell);
 
             IlluminaFlowcell.FlowcellType oldFcType = IlluminaFlowcell.FlowcellType.valueOf(fields[1]);
             Assert.assertEquals(illuminaFlowcell.getFlowcellType(), oldFcType);
