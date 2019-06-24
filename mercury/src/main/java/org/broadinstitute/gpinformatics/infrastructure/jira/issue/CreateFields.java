@@ -151,6 +151,7 @@ public class CreateFields extends UpdateFields {
         EXOME_EXPRESS("Exome Express"),
         MICROBIAL("Microbial"),
         GERMLINE_EXOME("Germline Exome"),
+        SOMATIC_EXOME("Somatic Exome"),
         CDNA_TRUSEQ_SS("cDNA TruSeq Strand Specific Large Insert"),
         CDNA_LASSO("Lasso"),
         PRODUCT_ORDER("Product Order"),
