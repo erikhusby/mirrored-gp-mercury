@@ -262,13 +262,13 @@ public class BillingSessionActionBean extends CoreActionBean {
     public Multimap<ProductOrder.QuoteSourceType, String> getQuoteLink(QuoteImportItem quoteImportItem) {
         Multimap<ProductOrder.QuoteSourceType, String> quoteMap = HashMultimap.create();
         StringBuffer quoteLinkBuffer = new StringBuffer("<a class='external' target='QUOTE' href='");
-        ProductOrder.QuoteSourceType quoteSourceType = ProductOrder.QuoteSourceType.SAP_SOURCE;
+        ProductOrder.QuoteSourceType quoteSourceType = quoteImportItem.getProductOrder().getQuoteSource();
+
         if (quoteImportItem.isSapOrder()) {
             quoteLinkBuffer.append(sapQuoteLink.sapUrl(quoteImportItem.getQuoteId()));
         } else {
             String workItem = Optional.ofNullable(quoteImportItem.getSingleWorkItem()).orElse("");
             quoteLinkBuffer.append(quoteLink.workUrl(quoteImportItem.getQuoteId(), workItem));
-            quoteSourceType = ProductOrder.QuoteSourceType.QUOTE_SERVER;
         }
         quoteLinkBuffer.append("'>").append(quoteImportItem.getQuoteId()).append("</a>");
         quoteMap.put(quoteSourceType, quoteLinkBuffer.toString());
