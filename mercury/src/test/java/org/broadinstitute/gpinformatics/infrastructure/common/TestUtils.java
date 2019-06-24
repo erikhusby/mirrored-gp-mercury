@@ -165,7 +165,6 @@ public class TestUtils {
         } catch (SAPInterfaceException e) {
 
         }
-        billingOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
         return sapQuote;
     }
 
