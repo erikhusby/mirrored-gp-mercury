@@ -471,4 +471,43 @@ public class LedgerEntryFixupTest extends Arquillian {
         utx.commit();
     }
 
+   @Test(enabled = false)
+    public void support5484ReverseIncorrectQuantity() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        String workItem = "330679";
+        List <LedgerEntry> entryToCorrect= ledgerEntryFixupDao.findList(LedgerEntry.class, LedgerEntry_.workItem, workItem);
+        String quote = "MMMPM1";
+        entryToCorrect.forEach(ledgerEntry -> Assert.assertEquals(ledgerEntry.getQuoteId(), quote));
+
+        final Set<PriceItem> collectedPriceItem =
+                entryToCorrect.stream().map(LedgerEntry::getPriceItem).collect(Collectors.toSet());
+        final Set<Date> collectedWorkCompleteDate =
+                entryToCorrect.stream().map(LedgerEntry::getWorkCompleteDate).collect(Collectors.toSet());
+
+        Quote quoteByAlphaId = null;
+        try {
+            quoteByAlphaId = quoteService.getQuoteByAlphaId(quote);
+        } catch (QuoteServerException | QuoteNotFoundException e) {
+            Assert.fail();
+        }
+        String fixupMessage = String.format("SUPPORT-5484 Reverse samples billed in Quotes (workItem %s, Quote %s)", workItem, quote);
+
+        final String correction = quoteService.registerNewSAPWork(quoteByAlphaId,
+                QuotePriceItem.convertMercuryPriceItem(collectedPriceItem.iterator().next()), null,
+                collectedWorkCompleteDate.iterator().next(), -5.25,
+                "https://gpinfojira.broadinstitute.org/jira/browse/SUPPORT-5484",
+                "correction", "SUPPORT-5484", null);
+
+        final Map<ProductOrderSample, List<LedgerEntry>> ledgersByProductOrderSample =
+                entryToCorrect.stream().collect(Collectors.groupingBy(LedgerEntry::getProductOrderSample));
+
+        ledgersByProductOrderSample.forEach((productOrderSample, ledgerEntries) -> productOrderSample.getLedgerItems().removeAll(ledgerEntries));
+
+        String messageWithCorrection = String.format("%s %s", fixupMessage, correction);
+        System.out.println(messageWithCorrection);
+        ledgerEntryFixupDao.persist(new FixupCommentary(messageWithCorrection));
+        utx.commit();
+    }
+
 }
