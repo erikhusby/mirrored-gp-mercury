@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
@@ -24,6 +25,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample_;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -90,6 +92,9 @@ public class LabVesselFixupTest extends Arquillian {
 
     @Inject
     private ReagentDesignDao reagentDesignDao;
+
+    @Inject
+    private IlluminaFlowcellDao illuminaFlowcellDao;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -1738,6 +1743,40 @@ public class LabVesselFixupTest extends Arquillian {
         }
 
         labVesselDao.persist(new FixupCommentary(lines.get(0)));
+        labVesselDao.flush();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/UpdateFlowcellType.txt,
+     * so it can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * GPLIM-6422 changed fc type from Nova S1 to MiSeq
+     * CDR7F NovaSeqS1Flowcell MiSeqFlowcell
+     */
+    @Test(enabled = false)
+    public void fixupGplim6422UpdateFCType() throws Exception {
+        userBean.loginOSUser();
+
+        List<String> flowcellUpdateLines = IOUtils.readLines(VarioskanParserTest.getTestResource("UpdateFlowcellType.txt"));
+
+        for(int i = 1; i < flowcellUpdateLines.size(); i++) {
+            String[] fields = LabVesselFixupTest.WHITESPACE_PATTERN.split(flowcellUpdateLines.get(i));
+            if(fields.length != 3) {
+                throw new RuntimeException("Expected three white-space separated fields in " + flowcellUpdateLines.get(i));
+            }
+            IlluminaFlowcell illuminaFlowcell = illuminaFlowcellDao.findByBarcode(fields[0]);
+            Assert.assertNotNull(illuminaFlowcell);
+
+            IlluminaFlowcell.FlowcellType oldFcType = IlluminaFlowcell.FlowcellType.valueOf(fields[1]);
+            Assert.assertEquals(illuminaFlowcell.getFlowcellType(), oldFcType);
+
+            IlluminaFlowcell.FlowcellType newFcType = IlluminaFlowcell.FlowcellType.valueOf(fields[2]);
+
+            System.out.println("Changing " + illuminaFlowcell.getLabel() + " FC Type from " + oldFcType.getDisplayName()
+                                                                         + " to " + newFcType.getDisplayName());
+            illuminaFlowcell.setFlowcellType(newFcType);
+        }
+
+        labVesselDao.persist(new FixupCommentary(flowcellUpdateLines.get(0)));
         labVesselDao.flush();
     }
 
