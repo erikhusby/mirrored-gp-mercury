@@ -3,13 +3,11 @@ package org.broadinstitute.gpinformatics.athena.presentation;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import net.sourceforge.stripes.mock.MockRoundtrip;
-import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingAdaptor;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
@@ -26,7 +24,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
-import org.hamcrest.Matchers;
 import org.mockito.Mockito;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -41,8 +38,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.emptyCollectionOf;
 import static org.hamcrest.Matchers.equalTo;
@@ -127,10 +122,10 @@ public class BillingSessionActionBeanTest {
         LedgerEntry ledgerEntry = Mockito.mock(LedgerEntry.class);
 
         ProductOrder quoteServerProductOrder = ProductOrderTestFactory.createDummyProductOrder("2345");
-        quoteServerProductOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
+        quoteServerProductOrder.setQuoteId(qsQuoteId);
 
         ProductOrder sapProductOrder = ProductOrderTestFactory.createDummyProductOrder("3456");
-        sapProductOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
+        sapProductOrder.setQuoteId(sapQuoteId);
 
         QuoteImportItem quoteServerImportItem =
             new QuoteImportItem(qsQuoteId, new PriceItem(qsQuoteId, null, null, null), "",
@@ -301,7 +296,6 @@ public class BillingSessionActionBeanTest {
 
     public QuoteImportItem getQuoteImportItem(String quoteId, ProductOrder.QuoteSourceType quoteSourceType) {
         ProductOrder pdo = ProductOrderTestFactory.createDummyProductOrder("PDO-1234");
-        pdo.setQuoteSource(quoteSourceType);
         pdo.setQuoteId(quoteId);
         List<LedgerEntry> ledgerItems = new ArrayList<>();
         if (!quoteSourceType.isSapType()){

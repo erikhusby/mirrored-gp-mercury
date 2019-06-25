@@ -611,14 +611,17 @@ public class ProductOrderTest {
 
     public void testSapOrderStatus() throws Exception {
         ProductOrder stateCheckOrder = ProductOrderTestFactory.createDummyProductOrder();
+        stateCheckOrder.setQuoteId(null);
         assertThat(stateCheckOrder.hasSapQuote(), is(equalTo(false)));
         assertThat(stateCheckOrder.hasQuoteServerQuote(), is(equalTo(false)));
-        assertThat(stateCheckOrder.isQuoteIdSet(), is(equalTo(true)));
+        assertThat(stateCheckOrder.isQuoteIdSet(), is(equalTo(false)));
 
+        stateCheckOrder.setQuoteId("GPP71");
         assertThat(stateCheckOrder.hasSapQuote(), is(equalTo(false)));
         assertThat(stateCheckOrder.hasQuoteServerQuote(), is(equalTo(true)));
         assertThat(stateCheckOrder.isQuoteIdSet(), is(equalTo(true)));
 
+        stateCheckOrder.setQuoteId("2700039");
         assertThat(stateCheckOrder.hasSapQuote(), is(equalTo(true)));
         assertThat(stateCheckOrder.hasQuoteServerQuote(), is(equalTo(false)));
         assertThat(stateCheckOrder.isQuoteIdSet(), is(equalTo(true)));
