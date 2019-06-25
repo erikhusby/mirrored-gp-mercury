@@ -97,7 +97,7 @@ public class ProductOrderListEntry implements Serializable {
     // This is called through reflection and only appears to be unused.
     public ProductOrderListEntry(Long orderId, String title, String jiraTicketKey, ProductOrder.OrderStatus orderStatus,
                                  Product product, String researchProjectTitle, Long ownerId,
-                                 Date placedDate, Integer laneCount, String quoteId, ProductOrder.OrderAccessType orderType, ProductOrder.QuoteSourceType quoteSourceType) {
+                                 Date placedDate, Integer laneCount, String quoteId, ProductOrder.OrderAccessType orderType) {
 
         // No billing session and a the constructed count is set to 0 because it is not used for this constructor.
         this(orderId, title, jiraTicketKey, orderStatus, product, researchProjectTitle, ownerId, placedDate,
