@@ -841,8 +841,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
         for (String destinationBarcode : destinationBarcodes) {
             if (labelLabVesselMap.get(destinationBarcode) != null) {
-                messageCollection.addError("Destination " + destinationBarcode
-                                           + " is in the database and has seen transfers.");
+                messageCollection.addError("Unable to use destination " + destinationBarcode
+                                           + " as it is in the database and has seen transfers.");
             }
         }
     }

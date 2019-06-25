@@ -352,10 +352,12 @@ public enum LabEventType {
 
     PIZZABOX_DAUGHTER_TRANSFER("PizzaBoxDaughterTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP_APPLY_SM_IDS, VolumeConcUpdate.BSP_AND_MERCURY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP_APPLY_SM_IDS,
+            VolumeConcUpdate.BSP_AND_MERCURY,
             new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT, RackOfTubes.RackType.values(),
                     RackOfTubes.RackType.values()).sourceVolume(true).targetVolume(true).requireSingleParticipant(true).
-                    destinationMarkStockOptions(new MarkStock[] {MarkStock.ActiveStock, MarkStock.BackupStock, MarkStock.ReservedStock}).build(),
+                    destinationMarkStockOptions(new MarkStock[]{MarkStock.ActiveStock, MarkStock.BackupStock,
+                            MarkStock.ReservedStock, MarkStock.None}).build(),
             LibraryType.NONE_ASSIGNED, SourceHandling.TERMINATE_DEPLETED, true),
 
     // Dev Samples
@@ -2830,46 +2832,6 @@ public enum LabEventType {
             Matcher matcher = getBarcodePattern().matcher(barcode);
             return matcher.matches();
         }
-    }
-
-    /**
-     * Used to track allowed Stock Types to be used when passing to BSP if necessary.
-     */
-    public enum StockSampleType {
-        None("Not Stock"),
-        ActiveStock("Active Stock"),
-        BackupStock("Backup Stock"),
-        ReservedStock("Reserved Stock");
-
-        private final String name; // the charge type associated with the sample kit type
-
-        /**
-         * Constructor that sets a charge type for the enum.
-         */
-        private StockSampleType(String name) {
-            this.name = name;
-        }
-
-        public String getEnumName() {
-            return name();
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public static StockSampleType getByName(String name) {
-            for (StockSampleType stockSampleType : StockSampleType.values()) {
-                if (stockSampleType.getName().equals(name)) {
-                    return stockSampleType;
-                }
-            }
-            return null;
-        }
-    }
-
-    public List<StockSampleType> getStockTypes() {
-        return Arrays.asList(StockSampleType.values());
     }
 
     private final LibraryType libraryType;

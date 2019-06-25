@@ -1,5 +1,4 @@
 <%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTransferActionBean" %>
-<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.StockSampleType" %>
 <%--
 This fragment is used by manual_transfer.jsp to re-use code when displaying a source plate / rack and a target
 plate / rack.
