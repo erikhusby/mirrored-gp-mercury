@@ -194,7 +194,6 @@ public class BillingCreditDbFreeTest {
     public void testCreateBillingCreditRequest(ProductOrder.QuoteSourceType quoteSourceType)
             throws Exception {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
-        pdo.setQuoteSource(quoteSourceType);
         if(quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
             pdo.setQuoteId("00029338");
         }
@@ -284,7 +283,6 @@ public class BillingCreditDbFreeTest {
     public void testCreateBillingCreditRequestNoFunding(ProductOrder.QuoteSourceType quoteSourceType)
             throws Exception {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
-        pdo.setQuoteSource(quoteSourceType);
         if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
             pdo.setQuoteId("99339288");
         }
@@ -386,7 +384,6 @@ public class BillingCreditDbFreeTest {
     @Test(dataProvider = "sapOrQuoteProvider")
     public void testNegativeBilling(ProductOrder.QuoteSourceType quoteSourceType) throws Exception {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
-        pdo.setQuoteSource(quoteSourceType);
         if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
             pdo.setQuoteId("99339288");
         }
@@ -442,7 +439,6 @@ public class BillingCreditDbFreeTest {
     @Test(dataProvider = "sapOrQuoteProvider")
     public void testPositiveBilling(ProductOrder.QuoteSourceType quoteSourceType) throws Exception {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
-        pdo.setQuoteSource(quoteSourceType);
         if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
             pdo.setQuoteId("99339288");
         }
@@ -505,7 +501,6 @@ public class BillingCreditDbFreeTest {
     public void testMoreNegativeThanPositiveBillingPositiveFirst(ProductOrder.QuoteSourceType quoteSourceType)
             throws Exception {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
-        pdo.setQuoteSource(quoteSourceType);
         if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
             pdo.setQuoteId("99339288");
         }
