@@ -465,7 +465,7 @@ public class BSPRestSender implements Serializable {
                     List<LabEvent> labEventList = labEvents.stream().
                             filter(le -> Objects.equals(le.getStationEventType(), plateTransferEventType)).
                             collect(Collectors.toList());
-                    boolean mercury = areSourceLabVesselsMercurySourced(labEventList);
+                    boolean mercury = areSourceLabVesselsNotBSPSourced(labEventList);
 
                     if (!mercury) {
                         copy.getPlateTransferEvent().add(plateTransferEventType);
@@ -488,19 +488,19 @@ public class BSPRestSender implements Serializable {
     }
 
     /**
-     * From a LabEvent, return whether any of the source lab vessels had a MetadataSource of Mercury.
+     * From a LabEvent, return whether any of the source lab vessels had a MetadataSource of not BSP.
      *
      * @param labEventList List of LabEvent objects to check
      *
-     * @return Whether any of the lab events had source vessels that were from Mercury.
+     * @return Whether any of the lab events had source vessels that were not from BSP.
      */
-    private boolean areSourceLabVesselsMercurySourced(List<LabEvent> labEventList) {
+    private boolean areSourceLabVesselsNotBSPSourced(List<LabEvent> labEventList) {
         boolean mercury = false;
         for (LabEvent labEvent : labEventList) {
             for (LabVessel labVessel : labEvent.getSourceLabVessels()) {
                 for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
                     MercurySample earliestMercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
-                    if (earliestMercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+                    if (earliestMercurySample.getMetadataSource() != MercurySample.MetadataSource.BSP) {
                         // Don't support mixed MERCURY and BSP (engineer must change to
                         // TranslateBspMessage.SECTION_TO_CHERRY if necessary).
                         mercury = true;
