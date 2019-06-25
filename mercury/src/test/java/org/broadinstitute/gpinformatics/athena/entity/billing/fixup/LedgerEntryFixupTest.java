@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
@@ -502,7 +503,10 @@ public class LedgerEntryFixupTest extends Arquillian {
         final Map<ProductOrderSample, List<LedgerEntry>> ledgersByProductOrderSample =
                 entryToCorrect.stream().collect(Collectors.groupingBy(LedgerEntry::getProductOrderSample));
 
-        ledgersByProductOrderSample.forEach((productOrderSample, ledgerEntries) -> productOrderSample.getLedgerItems().removeAll(ledgerEntries));
+        ledgersByProductOrderSample.forEach((productOrderSample, ledgerEntries) -> {
+            productOrderSample.getProductOrder().setOrderStatus(ProductOrder.OrderStatus.Submitted);
+            productOrderSample.getLedgerItems().removeAll(ledgerEntries);
+        });
 
         String messageWithCorrection = String.format("%s %s", fixupMessage, correction);
         System.out.println(messageWithCorrection);
