@@ -9,8 +9,13 @@ import javax.inject.Inject;
 public class SapQuoteLink {
     private static final String SAP_DETAILS = "/my-quotes/";
 
-    @Inject
+
     private SapConfig sapConfig;
+
+    @Inject
+    public SapQuoteLink(SapConfig sapConfig) {
+        this.sapConfig = sapConfig;
+    }
 
     public String sapUrl(String sapQuoteId) {
         return sapConfig.getUrl() + SAP_DETAILS + sapQuoteId + "/details";
