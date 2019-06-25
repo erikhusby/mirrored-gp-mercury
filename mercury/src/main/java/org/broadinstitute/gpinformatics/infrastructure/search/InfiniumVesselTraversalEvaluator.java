@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.apache.commons.collections4.MultiValuedMap;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
@@ -30,14 +31,14 @@ public class InfiniumVesselTraversalEvaluator extends CustomTraversalEvaluator {
 
     // All Infinium array search logic is based upon a DNA plate/DNA plate well as the source located by the target of
     //    ancestor/descendant event type
-    List<LabEventType> infiniumRootEventTypes = Collections.singletonList(LabEventType.ARRAY_PLATING_DILUTION);
+    private List<LabEventType> infiniumRootEventTypes = Collections.singletonList(LabEventType.ARRAY_PLATING_DILUTION);
 
-    protected boolean shouldProducePlates = false;
-    protected boolean shouldProduceWells = false;
+    private boolean shouldProducePlates;
+    private boolean shouldProduceWells;
 
     // Implementations to return only DNA plates or plate wells associated with starting vessel(s)
-    public static InfiniumVesselTraversalEvaluator DNA_PLATE_INSTANCE = new InfiniumVesselTraversalEvaluator("Infinium DNA Plates Only", "infiniumPlates");
-    public static InfiniumVesselTraversalEvaluator DNA_PLATEWELL_INSTANCE = new InfiniumVesselTraversalEvaluator("Infinium DNA Plate Wells Only", "infiniumWells");
+    static InfiniumVesselTraversalEvaluator DNA_PLATE_INSTANCE = new InfiniumVesselTraversalEvaluator("Infinium DNA Plates Only", "infiniumPlates");
+    static InfiniumVesselTraversalEvaluator DNA_PLATEWELL_INSTANCE = new InfiniumVesselTraversalEvaluator("Infinium DNA Plate Wells Only", "infiniumWells");
 
     // Used to determine if a search is related to array processing
     private static Set<String> INFINIUM_TRAVERSER_IDS = new HashSet<>();
@@ -55,12 +56,7 @@ public class InfiniumVesselTraversalEvaluator extends CustomTraversalEvaluator {
 
     @Override
     public Set<Object> evaluate(List<? extends Object> rootEntities, TransferTraverserCriteria.TraversalDirection traversalDirection, SearchInstance searchInstance) {
-        Set<Object> infiniumVessels = new TreeSet<>( new Comparator() {
-            @Override
-            public int compare(Object first, Object second) {
-                return ((LabVessel)first).getLabel().compareTo(((LabVessel)second).getLabel());
-            }
-        });
+        Set<Object> infiniumVessels = new TreeSet<>((Comparator) Comparator.comparing(o -> ((LabVessel) o).getLabel()));
 
         // Get the Infinium vessels by traversing ancestor/descendant events of initial vessel(s)
         TransferTraverserCriteria.VesselForEventTypeCriteria eventTypeCriteria
@@ -70,12 +66,11 @@ public class InfiniumVesselTraversalEvaluator extends CustomTraversalEvaluator {
 
             // If starting vessel is DNA plate or well, add plate and/or well(s) and continue
             Set<LabVessel> dnaVessels = testForStartingOnDnaPlateOrWell(startingVessel);
-            if( dnaVessels.size() > 0 ) {
+            if(!dnaVessels.isEmpty()) {
                 infiniumVessels.addAll(dnaVessels);
                 continue;
             }
 
-            boolean found = false;
             VesselContainer<?> vesselContainer = startingVessel.getContainerRole();
             if( vesselContainer != null ) {
                 // Rarely if ever will someone come in with daughter plate, just do the traverse
@@ -83,6 +78,7 @@ public class InfiniumVesselTraversalEvaluator extends CustomTraversalEvaluator {
             } else {
 
                 // In cases where the PDO tube is plated directly, we don't need to traverse.
+                boolean found = false;
                 for (LabVessel rack : startingVessel.getContainers()) {
                     for (SectionTransfer sectionTransfer : rack.getContainerRole().getSectionTransfersFrom()) {
                         if (sectionTransfer.getLabEvent().getLabEventType() == LabEventType.ARRAY_PLATING_DILUTION) {
@@ -115,6 +111,23 @@ public class InfiniumVesselTraversalEvaluator extends CustomTraversalEvaluator {
                 iter.remove();
             } else if( eventVessel.getType() == LabVessel.ContainerType.STATIC_PLATE && !shouldProducePlates ) {
                 iter.remove();
+            }
+        }
+
+        // If the user searched on PDO, and requested wells, filter out wells that don't match
+        if (shouldProduceWells && searchInstance.getSearchValues().size() == 1) {
+            SearchInstance.SearchValue searchValue = searchInstance.getSearchValues().get(0);
+            if (searchValue.getSearchTerm().getName().equals("PDO")) { // todo jmt
+                Iterator<?> iter = infiniumVessels.iterator();
+                while (iter.hasNext()) {
+                    LabVessel eventVessel = (LabVessel)iter.next();
+                    BucketEntry singleBucketEntry = eventVessel.getSampleInstancesV2().iterator().next().getSingleBucketEntry();
+                    if (singleBucketEntry != null) {
+                        if (!searchValue.getValues().contains(singleBucketEntry.getProductOrder().getBusinessKey())) {
+                            iter.remove();
+                        }
+                    }
+                }
             }
         }
 
@@ -161,7 +174,7 @@ public class InfiniumVesselTraversalEvaluator extends CustomTraversalEvaluator {
      * @param context Search context holding various shared objects
      * @return Always a single plate associated with any downstream vessel/position
      */
-    public static String getInfiniumDnaPlateBarcode(LabVessel infiniumVessel, SearchContext context ) {
+    static String getInfiniumDnaPlateBarcode(LabVessel infiniumVessel, SearchContext context) {
         String result = null;
         if(!isInfiniumSearch(context)) {
             return result;
@@ -201,7 +214,7 @@ public class InfiniumVesselTraversalEvaluator extends CustomTraversalEvaluator {
         return result;
     }
 
-    public static String getInfiniumAmpPlateBarcode(LabVessel infiniumVessel, SearchContext context) {
+    static String getInfiniumAmpPlateBarcode(LabVessel infiniumVessel, SearchContext context) {
         String result = null;
         if(!isInfiniumSearch(context)) {
             return result;
@@ -287,8 +300,8 @@ public class InfiniumVesselTraversalEvaluator extends CustomTraversalEvaluator {
      * @param context SearchContext containing values associated with search instance
      * @return All downstream Infinium chips and associated positions (positions ignored)
      */
-    public static MultiValuedMap<LabVessel, VesselPosition> getChipDetailsForDnaPlate(
-            LabVessel dnaPlate, List<LabEventType> chipEventTypes, SearchContext context ) {
+    static MultiValuedMap<LabVessel, VesselPosition> getChipDetailsForDnaPlate(
+            LabVessel dnaPlate, List<LabEventType> chipEventTypes, SearchContext context) {
 
         // Every Infinium event/vessel looks to descendant for chip barcode
         LabVesselSearchDefinition.VesselsForEventTraverserCriteria infiniumDescendantCriteria = new LabVesselSearchDefinition.VesselsForEventTraverserCriteria(
@@ -309,7 +322,7 @@ public class InfiniumVesselTraversalEvaluator extends CustomTraversalEvaluator {
 
         if( startingVessel.getType() != LabVessel.ContainerType.PLATE_WELL
                 && startingVessel.getType() != LabVessel.ContainerType.STATIC_PLATE ) {
-            return Collections.EMPTY_SET;
+            return Collections.emptySet();
         }
 
 
@@ -335,6 +348,6 @@ public class InfiniumVesselTraversalEvaluator extends CustomTraversalEvaluator {
             }
         }
 
-        return Collections.EMPTY_SET;
+        return Collections.emptySet();
     }
 }
