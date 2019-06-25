@@ -183,13 +183,6 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BatchWorkflowActionBean"
                                           event="view">Batch Workflow</stripes:link>
                         </li>
-                        <security:authorizeBlock roles="<%= roles(LabManager, PDM, GPProjectManager, PM, Developer) %>">
-                            <li>
-                                <stripes:link id="molecularIndexUpload"
-                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexPlateActionBean"
-                                              event="view">Upload Molecular Index Plate(s) from Manifest</stripes:link>
-                            </li>
-                        </security:authorizeBlock>
                         <li>
                             <stripes:link id="abandonVessels"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AbandonVesselActionBean"
@@ -210,11 +203,40 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.PlateMetadataActionBean"
                                           event="view">Single Cell Metadata Upload</stripes:link>
                         </li>
+                        <hr/>
                         <li>
                             <stripes:link id="molecularIndexNaming"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexNamingActionBean"
                                           event="view">Make Molecular Index Names</stripes:link>
                         </li>
+                        <li>
+                            <stripes:link id="indexPlateDefinition"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexPlateActionBean"
+                                          event="makeDefinition">Define Index Plate</stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="indexPlateInstance"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexPlateActionBean"
+                                          event="makeInstance">Instantiate Index Plate from Definition</stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="indexPlateDefManage"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexPlateActionBean"
+                                          event="manageDefinition">Manage Index Plate Definitions</stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="indexPlateInstManage"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexPlateActionBean"
+                                          event="manageInstances">Manage Index Plate Instances</stripes:link>
+                        </li>
+                        <security:authorizeBlock roles="<%= roles(LabManager, PDM, GPProjectManager, PM, Developer) %>">
+                            <li>
+                                <stripes:link id="molecularIndexUpload"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexPlateActionBean"
+                                              event="view">Upload Molecular Index Plate(s) from Manifest</stripes:link>
+                            </li>
+                        </security:authorizeBlock>
+
                     </ul>
                 </li>
             </security:authorizeBlock>
