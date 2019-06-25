@@ -16,5 +16,6 @@ TRAILING NULLCOLS
  billing_session_id,
  billing_message char(500),
  work_complete_date DATE "YYYYMMDDHH24MISS",
- quote_server_work_item
+ quote_server_work_item,
+ sap_delivery_document
 )
