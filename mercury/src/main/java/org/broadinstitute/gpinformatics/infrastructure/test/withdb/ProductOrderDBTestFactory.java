@@ -101,7 +101,6 @@ public class ProductOrderDBTestFactory {
      */
     public static ProductOrder createProductOrder(GenericDao dao, ProductOrder.QuoteSourceType quoteSource, String... sampleNames) {
         ProductOrder productOrder = ProductOrderTestFactory.createProductOrder(sampleNames);
-//        productOrder.setQuoteSource(quoteSource);
         dao.persist(productOrder.getResearchProject());
         dao.persist(productOrder.getProduct());
         dao.persist(productOrder);

@@ -64,8 +64,6 @@ public class ProductOrderListEntry implements Serializable {
 
     private long readyForBillingCount;
 
-//    private ProductOrder.QuoteSourceType quoteSourceType;
-
     private ProductOrderListEntry(Long orderId, String title, String jiraTicketKey,
                                   ProductOrder.OrderStatus orderStatus, Product product, String researchProjectTitle,
                                   Long ownerId, Date placedDate, Integer laneCount, String quoteId,
@@ -122,9 +120,8 @@ public class ProductOrderListEntry implements Serializable {
         this(null, null, null, 0);
     }
 
-    public static ProductOrderListEntry createDummy(ProductOrder defaultOrder) {
-        final ProductOrderListEntry productOrderListEntry = new ProductOrderListEntry();
-        return productOrderListEntry;
+    public static ProductOrderListEntry createDummy() {
+        return new ProductOrderListEntry();
     }
 
     /**

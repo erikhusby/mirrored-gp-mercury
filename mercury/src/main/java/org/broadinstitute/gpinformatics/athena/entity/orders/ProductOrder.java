@@ -311,10 +311,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Column(name = "COVERAGE_TYPE_KEY", nullable = true, length = 200)
     private String coverageTypeKey;
 
-//    @Enumerated(EnumType.STRING)
-//    @Column(name="QUOTE_SOURCE")
-//    private QuoteSourceType quoteSource;
-//
     @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true,
             mappedBy = "parentOrderDetail")
     private Set<SapQuoteItemReference> quoteReferences = new HashSet<>();
@@ -360,7 +356,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 "Clone " + toClone.getChildOrders().size() + ": " + toClone.getTitle(),
                 new ArrayList<ProductOrderSample>(), toClone.getQuoteId(), toClone.getProduct(),
                 toClone.getResearchProject());
-//        cloned.setQuoteSource(toClone.getQuoteSource());
         List<Product> potentialAddons = new ArrayList<>();
 
         for (ProductOrderAddOn cloneAddon : toClone.getAddOns()) {
@@ -2652,9 +2647,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             return foundValue;
 
         }
+
         public static QuoteSourceType getByQuoteId(String quoteId) {
             return (StringUtils.isNumeric(quoteId))?SAP_SOURCE:QUOTE_SERVER;
         }
+
         public boolean isSapType() {
             return this == SAP_SOURCE;
         }
