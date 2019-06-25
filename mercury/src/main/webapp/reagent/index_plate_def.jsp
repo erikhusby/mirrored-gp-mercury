@@ -41,7 +41,7 @@
             <!-- Radio button group for plate geometry: 96 or 384 well. -->
             <div class="inputGroup">
                 <div class="inputRow">
-                    <div class="firstCol">Plate Geometry</div>
+                    <div class="firstCol">Plate Size</div>
                     <div class="control-group controls">
                         <span>
                             <input type="radio" id="select96well" name="plateGeometry" value="96"/>
@@ -68,9 +68,10 @@
             </div>
 
             <!-- Text box for plate name. -->
-            <div class="inputGroup">
+            <div class="inputGroup" title="Provide a name for the index plate definition.
+An error is given if the name has been used before.">
                 <div class="inputRow">
-                    <div class="firstCol">Plate Name</div>
+                    <div class="firstCol">Plate Definition Name</div>
                     <div class="control-group controls">
                         <stripes:text id="plateName" name="plateName"/>
                     </div>
@@ -78,9 +79,12 @@
             </div>
 
             <!-- Checkbox for overwrite. -->
-            <div class="inputGroup">
+            <div class="inputGroup" title="Indicates your intent to replace an existing plate definition with a new one.
+This can only be done when there are no existing index plate instances.
+Use the Index Plate Admin page should be used for a simple rename, and
+also for removing existing plate instances.">
                 <div class="inputRow">
-                    <div class="firstCol">Allow Overwrite</div>
+                    <div class="firstCol">Replace Existing</div>
                     <div class="control-group controls">
                         <stripes:checkbox id="allowOverwrite" name="allowOverwrite"/>
                     </div>
@@ -88,21 +92,20 @@
             </div>
 
             <!-- File chooser to upload Excel spreadsheet of well positions & index scheme names. -->
-            <div class="inputGroup">
+            <div class="inputGroup" title="Provide an Excel spreadsheet with rows having two columns.
+The first column has position (A1 or A01, etc.).
+The second has index name (such as Illumina_P5-Wodel_P7-Zajic).
+The header row is optional. If present it is ignored.">
                 <div class="inputRow">
                     <div class="firstCol">Spreadsheet</div>
                     <div class="control-group controls">
-                        <stripes:file name="spreadsheet" id="spreadsheet"
-                        title="An Excel spreadsheet, each row having two columns:
-first column has position (A1 or A01, etc.),
-second has index name (such as Illumina_P5-Wodel_P7-Zajic).
-The header row is optional and if present it is ignored."/>
+                        <stripes:file name="spreadsheet" id="spreadsheet"/>
                     </div>
                 </div>
             </div>
 
             <!-- Button to "Create Plate Definition". -->
-            <div class="inputGroup">
+            <div class="inputGroup" title="Upload and create/update the plate definition.">
                 <div class="inputRow">
                     <div class="firstCol"></div>
                     <div class="controls">

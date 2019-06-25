@@ -105,6 +105,10 @@ public class MolecularIndexPlateActionBean extends CoreActionBean {
 
     @HandlesEvent(UPLOAD_DEFINITION)
     public Resolution uploadDef() {
+        if (plateName.length() > 254) {
+            addValidationError(plateName, "Plate name is longer than 254 characters.");
+            return new ForwardResolution(PLATE_DEFINITION_PAGE);
+        }
         List<List<String>> rows = null;
         try {
             // Validates the spreadsheet and creates a Index Plate Definition.

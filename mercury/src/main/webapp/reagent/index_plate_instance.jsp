@@ -44,9 +44,9 @@
         <stripes:form beanclass="${actionBean.class.name}" id="plateDefinitionForm">
 
             <!-- Selects a plate definition. -->
-            <div class="inputGroup">
+            <div class="inputGroup" title="Select a plate definition to use for new index plate instances.">
                 <div class="inputRow">
-                    <div class="firstCol">Plate Definition</div>
+                    <div class="firstCol">Plate Definition Name</div>
                     <div class="control-group controls">
                         <stripes:select name="plateName" value="${actionBean.plateName}">
                             <stripes:options-collection collection="${actionBean.plateNames}"/>
@@ -60,7 +60,7 @@
 
             <!-- Generates a layout (positions and contents) for an index plate definition. -->
             <c:if test="${empty actionBean.plateLayout}">
-                <div class="inputGroup">
+                <div class="inputGroup" title="Shows a grid of the plate with well position and content.">
                     <div class="inputRow">
                         <div class="firstCol"></div>
                         <div class="controls">
@@ -88,7 +88,7 @@
             </c:if>
 
             <!-- Text box for Sales Order Number. -->
-            <div class="inputGroup">
+            <div class="inputGroup" title="The sales order number that should be associated with the plates.">
                 <div class="inputRow">
                     <div class="firstCol">Sales Order Number</div>
                     <div class="control-group controls">
@@ -98,20 +98,21 @@
             </div>
 
             <!-- File chooser to upload Excel spreadsheet of barcodes of the plates to be created. -->
-            <div class="inputGroup">
+            <div class="inputGroup" title="Provide an Excel spreadsheet with rows having one column.
+The first column should be the new plate barcode.
+Plate barcodes will be leading zero filled to make 12 digits.
+The header row is optional. If present, it is ignored.">
                 <div class="inputRow">
                     <div class="firstCol">Spreadsheet</div>
                     <div class="control-group controls">
-                        <stripes:file name="spreadsheet" id="spreadsheet"
-                        title="An Excel spreadsheet, each row having one column that contains a plate barcode.
-Plate barcodes will be leading zero filled to make 12 digits.
-The header row is optional. If present, it is ignored."/>
+                        <stripes:file name="spreadsheet" id="spreadsheet"/>
                     </div>
                 </div>
             </div>
 
             <!-- Button to "Create Plate Definition" -->
-            <div class="inputGroup">
+            <div class="inputGroup" title="Makes a new plate for each of the barcodes using the plate
+definition to determine the well positions and reagent content.">
                 <div class="inputRow">
                     <div class="firstCol"></div>
                     <div class="controls">

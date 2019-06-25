@@ -371,6 +371,7 @@ public class IndexedPlateFactory {
             StaticPlate staticPlate = new StaticPlate(paddedBarcode, plateType);
             staticPlate.setCreatedOn(new Date());
             plateBatch.add(staticPlate);
+            definition.getPlateInstances().add(staticPlate);
             reagentMap.forEach((vesselPosition, molecularIndexReagent) -> {
                 PlateWell plateWell = new PlateWell(staticPlate, vesselPosition);
                 plateWell.addReagent(molecularIndexReagent);

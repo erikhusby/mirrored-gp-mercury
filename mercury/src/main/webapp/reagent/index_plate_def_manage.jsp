@@ -7,30 +7,6 @@
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexPlateActionBean"/>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Manage Index Plate Definitions" sectionTitle="Manage Index Plate Definitions">
-    <stripes:layout-component name="extraHead">
-        <script type="text/javascript">
-            $j(document).ready(function () {
-                $j('#definitionNameList').dataTable({
-                    "oTableTools":ttExportDefines,
-                    "aaSorting":[[2, 'asc']],
-                    "aoColumns":[
-                        {"bSortable": false}, // checkbox
-                        {"bSortable":true},   // name
-                    ]
-                });
-
-                $j('#plateBarcodeList').dataTable({
-                    "oTableTools":ttExportDefines,
-                    "aaSorting":[[2, 'asc']],
-                    "aoColumns":[
-                        {"bSortable": false}, // checkbox
-                        {"bSortable":true},   // barcode
-                    ]
-                });
-            });
-        </script>
-    </stripes:layout-component>
-
     <stripes:layout-component name="content">
         <style type="text/css">
             div.inputGroup {
@@ -62,82 +38,83 @@
         </style>
 
         <stripes:form beanclass="${actionBean.class.name}" id="plateDefManageForm">
+            <stripes:hidden name="plateName"/>
+
             <c:if test="${!actionBean.plateNames.isEmpty()}">
                 <!-- Show list of definitions with a checkbox selector -->
-                <table id="defintionNameList" class="table simple">
-                    <thead>
-                    <tr>
-                        <th/>
-                        <th>Name</th>
-                    </tr>
-                    </thead>
-                    <tbody>
+                <div class="inputGroup" title="Either select a plate definition or enter plate barcode(s) below.">
                     <c:forEach items="${actionBean.plateNames}" var="nameItem" varStatus="item">
-                        <tr>
-                            <td>
-                                <stripes:checkbox name="selectedName" value="${nameItem}" class="shiftCheckbox"/>
-                            </td>
-                            <td>${nameItem}</td>
-                            <input type="hidden" name="plateNames[${item.index}]" value="${nameItem}"/>
-                        </tr>
-                    </c:forEach>
-                    </tbody>
-                </table>
-            </c:if>
-
-            <c:if test="${not empty actionBean.plateName}">
-                <div class="inputGroup">
-                    <!-- Rename definition -->
-                    <div class="inputRow">
-                        <div class="firstCol">Rename To</div>
-                        <div class="control-group controls">
-                            <input type="text" id="newDefinitionName" name="newDefinitionName"/>
-                        </div>
-                    </div>
-
-                    <div class="inputRow">
-                        <div class="firstCol">
-                            <stripes:submit id="renameDefintion" name="renameDefinition" value="Rename" class="btn btn-primary"/>
-                        </div>
-                    </div>
-
-                    <!-- Delete definition -->
-                    <div class="inputRow">
-                        <div class="firstCol">
-                            <stripes:submit id="deleteDefintion" name="deleteDefinition" value="Delete" class="btn btn-primary"/>
-                        </div>
-                    </div>
-
-                    <!-- Find index plates made from definition -->
-                    <div class="inputRow">
-                        <div class="firstCol">
-                            <stripes:submit id="findInstances" name="findInstances" value="Find Instances" class="btn btn-primary"/>
-                        </div>
-                    </div>
-
-                    <!-- Show list of index plate instances with a checkbox selector. -->
-                    <c:if test="${!plateBarcodes.isEmpty()}">
-                        <h4>Index plates made from the selected plate definition</h4>
                         <div class="inputRow">
-                            <table id="plateBarcodeList" class="table simple">
-                                <thead>
-                                <tr>
-                                    <th>Plate Barcode</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                <c:forEach items="${actionBean.plateBarcodes}" var="nameItem" varStatus="item">
-                                    <tr>
-                                        <td>${nameItem}</td>
-                                        <input type="hidden" name="plateBarcodes[${item.index}]" value="${nameItem}"/>
-                                    </tr>
-                                </c:forEach>
-                                </tbody>
-                            </table>
+                            <div class="firstCol">
+                                <stripes:checkbox group="" name="selectedName" value="${nameItem}" class="shiftCheckbox"/>
+                            </div>
+                            <div class="controls">${nameItem}</div>
+                            <input type="hidden" name="plateNames[${item.index}]" value="${nameItem}"/>
                         </div>
-                    </c:if>
+                    </c:forEach>
                 </div>
             </c:if>
+
+            <!-- Rename the selected definition -->
+            <div class="inputGroup" title="Rename the selected plate definition.">
+                <div class="inputRow">
+                    <div class="firstCol">
+                        <stripes:submit id="renameDefintion" name="renameDefinition" value="Rename" class="btn btn-primary"/>
+                    </div>
+                    <div class="control-group controls">
+                        <input type="text" id="newDefinitionName" name="newDefinitionName"/>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delete the selected definition -->
+            <div class="inputGroup" title="Delete the selected plate definition.">
+                <div class="inputRow">
+                    <div class="firstCol">
+                        <stripes:submit id="deleteDefintion" name="deleteDefinition" value="Delete" class="btn btn-primary"/>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Find index plates made from definition -->
+            <div class="inputGroup" title="Shows the barcodes of plates instantiated from the selected definition.">
+                <div class="inputRow">
+                    <div class="firstCol">
+                        <stripes:submit id="findInstances" name="findInstances" value="Find Instances" class="btn btn-primary"/>
+                    </div>
+                </div>
+            </div>
+
+            <c:if test="${!plateBarcodes.isEmpty()}">
+                <h4>Index plates made from the selected plate definition</h4>
+                <div class="inputGroup">
+                <div class="inputRow">
+                    <table id="plateBarcodeList" class="table simple">
+                        <thead>
+                        <tr>
+                            <th>Plate Barcode</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <c:forEach items="${actionBean.plateBarcodes}" var="nameItem" varStatus="item">
+                            <tr>
+                                <td>${nameItem}</td>
+                                <input type="hidden" name="plateBarcodes[${item.index}]" value="${nameItem}"/>
+                            </tr>
+                        </c:forEach>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Delete the selected plate instances. -->
+                <div class="inputRow" title="Delete the selected plate instances.">
+                    <div class="firstCol">
+                        <stripes:submit id="deleteInstances" name="deleteInstances" value="Delete" class="btn btn-primary"/>
+                    </div>
+                </div>
+            </c:if>
+            </div>
+        </c:if>
             <!-- Text area to upload plate barcodes -->
             <!-- Find definition(s) for plate(s) -->
             <!-- Delete plates(s) but only if not part of a transfer -->

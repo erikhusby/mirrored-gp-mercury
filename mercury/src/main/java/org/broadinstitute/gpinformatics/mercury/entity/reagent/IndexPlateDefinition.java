@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
-import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -40,11 +39,10 @@ public class IndexPlateDefinition {
             mappedBy = "indexPlateDefinition")
     private Set<IndexPlateDefinitionWell> definitionWells = new HashSet<>();
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.PERSIST)
     @JoinTable(name = "index_plate_instance",
             joinColumns = @JoinColumn(name = "definition_id"),
             inverseJoinColumns = @JoinColumn(name = "lab_vessel"))
-    @AuditJoinTable(name = "index_plate_instance_aud")
     private Set<StaticPlate> plateInstances = new HashSet<>();
 
     private String definitionName;

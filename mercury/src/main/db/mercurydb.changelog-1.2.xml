@@ -2457,6 +2457,11 @@
                                  baseTableSchemaName="mercury" baseTableName="index_plate_instance" baseColumnNames="definition_id"
                                  referencedTableSchemaName="mercury" referencedTableName="lab_vessel" referencedColumnNames="lab_vessel_id"/>
     </changeSet>
+    <changeSet id="GPLIM-6138-045" author="epolk">
+        <createIndex indexName="ix_index_plate_inst_vslid" tableName="index_plate_instance" schemaName="mercury">
+            <column name="lab_vessel"/>
+        </createIndex>
+    </changeSet>
 
     <changeSet id="GPLIM-6138-051" author="epolk">
         <createTable tableName="index_plate_instance_aud" schemaName="mercury">
