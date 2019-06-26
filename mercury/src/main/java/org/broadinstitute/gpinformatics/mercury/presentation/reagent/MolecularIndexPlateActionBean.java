@@ -152,7 +152,7 @@ public class MolecularIndexPlateActionBean extends CoreActionBean {
             messageCollection.addError("Cannot read file: " + e.toString());
         }
         if (!messageCollection.hasErrors()) {
-            indexedPlateFactory.makeIndexPlate(plateName, rows, messageCollection);
+            indexedPlateFactory.makeIndexPlate(plateName, rows, salesOrderNumber, messageCollection);
         }
         addMessages(messageCollection);
         return makeInstance();

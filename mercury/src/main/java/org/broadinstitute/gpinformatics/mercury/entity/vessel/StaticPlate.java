@@ -8,13 +8,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.IndexPlateDefinition;
 import org.hibernate.envers.Audited;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.ManyToOne;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -214,11 +212,11 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
     @Enumerated(EnumType.STRING)
     private PlateType plateType;
 
-    @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST})
-    @JoinTable(name = "index_plate_instance",
-            joinColumns = @JoinColumn(name = "lab_vessel"),
-            inverseJoinColumns = @JoinColumn(name = "definition_id"))
+    @ManyToOne
+    @JoinColumn(name="index_plate_definition", referencedColumnName = "definition_id")
     private IndexPlateDefinition indexPlateDefinition;
+
+    private String salesOrderNumber;
 
     public StaticPlate(String label, PlateType plateType) {
         super(label);
@@ -490,5 +488,13 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
 
     public IndexPlateDefinition getIndexPlateDefinition() {
         return indexPlateDefinition;
+    }
+
+    public String getSalesOrderNumber() {
+        return salesOrderNumber;
+    }
+
+    public void setSalesOrderNumber(String salesOrderNumber) {
+        this.salesOrderNumber = salesOrderNumber;
     }
 }

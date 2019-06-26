@@ -29,7 +29,6 @@ import org.testng.annotations.Test;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
-import javax.persistence.Query;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -37,7 +36,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -126,8 +124,11 @@ public class IndexedPlateFactoryTest extends StubbyContainerTest {
     @Test
     public void testMultipleIndexPlateInstances() throws Exception {
         String identifier = dateFormat.format(new Date());
+        final String salesOrderNumber = "salesOrder " + identifier;
+        final String plateName = "plateName" + identifier;
+        final int numberOfPlates = 5;
+
         // Makes an index plate definition with two wells.
-        String plateName = "plateName" + identifier;
         IndexPlateDefinition.ReagentType reagentType = IndexPlateDefinition.ReagentType.PRIMER;
         VesselGeometry vesselGeometry = VesselGeometry.G12x8;
         MessageCollection messageCollection = new MessageCollection();
@@ -136,13 +137,18 @@ public class IndexedPlateFactoryTest extends StubbyContainerTest {
         indexedPlateFactory.makeIndexPlateDefinition(plateName, cellGrid, vesselGeometry,
                 reagentType, false, messageCollection);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+
         // Instantiates a number of index plates from the definition.
         messageCollection.clearAll();
-        final int numberOfPlates = 5;
         List<List<String>> plateBarcodes = IntStream.range(0, numberOfPlates).
                 mapToObj(i -> Collections.singletonList("0" + identifier + i)).
                 collect(Collectors.toList());
-        indexedPlateFactory.makeIndexPlate(plateName, plateBarcodes, messageCollection);
+        indexedPlateFactory.makeIndexPlate(plateName, plateBarcodes.subList(0, numberOfPlates - 1),
+                salesOrderNumber, messageCollection);
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        // Does the last barcode in another call.
+        indexedPlateFactory.makeIndexPlate(plateName, plateBarcodes.subList(numberOfPlates - 1, numberOfPlates),
+                salesOrderNumber, messageCollection);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
 
         final IndexPlateDefinition plateDefinition = staticPlateDao.findSingle(IndexPlateDefinition.class,
@@ -158,18 +164,8 @@ public class IndexedPlateFactoryTest extends StubbyContainerTest {
         plateBarcodes.stream().flatMap(List::stream).forEach(barcode -> {
             StaticPlate staticPlate = staticPlateDao.findByBarcode(barcode);
             Assert.assertNotNull(staticPlate, "missing " + barcode);
-
-            // Ugly but it works.
-            Query query = staticPlateDao.getEntityManager().createNativeQuery(
-                    "select definition_id from index_plate_instance where lab_vessel = ?");
-            query.setParameter(1, staticPlate.getLabVesselId());
-            BigDecimal id = (BigDecimal)query.getSingleResult();
-            Assert.assertNotNull(id);
-            Assert.assertEquals(staticPlateDao.findById(IndexPlateDefinition.class, id.longValueExact()),
-                    plateDefinition, "for barcode " + barcode);
-
-            // XXX should work but doesn't
-            //Assert.assertEquals(staticPlate.getIndexPlateDefinition(), plateDefinition, "for barcode " + barcode);
+            Assert.assertEquals(staticPlate.getIndexPlateDefinition(), plateDefinition, "for barcode " + barcode);
+            Assert.assertEquals(staticPlate.getSalesOrderNumber(), salesOrderNumber, "for barcode " + barcode);
         });
     }
 
@@ -210,7 +206,7 @@ public class IndexedPlateFactoryTest extends StubbyContainerTest {
         String plateBarcode = identifier;
         indexedPlateFactory.makeIndexPlate(plateName,
                 Arrays.asList(Arrays.asList("Barcode"), Arrays.asList(identifier)),
-                messageCollection);
+                "salesOrder" + identifier, messageCollection);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
 
         String zeroFilledBarcode = String.format("%012d", Long.parseLong(plateBarcode));

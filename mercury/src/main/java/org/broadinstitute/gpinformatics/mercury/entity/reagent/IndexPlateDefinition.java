@@ -12,8 +12,6 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -39,10 +37,7 @@ public class IndexPlateDefinition {
             mappedBy = "indexPlateDefinition")
     private Set<IndexPlateDefinitionWell> definitionWells = new HashSet<>();
 
-    @OneToMany(cascade = CascadeType.PERSIST)
-    @JoinTable(name = "index_plate_instance",
-            joinColumns = @JoinColumn(name = "definition_id"),
-            inverseJoinColumns = @JoinColumn(name = "lab_vessel"))
+    @OneToMany(mappedBy = "indexPlateDefinition")
     private Set<StaticPlate> plateInstances = new HashSet<>();
 
     private String definitionName;

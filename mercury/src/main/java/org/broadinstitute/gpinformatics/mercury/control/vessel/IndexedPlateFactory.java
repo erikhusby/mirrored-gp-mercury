@@ -23,6 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -324,7 +325,8 @@ public class IndexedPlateFactory {
      *                    is optional and if present it is ignored.
      * @param messageCollection used to pass errors, warnings, and info back to the UI.
      */
-    public void makeIndexPlate(String plateName, List<List<String>> spreadsheet, MessageCollection messageCollection) {
+    public void makeIndexPlate(String plateName, List<List<String>> spreadsheet, @Nullable String salesOrderNumber,
+            MessageCollection messageCollection) {
         boolean hasHeaderRow = !NumberUtils.isDigits(spreadsheet.get(0).get(0));
         List<String> plateBarcodes = spreadsheet.subList(hasHeaderRow ? 1 : 0, spreadsheet.size()).
                 stream().flatMap(List::stream).distinct().collect(Collectors.toList());
@@ -353,7 +355,7 @@ public class IndexedPlateFactory {
             messageCollection.addError(UNKNOWN_STATIC_PLATE_TYPE, definition.getVesselGeometry().name());
             return;
         }
-        // Makes a map for each position defined in the index plate definition and the well reagent.
+        // Makes a map of position and reagent from the index plate definition.
         Map<VesselPosition, MolecularIndexReagent> reagentMap = definition.getDefinitionWells().stream().
                 collect(Collectors.toMap(IndexPlateDefinitionWell::getVesselPosition,
                         well -> new MolecularIndexReagent(well.getMolecularIndexingScheme())));
@@ -364,14 +366,16 @@ public class IndexedPlateFactory {
             // Persists batches periodically and also at the end to avoid out of memory errors.
             if (plateBatch.size() >= 100) {
                 staticPlateDao.persistAll(plateBatch);
+                definition.getPlateInstances().addAll(plateBatch);
                 plateBatch.clear();
             }
             String paddedBarcode = StringUtils.leftPad(barcode, BARCODE_LENGTH, '0');
             paddedBarcodes.add(paddedBarcode);
             StaticPlate staticPlate = new StaticPlate(paddedBarcode, plateType);
             staticPlate.setCreatedOn(new Date());
+            staticPlate.setIndexPlateDefinition(definition);
+            staticPlate.setSalesOrderNumber(salesOrderNumber);
             plateBatch.add(staticPlate);
-            definition.getPlateInstances().add(staticPlate);
             reagentMap.forEach((vesselPosition, molecularIndexReagent) -> {
                 PlateWell plateWell = new PlateWell(staticPlate, vesselPosition);
                 plateWell.addReagent(molecularIndexReagent);
@@ -379,6 +383,7 @@ public class IndexedPlateFactory {
             });
         }
         staticPlateDao.persistAll(plateBatch);
+        definition.getPlateInstances().addAll(plateBatch);
         messageCollection.addInfo("Created index plates " + StringUtils.join(paddedBarcodes, " "));
     }
 }
