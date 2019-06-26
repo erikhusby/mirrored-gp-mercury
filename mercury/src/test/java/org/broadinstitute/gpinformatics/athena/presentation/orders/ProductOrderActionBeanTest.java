@@ -440,7 +440,6 @@ public class ProductOrderActionBeanTest {
             quoteId = "9999999";
         }
         pdo.setQuoteId(quoteId);
-        pdo.setQuoteSource(quoteSource);
         pdo.addRegulatoryInfo(new RegulatoryInfo("test", RegulatoryInfo.Type.IRB, "test"));
         pdo.setAttestationConfirmed(true);
         pdo.setJiraTicketKey("");
@@ -903,7 +902,6 @@ public class ProductOrderActionBeanTest {
                                             boolean expectedToPassValidation, String testErrorMessage,
                                             ProductOrder.QuoteSourceType quoteSourceType) {
         ProductOrder pdo = ProductOrderTestFactory.buildSampleInitiationProductOrder(22);
-        pdo.setQuoteSource(quoteSourceType);
         pdo.setSkipQuoteReason(reason);
         pdo.setQuoteId(quoteId);
         actionBean.clearValidationErrors();
@@ -1205,7 +1203,6 @@ public class ProductOrderActionBeanTest {
         testOrder.setJiraTicketKey(jiraTicketKey);
         testOrder.setProduct(primaryProduct);
         testOrder.setQuoteId(testQuoteIdentifier);
-        testOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
 
         PriceList priceList = new PriceList();
         Collection<QuoteItem> quoteItems = new HashSet<>();
@@ -1352,7 +1349,6 @@ public class ProductOrderActionBeanTest {
         testOrder.setJiraTicketKey("PDO-TESTPDOValue");
         testOrder.setProduct(primaryProduct);
         testOrder.setQuoteId(testQuoteIdentifier);
-        testOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
         testOrder.updateAddOnProducts(Collections.singletonList(addonNonSeqProduct));
 
 
@@ -1470,7 +1466,6 @@ public class ProductOrderActionBeanTest {
         testOrder.setJiraTicketKey("PDO-TESTPDOValue");
         testOrder.setProduct(primaryProduct);
         testOrder.setQuoteId(testQuoteIdentifier);
-        testOrder.setQuoteSource(quoteSource);
         testOrder.updateAddOnProducts(Collections.singletonList(addonNonSeqProduct));
 
         List<ProductOrderSample> sampleList = new ArrayList<>();
@@ -1490,7 +1485,6 @@ public class ProductOrderActionBeanTest {
         extraOrder1.setJiraTicketKey("PDO-extra1");
         extraOrder1.setProduct(dummyProduct1);
         extraOrder1.setQuoteId(testQuoteIdentifier);
-        extraOrder1.setQuoteSource(quoteSource);
 
         IntStream.range(0, 10).forEach(sampleRangeIterator -> {
             extraOrder1.addSample(new ProductOrderSample("extra1-Test" + sampleRangeIterator));
@@ -1503,7 +1497,6 @@ public class ProductOrderActionBeanTest {
         extraOrder2.setJiraTicketKey("PDO-extra2");
         extraOrder2.setProduct(dummyProduct1);
         extraOrder2.setQuoteId(testQuoteIdentifier);
-        extraOrder2.setQuoteSource(quoteSource);
 
         IntStream.range(0, 23).forEach(sampleRangeIterator -> {
             extraOrder2.addSample(new ProductOrderSample("extra1-Test" + sampleRangeIterator));
@@ -1516,7 +1509,6 @@ public class ProductOrderActionBeanTest {
         extraOrder3.setJiraTicketKey("PDO-extra3");
         extraOrder3.setProduct(dummyProduct1);
         extraOrder3.setQuoteId(testQuoteIdentifier);
-        extraOrder3.setQuoteSource(quoteSource);
 
         IntStream.range(0, 49).forEach(sampleRangeIterator -> {
             extraOrder3.addSample(new ProductOrderSample("extra1-Test" + sampleRangeIterator));
@@ -1756,7 +1748,6 @@ public class ProductOrderActionBeanTest {
         testOrder = new ProductOrder();
         testOrder.setProduct(primaryProduct);
         testOrder.setQuoteId(testQuote.getAlphanumericId());
-        testOrder.setQuoteSource(quoteSource);
         actionBean.setQuoteSource(quoteSource);
 
         List<ProductOrderSample> sampleList = new ArrayList<>();
@@ -1940,7 +1931,6 @@ public class ProductOrderActionBeanTest {
         testOrder = new ProductOrder();
         testOrder.setProduct(primaryProduct);
         testOrder.setQuoteId(testQuote.getAlphanumericId());
-        testOrder.setQuoteSource(quoteSource);
 
         ProductOrder secondOrder = new ProductOrder();
         secondOrder.setProduct(secondaryProduct);
@@ -2259,7 +2249,6 @@ public class ProductOrderActionBeanTest {
         testOrder = new ProductOrder();
         testOrder.setProduct(primaryProduct);
         testOrder.setQuoteId(testQuoteIdentifier);
-        testOrder.setQuoteSource(quoteSource);
         testOrder.updateAddOnProducts(Collections.singletonList(addonNonSeqProduct));
 
         List<ProductOrderSample> sampleList = new ArrayList<>();
@@ -2275,7 +2264,6 @@ public class ProductOrderActionBeanTest {
         extraOrder1.setJiraTicketKey("PDO-extra1");
         extraOrder1.setProduct(dummyProduct1);
         extraOrder1.setQuoteId(testQuoteIdentifier);
-        extraOrder1.setQuoteSource(quoteSource);
 
         IntStream.range(0,10).forEach(sampleRangeIterator -> {
             extraOrder1.addSample(new ProductOrderSample("extra1-Test"+sampleRangeIterator));
@@ -2288,7 +2276,6 @@ public class ProductOrderActionBeanTest {
         extraOrder2.setJiraTicketKey("PDO-extra2");
         extraOrder2.setProduct(dummyProduct1);
         extraOrder2.setQuoteId(testQuoteIdentifier);
-        extraOrder2.setQuoteSource(quoteSource);
 
         IntStream.range(0,23).forEach(sampleRangeIterator -> {
             extraOrder2.addSample(new ProductOrderSample("extra1-Test"+sampleRangeIterator));
@@ -2301,7 +2288,6 @@ public class ProductOrderActionBeanTest {
         extraOrder3.setJiraTicketKey("PDO-extra3");
         extraOrder3.setProduct(dummyProduct1);
         extraOrder3.setQuoteId(testQuoteIdentifier);
-        extraOrder3.setQuoteSource(quoteSource);
 
         IntStream.range(0,49).forEach(value -> {
 
@@ -2608,7 +2594,6 @@ public class ProductOrderActionBeanTest {
         testOrder.setJiraTicketKey("PDO-TESTPDOValue");
         testOrder.setProduct(primaryProduct);
         testOrder.setQuoteId(testQuoteIdentifier);
-        testOrder.setQuoteSource(quoteSource);
         List<ProductOrderSample> sampleList = new ArrayList<>();
 
         actionBean.setEditOrder(testOrder);
@@ -2865,7 +2850,6 @@ public class ProductOrderActionBeanTest {
     public void testQuoteOptionsFundsReservation() throws Exception {
         String quoteId = "DNA4JD";
         testOrder = new ProductOrder();
-        testOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
         FundingLevel fundingLevel = new FundingLevel();
         Funding funding = new Funding(Funding.FUNDS_RESERVATION, "test", "c333");
         funding.setGrantNumber("1234");
@@ -2895,7 +2879,6 @@ public class ProductOrderActionBeanTest {
     public void testQuoteOptionsFundsReservationExpiresAfterLeapYear() throws Exception {
         String quoteId = "DNA4JD";
         testOrder = new ProductOrder();
-        testOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
         FundingLevel fundingLevel = new FundingLevel();
         Funding funding = new Funding(Funding.FUNDS_RESERVATION, "test", "c333");
         funding.setGrantNumber("1234");
@@ -2928,7 +2911,6 @@ public class ProductOrderActionBeanTest {
     public void testSapQuoteOptionsFundsReservation() throws Exception {
         String quoteId = "12345";
         testOrder = new ProductOrder();
-        testOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
         Date oneWeek = DateUtils.getOneWeek();
 
         Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenAnswer(new Answer<SapQuote>() {
@@ -2997,7 +2979,6 @@ public class ProductOrderActionBeanTest {
     public void testQuoteOptionsPurchaseOrder() throws Exception {
         String quoteId = "DNA4JD";
         testOrder = new ProductOrder();
-        testOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
         FundingLevel fundingLevel = new FundingLevel();
         Funding funding = new Funding(Funding.PURCHASE_ORDER, "test", "c333");
         funding.setPurchaseOrderNumber("1234");
@@ -3025,7 +3006,6 @@ public class ProductOrderActionBeanTest {
     public void testSapQuoteOptionsPurchaseOrder() throws Exception {
         String quoteId = "12345";
         testOrder = new ProductOrder();
-        testOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
         Date oneWeek = DateUtils.getOneWeek();
 
         Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenAnswer(new Answer<SapQuote>() {
@@ -3086,7 +3066,6 @@ public class ProductOrderActionBeanTest {
     public void testQuoteOptionsNoFunding() throws Exception {
         String quoteId = "DNA4JD";
         testOrder = new ProductOrder();
-        testOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
         FundingLevel fundingLevel = new FundingLevel();
         Funding funding = new Funding();
         fundingLevel.setFunding(Collections.singleton(funding));
@@ -3105,7 +3084,6 @@ public class ProductOrderActionBeanTest {
     public void testSapQuoteOptionsNoFunding() throws Exception {
         String quoteId = "12345";
         testOrder = new ProductOrder();
-        testOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
 
         Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenAnswer(new Answer<SapQuote>() {
             @Override
@@ -3151,7 +3129,6 @@ public class ProductOrderActionBeanTest {
         pdo.setJiraTicketKey("");
         pdo.setOrderStatus(ProductOrder.OrderStatus.Draft);
         pdo.setCreatedBy(1L);
-        pdo.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
 
         // Initialize the Action Bean to be in such a state that we can mimic calls from the web
         HttpServletRequest request = new MockHttpServletRequest("foo","bar");
@@ -3428,7 +3405,6 @@ public class ProductOrderActionBeanTest {
         pdo.setAttestationConfirmed(true);
         pdo.setJiraTicketKey("");
         pdo.setOrderStatus(ProductOrder.OrderStatus.Draft);
-        pdo.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
         pdo.setCreatedBy(1L);
 
         // Initialize the Action Bean to be in such a state that we can mimic calls from the web

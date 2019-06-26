@@ -1436,7 +1436,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                     DELETE_SAMPLES_ACTION, PLACE_ORDER_ACTION, VALIDATE_ORDER, UNABANDON_SAMPLES_ACTION, REPLACE_SAMPLES})
     public void entryInit() {
         if (editOrder != null) {
-            productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy(editOrder) :
+            productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy() :
                     orderListEntryDao.findSingle(editOrder.getJiraTicketKey());
 
             ProductOrder.loadLabEventSampleData(editOrder.getSamples());
@@ -3665,16 +3665,11 @@ public class ProductOrderActionBean extends CoreActionBean {
                             }
                         }
 
-                        if (canSwitch) {
-                            editOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
-                        }
                     }
 
                 } catch (SAPIntegrationException e) {
                     throw new InvalidProductException("The quote you are attempting to switch to is invalid.");
                 }
-            } else {
-                editOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
             }
         }
     }

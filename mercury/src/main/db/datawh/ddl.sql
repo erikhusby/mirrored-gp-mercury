@@ -262,7 +262,8 @@ CREATE TABLE ledger_entry (
   billing_message         VARCHAR2(500),
   work_complete_date      DATE,
   etl_date                DATE        NOT NULL,
-  quote_server_work_item  VARCHAR2(255)
+  quote_server_work_item  VARCHAR2(255),
+  sap_delivery_document  VARCHAR2(255)
 );
 
 CREATE TABLE billing_session (
@@ -596,7 +597,8 @@ CREATE TABLE im_ledger_entry (
   billing_session_id      NUMERIC(19),
   billing_message         VARCHAR2(500),
   work_complete_date      DATE,
-  quote_server_work_item varchar2(255)
+  quote_server_work_item varchar2(255),
+  sap_delivery_document  VARCHAR2(255)
 );
 
 CREATE TABLE im_billing_session (

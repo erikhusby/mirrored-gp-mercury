@@ -116,7 +116,6 @@ public class SapIntegrationServiceImplDBFreeTest {
         Mockito.when(mockIntegrationClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(materials);
 
         ProductOrder conversionPdo = ProductOrderTestFactory.createDummyProductOrder(10, jiraTicketKey);
-        conversionPdo.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
 
         conversionPdo.setQuoteId(SAP_QUOTE_ID);
         conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
@@ -444,7 +443,6 @@ public class SapIntegrationServiceImplDBFreeTest {
         Mockito.when(mockIntegrationClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(materials);
 
         ProductOrder productOrder = ProductOrderTestFactory.createDummyProductOrder(10, jiraTicketKey);
-        productOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
 
         productOrder.setQuoteId(SAP_QUOTE_ID);
 
