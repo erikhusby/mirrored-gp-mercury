@@ -112,12 +112,7 @@
             </thead>
             <tbody>
             <c:forEach items="${actionBean.quoteImportItems}" var="item">
-                <c:set var="rowIdentifier" value="${item.singleWorkItem}"/>
-                <c:if test="${rowIdentifier==actionBean.notEligibleForQuoteServer()}">
-                    <c:set var="rowIdentifier" value="${item.quoteId}"/>
-                </c:if>
-
-                <tr id="${rowIdentifier}">
+                <tr id="${item.tabularIdentifier}">
                     <td>
                         <c:choose>
                             <c:when test="${item.sapOrder}">
