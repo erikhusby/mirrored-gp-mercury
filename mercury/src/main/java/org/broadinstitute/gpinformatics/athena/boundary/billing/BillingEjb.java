@@ -100,7 +100,8 @@ public class BillingEjb {
         }
 
         public boolean isBilledInQuoteServer() {
-            return StringUtils.isNotBlank(workId);
+            return StringUtils.isNotBlank(workId) &&
+                   !workId.equals(BillingAdaptor.NOT_ELLIGIBLE_FOR_QUOTE_SERVER_INDICATOR);
         }
     }
 
