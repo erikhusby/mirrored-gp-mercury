@@ -172,6 +172,7 @@ public class CreateFields extends UpdateFields {
         SAMPLE_INITIATION("Sample Initiation"),
         RECEIPT("Receipt"),
         ALLPREP("AllPrep Extraction"),
+        CDNA_EXTRACTION("cDNA Extraction"),
         DNA_EXTRACTION("DNA Extraction"),
         EXTRACTION_OTHER("Extraction (Other)"),
         RNA_EXTRACTION("RNA Extraction"),

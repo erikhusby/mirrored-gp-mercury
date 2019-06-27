@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -89,6 +90,7 @@ public class JiraServiceImpl extends AbstractJsonJaxRsClientService implements J
     }
 
     // Temporary container class to get ticket ID (key) from the server.
+    @JsonIgnoreProperties(ignoreUnknown = true)
     private static class JiraIssueData {
         private String key;
 
