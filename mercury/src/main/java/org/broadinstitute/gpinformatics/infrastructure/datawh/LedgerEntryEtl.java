@@ -61,7 +61,8 @@ public class LedgerEntryEtl extends GenericEntityEtl<LedgerEntry, LedgerEntry> {
                 format(billingSession != null ? billingSession.getBillingSessionId() : null),
                 format(entity.getBillingMessage()),
                 format(entity.getWorkCompleteDate()),
-                format(entity.getWorkItem())
+                format(entity.getWorkItem()),
+                format(entity.getSapDeliveryDocumentId())
                 );
     }
 }

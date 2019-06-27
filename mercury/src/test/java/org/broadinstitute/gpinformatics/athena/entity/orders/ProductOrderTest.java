@@ -386,7 +386,6 @@ public class ProductOrderTest {
     public void testNonAbandonedCount() throws Exception {
         ProductOrder testParentOrder = new ProductOrder(TEST_CREATOR, "Test order with Abandoned Count",
                 sixMercurySamplesNoDupes, QUOTE, null, null);
-        testParentOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
         testParentOrder.addSapOrderDetail(new SapOrderDetail("testParentNumber", testParentOrder.getNonAbandonedCount(),
                 testParentOrder.getQuoteId(), SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode()));
 
@@ -612,16 +611,17 @@ public class ProductOrderTest {
 
     public void testSapOrderStatus() throws Exception {
         ProductOrder stateCheckOrder = ProductOrderTestFactory.createDummyProductOrder();
+        stateCheckOrder.setQuoteId(null);
         assertThat(stateCheckOrder.hasSapQuote(), is(equalTo(false)));
         assertThat(stateCheckOrder.hasQuoteServerQuote(), is(equalTo(false)));
-        assertThat(stateCheckOrder.isQuoteIdSet(), is(equalTo(true)));
+        assertThat(stateCheckOrder.isQuoteIdSet(), is(equalTo(false)));
 
-        stateCheckOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
+        stateCheckOrder.setQuoteId("GPP71");
         assertThat(stateCheckOrder.hasSapQuote(), is(equalTo(false)));
         assertThat(stateCheckOrder.hasQuoteServerQuote(), is(equalTo(true)));
         assertThat(stateCheckOrder.isQuoteIdSet(), is(equalTo(true)));
 
-        stateCheckOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
+        stateCheckOrder.setQuoteId("2700039");
         assertThat(stateCheckOrder.hasSapQuote(), is(equalTo(true)));
         assertThat(stateCheckOrder.hasQuoteServerQuote(), is(equalTo(false)));
         assertThat(stateCheckOrder.isQuoteIdSet(), is(equalTo(true)));
@@ -641,12 +641,10 @@ public class ProductOrderTest {
         assertThat(quoteTestOrder.hasQuoteServerQuote(), is(equalTo(false)));
         assertThat(quoteTestOrder.isQuoteIdSet(), is(equalTo(false)));
 
-        quoteTestOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
         assertThat(quoteTestOrder.hasSapQuote(), is(equalTo(false)));
         assertThat(quoteTestOrder.hasQuoteServerQuote(), is(equalTo(false)));
         assertThat(quoteTestOrder.isQuoteIdSet(), is(equalTo(false)));
 
-        quoteTestOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
         assertThat(quoteTestOrder.hasSapQuote(), is(equalTo(false)));
         assertThat(quoteTestOrder.hasQuoteServerQuote(), is(equalTo(false)));
         assertThat(quoteTestOrder.isQuoteIdSet(), is(equalTo(false)));
@@ -656,7 +654,7 @@ public class ProductOrderTest {
         assertThat(quoteTestOrder.hasQuoteServerQuote(), is(equalTo(false)));
         assertThat(quoteTestOrder.isQuoteIdSet(), is(equalTo(true)));
 
-        quoteTestOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
+        quoteTestOrder.setQuoteId(QUOTE+"x");
         assertThat(quoteTestOrder.hasSapQuote(), is(equalTo(false)));
         assertThat(quoteTestOrder.hasQuoteServerQuote(), is(equalTo(true)));
         assertThat(quoteTestOrder.isQuoteIdSet(), is(equalTo(true)));
