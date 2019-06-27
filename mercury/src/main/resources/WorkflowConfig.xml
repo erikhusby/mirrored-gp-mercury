@@ -4048,6 +4048,7 @@
                 <bucketEntryEvaluator>
                     <materialTypes>RNA</materialTypes>
                     <materialTypes>RNA_TOTAL_RNA</materialTypes>
+                    <materialTypes>OTHER_LYSATE</materialTypes>
                 </bucketEntryEvaluator>
             </workflowStepDefs>
             <workflowStepDefs>
