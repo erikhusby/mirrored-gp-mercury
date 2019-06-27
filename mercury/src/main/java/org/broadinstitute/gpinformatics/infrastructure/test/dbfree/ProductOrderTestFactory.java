@@ -216,6 +216,10 @@ public class ProductOrderTestFactory {
         return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.INFINIUM);
     }
 
+    public static ProductOrder buildSingleCellHashingProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.SINGLE_CELL_HASHING_10X);
+    }
+
 
     /**
      * Database free creation of Product Order from scratch, including creation of a new Research Project and Product.
