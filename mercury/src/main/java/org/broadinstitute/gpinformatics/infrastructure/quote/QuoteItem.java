@@ -19,17 +19,20 @@ public class QuoteItem {
     private String unit;
     private ReplacementItems replacementItems;
     private String quantityComplete;
+    private String platform;
 
     public QuoteItem() {}
 
     public QuoteItem(String quoteId, String priceItemId, String name, String quantity, String price, String unit,
-                     String platformName, String categoryName) {
+                     String platform, String categoryName) {
         this.quoteId = quoteId;
         this.priceItemId = priceItemId;
         this.name = name;
         this.quantity = quantity;
         this.price = price;
         this.unit = unit;
+        this.platform = platform;
+        this.categoryName = categoryName;
     }
 
     @XmlAttribute(name = "quoteId")
@@ -104,13 +107,22 @@ public class QuoteItem {
         this.replacementItems = replacementItems;
     }
 
-    @XmlElement(name = "quantityComplete")
+    @XmlAttribute(name = "quantityComplete")
     public String getQuantityComplete() {
         return quantityComplete;
     }
 
     public void setQuantityComplete(String quantityComplete) {
         this.quantityComplete = quantityComplete;
+    }
+
+    @XmlAttribute(name = "platform")
+    public String getPlatform() {
+        return platform;
+    }
+
+    public void setPlatform(String platform) {
+        this.platform = platform;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -18,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.testng.Assert;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.Collections;
 import java.util.Date;
@@ -28,6 +30,7 @@ import java.util.List;
 /**
  * TODO scottmat fill in javadoc!!!
  */
+@Dependent
 public class LabBatchTestUtils {
 
     BucketDao bucketDao;
@@ -54,7 +57,11 @@ public class LabBatchTestUtils {
         ProductOrder stubTestPDO = ProductOrderTestFactory.createDummyProductOrder(LabBatchEJBTest.STUB_TEST_PDO_KEY);
         stubTestPDO.setTitle(stubTestPDO.getTitle() + ((new Date()).getTime()));
         stubTestPDO.updateAddOnProducts(Collections.<Product>emptyList());
-        stubTestPDO.setProduct(productDao.findByBusinessKey(Product.EXOME_EXPRESS_V2_PART_NUMBER));
+        try {
+            stubTestPDO.setProduct(productDao.findByBusinessKey(Product.EXOME_EXPRESS_V2_PART_NUMBER));
+        } catch (InvalidProductException e) {
+            Assert.fail(e.getMessage());
+        }
         stubTestPDO.setResearchProject(researchProjectDao.findByTitle("ADHD"));
         for (LabVessel vessel : mapBarcodeToTube.values()) {
             bucket.addEntry(stubTestPDO, vessel, bucketEntryType);

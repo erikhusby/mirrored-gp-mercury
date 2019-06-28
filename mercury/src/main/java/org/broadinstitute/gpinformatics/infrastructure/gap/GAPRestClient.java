@@ -1,15 +1,17 @@
 package org.broadinstitute.gpinformatics.infrastructure.gap;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.WebResource;
-import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
+import org.broadinstitute.gpinformatics.mercury.control.AbstractJaxRsClientService;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.WebTarget;
 
 /**
  * This contains common code used by all clients of GAP rest (ie: non-broadcore) services.
  */
-public class GAPRestClient extends AbstractJerseyClientService {
+@Dependent
+public class GAPRestClient extends AbstractJaxRsClientService {
 
     private static final long serialVersionUID = 20150720L;
 
@@ -32,7 +34,7 @@ public class GAPRestClient extends AbstractJerseyClientService {
         specifyHttpAuthCredentials(client, gapConfig);
     }
 
-    public WebResource getWebResource(String urlString) {
-        return getJerseyClient().resource(urlString);
+    public WebTarget getWebResource(String urlString) {
+        return getJaxRsClient().target(urlString);
     }
 }

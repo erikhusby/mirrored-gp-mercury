@@ -1,12 +1,20 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import org.apache.commons.io.IOUtils;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -21,15 +29,20 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -38,9 +51,13 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  */
 @Test(groups = TestGroups.FIXUP)
 public class LabMetricFixupTest extends Arquillian {
+    public static final Pattern TAB_PATTERN = Pattern.compile("\\t");
 
     @Inject
     private LabMetricRunDao dao;
+
+    @Inject
+    private LabMetricDao labMetricDao;
 
     @Inject
     private UserBean userBean;
@@ -372,6 +389,171 @@ public class LabMetricFixupTest extends Arquillian {
         }
     }
 
+    @Test(enabled = false)
+    public void fixupGplim4803() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        List<LabMetric.MetricType> metricTypes = Arrays.asList(LabMetric.MetricType.VIIA_QPCR,
+                LabMetric.MetricType.ECO_QPCR);
+        for (LabMetric.MetricType metricType: metricTypes) {
+            for (LabMetric labMetric : labMetricDao.findByMetricType(metricType)) {
+                if (labMetric.getUnits() != LabMetric.LabUnit.NM) {
+                    labMetric.setLabUnit(LabMetric.LabUnit.NM);
+                    System.out.println("Lab metric " + labMetric.getLabMetricId() + " set lab unit to " +
+                                       LabMetric.LabUnit.NM.getDisplayName());
+                }
+            }
+        }
+        labMetricDao.persist(new FixupCommentary("GPLIM-4803 change viia and eco lab units to nM"));
+        labMetricDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim4854() {
+        try {
+            utx.begin();
+            userBean.loginOSUser();
+            deleteRun("05.19.17 Viia7 Set 1 Custom EL", "GPLIM-4854 incorrect uploads");
+            utx.commit();
+        } catch (NotSupportedException | SystemException | RollbackException | HeuristicMixedException |
+                HeuristicRollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/DeleteLabMetricRuns.txt, so it can
+     * be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-3624 User uploaded the wrong pico type
+     * 11_30-02:57 LCSET-12440
+     */
+    @Test(enabled = false)
+    public void fixupSupport3624() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("DeleteLabMetricRuns.txt"));
+        String reason = lines.get(0);
+
+        for (String runName : lines.subList(1, lines.size())) {
+            deleteRun(runName, reason);
+        }
+
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport3463() throws Exception {
+        long[] wrongLabMetricIds = new long[]{
+                335907L,
+                335908L,
+                335909L,
+                335910L,
+                335911L,
+                335912L,
+                335913L,
+                335914L,
+                335915L,
+                335916L,
+                335917L,
+                335918L,
+                335919L,
+                335920L,
+                335921L,
+                335922L,
+                335923L,
+                335924L,
+                335925L,
+                335926L,
+                335927L,
+                335928L,
+                335929L,
+                335930L,
+                335931L,
+                335932L,
+                335933L,
+                335934L,
+                335935L,
+                335936L,
+                335937L,
+                335938L,
+                335939L,
+                335940L,
+                335941L,
+                335942L,
+                335943L,
+                335944L,
+                335945L,
+                335946L,
+                335947L,
+                335948L,
+                335949L,
+                335950L,
+                335951L,
+                335952L,
+                335953L,
+                335954L,
+                335955L,
+                335956L,
+                335957L,
+                335958L,
+                335959L,
+                335960L,
+                335961L,
+                335962L,
+                335963L,
+                335964L,
+                335965L,
+                335966L,
+                335967L,
+                335968L,
+                335969L,
+                335970L,
+                335971L,
+                335972L,
+                335973L,
+                335974L,
+                335975L,
+                335976L,
+                335977L,
+                335978L,
+                335979L,
+                335980L,
+                335981L,
+                335982L,
+                335983L,
+                335984L,
+                335985L,
+                335986L,
+                335987L,
+                335988L,
+                335989L,
+                335990L,
+                335991L,
+                335992L,
+                335993L,
+                335994L,
+                335995L,
+                335996L,
+                335997L,
+                335998L,
+                335999L
+        };
+        userBean.loginOSUser();
+        utx.begin();
+        for (long metricId : wrongLabMetricIds) {
+            LabMetric labMetric = labVesselDao.findById(LabMetric.class, metricId);
+            Assert.assertEquals(labMetric.getName(), LabMetric.MetricType.SHEARING_PICO);
+            Assert.assertEquals(labMetric.getCreatedDate().toString(), "2017-07-26 15:05:00.245");
+            System.out.println("Deleting LabMetric " + labMetric.getLabMetricId());
+            labVesselDao.remove(labMetric);
+        }
+        dao.persist(new FixupCommentary("SUPPORT-3463 delete shearing metric"));
+        dao.flush();
+        utx.commit();
+    }
+
     private void deleteRun(String runName, String reason) {
         LabMetricRun labMetricRun = dao.findByName(runName);
         for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
@@ -391,4 +573,79 @@ public class LabMetricFixupTest extends Arquillian {
         dao.flush();
     }
 
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/ChangeMetricRunType.txt, so it
+     * can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-3483
+     * 10x NCI inters low input\tPlating Pico\tTrue
+     * 12128 inters\tPlating Pico\tTrue
+     */
+    @Test(enabled = false)
+    public void fixupSupport3483() throws IOException {
+        userBean.loginOSUser();
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ChangeMetricRunType.txt"));
+        String jiraTicket = lines.get(0);
+        for (int i = 1; i < lines.size(); i++) {
+            String[] fields = TAB_PATTERN.split(lines.get(i));
+            if (fields.length != 3) {
+                throw new RuntimeException("Expected three tab separated fields in " + lines.get(i));
+            }
+            String runName = fields[0];
+            LabMetricRun labMetricRun = dao.findByName(runName);
+            Assert.assertNotNull(labMetricRun, runName + " not found");
+            System.out.println("Updating run " + labMetricRun.getRunName());
+            String metricTypeName = fields[1];
+            LabMetric.MetricType metricType = LabMetric.MetricType.getByDisplayName(metricTypeName);
+            Assert.assertNotNull(metricType, metricTypeName + " not found");
+            labMetricRun.setMetricType(metricType);
+            for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
+                System.out.println("Updating metric " + labMetric.getLabMetricId());
+                labMetric.setMetricType(metricType);
+            }
+            if (Boolean.valueOf(fields[2])) {
+                updateRisk(labMetricRun.getLabMetrics());
+            }
+        }
+        dao.persist(new FixupCommentary(jiraTicket));
+        dao.flush();
+    }
+
+    private void updateRisk(Set<LabMetric> labMetrics) {
+        Map<ProductOrder, List<ProductOrderSample>> mapPdoToListPdoSamples = new HashMap<>();
+        Multimap<ProductOrderSample, LabMetric> mapPdoSampleToMetrics = HashMultimap.create();
+        // This code could be factored out of QuantificationEJB.updateRisk, but it seems risky to change
+        // production code for a fixup.
+        //noinspection Duplicates
+        for (LabMetric localLabMetric : labMetrics) {
+            if (localLabMetric.getLabMetricDecision() != null) {
+                for (SampleInstanceV2 sampleInstanceV2 : localLabMetric.getLabVessel().getSampleInstancesV2()) {
+                    ProductOrderSample singleProductOrderSample = sampleInstanceV2.getSingleProductOrderSample();
+                    if (singleProductOrderSample != null) {
+                        ProductOrder productOrder = singleProductOrderSample.getProductOrder();
+                        List<ProductOrderSample> productOrderSamples =
+                                mapPdoToListPdoSamples.get(productOrder);
+                        if (productOrderSamples == null) {
+                            productOrderSamples = new ArrayList<>();
+                            mapPdoToListPdoSamples.put(productOrder, productOrderSamples);
+                        }
+                        productOrderSamples.add(singleProductOrderSample);
+                        mapPdoSampleToMetrics.put(singleProductOrderSample, localLabMetric);
+                    }
+                }
+            }
+        }
+        for (Map.Entry<ProductOrder, List<ProductOrderSample>> pdoListPdoSamplesEntry :
+                mapPdoToListPdoSamples.entrySet()) {
+            ProductOrder productOrder = pdoListPdoSamplesEntry.getKey();
+            System.out.print("Calculating risk for " + productOrder.getBusinessKey() + " ");
+            List<ProductOrderSample> productOrderSamples = pdoListPdoSamplesEntry.getValue();
+            for (ProductOrderSample productOrderSample : productOrderSamples) {
+                System.out.print(productOrderSample.getSampleKey() + " ");
+            }
+            System.out.println();
+
+            int i = productOrder.calculateRisk(productOrderSamples);
+            System.out.println("Risk count " + i);
+        }
+    }
 }

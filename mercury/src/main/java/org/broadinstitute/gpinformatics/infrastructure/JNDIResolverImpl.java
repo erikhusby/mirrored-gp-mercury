@@ -2,7 +2,10 @@ package org.broadinstitute.gpinformatics.infrastructure;
 
 
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
+import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -11,9 +14,11 @@ import java.util.Hashtable;
 /**
  * Real implementation of JNDI resolver that tries to look up properties in JNDI.
  */
+@Dependent
+@Default
 public class JNDIResolverImpl implements JNDIResolver {
-    @Inject
-    private Log log;
+
+    private Log log = LogFactory.getLog(this.getClass());
 
     @Override
     public String lookupProperty(String name) throws NamingException {

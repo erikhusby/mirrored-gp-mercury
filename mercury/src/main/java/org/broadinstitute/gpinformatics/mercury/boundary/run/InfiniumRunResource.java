@@ -9,14 +9,17 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
@@ -27,9 +30,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -40,14 +40,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathFactory;
-import java.io.File;
-import java.io.FileInputStream;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -148,44 +140,57 @@ public class InfiniumRunResource {
             SampleData sampleData = sampleDataFetcher.fetchSampleData(
                     sampleInstanceV2.getNearestMercurySampleName());
 
-            ProductOrderSample productOrderSample = sampleInstanceV2.getProductOrderSampleForSingleBucket();
+            // When the ARRAY batch is auto-created, all samples on the plate get BucketEntries, even controls (this
+            // is arguably a bug in BucketEjb), so the BucketEntry can be used to determine an unambiguous PDO, unless
+            // the sample pre-dates auto-creation of ARRAY batches.
+            // To determine whether the sample is a process control (as opposed to a HapMap sample added to a PDO for
+            // scientific purposes), we have to look for the absence of a ProductOrderSample.
             ProductOrder productOrder;
+            BucketEntry singleBucketEntry = sampleInstanceV2.getSingleBucketEntry();
+            ProductOrderSample productOrderSample = sampleInstanceV2.getProductOrderSampleForSingleBucket();
+            if (singleBucketEntry == null) {
+                if (productOrderSample == null) {
+                    // Likely a control, look at all samples on imported plate to try to find common ProductOrder
+                    TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
+                            new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(
+                                    LabEventType.ARRAY_PLATING_DILUTION), true);
+                    chip.getContainerRole().applyCriteriaToAllPositions(vesselForEventTypeCriteria,
+                            TransferTraverserCriteria.TraversalDirection.Ancestors);
+
+                    Set<ProductOrder> productOrders = new HashSet<>();
+                    for (Map.Entry<LabEvent, Set<LabVessel>> labEventSetEntry :
+                            vesselForEventTypeCriteria.getVesselsForLabEventType().entrySet()) {
+                        for (LabVessel labVessel : labEventSetEntry.getValue()) {
+                            Set<SampleInstanceV2> sampleInstances = OrmUtil.proxySafeIsInstance(labVessel, PlateWell.class) ?
+                                    labVessel.getContainers().iterator().next().getContainerRole().getSampleInstancesV2() :
+                                    labVessel.getSampleInstancesV2();
+                            for (SampleInstanceV2 sampleInstance : sampleInstances) {
+                                ProductOrderSample platedPdoSample = sampleInstance.getProductOrderSampleForSingleBucket();
+                                if (platedPdoSample != null) {
+                                    productOrders.add(platedPdoSample.getProductOrder());
+                                }
+                            }
+                            if (OrmUtil.proxySafeIsInstance(labVessel, PlateWell.class)) {
+                                break;
+                            }
+                        }
+                    }
+
+                    if (productOrders.size() >= 1) {
+                        productOrder = productOrders.iterator().next();
+                    } else {
+                        throw new ResourceException("Found no product orders ", Response.Status.INTERNAL_SERVER_ERROR);
+                    }
+                } else {
+                    productOrder = productOrderSample.getProductOrder();
+                }
+            } else {
+                productOrder = singleBucketEntry.getProductOrder();
+            }
+
             boolean positiveControl = false;
             boolean negativeControl = false;
             if (productOrderSample == null) {
-                // Likely a control, look at all samples on imported plate to try to find common ProductOrder
-                TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
-                        new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(
-                                LabEventType.ARRAY_PLATING_DILUTION), true);
-                chip.getContainerRole().applyCriteriaToAllPositions(vesselForEventTypeCriteria,
-                        TransferTraverserCriteria.TraversalDirection.Ancestors);
-
-                Set<ProductOrder> productOrders = new HashSet<>();
-                for (Map.Entry<LabEvent, Set<LabVessel>> labEventSetEntry :
-                        vesselForEventTypeCriteria.getVesselsForLabEventType().entrySet()) {
-                    for (LabVessel labVessel : labEventSetEntry.getValue()) {
-                        Set<SampleInstanceV2> sampleInstances = OrmUtil.proxySafeIsInstance(labVessel, PlateWell.class) ?
-                                labVessel.getContainers().iterator().next().getContainerRole().getSampleInstancesV2() :
-                                labVessel.getSampleInstancesV2();
-                        for (SampleInstanceV2 sampleInstance : sampleInstances) {
-                            ProductOrderSample platedPdoSample = sampleInstance.getProductOrderSampleForSingleBucket();
-                            if (platedPdoSample != null) {
-                                productOrders.add(platedPdoSample.getProductOrder());
-                            }
-                        }
-                        if (OrmUtil.proxySafeIsInstance(labVessel, PlateWell.class)) {
-                            break;
-                        }
-                    }
-                }
-
-                if (productOrders.size() == 1) {
-                    productOrder = productOrders.iterator().next();
-                } else if (productOrders.size() > 1){
-                    throw new ResourceException("Found mix of product orders ", Response.Status.INTERNAL_SERVER_ERROR);
-                } else  {
-                    throw new ResourceException("Found no product orders ", Response.Status.INTERNAL_SERVER_ERROR);
-                }
                 Control processControl = evaluateAsControl(sampleData);
                 if (processControl != null) {
                     if (processControl.getType() == Control.ControlType.POSITIVE) {
@@ -194,9 +199,8 @@ public class InfiniumRunResource {
                         negativeControl = true;
                     }
                 }
-            } else {
-                productOrder = productOrderSample.getProductOrder();
             }
+
             GenotypingChip chipType = findChipType(productOrder, effectiveDate);
 
             if (chipType == null) {
@@ -217,8 +221,7 @@ public class InfiniumRunResource {
                     startDate = labEvent.getEventDate();
                 }
             }
-            String scannerName = InfiniumRunProcessor.findScannerName(chip.getLabel(), vesselPosition.name(),
-                    infiniumStarterConfig);
+            String scannerName = InfiniumRunProcessor.findScannerName(chip.getLabel(), infiniumStarterConfig);
 
             String batchName = null;
             if (sampleInstanceV2.getSingleBatch() != null) {
@@ -229,16 +232,18 @@ public class InfiniumRunResource {
             String productFamily = null;
             String partNumber = null;
             String researchProjectId = null;
+            ResearchProject.RegulatoryDesignation regulatoryDesignation = null;
             if (productOrder != null) {
                 productOrderId = productOrder.getJiraTicketKey();
                 productName = productOrder.getProduct().getProductName();
                 productFamily = productOrder.getProduct().getProductFamily().getName();
                 partNumber = productOrder.getProduct().getPartNumber();
                 researchProjectId = productOrder.getResearchProject().getBusinessKey();
+                regulatoryDesignation = productOrder.getResearchProject().getRegulatoryDesignation();
 
                 //Attempt to override default chip attributes if changed in product order
                 GenotypingProductOrderMapping genotypingProductOrderMapping =
-                        attributeArchetypeDao.findGenotypingProductOrderMapping(productOrder.getJiraTicketKey());
+                        attributeArchetypeDao.findGenotypingProductOrderMapping(productOrder.getProductOrderId());
                 if (genotypingProductOrderMapping != null) {
                     for (ArchetypeAttribute archetypeAttribute : genotypingProductOrderMapping.getAttributes()) {
                         if (chipAttributes.containsKey(archetypeAttribute.getAttributeName()) &&
@@ -250,6 +255,10 @@ public class InfiniumRunResource {
                 }
             }
 
+            String sampleLsid = sampleData.getSampleLsid();
+            if (sampleLsid == null && regulatoryDesignation != null && regulatoryDesignation.isClinical()) {
+                sampleLsid = CrspPipelineUtils.getCrspLSIDForBSPSampleId(sampleInstanceV2.getNearestMercurySampleName());
+            }
             infiniumRunBean = new InfiniumRunBean(
                     idatPrefix + "_Red.idat",
                     idatPrefix + "_Grn.idat",
@@ -259,7 +268,7 @@ public class InfiniumRunResource {
                     chipAttributes.get("zcall_threshold_unix"),
                     sampleInstanceV2.getNearestMercurySampleName(),
                     sampleData.getCollaboratorsSampleName(),
-                    sampleData.getSampleLsid(),
+                    sampleLsid,
                     sampleData.getGender(),
                     sampleData.getPatientId(),
                     researchProjectId,
@@ -275,8 +284,8 @@ public class InfiniumRunResource {
                     batchName,
                     startDate,
                     scannerName,
-                    chipAttributes.get("norm_manifest_unix")
-                    );
+                    chipAttributes.get("norm_manifest_unix"),
+                    regulatoryDesignation == null ? null : regulatoryDesignation.name());
         } else {
             throw new RuntimeException("Expected 1 sample, found " + sampleInstancesAtPositionV2.size());
         }
@@ -333,5 +342,9 @@ public class InfiniumRunResource {
         mapSerialNumberToMachineName.put("N0700", "Fiddler Pig");
         mapSerialNumberToMachineName.put("N588", "Fiffer Pig");
         mapSerialNumberToMachineName.put("N0588", "Fiffer Pig");
+        mapSerialNumberToMachineName.put("N1052", "BAF");
+        mapSerialNumberToMachineName.put("N01052", "BAF");
+        mapSerialNumberToMachineName.put("N1042", "BAE");
+        mapSerialNumberToMachineName.put("N01042", "BAE");
     }
 }

@@ -2,8 +2,8 @@ package org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers;
 
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 /**
@@ -14,22 +14,26 @@ import javax.inject.Inject;
  * By triggering off of the {@link org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType}, we can
  * target each message at its own message validator.
  */
+@Dependent
 public class EventHandlerSelector {
 
-    private SonicAliquotHandler sonicAliquotHandler;
     private DenatureToDilutionTubeHandler denatureToDilutionTubeHandler;
     private FlowcellMessageHandler flowcellMessageHandler;
     private FlowcellLoadedHandler flowcellLoadedHandler;
+    private BspNewRootHandler bspNewRootHandler;
+    private CreateLabBatchHandler createLabBatchHandler;
 
     @Inject
-    public EventHandlerSelector(SonicAliquotHandler sonicAliquotHandler,
-            DenatureToDilutionTubeHandler denatureToDilutionTubeHandler,
+    public EventHandlerSelector(DenatureToDilutionTubeHandler denatureToDilutionTubeHandler,
             FlowcellMessageHandler flowcellMessageHandler,
-            FlowcellLoadedHandler flowcellLoadedHandler) {
-        this.sonicAliquotHandler = sonicAliquotHandler;
+            FlowcellLoadedHandler flowcellLoadedHandler,
+            BspNewRootHandler bspNewRootHandler,
+            CreateLabBatchHandler createLabBatchHandler) {
         this.denatureToDilutionTubeHandler = denatureToDilutionTubeHandler;
         this.flowcellMessageHandler = flowcellMessageHandler;
         this.flowcellLoadedHandler = flowcellLoadedHandler;
+        this.bspNewRootHandler = bspNewRootHandler;
+        this.createLabBatchHandler = createLabBatchHandler;
     }
 
     /**
@@ -57,15 +61,15 @@ public class EventHandlerSelector {
         case REAGENT_KIT_TO_FLOWCELL_TRANSFER:
             flowcellMessageHandler.handleEvent(targetEvent, stationEvent);
             break;
-
-        case AUTO_DAUGHTER_PLATE_CREATION:
-            stationEvent.setEventType(LabEventType.SAMPLES_DAUGHTER_PLATE_CREATION.getName());
-            break;
         case FLOWCELL_LOADED:
             flowcellLoadedHandler.handleEvent(targetEvent, stationEvent);
             break;
-        case SONIC_DAUGHTER_PLATE_CREATION:
-            sonicAliquotHandler.handleEvent(targetEvent, stationEvent);
+        case BLOOD_PLASMA_SECOND_TRANSFER:
+        case BLOOD_BUFFY_COAT_TRANSFER:
+            bspNewRootHandler.handleEvent(targetEvent, stationEvent);
+            break;
+        case ARRAY_PLATING_DILUTION:
+            createLabBatchHandler.handleEvent(targetEvent, stationEvent);
             break;
         }
     }
@@ -77,4 +81,5 @@ public class EventHandlerSelector {
     public FlowcellLoadedHandler getFlowcellLoadedHandler() {
         return flowcellLoadedHandler;
     }
+
 }

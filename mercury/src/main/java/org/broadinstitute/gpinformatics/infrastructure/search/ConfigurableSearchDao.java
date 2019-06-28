@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Conjunction;
@@ -302,7 +303,7 @@ public class ConfigurableSearchDao extends GenericDao {
             PaginationUtil.startPagination(criteria, pagination, true);
 
             TraversalEvaluator evaluator = null;
-            Set<Object> idList = null;
+            Set<Object> traversalEntities = null;
 
             Map<String,TraversalEvaluator> traversalEvaluators;
             if( isAlternateSearchDefinition ) {
@@ -310,28 +311,55 @@ public class ConfigurableSearchDao extends GenericDao {
 
                 // Alternate traversal evaluator configured
                 evaluator = traversalEvaluators.get(ConfigurableSearchDefinition.ALTERNATE_DEFINITION_ID);
-                idList = evaluator.evaluate(pagination.getIdList(), searchInstance);
+                traversalEntities = evaluator.evaluate(pagination.getIdList(), searchInstance);
                 // Reconfigure pagination with correct base entity type
                 pagination.setResultEntity(configurableSearchDef.getResultEntity());
             } else {
+                boolean isCustomTraversal = false;
                 traversalEvaluators = configurableSearchDef.getTraversalEvaluators();
                 for (Map.Entry<String, TraversalEvaluator> configuredEvaluatorEntry
                         : traversalEvaluators.entrySet()) {
                     // Traverse the options which are checked
-                    Boolean doTraverse = traversalEvaluatorValues.get(configuredEvaluatorEntry.getKey());
-                    if (doTraverse) {
+                    if (traversalEvaluatorValues.get(configuredEvaluatorEntry.getKey())) {
                         evaluator = configuredEvaluatorEntry.getValue();
-                        if (idList == null) {
-                            idList = evaluator.evaluate(pagination.getIdList(), searchInstance);
+
+                        // Did user select a custom evaluator?
+                        isCustomTraversal = configurableSearchDef.getCustomTraversalOptions() != null &&
+                                configurableSearchDef.getCustomTraversalOptions().containsKey(
+                                        searchInstance.getCustomTraversalOptionName() );
+
+                        if( isCustomTraversal ) {
+                            // Do the traversal via the custom evaluator
+                            TransferTraverserCriteria.TraversalDirection traversalDirection = evaluator.getTraversalDirection();
+                            CustomTraversalEvaluator customEvaluator = configurableSearchDef.getCustomTraversalOptions().get(searchInstance.getCustomTraversalOptionName());
+                            if (traversalEntities == null) {
+                                traversalEntities = customEvaluator.evaluate(pagination.getIdList(), traversalDirection, searchInstance);
+                            } else {
+                                traversalEntities.addAll(customEvaluator.evaluate(pagination.getIdList(), traversalDirection, searchInstance));
+                            }
                         } else {
-                            idList.addAll(evaluator.evaluate(pagination.getIdList(), searchInstance));
+                            // Do the traversal via the standard (ancestor/descendant) evaluator
+                            if (traversalEntities == null) {
+                                traversalEntities = evaluator.evaluate(pagination.getIdList(), searchInstance);
+                            } else {
+                                traversalEntities.addAll(evaluator.evaluate(pagination.getIdList(), searchInstance));
+                            }
                         }
+                    }
+                }
+
+                // Add initial vessels to custom traversal results if selected
+                // The custom traverser logic is responsible for adding initial vessels as required if exclude is checked
+                if( isCustomTraversal ) {
+                    if (!searchInstance.getExcludeInitialEntitiesFromResults()) {
+                        // Put all the initial entities back into the result Set
+                        traversalEntities.addAll(pagination.getIdList());
                     }
                 }
             }
 
             // Replace the full entities in the pagination with ids using last evaluator
-            List<Object> rootIdList = evaluator.buildEntityIdList(idList);
+            List<Object> rootIdList = evaluator.buildEntityIdList(traversalEntities);
             pagination.setIdList(rootIdList);
 
         }

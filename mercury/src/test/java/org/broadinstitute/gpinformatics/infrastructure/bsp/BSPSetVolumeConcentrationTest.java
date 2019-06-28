@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPSampleDataFetcherImpl;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -21,7 +21,7 @@ public class BSPSetVolumeConcentrationTest  {
     private BSPSampleSearchService bspSampleSearchService=new BSPSampleSearchServiceImpl(bspConfig);
 
     public void testSetVolumeAndConcentration() {
-        BSPSampleDataFetcher dataFetcher = new BSPSampleDataFetcher(bspSampleSearchService, bspConfig);
+        BSPSampleDataFetcher dataFetcher = new BSPSampleDataFetcherImpl(bspSampleSearchService, bspConfig);
         BSPSetVolumeConcentrationImpl bspSetVolumeConcentration = new BSPSetVolumeConcentrationImpl(bspConfig);
 
         String testSampleId = "SM-1234";
@@ -31,7 +31,8 @@ public class BSPSetVolumeConcentrationTest  {
 
         for (int i = 0; i < newVolume.length; ++i) {
             String result = bspSetVolumeConcentration.setVolumeAndConcentration(
-                    testSampleId, newVolume[i], newConcentration[i], newReceptacleWeight[i]);
+                    testSampleId, newVolume[i], newConcentration[i], newReceptacleWeight[i],
+                    BSPSetVolumeConcentration.TerminateAction.LEAVE_CURRENT_STATE);
             Assert.assertEquals(result, BSPSetVolumeConcentration.RESULT_OK);
 
             SampleData bspSampleData = dataFetcher.fetchSingleSampleFromBSP(testSampleId);

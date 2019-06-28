@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
-import org.broadinstitute.gpinformatics.infrastructure.quote.*;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -23,7 +22,7 @@ public class QuoteServiceTest {
     @BeforeClass(groups = EXTERNAL_INTEGRATION)
     private void setupLargeQuoteAndPriceItem() {
         quote = new Quote("DNA4JC",new QuoteFunding(Collections.singleton(new FundingLevel("100",
-                new Funding(Funding.FUNDS_RESERVATION, "NHGRI", "NHGRI")))), ApprovalStatus.FUNDED);
+                Collections.singleton(new Funding(Funding.FUNDS_RESERVATION, "NHGRI", "NHGRI"))))), ApprovalStatus.FUNDED);
         quotePriceItem = new QuotePriceItem("Illumina Sequencing","1","Illumina Custom Hybrid Selection Library (93 sample batch size)","15","bannanas","DNA Sequencing");
     }
 
@@ -33,7 +32,7 @@ public class QuoteServiceTest {
         System.out.println(fetchedQuote.getQuoteFunding().getFundsRemaining());
         String workBatchId =
             service.registerNewWork(quote, quotePriceItem, null, new Date(), 0.0001,
-                    "http://www.MercuryTesting", "paramName", "paramValue");
+                    "http://www.MercuryTesting", "paramName", "paramValue", null);
         System.out.println(fetchedQuote.getQuoteFunding().getFundsRemaining());
 
         Assert.assertNotNull(workBatchId);
@@ -57,26 +56,31 @@ public class QuoteServiceTest {
         Assert.assertEquals("NIAID (CO 5035331)", quote.getName());
 
         for(FundingLevel level : quote.getQuoteFunding().getFundingLevel()) {
-            if(level.getFunding().getCostObject().equals("5035331")) {
-                Assert.assertEquals("GENSEQCTR_(NIH)NIAID",
-                        level.getFunding().getGrantDescription());
-                Assert.assertEquals(Funding.FUNDS_RESERVATION,
-                        level.getFunding().getFundingType());
-            } else if(level.getFunding().getCostObject().equals("5030300")) {
-                Assert.assertEquals("NIAIDSURVEILLANCEOPT",
-                        level.getFunding().getGrantDescription());
-                Assert.assertEquals(Funding.FUNDS_RESERVATION,
-                        level.getFunding().getFundingType());
-            } else {
-                Assert.fail("Encountered an unrecognized funding level");
+
+            for (Funding funding :level.getFunding()) {
+                if(funding.getCostObject().equals("5035331")) {
+                    Assert.assertEquals("GENSEQCTR_(NIH)NIAID",
+                            funding.getGrantDescription());
+                    Assert.assertEquals(Funding.FUNDS_RESERVATION,
+                            funding.getFundingType());
+                } else if(funding.getCostObject().equals("5030300")) {
+                    Assert.assertEquals("NIAIDSURVEILLANCEOPT",
+                            funding.getGrantDescription());
+                    Assert.assertEquals(Funding.FUNDS_RESERVATION,
+                            funding.getFundingType());
+                } else {
+                    Assert.fail("Encountered an unrecognized funding level");
+                }
             }
         }
         Assert.assertEquals("DNA23H", quote.getAlphanumericId());
 
         quote = service.getQuoteByAlphaId("DNA3A9");
         for(FundingLevel level : quote.getQuoteFunding().getFundingLevel()) {
-            Assert.assertEquals("HARVARD UNIVERSITY", level.getFunding().getInstitute());
-            Assert.assertEquals(Funding.PURCHASE_ORDER, level.getFunding().getFundingType());
+            for (Funding funding :level.getFunding()) {
+                Assert.assertEquals("HARVARD UNIVERSITY", funding.getInstitute());
+                Assert.assertEquals(Funding.PURCHASE_ORDER, funding.getFundingType());
+            }
         }
         Assert.assertEquals("DNA3A9", quote.getAlphanumericId());
 
@@ -107,4 +111,8 @@ public class QuoteServiceTest {
             Assert.fail(e.toString());
         }
     }
+
+
+
+
 }

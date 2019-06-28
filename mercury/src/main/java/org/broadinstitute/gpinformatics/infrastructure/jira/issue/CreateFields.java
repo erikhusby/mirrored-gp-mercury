@@ -1,23 +1,20 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.issue;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jira.NameableTypeJsonSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CreateJiraIssueFieldsSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Nameable;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
-import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.map.JsonSerializer;
-import org.codehaus.jackson.map.SerializerProvider;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.regex.Matcher;
 
 /**
@@ -91,7 +88,8 @@ public class CreateFields extends UpdateFields {
         PRODUCT_ORDERING("Product Ordering", "PDO"),
         RESEARCH_PROJECTS("Research Projects", "RP"),
         RECEIPT_PROJECT("Sample Receipt Tracking", "RCT"),
-        EXTRACTION_PROJECT("Extractions", "XTR");
+        EXTRACTION_PROJECT("Extractions", "XTR"),
+        ARRAY_PROJECT("Array Tracking", "ARRAY");
 
         private final String projectName;
         private final String keyPrefix;
@@ -151,19 +149,39 @@ public class CreateFields extends UpdateFields {
         // jiraName is defined by JIRA and must not be based on Mercury Workflow.
         WHOLE_EXOME_HYBSEL("Whole Exome (HybSel)"),
         EXOME_EXPRESS("Exome Express"),
+        MICROBIAL("Microbial"),
+        GERMLINE_EXOME("Germline Exome"),
         CDNA_TRUSEQ_SS("cDNA TruSeq Strand Specific Large Insert"),
+        CDNA_LASSO("Lasso"),
         PRODUCT_ORDER("Product Order"),
         RESEARCH_PROJECT("Research Project"),
-        FLOWCELL("Flowcell"),
+        HISEQ_2000("HiSeq 2000"),
+        HISEQ_2500_RAPID_RUN("HiSeq 2500 Rapid Run"),
+        HISEQ_2500_HIGH_OUTPUT("HiSeq 2500 High Output"),
+        HISEQ_4000("HiSeq 4000"),
+        HISEQ_X_10("HiSeq X 10"),
+        MALARIA("Malaria"),
+        NOVASEQ("NovaSeq S2"),
+        NOVASEQ_S1("NovaSeq S1"),
+        NOVASEQ_S4("NovaSeq S4"),
+        NOVASEQ_SP("NovaSeq SP"),
+        NEXTSEQ("NextSeq"),
         MISEQ("MiSeq"),
+        MISEQ_16S("MiSeq16s"),
+        TSCA("TSCA"),
         SAMPLE_INITIATION("Sample Initiation"),
         RECEIPT("Receipt"),
-        ALLPREP("AllPrep"),
+        ALLPREP("AllPrep Extraction"),
+        CDNA_EXTRACTION("cDNA Extraction"),
         DNA_EXTRACTION("DNA Extraction"),
         EXTRACTION_OTHER("Extraction (Other)"),
         RNA_EXTRACTION("RNA Extraction"),
         HUMAN_PCR_FREE("Human PCR-Free"),
-        HUMAN_PCR_PLUS("Human PCR-Plus");
+        HUMAN_PCR_PLUS("Human PCR-Plus"),
+        INFINIUM_8("Infinium-8"), // todo jmt -12, -24
+        EXTERNAL_QUANT_AND_SEQ("External Library (Quant & Seq Only)"),
+        ;
+
         private final String jiraName;
 
         IssueType(String jiraName) {
@@ -180,25 +198,6 @@ public class CreateFields extends UpdateFields {
             return jiraName;
         }
 
-        /** Contains the IssueType to use for a given workflow. */
-        public static final Map<String, IssueType> MAP_WORKFLOW_TO_ISSUE_TYPE = new HashMap<String, IssueType>() {{
-            put(Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), EXOME_EXPRESS);
-            put(Workflow.ICE_EXOME_EXPRESS.getWorkflowName(), EXOME_EXPRESS);
-            put(Workflow.ICE_CRSP.getWorkflowName(), EXOME_EXPRESS);
-            put(Workflow.ICE.getWorkflowName(), EXOME_EXPRESS);
-        }};
-
-        public static IssueType fromJiraName(String jiraName) {
-            IssueType foundValue = null;
-            for (IssueType issuetype : values()) {
-                if (issuetype.getJiraName().equals(jiraName)) {
-                    foundValue = issuetype;
-                    break;
-                }
-            }
-
-            return foundValue;
-        }
     }
 
 

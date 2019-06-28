@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
-import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -17,13 +16,16 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Resource;
 import javax.ejb.EJBContext;
-import javax.ejb.Singleton;
+import javax.ejb.Stateless;
 import javax.ejb.TransactionManagement;
 import javax.ejb.TransactionManagementType;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
@@ -33,20 +35,19 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 /**
  * Finds pending infinium chip runs and forwards them on to analysis.
  */
-@Singleton
+@Stateless
+@Dependent
 @TransactionManagement(value= TransactionManagementType.BEAN)
 public class InfiniumRunFinder implements Serializable {
     private static final Log log = LogFactory.getLog(InfiniumRunFinder.class);
 
     @Inject
     private InfiniumRunProcessor infiniumRunProcessor;
-
-    @Inject
-    private BettaLimsMessageResource bettaLimsMessageResource;
 
     @Inject
     private InfiniumPipelineClient infiniumPipelineClient;
@@ -66,10 +67,13 @@ public class InfiniumRunFinder implements Serializable {
     @Inject
     private BSPUserList bspUserList;
 
+    @Inject
+    private UserBean userBean;
+
     @Resource
     private EJBContext ejbContext;
 
-    private AtomicBoolean busy = new AtomicBoolean(false);
+    private static final AtomicBoolean busy = new AtomicBoolean(false);
 
     public void find() throws SystemException {
         if (!busy.compareAndSet(false, true)) {
@@ -77,27 +81,37 @@ public class InfiniumRunFinder implements Serializable {
         }
 
         try {
+            userBean.login("seqsystem");
             List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(LabEventType.INFINIUM_XSTAIN,
                     LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
-            for (LabVessel labVessel : infiniumChips) {
-                UserTransaction utx = ejbContext.getUserTransaction();
-                try {
-                    if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
-                        StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
-                        utx.begin();
-                        processChip(staticPlate);
-                        // The commit doesn't cause a flush (not clear why), so we must do it explicitly.
-                        labEventDao.flush();
-                        utx.commit();
+            List<String> barcodes = infiniumChips.stream().map(LabVessel::getLabel).collect(Collectors.toList());
+            for (String barcode : barcodes) {
+                if (labEventDao != null && labEventDao.getEntityManager() != null &&
+                        labEventDao.getEntityManager().isOpen()) {
+                    UserTransaction utx = ejbContext.getUserTransaction();
+                    try {
+                        // Clear the session, then fetch each chip individually, otherwise many chips will accumulate.
+                        // This accumulation would take progressively longer to dirty check during the flush after
+                        // each chip.  For 75 chips, the overall time is reduced from 1m20s to 15s.
+                        labVesselDao.clear();
+                        LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
+                        if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
+                            StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
+                            utx.begin();
+                            log.debug("Processing " + staticPlate.getLabel());
+                            processChip(staticPlate);
+                            // The commit doesn't cause a flush (not clear why), so we must do it explicitly.
+                            labEventDao.flush();
+                            utx.commit();
+                        }
+                    } catch (Exception e) {
+                        utx.rollback();
+                        log.error("Failed to process chip " + barcode, e);
+                        emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
+                                Collections.emptyList(), "[Mercury] Failed to process infinium chip",
+                                "For " + barcode + " with error: " + e.getMessage(),
+                                false, true);
                     }
-                } catch (Exception e) {
-                    utx.rollback();
-                    log.error("Failed to process chip " + labVessel.getLabel(), e);
-                    emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
-                            Collections.<String>emptyList(),
-                            "[Mercury] Failed to process infinium chip", "For " + labVessel.getLabel() +
-                                                                                     " with error: " + e.getMessage(),
-                            false);
                 }
             }
         } finally {
@@ -107,12 +121,20 @@ public class InfiniumRunFinder implements Serializable {
 
     private void processChip(StaticPlate staticPlate) throws Exception {
         InfiniumRunProcessor.ChipWellResults chipWellResults = infiniumRunProcessor.process(staticPlate);
-        if (!chipWellResults.isHasRunStarted() || chipWellResults.getScannerName() == null) {
+        if (!chipWellResults.isHasRunStarted()) {
             return;
+        }
+        boolean failedToFindScannerName = chipWellResults.getScannerName() == null;
+        if (failedToFindScannerName) {
+            log.warn("Failed to find scanner name from filesystem, setting to Mercury");
+            chipWellResults.setScannerName(LabEvent.UI_PROGRAM_NAME);
         }
         if (checkForInvalidPipelineLocation(staticPlate)) {
             log.debug("Won't forward plate where its Pipeline location not set to US Cloud: " + staticPlate.getLabel());
             createEvent(staticPlate, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED, chipWellResults.getScannerName());
+            if (failedToFindScannerName) {
+                sendFailedToFindScannerNameEmail(staticPlate);
+            }
             return;
         }
         log.debug("Processing chip: " + staticPlate.getLabel());
@@ -121,7 +143,7 @@ public class InfiniumRunFinder implements Serializable {
         boolean allComplete = true;
         for (VesselPosition vesselPosition : chipWellResults.getPositionWithSampleInstance()) {
             //Check to see if any of the wells in the chip are abandoned.
-            if(!staticPlate.isPositionAbandoned(vesselPosition.toString())) {
+            if(!isAbandoned(staticPlate,vesselPosition)) {
                 boolean autocallStarted = false;
                 for (LabEventMetadata metadata : labEventMetadata) {
                     if (metadata.getLabEventMetadataType() ==
@@ -134,12 +156,8 @@ public class InfiniumRunFinder implements Serializable {
                 }
 
                 if (!autocallStarted && chipWellResults.getWellCompleteMap().get(vesselPosition)) {
-                    if (callStarterOnWell(staticPlate, vesselPosition)) {
-                        LabEventMetadata newMetadata = new LabEventMetadata();
-                        newMetadata.setLabEventMetadataType(LabEventMetadata.LabEventMetadataType.AutocallStarted);
-                        newMetadata.setValue(vesselPosition.name());
-                        someStartedEvent.addMetadata(newMetadata);
-                    } else {
+                    boolean started = start(staticPlate, vesselPosition, someStartedEvent);
+                    if (!started) {
                         allComplete = false;
                     }
                 }
@@ -150,7 +168,7 @@ public class InfiniumRunFinder implements Serializable {
         boolean starterCalledOnAllWells = true;
         for (VesselPosition vesselPosition: staticPlate.getVesselGeometry().getVesselPositions()) {
             //Check to see if any of the wells in the chip are abandoned.
-            if(!staticPlate.isPositionAbandoned(vesselPosition.toString())) {
+            if(!isAbandoned(staticPlate,vesselPosition)) {
                 Set<SampleInstanceV2> sampleInstancesAtPositionV2 =
                         staticPlate.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition);
                 if (sampleInstancesAtPositionV2 != null && !sampleInstancesAtPositionV2.isEmpty()) {
@@ -174,7 +192,44 @@ public class InfiniumRunFinder implements Serializable {
 
         if (allComplete && starterCalledOnAllWells) {
             createEvent(staticPlate, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED, someStartedEvent.getEventLocation());
+            if (failedToFindScannerName) {
+                sendFailedToFindScannerNameEmail(staticPlate);
+            }
         }
+    }
+
+
+    /**
+     *  Check to see if the any position on the current chip or any ancestor plates or vessels are abandoned.
+     */
+    private boolean isAbandoned(StaticPlate staticPlate, VesselPosition vesselPosition) {
+        TransferTraverserCriteria.AbandonedLabVesselCriteria abandonedLabVesselCriteria =
+                new TransferTraverserCriteria.AbandonedLabVesselCriteria();
+        staticPlate.getContainerRole().evaluateCriteria(vesselPosition, abandonedLabVesselCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors, 0);
+        if(abandonedLabVesselCriteria.isAncestorAbandoned()) {
+            return true;
+        }
+        return false;
+    }
+
+    public boolean start(StaticPlate staticPlate, VesselPosition vesselPosition, LabEvent someStartedEvent) {
+        boolean started = callStarterOnWell(staticPlate, vesselPosition);
+        if (started) {
+            LabEventMetadata newMetadata = new LabEventMetadata();
+            newMetadata.setLabEventMetadataType(LabEventMetadata.LabEventMetadataType.AutocallStarted);
+            newMetadata.setValue(vesselPosition.name());
+            someStartedEvent.addMetadata(newMetadata);
+        }
+        return started;
+    }
+
+    private void sendFailedToFindScannerNameEmail(StaticPlate staticPlate) {
+        String subject = "[Mercury] Failed to find scanner name for infinium chip " + staticPlate.getLabel();
+        String body = "Defaulted scanner name to be " + staticPlate.getLabel() + " for starter events";
+        emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
+                Collections.emptyList(),
+                subject, body,
+                false, true);
     }
 
     /**

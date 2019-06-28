@@ -38,7 +38,10 @@ ul.DTTT_dropdown.dropdown-menu li { position: relative; }
 .DTTT { float: right; }
 
 .dropdown-menu a { text-decoration: none !important }
-
+/* Datatables bootstrap css adds box icsons which clutter the header */
+table.dataTable thead .sorting:after { content: "" }
+table.dataTable thead .sorting_asc:after { content: "" }
+table.dataTable thead .sorting_desc:after { content: "" }
 /* DataTables sorting CSS */
 table.table thead .sorting,
 table.table thead .sorting_asc,
@@ -54,7 +57,7 @@ table.table thead .sorting_asc_disabled { background: url('/Mercury/images/sort_
 table.table thead .sorting_desc_disabled { background: url('/Mercury/images/sort_desc_disabled.png') no-repeat center right; }
 
 /* highlight error */
-input.error, select.error, textarea.error { background-color: #F2DEDE; border: 1px #8b0000 solid; }
+input.error, select.error, textarea.error, input:invalid { background-color: #F2DEDE; border: 1px #8b0000 solid; }
 
 /* SIMPLE (HIGHTLIGHTS ROW W/ MOUSE)***************** */
 table.simple thead tr { text-align: left; border-radius: 3px;-moz-border-radius: 3px; -webkit-border-radius: 3px; -khtml-border-radius: 3px;}
@@ -73,9 +76,45 @@ table.dataTable tr:hover td.subgroup, table.dataTable td.subgroup { background-c
 table.workflow td.latest { background-color: #b4ffcc }
 table.workflow td.current { background-color: #eecac6}
 
+tr .bad-price-div {
+    z-index: 10;
+    display:none;
+    padding: 14px 20px;
+    margin-top: -30px;
+    margin-left: 400px;
+    width: 300px;
+    line-height: 16px;
+}
+
+tr.bad-prices:hover .bad-price-div {
+    display:inline;
+    position: absolute;
+    color: #111;
+    border: 1px solid #DCA;
+    background: #FFFAF0;
+}.callout {
+     z-index:20;
+     position:absolute;
+     top: 30px; border:0;
+     left: -12px;
+ }
+
+table#productList tr.bad-prices.odd {
+     background-color: #b93d2e;
+ }
+
+table#productList tr.bad-prices.even {
+    background-color: #b94a48;
+}
+
+/* min width for columns excluding the checkbox column */
+table.compact th:nth-child(n+2) { width:auto; min-width: 5em; }
+table.compact td,span.title { white-space: nowrap; }
+
 table.nocol tbody td,table.nocol tbody th { border-left: none; border-right: none; }
 
 .page-header { color: #644436; border-bottom: 1px solid #EEEEEE; margin: 0 0 15px 0; padding-bottom: 3px; font-size: x-large; font-weight: bold; line-height: 1; }
+.title-header { color: #644436; margin: 0 0 15px 0; padding-bottom: 3px; font-size: x-large; font-weight: bold; line-height: 1; }
 
 .twocolumn {-moz-column-count:2;-webkit-column-count:2;-moz-column-gap:2em;-webkit-column-gap:2em;-moz-column-rule-style:solid;-moz-column-rule-color:#fff;-moz-column-rule-width:2px;-webkit-column-rule-style:solid;-webkit-column-rule-color:#fff;-webkit-column-rule-width:2px}
 .threecolumn {-moz-column-count:3;-webkit-column-count:3;-moz-column-gap:2em;-webkit-column-gap:2em;-moz-column-rule-style:solid;-moz-column-rule-color:#fff;-moz-column-rule-width:2px;-webkit-column-rule-style:solid;-webkit-column-rule-color:#fff;-webkit-column-rule-width:2px}
@@ -127,8 +166,7 @@ textarea.controlledText { width: 550px; }
 .dataTables_filter { float: left !important; text-align: left !important;}
 .dataTables_filter input.text { width: 500px; font-size: 12px; height: 14px; }
 .filterOptions { position: absolute; margin-left: 10px; display: inline; }
-.filterDropdown { height: 25px; }
-
+.dataTables_length select, .dataTables_info, .filterDropdown { height: 25px; width: auto !important;}
 /* The 'x' for clearing input */
 .clear-helper { color: #0000cd; cursor: pointer; font-size: 20px; font-weight: bold; margin: 8px 2px 0 -19px; padding: 1px 4px; }
 

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -12,6 +13,9 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.ReferenceSequenceDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
+import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -29,6 +33,7 @@ import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
@@ -49,6 +54,9 @@ public class ResearchProjectFixupTest extends Arquillian {
 
     @Inject
     private BSPUserList bspUserList;
+
+    @Inject
+    private ReferenceSequenceDao referenceSequenceDao;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -114,6 +122,24 @@ public class ResearchProjectFixupTest extends Arquillian {
 
         rpDao.remove(researchProject);
         rpDao.persist(new FixupCommentary("see https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3526"));
+    }
+
+    @Test(enabled = false)
+    public void fixupGPLIM_4880_Change_Title() {
+        userBean.loginOSUser();
+
+        final String RP1449 = "RP-1449";
+        final String OLD_TITLE = "Nada Kalaany - Boston Children's Hospital";
+        final String NEW_TITLE = "Nada Kalaany - Boston Childrens Hospital";
+
+        ResearchProject researchProject = rpDao.findByJiraTicketKey(RP1449);
+        if (researchProject == null) {
+            Assert.fail(String.format("Research Project %s doesn't exist.", RP1449));
+        }
+        assertThat(researchProject.getTitle(), equalTo(OLD_TITLE));
+        researchProject.setTitle(NEW_TITLE);
+
+        rpDao.persist(new FixupCommentary("see https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4880"));
     }
 
     /**
@@ -247,4 +273,69 @@ public class ResearchProjectFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void fixupSupport2534() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        ResearchProject researchProject = rpDao.findByBusinessKey("RP-1375");
+        Assert.assertNotNull(researchProject);
+        researchProject.setReferenceSequenceKey(null);
+        researchProject.setSequenceAlignerKey(null);
+        System.out.println("Setting " + researchProject.getBusinessKey() +
+                " reference sequence to " + researchProject.getReferenceSequenceKey() +
+                ", aligner to " + researchProject.getSequenceAlignerKey());
+        rpDao.persist(new FixupCommentary("SUPPORT-2534 fix RP-1375 for pipeline query"));
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void changeRegulatoryDesignationGplim5031() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        ResearchProject researchProject = rpDao.findByBusinessKey("RP-1467");
+        researchProject.setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS);
+        rpDao.persist(new FixupCommentary("GPLIM-5031 updating incorrectly selected regulatory designation."));
+        utx.commit();
+    }
+
+    /**
+     * Updates the research project's reference sequence and version.
+     * Takes input from a file for maximum reuse. Expected format is
+     * <pre>
+     * SUPPORT-1234 The fixup commentary string
+     * RP-1234 Homo_sapiens_assembly19|1     [the delimiter and version is optional]
+     * RP-5678 Homo_sapiens_assembly19|2
+     * </pre>
+     * Assertion will fail if reference sequence string is not in the database.
+     * @throws Exception
+     */
+    @Test(enabled = false)
+    public void changeRefSeq() throws Exception {
+        final String filename = "RefSeqUpdate.txt";
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource(filename));
+        Assert.assertTrue(CollectionUtils.size(fixupLines) >= 2, filename + " is missing content.");
+        String fixupReason = fixupLines.get(0).trim();
+        Assert.assertTrue(StringUtils.isNotBlank(fixupReason), "Missing fixup reason.");
+
+        userBean.loginOSUser();
+        utx.begin();
+        for (String line : fixupLines.subList(1, fixupLines.size())) {
+            String[] tokens = line.split(" ", 2);
+            Assert.assertEquals(tokens.length, 2, "Unexpected format in line \"" + line + "\".");
+            Assert.assertTrue(StringUtils.isNotBlank(tokens[0]), "Missing RP-id in line \"" + line + "\".");
+            Assert.assertTrue(StringUtils.isNotBlank(tokens[1]), "Missing reference sequence in line \"" + line + "\".");
+            ReferenceSequence referenceSequence = StringUtils.contains(tokens[1], ReferenceSequence.SEPARATOR) ?
+                    referenceSequenceDao.findByBusinessKey(tokens[1]) :
+                    referenceSequenceDao.findCurrent(tokens[1]);
+            Assert.assertNotNull(referenceSequence, "No such reference sequence \"" + tokens[1] + "\".");
+
+            ResearchProject researchProject = rpDao.findByBusinessKey(tokens[0]);
+            Assert.assertNotNull(researchProject, "No such project \"" + tokens[0] + "\".");
+            System.out.println("Changing " + researchProject.getJiraTicketKey() + " ref seq to " +
+                    referenceSequence.getBusinessKey());
+            researchProject.setReferenceSequenceKey(referenceSequence.getBusinessKey());
+        }
+        rpDao.persist(new FixupCommentary(fixupReason));
+        utx.commit();
+    }
 }

@@ -1,20 +1,27 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientHandlerException;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
-import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
+import org.broadinstitute.gpinformatics.mercury.control.AbstractJaxRsClientService;
 
+import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.*;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.MultivaluedMap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-@Impl
-public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService implements BSPSampleSearchService {
+@Dependent
+@Default
+public class BSPSampleSearchServiceImpl extends AbstractJaxRsClientService implements BSPSampleSearchService {
     private static final long serialVersionUID = 3432255750259397293L;
 
     public static final String SEARCH_RUN_SAMPLE_SEARCH = "search/runSampleSearch";
@@ -63,18 +70,16 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
 
         String urlString = bspConfig.getWSUrl(SEARCH_RUN_SAMPLE_SEARCH);
 
-        List<String> parameters = new ArrayList<>();
+        MultivaluedMap<String, String> parameters = new MultivaluedHashMap<>();
 
         try {
             for (BSPSampleSearchColumn column : queryColumns) {
-                parameters.add("columns=" + URLEncoder.encode(column.columnName(), "UTF-8"));
+                parameters.add("columns", column.columnName());
             }
 
-            parameters.add("sample_ids=" + StringUtils.join(sampleIDs, ","));
+            parameters.add("sample_ids", StringUtils.join(sampleIDs, ","));
 
-            String parameterString = StringUtils.join(parameters, "&");
-
-            post(urlString, parameterString, ExtraTab.TRUE, new PostCallback() {
+            post(urlString, parameters, ExtraTab.TRUE, new PostCallback() {
                 @Override
                 public void callback(String[] bspData) {
                     Map<BSPSampleSearchColumn, String> newMap = new HashMap<>();
@@ -89,16 +94,8 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
                     ret.add(newMap);
                 }
             });
-        } catch (ClientHandlerException clientException) {
+        } catch (WebApplicationException clientException) {
             throw new BSPLookupException("Error connecting to BSP", clientException);
-        } catch (UnsupportedEncodingException uex) {
-            throw new RuntimeException(uex);
-        }
-
-        // Sample IDs were provided, BSP service should at minimum return the same set of IDs with blank data.
-        // An empty return set represents a service failure
-        if(ret.isEmpty()) {
-            throw new BSPLookupException("BSP sample service failed");
         }
 
         return ret;

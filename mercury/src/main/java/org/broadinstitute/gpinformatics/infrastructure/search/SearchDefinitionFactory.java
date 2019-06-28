@@ -1,6 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.mercury.boundary.search.SearchRequestBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.search.SearchValueBean;
@@ -11,7 +15,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,6 +23,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Configurable search definitions for various entities.
@@ -30,14 +34,17 @@ public class SearchDefinitionFactory {
     private static Map<String, ConfigurableSearchDefinition> MAP_NAME_TO_DEF = new HashMap<>();
 
     /**
-     * Convenience to allow users to just enter the number of the LCSET.
+     * Convenience to allow users to just enter the number or suffix of the batch name.  <br />
+     * Note:  Only works if the search term is the exact same as the batch prefix (FCT,ARRAY,SK, etc.) <br />
+     * TODO: JMS Handle lists of multiple values (e.g when BETWEEN, IN operators selected)
      */
-    private static SearchTerm.Evaluator<Object> lcsetConverter = new SearchTerm.Evaluator<Object>() {
+    private static SearchTerm.Evaluator<Object> batchNameInputConverter = new SearchTerm.Evaluator<Object>() {
         @Override
         public Object evaluate(Object entity, SearchContext context) {
+            String prefix = context.getSearchValue().getName();
             String value = context.getSearchValueString();
-            if( value.matches("[0-9]*")){
-                value = "LCSET-" + value;
+            if( !value.startsWith( prefix ) && context.getSearchValue().getOperator() != SearchInstance.Operator.LIKE ){
+                value = prefix + "-" + value;
             }
             return value;
         }
@@ -48,12 +55,41 @@ public class SearchDefinitionFactory {
      */
     private static SearchTerm.Evaluator<Object> pdoConverter = new SearchTerm.Evaluator<Object>() {
         @Override
-        public Object evaluate(Object entity, SearchContext context) {
+        public String evaluate(Object entity, SearchContext context) {
             String value = context.getSearchValueString();
             if( value.matches("[0-9]*")){
                 value = "PDO-" + value;
             }
             return value;
+        }
+    };
+
+    private static SearchTerm.Evaluator<Object> billingSessionConverter = new SearchTerm.Evaluator<Object>() {
+        @Override
+        public Long evaluate(Object entity, SearchContext context) {
+            String value = context.getSearchValueString();
+
+            if(value.startsWith(BillingSession.ID_PREFIX)) {
+                value = value.split(BillingSession.ID_PREFIX)[1];
+            }
+            if (!NumberUtils.isNumber(value)) {
+                value = "0";
+            }
+            return Long.valueOf(value);
+        }
+    };
+    private static SearchTerm.Evaluator<Object> userIdConverter = new SearchTerm.Evaluator<Object>() {
+        @Override
+        public Long evaluate(Object entity, SearchContext context) {
+
+            String value = context.getSearchValueString();
+            final Optional<BspUser> searchBspUser = Optional.ofNullable(context.getBspUserList().getByUsername(value));
+
+            Long userId = 0L;
+            if(searchBspUser.isPresent()) {
+                userId = searchBspUser.get().getUserId();
+            }
+            return userId;
         }
     };
 
@@ -67,6 +103,7 @@ public class SearchDefinitionFactory {
         fact.buildReagentSearchDef();
         fact.buildLabMetricSearchDef();
         fact.buildLabMetricRunSearchDef();
+        fact.buildProductOrderSearchDef();
     }
 
     public static ConfigurableSearchDefinition getForEntity(String entity) {
@@ -82,6 +119,7 @@ public class SearchDefinitionFactory {
             fact.buildReagentSearchDef();
             fact.buildLabMetricSearchDef();
             fact.buildLabMetricRunSearchDef();
+            fact.buildProductOrderSearchDef();
         }
 
         return MAP_NAME_TO_DEF.get(entity);
@@ -123,13 +161,35 @@ public class SearchDefinitionFactory {
         MAP_NAME_TO_DEF.put(ColumnEntity.LAB_METRIC_RUN.getEntityName(), configurableSearchDefinition);
     }
 
-    static SearchTerm.Evaluator<Object> getLcsetInputConverter(){
-        return lcsetConverter;
+    private void buildProductOrderSearchDef() {
+        ConfigurableSearchDefinition productOrderSearchDefinition
+                = new ProductOrderSearchDefinition().buildSearchDefinition();
+        MAP_NAME_TO_DEF.put(ColumnEntity.PRODUCT_ORDER.getEntityName(), productOrderSearchDefinition);
     }
 
+    /**
+     * Prepends batch type from search term name to a numeric entry <br/>
+     * e.g converts user input 7786 to ARRAY-7786 for ARRAY term name
+     */
+    static SearchTerm.Evaluator<Object> getBatchNameInputConverter(){
+        return batchNameInputConverter;
+    }
+
+    /**
+     * Prepends 'PDO-' to a numeric entry for PDO term
+     */
     static SearchTerm.Evaluator<Object> getPdoInputConverter(){
         return pdoConverter;
     }
+
+    static SearchTerm.Evaluator<Object> getBillingSessionConverter() {
+        return billingSessionConverter;
+    }
+
+    static SearchTerm.Evaluator<Object> getUserIdConverter() {
+        return userIdConverter;
+    }
+
 
     /**
      * Shared logic to extract the type of any lab vessel
@@ -198,14 +258,19 @@ public class SearchDefinitionFactory {
      * Shared value list of all lab event types.
      */
     static class EventTypeValuesExpression extends SearchTerm.Evaluator<List<ConstrainedValue>> {
-        @Override
-        public List<ConstrainedValue> evaluate(Object entity, SearchContext context) {
+
+        public static List<ConstrainedValue> getConstrainedValues() {
             List<ConstrainedValue> constrainedValues = new ArrayList<>();
             for (LabEventType labEventType : LabEventType.values()) {
                 constrainedValues.add(new ConstrainedValue(labEventType.toString(), labEventType.getName()));
             }
             Collections.sort(constrainedValues);
             return constrainedValues;
+        }
+
+        @Override
+        public List<ConstrainedValue> evaluate(Object entity, SearchContext context) {
+            return getConstrainedValues();
         }
     }
 

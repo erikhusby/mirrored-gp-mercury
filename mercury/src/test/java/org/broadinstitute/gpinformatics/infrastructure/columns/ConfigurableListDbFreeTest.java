@@ -16,8 +16,8 @@ import org.testng.annotations.Test;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,7 +32,7 @@ public class ConfigurableListDbFreeTest {
         BarcodedTube tube1 = new BarcodedTube("tube1");
         List<ColumnTabulation> columnTabulations = new ArrayList<>();
         columnTabulations.add(configurableSearchDefinition.getSearchTerm("Barcode"));
-        ConfigurableList configurableList = new ConfigurableList(columnTabulations, 1, "ASC", ColumnEntity.LAB_VESSEL);
+        ConfigurableList configurableList = new ConfigurableList(columnTabulations, Collections.EMPTY_MAP, 1, "ASC", ColumnEntity.LAB_VESSEL);
 
         List<LabVessel> entityList = new ArrayList<>();
         entityList.add(tube1);
@@ -54,7 +54,7 @@ public class ConfigurableListDbFreeTest {
         List<ColumnTabulation> columnTabulations = new ArrayList<>();
         columnTabulations.add(configurableSearchDefinition.getSearchTerm("LabEventId"));
         columnTabulations.add(configurableSearchDefinition.getSearchTerm("Lab Event Reagents"));
-        ConfigurableList configurableList = new ConfigurableList(columnTabulations, 1, "ASC", ColumnEntity.LAB_EVENT);
+        ConfigurableList configurableList = new ConfigurableList(columnTabulations, Collections.EMPTY_MAP, 1, "ASC", ColumnEntity.LAB_EVENT);
 
         List<LabEvent> entityList = new ArrayList<>();
         LabEvent event1 = new LabEvent(LabEventType.A_BASE, new Date(), "SPIDERMAN", 1l, 101l, "Bravo");
@@ -125,7 +125,7 @@ public class ConfigurableListDbFreeTest {
         event1.addReagent(reagent3);
 
         // Rebuild ConfigurableList
-        configurableList = new ConfigurableList(columnTabulations, 1, "ASC", ColumnEntity.LAB_EVENT);
+        configurableList = new ConfigurableList(columnTabulations, Collections.EMPTY_MAP, 1, "ASC", ColumnEntity.LAB_EVENT);
         configurableList.addRows(entityList);
         resultList = configurableList.getResultList();
         // Verify nested table

@@ -6,20 +6,29 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample_;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -29,6 +38,10 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.Root;
 import javax.transaction.UserTransaction;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,6 +53,7 @@ import java.util.Collection;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -53,7 +67,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @Test(groups = TestGroups.FIXUP)
 public class LabVesselFixupTest extends Arquillian {
 
-    private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s");
+    public static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s");
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -75,6 +89,12 @@ public class LabVesselFixupTest extends Arquillian {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private ReagentDesignDao reagentDesignDao;
+
+    @Inject
+    private IlluminaFlowcellDao illuminaFlowcellDao;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -1478,5 +1498,286 @@ public class LabVesselFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void fixupBsp3119FiupTubeLabels() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        Map<String, String> oldBarcodeToNewBarcode = new HashMap<String, String>() {{
+            put("1140121300", "1140121258");
+            put("1140121306", "1140121296");
+            put("1140121320", "1140121300");
+            put("1140121321", "1140121306");
+            put("1140121280", "1140121320");
+            put("1140121322", "1140121321");
+            put("1140121258", "1140121280");
+            put("1140121296", "1140121322");
+        }};
+
+        String tempSuffix = "_TEMP";
+        List<String> tempBarcodes = new ArrayList<>();
+        List<LabVessel> labVessels = labVesselDao.findByListIdentifiers(new ArrayList<>(oldBarcodeToNewBarcode.keySet()));
+        for (LabVessel labVessel: labVessels) {
+            String oldBarcode = labVessel.getLabel();
+            String newBarcode = oldBarcode + tempSuffix;
+            tempBarcodes.add(newBarcode);
+            labVessel.setLabel(newBarcode);
+            System.out.println(
+                    "Changing tube " + labVessel.getLabVesselId() + " label from " + oldBarcode + " to " + newBarcode);
+        }
+
+        FixupCommentary fixupCommentary =
+                new FixupCommentary("BSP-3119 Change tube labels to temp to avoid unique constaint.");
+        labBatchDao.persist(fixupCommentary);
+        labBatchDao.flush();
+
+        labVessels = labVesselDao.findByListIdentifiers(tempBarcodes);
+        for (LabVessel labVessel: labVessels) {
+            String oldBarcode = labVessel.getLabel().replaceAll(tempSuffix, "");
+            String newBarcode = oldBarcodeToNewBarcode.get(oldBarcode);
+            labVessel.setLabel(newBarcode);
+            System.out.println(
+                    "Changing tube " + labVessel.getLabVesselId() + " label from " + oldBarcode + " to " + newBarcode);
+        }
+
+        fixupCommentary = new FixupCommentary("BSP-3119 Change tube labels to correct name.");
+        labBatchDao.persist(fixupCommentary);
+        labBatchDao.flush();
+
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport2709() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<BarcodedTube> tubes = barcodedTubeDao.findListByBarcodes(Arrays.asList(
+                "1125668423",
+                "1125668470",
+                "1125668491",
+                "1125668483",
+                "1125664356",
+                "1125665028",
+                "1125664990",
+                "1125665004",
+                "1125665161",
+                "1125665157",
+                "1125665166",
+                "1125665212"));
+
+        for (LabVessel labVessel : tubes) {
+            labVessel.setReceptacleWeight(new BigDecimal(".62"));
+            System.out.println("Setting tube initial tare weight: " + labVessel.getLabel() + " to .62");
+        }
+
+        FixupCommentary fixupCommentary = new FixupCommentary("SUPPORT-2709 - Assign missing tare values to default");
+        barcodedTubeDao.persist(fixupCommentary);
+        barcodedTubeDao.flush();
+
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim5001() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<StaticPlate> plates = staticPlateDao.findListByList(StaticPlate.class, StaticPlate_.label, Arrays.asList(
+                "000001827023",
+                "000001811023", "000001828323", "000001808923", "000001806223", "000001800423", "000001824523",
+                "000001801023", "000001812523", "000001829823", "000001806023", "000001804123", "000001819223",
+                "000001802123", "000001814423-GPLIM-3164", "000001816023"));
+
+        for (StaticPlate plate : plates) {
+            plate.setPlateType(StaticPlate.PlateType.IndexedAdapterPlate96);
+        }
+
+        FixupCommentary fixupCommentary = new FixupCommentary("GPLIM-5001 - Assign missing plate types to static plates");
+        barcodedTubeDao.persist(fixupCommentary);
+        barcodedTubeDao.flush();
+
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim5136() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        CriteriaBuilder builder = labVesselDao.getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<LabVessel> query = builder.createQuery(LabVessel.class);
+        Root<LabVessel> zeroConcRoot = query.from(LabVessel.class);
+        Join<LabVessel, MercurySample> labVessels = zeroConcRoot.join(LabVessel_.mercurySamples);
+        BigDecimal zeroDecimal = BigDecimal.valueOf(0);
+        query.select(zeroConcRoot)
+            .where(builder.and(builder.equal(zeroConcRoot.get(LabVessel_.concentration), zeroDecimal),
+                               builder.equal(labVessels.get(MercurySample_.metadataSource), MercurySample.MetadataSource.BSP)
+            ));
+        List<LabVessel> labVesselList  = labVesselDao.getEntityManager().createQuery(query).getResultList();
+        for (LabVessel labVessel: labVesselList) {
+            System.out.println("Setting tube concentration: " + labVessel.getLabel() + " to null");
+            labVessel.setConcentration(null);
+        }
+        FixupCommentary fixupCommentary =
+                new FixupCommentary("GPLIM-5136 Set all 0 concentrations to null where BSP is metadatasource");
+        labVesselDao.persist(fixupCommentary);
+        labVesselDao.flush();
+
+        utx.commit();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/AlterSampleName.txt,
+     * so it can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-3871 change name of incorrectly accessioned sample and vessel
+     * SM-G811M A1119993
+     * SM-9T6OH A9920002
+     */
+    @Test(enabled = false)
+    public void fixupSupport3871ChangeSampleName() throws Exception {
+        userBean.loginOSUser();
+
+        List<String> sampleUpdateLines = IOUtils.readLines(VarioskanParserTest.getTestResource("AlterSampleName.txt"));
+
+        for(int i = 1; i < sampleUpdateLines.size(); i++) {
+            String[] fields = LabVesselFixupTest.WHITESPACE_PATTERN.split(sampleUpdateLines.get(i));
+            if(fields.length != 2) {
+                throw new RuntimeException("Expected two white-space separated fields in " + sampleUpdateLines.get(i));
+            }
+               LabVessel vessel = labVesselDao.findByIdentifier(fields[1]);
+
+            Assert.assertNotNull(vessel, fields[1] + " not found");
+            final String replacementVesselLabel = fields[1] + "_bad_vessel";
+            System.out.println("Changing " + vessel.getLabel() + " to " + replacementVesselLabel);
+            vessel.setLabel(replacementVesselLabel);
+        }
+
+        labVesselDao.persist(new FixupCommentary(sampleUpdateLines.get(0)));
+        labVesselDao.flush();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/UpdateVesselBarcode.txt,
+     * so it can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-4118 change vessel barcode
+     * 5600 FB04985689
+     */
+    @Test(enabled = false)
+    public void fixupSupport4118UpdateVesselBarcode() throws Exception {
+        userBean.loginOSUser();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("UpdateVesselBarcode.txt"));
+
+        Map<String, String> mapOldToNew = new LinkedHashMap<>();
+        for(int i = 1; i < lines.size(); i++) {
+            String[] fields = WHITESPACE_PATTERN.split(lines.get(i));
+            if (fields.length != 2) {
+                throw new RuntimeException("Expected two white-space separated fields in " + lines.get(i));
+            }
+            mapOldToNew.put(fields[0], fields[1]);
+        }
+        Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(new ArrayList<>(mapOldToNew.keySet()));
+        for (Map.Entry<String, LabVessel> barcodeVesselEntry : mapBarcodeToVessel.entrySet()) {
+            LabVessel labVessel = barcodeVesselEntry.getValue();
+            String barcode = barcodeVesselEntry.getKey();
+            Assert.assertNotNull(labVessel, barcode + " not found");
+            String newBarcode = mapOldToNew.get(barcode);
+            System.out.println("Changing " + labVessel.getLabel() + " to " + newBarcode);
+            labVessel.setLabel(newBarcode);
+        }
+
+        labVesselDao.persist(new FixupCommentary(lines.get(0)));
+        labVesselDao.flush();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/AddBaitToVessel.txt,
+     * so it can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * GPLIM-5657 add missing reagent design
+     * 5600 FB04985689
+     */
+    @Test(enabled = false)
+    public void fupxGplim5657AddBait() throws Exception {
+        userBean.loginOSUser();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("AddBaitToVessel.txt"));
+
+        Map<String, ReagentDesign> mapTubeToReagentDesign = new LinkedHashMap<>();
+        for(int i = 1; i < lines.size(); i++) {
+            String[] fields = WHITESPACE_PATTERN.split(lines.get(i));
+            if (fields.length != 2) {
+                throw new RuntimeException("Expected two white-space separated fields in " + lines.get(i));
+            }
+            ReagentDesign reagent = reagentDesignDao.findByBusinessKey(fields[1]);
+            Assert.assertNotNull(reagent, fields[1] + " not found");
+            Assert.assertEquals(reagent.getReagentType(), ReagentDesign.ReagentType.BAIT, "Expect only bait designs");
+            mapTubeToReagentDesign.put(fields[0], reagent);
+        }
+        Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(new ArrayList<>(mapTubeToReagentDesign.keySet()));
+        for (Map.Entry<String, LabVessel> barcodeVesselEntry : mapBarcodeToVessel.entrySet()) {
+            LabVessel labVessel = barcodeVesselEntry.getValue();
+            String barcode = barcodeVesselEntry.getKey();
+            Assert.assertNotNull(labVessel, barcode + " not found");
+
+            // Ensure Bait isn't already associated to tube
+            for (SampleInstanceV2 sampleInstanceV2: labVessel.getSampleInstancesV2()) {
+                for (ReagentDesign reagentDesign : sampleInstanceV2.getReagentsDesigns()) {
+                    if (reagentDesign.getReagentType() == ReagentDesign.ReagentType.BAIT) {
+                        throw new RuntimeException("Tube already has bait associated: " + barcode);
+                    }
+                }
+                for (Reagent reagent : sampleInstanceV2.getReagents()) {
+                    if (OrmUtil.proxySafeIsInstance(reagent, DesignedReagent.class)) {
+                        DesignedReagent designedReagent = OrmUtil.proxySafeCast(reagent, DesignedReagent.class);
+                        ReagentDesign.ReagentType reagentType = designedReagent.getReagentDesign().getReagentType();
+                        if (reagentType == ReagentDesign.ReagentType.BAIT) {
+                            throw new RuntimeException("Tube already has bait associated: " + barcode);
+                        }
+                    }
+                }
+            }
+            ReagentDesign baitDesign = mapTubeToReagentDesign.get(barcode);
+            System.out.println("Adding " + baitDesign.getDesignName() + " to " + labVessel.getLabel());
+            DesignedReagent reagent = new DesignedReagent(baitDesign);
+            labVessel.addReagent(reagent);
+        }
+
+        labVesselDao.persist(new FixupCommentary(lines.get(0)));
+        labVesselDao.flush();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/UpdateFlowcellType.txt,
+     * so it can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * GPLIM-6422 changed fc type from Nova S1 to MiSeq
+     * CDR7F NovaSeqS1Flowcell MiSeqFlowcell
+     */
+    @Test(enabled = false)
+    public void fixupGplim6422UpdateFCType() throws Exception {
+        userBean.loginOSUser();
+
+        List<String> flowcellUpdateLines = IOUtils.readLines(VarioskanParserTest.getTestResource("UpdateFlowcellType.txt"));
+
+        for(int i = 1; i < flowcellUpdateLines.size(); i++) {
+            String[] fields = LabVesselFixupTest.WHITESPACE_PATTERN.split(flowcellUpdateLines.get(i));
+            if(fields.length != 3) {
+                throw new RuntimeException("Expected three white-space separated fields in " + flowcellUpdateLines.get(i));
+            }
+            IlluminaFlowcell illuminaFlowcell = illuminaFlowcellDao.findByBarcode(fields[0]);
+            Assert.assertNotNull(illuminaFlowcell);
+
+            IlluminaFlowcell.FlowcellType oldFcType = IlluminaFlowcell.FlowcellType.valueOf(fields[1]);
+            Assert.assertEquals(illuminaFlowcell.getFlowcellType(), oldFcType);
+
+            IlluminaFlowcell.FlowcellType newFcType = IlluminaFlowcell.FlowcellType.valueOf(fields[2]);
+
+            System.out.println("Changing " + illuminaFlowcell.getLabel() + " FC Type from " + oldFcType.getDisplayName()
+                                                                         + " to " + newFcType.getDisplayName());
+            illuminaFlowcell.setFlowcellType(newFcType);
+        }
+
+        labVesselDao.persist(new FixupCommentary(flowcellUpdateLines.get(0)));
+        labVesselDao.flush();
+    }
 
 }

@@ -35,6 +35,13 @@
 
         <script src="${ctxpath}/resources/scripts/jquery-1.10.1.min.js"></script>
         <script type="text/javascript"> var $j = jQuery.noConflict(); </script>
+        <script src="${ctxpath}/resources/scripts/jquery-ui-1.9.2.custom.min.js"></script>
+        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-dropdown.js"></script>
+        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-tooltip.js"></script>
+        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-popover.js"></script>
+        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-alert.js"></script>
+
+        <script src="${ctxpath}/resources/scripts/jquery.dateRangeSelector.js"></script>
 
         <c:choose>
             <c:when test="${dataTablesVersion == '1.10'}">
@@ -43,8 +50,6 @@
                       href="${ctxpath}/resources/scripts/DataTables-1.10.12/css/jquery.dataTables.min.css"/>
                 <link rel="stylesheet"
                       href="${ctxpath}/resources/scripts/DataTables-1.10.12/css/dataTables.bootstrap.min.css"/>
-
-                <%--https://datatables.net/extensions/buttons--%>
                 <script type="text/javascript"
                         src="${ctxpath}/resources/scripts/DataTablesPlugins-1.10/JSZip-2.5.0/jszip.min.js"></script>
                 <script type="text/javascript"
@@ -76,16 +81,9 @@
             </c:otherwise>
         </c:choose>
 
-        <script src="${ctxpath}/resources/scripts/jquery-ui-1.9.2.custom.min.js"></script>
-        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-dropdown.js"></script>
-        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-tooltip.js"></script>
-        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-popover.js"></script>
-        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-alert.js"></script>
-
-        <script src="${ctxpath}/resources/scripts/jquery.dateRangeSelector.js"></script>
-
         <c:if test="${withColVis}">
             <script src="${ctxpath}/resources/scripts/DataTablesPlugins-1.10/Buttons-1.2.2/js/buttons.colVis.min.js"></script>
+            <link rel="stylesheet"  href="${ctxpath}/resources/css/mercury.colvis.css"/>
         </c:if>
 
         <c:if test="${withColReorder}">
@@ -111,6 +109,8 @@
         <script src="${ctxpath}/resources/scripts/jquery.heatcolor.0.0.1.js"></script>
         <script src="${ctxpath}/resources/scripts/jquery.sparkline-2.1.2.min.js"></script>
         <script src="${ctxpath}/resources/scripts/jquery.headerPersist.1.0.js"></script>
+
+        <script src="${ctxpath}/Owasp.CsrfGuard/JavaScriptServlet"></script>
 
         <script src="https://gpinfojira.broadinstitute.org:8443/jira/s/en_US-vrke9z/733/4/1.2.5/_/download/batch/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector.js?collectorId=ad2bd4e3"></script>
         <script>window.ATL_JQ_PAGE_PROPS = {
@@ -270,8 +270,7 @@
     </body>
 
     <footer>
-        <p>Copyright © 2012-2013 Eli and Edythe L. Broad Institute. All rights reserved. No unauthorized use or
-            disclosure is permitted.<br/>
+        <p>Copyright &copy; 2012<script>document.write("-"+new Date().getFullYear());</script> Broad Institute<br/>
             Genomics Platform. ${buildInfoBean.buildInformation}. Deployment
             - ${buildInfoBean.deployment}.</p>
     </footer>

@@ -12,5 +12,6 @@ public enum RoleType {
     PDM,
     BROAD_PI,
     SCIENTIST,
+    VIEWER,
     OTHER
 }

@@ -8,6 +8,7 @@ import org.apache.deltaspike.core.api.provider.BeanProvider;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
@@ -29,13 +30,18 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.Dependent;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -46,7 +52,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * for an example of double billing.
  */
 @Test(groups = TestGroups.ALTERNATIVES)
+@Dependent
 public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTest {
+
+    public ConcurrentBillingSessionDoubleBillingTest(){}
 
     private static final Log logger = LogFactory.getLog(ConcurrentBillingSessionDoubleBillingTest.class);
 
@@ -84,6 +93,8 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
         for (LedgerEntry ledgerEntry : billingSession.getLedgerEntryItems()) {
             ledgerEntry.setBillingMessage("test flameout");
             billingSession.setBilledDate(null);
+            ledgerEntry.setWorkItem(null);
+            RegisterWorkAlwaysWorks.testPriceItems.add(ledgerEntry.getPriceItem());
             Assert.assertFalse(ledgerEntry.isBilled(),
                     "If ledger entry is considered billed, this test will not try to bill it, which means we may be at risk of double billing.");
         }
@@ -177,13 +188,25 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
     }
 
     @Alternative
+    @ApplicationScoped
     private static class RegisterWorkAlwaysWorks implements QuoteService {
+
+        public RegisterWorkAlwaysWorks(){}
 
         public static int workItemNumber;
 
+        public static Set<PriceItem> testPriceItems = new HashSet<>();
+
         @Override
         public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
-            return new PriceList();
+            final PriceList priceList = new PriceList();
+            for (PriceItem testPriceItem : testPriceItems) {
+                final QuotePriceItem quotePriceItem = QuotePriceItem.convertMercuryPriceItem(testPriceItem);
+                quotePriceItem.setPrice("50.00");
+                priceList.add(quotePriceItem);
+            }
+
+            return priceList;
         }
 
         @Override
@@ -194,7 +217,7 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
         @Override
         public String registerNewWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
                                       Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
-                                      String callbackParameterName, String callbackParameterValue) {
+                                      String callbackParameterName, String callbackParameterValue, BigDecimal priceAdjustment) {
 
             try {
                 // sleep here for a while to increase the likelihood that the vm really does try to call bill() at the same time
@@ -209,7 +232,7 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
         @Override
         public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
                                          Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
-                                         String callbackParameterName, String callbackParameterValue) {
+                                         String callbackParameterName, String callbackParameterValue, BigDecimal priceAdjustment) {
             try {
                 // sleep here for a while to increase the likelihood that the vm really does try to call bill() at the same time
                 Thread.sleep(1000);
@@ -223,7 +246,7 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
         @Override
         public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
 
-            FundingLevel level = new FundingLevel("100", new Funding(Funding.PURCHASE_ORDER,null, null));
+            FundingLevel level = new FundingLevel("100", Collections.singleton(new Funding(Funding.PURCHASE_ORDER,null, null)));
             QuoteFunding funding = new QuoteFunding(Collections.singleton(level));
             Quote stubQuote = new Quote("testMMA", funding, ApprovalStatus.FUNDED);
             stubQuote.setAlphanumericId("testMMA");
@@ -248,6 +271,22 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
         @Override
         public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
             return null;
+        }
+
+        @Override
+        public PriceList getPriceItemsForDate(List<QuoteImportItem> targetedPriceItemCriteria)
+                throws QuoteServerException, QuoteNotFoundException {
+            final PriceList priceList = getAllPriceItems();
+
+            for (QuoteImportItem targetedPriceItemCriterion : targetedPriceItemCriteria) {
+
+                final QuotePriceItem quotePriceItem =
+                        QuotePriceItem.convertMercuryPriceItem(targetedPriceItemCriterion.getPriceItem());
+                quotePriceItem.setPrice("50.00");
+                priceList.add(quotePriceItem);
+            }
+
+            return priceList;
         }
 
         @Override

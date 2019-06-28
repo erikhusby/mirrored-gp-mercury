@@ -37,6 +37,38 @@
                 );
                 $j.validator.classRuleSettings.expirationDate = {expirationDate: true};
                 $j('.reagentForm').each(function() { $j(this).validate(); });
+
+                $j('.manualTransferPageLink').click(function (event) {
+                    var expectedEvent = "${actionBean.expectedWorkflowEvent.workflowStepDef.name}";
+                    var addressValue = $(this).attr("href");
+                    var params = addressValue.split('&');
+                    for (var i = 0; i < params.length; i++) {
+                        var param = params[i];
+                        if (param.startsWith('workflowStepName')) {
+                            var actualEvent = param.split("=")[1];
+                            actualEvent = decodeURIComponent(actualEvent);
+                            actualEvent = actualEvent.replace(/\+/g,' ');
+                            queryUser(actualEvent, expectedEvent, event);
+                        }
+                    }
+                });
+
+                $j('form.reagentForm').submit(function (event) {
+                    var expectedEvent = "${actionBean.expectedWorkflowEvent.workflowStepDef.name}";
+                    var form = this;
+                    var actualEvent = $("input[name='workflowStepName']", form).val();
+                    queryUser(actualEvent, expectedEvent, event);
+                });
+
+                function queryUser(actualEvent, expectedEvent, formEvent) {
+                    console.log(actualEvent);
+                    if (actualEvent !== expectedEvent) {
+                        if (!confirm("Expect next workflow step to be: " + expectedEvent +
+                            ". Are you sure you want to proceed?")) {
+                            formEvent.preventDefault();
+                        }
+                    }
+                }
             });
             // Some scanners send carriage return, we don't want this to submit the form
             $j(document).on("keypress", ":input:not(textarea)", function (event) {
@@ -74,7 +106,7 @@
                             <c:choose>
                                 <c:when test="${not empty labEventType.manualTransferDetails.messageType or not empty workflowEvent.workflowStepDef.manualTransferDetails}">
                                     <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTransferActionBean"
-                                            event="chooseEventType">
+                                            event="chooseEventType" class="manualTransferPageLink">
                                         <stripes:param name="stationEvents[0].eventType" value="${labEventType.name}"/>
                                         <stripes:param name="workflowProcessName" value="${workflowEvent.workflowStepDef.processDef.name}"/>
                                         <stripes:param name="workflowStepName" value="${workflowEvent.workflowStepDef.name}"/>

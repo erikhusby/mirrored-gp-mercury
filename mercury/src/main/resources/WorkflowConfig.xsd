@@ -14,6 +14,12 @@
             </xs:element>
         </xs:sequence>
     </xs:complexType>
+    <xs:complexType name="reagentRequirementsType">
+        <xs:sequence>
+            <xs:element type="xs:string" name="reagentName"/>
+            <xs:element type="xs:boolean" name="expirationDateIncluded"/>
+        </xs:sequence>
+    </xs:complexType>
     <xs:complexType name="manualTransferDetailsType">
         <xs:sequence>
             <xs:element name="messageType">
@@ -24,15 +30,22 @@
                     </xs:restriction>
                 </xs:simpleType>
             </xs:element>
+            <xs:element type="reagentRequirementsType" name="reagentRequirements" minOccurs="0"/>
             <xs:element type="xs:string" name="sourceVesselTypeGeometryString" minOccurs="0"/>
             <xs:element type="xs:string" name="sourceSection" minOccurs="0"/>
             <xs:element type="xs:string" name="targetVesselTypeGeometryString"/>
             <xs:element type="xs:string" name="targetSection"/>
+            <xs:element type="xs:string" name="targetSections" minOccurs="0"/>
+            <xs:element type="xs:string" name="targetBarcodedTubeTypeString"/>
+            <xs:element type="xs:string" name="sourceBarcodedTubeTypeString"/>
+            <xs:element type="xs:string" name="targetWellTypeString"/>
+            <xs:element type="xs:boolean" name="sourceMassRemoved"/>
             <xs:element type="xs:string" name="buttonValue" minOccurs="0"/>
             <xs:element type="xs:string" name="targetExpectedToExist" minOccurs="0"/>
             <xs:element type="xs:string" name="targetExpectedEmpty" minOccurs="0"/>
             <xs:element type="xs:string" name="repeatedEvent" minOccurs="0"/>
             <xs:element type="xs:string" name="repeatedWorkflowQualifier" minOccurs="0"/>
+            <xs:element type="xs:boolean" name="useWebCam"/>
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="workflowStepDefsType">
@@ -59,6 +72,7 @@
                     <xs:restriction base="xs:string">
                         <xs:enumeration value="LCSET"/>
                         <xs:enumeration value="XTR"/>
+                        <xs:enumeration value="ARRAY"/>
                     </xs:restriction>
                 </xs:simpleType>
             </xs:element>
@@ -77,6 +91,7 @@
                     </xs:restriction>
                 </xs:simpleType>
             </xs:element>
+            <xs:element type="xs:boolean" name="jiraSampleFromNearest" minOccurs="0"/>
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="workflowConfigType">
@@ -106,6 +121,7 @@
                 </xs:simpleType>
             </xs:element>
             <xs:element type="xs:string" name="statusTransition" minOccurs="0"/>
+            <xs:element type="xs:string" name="endStatus" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="sequencingConfigDefsType" mixed="true">

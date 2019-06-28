@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.search;
 
-import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
@@ -12,6 +11,8 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -37,10 +38,10 @@ public class SearchResourceTest extends RestServiceContainerTest {
     public void testLcsetSearch(@ArquillianResource URL baseUrl) throws MalformedURLException {
         SearchRequestBean searchRequestBean = new SearchRequestBean("LabVessel", "LCSET Data", Collections.singletonList(
                 new SearchValueBean("LCSET", Collections.singletonList("LCSET-8333"))));
-        WebResource resource = makeWebResource(baseUrl, "run");
-        SearchResponseBean response = resource.type(MediaType.APPLICATION_XML_TYPE)
-                .accept(MediaType.APPLICATION_XML_TYPE).entity(searchRequestBean)
-                .post(SearchResponseBean.class);
+        WebTarget resource = makeWebResource(baseUrl, "run");
+        SearchResponseBean response = resource.request(MediaType.APPLICATION_XML_TYPE)
+                .accept(MediaType.APPLICATION_XML_TYPE)
+                .post(Entity.xml(searchRequestBean), SearchResponseBean.class);
         Assert.assertEquals(response.getSearchRowBeans().size(), 95);
     }
 
@@ -49,10 +50,10 @@ public class SearchResourceTest extends RestServiceContainerTest {
     public void testEmerge(@ArquillianResource URL baseUrl) throws MalformedURLException {
         SearchRequestBean aliquotsSearchRequestBean = new SearchRequestBean("LabVessel", "eMERGE Aliquots Web Service",
                 Collections.singletonList(new SearchValueBean("PDO", Collections.singletonList("PDO-8927"))));
-        WebResource resource = makeWebResource(baseUrl, "run");
-        SearchResponseBean aliquotsResponse = resource.type(MediaType.APPLICATION_XML_TYPE).
-                accept(MediaType.APPLICATION_XML_TYPE).entity(aliquotsSearchRequestBean).
-                post(SearchResponseBean.class);
+        WebTarget resource = makeWebResource(baseUrl, "run");
+        SearchResponseBean aliquotsResponse = resource.request(MediaType.APPLICATION_XML_TYPE).
+                accept(MediaType.APPLICATION_XML_TYPE).
+                post(Entity.xml(aliquotsSearchRequestBean), SearchResponseBean.class);
 
         Assert.assertEquals(aliquotsResponse.getSearchRowBeans().size(), 94);
         Assert.assertEquals(aliquotsResponse.getHeaders().size(), 3);
@@ -65,12 +66,12 @@ public class SearchResourceTest extends RestServiceContainerTest {
 
         SearchRequestBean manifestSearchRequestBean = new SearchRequestBean("LabVessel", "eMERGE Manifest Web Service",
                 Collections.singletonList(new SearchValueBean("Mercury Sample ID", aliquotIds)));
-        SearchResponseBean manifestResponse = resource.type(MediaType.APPLICATION_XML_TYPE).
-                accept(MediaType.APPLICATION_XML_TYPE).entity(manifestSearchRequestBean).
-                post(SearchResponseBean.class);
+        SearchResponseBean manifestResponse = resource.request(MediaType.APPLICATION_XML_TYPE).
+                accept(MediaType.APPLICATION_XML_TYPE).
+                post(Entity.xml(manifestSearchRequestBean), SearchResponseBean.class);
         Assert.assertEquals(manifestResponse.getHeaders().size(), 10);
-        // One was not transferred, because of bad molecular index well
-        Assert.assertEquals(manifestResponse.getSearchRowBeans().size(), 93);
+        // One was initially not transferred, because of bad molecular index well, but it was included in a later batch.
+        Assert.assertEquals(manifestResponse.getSearchRowBeans().size(), 94);
     }
 
     @Override

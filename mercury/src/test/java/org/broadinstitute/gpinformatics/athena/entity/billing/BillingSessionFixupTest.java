@@ -3,24 +3,51 @@
  */
 package org.broadinstitute.gpinformatics.athena.entity.billing;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
-import java.util.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.FIXUP)
 public class BillingSessionFixupTest extends Arquillian {
@@ -34,7 +61,16 @@ public class BillingSessionFixupTest extends Arquillian {
     private LedgerEntryDao ledgerEntryDao;
 
     @Inject
+    private BillingEjb billingEjb;
+
+    @Inject
     private BSPUserList userList;
+
+    @Inject
+    private UserBean userBean;
+
+    @Inject
+    private ProductOrderDao productOrderDao;
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
@@ -93,5 +129,243 @@ public class BillingSessionFixupTest extends Arquillian {
         billingSessionDao.persistAll(Collections.emptyList());
 
         logger.info("Registered Manual billing");
+    }
+
+    @Test(enabled = false)
+    public void endBillingSession() {
+
+        userBean.loginOSUser();
+
+        BillingSession sessionToEnd = billingSessionDao.findByBusinessKey("BILL-9314");
+        billingEjb.endSession(sessionToEnd);
+
+        billingSessionDao.persist(new FixupCommentary("ending Billing Session for Steve"));
+    }
+
+    @Test(enabled = false)
+    public void alterQuoteInSessionSupport2695() {
+        userBean.loginOSUser();
+
+        BillingSession session = billingSessionDao.findByBusinessKey("BILL-9361");
+
+        for (LedgerEntry ledgerEntry : session.getLedgerEntryItems()) {
+            ledgerEntry.setQuoteId("MMMJLI");
+        }
+
+        billingSessionDao.persist(new FixupCommentary("SUPPORT-2695: Changed the Quote for PDO-11232 on ledger entries to allow billing to proceed in Mercury"));
+    }
+
+    @Test(enabled = false)
+    public void alterQuoteInSessionGplim4730() {
+        userBean.loginOSUser();
+
+        BillingSession session = billingSessionDao.findByBusinessKey("BILL-9373");
+
+        for (LedgerEntry ledgerEntry : session.getLedgerEntryItems()) {
+            ledgerEntry.setQuoteId("GPIFX");
+        }
+
+        billingSessionDao.persist(new FixupCommentary("GPLIM-4730: Changed the Quote for PDO-11370 on ledger entries to allow billing to proceed in Mercury"));
+    }
+
+    @Test(enabled = false)
+    public void gplim5416UpdateLedgerItems() throws Exception {
+        userBean.loginOSUser();
+
+        Map<Pair<String, String>, String> deliveryPairings = new HashMap<>();
+        deliveryPairings.put(Pair.of("PDO-13777", "02/14/2018"), "200002667");
+        deliveryPairings.put(Pair.of("PDO-14070", "02/14/2018"), "200002666");
+        deliveryPairings.put(Pair.of("PDO-14078", "02/14/2018"), "200002664");
+        deliveryPairings.put(Pair.of("PDO-14078", "02/15/2018"), "200002665");
+        deliveryPairings.put(Pair.of("PDO-14137", "02/14/2018"), "200002662");
+        deliveryPairings.put(Pair.of("PDO-14137", "02/13/2018"), "200002663");
+        BillingSession session = billingSessionDao.findByBusinessKey("BILL-12437");
+
+        for (LedgerEntry ledgerEntry : session.getLedgerEntryItems()) {
+            final String targetBusinessKey = ledgerEntry.getProductOrderSample().getProductOrder().getBusinessKey();
+            final String targetDate = (new SimpleDateFormat("MM/dd/yyyy")).format(ledgerEntry.getWorkCompleteDate());
+            if(deliveryPairings.containsKey(Pair.of(targetBusinessKey, targetDate))) {
+                ledgerEntry.setSapDeliveryDocumentId(deliveryPairings.get(Pair.of(targetBusinessKey, targetDate)));
+                System.out.println("Added a delivery Document ID of " +
+                                   deliveryPairings.get(Pair.of(targetBusinessKey, targetDate)) +
+                                   " To the ledger entry for " + targetBusinessKey + " work date of " + targetDate +
+                                   " in billing session " + session.getBusinessKey());
+                ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
+                ledgerEntry.getProductOrderSample().getProductOrder().latestSapOrderDetail().addLedgerEntry(ledgerEntry);
+            }
+        }
+        billingSessionDao.persist(new FixupCommentary("GPLIM-5416: Updated the delivery document for a set of "
+                                                      + "ledger entries which successfully created Delivery documents "
+                                                      + "in SAP but SAP incorrectly recorded a failure along with the "
+                                                      + "success so the success was not captured"));
+    }
+
+    @Test(enabled = false)
+    public void gplim6239UpdateLedgerItems() throws Exception {
+        userBean.loginOSUser();
+
+        final String productOrderKey = "PDO-16275";
+        final String quoteWorkItemId = "320954";
+        final String sampleToFind = "SM-G9JXF";
+        final String workCompleteDate = "3/25/2019";
+
+        final String billingSessionId = "BILL-15292";
+
+        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("mm/dd/YYYY");
+
+        final ProductOrder orderToModify = productOrderDao.findByBusinessKey(productOrderKey);
+
+        final List<ProductOrderSample> notCompletelyBilldSamples = orderToModify.getSamples().stream()
+                .filter(productOrderSample -> StringUtils.equals(productOrderSample.getSampleKey(), sampleToFind))
+                .collect(Collectors.toList());
+        BillingSession updateSession = billingSessionDao.findByBusinessKey(billingSessionId);
+
+        Assert.assertEquals(notCompletelyBilldSamples.size(), 1);
+
+        notCompletelyBilldSamples.forEach(productOrderSample -> {
+            final List<LedgerEntry> ledgerEntries = productOrderSample.getLedgerItems().stream()
+                    .filter(ledgerEntry -> StringUtils.equals(ledgerEntry.getWorkItem(), quoteWorkItemId))
+                    .collect(Collectors.toList());
+
+            Assert.assertEquals(ledgerEntries.size(), 1);
+
+            ledgerEntries.forEach(ledgerEntry -> {
+                System.out.println("changing ledger status for work Item " + ledgerEntry.getWorkItem() +
+                                   " to complete.");
+                try {
+                    ledgerEntry.setWorkCompleteDate(simpleDateFormat.parse(workCompleteDate));
+                    ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
+                    ledgerEntry.setBillingSession(updateSession);
+                } catch (ParseException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        });
+
+        billingSessionDao.persist(new FixupCommentary("GPLIM-6239: Updated the work ID for one "
+                                                      + "ledger entry associated with "+productOrderKey
+                                                      + " which was unsuccessful at creating Delivery documents "
+                                                      + "in SAP because the SAP order got corrupted.  A subsequent "
+                                                      + "request to Business Systems is made to move the work Item to "
+                                                      + "Comleted status"));
+    }
+
+    private Set<LedgerEntry> findNegativelyBilledEntriesByOrder(@Nonnull List<String> productOrderBusinessKeys) {
+        Set<LedgerEntry> orderList = ledgerEntryDao
+            .findByOrderList(productOrderBusinessKeys, LedgerEntryDao.BillingSessionInclusion.NO_SESSION_STARTED);
+        Set<LedgerEntry> negativeEntries = orderList.stream().filter(
+            ledgerEntry -> ledgerEntry.getQuantity() < 0 && !StringUtils
+                .equals(ledgerEntry.getBillingMessage(), BillingSession.SUCCESS)).collect(Collectors.toSet());
+        if (negativeEntries == null) {
+            negativeEntries = Collections.emptySet();
+        }
+        return negativeEntries;
+    }
+
+    @Test(enabled = false)
+    public void gplim5653UpdateLedgerItemsWithDeliveryDocument(){
+        userBean.loginOSUser();
+        String deliveryDocument = "0200003565";
+        String pdoKey = "PDO-14753";
+        String quoteServerWorkItem = "288337";
+
+        Set<LedgerEntry> negativelyBilledEntries = findNegativelyBilledEntriesByOrder(Collections.singletonList(pdoKey));
+
+        assertThat(negativelyBilledEntries.size(), equalTo(1));
+
+        LedgerEntry ledgerEntry = negativelyBilledEntries.iterator().next();
+
+        assertThat(ledgerEntry.getWorkItem(), equalTo(quoteServerWorkItem));
+        assertThat(ledgerEntry.getSapDeliveryDocumentId(), nullValue());
+        ledgerEntry.setSapDeliveryDocumentId(deliveryDocument);
+        ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
+
+        ledgerEntryDao.persist(new FixupCommentary("GPLIM-5653: Associate SAP Delivery Document with negatively billed ledger entry."));
+    }
+
+
+    private void updateNegativeLedgerItemsWithDeliveryDocument(String deliveryDocument, String pdoKey,
+                                                              String quoteServerWorkItem) {
+        Set<LedgerEntry> negativelyBilledEntries = findNegativelyBilledEntriesByOrder(Collections.singletonList(pdoKey));
+
+        assertThat(negativelyBilledEntries.size(), greaterThan(0));
+
+        for (LedgerEntry negativelyBilledEntry : negativelyBilledEntries) {
+            if(StringUtils.equals(negativelyBilledEntry.getWorkItem(), quoteServerWorkItem)) {
+                assertThat(negativelyBilledEntry.getSapDeliveryDocumentId(), nullValue());
+                negativelyBilledEntry.setSapDeliveryDocumentId(deliveryDocument);
+                final ProductOrderSample productOrderSample = negativelyBilledEntry.getProductOrderSample();
+                final SapOrderDetail sapOrderDetail = productOrderSample.getProductOrder().latestSapOrderDetail();
+                sapOrderDetail.addLedgerEntry(negativelyBilledEntry);
+                negativelyBilledEntry.setBillingMessage(BillingSession.SUCCESS);
+                System.out.println("Updated the delivery document id on the billing ledger record for negatively billed sample " +
+                                   productOrderSample.getBusinessKey() +
+                                   " on PDO " + productOrderSample.getProductOrder().getBusinessKey() +
+                                   " where the quote work item is " + quoteServerWorkItem + " to be set to " +
+                                   deliveryDocument + ".  Also set the billing message to 'Billed Successfully' and "
+                                   + "associated the billing ledger with the SAP order " +
+                                   sapOrderDetail.getSapOrderNumber());
+            }
+        }
+    }
+
+    @Test(enabled = false)
+    public void gplim5729UpdateDeliveryDocuments() throws Exception {
+
+        userBean.loginOSUser();
+
+        String pdoKey = "PDO-15708";
+
+        Map<String, String> deliveriesAndWorkItem = new HashMap<>();
+        deliveriesAndWorkItem.put("291070", "0200003890");
+        deliveriesAndWorkItem.put("291069", "0200003889");
+
+        for (Map.Entry<String, String> stringStringPair : deliveriesAndWorkItem.entrySet()) {
+            updateNegativeLedgerItemsWithDeliveryDocument(stringStringPair.getValue(), pdoKey, stringStringPair.getKey());
+        }
+
+         ledgerEntryDao.persist(new FixupCommentary("GPLIM-5729: Associate SAP Delivery Document with negatively billed ledger entries for PDO-15708"));
+    }
+
+    @Test(enabled = false)
+    public void gplim5767BlockSAPBillingOnly() throws Exception {
+
+        userBean.loginOSUser();
+        String pdoKey = "PDO-15708";
+        List<String> sampleKeyList = Arrays.asList("SM-HCBHD", "SM-HCBHQ");
+
+        ProductOrder orderToUpdate = productOrderDao.findByBusinessKey(pdoKey);
+
+
+        Set<ProductOrderSample> targettedSamples = orderToUpdate.getSamples().stream()
+                .filter(productOrderSample -> sampleKeyList.contains(productOrderSample.getSampleKey())).collect(
+                        Collectors.toSet());
+
+        Assert.assertTrue(CollectionUtils.isNotEmpty(targettedSamples),"Unable to find the samples that are targetted.");
+
+        Set<LedgerEntry> entriesToCorrect = new HashSet<>();
+
+        for (ProductOrderSample targettedSample : targettedSamples) {
+            targettedSample.getLedgerItems().stream()
+                    .filter(ledgerEntry -> StringUtils.isBlank(ledgerEntry.getBillingMessage())
+                            && ledgerEntry.getBillingSession() == null)
+                    .forEach(entriesToCorrect::add);
+        }
+
+        Assert.assertTrue(CollectionUtils.isNotEmpty(entriesToCorrect), "Unable to find LedgerItems to correct.");
+        Assert.assertTrue(entriesToCorrect.size() == 2, "There should only be 2 ledger entries found.");
+
+        for (LedgerEntry ledgerEntry : entriesToCorrect) {
+
+
+            ledgerEntry.setSapDeliveryDocumentId("Blocking SAP to balance out prior negatives");
+            System.out.println("For " + ledgerEntry.getProductOrderSample().getProductOrder().getBusinessKey() +
+                    " sample " + ledgerEntry.getProductOrderSample().getBusinessKey() +
+                    " Setting the ledger entry with quantity of " + ledgerEntry.getQuantity() +
+                    " to skip SAP by setting the delivery document id to " +
+                    ledgerEntry.getSapDeliveryDocumentId());
+        }
+
+        productOrderDao.persist(new FixupCommentary("GPLIM-5767: blocking SAP for ledger entry Billing to balance the SAP entries"));
     }
 }

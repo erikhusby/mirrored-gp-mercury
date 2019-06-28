@@ -24,7 +24,10 @@ public class ArraysQc {
     private Long analysisVersion;
     private Boolean isLatest;
     private String chipType;
+    /** zCall call rate*/
     private BigDecimal callRate;
+    private BigDecimal autocallCallRate;
+    private Long numAutocallCalls;
     private Boolean autocallPf;
     private Date autocallDate;
     private Date imagingDate;
@@ -32,6 +35,7 @@ public class ArraysQc {
     private Character autocallGender;
     private Character fpGender;
     private Character reportedGender;
+    // See GPLIM-4863, this column needs 3 states so needs to be replaced with business logic until analytics changes
     private Boolean genderConcordancePf;
     private BigDecimal hetPct;
     private BigDecimal hetHomvarRatio;
@@ -98,6 +102,21 @@ public class ArraysQc {
         return callRate.multiply(BigDecimal.valueOf(100)).setScale(3, BigDecimal.ROUND_HALF_UP);
     }
 
+    public BigDecimal getAutocallCallRate() {
+        return autocallCallRate;
+    }
+
+    public BigDecimal getAutocallCallRatePct() {
+        if (autocallCallRate == null) {
+            return null;
+        }
+        return autocallCallRate.multiply(BigDecimal.valueOf(100)).setScale(3, BigDecimal.ROUND_HALF_UP);
+    }
+
+    public Long getNumAutocallCalls() {
+        return numAutocallCalls;
+    }
+
     public Boolean getAutocallPf() {
         return autocallPf;
     }
@@ -115,19 +134,53 @@ public class ArraysQc {
     }
 
     public Character getAutocallGender() {
-        return autocallGender;
+        return autocallGender==null?Character.MIN_VALUE:autocallGender;
     }
 
     public Character getFpGender() {
-        return fpGender;
+        return fpGender==null?Character.MIN_VALUE:fpGender;
     }
 
     public Character getReportedGender() {
-        return reportedGender;
+        return reportedGender==null?Character.MIN_VALUE:reportedGender;
     }
 
-    public Boolean getGenderConcordancePf() {
-        return genderConcordancePf;
+    /**
+     * Display logic for potential states  See GPLIM-4863, GPLIM-6134
+     */
+    public String getGenderConcordancePf() {
+        // The existing 0.2% nulls in this column would be reported as N/A
+        if( genderConcordancePf == null ) {
+            return "N/A";
+        }
+
+        // Low hanging fruit:  If analytics says it passes, it passes
+        // Correlates to GPLIM-6134 including 2 matches with an unreported are a Pass
+        if( genderConcordancePf ) {
+            return "Pass";
+        }
+
+        // Data cleanse - replace the possible nulls with spaces
+        Character theReportedGender = getReportedGender();
+        // Convert ~40 'N' values to 'U'
+        if( theReportedGender.equals('N')) {
+            theReportedGender = Character.valueOf('U');
+        }
+        Character theAutocallGender = getAutocallGender();
+        Character theFpGender = getFpGender();
+
+        // 2 Unreporteds should show as N/A (overwrites DB Fail value)
+        if( theReportedGender.equals('U') && theFpGender.equals('U') ) {
+            return "N/A";
+        }
+
+        // Handle the thousand or so nulls (overwrites DB NULL value)
+        if( theFpGender.equals(Character.MIN_VALUE) || theAutocallGender.equals(Character.MIN_VALUE) ) {
+            return "N/A";
+        }
+
+        // Default is Fail
+        return "Fail";
     }
 
     public BigDecimal getHetPct() {

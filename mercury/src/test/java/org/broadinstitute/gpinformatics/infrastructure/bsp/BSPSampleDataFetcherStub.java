@@ -11,12 +11,24 @@ import java.util.Map;
 @RequestScoped
 public class BSPSampleDataFetcherStub extends BSPSampleDataFetcher {
 
+    public BSPSampleDataFetcherStub(){}
+
     private Map<String, BspSampleData> sampleDataBySampleId = new HashMap<>();
     private Map<String, String> samplePlasticBySampleId = new HashMap<>();
 
+
+    /**
+     * Clears any cached test sample data and replaces with new testing data <br/>
+     * Typically managed in TestNg's @BeforeMethod event
+     */
     public void stubFetchSampleData(String sampleId, BspSampleData sampleData, String samplePlastic) {
         sampleDataBySampleId.put(sampleId, sampleData);
         samplePlasticBySampleId.put(sampleId, samplePlastic);
+    }
+
+    public void clearStubFetchSampleData() {
+        sampleDataBySampleId.clear();
+        samplePlasticBySampleId.clear();
     }
 
     @Override

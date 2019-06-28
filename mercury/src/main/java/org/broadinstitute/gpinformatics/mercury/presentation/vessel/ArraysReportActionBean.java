@@ -94,6 +94,10 @@ public class ArraysReportActionBean extends CoreActionBean {
             String[] pdoKeys = pdoBusinessKeys.trim().split("\\s+");
             for (String pdoKey : pdoKeys) {
                 ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoKey);
+                if( productOrder == null ) {
+                    addMessage( "PDO " + pdoKey + " not found");
+                    continue;
+                }
                 vesselPositionPairs.addAll(SampleSheetFactory.loadByPdo(productOrder));
                 if (firstProductOrder == null) {
                     firstProductOrder = productOrder;
@@ -137,8 +141,10 @@ public class ArraysReportActionBean extends CoreActionBean {
                         if (firstProductOrder == null && !hasErrors()) {
                             Set<SampleInstanceV2> sampleInstances =
                                     labVessel.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition);
-                            ProductOrderSample productOrderSample =
-                                    sampleInstances.iterator().next().getProductOrderSampleForSingleBucket();
+                            ProductOrderSample productOrderSample = null;
+                            if( !sampleInstances.isEmpty() ) {
+                                productOrderSample = sampleInstances.iterator().next().getProductOrderSampleForSingleBucket();
+                            }
                             if (productOrderSample != null) {
                                 firstProductOrder = productOrderSample.getProductOrder();
                             }
@@ -150,7 +156,7 @@ public class ArraysReportActionBean extends CoreActionBean {
         if (vesselPositionPairs.isEmpty()) {
             addGlobalValidationError("No chips found.");
         }
-        if (firstProductOrder == null && !hasErrors()) {
+        if ( pdoBusinessKeys != null && firstProductOrder == null && !hasErrors()) {
             addGlobalValidationError("No product orders found.");
         }
 

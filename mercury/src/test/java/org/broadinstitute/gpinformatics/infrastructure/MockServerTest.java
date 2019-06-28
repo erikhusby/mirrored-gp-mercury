@@ -18,23 +18,12 @@ import org.mockserver.model.HttpResponse;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class MockServerTest {
     private ClientAndServer mockServer;
 
     @BeforeClass(alwaysRun = true)
     public void startMockServer() {
-        mockServer = ClientAndServer.startClientAndServer(getPortList());
-    }
-
-    private Integer[] getPortList() {
-        List<Integer> portList = new ArrayList<>();
-        while (portList.size() < 20) {
-            portList.add(6000 + portList.size());
-        }
-        return portList.toArray(new Integer[portList.size()]);
+        mockServer = ClientAndServer.startClientAndServer(0);
     }
 
     @AfterClass(alwaysRun = true)

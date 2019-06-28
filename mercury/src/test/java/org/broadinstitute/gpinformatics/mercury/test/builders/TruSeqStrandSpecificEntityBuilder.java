@@ -120,6 +120,11 @@ public class TruSeqStrandSpecificEntityBuilder {
         Assert.assertEquals(polyAPlate.getSampleInstancesV2().size(), mapBarcodeToTube.size(),
                 "Wrong number of sample instances");
 
+        LabEventTest.validateWorkflow("ERCCSpikeIn", polyAPlate);
+        LabEvent erccSpikeInEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                truSeqStrandSpecificJaxbBuilder.getErccSpikeInEventJaxb(), polyAPlate);
+        labEventHandler.processEvent(erccSpikeInEvent);
+
         // PolyASelectionTS
         LabEventTest.validateWorkflow("PolyASelectionTS", polyAPlate);
         mapBarcodeToVessel.clear();

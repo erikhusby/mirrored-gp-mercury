@@ -6,15 +6,26 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.control.LoginAndPassword;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
 
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("sap")
+@ApplicationScoped
 public class SapConfig extends AbstractConfig implements LoginAndPassword, Serializable {
+    private static final String SHORT_CLOSE_REQUEST = "Short Close Request";
+    private static final String BILLING_CREDIT_REQUEST = "Billing Credit Request";
+    public static final String BILLING_CREDIT_TEMPLATE = "BillingCreditRequest.ftl";
 
     private String login;
     private String password;
+
+    private String sapSupportEmail;
+
+    private String sapSupportEmailSubjectPrefix;
+
+    public SapConfig(){}
 
     @Inject
     public SapConfig(@Nonnull Deployment mercuryDeployment) {
@@ -41,5 +52,28 @@ public class SapConfig extends AbstractConfig implements LoginAndPassword, Seria
 
     public static SapConfig produce(Deployment deployment) {
         return produce(SapConfig.class, deployment);
+    }
+    public String getSapSupportEmail() {
+        return sapSupportEmail;
+    }
+
+    public void setSapSupportEmail(String sapSupportEmail) {
+        this.sapSupportEmail = sapSupportEmail;
+    }
+
+    public String getSapShortCloseEmailSubject() {
+        return getSapSupportEmailSubjectPrefix() + ": " + SHORT_CLOSE_REQUEST;
+    }
+
+    public String getSapReverseBillingSubject() {
+        return getSapSupportEmailSubjectPrefix() + ": " + BILLING_CREDIT_REQUEST;
+    }
+
+    public String getSapSupportEmailSubjectPrefix() {
+        return sapSupportEmailSubjectPrefix;
+    }
+
+    public void setSapSupportEmailSubjectPrefix(String sapSupportEmailSubjectPrefix) {
+        this.sapSupportEmailSubjectPrefix = sapSupportEmailSubjectPrefix;
     }
 }

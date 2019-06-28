@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.infrastructure.metrics;
 
-import edu.mit.broad.core.util.CollectionUtility;
+import com.google.common.collect.Iterables;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.PicardAggregationSample;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.PicardAggregationSample_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
@@ -16,6 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardFing
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardFingerprint_;
 
 import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -32,7 +35,6 @@ import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -42,52 +44,62 @@ import java.util.Map;
  * Not a {@link GenericDao} because it uses a different persistence unit.
  */
 @Stateful
+@RequestScoped
 public class AggregationMetricsFetcher {
 
     private static final Log log = LogFactory.getLog(AggregationMetricsFetcher.class);
 
-    public static final String SAMPLE_COLUMN = "sample";
-    public static final String PROJECT_COLUMN = "project";
-    public static final String VERSION_COLUMN = "version";
-    private static final int MAX_AGGREGATION_FETCHER_QUERY_SIZE = 500;
+    private static final int MAX_AGGREGATION_FETCHER_QUERY_SIZE = 1000;
 
     @PersistenceContext(unitName = "metrics_pu", type = PersistenceContextType.EXTENDED)
     private EntityManager entityManager;
 
-    public List<Aggregation> fetch(List<SubmissionTuple> tuples) {
+    public List<Aggregation> fetch(Collection<SubmissionTuple> tuples) {
+
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Aggregation> criteriaQuery = criteriaBuilder.createQuery(Aggregation.class);
-
         Root<Aggregation> root = criteriaQuery.from(Aggregation.class);
-        Collection<Collection<SubmissionTuple>> splitTuples =
-                CollectionUtility.split(tuples, MAX_AGGREGATION_FETCHER_QUERY_SIZE);
+        root.fetch(Aggregation_.aggregationWgs);
+        Join<Aggregation, PicardAggregationSample> picardAggregationSampleJoin = root.join(Aggregation_.picardAggregationSample);
 
-        List<Aggregation> aggregations = new ArrayList<>();
-        for (Collection<SubmissionTuple> subTuples : splitTuples) {
-            List<Predicate> predicates = new ArrayList<>();
-            for (SubmissionTuple tuple : subTuples) {
-                List<Predicate> tuplePredicates = new ArrayList<>();
-                tuplePredicates.add(criteriaBuilder.equal(root.get(Aggregation_.project), tuple.getProject()));
-                tuplePredicates.add(criteriaBuilder.equal(root.get(Aggregation_.sample), tuple.getSampleName()));
-                tuplePredicates.add(criteriaBuilder.equal(root.get(Aggregation_.version), tuple.getVersion()));
-                predicates.add(criteriaBuilder.and(tuplePredicates.toArray(new Predicate[tuplePredicates.size()])));
+        List<Aggregation> allResults = new ArrayList<>();
+        Map<String, Collection<SubmissionTuple>> tuplesByProject = SubmissionTuple.byProject(tuples);
+
+        for (Map.Entry<String, Collection<SubmissionTuple>> projectTupleEntry : tuplesByProject.entrySet()) {
+            String projectName = projectTupleEntry.getKey();
+            Collection<SubmissionTuple> tupleList = projectTupleEntry.getValue();
+            for (List<SubmissionTuple> tuplesSublist : Iterables.partition(tupleList, MAX_AGGREGATION_FETCHER_QUERY_SIZE)) {
+                List<Aggregation> aggregations = new ArrayList<>();
+                List<Predicate> predicates = new ArrayList<>();
+                Predicate projectJoin = criteriaBuilder.and(
+                    criteriaBuilder.or(
+                        criteriaBuilder.equal(
+                            picardAggregationSampleJoin.get(PicardAggregationSample_.researchProject), projectName),
+                        criteriaBuilder.equal(
+                            picardAggregationSampleJoin.get(PicardAggregationSample_.project), projectName)
+                ));
+                predicates.add(projectJoin);
+                predicates.add(criteriaBuilder.isNull(root.get(Aggregation_.library)));
+                predicates.add(criteriaBuilder.isTrue(root.get(Aggregation_.latest)));
+                predicates.add(root.get(Aggregation_.sample).in(SubmissionTuple.extractSampleNames(tuplesSublist)));
+
+                CriteriaQuery<Aggregation> whereClause =
+                    criteriaQuery.where(predicates.toArray(new Predicate[predicates.size()]));
+                TypedQuery<Aggregation> query = entityManager.createQuery(whereClause.distinct(true));
+
+                try {
+                    List<Aggregation> resultList = query.getResultList();
+                    aggregations.addAll(resultList);
+                } catch (NoResultException e) {
+                    log.info("Unable to retrieve aggregations based on given criteria");
+                }
+                allResults.addAll(aggregations);
             }
-
-            criteriaQuery.where(criteriaBuilder.or(predicates.toArray(new Predicate[predicates.size()])),
-                    criteriaBuilder.isNull(root.get(Aggregation_.library)));
-
-            List<Aggregation> aggregationResult = new ArrayList<>();
-            TypedQuery<Aggregation> query = entityManager.createQuery(criteriaQuery);
-
-            try {
-                aggregationResult = query.getResultList();
-            } catch (NoResultException e) {
-                log.info("Unable to retrieve aggregations based on given criteria");
-            }
-            fetchLod(aggregationResult);
-            aggregations.addAll(aggregationResult);
         }
-        return aggregations;
+        for (List<Aggregation> aggregations : Iterables.partition(allResults, MAX_AGGREGATION_FETCHER_QUERY_SIZE)) {
+            fetchLod(aggregations);
+        }
+        return allResults;
     }
 
     @SuppressWarnings("unchecked")
@@ -106,7 +118,9 @@ public class AggregationMetricsFetcher {
                 readGroupPicardAnalysisJoin.join(AggregationReadGroup_.aggregation);
 
         List<Predicate> predicates = new ArrayList<>();
+        List<Integer> aggregationIds = new ArrayList<>(aggregations.size());
         for (Aggregation aggregation : aggregations) {
+            aggregationIds.add(aggregation.getId());
             predicates.add(queryBuilder
                     .equal(aggregationAggregationReadGroupsJoin.get(Aggregation_.id), aggregation.getId()));
         }
@@ -115,10 +129,8 @@ public class AggregationMetricsFetcher {
         Expression<Double> minExpression = queryBuilder.min(root.get(PicardFingerprint_.lodExpectedSample));
         Expression<Double> maxExpression = queryBuilder.max(root.get(PicardFingerprint_.lodExpectedSample));
 
-        CriteriaQuery<Tuple> multiselect = tupleQuery.multiselect(
-                aggregationPath, minExpression, maxExpression)
-                .where(queryBuilder.or(predicates.toArray(new Predicate[predicates.size()])))
-                .groupBy(aggregationPath);
+        CriteriaQuery<Tuple> multiselect = tupleQuery.multiselect(aggregationPath, minExpression, maxExpression)
+            .where(aggregationPath.in(aggregationIds)).groupBy(aggregationPath);
 
         List<Tuple> tuples = entityManager.createQuery(multiselect).getResultList();
         Map<Integer, LevelOfDetection> lodMap = new HashMap<>();

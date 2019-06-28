@@ -2,8 +2,10 @@ package org.broadinstitute.gpinformatics.infrastructure.test.dbfree;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -17,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -80,5 +83,19 @@ public class ProductOrderSampleTestFactory {
             productOrderSamples.add(productOrderSample);
         }
         return productOrderSamples;
+    }
+
+    public static void markAsBilled(ProductOrderSample sampleToBeBilled) {
+
+        final PriceItem priceItem = new PriceItem(sampleToBeBilled.getProductOrder().getQuoteId(), "platform", "category", "test");
+
+        sampleToBeBilled.addLedgerItem(new Date(), priceItem, 1d);
+
+        LedgerEntry toclose = sampleToBeBilled.getLedgerItems().iterator().next();
+        toclose.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+        toclose.setBillingMessage(BillingSession.SUCCESS);
+        BillingSession closingSession = new BillingSession(ProductOrderTestFactory.TEST_CREATOR, Collections.singleton(toclose));
+        closingSession.setBilledDate(new Date());
+
     }
 }

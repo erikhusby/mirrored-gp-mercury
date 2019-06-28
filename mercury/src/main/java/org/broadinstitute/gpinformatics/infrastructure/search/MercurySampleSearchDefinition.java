@@ -1,11 +1,18 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.DisplayExpression;
+import org.broadinstitute.gpinformatics.infrastructure.columns.PassingFingerprintPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.columns.SampleDataFetcherAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.columns.SampleMetadataPlugin;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FpGenotype;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -14,11 +21,15 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * Builds ConfigurableSearchDefinition for mercury sample user defined search logic
@@ -31,6 +42,9 @@ public class MercurySampleSearchDefinition {
 
         List<SearchTerm> searchTerms = buildSampleBatch();
         mapGroupSearchTerms.put("Batches", searchTerms);
+
+        searchTerms = LabVesselSearchDefinition.buildBsp();
+        mapGroupSearchTerms.put("BSP", searchTerms);
 
         searchTerms = buildSampleSearch();
         mapGroupSearchTerms.put("Mercury Samples", searchTerms);
@@ -55,6 +69,15 @@ public class MercurySampleSearchDefinition {
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
                 ColumnEntity.MERCURY_SAMPLE, criteriaProjections, mapGroupSearchTerms);
 
+        configurableSearchDefinition.setAddRowsListenerFactory(
+                new ConfigurableSearchDefinition.AddRowsListenerFactory() {
+                    @Override
+                    public Map<String, ConfigurableList.AddRowsListener> getAddRowsListeners() {
+                        Map<String, ConfigurableList.AddRowsListener> listeners = new HashMap<>();
+                        listeners.put(SampleDataFetcherAddRowsListener.class.getSimpleName(), new SampleDataFetcherAddRowsListener());
+                        return listeners;
+                    }
+                });
         return configurableSearchDefinition;
     }
 
@@ -79,8 +102,7 @@ public class MercurySampleSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("LCSET");
-        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getLcsetInputConverter());
+        searchTerm.setName("Lab Batch");
         criteriaPaths = new ArrayList<>();
 
         // Mercury only cares about workflow batches
@@ -128,6 +150,30 @@ public class MercurySampleSearchDefinition {
                     result += sampleVessel.getBucketEntriesCount();
                 }
                 return new Long(result);
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Research Project");
+        searchTerm.setDisplayValueExpression(new SamplePdoDisplayExpression() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                MercurySample sample = (MercurySample) entity;
+
+                Set<ProductOrderSample> productOrderSamples = findPdoSamples(sample);
+
+                Set<String> rpValues = new TreeSet<>();
+                ResearchProject rp;
+
+                for( ProductOrderSample productOrderSample : productOrderSamples ) {
+                    rp = productOrderSample.getProductOrder().getResearchProject();
+                    if( rp != null ) {
+                        rpValues.add( rp.getName() + "[" + rp.getBusinessKey() + "]");
+                    }
+                }
+
+                return rpValues;
             }
         });
         searchTerms.add(searchTerm);
@@ -307,7 +353,8 @@ public class MercurySampleSearchDefinition {
 
         // ******** Allow individual selectable result columns for each sample metadata value *******
         for (Metadata.Key meta : Metadata.Key.values()) {
-            if (meta.getCategory() == Metadata.Category.SAMPLE) {
+            if (meta.getCategory() == Metadata.Category.SAMPLE &&
+                    BSPSampleSearchColumn.getByName(meta.getDisplayName()) == null) {
                 searchTerm = new SearchTerm();
                 searchTerm.setName(meta.getDisplayName());
                 searchTerm.setDisplayExpression(DisplayExpression.METADATA);
@@ -326,6 +373,75 @@ public class MercurySampleSearchDefinition {
         searchTerm.setPluginClass(SampleMetadataPlugin.class);
         searchTerms.add(searchTerm);
 
+        SearchTerm parentSearchTerm = new SearchTerm();
+        parentSearchTerm.setName("Fingerprints");
+        parentSearchTerm.setIsNestedParent(Boolean.TRUE);
+        parentSearchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, SearchContext context) {
+                MercurySample mercurySample = (MercurySample) entity;
+                return mercurySample.getFingerprints().stream().sorted(
+                        Comparator.comparing(Fingerprint::getDateGenerated)).collect(Collectors.toList());
+            }
+        });
+        searchTerms.add(parentSearchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Date Generated");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, SearchContext context) {
+                Fingerprint fingerprint = (Fingerprint) entity;
+                return fingerprint.getDateGenerated();
+            }
+        });
+        parentSearchTerm.addNestedEntityColumn(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("FP Genotype");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, SearchContext context) {
+                Fingerprint fingerprint = (Fingerprint) entity;
+                List<FpGenotype> fpGenotypesOrdered = fingerprint.getFpGenotypesOrdered();
+                StringBuilder genotype = new StringBuilder(fpGenotypesOrdered.size() * 2);
+                for (FpGenotype fpGenotype : fpGenotypesOrdered) {
+                    if (fpGenotype != null) {
+                        genotype.append(fpGenotype.getGenotype());
+                    }
+                }
+                return genotype.toString();
+            }
+        });
+        parentSearchTerm.addNestedEntityColumn(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Pass / Fail");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, SearchContext context) {
+                Fingerprint fingerprint = (Fingerprint) entity;
+                return fingerprint.getDisposition();
+            }
+        });
+        parentSearchTerm.addNestedEntityColumn(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Gender");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, SearchContext context) {
+                Fingerprint fingerprint = (Fingerprint) entity;
+                return fingerprint.getGender();
+            }
+        });
+        parentSearchTerm.addNestedEntityColumn(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Passing Initial Fingerprint");
+        searchTerm.setPluginClass(PassingFingerprintPlugin.class);
+        searchTerms.add(searchTerm);
+
         return searchTerms;
     }
 
@@ -340,46 +456,45 @@ public class MercurySampleSearchDefinition {
             this.includeSampleStatus = includeSampleStatus;
         }
 
-        @Override
-        public List<String> evaluate(Object entity, SearchContext context) {
-            MercurySample sample = (MercurySample) entity;
-            List<String> results = new ArrayList<>();
-            String jiraTicketKey;
-            String sampleDeliveryStatus;
+        public SamplePdoDisplayExpression(){}
 
-            // Try for PDO sample directly from mercury sample
+        @Override
+        public Set<String> evaluate(Object entity, SearchContext context) {
+            MercurySample sample = (MercurySample) entity;
+
+            Set<ProductOrderSample> productOrderSamples = findPdoSamples(sample);
+
+            Set<String> results = new TreeSet<>();
+
+            for( ProductOrderSample productOrderSample : productOrderSamples ) {
+                String businessKey = productOrderSample.getProductOrder().getBusinessKey();
+                String sampleDeliveryStatus = productOrderSample.getDeliveryStatus().getDisplayName();
+                if( includeSampleStatus && !sampleDeliveryStatus.isEmpty()) {
+                    results.add(businessKey + "->(" + sampleDeliveryStatus + ")");
+                } else {
+                    results.add( businessKey );
+                }
+            }
+
+            return results;
+        }
+
+        protected Set<ProductOrderSample> findPdoSamples(MercurySample sample){
+
+            // If sample is directly associated with a PDO, only use the direct association
             Set<ProductOrderSample> productOrderSamples = sample.getProductOrderSamples();
             if (!productOrderSamples.isEmpty()) {
-                for( ProductOrderSample productOrderSample : productOrderSamples ) {
-                    jiraTicketKey = productOrderSample.getProductOrder().getJiraTicketKey();
-                    sampleDeliveryStatus = productOrderSample.getDeliveryStatus().getDisplayName();
-                    if( includeSampleStatus && !sampleDeliveryStatus.isEmpty()) {
-                        results.add(jiraTicketKey + "->(" + sampleDeliveryStatus + ")");
-                    } else {
-                        results.add( jiraTicketKey );
-                    }
-                }
+                return productOrderSamples;
             } else {
-                // PDO sample needs to be found via SampleInstanceV2 ancestry
+                // Otherwise, use all PDO samples found via SampleInstanceV2 ancestry
                 Set<LabVessel> sampleVessels = sample.getLabVessel();
                 for( LabVessel sampleVessel : sampleVessels ) {
                     for( SampleInstanceV2 sampleInstanceV2 : sampleVessel.getSampleInstancesV2() ) {
-                        for( ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples() ) {
-                            jiraTicketKey = productOrderSample.getProductOrder().getJiraTicketKey();
-                            sampleDeliveryStatus = productOrderSample.getDeliveryStatus().getDisplayName();
-                            if( includeSampleStatus && !sampleDeliveryStatus.isEmpty()) {
-                                results.add(jiraTicketKey + "->(" + sampleDeliveryStatus + ")");
-                            } else {
-                                results.add( jiraTicketKey );
-                            }
-                        }
+                        productOrderSamples.addAll( sampleInstanceV2.getAllProductOrderSamples() );
                     }
                 }
             }
-            if( results.size() > 1 ) {
-                Collections.sort(results);
-            }
-            return results;
+            return productOrderSamples;
         }
     }
 }

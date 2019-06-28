@@ -8,30 +8,34 @@ app:
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
+      gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
 
     AUTO_BUILD:
-      host:     mercurydev.broadinstitute.org
-      port:     8444
-      jmsPort:  5446
-      workflowValidationEmail:
-
-    TEST:
-      host:     mercurydev.broadinstitute.org
+      host:     vmercurydev.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
+      gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
 
+    TEST:
+      host:     mercuryfb.broadinstitute.org
+      port:     8443
+      jmsPort:  5445
+      workflowValidationEmail:
+      gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
     QA:
       host:     mercuryqa.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
+      gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
 
     RC:
       host:     mercuryrc.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
+      gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
 
     PROD:
       host:     mercury.broadinstitute.org
@@ -39,6 +43,7 @@ app:
       jmsPort:  5445
       workflowValidationEmail: mercury-dev@broadinstitute.org
       #limsworkflowvalidation@broadinstitute.org
+      gpBillingManagers: !!set { suhamil@broadinstitute.org, sferrier@broadinstitute.org }
 
 bsp:
 
@@ -124,15 +129,10 @@ portal:
 
 quote:
 
-    DEV:
+    TEST:
       login:    mercuryquote
       password: ml1m5qu0t3
-      url:      http://quotedev:8080
-
-    QA:
-      login:    mercuryquote
-      password: ml1m5qu0t3
-      url:      http://quoteqa:8080
+      url:      https://quotes-test.broadinstitute.org
 
     PROD:
       login:    mercuryquote
@@ -234,24 +234,55 @@ infiniumStarter:
 
     DEV:
         dataPath: /humgen/illumina_data/dev
+#        dataPath: \\neon\humgen_illumina_data\dev
         minimumIdatFileLength: -1
-        jmsHost: vpicard01
+        decodeDataPath: /humgen/illumina_decode_data/Decode_data/dev
+#        decodeDataPath: \\neon\humgen_illumina_decode_data\Decode_data\dev
+        archivePath: /tmp/gap_archive/infinium
+        numChipsPerArchivePeriod: 10
+        jmsHost: picard-jms-dev.broadinstitute.org
         jmsPort: 61616
-        jmsQueue: broad.arrays.enqueue_staging
+        jmsQueue: broad.arrays.enqueue.staging
+        login: mercury-pipeline
+        passwordFileName: mercury-pipeline-dev-passwords.properties
 
     QA:
         dataPath: /humgen/illumina_data/qa
         minimumIdatFileLength: -1
-        jmsHost: vpicard01
+        decodeDataPath: /humgen/illumina_decode_data/Decode_data/qa
+        archivePath: /tmp/gap_archive/infinium
+        numChipsPerArchivePeriod: 10
+        jmsHost: picard-jms-dev.broadinstitute.org
         jmsPort: 61616
-        jmsQueue: broad.arrays.enqueue_staging
+        jmsQueue: broad.arrays.enqueue.staging
+        login: mercury-pipeline
+        passwordFileName: mercury-pipeline-dev-passwords.properties
 
     PROD:
         dataPath: /humgen/illumina_data
         minimumIdatFileLength: 2000000
-        jmsHost: vpicard03
+        decodeDataPath: /humgen/illumina_decode_data/Decode_data
+        archivePath: /seq/tier3b/gap_archive/infinium
+        numChipsPerArchivePeriod: 100
+        jmsHost: picard-jms.broadinstitute.org
         jmsPort: 61616
         jmsQueue: broad.arrays.enqueue
+        login: mercury-pipeline
+        passwordFileName: mercury-pipeline-prod-passwords.properties
+
+decoder:
+
+    DEV:
+      host:     gp-decode-vm.broadinstitute.org
+      port:     5000
+
+    QA:
+      host:     gp-decode-vm.broadinstitute.org
+      port:     5000
+
+    PROD:
+      host:     gp-decode-vm.broadinstitute.org
+      port:     5000
 
 hipchat:
     DEV:
@@ -264,16 +295,9 @@ hipchat:
         gpLimsRoom: Mercury & Athena (GPInfx)
         authorizationToken: db3e86c451ef8ac0cddb94133e0455
 
-bass:
-    PROD:
-      login:    mercury-bass
-      password: LszkUJSGyb!
-      host:     bass.broadinstitute.org
-      port:     443
-
 submission:
     DEV:
-      host:     picard01
+      host:     seqsubmission02
       port:     33333
 
     PROD:
@@ -284,12 +308,28 @@ sap:
     DEV:
       login:      GPCOMU
       password:   SAPERD300!
+      sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
+      sapSupportEmailSubjectPrefix: "TEST SAP Order"
+    TEST:
+      login:      GPCOMU
+      password:   temp1!
+      sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
+      sapSupportEmailSubjectPrefix: "TEST SAP Order"
     QA:
       login:      GPCOMU
       password:   SAPERQ300!
+      sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
+      sapSupportEmailSubjectPrefix: "TEST SAP Order"
+    RC:
+      login:      GPCOMU
+      password:   temp1!
+      sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
+      sapSupportEmailSubjectPrefix: "TEST SAP Order"
     PROD:
       login:      GPCOMU
       password:   SAPERP300!
+      sapSupportEmail: BUSSYS@broadinstitute.org
+      sapSupportEmailSubjectPrefix: "SAP Order"
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 mercury:
 
@@ -299,7 +339,7 @@ mercury:
       bsp:      DEV
       gap:      DEV
       jira:     TEST
-      quote:    QA
+      quote:    TEST
       squid:    TEST
       tableau:  PROD
       thrift:   TEST
@@ -308,10 +348,10 @@ mercury:
       bettaLimsServer: DEV
       hipchat: DEV
       collaborate: DEV
-      bass: PROD
       submission: DEV
       infiniumStarter: DEV
-      sap:  QA
+      sap:  RC
+      decoder: DEV
 
 
     AUTO_BUILD:
@@ -320,8 +360,8 @@ mercury:
       bsp:      DEV
       gap:      DEV
       jira:     TEST
-      quote:    QA
-      squid:    DEV
+      quote:    TEST
+      squid:    TEST
       tableau:  PROD
       thrift:   TEST
       deckMsgs: DEV
@@ -329,10 +369,10 @@ mercury:
       bettaLimsServer: DEV
       hipchat: DEV
       collaborate: DEV
-      bass: PROD
       submission: DEV
       infiniumStarter: DEV
-      sap:  QA
+      sap:  RC
+      decoder: DEV
 
     TEST:
 
@@ -340,7 +380,7 @@ mercury:
       bsp:      DEV
       gap:      DEV
       jira:     TEST
-      quote:    QA
+      quote:    TEST
       squid:    TEST
       tableau:  PROD
       thrift:   TEST
@@ -349,17 +389,17 @@ mercury:
       bettaLimsServer: TEST
       hipchat: DEV
       collaborate: DEV
-      bass:     PROD
       submission: DEV
       infiniumStarter: DEV
-      sap:  QA
+      sap:  RC
+      decoder: DEV
 
     QA:
       app:      QA
       bsp:      RC
       gap:      RC
       jira:     TEST
-      quote:    QA
+      quote:    TEST
       squid:    QA
       tableau:  PROD
       thrift:   QA
@@ -368,10 +408,10 @@ mercury:
       bettaLimsServer: QA
       hipchat: DEV
       collaborate: RC
-      bass:     PROD
       submission: DEV
       infiniumStarter: QA
-      sap:  QA
+      sap:  RC
+      decoder: QA
 
     RC:
 
@@ -379,7 +419,7 @@ mercury:
       bsp:      RC
       gap:      RC
       jira:     TEST
-      quote:    QA
+      quote:    TEST
       squid:    QA
       tableau:  PROD
       thrift:   QA
@@ -388,10 +428,10 @@ mercury:
       bettaLimsServer: QA
       hipchat: DEV
       collaborate: RC
-      bass:     PROD
       submission: DEV
       infiniumStarter: QA
-      sap:  QA
+      sap:  RC
+      decoder: QA
 
 
     PROD:
@@ -409,8 +449,8 @@ mercury:
       bettaLimsServer: PROD
       hipchat: PROD
       collaborate: PROD
-      bass:     PROD
       submission: PROD
       infiniumStarter: PROD
       sap:  PROD
+      decoder: PROD
 

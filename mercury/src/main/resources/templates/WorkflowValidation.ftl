@@ -1,14 +1,15 @@
 <#-- @ftlvariable name="linkToPlastic" type="java.lang.String" -->
-<#-- @ftlvariable name="stationEvent" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType" -->
+<#-- @ftlvariable name="stationEventNames" type="java.lang.String -->
+<#-- @ftlvariable name="start" type="java.util.Date" -->
+<#-- @ftlvariable name="station" type="java.lang.String" -->
 <#-- @ftlvariable name="bspUser" type="org.broadinstitute.bsp.client.users.BspUser" -->
 <#-- @ftlvariable name="validationErrors" type="java.util.List<org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator.WorkflowValidationError>" -->
 <html xmlns="http://www.w3.org/1999/html">
 <body>
 <p>
-    Mercury regrets to inform you that the <a href="${linkToPlastic}">${stationEvent.eventType}</a> message sent
-    on ${stationEvent.start?datetime} from ${stationEvent.station} on behalf of
+    Mercury regrets to inform you that the following events sent on ${start?datetime} from ${station} on behalf of
     <a href="mailto:${bspUser.email}">${bspUser.fullName}</a>
-    has failed validation because ${validationErrors?size} samples are in the wrong state.
+    has failed validation because ${validationErrors?size} samples are in the wrong state: ${stationEventNames}
 </p>
 <table>
     <thead>

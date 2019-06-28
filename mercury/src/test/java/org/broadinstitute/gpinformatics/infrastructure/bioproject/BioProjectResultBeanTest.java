@@ -16,13 +16,12 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import javax.xml.bind.JAXBException;
-import java.io.StringWriter;
+import java.io.IOException;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class BioProjectResultBeanTest {
 
-    public void testBioProjectsJson() throws JAXBException {
+    public void testBioProjectsJson() throws IOException {
 
         String testJson = "{\n"
                           + "\"bioprojects\": [{\"accession\":\"PRJNA185967\",\"alias\":\"phs000569\",\"projectName\":\"Primary submission\"},{\"accession\":\"PRJNA186400\",\"alias\":\"phs000584\",\"projectName\":\"Primary submission\"}\n"
@@ -37,14 +36,14 @@ public class BioProjectResultBeanTest {
 
         Assert.assertEquals(bioProjects, bioProjecrsDeSerialized);
     }
-    public void testBioProjectsUnmarshallNullFields() throws JAXBException {
+    public void testBioProjectsUnmarshallNullFields() throws IOException {
 
         String testJson = "{\"bioprojects\": [{\"accession\":\"PRJNA185967\"},{\"accession\":\"PRJNA186400\"}]}";
 
         BioProjects bioProjects = new BioProjects(new BioProject("PRJNA185967"), new BioProject("PRJNA186400"));
 
-        StringWriter writer = MercuryStringUtils.serializeJsonBean(bioProjects);
+        String serialized = MercuryStringUtils.serializeJsonBean(bioProjects);
 
-        Assert.assertEquals(writer.toString().replaceAll("\\s+", ""), testJson.replaceAll("\\s+", ""));
+        Assert.assertEquals(serialized.replaceAll("\\s+", ""), testJson.replaceAll("\\s+", ""));
     }
 }

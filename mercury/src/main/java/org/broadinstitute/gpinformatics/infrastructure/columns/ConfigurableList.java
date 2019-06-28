@@ -4,10 +4,12 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.search.ResultParamValues;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
+import org.owasp.encoder.Encode;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -51,7 +53,7 @@ public class ConfigurableList {
      * A way to capture high latency bulk data for a page of results
      */
     public interface AddRowsListener {
-        void addRows(List<?> entityList, SearchContext context, List<ColumnTabulation> nonPluginTabulations);
+        void addRows(List<?> entityList, SearchContext context, Map<Integer,ColumnTabulation> nonPluginTabulations);
         void reset();
     }
 
@@ -60,9 +62,13 @@ public class ConfigurableList {
      */
     private final Map<String,AddRowsListener> addRowsListeners = new HashMap<>();
 
-    private final List<ColumnTabulation> pluginTabulations = new ArrayList<>();
+    /**
+     Correlates custom result params with their associated ColumnTabluation **/
+    private final Map<Integer,ResultParamValues> resultParamsMap = new HashMap<>();
 
-    private final List<ColumnTabulation> nonPluginTabulations = new ArrayList<>();
+    private final Map<Integer,ColumnTabulation> pluginTabulations = new HashMap<>();
+
+    private final  Map<Integer,ColumnTabulation> nonPluginTabulations = new HashMap<>();
 
     private final Integer sortColumnIndex;
 
@@ -159,29 +165,54 @@ public class ConfigurableList {
         DOWNLOAD
     }
 
-    public ConfigurableList(List<ColumnTabulation> columnTabulations, Integer sortColumnIndex,
-            String sortDirection, /*Boolean admin, */ @Nonnull ColumnEntity columnEntity) {
-        this(columnTabulations, sortColumnIndex, sortDirection, /*admin, */columnEntity,
+    public ConfigurableList(List<ColumnTabulation> columnTabulations, Map<Integer, ResultParamValues> resultParamsMap, Integer sortColumnIndex,
+                            String sortDirection, /*Boolean admin, */ @Nonnull ColumnEntity columnEntity) {
+        this( columnTabulations, resultParamsMap, sortColumnIndex, sortDirection, /*admin, */columnEntity,
                 DEFAULT_MULTI_VALUE_DELIMITER);
+    }
+
+    /**
+     * Constructor without sort direction.
+     * @param columnTabulations The tabulations used.
+     * @param resultParamsMap Any result column parameters (indexed by associated column's position in columnTabulations)
+     * @param sortColumnIndexes The columns and sorting configurations
+     * @param columnEntity The base entity of the search result
+     */
+    public ConfigurableList(List<ColumnTabulation> columnTabulations, Map<Integer, ResultParamValues> resultParamsMap, List<SortColumn> sortColumnIndexes,
+                            @Nonnull ColumnEntity columnEntity) {
+
+        this( columnTabulations, resultParamsMap, null, null, /*admin, */columnEntity);
+        if (sortColumnIndexes != null && !sortColumnIndexes.isEmpty()) {
+            this.sortColumnIndexes = new ArrayList<>(sortColumnIndexes);
+        }
     }
 
     /**
      * Constructor.
      *
      * @param columnTabulations The tabulations used.
+     * @param resultParamsMap Any result column parameters (indexed by associated column's position in columnTabulations)
      * @param sortColumnIndex The column to sort.
      * @param sortDirection Ascending or descending.
-     * @param columnEntity The field id.
+     * @param columnEntity The base entity of the search result
      * @param multiValueDelimiter The text to use as the delimiter between values in a multi-valued field.
      */
-    public ConfigurableList(List<ColumnTabulation> columnTabulations, Integer sortColumnIndex,
-            String sortDirection, /*Boolean admin, */ @Nonnull ColumnEntity columnEntity, String multiValueDelimiter) {
+    public ConfigurableList(List<ColumnTabulation> columnTabulations, Map<Integer, ResultParamValues> resultParamsMap, Integer sortColumnIndex,
+                            String sortDirection, /*Boolean admin, */ @Nonnull ColumnEntity columnEntity, String multiValueDelimiter) {
         this.columnEntity = columnEntity;
         this.multiValueDelimiter = multiValueDelimiter;
-        for (ColumnTabulation columnTabulation : columnTabulations) {
+        this.resultParamsMap.putAll(resultParamsMap);
+
+        for (int i = 0; i < columnTabulations.size(); i++ ) {
+            ColumnTabulation columnTabulation = columnTabulations.get(i);
             // Ignore header logic on nested table ColumnTabulation
             if( !columnTabulation.isNestedParent() ) {
-                headerGroupMap.put(columnTabulation.getName(), new HeaderGroup(columnTabulation.getName()));
+                ResultParamValues resultParams = resultParamsMap.get(i);
+                if( resultParams == null ) {
+                    headerGroupMap.put(columnTabulation.getName(), new HeaderGroup(columnTabulation.getName()));
+                } else {
+                    headerGroupMap.put(resultParams.getUserColumnName(), new HeaderGroup(columnTabulation.getName()));
+                }
             }
         }
         this.sortColumnIndex = sortColumnIndex;
@@ -189,30 +220,15 @@ public class ConfigurableList {
 //        isAdmin = admin;
 
         // Get the plugin tabulations and the non plugin tabulations.
-        for (ColumnTabulation columnTabulation : columnTabulations) {
+        for (int i = 0; i < columnTabulations.size();i++ ) {
+            ColumnTabulation columnTabulation = columnTabulations.get(i);
             if (columnTabulation.getPluginClass() != null) {
-                pluginTabulations.add(columnTabulation);
+                pluginTabulations.put(i, columnTabulation);
             } else {
-                nonPluginTabulations.add(columnTabulation);
+                nonPluginTabulations.put(i, columnTabulation);
             }
         }
 
-    }
-
-    /**
-     * Constructor without sort direction.
-     *
-     * @param columnTabulations The tabulations used.
-     * @param sortColumnIndexes The columns to sort by.
-     * @param columnEntity The field id.
-     */
-    public ConfigurableList(List<ColumnTabulation> columnTabulations, List<SortColumn> sortColumnIndexes,
-            @Nonnull ColumnEntity columnEntity) {
-
-        this(columnTabulations, null, null, /*admin, */columnEntity);
-        if (sortColumnIndexes != null && !sortColumnIndexes.isEmpty()) {
-            this.sortColumnIndexes = new ArrayList<>(sortColumnIndexes);
-        }
     }
 
     /**
@@ -355,9 +371,15 @@ public class ConfigurableList {
         private String formattedValue;
 
         Cell(Header header, Comparable<?> sortableValue, String formattedValue) {
+            this(header, sortableValue, formattedValue, true);
+        }
+
+        Cell(Header header, Comparable<?> sortableValue, String formattedValue, boolean xssEncode) {
             this.header = header;
             this.sortableValue = sortableValue;
-            this.formattedValue = formattedValue;
+            if (formattedValue != null) {
+                this.formattedValue = xssEncode ? Encode.forHtml(formattedValue) : formattedValue;
+            }
         }
 
         public Header getHeader() {
@@ -443,9 +465,16 @@ public class ConfigurableList {
             // evaluate expression to get ID
             Row row = new Row(columnEntity.getIdGetter().getId(entity));
             rows.add(row);
-            for (ColumnTabulation columnTabulation : nonPluginTabulations) {
+            for (Map.Entry<Integer,ColumnTabulation> intColumnEntry : nonPluginTabulations.entrySet()) {
+                ColumnTabulation columnTabulation = intColumnEntry.getValue();
+                Integer paramIndex = intColumnEntry.getKey();
+                context.setColumnParams( resultParamsMap.get(paramIndex) );
                 if( !columnTabulation.isNestedParent() ) {
-                    recurseColumns(context, entity, row, columnTabulation, columnTabulation.getName());
+                    if( resultParamsMap.get(paramIndex) == null ) {
+                        recurseColumns(context, entity, row, columnTabulation, columnTabulation.getName());
+                    } else {
+                        recurseColumns(context, entity, row, columnTabulation, resultParamsMap.get(paramIndex).getUserColumnName());
+                    }
                 } else {
                     Collection<?> nestedEntities = columnTabulation.evalNestedTableExpression(entity, context);
                     // Build final nested ResultList here...
@@ -456,7 +485,10 @@ public class ConfigurableList {
                 }
             }
             // Plugins for nested table processing handled on a row-by-row basis
-            for (ColumnTabulation columnTabulation : pluginTabulations) {
+            for (Map.Entry<Integer,ColumnTabulation> intColumnEntry : pluginTabulations.entrySet()) {
+                ColumnTabulation columnTabulation = intColumnEntry.getValue();
+                Integer paramIndex = intColumnEntry.getKey();
+                context.setColumnParams( resultParamsMap.get(paramIndex) );
                 context.setSearchTerm((SearchTerm) columnTabulation);
                 if( columnTabulation.isNestedParent() ) {
                     ListPlugin listPlugin = getPlugin(columnTabulation.getPluginClass());
@@ -470,13 +502,17 @@ public class ConfigurableList {
         }
 
         // Call the plugins, and add their data to the accumulated rows.
-        for (ColumnTabulation columnTabulation : pluginTabulations) {
+        for (ColumnTabulation columnTabulation : pluginTabulations.values()) {
             context.setSearchTerm((SearchTerm) columnTabulation);
             ListPlugin listPlugin = getPlugin(columnTabulation.getPluginClass());
             // Legacy plugin process from BSP
             if( !columnTabulation.isNestedParent() ) {
                 List<Row> pluginRows =
                         listPlugin.getData(entityList, headerGroupMap.get(columnTabulation.getName()), context);
+                if (pluginRows.size() != entityList.size()) {
+                    throw new RuntimeException("Plugin returned " + pluginRows.size() +
+                            " rows, but entityList size is " + entityList.size());
+                }
                 int rowIndex = pageStartingRow;
                 for (Row row : pluginRows) {
                     // TODO jmt rows might be empty, if columns are all plugins
@@ -567,7 +603,7 @@ public class ConfigurableList {
             Comparable<?> comparableValue =
                     columnTabulation.evalValueTypeExpression(entity,context)
                         .getComparableValue(currentValue,multiValueDelimiter);
-            Cell cell = new Cell(header, comparableValue, formattedString);
+            Cell cell = new Cell(header, comparableValue, formattedString, columnTabulation.mustEscape());
             row.addCell(cell);
             valueIndex++;
         }
@@ -598,11 +634,13 @@ public class ConfigurableList {
             List<String> cells = new ArrayList<>();
             for( ColumnTabulation nestedColumnTabulation : columnTabulation.getNestedEntityColumns() ) {
                 Object value = nestedColumnTabulation.evalValueExpression(entity, context);
+                String output;
                 if( context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB ) {
-                    cells.add(nestedColumnTabulation.evalUiDisplayOutputExpression(value, context));
+                    output = nestedColumnTabulation.evalUiDisplayOutputExpression(value, context);
                 } else {
-                    cells.add(nestedColumnTabulation.evalPlainTextOutputExpression(value, context));
+                    output = nestedColumnTabulation.evalPlainTextOutputExpression(value, context);
                 }
+                cells.add(nestedColumnTabulation.mustEscape() ? Encode.forHtml(output) : output);
             }
             ResultRow row = new ResultRow( emptySortableCells, cells, null );
             localRows.add(row);
@@ -902,12 +940,19 @@ public class ConfigurableList {
         /**
          * Each row may have a nested table
          */
-        private Map<String, ResultList> nestedTables = new HashMap<>();
+        private Map<String, ResultList> nestedTables = new LinkedHashMap<>();
+
         /**
          * Each cell may have a nested table.
          */
         private List<ResultList> cellNestedTables = new ArrayList<>();
 
+        /**
+         *
+         * @param sortableCells see field
+         * @param renderableCells must be escaped for XSS
+         * @param resultId see field
+         */
         ResultRow(List<Comparable<?>> sortableCells, List<String> renderableCells, String resultId) {
             this.sortableCells = sortableCells;
             this.renderableCells = renderableCells;

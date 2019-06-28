@@ -1,10 +1,24 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
+import clover.org.apache.commons.collections.CollectionUtils;
+import org.broadinstitute.gpinformatics.infrastructure.ShortDateAdapter;
+
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @XmlRootElement(name="Quote")
 public class Quote {
@@ -18,6 +32,14 @@ public class Quote {
     private QuoteFunding quoteFunding;
     private QuoteType quoteType;
     private Collection<QuoteItem> quoteItems = new ArrayList<> ();
+    private Date expirationDate;
+
+    @XmlTransient
+    private Collection<Funding> cachedFunding;
+
+    // quick access Cache of quote items
+    @XmlTransient
+    public HashMap<String, HashMap<String, HashMap<String, QuoteItem>>> quoteItemCache = new HashMap<>();
 
     public Quote() {}
 
@@ -103,6 +125,15 @@ public class Quote {
         this.quoteType = quoteType;
     }
 
+    @XmlAttribute(name="expirationDate")
+    @XmlJavaTypeAdapter(ShortDateAdapter.class)
+    public Date getExpirationDate() {
+        return expirationDate;
+    }
+
+    public void setExpirationDate(Date expirationDate) {
+        this.expirationDate = expirationDate;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -122,23 +153,124 @@ public class Quote {
         return alphanumericId != null ? alphanumericId.hashCode() : 0;
     }
 
+    /**
+     * Tests if the Quote is in a state that makes it eligible to be used on an order bound for SAP.  The criteria
+     * for this would be
+     * <ul>
+     * <li>There is only one funding source defined for the quote.  SAP Orders will only be able to handle one
+     * source of funding</li>
+     * <li>If the funding source is backed by a Grant, ensure that the grant end date has not passed.</li>
+     * </ul>
+     *
+     * @return
+     *
+     */
     public boolean isEligibleForSAP() {
-
-        FundingLevel singleLevel = getFirstRelevantFundingLevel();
-
-        return !(singleLevel == null);
+        List<Funding> allFundingSources = new ArrayList<>();
+        Optional.ofNullable(getFirstRelevantFundingLevel())
+            .ifPresent(singleLevel -> {
+                Optional.ofNullable(singleLevel.getFunding())
+                    .ifPresent(allFundingSources::addAll);
+            });
+        return  allFundingSources.size() == 1;
     }
 
+    public boolean isFunded() {
+        return isFunded(new Date());
+    }
+
+    public boolean isFunded(Date effectiveDate) {
+
+        int fundsCount = 0;
+        int purchaseOrderCount = 0;
+        Map<String, List<Funding>> fundingByType =
+            getFunding().stream().collect(Collectors.groupingBy(Funding::getFundingType));
+
+        fundsCount = Optional.ofNullable(fundingByType.get(Funding.FUNDS_RESERVATION))
+            .orElse(Collections.emptyList()).stream()
+            .filter(funding -> funding.isGrantActiveForDate(effectiveDate)).collect(Collectors.toSet())
+            .size();
+
+        purchaseOrderCount = Optional.ofNullable(fundingByType.get(Funding.PURCHASE_ORDER))
+            .orElse(Collections.emptyList()).size();
+
+        return (fundsCount != 0 || purchaseOrderCount != 0) ;
+    }
+
+    /**
+     * Helper method to support SAP transition.  If there is only one funding level, this will return it.  Otherwise
+     * Null will be returned. This method should only be used for testing if funding is valid for SAP.
+     *
+     * @return Single funding level for the quote, or null if there is either more than one level or no level.
+     */
     public FundingLevel getFirstRelevantFundingLevel() {
         FundingLevel singleLevel = null;
 
-        for(FundingLevel level : quoteFunding.getFundingLevel()) {
-            if (singleLevel == null) {
-                singleLevel = level;
-            } else {
-                return null;
+        if (quoteFunding != null && CollectionUtils.isNotEmpty(quoteFunding.getFundingLevel())) {
+            for(FundingLevel level : quoteFunding.getFundingLevel()) {
+                if (singleLevel == null) {
+                    singleLevel = level;
+                } else {
+                    return null;
+                }
             }
         }
         return singleLevel;
+    }
+
+    /**
+     * initialized the Multi level hash map to make accessing items in the quote item collection easier
+     */
+    public void initializeQuoteItemCache () {
+        if(CollectionUtils.isNotEmpty(quoteItems)) {
+            for (QuoteItem quoteItem : quoteItems) {
+                if(!quoteItemCache.containsKey(quoteItem.getCategoryName())) {
+                    quoteItemCache.put(quoteItem.getCategoryName(), new HashMap<String, HashMap<String, QuoteItem>>());
+                }
+                if(!quoteItemCache.get(quoteItem.getCategoryName()).containsKey(quoteItem.getPlatform())) {
+                    quoteItemCache.get(quoteItem.getCategoryName()).put(quoteItem.getPlatform(),new HashMap<String, QuoteItem>());
+                }
+                if(!quoteItemCache.get(quoteItem.getCategoryName()).get(quoteItem.getPlatform()).containsKey(quoteItem.getName())) {
+                    quoteItemCache.get(quoteItem.getCategoryName()).get(quoteItem.getPlatform()).put(quoteItem.getName(), quoteItem);
+                }
+            }
+        }
+    }
+
+    /**
+     * Access a quote item defined on the quote by key criteria.
+     *
+     * @param platform  Platform with which the desired quote item should be associated
+     * @param category  Category with which the desired quote item should be associated
+     * @param name      Name with which the desired quote item should be named
+     * @return  specific QuoteItem on the quote when found, or null if it is not found
+     */
+    public QuoteItem findCachedQuoteItem(String platform, String category, String name) {
+
+        QuoteItem foundItem = null;
+
+        if(quoteItemCache.isEmpty()) {
+            initializeQuoteItemCache();
+        }
+        if (quoteItemCache.containsKey(category) &&
+            quoteItemCache.get(category).containsKey(platform) &&
+            quoteItemCache.get(category).get(platform).containsKey(name)) {
+
+            foundItem = quoteItemCache.get(category).get(platform).get(name);
+
+        }
+
+        return foundItem;
+    }
+
+    public Collection<Funding> getFunding() {
+        if (CollectionUtils.isEmpty(cachedFunding)) {
+            cachedFunding = new HashSet<>();
+            getQuoteFunding().getActiveFundingLevel().stream().filter(Objects::nonNull)
+                .filter(fundingLevel -> Objects.nonNull(fundingLevel.getFunding()))
+                .forEach(fundingLevel -> cachedFunding.addAll(fundingLevel.getFunding()));
+
+        }
+        return cachedFunding;
     }
 }

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.testng.Assert;
 
 import java.io.File;
@@ -30,10 +31,13 @@ public class EtlTestUtilities {
         FilenameFilter filter = new FilenameFilter() {
             @Override
             public boolean accept(File dirname, String filename) {
-                return (filename.endsWith(".dat")
-                        || filename.endsWith(ExtractTransform.READY_FILE_SUFFIX))
+                return ((filename.length() > "20140807112133_X.dat".length()) &&
+                        StringUtils.isNumeric(filename.substring(0,14)) &&
+                        filename.startsWith("20") &&
+                        filename.substring(14,15).equals("_") &&
+                        (filename.endsWith(".dat") || filename.endsWith(ExtractTransform.READY_FILE_SUFFIX))
                        || filename.equals(ExtractTransform.LAST_ETL_FILE)
-                       || filename.equals(ExtractTransform.LAST_WF_CONFIG_HASH_FILE);
+                       || filename.equals(ExtractTransform.LAST_WF_CONFIG_HASH_FILE));
             }
         };
         for (File file : new File(dir).listFiles(filter)) {

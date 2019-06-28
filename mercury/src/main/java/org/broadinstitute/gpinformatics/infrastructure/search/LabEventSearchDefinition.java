@@ -3,13 +3,13 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.columns.SampleDataFetcherAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.DisplayExpression;
 import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselSourcePositionPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselTargetPositionPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.columns.SampleDataFetcherAddRowsListener;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -50,7 +50,7 @@ public class LabEventSearchDefinition {
     // Use an enum rather than having to reference via String values of term names
     // TODO: JMS Create a shared interface that this implements then use this as a registry of all term names
     public enum MultiRefTerm {
-        LCSET("LCSET");
+        LCSET("Lab Batch");
 
         MultiRefTerm(String termRefName ) {
             this.termRefName = termRefName;
@@ -126,6 +126,9 @@ public class LabEventSearchDefinition {
 
         searchTerms = buildEventSampleOptions( sourceLayoutTerm, destinationLayoutTerm );
         mapGroupSearchTerms.put("Sample Metadata", searchTerms);
+
+        searchTerms = buildEventMetadata();
+        mapGroupSearchTerms.put("Event Metadata", searchTerms);
 
         searchTerms = buildLabEventNestedTables();
         searchTerms.add(sourceLayoutTerm);
@@ -312,26 +315,6 @@ public class LabEventSearchDefinition {
         });
         searchTerms.add(searchTerm);
 
-        searchTerm = new SearchTerm();
-        searchTerm.setName("Simulation Mode");
-        searchTerm.setValueType(ColumnValueType.BOOLEAN);
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public String evaluate(Object entity, SearchContext context) {
-                LabEvent labEvent = (LabEvent) entity;
-                Boolean result = Boolean.FALSE;
-                for(LabEventMetadata meta : labEvent.getLabEventMetadatas() ) {
-                    if( meta.getLabEventMetadataType() == LabEventMetadata.LabEventMetadataType.SimulationMode ) {
-                        result = Boolean.valueOf(meta.getValue());
-                        break;
-                    }
-                }
-                return result?"Yes":"No";
-
-            }
-        });
-        searchTerms.add(searchTerm);
-
         return searchTerms;
     }
 
@@ -511,6 +494,43 @@ public class LabEventSearchDefinition {
         return searchTerms;
     }
 
+    /**
+     * Event metadata values.
+     *
+     * @return List of search terms/column definitions for lab event metadata
+     */
+    private List<SearchTerm> buildEventMetadata() {
+        List<SearchTerm> searchTerms = new ArrayList<>();
+
+        for (LabEventMetadata.LabEventMetadataType labEventMetadataType : LabEventMetadata.LabEventMetadataType.values()) {
+            SearchTerm searchTerm = new SearchTerm();
+            searchTerm.setName(labEventMetadataType.getDisplayName());
+            searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+                @Override
+                public Set<String> evaluate(Object entity, SearchContext context) {
+                    LabEvent labEvent = (LabEvent) entity;
+                    Set<String> results = new HashSet<>();
+                    for (LabEventMetadata labEventMetadata : labEvent.getLabEventMetadatas()) {
+                        if (labEventMetadata.getLabEventMetadataType().getDisplayName().equals(searchTerm.getName())) {
+                            if (labEventMetadata.getLabEventMetadataType() ==
+                                    LabEventMetadata.LabEventMetadataType.SimulationMode) {
+                                results.add(Boolean.valueOf(labEventMetadata.getValue()) ? "Yes" : "No");
+                            } else {
+                                results.add(labEventMetadata.getValue());
+                            }
+                            break;
+                        }
+                    }
+
+                    return results;
+                }
+            });
+            searchTerms.add(searchTerm);
+        }
+
+        return searchTerms;
+    }
+
     private List<SearchTerm> buildLabEventBatch( SearchTerm... nestedTableTerms ) {
         List<SearchTerm> searchTerms = new ArrayList<>();
 
@@ -542,7 +562,7 @@ public class LabEventSearchDefinition {
                 for( LabVessel labVessel : eventVessels ) {
                     for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
                         for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples() ) {
-                            productNames.add(productOrderSample.getProductOrder().getJiraTicketKey());
+                            productNames.add(productOrderSample.getProductOrder().getBusinessKey());
                         }
                     }
                 }
@@ -562,10 +582,9 @@ public class LabEventSearchDefinition {
         searchTerm = new SearchTerm();
         searchTerm.setName(MultiRefTerm.LCSET.getTermRefName());
         searchTerm.setHelpText(
-                "LCSET term will only locate events associated with batch or rework batch vessels.<br>"
+                "Lab Batch term will only locate events associated with batch or rework batch vessels.<br>"
                 + "Traversal option(s) should be selected if chain of custody events are desired.<br>"
-                + "Note: The LCSET term is exclusive, no other terms can be selected.");
-        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getLcsetInputConverter());
+                + "Note: The Lab Batch term is exclusive, no other terms can be selected.");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
@@ -582,7 +601,7 @@ public class LabEventSearchDefinition {
         searchTerm.setCriteriaPaths(blankCriteriaPaths);
 
         SearchTerm lcsetEventTerm = new SearchTerm();
-        lcsetEventTerm.setName("LCSET event type");
+        lcsetEventTerm.setName("Lab batch event type");
         lcsetEventTerm.setConstrainedValuesExpression(new SearchDefinitionFactory.EventTypeValuesExpression());
         lcsetEventTerm.setTraversalFilterExpression(new SearchTerm.Evaluator<Boolean>() {
             @Override
@@ -629,6 +648,11 @@ public class LabEventSearchDefinition {
         searchTerm = new SearchTerm();
         searchTerm.setName("Molecular Index");
         searchTerm.setDisplayExpression(DisplayExpression.MOLECULAR_INDEX);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Unique Molecular Identifier");
+        searchTerm.setDisplayExpression(DisplayExpression.UNIQUE_MOLECULAR_IDENTIFIER);
         searchTerms.add(searchTerm);
 
         return searchTerms;
@@ -775,7 +799,7 @@ public class LabEventSearchDefinition {
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerms.add(searchTerm);
 
-        // By LCSET
+        // By lab batch
         searchTerm = new SearchTerm();
         searchTerm.setName(MultiRefTerm.LCSET.getTermRefName());
 

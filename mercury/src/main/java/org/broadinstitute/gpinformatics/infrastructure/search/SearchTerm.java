@@ -18,10 +18,15 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
- * Represents the definition of a term in a user-defined search. Intended to be XStreamed.
+ * Represents the definition of both a search criteria term (input) and a search result column (output) <br />
+ * To be displayed as user selectable input criteria, (basically) will have criteria path(s) assigned  <br />
+ * Output value as a result column will be generated via display expressions <br />
+ * Intended to be XStreamed.
  */
 public class SearchTerm implements Serializable, ColumnTabulation {
 
@@ -215,6 +220,12 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     private Evaluator<List<ConstrainedValue>> constrainedValuesExpression;
 
     /**
+     * Expression that provides list of constrained result column values
+     * TODO JMS This might be better off as part of a list plugin as parameter configurations get more complicated
+     */
+    private Evaluator<ResultParamConfiguration> resultParamConfigurationExpression;
+
+    /**
      * Dynamic value type expression.
      * Required to handle String, Data, Number metadata
      */
@@ -245,6 +256,8 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      * Optional expression to enhance UI presentation of result column value
      */
     private Evaluator<String> uiDisplayOutputExpression;
+
+    private boolean mustEscape = true;
 
     /**
      * Header text (or expression to derive it) for displaying search results.
@@ -425,6 +438,17 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     }
 
     /**
+     * Allow user selection of one or more logically related result columns
+     */
+    public Evaluator<ResultParamConfiguration> getResultParamConfigurationExpression() {
+        return resultParamConfigurationExpression;
+    }
+
+    public void setResultParamConfigurationExpression(Evaluator<ResultParamConfiguration> resultParamConfigurationExpression) {
+        this.resultParamConfigurationExpression = resultParamConfigurationExpression;
+    }
+
+    /**
      * Set a constant value type for this term
      */
     public void setValueType( ColumnValueType valueType ) {
@@ -459,6 +483,13 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         return displayExpression;
     }
 
+    /**
+     * Using an expression implementation pre-defined in the enum DisplayExpression, this method sets the
+     * implementation to extract value(s) from the base entity object to be used as the source of the result column
+     * value presented in UI or download.
+     *
+     * @param displayExpression
+     */
     public void setDisplayExpression(DisplayExpression displayExpression) {
         this.displayExpression = displayExpression;
     }
@@ -697,7 +728,7 @@ public class SearchTerm implements Serializable, ColumnTabulation {
             }
 */
 
-            List resultObjects = new ArrayList<>();
+            Set resultObjects = new HashSet<>();
             Collection<?> expressionObjects = DisplayExpression.rowObjectToExpressionObject(
                     entity,
                     getDisplayExpression().getExpressionClass(),
@@ -745,9 +776,22 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     }
 
     @Override
+    public boolean mustEscape() {
+        return mustEscape;
+    }
+
+    public void setMustEscape(boolean mustEscape) {
+        this.mustEscape = mustEscape;
+    }
+
+    @Override
     public Object evalViewHeaderExpression(Object entity, SearchContext context) {
         if (getViewHeaderExpression() == null) {
-            return getName();
+            if( context.getColumnParams() == null ) {
+                return getName();
+            } else {
+                return context.getColumnParams().getUserColumnName();
+            }
         } else {
             context = addTermToContext(context);
             return getViewHeaderExpression().evaluate(entity, context);

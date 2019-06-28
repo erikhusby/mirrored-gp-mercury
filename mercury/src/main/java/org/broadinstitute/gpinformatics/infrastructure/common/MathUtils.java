@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.OptionalDouble;
 
 /**
  * A collection of utility functions for working with numbers.
@@ -33,6 +35,12 @@ public class MathUtils {
                || (Math.abs(actual - expected) <= 5 * Math.ulp(expected));
     }
 
+    public static boolean isSame(BigDecimal actual, BigDecimal expected) {
+        return actual == null && expected == null ||
+                actual != null && expected != null &&
+                        scaleTwoDecimalPlaces(actual).equals(scaleTwoDecimalPlaces(expected));
+    }
+
     /**
      * Mercury uses a (semi) standard scaling of BigDecimal values to 2 decimal places.
      */
@@ -50,5 +58,14 @@ public class MathUtils {
             return null;
         }
         return input.setScale(3, BigDecimal.ROUND_HALF_UP);
+    }
+
+    public static boolean areTooFarApart(float lowerValue, float higherValue, float maxPercentageBetweenReads) {
+        float percentDiff = (Math.abs(higherValue - lowerValue)) / ((higherValue + lowerValue) / 2);
+        return percentDiff > maxPercentageBetweenReads;
+    }
+
+    public static OptionalDouble average(List<Float> vals) {
+        return vals.stream().mapToDouble(val -> val).average();
     }
 }

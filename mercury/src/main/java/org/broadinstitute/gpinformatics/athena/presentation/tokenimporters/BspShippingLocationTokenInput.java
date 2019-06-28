@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.json.JSONException;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.text.MessageFormat;
 import java.util.List;
@@ -15,14 +16,13 @@ import java.util.List;
 /**
  * Token Input support for Shipping Locations (aka Sites).
  */
+@Dependent
 public class BspShippingLocationTokenInput extends TokenInput<Site> {
 
     private static final String ADDITIONAL_LINE_FORMAT = "<div class=\"ac-dropdown-multiline-subtext\">{0}</div>";
 
-    @Inject
     private BSPManagerFactory bspManagerFactory;
 
-    @Inject
     private BSPSiteList bspSiteList;
 
     private List<Site> sites;
@@ -78,5 +78,16 @@ public class BspShippingLocationTokenInput extends TokenInput<Site> {
     @Override
     protected Site getById(String key) {
         return bspSiteList.getById(Long.valueOf(key));
+    }
+
+    @Inject
+    public void setBspManagerFactory(
+            BSPManagerFactory bspManagerFactory) {
+        this.bspManagerFactory = bspManagerFactory;
+    }
+
+    @Inject
+    public void setBspSiteList(BSPSiteList bspSiteList) {
+        this.bspSiteList = bspSiteList;
     }
 }

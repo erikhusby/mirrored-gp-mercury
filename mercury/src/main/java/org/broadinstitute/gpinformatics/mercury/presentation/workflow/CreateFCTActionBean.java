@@ -11,6 +11,7 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
@@ -21,10 +22,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
-import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationUtils;
+import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationActionBean;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -32,7 +32,6 @@ import java.math.BigDecimal;
 import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -77,6 +76,9 @@ public class CreateFCTActionBean extends CoreActionBean {
 
     @Inject
     private BucketEntryDao bucketEntryDao;
+
+    @Inject
+    private ProductDao productDao;
 
     @Validate(required = true, on = {LOAD_DENATURE,LOAD_NORM,LOAD_POOLNORM})
     private String lcsetNames;
@@ -166,140 +168,109 @@ public class CreateFCTActionBean extends CoreActionBean {
      * the lcsets and finding all descendant tubes for the event type selected in the UI.
      */
     private Resolution loadTubes() {
-        // Keeps any existing createFctDtos (regardless of current lcset names) and only adds to them.
-        for (LabBatch targetLcset : loadLcsets()) {
-            int previousRowDtoCount = createFctDtos.size();
+        Map<LabVessel, LabBatch> loadingTubeToLcset = new HashMap<>();
+        Multimap<LabVessel, LabBatch> loadingTubeToLcsets = HashMultimap.create();
+        Multimap<LabVessel, BucketEntry> loadingTubeToBucketEntry = HashMultimap.create();
+        Multimap<LabVessel, LabVessel> loadingTubeToControl = HashMultimap.create();
+        Multimap<LabVessel, LabEvent> loadingTubeToLabEvent = HashMultimap.create();
 
-            Map<LabVessel, BucketEntry> batchStartingVesselToBucketEntry = new HashMap<>();
-            for (BucketEntry bucketEntry : targetLcset.getBucketEntries()) {
-                batchStartingVesselToBucketEntry.put(bucketEntry.getLabVessel(), bucketEntry);
-            }
+        List<String> noLoadingTubeLcsets = DesignationActionBean.loadingTubeDtoForLcsets(selectedEventType,
+                loadLcsets(), loadingTubeToLcset, loadingTubeToLcsets, loadingTubeToLabEvent,
+                loadingTubeToBucketEntry, loadingTubeToControl);
+        if (!noLoadingTubeLcsets.isEmpty()) {
+            addMessage("No " + selectedEventType + " found tubes in " + StringUtils.join(noLoadingTubeLcsets, ", "));
+        }
 
-            Multimap<LabVessel, LabEvent> loadingTubeToLabEvent = HashMultimap.create();
-            Multimap<LabVessel, BucketEntry> loadingTubeToBucketEntry = HashMultimap.create();
-            Multimap<LabVessel, LabVessel> loadingTubeToUnbucketedBatchStartingVessel = HashMultimap.create();
-            Map<LabVessel, Set<LabBatch>> loadingTubeToLcsets = new HashMap<>();
+        // Makes UI table rows for the loading tubes.
+        for (LabVessel loadingTube : loadingTubeToLabEvent.keySet()) {
+            Multimap<String, String> productToStartingVessel = HashMultimap.create();
+            Set<String> sampleNames = new HashSet<>();
+            Set<LabVessel> bucketedVessels = new HashSet<>();
+            String regulatoryDesignation = null;
 
-            // Iterates on the starting batch vessels to find norm/pool/denature tubes,
-            // and links them to a bucket entry.
-            for (LabVessel startingBatchVessel : targetLcset.getStartingBatchLabVessels()) {
-                Map<LabEvent, Set<LabVessel>> loadingEventsAndVessels = new HashMap<>();
-
-                loadingEventsAndVessels.putAll(startingBatchVessel.findVesselsForLabEventType(selectedEventType,
-                        true, EnumSet.of(TransferTraverserCriteria.TraversalDirection.Descendants)));
-
-                for (LabEvent targetEvent : loadingEventsAndVessels.keySet()) {
-                    for (LabVessel loadingTube : loadingEventsAndVessels.get(targetEvent)) {
-                        // Finds the best lcset(s) for the loading tube.
-                        Set<LabBatch> bestLcsets = DesignationUtils.findBestLcsets(loadingTube).getLeft();
-                        // Only keeps the loading tube if the target lcset is found.
-                        if (bestLcsets.contains(targetLcset)) {
-                            loadingTubeToLcsets.put(loadingTube, bestLcsets);
-                            loadingTubeToLabEvent.put(loadingTube, targetEvent);
-                            BucketEntry bucketEntry = batchStartingVesselToBucketEntry.get(startingBatchVessel);
-                            if (bucketEntry != null) {
-                                loadingTubeToBucketEntry.put(loadingTube, bucketEntry);
-                            } else {
-                                // A positive control is in a batch starting vessel but doesn't have a bucket entry.
-                                loadingTubeToUnbucketedBatchStartingVessel.put(loadingTube, startingBatchVessel);
-                            }
-                        }
+            // Gets product, regulatory designation, and number of samples from the bucket entries.
+            // For each loading tube, all ancestor samples must be found in order to correctly
+            // display pools from multiple LCSETs (SUPPORT-3578).
+            for (BucketEntry bucketEntry : loadingTubeToBucketEntry.get(loadingTube)) {
+                String productName = bucketEntry.getProductOrder().getProduct() != null ?
+                        bucketEntry.getProductOrder().getProduct().getProductName() :
+                        "[No product for " + bucketEntry.getProductOrder().getJiraTicketKey() + "]";
+                productToStartingVessel.put(productName, bucketEntry.getLabVessel().getLabel());
+                // Sets the regulatory designation to Clinical, Research, or mixed.
+                if (bucketEntry.getProductOrder().getResearchProject().getRegulatoryDesignation().isClinical()) {
+                    if (regulatoryDesignation == null) {
+                        regulatoryDesignation = CLINICAL;
+                    } else if (!regulatoryDesignation.equals(CLINICAL)) {
+                        regulatoryDesignation = MIXED;
                     }
-                }
-            }
-
-            // Makes UI table rows for the loading tubes.
-            for (LabVessel loadingTube : loadingTubeToLabEvent.keySet()) {
-                Multimap<String, String> productToStartingVessel = HashMultimap.create();
-                String regulatoryDesignation = null;
-                int numberSamples = 0;
-
-                // Gets product, regulatory designation, and number of samples from the bucket entries.
-                for (BucketEntry bucketEntry : loadingTubeToBucketEntry.get(loadingTube)) {
-                    String productName = bucketEntry.getProductOrder().getProduct() != null ?
-                            bucketEntry.getProductOrder().getProduct().getProductName() :
-                            "[No product for " + bucketEntry.getProductOrder().getJiraTicketKey() + "]";
-                    productToStartingVessel.put(productName, bucketEntry.getLabVessel().getLabel());
-                    // Sets the regulatory designation to Clinical, Research, or mixed.
-                    if (bucketEntry.getProductOrder().getResearchProject().getRegulatoryDesignation().
-                            isClinical()) {
-                        if (regulatoryDesignation == null) {
-                            regulatoryDesignation = CLINICAL;
-                        } else if (!regulatoryDesignation.equals(CLINICAL)) {
-                            regulatoryDesignation = MIXED;
-                        }
-                    } else {
-                        if (regulatoryDesignation == null) {
-                            regulatoryDesignation = RESEARCH;
-                        } else if (!regulatoryDesignation.equals(RESEARCH)) {
-                            regulatoryDesignation = MIXED;
-                        }
-                    }
-                    numberSamples += bucketEntry.getLabVessel().getSampleNames().size();
-                }
-                // Adds in the unbucketed positive controls.
-                for (LabVessel startingVessel : loadingTubeToUnbucketedBatchStartingVessel.get(loadingTube)) {
-                    productToStartingVessel.put(CONTROLS, startingVessel.getLabel());
-                    numberSamples += startingVessel.getSampleNames().size();
-                }
-
-                // For each loading tube, each product will show a corresponding list of starting vessels.
-                List<String> productNameList = new ArrayList<>(productToStartingVessel.keySet());
-                Collections.sort(productNameList);
-                List<String> startingVesselList = new ArrayList<>();
-                for (String productName : productNameList) {
-                    List<String> startingVessels = new ArrayList<>(productToStartingVessel.get(productName));
-                    Collections.sort(startingVessels);
-                    startingVesselList.add((productName.equals(CONTROLS) ?
-                            productName : "Bucketed tubes for " + productName) + ": " +
-                                           StringUtils.join(startingVessels, ", "));
-                }
-
-                // Gets event dates.
-                Set<String> eventDates = new HashSet<>();
-                for (LabEvent labEvent : loadingTubeToLabEvent.get(loadingTube)) {
-                    eventDates.add(dateFormat.format(labEvent.getEventDate()));
-                }
-
-                String additionalLcsets = "";
-                for (LabBatch additionalLcset : loadingTubeToLcsets.get(loadingTube)) {
-                    if (!additionalLcset.equals(targetLcset)) {
-                        additionalLcsets += "<br/>" + additionalLcset.getBatchName();
-                    }
-                }
-
-                CreateFctDto createFctDto = new CreateFctDto(loadingTube.getLabel(), targetLcset.getBatchName(), additionalLcsets,
-                        StringUtils.join(eventDates, "<br/>"),
-                        StringUtils.join(productNameList, "<br/>"),
-                        StringUtils.join(startingVesselList, "\n"),
-                        selectedEventTypeDisplay, defaultLoadingConc, targetLcset.getJiraTicket().getBrowserUrl(),
-                        regulatoryDesignation, numberSamples);
-
-                // Each tube barcode should only be present once.
-                CreateFctDto existingDto = null;
-                for (CreateFctDto dto : createFctDtos) {
-                    if (dto.getBarcode().equals(createFctDto.getBarcode())) {
-                        existingDto = dto;
-                    }
-                }
-                if (existingDto == null) {
-                    createFctDtos.add(createFctDto);
                 } else {
-                    // Updates an existing row if it hasn't already been selected.
-                    if (existingDto.getNumberLanes() == 0) {
-                        createFctDtos.remove(existingDto);
-                        createFctDtos.add(createFctDto);
-                    } else if (!existingDto.getLcset().equals(createFctDto.getLcset())) {
-                        addMessage("Tube " + existingDto.getBarcode() + " is already selected in " +
-                                   existingDto.getLcset() + " and will not be updated to " + createFctDto.getLcset());
+                    if (regulatoryDesignation == null) {
+                        regulatoryDesignation = RESEARCH;
+                    } else if (!regulatoryDesignation.equals(RESEARCH)) {
+                        regulatoryDesignation = MIXED;
                     }
                 }
+                bucketedVessels.add(bucketEntry.getLabVessel());
+                sampleNames.addAll(bucketEntry.getLabVessel().getSampleNames());
             }
-            if (createFctDtos.size() == previousRowDtoCount) {
-                addMessage("No additional tubes found for " + targetLcset.getBatchName());
+            for (LabVessel startingTube : loadingTubeToControl.get(loadingTube)) {
+                productToStartingVessel.put(CONTROLS, startingTube.getLabel());
+                sampleNames.addAll(startingTube.getSampleNames());
+            }
+
+            // For each loading tube a per-product list of starting vessels is shown in a tooltip.
+            List<String> productNameList = new ArrayList<>(productToStartingVessel.keySet());
+            Collections.sort(productNameList);
+            List<String> startingVesselList = new ArrayList<>();
+            for (String productName : productNameList) {
+                List<String> startingVessels = new ArrayList<>(productToStartingVessel.get(productName));
+                Collections.sort(startingVessels);
+                startingVesselList.add((productName.equals(CONTROLS) ?
+                        productName : "Bucketed tubes for " + productName) + ": " +
+                        StringUtils.join(startingVessels, ", "));
+            }
+
+            // Gets event dates.
+            Set<String> eventDates = new HashSet<>();
+            for (LabEvent labEvent : loadingTubeToLabEvent.get(loadingTube)) {
+                eventDates.add(dateFormat.format(labEvent.getEventDate()));
+            }
+
+            LabBatch primaryLcset = loadingTubeToLcset.get(loadingTube);
+            String additionalLcsets = "";
+            for (LabBatch additionalLcset : loadingTubeToLcsets.get(loadingTube)) {
+                if (!additionalLcset.equals(primaryLcset)) {
+                    additionalLcsets += "<br/>" + additionalLcset.getBatchName();
+                }
+            }
+
+            CreateFctDto createFctDto = new CreateFctDto(loadingTube.getLabel(), primaryLcset.getBatchName(),
+                    additionalLcsets, StringUtils.join(eventDates, "<br/>"), productNameList,
+                    StringUtils.join(startingVesselList, "\n"),
+                    selectedEventTypeDisplay, defaultLoadingConc, primaryLcset.getJiraTicket().getBrowserUrl(),
+                    regulatoryDesignation, sampleNames.size());
+
+            // Each tube barcode should only be present once, so this tube merges into an existing
+            // dto if it exists and hasn't already been selected.
+            CreateFctDto existingDto = null;
+            for (CreateFctDto dto : createFctDtos) {
+                if (dto.getBarcode().equals(createFctDto.getBarcode())) {
+                    existingDto = dto;
+                }
+            }
+            if (existingDto == null) {
+                createFctDtos.add(createFctDto);
+            } else {
+                if (existingDto.getNumberLanes() == 0) {
+                    createFctDtos.remove(existingDto);
+                    createFctDtos.add(createFctDto);
+                } else if (!existingDto.getLcset().equals(createFctDto.getLcset())) {
+                    addMessage("Tube " + existingDto.getBarcode() + " is already selected in " +
+                            existingDto.getLcset() + " and will not be updated to " + createFctDto.getLcset());
+                }
             }
         }
-        Collections.sort(createFctDtos, CreateFctDto.BY_BARCODE);
+        Collections.sort(createFctDtos, (d0, d1) -> d0.getBarcode().compareTo(d1.getBarcode()));
         return new ForwardResolution(VIEW_PAGE);
     }
 
@@ -340,9 +311,12 @@ public class CreateFCTActionBean extends CoreActionBean {
                     regulatoryDesignation = createFctDto.getRegulatoryDesignation();
                 }
                 if (!regulatoryDesignation.equals(createFctDto.getRegulatoryDesignation()) ||
-                    regulatoryDesignation.equals(MIXED)) {
-                    addGlobalValidationError("Cannot mix Clinical and Research on a flowcell.");
-                    return new ForwardResolution(VIEW_PAGE);
+                        regulatoryDesignation.equals(MIXED)) {
+                    boolean mixedFlowcellOk = labBatchEjb.isMixedFlowcellOk(createFctDto);
+                    if (!mixedFlowcellOk) {
+                        addGlobalValidationError("Cannot mix Clinical and Research on a flowcell.");
+                        return new ForwardResolution(VIEW_PAGE);
+                    }
                 }
             }
         }

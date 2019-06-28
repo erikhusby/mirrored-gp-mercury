@@ -2,16 +2,20 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
+import org.broadinstitute.gpinformatics.infrastructure.columns.DisplayExpression;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -28,6 +32,9 @@ public class ReagentSearchDefinition {
         searchTerms = buildReagentEventGroup();
         mapGroupSearchTerms.put("Events", searchTerms);
 
+        searchTerms = buildMetadataGroup();
+        mapGroupSearchTerms.put("Metadata", searchTerms);
+
         List<ConfigurableSearchDefinition.CriteriaProjection> criteriaProjections = new ArrayList<>();
 
         criteriaProjections.add( new ConfigurableSearchDefinition.CriteriaProjection("ReagentID",
@@ -37,6 +44,20 @@ public class ReagentSearchDefinition {
                 ColumnEntity.REAGENT, criteriaProjections, mapGroupSearchTerms);
 
         return configurableSearchDefinition;
+    }
+
+    private List<SearchTerm> buildMetadataGroup() {
+        List<SearchTerm> searchTerms = new ArrayList<>();
+        for (Metadata.Key meta : Metadata.Key.values()) {
+            if (meta.getCategory() == Metadata.Category.REAGENT && meta != Metadata.Key.BAIT_WELL) {
+                SearchTerm searchTerm = new SearchTerm();
+                searchTerm.setName(meta.getDisplayName());
+                searchTerm.setDisplayExpression(DisplayExpression.REAGENT_METADATA);
+                searchTerms.add(searchTerm);
+            }
+        }
+
+        return searchTerms;
     }
 
     private List<SearchTerm> buildReagentGroup() {
@@ -99,6 +120,25 @@ public class ReagentSearchDefinition {
         });
         searchTerms.add(searchTerm);
 
+        searchTerm = new SearchTerm();
+        searchTerm.setName("First Use Date");
+        searchTerm.setDbSortPath("firstUse");
+        searchTerm.setValueType(ColumnValueType.DATE_TIME);
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("ReagentID"));
+        criteriaPath.setPropertyName("firstUse");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Date evaluate(Object entity, SearchContext context) {
+                Reagent reagent = (Reagent) entity;
+                return reagent.getFirstUse();
+            }
+        });
+        searchTerms.add(searchTerm);
+
         return searchTerms;
     }
 
@@ -107,10 +147,9 @@ public class ReagentSearchDefinition {
 
         // This is an exclusive search term using programmatic logic to populate the entity list
         SearchTerm searchTerm = new SearchTerm();
-        searchTerm.setName("LCSET");
+        searchTerm.setName("Lab Batch");
         searchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         searchTerm.setAlternateSearchDefinition(buildLcsetAlternateSearchDef());
-        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getLcsetInputConverter());
         searchTerm.setHelpText( "Reagents are collected and consolidated from all descendant events in the LCSET."
             + "\nThe LCSET term is exclusive, no other terms can be selected.");
         // Need criteria path in order to see in list of terms
@@ -139,7 +178,7 @@ public class ReagentSearchDefinition {
                 "labBatchType", SearchInstance.Operator.EQUALS, LabBatch.LabBatchType.WORKFLOW);
 
         SearchTerm searchTerm = new SearchTerm();
-        searchTerm.setName("LCSET");
+        searchTerm.setName("Lab Batch");
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList(/* LabEvent*/ "inPlaceLabEvents", /* LabVessel */

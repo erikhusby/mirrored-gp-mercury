@@ -16,7 +16,7 @@
                                 tabindex="=1" event="list">List</stripes:link>
                     </li>
                     <%-- PMs and sometimes PDMs (and Developers) can create Research Projects. --%>
-                    <security:authorizeBlock roles="<%= roles(Developer, PM, PDM) %>">
+                    <security:authorizeBlock roles="<%= roles(Developer, GPProjectManager, PM, PDM) %>">
                         <li>
                             <stripes:link id="createProject"
                                     beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"
@@ -35,7 +35,7 @@
                                 tabindex="=1" event="list">List</stripes:link>
                     </li>
                     <%-- PMs and PDMs (and Developers) can create Product Orders. --%>
-                    <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
+                    <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
                         <li>
                             <stripes:link id="createProductOrder"
                                           beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
@@ -75,13 +75,13 @@
             </li>
 
             <security:authorizeBlock
-                    roles="<%= roles(LabUser, LabManager, PDM, PM, Developer)%>">
+                    roles="<%= roles(LabUser, LabManager, PDM, GPProjectManager, PM, Developer)%>">
                 <li class="dropdown">
 
                     <a id="labNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
                             class="icon-tasks"></span> Lab <b class="caret"></b></a>
                     <ul class="dropdown-menu" role="menu">
-                        <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, PM, Developer) %>">
+                        <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, GPProjectManager, PM, Developer) %>">
                             <li>
                                 <stripes:link id="addToBucket"
                                               beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AddReworkActionBean"
@@ -94,7 +94,7 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"
                                           event="view">Buckets</stripes:link>
                         </li>
-                        <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, PM, Developer) %>">
+                        <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, GPProjectManager, PM, Developer) %>">
                             <li>
                                 <stripes:link id="controls"
                                               beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.CollaboratorControlsActionBean"
@@ -183,7 +183,7 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BatchWorkflowActionBean"
                                           event="view">Batch Workflow</stripes:link>
                         </li>
-                        <security:authorizeBlock roles="<%= roles(LabManager, PDM, PM, Developer) %>">
+                        <security:authorizeBlock roles="<%= roles(LabManager, PDM, GPProjectManager, PM, Developer) %>">
                             <li>
                                 <stripes:link id="molecularIndexUpload"
                                               beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexPlateActionBean"
@@ -199,6 +199,21 @@
                             <stripes:link id="sampleSheet"
                                     beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.ArraysReportActionBean"
                                     event="view">Arrays Reports</stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="externalLibraryUpload"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ExternalLibraryUploadActionBean"
+                                          event="view">Upload External Library Spreadsheet</stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="singleCellMetadataUpload"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.PlateMetadataActionBean"
+                                          event="view">Single Cell Metadata Upload</stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="molecularIndexNaming"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexNamingActionBean"
+                                          event="view">Make Molecular Index Names</stripes:link>
                         </li>
                     </ul>
                 </li>
@@ -239,6 +254,91 @@
                 </li>
             </security:authorizeBlock>
 
+            <security:authorizeBlock roles="<%= roles(LabManager, PDM, GPProjectManager, PM, Developer, LabUser) %>">
+
+                <li class="dropdown">
+                    <a id="storageNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
+                            class="icon-inbox"></span> Storage <b class="caret"></b></a>
+                    <ul class="dropdown-menu" role="menu">
+                        <security:authorizeBlock
+                                roles="<%= roles(LabManager, PDM, GPProjectManager, PM, Developer, LabUser) %>">
+                            <li>
+
+                                <stripes:link id="listStorage"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.storage.StorageLocationActionBean"
+                                              event="list">List</stripes:link>
+                            </li>
+                        </security:authorizeBlock>
+                        <security:authorizeBlock roles="<%= roles(LabManager, PDM, GPProjectManager, PM, Developer) %>">
+                            <li>
+                                <stripes:link id="createStorage"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.storage.StorageLocationActionBean"
+                                              event="create">Create New Storage</stripes:link>
+                            </li>
+                        </security:authorizeBlock>
+                        <li class="divider"></li>
+                        <security:authorizeBlock
+                                roles="<%= roles(LabManager, PDM, GPProjectManager, PM, Developer, LabUser) %>">
+
+                            <li>
+                                <stripes:link id="findContainer"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.container.ContainerActionBean"
+                                              event="view">
+                                    Check In / Search Container
+                                </stripes:link>
+                            </li>
+                        </security:authorizeBlock>
+
+                        <security:authorizeBlock
+                                roles="<%= roles(LabManager, PDM, GPProjectManager, PM, Developer, LabUser) %>">
+                            <li>
+                                <stripes:link id="createNewContainer"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.container.ContainerActionBean"
+                                              event="create">
+                                    Create New Container
+                                </stripes:link>
+                            </li>
+                        </security:authorizeBlock>
+                        <security:authorizeBlock
+                                roles="<%= roles(LabManager, PDM, GPProjectManager, PM, Developer, LabUser) %>">
+
+                            <li>
+                                <stripes:link id="pickFromStorage"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.PickerActionBean"
+                                              event="view">
+                                    Create Pick List From Storage
+                                </stripes:link>
+                            </li>
+                        </security:authorizeBlock>
+                    </ul>
+                </li>
+            </security:authorizeBlock>
+            <li class="dropdown">
+                <a id="receivingNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
+                        class="icon-envelope"></span> Receiving <b class="caret"></b></a>
+                <ul class="dropdown-menu" role="menu">
+                    <li>
+                        <stripes:link id="receiveByKitScan"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.ReceivingActionBean"
+                                      event="byKitScan">Receive By Kit Scan</stripes:link>
+                    </li>
+                    <li>
+                        <stripes:link id="receiveBySampleScan"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.ReceivingActionBean"
+                                      event="bySampleScan">Receive By Sample Scan</stripes:link>
+                    </li>
+                    <li>
+                        <stripes:link id="receiveBySampleScanAndLink"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.ReceivingActionBean"
+                                      event="bySampleScanAndLink">Receive By Sample Scan And Link</stripes:link>
+                    </li>
+                    <li>
+                        <stripes:link id="receiveBySkId"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.ReceivingActionBean"
+                                      event="bySkId">Receive By SK-ID</stripes:link>
+                    </li>
+                </ul>
+            </li>
         </ul>
         <ul class="nav pull-right global-search navbar-search">
             <li style="white-space:nowrap;">

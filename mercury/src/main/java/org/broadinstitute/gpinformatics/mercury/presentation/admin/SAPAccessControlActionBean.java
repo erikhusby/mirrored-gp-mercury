@@ -13,6 +13,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessControl;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessStatus;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -53,8 +54,8 @@ public class SAPAccessControlActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void initValues() {
         accessController = accessControlEjb.getCurrentControlDefinitions();
-        for (String selectedFeature : accessController.getDisabledFeatures()) {
-            selectedPriceItems.add(selectedFeature);
+        for (AccessItem selectedFeature : accessController.getDisabledItems()) {
+            selectedPriceItems.add(selectedFeature.getItemValue());
         }
         enabledAccess = accessController.getAccessStatus().name();
         for (QuotePriceItem quotePriceItem : priceListCache.getQuotePriceItems()) {
@@ -73,13 +74,13 @@ public class SAPAccessControlActionBean extends CoreActionBean {
     @HandlesEvent(SET_ACCESS_ACTION)
     public Resolution setAccess() {
         AccessStatus status = AccessStatus.valueOf(enabledAccess);
-        accessControlEjb.setDefinitions(status, selectedPriceItems);
+        accessControlEjb.setDefinitionItems(status, selectedPriceItems);
         return new RedirectResolution(SAPAccessControlActionBean.class, VIEW_ACTION);
     }
 
     @HandlesEvent(RESET_ACCESS_ACTION)
     public Resolution resetAccess() {
-        accessControlEjb.setDefinitions(AccessStatus.ENABLED, new HashSet<String>());
+        accessControlEjb.setDefinitionItems(AccessStatus.ENABLED, new HashSet<String>());
         return new RedirectResolution(SAPAccessControlActionBean.class, VIEW_ACTION);
     }
 
@@ -96,10 +97,6 @@ public class SAPAccessControlActionBean extends CoreActionBean {
 
     public Set<String> getSelectedPriceItems() {
         return selectedPriceItems;
-    }
-
-    public String getSelectedOptionsString() {
-        return StringUtils.join(accessController.getDisabledFeatures(), AccessControl.CONTROLLER_SEPARATOR_CHARS);
     }
 
     public void setEnabledAccess(String enabledAccess) {

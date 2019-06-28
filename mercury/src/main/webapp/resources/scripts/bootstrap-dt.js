@@ -30,13 +30,13 @@ function enableDefaultPagingOptions(){
         "bLengthChange": true,
         "sPaginationType": 'bootstrap',
     });
-    $j.fn.dataTable.defaults.aLengthMenu = [[50, 100, 200, 400, -1], [50, 100, 200, 400, "All"]];
+    $j.fn.dataTable.defaults.aLengthMenu = [[50, 100, 200, 400, 1000, 2000, 4000, -1], [50, 100, 200, 400, 1000, 2000, 4000, "All"]];
 }
 /**
  *  Set the defaults for DataTables initialization
  */
 $j.extend(true, $j.fn.dataTable.defaults, {
-    "sDom": "<'row-fluid'<'span8'f><'span4'B>r>t<'row-fluid'<'span6'i><'span6'p>>",
+    'sDom': "<'row-fluid'<'span8'f>><'row-fluid'<'span4'l><'span4 pull-right'<'pull-right'B>>>rt<'row-fluid'<'span6'l><'span6 pull-right'p>>",
     "bAutoWidth": false,
     "bInfo": false,
     "bStateSave": true,
@@ -50,7 +50,8 @@ $j.extend(true, $j.fn.dataTable.defaults, {
 });
 if (isLegacyDataTables()) {
     $j.extend(true, $j.fn.dataTable.defaults, {
-        "sDom": "<'row-fluid'<'span8'f><'span4'T>r>t<'row-fluid'<'span6'i><'span6'p>>",
+        'sDom': "<'row-fluid'<'span6'f><'span4'T><'span2'il>>rt<'row-fluid'<'span6'l><'span6'p>>",
+        "sPaginationType": "bootstrap",
     });
 }
 
@@ -64,27 +65,70 @@ var filterDropdownHtml = "<div class='filterOptions'>using <select class='filter
 function isBlank(value){
     return (value === undefined || value.trim() === '');
 }
+
+/**
+ * Create standard set of buttons used in Mercury: 'excel' and 'copy' which exports the data to chosen format.
+ *
+ * Exported data includes all checked entries in the DataTable with filtering, sorting:
+ */
+function standardButtons(checkboxClass="shiftCheckbox", headerClass) {
+    var defaultOptions = {
+        /* do not export colum 0 (the checkbox column) */
+        columns: ':visible :gt(0)',
+        rows: function (html, index, node) {
+            /* include only checked rows in the export */
+            var $checked = $j(node).find('input:checked.' + checkboxClass);
+            return $checked!==undefined && $checked.length>0;
+        },
+        format: {
+            /* if there are any additional things in the headers such as filtering widgets, ignore them */
+            header: function(html, index, node){
+                if (headerClass){
+                    return $j(node).find("."+headerClass).text();
+                }
+                return $j(node).text();
+            }
+        },
+        /* export results should include only filtered results and for all pages, not just the current page. */
+        modifier: {
+            search: 'applied',
+            order: 'current',
+            page: 'all'
+        }
+    };
+
+    return [
+        {extend: 'copy', exportOptions: defaultOptions },
+        { extend: 'excel', exportOptions: defaultOptions},
+        ];
+}
+
 /**
  * Dynamically add the HTML element for the dropdown and the choices, as well as define the
  * dropdown behavior when the user changes it (clicks on it and selects another item).
  *
  * @param oTable
  * @param tableID
+ * @param additionalOptionMap map of new option to create:
+ *      var additionalOptionMap = {
+            value: "theValue",
+            text: "Something to select",
+            searchIndex: 1
+        }
  */
-function includeAdvancedFilter(oTable, tableID) {
+function includeAdvancedFilter(oTable, tableID, additionalOptionMap) {
     $j(tableID + "_filter").append(filterDropdownHtml);
+    if (additionalOptionMap != undefined) {
+        $j(tableID + "_filter").find(".filterDropdown").append("<option value='" + additionalOptionMap.value + "'>" + additionalOptionMap.text + "</option>");
+    }
     $j(tableID + "_filter").find(".filterDropdown").change(function() {
-        chooseFilterForData(oTable);
+        chooseFilterForData(oTable, additionalOptionMap);
     });
     findFilterTextInput(oTable).focusout(function () {
-        var filterTextInput = oTable.fnSettings().oPreviousSearch;
-        if (isBlank(filterTextInput.sSearch)) {
-            oTable.fnFilterClear();
-        }
+        findFilterTextInput(oTable).trigger('keyup');
     });
 
-
-    $j(".dataTables_filter input[type='text']").keyup();
+    $j(".dataTables_filter").find("input[type='text'],input[type='search']").keyup();
 }
 
 function findDataTableWrapper(oTable) {
@@ -92,7 +136,7 @@ function findDataTableWrapper(oTable) {
 }
 
 function findFilterTextInput(oTable) {
-    return $j(findDataTableWrapper(oTable)).find(".dataTables_filter input[type='text']");
+    return $j(findDataTableWrapper(oTable)).find(".dataTables_filter").find("input[type='text'],input[type='search']");
 }
 /**
  * Define the regular expression for the AND and OR filter.  The OR filter needs to create
@@ -100,33 +144,43 @@ function findFilterTextInput(oTable) {
  *
  * @param oTable
  */
-function chooseFilterForData(oTable) {
+function chooseFilterForData(oTable, additionalOptionMap) {
     var filterWrapperSelector = findDataTableWrapper(oTable);
     var filterTextInput = findFilterTextInput(oTable);
     filterTextInput.unbind('keyup');
+    var hasAdditionalOption = additionalOptionMap != undefined
+        && additionalOptionMap.value != undefined
+        && additionalOptionMap.searchIndex != undefined;
+
     filterTextInput.keyup(function () {
         var tab = RegExp("\\t", "g");
         var useOr = false;
-        if ($j(filterWrapperSelector).find(".filterDropdown").val() == "any") {
+        var useAdditionalOption=false;
+        var searchIndex = null;
+        var useGrep = false;
+        var selectedOption = $j(filterWrapperSelector).find(".filterDropdown").val();
+        if (selectedOption === "any") {
             useOr = true;
+            useGrep = true;
+        } else if (hasAdditionalOption && selectedOption === additionalOptionMap.value) {
+            searchIndex = additionalOptionMap.searchIndex;
+            useAdditionalOption = true;
+            useGrep = true;
         }
         var filterInput = filterTextInput.val().replace(tab, " ");
-        var searchRegex = ".";
-        if (useOr) {
-            // OR
-            if (!isBlank(filterInput)) {
-                searchRegex = "(" + filterInput.trim().split(" ").join("+|") + "+)";
+        oTable.fnFilterClear(oTable.oSettings);
+        if (!isBlank(filterInput)) {
+            var searchText = filterInput;
+            if (useOr) {
+                searchText = "(" + filterInput.trim().split(/\s+/).join(".*|") + ".*)";
+            } else if (useAdditionalOption) {
+                searchText = "(^" + filterInput.trim().split(/\s+/).join("$|^") + "$)";
             }
-            oTable.fnFilter( searchRegex, null, true, false );
-        }else {
-            // AND
-            if (!isBlank(filterInput)) {
-                oTable.fnFilter(filterInput, null, false, true);
-            }
+
+            // the last column here is 'smart search' which is normally false when regexp is used.
+            oTable.fnFilter(searchText, searchIndex, useGrep, !useGrep);
         }
-        if (useOr||matchNone) {
-            oTable.fnFilter( searchRegex, null, true, false );
-        }
+
         filterTextInput.val(filterInput);
     });
 
@@ -197,25 +251,27 @@ $j.extend( $j.fn.dataTableExt.oPagination, {
                 $('li:gt(0)', an[i]).filter(':not(:last)').remove();
 
                 // Add the new list items and their event handlers
-                for ( j=iStart ; j<=iEnd ; j++ ) {
-                    sClass = (j==oPaging.iPage+1) ? 'class="active"' : '';
-                    $('<li '+sClass+'><a href="#">'+j+'</a></li>')
-                        .insertBefore( $('li:last', an[i])[0] )
-                        .bind('click', function (e) {
-                            e.preventDefault();
-                            oSettings._iDisplayStart = (parseInt($('a', this).text(),10)-1) * oPaging.iLength;
-                            fnDraw( oSettings );
-                        } );
+                if (oPaging.iTotalPages>1) {
+                    for (j = iStart; j <= iEnd; j++) {
+                        sClass = (j == oPaging.iPage + 1) ? 'class="active"' : '';
+                        $('<li ' + sClass + '><a href="#">' + j + '</a></li>')
+                            .insertBefore($('li:last', an[i])[0])
+                            .bind('click', function (e) {
+                                e.preventDefault();
+                                oSettings._iDisplayStart = (parseInt($('a', this).text(), 10) - 1) * oPaging.iLength;
+                                fnDraw(oSettings);
+                            });
+                    }
                 }
 
                 // Add / remove disabled classes from the static elements
-                if ( oPaging.iPage === 0 ) {
+                if ( oPaging.iPage <= 0 ) {
                     $('li:first', an[i]).addClass('disabled');
                 } else {
                     $j('li:first', an[i]).removeClass('disabled');
                 }
 
-                if ( oPaging.iPage === oPaging.iTotalPages-1 || oPaging.iTotalPages === 0 ) {
+                if ( oPaging.iPage === oPaging.iTotalPages-1 || oPaging.iTotalPages <= 0 ) {
                     $j('li:last', an[i]).addClass('disabled');
                 } else {
                     $j('li:last', an[i]).removeClass('disabled');

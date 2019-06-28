@@ -685,5 +685,728 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-4602-7" author="epolk">
+        <createIndex tableName="SAP_ORDER_DETAIL_AUD" indexName="IX_SAP_ORDER_DETAIL_AUD">
+            <column name="REV"/>
+            <column name="SAP_ORDER_DETAIL_ID"/>
+        </createIndex>
+    </changeSet>
 
+    <changeSet id="GPLIM-4602-2" author="epolk">
+        <createIndex tableName="SUBMISSION_TRACKER_AUD" indexName="IX_SUBMISSION_TRACKER_AUD">
+            <column name="SUBMISSION_TRACKER_ID"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-4656-1" author="scottmat">
+        <dropNotNullConstraint tableName="SAP_ORDER_DETAIL_AUD" columnName="SAP_ORDER_NUMBER" columnDataType="varchar (255)" schemaName="ATHENA" />
+        <dropNotNullConstraint tableName="SAP_ORDER_DETAIL_AUD" columnName="created_by" columnDataType="numeric(15, 0)" schemaName="ATHENA" />
+        <dropNotNullConstraint tableName="SAP_ORDER_DETAIL_AUD" columnName="modified_by" columnDataType="numeric(15, 0)" schemaName="ATHENA" />
+        <dropNotNullConstraint tableName="SAP_ORDER_DETAIL_AUD" columnName="created_date" columnDataType="timestamp(6)" schemaName="ATHENA" />
+        <dropNotNullConstraint tableName="SAP_ORDER_DETAIL_AUD" columnName="modified_date" columnDataType="timestamp(6)" schemaName="ATHENA" />
+        <dropNotNullConstraint tableName="SAP_ORDER_DETAIL_AUD" columnName="primary_quantity" columnDataType="number(10,0)" schemaName="ATHENA" />
+        <dropNotNullConstraint tableName="SAP_ORDER_DETAIL_AUD" columnName="REFERENCE_PRODUCT_ORDER" columnDataType="number(19,0)" schemaName="ATHENA" />
+    </changeSet>
+
+    <changeSet id="GPLIM-4652-1" author="scottmat">
+        <createTable tableName="ACCESS_ITEM" schemaName="ATHENA">
+            <column name="id" type="number(19,0)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="item_value" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="access_control" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <createSequence sequenceName="SEQ_ACCESS_CONTROL_ITEM" schemaName="athena" startValue="1" incrementBy="50" />
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-4685-1">
+        <dropNotNullConstraint tableName="sap_order_detail" columnName="REFERENCE_PRODUCT_ORDER" schemaName="athena"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-4685-2" author="scottmat">
+        <createTable tableName="product_order_sap_orders" schemaName="athena">
+            <column name="reference_product_order" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+            <column name="sap_reference_orders" type="number(19,0)" >
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="product_order_sap_orders" baseColumnNames="reference_product_order"
+                                 constraintName="fk_pdo_sap_to_pdo"
+                                 referencedTableName="product_order"
+                                 referencedColumnNames="PRODUCT_ORDER_ID" referencedTableSchemaName="athena" baseTableSchemaName="athena" />
+        <addForeignKeyConstraint baseTableName="product_order_sap_orders" baseColumnNames="sap_reference_orders"
+                                 constraintName="fk_pdo_sap_to_sap"
+                                 referencedTableName="SAP_ORDER_DETAIL"
+                                 referencedColumnNames="SAP_ORDER_DETAIL_ID" referencedTableSchemaName="athena" baseTableSchemaName="athena" />
+    </changeSet>
+
+    <changeSet id="GPLIM-4685-3" author="scottmat">
+        <createTable tableName="product_order_sap_orders_aud" schemaName="athena">
+            <column name="rev" type="number(19,0)" />
+            <column name="revtype" type="number(3,0)" />
+            <column name="reference_product_order" type="number(19,0)" />
+            <column name="sap_reference_orders" type="number(19,0)" />
+
+        </createTable>
+
+        <addPrimaryKey tableName="product_order_sap_orders_aud"
+                       columnNames="rev, reference_product_order, sap_reference_orders" />
+
+        <createIndex tableName="product_order_sap_orders_aud" indexName="idx_aud_pdo_sap_to_pdo">
+            <column name="reference_product_order" />
+        </createIndex>
+        <createIndex tableName="product_order_sap_orders_aud" indexName="idx_aud_pdo_sap_to_sap">
+            <column name="sap_reference_orders" />
+        </createIndex>
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-4685-4">
+        <sql>
+            insert into PRODUCT_ORDER_SAP_ORDERS ropo
+            (ropo.REFERENCE_PRODUCT_ORDER, ropo.SAP_REFERENCE_ORDERS )
+            select pdo.PRODUCT_ORDER_ID, sod.SAP_ORDER_DETAIL_ID
+            from product_order pdo
+            join SAP_ORDER_DETAIL sod on sod.REFERENCE_PRODUCT_ORDER = pdo.PRODUCT_ORDER_ID;
+        </sql>
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-4685-5">
+        <sql>
+            insert into PRODUCT_ORDER_SAP_ORDERS_aud ropo
+            (ropo.REFERENCE_PRODUCT_ORDER, ropo.SAP_REFERENCE_ORDERS, ropo.REV, ropo.REVTYPE )
+            select distinct pdo.PRODUCT_ORDER_ID, sod.SAP_ORDER_DETAIL_ID, sod.REV, sod.REVTYPE
+            from product_order_aud pdo
+            join SAP_ORDER_DETAIL_aud sod on sod.REFERENCE_PRODUCT_ORDER = pdo.PRODUCT_ORDER_ID
+            where JIRA_TICKET_KEY is not null;
+        </sql>
+    </changeSet>
+    <changeSet id="GPLIM-4778-1" author="scottmat">
+        <addColumn schemaName="athena" tableName="SAP_ORDER_DETAIL">
+            <column name="order_products_hash" type="varchar(255)" />
+        </addColumn>
+        <addColumn schemaName="athena" tableName="SAP_ORDER_DETAIL">
+            <column name="order_prices_hash" type="varchar(255)" />
+        </addColumn>
+        <addColumn schemaName="athena" tableName="SAP_ORDER_DETAIL_AUD">
+            <column name="order_products_hash" type="varchar(255)" />
+        </addColumn>
+        <addColumn schemaName="athena" tableName="SAP_ORDER_DETAIL_AUD">
+            <column name="order_prices_hash" type="varchar(255)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-4923-1" author="dryan">
+        <addColumn tableName="SUBMISSION_TRACKER" schemaName="athena">
+            <column name="PROCESSING_LOCATION" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-4923-2" author="dryan">
+        <addColumn tableName="SUBMISSION_TRACKER_AUD" schemaName="athena">
+            <column name="PROCESSING_LOCATION" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-4923-3" author="dryan">
+        <dropUniqueConstraint tableName="SUBMISSION_TRACKER" constraintName="UNQ_SUBMISSION_TRACKER_TUPLE"
+                              schemaName="ATHENA"/>
+    </changeSet>
+    <changeSet id="GPLIM-4923-4" author="dryan">
+        <addColumn tableName="SUBMISSION_TRACKER" schemaName="athena">
+            <column name="DATA_TYPE" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-4923-5" author="dryan">
+        <addColumn tableName="SUBMISSION_TRACKER_AUD" schemaName="athena">
+            <column name="DATA_TYPE" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-4750-1" author="scottmat">
+        <createTable tableName="pdo_addon_price_adjustment" schemaName="athena">
+            <column name="pdo_addon_price_adjustment_id" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+            <column name="adjustment_value" type="number(19,2)" />
+            <column name="adjustment_quantity" type="number(19,0)" />
+            <column name="custom_product_name" type="varchar(255)" />
+            <column name="add_on" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="pdo_addon_price_adjustment" schemaName="athena"
+                       constraintName="PK_PDO_ADDON_ADJUSTMENT" columnNames="pdo_addon_price_adjustment_id" />
+
+        <createSequence sequenceName="SEQ_PDO_ADDON_PRICE_ADJUSTMENT" schemaName="athena" startValue="1" incrementBy="50" />
+        <createIndex tableName="pdo_addon_price_adjustment" indexName="ix_pdo_add_on_price_adjustment" >
+            <column name="add_on"/>
+        </createIndex>
+        <addForeignKeyConstraint baseTableSchemaName="athena" baseTableName="pdo_addon_price_adjustment"
+                                 baseColumnNames="add_on" referencedTableSchemaName="athena"
+                                 referencedTableName="product_order_add_on" referencedColumnNames="PRODUCT_ORDER_ADD_ON_ID"
+                                 constraintName="FK_PDO_ADDON_ADJUSTMENT_PDO" />
+    </changeSet>
+
+    <changeSet id="GPLIM-4750-2" author="scottmat">
+        <createTable tableName="pdo_addon_price_adjustment_aud" schemaName="athena">
+            <column name="pdo_addon_price_adjustment_id" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+            <column name="rev" type="number(19,0)" >
+                <constraints nullable="false" />
+            </column>
+            <column name="revtype" type="number(3,0)" />
+
+            <column name="adjustment_value" type="number(19,2)" />
+            <column name="adjustment_quantity" type="number(19,0)" />
+            <column name="custom_product_name" type="varchar(255)" />
+            <column name="add_on" type="number(19,0)" />
+        </createTable>
+
+        <addPrimaryKey schemaName="athena" tableName="pdo_addon_price_adjustment_aud"
+                       columnNames="pdo_addon_price_adjustment_id, rev" constraintName="PK_PDO_ADDON_ADJUSTMENT_AUD"/>
+        <addForeignKeyConstraint constraintName="fk_pdo_addon_adjustment_aud" baseTableSchemaName="athena"
+                                 baseTableName="pdo_addon_price_adjustment_aud" baseColumnNames="rev"
+                                 referencedTableSchemaName="mercury"
+                                 referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-4750-3" author="scottmat">
+        <createTable tableName="pdo_price_adjustment" schemaName="athena">
+            <column name="pdo_price_adjustment_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="adjustment_value" type="number(19,2)" />
+            <column name="adjustment_quantity" type="number(19,0)" />
+            <column name="custom_product_name" type="varchar(255)" />
+            <column name="product_order" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="pdo_price_adjustment" schemaName="athena"
+                       constraintName="PK_PDO_PRICE_ADJUSTMENT" columnNames="pdo_price_adjustment_id" />
+
+        <addForeignKeyConstraint constraintName="FK_PDO_PRICE_ADJUSTMENT_PDO" baseTableName="pdo_price_adjustment"
+                                 baseColumnNames="product_order" baseTableSchemaName="athena"
+                                 referencedColumnNames="product_order_id" referencedTableName="product_order"
+                                 referencedTableSchemaName="athena" />
+
+        <createSequence sequenceName="SEQ_PDO_PRICE_ADJUSTMENT" schemaName="athena" startValue="1" incrementBy="50" />
+
+        <createIndex tableName="pdo_price_adjustment" indexName="IX_PDO_PRICE_ADJUSTMENT">
+            <column name="product_order"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-4750-4" author="scottmat">
+        <createTable tableName="pdo_price_adjustment_aud" schemaName="athena">
+            <column name="pdo_price_adjustment_id" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+            <column name="rev" type="number(19,0)" >
+                <constraints nullable="false" />
+            </column>
+            <column name="revtype" type="number(3,0)" />
+            <column name="adjustment_value" type="number(19,2)" />
+            <column name="adjustment_quantity" type="number(19,0)" />
+            <column name="custom_product_name" type="varchar(255)" />
+            <column name="product_order" type="number(19,0)"/>
+        </createTable>
+
+        <addPrimaryKey schemaName="athena" tableName="pdo_price_adjustment_aud"
+                       constraintName="PK_PDO_ADJUSTMENT_AUD" columnNames="pdo_price_adjustment_id, rev"/>
+
+        <addForeignKeyConstraint constraintName="fk_pdo_adjustment_aud" baseTableSchemaName="athena"
+                                 baseTableName="pdo_price_adjustment_aud" baseColumnNames="rev"
+                                 referencedTableSchemaName="mercury"
+                                 referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-4924-1" author="scottmat">
+        <addColumn schemaName="athena" tableName="product">
+            <column name="ALTERNATE_EXTERNAL_NAME" type="varchar(255)" />
+            <column name="external_price_item" type="number(19,0)" />
+            <column name="CLINICAL_ONLY_PRODUCT" type="number(1,0)" />
+        </addColumn>
+
+        <addForeignKeyConstraint constraintName="FK_PRODUCT_EXT_PRICE_ITEM" baseTableSchemaName="athena" baseTableName="product"
+                                 baseColumnNames="external_price_item" referencedTableSchemaName="athena"
+                                 referencedTableName="price_item" referencedColumnNames="price_item_id" />
+    </changeSet>
+
+    <changeSet id="GPLIM-4924-2" author="scottmat">
+        <addColumn schemaName="athena" tableName="product_aud">
+            <column name="ALTERNATE_EXTERNAL_NAME" type="varchar(255)" />
+            <column name="external_price_item" type="number(19,0)" />
+            <column name="CLINICAL_ONLY_PRODUCT" type="number(1,0)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-4748-1" author="scottmat">
+        <addColumn schemaName="athena" tableName="product_order">
+            <column name="PRIOR_TOSAP1_5" type="number(1,0)" />
+        </addColumn>
+
+        <sql>
+             update PRODUCT_ORDER pdo
+            set pdo.PRIOR_TOSAP1_5 = 1;
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-4748-2" author="scottmat">
+        <addColumn schemaName="athena" tableName="product_order_aud">
+            <column name="PRIOR_TOSAP1_5" type="number(1,0)" />
+        </addColumn>
+
+        <sql>
+            update PRODUCT_ORDER_aud pdo
+            set pdo.PRIOR_TOSAP1_5 = 1;
+        </sql>
+
+    </changeSet>
+
+    <changeSet id="GPLIM-4924-3" author="scottmat">
+        <addColumn schemaName="athena" tableName="product_order">
+            <column name="ORDER_TYPE" type="varchar(50)" />
+            <column name="CLINICAL_ATTESTATION_CONFIRMED" type="number(1,0)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-4924-4" author="scottmat">
+        <addColumn schemaName="athena" tableName="product_order_aud">
+            <column name="ORDER_TYPE" type="varchar(50)" />
+            <column name="CLINICAL_ATTESTATION_CONFIRMED" type="number(1,0)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-5112-1" >
+        <sql>
+            update product pdt
+            set pdt.CLINICAL_ONLY_PRODUCT = 1
+            where pdt.PART_NUMBER in ('P-CLA-0005', 'P-CLA-0006', 'P-CLA-0004', 'P-CLA-0003', 'P-CLA-0007',
+                                      'P-VAL-0010', 'P-VAL-0016', 'P-WG-0054');
+        </sql>
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-5112-2" >
+        <sql>
+            update product_aud pdt
+            set pdt.CLINICAL_ONLY_PRODUCT = 1
+            where pdt.PART_NUMBER in ('P-CLA-0005', 'P-CLA-0006', 'P-CLA-0004', 'P-CLA-0003', 'P-CLA-0007',
+                                      'P-VAL-0010', 'P-VAL-0016', 'P-WG-0054');
+        </sql>
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-5112-3" >
+        <sql>
+            update product pdt
+            set pdt.CLINICAL_ONLY_PRODUCT = 0
+            where pdt.PART_NUMBER not in ('P-CLA-0005', 'P-CLA-0006', 'P-CLA-0004', 'P-CLA-0003', 'P-CLA-0007',
+            'P-VAL-0010', 'P-VAL-0016', 'P-WG-0054');
+        </sql>
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-5112-4" >
+        <sql>
+            update product_aud pdt
+            set pdt.CLINICAL_ONLY_PRODUCT = 0
+            where pdt.PART_NUMBER not in ('P-CLA-0005', 'P-CLA-0006', 'P-CLA-0004', 'P-CLA-0003', 'P-CLA-0007',
+            'P-VAL-0010', 'P-VAL-0016', 'P-WG-0054');
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-4924-5" author="scottmat">
+        <sql>
+            update product_order pdo
+            set pdo.ORDER_TYPE = 'BROAD_PI_ENGAGED_WORK'
+            where pdo.PRODUCT_ORDER_ID in (
+                select pdo.PRODUCT_ORDER_ID from product_order pdo
+                join product pdt on pdt.PRODUCT_ID = pdo.PRODUCT
+                where pdt.EXTERNAL_ONLY_PRODUCT = 0
+                and pdt.CLINICAL_ONLY_PRODUCT != 1
+            );
+        </sql>
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-4924-6">
+        <sql>
+            update product_order pdo
+            set pdo.ORDER_TYPE = 'COMMERCIAL'
+            where pdo.PRODUCT_ORDER_ID in (
+                select pdo.PRODUCT_ORDER_ID from product_order pdo
+                join product pdt on pdt.PRODUCT_ID = pdo.PRODUCT
+                where pdt.EXTERNAL_ONLY_PRODUCT = 1
+                or pdt.CLINICAL_ONLY_PRODUCT = 1
+            );
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-4924-7" author="scottmat">
+        <sql>
+            update product_order_aud pdo
+            set pdo.ORDER_TYPE = 'BROAD_PI_ENGAGED_WORK'
+            where pdo.PRODUCT_ORDER_ID in (
+            select pdo.PRODUCT_ORDER_ID from product_order pdo
+            join product pdt on pdt.PRODUCT_ID = pdo.PRODUCT
+            where pdt.EXTERNAL_ONLY_PRODUCT = 0
+            and pdt.CLINICAL_ONLY_PRODUCT != 1
+            );
+        </sql>
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-4924-8">
+        <sql>
+            update product_order_aud pdo
+            set pdo.ORDER_TYPE = 'COMMERCIAL'
+            where pdo.PRODUCT_ORDER_ID in (
+            select pdo.PRODUCT_ORDER_ID from product_order pdo
+            join product pdt on pdt.PRODUCT_ID = pdo.PRODUCT
+            where pdt.EXTERNAL_ONLY_PRODUCT = 1
+            or pdt.CLINICAL_ONLY_PRODUCT = 1
+            );
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-4924-9" author="scottmat">
+        <sql>
+            update product pdt
+            set pdt.EXTERNAL_ONLY_PRODUCT=0
+            where pdt.CLINICAL_ONLY_PRODUCT=1
+            and pdt.EXTERNAL_ONLY_PRODUCT=1
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-4924-10" author="scottmat">
+        <sql>
+            update product_aud pdt
+            set pdt.EXTERNAL_ONLY_PRODUCT=0
+            where pdt.CLINICAL_ONLY_PRODUCT=1
+            and pdt.EXTERNAL_ONLY_PRODUCT=1
+        </sql>
+    </changeSet>
+
+    <changeSet author="scottmat" id ="GPLIM-4922-1">
+        <addColumn tableName="BILLING_LEDGER" schemaName="ATHENA">
+            <column name="sap_order_detail_id" type="number(19,0)" />
+        </addColumn>
+
+        <addForeignKeyConstraint baseTableName="BILLING_LEDGER" baseColumnNames="sap_order_detail_id"
+                                 constraintName="FK_LEDGER_TO_SAP_ORDER"
+                                 referencedTableName="sap_order_detail"
+                                 referencedColumnNames="sap_order_detail_id" baseTableSchemaName="athena"
+                                 referencedTableSchemaName="athena" />
+    </changeSet>
+    <changeSet id="GPLIM-4922-2" author="scottmat">
+        <addColumn tableName="BILLING_LEDGER_AUD" schemaName="ATHENA">
+            <column name="sap_order_detail_id" type="number(19,0)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-5112-5" author="scottmat">
+        <sql>
+            update athena.product pdt
+            set pdt.PDM_ORDERABLE_ONLY = 0
+            where pdt.CLINICAL_ONLY_PRODUCT = 1
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-4750-5" author="scottmat">
+        <createIndex tableName="pdo_price_adjustment_aud" indexName="PDO_ADJUSTMENT_AUD_IDX">
+            <column name="rev"/>
+            <column name="pdo_price_adjustment_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-4750-6" author="scottmat">
+        <createIndex tableName="pdo_addon_price_adjustment_aud" indexName="PDO_ADDON_ADJUSTMENT_AUD_IDX">
+            <column name="rev"/>
+            <column name="pdo_addon_price_adjustment_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-4750-7" author="scottmat">
+        <createIndex tableName="pdo_addon_price_adjustment" indexName="PDO_ADJUSTMENT_IDX">
+            <column name="add_on"/>
+            <column name="pdo_addon_price_adjustment_id" />
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-5112-6" author="scottmat">
+        <sql>
+            update athena.product_aud pdt
+            set pdt.PDM_ORDERABLE_ONLY = 0
+            where pdt.CLINICAL_ONLY_PRODUCT = 1
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-5112-7" author="scottmat">
+        <sql>
+            update athena.product_order pdo
+            set pdo.CLINICAL_ATTESTATION_CONFIRMED = 0;
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-5112-8" author="scottmat">
+        <sql>
+            update athena.product_order_aud pdo
+            set pdo.CLINICAL_ATTESTATION_CONFIRMED = 0;
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-5112-9" author="scottmat">
+        <sql>
+            update athena.product_order pdo
+            set pdo.CLINICAL_ATTESTATION_CONFIRMED = 1
+            where pdo.product_order_id in (
+                select pdo.product_order_id
+                from athena.product_order pdo
+                join athena.product pdt on pdt.PRODUCT_ID = pdo.PRODUCT
+                where pdt.CLINICAL_ONLY_PRODUCT = 1 and
+                pdo.order_status not in ('Draft', 'Abandoned'));
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-5112-10" author="scottmat">
+        <sql>
+            update athena.product_order_aud pdo
+            set pdo.CLINICAL_ATTESTATION_CONFIRMED = 1
+            where pdo.product_order_id in (
+                select pdo.product_order_id
+                from athena.product_order_aud pdo
+                join athena.product pdt on pdt.PRODUCT_ID = pdo.PRODUCT
+                where pdt.CLINICAL_ONLY_PRODUCT = 1 and
+            pdo.order_status not in ('Draft', 'Abandoned'));
+        </sql>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-5266-1">
+        <addColumn tableName="PRODUCT" schemaName="ATHENA">
+            <column name="ANALYZE_UMI" type="number(1,0)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-5266-2">
+        <addColumn tableName="PRODUCT_AUD" schemaName="ATHENA">
+            <column name="ANALYZE_UMI" type="number(1,0)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-5266-3">
+        <addColumn tableName="PRODUCT_ORDER" schemaName="ATHENA">
+            <column name="ANALYZE_UMI_OVERRIDE" type="number(1,0)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-5266-4">
+        <addColumn tableName="PRODUCT_ORDER_AUD" schemaName="ATHENA">
+            <column name="ANALYZE_UMI_OVERRIDE" type="number(1,0)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2965-1" author="jsacco">
+        <sql endDelimiter="/">
+            DECLARE
+
+            CURSOR CUR_CONSTRAINT
+            IS select c.constraint_name, c.constraint_type, c.owner, c.table_name
+            , listagg( ic.column_name, ',')  WITHIN GROUP (ORDER BY ic.COLUMN_POSITION) as COLS
+            from all_constraints c
+            , all_indexes i
+            , all_ind_columns ic
+            where c.table_name = i.table_name
+            and c.constraint_name = i.index_name
+            and ic.index_owner = i.owner
+            and ic.index_name = i.index_name
+            and c.owner = 'ATHENA'
+            and c.constraint_name like 'SYS_C%'
+            group by c.constraint_name, c.owner, c.table_name, c.constraint_type;
+
+            CUR_CONSTR_REC CUR_CONSTRAINT%ROWTYPE;
+
+            PROCEDURE RENAME_INDEX_CONSTR( A_OWNER VARCHAR2, A_TABLE VARCHAR2, A_OLD_NAME VARCHAR2, A_NEW_NAME VARCHAR2 )
+            AS
+            BEGIN
+            EXECUTE IMMEDIATE 'ALTER INDEX ' || A_OWNER || '.' || A_OLD_NAME || ' RENAME TO ' || A_NEW_NAME;
+            EXECUTE IMMEDIATE 'ALTER TABLE ' || A_OWNER || '.' || A_TABLE || ' RENAME CONSTRAINT ' || A_OLD_NAME || ' TO ' || A_NEW_NAME;
+            DBMS_OUTPUT.PUT_LINE( 'Renamed constraint and index on ' || A_OWNER || '.' || A_TABLE || ' from ' || A_OLD_NAME || ' TO ' || A_NEW_NAME );
+            END;
+
+            BEGIN
+            dbms_output.enable();
+            OPEN CUR_CONSTRAINT;
+            WHILE TRUE
+            LOOP
+            FETCH CUR_CONSTRAINT INTO CUR_CONSTR_REC;
+            EXIT WHEN CUR_CONSTRAINT%NOTFOUND;
+
+            IF CUR_CONSTR_REC.OWNER = 'ATHENA'  AND CUR_CONSTR_REC.TABLE_NAME = 'PRICE_ITEM' AND CUR_CONSTR_REC.COLS = 'PRICE_ITEM_ID' THEN
+            RENAME_INDEX_CONSTR( CUR_CONSTR_REC.OWNER, CUR_CONSTR_REC.TABLE_NAME, CUR_CONSTR_REC.CONSTRAINT_NAME, CUR_CONSTR_REC.CONSTRAINT_TYPE || 'K_' || 'PRICE_ITEM');
+
+            ELSIF CUR_CONSTR_REC.OWNER = 'ATHENA'  AND CUR_CONSTR_REC.TABLE_NAME = 'PRICE_ITEM' AND CUR_CONSTR_REC.COLS = 'PLATFORM,CATEGORY,NAME' THEN
+            RENAME_INDEX_CONSTR( CUR_CONSTR_REC.OWNER, CUR_CONSTR_REC.TABLE_NAME, CUR_CONSTR_REC.CONSTRAINT_NAME, CUR_CONSTR_REC.CONSTRAINT_TYPE || 'K_' || 'PRICE_ITEM_PLAT_CATNAME');
+
+            ELSIF CUR_CONSTR_REC.OWNER = 'ATHENA'  AND CUR_CONSTR_REC.TABLE_NAME = 'PRODUCT' AND CUR_CONSTR_REC.COLS = 'PRODUCT_ID' THEN
+            RENAME_INDEX_CONSTR( CUR_CONSTR_REC.OWNER, CUR_CONSTR_REC.TABLE_NAME, CUR_CONSTR_REC.CONSTRAINT_NAME, CUR_CONSTR_REC.CONSTRAINT_TYPE || 'K_' || 'PRODUCT');
+
+            ELSIF CUR_CONSTR_REC.OWNER = 'ATHENA'  AND CUR_CONSTR_REC.TABLE_NAME = 'PRODUCT' AND CUR_CONSTR_REC.COLS = 'PART_NUMBER' THEN
+            RENAME_INDEX_CONSTR( CUR_CONSTR_REC.OWNER, CUR_CONSTR_REC.TABLE_NAME, CUR_CONSTR_REC.CONSTRAINT_NAME, CUR_CONSTR_REC.CONSTRAINT_TYPE || 'K_' || 'PRODUCT_PART_NUMBER');
+
+            ELSIF CUR_CONSTR_REC.OWNER = 'ATHENA'  AND CUR_CONSTR_REC.TABLE_NAME = 'PRODUCT_ADD_ONS' AND CUR_CONSTR_REC.COLS = 'PRODUCT,ADD_ONS' THEN
+            RENAME_INDEX_CONSTR( CUR_CONSTR_REC.OWNER, CUR_CONSTR_REC.TABLE_NAME, CUR_CONSTR_REC.CONSTRAINT_NAME, CUR_CONSTR_REC.CONSTRAINT_TYPE || 'K_' || 'PRODUCT_ADD_ONS');
+
+            ELSIF CUR_CONSTR_REC.OWNER = 'ATHENA'  AND CUR_CONSTR_REC.TABLE_NAME = 'PRODUCT_FAMILY' AND CUR_CONSTR_REC.COLS = 'PRODUCT_FAMILY_ID' THEN
+            RENAME_INDEX_CONSTR( CUR_CONSTR_REC.OWNER, CUR_CONSTR_REC.TABLE_NAME, CUR_CONSTR_REC.CONSTRAINT_NAME, CUR_CONSTR_REC.CONSTRAINT_TYPE || 'K_' || 'PRODUCT_FAMILY');
+
+            ELSIF CUR_CONSTR_REC.OWNER = 'ATHENA'  AND CUR_CONSTR_REC.TABLE_NAME = 'PRODUCT_FAMILY' AND CUR_CONSTR_REC.COLS = 'NAME' THEN
+            RENAME_INDEX_CONSTR( CUR_CONSTR_REC.OWNER, CUR_CONSTR_REC.TABLE_NAME, CUR_CONSTR_REC.CONSTRAINT_NAME, CUR_CONSTR_REC.CONSTRAINT_TYPE || 'K_' || 'PRODUCT_FAMILY_NAME');
+
+            ELSIF CUR_CONSTR_REC.OWNER = 'ATHENA'  AND CUR_CONSTR_REC.TABLE_NAME = 'PRODUCT_ORDER' AND CUR_CONSTR_REC.COLS = 'PRODUCT_ORDER_ID' THEN
+            RENAME_INDEX_CONSTR( CUR_CONSTR_REC.OWNER, CUR_CONSTR_REC.TABLE_NAME, CUR_CONSTR_REC.CONSTRAINT_NAME, CUR_CONSTR_REC.CONSTRAINT_TYPE || 'K_' || 'PRODUCT_ORDER');
+
+            ELSIF CUR_CONSTR_REC.OWNER = 'ATHENA'  AND CUR_CONSTR_REC.TABLE_NAME = 'PRODUCT_ORDER' AND CUR_CONSTR_REC.COLS = 'TITLE' THEN
+            RENAME_INDEX_CONSTR( CUR_CONSTR_REC.OWNER, CUR_CONSTR_REC.TABLE_NAME, CUR_CONSTR_REC.CONSTRAINT_NAME, CUR_CONSTR_REC.CONSTRAINT_TYPE || 'K_' || 'PRODUCT_ORDER_TITLE');
+
+            ELSIF CUR_CONSTR_REC.OWNER = 'ATHENA'  AND CUR_CONSTR_REC.TABLE_NAME = 'PRODUCT_ORDER_SAMPLE' AND CUR_CONSTR_REC.COLS = 'PRODUCT_ORDER_SAMPLE_ID' THEN
+            RENAME_INDEX_CONSTR( CUR_CONSTR_REC.OWNER, CUR_CONSTR_REC.TABLE_NAME, CUR_CONSTR_REC.CONSTRAINT_NAME, CUR_CONSTR_REC.CONSTRAINT_TYPE || 'K_' || 'PRODUCT_ORDER_SAMPLE');
+
+            ELSIF CUR_CONSTR_REC.OWNER = 'ATHENA'  AND CUR_CONSTR_REC.TABLE_NAME = 'PROJECT_PERSON' AND CUR_CONSTR_REC.COLS = 'PROJECT_PERSON_ID' THEN
+            RENAME_INDEX_CONSTR( CUR_CONSTR_REC.OWNER, CUR_CONSTR_REC.TABLE_NAME, CUR_CONSTR_REC.CONSTRAINT_NAME, CUR_CONSTR_REC.CONSTRAINT_TYPE || 'K_' || 'PROJECT_PERSON');
+
+            ELSIF CUR_CONSTR_REC.OWNER = 'ATHENA'  AND CUR_CONSTR_REC.TABLE_NAME = 'RESEARCH_PROJECT' AND CUR_CONSTR_REC.COLS = 'RESEARCH_PROJECT_ID' THEN
+            RENAME_INDEX_CONSTR( CUR_CONSTR_REC.OWNER, CUR_CONSTR_REC.TABLE_NAME, CUR_CONSTR_REC.CONSTRAINT_NAME, CUR_CONSTR_REC.CONSTRAINT_TYPE || 'K_' || 'RESEARCH_PROJECT');
+
+            ELSIF CUR_CONSTR_REC.OWNER = 'ATHENA'  AND CUR_CONSTR_REC.TABLE_NAME = 'RESEARCH_PROJECT' AND CUR_CONSTR_REC.COLS = 'TITLE' THEN
+            RENAME_INDEX_CONSTR( CUR_CONSTR_REC.OWNER, CUR_CONSTR_REC.TABLE_NAME, CUR_CONSTR_REC.CONSTRAINT_NAME, CUR_CONSTR_REC.CONSTRAINT_TYPE || 'K_' || 'RESEARCH_PROJECT_TITLE');
+
+            ELSIF CUR_CONSTR_REC.OWNER = 'ATHENA'  AND CUR_CONSTR_REC.TABLE_NAME = 'RESEARCH_PROJECT_COHORT' AND CUR_CONSTR_REC.COLS = 'RESEARCH_PROJECT_COHORT_ID' THEN
+            RENAME_INDEX_CONSTR( CUR_CONSTR_REC.OWNER, CUR_CONSTR_REC.TABLE_NAME, CUR_CONSTR_REC.CONSTRAINT_NAME, CUR_CONSTR_REC.CONSTRAINT_TYPE || 'K_' || 'RESEARCH_PROJECT_COHORT');
+
+            ELSIF CUR_CONSTR_REC.OWNER = 'ATHENA'  AND CUR_CONSTR_REC.TABLE_NAME = 'RESEARCH_PROJECT_FUNDING' AND CUR_CONSTR_REC.COLS = 'RESEARCH_PROJECT_FUNDING_ID' THEN
+            RENAME_INDEX_CONSTR( CUR_CONSTR_REC.OWNER, CUR_CONSTR_REC.TABLE_NAME, CUR_CONSTR_REC.CONSTRAINT_NAME, CUR_CONSTR_REC.CONSTRAINT_TYPE || 'K_' || 'RESEARCH_PROJECT_FUNDING');
+
+            ELSIF CUR_CONSTR_REC.OWNER = 'ATHENA'  AND CUR_CONSTR_REC.TABLE_NAME = 'RESEARCH_PROJECTIRB' AND CUR_CONSTR_REC.COLS = 'RESEARCH_PROJECTIRBID' THEN
+            RENAME_INDEX_CONSTR( CUR_CONSTR_REC.OWNER, CUR_CONSTR_REC.TABLE_NAME, CUR_CONSTR_REC.CONSTRAINT_NAME, CUR_CONSTR_REC.CONSTRAINT_TYPE || 'K_' || 'RESEARCH_PROJECTIRB');
+
+            ELSIF CUR_CONSTR_REC.OWNER = 'ATHENA'  AND CUR_CONSTR_REC.TABLE_NAME = 'PRODUCT_ORDER_KIT_DETAIL' AND CUR_CONSTR_REC.COLS = 'PRODUCT_ORDER_KIT_DETAIL_ID' THEN
+            RENAME_INDEX_CONSTR( CUR_CONSTR_REC.OWNER, CUR_CONSTR_REC.TABLE_NAME, CUR_CONSTR_REC.CONSTRAINT_NAME, CUR_CONSTR_REC.CONSTRAINT_TYPE || 'K_' || 'PDO_KIT_DETAIL');
+
+            ELSIF CUR_CONSTR_REC.OWNER = 'ATHENA'  AND CUR_CONSTR_REC.TABLE_NAME = 'PDO_KIT_DTL_POST_REC_OPT' AND CUR_CONSTR_REC.COLS = 'PRODUCT_ORDER_KIT_DETAIL_ID,POST_RECEIVE_OPTIONS' THEN
+            RENAME_INDEX_CONSTR( CUR_CONSTR_REC.OWNER, CUR_CONSTR_REC.TABLE_NAME, CUR_CONSTR_REC.CONSTRAINT_NAME, CUR_CONSTR_REC.CONSTRAINT_TYPE || 'K_' || 'PDO_KIT_DET_POST_REC_OPTS');
+
+            ELSIF CUR_CONSTR_REC.OWNER = 'ATHENA'  AND CUR_CONSTR_REC.TABLE_NAME = 'REGULATORY_INFO' AND CUR_CONSTR_REC.COLS = 'REGULATORY_INFO_ID' THEN
+            RENAME_INDEX_CONSTR( CUR_CONSTR_REC.OWNER, CUR_CONSTR_REC.TABLE_NAME, CUR_CONSTR_REC.CONSTRAINT_NAME, CUR_CONSTR_REC.CONSTRAINT_TYPE || 'K_' || 'REGULATORY_INFO');
+
+            ELSIF CUR_CONSTR_REC.OWNER = 'ATHENA'  AND CUR_CONSTR_REC.TABLE_NAME = 'SUBMISSION_TRACKER' AND CUR_CONSTR_REC.COLS = 'SUBMISSION_TRACKER_ID' THEN
+            RENAME_INDEX_CONSTR( CUR_CONSTR_REC.OWNER, CUR_CONSTR_REC.TABLE_NAME, CUR_CONSTR_REC.CONSTRAINT_NAME, CUR_CONSTR_REC.CONSTRAINT_TYPE || 'K_' || 'SUBMISSION_TRACKER');
+
+            ELSIF CUR_CONSTR_REC.OWNER = 'ATHENA' AND CUR_CONSTR_REC.TABLE_NAME = 'PRODUCT_ORDER_SAP_ORDERS_AUD' AND CUR_CONSTR_REC.COLS = 'REV,REFERENCE_PRODUCT_ORDER,SAP_REFERENCE_ORDERS' THEN
+            RENAME_INDEX_CONSTR( CUR_CONSTR_REC.OWNER, CUR_CONSTR_REC.TABLE_NAME, CUR_CONSTR_REC.CONSTRAINT_NAME, CUR_CONSTR_REC.CONSTRAINT_TYPE || 'K_' || 'PDO_SAP_ORDERS_AUD_REV');
+
+            ELSE
+            DBMS_OUTPUT.PUT_LINE( '********* Constraint and index ' || CUR_CONSTR_REC.OWNER || '.' || CUR_CONSTR_REC.TABLE_NAME || '.' || CUR_CONSTR_REC.CONSTRAINT_NAME || ' NOT HANDLED *********' );
+            END IF;
+            END LOOP;
+            CLOSE CUR_CONSTRAINT;
+            END;
+/
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-5598-1" author="thompson">
+        <addColumn tableName="PRODUCT_ORDER_SAMPLE" schemaName="athena">
+            <column name="AGGREGATION_PARTICLE" type="varchar2(20)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-5598-2" author="thompson">
+        <addColumn tableName="PRODUCT_ORDER_SAMPLE_AUD" schemaName="athena">
+            <column name="AGGREGATION_PARTICLE" type="varchar2(20)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-5720-1">
+        <addColumn tableName="PRODUCT" schemaName="ATHENA">
+            <column name="BAIT_LOCKED" type="number(1,0)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-5720-2">
+        <addColumn tableName="PRODUCT_AUD" schemaName="ATHENA">
+            <column name="BAIT_LOCKED" type="number(1,0)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-5720-3">
+        <addColumn tableName="PRODUCT_ORDER" schemaName="ATHENA">
+            <column name="REAGENT_DESIGN_KEY" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-5720-4">
+        <addColumn tableName="PRODUCT_ORDER_AUD" schemaName="ATHENA">
+            <column name="REAGENT_DESIGN_KEY" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-5831-1">
+        <addColumn tableName="PRODUCT" schemaName="ATHENA">
+            <column name="COVERAGE_TYPE_KEY" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-5831-2">
+        <addColumn tableName="PRODUCT_AUD" schemaName="ATHENA">
+            <column name="COVERAGE_TYPE_KEY" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-5831-3">
+        <addColumn tableName="PRODUCT_ORDER" schemaName="ATHENA">
+            <column name="COVERAGE_TYPE_KEY" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-5831-4">
+        <addColumn tableName="PRODUCT_ORDER_AUD" schemaName="ATHENA">
+            <column name="COVERAGE_TYPE_KEY" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-5893-1">
+        <addColumn tableName="PRODUCT" schemaName="ATHENA">
+            <column name="INDEX_TYPE" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-5893-2">
+        <addColumn tableName="PRODUCT_AUD" schemaName="ATHENA">
+            <column name="INDEX_TYPE" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="dryan" id="GPLIM-5948-1">
+        <addColumn tableName="PRODUCT" schemaName="ATHENA">
+            <column name="DEFAULT_AGGREGATION_PARTICLE" type="varchar(30)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="dryan" id="GPLIM-5948-1_AUD">
+        <addColumn tableName="PRODUCT_AUD" schemaName="ATHENA">
+            <column name="DEFAULT_AGGREGATION_PARTICLE" type="varchar(30)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="dryan" id="GPLIM-5948-2">
+        <addColumn tableName="PRODUCT_ORDER" schemaName="ATHENA">
+            <column name="DEFAULT_AGGREGATION_PARTICLE" type="varchar(30)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="dryan" id="GPLIM-5948-2_AUD">
+        <addColumn tableName="PRODUCT_ORDER_AUD" schemaName="ATHENA">
+            <column name="DEFAULT_AGGREGATION_PARTICLE" type="varchar(30)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

@@ -6,12 +6,13 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.FileInputStream;
@@ -26,7 +27,11 @@ import java.util.Map;
  * Test creation of plates
  */
 @Test(groups = TestGroups.STUBBY)
-public class IndexedPlateFactoryTest extends ContainerTest {
+@Dependent
+public class IndexedPlateFactoryTest extends StubbyContainerTest {
+
+    public IndexedPlateFactoryTest(){}
+
     @Inject
     private IndexedPlateFactory indexedPlateFactory;
 
@@ -61,7 +66,7 @@ public class IndexedPlateFactoryTest extends ContainerTest {
                 continue;
             }
             if (row != null) {
-                Cell broadBarcodeCell = row.getCell(3, Row.RETURN_BLANK_AS_NULL);
+                Cell broadBarcodeCell = row.getCell(3, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
                 if (broadBarcodeCell != null) {
                     broadBarcodeCell.setCellValue(plateBarcode);
                 }

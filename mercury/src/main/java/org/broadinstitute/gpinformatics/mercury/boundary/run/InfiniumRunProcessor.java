@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
@@ -10,6 +12,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -18,9 +21,11 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +34,7 @@ import java.util.Set;
 /**
  * Scans run folder for the finished idat pairs for each sample well in a chip
  */
+@Dependent
 public class InfiniumRunProcessor {
 
     private static final Log log = LogFactory.getLog(InfiniumRunProcessor.class);
@@ -49,10 +55,14 @@ public class InfiniumRunProcessor {
         Map<VesselPosition, Boolean> wellCompleteMap = new HashMap<>();
         String chipBarcode = chip.getLabel();
         File runDirectory = getRunDirectory(chipBarcode);
-        boolean hasRunStarted = runDirectory.exists();
+        boolean hasRunStarted = false;
         boolean isChipCompleted = true;
         String scannerName = null;
         if (runDirectory.exists()) {
+            String[] extensions = new String[] { "xml" };
+            Collection<File> xmlFiles = FileUtils.listFiles(runDirectory, extensions, false);
+            hasRunStarted = !xmlFiles.isEmpty();
+            scannerName = findScannerName(chipBarcode, infiniumStarterConfig);
             List<String> idatFiles = listIdatFiles(runDirectory);
             for (VesselPosition vesselPosition: chip.getVesselGeometry().getVesselPositions()) {
                 Set<SampleInstanceV2> sampleInstancesAtPositionV2 =
@@ -65,9 +75,6 @@ public class InfiniumRunProcessor {
                     wellCompleteMap.put(vesselPosition, complete);
                     if (!complete) {
                         isChipCompleted = false;
-                    }
-                    if (scannerName == null) {
-                        scannerName = findScannerName(chipBarcode, vesselPosition.name(), infiniumStarterConfig);
                     }
                 }
             }
@@ -103,14 +110,21 @@ public class InfiniumRunProcessor {
         return new File(rootDir, chipBarcode);
     }
 
-    public static String findScannerName(String chipBarcode, String vesselPosition,
-            InfiniumStarterConfig infiniumStarterConfig) {
+    /**
+     * Grab any red xml file in chip directory to attempt to parse scanner ID.
+     * @return scanner name if ID to scanner known, else null
+     */
+    public static String findScannerName(String chipBarcode, InfiniumStarterConfig infiniumStarterConfig) {
         try {
             if (infiniumStarterConfig != null) {
-                String redXml = String.format("%s_%s_1_Red.xml", chipBarcode, vesselPosition);
+                FileFilter fileFilter = new WildcardFileFilter("*_Red.xml");
                 File chipDir = new File(infiniumStarterConfig.getDataPath(), chipBarcode);
-                File redXmlFile = new File(chipDir, redXml);
-                if (redXmlFile.exists()) {
+                File[] files = chipDir.listFiles(fileFilter);
+                if (files != null && chipDir.length() > 0) {
+                    File redXmlFile = files[0];
+                    if (!redXmlFile.exists()) {
+                            return null;
+                    }
                     DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
                     DocumentBuilder documentBuilder = builderFactory.newDocumentBuilder();
                     Document document = documentBuilder.parse(new FileInputStream(redXmlFile));

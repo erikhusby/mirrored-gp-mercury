@@ -5,8 +5,8 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="View Product: #{actionBean.editProduct.partNumber}"
-                       sectionTitle="View Product: #{actionBean.editProduct.partNumber}"
+<stripes:layout-render name="/layout.jsp" pageTitle="View Product: ${actionBean.editProduct.partNumber}"
+                       sectionTitle="View Product: ${actionBean.editProduct.partNumber}"
                        businessKeyValue="${actionBean.editProduct.businessKey}">
 
     <stripes:layout-component name="content">
@@ -16,9 +16,9 @@
                             value="${actionBean.editProduct.businessKey}"/>
             <div class="actionButtons">
 
-                <security:authorizeBlock roles="<%= roles(PDM, PM, Developer) %>">
+                <security:authorizeBlock roles="<%= roles(PDM, GPProjectManager, PM, Developer) %>">
 
-                    <c:if test="${!actionBean.editProduct.savedInSAP}">
+                    <c:if test="${!actionBean.productInSAP(actionBean.editProduct.partNumber, actionBean.editProduct.determineCompanyConfiguration())}">
                         <stripes:submit name="${actionBean.publishSAPAction}" id="${actionBean.publishSAPAction}"
                                         value="Publish Product to SAP"
                                         class="btn padright" title="Click to Publish Product to SAP"/>
@@ -43,11 +43,22 @@
             </div>
 
             <div class="view-control-group control-group">
-                <label class="control-label label-form">Product Name</label>
+                <label class="control-label label-form">Primary Product Name</label>
                 <div class="controls">
                     <div class="form-value">${actionBean.editProduct.productName}</div>
                 </div>
             </div>
+
+
+            <%--Saving this implementation for the final 2.0 SAP/GP release of Mercury--%>
+            <%--<c:if test="${actionBean.editProduct.alternateExternalName != null}">--%>
+                <%--<div class="view-control-group control-group">--%>
+                    <%--<label class="control-label label-form">Alternate (External) Product Name</label>--%>
+                    <%--<div class="controls">--%>
+                        <%--<div class="form-value">${actionBean.editProduct.alternateExternalName}</div>--%>
+                    <%--</div>--%>
+                <%--</div>--%>
+            <%--</c:if>--%>
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Product Family</label>
@@ -130,6 +141,16 @@
                 </div>
             </div>
 
+                <%--Saving this implementation for the final 2.0 SAP/GP release of Mercury--%>
+            <%--<c:if test="${actionBean.editProduct.externalPriceItem != null}">--%>
+                <%--<div class="view-control-group control-group">--%>
+                    <%--<label class="control-label label-form">Alternate (External) Price Items</label>--%>
+                    <%--<div class="controls">--%>
+                        <%--<div class="form-value">${actionBean.editProduct.externalPriceItem.displayName}</div>--%>
+                    <%--</div>--%>
+                <%--</div>--%>
+            <%--</c:if>--%>
+
             <div class="view-control-group control-group">
                 <label class="control-label label-form">PDM Orderable Only</label>
                 <div class="controls">
@@ -210,16 +231,23 @@
 
             <security:authorizeBlock roles="<%= roles(PDM, Developer) %>">
                 <div class="view-control-group control-group">
-                    <label class="control-label label-form">Clinical or Commercial Product?</label>
+                    <label class="control-label label-form">Only offered as Commercial Product?</label>
                     <div class="controls">
                         <div class="form-value">
                                 ${actionBean.editProduct.externalOnlyProduct ? "Yes" : "No"}
                         </div>
                     </div>
                 </div>
-            </security:authorizeBlock>
 
-            <security:authorizeBlock roles="<%= roles(PDM, Developer) %>">
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Clinical Product?</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.clinicalProduct ? "Yes" : "No"}
+                        </div>
+                    </div>
+                </div>
+
                 <div class="view-control-group control-group">
                     <label class="control-label label-form">Expect Initial Quant In Mercury</label>
                     <div class="controls">
@@ -235,7 +263,7 @@
                     <label class="control-label label-form">Workflow</label>
                     <div class="controls">
                         <div class="form-value">
-                        ${actionBean.editProduct.workflow.workflowName}
+                        ${actionBean.editProduct.workflowName}
                         </div>
                     </div>
                 </div>
@@ -260,12 +288,30 @@
                 </div>
 
                 <div class="view-control-group control-group">
+                    <label class="control-label label-form">Custom Aggregation Particle</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.aggregationParticleDisplayName}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-control-group control-group">
                     <label class="control-label label-form">Analysis Type</label>
                     <div class="controls">
                         <div class="form-value">
                             <c:if test="${!empty actionBean.editProduct.analysisTypeKey}">
                                 ${(actionBean.getAnalysisType(actionBean.editProduct.analysisTypeKey)).displayName}
                             </c:if>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Bait Locked</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.baitLocked ? "Yes" : "No"}
                         </div>
                     </div>
                 </div>
@@ -328,6 +374,38 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Index Type</label>
+                    <div class="controls">
+                        <div class="form-value">
+                            <c:if test="${!empty actionBean.editProduct.indexType}">
+                                ${actionBean.editProduct.indexType}
+                            </c:if>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Analyze UMIs</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.analyzeUmi ? "Yes" : "No"}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Coverage</label>
+                    <div class="controls">
+                        <div class="form-value">
+                            <c:if test="${!empty actionBean.editProduct.coverageTypeKey}">
+                                ${(actionBean.getCoverageType(actionBean.editProduct.coverageTypeKey)).displayName}
+                            </c:if>
+                        </div>
+                    </div>
+                </div>
+
             </fieldset>
         </div>
 
@@ -357,6 +435,9 @@
                         <td>${addOnProduct.productFamily.name}</td>
                         <td>
                             ${addOnProduct.primaryPriceItem.displayName}
+                            <c:if test="${addOnProduct.externalPriceItem != null}">
+                                external price item ${addOnProduct.externalPriceItem.displayName}
+                            </c:if>
                         </td>
                     </tr>
                 </c:forEach>
@@ -383,6 +464,17 @@
                     </tr>
                 </c:forEach>
             </tbody>
+            <c:if test="${actionBean.externalReplacementPriceItems != null}">
+                <tbody>
+                <c:forEach items="${actionBean.externalReplacementPriceItems}" var="externalReplacementPriceItem">
+                    <tr>
+                        <td>${externalReplacementPriceItem.platformName}</td>
+                        <td>${externalReplacementPriceItem.categoryName}</td>
+                        <td>${externalReplacementPriceItem.name}</td>
+                    </tr>
+                </c:forEach>
+                </tbody>
+            </c:if>
         </table>
     </stripes:layout-component>
 </stripes:layout-render>

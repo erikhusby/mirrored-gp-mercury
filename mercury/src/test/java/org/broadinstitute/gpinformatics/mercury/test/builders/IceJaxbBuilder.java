@@ -29,6 +29,11 @@ public class IceJaxbBuilder {
         PLEX96
     }
 
+    public enum PrepType {
+        ICE,
+        HYPER_PREP_ICE
+    }
+
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private final String testPrefix;
     private final List<String> pondRegRackBarcodes;
@@ -78,12 +83,16 @@ public class IceJaxbBuilder {
     private PlateCherryPickEvent icePoolTest;
     private List<Triple<String, String, Integer>> ice2ndHybReagents;
     private List<Triple<String, String, Integer>> iceCatchEnrichmentSetupReagents;
+    private PrepType prepType;
+    private PlateTransferEventType iceHyperPrep1stBaitAddition;
+    private PlateTransferEventType iceHyperPrep2ndBaitAddition;
 
+    /** Constructor for ICE or HYPER_PREP_ICE. */
     public IceJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
             List<String> pondRegRackBarcodes, List<List<String>> listPondRegTubeBarcodes, String baitTube1Barcode,
             String baitTube2Barcode, LibraryConstructionJaxbBuilder.TargetSystem targetSystem, PlexType plexType,
             List<Triple<String, String, Integer>> ice2ndHybReagentTypeLotYearOffset,
-            List<Triple<String, String, Integer>> iceCatchEnrichmentSetupReagentTypeLotOffset) {
+            List<Triple<String, String, Integer>> iceCatchEnrichmentSetupReagentTypeLotOffset, PrepType prepType) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.testPrefix = testPrefix;
         this.pondRegRackBarcodes = pondRegRackBarcodes;
@@ -94,6 +103,18 @@ public class IceJaxbBuilder {
         this.plexType = plexType;
         this.ice2ndHybReagents = ice2ndHybReagentTypeLotYearOffset;
         this.iceCatchEnrichmentSetupReagents = iceCatchEnrichmentSetupReagentTypeLotOffset;
+        this.prepType = prepType;
+    }
+
+    /** Defaults to ICE. */
+    public IceJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
+            List<String> pondRegRackBarcodes, List<List<String>> listPondRegTubeBarcodes, String baitTube1Barcode,
+            String baitTube2Barcode, LibraryConstructionJaxbBuilder.TargetSystem targetSystem, PlexType plexType,
+            List<Triple<String, String, Integer>> ice2ndHybReagentTypeLotYearOffset,
+            List<Triple<String, String, Integer>> iceCatchEnrichmentSetupReagentTypeLotOffset) {
+        this(bettaLimsMessageTestFactory, testPrefix, pondRegRackBarcodes, listPondRegTubeBarcodes,
+                baitTube1Barcode, baitTube2Barcode, targetSystem, plexType, ice2ndHybReagentTypeLotYearOffset,
+                iceCatchEnrichmentSetupReagentTypeLotOffset, PrepType.ICE);
     }
 
     public IceJaxbBuilder invoke() {
@@ -209,43 +230,49 @@ public class IceJaxbBuilder {
 
         // Ice1stHybridization
         firstHybPlateBarcode = testPrefix + "1stHyb";
-        ice1stHybridization = bettaLimsMessageTestFactory.buildRackToPlate(
-                "Ice1stHybridization", spriRackBarcode, spriTubeBarcodes, firstHybPlateBarcode);
-        bettaLimsMessageTestFactory.addMessage(messageList, ice1stHybridization);
 
-        if (targetSystem == LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY) {
-            // Ice1stBaitAddition
-            ice1stBaitAddition = bettaLimsMessageTestFactory.buildTubeToPlate(
-                    "Ice1stBaitAddition", baitTube1Barcode, firstHybPlateBarcode, LabEventFactory.PHYS_TYPE_EPPENDORF_96,
-                    LabEventFactory.SECTION_ALL_96, "tube");
-            bettaLimsMessageTestFactory.addMessage(messageList, ice1stBaitAddition);
-        } else {
-            // Ice1stBaitPick
-            List<BettaLimsMessageTestFactory.CherryPick> bait1CherryPicks = new ArrayList<>();
-            String bait1RackBarcode = "B1R" + testPrefix;
-            for (int i = 0; i < 8; i++) {
-                bait1CherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(bait1RackBarcode, "A01",
-                        firstHybPlateBarcode, (char) ('A' + i) + "01"));
-            }
-            ice1stBaitPick = bettaLimsMessageTestFactory.buildCherryPickToPlate("Ice1stBaitPick",
-                    LabEventFactory.PHYS_TYPE_TUBE_RACK, Collections.singletonList(bait1RackBarcode),
-                    Collections.singletonList(Collections.singletonList(baitTube1Barcode)),
-                    Collections.singletonList(firstHybPlateBarcode), bait1CherryPicks);
-            ReagentType baitReagent = new ReagentType();
-            baitReagent.setBarcode("Bait" + Long.toString(System.currentTimeMillis()));
-            baitReagent.setKitType("Rapid Capture Kit Box 4 (Bait)");
-            MetadataType metadataType = new MetadataType();
-            metadataType.setName("Bait Well");
-            metadataType.setValue("A1");
-            baitReagent.getMetadata().add(metadataType);
-            ice1stBaitPick.getReagent().add(baitReagent);
+        if (prepType == PrepType.HYPER_PREP_ICE) {
+            // IceHyperPrep1stBaitPick (bait tubes to empty plate)
+            String firstBaitPlateBarcode = "B1B" + testPrefix;
+            ice1stBaitPick = makeBaitPick("B1R" + testPrefix, firstBaitPlateBarcode, "IceHyperPrep1stBaitPick",
+                    baitTube1Barcode, bettaLimsMessageTestFactory);
             bettaLimsMessageTestFactory.addMessage(messageList, ice1stBaitPick);
 
-            //PostIce1stHybridizationThermoCyclerLoaded
-            postIce1stHybridizationThermoCyclerLoaded = bettaLimsMessageTestFactory.buildPlateEvent(
-                    "PostIce1stHybridizationThermoCyclerLoaded", firstHybPlateBarcode);
-            postIce1stHybridizationThermoCyclerLoaded.setStation("WALDORF");
-            bettaLimsMessageTestFactory.addMessage(messageList, postIce1stHybridizationThermoCyclerLoaded);
+            // IceHyperPrep1stBaitAddition (bait plate to empty plate)
+            iceHyperPrep1stBaitAddition = bettaLimsMessageTestFactory.buildPlateToPlate("IceHyperPrep1stBaitAddition",
+                firstBaitPlateBarcode, firstHybPlateBarcode);
+            bettaLimsMessageTestFactory.addMessage(messageList, iceHyperPrep1stBaitAddition);
+
+            // IceHyperPrep1stHybridization (SPRI rack merges into bait-filled plate)
+            ice1stHybridization = bettaLimsMessageTestFactory.buildRackToPlate(
+                "IceHyperPrep1stHybridization", spriRackBarcode, spriTubeBarcodes, firstHybPlateBarcode);
+            bettaLimsMessageTestFactory.addMessage(messageList, ice1stHybridization);
+            // (There is no PostIce1stHybridizationThermoCyclerLoaded)
+
+        } else {
+            ice1stHybridization = bettaLimsMessageTestFactory.buildRackToPlate(
+                    "Ice1stHybridization", spriRackBarcode, spriTubeBarcodes, firstHybPlateBarcode);
+            bettaLimsMessageTestFactory.addMessage(messageList, ice1stHybridization);
+
+            if (targetSystem == LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY) {
+                // Ice1stBaitAddition
+                ice1stBaitAddition = bettaLimsMessageTestFactory.buildTubeToPlate(
+                        "Ice1stBaitAddition", baitTube1Barcode, firstHybPlateBarcode,
+                        LabEventFactory.PHYS_TYPE_EPPENDORF_96,
+                        LabEventFactory.SECTION_ALL_96, "tube");
+                bettaLimsMessageTestFactory.addMessage(messageList, ice1stBaitAddition);
+            } else {
+                // Ice1stBaitPick
+                ice1stBaitPick = makeBaitPick("B1R" + testPrefix, firstHybPlateBarcode, "Ice1stBaitPick",
+                        baitTube1Barcode, bettaLimsMessageTestFactory);
+                bettaLimsMessageTestFactory.addMessage(messageList, ice1stBaitPick);
+
+                //PostIce1stHybridizationThermoCyclerLoaded
+                postIce1stHybridizationThermoCyclerLoaded = bettaLimsMessageTestFactory.buildPlateEvent(
+                        "PostIce1stHybridizationThermoCyclerLoaded", firstHybPlateBarcode);
+                postIce1stHybridizationThermoCyclerLoaded.setStation("WALDORF");
+                bettaLimsMessageTestFactory.addMessage(messageList, postIce1stHybridizationThermoCyclerLoaded);
+            }
         }
 
         // Ice1stCapture
@@ -264,36 +291,59 @@ public class IceJaxbBuilder {
 
         // Ice2ndHybridization
 
-        ice2ndHybridization = bettaLimsMessageTestFactory.buildPlateEvent("Ice2ndHybridization",
-                firstCapturePlateBarcode,
-                targetSystem == LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY ?
-                        BettaLimsMessageTestFactory.reagentList(ice2ndHybReagents) : Collections.EMPTY_LIST);
-        bettaLimsMessageTestFactory.addMessage(messageList, ice2ndHybridization);
-
-        if (targetSystem == LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY) {
-            ice2ndBaitAddition = bettaLimsMessageTestFactory
-                    .buildTubeToPlate("Ice2ndBaitAddition", baitTube2Barcode, firstCapturePlateBarcode,
-                            LabEventFactory.PHYS_TYPE_EPPENDORF_96, LabEventFactory.SECTION_ALL_96, "tube");
-            bettaLimsMessageTestFactory.addMessage(messageList, ice2ndBaitAddition);
-        } else {
-            // Ice2ndBaitPick
-            List<BettaLimsMessageTestFactory.CherryPick> bait2CherryPicks = new ArrayList<>();
-            String bait2RackBarcode = "B2R" + testPrefix;
-            for (int i = 0; i < 8; i++) {
-                bait2CherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(bait2RackBarcode, "A01",
-                        firstCapturePlateBarcode, (char) ('A' + i) + "01"));
-            }
-            ice2ndBaitPick = bettaLimsMessageTestFactory.buildCherryPickToPlate("Ice2ndBaitPick",
-                    LabEventFactory.PHYS_TYPE_TUBE_RACK, Collections.singletonList(bait2RackBarcode),
-                    Collections.singletonList(Collections.singletonList(baitTube2Barcode)),
-                    Collections.singletonList(firstCapturePlateBarcode), bait2CherryPicks);
+        if (prepType == PrepType.HYPER_PREP_ICE) {
+            // IceHyperPrep2ndBaitPick (bait tubes to empty plate)
+            String secondBaitPlateBarcode = "B2B" + testPrefix;
+            ice2ndBaitPick = makeBaitPick("B2R" + testPrefix, secondBaitPlateBarcode, "IceHyperPrep2ndBaitPick",
+                    baitTube2Barcode, bettaLimsMessageTestFactory);
             bettaLimsMessageTestFactory.addMessage(messageList, ice2ndBaitPick);
 
-            //PostIce2ndHybridizationThermoCyclerLoaded
-            postIce2ndHybridizationThermoCyclerLoaded = bettaLimsMessageTestFactory.buildPlateEvent(
-                    "PostIce2ndHybridizationThermoCyclerLoaded", firstCapturePlateBarcode);
-            postIce1stCaptureThermoCyclerLoaded.setStation("WALDORF");
-            bettaLimsMessageTestFactory.addMessage(messageList, postIce2ndHybridizationThermoCyclerLoaded);
+            // Ice2ndHybridization in-place event
+            ice2ndHybridization = bettaLimsMessageTestFactory.buildPlateEvent("Ice2ndHybridization",
+                    firstCapturePlateBarcode,
+                    targetSystem == LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY ?
+                            BettaLimsMessageTestFactory.reagentList(ice2ndHybReagents) : Collections.EMPTY_LIST);
+            bettaLimsMessageTestFactory.addMessage(messageList, ice2ndHybridization);
+
+            // IceHyperPrep2ndBaitAddition (bait plate merges into 2nd hyb plate)
+            iceHyperPrep2ndBaitAddition = bettaLimsMessageTestFactory.buildPlateToPlate("IceHyperPrep2ndBaitAddition",
+                    secondBaitPlateBarcode, firstCapturePlateBarcode);
+            bettaLimsMessageTestFactory.addMessage(messageList, iceHyperPrep2ndBaitAddition);
+
+        } else {
+            // Ice2ndHybridization in-place event
+            ice2ndHybridization = bettaLimsMessageTestFactory.buildPlateEvent("Ice2ndHybridization",
+                    firstCapturePlateBarcode,
+                    targetSystem == LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY ?
+                            BettaLimsMessageTestFactory.reagentList(ice2ndHybReagents) : Collections.EMPTY_LIST);
+            bettaLimsMessageTestFactory.addMessage(messageList, ice2ndHybridization);
+
+            if (targetSystem == LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY) {
+                // Ice2ndBaitAddition
+                ice2ndBaitAddition = bettaLimsMessageTestFactory
+                        .buildTubeToPlate("Ice2ndBaitAddition", baitTube2Barcode, firstCapturePlateBarcode,
+                                LabEventFactory.PHYS_TYPE_EPPENDORF_96, LabEventFactory.SECTION_ALL_96, "tube");
+                bettaLimsMessageTestFactory.addMessage(messageList, ice2ndBaitAddition);
+            } else {
+                // Ice2ndBaitPick
+                List<BettaLimsMessageTestFactory.CherryPick> bait2CherryPicks = new ArrayList<>();
+                String bait2RackBarcode = "B2R" + testPrefix;
+                for (int i = 0; i < 8; i++) {
+                    bait2CherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(bait2RackBarcode, "A01",
+                            firstCapturePlateBarcode, (char) ('A' + i) + "01"));
+                }
+                ice2ndBaitPick = bettaLimsMessageTestFactory.buildCherryPickToPlate("Ice2ndBaitPick",
+                        LabEventFactory.PHYS_TYPE_TUBE_RACK, Collections.singletonList(bait2RackBarcode),
+                        Collections.singletonList(Collections.singletonList(baitTube2Barcode)),
+                        Collections.singletonList(firstCapturePlateBarcode), bait2CherryPicks);
+                bettaLimsMessageTestFactory.addMessage(messageList, ice2ndBaitPick);
+
+                //PostIce2ndHybridizationThermoCyclerLoaded
+                postIce2ndHybridizationThermoCyclerLoaded = bettaLimsMessageTestFactory.buildPlateEvent(
+                        "PostIce2ndHybridizationThermoCyclerLoaded", firstCapturePlateBarcode);
+                postIce1stCaptureThermoCyclerLoaded.setStation("WALDORF");
+                bettaLimsMessageTestFactory.addMessage(messageList, postIce2ndHybridizationThermoCyclerLoaded);
+            }
         }
 
         // Ice2ndCapture
@@ -494,5 +544,36 @@ public class IceJaxbBuilder {
 
     public String getBaitTube2Barcode() {
         return baitTube2Barcode;
+    }
+
+    public PlateTransferEventType getIceHyperPrep1stBaitAddition() {
+        return iceHyperPrep1stBaitAddition;
+    }
+
+    public PlateTransferEventType getIceHyperPrep2ndBaitAddition() {
+        return iceHyperPrep2ndBaitAddition;
+    }
+
+    protected static PlateCherryPickEvent makeBaitPick(String baitRackBarcode, String targetPlateBarcode,
+            String eventName, String baitTubeBarcode, BettaLimsMessageTestFactory bettaLimsMessageTestFactory) {
+        PlateCherryPickEvent pickEvent;
+        List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(baitRackBarcode, "A01",
+                    targetPlateBarcode, (char) ('A' + i) + "01"));
+        }
+        pickEvent = bettaLimsMessageTestFactory.buildCherryPickToPlate(eventName,
+                LabEventFactory.PHYS_TYPE_TUBE_RACK, Collections.singletonList(baitRackBarcode),
+                Collections.singletonList(Collections.singletonList(baitTubeBarcode)),
+                Collections.singletonList(targetPlateBarcode), cherryPicks);
+        ReagentType baitReagent = new ReagentType();
+        baitReagent.setBarcode("Bait" + Long.toString(System.currentTimeMillis()));
+        baitReagent.setKitType("Rapid Capture Kit Box 4 (Bait)");
+        MetadataType metadataType = new MetadataType();
+        metadataType.setName("Bait Well");
+        metadataType.setValue("A1");
+        baitReagent.getMetadata().add(metadataType);
+        pickEvent.getReagent().add(baitReagent);
+        return pickEvent;
     }
 }

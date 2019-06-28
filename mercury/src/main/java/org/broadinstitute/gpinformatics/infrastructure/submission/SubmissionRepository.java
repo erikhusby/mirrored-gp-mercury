@@ -11,23 +11,31 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.Predicate;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
-@XmlType(name = "site")
+// setting the access order to alphabetical helps the tests pass more reliably.
+@JsonPropertyOrder(alphabetic = true)
+@JsonSerialize(include=JsonSerialize.Inclusion.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class SubmissionRepository implements Serializable {
     private static final long serialVersionUID = -3831990214996752938L;
     public static final String DEFAULT_REPOSITORY_NAME = "NCBI_PROTECTED";
     public static final String DEFAULT_REPOSITORY_DESCRIPTOR = "NCBI Controlled Access (dbGaP) submissions";
 
+    @JsonProperty
     private String name;
+    @JsonProperty
     private String description;
+    @JsonProperty
     private boolean active;
 
     public SubmissionRepository(String name, String description, Boolean active) {
@@ -47,7 +55,6 @@ public class SubmissionRepository implements Serializable {
         return name;
     }
 
-    @XmlElement
     public void setName(String name) {
         this.name = name;
     }
@@ -56,12 +63,10 @@ public class SubmissionRepository implements Serializable {
         return description;
     }
 
-    @XmlElement
     public void setDescription(String description) {
         this.description = description;
     }
 
-    @XmlElement
     public boolean isActive() {
         return active;
     }

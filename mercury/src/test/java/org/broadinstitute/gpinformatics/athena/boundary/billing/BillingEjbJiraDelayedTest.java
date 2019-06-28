@@ -37,10 +37,13 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import javax.ejb.EJBTransactionRolledbackException;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -52,7 +55,11 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Test(groups = TestGroups.ALTERNATIVES)
+@Dependent
 public class BillingEjbJiraDelayedTest extends Arquillian {
+
+    public BillingEjbJiraDelayedTest(){}
+
     private static boolean failQuoteCall = false;
     private static boolean inContainer = true;
     @Inject
@@ -86,8 +93,12 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
     private static Map<String, Integer> dpCallCount = new HashMap<>();
 
     @Alternative
+    @Dependent
     protected static class DelayedJiraService extends
             ConcurrentProductOrderDoubleCreateTest.ControlBusinessKeyJiraService {
+
+        public DelayedJiraService(){}
+
         @Override
         public JiraIssue getIssue(String key) throws IOException {
             try {
@@ -105,9 +116,13 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
     }
 
     @Alternative
+    @ApplicationScoped
     protected static class QuoteServiceStubWithWait implements QuoteService {
 
+        public QuoteServiceStubWithWait(){}
+
         private static final long serialVersionUID = 6093273925949722169L;
+
 
         @Override
         public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
@@ -125,7 +140,8 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
                                       QuotePriceItem itemIsReplacing,
                                       Date reportedCompletionDate,
                                       double numWorkUnits,
-                                      String callbackUrl, String callbackParameterName, String callbackParameterValue) {
+                                      String callbackUrl, String callbackParameterName, String callbackParameterValue,
+                                      BigDecimal priceAdjustment) {
             // Simulate failure only for one particular PriceItem.
             log.debug("In register New work");
             String workId = "workItemId\t1000";
@@ -149,7 +165,8 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
         @Override
         public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
                                          Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
-                                         String callbackParameterName, String callbackParameterValue) {
+                                         String callbackParameterName, String callbackParameterValue,
+                                         BigDecimal priceAdjustment) {
             // Simulate failure only for one particular PriceItem.
             log.debug("In register New work");
             String workId = "workItemId\t1000";
@@ -187,6 +204,12 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
 
         @Override
         public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
+            return null;
+        }
+
+        @Override
+        public PriceList getPriceItemsForDate(List<QuoteImportItem> targetedPriceItemCriteria)
+                throws QuoteServerException, QuoteNotFoundException {
             return null;
         }
 

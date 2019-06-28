@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
 
+import org.apache.commons.collections4.ListValuedMap;
+import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
@@ -7,8 +10,9 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.ArraysQcDao;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcBlacklisting;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentration;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentrationProducer;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentrationStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -22,6 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
 import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumEntityBuilder;
@@ -29,7 +34,9 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
+import java.text.Format;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +62,7 @@ public class MetricsViewActionBeanTest {
     private ProductOrderSampleDao productOrderSampleDaoMock;
     private ProductEjb productEjbMock;
     private AttributeArchetypeDao attributeArchetypeDaoMock;
+    private Format fastDateFormat = FastDateFormat.getInstance("MM/dd/yyyy");
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -74,9 +82,11 @@ public class MetricsViewActionBeanTest {
 
     public void testFindArraysQcForHybChip() throws Exception {
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
-        BSPSetVolumeConcentration bspSetVolumeConcentration = BSPSetVolumeConcentrationProducer.stubInstance();
+        BSPSetVolumeConcentration bspSetVolumeConcentration =  new BSPSetVolumeConcentrationStub();
         LabEventFactory labEventFactory = new LabEventFactory(testUserList, bspSetVolumeConcentration);
         LabEventHandler labEventHandler = new LabEventHandler();
+        Date now = new Date();
+        String blacklistFailReason = "DATA_QUALITY";
 
         int numSamples = 94;
         BaseEventTest.expectedRouting = SystemRouter.System.SQUID;
@@ -90,6 +100,7 @@ public class MetricsViewActionBeanTest {
 
         List<StaticPlate> hybChips = infiniumEntityBuilder.getHybChips();
         StaticPlate hybChip = hybChips.iterator().next();
+        VesselPosition hybWellPosition = VesselPosition.R01C01;
 
         when(labVesselDaoMock.findByIdentifier(hybChip.getLabel())).thenReturn(hybChip);
         Map<String, LabVessel> barcodeToVesselMap = new HashMap<>();
@@ -115,9 +126,26 @@ public class MetricsViewActionBeanTest {
         assertTrue(actionBean.isFoundResults());
 
         ArraysQc arraysQc = mock(ArraysQc.class);
+        when(arraysQc.getChipWellBarcode()).thenReturn(hybChip.getLabel() + "_" + hybWellPosition);
         when(arraysQc.getCallRate()).thenReturn(new BigDecimal(".9877"));
+        when(arraysQc.getAutocallCallRate()).thenReturn(new BigDecimal(".9788"));
         when(arraysQc.getHetPct()).thenReturn(new BigDecimal(".19"));
+        when(arraysQc.getAutocallDate()).thenReturn(now);
         when(arraysQcDaoMock.findByBarcodes(anyList())).thenReturn(Collections.singletonList(arraysQc));
+
+        ArraysQcBlacklisting arraysQcBlacklisting = mock(ArraysQcBlacklisting.class);
+        when(arraysQcBlacklisting.getBlacklistedOn()).thenReturn(now);
+        when(arraysQcBlacklisting.getWhitelistedOn()).thenReturn(now);
+        when(arraysQcBlacklisting.getBlacklistReason()).thenReturn(blacklistFailReason);
+
+        ListValuedMap<String, ArraysQcBlacklisting> multiMapWellBarcodeToMetric = new ArrayListValuedHashMap<>();
+        multiMapWellBarcodeToMetric.put(hybChip.getLabel() + "_" + hybWellPosition, arraysQcBlacklisting);
+        when(arraysQcDaoMock.findBlacklistMapByBarcodes(anyList())).thenReturn(multiMapWellBarcodeToMetric);
+
+        Map<String, ArraysQc> mapWellBarcodeToMetric = new HashMap<>();
+        mapWellBarcodeToMetric.put(hybChip.getLabel() + "_" + hybWellPosition, arraysQc);
+        when(arraysQcDaoMock.findMapByBarcodes(anyList())).thenReturn(mapWellBarcodeToMetric);
+
         actionBean.buildInfiniumMetricsTable(hybChip);
 
         MetricsViewActionBean.PlateMap plateMap = actionBean.getPlateMap();
@@ -127,9 +155,9 @@ public class MetricsViewActionBeanTest {
         for (MetricsViewActionBean.PlateMapMetrics plateMapMetrics: MetricsViewActionBean.PlateMapMetrics.values()) {
             boolean foundMetric = false;
             for (MetricsViewActionBean.WellDataset wellDataset: plateMap.getDatasets()) {
-                if (wellDataset.getPlateMapMetrics() == plateMapMetrics) {
+                if (wellDataset.getDisplayMetrics() == plateMapMetrics) {
                     foundMetric = true;
-                    if (wellDataset.getPlateMapMetrics() == MetricsViewActionBean.PlateMapMetrics.CALL_RATE) {
+                    if (wellDataset.getDisplayMetrics() == MetricsViewActionBean.PlateMapMetrics.CALL_RATE) {
                         callRateDataset = wellDataset;
                     }
                     break;
@@ -139,6 +167,18 @@ public class MetricsViewActionBeanTest {
                 fail("Failed to find plate map metric in datasets: " + plateMapMetrics.name());
             }
         }
+
+        assertEquals( plateMap.getWellStatusMap().get(hybWellPosition.name()), MetricsViewActionBean.WellStatus.Blacklisted );
+
+        String blackListDisplay = null;
+        for( MetricsViewActionBean.Metadata metadata : plateMap.getWellMetadataMap().get(hybWellPosition.name()) ) {
+            if( metadata.getLabel().equals("Pipeline Blacklist")) {
+                blackListDisplay = metadata.getValue();
+                break;
+            }
+        }
+
+        assertEquals( fastDateFormat.format(now) + " - " + blacklistFailReason, blackListDisplay );
 
         for (MetricsViewActionBean.WellData wellData: callRateDataset.getWellData()) {
             assertEquals(wellData.getValue(), "98.77");

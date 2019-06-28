@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Date;
 
@@ -26,6 +27,8 @@ public class LabVesselEtlDbFreeTest {
     private String vesselLabel = "8917538.0";
     private LabVessel.ContainerType vesselType = LabVessel.ContainerType.TUBE;
     private String vesselName = "vessel_name";
+    private Date createdOn = new Date();
+    private BigDecimal vesselVolume = BigDecimal.valueOf(28.16d);
     private LabVesselEtl tst;
 
     private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
@@ -69,6 +72,8 @@ public class LabVesselEtlDbFreeTest {
         expect(obj.getLabel()).andReturn(vesselLabel);
         expect(obj.getType()).andReturn(vesselType);
         expect(obj.getName()).andReturn(vesselName);
+        expect(obj.getCreatedOn()).andReturn(createdOn);
+        expect(obj.getVolume()).andReturn(vesselVolume);
 
         replay(mocks);
 
@@ -81,6 +86,7 @@ public class LabVesselEtlDbFreeTest {
 
     private void verifyRecord(String record) {
         int i = 0;
+
         String[] parts = record.split(",");
         assertEquals(parts[i++], etlDateStr);
         assertEquals(parts[i++], "F");
@@ -88,6 +94,8 @@ public class LabVesselEtlDbFreeTest {
         assertEquals(parts[i++], vesselLabel);
         assertEquals(parts[i++], vesselType.getName());
         assertEquals(parts[i++], vesselName);
+        assertEquals(parts[i++], ExtractTransform.formatTimestamp(createdOn));
+        assertEquals(parts[i++], vesselVolume.toString());
         assertEquals(parts.length, i);
     }
 }

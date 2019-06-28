@@ -168,42 +168,4 @@ public class PreferenceEjb {
         }
     }
 
-    /**
-     * Get a preference associated with objects.
-     *
-     * @param object1Id      An id for an object that is used for look up.
-     * @param object2Id      An id for a second object to be used for look up.
-     * @param preferenceType The preference type.
-     *
-     * @return Preference The matching preference
-     */
-    public List<Preference> getPreferences(
-            @Nonnull Long object1Id, @Nullable Long object2Id, @Nonnull PreferenceType preferenceType)
-            throws Exception {
-        return preferenceDao.getPreferences(object1Id, object2Id, preferenceType);
-    }
-
-    /**
-     * Get all preferences of all types attached to a user.
-     *
-     * @param associatedUser The user to associate with this preference.
-     *
-     * @return Preference The matching preference
-     */
-    public List<Preference> getPreferences(@Nonnull Long associatedUser) throws Exception {
-        return preferenceDao.getPreferences(associatedUser);
-    }
-
-    /**
-     * Get the preferences for a user of a particular type.
-     *
-     * @param associatedUser The user to associate with this preference.
-     * @param preferenceType The preference type for easy searching.
-     *
-     * @return Preference The matching preference
-     */
-    public List<Preference> getPreferences(
-            @Nonnull Long associatedUser, @Nullable PreferenceType preferenceType) throws Exception {
-        return preferenceDao.getPreferences(associatedUser, preferenceType);
-    }
 }

@@ -35,11 +35,6 @@
                 <input type='hidden' name="dateRangeSelector" value="14"/> <!-- Set to "custom" otherwise dates are not saved. -->
                 <input type='hidden' name="lcsetsBarcodes" value="${actionBean.lcsetsBarcodes}"/>
                 <input type='hidden' name="tubeLcsetSelectionCount" value="${actionBean.tubeLcsetAssignments.size()}"/>
-
-                <input type='hidden' name="showQueued" value="${actionBean.showQueued}"/>
-                <input type='hidden' name="showProcessed" value="${actionBean.showProcessed}"/>
-                <input type='hidden' name="showAbandoned" value="${actionBean.showAbandoned}"/>
-                <input type='hidden' name="append" value="${actionBean.append}"/>
             </c:if>
 
             <c:forEach items="${actionBean.dtos}" var="dto" varStatus="item">
@@ -58,7 +53,7 @@
                 <input type="hidden" name="dtos[${item.index}].pairedEndRead" value="${dto.pairedEndRead?'Yes':'No'}"/>
                 <input type="hidden" name="dtos[${item.index}].poolTest" value="${dto.poolTest?'Yes':'No'}"/>
                 <input type="hidden" name="dtos[${item.index}].regulatoryDesignation" value="${dto.regulatoryDesignation}"/>
-                <input type="hidden" name="dtos[${item.index}].productNameJoin" value="${dto.productNameJoin}"/>
+                <input type="hidden" name="dtos[${item.index}].product" value="${dto.product}"/>
                 <input type="hidden" name="dtos[${item.index}].startingBatchVessels" value="${dto.startingBatchVessels}"/>
 
                 <input type="hidden" name="dtos[${item.index}].numberLanes" value="${dto.numberLanes}"/>
@@ -67,7 +62,6 @@
 
 
                 <input type="hidden" name="dtos[${item.index}].designationId" value="${dto.designationId}"/>
-                <input type="hidden" name="dtos[${item.index}].tubeEventId" value="${dto.tubeEventId}"/>
             </c:forEach>
 
             <p>These tubes were found to have samples in multiple LCSETs.</p>

@@ -1,0 +1,228 @@
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="SampleId">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="Type" use="optional"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="PositionName">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="Type" use="optional"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="PositionIndex">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:int">
+          <xs:attribute type="xs:string" name="Type" use="optional"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Labware">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="Type" use="optional"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="TotalVolumeInUl">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="Type" use="optional"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="InternalControlName">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="Type" use="optional"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="State">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="Type" use="optional"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SampleType">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="Type" use="optional"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Timestamp">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="Type"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="BatchID">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:int">
+          <xs:attribute type="xs:string" name="Type"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Instrument">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="Type"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Comment">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="Type"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="InstrumentType">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="Type"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SerializeVersion">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:byte">
+          <xs:attribute type="xs:string" name="Type"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="RackId">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="Type"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="RackLabware">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="Type"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CreationTimestamp">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="Type"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="RackUsageType">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="Type"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CSVConverted">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:byte">
+          <xs:attribute type="xs:string" name="Type"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="RackLockType">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="Type"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="RackPosition">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="SampleId"/>
+        <xs:element ref="PositionName"/>
+        <xs:element ref="PositionIndex"/>
+        <xs:element ref="Labware"/>
+        <xs:element ref="TotalVolumeInUl"/>
+        <xs:element ref="InternalControlName"/>
+        <xs:element ref="State"/>
+        <xs:element ref="SampleType"/>
+      </xs:sequence>
+      <xs:attribute type="xs:string" name="Type" use="optional"/>
+      <xs:attribute type="xs:string" name="Class" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="ModificationRecord">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Timestamp"/>
+        <xs:element ref="BatchID"/>
+        <xs:element ref="Instrument"/>
+        <xs:element ref="Comment"/>
+        <xs:element ref="InstrumentType"/>
+      </xs:sequence>
+      <xs:attribute type="xs:string" name="Type"/>
+      <xs:attribute type="xs:string" name="Class"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Rack">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="SerializeVersion"/>
+        <xs:element ref="RackId"/>
+        <xs:element ref="RackLabware"/>
+        <xs:element ref="CreationTimestamp"/>
+        <xs:element ref="RackUsageType"/>
+        <xs:element ref="CSVConverted"/>
+        <xs:element ref="RackLockType"/>
+        <xs:element ref="RackPosition" maxOccurs="unbounded" minOccurs="0"/>
+        <xs:element ref="ModificationRecord"/>
+      </xs:sequence>
+      <xs:attribute type="xs:string" name="Type"/>
+      <xs:attribute type="xs:string" name="Class"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

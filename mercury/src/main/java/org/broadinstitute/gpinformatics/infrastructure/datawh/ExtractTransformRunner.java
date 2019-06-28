@@ -16,6 +16,8 @@ import javax.ejb.Timeout;
 import javax.ejb.Timer;
 import javax.ejb.TimerConfig;
 import javax.ejb.TimerService;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
 import java.util.Date;
 
@@ -28,6 +30,7 @@ import static javax.ejb.ConcurrencyManagementType.BEAN;
 @Startup
 @Singleton
 @ConcurrencyManagement(BEAN)
+@TransactionManagement(TransactionManagementType.BEAN)
 public class ExtractTransformRunner {
     private static final Log log = LogFactory.getLog(ExtractTransform.class);
 
@@ -40,6 +43,9 @@ public class ExtractTransformRunner {
     private int timerPeriod = 5;
 
     private static Date previousNextTimeout = new Date(0);
+
+    // ETL must be enabled via (JMX immutable) system property at startup (System.getProperty())
+    private boolean isETLEnabled = Boolean.getBoolean("enableETL");
 
     @Resource
     TimerService timerService;
@@ -79,13 +85,18 @@ public class ExtractTransformRunner {
     }
 
     /**
-     * Check Mercury configuration in the YAML file and see if the Data Warehouse system is enabled for this
+     * Check Mercury configuration in the YAML file and startup environment and see if the Data Warehouse system is enabled for this
      * environment.  If it is not, then the configuration will be null.
      *
      * @return true if it's an environment where ETL should be run
      */
     private boolean isEnabled() {
-        // Can't use @Inject for this object or we'll run into VFS protocol errors.
+
+        if( !isETLEnabled ) {
+            return false;
+        }
+
+        // ETL must also be configured in mercury-config.yaml file
         EtlConfig etlConfig = (EtlConfig) MercuryConfiguration.getInstance().getConfig(EtlConfig.class, deployment);
         return AbstractConfig.isSupported(etlConfig);
     }

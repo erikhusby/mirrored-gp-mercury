@@ -12,12 +12,16 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry_;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
+import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket_;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
@@ -29,13 +33,13 @@ import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Subquery;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 @Stateful
 @RequestScoped
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class LabVesselDao extends GenericDao {
 
     public LabVessel findByIdentifier(String barcode) {
@@ -44,6 +48,23 @@ public class LabVesselDao extends GenericDao {
 
     public List<LabVessel> findByListIdentifiers(List<String> barcodes) {
         return findListByList(LabVessel.class, LabVessel_.label, barcodes);
+    }
+
+    public List<LabVessel> findByTickets(String ticket) {
+
+        List<LabVessel> resultList = new ArrayList<>();
+        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<LabVessel> criteriaQuery = criteriaBuilder.createQuery(LabVessel.class);
+        Root<LabVessel> root = criteriaQuery.from(LabVessel.class);
+        Join<LabVessel, JiraTicket> labVessels = root.join(LabVessel_.ticketsCreated);
+        Predicate predicate = criteriaBuilder.equal(labVessels.get(JiraTicket_.ticketId), ticket);
+        criteriaQuery.where(predicate);
+        try {
+            resultList.addAll(getEntityManager().createQuery(criteriaQuery).getResultList());
+        } catch (NoResultException ignored) {
+            return resultList;
+        }
+        return resultList;
     }
 
     public LabVessel findByListIdentifiers(Long vid) {

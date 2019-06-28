@@ -14,6 +14,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.File;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -41,6 +42,8 @@ public class GenericEntityEtlDbFreeTest {
     private final String label = "012345678";
     private final LabVessel.ContainerType type = LabVessel.ContainerType.TUBE;
     private String vesselName = "vessel_name";
+    private Date vesselCreated = new Date();
+    private BigDecimal vesselVolume = new BigDecimal("101.999");
 
     private final String datafileDir = System.getProperty("java.io.tmpdir");
 
@@ -95,6 +98,8 @@ public class GenericEntityEtlDbFreeTest {
         expect(obj.getLabel()).andReturn(label);
         expect(obj.getType()).andReturn(type);
         expect(obj.getName()).andReturn(vesselName);
+        expect(obj.getCreatedOn()).andReturn(vesselCreated);
+        expect(obj.getVolume()).andReturn(vesselVolume);
 
         auditReader.clear();
 
@@ -102,7 +107,7 @@ public class GenericEntityEtlDbFreeTest {
 
         tst.setAuditReaderDao(auditReader);
 
-        int recordCount = tst.doEtl(revIds, etlDateStr);
+        int recordCount = tst.doIncrementalEtl(revIds, etlDateStr);
 
         assertEquals(recordCount, 1);
 
@@ -132,7 +137,7 @@ public class GenericEntityEtlDbFreeTest {
 
         tst.setAuditReaderDao(auditReader);
 
-        int recordCount = tst.doEtl(revIds, etlDateStr);
+        int recordCount = tst.doIncrementalEtl(revIds, etlDateStr);
         assertEquals(recordCount, 1);
 
         String dataFilename = etlDateStr + "_" + tst.baseFilename + ".dat";
@@ -157,6 +162,8 @@ public class GenericEntityEtlDbFreeTest {
         expect(obj.getLabel()).andReturn(label).times(2);
         expect(obj.getType()).andReturn(type).times(2);
         expect(obj.getName()).andReturn(vesselName).times(2);
+        expect(obj.getCreatedOn()).andReturn(vesselCreated).times(2);
+        expect(obj.getVolume()).andReturn(vesselVolume).times(2);
         replay(mocks);
 
         tst.setAuditReaderDao(auditReader);

@@ -9,8 +9,9 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.hibernate.envers.Audited;
 
 /**
- * A ReagentDesign is the name of magical elixirs, such as Baits and CATs, which are ordered from companies like IDT
- * or brewed in-house. A CAT is a Custom Amplicon Tube.
+ * A ReagentDesign is an abstraction or categorization of DesignedReagent, which is an instance of Reagent.
+ * ReagentDesign is used when the reagent is a bait or CAT. CAT stands for Custom Amplicon Tube.
+ * The design name is associated with a target list (or "manifest") registered in the pipeline.
  */
 @Entity
 @Audited
@@ -53,6 +54,10 @@ public class ReagentDesign implements BusinessObject {
     public ReagentDesign(@Nonnull String designName, @Nonnull ReagentType reagentType) {
         this.designName = designName;
         this.reagentType = reagentType;
+    }
+
+    public Long getReagentDesignId() {
+        return reagentDesignId;
     }
 
     public ReagentType getReagentType() {
@@ -107,4 +112,5 @@ public class ReagentDesign implements BusinessObject {
     public void addDesignedReagent(DesignedReagent designedReagent) {
         this.designedReagents.add(designedReagent);
     }
+
 }

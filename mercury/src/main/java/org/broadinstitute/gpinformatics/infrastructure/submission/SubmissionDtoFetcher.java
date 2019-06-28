@@ -12,8 +12,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
@@ -27,8 +25,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationMetricsFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
@@ -36,6 +32,7 @@ import org.jvnet.inflector.Noun;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,75 +42,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@Dependent
 public class SubmissionDtoFetcher {
     private static final Log log = LogFactory.getLog(SubmissionDtoFetcher.class);
     private AggregationMetricsFetcher aggregationMetricsFetcher;
-    private BassSearchService bassSearchService;
     private SubmissionsService submissionsService;
     private ProductOrderSampleDao productOrderSampleDao;
 
     @Inject
     public SubmissionDtoFetcher(AggregationMetricsFetcher aggregationMetricsFetcher,
-                                BassSearchService bassSearchService, SubmissionsService submissionsService,
+                                SubmissionsService submissionsService,
                                 ProductOrderSampleDao productOrderSampleDao) {
         this.aggregationMetricsFetcher = aggregationMetricsFetcher;
-        this.bassSearchService = bassSearchService;
         this.submissionsService = submissionsService;
         this.productOrderSampleDao = productOrderSampleDao;
-    }
-
-    /**
-     * Fetch information about files that are available for submission, including related information such as
-     * aggregation metrics. The results may include files that have already been submitted.
-     *
-     * @param researchProject    the research project to find files for
-     * @param messageReporter    a collector for messages related to finding submission files that a user might be interested in
-     * @return a list of files for submission
-     */
-    public List<SubmissionDto> fetch(@Nonnull ResearchProject researchProject, MessageReporter messageReporter) {
-        Map<String, Collection<ProductOrder>> sampleNameToPdos = getSamplesForProject(researchProject, messageReporter);
-
-        Set<String> sampleNames = sampleNameToPdos.keySet();
-
-        // Gather status for anything that has already been submitted
-        Map<String, SubmissionTuple> submissionIds = collectSubmissionIdentifiers(researchProject);
-        Map<String, SubmissionStatusDetailBean> sampleSubmissionMap = buildSampleToSubmissionMap(submissionIds);
-
-        Map<SubmissionTuple, BassDTO> bassDTOMap =
-                fetchBassDtos(researchProject.getBusinessKey(), sampleNames.toArray(new String[sampleNames.size()]));
-
-        /*
-         * Since Mercury currently only works with BAM files, always fetch aggregation metrics. If Mercury needs to
-         * support other file types in the future, the Bass results will have to be split apart by file type so that
-         * metrics can be conditionally fetched as appropriate for each type.
-         */
-        Map<SubmissionTuple, Aggregation> aggregationMap = fetchAggregationDtos(bassDTOMap.values());
-
-        List<SubmissionDto> results = new ArrayList<>();
-        buildSubmissionDtosFromResults(results, sampleNameToPdos, sampleSubmissionMap, bassDTOMap, aggregationMap,
-                researchProject);
-        return results;
-    }
-
-    public Map<SubmissionTuple, BassDTO> fetchBassDtos(String researchProjectBusinessKey, String... samples) {
-        List<BassDTO> bassDTOs = bassSearchService.runSearch(researchProjectBusinessKey, samples);
-        return buildBassDtoMap(bassDTOs);
-    }
-
-    private Map<String, Collection<ProductOrder>> getSamplesForProject(ResearchProject researchProject,
-                                                                       MessageReporter messageReporter) {
-        List<ProductOrderSample> unfilteredSamples =
-                productOrderSampleDao.findByResearchProject(researchProject.getJiraTicketKey());
-        List<ProductOrderSample> productOrderSamples
-                = new ArrayList<>(Collections2.filter(unfilteredSamples, new Predicate<ProductOrderSample>() {
-            @Override
-            public boolean apply(@Nullable ProductOrderSample input) {
-                return input.canBeSubmitted();
-            }
-        }));
-        ProductOrder.loadCollaboratorSampleName(productOrderSamples);
-
-        return getCollaboratorSampleNameToPdoMap(productOrderSamples, messageReporter);
     }
 
     Map<String, Collection<ProductOrder>> getCollaboratorSampleNameToPdoMap(
@@ -141,74 +83,102 @@ public class SubmissionDtoFetcher {
 
         return results.asMap();
     }
+    /**
+     * Fetch information about files that are available for submission, including related information such as
+     * aggregation metrics. The results may include files that have already been submitted.
+     *
+     * @param researchProject    the research project to find files for
+     * @param messageReporter    a collector for messages related to finding submission files that a user might be interested in
+     * @return a list of files for submission
+     */
+    public List<SubmissionDto> fetch(@Nonnull ResearchProject researchProject, MessageReporter messageReporter) {
+        List<ProductOrderSample> productOrderSamples =
+                productOrderSampleDao.findSubmissionSamples(researchProject.getJiraTicketKey());
 
-    private Map<SubmissionTuple, BassDTO> buildBassDtoMap(List<BassDTO> bassDTOs) {
-        Map<SubmissionTuple, BassDTO> bassDTOMap = new HashMap<>();
-        for (BassDTO bassDTO : bassDTOs) {
-            SubmissionTuple tuple = bassDTO.getTuple();
-            if (bassDTOMap.containsKey(tuple)) {
-                throw new RuntimeException("The bassDTO Map already contains an index for: " + tuple);
-            }
-            bassDTOMap.put(tuple, bassDTO);
+        ProductOrder.loadCollaboratorSampleName(productOrderSamples);
+
+        // Gather status for anything that has already been submitted
+        Map<String, SubmissionStatusDetailBean> sampleSubmissionMap = new HashMap<>();
+        try {
+            sampleSubmissionMap.putAll(buildSampleToSubmissionMap(researchProject));
+        } catch (Exception e) {
+            messageReporter.addMessage(e.getLocalizedMessage());
         }
-        return bassDTOMap;
+
+        /*
+         * Since Mercury currently only works with BAM files, always fetch aggregation metrics. If Mercury needs to
+         * support other file types in the future, the results will have to be split apart by file type so that
+         * metrics can be conditionally fetched as appropriate for each type.
+         */
+        Map<SubmissionTuple, Aggregation> aggregationMap = fetchAggregationDtos(productOrderSamples);
+
+        List<SubmissionDto> results = buildSubmissionDtosFromResults(sampleSubmissionMap, aggregationMap, researchProject, messageReporter);
+        return results;
     }
 
     /**
-     * Fetch aggregation metrics for a set of files from Bass. This only applies to BAM files. Since Mercury is
+     * Fetch aggregation metrics given PDO samples. This only applies to BAM files. Since Mercury is
      * currently only dealing with BAM files, this is always done. However, if Mercury needs to support more file types
      * in the future (e.g., VCF), then this will need to be revisited.
      *
      * While it is expected that there will be an aggregation record returned for each input, this is not guaranteed by
      * Mercury.
      *
-     * @param bassDTOs    Bass files to fetch aggregation metrics for; must be BAMs
      * @return a map of submission tuple to aggregation data
      */
-    public Map<SubmissionTuple, Aggregation> fetchAggregationDtos(Collection<BassDTO> bassDTOs) {
-        Map<SubmissionTuple, Aggregation> aggregationMap;
-
-        List<SubmissionTuple> tuples = new ArrayList<>();
-        for (BassDTO bassDTO : bassDTOs) {
-            SubmissionTuple tuple = bassDTO.getTuple();
-            log.debug(String.format("Fetching Metrics aggregations for tuple: %s", tuple));
-            tuples.add(tuple);
+    public Map<SubmissionTuple, Aggregation> fetchAggregationDtos(List<ProductOrderSample> productOrderSamples) {
+        List<SubmissionTuple> tupleList = new ArrayList<>();
+        for (ProductOrderSample productOrderSample : productOrderSamples) {
+            String sampleName = productOrderSample.getSampleData().getCollaboratorsSampleName();
+            String mercuryProject = productOrderSample.getProductOrder().getResearchProject().getJiraTicketKey();
+            SubmissionTuple submissionTuple =
+                new SubmissionTuple(mercuryProject, mercuryProject, sampleName, SubmissionTuple.VERSION_UNKNOWN, SubmissionTuple.PROCESSING_LOCATION_UNKNOWN,
+                    SubmissionTuple.DATA_TYPE_UNKNOWN);
+            tupleList.add(submissionTuple);
         }
-
-        List<Aggregation> aggregation = aggregationMetricsFetcher.fetch(tuples);
-        aggregationMap = Maps.uniqueIndex(aggregation, new Function<Aggregation, SubmissionTuple>() {
+        final Map<SubmissionTuple, Aggregation> aggregationMap = new HashMap<>();
+        List<Aggregation> aggregations = aggregationMetricsFetcher.fetch(tupleList);
+        aggregationMap.putAll(Maps.uniqueIndex(aggregations, new Function<Aggregation, SubmissionTuple>() {
             @Override
             public SubmissionTuple apply(@Nullable Aggregation aggregation) {
-                return aggregation.getTuple();
+                return aggregation.getSubmissionTuple();
             }
-        });
+        }));
+
         return aggregationMap;
     }
 
-    public void buildSubmissionDtosFromResults(List<SubmissionDto> results,
-                                               Map<String, Collection<ProductOrder>> sampleNameToPdos,
-                                               Map<String, SubmissionStatusDetailBean> sampleSubmissionMap,
-                                               Map<SubmissionTuple, BassDTO> bassDTOMap,
-                                               Map<SubmissionTuple, Aggregation> aggregationMap,
-                                               ResearchProject researchProject) {
-        for (Map.Entry<SubmissionTuple, BassDTO> bassDTOEntry : bassDTOMap.entrySet()) {
-            SubmissionTuple tuple = bassDTOEntry.getKey();
-            BassDTO bassDTO = bassDTOEntry.getValue();
+    public List<SubmissionDto> buildSubmissionDtosFromResults(
+        Map<String, SubmissionStatusDetailBean> sampleSubmissionMap,
+        Map<SubmissionTuple, Aggregation> aggregationMap,
+        ResearchProject researchProject,
+        MessageReporter messageReporter) {
+        List<SubmissionDto> results = new ArrayList<>();
+        List<String> errors = new ArrayList<>();
+        for (SubmissionTuple tuple : aggregationMap.keySet()) {
             Aggregation aggregation = aggregationMap.get(tuple);
             if (aggregation == null) {
-                throw new RuntimeException("Could not find metrics for: " + tuple);
+                errors.add(String.format("%s v%s", tuple.getSampleName(), tuple.getVersion()));
             }
             SubmissionTracker submissionTracker = researchProject.getSubmissionTracker(tuple);
             SubmissionStatusDetailBean statusDetailBean = null;
             if (submissionTracker != null) {
-                statusDetailBean = sampleSubmissionMap.get(submissionTracker.createSubmissionIdentifier());
+                try {
+                    statusDetailBean = sampleSubmissionMap.get(submissionTracker.createSubmissionIdentifier());
+                } catch (Exception e) {
+                    messageReporter.addMessage(e.getMessage());
+                }
             }
-            results.add(new SubmissionDto(bassDTO, aggregation, sampleNameToPdos.get(tuple.getSampleName()),
-                    statusDetailBean));
+            results.add(new SubmissionDto(aggregation, statusDetailBean));
         }
+        if (!errors.isEmpty()) {
+            messageReporter.addMessage("Picard data not found for samples<ul><li>{0}</ul>", errors);
+        }
+        return results;
     }
 
-    public Map<String, SubmissionStatusDetailBean> buildSampleToSubmissionMap(Map<String, SubmissionTuple> submissionTupleMap) {
+    public Map<String, SubmissionStatusDetailBean> buildSampleToSubmissionMap(ResearchProject researchProject) {
+        Map<String, SubmissionTuple> submissionTupleMap = collectSubmissionIdentifiers(researchProject);
         Map<String, SubmissionStatusDetailBean> sampleSubmissionMap = new HashMap<>();
 
         Set<String> submissionIds = submissionTupleMap.keySet();
@@ -216,17 +186,23 @@ public class SubmissionDtoFetcher {
             Collection<SubmissionStatusDetailBean> submissionStatus =
                     submissionsService.getSubmissionStatus(submissionIds.toArray(new String[submissionIds.size()]));
             for (SubmissionStatusDetailBean submissionStatusDetailBean : submissionStatus) {
-                SubmissionTuple submissionTuple = submissionTupleMap.get(submissionStatusDetailBean.getUuid());
-                submissionStatusDetailBean.setSubmittedVersion(submissionTuple.getVersion());
-                sampleSubmissionMap.put(submissionStatusDetailBean.getUuid(), submissionStatusDetailBean);
+                if (hasSubmission(submissionStatusDetailBean)) {
+                    SubmissionTuple submissionTuple = submissionTupleMap.get(submissionStatusDetailBean.getUuid());
+                    submissionStatusDetailBean.setSubmittedVersion(submissionTuple.getVersion());
+                    submissionStatusDetailBean.setSubmissionDatatype(submissionTuple.getDataType());
+                    sampleSubmissionMap.put(submissionStatusDetailBean.getUuid(), submissionStatusDetailBean);
+                }
             }
         }
         return sampleSubmissionMap;
     }
 
+    private boolean hasSubmission(SubmissionStatusDetailBean submissionStatusDetailBean) {
+        return submissionStatusDetailBean.getStatus() != null;
+    }
+
     public void refreshSubmissionStatuses(ResearchProject editResearchProject, List<SubmissionDto> submissionDataList) {
-        Map<String, SubmissionTuple> submissionTupleMap = collectSubmissionIdentifiers(editResearchProject);
-        Map<String, SubmissionStatusDetailBean> sampleSubmissionMap = buildSampleToSubmissionMap(submissionTupleMap);
+        Map<String, SubmissionStatusDetailBean> sampleSubmissionMap = buildSampleToSubmissionMap(editResearchProject);
         for (SubmissionDto submissionDto : submissionDataList) {
             if (StringUtils.isNotBlank(submissionDto.getUuid())) {
                 submissionDto.setStatusDetailBean(sampleSubmissionMap.get(submissionDto.getUuid()));
@@ -239,7 +215,10 @@ public class SubmissionDtoFetcher {
         /** SubmissionTracker uses sampleName for accessionIdentifier
          @see: org/broadinstitute/gpinformatics/athena/boundary/projects/ ResearchProjectEjb.java:243 **/
         for (SubmissionTracker submissionTracker : researchProject.getSubmissionTrackers()) {
-            submissionIds.put(submissionTracker.createSubmissionIdentifier(), submissionTracker.getTuple());
+            String uuid = submissionTracker.createSubmissionIdentifier();
+            if (!submissionIds.containsKey(uuid)) {
+                submissionIds.put(uuid, submissionTracker.getSubmissionTuple());
+            }
         }
         return submissionIds;
     }

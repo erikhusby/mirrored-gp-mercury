@@ -1,11 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -51,18 +53,25 @@ import java.util.TreeMap;
  */
 @Entity
 @Audited
-@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"batchName"}))
+@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"batch_name"}))
 public class LabBatch {
 
     public static class VesselToLanesInfo {
         private List<VesselPosition> lanes;
         private BigDecimal concentration;
         private LabVessel labVessel;
+        private String linkedLcset;
+        private String productNames;
+        private List<FlowcellDesignation> designations;
 
-        public VesselToLanesInfo(List<VesselPosition> lanes, BigDecimal concentration, LabVessel labVessel) {
+        public VesselToLanesInfo(List<VesselPosition> lanes, BigDecimal concentration, LabVessel labVessel,
+                String lcsetName, String productName, @Nonnull List<FlowcellDesignation> designations) {
             this.lanes = lanes;
             this.concentration = concentration;
             this.labVessel = labVessel;
+            this.linkedLcset = lcsetName;
+            this.productNames = productName;
+            this.designations = designations;
         }
 
         public List<VesselPosition> getLanes() {
@@ -88,12 +97,39 @@ public class LabBatch {
         public void setLabVessel(LabVessel labVessel) {
             this.labVessel = labVessel;
         }
+
+        public String getLinkedLcset() {
+            return linkedLcset;
+        }
+
+        public void setLinkedLcset(String linkedLcset) {
+            this.linkedLcset = linkedLcset;
+        }
+
+        public String getProductNames() {
+            return productNames;
+        }
+
+        public void setProductNames(String productNames) {
+            this.productNames = productNames;
+        }
+
+        public List<FlowcellDesignation> getDesignations() {
+            return designations;
+        }
+
+        public void setDesignations(@Nonnull List<FlowcellDesignation> designations) {
+            this.designations = designations;
+        }
     }
 
-    public static final Comparator<LabBatch> byDate = new Comparator<LabBatch>() {
+    /**
+     * To support lab batch sorting by creation date, newest first
+     */
+    public static final Comparator<LabBatch> byDateDesc = new Comparator<LabBatch>() {
         @Override
-        public int compare(LabBatch bucketEntryPrime, LabBatch bucketEntrySecond) {
-            return bucketEntryPrime.getCreatedOn().compareTo(bucketEntrySecond.getCreatedOn());
+        public int compare(LabBatch labBatchPrime, LabBatch labBatchSecond) {
+            return ObjectUtils.compare(labBatchSecond.getCreatedOn(), labBatchPrime.getCreatedOn());
         }
     };
 
@@ -108,7 +144,9 @@ public class LabBatch {
     @Deprecated
     @ManyToMany(cascade = CascadeType.PERSIST)
     // have to specify name, generated aud name is too long for Oracle
-    @JoinTable(schema = "mercury", name = "lb_starting_lab_vessels")
+    @JoinTable(schema = "MERCURY", name = "LB_STARTING_LAB_VESSELS"
+            , joinColumns = {@JoinColumn(name = "LAB_BATCH")}
+            , inverseJoinColumns = {@JoinColumn(name = "STARTING_LAB_VESSELS")})
     private Set<LabVessel> startingLabVessels = new HashSet<>();
 
     private boolean isActive = true;
@@ -116,6 +154,7 @@ public class LabBatch {
     private String batchName;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "JIRA_TICKET")
     private JiraTicket jiraTicket;
 
     // todo jmt get Hibernate to sort this
@@ -126,11 +165,12 @@ public class LabBatch {
      * Vessels in the batch that were added as rework from a previous batch.
      */
     @ManyToMany(cascade = CascadeType.ALL)
-    @JoinTable(name = "lab_batch_reworks", joinColumns = @JoinColumn(name = "lab_batch"),
-            inverseJoinColumns = @JoinColumn(name = "reworks"))
+    @JoinTable(schema = "MERCURY", name = "LAB_BATCH_REWORKS"
+            , joinColumns = @JoinColumn(name = "LAB_BATCH")
+            , inverseJoinColumns = @JoinColumn(name = "REWORKS"))
     private Collection<LabVessel> reworks = new HashSet<>();
 
-    private Date createdOn;
+    private Date createdOn; // todo jmt, should be CREATED_DATE?
 
     private Boolean isValidationBatch;
 
@@ -187,7 +227,7 @@ public class LabBatch {
     @Transient
     private String important;
 
-    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labBatch")
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labBatch", orphanRemoval = true)
     private Set<BucketEntry> bucketEntries = new HashSet<>();
 
     protected LabBatch() {
@@ -204,13 +244,20 @@ public class LabBatch {
         createdOn = new Date();
     }
 
+    public LabBatch(@Nonnull String batchName, @Nonnull Set<LabVessel> starterVessels,
+                    @Nonnull LabBatchType labBatchType, @Nonnull Date date) {
+        this(batchName, starterVessels, labBatchType);
+        createdOn = date;
+    }
+
     /** Specialized FCT or MISEQ constructor for test purposes. Puts the starter vessel on all flowcell lanes. */
     public LabBatch(@Nonnull String batchName, @Nonnull LabBatchType labBatchType,
                     IlluminaFlowcell.FlowcellType flowcellType, @Nonnull LabVessel starterVessel,
                     @Nullable BigDecimal concentration) {
         this(batchName, Collections.singletonList(
                 new VesselToLanesInfo(Arrays.asList(flowcellType.getVesselGeometry().getVesselPositions()),
-                        concentration, starterVessel)), labBatchType, flowcellType);
+                        concentration, starterVessel, null, null, Collections.<FlowcellDesignation>emptyList())),
+                labBatchType, flowcellType);
     }
 
     /** Constructor for FCT or MISEQ where each vessel must be designated to specific lanes. */
@@ -221,8 +268,7 @@ public class LabBatch {
         this.labBatchType = labBatchType;
         this.flowcellType = flowcellType;
         for (VesselToLanesInfo vesselToLanesInfo : vesselToLanesInfos) {
-            addLabVessel(vesselToLanesInfo.getLabVessel(), vesselToLanesInfo.getConcentration(),
-                    vesselToLanesInfo.getLanes());
+            addLabVessel(vesselToLanesInfo);
         }
         createdOn = new Date();
     }
@@ -279,28 +325,26 @@ public class LabBatch {
     }
 
     public void addLabVessel(@Nonnull LabVessel labVessel) {
-        addLabVessel(labVessel, null);
-    }
-
-    public void addLabVessel(@Nonnull LabVessel labVessel, @Nullable BigDecimal concentration) {
-        LabBatchStartingVessel labBatchStartingVessel = new LabBatchStartingVessel(labVessel, this, concentration);
+        LabBatchStartingVessel labBatchStartingVessel = new LabBatchStartingVessel(labVessel, this);
         startingBatchLabVessels.add(labBatchStartingVessel);
         labVessel.addNonReworkLabBatchStartingVessel(labBatchStartingVessel);
     }
 
     /**
-     * Adds a vessel to this batch.
-     * @param labVessel the vessel to be added.
-     * @param concentration the vessel's concentration (typically a flowcell loading concentration).
-     * @param positions the position that the vessel occupies in the batch (typically a flowcell lane).
+     * Adds a vessel with lane loading info to this FCT/MISEQ batch.
+     * @param vesselToLanesInfo holds the flowcell loading parameters.
      */
-    public void addLabVessel(@Nonnull LabVessel labVessel, @Nullable BigDecimal concentration,
-                             @Nonnull List<VesselPosition> positions) {
-        for (VesselPosition vesselPosition : positions) {
+    public void addLabVessel(@Nonnull VesselToLanesInfo vesselToLanesInfo) {
+        for (int i = 0; i < vesselToLanesInfo.getLanes().size(); ++i) {
+            FlowcellDesignation designation = (vesselToLanesInfo.getDesignations().size() > i) ?
+                    vesselToLanesInfo.getDesignations().get(i) : null;
             LabBatchStartingVessel labBatchStartingVessel =
-                    new LabBatchStartingVessel(labVessel, this, concentration, vesselPosition);
+                    new LabBatchStartingVessel(vesselToLanesInfo.getLabVessel(), this,
+                            vesselToLanesInfo.getConcentration(),
+                            vesselToLanesInfo.getLanes().get(i), vesselToLanesInfo.getLinkedLcset(),
+                            vesselToLanesInfo.getProductNames(), designation);
             startingBatchLabVessels.add(labBatchStartingVessel);
-            labVessel.addNonReworkLabBatchStartingVessel(labBatchStartingVessel);
+            vesselToLanesInfo.getLabVessel().addNonReworkLabBatchStartingVessel(labBatchStartingVessel);
         }
     }
 
@@ -403,8 +447,8 @@ public class LabBatch {
         this.workflowName = workflowName;
     }
 
-    public void setWorkflow(@Nonnull Workflow workflow) {
-        workflowName = workflow.getWorkflowName();
+    public void setWorkflow(@Nonnull String workflow) {
+        workflowName = workflow;
     }
 
     public String getBatchDescription() {
@@ -437,11 +481,11 @@ public class LabBatch {
      * <p/>
      * {@code [Product name] [Product workflow Version]: [comma separated list of PDO names]}
      */
-    public static String generateBatchName(@Nonnull Workflow workflow, @Nonnull Collection<String> pdoNames) {
+    public static String generateBatchName(@Nonnull String workflow, @Nonnull Collection<String> pdoNames) {
 
         StringBuilder batchName = new StringBuilder();
 
-        batchName.append(workflow.getWorkflowName()).append(": ");
+        batchName.append(workflow).append(": ");
         boolean first = true;
 
         for (String currentPdo : pdoNames) {
@@ -473,8 +517,7 @@ public class LabBatch {
     }
 
     /**
-     * TicketFields is an enum intended to assist in the creation of a Jira ticket
-     * for Product orders
+     * TicketFields is an enum representing the fields in a Jira ticket.
      */
     public enum TicketFields implements CustomField.SubmissionField {
         PROTOCOL("Protocol", true),
@@ -507,8 +550,21 @@ public class LabBatch {
         SUMMARY("Summary", false),
         SEQUENCING_STATION("Sequencing Station", true),
         CLUSTER_STATION("Cluster Station", true),
-        MATERIAL_TYPE("BATCH_TYPE", true),
-        LANE_INFO("Lane Info", true);
+        MATERIAL_TYPE("Material Type", true),
+        LANE_INFO("Lane Info", true),
+        READ_STRUCTURE("Read Structure", true),
+        SAMPLES_ON_RISK("Samples On Risk", true),
+        RISK_CATEGORIZED_SAMPLES("Risk Categorized Samples", true),
+        REWORK_SAMPLES("Rework Samples",true),
+
+        ISSUE_TYPE_MAP("Issue Type", false),
+        ISSUE_TYPE_NAME("name", false),
+
+        // ARRAY tickets
+        NUMBER_OF_EMPTIES("Number of Empties", true),
+        NUMBER_OF_WELLS("Total Samples, Controls, and Empties", true),
+        CONTAINER_ID("Container ID", true),
+        ;
 
 
         private final String fieldName;
@@ -548,6 +604,12 @@ public class LabBatch {
     public void addBucketEntry(BucketEntry bucketEntry) {
         bucketEntries.add(bucketEntry);
         bucketEntry.setLabBatch(this);
+    }
+
+    public void removeBucketEntry(BucketEntry bucketEntry) {
+        bucketEntries.remove(bucketEntry);
+        bucketEntry.setLabBatch(null);
+        bucketEntry.setStatus(BucketEntry.Status.Active);
     }
 
     public void setCreatedOn(Date createdOn) {

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.analytics;
 
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcBlacklisting;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -15,7 +16,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.testng.Assert.*;
 
 /**
  * Test the DAO.
@@ -34,12 +34,23 @@ public class ArraysQcDaoTest extends Arquillian {
     @Test
     public void testFindByBarcodes() {
         List<ArraysQc> arraysQcList = arraysQcDao.findByBarcodes(Arrays.asList(
-                "101342370027_R02C01", "101342370134_R12C02"));
+                "200584330132_R12C01", "200584330041_R07C02"));
         Assert.assertEquals(arraysQcList.size(), 2);
         // The data is currently in flux, so just check that there are no exceptions in the mapping
         for (ArraysQc arraysQc : arraysQcList) {
             arraysQc.getArraysQcFingerprints().size();
             arraysQc.getArraysQcGtConcordances().size();
+        }
+    }
+
+    @Test
+    public void testFindBlacklist() {
+        List<ArraysQcBlacklisting> arraysBlacklist = arraysQcDao.findBlacklistByBarcodes(Arrays.asList(
+                "1214201633HC0_R02C01", "1214172005HC0_R01C01"));
+        Assert.assertEquals(arraysBlacklist.size(), 2);
+        // The data is currently in flux, so just check that there are no exceptions in the mapping
+        for (ArraysQcBlacklisting blacklisting : arraysBlacklist) {
+            System.out.println( blacklisting.getChipWellBarcode() + ":" + blacklisting.getBlacklistReason() );
         }
     }
 }

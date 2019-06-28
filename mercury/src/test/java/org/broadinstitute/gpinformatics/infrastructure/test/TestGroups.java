@@ -30,6 +30,9 @@ public class TestGroups {
     /** Other types of tests */
     public static final String MULTITHREADED = "Multithreaded";
 
+    /** Long running ALTERNATIVES tests. */
+    public static final String LONG_RUNNING = "LongRunning";
+
     /**
      * This means ... ?
      */

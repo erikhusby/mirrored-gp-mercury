@@ -1,16 +1,15 @@
 package org.broadinstitute.gpinformatics.mercury.integration;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.UniformInterfaceException;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
-import com.sun.jersey.api.json.JSONConfiguration;
-import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
-import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.jboss.arquillian.testng.Arquillian;
 import org.testng.annotations.BeforeMethod;
 
+import javax.enterprise.context.Dependent;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
@@ -20,8 +19,8 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.AL
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STUBBY;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.testng.Assert.fail;
 
 /**
@@ -34,13 +33,12 @@ import static org.testng.Assert.fail;
  *
  * @author breilly
  */
+@Dependent
 public abstract class RestServiceContainerTest extends Arquillian {
 
     public static final int DEFAULT_FORWARD_PORT = 8443;
     private static final String SERVLET_MAPPING_PREFIX = "rest";
     public static final String JBOSS_HTTPS_PORT_SYSTEM_PROPERTY = "jbossHttpsPort";
-
-    private ClientConfig clientConfig;
 
     /**
      * Returns the base path of the resource under test with no leading or
@@ -53,11 +51,7 @@ public abstract class RestServiceContainerTest extends Arquillian {
 
     @BeforeMethod(groups = {EXTERNAL_INTEGRATION, ALTERNATIVES, STUBBY, STANDARD})
     public void setUp() throws Exception {
-        clientConfig = new DefaultClientConfig();
-        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
-        clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);
-        clientConfig.getClasses().add(JacksonJsonProvider.class);
-        JerseyUtils.acceptAllServerCertificates(clientConfig);
+//        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
     }
 
     /**
@@ -72,11 +66,14 @@ public abstract class RestServiceContainerTest extends Arquillian {
      *
      * @return a configured WebResource for the service method
      */
-    protected WebResource makeWebResource(URL baseUrl, String serviceUrl) throws MalformedURLException {
+    protected WebTarget makeWebResource(URL baseUrl, String serviceUrl) throws MalformedURLException {
+        ClientBuilder clientBuilder = ClientBuilder.newBuilder();
+        JaxRsUtils.acceptAllServerCertificates(clientBuilder);
 
-        Client client = Client.create(clientConfig);
+        Client client = clientBuilder.build();
+//        client.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
         String newUrl = convertUrlToSecure(baseUrl);
-        return client.resource(
+        return client.target(
                 newUrl + SERVLET_MAPPING_PREFIX + "/" + getResourcePath() + "/" + serviceUrl);
     }
 
@@ -102,11 +99,11 @@ public abstract class RestServiceContainerTest extends Arquillian {
      *
      * @return the response content
      */
-    protected String get(WebResource resource) {
+    protected String get(WebTarget resource) {
         try {
-            return resource.accept(APPLICATION_JSON_TYPE).get(String.class);
-        } catch (UniformInterfaceException e) {
-            fail("Error with GET: " + e.getResponse().getEntity(String.class), e);
+            return resource.request(APPLICATION_JSON_TYPE).get(String.class);
+        } catch (WebApplicationException e) {
+            fail("Error with GET: " + e.getResponse().readEntity(String.class), e);
         }
         // Can't technically get here, but javac doesn't understand that fail() is guaranteed to throw a runtime exception
         return null;
@@ -121,12 +118,12 @@ public abstract class RestServiceContainerTest extends Arquillian {
      *
      * @return the caught UniformInterfaceException
      */
-    protected UniformInterfaceException getWithError(WebResource resource) {
-        UniformInterfaceException caught = null;
+    protected WebApplicationException getWithError(WebTarget resource) {
+        WebApplicationException caught = null;
         try {
-            resource.accept(APPLICATION_JSON_TYPE).get(String.class);
+            resource.request(APPLICATION_JSON_TYPE).get(String.class);
             fail("Expected UniformInterfaceException not thrown");
-        } catch (UniformInterfaceException e) {
+        } catch (WebApplicationException e) {
             caught = e;
         }
         return caught;
@@ -141,7 +138,7 @@ public abstract class RestServiceContainerTest extends Arquillian {
      * @param status  the expected status code
      * @param content the expected response content
      */
-    protected void assertErrorResponse(UniformInterfaceException caught, int status, String content) {
+    protected void assertErrorResponse(WebApplicationException caught, int status, String content) {
         assertThat(caught.getResponse().getStatus(), equalTo(status));
         assertThat(getResponseContent(caught), equalTo(content));
     }
@@ -156,21 +153,22 @@ public abstract class RestServiceContainerTest extends Arquillian {
      *
      * @return the response content
      */
-    protected String post(WebResource resource, String request) {
+    protected String post(WebTarget resource, String request) {
         try {
-            return resource.type(APPLICATION_JSON_TYPE).accept(APPLICATION_JSON_TYPE).post(String.class, request);
-        } catch (UniformInterfaceException e) {
-            fail("Error with POST: " + e.getResponse().getEntity(String.class), e);
+            return resource.request(APPLICATION_JSON_TYPE).accept(APPLICATION_JSON_TYPE)
+                    .post(Entity.entity(request, APPLICATION_JSON_TYPE), String.class);
+        } catch (WebApplicationException e) {
+            fail("Error with POST: " + e.getResponse().readEntity(String.class), e);
         }
         // Can't technically get here, but javac doesn't understand that fail() is guaranteed to throw a runtime exception
         return null;
     }
 
-    protected String getResponseContent(UniformInterfaceException caught) {
-        return caught.getResponse().getEntity(String.class);
+    protected String getResponseContent(WebApplicationException caught) {
+        return caught.getResponse().readEntity(String.class);
     }
 
-    protected WebResource addQueryParam(WebResource resource, String name, List<String> values) {
+    protected WebTarget addQueryParam(WebTarget resource, String name, List<String> values) {
         for (String value : values) {
             resource = resource.queryParam(name, value);
         }

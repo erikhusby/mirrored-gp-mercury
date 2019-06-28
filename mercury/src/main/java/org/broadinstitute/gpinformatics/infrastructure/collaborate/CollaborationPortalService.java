@@ -1,21 +1,23 @@
 package org.broadinstitute.gpinformatics.infrastructure.collaborate;
 
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientHandlerException;
-import com.sun.jersey.api.client.UniformInterfaceException;
-import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.SampleKitRecipient;
 import org.broadinstitute.gpinformatics.athena.entity.project.CollaborationData;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
+import org.broadinstitute.gpinformatics.mercury.control.AbstractJaxRsClientService;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -24,7 +26,8 @@ import javax.ws.rs.core.Response;
  * Service to talk to the CollaborationData Portal.
  */
 @Default
-public class CollaborationPortalService extends AbstractJerseyClientService {
+@Dependent
+public class CollaborationPortalService extends AbstractJaxRsClientService {
 
     private static final long serialVersionUID = 5340477906783139812L;
 
@@ -91,7 +94,7 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
         }
 
         String url = config.getUrlBase() + Endpoint.BEGIN_COLLABORATION.getSuffixUrl();
-        WebResource resource = getJerseyClient().resource(url);
+        WebTarget resource = getJaxRsClient().target(url);
 
         CollaborationData collaboration =
                 new CollaborationData(researchProject.getName(), researchProject.getSynopsis(),
@@ -99,12 +102,11 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
                         sampleKitRecipient, collaborationMessage);
 
         try {
-            return resource.type(MediaType.APPLICATION_XML).post(String.class, collaboration);
-        } catch (UniformInterfaceException e) {
+            return JaxRsUtils.postAndCheck(resource.request(MediaType.APPLICATION_XML), Entity.xml(collaboration),
+                    String.class);
+        } catch (WebApplicationException e) {
             rethrowIfCollaborationError(e);
             throw new CollaborationNotFoundException("Could not communicate with collaboration portal at " + url, e);
-        } catch (ClientHandlerException e) {
-            throw new CollaborationPortalException("Could not communicate with collaboration portal at " + url, e);
         }
     }
 
@@ -112,14 +114,11 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
             throws CollaborationNotFoundException, CollaborationPortalException {
 
         String url = config.getUrlBase() + Endpoint.GET_COLLABORATION_DETAILS.getSuffixUrl() + researchProjectKey;
-        WebResource resource = getJerseyClient().resource(url);
+        WebTarget resource = getJaxRsClient().target(url);
 
         try {
-            return resource.accept(MediaType.APPLICATION_XML).get(CollaborationData.class);
-        } catch (UniformInterfaceException e) {
-            // No collaboration yet.
-            return null;
-        } catch (ClientHandlerException e) {
+            return JaxRsUtils.getAndCheck(resource.request(MediaType.APPLICATION_XML), CollaborationData.class);
+        } catch (WebApplicationException e) {
             throw new CollaborationPortalException("Could not communicate with collaboration portal at " + url, e);
         }
     }
@@ -128,19 +127,19 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
     public String resendInvitation(@Nonnull String researchProjectKey) throws CollaborationPortalException {
 
         String url = config.getUrlBase() + Endpoint.RESEND_INVITATION.getSuffixUrl() + researchProjectKey;
-        WebResource resource = getJerseyClient().resource(url);
+        WebTarget resource = getJaxRsClient().target(url);
 
         try {
-            return resource.post(String.class);
-        } catch (UniformInterfaceException e) {
+            return JaxRsUtils.postAndCheck(resource.request(), null, String.class);
+        } catch (WebApplicationException e) {
             rethrowIfCollaborationError(e);
             throw new CollaborationPortalException("Could not communicate with collaboration portal at " + url, e);
         }
     }
 
-    private static void rethrowIfCollaborationError(UniformInterfaceException e) throws CollaborationPortalException {
+    private static void rethrowIfCollaborationError(WebApplicationException e) throws CollaborationPortalException {
         if (e.getResponse().getStatus() == Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()) {
-            throw new CollaborationPortalException(e.getResponse().getEntity(String.class), e);
+            throw new CollaborationPortalException(e.getResponse().readEntity(String.class), e);
         }
     }
 }

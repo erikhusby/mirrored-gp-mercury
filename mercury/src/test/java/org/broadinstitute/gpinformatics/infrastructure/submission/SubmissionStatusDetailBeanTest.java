@@ -18,16 +18,16 @@ public class SubmissionStatusDetailBeanTest {
         SubmissionStatusDetailBean testStatus = new SubmissionStatusDetailBean();
 
         Assert.assertNull(testStatus.getUuid());
-        Assert.assertNull(testStatus.getStatus());
+        Assert.assertNull(testStatus.getStatusString());
         Assert.assertTrue(testStatus.getErrors().isEmpty());
 
         testStatus.setUuid(testUuid);
 
         Assert.assertEquals(testStatus.getUuid(), testUuid);
 
-        testStatus.setStatus("InTransit");
+        testStatus.setStatus(SubmissionStatusDetailBean.Status.IN_TRANSIT);
 
-        Assert.assertEquals(testStatus.getStatus(),
+        Assert.assertEquals(testStatus.getStatusString(),
                 SubmissionStatusDetailBean.Status.IN_TRANSIT.getLabel());
 
         testStatus.setErrors(Arrays.asList(testError1, testError2));

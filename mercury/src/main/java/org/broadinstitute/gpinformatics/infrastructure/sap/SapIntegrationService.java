@@ -4,11 +4,14 @@ import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
+import org.broadinstitute.sap.entity.OrderCalculatedValues;
+import org.broadinstitute.sap.entity.SAPMaterial;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
-import javax.annotation.Nonnull;
 import java.math.BigDecimal;
+import java.util.Date;
+import java.util.Set;
 
 /**
  *
@@ -34,10 +37,11 @@ public interface SapIntegrationService {
      * For a given ProductOrder that is already represented in SAP, this method will communicate to SAP any changes to
      * be made for that order
      * @param placedOrder ProductOrder, that is reflected in SAP, to be updated in SAP
+     * @param closingOrder
      * @return Unique order identifier of the sales/release order currently in SAP
      * @throws SAPIntegrationException
      */
-    void updateOrder(ProductOrder placedOrder) throws SAPIntegrationException;
+    void updateOrder(ProductOrder placedOrder, boolean closingOrder) throws SAPIntegrationException;
 
     /**
      * For Phase 1 of the SAP/GP integration, Orders placed in SAP need to have reference to the customer number found
@@ -55,32 +59,26 @@ public interface SapIntegrationService {
      * @param item A structure previously utilized by logging information to the quote server which aggregates work
      *             by Quote, Product order, PDO and finally amount done.
      * @param quantityOverride
+     * @param workCompleteDate
      * @return A unique identifier associated with the recorded record of work in SAP
      * @throws SAPIntegrationException
      */
-    String billOrder(QuoteImportItem item, BigDecimal quantityOverride) throws SAPIntegrationException;
+    String billOrder(QuoteImportItem item, BigDecimal quantityOverride, Date workCompleteDate) throws SAPIntegrationException;
 
     /**
      * With the introduction of a direct communication to SAP from Mercury, we will do away with Price Items for a
      * representation of the price of work.  Products are now directly reflected in the System which manages our
      * financial records (SAP).  This method will allow Mercury to create a representation of a Product within SAP
      * for the purpose of tracking projected and actual work
-     * @param product The Product information to be reflected in SAP
-     * @throws SAPIntegrationException
-     */
-    void createProductInSAP(Product product) throws SAPIntegrationException;
-
-    /**
-     * For an existing product, this method will allow Mercury to update that product with any changes made within
+     * 
+     * For an existing product, this method will also allow Mercury to update that product with any changes made within
      * Mercury
      * @param product The Product information to be reflected in SAP
      * @throws SAPIntegrationException
      */
-    void changeProductInSAP(Product product) throws SAPIntegrationException;
+    void publishProductInSAP(Product product) throws SAPIntegrationException;
+    
+    Set<SAPMaterial> findProductsInSap() throws SAPIntegrationException;
 
-    SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyCode(ProductOrder companyProductOrder)
-            throws SAPIntegrationException;
-
-    @Nonnull
-    SapIntegrationClientImpl.SAPCompanyConfiguration getSapCompanyConfigurationForProduct(Product product);
+    OrderCalculatedValues calculateOpenOrderValues(int addedSampleCount, String quoteId, ProductOrder productOrder) throws SAPIntegrationException;
 }

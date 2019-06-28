@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 /**
@@ -43,7 +44,7 @@ public class SampleLink {
     }
 
     private enum Format {
-        /* TODO SGM: Revisit the Validity of this enum */
+        /* TODO Revisit the Validity of this enum */
         BSP("BSP_SAMPLE", "BSP Sample"),
         UNKNOWN(null, null);
         private final String target;
@@ -62,6 +63,7 @@ public class SampleLink {
         }
     }
 
+    @Dependent
     public static class Factory {
         private final BSPConfig bspConfig;
 

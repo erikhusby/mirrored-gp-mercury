@@ -1,11 +1,19 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -13,6 +21,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFa
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
+import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matchers;
 import org.meanbean.lang.EquivalentFactory;
 import org.meanbean.test.BeanTester;
@@ -26,9 +35,13 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
@@ -126,6 +139,13 @@ public class ProductOrderTest {
                 .ignoreProperty("childOrders")
                 .ignoreProperty("parentOrder")
                 .ignoreProperty("pipelineLocation")
+                .ignoreProperty("quotePriceMatchAdjustments")
+                .ignoreProperty("orderType")
+                .ignoreProperty("clinicalAttestationConfirmed")
+                .ignoreProperty("analyzeUmiOverride")
+                .ignoreProperty("reagentDesignKey")
+                .ignoreProperty("defaultAggregationParticle")
+                .ignoreProperty("coverageTypeKey")
                 .build();
         tester.testBean(ProductOrder.class, configuration);
 
@@ -357,11 +377,17 @@ public class ProductOrderTest {
         Assert.assertEquals(testProductOrder.getUnbilledSampleCount(), 0);
     }
 
-    public void testNonAbandonedCount() {
-        ProductOrder testParentOrder = new ProductOrder(TEST_CREATOR, "Test order with Abandoned Count",sixMercurySamplesNoDupes, QUOTE,null, null);
+    public void testNonAbandonedCount() throws Exception {
+        ProductOrder testParentOrder = new ProductOrder(TEST_CREATOR, "Test order with Abandoned Count",
+                sixMercurySamplesNoDupes, QUOTE, null, null);
+        testParentOrder.addSapOrderDetail(new SapOrderDetail("testParentNumber", testParentOrder.getNonAbandonedCount(),
+                testParentOrder.getQuoteId(), SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", ""));
 
-        Assert.assertEquals(6, testParentOrder.getNonAbandonedCount());
-        Assert.assertEquals(0, testParentOrder.getNumberForReplacement());
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL),6);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),6);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER),6);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY),6);
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 0);
 
         int numberOfAbandoned = 4;
         for(ProductOrderSample sampleToAbandon:testParentOrder.getSamples()) {
@@ -372,17 +398,89 @@ public class ProductOrderTest {
             sampleToAbandon.setDeliveryStatus(ProductOrderSample.DeliveryStatus.ABANDONED);
             numberOfAbandoned--;
         }
-        Assert.assertEquals(2, testParentOrder.getNonAbandonedCount());
-        Assert.assertEquals(4, testParentOrder.getNumberForReplacement());
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 2);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 2);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 2);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 2);
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 4);
 
         ProductOrder cloneOrder = ProductOrder.cloneProductOrder(testParentOrder, true);
+        cloneOrder.setOrderStatus(OrderStatus.Draft);
 
-        Assert.assertEquals(2, testParentOrder.getNonAbandonedCount());
-        Assert.assertEquals(4, testParentOrder.getNumberForReplacement());
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 2);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 2);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 2);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 2);
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 4);
         cloneOrder.addSamples(fourBspSamplesWithNoDupes);
 
-        Assert.assertEquals(6, testParentOrder.getNonAbandonedCount());
-        Assert.assertEquals(0, testParentOrder.getNumberForReplacement());
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 6);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 6);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 2);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 2);
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 0);
+
+        cloneOrder.setOrderStatus(OrderStatus.Pending);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 6);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 6);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 2);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 2);
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 0);
+
+
+
+        cloneOrder.setJiraTicketKey("PDO-CLONE1");
+        cloneOrder.setOrderStatus(OrderStatus.Submitted);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 6);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 6);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 6);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 6);
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 0);
+
+        int numberNextAbandoned = 1;
+        for (ProductOrderSample productOrderSample : testParentOrder.getSamples()) {
+            if(numberNextAbandoned == 0) {
+                break;
+            }
+            if (productOrderSample.isToBeBilled()) {
+
+                productOrderSample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.ABANDONED);
+                numberNextAbandoned--;
+            }
+        }
+
+        ProductOrder cloneOrder2 = ProductOrder.cloneProductOrder(testParentOrder, false);
+        cloneOrder2.setOrderStatus(OrderStatus.Draft);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 5);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 5);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 5);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 5);
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 1);
+
+        cloneOrder2.addSamples(ProductOrderSampleTestFactory.createSampleListWithMercurySamples("SM-test9"));
+
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 6);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 5);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 5);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 5);
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 0);
+
+        cloneOrder2.setOrderStatus(OrderStatus.Pending);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 6);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 5);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 5);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 5);
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 0);
+
+        cloneOrder2.setJiraTicketKey("PDO-CLONE2");
+        cloneOrder2.setOrderStatus(OrderStatus.Submitted);
+
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 6);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 5);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 5);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 6);
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 0);
+
     }
 
     public void testLatestSapOrder() {
@@ -394,10 +492,10 @@ public class ProductOrderTest {
 
         final String sapOrderNumber = "SAP_001";
         final SapOrderDetail orderDetail1 = new SapOrderDetail(sapOrderNumber, 5, QUOTE,
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode());
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", "");
         orderDetail1.getUpdateData().setCreatedDate(new Date());
         final SapOrderDetail orderDetail2 = new SapOrderDetail(sapOrderNumber + "2", 5, QUOTE,
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode());
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", "");
         orderDetail2.getUpdateData().setCreatedDate(new Date());
         testProductOrder.addSapOrderDetail(orderDetail1);
 
@@ -409,33 +507,138 @@ public class ProductOrderTest {
         assertThat(testProductOrder.getSapOrderNumber(), is(equalTo(sapOrderNumber+"2")));
     }
 
-    private void billSampleOut(ProductOrder productOrder, ProductOrderSample sample, int expected) {
+    // This is a utility method and NOT a test method.  Will FAIL with arguments as it should.
+    @Test(enabled = false)
+    public static void billSampleOut(ProductOrder productOrder, ProductOrderSample sample, int expected) {
 
-        LedgerEntry primaryItemSampleEntry = new LedgerEntry(sample,
-                productOrder.getProduct().getPrimaryPriceItem(), new Date(), /*productOrder.getProduct(),*/ 1);
-        primaryItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+        billSamplesOut(productOrder, Collections.singleton(sample), expected);
 
-        LedgerEntry addonItemSampleEntry = new LedgerEntry(sample,
-                productOrder.getAddOns().iterator().next().getAddOn().getPrimaryPriceItem(),
-                new Date(), /*productOrder.getProduct(),*/ 1);
-        addonItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM);
-        sample.getLedgerItems().add(primaryItemSampleEntry);
-        sample.getLedgerItems().add(addonItemSampleEntry);
+    }
 
+    @Test(enabled = false)
+    public static void billSamplesOut(ProductOrder productOrder, Collection<ProductOrderSample> samples, int expected) {
+        BillingSession billingSession = null;
+        for (ProductOrderSample sample : samples) {
+            LedgerEntry primaryItemSampleEntry = new LedgerEntry(sample,
+                    productOrder.getProduct().getPrimaryPriceItem(), new Date(), /*productOrder.getProduct(),*/ 1);
+            primaryItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+
+            LedgerEntry addonItemSampleEntry = new LedgerEntry(sample,
+                    productOrder.getAddOns().iterator().next().getAddOn().getPrimaryPriceItem(),
+                    new Date(), /*productOrder.getProduct(),*/ 1);
+            addonItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM);
+            sample.getLedgerItems().add(primaryItemSampleEntry);
+            sample.getLedgerItems().add(addonItemSampleEntry);
+
+            Assert.assertEquals(productOrder.getUnbilledSampleCount(), expected);
+
+            billingSession = new BillingSession(4L, sample.getLedgerItems());
+        }
 
         Assert.assertEquals(productOrder.getUnbilledSampleCount(), expected);
 
+        for (LedgerEntry ledgerEntry : billingSession.getLedgerEntryItems()) {
+            ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
+        }
 
-        BillingSession billingSession =
-                new BillingSession(4L, sample.getLedgerItems());
-
-
-        Assert.assertEquals(productOrder.getUnbilledSampleCount(), expected);
-
-
-        addonItemSampleEntry.setBillingMessage(BillingSession.SUCCESS);
-        Assert.assertEquals(productOrder.getUnbilledSampleCount(), expected);
-        primaryItemSampleEntry.setBillingMessage(BillingSession.SUCCESS);
+        Assert.assertEquals(productOrder.getUnbilledSampleCount(), expected-samples.size());
         billingSession.setBilledDate(new Date());
+        if(productOrder.isSavedInSAP()) {
+            productOrder.latestSapOrderDetail().addLedgerEntries(billingSession.getLedgerEntryItems());
+        }
+    }
+
+    public void testQuoteGrantValidityWithUnallocatedFundingSources() throws Exception{
+        QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
+
+        Quote gp87Uquote = stubbedQuoteService.getQuoteByAlphaId("GP87U");
+
+        try {
+            ProductOrder.checkQuoteValidity(gp87Uquote);
+        } catch (Exception shouldNotHappen) {
+            Assert.fail();
+        }
+    }
+
+    public void testQuoteGrantValidityWithGrantExpiringNow() throws Exception{
+        QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
+
+        Quote expiringNowQuote = stubbedQuoteService.getQuoteByAlphaId("STCIL1");
+        for (FundingLevel fundingLevel : expiringNowQuote.getQuoteFunding().getFundingLevel()) {
+            for (Funding funding : fundingLevel.getFunding()) {
+                funding.setGrantEndDate( DateUtils.truncate(new Date(), Calendar.DATE));
+            }
+        }
+
+        try {
+            ProductOrder.checkQuoteValidity(expiringNowQuote);
+        } catch (Exception shouldNotHappen) {
+            Assert.fail();
+        }
+    }
+   public void testQuoteGrantValidityWithGrantExpired() throws Exception{
+        QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
+
+        Quote expiringNowQuote = stubbedQuoteService.getQuoteByAlphaId("STCIL1");
+        try {
+            ProductOrder.checkQuoteValidity(expiringNowQuote);
+            Assert.fail();
+        } catch (Exception shouldNotHappen) {
+        }
+    }
+
+    public void testGuardCompanyCodeSwtiching() throws Exception {
+        ProductOrder testProductOrder = ProductOrderTestFactory.createDummyProductOrder();
+
+        testProductOrder.addSapOrderDetail(new SapOrderDetail("test number",
+                testProductOrder.getSampleCount(), testProductOrder.getQuoteId(),
+                testProductOrder.getSapCompanyConfigurationForProductOrder().getCompanyCode(), "",
+                ""));
+
+        assertThat(testProductOrder.getSapCompanyConfigurationForProductOrder(), is(equalTo(
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD)) );
+
+        assertThat(testProductOrder.isSavedInSAP(), is(true));
+
+        Product externalProduct = ProductTestFactory.createTestProduct();
+
+        externalProduct.setExternalOnlyProduct(true);
+        try {
+            testProductOrder.setProduct(externalProduct);
+            Assert.fail("Setting an external product on a research order should be an exception");
+        } catch (InvalidProductException e) {
+            
+        }
+
+        Product clinicalProduct = ProductTestFactory.createTestProduct();
+        clinicalProduct.setClinicalProduct(true);
+        try {
+            testProductOrder.setProduct(clinicalProduct);
+            Assert.fail("Setting a clinical product on a research order should be an exception");
+        } catch (InvalidProductException e) {
+
+        }
+
+    }
+
+    @DataProvider(name = "aggregationParticles")
+    public Iterator<Object[]> aggregationParticles() {
+        List<Object[]> testCases = new ArrayList<>();
+        testCases.add(new Object[]{null, Product.AggregationParticle.DEFAULT_LABEL});
+        testCases.add(new Object[]{Product.AggregationParticle.PDO, Product.AggregationParticle.PDO.getDisplayName()});
+        testCases.add(new Object[]{Product.AggregationParticle.PDO_ALIQUOT,
+            Product.AggregationParticle.PDO_ALIQUOT.getDisplayName()});
+
+        return testCases.iterator();
+    }
+
+
+    @Test(dataProvider = "aggregationParticles")
+    public void testDefaultAggregationParticleDefaultValueNeverNull(Product.AggregationParticle aggregationParticle, String displayValue) {
+        ProductOrder productOrder = new ProductOrder();
+        productOrder.setDefaultAggregationParticle(aggregationParticle);
+
+        assertThat(StringUtils.isNotBlank(displayValue), CoreMatchers.is(true));
+        assertThat(productOrder.getAggregationParticleDisplayName(), equalTo(displayValue));
     }
 }

@@ -4,8 +4,8 @@
     xsi:schemaLocation="http://jboss.org/schema/arquillian
     http://jboss.org/schema/arquillian/arquillian_1_0.xsd">
 
-    <defaultProtocol type="Servlet 3.0">
-        <!-- localhost is needed for osx 10.9, jdk7.  Otherwise it flames out trying to connect to 0.0.0.0 -->
+	<defaultProtocol type="Servlet 3.0">
+        <!-- WildFly: [scheme, port, host, contextRoot, pullInMilliSeconds] -->
         <property name="host">localhost</property>
     </defaultProtocol>
 
@@ -27,11 +27,10 @@
             <!--<property name="password">${jboss.password}</property>-->
         <!--</configuration>-->
     <!--</container>-->
-
     <!---->
     <container qualifier="dev" default="true">
         <configuration>
-            <!-- Enter your value for ${jboss.home} below -->
+            <!-- Enter your value for ${jboss.home} below-->
             <property name="jbossHome">${jboss.home}</property>
             <property name="javaVmArguments">-Xmx1000m -XX:MaxPermSize=512m</property>
         </configuration>

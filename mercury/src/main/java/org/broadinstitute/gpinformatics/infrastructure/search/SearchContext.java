@@ -1,9 +1,13 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -38,6 +42,13 @@ public class SearchContext {
     private ResultCellTargetPlatform resultCellTargetPlatform = ResultCellTargetPlatform.TEXT;
     private String baseSearchURL;
     private PaginationUtil.Pagination pagination;
+    private ResultParamValues columnParams;
+    private JiraConfig jiraConfig;
+    private PriceListCache priceListCache;
+    private QuoteLink quoteLink;
+    private UserBean userBean;
+
+    private ResultParamValues rowTraverserParams;
 
     /**
      * Avoid having to access EJB or web application context to get user data for display
@@ -152,19 +163,23 @@ public class SearchContext {
 
     /**
      * Rack scan data (if used as search term input for multiple vessel barcodes) is passed from browser as JSON.
-     * This method avoids having to re-parse JSON for every required result column and row.
+     * This method avoids having to re-parse JSON for every required result column and row. <br/>
+     * Note:  Only a single rack scan can be associated with a search instance
      */
     public JSONObject getScanData(){
-        if( getSearchValue() == null || getSearchValue().getRackScanData() == null ) {
-            return null;
-        }
         if( rackScanData != null ) {
             return rackScanData;
-        }
-        try {
-            rackScanData = new JSONObject(new JSONTokener(getSearchValue().getRackScanData()));
-        } catch (JSONException jse) {
-            throw new RuntimeException("Unable to parse JSON rack scan data", jse);
+        } else {
+            try {
+                for (SearchInstance.SearchValue searchValue : searchInstance.getSearchValues()) {
+                    if (searchValue.getRackScanData() != null) {
+                        rackScanData = new JSONObject(new JSONTokener(searchValue.getRackScanData()));
+                        break;
+                    }
+                }
+            } catch (JSONException jse) {
+                throw new RuntimeException("Unable to parse JSON rack scan data", jse);
+            }
         }
         return rackScanData;
     }
@@ -214,5 +229,63 @@ public class SearchContext {
 
     public void setPagination(PaginationUtil.Pagination pagination) {
         this.pagination = pagination;
+    }
+
+    /**
+     * Sets a copy of result column parameter values for use in generating output header and value
+     */
+    public void setColumnParams( ResultParamValues columnParams ) {
+        this.columnParams = columnParams;
+    }
+
+    /**
+     * Gets a copy of result column parameter values for use in generating output header and value
+     */
+    public ResultParamValues getColumnParams(){
+        return columnParams;
+    }
+
+    public UserBean getUserBean() {
+        return userBean;
+    }
+
+    public void setUserBean(UserBean userBean) {
+        this.userBean = userBean;
+    }
+
+    public JiraConfig getJiraConfig() {
+        return jiraConfig;
+    }
+
+    public void setJiraConfig(JiraConfig jiraConfig) {
+        this.jiraConfig = jiraConfig;
+    }
+
+    public PriceListCache getPriceListCache() {
+        return priceListCache;
+    }
+
+    public void setPriceListCache(PriceListCache priceListCache) {
+        this.priceListCache = priceListCache;
+    }
+
+    public QuoteLink getQuoteLink() {
+        return quoteLink;
+    }
+
+    public void setQuoteLink(QuoteLink quoteLink) {
+        this.quoteLink = quoteLink;
+    }
+
+    public ResultParamValues getRowTraverserParams() {
+        return rowTraverserParams;
+    }
+
+    /**
+     * User configurable params for a selected customizable ancestor/descendant row traversal
+     */
+    public void setRowTraverserParams(
+            ResultParamValues rowTraverserParams) {
+        this.rowTraverserParams = rowTraverserParams;
     }
 }

@@ -8,7 +8,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.StringWriter;
+import java.io.IOException;
 import java.util.Arrays;
 
 /**
@@ -35,6 +35,9 @@ public class SubmissionRequestBeanTest {
     private String studyContact2;
     private String studyContact3;
     private String studyContact4;
+    private String broadProject = "RP-1234";
+    private String bamVersion = "V1";
+
     private SubmissionRequestBean testRequest;
 
     @BeforeMethod
@@ -42,125 +45,133 @@ public class SubmissionRequestBeanTest {
 
 
         testJson = "{\n"
-                   + "    \"submissions\": [\n"
-                   + "        {\n"
-                   + "            \"bioproject\": {\n"
-                   + "                \"accession\": \"PRJNA75333\"\n"
-                   + "            },\n"
-                   + "            \"biosample\": {\n"
-                   + "                \"contact\": {\n"
-                   + "                    \"email\": \"jgentry@broadinstitute.org\",\n"
-                   + "                    \"firstName\": \"Jeff\",\n"
-                   + "                    \"lab\": \"homer\",\n"
-                   + "                    \"lastName\": \"Gentry\",\n"
-                   + "                    \"middleName\": \"A\",\n"
-                   + "                    \"phone\": \"617-555-9292\"\n"
-                   + "                },\n"
-                   + "                \"filePath\": \"/some/funky/file.bam\",\n"
-                   + "                \"sampleId\": \"S_2507\"\n"
-                   + "            },\n"
-                   + "            \"studyContact\": \"jgentry\",\n"
-                   + "            \"site\": \"NCBI_PROTECTED\",\n"
-                   + "            \"submissiondatatype\": \"Whole Genome\",\n"
-                   + "            \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618745\"\n"
+                   + "  \"onPremOrCloudSubmissions\": [\n"
+                   + "    {\n"
+                   + "      \"bamVersion\": \"V1\",\n"
+                   + "      \"bioProject\": {\n"
+                   + "        \"accession\": \"PRJNA75333\"\n"
+                   + "      },\n"
+                   + "      \"broadProject\": \"RP-1234\",\n"
+                   + "      \"site\": \"NCBI_PROTECTED\",\n"
+                   + "      \"studyContact\": \"jgentry\",\n"
+                   + "      \"submissionDatatype\": \"Whole Genome\",\n"
+                   + "      \"submissionSample\": {\n"
+                   + "        \"contact\": {\n"
+                   + "          \"email\": \"jgentry@broadinstitute.org\",\n"
+                   + "          \"firstName\": \"Jeff\",\n"
+                   + "          \"lab\": \"homer\",\n"
+                   + "          \"lastName\": \"Gentry\",\n"
+                   + "          \"middleName\": \"A\",\n"
+                   + "          \"phone\": \"617-555-9292\"\n"
                    + "        },\n"
-                   + "        {\n"
-                   + "            \"bioproject\": {\n"
-                   + "                \"accession\": \"PRJNA75333\"\n"
-                   + "            },\n"
-                   + "            \"biosample\": {\n"
-                   + "                \"contact\": {\n"
-                   + "                    \"email\": \"jgentry2@broadinstitute.org\",\n"
-                   + "                    \"firstName\": \"Jeffrey\",\n"
-                   + "                    \"lab\": \"homer\",\n"
-                   + "                    \"lastName\": \"G\",\n"
-                   + "                    \"middleName\": \"A\",\n"
-                   + "                    \"phone\": \"617-555-5555\"\n"
-                   + "                },\n"
-                   + "                \"filePath\": \"/some/funky/file2.bam\",\n"
-                   + "                \"sampleId\": \"S_2651\"\n"
-                   + "            },\n"
-                   + "            \"studyContact\": \"jgentry\",\n"
-                   + "            \"site\": \"NCBI_PROTECTED\",\n"
-                   + "            \"submissiondatatype\": \"Whole Genome\",\n"
-                   + "            \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618746\"\n"
+                   + "        \"processingLocation\": \"OnPrem\",\n"
+                   + "        \"sampleId\": \"S_2507\"\n"
+                   + "      },\n"
+                   + "      \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618745\"\n"
+                   + "    },\n"
+                   + "    {\n"
+                   + "      \"bamVersion\": \"V1\",\n"
+                   + "      \"bioProject\": {\n"
+                   + "        \"accession\": \"PRJNA75333\"\n"
+                   + "      },\n"
+                   + "      \"broadProject\": \"RP-1234\",\n"
+                   + "      \"site\": \"NCBI_PROTECTED\",\n"
+                   + "      \"studyContact\": \"jgentry\",\n"
+                   + "      \"submissionDatatype\": \"Whole Genome\",\n"
+                   + "      \"submissionSample\": {\n"
+                   + "        \"contact\": {\n"
+                   + "          \"email\": \"jgentry2@broadinstitute.org\",\n"
+                   + "          \"firstName\": \"Jeffrey\",\n"
+                   + "          \"lab\": \"homer\",\n"
+                   + "          \"lastName\": \"G\",\n"
+                   + "          \"middleName\": \"A\",\n"
+                   + "          \"phone\": \"617-555-5555\"\n"
                    + "        },\n"
-                   + "        {\n"
-                   + "            \"bioproject\": {\n"
-                   + "                \"accession\": \"BlahBlah\"\n"
-                   + "            },\n"
-                   + "            \"biosample\": {\n"
-                   + "                \"contact\": {\n"
-                   + "                    \"email\": \"jgentry2@broadinstitute.org\",\n"
-                   + "                    \"firstName\": \"Jeffrey\",\n"
-                   + "                    \"lab\": \"homer\",\n"
-                   + "                    \"lastName\": \"G\",\n"
-                   + "                    \"middleName\": \"A\",\n"
-                   + "                    \"phone\": \"617-555-5555\"\n"
-                   + "                },\n"
-                   + "                \"filePath\": \"/some/funky/file2.bam\",\n"
-                   + "                \"sampleId\": \"S_2651\"\n"
-                   + "            },\n"
-                   + "            \"studyContact\": \"noSuchProject\",\n"
-                   + "            \"site\": \"NCBI_PROTECTED\",\n"
-                   + "            \"submissiondatatype\": \"Whole Genome\",\n"
-                   + "            \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618747\"\n"
+                   + "        \"processingLocation\": \"GCP\",\n"
+                   + "        \"sampleId\": \"S_2651\"\n"
+                   + "      },\n"
+                   + "      \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618746\"\n"
+                   + "    },\n"
+                   + "    {\n"
+                   + "      \"bamVersion\": \"V1\",\n"
+                   + "      \"bioProject\": {\n"
+                   + "        \"accession\": \"BlahBlah\"\n"
+                   + "      },\n"
+                   + "      \"broadProject\": \"RP-1234\",\n"
+                   + "      \"site\": \"NCBI_PROTECTED\",\n"
+                   + "      \"studyContact\": \"noSuchProject\",\n"
+                   + "      \"submissionDatatype\": \"Whole Genome\",\n"
+                   + "      \"submissionSample\": {\n"
+                   + "        \"contact\": {\n"
+                   + "          \"email\": \"jgentry2@broadinstitute.org\",\n"
+                   + "          \"firstName\": \"Jeffrey\",\n"
+                   + "          \"lab\": \"homer\",\n"
+                   + "          \"lastName\": \"G\",\n"
+                   + "          \"middleName\": \"A\",\n"
+                   + "          \"phone\": \"617-555-5555\"\n"
                    + "        },\n"
-                   + "        {\n"
-                   + "            \"bioproject\": {\n"
-                   + "                \"accession\": \"PRJNA75333\"\n"
-                   + "            },\n"
-                   + "            \"biosample\": {\n"
-                   + "                \"contact\": {\n"
-                   + "                    \"email\": \"jgentry2@broadinstitute.org\",\n"
-                   + "                    \"firstName\": \"Jeffrey\",\n"
-                   + "                    \"lab\": \"homer\",\n"
-                   + "                    \"lastName\": \"G\",\n"
-                   + "                    \"middleName\": \"A\",\n"
-                   + "                    \"phone\": \"617-555-5555\"\n"
-                   + "                },\n"
-                   + "                \"filePath\": \"/some/funky/file2.bam\",\n"
-                   + "                \"sampleId\": \"BlahBlahBlah\"\n"
-                   + "            },\n"
-                   + "            \"studyContact\": \"noSuchSample\",\n"
-                   + "            \"site\": \"NCBI_PROTECTED\",\n"
-                   + "            \"submissiondatatype\": \"Whole Genome\",\n"
-                   + "            \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618748\"\n"
+                   + "        \"processingLocation\": \"GCP\",\n"
+                   + "        \"sampleId\": \"S_2651\"\n"
+                   + "      },\n"
+                   + "      \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618747\"\n"
+                   + "    },\n"
+                   + "    {\n"
+                   + "      \"bamVersion\": \"V1\",\n"
+                   + "      \"bioProject\": {\n"
+                   + "        \"accession\": \"PRJNA75333\"\n"
+                   + "      },\n"
+                   + "      \"broadProject\": \"RP-1234\",\n"
+                   + "      \"site\": \"NCBI_PROTECTED\",\n"
+                   + "      \"studyContact\": \"noSuchSample\",\n"
+                   + "      \"submissionDatatype\": \"Whole Genome\",\n"
+                   + "      \"submissionSample\": {\n"
+                   + "        \"contact\": {\n"
+                   + "          \"email\": \"jgentry2@broadinstitute.org\",\n"
+                   + "          \"firstName\": \"Jeffrey\",\n"
+                   + "          \"lab\": \"homer\",\n"
+                   + "          \"lastName\": \"G\",\n"
+                   + "          \"middleName\": \"A\",\n"
+                   + "          \"phone\": \"617-555-5555\"\n"
                    + "        },\n"
-                   + "        {\n"
-                   + "            \"bioproject\": {\n"
-                   + "                \"accession\": \"BlahBlahBlah\"\n"
-                   + "            },\n"
-                   + "            \"biosample\": {\n"
-                   + "                \"contact\": {\n"
-                   + "                    \"email\": \"jgentry2@broadinstitute.org\",\n"
-                   + "                    \"firstName\": \"Jeffrey\",\n"
-                   + "                    \"lab\": \"homer\",\n"
-                   + "                    \"lastName\": \"G\",\n"
-                   + "                    \"middleName\": \"A\",\n"
-                   + "                    \"phone\": \"617-555-5555\"\n"
-                   + "                },\n"
-                   + "                \"filePath\": \"/some/funky/file2.bam\",\n"
-                   + "                \"sampleId\": \"BlahBlahBlah\"\n"
-                   + "            },\n"
-                   + "            \"studyContact\": \"noSuchProjectOrSample\",\n"
-                   + "            \"site\": \"NCBI_PROTECTED\",\n"
-                   + "            \"submissiondatatype\": \"Whole Genome\",\n"
-                   + "            \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618749\"\n"
-                   + "        }\n"
-                   + "    ]\n"
+                   + "        \"processingLocation\": \"GCP\",\n"
+                   + "        \"sampleId\": \"BlahBlahBlah\"\n"
+                   + "      },\n"
+                   + "      \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618748\"\n"
+                   + "    },\n"
+                   + "    {\n"
+                   + "      \"bamVersion\": \"V1\",\n"
+                   + "      \"bioProject\": {\n"
+                   + "        \"accession\": \"BlahBlahBlah\"\n"
+                   + "      },\n"
+                   + "      \"broadProject\": \"RP-1234\",\n"
+                   + "      \"site\": \"NCBI_PROTECTED\",\n"
+                   + "      \"studyContact\": \"noSuchProjectOrSample\",\n"
+                   + "      \"submissionDatatype\": \"Whole Genome\",\n"
+                   + "      \"submissionSample\": {\n"
+                   + "        \"contact\": {\n"
+                   + "          \"email\": \"jgentry2@broadinstitute.org\",\n"
+                   + "          \"firstName\": \"Jeffrey\",\n"
+                   + "          \"lab\": \"homer\",\n"
+                   + "          \"lastName\": \"G\",\n"
+                   + "          \"middleName\": \"A\",\n"
+                   + "          \"phone\": \"617-555-5555\"\n"
+                   + "        },\n"
+                   + "        \"processingLocation\": \"GCP\",\n"
+                   + "        \"sampleId\": \"BlahBlahBlah\"\n"
+                   + "      },\n"
+                   + "      \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618749\"\n"
+                   + "    }\n"
+                   + "  ]\n"
                    + "}";
         bioProject1 = new BioProject("PRJNA75333");
         bioProject2 = new BioProject("BlahBlah");
         bioProject3 = new BioProject("BlahBlahBlah");
-        bioSampleBean1 = new SubmissionBioSampleBean("S_2507","/some/funky/file.bam",
+        bioSampleBean1 = new SubmissionBioSampleBean("S_2507", SubmissionBioSampleBean.ON_PREM,
         new SubmissionContactBean("Jeff", "A", "Gentry", "jgentry@broadinstitute.org","617-555-9292","homer"));
         contact2 = new SubmissionContactBean("Jeffrey", "A", "G", "jgentry2@broadinstitute.org", "617-555-5555",
                 "homer");
-        bioSampleBean2 = new SubmissionBioSampleBean("S_2651","/some/funky/file2.bam",
-                contact2);
-        bioSampleBean3 = new SubmissionBioSampleBean("BlahBlahBlah","/some/funky/file2.bam",
-                contact2);
+        bioSampleBean2 = new SubmissionBioSampleBean("S_2651", SubmissionBioSampleBean.GCP, contact2);
+        bioSampleBean3 = new SubmissionBioSampleBean("BlahBlahBlah", SubmissionBioSampleBean.GCP, contact2);
         uuID1 = "7d835cc7-cd63-4cc6-9621-868155618745";
         uuID2 = "7d835cc7-cd63-4cc6-9621-868155618746";
         uuID3 = "7d835cc7-cd63-4cc6-9621-868155618747";
@@ -177,16 +188,19 @@ public class SubmissionRequestBeanTest {
         SubmissionLibraryDescriptor defaultType = ProductFamily.defaultLibraryDescriptor();
 
         testRequest.setSubmissions(Arrays.asList(new SubmissionBean(uuID1, studyContact1, bioProject1, bioSampleBean1,
-                defaultRepository, defaultType),
-                new SubmissionBean(uuID2, studyContact1, bioProject1, bioSampleBean2, defaultRepository, defaultType),
-                new SubmissionBean(uuID3, studyContact2, bioProject2, bioSampleBean2, defaultRepository, defaultType),
-                new SubmissionBean(uuID4, studyContact3, bioProject1, bioSampleBean3, defaultRepository, defaultType),
-                new SubmissionBean(uuID5, studyContact4, bioProject3, bioSampleBean3, defaultRepository, defaultType)));
+                defaultRepository, defaultType, broadProject, bamVersion),
+                new SubmissionBean(uuID2, studyContact1, bioProject1, bioSampleBean2, defaultRepository, defaultType,
+                        broadProject, bamVersion),
+                new SubmissionBean(uuID3, studyContact2, bioProject2, bioSampleBean2, defaultRepository, defaultType,
+                        broadProject, bamVersion),
+                new SubmissionBean(uuID4, studyContact3, bioProject1, bioSampleBean3, defaultRepository, defaultType,
+                        broadProject, bamVersion),
+                new SubmissionBean(uuID5, studyContact4, bioProject3, bioSampleBean3, defaultRepository, defaultType,
+                        broadProject, bamVersion)));
     }
 
     public void testSerialize() throws Exception {
-        StringWriter writer = MercuryStringUtils.serializeJsonBean(testRequest);
-        String unReplaced = writer.toString();
+        String unReplaced = MercuryStringUtils.serializeJsonBean(testRequest);
         String actual = unReplaced.replaceAll("\\s+", "");
         Assert.assertEquals(actual, testJson.replaceAll("\\s+", ""));
     }
@@ -199,6 +213,14 @@ public class SubmissionRequestBeanTest {
         Assert.assertEquals(requestBean.getSubmissions(), testRequest.getSubmissions());
 
         Assert.assertEquals(requestBean, testRequest);
+    }
+
+    public void testError() throws IOException {
+        String errorJson =
+            "{\"submissionStatuses\":[{\"uuid\":\"MERCURY_TEST_SUB_1499710803691_0001\",\"status\":\"Failure\",\"errors\":[\"Invalid V2\",\"Unable to access bam path for PRJNA75723 4304714212_K RP-418 V2 located GCP.\"]},{\"uuid\":\"MERCURY_TEST_SUB_1499710803692_0002\",\"status\":\"Failure\",\"errors\":[\"Invalid V2\",\"Unable to access bam path for PRJNA75723 4377315018_E RP-418 V2 located OnPrem.\"]}]}";
+        SubmissionStatusResultBean result =
+            MercuryStringUtils.deSerializeJsonBean(errorJson, SubmissionStatusResultBean.class);
+
     }
 
 }

@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
@@ -28,6 +28,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.ArrayList;
@@ -42,8 +43,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Test(groups = TestGroups.STUBBY)
-public class BucketEjbTest extends ContainerTest {
+/**
+ *  This test is singleThreaded because subsequent test methods are called before the @AfterMethod of the previous test method call is complete <br/>
+ *  Lifecycle @AfterMethod operates on the injected UserTransaction instance variable while subsequent methods are performing persistence operations.
+ *  The previous @AfterMethod rollback call is incomplete so unique constraints are violated.
+ */
+@Test(groups = TestGroups.STUBBY, singleThreaded = true)
+@RequestScoped
+public class BucketEjbTest extends StubbyContainerTest {
+
+    public BucketEjbTest(){}
 
     @Inject
     BucketEjb resource;
@@ -100,22 +109,24 @@ public class BucketEjbTest extends ContainerTest {
         poBusinessKey2 = "PDO-9";
         poBusinessKey3 = "PDO-10";
 
-        Date today = new Date();
+        long timestamp = (new Date()).getTime();
 
         productOrder1 = new ProductOrder(101L, "Test PO1", productOrderSamples, "GSP-123",
                                          productDao.findByBusinessKey(Product.EXOME_EXPRESS_V2_PART_NUMBER),
                                          researchProjectDao.findByTitle("ADHD"));
-        productOrder1.setTitle(productOrder1.getTitle() + today.getTime());
-        today = new Date();
+        productOrder1.setTitle(productOrder1.getTitle() + timestamp);
+
+        timestamp += 1000;
         productOrder2 = new ProductOrder(101L, "Test PO2", productOrderSamples, "GSP-123",
                                          productDao.findByBusinessKey(Product.EXOME_EXPRESS_V2_PART_NUMBER),
                                          researchProjectDao.findByTitle("ADHD"));
-        productOrder2.setTitle(productOrder2.getTitle() + today.getTime());
-        today = new Date();
+        productOrder2.setTitle(productOrder2.getTitle() + timestamp);
+
+        timestamp += 1000;
         productOrder3 = new ProductOrder(101L, "Test PO3", productOrderSamples, "GSP-123",
                                          productDao.findByBusinessKey(Product.EXOME_EXPRESS_V2_PART_NUMBER),
                                          researchProjectDao.findByTitle("ADHD"));
-        productOrder3.setTitle(productOrder3.getTitle() + today.getTime());
+        productOrder3.setTitle(productOrder3.getTitle() + timestamp);
 
         productOrder1.setJiraTicketKey(poBusinessKey1);
         productOrder1.setOrderStatus(ProductOrder.OrderStatus.Submitted);
@@ -215,13 +226,14 @@ public class BucketEjbTest extends ContainerTest {
         utx.rollback();
     }
 
-    public void testResource_start_entries() {
+    public void testResource_start_entries() throws Exception {
         bucket = bucketDao.findByName(PICO_PLATING_BUCKET);
         int originalBucketSize = bucket.getBucketEntries().size();
 
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
                 resource.applyBucketCriteria(Collections.<LabVessel>singletonList(bspAliquot1), productOrder1,
-                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
+        Thread.sleep(2L); // Pause to prevent events with same location, date, and disambiguator rejected as duplicate by Oracle
         Collection<BucketEntry> testEntries1 = workflowBucketEntriesPair.getRight();
         Assert.assertEquals(testEntries1.size(), 1);
         BucketEntry testEntry1 = testEntries1.iterator().next();
@@ -231,21 +243,24 @@ public class BucketEjbTest extends ContainerTest {
         
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair2 =
                 resource.applyBucketCriteria( Collections.<LabVessel>singletonList(bspAliquot2), productOrder2,
-                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
+        Thread.sleep(2L);
         Collection<BucketEntry> testEntries2 = workflowBucketEntriesPair2.getRight();
         Assert.assertEquals(testEntries2.size(), 1);
         BucketEntry testEntry2 = testEntries2.iterator().next();
 
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair3 =
                 resource.applyBucketCriteria(Collections.<LabVessel>singletonList(bspAliquot3), productOrder3,
-                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
+        Thread.sleep(2L);
         Collection<BucketEntry> testEntries3 = workflowBucketEntriesPair3.getRight();
         Assert.assertEquals(testEntries3.size(), 1);
         BucketEntry testEntry3 = testEntries3.iterator().next();
 
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair4 =
                 resource.applyBucketCriteria(Collections.<LabVessel>singletonList(bspAliquot4), productOrder3,
-                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
+        Thread.sleep(2L);
         Collection<BucketEntry> testEntries4 = workflowBucketEntriesPair4.getRight();
 
         Assert.assertEquals(testEntries4.size(), 1);
@@ -253,7 +268,8 @@ public class BucketEjbTest extends ContainerTest {
 
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair5 =
                 resource.applyBucketCriteria(Collections.<LabVessel>singletonList(bspAliquot1), productOrder1,
-                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
+        Thread.sleep(2L);
         Collection<BucketEntry> duplicateEntry = workflowBucketEntriesPair5.getRight();
         Assert.assertTrue(duplicateEntry.isEmpty());
         
@@ -294,13 +310,14 @@ public class BucketEjbTest extends ContainerTest {
     }
 
 
-    public void testResource_start_vessels() {
+    public void testResource_start_vessels() throws Exception {
         bucket = bucketDao.findByName(PICO_PLATING_BUCKET);
         int originalBucketSize = bucket.getBucketEntries().size();
 
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
                 resource.applyBucketCriteria(Collections.<LabVessel>singletonList(bspAliquot1), productOrder1,
-                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
+        Thread.sleep(2L); // Pause to prevent events with same location, date, and disambiguator rejected as duplicate by Oracle
         Collection<BucketEntry> testEntries1 = workflowBucketEntriesPair.getRight();
         Assert.assertEquals(testEntries1.size(), 1);
         BucketEntry testEntry1 = testEntries1.iterator().next();
@@ -318,7 +335,8 @@ public class BucketEjbTest extends ContainerTest {
                 bspAliquot3, bspAliquot4));
 
         resource.applyBucketCriteria(bucketCreateBatch, productOrder3, howieTest,
-                ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
+        Thread.sleep(2L);
 
         bucketDao.flush();
         bucketDao.clear();
@@ -399,13 +417,14 @@ public class BucketEjbTest extends ContainerTest {
     }
 
 
-    public void testResource_start_vessel_count() {
+    public void testResource_start_vessel_count() throws Exception {
         bucket = bucketDao.findByName(PICO_PLATING_BUCKET);
         int originalBucketSize = bucket.getBucketEntries().size();
         
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
                 resource.applyBucketCriteria(Collections.<LabVessel>singletonList(bspAliquot1), productOrder1,
-                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
+        Thread.sleep(2L); // Pause to prevent events with same location, date, and disambiguator rejected as duplicate by Oracle
         Collection<BucketEntry> testEntries1 = workflowBucketEntriesPair.getRight();
 
         Assert.assertEquals(testEntries1.size(), 1);
@@ -422,7 +441,8 @@ public class BucketEjbTest extends ContainerTest {
 
         Assert.assertTrue(Collections.addAll(bucketCreateBatch, bspAliquot2, bspAliquot3, bspAliquot4));
         resource.applyBucketCriteria(bucketCreateBatch, productOrder3, howieTest,
-                ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
+        Thread.sleep(2L);
 
         bucketDao.flush();
         bucketDao.clear();

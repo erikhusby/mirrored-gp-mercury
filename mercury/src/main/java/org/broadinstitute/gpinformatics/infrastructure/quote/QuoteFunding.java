@@ -4,6 +4,9 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Created by IntelliJ IDEA.
@@ -31,8 +34,20 @@ public class QuoteFunding {
         this.fundingLevel = fundLevel;
     }
 
+    public QuoteFunding(String fundsRemaining,
+                        Collection<FundingLevel> fundingLevel) {
+        this.fundsRemaining = fundsRemaining;
+        this.fundingLevel = fundingLevel;
+    }
+
     public Collection<FundingLevel> getFundingLevel() {
         return fundingLevel;
+    }
+
+    public Collection<FundingLevel> getActiveFundingLevel() {
+        return Optional.ofNullable(fundingLevel).orElse(Collections.emptyList()).stream()
+                .filter(FundingLevel::isActive)
+                .collect(Collectors.toList());
     }
 
     public String getFundsRemaining() {

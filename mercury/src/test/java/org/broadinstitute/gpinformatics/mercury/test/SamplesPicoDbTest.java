@@ -1,16 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.filter.LoggingFilter;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResponseBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
-import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.control.EntityLoggingFilter;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SamplesPicoJaxbBuilder;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -19,6 +17,10 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -30,7 +32,10 @@ import java.util.List;
  * A database test of the Samples Pico process
  */
 @Test(groups = TestGroups.STUBBY)
-public class SamplesPicoDbTest extends ContainerTest {
+@Dependent
+public class SamplesPicoDbTest extends StubbyContainerTest {
+
+    public SamplesPicoDbTest(){}
 
     private final SimpleDateFormat timestampFormat = new SimpleDateFormat("MMddHHmmss");
 
@@ -39,11 +44,10 @@ public class SamplesPicoDbTest extends ContainerTest {
     public void testEndToEnd(@ArquillianResource URL baseUrl) throws Exception {
         String timestamp = timestampFormat.format(new Date());
 
-        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
-        clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);
+        ClientBuilder clientBuilder = JaxRsUtils.getClientBuilderAcceptCertificate();
 
-        Client client = Client.create(clientConfig);
-        client.addFilter(new LoggingFilter(System.out));
+        Client client = clientBuilder.build();
+        client.register(new EntityLoggingFilter());
 
         String batchId = "BP-" + timestamp;
         ArrayList<String> tubeBarcodes = new ArrayList<>();
@@ -59,8 +63,9 @@ public class SamplesPicoDbTest extends ContainerTest {
         sendMessages(baseUrl, client, messageList);
 
         LabEventResponseBean labEventResponseBean =
-                client.resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/labevent/batch")
+                client.target(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/labevent/batch")
                         .path(batchId)
+                        .request()
                         .get(LabEventResponseBean.class);
         List<LabEventBean> labEventBeans = labEventResponseBean.getLabEventBeans();
         Assert.assertEquals(10, labEventBeans.size(), "Wrong number of lab events");
@@ -86,11 +91,10 @@ public class SamplesPicoDbTest extends ContainerTest {
         }
         LabBatchBean labBatchBean = new LabBatchBean(batchId, null, tubeBeans);
 
-        String response = client.resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/labbatch")
-                .type(MediaType.APPLICATION_XML_TYPE)
+        String response = client.target(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/labbatch")
+                .request(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
-                .entity(labBatchBean)
-                .post(String.class);
+                .post(Entity.xml(labBatchBean), String.class);
         System.out.println(response);
         return labBatchBean;
     }
@@ -107,11 +111,10 @@ public class SamplesPicoDbTest extends ContainerTest {
         String response = null;
         for (BettaLIMSMessage bettaLIMSMessage : messageList) {
             response =
-                    client.resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/bettalimsmessage")
-                            .type(MediaType.APPLICATION_XML_TYPE)
+                    client.target(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/bettalimsmessage")
+                            .request(MediaType.APPLICATION_XML_TYPE)
                             .accept(MediaType.APPLICATION_XML)
-                            .entity(bettaLIMSMessage)
-                            .post(String.class);
+                            .post(Entity.xml(bettaLIMSMessage), String.class);
             System.out.println(response);
         }
         return response;

@@ -50,6 +50,18 @@
                 </xsd:annotation>
             </xsd:element>
             <xsd:element name="derivedVesselLabel" type="xsd:string" />
+            <xsd:element name="readStructure" type="xsd:string">
+                <xsd:annotation>
+                    <xsd:documentation>A read structure string is a textual encoding of templates, barcodes, UMIs, or skips.
+                        For example:
+                        <br/>
+                        a 76-base paired-end read with one molecular barcode index will look like this "76T8B76T"
+                        <br/>
+                        a 101-base paired-end read with dual indices will look like this: "101T8B8B101T"
+                        <br/>
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
         </xsd:sequence>
     </xsd:complexType>
 
@@ -99,6 +111,16 @@
             <xsd:element name="lsid" type="xsd:string"/>
         </xsd:sequence>
     </xsd:complexType>
+
+    <xsd:element name="SampleKitReceivedRequest">
+        <xsd:complexType>
+            <xsd:choice>
+                <xsd:element name="sampleKitId" type="xsd:string"/>
+                <xsd:element name="username" type="xsd:string"/>
+                <xsd:element name="wellAndSourceTubeType" type="wellAndSourceTubeType" maxOccurs="unbounded"/>
+            </xsd:choice>
+        </xsd:complexType>
+    </xsd:element>
 
     <xsd:complexType name="wellAndSourceTubeType">
         <xsd:sequence>
@@ -174,6 +196,38 @@
             <xsd:element name="message" type="xsd:string"/>
             <xsd:element name="actualEventTypes" type="xsd:string" maxOccurs="unbounded"/>
             <xsd:element name="expectedEventTypes" type="xsd:string" maxOccurs="unbounded"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="reagentDesignType">
+        <xsd:sequence>
+            <xsd:element name="wasFound" type="xsd:boolean"/>
+            <xsd:element name="hasErrors" type="xsd:boolean"/>
+            <xsd:element name="error" type="xsd:string"/>
+            <xsd:element name="reagentDesignName" type="xsd:string"/>
+            <xsd:element name="tubeBarcode" type="xsd:string"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="productInfosType">
+        <xsd:sequence>
+            <xsd:element name="tubeBarcode" type="xsd:string"/>
+            <xsd:element name="wasFound" type="xsd:boolean"/>
+            <xsd:element name="hasErrors" type="xsd:boolean"/>
+            <xsd:element name="error" type="xsd:string"/>
+            <xsd:element name="productInfoType" type="productInfoType" maxOccurs="unbounded"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="productInfoType">
+        <xsd:sequence>
+            <xsd:element name="productName" type="xsd:string"/>
+            <xsd:element name="productFamily" type="xsd:string"/>
+            <xsd:element name="partNumber" type="xsd:string"/>
+            <xsd:element name="analysisTypeKey" type="xsd:string"/>
+            <xsd:element name="reagentDesignKey" type="xsd:string"/>
+            <xsd:element name="coverageKey" type="xsd:string"/>
+            <xsd:element name="workflowName" type="xsd:string"/>
         </xsd:sequence>
     </xsd:complexType>
 </xsd:schema>

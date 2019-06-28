@@ -1,8 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.samples;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -14,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserC
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -23,9 +26,11 @@ import java.util.Set;
  */
 public class MercurySampleData implements SampleData {
     private MercurySample mercurySample;
+    private String rootSampleId;
     private String sampleId;
     private String collaboratorSampleId;
     private String patientId;
+    private String broadPatientId;
     private String gender;
     private String tumorNormal;
 
@@ -35,6 +40,8 @@ public class MercurySampleData implements SampleData {
     private Date receiptDate;
     private String materialType;
     private String originalMaterialType;
+    private String species;
+    private String sampleLSID;
     private QuantData quantData;
 
     public MercurySampleData(@Nonnull String sampleId, @Nonnull Set<Metadata> metadata) {
@@ -80,7 +87,18 @@ public class MercurySampleData implements SampleData {
                 break;
             case ORIGINAL_MATERIAL_TYPE:
                 this.originalMaterialType = value;
+               break;
+            case SPECIES:
+                this.species = value;
                 break;
+            case LSID:
+                this.sampleLSID = value;
+                break;
+            case BROAD_PARTICIPANT_ID:
+                this.broadPatientId = value;
+                break;
+            case ROOT_SAMPLE:
+                this.rootSampleId = value;
             }
         }
     }
@@ -164,7 +182,7 @@ public class MercurySampleData implements SampleData {
     @Override
     public double getVolume() {
         if (initializeQuantData()) {
-            return quantData.getVolume();
+            return quantData.getVolume() == null ? 0 : quantData.getVolume();
         }
         return 0;
     }
@@ -177,15 +195,35 @@ public class MercurySampleData implements SampleData {
         return null;
     }
 
+    @Override
+    public String getReceptacleType() {
+        return null;
+    }
+
+    /**
+     * Merges in metadata from a metadata inheritance root. Existing values are overwritten.
+     */
+    public void mergeInheritedMetadata(SampleData other) {
+        if (other != null) {
+            collaboratorSampleId = other.getCollaboratorsSampleName();
+            patientId = other.getCollaboratorParticipantId();
+            gender = other.getGender();
+            species = other.getOrganism();
+        }
+    }
+
     /**
      * A sample may have a root MetadataSource of BSP (i.e. BspSampleData), but have aliquots that are managed by
      * Mercury.  This class returns Mercury quant information.
      */
     public static class QuantData {
         private Date picoRunDate;
-        private double volume;
+        private Double volume;
         private Double concentration;
-        private double totalDna;
+        private Double totalDna;
+
+        private QuantData() {
+        }
 
         public QuantData(MercurySample mercurySample) {
             if (!mercurySample.getLabVessel().isEmpty()) {
@@ -201,19 +239,24 @@ public class MercurySampleData implements SampleData {
                 if (labMetrics != null && !labMetrics.isEmpty()) {
                     // Use most recent
                     LabMetric labMetric = labMetrics.get(labMetrics.size() - 1);
-                    concentration = labMetric.getValue().doubleValue();
-                    if (labMetric.getTotalNg() != null) {
-                        totalDna = labMetric.getTotalNg().doubleValue();
-                    }
-                    LabMetricRun labMetricRun = labMetric.getLabMetricRun();
-
-                    // Generic uploads don't have runs
-                    if (labMetricRun == null) {
-                        picoRunDate = labMetric.getCreatedDate();
-                    } else {
-                        picoRunDate = labMetricRun.getRunDate();
-                    }
+                    updateFromLabMetric(labMetric);
                 }
+            }
+        }
+
+        public void updateFromLabMetric(LabMetric labMetric) {
+            concentration = labMetric.getValue().doubleValue();
+            if (labMetric.getTotalNg() != null) {
+                // convert ng to ug
+                totalDna = labMetric.getTotalNg().doubleValue()  / 1000.0;
+            }
+            LabMetricRun labMetricRun = labMetric.getLabMetricRun();
+
+            // Generic uploads don't have runs
+            if (labMetricRun == null) {
+                picoRunDate = labMetric.getCreatedDate();
+            } else {
+                picoRunDate = labMetricRun.getRunDate();
             }
         }
 
@@ -221,7 +264,7 @@ public class MercurySampleData implements SampleData {
             return picoRunDate;
         }
 
-        public double getVolume() {
+        public Double getVolume() {
             return volume;
         }
 
@@ -229,18 +272,22 @@ public class MercurySampleData implements SampleData {
             return concentration;
         }
 
-        public double getTotalDna() {
+        public Double getTotalDna() {
             return totalDna;
         }
     }
 
     /**
-     * For mercury samples, the root id is considered
-     * the same thing as the sample id.
+     * For clinical samples, the root id is considered the same thing as the sample id,
+     * so return the sample id as default when the root metadata is not explicitly set.
      */
     @Override
     public String getRootSample() {
-        return sampleId;
+        return rootSampleId == null ? sampleId : rootSampleId;
+    }
+
+    public void setRootSampleId(String rootSampleId) {
+        this.rootSampleId = rootSampleId;
     }
 
     @Override
@@ -248,8 +295,17 @@ public class MercurySampleData implements SampleData {
         return sampleId;
     }
 
+    public void setSampleId(String sampleId) {
+        this.sampleId = sampleId;
+    }
+
     @Override
     public String getCollection() {
+        return "";
+    }
+
+    @Override
+    public String getCollectionWithoutGroup() {
         return "";
     }
 
@@ -270,12 +326,12 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public String getPatientId() {
-        return patientId;
+        return broadPatientId == null ? patientId : broadPatientId;
     }
 
     @Override
     public String getOrganism() {
-        return "";
+        return species;
     }
 
     @Override
@@ -285,11 +341,11 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public String getSampleLsid() {
-        return "";
+        return sampleLSID;
     }
 
     /**
-     * For mercury samples, the patient id is the
+     * For clinical samples, the patient id is the
      * collaborator patient id because the only
      * patient id we know is the one given to us
      * by the collaborator.
@@ -323,7 +379,7 @@ public class MercurySampleData implements SampleData {
     @Override
     public double getTotal() {
         if (initializeQuantData()) {
-            return quantData.getTotalDna();
+            return quantData.getTotalDna() == null ? 0 : quantData.getTotalDna();
         }
         return 0;
     }
@@ -405,5 +461,26 @@ public class MercurySampleData implements SampleData {
 
     public String getVisit() {
         return visit;
+    }
+
+    public void overrideWithQuants(Collection<LabMetric> labMetrics) {
+        if (quantData == null) {
+            quantData = new QuantData();
+        }
+        for (LabMetric labMetric : labMetrics) {
+            if (labMetric.getName() == LabMetric.MetricType.INITIAL_PICO) {
+                quantData.updateFromLabMetric(labMetric);
+            }
+        }
+    }
+
+    @Override
+    public String getSampleKitId() {
+        return null;
+    }
+
+    @Override
+    public String getSampleStatus() {
+        return null;
     }
 }

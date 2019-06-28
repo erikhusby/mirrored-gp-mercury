@@ -46,9 +46,9 @@ import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
@@ -327,7 +327,7 @@ public class LimsQueryResourceUnitTest {
         expect(mockThriftService.fetchQpcrForTube("barcode")).andReturn(1.23);
         replayAll();
 
-        double result = resource.fetchQpcrForTube("barcode", LabMetric.MetricType.ECO_QPCR.getDisplayName());
+        double result = resource.fetchQpcrForTube("barcode", LabMetric.MetricType.ECO_QPCR.getDisplayName(), false);
         assertThat(result, equalTo(1.23));
 
         verifyAll();
@@ -343,7 +343,7 @@ public class LimsQueryResourceUnitTest {
         expect(mockThriftService.fetchQuantForTube("barcode", "test")).andReturn(1.23);
         replayAll();
 
-        double result = resource.fetchQuantForTube("barcode", "test");
+        double result = resource.fetchQuantForTube("barcode", "test", false);
         assertThat(result, equalTo(1.23));
 
         verifyAll();

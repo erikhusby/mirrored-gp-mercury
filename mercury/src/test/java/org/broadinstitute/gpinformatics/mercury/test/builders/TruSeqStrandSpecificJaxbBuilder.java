@@ -28,6 +28,7 @@ public class TruSeqStrandSpecificJaxbBuilder {
     private String endRepairCleanupTSleanupPlate;
     private String adapterLigationCleanupPlate;
     private PlateTransferEventType polyATransferEventJaxb;
+    private PlateEventType erccSpikeInEventJaxb;
     private PlateTransferEventType postASelectionEventJaxb;
     private PlateEventType polyABindingTSThermoCyclerJaxb;
     private PlateEventType mRNAElutionTSThermoCyclerJaxb;
@@ -83,6 +84,10 @@ public class TruSeqStrandSpecificJaxbBuilder {
 
     public PlateTransferEventType getPolyATransferEventJaxb() {
         return polyATransferEventJaxb;
+    }
+
+    public PlateEventType getErccSpikeInEventJaxb() {
+        return erccSpikeInEventJaxb;
     }
 
     public PlateTransferEventType getPostASelectionEventJaxb() {
@@ -150,6 +155,10 @@ public class TruSeqStrandSpecificJaxbBuilder {
         polyATransferEventJaxb = bettaLimsMessageTestFactory.buildRackToPlate("PolyATransfer", rackBarcode,
                 tubeBarcodeList, polyAPlateBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, polyATransferEventJaxb);
+
+        erccSpikeInEventJaxb =
+                bettaLimsMessageTestFactory.buildPlateEvent("ERCCSpikeIn", polyAPlateBarcode);
+        bettaLimsMessageTestFactory.addMessage(messageList, erccSpikeInEventJaxb);
 
         polyASelectionPlate = "PolyASelectionPLate" + testPrefix;
         postASelectionEventJaxb = bettaLimsMessageTestFactory.buildPlateToPlate(

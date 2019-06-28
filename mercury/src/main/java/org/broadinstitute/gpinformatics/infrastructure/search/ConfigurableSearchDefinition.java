@@ -73,6 +73,11 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
     private Map<String, TraversalEvaluator> traversalEvaluators;
 
     /**
+     * Allow a user to apply a filter to include/exclude what's provided from traversals
+     */
+    private Map<String, CustomTraversalEvaluator> customTraversalOptions;
+
+    /**
      * Produce named AddRowsListener instances for this search definition.
      */
     private AddRowsListenerFactory addRowsListenerFactory;
@@ -179,6 +184,29 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
      */
     public Map<String,TraversalEvaluator> getTraversalEvaluators(){
         return traversalEvaluators;
+    }
+
+    /**
+     * Allow an optional custom traversal evaluator to be attached to this search
+     * @param customTraversalOption The custom traversal implementation
+     */
+    public void addCustomTraversalOption(CustomTraversalEvaluator customTraversalOption) {
+        if( customTraversalOptions == null ) {
+            // Retain deterministic ordering
+            customTraversalOptions = new LinkedHashMap<>();
+        } else {
+            if( customTraversalOptions.containsKey(customTraversalOption.getUiName()) ) {
+                throw new RuntimeException("Duplicate CustomTraversalOptions Id in ConfigurableSearchDefinition: " + customTraversalOption.getUiName());
+            }
+        }
+        this.customTraversalOptions.put(customTraversalOption.getUiName(), customTraversalOption);
+    }
+
+    /**
+     * Obtain the TraversalSelectionFilter implementations
+     */
+    public Map<String,CustomTraversalEvaluator> getCustomTraversalOptions(){
+        return customTraversalOptions;
     }
 
 

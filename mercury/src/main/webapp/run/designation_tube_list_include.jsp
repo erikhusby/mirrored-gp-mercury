@@ -69,7 +69,7 @@
                             <td class="width4">${dto.calculateCycles()}</td>
                             <td class="width2">${dto.poolTest?'Yes':'No'}</td>
                             <td class="width8">${dto.regulatoryDesignation}</td>
-                            <td><span title="${dto.startingBatchVessels}">${dto.productNameJoin}</span></td>
+                            <td><span title="${dto.startingBatchVessels}">${dto.product}</span></td>
 
                             <input type="hidden" name="dtos[${item.index}].selected" id="checkbox_${item.index}_Input" value="false"/>
                             <input type="hidden" name="dtos[${item.index}].priority" value="${dto.priority}"/>
@@ -87,11 +87,10 @@
                             <input type="hidden" name="dtos[${item.index}].pairedEndRead" value="${dto.pairedEndRead?'Yes':'No'}"/>
                             <input type="hidden" name="dtos[${item.index}].poolTest" value="${dto.poolTest?'Yes':'No'}"/>
                             <input type="hidden" name="dtos[${item.index}].regulatoryDesignation" value="${dto.regulatoryDesignation}"/>
-                            <input type="hidden" name="dtos[${item.index}].productNameJoin" value="${dto.productNameJoin}"/>
+                            <input type="hidden" name="dtos[${item.index}].product" value="${dto.product}"/>
                             <input type="hidden" name="dtos[${item.index}].startingBatchVessels" value="${dto.startingBatchVessels}"/>
 
                             <input type="hidden" name="dtos[${item.index}].designationId" value="${dto.designationId}"/>
-                            <input type="hidden" name="dtos[${item.index}].tubeEventId" value="${dto.tubeEventId}"/>
                         </tr>
                     </c:forEach>
                     </tbody>

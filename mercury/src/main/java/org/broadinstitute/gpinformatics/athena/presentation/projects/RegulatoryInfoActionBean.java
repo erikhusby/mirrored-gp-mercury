@@ -12,12 +12,15 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryIn
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.OrspProjectDao;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.OrspProjectDao;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @UrlBinding("/projects/regulatoryInfo.action")
 public class RegulatoryInfoActionBean extends CoreActionBean {
@@ -76,17 +79,41 @@ public class RegulatoryInfoActionBean extends CoreActionBean {
      */
     @HandlesEvent(REGULATORY_INFO_QUERY_ACTION)
     public Resolution queryRegulatoryInfoReturnHtmlSnippet() {
-        String query = q.trim();
-        searchResults = regulatoryInfoDao.findByIdentifier(query);
-        if (searchResults.isEmpty()) {
-            orspSearchResult = orspProjectDao.findByKey(query);
-            if (orspSearchResult != null) {
-                regulatoryInfoType = orspSearchResult.getType();
-                regulatoryInfoAlias = orspSearchResult.getName();
+        researchProjectKey = getContext().getRequest().getParameter("researchProjectKey");
+
+        Optional<String> queryInput= Optional.ofNullable(q);
+
+        if (queryInput.isPresent()) {
+            String query = queryInput.get().trim();
+
+            searchResults = regulatoryInfoDao.findByIdentifier(query);
+            if (searchResults.isEmpty()) {
+                Optional<OrspProject> orspSearchResults = Optional.ofNullable(orspProjectDao.findByKey(query));
+                orspSearchResults.ifPresent(orspProject -> {
+                    orspSearchResult = orspProject;
+                    regulatoryInfoType = orspProject.getType();
+                    regulatoryInfoAlias = orspProject.getName();
+                });
+            } else {
+                final Set<String> regulatoryInfoIdentifiers =
+                        searchResults.stream().map(RegulatoryInfo::getIdentifier).collect(Collectors.toSet());
+                final List<OrspProject> orspResults = orspProjectDao.findOrspProjectListByIdList(regulatoryInfoIdentifiers);
+                final Optional<Set<RegulatoryInfo>> orspResultValidResults = Optional.ofNullable(orspResults.stream()
+                        .map(orspProject -> new RegulatoryInfo(orspProject.getName(), orspProject.getType(),
+                                    orspProject.getProjectKey())).collect(Collectors.toSet()));
+
+                if(orspResultValidResults.isPresent() && !orspResultValidResults.get().isEmpty()) {
+
+                    searchResults.forEach(regulatoryInfo -> {
+                        regulatoryInfo.setUserEdit(!orspResultValidResults.get().contains(regulatoryInfo));
+                    });
+                } else {
+                    searchResults.clear();
+                }
             }
+            regulatoryInfoIdentifier = query;
         }
-        regulatoryInfoIdentifier = query;
-        return new ForwardResolution("regulatory_info_dialog_sheet_2.jsp");
+        return new ForwardResolution("regulatory_info_dialog_sheet_2.jsp").addParameter("researchProjectKey", researchProjectKey);
     }
 
     /**

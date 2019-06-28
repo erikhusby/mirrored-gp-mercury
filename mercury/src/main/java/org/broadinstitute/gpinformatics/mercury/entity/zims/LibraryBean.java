@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.zims;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme;
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
 import org.apache.commons.lang3.StringUtils;
@@ -11,9 +13,8 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-
-import org.codehaus.jackson.annotate.JsonProperty;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -50,7 +51,7 @@ public class LibraryBean {
     private Boolean hasIndexingRead;
 
     @JsonProperty("expectedInsertSize")
-    private String expectedInsertSize; // Squid only
+    private String expectedInsertSize;
 
     @JsonProperty("analysisType")
     private String analysisType;
@@ -80,7 +81,7 @@ public class LibraryBean {
     private String restrictionEnzyme; // Squid only
 
     @JsonProperty("baitSetName")
-    private String bait; // Squid only
+    private String bait;
 
     /** obfuscated name of the participantId (person) from whence this sample was taken */
     @JsonProperty("participantId")
@@ -129,7 +130,7 @@ public class LibraryBean {
     private String rootSample;
 
     @JsonProperty
-    private String sampleId; // BSP sample ID
+    private String sampleId;
 
     @JsonProperty
     private String gender;
@@ -199,6 +200,18 @@ public class LibraryBean {
     @JsonProperty("buickCollectionDate")
     private String buickCollectionDate; // buick specific field, not generally applicable to future crsp work
 
+    @JsonProperty("analyzeUmis")
+    private boolean analyzeUmis;
+
+    @JsonProperty("submissionsMetadata")
+    private List<SubmissionMetadata> submissionMetadata = new ArrayList<>();
+
+    @JsonProperty("aggregationParticle")
+    private String aggregationParticle;
+
+    @JsonIgnore
+    private boolean impliedSampleName = false;
+
     public LibraryBean() {}
 
     /**
@@ -222,14 +235,16 @@ public class LibraryBean {
     }
 
     public LibraryBean(String library, String initiative, Long workRequest, MolecularIndexingScheme indexingScheme,
-            Boolean hasIndexingRead, String expectedInsertSize, String analysisType,
-            String referenceSequence, String referenceSequenceVersion, String organism, String species,
-            String strain, String aligner, String rrbsSizeRange, String restrictionEnzyme, String bait,
-            double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
-            TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes, String gssrSampleType,
-            Boolean doAggregation, Collection<String> customAmpliconSetNames, ProductOrder productOrder,
-            String lcSet, SampleData sampleData, String labWorkflow, String libraryCreationDate,
-            String productOrderSample, String metadataSource, String aggregationDataType /*only for controls*/) {
+                       Boolean hasIndexingRead, String expectedInsertSize, String analysisType,
+                       String referenceSequence, String referenceSequenceVersion, String organism, String species,
+                       String strain, String aligner, String rrbsSizeRange, String restrictionEnzyme, String bait,
+                       double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
+                       TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes, String gssrSampleType,
+                       Boolean doAggregation, Collection<String> customAmpliconSetNames, ProductOrder productOrder,
+                       String lcSet, SampleData sampleData, String labWorkflow, String libraryCreationDate,
+                       String productOrderSample, String metadataSource, String aggregationDataType,
+                       JiraService jiraService, List<SubmissionMetadata> submissionMetadata, boolean analyzeUmis,
+                       String aggregationParticle, boolean impliedSampleName) {
 
         // project was always null in the calls here, so don't send it through. Can add back later.
         this(library, null, initiative, workRequest, indexingScheme, hasIndexingRead, expectedInsertSize,
@@ -237,7 +252,8 @@ public class LibraryBean {
                 aligner, rrbsSizeRange, restrictionEnzyme, bait, null, labMeasuredInsertSize, positiveControl,
                 negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation, customAmpliconSetNames,
                 productOrder, lcSet, sampleData, labWorkflow, productOrderSample, libraryCreationDate, null, null,
-                metadataSource, aggregationDataType);
+                metadataSource, aggregationDataType, jiraService, submissionMetadata, analyzeUmis, aggregationParticle,
+                impliedSampleName);
     }
 
     /**
@@ -283,6 +299,8 @@ public class LibraryBean {
      * @param workRequestDomain squid work request domain name
      * @param metadataSource BSP or Mercury
      * @param aggregationDataType only for controls
+     * @param analyzeUmis are we analyzing the Umi, set in product and overriden in PDO
+     * @param impliedSampleName indicates the Mercury sample name should be null in the pipeline output.
      */
     public LibraryBean(String library, String project, String initiative, Long workRequest,
             MolecularIndexingScheme indexingScheme, Boolean hasIndexingRead, String expectedInsertSize,
@@ -294,7 +312,8 @@ public class LibraryBean {
             Boolean doAggregation, Collection<String> customAmpliconSetNames, ProductOrder productOrder,
             String lcSet, SampleData sampleData, String labWorkflow, String productOrderSample,
             String libraryCreationDate, String workRequestType, String workRequestDomain, String metadataSource,
-            String aggregationDataType) {
+            String aggregationDataType, JiraService jiraService, List<SubmissionMetadata> submissionMetadata,
+            boolean analyzeUmis, String aggregationParticle, boolean impliedSampleName) {
 
         this(sampleLSID, gssrSampleType, collaboratorSampleId, organism, species, strain, individual, sampleData,
                 labWorkflow, productOrderSample, libraryCreationDate);
@@ -318,7 +337,7 @@ public class LibraryBean {
         isPositiveControl = positiveControl;
         isNegativeControl = negativeControl;
         if (devExperimentData != null) {
-            this.devExperimentData = new DevExperimentDataBean(devExperimentData);
+            this.devExperimentData = new DevExperimentDataBean(devExperimentData, jiraService);
         }
         this.gssrBarcodes = gssrBarcodes;
         this.doAggregation = doAggregation;
@@ -326,10 +345,9 @@ public class LibraryBean {
         if (metadataSource != null) {
             this.metadataSource = metadataSource;
         }
+        dataType = aggregationDataType;
 
-        if (productOrder == null) {
-            dataType = aggregationDataType;
-        } else {
+        if (productOrder != null) {
             this.regulatoryDesignation = productOrder.getRegulatoryDesignationCodeForPipeline();
             productOrderKey = productOrder.getBusinessKey();
             productOrderTitle = productOrder.getTitle();
@@ -341,7 +359,9 @@ public class LibraryBean {
 
             Product product = productOrder.getProduct();
             if (product != null) {
-                this.dataType = productOrder.getProduct().getAggregationDataType();
+                if (dataType == null) {
+                    dataType = productOrder.getProduct().getAggregationDataType();
+                }
                 this.product = product.getProductName();
                 ProductFamily family = product.getProductFamily();
                 if (family != null) {
@@ -364,6 +384,13 @@ public class LibraryBean {
         this.lcSet = lcSet;
         this.workRequestType = workRequestType;
         this.workRequestDomain = workRequestDomain;
+        this.submissionMetadata = submissionMetadata;
+        this.analyzeUmis = analyzeUmis;
+        this.aggregationParticle = aggregationParticle;
+        this.impliedSampleName = impliedSampleName;
+        if (impliedSampleName) {
+            sampleId = null;
+        }
     }
 
     /**
@@ -400,6 +427,7 @@ public class LibraryBean {
             participantId = StringUtils.trimToNull(sampleData.getPatientId());
             population = StringUtils.trimToNull(sampleData.getEthnicity());
             race = StringUtils.trimToNull(sampleData.getRace());
+
             collaboratorParticipantId = StringUtils.trimToNull(sampleData.getCollaboratorParticipantId());
             isGssrSample = false;
             metadataSource = MercurySample.BSP_METADATA_SOURCE;
@@ -675,5 +703,21 @@ public class LibraryBean {
 
     public String getBuickCollectionDate() {
         return buickCollectionDate;
+    }
+
+    public boolean isAnalyzeUmis() {
+        return analyzeUmis;
+    }
+
+    public List<SubmissionMetadata> getSubmissionMetadata() {
+        return submissionMetadata;
+    }
+
+    public String getAggregationParticle() {
+        return aggregationParticle;
+    }
+
+    public boolean isImpliedSampleName() {
+        return impliedSampleName;
     }
 }

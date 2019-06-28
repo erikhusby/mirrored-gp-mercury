@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.hibernate.envers.Audited;
 
@@ -13,11 +14,14 @@ import javax.persistence.Enumerated;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static javax.swing.UIManager.put;
+import static org.broadinstitute.gpinformatics.mercury.entity.OrmUtil.proxySafeCast;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.ContainerType.STATIC_PLATE;
 
 /**
@@ -103,6 +107,7 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         Eppendorf384("Eppendorf384", VesselGeometry.G24x16),
         FilterPlate96("FilterPlate96", VesselGeometry.G12x8),
         Fluidigm48_48AccessArrayIFC("Fluidigm48.48AccessArrayIFC", VesselGeometry.FLUIDIGM_48_48),
+        UniqueMolecularIdentifierPlate96("UniqueMolecularIdentifierPlate96", VesselGeometry.G12x8),
         IndexedAdapterPlate96("IndexedAdapterPlate96", VesselGeometry.G12x8),
         IndexedAdapterPlate384("IndexedAdapterPlate384", VesselGeometry.G24x16),
         Matrix96("Matrix96", VesselGeometry.G12x8),
@@ -125,6 +130,7 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         Plate96Well1200("Plate96Well1200", VesselGeometry.G12x8),
         Plate96WellCollectionTube2000("Plate96WellCollectionTube2000", VesselGeometry.G12x8),
         Plate96WellRNA("Plate96WellRNA", VesselGeometry.G12x8),
+        Plate96WellPowerBead("Plate96WellPowerBead", VesselGeometry.G12x8),
         SageCassette("SageCassette", VesselGeometry.SAGE_CASSETTE),
         SpinColumn96SlotRack("SpinColumn96SlotRack", VesselGeometry.G12x8),
         InfiniumChip24("InfiniumChip24", VesselGeometry.INFINIUM_24_CHIP),
@@ -230,7 +236,7 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         for (LabEvent event : getTransfersTo()) {
             for (LabVessel source : event.getSourceLabVessels()) {
                 if (source.getType() == STATIC_PLATE) {
-                    parents.add(OrmUtil.proxySafeCast(source, StaticPlate.class));
+                    parents.add(proxySafeCast(source, StaticPlate.class));
                 }
             }
         }
@@ -295,6 +301,88 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
     }
 
     /**
+     * Traverses plate well ancestors to find the nearest tube formation, and the corresponding
+     * tube position. Also collects LabEventMetadata along the way. Throws if more than one
+     * tube formations feed into the plate.
+     */
+    public static class TubeFormationByWellCriteria extends TransferTraverserCriteria {
+
+        /** The well position we are starting from. */
+        private VesselPosition queryVesselPosition;
+
+        /** Dto that holds the result of the traversal. */
+        public class Result {
+            /** A sparsely populated map that only has entries for existing tubes. */
+            private Map<VesselPosition, VesselPosition> wellToTubePosition = new HashMap<>();
+            private TubeFormation tubeFormation = null;
+            private Set<LabEventMetadata> labEventMetadata = new HashSet<>();
+
+            public void setTubeFormation(TubeFormation tubeFormation) {
+                this.tubeFormation = tubeFormation;
+            }
+
+            public TubeFormation getTubeFormation() {
+                return tubeFormation;
+            }
+
+            public Map<VesselPosition, VesselPosition> getWellToTubePosition() {
+                return wellToTubePosition;
+            }
+
+            public Set<LabEventMetadata> getLabEventMetadata() {
+                return labEventMetadata;
+            }
+        }
+
+        private Result result = new Result();
+
+        public Result getResult() {
+            return result;
+        }
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            Pair<LabVessel,VesselPosition> vesselPositionPair = context.getContextVesselAndPosition();
+            VesselPosition contextVesselPosition = vesselPositionPair.getRight();
+            VesselContainer contextVesselContainer = context.getContextVesselContainer();
+
+            if (contextVesselPosition != null && context.getHopCount() == 0) {
+                // Saves the new starting well position. The traversal history is cleared each time
+                // since an upstream plate well may be split out to multiple downstream plate wells,
+                // such as when a pico rack goes to Epp96 dilution and then to Epp384 microfluor.
+                queryVesselPosition = contextVesselPosition;
+                resetAllTraversed();
+            }
+
+            if (contextVesselContainer != null) {
+                if (OrmUtil.proxySafeIsInstance(contextVesselContainer.getEmbedder(), TubeFormation.class)) {
+                    TubeFormation tubeFormation = OrmUtil.proxySafeCast(contextVesselContainer.getEmbedder(),
+                            TubeFormation.class);
+                    if (result.getTubeFormation() == null) {
+                        result.setTubeFormation(tubeFormation);
+                    } else if (result.getTubeFormation() != tubeFormation) {
+                        throw new RuntimeException("Expected one tube formation but found " +
+                                result.getTubeFormation().getLabel() + " and " + tubeFormation.getLabel());
+                    }
+                    if (tubeFormation.getContainerRole().getMapPositionToVessel().containsKey(contextVesselPosition)) {
+                        result.getWellToTubePosition().put(queryVesselPosition, contextVesselPosition);
+                    }
+                    return TraversalControl.StopTraversing;
+                } else {
+                    // Collects lab event metadata on the plates that are traversed, including the starting plate.
+                    for (LabEvent labEvent : contextVesselContainer.getEmbedder().getEvents()) {
+                        result.getLabEventMetadata().addAll(labEvent.getLabEventMetadatas());
+                    }
+                }
+            }
+            return TraversalControl.ContinueTraversing;
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {}
+    }
+
+    /**
      * Returns, for each well position, whether or not there has been a source tube in a tube rack somewhere in the
      * ancestry.
      *
@@ -302,6 +390,13 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
      */
     public Map<VesselPosition, Boolean> getHasRackContentByWell() {
         HasRackContentByWellCriteria criteria = new HasRackContentByWellCriteria();
+        vesselContainer.applyCriteriaToAllPositions(criteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+        return criteria.getResult();
+    }
+
+    /** Returns nearest ancestor rack and tube position for each well, and lab event metadata. */
+    public TubeFormationByWellCriteria.Result nearestFormationAndTubePositionByWell() {
+        TubeFormationByWellCriteria criteria = new TubeFormationByWellCriteria();
         vesselContainer.applyCriteriaToAllPositions(criteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
         return criteria.getResult();
     }
@@ -353,6 +448,13 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         return plateType.getVesselGeometry();
     }
 
+    /**
+     * Needed for a fixup - use constructor only
+     * @param plateType Change existing persisted plate type to this value
+     */
+    void setPlateType(PlateType plateType) {
+        this.plateType = plateType;
+    }
 
     public PlateType getPlateType() {
         return plateType;

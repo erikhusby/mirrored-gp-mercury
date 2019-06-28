@@ -1,4 +1,4 @@
-<%@ page import="org.broadinstitute.gpinformatics.infrastructure.common.TokenInput" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -13,7 +13,9 @@
                         $j("#projectManagers").tokenInput(
                             "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                 hintText: "Type a Project Manager name",
+                                <enhance:out escapeXml="false">
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.projectManagerList.completeData)},
+                                </enhance:out>
                                 tokenDelimiter: "${actionBean.projectManagerList.separator}",
                                 preventDuplicates: true,
                                 resultsFormatter: formatInput,
@@ -24,7 +26,9 @@
                         $j("#scientists").tokenInput(
                             "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                 hintText: "Type a Scientist name",
+                                <enhance:out escapeXml="false">
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.scientistList.completeData)},
+                                </enhance:out>
                                 tokenDelimiter: "${actionBean.scientistList.separator}",
                                 preventDuplicates: true,
                                 resultsFormatter: formatInput,
@@ -35,7 +39,9 @@
                         $j("#externalCollaborators").tokenInput(
                             "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                 hintText: "Type a Collaborator name",
+                                <enhance:out escapeXml="false">
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.externalCollaboratorList.completeData)},
+                                </enhance:out>
                                 tokenDelimiter: "${actionBean.externalCollaboratorList.separator}",
                                 preventDuplicates: true,
                                 resultsFormatter: formatInput,
@@ -46,7 +52,9 @@
                         $j("#broadPIs").tokenInput(
                             "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                 hintText: "Type a Broad PI",
+                                <enhance:out escapeXml="false">
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.broadPiList.completeData)},
+                                </enhance:out>
                                 tokenDelimiter: "${actionBean.broadPiList.separator}",
                                 preventDuplicates: true,
                                 resultsFormatter: formatInput,
@@ -57,7 +65,9 @@
                         $j("#otherUsers").tokenInput(
                             "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                 hintText: "Enter a user name",
+                                <enhance:out escapeXml="false">
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.otherUserList.completeData)},
+                                </enhance:out>
                                 tokenDelimiter: "${actionBean.otherUserList.separator}",
                                 preventDuplicates: true,
                                 resultsFormatter: formatInput,
@@ -67,7 +77,9 @@
 
                         $j("#fundingSources").tokenInput(
                             "${ctxpath}/projects/project.action?fundingAutocomplete=", {
+                                <enhance:out escapeXml="false">
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.fundingSourceList.completeData)},
+                                </enhance:out>
                                 tokenDelimiter: "${actionBean.fundingSourceList.separator}",
                                 preventDuplicates: true,
                                 resultsFormatter: formatInput,
@@ -78,7 +90,9 @@
                         $j("#cohorts").tokenInput(
                             "${ctxpath}/projects/project.action?cohortAutocomplete=", {
                                 hintText: "Type a Sample Cohort name",
+                                <enhance:out escapeXml="false">
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.cohortsList.completeData)},
+                                </enhance:out>
                                 tokenDelimiter: "${actionBean.cohortsList.separator}",
                                 preventDuplicates: true,
                                 resultsFormatter: formatInput,
@@ -89,7 +103,9 @@
                         $j("#parentResearchProject").tokenInput(
                                 "${ctxpath}/projects/project.action?projectHierarchyAwareAutocomplete=&researchProject=${actionBean.editResearchProject.businessKey}", {
                                     hintText: "Type a project name",
+                                    <enhance:out escapeXml="false">
                                     prePopulate: ${actionBean.ensureStringResult(actionBean.projectTokenInput.completeData)},
+                                    </enhance:out>
                                     resultsFormatter: formatInput,
                                     tokenLimit: 1,
                                     autoSelectFirstResult: true

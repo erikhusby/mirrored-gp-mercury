@@ -30,7 +30,6 @@
                 <fieldset>
                     <legend><h4>Price Items to "Blacklist"</h4></legend>
                 <div id="priceItems" class="control-group">
-                    <c:set var="preSelectedOptions" value="${actionBean.selectedOptionsString}"/>
 
                     <c:forEach items="${actionBean.priceListOptions}" var="priceItem">
 

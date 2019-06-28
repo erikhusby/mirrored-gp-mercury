@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -12,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
+import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
@@ -29,6 +31,8 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -37,8 +41,8 @@ import javax.persistence.Table;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -149,6 +153,7 @@ public class MercurySample extends AbstractSample {
     private String sampleKey;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
+    @JoinColumn(name = "RAP_SHEET")
     private RapSheet rapSheet;
 
     @OneToMany(mappedBy = "mercurySample", fetch = FetchType.LAZY,  cascade = CascadeType.PERSIST)
@@ -159,12 +164,21 @@ public class MercurySample extends AbstractSample {
     private MetadataSource metadataSource;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(schema = "MERCURY"
+            , joinColumns = {@JoinColumn(name = "MERCURY_SAMPLE")}
+            ,inverseJoinColumns = {@JoinColumn(name = "METADATA")})
     @BatchSize(size = 100)
     private Set<Metadata> metadata = new HashSet<>();
 
     // TODO: jms Shouldn't this be plural?
     @ManyToMany(mappedBy = "mercurySamples", cascade = CascadeType.PERSIST)
+    @BatchSize(size = 100)
     protected Set<LabVessel> labVessel = new HashSet<>();
+
+    private Boolean isRoot;
+
+    @OneToMany(mappedBy = "mercurySample", cascade = CascadeType.PERSIST)
+    private Set<Fingerprint> fingerprints = new HashSet<>();
 
     /**
      * For JPA
@@ -181,6 +195,18 @@ public class MercurySample extends AbstractSample {
     public MercurySample(String sampleKey, MetadataSource metadataSource) {
         this.sampleKey = sampleKey;
         this.metadataSource = metadataSource;
+    }
+
+    /**
+     * Creates a new MercurySample with a specific metadata source in the absence of the actual sample data.
+     *
+     * @param sampleKey         the name of the sample
+     * @param metadataSource    the source of the sample data
+     * @param isRoot            true if this is a new root
+     */
+    public MercurySample(String sampleKey, MetadataSource metadataSource, Boolean isRoot) {
+        this(sampleKey, metadataSource);
+        this.isRoot = isRoot;
     }
 
     /**
@@ -220,6 +246,10 @@ public class MercurySample extends AbstractSample {
     @Override
     public String getSampleKey() {
         return sampleKey;
+    }
+
+    void setSampleKey(String sampleKey) {
+        this.sampleKey = sampleKey;
     }
 
     public Set<ProductOrderSample> getProductOrderSamples() {
@@ -270,6 +300,31 @@ public class MercurySample extends AbstractSample {
         }
     }
 
+    /**
+     * Adds new metadata entries or updates existing ones, but does not remove existing entries
+     * that aren't in the updates.
+     */
+    public void updateMetadata(Set<Metadata> updates) {
+        if (metadataSource == MetadataSource.MERCURY) {
+            for (Metadata update : updates) {
+                Metadata.Key key = update.getKey();
+                for (Iterator<Metadata> iterator = metadata.iterator(); iterator.hasNext(); ) {
+                    // Lookup on name and remove is necessary in case the data type changes.
+                    if (key.name().equals(iterator.next().getKey().name())) {
+                        iterator.remove();
+                    }
+                }
+                if (StringUtils.isNotBlank(update.getValue())) {
+                    metadata.add(update);
+                }
+            }
+            setSampleData(new MercurySampleData(sampleKey, this.metadata, getReceivedDate()));
+        } else {
+            throw new IllegalStateException(String.format(
+                    "MercurySamples with metadata source of %s cannot have Mercury metadata", metadataSource));
+        }
+    }
+
     public Set<Metadata> getMetadata() {
         return metadata;
     }
@@ -280,6 +335,19 @@ public class MercurySample extends AbstractSample {
 
     public Set<LabVessel> getLabVessel() {
         return labVessel;
+    }
+
+    public Boolean isRoot() {
+        return isRoot;
+    }
+
+    public Set<Fingerprint> getFingerprints() {
+        return fingerprints;
+    }
+
+    // For fixup tests only.
+    void setRoot(Boolean root) {
+        isRoot = root;
     }
 
     /**
@@ -296,13 +364,23 @@ public class MercurySample extends AbstractSample {
     }
 
     public Date getReceivedDate() {
+        LabEvent receiptEvent = getReceiptEvent();
+        if (receiptEvent != null) {
+            return receiptEvent.getEventDate();
+        }
+        return null;
+    }
 
-        for(LabVessel currentVessel:labVessel) {
-            Map<LabEvent, Set<LabVessel>> vesselsForEvent = currentVessel
-                    .findVesselsForLabEventType(LabEventType.SAMPLE_RECEIPT, true,
-                            EnumSet.of(TransferTraverserCriteria.TraversalDirection.Ancestors));
+    public LabEvent getReceiptEvent() {
+        for(LabVessel currentVessel : labVessel) {
+            TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
+                    new TransferTraverserCriteria.VesselForEventTypeCriteria(
+                            Collections.singletonList(LabEventType.SAMPLE_RECEIPT), false, true);
+            currentVessel.evaluateCriteria(vesselForEventTypeCriteria,
+                    TransferTraverserCriteria.TraversalDirection.Ancestors);
+            Map<LabEvent, Set<LabVessel>> vesselsForEvent = vesselForEventTypeCriteria.getVesselsForLabEventType();
             if (!vesselsForEvent.isEmpty()) {
-                return vesselsForEvent.keySet().iterator().next().getEventDate();
+                return vesselsForEvent.keySet().iterator().next();
             }
         }
 
@@ -373,7 +451,7 @@ public class MercurySample extends AbstractSample {
 
     public void removeSampleFromVessels(Collection<LabVessel> vesselsForRemoval) {
         for (LabVessel labVesselForRemoval : vesselsForRemoval) {
-            labVesselForRemoval.getMercurySamples().remove(this);
+            labVesselForRemoval.removeSample(this);
             labVessel.remove(labVesselForRemoval);
         }
     }
