@@ -294,10 +294,13 @@ public class BillingAdaptor implements Serializable {
                                         throw new BillingException(NEGATIVE_BILL_ERROR);
                                     } else if (quantityForSAP < 0) {
 
-                                        sapService.creditDelivery( priorSapBillings.iterator().next().getSapDeliveryDocumentId() ,item);
+//                                        priorSapBillings
+
+                                        final String creditOrderId = sapService.creditDelivery(
+                                                priorSapBillings.iterator().next().getSapDeliveryDocumentId(), item);
 
                                         item.setBillingMessages(BillingSession.BILLING_CREDIT);
-                                        sapBillingId = BILLING_CREDIT_REQUESTED_INDICATOR;
+                                        sapBillingId = creditOrderId;
                                         result.setSapBillingId(sapBillingId);
                                         billingEjb.updateSapLedgerEntries(item, workId, sapBillingId,
                                                 BillingSession.BILLING_CREDIT);

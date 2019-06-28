@@ -76,4 +76,18 @@
             <column name="OFFERED_AS_COMMERCIAL" type="number(1,0)" />
         </addColumn>
     </changeSet>
+    <changeSet id="GPLIM-6436-add-credited-reference" author="scottmat">
+        <addColumn tableName="BILLING_LEDGER" schemaName="ATHENA">
+            <column name="SAP_CREDITED_DELIVERY_DOCUMENT" type="varchar(255)">
+                <constraints nullable="true" />
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6436-add-credited-reference-aud" author="scottmat">
+        <addColumn tableName="BILLING_LEDGER_AUD" schemaName="ATHENA">
+            <column name="SAP_CREDITED_DELIVERY_DOCUMENT" type="varchar(255)">
+                <constraints nullable="true" />
+            </column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

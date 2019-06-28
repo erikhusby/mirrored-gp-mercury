@@ -216,6 +216,11 @@ public class QuoteImportItem {
      */
     public void updateSapLedgerEntries(String billingMessage, String quoteServerWorkItem, String sapDeliveryId) {
 
+        updateSapLedgerEntries(billingMessage, quoteServerWorkItem, sapDeliveryId, ledgerItems);
+    }
+
+    public void updateSapLedgerEntries(String billingMessage, String quoteServerWorkItem, String sapDeliveryId,
+                                        Collection<LedgerEntry> ledgerItems) {
         for (LedgerEntry ledgerEntry : ledgerItems) {
             ledgerEntry.setQuoteId(quoteId);
             ledgerEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);

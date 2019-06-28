@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessio
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -222,6 +223,23 @@ public class BillingEjb {
                                     String sapDeliveryId, String billingMessage) {
 
         item.updateSapLedgerEntries(billingMessage, quoteServerWorkItem,sapDeliveryId);
+        billingSessionDao.flush();
+    }
+
+    /**
+     * Separation of the action of calling the quote server and updating the associated ledger entries.  This is to
+     * separate the steps of billing a session into smaller finite transactions so we can record more to the database
+     * sooner
+     *
+     * @param item                Representation of the quote and its ledger entries that are to be billed
+     * @param quoteServerWorkItem the pointer back to the quote server transaction
+     * @param sapDeliveryId
+     * @param billingMessage
+     */
+    public void updateSapIndividualLedgerEntries(QuoteImportItem item, String quoteServerWorkItem,
+                                                 String sapDeliveryId, String billingMessage, Collection<LedgerEntry> ledgerEntries) {
+
+        item.updateSapLedgerEntries(billingMessage, quoteServerWorkItem,sapDeliveryId,ledgerEntries);
         billingSessionDao.flush();
     }
 

@@ -96,6 +96,9 @@ public class LedgerEntry implements Serializable {
     @JoinColumn(name = "SAP_ORDER_DETAIL_ID")
     private SapOrderDetail sapOrderDetail;
 
+    @Column(name = "SAP_CREDITED_DELIVERY_DOCUMENT")
+    private String creditedDeliveryDocumentId;
+
     /**
      * Package private constructor for JPA use.
      */
@@ -167,7 +170,13 @@ public class LedgerEntry implements Serializable {
         this.billingMessage = billingMessage;
     }
 
+    public String getCreditedDeliveryDocumentId() {
+        return creditedDeliveryDocumentId;
+    }
 
+    public void setCreditedDeliveryDocumentId(String creditedDeliveryDocumentId) {
+        this.creditedDeliveryDocumentId = creditedDeliveryDocumentId;
+    }
 
     /**
      * A ledger item is billed if either its message is the success status or the session has been billed. The
