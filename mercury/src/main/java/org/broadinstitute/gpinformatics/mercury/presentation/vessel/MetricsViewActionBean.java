@@ -523,9 +523,9 @@ public class MetricsViewActionBean extends RackScanActionBean {
 
             // Blacklisting
             if( wellBlacklistMap.containsKey(chipWellbarcode) ) {
-                plateMap.setWellStatus(startPosition, WellStatus.Blacklisted);
                 for( ArraysQcBlacklisting blacklisting : wellBlacklistMap.get(chipWellbarcode)) {
                     if (blacklisting.getAnalysisVersion().equals(arraysQc.getAnalysisVersion())) {
+                        plateMap.setWellStatus(startPosition, WellStatus.Blacklisted);
                         metadata.add(Metadata.create("Pipeline Blacklist", DATE_FORMAT.format(blacklisting.getBlacklistedOn()) + " - " + blacklisting.getBlacklistReason()));
                         if (blacklisting.getWhitelistedOn() != null) {
                             metadata.add(Metadata.create("Whitelisted", DATE_FORMAT.format(blacklisting.getWhitelistedOn())));
