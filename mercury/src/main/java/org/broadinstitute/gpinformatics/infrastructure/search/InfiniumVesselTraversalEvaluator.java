@@ -117,7 +117,7 @@ public class InfiniumVesselTraversalEvaluator extends CustomTraversalEvaluator {
         // If the user searched on PDO, and requested wells, filter out wells that don't match
         if (shouldProduceWells && searchInstance.getSearchValues().size() == 1) {
             SearchInstance.SearchValue searchValue = searchInstance.getSearchValues().get(0);
-            if (searchValue.getSearchTerm().getName().equals("PDO")) { // todo jmt
+            if (searchValue.getSearchTerm().getName().equals(LabVesselSearchDefinition.PDO_SEARCH_TERM)) {
                 Iterator<?> iter = infiniumVessels.iterator();
                 while (iter.hasNext()) {
                     LabVessel eventVessel = (LabVessel)iter.next();

@@ -89,7 +89,9 @@ public class LabVesselSearchDefinition {
     public static final List<LabEventType> CHIP_EVENT_TYPES = Collections.singletonList(
             LabEventType.INFINIUM_HYBRIDIZATION);
 
-    public static final List<LabEventType> FLOWCELL_LAB_EVENT_TYPES = new ArrayList<>();
+    static final List<LabEventType> FLOWCELL_LAB_EVENT_TYPES = new ArrayList<>();
+    static final String PDO_SEARCH_TERM = "PDO";
+
     static {
         FLOWCELL_LAB_EVENT_TYPES.add(LabEventType.FLOWCELL_TRANSFER);
         FLOWCELL_LAB_EVENT_TYPES.add(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER);
@@ -792,7 +794,7 @@ public class LabVesselSearchDefinition {
 
         // PDO
         searchTerm = new SearchTerm();
-        searchTerm.setName("PDO");
+        searchTerm.setName(PDO_SEARCH_TERM);
         searchTerm.setDbSortPath("bucketEntries.productOrder.jiraTicketKey");
         searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getPdoInputConverter());
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
