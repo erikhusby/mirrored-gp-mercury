@@ -101,7 +101,7 @@ public class BillingEjb {
         }
 
         public boolean isBilledInQuoteServer() {
-            return StringUtils.isNotBlank(workId);
+            return StringUtils.isNumeric(workId);
         }
     }
 

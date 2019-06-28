@@ -112,26 +112,21 @@
             </thead>
             <tbody>
             <c:forEach items="${actionBean.quoteImportItems}" var="item">
-                <tr id="${item.singleWorkItem}">
+                <tr id="${item.tabularIdentifier}">
                     <td>
                         <c:choose>
                             <c:when test="${item.sapOrder}">
                                 Sap Quote:
-                                <a href="${actionBean.getSapQuoteUrl(item.quoteId)}" class="external" target="QUOTE">
-                                        ${item.quoteId}
-                                </a>
+                                <a href="${actionBean.getSapQuoteUrl(item.quoteId)}" class="external" target="QUOTE">${item.quoteId}</a>
                             </c:when>
                             <c:otherwise>
-                                <a href="${actionBean.getQuoteUrl(item.quoteId)}" class="external" target="QUOTE">
-                                        ${item.quoteId}
-                                </a>
-
+                                <a href="${actionBean.getQuoteUrl(item.quoteId)}" class="external" target="QUOTE">${item.quoteId}</a>
                             </c:otherwise>
                         </c:choose>
                     </td>
                     <td>
                         <c:forEach items="${item.orderKeys}" var="pdoBusinessKey">
-                            <span style="white-space: nowrap">
+                            <span class="billed-pdos" style="white-space: nowrap">
                                 <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" event="view">
                                     <stripes:param name="productOrder" value="${pdoBusinessKey}"/>
                                     ${pdoBusinessKey}
@@ -142,15 +137,20 @@
                     </td>
                     <td>
                         <c:forEach items="${item.workItems}" var="quoteServerWorkItem">
-                            <a href="${actionBean.getQuoteWorkItemUrl(item.quoteId,quoteServerWorkItem)}" target="QUOTE">
-                                ${quoteServerWorkItem}<br>
-                            </a>
+                            <c:choose><c:when test="${!item.sapOrder}">
+                                <a class="billed-workItems"
+                                   href="${actionBean.getQuoteWorkItemUrl(item.quoteId,quoteServerWorkItem)}"
+                                   target="QUOTE">${quoteServerWorkItem}</a><br/>
+                            </c:when>
+                            <c:otherwise>${quoteServerWorkItem}</c:otherwise></c:choose>
                         </c:forEach>
                     </td>
                     <td>
-                        <c:forEach items="${item.sapItems}" var="sapWorkItem">
+                        <span class="sapDocumentIds">
+                            <c:forEach items="${item.sapItems}" var="sapWorkItem">
                                 ${sapWorkItem}<br>
-                        </c:forEach>
+                            </c:forEach>
+                        </span>
                     </td>
                     <td>${item.priceItem.platform}</td>
                     <td>${item.priceItem.category}</td>
@@ -161,7 +161,7 @@
                     <td>
                         <fmt:formatDate value="${item.workCompleteDate}" pattern="${actionBean.datePattern}"/>
                     </td>
-                    <td>${item.billingMessage}</td>
+                    <td><span class="billingMessage">${item.billingMessage}</span></td>
                 </tr>
             </c:forEach>
             </tbody>

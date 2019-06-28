@@ -322,32 +322,35 @@ public class BillingAdaptor implements Serializable {
                             BillingSession.SUCCESS);
                 } catch (Exception ex) {
 
-                    StringBuilder errorMessage = new StringBuilder();
+                    StringBuilder errorMessageBuilder = new StringBuilder();
                     if (!result.isBilledInQuoteServer() && StringUtils.isBlank(workId)) {
 
 
-                        errorMessage.append("A problem occurred attempting to post to the quote server for ")
+                        errorMessageBuilder.append("A problem occurred attempting to post to the quote server for ")
                                 .append(billingSession.getBusinessKey()).append(".");
 
                     } else if (!result.isBilledInSap() && isQuoteFunded && item.isSapOrder()) {
 
-                        errorMessage.append("A problem occured attempting to post to SAP for ")
+                        errorMessageBuilder.append("A problem occured attempting to post to SAP for ")
                                 .append(billingSession.getBusinessKey()).append(".");
 
                     }
                     else {
-                        errorMessage.append("A problem occurred saving the ledger entries for ")
-                                .append(billingSession.getBusinessKey()).append(" with an SAP ID of ")
-                                .append(result.isBilledInSap()?result.getSapBillingId():sapBillingId).append(",")
-                                .append(" with work id of ").append(result.isBilledInQuoteServer()?result.getWorkId():workId)
-                                .append(".  ")
-                                .append("The quote for this item may have been successfully sent to the quote server");
+                        errorMessageBuilder.append("A problem occurred saving the ledger entries for ")
+                            .append(billingSession.getBusinessKey()).append(" with an SAP ID of ")
+                            .append(result.isBilledInSap() ? result.getSapBillingId() : sapBillingId).append(",")
+                            .append(" with work id of ")
+                            .append(result.isBilledInQuoteServer() ? result.getWorkId() : workId)
+                            .append(".  ")
+                            .append("The quote for this item may have been successfully sent to ")
+                            .append(result.isBilledInSap() ? "SAP" : "the quote server");
                     }
 
-                    log.error(errorMessage + ex.toString(), ex);
+                    log.error(errorMessageBuilder + " " + ex.toString(), ex);
 
-                    item.setBillingMessages(errorMessage + ex.getMessage());
-                    result.setErrorMessage(errorMessage + ex.getMessage());
+                    String errorMessage = errorMessageBuilder + " " + ex.getMessage();
+                    item.setBillingMessages(errorMessage);
+                    result.setErrorMessage(errorMessage);
                     errorsInBilling = true;
                 }
             }

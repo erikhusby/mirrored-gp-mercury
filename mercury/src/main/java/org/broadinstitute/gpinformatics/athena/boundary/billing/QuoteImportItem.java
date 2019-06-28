@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
  */
 public class QuoteImportItem {
     public static final String PDO_QUANTITY_FORMAT = "###,###,###.##";
+    private String tabularIdentifier;
     private final String quoteId;
     private final PriceItem priceItem;
     private String quotePriceType;
@@ -61,9 +62,13 @@ public class QuoteImportItem {
                 updateDateRange(ledger.getWorkCompleteDate());
                 if (StringUtils.isNotBlank(ledger.getWorkItem())) {
                     workItems.add(ledger.getWorkItem());
+                    if (tabularIdentifier == null) {
+                        tabularIdentifier = ledger.getWorkItem();
+                    }
                 }
                 if (StringUtils.isNotBlank(ledger.getSapDeliveryDocumentId())) {
                     sapItems = ledger.getSapDeliveryDocumentId();
+                    tabularIdentifier = sapItems;
                 } else {
                     if (!StringUtils.equals(ledger.getSapDeliveryDocumentId(), sapItems)) {
                         throw new RuntimeException("Mis Matched SAPDelivery Document Found");
@@ -385,6 +390,10 @@ public class QuoteImportItem {
 
     public void setSapQuote(SapQuote sapQuote) {
         this.sapQuote = sapQuote;
+    }
+
+    public String getTabularIdentifier() {
+        return tabularIdentifier;
     }
 
     public boolean isSapOrder() { return productOrder.hasSapQuote();}
