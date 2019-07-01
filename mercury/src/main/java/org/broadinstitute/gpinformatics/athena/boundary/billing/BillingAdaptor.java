@@ -37,12 +37,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * The Billing Adaptor was derived to provide the ability to provide singular interface calls related to billingEJB
@@ -272,16 +270,7 @@ public class BillingAdaptor implements Serializable {
                                             BillingSession.BILLED_FOR_SAP + " "
                                             + BillingSession.BILLED_FOR_QUOTES);
                                 } else {
-                                    Set<LedgerEntry> priorSapBillings = new HashSet<>();
-                                    item.getBillingCredits().stream()
-                                            .filter(ledgerEntry -> ledgerEntry.getProductOrderSample().getProductOrder().getProduct().equals(item.getProduct()))
-                                            .forEach(ledgerEntry -> {
-                                                ledgerEntry.getPreviouslyBilled().stream()
-                                                        .filter(previousBilled -> previousBilled.getSapDeliveryDocumentId()
-                                                                                  != null)
-                                                        .sorted(Comparator.comparing(LedgerEntry::getSapDeliveryDocumentId).reversed())
-                                                        .collect(Collectors.toCollection(() -> priorSapBillings));
-                                            });
+                                    List<LedgerEntry> priorSapBillings = item.getPriorSapLedgerEntries();
 
                                     // Negative billing is allowed if the same positive number has been previously billed.
                                     // When this is not the case throw an exception.
@@ -293,17 +282,15 @@ public class BillingAdaptor implements Serializable {
                                         result.setErrorMessage(NEGATIVE_BILL_ERROR);
                                         throw new BillingException(NEGATIVE_BILL_ERROR);
                                     } else if (quantityForSAP < 0) {
-
-//                                        priorSapBillings
-
-                                        final String creditOrderId = sapService.creditDelivery(
-                                                priorSapBillings.iterator().next().getSapDeliveryDocumentId(), item);
+                                        priorSapBillings = sapService.creditDelivery(item);
 
                                         item.setBillingMessages(BillingSession.BILLING_CREDIT);
-                                        sapBillingId = creditOrderId;
+                                        sapBillingId =
+                                            priorSapBillings.stream().map(LedgerEntry::getSapDeliveryDocumentId)
+                                                .toString();
                                         result.setSapBillingId(sapBillingId);
-                                        billingEjb.updateSapLedgerEntries(item, workId, sapBillingId,
-                                                BillingSession.BILLING_CREDIT);
+                                        billingEjb.updateSapIndividualLedgerEntries(item, workId, sapBillingId,
+                                            priorSapBillings, BillingSession.BILLING_CREDIT);
                                     }
                                 }
                                 item.getProductOrder().latestSapOrderDetail().addLedgerEntries(item.getLedgerItems());

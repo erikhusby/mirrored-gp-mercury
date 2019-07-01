@@ -230,14 +230,14 @@ public class BillingEjb {
      * Separation of the action of calling the quote server and updating the associated ledger entries.  This is to
      * separate the steps of billing a session into smaller finite transactions so we can record more to the database
      * sooner
-     *
-     * @param item                Representation of the quote and its ledger entries that are to be billed
+     *  @param item                Representation of the quote and its ledger entries that are to be billed
      * @param quoteServerWorkItem the pointer back to the quote server transaction
      * @param sapDeliveryId
      * @param billingMessage
      */
     public void updateSapIndividualLedgerEntries(QuoteImportItem item, String quoteServerWorkItem,
-                                                 String sapDeliveryId, String billingMessage, Collection<LedgerEntry> ledgerEntries) {
+                                                 String sapDeliveryId, Collection<LedgerEntry> ledgerEntries,
+                                                 String billingMessage) {
 
         item.updateSapLedgerEntries(billingMessage, quoteServerWorkItem,sapDeliveryId,ledgerEntries);
         billingSessionDao.flush();

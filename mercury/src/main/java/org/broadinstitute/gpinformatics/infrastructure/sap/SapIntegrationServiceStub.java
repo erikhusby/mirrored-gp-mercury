@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.sap;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
@@ -305,7 +306,7 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     }
 
     @Override
-    public String creditDelivery(String deliveryDocumentId, QuoteImportItem quoteItemForBilling) {
+    public List<LedgerEntry> creditDelivery(QuoteImportItem quoteItemForBilling) {
         return null;
     }
 }

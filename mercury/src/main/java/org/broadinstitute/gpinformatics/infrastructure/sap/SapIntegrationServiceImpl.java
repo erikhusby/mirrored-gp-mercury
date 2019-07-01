@@ -38,6 +38,7 @@ import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
@@ -565,12 +566,19 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @Override
-    public String creditDelivery(String deliveryDocumentId, QuoteImportItem quoteItemForBilling)
-            throws SAPIntegrationException {
+    public Set<String> creditDelivery(QuoteImportItem quoteItemForBilling) throws SAPIntegrationException {
+        Set<String> returnOrders = new HashSet<>();
 
-        SAPOrderItem returnLine = new SAPOrderItem(quoteItemForBilling.getProduct().getPartNumber(), BigDecimal.valueOf(quoteItemForBilling.getQuantity()));
-        SAPReturnOrder returnOrder = new SAPReturnOrder(deliveryDocumentId, Collections.singleton(returnLine));
-        return getClient().createReturnOrder(returnOrder);
+        Map<LedgerEntry, Collection<SAPOrderItem>> deliveryDocumentsMap = quoteItemForBilling.buildOrderItemQuantyMap();
+        for (LedgerEntry ledgerEntry: deliveryDocumentsMap.keySet()) {
+            Collection<SAPOrderItem> deliveryItems = deliveryDocumentsMap.get(ledgerEntry);
+            String returnOrderDocumentId = getClient()
+                .createReturnOrder(new SAPReturnOrder(ledgerEntry.getSapDeliveryDocumentId(), deliveryItems));
+            returnOrders.add(returnOrderDocumentId);
+            ledgerEntry.updateDeliveryDocument(returnOrderDocumentId);
+        }
+
+        return returnOrders;
     }
 
     private boolean productsFoundInSap(ProductOrder productOrder) {

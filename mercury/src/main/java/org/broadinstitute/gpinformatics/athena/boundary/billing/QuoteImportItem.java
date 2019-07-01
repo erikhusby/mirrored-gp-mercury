@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
+import com.google.common.collect.HashMultimap;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
@@ -10,17 +11,24 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.sap.entity.order.SAPOrderItem;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 
 import javax.annotation.Nonnull;
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -76,6 +84,19 @@ public class QuoteImportItem {
                 }
             }
         }
+    }
+
+    public List<LedgerEntry> getPriorSapLedgerEntries() {
+        List<LedgerEntry> priorSapBillings = new ArrayList<>();
+        getBillingCredits().stream().filter(
+            ledgerEntry -> ledgerEntry.getProductOrderSample().getProductOrder().getProduct().equals(getProduct()))
+            .forEach(ledgerEntry -> {
+                ledgerEntry.getPreviouslyBilled().stream()
+                    .filter(previousBilled -> previousBilled.getSapDeliveryDocumentId() != null)
+                    .sorted(Comparator.comparing(LedgerEntry::getSapDeliveryDocumentId).reversed()).distinct()
+                    .collect(Collectors.toCollection(() -> priorSapBillings));
+            });
+        return priorSapBillings;
     }
 
     public Collection<String> getWorkItems() {
@@ -397,4 +418,25 @@ public class QuoteImportItem {
     }
 
     public boolean isSapOrder() { return productOrder.hasSapQuote();}
+
+    public Map<LedgerEntry, Double> findLedgerEntriesWithQuantity() {
+        Map<LedgerEntry, Double> ledgersWithQuantity = new HashMap<>();
+        AtomicReference<Double> foundQuantity= new AtomicReference<>(0d);
+        getPriorSapLedgerEntries().stream().filter(ledgerEntry -> ledgerEntry.getQuantity() > 0)
+            .forEach(ledgerEntry -> {
+                if (foundQuantity.get() + getQuantity() < 0) {
+                    Double newQty = ledgersWithQuantity.merge(ledgerEntry, ledgerEntry.getQuantity(),
+                            (d1, d2) -> d1 + d2);
+                    foundQuantity.accumulateAndGet(newQty, (q1, q2) -> q1 + q2);
+                }
+            });
+        return ledgersWithQuantity;
+    }
+    public Map<LedgerEntry, Collection<SAPOrderItem>> buildOrderItemQuantyMap() {
+        HashMultimap<LedgerEntry, SAPOrderItem> orderItemHashMultimap = HashMultimap.<LedgerEntry, SAPOrderItem>create();
+        findLedgerEntriesWithQuantity().forEach((k, v)->{
+            orderItemHashMultimap.put(k, new SAPOrderItem(getProduct().getPartNumber(), BigDecimal.valueOf(v)));
+        });
+        return orderItemHashMultimap.asMap();
+    }
 }

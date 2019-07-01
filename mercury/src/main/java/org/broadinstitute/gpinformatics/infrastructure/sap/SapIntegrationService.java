@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.sap;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -15,6 +16,7 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -90,12 +92,10 @@ public interface SapIntegrationService {
     /**
      * This method assists in the need to occasionally "Unbill" samples on an order.  It will create and send the
      * conceptual return order to SAP to credit the work that was previously billed on the given delivery document.
-     * @param deliveryDocumentId    Identifier of the delivery document created when the work intended to be reversed
-     *                              was originally billed
      * @param quoteItemForBilling   contains all the information for the work that will be reverted
      * @return identifier that is associated with the SAP return order created to process this credit request
      */
-    String creditDelivery(String deliveryDocumentId, QuoteImportItem quoteItemForBilling)
+    List<LedgerEntry> 6 creditDelivery(QuoteImportItem quoteItemForBilling)
             throws SAPIntegrationException;
 
     class Option {

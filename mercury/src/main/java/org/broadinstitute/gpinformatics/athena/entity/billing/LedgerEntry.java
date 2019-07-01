@@ -308,6 +308,11 @@ public class LedgerEntry implements Serializable {
             .collect(Collectors.toSet());
     }
 
+    public void updateDeliveryDocument(String newDeliveryDocumentId) {
+        setCreditedDeliveryDocumentId(sapDeliveryDocumentId);
+        setSapDeliveryDocumentId(newDeliveryDocumentId);
+    }
+
     /**
      * The price item status on the ledger entry.
      */
