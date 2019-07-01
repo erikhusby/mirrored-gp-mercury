@@ -674,7 +674,7 @@ public class LabMetricSearchDefinition {
         // todo jmt needs a display expression
 
         SearchTerm collectionTerm = new SearchTerm();
-        collectionTerm.setName("Collection");
+        collectionTerm.setName("Collection sub");
         collectionTerm.setExternalDataExpression(values -> {
             SearchItem group = new SearchItem("Group / Collection", "EQUALS", values);
             SearchItem collection = new SearchItem("Collection", "EQUALS", values);
