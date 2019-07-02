@@ -307,6 +307,6 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
 
     @Override
     public List<LedgerEntry> creditDelivery(QuoteImportItem quoteItemForBilling) {
-        return null;
+        return Collections.emptyList();
     }
 }

@@ -566,16 +566,16 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @Override
-    public Set<String> creditDelivery(QuoteImportItem quoteItemForBilling) throws SAPIntegrationException {
-        Set<String> returnOrders = new HashSet<>();
+    public List<LedgerEntry> creditDelivery(QuoteImportItem quoteItemForBilling) throws SAPIntegrationException {
+        List<LedgerEntry> returnOrders = new ArrayList<>();
 
         Map<LedgerEntry, Collection<SAPOrderItem>> deliveryDocumentsMap = quoteItemForBilling.buildOrderItemQuantyMap();
         for (LedgerEntry ledgerEntry: deliveryDocumentsMap.keySet()) {
             Collection<SAPOrderItem> deliveryItems = deliveryDocumentsMap.get(ledgerEntry);
             String returnOrderDocumentId = getClient()
                 .createReturnOrder(new SAPReturnOrder(ledgerEntry.getSapDeliveryDocumentId(), deliveryItems));
-            returnOrders.add(returnOrderDocumentId);
             ledgerEntry.updateDeliveryDocument(returnOrderDocumentId);
+            returnOrders.add(ledgerEntry);
         }
 
         return returnOrders;

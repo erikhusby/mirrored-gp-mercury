@@ -95,7 +95,7 @@ public interface SapIntegrationService {
      * @param quoteItemForBilling   contains all the information for the work that will be reverted
      * @return identifier that is associated with the SAP return order created to process this credit request
      */
-    List<LedgerEntry> 6 creditDelivery(QuoteImportItem quoteItemForBilling)
+    List<LedgerEntry> creditDelivery(QuoteImportItem quoteItemForBilling)
             throws SAPIntegrationException;
 
     class Option {
