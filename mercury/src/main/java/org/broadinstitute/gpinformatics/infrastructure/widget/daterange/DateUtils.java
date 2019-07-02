@@ -18,6 +18,8 @@ import java.text.DateFormat;
 import java.text.Format;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
 import java.util.Date;
@@ -578,6 +580,23 @@ public class DateUtils {
      */
     public static boolean happenedRecently(Date first, Date second, long timeInterval) {
         return (first.getTime() + timeInterval) <= second.getTime();
+    }
+
+    /**
+     * Gets the 12:00 AM start of the given number of workdays in the past, does not count Saturday and Sunday
+     * @param pastDays The number of workdays before today
+     */
+    public static Date getPastWorkdayStartFromNow( int pastDays ) {
+        Instant thisMorning = Instant.now().truncatedTo(ChronoUnit.DAYS);
+        switch ( thisMorning.get(ChronoField.DAY_OF_WEEK ) ){
+            case Calendar.MONDAY:  // Thursday
+            case Calendar.TUESDAY: // Friday
+                pastDays += 2;
+                break;
+            default:
+                break;
+        }
+        return Date.from( thisMorning.plus( pastDays * -1, ChronoUnit.DAYS ) );
     }
 
     /**

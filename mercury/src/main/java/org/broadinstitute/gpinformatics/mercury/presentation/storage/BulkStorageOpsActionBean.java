@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.presentation.storage;
 
 import net.sourceforge.stripes.action.*;
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocationDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -432,12 +433,11 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
                     + " has no event activity.  Tube layout unavailable.");
         }
 
-        long now = new Date().getTime();
-        long eventDate = latestRackEvent.getEventDate().getTime();
-        long dayDiff = ( now - eventDate ) / MILLIS_PER_DAY;
-        if( dayDiff > 2 ) {
-            return Pair.of("danger", "Latest event for rack barcode " + barcode
-                    + " is " + dayDiff + " days old. Tube layout questionable - ignoring.");
+        Date twoWorkingDaysAgo = DateUtils.getPastWorkdayStartFromNow(2);
+        Date eventDate = latestRackEvent.getEventDate();
+        if( eventDate.before( twoWorkingDaysAgo ) ) {
+            return Pair.of("danger", "Latest event date (" + DateUtils.formatISO8601Date( eventDate ) + ") for rack " + barcode
+                    + " is over 2 working days ago. Tube layout questionable - ignoring.");
         }
 
         LabEvent checkOutEvent = createStorageEvent( LabEventType.STORAGE_CHECK_IN, eventTubes.get(latestRackEvent), storageLocation, rack );
