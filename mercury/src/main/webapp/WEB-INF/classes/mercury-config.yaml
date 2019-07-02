@@ -149,7 +149,7 @@ squid:
       url: http://prodinfobuild.broadinstitute.org:8020/squid
 
     QA:
-      url: http://vsquidrc1.broadinstitute.org:8000/squid
+      url: http://prodinfobuild.broadinstitute.org:8020/squid
 
     PROD:
       url: http://squid-ui.broadinstitute.org:8000/squid
