@@ -247,7 +247,10 @@ public class ConfigurableSearchDao extends GenericDao {
 
                         if (searchValue.getSearchTerm().getExternalDataExpression() != null) {
                             log.info("Fetching external data expression for " + searchValue.getSearchTerm().getName());
-                            List<Object> objectList = searchValue.getSearchTerm().getExternalDataExpression().generate(searchValue.getValues());
+                            searchValue.convertSearchValue();
+                            List<Object> objectList = searchValue.getSearchTerm().getExternalDataExpression().generate(
+                                    searchValue.getValues());
+                            getEntityManager().createNativeQuery("truncate table BULK_QUERY_PARAMETER").executeUpdate();
                             log.info("Storing bulk query parameters " + objectList.size());
                             for (int i = 0; i < objectList.size(); i++) {
                                 Object o = objectList.get(i);

@@ -663,7 +663,7 @@ public class LabMetricSearchDefinition {
         SearchTerm workRequestTerm = new SearchTerm();
         workRequestTerm.setName("Work Request ID");
         workRequestTerm.setExternalDataExpression(values -> {
-            SearchItem searchItem = new SearchItem("Fullfilled Samples - Work Request ID", "EQUALS", values);
+            SearchItem searchItem = new SearchItem("Fullfilled Samples - Work Request ID", "IN", values);
             return runBspSearch(searchItem);
         });
         SearchTerm.CriteriaPath sampleKeyCriteriaPath = new SearchTerm.CriteriaPath();
@@ -723,8 +723,11 @@ public class LabMetricSearchDefinition {
         SearchTerm collabSampleTerm = new SearchTerm();
         collabSampleTerm.setName(DisplayExpression.COLLABORATOR_SAMPLE_ID.getColumnName());
         collabSampleTerm.setExternalDataExpression(values -> {
-            SearchItem searchItem = new SearchItem("Collaborator Sample ID", "EQUALS", values);
-            return runBspSearch(searchItem);
+            SearchItem aliasName = new SearchItem("Sample Alias Name", "EQUALS",
+                    Collections.singletonList("Collaborator Sample ID"));
+            SearchItem aliasValue = new SearchItem("Sample Alias Value", "IN", values);
+            aliasName.setChildren(Collections.singletonList(aliasValue));
+            return runBspSearch(aliasName);
         });
         collabSampleTerm.setCriteriaPaths(Collections.singletonList(sampleKeyCriteriaPath));
         initBspTerm(collabSampleTerm, DisplayExpression.COLLABORATOR_SAMPLE_ID);
@@ -733,8 +736,11 @@ public class LabMetricSearchDefinition {
         SearchTerm collabParticipantTerm = new SearchTerm();
         collabParticipantTerm.setName(DisplayExpression.COLLABORATOR_PARTICIPANT_ID.getColumnName());
         collabParticipantTerm.setExternalDataExpression(values -> {
-            SearchItem searchItem = new SearchItem("Collaborator Participant ID", "EQUALS", values);
-            return runBspSearch(searchItem);
+            SearchItem aliasName = new SearchItem("Participant Alias Name", "EQUALS",
+                    Collections.singletonList("Collaborator Participant ID"));
+            SearchItem aliasValue = new SearchItem("Participant Alias Value", "IN", values);
+            aliasName.setChildren(Collections.singletonList(aliasValue));
+            return runBspSearch(aliasName);
         });
         collabParticipantTerm.setCriteriaPaths(Collections.singletonList(sampleKeyCriteriaPath));
         initBspTerm(collabParticipantTerm, DisplayExpression.COLLABORATOR_PARTICIPANT_ID);
