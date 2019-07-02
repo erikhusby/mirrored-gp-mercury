@@ -427,7 +427,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
      * </ul>
      */
     @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
-      public void testPositive() {
+    public void testPositive() {
 
         cycleFails = false;
 
@@ -459,12 +459,15 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                 assertThat(ledgerEntry.getWorkItem(), is(nullValue()));
                 failMessage = "A problem occurred attempting to post to the quote server for " +
                               ledgerEntry.getBillingSession().getBusinessKey() +
-                              ".java.lang.RuntimeException: Intentional Work Registration Failure!";
+                              ". java.lang.RuntimeException: Intentional Work Registration Failure!";
             }
         }
         String successMessagePattern = String.format(BillingAdaptor.BILLING_LOG_TEXT_FORMAT, GOOD_WORK_ID,
             BillingAdaptor.NOT_ELIGIBLE_FOR_SAP_INDICATOR, "", "", 0f, "", "", "").substring(0, 50) + ".*";
         assertThat(failMessage, notNullValue());
+        for (LogRecord testLogHandlerLog : testLogHandler.getLogs()) {
+            System.out.println(testLogHandlerLog.getMessage());
+        }
 
         assertThat(testLogHandler.messageMatches(failMessage), is(true));
         Collection<LogRecord> successLogs = testLogHandler.findLogs(successMessagePattern);
