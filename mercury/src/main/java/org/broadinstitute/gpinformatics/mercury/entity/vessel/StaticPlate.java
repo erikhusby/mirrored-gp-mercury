@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.IndexPlateDefinition;
 import org.hibernate.envers.Audited;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -212,7 +213,7 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
     @Enumerated(EnumType.STRING)
     private PlateType plateType;
 
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
     @JoinColumn(name="index_plate_definition", referencedColumnName = "definition_id")
     private IndexPlateDefinition indexPlateDefinition;
 

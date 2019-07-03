@@ -6,7 +6,29 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexPlateActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="Create Index Plate from Definition" sectionTitle="Create Index Plate from Definition">
+<stripes:layout-render name="/layout.jsp" pageTitle="Index Plate Instance" sectionTitle="Index Plate Instance">
+    <stripes:layout-component name="extraHead">
+        <script type="text/javascript">
+
+            $j(document).ready(function() {
+                managementLayout(<c:if test="${actionBean.managePage}">true</c:if>);
+            });
+
+            function managementLayout(isManagement) {
+                if (isManagement) {
+                    $j(".creationLayout").hide();
+                    $j(".managementLayout").show();
+                    $j("#selectManage").attr('checked', 'checked');
+                } else {
+                    $j(".creationLayout").show();
+                    $j(".managementLayout").hide();
+                    $j("#selectCreate").attr('checked', 'checked');
+                }
+            }
+
+        </script>
+    </stripes:layout-component>
+
     <stripes:layout-component name="content">
         <style type="text/css">
             div.inputGroup {
@@ -27,6 +49,7 @@
                 vertical-align: middle;
                 padding-top: 15px;
             }
+
             text, textarea, .firstCol, .controls {
                 font-size: 12px;
                 font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -39,88 +62,158 @@
                 horiz-align: center;
                 width: 10em;
             }
+            div.even {
+                background-color: #fff;
+            }
+            div.odd {
+                background-color: #f5f5f5;
+            }
         </style>
 
         <stripes:form beanclass="${actionBean.class.name}" id="plateDefinitionForm">
-
-            <!-- Selects a plate definition. -->
-            <div class="inputGroup" title="Select a plate definition to use for new index plate instances.">
+            <!-- Radio button group for type of operation. -->
+            <div class="inputGroup" title="Select the type of operation to perform.">
                 <div class="inputRow">
-                    <div class="firstCol">Plate Definition Name</div>
+                    <div class="firstCol">Operation</div>
                     <div class="control-group controls">
-                        <stripes:select name="plateName" value="${actionBean.plateName}">
-                            <stripes:options-collection collection="${actionBean.plateNames}"/>
-                        </stripes:select>
+                        <span>
+                            <input type="radio" id="selectCreate" name="managePage" value="false" onclick="managementLayout(false)"/>
+                            <label for="selectCreate">Create new plates</label>
+                        </span>
+                        <span style="padding-left: 20px;">
+                            <input type="radio" id="selectManage" name="managePage" value="true" onclick="managementLayout(true)"/>
+                            <label for="selectManage">Manage existing plates</label>
+                        </span>
                     </div>
                 </div>
             </div>
-            <c:forEach items="${actionBean.plateNames}" varStatus="varStatus">
-                <stripes:hidden name="plateNames[${varStatus.index}]"/>
-            </c:forEach>
 
-            <!-- Generates a layout (positions and contents) for an index plate definition. -->
-            <c:if test="${empty actionBean.plateLayout}">
-                <div class="inputGroup" title="Shows a grid of the plate with well position and content.">
+            <!-- -------------------- The layout for creating plate instances -------------------- -->
+
+            <div class="creationLayout">
+
+                <c:forEach items="${actionBean.plateNames}" varStatus="item">
+                    <stripes:hidden name="plateNames[${item.index}]"/>
+                </c:forEach>
+
+                <!-- Selects a plate definition. -->
+                <div class="inputGroup" title="Select a plate definition to use for new index plate instances.">
                     <div class="inputRow">
-                        <div class="firstCol"></div>
-                        <div class="controls">
-                            <stripes:submit id="findLayout" name="findLayout" value="Show Layout" class="btn btn-primary"/>
+                        <div class="firstCol">Plate Definition Name</div>
+                        <div class="control-group controls">
+                            <stripes:select name="selectedPlateName" value="${actionBean.selectedPlateName}">
+                                <stripes:option value=" "/>
+                                <stripes:options-collection collection="${actionBean.plateNames}"/>
+                            </stripes:select>
                         </div>
                     </div>
                 </div>
-            </c:if>
 
-            <!-- Displays the layout data. -->
-            <c:if test="${not empty actionBean.plateLayout}">
-                <div id="layoutContents" style="padding-top: 10px; display: block";>
-                    <table id="layoutCellGrid" border="2">
-                        <tbody>
-                        <c:forEach items="${actionBean.plateLayout}" var="layoutRow">
-                            <tr>
-                                <c:forEach items="${layoutRow}" var="layoutCell">
-                                    <td class="layoutCell">${layoutCell}</td>
-                                </c:forEach>
-                            </tr>
-                        </c:forEach>
-                        </tbody>
-                    </table>
-                </div>
-            </c:if>
-
-            <!-- Text box for Sales Order Number. -->
-            <div class="inputGroup" title="The sales order number that should be associated with the plates.">
-                <div class="inputRow">
-                    <div class="firstCol">Sales Order Number</div>
-                    <div class="control-group controls">
-                        <stripes:text id="salesOrderNumber" name="salesOrderNumber"/>
+                <!-- Text box for Sales Order Number. -->
+                <div class="inputGroup" title="Provide a sales order number for the plates.">
+                    <div class="inputRow">
+                        <div class="firstCol">Sales Order Number</div>
+                        <div class="control-group controls">
+                            <stripes:text id="salesOrderNumber" name="salesOrderNumber"/>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- File chooser to upload Excel spreadsheet of barcodes of the plates to be created. -->
-            <div class="inputGroup" title="Provide an Excel spreadsheet with rows having one column.
-The first column should be the new plate barcode.
-Plate barcodes will be leading zero filled to make 12 digits.
-The header row is optional. If present, it is ignored.">
-                <div class="inputRow">
-                    <div class="firstCol">Spreadsheet</div>
-                    <div class="control-group controls">
-                        <stripes:file name="spreadsheet" id="spreadsheet"/>
+                <!-- Checkbox for overwrite. -->
+                <div class="inputGroup" title="Indicate that you want to replace contents of the plate(s),
+provided the plate(s) have not been used in a transfer.">
+                    <div class="inputRow">
+                        <div class="firstCol">Replace Existing</div>
+                        <div class="control-group controls">
+                            <stripes:checkbox id="replaceExisting" name="replaceExisting"/>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Button to "Create Plate Definition" -->
-            <div class="inputGroup" title="Makes a new plate for each of the barcodes using the plate
+                <div style="float: left; width: 50%;">
+                    <!-- File chooser to upload Excel spreadsheet of barcodes of the plates to be created. -->
+                    <div class="inputGroup" title="Provide an Excel spreadsheet.">
+                        <div class="inputRow">
+                            <div class="firstCol">Spreadsheet</div>
+                            <div class="control-group controls">
+                                <stripes:file name="spreadsheet" id="spreadsheet"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Button to create plate instance. -->
+                    <div class="inputGroup" title="Makes a new plate for each of the barcodes, using the plate
 definition to determine the well positions and reagent content.">
-                <div class="inputRow">
-                    <div class="firstCol"></div>
-                    <div class="controls">
-                        <stripes:submit id="createInstance" name="createInstance" value="Create" class="btn btn-primary"/>
+                        <div class="inputRow">
+                            <div class="firstCol"></div>
+                            <div class="controls">
+                                <stripes:submit id="createInstance" name="createInstance" value="Create Plates" class="btn btn-primary"/>
+                            </div>
+                        </div>
                     </div>
+                </div>
+
+                <div style="float: right; width: 50%;">
+                    <p>Accepts an Excel spreadsheet.
+                    <ul>
+                        <li>The header row is optional. If present it is ignored, but it must not have<br/>
+                            a number in column A or else it will be mistaken for a data row.</li>
+                        <li>The data rows should have one column.<br/>
+                            Column A should contain the plate barcode (such as 012345678901).
+                        </li>
+                    </ul>
+                    </p>
                 </div>
             </div>
 
+
+            <!-- -------------------- A different layout used for management. -------------------- -->
+
+
+            <div class="managementLayout">
+                <!-- Input textarea for plate barcodes. -->
+                <div class="inputGroup">
+                    <div class="inputRow">
+                        <div class="firstCol">Plate barcodes</div>
+                        <div class="controls">
+                            <stripes:textarea id="plateBarcodeTextarea" name="plateBarcodeString" cols="104" rows="4" style="width: 100%;"/>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Find definition(s) for plate(s) -->
+                <div class="inputGroup" title="Finds the plate definitions for the given plate barcodes.">
+                    <div class="inputRow">
+                        <div class="firstCol"></div>
+                        <div class="controls">
+                            <stripes:submit id="findDefinitions" name="findDefinitions" value="Find Plate Definitions" class="btn btn-primary"/>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Displays the definitions and their barcodes. -->
+                <c:if test="${not empty actionBean.definitionToBarcode}">
+                    <div class="inputGroup">
+                        <c:forEach items="${actionBean.definitionToBarcode}" var="row" varStatus="item">
+                            <div class="inputRow ${item.index%2==0 ? "even" : "odd"}">
+                                <div class="firstCol">Plates made from ${row.left}</div>
+                                <div class="controls">${row.right}
+                                </div>
+                            </div>
+                        </c:forEach>
+                    </div>
+                </c:if>
+
+                <!-- Button to delete the plate instances. -->
+                <div class="inputGroup" title="Deletes the plates if they are all unused.">
+                    <div class="inputRow">
+                        <div class="firstCol"></div>
+                        <div class="controls">
+                            <stripes:submit id="deleteInstances" name="deleteInstances" value="Delete Plates" class="btn btn-primary"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </stripes:form>
 
     </stripes:layout-component>

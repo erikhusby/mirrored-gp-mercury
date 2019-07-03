@@ -3,25 +3,25 @@ package org.broadinstitute.gpinformatics.mercury.control.vessel;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.GenericTableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.IndexPlateDefinitionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.reagent.MolecularIndexingSchemeFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.IndexPlateDefinition;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.IndexPlateDefinitionWell;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.IndexPlateDefinition_;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,15 +31,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This class creates plates containing molecular index reagents
@@ -48,14 +49,16 @@ import java.util.stream.Collectors;
 public class IndexedPlateFactory {
     private static final Log LOG = LogFactory.getLog(IndexedPlateFactory.class);
     public static final int BARCODE_LENGTH = 12;
-    public static final String DEFINITION_IN_USE = "Index Plate Definition \"%s\" is in use and cannot be changed.";
-    public static final String NEEDS_OVERWRITE =
-            "To overwrite the existing index plate definition Allow Overwrite must be checked.";
-    public static final String NO_SUCH_DEFINITION = "No Index Plate Definition found for \"%s\".";
+    public static final String CANNOT_REMOVE = "Cannot remove index plate%s that is in use: %s.";
+    public static final String DEFINITION_SUFFIX = " definition";
+    public static final String IN_USE = "Index plate%s is in use: %s.";
+    public static final String NEEDS_OVERWRITE = "Replace Existing must be checked to overwrite an index plate%s.";
+    public static final String NOT_FOUND = "No index plate%s found for \"%s\".";
+    public static final String PLATES_REMOVED = "%d unused index plates were deleted from Mercury.";
+    public static final String SPREADSHEET_EMPTY = "The spreadsheet has no data.";
     public static final String UNKNOWN_MIS_NAME = "Unknown molecular index name \"%s\".";
     public static final String UNKNOWN_POSITION = "Unknown vessel position \"%s\".";
     public static final String UNKNOWN_STATIC_PLATE_TYPE = "Unknown static plate geometry \"%s\".";
-    public static final String VESSELS_EXIST = "Found existing vessel(s) having label(s): %s.";
     public static final String WRONG_COLUMN_COUNT = "At row %d expected %d columns but found %d.";
 
     @Inject
@@ -66,6 +69,12 @@ public class IndexedPlateFactory {
 
     @Inject
     private StaticPlateDao staticPlateDao;
+
+    @Inject
+    private IndexPlateDefinitionDao indexPlateDefinitionDao;
+
+    @Inject
+    private UserBean userBean;
 
     public enum TechnologiesAndParsers {
         FOUR54_SINGLE("454 (Single Index)",
@@ -197,10 +206,9 @@ public class IndexedPlateFactory {
 
     public void findLayout(String plateName, List<List<String>> layout, MessageCollection messageCollection) {
         layout.clear();
-        IndexPlateDefinition definition = staticPlateDao.findSingle(IndexPlateDefinition.class,
-                IndexPlateDefinition_.definitionName, plateName);
+        IndexPlateDefinition definition = indexPlateDefinitionDao.findByName(plateName);
         if (definition == null) {
-            messageCollection.addWarning(NO_SUCH_DEFINITION, plateName);
+            messageCollection.addWarning(NOT_FOUND, DEFINITION_SUFFIX, plateName);
         } else {
             Map<VesselGeometry.RowColumn, String> rowColumnToName = new HashMap<>();
             for (IndexPlateDefinitionWell well : definition.getDefinitionWells()) {
@@ -238,7 +246,7 @@ public class IndexedPlateFactory {
         }
         if (CollectionUtils.isEmpty(processor.getHeaderAndDataRows()) ||
                 CollectionUtils.isEmpty(processor.getHeaderAndDataRows().get(0))) {
-            messageCollection.addError("Spreadsheet has no content.");
+            messageCollection.addError(SPREADSHEET_EMPTY);
         }
         int rowNumber = 0;
         for (List<String> row : processor.getHeaderAndDataRows()) {
@@ -251,8 +259,114 @@ public class IndexedPlateFactory {
     }
 
     public List<String> findPlateDefinitionNames() {
-        return staticPlateDao.findIndexPlateDefinitionNames();
+        return indexPlateDefinitionDao.findIndexPlateDefinitionNames();
+    }
 
+	public void renameDefinition(String plateName, String newDefinitionName, MessageCollection messageCollection) {
+        if (indexPlateDefinitionDao.findByName(newDefinitionName) != null) {
+            messageCollection.addError(IN_USE, DEFINITION_SUFFIX, newDefinitionName);
+            return;
+        }
+
+        IndexPlateDefinition definition = indexPlateDefinitionDao.findByName(plateName);
+        if (definition == null) {
+            messageCollection.addError(NOT_FOUND, DEFINITION_SUFFIX, plateName);
+        } else {
+            definition.setDefinitionName(newDefinitionName);
+            messageCollection.addInfo("Index plate definition has been renamed to " + newDefinitionName);
+        }
+    }
+
+    public void deleteDefinition(String plateName, MessageCollection messageCollection) {
+        IndexPlateDefinition definition = indexPlateDefinitionDao.findByName(plateName);
+        if (definition == null) {
+            messageCollection.addError(NOT_FOUND, DEFINITION_SUFFIX, plateName);
+        } else {
+            // The plate definition must have no instances.
+            String instanceBarcodes = definition.getPlateInstances().stream().
+                    map(StaticPlate::getLabel).sorted().collect(Collectors.joining(" "));
+            if (StringUtils.isNotBlank(instanceBarcodes)) {
+                messageCollection.addError(CANNOT_REMOVE, DEFINITION_SUFFIX, plateName);
+            } else {
+                indexPlateDefinitionDao.remove(definition);
+                messageCollection.addInfo("Index plate definition has been deleted.");
+            }
+        }
+    }
+
+    /**
+     * Looks up the index plates instantiated from the index plate definition.
+     * Determines which plates have any events which indicates they are in use.
+     *
+     * @return pair of joined lists of plate barcodes, the left for unused plates, the right for plates in use.
+     */
+    public Pair<String, String> findInstances(String plateName, MessageCollection messageCollection) {
+        IndexPlateDefinition definition = indexPlateDefinitionDao.findByName(plateName);
+        if (definition == null) {
+            messageCollection.addWarning(NOT_FOUND, DEFINITION_SUFFIX, plateName);
+        } else {
+            Map<Boolean, List<StaticPlate>> mapUsageToPlate = definition.getPlateInstances().stream().
+                    collect(Collectors.groupingBy(staticPlate -> CollectionUtils.isEmpty(staticPlate.getEvents())));
+            String unused = mapUsageToPlate.get(Boolean.TRUE) == null ? "" :
+                    mapUsageToPlate.get(Boolean.TRUE).stream().
+                            map(StaticPlate::getLabel).sorted().collect(Collectors.joining(" "));
+            String inUse = mapUsageToPlate.get(Boolean.FALSE) == null ? "" :
+                    mapUsageToPlate.get(Boolean.FALSE).stream().
+                            map(StaticPlate::getLabel).sorted().collect(Collectors.joining(" "));
+            return Pair.of(unused, inUse);
+        }
+        return Pair.of("", "");
+    }
+
+    /**
+     * Looks up the index plate definition(s) that were used for instantiating the specified plates.
+     * @return list of pairs of (plate definition name, joined list of plate barcodes)
+     */
+    public List<Pair<String, String>> findDefinitions(List<String> barcodes) {
+        Map<String, List<StaticPlate>> definitionToInstance = staticPlateDao.findByBarcodes(barcodes).stream().
+                collect(Collectors.groupingBy(staticPlate -> staticPlate.getIndexPlateDefinition() == null ?
+                        "(none)" : staticPlate.getIndexPlateDefinition().getDefinitionName()));
+
+        return definitionToInstance.keySet().stream().sorted().
+                map(name -> Pair.of(name, definitionToInstance.get(name).stream().
+                        map(StaticPlate::getLabel).sorted().collect(Collectors.joining(" ")))).
+                collect(Collectors.toList());
+    }
+
+    /** Deletes the given plate instances. */
+ 	public void deleteInstances(List<String> barcodes, MessageCollection messageCollection) {
+        Map<Boolean, List<StaticPlate>> mapUsageToPlate = staticPlateDao.findByBarcodes(barcodes).stream().
+                collect(Collectors.groupingBy(staticPlate -> CollectionUtils.isEmpty(staticPlate.getEvents())));
+        if (barcodes.size() == mapUsageToPlate.values().stream().mapToInt(List::size).sum()) {
+            if (CollectionUtils.isEmpty(mapUsageToPlate.get(Boolean.FALSE))) {
+                removePlates(mapUsageToPlate.values().stream().flatMap(List::stream));
+                messageCollection.addInfo(PLATES_REMOVED, barcodes.size());
+            } else {
+                // One or more plates are in use.
+                messageCollection.addError(CANNOT_REMOVE, "", mapUsageToPlate.get(Boolean.FALSE).stream().
+                        map(StaticPlate::getLabel).sorted().collect(Collectors.joining(" ")));
+            }
+        } else if (barcodes.size() > 0) {
+            // Errors the input barcodes that aren't plate barcodes.
+            messageCollection.addError(NOT_FOUND, "", CollectionUtils.subtract(barcodes,
+                    mapUsageToPlate.values().stream().flatMap(List::stream).
+                            map(StaticPlate::getLabel).collect(Collectors.toList())).
+                    stream().sorted().collect(Collectors.joining(" ")));
+        }
+    }
+
+    private void removePlates(Stream<StaticPlate> stream) {
+        stream.forEach(staticPlate -> {
+            IndexPlateDefinition indexPlateDefinition = staticPlate.getIndexPlateDefinition();
+            if (indexPlateDefinition != null) {
+                indexPlateDefinition.getPlateInstances().remove(staticPlate);
+            }
+            staticPlate.getContainerRole().getMapPositionToVessel().
+                    forEach((position, well) -> staticPlateDao.remove(well));
+            staticPlateDao.remove(staticPlate);
+            // Flush needed here to avoid unique index violation on plate label when the plate is being remade.
+            staticPlateDao.flush();
+        });
     }
 
     /**
@@ -269,8 +383,11 @@ public class IndexedPlateFactory {
             @NotNull VesselGeometry vesselGeometry, IndexPlateDefinition.ReagentType reagentType,
             boolean allowOverwrite, MessageCollection messageCollection) {
 
-        IndexPlateDefinition definition = staticPlateDao.findSingle(IndexPlateDefinition.class,
-                IndexPlateDefinition_.definitionName, plateName);
+        if (CollectionUtils.isEmpty(spreadsheet) || CollectionUtils.isEmpty(spreadsheet.get(0))) {
+            messageCollection.addError(SPREADSHEET_EMPTY);
+        }
+        boolean isOverwrite = false;
+        IndexPlateDefinition definition = indexPlateDefinitionDao.findByName(plateName);
         if (definition == null) {
             definition = new IndexPlateDefinition(plateName, vesselGeometry, reagentType);
         } else if (allowOverwrite && definition.getPlateInstances().isEmpty()) {
@@ -278,42 +395,48 @@ public class IndexedPlateFactory {
             definition.getDefinitionWells().clear();
             definition.setVesselGeometry(vesselGeometry);
             definition.setReagentType(reagentType);
+            isOverwrite = true;
         } else if (!allowOverwrite && definition.getPlateInstances().isEmpty()) {
-            messageCollection.addError(NEEDS_OVERWRITE);
-            return;
+            messageCollection.addError(NEEDS_OVERWRITE, DEFINITION_SUFFIX);
         } else {
-            messageCollection.addError(DEFINITION_IN_USE, plateName);
-            return;
+            messageCollection.addError(IN_USE, DEFINITION_SUFFIX, plateName);
         }
-
-        boolean hasHeaderRow = VesselPosition.getByName(spreadsheet.get(0).get(0)) == null;
-        // Makes a map of the first two columns of the spreadsheet.
-        Map<String, String> positionToMisName = spreadsheet.subList(hasHeaderRow ? 1 : 0, spreadsheet.size()).
-                stream().collect(Collectors.toMap(row -> row.get(0), row ->row.get(1)));
-
-        // Looks up molecular indexing schemes by name.
-        Map<String, MolecularIndexingScheme> mapNameToMis =
-                molecularIndexingSchemeDao.findByNames(positionToMisName.values()).
-                        stream().
-                        collect(Collectors.toMap(MolecularIndexingScheme::getName, Function.identity()));
-
-        // Makes index plate definition wells for each of the given positions.
-        final IndexPlateDefinition finalDef = definition;
-        positionToMisName.forEach((position, misName) -> {
-            VesselPosition vesselPosition = VesselPosition.getByName(position);
-            if (vesselPosition == null) {
-                messageCollection.addError(UNKNOWN_POSITION, misName);
-            }
-            MolecularIndexingScheme scheme = mapNameToMis.get(misName);
-            if (scheme == null) {
-                messageCollection.addError(UNKNOWN_MIS_NAME, misName);
-            }
-            finalDef.getDefinitionWells().add(new IndexPlateDefinitionWell(finalDef, scheme, vesselPosition));
-        });
-
         if (!messageCollection.hasErrors()) {
-            messageCollection.addInfo("Created index plate definition " + plateName);
-            staticPlateDao.persist(finalDef);
+            boolean hasHeaderRow = VesselPosition.getByName(spreadsheet.get(0).get(0)) == null;
+            // Makes a map of the first two columns of the spreadsheet.
+            Map<String, String> positionToMisName = spreadsheet.subList(hasHeaderRow ? 1 : 0, spreadsheet.size()).
+                    stream().collect(Collectors.toMap(row -> row.get(0), row -> row.get(1)));
+
+            // Looks up molecular indexing schemes by name.
+            Map<String, MolecularIndexingScheme> mapNameToMis =
+                    molecularIndexingSchemeDao.findByNames(positionToMisName.values()).
+                            stream().
+                            collect(Collectors.toMap(MolecularIndexingScheme::getName, Function.identity()));
+
+            // Makes a list of the valid position names for this rack geometry.
+            List<String> validPositionNames = Stream.of(vesselGeometry.getVesselPositions()).
+                    map(VesselPosition::name).collect(Collectors.toList());
+
+            // Makes index plate definition wells for each of the given positions.
+            final IndexPlateDefinition finalDef = definition;
+            positionToMisName.forEach((position, misName) -> {
+                VesselPosition vesselPosition = VesselPosition.getByName(position);
+                if (vesselPosition == null || !validPositionNames.contains(vesselPosition.name())) {
+                    messageCollection.addError(UNKNOWN_POSITION, position);
+                }
+
+                MolecularIndexingScheme scheme = mapNameToMis.get(misName);
+                if (scheme == null) {
+                    messageCollection.addError(UNKNOWN_MIS_NAME, misName);
+                }
+                finalDef.getDefinitionWells().add(new IndexPlateDefinitionWell(finalDef, scheme, vesselPosition));
+            });
+
+            if (!messageCollection.hasErrors()) {
+                messageCollection.addInfo((isOverwrite ? "Updated" : "Created") +
+                        " index plate definition " + plateName);
+                indexPlateDefinitionDao.persist(finalDef);
+            }
         }
     }
 
@@ -326,64 +449,91 @@ public class IndexedPlateFactory {
      * @param messageCollection used to pass errors, warnings, and info back to the UI.
      */
     public void makeIndexPlate(String plateName, List<List<String>> spreadsheet, @Nullable String salesOrderNumber,
-            MessageCollection messageCollection) {
-        boolean hasHeaderRow = !NumberUtils.isDigits(spreadsheet.get(0).get(0));
-        List<String> plateBarcodes = spreadsheet.subList(hasHeaderRow ? 1 : 0, spreadsheet.size()).
-                stream().flatMap(List::stream).distinct().collect(Collectors.toList());
+            boolean replaceExisting, MessageCollection messageCollection) {
 
-        // Plate barcodes must not already exist.
-        String existing = staticPlateDao.findListByList(LabVessel.class, LabVessel_.label, plateBarcodes).
-                stream().
-                filter(Objects::nonNull).
-                map(LabVessel::getLabel).
-                sorted().collect(Collectors.joining(" "));
-        if (!existing.isEmpty()) {
-            messageCollection.addError(VESSELS_EXIST, existing);
+        if (CollectionUtils.isEmpty(spreadsheet) || CollectionUtils.isEmpty(spreadsheet.get(0))) {
+            messageCollection.addError(SPREADSHEET_EMPTY);
             return;
+        }
+
+        int overwriteCount = 0;
+        boolean hasHeaderRow = !NumberUtils.isDigits(spreadsheet.get(0).get(0));
+        // Reads the plate barcodes from the spreadsheet and does leading zero fill as needed.
+        List<String> plateBarcodes = spreadsheet.subList(hasHeaderRow ? 1 : 0, spreadsheet.size()).
+                stream().flatMap(List::stream).distinct().
+                map(barcode -> StringUtils.leftPad(barcode, BARCODE_LENGTH, '0')).
+                collect(Collectors.toList());
+
+        // Checks that each plate either does not exist, or if it does exist then replaceExisting is set
+        // and the plate has no events.
+        Map<Boolean, List<StaticPlate>> mapUsageToPlate = staticPlateDao.findByBarcodes(plateBarcodes).stream().
+                collect(Collectors.groupingBy(staticPlate -> CollectionUtils.isEmpty(staticPlate.getEvents())));
+        if (CollectionUtils.isNotEmpty(mapUsageToPlate.get(Boolean.TRUE)) && !replaceExisting) {
+            messageCollection.addError(NEEDS_OVERWRITE, "");
+        }
+        if (CollectionUtils.isNotEmpty(mapUsageToPlate.get(Boolean.FALSE))) {
+            messageCollection.addError(IN_USE, "", mapUsageToPlate.get(Boolean.FALSE).stream().
+                map(StaticPlate::getLabel).sorted().collect(Collectors.joining(" ")));
         }
         // Index plate definition must exist.
-        IndexPlateDefinition definition = staticPlateDao.findSingle(IndexPlateDefinition.class,
-                IndexPlateDefinition_.definitionName, plateName);
+        StaticPlate.PlateType plateType = null;
+        IndexPlateDefinition definition = indexPlateDefinitionDao.findByName(plateName);
         if (definition == null) {
-            messageCollection.addError(NO_SUCH_DEFINITION, plateName);
-            return;
-        }
-        StaticPlate.PlateType plateType = definition.getVesselGeometry() == VesselGeometry.G12x8 ?
-                StaticPlate.PlateType.IndexedAdapterPlate96 : definition.getVesselGeometry() == VesselGeometry.G24x16 ?
-                StaticPlate.PlateType.IndexedAdapterPlate384 : null;
-        if (plateType == null) {
-            messageCollection.addError(UNKNOWN_STATIC_PLATE_TYPE, definition.getVesselGeometry().name());
-            return;
-        }
-        // Makes a map of position and reagent from the index plate definition.
-        Map<VesselPosition, MolecularIndexReagent> reagentMap = definition.getDefinitionWells().stream().
-                collect(Collectors.toMap(IndexPlateDefinitionWell::getVesselPosition,
-                        well -> new MolecularIndexReagent(well.getMolecularIndexingScheme())));
-
-        List<StaticPlate> plateBatch = new ArrayList<>();
-        List<String> paddedBarcodes = new ArrayList<>();
-        for (String barcode : plateBarcodes) {
-            // Persists batches periodically and also at the end to avoid out of memory errors.
-            if (plateBatch.size() >= 100) {
-                staticPlateDao.persistAll(plateBatch);
-                definition.getPlateInstances().addAll(plateBatch);
-                plateBatch.clear();
+            messageCollection.addError(NOT_FOUND, DEFINITION_SUFFIX, plateName);
+        } else {
+            plateType = (definition.getVesselGeometry() == VesselGeometry.G12x8) ?
+                    StaticPlate.PlateType.IndexedAdapterPlate96 :
+                    (definition.getVesselGeometry() == VesselGeometry.G24x16) ?
+                            StaticPlate.PlateType.IndexedAdapterPlate384 : null;
+            if (plateType == null) {
+                messageCollection.addError(UNKNOWN_STATIC_PLATE_TYPE, definition.getVesselGeometry().name());
             }
-            String paddedBarcode = StringUtils.leftPad(barcode, BARCODE_LENGTH, '0');
-            paddedBarcodes.add(paddedBarcode);
-            StaticPlate staticPlate = new StaticPlate(paddedBarcode, plateType);
-            staticPlate.setCreatedOn(new Date());
-            staticPlate.setIndexPlateDefinition(definition);
-            staticPlate.setSalesOrderNumber(salesOrderNumber);
-            plateBatch.add(staticPlate);
-            reagentMap.forEach((vesselPosition, molecularIndexReagent) -> {
-                PlateWell plateWell = new PlateWell(staticPlate, vesselPosition);
-                plateWell.addReagent(molecularIndexReagent);
-                staticPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
-            });
         }
-        staticPlateDao.persistAll(plateBatch);
-        definition.getPlateInstances().addAll(plateBatch);
-        messageCollection.addInfo("Created index plates " + StringUtils.join(paddedBarcodes, " "));
+        if (!messageCollection.hasErrors()) {
+            // Removes any existing plates known to be unused so their labels can be reused.
+            if (mapUsageToPlate.get(Boolean.TRUE) != null) {
+                overwriteCount = mapUsageToPlate.get(Boolean.TRUE).size();
+                removePlates(mapUsageToPlate.get(Boolean.TRUE).stream());
+            }
+
+            // Makes a map of position and reagent from the index plate definition.
+            Map<VesselPosition, MolecularIndexReagent> reagentMap = definition.getDefinitionWells().stream().
+                    collect(Collectors.toMap(IndexPlateDefinitionWell::getVesselPosition,
+                            well -> new MolecularIndexReagent(well.getMolecularIndexingScheme())));
+
+            List<StaticPlate> plateBatch = new ArrayList<>();
+            for (String barcode : plateBarcodes) {
+                // Persists batches periodically and also at the end to avoid out of memory errors.
+                if (plateBatch.size() >= 100) {
+                    staticPlateDao.persistAll(plateBatch);
+                    definition.getPlateInstances().addAll(plateBatch);
+                    plateBatch.clear();
+                }
+                StaticPlate staticPlate = new StaticPlate(barcode, plateType);
+                staticPlate.setCreatedOn(new Date());
+                staticPlate.setIndexPlateDefinition(definition);
+                staticPlate.setSalesOrderNumber(salesOrderNumber);
+                plateBatch.add(staticPlate);
+                reagentMap.forEach((vesselPosition, molecularIndexReagent) -> {
+                    PlateWell plateWell = new PlateWell(staticPlate, vesselPosition);
+                    plateWell.addReagent(molecularIndexReagent);
+                    staticPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
+                });
+            }
+            staticPlateDao.persistAll(plateBatch);
+            definition.getPlateInstances().addAll(plateBatch);
+            // Shows username, plate count, definition name.
+            int newCount = plateBarcodes.size() - overwriteCount;
+            if (overwriteCount == 0) {
+                messageCollection.addInfo(String.format("%s created %d index plates from %s",
+                        userBean.getBspUser().getUsername(), newCount, plateName));
+            } else if (newCount == 0) {
+                messageCollection.addInfo(String.format("%s updated %d index plates from %s",
+                        userBean.getBspUser().getUsername(), overwriteCount, plateName));
+            } else {
+                messageCollection.addInfo(String.format("%s created %d and updated %d index plates from %s",
+                        userBean.getBspUser().getUsername(), newCount, overwriteCount, plateName));
+            }
+        }
     }
 }

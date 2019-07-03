@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury.control.dao.vessel;
+package org.broadinstitute.gpinformatics.mercury.control.dao.reagent;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.IndexPlateDefinition;
@@ -15,24 +15,28 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * Data Access Object for plates
- */
 @Stateful
 @RequestScoped
-public class StaticPlateDao extends GenericDao {
+public class IndexPlateDefinitionDao extends GenericDao {
 
-    public StaticPlate findByBarcode(String barcode) {
-        return findSingle(StaticPlate.class, StaticPlate_.label, barcode);
+    public IndexPlateDefinition findByName(String plateDefinitionName) {
+        return findSingle(IndexPlateDefinition.class, IndexPlateDefinition_.definitionName, plateDefinitionName);
     }
 
-    public List<StaticPlate> findByBarcodes(@Nonnull Collection<String> barcodes) {
-        return findListByList(StaticPlate.class, StaticPlate_.label, barcodes);
+    /**
+     * Returns the index plates instantiated from the index plate definition.
+     * @param plateDefinitionName
+     * @return list of index plates, or null if the indexPlateDefinition doesn't exist.
+     */
+    public List<StaticPlate> findByPlateDefintion(String plateDefinitionName) {
+        IndexPlateDefinition indexPlateDefinition = findSingle(IndexPlateDefinition.class,
+                IndexPlateDefinition_.definitionName, plateDefinitionName);
+        if (indexPlateDefinition != null) {
+            return new ArrayList<>(indexPlateDefinition.getPlateInstances());
+        }
+        return null;
     }
 
-    public List<StaticPlate> findByPlateType(StaticPlate.PlateType plateType) {
-        return findList(StaticPlate.class, StaticPlate_.plateType, plateType);
-    }
     /** Returns an ordered list of the index plate definition names. */
     public List<String> findIndexPlateDefinitionNames() {
         CriteriaQuery<String> criteriaQuery = getCriteriaBuilder().createQuery(String.class);

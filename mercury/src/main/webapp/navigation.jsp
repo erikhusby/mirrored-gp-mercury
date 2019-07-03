@@ -212,22 +212,12 @@
                         <li>
                             <stripes:link id="indexPlateDefinition"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexPlateActionBean"
-                                          event="makeDefinition">Define Index Plate</stripes:link>
+                                          event="indexDefinition">Index Plate Definition</stripes:link>
                         </li>
                         <li>
                             <stripes:link id="indexPlateInstance"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexPlateActionBean"
-                                          event="makeInstance">Instantiate Index Plate from Definition</stripes:link>
-                        </li>
-                        <li>
-                            <stripes:link id="indexPlateDefManage"
-                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexPlateActionBean"
-                                          event="manageDefinition">Manage Index Plate Definitions</stripes:link>
-                        </li>
-                        <li>
-                            <stripes:link id="indexPlateInstManage"
-                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexPlateActionBean"
-                                          event="manageInstances">Manage Index Plate Instances</stripes:link>
+                                          event="indexInstance">Index Plate Instance</stripes:link>
                         </li>
                         <security:authorizeBlock roles="<%= roles(LabManager, PDM, GPProjectManager, PM, Developer) %>">
                             <li>

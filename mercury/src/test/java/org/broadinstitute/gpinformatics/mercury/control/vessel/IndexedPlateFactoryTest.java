@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.control.vessel;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -14,15 +15,20 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.IndexPlateDefinitionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.IndexPlateDefinition;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.IndexPlateDefinition_;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -66,7 +72,13 @@ public class IndexedPlateFactoryTest extends StubbyContainerTest {
     @Inject
     private StaticPlateDao staticPlateDao;
 
-    @Test(enabled = true)
+    @Inject
+    private IndexPlateDefinitionDao indexPlateDefinitionDao;
+
+    @Inject
+    private UserBean userBean;
+
+    @Test
     public void testParseFile() {
         Map<String, StaticPlate> mapBarcodeToPlate = indexedPlateFactory.parseStream(
                 Thread.currentThread().getContextClassLoader().getResourceAsStream("DuplexCOAforBroad.xlsx"),
@@ -112,6 +124,9 @@ public class IndexedPlateFactoryTest extends StubbyContainerTest {
 
     @BeforeMethod
     public void beforeMethod() {
+        if (userBean != null) {
+            userBean.loginTestUser();
+        }
         if (staticPlateDao != null && CollectionUtils.isEmpty(misNames)) {
             misNames = staticPlateDao.findAll(MolecularIndexingScheme.class).stream().
                     map(MolecularIndexingScheme::getName).
@@ -122,57 +137,9 @@ public class IndexedPlateFactoryTest extends StubbyContainerTest {
     }
 
     @Test
-    public void testMultipleIndexPlateInstances() throws Exception {
-        String identifier = dateFormat.format(new Date());
-        final String salesOrderNumber = "salesOrder " + identifier;
-        final String plateName = "plateName" + identifier;
-        final int numberOfPlates = 5;
-
-        // Makes an index plate definition with two wells.
-        IndexPlateDefinition.ReagentType reagentType = IndexPlateDefinition.ReagentType.PRIMER;
-        VesselGeometry vesselGeometry = VesselGeometry.G12x8;
-        MessageCollection messageCollection = new MessageCollection();
-        List<List<String>> cellGrid = Arrays.asList(Arrays.asList("B02", misNames.get(302)),
-                Arrays.asList("C03", misNames.get(303)));
-        indexedPlateFactory.makeIndexPlateDefinition(plateName, cellGrid, vesselGeometry,
-                reagentType, false, messageCollection);
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
-
-        // Instantiates a number of index plates from the definition.
-        messageCollection.clearAll();
-        List<List<String>> plateBarcodes = IntStream.range(0, numberOfPlates).
-                mapToObj(i -> Collections.singletonList("0" + identifier + i)).
-                collect(Collectors.toList());
-        indexedPlateFactory.makeIndexPlate(plateName, plateBarcodes.subList(0, numberOfPlates - 1),
-                salesOrderNumber, messageCollection);
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
-        // Does the last barcode in another call.
-        indexedPlateFactory.makeIndexPlate(plateName, plateBarcodes.subList(numberOfPlates - 1, numberOfPlates),
-                salesOrderNumber, messageCollection);
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
-
-        final IndexPlateDefinition plateDefinition = staticPlateDao.findSingle(IndexPlateDefinition.class,
-                IndexPlateDefinition_.definitionName, plateName);
-        Assert.assertNotNull(plateDefinition, "def for " + plateName);
-        Assert.assertEquals(plateDefinition.getDefinitionName(), plateName);
-        Assert.assertEquals(plateDefinition.getVesselGeometry(), vesselGeometry);
-        Assert.assertEquals(plateDefinition.getReagentType(), reagentType);
-        Assert.assertEquals(plateDefinition.getPlateInstances().stream().
-                        map(LabVessel::getLabel).sorted().collect(Collectors.joining(" ")),
-                plateBarcodes.stream().flatMap(List::stream).sorted().collect(Collectors.joining(" ")));
-
-        plateBarcodes.stream().flatMap(List::stream).forEach(barcode -> {
-            StaticPlate staticPlate = staticPlateDao.findByBarcode(barcode);
-            Assert.assertNotNull(staticPlate, "missing " + barcode);
-            Assert.assertEquals(staticPlate.getIndexPlateDefinition(), plateDefinition, "for barcode " + barcode);
-            Assert.assertEquals(staticPlate.getSalesOrderNumber(), salesOrderNumber, "for barcode " + barcode);
-        });
-    }
-
-    @Test
     public void testDefineAndInstantiateIndexPlate() throws Exception {
         String identifier = dateFormat.format(new Date());
-
+        String salesOrderNumber = "salesOrder" + identifier;
         String plateName = "plateName" + identifier;
         IndexPlateDefinition.ReagentType reagentType = IndexPlateDefinition.ReagentType.ADAPTER;
         VesselGeometry vesselGeometry = VesselGeometry.G24x16;
@@ -192,25 +159,26 @@ public class IndexedPlateFactoryTest extends StubbyContainerTest {
         Assert.assertEquals(spreadsheet.stream().flatMap(List::stream).collect(Collectors.joining(" ")),
                 cellGrid.stream().flatMap(List::stream).collect(Collectors.joining(" ")));
 
-        // Creates an index plate definition.
+        // Creates index plate definition.
         messageCollection.clearAll();
         indexedPlateFactory.makeIndexPlateDefinition(plateName, spreadsheet, vesselGeometry,
                 reagentType, false, messageCollection);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertTrue(indexedPlateFactory.findPlateDefinitionNames().contains(plateName), "no " + plateName);
 
-        // The definition should now be available.
-        Assert.assertTrue(indexedPlateFactory.findPlateDefinitionNames().contains(plateName), "missing " + plateName);
-
-        // Instantiates an index plate.
+        // Instantiates an index plate from the plate definition.
         messageCollection.clearAll();
         String plateBarcode = identifier;
-        indexedPlateFactory.makeIndexPlate(plateName,
-                Arrays.asList(Arrays.asList("Barcode"), Arrays.asList(identifier)),
-                "salesOrder" + identifier, messageCollection);
+        List<List<String>> barcodeSpreadsheet = Arrays.asList(Arrays.asList("Barcodes"), Arrays.asList(plateBarcode));
+        indexedPlateFactory.makeIndexPlate(plateName, barcodeSpreadsheet, salesOrderNumber, false, messageCollection);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
 
+        // Verifies the plate barcode is leading zero filled to 12 digits.
         String zeroFilledBarcode = String.format("%012d", Long.parseLong(plateBarcode));
         StaticPlate staticPlate = staticPlateDao.findByBarcode(zeroFilledBarcode);
+        Assert.assertNotNull(staticPlate);
+        Assert.assertEquals(staticPlate.getSalesOrderNumber(), salesOrderNumber);
+        Assert.assertEquals(staticPlate.getIndexPlateDefinition().getDefinitionName(), plateName);
         for (List<String> row : cellGrid.subList(1, cellGrid.size())) {
             Collection<SampleInstanceV2> instances = staticPlate.getContainerRole().
                     getSampleInstancesAtPositionV2(VesselPosition.getByName(row.get(0)));
@@ -218,6 +186,246 @@ public class IndexedPlateFactoryTest extends StubbyContainerTest {
             Assert.assertEquals(instances.iterator().next().getMolecularIndexingScheme().getName(), row.get(1));
         }
     }
+
+    @Test
+    public void testMultipleIndexPlateInstances() {
+        final String identifier = dateFormat.format(new Date());
+        final String salesOrderNumber = "salesOrder " + identifier;
+        final String plateName = "plateName" + identifier;
+        final int numberOfPlates = 5;
+        final MessageCollection messageCollection = new MessageCollection();
+        final IndexPlateDefinition.ReagentType reagentType = IndexPlateDefinition.ReagentType.ADAPTER;
+        final VesselGeometry vesselGeometry = VesselGeometry.G12x8;
+
+        // Makes an index plate definition.
+        indexedPlateFactory.makeIndexPlateDefinition(plateName,
+                Arrays.asList(Arrays.asList("B02", misNames.get(302)), Arrays.asList("C03", misNames.get(303))),
+                vesselGeometry, reagentType, false, messageCollection);
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+
+        // Instantiates a number of index plates from the definition.
+        messageCollection.clearAll();
+        List<List<String>> plateBarcodes = IntStream.range(0, numberOfPlates).
+                mapToObj(i -> Collections.singletonList("0" + identifier + i)).
+                collect(Collectors.toList());
+        indexedPlateFactory.makeIndexPlate(plateName, plateBarcodes.subList(0, numberOfPlates - 1),
+                salesOrderNumber, false, messageCollection);
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        // Does the last barcode in another call.
+        indexedPlateFactory.makeIndexPlate(plateName, plateBarcodes.subList(numberOfPlates - 1, numberOfPlates),
+                salesOrderNumber, false, messageCollection);
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+
+        final IndexPlateDefinition plateDefinition = indexPlateDefinitionDao.findByName(plateName);
+        Assert.assertNotNull(plateDefinition, "def for " + plateName);
+        Assert.assertEquals(plateDefinition.getDefinitionName(), plateName);
+        Assert.assertEquals(plateDefinition.getVesselGeometry(), vesselGeometry);
+        Assert.assertEquals(plateDefinition.getReagentType(), reagentType);
+        Assert.assertEquals(plateDefinition.getPlateInstances().stream().
+                        map(LabVessel::getLabel).sorted().collect(Collectors.joining(" ")),
+                plateBarcodes.stream().flatMap(List::stream).sorted().collect(Collectors.joining(" ")));
+
+        plateBarcodes.stream().flatMap(List::stream).forEach(barcode -> {
+            StaticPlate staticPlate = staticPlateDao.findByBarcode(barcode);
+            Assert.assertNotNull(staticPlate, "missing " + barcode);
+            Assert.assertEquals(staticPlate.getIndexPlateDefinition(), plateDefinition, "for barcode " + barcode);
+            Assert.assertEquals(staticPlate.getSalesOrderNumber(), salesOrderNumber, "for barcode " + barcode);
+        });
+    }
+
+    @Test
+    public void testRenameAndDelete() {
+        final String identifier = dateFormat.format(new Date());
+        final String plateName1 = "plateName1_" + identifier;
+        final String plateName2 = "plateName2_" + identifier;
+        final String plateName3 = "plateName3_" + identifier;
+        final MessageCollection messageCollection = new MessageCollection();
+
+        indexedPlateFactory.makeIndexPlateDefinition(plateName1, Arrays.asList(Arrays.asList("A1", misNames.get(99))),
+                VesselGeometry.G12x8, IndexPlateDefinition.ReagentType.ADAPTER, false, messageCollection);
+
+        indexedPlateFactory.makeIndexPlateDefinition(plateName2, Arrays.asList(Arrays.asList("A1", misNames.get(99))),
+                VesselGeometry.G12x8, IndexPlateDefinition.ReagentType.ADAPTER, false, messageCollection);
+
+        // Rename should fail since new plate name is in use.
+        indexedPlateFactory.renameDefinition(plateName1, plateName2, messageCollection);
+        Assert.assertTrue(messageCollection.getErrors().contains(
+                String.format(IndexedPlateFactory.IN_USE, IndexedPlateFactory.DEFINITION_SUFFIX, plateName2)),
+                StringUtils.join(messageCollection.getErrors(), "; "));
+        messageCollection.clearAll();
+
+        // Delete should succeed.
+        indexedPlateFactory.deleteDefinition(plateName2, messageCollection);
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertNull(indexPlateDefinitionDao.findByName(plateName2), "Failed to delete " + plateName2);
+
+        // Rename should succeed.
+        indexedPlateFactory.renameDefinition(plateName1, plateName2, messageCollection);
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+
+        // Rename should fail since plate definition doesn't exist any more.
+        indexedPlateFactory.renameDefinition(plateName1, plateName3, messageCollection);
+        Assert.assertTrue(messageCollection.getErrors().contains(
+                String.format(IndexedPlateFactory.NOT_FOUND, IndexedPlateFactory.DEFINITION_SUFFIX, plateName1)),
+                StringUtils.join(messageCollection.getErrors(), "; "));
+        messageCollection.clearAll();
+
+        // Delete should fail since plate definition doesn't exist.
+        indexedPlateFactory.deleteDefinition(plateName1, messageCollection);
+        Assert.assertTrue(messageCollection.getErrors().contains(
+                String.format(IndexedPlateFactory.NOT_FOUND, IndexedPlateFactory.DEFINITION_SUFFIX, plateName1)),
+                StringUtils.join(messageCollection.getErrors(), "; "));
+        messageCollection.clearAll();
+
+        // Instantiate the plate definition should fail since plate definition doesn't exist.
+        String plateBarcode = String.format("%012d", Long.parseLong(identifier));
+        indexedPlateFactory.makeIndexPlate(plateName1, Arrays.asList(Arrays.asList(plateBarcode)), "", false,
+                messageCollection);
+        Assert.assertTrue(messageCollection.getErrors().contains(
+                String.format(IndexedPlateFactory.NOT_FOUND, IndexedPlateFactory.DEFINITION_SUFFIX, plateName1)),
+                StringUtils.join(messageCollection.getErrors(), "; "));
+        messageCollection.clearAll();
+
+        // Instantiate should succeed with plateName2.
+        indexedPlateFactory.makeIndexPlate(plateName2, Arrays.asList(Arrays.asList(plateBarcode)), "", false,
+                messageCollection);
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        StaticPlate plate2 = staticPlateDao.findByBarcode(plateBarcode);
+        Assert.assertNotNull(plate2);
+        Assert.assertTrue(indexPlateDefinitionDao.findByName(plateName2).getPlateInstances().contains(plate2));
+
+        // Delete should fail since plate definition is in use.
+        indexedPlateFactory.deleteDefinition(plateName2, messageCollection);
+        Assert.assertTrue(messageCollection.getErrors().contains(
+                String.format(IndexedPlateFactory.CANNOT_REMOVE, IndexedPlateFactory.DEFINITION_SUFFIX, plateName2)),
+                StringUtils.join(messageCollection.getErrors(), "; "));
+        messageCollection.clearAll();
+
+        // Deleting the plate instances should fail since one of the plates doesn't exist.
+        indexedPlateFactory.deleteInstances(Arrays.asList("0-0-0-0-0-00", plateBarcode), messageCollection);
+        Assert.assertTrue(messageCollection.getErrors().contains(
+                String.format(IndexedPlateFactory.NOT_FOUND, "", "0-0-0-0-0-00")),
+                StringUtils.join(messageCollection.getErrors(), "; "));
+        messageCollection.clearAll();
+
+        // Deleting the plate instance should succeed.
+        indexedPlateFactory.deleteInstances(Collections.singletonList(plateBarcode), messageCollection);
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertNull(staticPlateDao.findByBarcode(plateBarcode), "Failed to delete " + plateBarcode);
+
+        // And now deleting the plate definition should succeed.
+        indexedPlateFactory.deleteDefinition(plateName2, messageCollection);
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertNull(indexPlateDefinitionDao.findByName(plateName2), "Failed to delete " + plateName2);
+    }
+
+    @Test
+    public void testRemakeAndDelete() {
+        final String identifier = dateFormat.format(new Date());
+        final String plateName1 = "plateName1_" + identifier;
+        final String plateName2 = "plateName2_" + identifier;
+        final MessageCollection messageCollection = new MessageCollection();
+
+        // Makes the first plate definition.
+        indexedPlateFactory.makeIndexPlateDefinition(plateName1, Arrays.asList(Arrays.asList("J18", misNames.get(99))),
+                VesselGeometry.G24x16, IndexPlateDefinition.ReagentType.ADAPTER, false, messageCollection);
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertNotNull(indexPlateDefinitionDao.findByName(plateName1));
+        // Remakes the definition. This fails when "Replace Existing" is unset.
+        indexedPlateFactory.makeIndexPlateDefinition(plateName1, Arrays.asList(Arrays.asList("A01", misNames.get(0))),
+                VesselGeometry.G12x8, IndexPlateDefinition.ReagentType.ADAPTER, false, messageCollection);
+        Assert.assertEquals(messageCollection.getErrors().get(0),
+                String.format(IndexedPlateFactory.NEEDS_OVERWRITE, IndexedPlateFactory.DEFINITION_SUFFIX),
+                StringUtils.join(messageCollection.getErrors(), "; "));
+        messageCollection.clearAll();
+        // The original definition still exists.
+        Assert.assertEquals(indexPlateDefinitionDao.findByName(plateName1).getVesselGeometry(), VesselGeometry.G24x16);
+        // Remake succeeds when "Replace Existing" is set.
+        indexedPlateFactory.makeIndexPlateDefinition(plateName1, Arrays.asList(Arrays.asList("A01", misNames.get(0))),
+                VesselGeometry.G12x8, IndexPlateDefinition.ReagentType.ADAPTER, true, messageCollection);
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertEquals(indexPlateDefinitionDao.findByName(plateName1).getVesselGeometry(), VesselGeometry.G12x8);
+
+        // Makes the second plate definition.
+        indexedPlateFactory.makeIndexPlateDefinition(plateName2, Arrays.asList(Arrays.asList("N03", misNames.get(90))),
+                VesselGeometry.G24x16, IndexPlateDefinition.ReagentType.PRIMER, false, messageCollection);
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        messageCollection.clearAll();
+
+        // Instantiates an index plate from the 2nd plate definition then remakes the plate (using the same
+        // plate barcode) from the 1st plate definition. This is allowed as long as the index plate is unused.
+        String plateBarcode = String.format("%012d", Long.parseLong(identifier));
+        List<List<String>> barcodeSpreadsheet = Arrays.asList(Arrays.asList("Barcodes"), Arrays.asList(plateBarcode));
+        indexedPlateFactory.makeIndexPlate(plateName2, barcodeSpreadsheet, identifier, false, messageCollection);
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        // With "replace existing" checkbox unset the remake fails.
+        indexedPlateFactory.makeIndexPlate(plateName1, barcodeSpreadsheet, identifier, false, messageCollection);
+        Assert.assertEquals(messageCollection.getErrors().get(0),
+                String.format(IndexedPlateFactory.NEEDS_OVERWRITE, ""),
+                StringUtils.join(messageCollection.getErrors(), "; "));
+        messageCollection.clearAll();
+        // This remake succeeds.
+        indexedPlateFactory.makeIndexPlate(plateName1, barcodeSpreadsheet, "a test", true, messageCollection);
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        StaticPlate staticPlate = staticPlateDao.findByBarcode(plateBarcode);
+        Assert.assertNotNull(staticPlate, "missing " + plateBarcode);
+        messageCollection.clearAll();
+
+        // Tests finding the instances for the plate definition.
+        Pair<String, String> unusedAndInUse = indexedPlateFactory.findInstances(plateName1, messageCollection);
+        Assert.assertTrue(unusedAndInUse.getLeft().contains(staticPlate.getLabel()));
+        Assert.assertTrue(unusedAndInUse.getRight().isEmpty());
+
+        // Adds a transfer to a new plate so that this plate will be treated as being in use.
+        StaticPlate targetPlate = new StaticPlate("dummy" + identifier, staticPlate.getPlateType());
+        staticPlate.getContainerRole().getSectionTransfersFrom().add(new SectionTransfer(
+                staticPlate.getContainerRole(), SBSSection.ALL96, null,
+                targetPlate.getContainerRole(), SBSSection.ALL96, null,
+                new LabEvent(LabEventType.INDEXED_ADAPTER_LIGATION, new Date(), "test", 0L, 0L, "test")));
+        staticPlateDao.persist(staticPlate);
+        Assert.assertFalse(CollectionUtils.isEmpty(staticPlate.getTransfersFrom()));
+        messageCollection.clearAll();
+
+        // Deleting the instance should fail since the plate is in use.
+        indexedPlateFactory.deleteInstances(Collections.singletonList(plateBarcode), messageCollection);
+        Assert.assertTrue(messageCollection.getErrors().contains(
+                String.format(IndexedPlateFactory.CANNOT_REMOVE, "", plateBarcode)),
+                StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertNotNull(staticPlateDao.findByBarcode(plateBarcode), "Failed to delete " + plateBarcode);
+        messageCollection.clearAll();
+
+        // Remaking the instance from a new definition should fail since the plate is in use.
+        indexedPlateFactory.makeIndexPlate(plateName2, barcodeSpreadsheet, identifier, true, messageCollection);
+        Assert.assertEquals(messageCollection.getErrors().get(0),
+                String.format(IndexedPlateFactory.IN_USE, "", plateBarcode),
+                StringUtils.join(messageCollection.getErrors(), "; "));
+
+        // Tests finding the instances for the plate definition.
+        unusedAndInUse = indexedPlateFactory.findInstances(plateName1, messageCollection);
+        Assert.assertTrue(unusedAndInUse.getLeft().isEmpty());
+        Assert.assertTrue(unusedAndInUse.getRight().contains(staticPlate.getLabel()));
+    }
+
+
+    @Test
+    public void testEmptySpreadsheetCreate() {
+        final String identifier = dateFormat.format(new Date());
+        final MessageCollection messageCollection = new MessageCollection();
+
+        // Plate definition with no content.
+        indexedPlateFactory.makeIndexPlateDefinition(identifier, Collections.emptyList(),
+                VesselGeometry.G24x16, IndexPlateDefinition.ReagentType.ADAPTER, false, messageCollection);
+        Assert.assertEquals(messageCollection.getErrors().get(0), String.format(IndexedPlateFactory.SPREADSHEET_EMPTY),
+                StringUtils.join(messageCollection.getErrors(), "; "));
+        messageCollection.clearAll();
+
+        // Plate instance with no content.
+        indexedPlateFactory.makeIndexPlate(identifier, Collections.emptyList(), identifier, false, messageCollection);
+        Assert.assertEquals(messageCollection.getErrors().get(0), String.format(IndexedPlateFactory.SPREADSHEET_EMPTY),
+                StringUtils.join(messageCollection.getErrors(), "; "));
+
+    }
+
 
     /** Returns a stream to an excel spreadsheet that contains the cell grid. */
     public InputStream excelSpreadsheet(List<List<String>> cellGrid) throws IOException {
@@ -234,5 +442,4 @@ public class IndexedPlateFactoryTest extends StubbyContainerTest {
         workbook.write(stream);
         return new ByteArrayInputStream(stream.toByteArray());
     }
-
 }
