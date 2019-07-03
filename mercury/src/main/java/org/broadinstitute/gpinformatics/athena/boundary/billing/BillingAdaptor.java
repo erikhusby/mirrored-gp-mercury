@@ -37,7 +37,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -279,7 +278,6 @@ public class BillingAdaptor implements Serializable {
                                                 ledgerEntry.getPreviouslyBilled().stream()
                                                         .filter(previousBilled -> previousBilled.getSapDeliveryDocumentId()
                                                                                   != null)
-                                                        .sorted(Comparator.comparing(LedgerEntry::getSapDeliveryDocumentId).reversed())
                                                         .collect(Collectors.toCollection(() -> priorSapBillings));
                                             });
 
@@ -293,9 +291,8 @@ public class BillingAdaptor implements Serializable {
                                         result.setErrorMessage(NEGATIVE_BILL_ERROR);
                                         throw new BillingException(NEGATIVE_BILL_ERROR);
                                     } else if (quantityForSAP < 0) {
-
-                                        sapService.creditDelivery( priorSapBillings.iterator().next().getSapDeliveryDocumentId() ,item);
-
+                                        billingEjb.sendBillingCreditRequestEmail(item, priorSapBillings,
+                                                billingSession.getCreatedBy());
                                         item.setBillingMessages(BillingSession.BILLING_CREDIT);
                                         sapBillingId = BILLING_CREDIT_REQUESTED_INDICATOR;
                                         result.setSapBillingId(sapBillingId);

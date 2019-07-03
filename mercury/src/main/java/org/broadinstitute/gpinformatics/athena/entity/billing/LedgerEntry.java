@@ -200,7 +200,7 @@ public class LedgerEntry implements Serializable {
      * This ledger entry has a positively successful billing message.
      */
     public boolean isSuccessfullyBilled() {
-        return BillingSession.SUCCESS.equals(billingMessage);
+        return BillingSession.SUCCESS.equals(billingMessage) || BillingSession.BILLING_CREDIT.equals(billingMessage);
     }
 
     /**

@@ -564,15 +564,6 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
     }
 
-    @Override
-    public String creditDelivery(String deliveryDocumentId, QuoteImportItem quoteItemForBilling)
-            throws SAPIntegrationException {
-
-        SAPOrderItem returnLine = new SAPOrderItem(quoteItemForBilling.getProduct().getPartNumber(), BigDecimal.valueOf(quoteItemForBilling.getQuantity()));
-        SAPReturnOrder returnOrder = new SAPReturnOrder(deliveryDocumentId, Collections.singleton(returnLine));
-        return getClient().createReturnOrder(returnOrder);
-    }
-
     private boolean productsFoundInSap(ProductOrder productOrder) {
         boolean result = true;
 
