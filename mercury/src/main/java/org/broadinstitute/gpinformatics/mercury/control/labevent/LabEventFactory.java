@@ -1035,7 +1035,12 @@ public class LabEventFactory implements Serializable {
             StaticPlate staticPlate = staticPlateDao.findByBarcode(plate.getBarcode());
             labEvent = buildFromBettaLimsPlateEventDbFree(plateEventType, staticPlate);
         } else {
+            // A newly labeled rack should be created and persisted as
+            boolean createSourcesForEvent = LabEventType.getByName(plateEventType.getEventType()).isCreateSources();
             RackOfTubes rackOfTubes = rackOfTubesDao.findByBarcode(plateEventType.getPlate().getBarcode());
+            if( rackOfTubes == null ) {
+                rackOfTubes = new RackOfTubes( plateEventType.getPlate().getBarcode(), getRackType( plateEventType.getPlate() ) );
+            }
             Map<String, BarcodedTube> mapBarcodeToVessel = findTubesByBarcodes(plateEventType.getPositionMap());
             //noinspection unchecked
             TubeFormation tubeFormation = tubeFormationDao.findByDigest(makeDigest(plateEventType.getPositionMap(),
@@ -1338,6 +1343,7 @@ public class LabEventFactory implements Serializable {
 
     /**
      * Builds an in-place event on a static plate
+     * @throws Exception When plate does not exist.  Static plate must ALWAYS exist if an in-place event is acting on it.  (CREATE_SOURCES = false)
      */
     @DaoFree
     public LabEvent buildFromBettaLimsPlateEventDbFree(PlateEventType plateEvent, StaticPlate plate) {
@@ -1416,6 +1422,9 @@ public class LabEventFactory implements Serializable {
         }
         tubeFormation.addInPlaceEvent(labEvent);
         labEvent.setAncillaryInPlaceVessel(rackOfTubes);
+        if( rackOfTubes != null ) {
+            rackOfTubes.getAncillaryInPlaceEvents().add(labEvent);
+        }
         return labEvent;
     }
 

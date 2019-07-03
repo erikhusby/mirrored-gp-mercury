@@ -197,6 +197,10 @@ public class RackOfTubes extends LabVessel {
         return tubeFormations;
     }
 
+    public Set<LabEvent> getAncillaryInPlaceEvents() {
+        return ancillaryInPlaceEvents;
+    }
+
     @Override
     public Set<LabEvent> getInPlaceLabEvents() {
         Set<LabEvent> allInPlaceEvents = new HashSet<>();
