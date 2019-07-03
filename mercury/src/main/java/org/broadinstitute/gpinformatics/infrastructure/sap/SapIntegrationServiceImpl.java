@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -45,6 +46,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -568,14 +570,19 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     @Override
     public List<LedgerEntry> creditDelivery(QuoteImportItem quoteItemForBilling) throws SAPIntegrationException {
         List<LedgerEntry> returnOrders = new ArrayList<>();
-
-        Map<LedgerEntry, Collection<SAPOrderItem>> deliveryDocumentsMap = quoteItemForBilling.buildOrderItemQuantyMap();
-        for (LedgerEntry ledgerEntry: deliveryDocumentsMap.keySet()) {
-            Collection<SAPOrderItem> deliveryItems = deliveryDocumentsMap.get(ledgerEntry);
-            String returnOrderDocumentId = getClient()
-                .createReturnOrder(new SAPReturnOrder(ledgerEntry.getSapDeliveryDocumentId(), deliveryItems));
-            ledgerEntry.updateDeliveryDocument(returnOrderDocumentId);
-            returnOrders.add(ledgerEntry);
+        Map<String, List<LedgerEntry>> ledgersByDocumentId =
+            quoteItemForBilling.getPriorSapLedgerEntries().stream().filter(LedgerEntry::isSuccessfullyBilled)
+            .collect(Collectors.groupingBy(LedgerEntry::getSapDeliveryDocumentId));
+        Map<String, Collection<SAPOrderItem>> deliveryDocumentsMap = quoteItemForBilling.buildOrderItemQuantityMap();
+        if (CollectionUtils.isNotEmpty(ledgersByDocumentId.entrySet())) {
+            for (String documentId : deliveryDocumentsMap.keySet()) {
+                Collection<SAPOrderItem> deliveryItems = deliveryDocumentsMap.get(documentId);
+                String returnOrderDocumentId =
+                    getClient().createReturnOrder(new SAPReturnOrder(documentId, deliveryItems));
+                ledgersByDocumentId.getOrDefault(documentId, Collections.emptyList())
+                    .forEach(ledgerEntry -> ledgerEntry.setCreditedDeliveryDocumentId(returnOrderDocumentId));
+                returnOrders.addAll(ledgersByDocumentId.get(documentId));
+            }
         }
 
         return returnOrders;

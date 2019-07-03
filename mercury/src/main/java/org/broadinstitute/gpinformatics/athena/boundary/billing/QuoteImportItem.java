@@ -419,23 +419,23 @@ public class QuoteImportItem {
 
     public boolean isSapOrder() { return productOrder.hasSapQuote();}
 
-    public Map<LedgerEntry, Double> findLedgerEntriesWithQuantity() {
-        Map<LedgerEntry, Double> ledgersWithQuantity = new HashMap<>();
+    public Map<String, Double> findLedgerEntriesWithQuantity() {
+        Map<String, Double> ledgersWithQuantity = new HashMap<>();
         AtomicReference<Double> foundQuantity= new AtomicReference<>(0d);
         getPriorSapLedgerEntries().stream().filter(ledgerEntry -> ledgerEntry.getQuantity() > 0)
             .forEach(ledgerEntry -> {
                 if (foundQuantity.get() + getQuantity() < 0) {
-                    Double newQty = ledgersWithQuantity.merge(ledgerEntry, ledgerEntry.getQuantity(),
+                    Double newQty = ledgersWithQuantity.merge(ledgerEntry.getSapDeliveryDocumentId(), ledgerEntry.getQuantity(),
                             (d1, d2) -> d1 + d2);
                     foundQuantity.accumulateAndGet(newQty, (q1, q2) -> q1 + q2);
                 }
             });
         return ledgersWithQuantity;
     }
-    public Map<LedgerEntry, Collection<SAPOrderItem>> buildOrderItemQuantyMap() {
-        HashMultimap<LedgerEntry, SAPOrderItem> orderItemHashMultimap = HashMultimap.<LedgerEntry, SAPOrderItem>create();
-        findLedgerEntriesWithQuantity().forEach((k, v)->{
-            orderItemHashMultimap.put(k, new SAPOrderItem(getProduct().getPartNumber(), BigDecimal.valueOf(v)));
+    public Map<String, Collection<SAPOrderItem>> buildOrderItemQuantityMap() {
+        HashMultimap<String, SAPOrderItem> orderItemHashMultimap = HashMultimap.create();
+        findLedgerEntriesWithQuantity().forEach((docId, qty)->{
+            orderItemHashMultimap.put(docId, new SAPOrderItem(getProduct().getPartNumber(), BigDecimal.valueOf(qty)));
         });
         return orderItemHashMultimap.asMap();
     }

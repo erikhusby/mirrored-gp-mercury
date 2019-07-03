@@ -59,11 +59,13 @@ import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import org.testng.collections.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -220,7 +222,7 @@ public class BillingCreditDbFreeTest {
                     assertThat(testReturnOrder.getDeliveryId(), is(equalTo(firstDeliveryDocument)));
 
                     for (SAPOrderItem deliveryItem : testReturnOrder.getDeliveryItems()) {
-                        assertThat(deliveryItem.getItemQuantity(),is(equalTo(BigDecimal.valueOf(-2d))));
+                        assertThat(deliveryItem.getItemQuantity(),is(equalTo(BigDecimal.valueOf(qtyPositiveTwo))));
 
                         for (LedgerEntry ledgerItem : pdoSample.getLedgerItems()) {
 
@@ -306,7 +308,7 @@ public class BillingCreditDbFreeTest {
                             assertThat(testReturnOrder.getDeliveryId(), is(equalTo(firstDeliveryDocumentId)));
 
                             for (SAPOrderItem deliveryItem : testReturnOrder.getDeliveryItems()) {
-                                assertThat(deliveryItem.getItemQuantity(),is(equalTo(BigDecimal.valueOf(-2d))));
+                                assertThat(deliveryItem.getItemQuantity(),is(equalTo(BigDecimal.valueOf(qtyPositiveTwo))));
 
                                 for (LedgerEntry ledgerItem : pdoSample.getLedgerItems()) {
 

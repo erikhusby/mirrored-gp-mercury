@@ -209,14 +209,14 @@ public class LedgerEntry implements Serializable {
      * This ledger entry has a positively successful billing message.
      */
     public boolean isSuccessfullyBilled() {
-        return BillingSession.SUCCESS.equals(billingMessage);
+        return BillingSession.SUCCESS.equals(billingMessage) || BillingSession.BILLING_CREDIT.equals(billingMessage);
     }
 
     /**
      * This ledger has a billing message but it is not the success message, which means it is an error message.
      */
     public boolean isUnsuccessfullyBilled() {
-        return billingMessage != null && !BillingSession.SUCCESS.equals(billingMessage);
+        return !isSuccessfullyBilled();
     }
 
     public void removeFromSession() {
@@ -275,7 +275,11 @@ public class LedgerEntry implements Serializable {
                 .append(priceItem, castOther.getPriceItem())
                 .append(priceItemType, castOther.getPriceItemType())
                 .append(quoteId, castOther.getQuoteId())
-                .append(billingSession, castOther.getBillingSession()).isEquals();
+                .append(billingSession, castOther.getBillingSession())
+                .append(workItem, castOther.getWorkItem())
+                .append(sapDeliveryDocumentId, castOther.getSapDeliveryDocumentId())
+                .append(creditedDeliveryDocumentId, castOther.getCreditedDeliveryDocumentId())
+            .isEquals();
     }
 
     @Override
@@ -285,7 +289,11 @@ public class LedgerEntry implements Serializable {
                 .append(priceItem)
                 .append(priceItemType)
                 .append(quoteId)
-                .append(billingSession).toHashCode();
+                .append(billingSession)
+                .append(workItem)
+                .append(sapDeliveryDocumentId)
+                .append(creditedDeliveryDocumentId)
+            .toHashCode();
     }
 
     public Date getBucketDate() {

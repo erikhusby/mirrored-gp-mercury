@@ -41,6 +41,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * The Billing Adaptor was derived to provide the ability to provide singular interface calls related to billingEJB
@@ -287,7 +288,7 @@ public class BillingAdaptor implements Serializable {
                                         item.setBillingMessages(BillingSession.BILLING_CREDIT);
                                         sapBillingId =
                                             priorSapBillings.stream().map(LedgerEntry::getSapDeliveryDocumentId)
-                                                .toString();
+                                                .collect(Collectors.joining(" "));
                                         result.setSapBillingId(sapBillingId);
                                         billingEjb.updateSapIndividualLedgerEntries(item, workId, sapBillingId,
                                             priorSapBillings, BillingSession.BILLING_CREDIT);
