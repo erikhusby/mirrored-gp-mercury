@@ -509,7 +509,8 @@ public class LabMetricFixupTest extends Arquillian {
      * 0185769029
      */
     @Test(enabled = false)
-    public void fixupGplim6452() throws IOException {
+    public void fixupGplim6452() throws Exception {
+        utx.begin();
         userBean.loginOSUser();
         List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("DeleteGenericMetric.txt"));
         String jiraTicket = lines.get(0);
@@ -536,6 +537,7 @@ public class LabMetricFixupTest extends Arquillian {
         }
         labVesselDao.persist(new FixupCommentary(jiraTicket + " deleted lab metrics of type " + lines.get(1)));
         labVesselDao.flush();
+        utx.commit();
     }
 
     private void updateRisk(Set<LabMetric> labMetrics) {
