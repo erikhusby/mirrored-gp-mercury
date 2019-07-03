@@ -38,6 +38,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -497,6 +498,44 @@ public class LabMetricFixupTest extends Arquillian {
         }
         dao.persist(new FixupCommentary(jiraTicket));
         dao.flush();
+    }
+
+    /**
+     * This test reads its parameters from a file, testdata/DeleteGenericMetric.txt, so it can be used for other similar fixups,
+     * without writing a new test.  Example contents of the file are:
+     * GPLIM-6452
+     * Plating Pico
+     * 0185769113
+     * 0185769029
+     */
+    @Test(enabled = false)
+    public void fixupGplim6452() throws IOException {
+        userBean.loginOSUser();
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("DeleteGenericMetric.txt"));
+        String jiraTicket = lines.get(0);
+        LabMetric.MetricType metricType = LabMetric.MetricType.getByDisplayName(lines.get(1));
+        for (int i = 2; i < lines.size(); i++) {
+            String barcode = lines.get(i).trim();
+            LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
+            if (labVessel == null) {
+                throw new RuntimeException("Failed to find lab vessel " + barcode);
+            }
+
+            Set<LabMetric> deleteMetrics = new HashSet<>();
+            for (LabMetric labMetric: labVessel.getMetrics()) {
+                if (labMetric.getName() == metricType) {
+                    deleteMetrics.add(labMetric);
+                    System.out.println("delete lab metric " + labMetric.getLabMetricId() + " from " +
+                                       labVessel.getLabel());
+                }
+            }
+            labVessel.getMetrics().removeAll(deleteMetrics);
+            for (LabMetric labMetric: deleteMetrics) {
+                labMetricDao.remove(labMetric);
+            }
+        }
+        labVesselDao.persist(new FixupCommentary(jiraTicket + " deleted lab metrics of type " + lines.get(1)));
+        labVesselDao.flush();
     }
 
     private void updateRisk(Set<LabMetric> labMetrics) {
