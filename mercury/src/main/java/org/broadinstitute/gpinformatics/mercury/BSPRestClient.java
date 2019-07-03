@@ -11,7 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury;
 
-import org.broadinstitute.bsp.client.queue.CompletedSamples;
+//import org.broadinstitute.bsp.client.queue.CompletedSamples;
 import org.broadinstitute.bsp.client.response.ExomeExpressCheckResponse;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJaxRsClientService;
@@ -76,7 +76,7 @@ public class BSPRestClient extends AbstractJaxRsClientService {
 
     public void informUsersOfPicoCompletion(List<String> sampleIds) {
         WebTarget webResource = getJaxRsClient().target(getUrl(SEND_PICO_MESSAGE));
-        webResource.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.entity(new CompletedSamples(sampleIds), MediaType.APPLICATION_JSON_TYPE));
+//        webResource.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.entity(new CompletedSamples(sampleIds), MediaType.APPLICATION_JSON_TYPE));
     }
 
     @XmlRootElement

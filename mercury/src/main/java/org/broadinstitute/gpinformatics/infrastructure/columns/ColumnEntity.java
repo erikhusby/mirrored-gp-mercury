@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
@@ -81,7 +82,12 @@ public enum ColumnEntity {
                 }
             },PreferenceType.GLOBAL_PRODUCT_ORDER_COLUMN_SETS, PreferenceType.USER_PRODUCT_ORDER_COLUMN_SETS,
             new PreferenceType[]{PreferenceType.GLOBAL_PRODUCT_ORDER_SEARCH_INSTANCES,
-                    PreferenceType.USER_PRODUCT_ORDER_SEARCH_INSTANCES});
+                    PreferenceType.USER_PRODUCT_ORDER_SEARCH_INSTANCES}),
+    QUEUE_GROUPING("QueueGrouping", "Queue Grouping", "queueGroupingId", QueueGrouping.class,
+            entity -> {return ((QueueGrouping)entity).getQueueGroupingId().toString();},
+            PreferenceType.GLOBAL_QUEUE_GROUPING_COLUMN_SETS, PreferenceType.USER_QUEUE_GROUPING_COLUMN_SETS,
+            new PreferenceType[]{PreferenceType.GLOBAL_QUEUE_GROUPING_SEARCH_INSTANCES,
+                    PreferenceType.USER_QUEUE_GROUPING_SEARCH_INSTANCES});
 
     private IdGetter idGetter;
     private String entityName;
