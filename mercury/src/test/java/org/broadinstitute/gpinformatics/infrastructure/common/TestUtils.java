@@ -24,11 +24,13 @@ import org.testng.Assert;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -71,7 +73,8 @@ public class TestUtils {
                                              SapQuoteTestScenario quoteTestScenario, String salesorg)
             throws SAPIntegrationException {
 
-        billingOrder.setQuoteId(testQuoteIdentifier);
+        Optional<ProductOrder> optionalProductOrder = Optional.ofNullable(billingOrder);
+        optionalProductOrder.ifPresent(productOrder -> productOrder.setQuoteId(testQuoteIdentifier));
 
         ZESDQUOTEHEADER sapQHeader = ZESDQUOTEHEADER.Factory.newInstance();
         sapQHeader.setPROJECTNAME("TestProject");
@@ -92,7 +95,8 @@ public class TestUtils {
 
         final Set<QuoteItem> quoteItems = new HashSet<>();
 
-        final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(billingOrder);
+        final List<Product> allProductsOrdered = new ArrayList<>();
+        optionalProductOrder.ifPresent(productOrder -> allProductsOrdered.addAll(ProductOrder.getAllProductsOrdered(productOrder)));
         switch(quoteTestScenario) {
         case PRODUCTS_MATCH_QUOTE_ITEMS:
 
@@ -160,11 +164,15 @@ public class TestUtils {
         fundingDetailsCollection.add(new FundingDetail(sapFundDetail));
 
         final SapQuote sapQuote = new SapQuote(header, fundingDetailsCollection, Collections.emptySet(), quoteItems);
-        try {
-            billingOrder.updateQuoteItems(sapQuote);
-        } catch (SAPInterfaceException e) {
 
-        }
+            optionalProductOrder.ifPresent(productOrder -> {
+                try {
+                    productOrder.updateQuoteItems(sapQuote);
+                } catch (SAPInterfaceException e) {
+
+                }
+            });
+
         return sapQuote;
     }
 
