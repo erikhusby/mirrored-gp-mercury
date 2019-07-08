@@ -4,6 +4,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine_;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
 
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
@@ -25,5 +27,9 @@ public class StateMachineDao extends GenericDao {
                 criteriaQuery.where(getCriteriaBuilder().equal(root.get(FiniteStateMachine_.status), status));
             }
         });
+    }
+
+    public FiniteStateMachine findByIdentifier(String name) {
+        return findSingle(FiniteStateMachine.class, FiniteStateMachine_.stateMachineName, name);
     }
 }

@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.StateMachineDao;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenAppContext;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.TaskManager;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerContext;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
@@ -27,7 +28,7 @@ public class FiniteStateMachineEngine {
     private static final Log log = LogFactory.getLog(FiniteStateMachineEngine.class);
 
     @Inject
-    private DragenAppContext context;
+    private SchedulerContext context;
 
     @Inject
     private TaskManager taskManager;
@@ -40,7 +41,7 @@ public class FiniteStateMachineEngine {
     public FiniteStateMachineEngine() {
     }
 
-    public FiniteStateMachineEngine(DragenAppContext context) {
+    public FiniteStateMachineEngine(SchedulerContext context) {
         this.context = context;
     }
 
@@ -76,7 +77,7 @@ public class FiniteStateMachineEngine {
             }
 
             log.debug("Checking transitions from " + state);
-            if (taskManager.isTaskComplete(state.getTask())) {
+            if (taskManager.isTaskComplete(state.getTask(), context)) {
                 List<Transition> transitionsFromState = stateMachine.getTransitionsFromState(state);
                 for (Transition transition : transitionsFromState) {
                     log.info("Processing Transition " + transition);
@@ -92,6 +93,7 @@ public class FiniteStateMachineEngine {
 
         if (stateMachine.isComplete()) {
             stateMachine.setStatus(Status.COMPLETE);
+            stateMachine.setDateCompleted(new Date());
         }
     }
 
@@ -100,11 +102,11 @@ public class FiniteStateMachineEngine {
         this.taskManager = taskManager;
     }
 
-    public void setContext(DragenAppContext context) {
+    public void setContext(SchedulerContext context) {
         this.context = context;
     }
 
-    public DragenAppContext getContext() {
+    public SchedulerContext getContext() {
         return context;
     }
 }

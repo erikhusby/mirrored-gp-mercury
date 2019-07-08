@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.state;
 
 import org.apache.commons.lang3.tuple.MutablePair;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
@@ -15,16 +16,15 @@ import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AlignmentTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DemultiplexTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenAppContext;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenSimulator;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenSimulatorTest;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.TaskManager;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.WaitForFileTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.FiniteStateMachineEngine;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.FiniteStateMachineFactory;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerContext;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerControllerStub;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -43,6 +43,7 @@ import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -80,6 +81,9 @@ public class FiniteStateMachineContainerTest extends Arquillian {
     @Inject
     private FiniteStateMachineEngine finiteStateMachineEngine;
 
+    @Inject
+    private FiniteStateMachineFactory stateMachineFactory;
+
     private static final String DENATURE_BARCODE = "0311158846";
 
     @Deployment
@@ -92,13 +96,14 @@ public class FiniteStateMachineContainerTest extends Arquillian {
         IlluminaSequencingRun sequencingRun = createSequencingRun();
 
         // Build Finite State Machine
-        String baseDirectory = System.getProperty("java.io.tmpdir");
-        File outputFolder = new File(baseDirectory, sequencingRun.getRunBarcode());
-        FiniteStateMachine finiteStateMachine = DragenSimulatorTest.createStateMachine(sequencingRun, outputFolder);
+        MessageCollection messageCollection = new MessageCollection();
+        FiniteStateMachine finiteStateMachine =
+                stateMachineFactory.createFiniteStateMachineForRun(sequencingRun, messageCollection);
 
-        DragenAppContext appContext = new DragenAppContext(new DragenSimulator());
+        DragenAppContext dragenAppContext = new DragenAppContext();
+        SchedulerContext schedulerContext = new SchedulerContext(new SchedulerControllerStub(), dragenAppContext);
 
-        finiteStateMachineEngine.setContext(appContext);
+        finiteStateMachineEngine.setContext(schedulerContext);
 
         finiteStateMachineEngine.resumeMachine(finiteStateMachine);
 
@@ -129,6 +134,7 @@ public class FiniteStateMachineContainerTest extends Arquillian {
         Assert.assertNotNull(finiteStateMachine.getDateQueued());
         Assert.assertNotNull(finiteStateMachine.getDateStarted());
         Assert.assertNotNull(finiteStateMachine.getActiveStates());
+        Assert.assertNotNull(finiteStateMachine.getDateCompleted());
 
         // Lookup Mercury Sample to verify tasks
     }

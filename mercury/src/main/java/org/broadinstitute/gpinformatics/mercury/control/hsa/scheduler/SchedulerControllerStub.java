@@ -1,12 +1,16 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler;
 
-import java.util.ArrayList;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.Dragen;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenSimulator;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.ProcessTask;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.TaskResult;
+
 import java.util.Arrays;
 import java.util.List;
 
 public class SchedulerControllerStub implements SchedulerController {
 
-    private List<QueueInfo> queue = new ArrayList<>();
+    private Dragen dragenSimulator = new DragenSimulator();
 
     @Override
     public List<PartitionInfo> listPartitions() {
@@ -16,26 +20,39 @@ public class SchedulerControllerStub implements SchedulerController {
         broadPartition.setNodeList("slurm-[0001-0002,0004-0005]");
         broadPartition.setState("idle");
         broadPartition.setNodes(4);
-        broadPartition.setTimelimit("infinite");
         return Arrays.asList(broadPartition);
     }
 
     @Override
     public List<QueueInfo> listQueue() {
         QueueInfo queueInfo = new QueueInfo();
-
+        queueInfo.setJobId(34541);
+        queueInfo.setName("testname");
+        queueInfo.setNodes(1);
+        queueInfo.setPartition("broad");
+        queueInfo.setState("PD");
+        queueInfo.setUser("jowalsh");
         return null;
     }
 
     @Override
-    public String batchJob(String jobName, String partition, String script) {
-        return null;
+    public String batchJob(String partition, ProcessTask processTask) {
+        TaskResult taskResult = dragenSimulator.fireProcess(processTask.getCommandLineArgument(), processTask);
+        return String.valueOf(taskResult.getProcessId());
     }
 
     @Override
     public boolean cancelJob(String jobId) {
-        Predicat
-        queue.stream().remo
-        return false;
+        return true;
+    }
+
+    @Override
+    public boolean isJobComplete(String jobName, long pid) {
+        return true;
+    }
+
+    @Override
+    public JobInfo fetchJobInfo(int jobId) {
+        return null;
     }
 }

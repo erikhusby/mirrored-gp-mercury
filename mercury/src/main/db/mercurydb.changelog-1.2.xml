@@ -2631,4 +2631,28 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-6242-28" author="jowalsh">
+        <addColumn tableName="TASK" schemaName="mercury">
+            <column name="TASK_NAME" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-29" author="jowalsh">
+        <addColumn tableName="TASK_AUD" schemaName="mercury">
+            <column name="TASK_NAME" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-30" author="jowalsh">
+        <addColumn tableName="FINITE_STATE_MACHINE" schemaName="mercury">
+            <column name="STATE_MACHINE_NAME" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-31" author="jowalsh">
+        <addColumn tableName="FINITE_STATE_MACHINE_AUD" schemaName="mercury">
+            <column name="STATE_MACHINE_NAME" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

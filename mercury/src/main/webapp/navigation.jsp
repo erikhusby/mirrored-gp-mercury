@@ -339,6 +339,17 @@
                     </li>
                 </ul>
             </li>
+            <li class="dropdown">
+                <a id="hsaNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
+                        class="icon-bullhorn"></span> HSA <b class="caret"></b></a>
+                <ul class="dropdown-menu" role="menu">
+                    <li>
+                        <stripes:link id="createDragenWorkflow"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.DragenActionBean"
+                                      event="create">Create Workflow</stripes:link>
+                    </li>
+                </ul>
+            </li>
         </ul>
         <ul class="nav pull-right global-search navbar-search">
             <li style="white-space:nowrap;">
