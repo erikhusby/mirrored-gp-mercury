@@ -1038,24 +1038,20 @@ public class ProductOrderActionBean extends CoreActionBean {
     double estimateSapOutstandingOrders(SapQuote foundQuote, int addedSampleCount, ProductOrder productOrder) {
         double value = 0d;
         Optional<BigDecimal> openSalesValue = Optional.empty();
-        if (productOrder == null) {
-            openSalesValue = Optional.ofNullable(foundQuote.getQuoteHeader().getSalesOrderTotal());
-            if(openSalesValue.isPresent()) {
-                value = openSalesValue.get().doubleValue();
-            }
-        }
-        if (!openSalesValue.isPresent()){
-            try {
-                OrderCalculatedValues calculatedValues =
-                    sapService.calculateOpenOrderValues(addedSampleCount, foundQuote, productOrder);
-                if (calculatedValues != null) {
-                    value = calculatedValues.calculateTotalOpenOrderValue(productOrder.getSapOrderNumber()).doubleValue();
+        try {
+            OrderCalculatedValues calculatedValues =
+                sapService.calculateOpenOrderValues(addedSampleCount, foundQuote, productOrder);
+            if (calculatedValues != null) {
+                Optional<ProductOrder> sapOrder = Optional.ofNullable(productOrder);
+                String sapNumber = null;
+                if(sapOrder.isPresent()) {
+                    sapNumber = sapOrder.get().getSapOrderNumber();
                 }
-            } catch (SAPIntegrationException e) {
-                logger.info("Attempting to calculate order from SAP yielded an error", e);
+                value = calculatedValues.calculateTotalOpenOrderValue(sapNumber).doubleValue();
             }
+        } catch (SAPIntegrationException e) {
+            logger.info("Attempting to calculate order from SAP yielded an error", e);
         }
-
         return value;
     }
 
