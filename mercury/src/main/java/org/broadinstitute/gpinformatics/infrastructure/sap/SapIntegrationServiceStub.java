@@ -53,7 +53,7 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
 
     @Override
     public void publishProductInSAP(Product product, boolean extendProductsToOtherPlatforms, PublishType publishType) throws SAPIntegrationException {
-        
+
     }
 
     @Override
@@ -303,7 +303,6 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     public SapQuote findSapQuote(String sapQuoteId) throws SAPIntegrationException {
         return null;
     }
-
     @Override
     public String creditDelivery(String deliveryDocumentId, QuoteImportItem quoteItemForBilling) {
         return null;

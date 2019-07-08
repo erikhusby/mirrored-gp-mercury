@@ -7,6 +7,7 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.poi.ss.formula.functions.T;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
@@ -43,6 +44,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * The Billing Adaptor was derived to provide the ability to provide singular interface calls related to billingEJB
@@ -274,14 +276,13 @@ public class BillingAdaptor implements Serializable {
                                 } else {
                                     Set<LedgerEntry> priorSapBillings = new HashSet<>();
                                     item.getBillingCredits().stream()
-                                            .filter(ledgerEntry -> ledgerEntry.getProductOrderSample().getProductOrder().getProduct().equals(item.getProduct()))
-                                            .forEach(ledgerEntry -> {
-                                                ledgerEntry.getPreviouslyBilled().stream()
-                                                        .filter(previousBilled -> previousBilled.getSapDeliveryDocumentId()
-                                                                                  != null)
-                                                        .sorted(Comparator.comparing(LedgerEntry::getSapDeliveryDocumentId).reversed())
-                                                        .collect(Collectors.toCollection(() -> priorSapBillings));
-                                            });
+                                        .filter(ledgerEntry -> ledgerEntry.getProductOrderSample().getProductOrder()
+                                            .getProduct().equals(item.getProduct()))
+                                        .forEach(ledgerEntry -> { ledgerEntry.getPreviouslyBilled().stream()
+                                                .filter(previousBilled -> previousBilled.getSapDeliveryDocumentId() != null)
+                                                .sorted(Comparator.comparing(LedgerEntry::getSapDeliveryDocumentId).reversed())
+                                                .collect(Collectors.toCollection(() -> priorSapBillings));
+                                        });
 
                                     // Negative billing is allowed if the same positive number has been previously billed.
                                     // When this is not the case throw an exception.
@@ -293,9 +294,8 @@ public class BillingAdaptor implements Serializable {
                                         result.setErrorMessage(NEGATIVE_BILL_ERROR);
                                         throw new BillingException(NEGATIVE_BILL_ERROR);
                                     } else if (quantityForSAP < 0) {
-
-                                        sapService.creditDelivery( priorSapBillings.iterator().next().getSapDeliveryDocumentId() ,item);
-
+                                        billingEjb.sendBillingCreditRequestEmail(item, priorSapBillings,
+                                                billingSession.getCreatedBy());
                                         item.setBillingMessages(BillingSession.BILLING_CREDIT);
                                         sapBillingId = BILLING_CREDIT_REQUESTED_INDICATOR;
                                         result.setSapBillingId(sapBillingId);

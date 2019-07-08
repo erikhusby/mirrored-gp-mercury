@@ -97,7 +97,6 @@ public interface SapIntegrationService {
      */
     String creditDelivery(String deliveryDocumentId, QuoteImportItem quoteItemForBilling)
             throws SAPIntegrationException;
-
     class Option {
         public static final Option NONE = Option.create();
 

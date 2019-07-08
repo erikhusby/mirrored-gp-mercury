@@ -572,7 +572,6 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         SAPReturnOrder returnOrder = new SAPReturnOrder(deliveryDocumentId, Collections.singleton(returnLine));
         return getClient().createReturnOrder(returnOrder);
     }
-
     private boolean productsFoundInSap(ProductOrder productOrder) {
         boolean result = true;
 
