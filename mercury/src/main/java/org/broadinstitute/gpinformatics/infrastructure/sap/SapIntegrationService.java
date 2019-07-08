@@ -87,6 +87,16 @@ public interface SapIntegrationService {
      */
     SapQuote findSapQuote(String sapQuoteId) throws SAPIntegrationException;
 
+    /**
+     * This method assists in the need to occasionally "Unbill" samples on an order.  It will create and send the
+     * conceptual return order to SAP to credit the work that was previously billed on the given delivery document.
+     * @param deliveryDocumentId    Identifier of the delivery document created when the work intended to be reversed
+     *                              was originally billed
+     * @param quoteItemForBilling   contains all the information for the work that will be reverted
+     * @return identifier that is associated with the SAP return order created to process this credit request
+     */
+    String creditDelivery(String deliveryDocumentId, QuoteImportItem quoteItemForBilling)
+            throws SAPIntegrationException;
     class Option {
         public static final Option NONE = Option.create();
 
