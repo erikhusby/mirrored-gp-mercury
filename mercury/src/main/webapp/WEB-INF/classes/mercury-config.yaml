@@ -284,6 +284,17 @@ decoder:
       host:     gp-decode-vm.broadinstitute.org
       port:     5000
 
+dragen:
+
+    DEV:
+      demultiplexOutputDirectory:  /seq/dragen/bcl2fastq/
+
+    QA:
+      demultiplexOutputDirectory:  /seq/dragen/bcl2fastq/
+
+    PROD:
+      demultiplexOutputDirectory:  /seq/dragen/bcl2fastq/
+
 hipchat:
     DEV:
         baseUrl: https://www.hipchat.com/v1/rooms/message
@@ -352,6 +363,7 @@ mercury:
       infiniumStarter: DEV
       sap:  RC
       decoder: DEV
+      dragen: DEV
 
 
     AUTO_BUILD:
@@ -373,6 +385,7 @@ mercury:
       infiniumStarter: DEV
       sap:  RC
       decoder: DEV
+      dragen: DEV
 
     TEST:
 
@@ -393,6 +406,7 @@ mercury:
       infiniumStarter: DEV
       sap:  RC
       decoder: DEV
+      dragen: DEV
 
     QA:
       app:      QA
@@ -412,6 +426,7 @@ mercury:
       infiniumStarter: QA
       sap:  RC
       decoder: QA
+      dragen: QA
 
     RC:
 
@@ -432,6 +447,7 @@ mercury:
       infiniumStarter: QA
       sap:  RC
       decoder: QA
+      dragen: QA
 
 
     PROD:
@@ -453,4 +469,5 @@ mercury:
       infiniumStarter: PROD
       sap:  PROD
       decoder: PROD
+      dragen: PROD
 

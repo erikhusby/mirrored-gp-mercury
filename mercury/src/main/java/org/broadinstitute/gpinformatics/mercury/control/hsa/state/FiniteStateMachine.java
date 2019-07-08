@@ -43,6 +43,8 @@ public class FiniteStateMachine {
 
     private Date dateCompleted;
 
+    private String stateMachineName;
+
     public FiniteStateMachine() {
         dateQueued = new Date();
     }
@@ -111,6 +113,14 @@ public class FiniteStateMachine {
 
     public void setDateCompleted(Date completedTime) {
         this.dateCompleted = completedTime;
+    }
+
+    public String getStateMachineName() {
+        return stateMachineName;
+    }
+
+    public void setStateMachineName(String stateMachineName) {
+        this.stateMachineName = stateMachineName;
     }
 
     public List<State> getActiveStates() {

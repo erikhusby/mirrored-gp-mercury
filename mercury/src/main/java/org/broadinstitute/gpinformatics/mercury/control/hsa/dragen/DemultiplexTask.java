@@ -36,7 +36,7 @@ public class DemultiplexTask extends ProcessTask {
         Objects.requireNonNull(sampleSheet, "Sample Sheet must not be null.");
 
         if (!bclInputDirectory.exists()) {
-            throw new IllegalArgumentException("bclInputDirectory must exist.");
+            throw new IllegalArgumentException("bclInputDirectory must exist: " + bclInputDirectory.getPath());
         }
 
         String dragenTaskBuilder = new DragenTaskBuilder().

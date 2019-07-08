@@ -1,26 +1,23 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler;
 
 
-import com.opencsv.bean.CsvBindByName;
+import com.opencsv.bean.CsvBindByPosition;
 
 public class PartitionInfo {
 
-    @CsvBindByName(column = "PARTITION")
+    @CsvBindByPosition(position = 33)
     private String name;
 
-    @CsvBindByName(column = "AVAIL")
+    @CsvBindByPosition(position = 0)
     private String available;
 
-    @CsvBindByName(column = "TIMELIMIT")
-    private String timelimit;
-
-    @CsvBindByName(column = "NODES")
+    @CsvBindByPosition(position = 23)
     private int nodes;
 
-    @CsvBindByName(column = "STATE")
+    @CsvBindByPosition(position = 15)
     private String state;
 
-    @CsvBindByName(column = "NODELIST")
+    @CsvBindByPosition(position = 8)
     private String nodeList;
 
     public PartitionInfo() {
@@ -40,14 +37,6 @@ public class PartitionInfo {
 
     public void setAvailable(String available) {
         this.available = available;
-    }
-
-    public String getTimelimit() {
-        return timelimit;
-    }
-
-    public void setTimelimit(String timelimit) {
-        this.timelimit = timelimit;
     }
 
     public int getNodes() {

@@ -36,7 +36,8 @@ import static org.broadinstitute.gpinformatics.infrastructure.search.LabVesselSe
  * Create an arrays sample sheet, for Genome Studio.
  */
 @Dependent
-public class SampleSheetFactory {
+public class
+SampleSheetFactory {
 
     static final Set<LabEventType> LAB_EVENT_TYPES = new HashSet<LabEventType>() {{
         add(LabEventType.INFINIUM_AMPLIFICATION);

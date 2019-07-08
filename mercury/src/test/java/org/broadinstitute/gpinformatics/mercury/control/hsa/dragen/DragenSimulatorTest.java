@@ -6,6 +6,8 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.SampleSheetBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.FiniteStateMachineEngine;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerContext;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerControllerStub;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AlignmentState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.DemultiplexState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine;
@@ -188,7 +190,8 @@ public class DragenSimulatorTest extends BaseEventTest {
         FiniteStateMachine finiteStateMachine = createStateMachine(run, outputDir);
 
         DragenAppContext appContext = new DragenAppContext(dragen);
-        FiniteStateMachineEngine engine = new FiniteStateMachineEngine(appContext);
+        SchedulerContext schedulerContext = new SchedulerContext(new SchedulerControllerStub(), appContext);
+        FiniteStateMachineEngine engine = new FiniteStateMachineEngine(schedulerContext);
         engine.setTaskManager(new TaskManager());
 
         // File not created, state will still be in WaitForFile
@@ -212,7 +215,7 @@ public class DragenSimulatorTest extends BaseEventTest {
         // Third execution will 'check' the pid's of the running demultiplexing tasks which won't exist. It'll assume
         // they are complete and move on to alignment.
         engine.executeProcessDaoFree(finiteStateMachine);
-        Assert.assertEquals(2 * 96, finiteStateMachine.getActiveStates().size());
+        Assert.assertEquals(96, finiteStateMachine.getActiveStates().size());
         for (State state: finiteStateMachine.getActiveStates()) {
             assertThat(state, instanceOf(AlignmentState.class));
         }

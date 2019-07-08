@@ -7,9 +7,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
+import org.broadinstitute.gpinformatics.mercury.entity.run.RunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
+import javax.enterprise.context.Dependent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -23,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 
+@Dependent
 public class SampleSheetBuilder {
 
     public static List<SampleData> grabDataFromFile(File sampleSheet) throws IOException {
@@ -47,6 +50,26 @@ public class SampleSheetBuilder {
 
         return CsvParser.parseCsvStreamToBeanByMapping(
                 br, ',', SampleData.class, colToFieldMap, null, 0);
+    }
+
+    public SampleSheet makeSampleSheet(IlluminaSequencingRun illuminaRun) {
+        RunCartridge flowcell = illuminaRun.getSampleCartridge();
+
+        Data data = new Data();
+        Header header = null;
+        for (VesselPosition vesselPosition: flowcell.getVesselGeometry().getVesselPositions()) {
+            int laneNum = Integer.parseInt(vesselPosition.name().substring(vesselPosition.name().length() - 1));
+            for (SampleInstanceV2 laneSampleInstance : flowcell.getContainerRole().getSampleInstancesAtPositionV2(
+                    vesselPosition)) {
+                data.addSample(laneSampleInstance, laneNum);
+                ProductOrderSample productOrderSample = laneSampleInstance.getSingleProductOrderSample();
+                if (productOrderSample != null) {
+                    header = createHeader(laneSampleInstance);
+                }
+            }
+        }
+
+        return new SampleSheet(header, data);
     }
 
     public SampleSheet makeSampleSheet(IlluminaSequencingRun illuminaRun, VesselPosition vesselPosition, int laneNum) {

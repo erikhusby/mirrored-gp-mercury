@@ -10,6 +10,8 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfigu
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.StateMachineDao;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenAppContext;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenSimulator;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerContext;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerControllerStub;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -92,9 +94,10 @@ public class FiniteStateMachineStarter {
                     userBean.login("seqsystem");
                     // FOr testing
                     DragenAppContext appContext = new DragenAppContext(new DragenSimulator());
+                    SchedulerContext schedulerContext = new SchedulerContext(new SchedulerControllerStub(), appContext);
 
                     for (FiniteStateMachine stateMachine: stateMachineDao.findByStatus(Status.RUNNING)) {
-                        engine.setContext(appContext);
+                        engine.setContext(schedulerContext);
                         engine.resumeMachine(stateMachine);
                     }
                 }

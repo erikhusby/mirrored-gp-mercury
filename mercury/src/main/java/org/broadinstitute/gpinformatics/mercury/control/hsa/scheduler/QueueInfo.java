@@ -1,32 +1,29 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler;
 
-import com.opencsv.bean.CsvBindByName;
+import com.opencsv.bean.CsvBindByPosition;
 
 public class QueueInfo {
 
-    @CsvBindByName(column = "JOBID  ")
+    @CsvBindByPosition(position = 8)
     private long jobId;
 
-    @CsvBindByName(column = "PARTITION")
-    private String partition;
-
-    @CsvBindByName(column = "NAME")
+    @CsvBindByPosition(position = 9)
     private String name;
 
-    @CsvBindByName(column = "USER")
+    @CsvBindByPosition(position = 20)
     private String user;
 
-    @CsvBindByName(column = "ST")
-    private String state;
-
-    @CsvBindByName(column = "TIME")
-    private String time;
-
-    @CsvBindByName(column = "NODES")
+    @CsvBindByPosition(position = 29)
     private int nodes;
 
-    @CsvBindByName(column = "NODELIST(REASON)")
-    private String nodeList;
+    @CsvBindByPosition(position = 41)
+    private String partition;
+
+    @CsvBindByPosition(position = 44)
+    private String time;
+
+    @CsvBindByPosition(position = 45)
+    private String state;
 
     public QueueInfo() {
     }
@@ -85,13 +82,5 @@ public class QueueInfo {
 
     public void setNodes(int nodes) {
         this.nodes = nodes;
-    }
-
-    public String getNodeList() {
-        return nodeList;
-    }
-
-    public void setNodeList(String nodeList) {
-        this.nodeList = nodeList;
     }
 }
