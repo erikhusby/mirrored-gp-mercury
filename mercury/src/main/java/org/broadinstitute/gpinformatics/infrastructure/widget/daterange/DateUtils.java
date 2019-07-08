@@ -18,8 +18,8 @@ import java.text.DateFormat;
 import java.text.Format;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.temporal.ChronoField;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
 import java.util.Date;
@@ -583,20 +583,38 @@ public class DateUtils {
     }
 
     /**
-     * Gets the 12:00 AM start of the given number of workdays in the past, does not count Saturday and Sunday
-     * @param pastDays The number of workdays before today
+     * Gets the 12:00 AM start of the given number of M-F weekdays in the past, does not count Sat, Sun, or company holidays
+     * @param pastDays The number of M-F workdays before today
      */
-    public static Date getPastWorkdayStartFromNow( int pastDays ) {
-        Instant thisMorning = Instant.now().truncatedTo(ChronoUnit.DAYS);
-        switch ( thisMorning.get(ChronoField.DAY_OF_WEEK ) ){
-            case Calendar.MONDAY:  // Thursday
-            case Calendar.TUESDAY: // Friday
-                pastDays += 2;
+    public static Date getPastWorkdaysFrom( Date from, int pastDays ) {
+        LocalDateTime startingAt = from.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime()
+                .truncatedTo(ChronoUnit.DAYS);
+        // Edge cases
+        if( pastDays == 0 ) {
+            return Date.from( startingAt.atZone(ZoneId.systemDefault()).toInstant() );
+        } else if ( pastDays < 0 ) {
+            throw new RuntimeException( "Functionality of negative range has not been validated." );
+        }
+
+        // Add 2 days for every full week
+        int fullWeeks = (int)(pastDays / 7 );
+        int partialDays = pastDays - ( fullWeeks * 7 );
+        pastDays = ( fullWeeks * 7 ) + ( fullWeeks * 2 ) + partialDays;
+        LocalDateTime prior = startingAt.minus( pastDays , ChronoUnit.DAYS );
+
+        switch (prior.getDayOfWeek()) {
+            case SUNDAY: // Go to Friday
+                prior = prior.minus( 2 , ChronoUnit.DAYS );
+                break;
+            case SATURDAY: // Go to Friday
+                prior = prior.minus( 1 , ChronoUnit.DAYS );
                 break;
             default:
                 break;
         }
-        return Date.from( thisMorning.plus( pastDays * -1, ChronoUnit.DAYS ) );
+        return Date.from( prior.atZone(ZoneId.systemDefault()).toInstant() );
     }
 
     /**

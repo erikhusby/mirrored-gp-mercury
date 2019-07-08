@@ -395,6 +395,7 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
 
         TreeSet<LabEvent> sortedEvents = new TreeSet<>(LabEvent.BY_EVENT_DATE);
         sortedEvents.addAll( rack.getInPlaceLabEvents() );
+        LabVessel tubeFormation = null;
 
         LabEvent latestRackEvent = null;
         for( LabEvent inPlaceEvent : sortedEvents ) {
@@ -404,6 +405,7 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
                 continue;
             } else {
                 latestRackEvent = inPlaceEvent;
+                tubeFormation = latestRackEvent.getInPlaceLabVessel();
                 break;
             }
         }
@@ -425,6 +427,7 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
             }
             if (sortedEvents.size() > 0) {
                 latestRackEvent = sortedEvents.last();
+                tubeFormation = eventTubes.get(latestRackEvent);
             }
         }
 
@@ -433,18 +436,18 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
                     + " has no event activity.  Tube layout unavailable.");
         }
 
-        Date twoWorkingDaysAgo = DateUtils.getPastWorkdayStartFromNow(2);
+        Date twoWorkingDaysAgo = DateUtils.getPastWorkdaysFrom(new Date(), 2);
         Date eventDate = latestRackEvent.getEventDate();
         if( eventDate.before( twoWorkingDaysAgo ) ) {
             return Pair.of("danger", "Latest event date (" + DateUtils.formatISO8601Date( eventDate ) + ") for rack " + barcode
                     + " is over 2 working days ago. Tube layout questionable - ignoring.");
         }
 
-        LabEvent checkOutEvent = createStorageEvent( LabEventType.STORAGE_CHECK_IN, eventTubes.get(latestRackEvent), storageLocation, rack );
+        LabEvent checkOutEvent = createStorageEvent( LabEventType.STORAGE_CHECK_IN, tubeFormation, storageLocation, rack );
         storageLocationDao.persist(checkOutEvent);
 
         return Pair.of("success", "Rack barcode " + barcode
-                + " and all tubes checked out of location "
+                + " and all tubes checked into "
                 + locationTrail + ".");
     }
 
