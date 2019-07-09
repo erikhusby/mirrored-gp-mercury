@@ -17,6 +17,7 @@ import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -28,6 +29,7 @@ import javax.enterprise.context.RequestScoped;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -203,6 +205,35 @@ public class GoogleBucketDao {
             }
         }
         return credentialOk;
+    }
+
+    /**
+     * Writes a new credential file.
+     *
+     * @param writerCredential indicates whether it's the writer or reader credential.
+     * @param content the json file content.
+     * @param messageCollection for returning any error or info messages.
+     */
+    public void uploadCredential(boolean writerCredential, String content, MessageCollection messageCollection) {
+        FileWriter fileWriter = null;
+        try {
+            File homeDir = new File(System.getProperty("user.home"));
+            String filename = writerCredential ?
+                    googleStorageConfig.getWriterCredentialFilename() : googleStorageConfig.getCredentialFilename();
+            File file = new File(homeDir, filename);
+            if (file.exists() && !file.canWrite()) {
+                messageCollection.addError("Existing file is not writable: " + file.getAbsolutePath());
+            } else {
+                fileWriter = new FileWriter(file);
+                fileWriter.write(content);
+                messageCollection.addInfo("Wrote new credential content to " + file.getAbsolutePath());
+            }
+        } catch (Exception e) {
+            logger.error("While writing credential: ", e);
+            messageCollection.addError("Cannot write new credential: " + e.toString());
+        } finally {
+            IOUtils.closeQuietly(fileWriter);
+        }
     }
 
     /**

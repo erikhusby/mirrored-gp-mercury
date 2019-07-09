@@ -4,6 +4,7 @@ import com.google.common.base.Objects;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
@@ -629,6 +630,20 @@ public class MayoManifestEjb {
      */
     public void testAccess(MayoAdminActionBean bean) {
         bean.setBucketList(googleBucketDao.test(bean.getMessageCollection()));
+    }
+
+    /**
+     * Rewrites the credential file.
+     */
+    public void uploadCredential(MayoAdminActionBean bean) {
+        try {
+            String jsonContent = StringUtils.join(IOUtils.readLines(bean.getCredentialFileReader()),
+                    System.lineSeparator());
+            googleBucketDao.uploadCredential(false, jsonContent, bean.getMessageCollection());
+        } catch (Exception e) {
+            logger.error("Exception while uploading credential file: ", e);
+            bean.getMessageCollection().addError("Cannot upload credential file: " + e.toString());
+        }
     }
 
     /**

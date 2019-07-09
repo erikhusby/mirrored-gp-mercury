@@ -77,20 +77,33 @@
                 </div>
             </c:if>
 
-            <div style="padding-top: 20px; width: 45em;">
-                <div style="float:left;">
-                    <stripes:submit id="rotateKeyBtn" name="rotateKeyBtn" value="Rotate Service Account Key"
-                                    class="btn btn-primary"
-                                    title="Click to cause a new Google login key to be generated."/>
-                </div>
-                <div style="float:right; width: 25em;">
-                    <span>
+            <div style="padding-top: 20px;">
+                <span>
+                    <div>
+                        <stripes:submit id="rotateKeyBtn" name="rotateKeyBtn" value="Rotate Service Account Key"
+                                        class="btn btn-primary"
+                                        title="Click to cause a new Google login key to be generated."/>
+                    </div>
+                    <div style="padding-left: 20px;">
                         <stripes:checkbox id="rotateAcknowledgement" name="rotateAcknowledgement"/>
                         <stripes:label for="rotateAcknowledgement">
-                            I acknowledge that rotating (changing) the service account key will affect all other Mercury instances that use this Google storage bucket.
+                            I acknowledge that rotating (changing) the service account key may lock out other Mercury instances that use this Google storage bucket.
                         </stripes:label>
+                    </div>
+                </span>
+            </div>
+
+            <div style="padding-top: 20px;">
+                <span>
+                    <span>
+                        <stripes:submit id="uploadCredentialBtn" name="uploadCredentialBtn" value="Upload New Credential"
+                                        class="btn btn-primary"
+                                        title="Click to upload a new Google bucket credential."/>
                     </span>
-                </div>
+                    <span style="padding-left: 20px;">
+                        <stripes:file name="credentialFile" id="credentialFile"/>
+                    </span>
+                </span>
             </div>
 
         </stripes:form>

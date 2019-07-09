@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.receiving;
 
 import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.FileBean;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
@@ -11,7 +12,9 @@ import org.broadinstitute.gpinformatics.mercury.boundary.manifest.MayoManifestEj
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,6 +33,7 @@ public class MayoAdminActionBean extends CoreActionBean {
     private static final String PULL_ONE_BTN = "pullFileBtn";
     private static final String VIEW_FILE_BTN = "viewFileBtn";
     private static final String ROTATE_KEY_BTN = "rotateKeyBtn";
+    private static final String UPLOAD_CREDENTIAL_BTN = "uploadCredentialBtn";
 
     @Inject
     private MayoManifestEjb mayoManifestEjb;
@@ -43,6 +47,7 @@ public class MayoAdminActionBean extends CoreActionBean {
     private boolean rotateAcknowledgement;
     private List<String> bucketList = new ArrayList<>();
     private List<String> failedFilesList = new ArrayList<>();
+    private FileBean credentialFile;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -135,6 +140,20 @@ public class MayoAdminActionBean extends CoreActionBean {
         return new ForwardResolution(MANIFEST_ADMIN_PAGE);
     }
 
+    /**
+     * Generates a cell grid for the contents of the specified manifest file.
+     */
+    @HandlesEvent(UPLOAD_CREDENTIAL_BTN)
+    public Resolution uploadCredential() {
+        if (credentialFile == null) {
+            addGlobalValidationError("Upload file is missing.");
+        } else {
+            mayoManifestEjb.uploadCredential(this);
+        }
+        addMessages(messageCollection);
+        return new ForwardResolution(MANIFEST_ADMIN_PAGE);
+    }
+
     public List<List<String>> getManifestCellGrid() {
         return manifestCellGrid;
     }
@@ -181,5 +200,17 @@ public class MayoAdminActionBean extends CoreActionBean {
 
     public void setFailedFilesList(List<String> failedFilesList) {
         this.failedFilesList = failedFilesList;
+    }
+
+    public Reader getCredentialFileReader() throws IOException {
+        return credentialFile.getReader();
+    }
+
+    public FileBean getCredentialFile() {
+        return credentialFile;
+    }
+
+    public void setCredentialFile(FileBean credentialFile) {
+        this.credentialFile = credentialFile;
     }
 }
