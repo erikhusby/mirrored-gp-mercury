@@ -46,6 +46,8 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.sap.entity.quote.FundingDetail;
+import org.broadinstitute.sap.entity.quote.FundingStatus;
 import org.broadinstitute.sap.entity.quote.QuoteItem;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
@@ -2420,15 +2422,19 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         final Set<String> errors = new HashSet<>();
 
         if(Objects.nonNull(quote)) {
-            quote.getFundingDetails().stream()
-                    .filter(fundingDetail -> fundingDetail.getFundingType() == SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION)
-                    .filter(fundingDetail -> !FundingLevel.isGrantActiveForDate(todayTruncated, fundingDetail.getFundingHeaderChangeDate()))
-                    .forEach(fundingDetail -> errors.add(String.format("The funding source %s has expired making this quote currently unfunded", fundingDetail.getItemNumber())));
+            quote.getFundingDetails().stream().filter(ProductOrder::fundingNotApproved)
+                .forEach(fundingDetail -> errors.add(String
+                    .format("The funding source %s is %s making this quote currently unavailable for ordering",
+                        fundingDetail.getItemNumber(), fundingDetail.getFundingStatus().getStatusText())));
         }
 
         if (CollectionUtils.isNotEmpty(errors)) {
             throw new QuoteServerException(errors.toString());
         }
+    }
+
+    private static boolean fundingNotApproved(FundingDetail fundingDetail) {
+        return fundingDetail.getFundingStatus() != FundingStatus.APPROVED;
     }
 
     /**
