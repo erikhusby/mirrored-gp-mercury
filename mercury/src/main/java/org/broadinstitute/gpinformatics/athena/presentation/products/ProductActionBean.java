@@ -163,6 +163,8 @@ public class ProductActionBean extends CoreActionBean {
 
     private String controlsProject;
 
+    private String negativeControlsProject;
+
     @ValidateNestedProperties({
             @Validate(field = "productName", required = true, maxlength = 255, on = {SAVE_ACTION},
                     label = "Product Name"),
@@ -271,6 +273,12 @@ public class ProductActionBean extends CoreActionBean {
             editProduct.setPositiveControlResearchProject(controlsProject == null ? null :
                     researchProjectDao.findByBusinessKey(controlsProject));
         }
+
+        if (editProduct.getNegativeControlResearchProject() == null ||
+            !editProduct.getNegativeControlResearchProject().getBusinessKey().equals(negativeControlsProject)) {
+            editProduct.setNegativeControlResearchProject(negativeControlsProject == null ? null :
+                    researchProjectDao.findByBusinessKey(negativeControlsProject));
+        }
     }
 
     /**
@@ -284,6 +292,9 @@ public class ProductActionBean extends CoreActionBean {
             }
             if (editProduct.getPositiveControlResearchProject() != null) {
                 controlsProject = editProduct.getPositiveControlResearchProject().getBusinessKey();
+            }
+            if (editProduct.getNegativeControlResearchProject() != null) {
+                negativeControlsProject = editProduct.getNegativeControlResearchProject().getBusinessKey();
             }
 
             List<ProductOrder> productOrderList = null;
@@ -820,6 +831,14 @@ public class ProductActionBean extends CoreActionBean {
 
     public void setControlsProject(String controlsProject) {
         this.controlsProject = controlsProject;
+    }
+
+    public String getNegativeControlsProject() {
+        return negativeControlsProject;
+    }
+
+    public void setNegativeControlsProject(String negativeControlsProject) {
+        this.negativeControlsProject = negativeControlsProject;
     }
 
     public String[] getGenotypingChipTechnologies() {
