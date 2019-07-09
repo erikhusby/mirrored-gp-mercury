@@ -22,11 +22,11 @@ public class MayoManifestImportProcessorDbFreeTest {
 
     public void testHeaderParsing1() throws Exception {
         for (String headers : Arrays.asList(
-                // With underlines and the one space.
-                "Package_Id,BiobankId_SampleId,Box_Id,Well_Position,Sample_Id,Parent_Sample_Id,Matrix_Id," +
-                        "Collection_Date,Biobank_Id,Sex_At_Birth,Age,NY State (Y/N),Sample_Type,Treatments," +
+                // Header from the jul 9 2019 file from Mayo.
+                "Package_Id,BiobankId_SampleId,Box_Id/Plate_Id,Well_Position,Sample_Id,Parent_Sample_Id,Matrix_Id," +
+                        "Collection_Date,Biobank_Id,Sex_At_Birth,Age,NY_State_(Y/N),Sample_Type,Treatments," +
                         "Quantity_(ul),Total_Concentration_(ng/ul),Total_Dna(ng),Visit_Description,Sample_Source," +
-                        "Study,Tracking_Number,Contact,Email,Requesting_Physician,Test_Name",
+                        "Study,Tracking_Number,Contact,Email,Requesting_Physician,Test_Name,Failure Mode",
                 // With run-on Id, no parens.
                 "PackageId,BiobankId SampleId,BoxId,Well Position,SampleId,Parent SampleId,MatrixId," +
                         "Collection Date,BiobankId,Sex At Birth,Age,NY State Y/N,Sample Type,Treatments," +
@@ -200,8 +200,9 @@ public class MayoManifestImportProcessorDbFreeTest {
                 "Matrix Id,Collection Date,Biobank Id,Sex At Birth,Age,Sample Type,Treatments," +
                 "Quantity (ul),Total Concentration (ng/ul),Total Dna(ng),Visit Description,Sample Source," +
                 "Study,Tracking Number,Contact,Email,Requesting Physician,Test Name";
-        String values = "\nPK001,B001_S001,B001,A1,S001,PS001,M001,03/26/2019,B001,F,22,DNA,None,0.01,1.01,2," +
-                "2nd Visit,Whole Blood,The Study Title,TRK001,theContact,email1@email.org,The Name,all";
+        String values = "\nPK001,B001_S001,B001,A1,S001,PS001,M001,03/26/2019,B001,F,22,DNA,None,0.01,1.01," +
+                // Puts a comma in the value for Total Dna(ng).
+                "\"2,400\",2nd Visit,Whole Blood,The Study Title,TRK001,theContact,email1@email.org,The Name,all";
         MessageCollection messages = new MessageCollection();
         MayoManifestImportProcessor processor;
         String expected;

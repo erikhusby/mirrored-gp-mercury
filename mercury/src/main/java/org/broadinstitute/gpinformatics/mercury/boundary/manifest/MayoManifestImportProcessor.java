@@ -81,7 +81,8 @@ public class MayoManifestImportProcessor {
         CONTACT("contact", Metadata.Key.CONTACT),
         EMAIL("email", Metadata.Key.CONTACT_EMAIL),
         REQUESTING_PHYSICIAN("requesting physician", Metadata.Key.REQUESTING_PHYSICIAN),
-        TEST_NAME("test name", Metadata.Key.PRODUCT_TYPE);
+        TEST_NAME("test name", Metadata.Key.PRODUCT_TYPE),
+        FAILURE_MODE("failure mode", null, Attribute.IGNORE);
 
         @NotNull
         private final String columnName;
@@ -247,8 +248,14 @@ public class MayoManifestImportProcessor {
                         if (header != null && !header.isIgnored()) {
                             String value = (row.size() > columnIndex) ? row.get(columnIndex) : null;
                             if (StringUtils.isNotBlank(value)) {
-                                if (header.hasUnits() && !NumberUtils.isParsable(value)) {
-                                    badValues.add(header.getText());
+                                if (header.hasUnits()) {
+                                    // Strips out any commas if the value is expected to be a number.
+                                    value = value.replaceAll(",", "");
+                                    if (!NumberUtils.isParsable(value)) {
+                                        badValues.add(header.getText());
+                                    } else {
+                                        row.set(columnIndex, value);
+                                    }
                                 }
                                 if (header == Header.PACKAGE_ID) {
                                     packageIds.add(value);
@@ -338,11 +345,16 @@ public class MayoManifestImportProcessor {
                     // Collapse multiple spaces into one and trim.
                             replaceAll("[ ]+", " ").trim();
             // Looks for the header name. If no match, try without the last token in case it's the units.
+            // If still no match try the substring before '/' (i.e. box_id/plate_id)
             Header match = nameToHeader.get(header);
             String units = "";
             if (match == null && header.contains(" ")) {
                 match = nameToHeader.get(StringUtils.substringBeforeLast(header, " "));
                 units = StringUtils.substringAfterLast(header, " ");
+            }
+            if (match == null && header.contains("/")) {
+                match = nameToHeader.get(StringUtils.substringBeforeLast(header, "/"));
+                units = "";
             }
             if (match == null && unknownHeaders != null) {
                 unknownHeaders.add(column);
