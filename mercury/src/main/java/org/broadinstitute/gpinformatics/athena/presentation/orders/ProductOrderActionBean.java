@@ -874,15 +874,17 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private void validateGrantEndDate(Date grantEndDate, String grantDisplayName, String quoteIdentifier) {
-        long numDaysBetween = DateUtils.getNumDaysBetween(new Date(), grantEndDate);
-        if (numDaysBetween > 0 && numDaysBetween < 45) {
-            addMessage(
+        if (grantEndDate != null) {
+            long numDaysBetween = DateUtils.getNumDaysBetween(new Date(), grantEndDate);
+            if (numDaysBetween > 0 && numDaysBetween < 45) {
+                addMessage(
                     String.format(
-                            "The Funding Source %s on %s  Quote expires in %d days. If it is likely "
-                            + "this work will not be completed by then, please work on updating the "
-                            + "funding source so billing errors can be avoided.",
-                            grantDisplayName, quoteIdentifier, numDaysBetween)
-            );
+                        "The Funding Source %s on %s  Quote expires in %d days. If it is likely "
+                        + "this work will not be completed by then, please work on updating the "
+                        + "funding source so billing errors can be avoided.",
+                        grantDisplayName, quoteIdentifier, numDaysBetween)
+                );
+            }
         }
     }
 
