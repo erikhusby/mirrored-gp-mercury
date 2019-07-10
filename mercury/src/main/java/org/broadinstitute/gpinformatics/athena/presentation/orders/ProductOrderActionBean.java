@@ -1676,6 +1676,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                                             fundingInfo.put("activeCostObject", daysUntilExpired > 0);
                                             fundingInfo.put("daysTillExpire", daysUntilExpired);
                                         } else {
+                                            fundingInfo.put("activeCostObject", fundingDetail.getFundingStatus()==FundingStatus.APPROVED);
                                             fundingInfo.put("fundsReservationEndDate", "No funds Reservation end date found");
                                             fundingInfo.put("daysTillExpire", "unable to determine expiration date");
                                         }
