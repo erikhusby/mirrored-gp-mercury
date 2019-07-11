@@ -874,15 +874,17 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private void validateGrantEndDate(Date grantEndDate, String grantDisplayName, String quoteIdentifier) {
-        long numDaysBetween = DateUtils.getNumDaysBetween(new Date(), grantEndDate);
-        if (numDaysBetween > 0 && numDaysBetween < 45) {
-            addMessage(
+        if (grantEndDate != null) {
+            long numDaysBetween = DateUtils.getNumDaysBetween(new Date(), grantEndDate);
+            if (numDaysBetween > 0 && numDaysBetween < 45) {
+                addMessage(
                     String.format(
-                            "The Funding Source %s on %s  Quote expires in %d days. If it is likely "
-                            + "this work will not be completed by then, please work on updating the "
-                            + "funding source so billing errors can be avoided.",
-                            grantDisplayName, quoteIdentifier, numDaysBetween)
-            );
+                        "The Funding Source %s on %s  Quote expires in %d days. If it is likely "
+                        + "this work will not be completed by then, please work on updating the "
+                        + "funding source so billing errors can be avoided.",
+                        grantDisplayName, quoteIdentifier, numDaysBetween)
+                );
+            }
         }
     }
 
@@ -1669,20 +1671,23 @@ public class ProductOrderActionBean extends CoreActionBean {
                                     if (fundingType.get() == SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION) {
                                         fundingInfo.put("fundsReservationNumber", fundingDetail.getDocumentNumber());
                                         final Optional<Date> grantDateEnd = Optional.ofNullable(fundingDetail.getFundingHeaderChangeDate());
-                                        if(grantDateEnd.isPresent()) {
-                                            fundingInfo.put("fundsReservationEndDate", DateUtils.getDate(grantDateEnd.get()));
-                                            fundingInfo.put("activeCostObject",
-                                                    DateUtils.getNumDaysBetween(todayTruncated, grantDateEnd.get())
-                                                    > 0);
-                                            fundingInfo.put("daysTillExpire", DateUtils
-                                                    .getNumDaysBetween(todayTruncated, grantDateEnd.get()));
-                                            fundingInfo.put("costObject", fundingDetail.getCostObject());
+                                        if (grantDateEnd.isPresent()) {
+                                            Date endDate = grantDateEnd.get();
+                                            fundingInfo.put("fundsReservationEndDate", DateUtils.getDate(endDate));
+                                            long daysUntilExpired = DateUtils.getNumDaysBetween(todayTruncated, endDate);
+                                            fundingInfo.put("activeCostObject", daysUntilExpired > 0);
+                                            fundingInfo.put("daysTillExpire", daysUntilExpired);
                                         } else {
+                                            fundingInfo.put("activeCostObject", fundingDetail.getFundingStatus()==FundingStatus.APPROVED);
                                             fundingInfo.put("fundsReservationEndDate", "No funds Reservation end date found");
-                                            fundingInfo.put("activeCostObject", "unable to determine if the cost Object is active");
                                             fundingInfo.put("daysTillExpire", "unable to determine expiration date");
                                         }
+                                        if (StringUtils.isNotBlank(fundingDetail.getCostObject())) {
+                                            fundingInfo.put("costObject", fundingDetail.getCostObject());
                                         } else {
+                                            fundingInfo.put("activeCostObject", "unable to determine if the cost Object is active");
+                                        }
+                                    } else {
                                         fundingInfo.put("purchaseOrderNumber", fundingDetail.getCustomerPoNumber());
                                     }
                                 } else {
