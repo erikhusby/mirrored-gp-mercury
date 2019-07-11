@@ -18,8 +18,6 @@ import net.sourceforge.stripes.action.UrlBinding;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
-import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.SearchInstanceNameCache;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
@@ -32,7 +30,6 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
-import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConstrainedValueDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
@@ -205,16 +202,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
 
     // Dependencies
     @Inject
-    private PreferenceDao preferenceDao;
-
-    @Inject
-    private PreferenceEjb preferenceEjb;
-
-    @Inject
     private ConfigurableListFactory configurableListFactory;
-
-    @Inject
-    private ConfigurableSearchDao configurableSearchDao;
 
     @Inject
     private BSPSampleSearchService bspSampleSearchService;

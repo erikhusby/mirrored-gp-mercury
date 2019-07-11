@@ -2510,4 +2510,12 @@
 	    tableName="sample_instance_entity" columnNames="lab_vessel, library_name"/>
     </changeSet>
 
+    <changeSet id="GPLIM-6326-1" author="thompson">
+        <sql>
+            create global temporary table BULK_QUERY_PARAMETER (
+                PARAM varchar2(255)
+            ) on commit preserve rows
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
