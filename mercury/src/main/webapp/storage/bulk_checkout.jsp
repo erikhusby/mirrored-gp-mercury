@@ -25,17 +25,23 @@
              */
             var addBarcodeFeedbackElement = function(barcode){
                 var listElement = $j("#barcodeList");
+                var responseId = "resp_" + barcode;
+                var feedbackElement = $j("#" + responseId, listElement );
 
                 // Check for duplicates
-                if( listElement.data("barcodeList")[barcode] != undefined ) {
+                if( feedbackElement.length > 0 && feedbackElement.data("itemStatus") != "init" ) {
                     showFadingFeedback("warning", "Ignoring duplicate barcode");
                     return null;
-                } else {
-                    listElement.data("barcodeList")[barcode] = barcode;
-                    var responseId = "resp_" + barcode;
-                    var feedbackElement = listElement.append('<li id="' + responseId + '" style="width:100%;padding-bottom: 12px">Processing ' + barcode + ' <img src="/Mercury/images/spinner.gif" width="16px" height="16px"/></li>');
-                    return $j( "#" + responseId, $j(feedbackElement) );
                 }
+                var feedback = 'Processing ' + barcode + ' <img src="/Mercury/images/spinner.gif" width="16px" height="16px"/>';
+                if( feedbackElement.length > 0 ) {
+                    feedbackElement.html(feedback);
+                } else {
+                    listElement.append('<li id="' + responseId + '" data-item-status="processing" style="width:100%;padding-bottom: 12px">' + feedback + '</li>');
+                    feedbackElement = $j("#" + responseId, listElement );
+                }
+                feedbackElement.data("itemStatus", "processing");
+                return feedbackElement;
             };
 
             /**
@@ -60,12 +66,12 @@
                 // Null if pre-validation fails
                 var listElement = addBarcodeFeedbackElement(barcode);
                 if( listElement != null ) {
-                    $j("#statusOutput").css("display","block");
                     $j.ajax("/Mercury/storage/bulkStorageOps.action", {
                         context: listElement,
                         dataType: "html",
                         data: formData,
                         complete: function (response, status) {
+                            this.data("itemStatus", status);
                             if (status != "success") {
                                 this.html('<span style="width:100%; padding: 6px 30px 6px 12px" class="alert-danger" role="alert">An error occurred: ' + response.responseText + '</span>');
                             } else {
@@ -84,7 +90,6 @@
              * Sets up event listeners, etc.
              */
             $j(document).ready(function () {
-                $j("#barcodeList").data("barcodeList", []);
                 $j("#txtBarcodeScan").change(doVesselAction);
             } );
         </script>
@@ -103,8 +108,12 @@
             </div>
 
         </div><%--row-fluid--%>
-        <div class="row-fluid"><div class="span8" id="statusOutput" style="display:none"><fieldset><legend>Outcome(s)</legend>
-            <ol id="barcodeList"></ol></fieldset>
+        <div class="row-fluid"><div class="span8" id="statusOutput"><fieldset><legend>Outcome(s)</legend>
+            <ol id="barcodeList">
+                <c:forEach var="mapEntry" items="${actionBean.vesselsCheckOutStatus.entrySet()}">
+                <li id="resp_${mapEntry.key}" data-item-status="init" style="width:100%;padding-bottom: 12px"><span style="width:100%; padding: 6px 30px 6px 12px" class="alert-info" role="alert">${mapEntry.value}</span></li>
+                </c:forEach>
+            </ol></fieldset>
         </div></div>
         </div><%--container-fluid--%>
     </stripes:layout-component>

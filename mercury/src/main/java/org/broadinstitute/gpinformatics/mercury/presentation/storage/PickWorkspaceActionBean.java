@@ -6,7 +6,6 @@ import net.sourceforge.stripes.action.*;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -22,6 +21,7 @@ import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -39,18 +39,17 @@ public class PickWorkspaceActionBean extends CoreActionBean {
     private static final String EVT_INIT = "init";
     private static final String EVT_PROCESS_BATCHES = "processBatches";
     private static final String EVT_DOWNLOAD_XFER_FILE = "buildXferFile";
+    private static final String EVT_BULK_CHECKOUT = "processBulkCheckOut";
 
     // UI Resolutions
     private static final String UI_DEFAULT = "/storage/picklist_workspace.jsp";
+    private static final String UI_BULK_CHECKOUT = "/storage/bulk_checkout.jsp";
 
     @Inject
     private StorageLocationDao storageLocationDao;
 
     @Inject
     private LabBatchDao labBatchDao;
-
-    @Inject
-    private LabEventDao labEventDao;
 
     /**
      * JSON display collections - default to empty
@@ -77,6 +76,26 @@ public class PickWorkspaceActionBean extends CoreActionBean {
             batchSelectionList.add( new BatchSelectionData(batch.getLabBatchId(), batch.getBatchName(),false,false) );
         }
         return new ForwardResolution(UI_DEFAULT);
+    }
+
+    /**
+     * User wants to forward list of racks/ loose vessels to bulk checkout page
+     */
+    @HandlesEvent(EVT_BULK_CHECKOUT)
+    public Resolution eventBulkCheckOut(){
+        if( pickerDataRows.isEmpty() ){
+            addGlobalValidationError("No batch vessels to check out");
+            return new ForwardResolution(UI_DEFAULT);
+        }
+
+        String[] barcodes = new String[pickerDataRows.size()];
+        for( int i = 0; i < pickerDataRows.size(); i++){
+            barcodes[i] = pickerDataRows.get(i).sourceVessel;
+        }
+
+        ForwardResolution resolution = new ForwardResolution( BulkStorageOpsActionBean.class, BulkStorageOpsActionBean.EVT_INIT_CHECK_OUT );
+        resolution.addParameter("checkOuts", barcodes);
+        return resolution;
     }
 
     /**
@@ -310,11 +329,10 @@ public class PickWorkspaceActionBean extends CoreActionBean {
     }
 
     /**
-     * Given an SRS batch, aggregate all the associated racks-->tubes-->storage locations <br/>
+     * The money method: given an SRS batch, aggregate all the associated racks-->tubes-->storage locations <br/>
      * Also handle loose vessels
      */
     private List<PickerDataRow> getDataRowsForBatch(LabBatch batchToAdd) {
-        /* ****************************                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  MONSTERS ALL BE HERE********************************************** */
         Set<LabVessel> batchVessels = batchToAdd.getNonReworkStartingLabVessels();
         if( batchVessels.isEmpty() ) {
             return Collections.EMPTY_LIST;
@@ -324,49 +342,69 @@ public class PickWorkspaceActionBean extends CoreActionBean {
         Map<LabVessel, PickerDataRow> containerRows = new HashMap<>();
 
         for(LabVessel batchVessel : batchVessels ) {
-            Triple<LabVessel, TubeFormation,StorageLocation> containerLoc = findVesselAndLocation( batchVessel );
-            LabVessel rackOrLooseTube = containerLoc.getLeft();
-            TubeFormation storedTubeFormation = containerLoc.getMiddle();
-            StorageLocation storageLocation = containerLoc.getRight();
+            StorageLocation storageLocation = batchVessel.getStorageLocation();
             PickerDataRow pickerDataRow;
-            if( containerRows.containsKey( rackOrLooseTube ) ) {
-                pickerDataRow = containerRows.get(rackOrLooseTube);
-            } else {
-                pickerDataRow = new PickerDataRow(batchToAdd.getLabBatchId(), batchToAdd.getBatchName());
-                pickerDataRow.setSourceVessel( rackOrLooseTube.getLabel() );
-                if( OrmUtil.proxySafeIsInstance(rackOrLooseTube, RackOfTubes.class) ) {
-                    RackOfTubes rack = OrmUtil.proxySafeCast(rackOrLooseTube, RackOfTubes.class);
-                    pickerDataRow.setRackScannable( rack.getRackType().isRackScannable()
-                        && rack.getRackType().name().startsWith("Matrix"));
-                } else {
-                    pickerDataRow.setRackScannable(false);
-                }
-                if( storageLocation != null ) {
-                    Long storageLocationId = storageLocation.getStorageLocationId();
-                    pickerDataRow.setStorageLocId( storageLocationId );
-                    pickerDataRow.setStorageLocPath(storageLocationDao.getLocationTrail(storageLocationId));
-                    if( storedTubeFormation != null ) {
 
-                        // Total sample count value - only need to do it once
-                        int vesselCount = 0;
-                        for (LabVessel tube : storedTubeFormation.getContainerRole().getContainedVessels()) {
-                            if (tube.getStorageLocation() != null && tube.getStorageLocation().getStorageLocationId().equals(storageLocationId)) {
-                                vesselCount++;
+            if( storageLocation != null && storageLocation.getLocationType() == StorageLocation.LocationType.LOOSE ) {
+                pickerDataRow = buildDataRowForLooseVessel( batchToAdd, batchVessel );
+                containerRows.put( batchVessel, pickerDataRow );
+            } else if( OrmUtil.proxySafeIsInstance( batchVessel, PlateWell.class ) ) {
+                PlateWell well = OrmUtil.proxySafeCast( batchVessel, PlateWell.class );
+                StaticPlate plate = well.getPlate();
+                pickerDataRow = containerRows.get( plate );
+                if( pickerDataRow == null ) {
+                    pickerDataRow = buildDataRowForPlateWell( batchToAdd, well );
+                    containerRows.put( plate, pickerDataRow );
+                }
+                PickerVessel pickerVessel = new PickerVessel(plate.getLabel(), well.getVesselPosition().name());
+                pickerDataRow.getPickerVessels().add(pickerVessel);
+            } else {
+                // Much uglier - racks and tubes
+                Triple<LabVessel, TubeFormation, LabEvent> vesselStorageData = findVesselAndLocation(batchVessel);
+                if( vesselStorageData == null ) {
+                    continue;
+                }
+                LabVessel rackOrPlate = vesselStorageData.getLeft();
+                TubeFormation storedTubeFormation = vesselStorageData.getMiddle();
+                LabEvent storageEvent = vesselStorageData.getRight();
+                if (containerRows.containsKey(rackOrPlate)) {
+                    pickerDataRow = containerRows.get(rackOrPlate);
+                } else {
+                    pickerDataRow = new PickerDataRow(batchToAdd.getLabBatchId(), batchToAdd.getBatchName());
+                    pickerDataRow.setSourceVessel(rackOrPlate.getLabel());
+                    RackOfTubes rack = OrmUtil.proxySafeCast(rackOrPlate, RackOfTubes.class);
+                    pickerDataRow.setRackScannable(rack.getRackType().isRackScannable()
+                            && rack.getRackType().name().startsWith("Matrix"));
+                    if (storageLocation != null) {
+                        Long storageLocationId = storageLocation.getStorageLocationId();
+                        pickerDataRow.setStorageLocId(storageLocationId);
+                        pickerDataRow.setStorageLocPath(storageLocationDao.getLocationTrail(storageLocation));
+                        if (storedTubeFormation != null) {
+                            // Total sample count value - only need to do it once
+                            int vesselCount = 0;
+                            for (LabVessel tube : storedTubeFormation.getContainerRole().getContainedVessels()) {
+                                if (tube.getStorageLocation() != null && tube.getStorageLocation().getStorageLocationId().equals(storageLocationId)) {
+                                    vesselCount++;
+                                }
+                            }
+                            pickerDataRow.setTotalVesselCount(vesselCount);
+                        }
+                    } else {
+                        if( storageEvent == null || storageEvent.getLabEventType() != LabEventType.STORAGE_CHECK_OUT ) {
+                            pickerDataRow.setStorageLocPath("(Not in Storage)");
+                        } else {
+                            storageLocation = storageEvent.getStorageLocation();
+                            if( storageLocation != null ) {
+                                pickerDataRow.setStorageLocPath("Checked out of " + storageLocation.buildLocationTrail() + " on " + SimpleDateFormat.getDateInstance().format(storageEvent.getEventDate()));
+                            } else {
+                                // Pre GPLIM-5728 will not have event storage locations
+                                pickerDataRow.setStorageLocPath("Checked out on " + SimpleDateFormat.getDateInstance().format(storageEvent.getEventDate()));
                             }
                         }
-                        pickerDataRow.setTotalVesselCount(vesselCount);
-                    } else {
-                        // Loose
-                        pickerDataRow.setTotalVesselCount(1);
                     }
-                } else {
-                    pickerDataRow.setStorageLocPath("(Not in Storage)");
+                    containerRows.put(rackOrPlate, pickerDataRow);
                 }
-                containerRows.put( rackOrLooseTube, pickerDataRow );
-            }
-
-            // For tube formations, build out the source lab vessel label and position
-            if( storedTubeFormation != null ) {
+                // For tube formations, build out the source lab vessel label and position
                 VesselPosition position = storedTubeFormation.getContainerRole().getPositionOfVessel(batchVessel);
                 PickerVessel pickerVessel = new PickerVessel(batchVessel.getLabel(), position.name());
                 pickerDataRow.getPickerVessels().add(pickerVessel);
@@ -377,26 +415,66 @@ public class PickWorkspaceActionBean extends CoreActionBean {
     }
 
     /**
-     * Find rack and location for a tube (or well?) </br>
-     * If loose location, return the original vessel and location
+     * Build PickerDataRow for vessel stored in a LOOSE location
      */
-    private Triple<LabVessel, TubeFormation, StorageLocation> findVesselAndLocation(LabVessel tube ) {
+    private PickerDataRow buildDataRowForLooseVessel( LabBatch batchToAdd, LabVessel looseVessel ){
+        StorageLocation storageLocation = looseVessel.getStorageLocation();
+        PickerDataRow pickerDataRow = new PickerDataRow(batchToAdd.getLabBatchId(), batchToAdd.getBatchName());
+        pickerDataRow.setSourceVessel( looseVessel.getLabel() );
+        pickerDataRow.setRackScannable(false);
+        pickerDataRow.setTotalVesselCount(1);
+        PickerVessel pickerVessel = new PickerVessel(looseVessel.getLabel(), "");
+        pickerDataRow.getPickerVessels().add(pickerVessel);
+        pickerDataRow.setStorageLocId( storageLocation.getStorageLocationId() );
+        pickerDataRow.setStorageLocPath( storageLocation.buildLocationTrail() );
+        return pickerDataRow;
+    }
 
-        StorageLocation tubeLocation = tube.getStorageLocation();
-        if( tubeLocation == null ) {
-            return null;
-        } else if( tubeLocation.getLocationType() == StorageLocation.LocationType.LOOSE ) {
-            return Triple.of( tube, null, tubeLocation );
-        } else if( OrmUtil.proxySafeIsInstance( tube, PlateWell.class ) ) {
-            return Triple.of( OrmUtil.proxySafeCast( tube, PlateWell.class ).getPlate(), null, tubeLocation );
+    /**
+     * Build PickerDataRow for vessel stored in a LOOSE location
+     */
+    private PickerDataRow buildDataRowForPlateWell( LabBatch batchToAdd, PlateWell well ){
+        StaticPlate plate = well.getPlate();
+        StorageLocation storageLocation = plate.getStorageLocation();
+        PickerDataRow pickerDataRow = new PickerDataRow(batchToAdd.getLabBatchId(), batchToAdd.getBatchName());
+        pickerDataRow.setSourceVessel( plate.getLabel() );
+        pickerDataRow.setRackScannable(false);
+        pickerDataRow.setTotalVesselCount(plate.getGeometrySize());
+        if( storageLocation != null ) {
+            pickerDataRow.setStorageLocId( storageLocation.getStorageLocationId() );
+            pickerDataRow.setStorageLocPath( storageLocation.buildLocationTrail() );
+        } else {
+            LabEvent latestStorageEvent = plate.getLatestStorageEvent();
+            if( latestStorageEvent != null && latestStorageEvent.getLabEventType() == LabEventType.STORAGE_CHECK_OUT ) {
+                storageLocation = latestStorageEvent.getStorageLocation();
+                if( storageLocation != null ) {
+                    pickerDataRow.setStorageLocPath("Checked out of " + storageLocation.buildLocationTrail() + " on " + SimpleDateFormat.getDateInstance().format(latestStorageEvent.getEventDate()));
+                } else {
+                    // Pre GPLIM-5728 will not have event storage locations
+                    pickerDataRow.setStorageLocPath("Checked out on " + SimpleDateFormat.getDateInstance().format(latestStorageEvent.getEventDate()));
+                }
+            } else {
+                pickerDataRow.setStorageLocPath( "(Not in storage)" );
+            }
         }
+
+        return pickerDataRow;
+    }
+
+    /**
+     * Find rack and location for a tube
+     */
+    private Triple<LabVessel, TubeFormation, LabEvent> findVesselAndLocation( LabVessel tube ) {
+
         LabEvent latestCheckInEvent;
+        LabEvent latestCheckOutEvent;
         LabEvent latestStorageEvent = tube.getLatestStorageEvent();
-        // Ignore check-out
         if( latestStorageEvent != null && latestStorageEvent.getLabEventType() == LabEventType.STORAGE_CHECK_OUT ) {
             latestCheckInEvent = null;
+            latestCheckOutEvent = latestStorageEvent;
         } else {
             latestCheckInEvent = latestStorageEvent;
+            latestCheckOutEvent = null;
         }
 
         // Most are 1:1 rack to tube formation
@@ -407,9 +485,37 @@ public class PickWorkspaceActionBean extends CoreActionBean {
             } else {
                 singleTubeFormation = null;
             }
-            return Triple.of(latestCheckInEvent.getAncillaryInPlaceVessel(), singleTubeFormation, tubeLocation);
+            return Triple.of(latestCheckInEvent.getAncillaryInPlaceVessel(), singleTubeFormation, latestCheckInEvent);
+        } else if( latestCheckOutEvent != null ) {
+            if (OrmUtil.proxySafeIsInstance(latestCheckOutEvent.getInPlaceLabVessel(), TubeFormation.class)) {
+                singleTubeFormation = OrmUtil.proxySafeCast(latestCheckOutEvent.getInPlaceLabVessel(), TubeFormation.class);
+            } else {
+                singleTubeFormation = null;
+            }
+            return Triple.of(latestCheckOutEvent.getAncillaryInPlaceVessel(), singleTubeFormation, latestCheckInEvent);
         } else {
-            return null;
+            TreeSet<LabEvent> sortedEvents = new TreeSet<>(LabEvent.BY_EVENT_DATE);
+            // Which event owns which tube formation?
+            Map<LabEvent,TubeFormation> eventTubes = new HashMap<>();
+            for (LabVessel tubeContainer : tube.getContainers() ) {
+                if( OrmUtil.proxySafeIsInstance( tubeContainer, TubeFormation.class ) ) {
+                    TubeFormation formation = OrmUtil.proxySafeCast( tubeContainer, TubeFormation.class );
+                    for( LabEvent evt : formation.getTransfersTo() ) {
+                        sortedEvents.add(evt);
+                        eventTubes.put(evt,formation);
+                    }
+                    for( LabEvent evt : formation.getTransfersFrom() ) {
+                        sortedEvents.add(evt);
+                        eventTubes.put(evt,formation);
+                    }
+                }
+            }
+            if (sortedEvents.size() > 0) {
+                LabEvent latestRackEvent = sortedEvents.last();
+                return Triple.of(latestRackEvent.getAncillaryInPlaceVessel(), OrmUtil.proxySafeCast( latestRackEvent.getInPlaceLabVessel(), TubeFormation.class ), sortedEvents.last());
+            } else {
+                return null;
+            }
         }
 
     }

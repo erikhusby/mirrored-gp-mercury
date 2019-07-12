@@ -376,9 +376,9 @@
                 </fieldset>
             </div>
             <div class="span2">
-                        <div class="control-label"><label for="btnProcessBatches">&nbsp;</label></div>
                         <div class="controls"><p><input type="submit" name="processBatches" id="btnProcessBatches" value="View Batches" style="width:120px"/></p>
-                            <p><input type="button" id="btnConflicts" value="Check Conflicts" data-conflict-state="pending" style="width:120px"/></p><%-- States are pending, success, fail --%></div>
+                            <p><input type="button" id="btnConflicts" value="Check Conflicts" data-conflict-state="pending" style="width:120px"/></p><%-- States are pending, success, fail --%>
+                            <p><input type="submit" name="processBulkCheckOut" id="btnBulkCheckout" value="Bulk Check-Out" style="width:120px"/></p></div>
             </div>
             <div class="span6">
                 <div id="ajaxError" class="alert-error" style="margin-left:12px;margin-right:12px;display: none"><button type="button" class="close" onclick="dismissAlert('Error');">&times;</button><span id="ajaxErrorText"></span></div>

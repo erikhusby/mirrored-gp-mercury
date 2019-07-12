@@ -12,8 +12,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
-import javax.json.Json;
-import javax.json.JsonObject;
+import javax.json.*;
+import javax.persistence.LockModeType;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -34,11 +35,11 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
     private static int MAX_BULK_CHECKIN_LOCS = 24;
 
     // Events
-    private static final String EVT_INIT_CHECK_OUT = "initCheckOut";
-    private static final String EVT_CHECK_OUT = "checkOut";
-    private static final String EVT_INIT_CHECK_IN = "initCheckIn";
-    private static final String EVT_VALIDATED_CHECK_IN = "validateCheckIn";
-    private static final String EVT_CHECK_IN = "checkIn";
+    static final String EVT_INIT_CHECK_OUT = "initCheckOut";
+    static final String EVT_CHECK_OUT = "checkOut";
+    static final String EVT_INIT_CHECK_IN = "initCheckIn";
+    static final String EVT_VALIDATED_CHECK_IN = "validateCheckIn";
+    static final String EVT_CHECK_IN = "checkIn";
 
     // UI Resolutions
     private static final String UI_CHECK_IN = "/storage/bulk_checkin.jsp";
@@ -48,11 +49,13 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
     String barcode;
     Long storageLocationId;
     List<String> proposedLocationIds;
+    List<String> checkOuts;
 
     // Instance/display vars
     String checkInPhase = CHECK_IN_PHASE_INIT;
-    List<StorageLocation> validLocations;
-    Map<Long,String> storageLocPaths;
+    List<StorageLocation> validLocations; // List of the valid subset of proposed check-in storage locations
+    Map<Long,String> storageLocPaths;  // Location path lookup by ID
+    Map<String,String> vesselsCheckOutStatus; // Display status of bulk checkouts forwarded from pick list link
 
     @Inject
     private StorageLocationDao storageLocationDao;
@@ -63,6 +66,9 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
     @DefaultHandler
     @HandlesEvent(EVT_INIT_CHECK_OUT)
     public Resolution eventInitCheckOut(){
+        if( checkOuts != null && checkOuts.size() > 0 ) {
+            buildVesselsCheckOutStatus();
+        }
         return new ForwardResolution(UI_CHECK_OUT);
     }
 
@@ -175,7 +181,7 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
 
             String locationPath = storageLocPaths.get(location.getStorageLocationId());
             if( locationPath == null ) {
-                locationPath = location.getLocationType().getDisplayName() + ":  " + storageLocationDao.getLocationTrail( location.getStorageLocationId() );
+                locationPath = location.getLocationType().getDisplayName() + ":  " + storageLocationDao.getLocationTrail( location );
                 storageLocPaths.put(location.getStorageLocationId(), locationPath );
             }
 
@@ -199,7 +205,6 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
         }
     }
 
-
     /**
      * Add or remove SRS batch vessels
      */
@@ -213,15 +218,13 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
         LabVessel vessel = storageLocationDao.findSingle( LabVessel.class, LabVessel_.label, barcode );
         if( vessel == null ) {
             return buildAjaxOutcome( Pair.of("danger", "Vessel barcode " + barcode + " not found.") );
-        } else if( vessel.getStorageLocation() != null ) {
-            return buildAjaxOutcome( Pair.of("warning", "Vessel barcode " + barcode + " already in storage.") );
         }
 
         StorageLocation storageLocation = storageLocationDao.findById(StorageLocation.class,storageLocationId );
         if( storageLocation == null ) {
             return buildAjaxOutcome( Pair.of("danger", "Barcode : " + barcode + " - No storage location exists for ID: " + storageLocationId ) );
         }
-        String locationTrail = storageLocationDao.getLocationTrail(storageLocationId);
+        String locationTrail = storageLocationDao.getLocationTrail(storageLocation);
 
         Pair<String, String> statusMessage = null;
         if( OrmUtil.proxySafeIsInstance( vessel, BarcodedTube.class ) ) {
@@ -254,7 +257,7 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
     }
 
     /**
-     * Check vessel out of storage
+     * Check vessel out of storage, called from ajax
      */
     @HandlesEvent(EVT_CHECK_OUT)
     public Resolution eventCheckOut(){
@@ -313,7 +316,7 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
      */
     private Pair<String, String> doCheckOut( BarcodedTube tube ) {
         StorageLocation storageLocation = tube.getStorageLocation();
-        String locationTrail = storageLocationDao.getLocationTrail( storageLocation.getStorageLocationId() );
+        String locationTrail = storageLocationDao.getLocationTrail( storageLocation );
         tube.setStorageLocation(null);
         LabEvent checkOutEvent = createStorageEvent( LabEventType.STORAGE_CHECK_OUT, tube, storageLocation,null );
         storageLocationDao.persist(checkOutEvent);
@@ -323,7 +326,7 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
 
     private Pair<String, String> doCheckOut( StaticPlate plate ) {
         StorageLocation storageLocation = plate.getStorageLocation();
-        String locationTrail = storageLocationDao.getLocationTrail( storageLocation.getStorageLocationId() );
+        String locationTrail = storageLocationDao.getLocationTrail( storageLocation );
         plate.setStorageLocation(null);
         LabEvent checkOutEvent = createStorageEvent( LabEventType.STORAGE_CHECK_OUT, plate, storageLocation, null );
         storageLocationDao.persist(checkOutEvent);
@@ -332,7 +335,7 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
 
     private Pair<String, String> doCheckOut( RackOfTubes rack ) {
         StorageLocation rackLocation = rack.getStorageLocation();
-        String locationTrail = storageLocationDao.getLocationTrail( rackLocation.getStorageLocationId() );
+        String locationTrail = storageLocationDao.getLocationTrail( rackLocation );
 
         Set<LabEvent> inPlaceEvents = new TreeSet<>(LabEvent.BY_EVENT_DATE);
         inPlaceEvents.addAll( rack.getInPlaceLabEvents() );
@@ -391,7 +394,7 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
      * @return Pair of values, if left not 'success', then nothing was done
      */
     private Pair<String, String> doCheckIn( RackOfTubes rack, StorageLocation storageLocation ) {
-        String locationTrail = storageLocationDao.getLocationTrail( storageLocation.getStorageLocationId() );
+        String locationTrail = storageLocationDao.getLocationTrail( storageLocation );
 
         TreeSet<LabEvent> sortedEvents = new TreeSet<>(LabEvent.BY_EVENT_DATE);
         sortedEvents.addAll( rack.getInPlaceLabEvents() );
@@ -445,6 +448,11 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
 
         LabEvent checkOutEvent = createStorageEvent( LabEventType.STORAGE_CHECK_IN, tubeFormation, storageLocation, rack );
         storageLocationDao.persist(checkOutEvent);
+        rack.setStorageLocation(storageLocation);
+        for( LabVessel tube : tubeFormation.getContainerRole().getContainedVessels() ) {
+            tube.setStorageLocation(storageLocation);
+        }
+        storageLocationDao.flush();
 
         return Pair.of("success", "Rack barcode " + barcode
                 + " and all tubes checked into "
@@ -452,11 +460,37 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
     }
 
     private LabEvent createStorageEvent(LabEventType labEventType, LabVessel inPlaceVessel, StorageLocation storageLocation, LabVessel ancillaryInPlaceVessel ){
-        LabEvent checkOutEvent = new LabEvent(labEventType, new Date(), LabEvent.UI_PROGRAM_NAME, 01L, getUserBean().getBspUser().getUserId(), LabEvent.UI_PROGRAM_NAME );
-        checkOutEvent.setInPlaceLabVessel(inPlaceVessel);
-        checkOutEvent.setStorageLocation(storageLocation);
-        checkOutEvent.setAncillaryInPlaceVessel(ancillaryInPlaceVessel);
-        return checkOutEvent;
+        LabEvent storageEvent = new LabEvent(labEventType, new Date(), LabEvent.UI_PROGRAM_NAME, 01L, getUserBean().getBspUser().getUserId(), LabEvent.UI_PROGRAM_NAME );
+        storageEvent.setInPlaceLabVessel(inPlaceVessel);
+        storageEvent.setStorageLocation(storageLocation);
+        storageEvent.setAncillaryInPlaceVessel(ancillaryInPlaceVessel);
+        return storageEvent;
+    }
+
+    /**
+     * Given a list of barcodes forwarded from pick workspace, build a list of statuses
+     */
+    private void buildVesselsCheckOutStatus() {
+        vesselsCheckOutStatus = new HashMap<>();
+        for( String barcode : checkOuts ) {
+            LabVessel vessel = storageLocationDao.findSingleSafely( LabVessel.class, LabVessel_.label, barcode, LockModeType.NONE );
+            if( vessel == null ) {
+                vesselsCheckOutStatus.put(barcode,"Vessel barcode " + barcode + " not found");
+                continue;
+            }
+            StorageLocation storageLocation = vessel.getStorageLocation();
+            if( storageLocation != null ) {
+                vesselsCheckOutStatus.put(barcode, "Pending: " + barcode + " - " +  storageLocationDao.getLocationTrail( storageLocation ) );
+            } else {
+                // This had better be check-out if not in storage
+                LabEvent checkOutEvent = vessel.getLatestStorageEvent();
+                if( checkOutEvent.getLabEventType() == LabEventType.STORAGE_CHECK_OUT ) {
+                    vesselsCheckOutStatus.put(barcode, "N/A: " + barcode + " checked out on " + SimpleDateFormat.getDateInstance().format(checkOutEvent.getEventDate()));
+                } else {
+                    vesselsCheckOutStatus.put(barcode, "N/A: " + barcode + " not in storage (and never checked out)" );
+                }
+            }
+        }
     }
 
     public void setBarcode(String barcode) {
@@ -493,4 +527,19 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
     public Map<Long, String> getStorageLocPaths() {
         return storageLocPaths;
     }
+
+    /**
+     * Setter for bulk checkout forward from pick workspace
+     */
+    public void setCheckOuts(List<String> checkOuts) {
+        this.checkOuts = checkOuts;
+    }
+
+    /**
+     * Display values for each barcode forwarded from pick workspace
+     */
+    public Map<String, String> getVesselsCheckOutStatus() {
+        return vesselsCheckOutStatus == null? Collections.emptyMap():vesselsCheckOutStatus;
+    }
+
 }

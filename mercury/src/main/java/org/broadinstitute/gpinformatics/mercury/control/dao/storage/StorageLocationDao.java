@@ -81,13 +81,15 @@ public class StorageLocationDao extends GenericDao {
      * Uses Oracle specific hierarchy query to get storage path to a location with one database round trip
      * @see org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation#buildLocationTrail() for JPA entity based logic
      */
-    public String getLocationTrail( Long storageLocationId ) {
+    public String getLocationTrail( StorageLocation storageLocation ) {
+        Long storageLocationId = storageLocation.getStorageLocationId();
         Query qry = getEntityManager().createNativeQuery("SELECT LISTAGG( label, ' > ' ) WITHIN GROUP ( ORDER BY level DESC ) \n"
                                                                  + "   FROM storage_location \n"
                                                                  + "START WITH storage_location_id = ? \n"
                                                                  + "CONNECT BY PRIOR parent_storage_location = storage_location_id");
         qry.setParameter( 1, storageLocationId );
-        return qry.getSingleResult().toString();
+        String locationTrail = qry.getSingleResult().toString();
+        return locationTrail;
     }
 
     /**

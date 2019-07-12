@@ -5,6 +5,8 @@ import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Stores location of vessels in the lab. Self references to Parent Location allow for deeply
@@ -220,6 +222,9 @@ public class StorageLocation {
 
     private Integer storageCapacity = new Integer(0);
 
+    @Transient
+    private String locationTrail = null;
+
     public StorageLocation() {
     }
 
@@ -310,33 +315,40 @@ public class StorageLocation {
      */
     @Transient
     public String buildLocationTrail() {
+        if( this.locationTrail != null ) {
+            return this.locationTrail;
+        }
         String locationTrailString = "";
-        LinkedList<StorageLocation> locationTrail = new LinkedList<>();
-        locationTrail.add(this);
+        LinkedList<StorageLocation> locationTrailList = new LinkedList<>();
+        locationTrailList.add(this);
         StorageLocation parentLocation = getParentStorageLocation();
         while (parentLocation != null) {
-            locationTrail.addFirst(parentLocation);
+            locationTrailList.addFirst(parentLocation);
             parentLocation = parentLocation.getParentStorageLocation();
         }
 
-        for (int i = 0; i < locationTrail.size(); i++) {
-            StorageLocation location = locationTrail.get(i);
+        for (int i = 0; i < locationTrailList.size(); i++) {
+            StorageLocation location = locationTrailList.get(i);
             locationTrailString += location.getLabel();
-            if (i < locationTrail.size() - 1) {
+            if (i < locationTrailList.size() - 1) {
                 locationTrailString += " > ";
             }
         }
-        return locationTrailString;
+        this.locationTrail = locationTrailString;
+        return this.locationTrail;
     }
 
     public static class StorageLocationLabelComparator
             implements Comparator<StorageLocation> {
+
+        private static Pattern IS_NUMBER_PATTERN = Pattern.compile("[A-Za-z]+ *\\d+");
+
         @Override
         public int compare(StorageLocation storageLocation1, StorageLocation storageLocation2) {
-            boolean isNumbered = storageLocation1.getLabel().matches("[A-Za-z]+ \\d+");
-            if (storageLocation1.getLocationType() == LocationType.SLOT &&
-                storageLocation2.getLocationType() == LocationType.SLOT &&
-                isNumbered) {
+            Matcher matcher1 = IS_NUMBER_PATTERN.matcher(storageLocation1.getLabel());
+            Matcher matcher2 = IS_NUMBER_PATTERN.matcher(storageLocation2.getLabel());
+            boolean isNumbered = matcher1.matches() && matcher2.matches();
+            if (isNumbered) {
                 Integer slotNumber = Integer.parseInt(storageLocation1.getLabel().replaceAll("\\D+",""));
                 Integer slot2Number = Integer.parseInt(storageLocation2.getLabel().replaceAll("\\D+",""));
                 return slotNumber.compareTo(slot2Number);

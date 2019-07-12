@@ -276,7 +276,7 @@ public class ContainerActionBean extends RackScanActionBean {
 
                 // Do not show any tubes checked in to other locations
                 if( tubeLocId != null && rackLocId != null && !tubeLocId.equals(rackLocId) ) {
-                    String locationPath = storageLocationDao.getLocationTrail(tubeLocId);
+                    String locationPath = storageLocationDao.getLocationTrail(tube.getStorageLocation());
                     addMessage(tube.getLabel() + " [ " + position + " ] was moved to " + locationPath );
                     continue;
                 }
@@ -441,7 +441,7 @@ public class ContainerActionBean extends RackScanActionBean {
             showLayout = true;
         }
         if (storageLocation != null) {
-            String locationPath = storageLocationDao.getLocationTrail(storageLocation.getStorageLocationId());
+            String locationPath = storageLocationDao.getLocationTrail(storageLocation);
             addMessage("Rack " + getViewVessel().getLabel() + " is currently stored in [" + locationPath + "] and will be removed at layout update.");
         }
         return new ForwardResolution(CONTAINER_VIEW_PAGE);
@@ -485,7 +485,7 @@ public class ContainerActionBean extends RackScanActionBean {
             rackWasRemovedFromStorage = true;
             messageCollection.addInfo("Layout update removed rack %s from storage location [%s]."
                     , rackOfTubes.getLabel()
-                    , storageLocationDao.getLocationTrail(storageLocation.getStorageLocationId()));
+                    , storageLocationDao.getLocationTrail(storageLocation));
 
             // Now the part where all tubes associated with rack check-in have to be removed also
             LabEvent checkInEvent = findLatestCheckInEvent( rackOfTubes );
@@ -517,7 +517,7 @@ public class ContainerActionBean extends RackScanActionBean {
                     messageCollection.addWarning("Layout update removed %s [%s] from [%s]"
                             , pv.getValue().getLabel(), pv.getKey()
                             , storageLocationDao
-                                    .getLocationTrail(pv.getValue().getStorageLocation().getStorageLocationId()));
+                                    .getLocationTrail(pv.getValue().getStorageLocation()));
                 }
                 pv.getValue().setStorageLocation(null);
             }
@@ -591,7 +591,7 @@ public class ContainerActionBean extends RackScanActionBean {
             if( rackOfTubes != null && rackOfTubes.getStorageLocation() != null ) {
                 messageCollection.addWarning("Rack %s will be removed from location [%s] when layout update performed."
                         , rackOfTubes.getLabel()
-                        , storageLocationDao.getLocationTrail( rackOfTubes.getStorageLocation().getStorageLocationId()));
+                        , storageLocationDao.getLocationTrail( rackOfTubes.getStorageLocation()));
             }
 
             List<String> barcodes = new ArrayList<>(rackScan.values());
@@ -622,7 +622,7 @@ public class ContainerActionBean extends RackScanActionBean {
                     if( labVessel.getStorageLocation() != null ) {
                         messageCollection.addWarning("%s [ %s ] will be removed from [%s] when layout update performed."
                                 , labVessel.getLabel(), vesselPosition
-                                , storageLocationDao.getLocationTrail( labVessel.getStorageLocation().getStorageLocationId()));
+                                , storageLocationDao.getLocationTrail( labVessel.getStorageLocation()));
                     }
                 }
             }
@@ -761,7 +761,7 @@ public class ContainerActionBean extends RackScanActionBean {
             storageLocationDao.persist(checkInEvent);
             messageCollection.addInfo("Rack of tubes %s checked in to [%s]."
                     , rackOfTubes.getLabel()
-                    , storageLocationDao.getLocationTrail(storageLocation.getStorageLocationId()));
+                    , storageLocationDao.getLocationTrail(storageLocation));
         } else {
             // static plate
             LabVessel checkInVessel = getViewVessel();
@@ -965,7 +965,7 @@ public class ContainerActionBean extends RackScanActionBean {
 
     public String getLocationTrail() {
         if (locationTrail == null && storageLocation != null) {
-            locationTrail = storageLocationDao.getLocationTrail(storageLocation.getStorageLocationId());
+            locationTrail = storageLocationDao.getLocationTrail(storageLocation);
         }
         return locationTrail;
     }
