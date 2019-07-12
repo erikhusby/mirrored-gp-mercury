@@ -114,7 +114,7 @@ public class LabMetricSearchDefinition {
     private Map<String, LabMetric.MetricType> metricTypeDisplayKeyMap;
     private Map<String, Metadata.Key> metadataDisplayKeyMap;
 
-    public ConfigurableSearchDefinition buildSearchDefinition(){
+    ConfigurableSearchDefinition buildSearchDefinition(){
 
         LabMetricSearchDefinition srchDef = new LabMetricSearchDefinition();
         Map<String, List<SearchTerm>> mapGroupSearchTerms = new LinkedHashMap<>();
@@ -128,7 +128,11 @@ public class LabMetricSearchDefinition {
         searchTerms = srchDef.buildLabMetricMetadata();
         mapGroupSearchTerms.put("Metric Metadata", searchTerms);
 
-        mapGroupSearchTerms.put("BSP", buildBsp());
+        SearchTerm.CriteriaPath sampleKeyCriteriaPath = new SearchTerm.CriteriaPath();
+        sampleKeyCriteriaPath.setCriteria(Arrays.asList("metricsVessel", "mercurySamples"));
+        sampleKeyCriteriaPath.setPropertyName("sampleKey");
+
+        mapGroupSearchTerms.put("BSP", buildBsp(sampleKeyCriteriaPath));
         mapGroupSearchTerms.put("Sample Repository", listByType(mapGroupSearchTerms.values(),
                 DisplayExpression.ExpressionGroup.SAMPLE_REPOSITORY));
         mapGroupSearchTerms.put("Sample Processing", listByType(mapGroupSearchTerms.values(),
@@ -657,7 +661,7 @@ public class LabMetricSearchDefinition {
         return searchTerms;
     }
 
-    private List<SearchTerm> buildBsp() {
+    static List<SearchTerm> buildBsp(SearchTerm.CriteriaPath sampleKeyCriteriaPath) {
         List<SearchTerm> searchTerms = new ArrayList<>();
 
         SearchTerm workRequestTerm = new SearchTerm();
@@ -666,9 +670,6 @@ public class LabMetricSearchDefinition {
             SearchItem searchItem = new SearchItem("Fullfilled Samples - Work Request ID", "IN", values);
             return runBspSearch(searchItem);
         });
-        SearchTerm.CriteriaPath sampleKeyCriteriaPath = new SearchTerm.CriteriaPath();
-        sampleKeyCriteriaPath.setCriteria(Arrays.asList("metricsVessel", "mercurySamples" ));
-        sampleKeyCriteriaPath.setPropertyName("sampleKey");
         workRequestTerm.setCriteriaPaths(Collections.singletonList(sampleKeyCriteriaPath));
         searchTerms.add(workRequestTerm);
         // todo jmt needs a display expression
@@ -755,7 +756,7 @@ public class LabMetricSearchDefinition {
         return searchTerms;
     }
 
-    private void initBspTerm(SearchTerm collabPatientTerm, DisplayExpression displayExpression) {
+    private static void initBspTerm(SearchTerm collabPatientTerm, DisplayExpression displayExpression) {
         collabPatientTerm.setDisplayExpression(displayExpression);
         collabPatientTerm.setAddRowsListenerHelper(new SearchTerm.Evaluator<Object>() {
             @Override

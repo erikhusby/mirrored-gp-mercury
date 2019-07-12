@@ -9,6 +9,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
@@ -474,6 +476,24 @@ public enum DisplayExpression {
         } else if (OrmUtil.proxySafeIsInstance(rowObject, MercurySample.class) && expressionClass.isAssignableFrom(SampleData.class)) {
             MercurySample mercurySample = (MercurySample) rowObject;
             return (List<T>) mercurySampleToSampleData(context, Collections.singletonList(mercurySample));
+
+        } else if (OrmUtil.proxySafeIsInstance(rowObject, QueueGrouping.class) && expressionClass.isAssignableFrom(SampleData.class)) {
+            // QueueGrouping to SampleData
+            QueueGrouping queueGrouping = (QueueGrouping) rowObject;
+            List<MercurySample> mercurySamples = new ArrayList<>();
+            for (QueueEntity queuedEntity : queueGrouping.getQueuedEntities()) {
+                mercurySamples.addAll(queuedEntity.getLabVessel().getMercurySamples());
+            }
+            return (List<T>) mercurySampleToSampleData(context, mercurySamples);
+
+        } else if (OrmUtil.proxySafeIsInstance(rowObject, QueueGrouping.class) && expressionClass.isAssignableFrom(SampleInstanceV2.class)) {
+            // QueueGrouping to SampleInstance
+            QueueGrouping queueGrouping = (QueueGrouping) rowObject;
+            List<SampleInstanceV2> sampleInstances = new ArrayList<>();
+            for (QueueEntity queuedEntity : queueGrouping.getQueuedEntities()) {
+                sampleInstances.addAll(queuedEntity.getLabVessel().getSampleInstancesV2());
+            }
+            return (List<T>) sampleInstances;
 
         } else if (OrmUtil.proxySafeIsInstance(rowObject, Reagent.class)) {
             Reagent reagent = (Reagent) rowObject;
