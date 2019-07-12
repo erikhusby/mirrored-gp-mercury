@@ -40,7 +40,6 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
 import javax.persistence.OrderColumn;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -119,13 +118,12 @@ public class ManifestSession implements Updatable {
     @Column(name = "RECEIPT_TICKET")
     private String receiptTicket;
 
-    @OneToOne
-    @JoinColumn(name = "MANIFEST_FILE")
-    private ManifestFile manifestFile;
+    @Column
+    private String manifestFilename;
 
     @ElementCollection
     @CollectionTable(name = "MANIFEST_VESSEL_LABELS", joinColumns=@JoinColumn(name="MANIFEST_SESSION"))
-    private Set<String> vesselLabels;
+    private Set<String> vesselLabels = new HashSet<>();
 
     /**
      * For JPA.
@@ -698,12 +696,12 @@ public class ManifestSession implements Updatable {
         return updateData;
     }
 
-    public ManifestFile getManifestFile() {
-        return manifestFile;
+    public String getManifestFilename() {
+        return manifestFilename;
     }
 
-    public void setManifestFile(ManifestFile manifestFile) {
-        this.manifestFile = manifestFile;
+    public void setManifestFilename(String manifestFilename) {
+        this.manifestFilename = manifestFilename;
     }
 
     public Set<String> getVesselLabels() {
@@ -722,5 +720,4 @@ public class ManifestSession implements Updatable {
                 .append("status", status)
                 .toString();
     }
-
 }

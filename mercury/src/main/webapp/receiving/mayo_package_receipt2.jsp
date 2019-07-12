@@ -71,7 +71,6 @@
             <stripes:hidden name="rackCount" value="${actionBean.rackCount}"/>
             <stripes:hidden name="rackBarcodeString" value="${actionBean.rackBarcodeString}"/>
             <stripes:hidden name="filename" value="${actionBean.filename}"/>
-            <stripes:hidden name="manifestSessionId" value="${actionBean.manifestSessionId}"/>
 
             <div class="inputGroup">
                 <div class="inputRow">
@@ -116,7 +115,7 @@
 
             <div style="padding-top: 20px;">
                 <span>
-                    <stripes:submit id="saveBtn" name="saveBtn" value="Receive" class="btn btn-primary"
+                    <stripes:submit id="receiveBtn" name="receiveBtn" value="Receive" class="btn btn-primary"
                                     title="Receives the package."/>
                     <span style="margin-left: 20px;">
                         <stripes:submit id="cancelBtn" name="cancelBtn" value="Cancel" class="btn btn-primary"/>

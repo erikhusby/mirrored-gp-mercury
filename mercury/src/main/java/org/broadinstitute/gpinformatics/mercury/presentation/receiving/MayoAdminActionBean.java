@@ -28,9 +28,6 @@ public class MayoAdminActionBean extends CoreActionBean {
     private static final String MANIFEST_ADMIN_PAGE = "mayo_manifest_admin.jsp";
     private static final String TEST_ACCESS_BTN = "testAccessBtn";
     private static final String SHOW_BUCKETLIST_BTN = "showBucketListBtn";
-    private static final String SHOW_FAILED_FILES_LIST_BTN = "showFailedFilesListBtn";
-    private static final String PULL_ALL_BTN = "pullAllFilesBtn";
-    private static final String PULL_ONE_BTN = "pullFileBtn";
     private static final String VIEW_FILE_BTN = "viewFileBtn";
     private static final String ROTATE_KEY_BTN = "rotateKeyBtn";
     private static final String UPLOAD_CREDENTIAL_BTN = "uploadCredentialBtn";
@@ -41,10 +38,11 @@ public class MayoAdminActionBean extends CoreActionBean {
     private MessageCollection messageCollection = new MessageCollection();
     private List<List<String>> manifestCellGrid = new ArrayList<>();
 
-    @Validate(required = true, on = {VIEW_FILE_BTN, PULL_ONE_BTN})
+    @Validate(required = true, on = {VIEW_FILE_BTN})
     private String filename;
 
-    private boolean rotateAcknowledgement;
+    private boolean rotateAcknowledgement = false;
+    private boolean uploadCredentialAcknowledgement = false;
     private List<String> bucketList = new ArrayList<>();
     private List<String> failedFilesList = new ArrayList<>();
     private FileBean credentialFile;
@@ -72,7 +70,7 @@ public class MayoAdminActionBean extends CoreActionBean {
             mayoManifestEjb.rotateServiceAccountKey(this);
             addMessages(messageCollection);
         } else {
-            addValidationError("rotateAcknowledgement", "Acknowledgement is required.");
+            addGlobalValidationError("The acknowledgement must be checked.");
         }
         return new ForwardResolution(MANIFEST_ADMIN_PAGE);
     }
@@ -89,42 +87,6 @@ public class MayoAdminActionBean extends CoreActionBean {
             outStream.write(bytes);
             outStream.flush();
         };
-    }
-
-    @HandlesEvent(SHOW_FAILED_FILES_LIST_BTN)
-    public Resolution showFailedFilesList() {
-        mayoManifestEjb.getFailedFiles(this);
-        final byte[] bytes = failedFilesList.stream().sorted().collect(Collectors.joining("\n")).getBytes();
-        return (request, response) -> {
-            response.setContentType("application/text");
-            response.setContentLength(bytes.length);
-            response.setHeader("Expires:", "0"); // eliminates browser caching
-            response.setHeader("Content-Disposition", "attachment; filename=failedFiles.txt");
-            OutputStream outStream = response.getOutputStream();
-            outStream.write(bytes);
-            outStream.flush();
-        };
-    }
-
-    /**
-     * Processes all new files found in the storage bucket.
-     */
-    @HandlesEvent(PULL_ALL_BTN)
-    public Resolution pullAll() {
-        mayoManifestEjb.pullAll(this);
-        addMessages(messageCollection);
-        return new ForwardResolution(MANIFEST_ADMIN_PAGE);
-    }
-
-    /**
-     * Re-reads and re-processes one file, for the purpose of updating
-     * (i.e. creating a new) manifest session for the file.
-     */
-    @HandlesEvent(PULL_ONE_BTN)
-    public Resolution pullOne() {
-        mayoManifestEjb.pullOne(this);
-        addMessages(messageCollection);
-        return new ForwardResolution(MANIFEST_ADMIN_PAGE);
     }
 
     /**
@@ -145,10 +107,14 @@ public class MayoAdminActionBean extends CoreActionBean {
      */
     @HandlesEvent(UPLOAD_CREDENTIAL_BTN)
     public Resolution uploadCredential() {
-        if (credentialFile == null) {
-            addGlobalValidationError("Upload file is missing.");
+        if (uploadCredentialAcknowledgement) {
+            if (credentialFile == null) {
+                addGlobalValidationError("Upload file is missing.");
+            } else {
+                mayoManifestEjb.uploadCredential(this);
+            }
         } else {
-            mayoManifestEjb.uploadCredential(this);
+            addGlobalValidationError("The acknowledgement must be checked.");
         }
         addMessages(messageCollection);
         return new ForwardResolution(MANIFEST_ADMIN_PAGE);
@@ -212,5 +178,13 @@ public class MayoAdminActionBean extends CoreActionBean {
 
     public void setCredentialFile(FileBean credentialFile) {
         this.credentialFile = credentialFile;
+    }
+
+    public boolean isUploadCredentialAcknowledgement() {
+        return uploadCredentialAcknowledgement;
+    }
+
+    public void setUploadCredentialAcknowledgement(boolean uploadCredentialAcknowledgement) {
+        this.uploadCredentialAcknowledgement = uploadCredentialAcknowledgement;
     }
 }

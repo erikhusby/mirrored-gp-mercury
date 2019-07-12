@@ -28,8 +28,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.infrastructure.Quarantined;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket_;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestFile;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestFile_;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -42,7 +40,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoAdmin
 import org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoPackageReceiptActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoSampleReceiptActionBean;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -51,12 +48,12 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -67,40 +64,30 @@ public class MayoManifestEjb {
     public static final String ACCESSIONED = "Accessioned rack %s with %s samples %s.";
     public static final String ALREADY_ACCESSIONED = "Rack %s is already accessioned.";
     public static final String ALREADY_ACCESSIONED_SAMPLES = "Samples %s are already accessioned.";
-    // The next one is used in gpuitest. If you change it here, change it there too.
-    public static final String ALREADY_LINKED = "Package %s is already linked to a valid manifest.";
-    // The next one is used in gpuitest. If you change it here, change it there too.
-    public static final String ALREADY_RECEIVED = "Package %s is already received.";
-    public static final String INVALID_FILENAME = "File '%s' has non-7-bit ascii filename and cannot be processed.";
+    public static final String CANNOT_REDO_RECEIPT = "Cannot re-receive package after accessioning.";
+    public static final String EXTRA_IN_MANIFEST = "Manifest contains additional rack barcode %s.";
     public static final String INVALID_MANIFEST = "File %s does not contain a manifest.";
     public static final String JIRA_PROBLEM = "Problem creating or updating RCT ticket: %s";
-    // The next one is used in gpuitest. If you change it here, change it there too.
-    public static final String MANIFEST_CREATED = "Created manifest from file %s.";
-    // The next one is used in gpuitest. If you change it here, change it there too.
-    public static final String MISSING_MANIFEST = "Cannot find a manifest for %s.";
-    public static final String NO_SUCH_FILE = "Cannot find file %s.";
+    public static final String MULTIPLE_FILES = "Found multiple files for %s : %s.";
+    public static final String NEEDS_ALLOW_UPDATE =
+            "%s has already been received. Allow Update must be checked to update it.";
+    public static final String NEEDS_MANUAL_LINKING = "You'll need to link a manifest file to this package.";
+    public static final String NO_SUCH_FILE = "Cannot find a file for %s.";
     public static final String NO_SAMPLES_UPDATED = "No sample metadata changes were found; is the filename correct?";
-    // The next one is used in gpuitest. If you change it here, change it there too.
-    public static final String NOT_ACCESSIONED = "Update manifest samples have not been accessioned: %s.";
-    // The next one is used in gpuitest. If you change it here, change it there too.
     public static final String NOT_IN_MANIFEST = "Manifest does not contain %s %s.";
-    public static final String NOT_IN_RACK_LIST = "Rack barcode input does not include manifest rack(s) %s.";
     public static final String NOT_LINKED = "Package %s is not linked to a valid manifest.";
     public static final String NOT_RECEIVED = "Package %s has not been received.";
+    public static final String ONLY_METADATA_CHANGES =
+            "Manifest update cannot change rack or position for accessioned sample tube %s.";
     public static final String PACKAGE_LINKED = "Package %s is linked to manifest from file %s.";
-    // The next one is used in gpuitest. If you change it here, change it there too.
     public static final String QUARANTINED = "%s is quarantined due to: %s.";
-    // The next one is used in gpuitest. If you change it here, change it there too.
+    public static final String QUARANTINE_DELETES =
+            "Package re-receipt will unquarantine previously quarantined items: %s.";
+    public static final String RACK_NOT_RECEIVED = "Package containing %s has not been received.";
     public static final String RECEIVED =
             "Package %s is received and <a id='rctTicketUrl' href=\"%s\">RCT ticket</a> was created.";
-    // The next one is used in gpuitest. If you change it here, change it there too.
-    public static final String SAMPLES_NOT_UPDATED = "No metadata changes found for samples: %s.";
-    // The next one is used in gpuitest. If you change it here, change it there too.
-    public static final String SAMPLES_UPDATED = "Metadata was updated for samples: %s.";
-    // The next one is used in gpuitest. If you change it here, change it there too.
-    public static final String SKIPPING_RECEIVED = "Ignoring file %s because " + ALREADY_RECEIVED;
-    // The next one is used in gpuitest. If you change it here, change it there too.
-    public static final String SKIPPING_LINKED = "Ignoring file %s because " + ALREADY_LINKED;
+    public static final String SAMPLES_NOT_UPDATED = "No metadata changes found for %d samples.";
+    public static final String SAMPLES_UPDATED = "Metadata was updated for %d samples: %s.";
     public static final String UNKNOWN_WELL_SCAN = "Rack scan contains unknown well position: %s.";
     public static final String UNQUARANTINED = "%s was unquarantined.";
     public static final String WRONG_TUBE_IN_POSITION = "At position %s the rack has %s but manifest shows %s.";
@@ -112,7 +99,8 @@ public class MayoManifestEjb {
                 put("ShipmentCondition", new CustomFieldDefinition("customfield_15661", "Shipment Condition", false));
                 put("TrackingNumber", new CustomFieldDefinition("customfield_15663", "Tracking Number", false));
                 put("KitDeliveryMethod", new CustomFieldDefinition("customfield_13767", "Kit Delivery Method", false));
-                put("RequestingPhysician", new CustomFieldDefinition("customfield_16163", "Requesting Physician", false));
+                put("RequestingPhysician",
+                        new CustomFieldDefinition("customfield_16163", "Requesting Physician", false));
                 put("ReceiptType", new CustomFieldDefinition("customfield_17360", "Receipt Type", false));
             }};
 
@@ -128,7 +116,6 @@ public class MayoManifestEjb {
     private MercurySampleDao mercurySampleDao;
     private TubeFormationDao tubeFormationDao;
     private JiraService jiraService;
-    private MayoManifestConfig mayoManifestConfig;
     private QuarantinedDao quarantinedDao;
 
     /**
@@ -151,273 +138,324 @@ public class MayoManifestEjb {
         this.quarantinedDao = quarantinedDao;
         this.jiraService = jiraService;
         // This config is from the yaml file.
-        this.mayoManifestConfig = (MayoManifestConfig) MercuryConfiguration.getInstance().
+        MayoManifestConfig mayoManifestConfig = (MayoManifestConfig) MercuryConfiguration.getInstance().
                 getConfig(MayoManifestConfig.class, deployment);
         googleBucketDao.setConfigGoogleStorageConfig(mayoManifestConfig);
     }
 
     /**
-     * Finds the ManifestSession for the package id, either an existing one for the package, or
-     * makes a new one from a manifest file in the storage bucket.
-     *
-     * @return boolean indicating if the package has already been received.
+     * Package receipt validation should be comprehensive and must not persist entities since
+     * the lab user may choose to cancel the receipt and first fix any errors. OTOH it should
+     * not generate errors for things that wouldn't prevent the lab user from a receipt-only
+     * operation.
      */
-    public boolean packageReceiptLookup(MayoPackageReceiptActionBean bean) {
-        ManifestSession manifestSession = manifestSessionDao.getSessionByPrefix(bean.getPackageBarcode());
-        if (manifestSession == null) {
-            // If none exists, searches bucket storage for the manifest file to use.
-            // First tries with a specific filename.
-            String expectedFilename = bean.getPackageBarcode() + ".csv";
-            manifestSession = processNewManifestFiles(bean.getMessageCollection(), expectedFilename,
-                    bean.getRackBarcodes()).
-                    stream().filter(session -> session != null).findFirst().orElse(null);
-            if (manifestSession == null) {
-                // If no luck, pulls in all new files and tries to make a ManifestSession for each.
-                // Keeps the one ManifestSession that matches the package barcode.
-                manifestSession = processNewManifestFiles(bean.getMessageCollection(), null, bean.getRackBarcodes()).
-                        stream().
-                        filter(session -> session.getSessionPrefix().equals(bean.getPackageBarcode())).
-                        findFirst().orElse(null);
-            }
-        }
-        boolean isAlreadyReceived = false;
-        if (manifestSession == null) {
-            // Generates a warning if the manifest is missing. The package can still be received.
-            bean.getMessageCollection().addError(MISSING_MANIFEST, bean.getPackageBarcode());
-        } else if (StringUtils.isNotBlank(manifestSession.getReceiptTicket())) {
-            // Errors if the package has already been received.
-            bean.getMessageCollection().addError(ALREADY_RECEIVED, bean.getPackageBarcode());
-            isAlreadyReceived = true;
+    public void packageReceiptValidation(MayoPackageReceiptActionBean bean) {
+        MessageCollection messages = bean.getMessageCollection();
+        String packageId = bean.getPackageBarcode();
+
+        List<ManifestRecord> records = null;
+        // Looks for a manifest file for the package barcode. If there's only one matching file
+        // it gets used. If none or multiple found, a warning is given and no file is used, i.e.
+        // the ManifestSession has the rack barcodes as manifestVessels but no ManifestRecords.
+        List<String> matchingFilenames = googleBucketDao.list(messages).stream().
+                filter(name -> name.endsWith(".csv") && name.contains(packageId)).
+                collect(Collectors.toList());
+        if (matchingFilenames.size() == 0) {
+            messages.addWarning(NO_SUCH_FILE, packageId);
+        } else if (matchingFilenames.size() > 1) {
+            messages.addWarning(MULTIPLE_FILES, packageId,
+                    matchingFilenames.stream().sorted().collect(Collectors.joining(" ")));
         } else {
-            bean.setManifestSessionId(manifestSession.getManifestSessionId());
-            bean.setFilename(manifestSession.getManifestFile() == null ? null :
-                    manifestSession.getManifestFile().getNamespaceFilename().getRight());
-            bean.setManifestCellGrid(readManifestFileCellGrid(bean.getFilename(), bean.getMessageCollection()));
-            Set<String> spreadsheetBarcodes = manifestSession.getRecords().stream().
-                    map(manifestRecord -> manifestRecord.getMetadataByKey(Metadata.Key.BOX_ID).getValue()).
-                    collect(Collectors.toSet());
-            if (CollectionUtils.isNotEmpty(bean.getRackBarcodes()) && !spreadsheetBarcodes.isEmpty()) {
-                // Generates errors if the manifest and the scanned rack barcodes do not match.
-                String notInManifest = CollectionUtils.subtract(bean.getRackBarcodes(), spreadsheetBarcodes).stream().
-                        sorted().collect(Collectors.joining(" "));
-                if (StringUtils.isNotBlank(notInManifest)) {
-                    bean.getMessageCollection().addError(NOT_IN_MANIFEST, "Box ID", notInManifest);
-                }
-                String notEntered = CollectionUtils.subtract(spreadsheetBarcodes, bean.getRackBarcodes()).stream().
-                        sorted().collect(Collectors.joining(" "));
-                if (StringUtils.isNotBlank(notEntered)) {
-                    bean.getMessageCollection().addError(NOT_IN_RACK_LIST, notEntered);
-                }
+            bean.setFilename(matchingFilenames.get(0));
+            // Parses the spreadsheet so errors can be found. Data mismatches and other manifest problems
+            // are turned into warnings at this point because they do not stop a package receipt.
+            records = extractManifestRecords(packageId, bean.getRackBarcodes(),
+                    bean.getFilename(), messages);
+            messages.addWarning(messages.getErrors());
+            messages.getErrors().clear();
+            if (!messages.hasWarnings() && records.isEmpty()) {
+                messages.addWarning(INVALID_MANIFEST, bean.getFilename());
             }
         }
-        return isAlreadyReceived;
+        // If no manifest file, the lab user will need to manually link a manifest file to this package later.
+        if (CollectionUtils.isEmpty(records)) {
+            messages.addWarning(NEEDS_MANUAL_LINKING, packageId);
+        }
+        ManifestSession manifestSession = manifestSessionDao.getSessionByPrefix(packageId);
+        if (manifestSession != null) {
+            if (!bean.isAllowUpdate()) {
+                messages.addError(NEEDS_ALLOW_UPDATE, packageId);
+            }
+            // The lab user cannot re-receive a package if the samples have been accessioned.
+            if (CollectionUtils.isNotEmpty(
+                    labVesselDao.findByListIdentifiers(new ArrayList<>(manifestSession.getVesselLabels())))) {
+                messages.addError(CANNOT_REDO_RECEIPT);
+            }
+            // Warns about any quarantines from the previous receipt.
+            String previousQuarantines = quarantinedDao.findItems(Quarantined.ItemSource.MAYO).stream().
+                    map(Quarantined::getItem).
+                    filter(item -> item.equals(packageId) ||
+                            manifestSession.getVesselLabels().contains(item)).
+                    sorted().
+                    collect(Collectors.joining(" "));
+            if (!previousQuarantines.isEmpty()) {
+                messages.addWarning(QUARANTINE_DELETES, previousQuarantines);
+            }
+        }
     }
 
     /**
-     * Links a received package to a manifest file.
+     * Finalizes a package receipt by making a manifest session (with or without records) and an RCT ticket.
+     * This should succeed since validation has already been done.
+     *
+     * If a manifest session already exists, this is a re-receipt and the manifest session is updated
+     * including the received rack barcodes.
      */
-    public void linkPackageToManifest(MayoPackageReceiptActionBean bean) {
-        // Puts up an error if the package has not been received yet.
-        ManifestSession manifestSession = manifestSessionDao.getSessionByPrefix(bean.getPackageBarcode());
-        if (manifestSession == null) {
-            bean.getMessageCollection().addError(NOT_RECEIVED, bean.getPackageBarcode());
-        } else if (CollectionUtils.isNotEmpty(manifestSession.getRecords())) {
-            bean.getMessageCollection().addError(ALREADY_LINKED, bean.getPackageBarcode());
-        } else {
-            // Parses the the spreadsheet into ManifestRecords.
-            List<List<String>> cellGrid = readManifestFileCellGrid(bean.getFilename(), bean.getMessageCollection());
-            MayoManifestImportProcessor processor = new MayoManifestImportProcessor();
-            List<ManifestRecord> records = processor.makeManifestRecords(cellGrid, bean.getFilename(),
-                    bean.getMessageCollection());
-            // Errors if the manifest file cannot be used for the package.
-            String packageId = manifestSession.getSessionPrefix();
-            if (!packageId.equals(records.get(0).getMetadataByKey(Metadata.Key.PACKAGE_ID).getValue())) {
-                bean.getMessageCollection().addError(NOT_IN_MANIFEST, "Package ID", packageId);
-            } else {
-                // To avoid continual retries, every file processed should have its filename persisted,
-                // even if there were errors parsing it. In this case the file is only for updating
-                // and never becomes a new ManifestSession, but it should not be revisited.
-                Collection<Object> newEntities = new ArrayList<>();
-                ManifestFile manifestFile = findOrCreateManifestFile(bean.getFilename(), newEntities);
-                manifestSessionDao.persistAll(newEntities);
-                // Adds ManifestFile and ManifestRecords to the existing manifest session.
-                manifestSession.addRecords(records);
-                manifestSession.setManifestFile(manifestFile);
+    public void packageReceipt(MayoPackageReceiptActionBean bean) {
+        String packageId = bean.getPackageBarcode();
+        // It's validated by the action bean, so this assert is for unit tests.
+        assert (StringUtils.isNotBlank(packageId));
 
-                // Generates error messages when the spreadsheet's rack barcodes
-                // and the previously entered rack barcodes do not match.
-                Set<String> enteredBarcodes = manifestSession.getRecords().stream().
+        MessageCollection messages = bean.getMessageCollection();
+        ManifestSession manifestSession = manifestSessionDao.getSessionByPrefix(packageId);
+        if (manifestSession == null) {
+            manifestSession = new ManifestSession(null, packageId, userBean.getBspUser(), false,
+                    Collections.emptyList());
+            manifestSessionDao.persist(manifestSession);
+        } else {
+            // Unquarantines any package or rack quarantined in the previous receipt.
+            quarantinedDao.unQuarantine(Quarantined.ItemSource.MAYO, Quarantined.ItemType.PACKAGE, packageId);
+            manifestSession.getVesselLabels().forEach(label ->
+                    quarantinedDao.unQuarantine(Quarantined.ItemSource.MAYO, Quarantined.ItemType.RACK, label));
+            manifestSession.getVesselLabels().clear();
+        }
+
+        // Updates the received rack barcodes.
+        manifestSession.getVesselLabels().addAll(bean.getRackBarcodes());
+
+        // Any errors will have already been reported in the validation phase.
+        // Errors are ignored here and the manifest session will have no manifest records.
+        manifestSession.addRecords(extractManifestRecords(packageId, bean.getRackBarcodes(),
+                bean.getFilename(), new MessageCollection()));
+
+        // Quarantines the package if there are no manifest records.
+        List<String> rctTicketComments = new ArrayList<>();
+        if (CollectionUtils.isEmpty(manifestSession.getRecords())) {
+            quarantinedDao.addOrUpdate(Quarantined.ItemSource.MAYO, Quarantined.ItemType.PACKAGE,
+                    packageId, Quarantined.MISSING_MANIFEST);
+            messages.addWarning(QUARANTINED, packageId, Quarantined.MISSING_MANIFEST);
+            rctTicketComments.add(String.format(QUARANTINED, packageId, Quarantined.MISSING_MANIFEST));
+        } else {
+            rctTicketComments.add("Package " + packageId + " is received and linked to manifest " +
+                    manifestSession.getManifestFilename());
+        }
+        // Quarantines racks based on lab user input. Currently these get unquarantined by a successful accessioning.
+        bean.getQuarantineBarcodeAndReason().forEach((barcode, reason) -> {
+            if (StringUtils.isNotBlank(reason)) {
+                quarantinedDao.addOrUpdate(Quarantined.ItemSource.MAYO, Quarantined.ItemType.RACK, barcode, reason);
+                messages.addInfo(QUARANTINED, barcode, reason);
+                rctTicketComments.add("Rack " + barcode + " is quarantined due to " + reason);
+            }
+        });
+        JiraTicket jiraTicket = makePackageRct(bean, manifestSession, rctTicketComments);
+        if (jiraTicket != null) {
+            manifestSessionDao.persist(jiraTicket);
+            bean.setRctUrl(jiraTicket.getBrowserUrl());
+            manifestSession.setReceiptTicket(jiraTicket.getTicketName());
+
+            messages.addInfo(String.format(RECEIVED, packageId, jiraTicket.getBrowserUrl()));
+        }
+    }
+
+    /**
+     * Links a previously received package to a manifest file. This means updating the manifest session
+     * with manifest records made from the manifest file.
+     *
+     * These cases are supported:
+     * - The received package has no previously linked manifest data.
+     * - The package samples are not accessioned and the manifest file matches package and rack barcodes.
+     * - Samples are accessioned and the manifest only has changes to the sample metadata.
+     */
+    public void updateManifest(MayoPackageReceiptActionBean bean) {
+        // These are validated by the action bean or caller, so this assert is for unit tests.
+        assert (StringUtils.isNotBlank(bean.getPackageBarcode()));
+
+        MessageCollection messages = bean.getMessageCollection();
+        String packageId = bean.getPackageBarcode();
+
+        // Searches for a manifest file if the filename is not given.
+        if (StringUtils.isBlank(bean.getFilename())) {
+            List<String> matchingFilenames = googleBucketDao.list(messages).stream().
+                    filter(name -> name.endsWith(".csv") && name.contains(packageId)).
+                    collect(Collectors.toList());
+            if (matchingFilenames.size() == 0) {
+                messages.addError(NO_SUCH_FILE, packageId);
+                return;
+            } else if (matchingFilenames.size() > 1) {
+                messages.addError(MULTIPLE_FILES, packageId,
+                        matchingFilenames.stream().sorted().collect(Collectors.joining(" ")));
+                return;
+            } else {
+                bean.setFilename(matchingFilenames.get(0));
+            }
+        }
+        String filename = bean.getFilename();
+
+        // There will always be a manifest session for a received package. It may or may not have manifest records.
+        ManifestSession manifestSession = manifestSessionDao.getSessionByPrefix(packageId);
+        if (manifestSession == null) {
+            messages.addError(NOT_RECEIVED, packageId);
+            return;
+        }
+        List<String> receivedRacks = new ArrayList<>(manifestSession.getVesselLabels());
+        List<ManifestRecord> newRecords = extractManifestRecords(packageId, receivedRacks, filename, messages);
+        // If there are manifest file parsing errors, or the manifest file doesn't match package and rack barcodes,
+        // report errors to the user and make no changes.
+        if (messages.hasErrors()) {
+            return;
+        }
+        // Accessioned samples must not have updates to the rack, tube, or position changes.
+        if (CollectionUtils.isNotEmpty(manifestSession.getRecords())) {
+            if (!bean.isAllowUpdate()) {
+                // The checkbox must be set to allow updates.
+                messages.addError(NEEDS_ALLOW_UPDATE, packageId);
+
+            } else if (CollectionUtils.isNotEmpty(labVesselDao.findByListIdentifiers(receivedRacks))) {
+                // Extracts any sample metadata changes from the new records.
+                Map<MercurySample, Set<Metadata>> metadataDiffs =
+                        extractMetadataChanges(manifestSession, newRecords, messages);
+                if (messages.hasErrors()) {
+                    return;
+                }
+                // Does the MercurySample metadata updates.
+                metadataDiffs.forEach((mercurySample, diffs) -> mercurySample.updateMetadata(diffs));
+
+                // Reports the changes.
+                List<String> updatedSamples = metadataDiffs.keySet().stream().
+                        map(MercurySample::getSampleKey).
+                        sorted().collect(Collectors.toList());
+                if (updatedSamples.isEmpty()) {
+                    messages.addWarning(NO_SAMPLES_UPDATED);
+                } else {
+                    messages.addInfo(SAMPLES_UPDATED, updatedSamples.size(),
+                            StringUtils.join(updatedSamples, " "));
+                    // Adds comment to the existing RCT.
+                    addRctComment(manifestSession.getReceiptTicket(), messages,
+                            "Sample metadata was updated from manifest file " +
+                                    manifestSession.getManifestFilename() + " for samples " +
+                                    StringUtils.join(updatedSamples, " "));
+                }
+            }
+        }
+
+        if (!messages.hasErrors()) {
+            manifestSession.getRecords().clear();
+            manifestSession.addRecords(newRecords);
+            manifestSession.setManifestFilename(filename);
+
+            String success = String.format(PACKAGE_LINKED, packageId, filename);
+            messages.addInfo(success);
+            // Unquarantines the package, relying on the above validation.
+            boolean wasQuarantined = quarantinedDao.unQuarantine(Quarantined.ItemSource.MAYO,
+                    Quarantined.ItemType.PACKAGE, packageId);
+            if (wasQuarantined) {
+                messages.addInfo(String.format(UNQUARANTINED, packageId));
+                // Adds comment to the existing RCT.
+                addRctComment(manifestSession.getReceiptTicket(), messages, success);
+            }
+        }
+    }
+
+    /**
+     * Validates that the manifest file is compatible with the existing manifest session and returns the
+     * manifest records from the file if no parsing or other errors were found.
+     */
+    private List<ManifestRecord> extractManifestRecords(String packageId, Collection<String> rackBarcodes,
+            String filename, MessageCollection messages) {
+        // Parses the the spreadsheet into ManifestRecords.
+        List<List<String>> cellGrid = readManifestFileCellGrid(filename, messages);
+        MayoManifestImportProcessor processor = new MayoManifestImportProcessor();
+        List<ManifestRecord> records = processor.makeManifestRecords(cellGrid, filename, messages);
+        if (records.isEmpty()) {
+            messages.addError(INVALID_MANIFEST, filename);
+        } else if (!packageId.equals(records.get(0).getMetadataByKey(Metadata.Key.PACKAGE_ID).getValue())) {
+            messages.addError(NOT_IN_MANIFEST, "Package ID", packageId);
+        } else {
+            // The spreadsheet's rack barcodes must match the previously entered rack barcodes.
+            Set<String> spreadsheetBarcodes = records.stream().
                     map(manifestRecord -> manifestRecord.getMetadataByKey(Metadata.Key.BOX_ID).getValue()).
                     collect(Collectors.toSet());
-                Set<String> spreadsheetBarcodes = records.stream().
-                        map(manifestRecord -> manifestRecord.getMetadataByKey(Metadata.Key.BOX_ID).getValue()).
-                        collect(Collectors.toSet());
-                String notInSpreadsheet = CollectionUtils.subtract(enteredBarcodes, spreadsheetBarcodes).stream().
-                        sorted().collect(Collectors.joining(" "));
-                if (StringUtils.isNotBlank(notInSpreadsheet)) {
-                    bean.getMessageCollection().addError(NOT_IN_MANIFEST, "previously entered rack(s)",
-                            notInSpreadsheet);
-                }
-                String notEntered = CollectionUtils.subtract(spreadsheetBarcodes, enteredBarcodes).stream().
-                        sorted().collect(Collectors.joining(" "));
-                if (StringUtils.isNotBlank(notEntered)) {
-                    bean.getMessageCollection().addError(NOT_IN_RACK_LIST, notEntered);
-                }
-                if (bean.getMessageCollection().hasErrors()) {
-                    // Updates the quarantine record for the package with a new reason.
-                    quarantinedDao.addOrUpdate(Quarantined.ItemSource.MAYO, Quarantined.ItemType.PACKAGE,
-                            bean.getPackageBarcode(), Quarantined.RACK_BARCODE_MISMATCH);
-                    // Adds comments to the existing RCT.
-                    addRctComment(manifestSession.getReceiptTicket(), bean.getMessageCollection(),
-                            String.format(PACKAGE_LINKED, bean.getPackageBarcode(), bean.getFilename()));
-                    addRctComment(manifestSession.getReceiptTicket(), bean.getMessageCollection(),
-                            String.format(QUARANTINED, bean.getPackageBarcode(), Quarantined.RACK_BARCODE_MISMATCH));
-                } else {
-                    // If successful, unquarantines the package.
-                    boolean wasQuarantined = quarantinedDao.unQuarantine(Quarantined.ItemSource.MAYO,
-                            Quarantined.ItemType.PACKAGE, bean.getPackageBarcode());
-                    if (wasQuarantined) {
-                        bean.getMessageCollection().addInfo(String.format(UNQUARANTINED, bean.getPackageBarcode()));
-                        // Adds comment to the existing RCT.
-                        addRctComment(manifestSession.getReceiptTicket(), bean.getMessageCollection(),
-                                String.format(PACKAGE_LINKED, bean.getPackageBarcode(), bean.getFilename()));
+            String notInSpreadsheet = CollectionUtils.subtract(rackBarcodes, spreadsheetBarcodes).
+                    stream().sorted().collect(Collectors.joining(" "));
+            if (StringUtils.isNotBlank(notInSpreadsheet)) {
+                messages.addError(NOT_IN_MANIFEST, "rack barcode", notInSpreadsheet);
+            }
+            String notEntered = CollectionUtils.subtract(spreadsheetBarcodes, rackBarcodes).
+                    stream().sorted().collect(Collectors.joining(" "));
+            if (StringUtils.isNotBlank(notEntered)) {
+                messages.addError(EXTRA_IN_MANIFEST, notEntered);
+            }
+        }
+        return messages.hasErrors() ? Collections.emptyList() : records;
+    }
+
+    /**
+     * Errors if there are vessel or position changes in the new manifest records.
+     * If no errors found, returns the updates to existing MercurySample metadata.
+     */
+    private Map<MercurySample, Set<Metadata>> extractMetadataChanges(ManifestSession manifestSession,
+            List<ManifestRecord> updateRecords, MessageCollection messages) {
+        Map<MercurySample, Set<Metadata>> metadataDiffs = new HashMap<>();
+
+        // Maps the updated records' sample name to sample metadata.
+        Multimap<String, Metadata> newMetadataRecords = HashMultimap.create();
+        for (ManifestRecord manifestRecord : updateRecords) {
+            // Sample name is the tube barcode.
+            String sampleName = manifestRecord.getValueByKey(Metadata.Key.BROAD_2D_BARCODE);
+            newMetadataRecords.putAll(sampleName, manifestRecord.getMetadata());
+        }
+
+        // Maps the tube to rack and position for old records and new records.
+        Map<String, String> oldTubeMap = manifestSession.getRecords().stream().
+                collect(Collectors.toMap(
+                        record -> record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE),
+                        record -> record.getValueByKey(Metadata.Key.BOX_ID) +
+                                record.getValueByKey(Metadata.Key.WELL_POSITION)));
+
+        Map<String, String> newTubeMap = updateRecords.stream().
+                collect(Collectors.toMap(
+                        record -> record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE),
+                        record -> record.getValueByKey(Metadata.Key.BOX_ID) +
+                                record.getValueByKey(Metadata.Key.WELL_POSITION)));
+
+        // For the accessioned samples, the new records must have identical combinations of rack, position, and tube.
+        Map<String, MercurySample> sampleMap = mercurySampleDao.findMapIdToMercurySample(newMetadataRecords.keySet());
+        String nonMetadataChanges = sampleMap.values().stream().
+                filter(mercurySample -> mercurySample != null).
+                map(MercurySample::getSampleKey).  // Tube barcode is the sample name.
+                filter(tubeBarcode -> !Objects.equal(oldTubeMap.get(tubeBarcode), newTubeMap.get(tubeBarcode))).
+                sorted().
+                collect(Collectors.joining(" "));
+
+        if (StringUtils.isNotBlank(nonMetadataChanges)) {
+            messages.addError(ONLY_METADATA_CHANGES, nonMetadataChanges);
+        } else {
+            // Collects any metadata differences found for each accessioned sample.
+            for (MercurySample mercurySample : sampleMap.values()) {
+                if (mercurySample != null) {
+                    Map<Metadata.Key, Metadata> existingData = mercurySample.getMetadata().stream().
+                            collect(Collectors.toMap(Metadata::getKey, Function.identity()));
+
+                    Set<Metadata> diffs = newMetadataRecords.get(mercurySample.getSampleKey()).stream().
+                            filter(newData -> !newData.getValue().equals(existingData.get(newData.getKey()))).
+                            collect(Collectors.toSet());
+                    if (CollectionUtils.isNotEmpty(diffs)) {
+                        metadataDiffs.put(mercurySample, diffs);
                     }
                 }
             }
         }
-    }
-
-    /**
-     * Updates existing sample's metadata from the given manifest file.
-     */
-    public void updateMetadata(MayoPackageReceiptActionBean bean) {
-        // Parses the the spreadsheet into ManifestRecords.
-        List<List<String>> cellGrid = readManifestFileCellGrid(bean.getFilename(), bean.getMessageCollection());
-        MayoManifestImportProcessor processor = new MayoManifestImportProcessor();
-        List<ManifestRecord> updateRecords = processor.makeManifestRecords(cellGrid, bean.getFilename(),
-                bean.getMessageCollection());
-        if (bean.getMessageCollection().hasErrors()) {
-            return;
-        }
-        // To avoid continual retries, every filename processed should be persisted, even if there were
-        // errors parsing it. The file is only for updating and never becomes a new ManifestSession.
-        Collection<Object> newEntities = new ArrayList<>();
-        findOrCreateManifestFile(bean.getFilename(), newEntities);
-        manifestSessionDao.persistAll(newEntities);
-
-        // There must be an existing manifest session.
-        String packageId = updateRecords.get(0).getMetadataByKey(Metadata.Key.PACKAGE_ID).getValue();
-        ManifestSession manifestSession = manifestSessionDao.getSessionByPrefix(packageId);
-        if (manifestSession == null) {
-            bean.getMessageCollection().addError(NOT_RECEIVED, packageId);
-            return;
-        }
-        // Collects the update data.
-        Multimap<String, Metadata> metadataMap = HashMultimap.create();
-        for (ManifestRecord manifestRecord : updateRecords) {
-            // Sample name is the tube barcode.
-            String sampleName = manifestRecord.getValueByKey(Metadata.Key.BROAD_2D_BARCODE);
-            metadataMap.putAll(sampleName, manifestRecord.getMetadata());
-        }
-        // All samples must have already been accessioned.
-        Map<String, MercurySample> sampleMap = mercurySampleDao.findMapIdToMercurySample(metadataMap.keySet());
-        Collection<String> noSuchSamples = CollectionUtils.subtract(metadataMap.keySet(),
-                sampleMap.entrySet().stream().
-                        filter(mapEntry -> mapEntry.getValue() != null).
-                        map(Map.Entry::getKey).
-                        collect(Collectors.toSet()));
-        if (!noSuchSamples.isEmpty()) {
-            bean.getMessageCollection().addError(NOT_ACCESSIONED, noSuchSamples.stream().
-                    sorted().collect(Collectors.joining(" ")));
-            return;
-        }
-        // For each sample, updates any metadata changes.
-        List<String> updatedSamples = new ArrayList<>();
-        List<String> noChangesToSample = new ArrayList<>();
-        for (MercurySample mercurySample : sampleMap.values()) {
-            Set<Metadata> diffs = new HashSet<>();
-            for (Metadata update : metadataMap.get(mercurySample.getSampleKey())) {
-                Metadata.Key key = update.getKey();
-                if (mercurySample.getMetadata().stream().
-                        anyMatch(existing -> key.equals(existing.getKey()) &&
-                                !existing.getValue().equals(update.getValue()))) {
-                    diffs.add(update);
-                }
-            }
-            if (diffs.isEmpty()) {
-                noChangesToSample.add(mercurySample.getSampleKey());
-            } else {
-                updatedSamples.add(mercurySample.getSampleKey());
-                mercurySample.updateMetadata(diffs);
-            }
-        }
-        updatedSamples.sort(Comparator.naturalOrder());
-        noChangesToSample.sort(Comparator.naturalOrder());
-        String updatedSampleNames = StringUtils.join(updatedSamples, " ");
-        if (updatedSamples.isEmpty()) {
-            bean.getMessageCollection().addWarning(NO_SAMPLES_UPDATED);
-        } else {
-            bean.getMessageCollection().addInfo(SAMPLES_UPDATED, updatedSampleNames);
-            if (!noChangesToSample.isEmpty()) {
-                bean.getMessageCollection().addInfo(SAMPLES_NOT_UPDATED, StringUtils.join(noChangesToSample, " "));
-            }
-            // Adds comment to the existing RCT.
-            addRctComment(manifestSession.getReceiptTicket(), bean.getMessageCollection(),
-                    "Sample metadata was updated from manifest file " + bean.getFilename() +
-                            " for samples " + updatedSampleNames);
-        }
-    }
-
-    /**
-     * Does a package receipt, with or without a linked manifest file.
-     * Makes a RCT ticket for the package.
-     */
-    public void packageReceipt(MayoPackageReceiptActionBean bean) {
-        // It's validated by the action bean, so this assert is for unit tests.
-        assert (StringUtils.isNotBlank(bean.getPackageBarcode()));
-        Collection<Object> newEntities = new ArrayList<>();
-        ManifestSession manifestSession;
-        if (bean.getManifestSessionId() == null) {
-            // Makes an unlinked ManifestSession, i.e. it's not linked to a manifest file.
-            manifestSession = new ManifestSession(null, bean.getPackageBarcode(),
-                    userBean.getBspUser(), false, Collections.emptyList());
-            manifestSession.setVesselLabels(new HashSet<>(bean.getRackBarcodes()));
-            newEntities.add(manifestSession);
-        } else {
-            manifestSession = manifestSessionDao.find(bean.getManifestSessionId());
-        }
-
-        // Makes comments for the RCT including "quarantined" if there is no manifest.
-        List<String> comments = new ArrayList<>();
-        if (manifestSession.getManifestFile() == null) {
-            comments.add(String.format(QUARANTINED, bean.getPackageBarcode(), Quarantined.MISSING_MANIFEST));
-            quarantinedDao.addOrUpdate(Quarantined.ItemSource.MAYO, Quarantined.ItemType.PACKAGE,
-                    bean.getPackageBarcode(), Quarantined.MISSING_MANIFEST);
-            bean.getMessageCollection().addError(QUARANTINED, bean.getPackageBarcode(),
-                    Quarantined.MISSING_MANIFEST);
-        } else {
-            comments.add("Package " + bean.getPackageBarcode() + " is received and linked to manifest " +
-                    manifestSession.getManifestFile().getNamespaceFilename().getRight());
-        }
-        // The individual racks can be separately quarantined by the lab user.
-        // Currently these are unquarantined by a successful accessioning.
-        bean.getQuarantineBarcodeAndReason().forEach((barcode, reason) -> {
-            if (StringUtils.isNotBlank(reason)) {
-                quarantinedDao.addOrUpdate(Quarantined.ItemSource.MAYO, Quarantined.ItemType.RACK,
-                        barcode, reason);
-                bean.getMessageCollection().addInfo(QUARANTINED, barcode, reason);
-                comments.add("Rack " + barcode + " is quarantined due to " + reason);
-            }});
-        JiraTicket jiraTicket = makePackageRct(bean, comments);
-        if (jiraTicket != null) {
-            newEntities.add(jiraTicket);
-            bean.setRctUrl(jiraTicket.getBrowserUrl());
-            manifestSession.setReceiptTicket(jiraTicket.getTicketName());
-
-            bean.getMessageCollection().addInfo(String.format(RECEIVED, bean.getPackageBarcode(),
-                    jiraTicket.getBrowserUrl()));
-        }
-        labVesselDao.persistAll(newEntities);
+        return metadataDiffs;
     }
 
     /**
@@ -426,8 +464,10 @@ public class MayoManifestEjb {
      */
     public void validateForAccessioning(MayoSampleReceiptActionBean bean) {
         // The action bean checks that the rack and scan are not empty. These asserts are for unit tests.
-        assert(bean.getRackScan() != null && bean.getRackScan().size() > 0);
-        assert(StringUtils.isNotBlank(bean.getRackBarcode()));
+        assert (bean.getRackScan() != null && bean.getRackScan().size() > 0);
+        assert (StringUtils.isNotBlank(bean.getRackBarcode()));
+
+        MessageCollection messages = bean.getMessageCollection();
         List<String> barcodes = new ArrayList<>();
         // Turns the rack scan into a list of position & sample to pass to and from jsp.
         bean.getRackScanEntries().clear();
@@ -437,14 +477,14 @@ public class MayoManifestEjb {
                 bean.getRackScanEntries().add(StringUtils.join(key, " ", value));
             }
         });
-        assert(!barcodes.isEmpty());
+        assert (!barcodes.isEmpty());
 
         // Rack barcode must be linked to a ManifestSession of a received Mayo package.
         ManifestSession manifestSession = manifestSessionDao.getSessionByVesselLabel(bean.getRackBarcode());
         if (manifestSession == null) {
-            bean.getMessageCollection().addError(NOT_RECEIVED, "containing " + bean.getRackBarcode());
+            messages.addError(RACK_NOT_RECEIVED, bean.getRackBarcode());
         } else if (CollectionUtils.isEmpty(manifestSession.getRecords())) {
-            bean.getMessageCollection().addError(NOT_LINKED, manifestSession.getSessionPrefix());
+            messages.addError(NOT_LINKED, manifestSession.getSessionPrefix());
         } else {
             bean.setManifestSessionId(manifestSession.getManifestSessionId());
         }
@@ -457,7 +497,7 @@ public class MayoManifestEjb {
                 sorted().
                 collect(Collectors.joining(" "));
         if (!existingVessels.isEmpty()) {
-            bean.getMessageCollection().addError(ALREADY_ACCESSIONED, existingVessels);
+            messages.addError(ALREADY_ACCESSIONED, existingVessels);
         }
 
         // Rack scan positions must all be valid for the rack type.
@@ -468,7 +508,7 @@ public class MayoManifestEjb {
                         collect(Collectors.toList())).
                 stream().sorted().collect(Collectors.joining(" "));
         if (!invalidPositions.isEmpty()) {
-            bean.getMessageCollection().addError(UNKNOWN_WELL_SCAN, invalidPositions);
+            messages.addError(UNKNOWN_WELL_SCAN, invalidPositions);
         }
     }
 
@@ -476,13 +516,14 @@ public class MayoManifestEjb {
      * Accessions rack, tubes, samples provided the manifest is found and data matches up.
      */
     public void accession(MayoSampleReceiptActionBean bean) {
+        MessageCollection messages = bean.getMessageCollection();
         // Finds the existing manifest session.
         ManifestSession manifestSession;
         if (bean.getManifestSessionId() == null) {
             // Finds the manifest session. It must have manifest records from a manifest file.
             manifestSession = manifestSessionDao.getSessionByVesselLabel(bean.getRackBarcode());
             if (manifestSession == null) {
-                bean.getMessageCollection().addError(NOT_RECEIVED, "containing " + bean.getRackBarcode());
+                messages.addError(RACK_NOT_RECEIVED, bean.getRackBarcode());
                 return;
             }
             bean.setManifestSessionId(manifestSession.getManifestSessionId());
@@ -494,14 +535,14 @@ public class MayoManifestEjb {
         // If manifest records don't exist it means the package was received without having a manifest file.
         // This is unusable for accessioning.
         if (CollectionUtils.isEmpty(manifestSession.getRecords())) {
-            bean.getMessageCollection().addError(NOT_LINKED, manifestSession.getSessionPrefix());
+            messages.addError(NOT_LINKED, manifestSession.getSessionPrefix());
             return;
         }
         // Finds the records for the rack.
         List<ManifestRecord> manifestRecords =
                 manifestSession.findRecordsByKey(bean.getRackBarcode(), Metadata.Key.BOX_ID);
         if (CollectionUtils.isEmpty(manifestRecords)) {
-            bean.getMessageCollection().addError(NOT_IN_MANIFEST, "Box ID", bean.getRackBarcode());
+            messages.addError(NOT_IN_MANIFEST, "Box ID", bean.getRackBarcode());
             return;
         }
 
@@ -524,7 +565,7 @@ public class MayoManifestEjb {
         mismatches.keySet().stream().sorted().forEach(position -> {
             String rackTube = mismatches.get(position).getLeft();
             String manifestTube = mismatches.get(position).getRight();
-            bean.getMessageCollection().addError(WRONG_TUBE_IN_POSITION, position,
+            messages.addError(WRONG_TUBE_IN_POSITION, position,
                     StringUtils.isBlank(rackTube) ? "no tube" : rackTube,
                     StringUtils.isBlank(manifestTube) ? "no tube" : manifestTube);
         });
@@ -540,10 +581,10 @@ public class MayoManifestEjb {
         String accessionedSamples = mercurySampleDao.findBySampleKeys(manifestPositionToTube.values()).stream().
                 map(MercurySample::getSampleKey).collect(Collectors.joining(" "));
         if (!accessionedSamples.isEmpty()) {
-            bean.getMessageCollection().addError(ALREADY_ACCESSIONED_SAMPLES, accessionedSamples);
+            messages.addError(ALREADY_ACCESSIONED_SAMPLES, accessionedSamples);
         }
 
-        if (bean.getMessageCollection().hasErrors()) {
+        if (messages.hasErrors()) {
             return;
         }
 
@@ -597,18 +638,18 @@ public class MayoManifestEjb {
             newEntities.add(mercurySample);
         }
 
-        bean.getMessageCollection().addInfo(String.format(ACCESSIONED, bean.getRackBarcode(),
+        messages.addInfo(String.format(ACCESSIONED, bean.getRackBarcode(),
                 sampleMetadata.keySet().size(),
                 sampleMetadata.keySet().stream().sorted().collect(Collectors.joining(" "))));
 
         boolean wasQuarantined = quarantinedDao.unQuarantine(Quarantined.ItemSource.MAYO,
                 Quarantined.ItemType.RACK, bean.getRackBarcode());
         if (wasQuarantined) {
-            bean.getMessageCollection().addInfo(String.format(UNQUARANTINED, bean.getRackBarcode()));
+            messages.addInfo(String.format(UNQUARANTINED, bean.getRackBarcode()));
         }
 
         // Adds comment to the existing RCT.
-        if (addRctComment(manifestSession.getReceiptTicket(), bean.getMessageCollection(),
+        if (addRctComment(manifestSession.getReceiptTicket(), messages,
                 String.format(ACCESSIONED, bean.getRackBarcode(), manifestPositionToTube.values().size(),
                         manifestPositionToTube.values().stream().sorted().collect(Collectors.joining(" "))))) {
             // Only persists entities if Jira succeeds.
@@ -655,42 +696,12 @@ public class MayoManifestEjb {
     }
 
     /**
-     * Finds bucket filenames that have been processed but were not made into manifest sessions
-     * and puts the list into the bean.
-     */
-    public void getFailedFiles(MayoAdminActionBean bean) {
-        bean.setFailedFilesList(manifestSessionDao.getFailedFilenames(mayoManifestConfig.getBucketName()).
-                stream().
-                map(qualifiedFilename -> ManifestFile.extractFilename(qualifiedFilename)).
-                collect(Collectors.toList()));
-    }
-
-    /**
-     * Reads the new manifest files from storage and makes new manifests
-     * when the package has not been received yet.
-     */
-    public void pullAll(MayoAdminActionBean bean) {
-        processNewManifestFiles(bean.getMessageCollection(), null, null).forEach(session ->
-                bean.getMessageCollection().addInfo(MANIFEST_CREATED,
-                        session.getManifestFile().getNamespaceFilename().getRight()));
-    }
-
-    /**
-     * Reads the manifest file given by the bean filename and makes a new manifest
-     * if the package has not been received yet.
-     */
-    public void pullOne(MayoAdminActionBean bean) {
-        processNewManifestFiles(bean.getMessageCollection(), bean.getFilename(), null).forEach(session ->
-                bean.getMessageCollection().addInfo(MANIFEST_CREATED,
-                        session.getManifestFile().getNamespaceFilename().getRight()));
-    }
-
-    /**
      * Looks for the file in Google Storage using filename and returns the cell data for each sheet.
-     * Returns null if the manifest file doesn't exist or could not be read. This is not an error.
-     * True errors are put in the MessageCollection.
+     * Returns empty if the manifest file doesn't exist or could not be read.
+     * Bucket access or csv parsing errors are put in the MessageCollection.
      */
-    private @NotNull List<List<String>> readManifestFileCellGrid(String filename, MessageCollection messages) {
+    private @NotNull
+    List<List<String>> readManifestFileCellGrid(String filename, MessageCollection messages) {
         if (StringUtils.isNotBlank(filename)) {
             byte[] spreadsheet = googleBucketDao.download(filename, messages);
             if (spreadsheet == null || spreadsheet.length == 0) {
@@ -702,118 +713,10 @@ public class MayoManifestEjb {
         return Collections.emptyList();
     }
 
-    /**
-     * Reads manifest file storage and persists files as new ManifestSessions, provided the package isn't received.
-     */
-    private List<ManifestSession> processNewManifestFiles(MessageCollection messages,
-            @Nullable String loadOneFilename, @Nullable List<String> rackBarcodes) {
-        List<ManifestSession> manifestSessions = new ArrayList<>();
-
-        // Makes the list of filenames that need to be processed, excluding the filenames already handled.
-        List<String> filenames = new ArrayList<>();
-        if (StringUtils.isBlank(loadOneFilename)) {
-            filenames.addAll(googleBucketDao.list(messages));
-            filenames.sort(Comparator.naturalOrder());
-            filenames.removeAll(manifestSessionDao.getFilenamesForNamespace(mayoManifestConfig.getBucketName()));
-        } else if (googleBucketDao.exists(loadOneFilename, messages)) {
-            // Processes just the specified filename and only if the file exists.
-            filenames.add(loadOneFilename);
-        }
-        // Makes the manifest sessions.
-        Set<Object> newEntities = new HashSet<>();
-        for (String filename : filenames) {
-            ManifestSession manifestSession = createManifestSession(filename, messages, rackBarcodes, newEntities);
-            if (manifestSession != null) {
-                manifestSessions.add(manifestSession);
-            }
-        }
-        // ManifestFile and ManifestSession entities made from files are persisted here because
-        // they are valid regardless of any further receiving or accessioning.
-        if (!newEntities.isEmpty()) {
-            manifestSessionDao.persistAll(newEntities);
-            manifestSessionDao.flush();
-        }
-        return manifestSessions;
-    }
-
-    /**
-     * Makes a new ManifestSession from the file for packages that haven't been received yet.
-     */
-    private @Nullable ManifestSession createManifestSession(String filename, MessageCollection messages,
-            @Nullable List<String> rackBarcodes, Set<Object> newEntities) {
-
-        // Only process filenames that can be stored in the database without substitution characters.
-        if (!MayoManifestImportProcessor.cleanupValue(filename).equals(filename)) {
-            messages.addWarning(String.format(INVALID_FILENAME, filename));
-            logger.warn(String.format(INVALID_FILENAME, filename));
-
-        } else {
-            // To avoid continual retries, every file processed should have its filename persisted,
-            // even if there were errors parsing it, or it's only for updating or linking and never
-            // becomes a new ManifestSession.
-            ManifestFile manifestFile = findOrCreateManifestFile(filename, newEntities);
-
-            MayoManifestImportProcessor processor = new MayoManifestImportProcessor();
-            // Ignores earlier errors in the message collection (from other manifest files).
-            int oldErrorCount = messages.getErrors().size();
-            List<List<String>> cellGrid = readManifestFileCellGrid(filename, messages);
-            List<ManifestRecord> records =
-                    processor.makeManifestRecords(cellGrid, filename, messages);
-            int parsingErrorCount = messages.getErrors().size() - oldErrorCount;
-
-            if (parsingErrorCount == 0) {
-                if (records.isEmpty()) {
-                    messages.addError(INVALID_MANIFEST, filename);
-                } else {
-                    String packageId = records.get(0).getMetadataByKey(Metadata.Key.PACKAGE_ID).getValue();
-
-                    // If a manifestSession for the package already exists, only makes a new manifestSession
-                    // if the package hasn't been received yet.
-                    ManifestSession oldSession = manifestSessionDao.getSessionByPrefix(packageId);
-                    // A package receipt is indicated by a receipt ticket on the manifestSession.
-                    if (oldSession != null && StringUtils.isNotBlank(oldSession.getReceiptTicket())) {
-
-                        // If the old session is valid (has manifest records) then the lab user can only
-                        // Update Sample Metadata. If more than that is needed then a data fixup is needed.
-                        // If the old session was a quarantined package with no manifest records, the
-                        // lab user should use Link Package to Manifest.
-                        messages.addWarning(String.format(
-                                oldSession.getRecords().isEmpty() ? SKIPPING_RECEIVED : SKIPPING_LINKED,
-                                filename, packageId));
-                    } else {
-                        ManifestSession manifestSession = new ManifestSession(null, packageId, userBean.getBspUser(),
-                                false, records);
-                        manifestSession.setManifestFile(manifestFile);
-
-                        // ManifestSession vesselLabels will hold the rack barcodes that the lab user entered
-                        // during the package receipt. It's not the rack barcodes from the spreadsheet.
-                        if (CollectionUtils.isNotEmpty(rackBarcodes)) {
-                            manifestSession.setVesselLabels(new HashSet<>(rackBarcodes));
-                        }
-                        newEntities.add(manifestSession);
-                        return manifestSession;
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
-    /** Finds or creates a new ManifestFile. */
-    private ManifestFile findOrCreateManifestFile(String filename, Collection<Object> newEntities) {
-        String qualifiedFilename = ManifestFile.qualifiedFilename(mayoManifestConfig.getBucketName(), filename);
-        // ManifestFile entities should be reused for the same filename.
-        ManifestFile manifestFile = manifestSessionDao.findSingle(ManifestFile.class,
-                ManifestFile_.qualifiedFilename, qualifiedFilename);
-        if (manifestFile == null) {
-            manifestFile = new ManifestFile(qualifiedFilename);
-            newEntities.add(manifestFile);
-        }
-        return manifestFile;
-    }
 
     /** Makes a new RCT in Jira for the Mayo package. */
-    private JiraTicket makePackageRct(MayoPackageReceiptActionBean bean, List<String> comments) {
+    private JiraTicket makePackageRct(MayoPackageReceiptActionBean bean, @NotNull  ManifestSession manifestSession,
+            List<String> comments) {
         String title = bean.getPackageBarcode();
         CustomField titleField = new CustomField(new CustomFieldDefinition("summary", "Summary", true), title);
 
@@ -834,9 +737,7 @@ public class MayoManifestEjb {
         JiraTicket jiraTicket = null;
         JiraIssue jiraIssue;
         try {
-            ManifestSession manifestSession = bean.getManifestSessionId() == null ? null :
-                    manifestSessionDao.find(bean.getManifestSessionId());
-            if (manifestSession != null && StringUtils.isNotBlank(manifestSession.getReceiptTicket())) {
+            if (StringUtils.isNotBlank(manifestSession.getReceiptTicket())) {
                 jiraTicket = labVesselDao.findSingle(JiraTicket.class, JiraTicket_.ticketId,
                         manifestSession.getReceiptTicket());
             }

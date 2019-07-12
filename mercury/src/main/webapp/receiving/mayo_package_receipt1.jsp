@@ -4,25 +4,12 @@
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoPackageReceiptActionBean"/>
 <script type="text/javascript">
     function receiveIt() {
-        $j(".relinkMode").css('display', 'none');
+        $j(".updateMode").css('display', 'none');
         $j(".receiveMode").css('display', 'block');
-        $j(".pkgIdInput").show();
-        $j("#linkPkgBtn").hide();
-        $j("#updateMetadataBtn").hide();
-    };
-    function relinkIt() {
-        $j(".relinkMode").css('display', 'block');
-        $j(".receiveMode").css('display', 'none');
-        $j(".pkgIdInput").show();
-        $j("#linkPkgBtn").show();
-        $j("#updateMetadataBtn").hide();
     };
     function updateIt() {
-        $j(".relinkMode").css('display', 'block');
+        $j(".updateMode").css('display', 'block');
         $j(".receiveMode").css('display', 'none');
-        $j(".pkgIdInput").hide();
-        $j("#linkPkgBtn").hide();
-        $j("#updateMetadataBtn").show();
     };
 </script>
 
@@ -57,18 +44,14 @@
                 <span>
                     <input type="radio" id="selectReceive" onchange="receiveIt()" name="mode" checked="checked"
                            style="display:inline; vertical-align: middle;">
-                    <label for="selectReceive" style="display:inline; vertical-align: middle;">Receive</label>
-                </span>
-                <span style="padding-left: 20px;">
-                    <input type="radio" id="selectLink" onchange="relinkIt()" name="mode" style="display:inline;">
-                    <label for="selectLink" style="display:inline;">Link pacakge to manifest</label>
+                    <label for="selectReceive" style="display:inline; vertical-align: middle;">Receive package</label>
                 </span>
                 <span style="padding-left: 20px;">
                     <input type="radio" id="selectUpdate" onchange="updateIt()" name="mode" style="display:inline;">
-                    <label for="selectUpdate" style="display:inline;">Update metadata from manifest</label>
+                    <label for="selectUpdate" style="display:inline;">Update manifest</label>
                 </span>
             </div>
-            <div class="inputGroup pkgIdInput">
+            <div class="inputGroup" title="The package barcode, starting with 'PKG'">
                 <div class="inputRow">
                     <div class="firstCol">Package ID</div>
                     <div class="control-group controls">
@@ -83,24 +66,28 @@
                         <stripes:text id="rackCount" name="rackCount"/>
                     </div>
                 </div>
-                <div class="inputRow receiveMode">
+                <div class="inputRow receiveMode" title="For unreadable barcodes type in short identifiers such as 1, 2, 3 or a, b, c">
                     <div class="firstCol">Rack barcodes</div>
                     <div class="controls">
-                        <stripes:textarea rows="5" id="rackBarcodeString" name="rackBarcodeString"
-                                          title="For unreadable barcodes type in short identifiers such as 1, 2, 3 or a, b, c"/>
+                        <stripes:textarea rows="5" id="rackBarcodeString" name="rackBarcodeString"/>
                     </div>
                 </div>
-                <div class="inputRow relinkMode" style="display: none;">
+                 <div class="inputRow updateMode" style="display: none;" title="Leave blank if you want Mercury to search for the file."/>
                     <div class="firstCol">Manifest filename</div>
                     <div class="controls">
                         <stripes:text id="filename" name="filename"/>
                     </div>
                 </div>
+                <div class="inputRow" title="Check this to allow an existing package receipt to be updated with new values.">
+                    <div class="firstCol">Allow Update</div>
+                    <div class="controls">
+                        <stripes:checkbox id="allowUpdate" name="allowUpdate"/>
+                    </div>
+                </div>
             </div>
             <div style="padding-top: 20px;">
                 <stripes:submit id="continueBtn" name="continueBtn" value="Continue" class="btn btn-primary receiveMode"/>
-                <stripes:submit id="linkPkgBtn" name="linkPkgBtn" value="Link Package" class="btn btn-primary" style="display: none;"/>
-                <stripes:submit id="updateMetadataBtn" name="updateMetadataBtn" value="Update Metadata" class="btn btn-primary" style="display: none;"/>
+                <stripes:submit id="updateManifestBtn" name="updateManifestBtn" value="Update Manifest" class="btn btn-primary updateMode" style="display: none;"/>
             </div>
         </stripes:form>
 

@@ -25,37 +25,16 @@
                 </c:if>
             </div>
 
-            <!-- Shows files that were read in but were not made into new manifests. -->
-            <div style="padding-top: 20px;">
-                <stripes:submit id="showFailedFilesListBtn" name="showFailedFilesListBtn" value="Show Failed Files"
-                                class="btn btn-primary"
-                                title="Makes a download txt file of any filenames that were read in and their content was not a valid manifest."/>
-            </div>
-
-            <!-- Loads all new files and makes new manifests out of the valid ones with new package barcodes. -->
-            <div style="padding-top: 20px;">
-                <stripes:submit id="pullAllFilesBtn" name="pullAllFilesBtn" value="Pull All New Manifest Files"
-                                class="btn btn-primary"
-                                title="Finds any new manifest files and saves them in Mercury."/>
-            </div>
-
-            <!-- Loads the specified file and makes a new manifest if valid and with a new package barcode. -->
-            <div style="padding-top: 20px;">
-                <stripes:submit id="pullFileBtn" name="pullFileBtn" value="Pull One Manifest File"
-                                class="btn btn-primary"
-                                title="Reads or re-reads the specified manifest file and saves or updates it in Mercury."/>
-                <span style="margin-left: 20px;">
-                    Filename:
-                    <stripes:text id="filename" name="filename"/>
-                </span>
-            </div>
-
             <!-- Displays the contents of a manifest file using the filename. -->
             <div style="padding-top: 20px;">
                 <span>
                     <stripes:submit id="viewFileBtn" name="viewFileBtn" value="View A Manifest File"
                                     class="btn btn-primary"
                                     title="Click to display contents of a manifest file."/>
+                    <span style="margin-left: 20px;">
+                        Filename:
+                        <stripes:text id="filename" name="filename"/>
+                    </span>
                 </span>
             </div>
 
@@ -87,7 +66,7 @@
                     <div style="padding-left: 20px;">
                         <stripes:checkbox id="rotateAcknowledgement" name="rotateAcknowledgement"/>
                         <stripes:label for="rotateAcknowledgement">
-                            I acknowledge that rotating (changing) the service account key may lock out other Mercury instances that use this Google storage bucket.
+                            OK to lock out other Mercury servers using the Google storage bucket.
                         </stripes:label>
                     </div>
                 </span>
@@ -104,6 +83,12 @@
                         <stripes:file name="credentialFile" id="credentialFile"/>
                     </span>
                 </span>
+                <div style="padding-left: 20px;">
+                    <stripes:checkbox id="uploadCredentialAcknowledgement" name="uploadCredentialAcknowledgement"/>
+                    <stripes:label for="uploadCredentialAcknowledgement">
+                        OK to lock out other Mercury servers using the Google storage bucket.
+                    </stripes:label>
+                </div>
             </div>
 
         </stripes:form>

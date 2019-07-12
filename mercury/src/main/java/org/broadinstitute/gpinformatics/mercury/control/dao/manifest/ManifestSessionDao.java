@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.manifest;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestFile;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession_;
 
@@ -20,7 +19,6 @@ import javax.persistence.criteria.SetJoin;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * DAO for ManifestSessions.
@@ -117,29 +115,5 @@ public class ManifestSessionDao extends GenericDao {
                 sorted((o1, o2) ->
                         o2.getUpdateData().getModifiedDate().compareTo(o1.getUpdateData().getModifiedDate())).
                 findFirst().orElse(null);
-    }
-
-    /**
-     * Returns all of the filenames in the given namespace.
-     */
-    public List<String> getFilenamesForNamespace(String namespace) {
-        return ((List<String>)getEntityManager().createNativeQuery(
-                "SELECT qualified_filename FROM manifest_file " +
-                " WHERE qualified_filename LIKE '" + namespace + ManifestFile.NAMESPACE_DELIMITER + "%' " +
-                " ORDER BY 1 ").
-                getResultList()).stream().
-                map(ManifestFile::extractFilename).
-                collect(Collectors.toList());
-    }
-
-    /**
-     * Returns all of the filenames in the given namespace that are not associated with a manifestSession.
-     */
-    public List<String> getFailedFilenames(String namespace) {
-        return getEntityManager().createNativeQuery("SELECT qualified_filename FROM manifest_file " +
-                " WHERE NOT EXISTS (SELECT 1 FROM manifest_session WHERE manifest_file_id = manifest_file) " +
-                " AND qualified_filename LIKE '" + namespace + ManifestFile.NAMESPACE_DELIMITER + "%' " +
-                " ORDER BY 1 ").
-                getResultList();
     }
 }

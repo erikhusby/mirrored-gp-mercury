@@ -2323,66 +2323,20 @@
     <changeSet id="GPLIM-6005-001" author="epolk">
         <dropNotNullConstraint columnName="research_project_id" schemaName="mercury" tableName="manifest_session"/>
     </changeSet>
-    <changeSet id="GPLIM-6005-002" author="epolk">
-        <createTable schemaName="mercury" tableName="manifest_file">
-            <column name="manifest_file_id" type="number(19,0)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="qualified_filename" type="varchar(255)">
-                <constraints nullable="false"/>
-            </column>
-        </createTable>
-        <addPrimaryKey constraintName="pk_manifest_file" tableName="manifest_file" columnNames="manifest_file_id"/>
-    </changeSet>
-    <changeSet id="GPLIM-6005-003" author="epolk">
-        <createTable schemaName="mercury" tableName="manifest_file_aud">
-            <column name="rev" type="number(19,0)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="revtype" type="number(3,0)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="manifest_file_id" type="number(19,0)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="qualified_filename" type="varchar(255)">
-                <constraints nullable="true"/>
-            </column>
-        </createTable>
-        <addPrimaryKey constraintName="pk_manifest_file_aud" tableName="manifest_file_aud"
-                       columnNames="rev, manifest_file_id"/>
-        <createIndex indexName="ix_manifest_file_aud" tableName="manifest_file_aud">
-            <column name="manifest_file_id"/>
-            <column name="rev"/>
-        </createIndex>
-    </changeSet>
     <changeSet id="GPLIM-6005-004" author="epolk">
         <addColumn schemaName="mercury" tableName="manifest_session">
-            <column name="manifest_file" type="number(19,0)"/>
+            <column name="manifest_filename" type="varchar(255)"/>
         </addColumn>
     </changeSet>
     <changeSet id="GPLIM-6005-005" author="epolk">
         <addColumn schemaName="mercury" tableName="manifest_session_aud">
-            <column name="manifest_file" type="number(19,0)"/>
+            <column name="manifest_filename" type="varchar(255)"/>
         </addColumn>
-    </changeSet>
-    <changeSet id="GPLIM-6005-006" author="epolk">
-        <addForeignKeyConstraint constraintName="fk_manifest_file_id"
-                                 baseTableSchemaName="mercury" referencedTableSchemaName="mercury"
-                                 baseTableName="manifest_session" baseColumnNames="manifest_file"
-                                 referencedTableName="manifest_file" referencedColumnNames="manifest_file_id"/>
-    </changeSet>
-    <changeSet id="GPLIM-6005-007" author="epolk">
-        <createSequence schemaName="mercury" sequenceName="SEQ_MANIFEST_FILE" incrementBy="50"/>
     </changeSet>
     <changeSet id="GPLIM-6005-008" author="epolk">
         <createIndex indexName="ix_manifest_session_prefix" tableName="manifest_session">
             <column name="session_prefix"/>
         </createIndex>
-    </changeSet>
-    <changeSet id="GPLIM-6005-009" author="epolk">
-        <addUniqueConstraint tableName="manifest_file" columnNames="qualified_filename"
-                             constraintName="U_MANIFEST_FILE_FILENAME" schemaName="mercury" />
     </changeSet>
     <changeSet id="GPLIM-6005-010" author="epolk">
         <createTable schemaName="mercury" tableName="manifest_vessel_labels">
