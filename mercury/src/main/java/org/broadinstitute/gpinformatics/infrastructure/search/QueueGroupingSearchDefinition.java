@@ -96,6 +96,20 @@ class QueueGroupingSearchDefinition {
             });
             searchTerms.add(searchTerm);
         }
+        {
+            SearchTerm searchTerm = new SearchTerm();
+            searchTerm.setName("Vessel Drill Downs");
+            searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+                @Override
+                public String evaluate(Object entity, SearchContext context) {
+                    String id = Long.toString(((QueueGrouping) entity).getQueueGroupingId());
+                    return LabVesselSearchDefinition.drillDownLink(context, id, "Vessels");
+                }
+            });
+            LabVesselSearchDefinition.configureDrillDown(searchTerm, ColumnEntity.LAB_VESSEL, "queue grouping id");
+            searchTerms.add(searchTerm);
+
+        }
 
         return searchTerms;
     }

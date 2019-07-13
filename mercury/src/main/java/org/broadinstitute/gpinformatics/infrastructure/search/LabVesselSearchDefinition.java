@@ -29,6 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -49,6 +50,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -241,6 +243,9 @@ public class LabVesselSearchDefinition {
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection( "sequencingRun", "labVesselId",
                 "runCartridge", SequencingRun.class));
 
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection( "queueEntities", "labVesselId",
+                "labVessel", QueueEntity.class));
+
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
                 ColumnEntity.LAB_VESSEL, criteriaProjections, mapGroupSearchTerms);
 
@@ -428,38 +433,71 @@ public class LabVesselSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
+        searchTerm.setName("Queue Grouping ID");
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("queueEntities", "queueGrouping"));
+        criteriaPath.setPropertyName("queueGroupingId");
+        searchTerm.setCriteriaPaths(Collections.singletonList(criteriaPath));
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<Long> evaluate(Object entity, SearchContext context) {
+                LabVessel labVessel = (LabVessel) entity;
+                Set<Long> ids = new HashSet<>();
+                for (QueueEntity queueEntity : labVessel.getQueueEntities()) {
+                    ids.add(queueEntity.getQueueGrouping().getQueueGroupingId());
+                }
+
+                return ids;
+            }
+        });
+        searchTerm.setValueType( ColumnValueType.UNSIGNED);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
         searchTerm.setName("Vessel Drill Downs");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 String label = ((LabVessel) entity).getLabel();
-
-                ResultParamValues columnParams = context.getColumnParams();
-                if( columnParams == null ) {
-                    return "(Params required)";
-                }
-
-                String drillDownString = null;
-                for(ResultParamValues.ParamValue value : columnParams.getParamValues() ) {
-                    if (value.getName().equals("drillDown")) {
-                        drillDownString = value.getValue();
-                        break;
-                    }
-                }
-
-                if( drillDownString == null ) {
-                    return "(No drill down selected)";
-                }
-
-                SearchInstanceNameCache.DrillDownOption drillDownOption = SearchInstanceNameCache.DrillDownOption.buildFromString(drillDownString);
-
-                Map<String,String[]> terms = new HashMap<>();
-                String[] values = {label};
-                terms.put(drillDownOption.getSearchTermName(), values);
-
-                return SearchDefinitionFactory.buildDrillDownLink("", drillDownOption.getTargetEntity(), drillDownOption.getPreferenceScope().name() + "|" + drillDownOption.getPreferenceName() + "|" + drillDownOption.getSearchName(), terms, context);
+                return drillDownLink(context, label, "");
             }
         });
+        configureDrillDown(searchTerm, ColumnEntity.LAB_VESSEL, "barcode");
+        searchTerms.add(searchTerm);
+
+        return searchTerms;
+    }
+
+    @NotNull
+    static String drillDownLink(SearchContext context, String id, String linkText) {
+        ResultParamValues columnParams = context.getColumnParams();
+        if( columnParams == null ) {
+            return "(Params required)";
+        }
+
+        String drillDownString = null;
+        for(ResultParamValues.ParamValue value : columnParams.getParamValues() ) {
+            if (value.getName().equals("drillDown")) {
+                drillDownString = value.getValue();
+                break;
+            }
+        }
+
+        if( drillDownString == null ) {
+            return "(No drill down selected)";
+        }
+
+        SearchInstanceNameCache.DrillDownOption drillDownOption = SearchInstanceNameCache.DrillDownOption.buildFromString(drillDownString);
+
+        Map<String,String[]> terms = new HashMap<>();
+        String[] values = {id};
+        terms.put(drillDownOption.getSearchTermName(), values);
+
+        return SearchDefinitionFactory.buildDrillDownLink(linkText, drillDownOption.getTargetEntity(),
+                drillDownOption.getPreferenceScope().name() + "|" + drillDownOption.getPreferenceName() + "|" + drillDownOption.getSearchName(), terms, context);
+    }
+
+    static void configureDrillDown(SearchTerm searchTerm, ColumnEntity columnEntity, String field) {
         searchTerm.setMustEscape(false);
         searchTerm.setResultParamConfigurationExpression(
             new SearchTerm.Evaluator<ResultParamConfiguration>() {
@@ -471,10 +509,10 @@ public class LabVesselSearchDefinition {
                             new ResultParamConfiguration.ParamInput("drillDown", ResultParamConfiguration.InputType.PICKLIST, "Select drill down search:");
                     List<ConstrainedValue> options = new ArrayList<>();
                     SearchInstanceNameCache instanceNameCache = ServiceAccessUtility.getBean(SearchInstanceNameCache.class);
-                    for( SearchInstanceNameCache.DrillDownOption drillDown : instanceNameCache.getDrillDowns(ColumnEntity.LAB_VESSEL.getEntityName()) ) {
+                    for( SearchInstanceNameCache.DrillDownOption drillDown : instanceNameCache.getDrillDowns(columnEntity.getEntityName()) ) {
                         options.add(new ConstrainedValue(drillDown.toString(), drillDown.getSearchName() ));
                     }
-                    if( options.size() == 0 ) {
+                    if(options.isEmpty()) {
                         options.add(new ConstrainedValue("", "(None Available)" ));
                     }
                     searchNameInput.setOptionItems(options);
@@ -484,10 +522,8 @@ public class LabVesselSearchDefinition {
                 }
             }
         );
-        searchTerm.setHelpText("Creates a column with a link to an existing search which functions as a drill-down.  <br/>Note: Selected search MUST have a single term which expects a barcode value.");
-        searchTerms.add(searchTerm);
-
-        return searchTerms;
+        searchTerm.setHelpText("Creates a column with a link to an existing search which functions as a drill-down.  " +
+                "<br/>Note: Selected search MUST have a single term which expects a " + field + " value.");
     }
 
     private List<SearchTerm> buildLabVesselBatchTypes() {
