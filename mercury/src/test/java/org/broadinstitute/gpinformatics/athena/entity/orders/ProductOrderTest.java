@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderT
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.sap.entity.quote.QuoteItem;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hamcrest.CoreMatchers;
@@ -40,6 +41,7 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
@@ -757,6 +759,40 @@ public class ProductOrderTest {
             quoteTestOrder.updateQuoteItems(differingQuote);
             Assert.fail();
         } catch (SAPInterfaceException e) {
+        }
+
+        SapQuote multDollarLimited =
+            TestUtils.buildTestSapQuote("00332883", 20000d, 100000d,
+                quoteTestOrder, TestUtils.SapQuoteTestScenario.MULTIPLE_DOLLAR_LIMITED,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
+        quoteTestOrder.setQuoteId(multDollarLimited.getQuoteHeader().getQuoteNumber());
+        try {
+            quoteTestOrder.updateQuoteItems(multDollarLimited);
+            Collection<SapQuoteItemReference> quoteReferences = quoteTestOrder.getQuoteReferences();
+
+            assertThat(quoteReferences, is(not(empty())));
+
+            SapQuoteItemReference primaryProductReferences = quoteReferences.stream().filter(
+                sapQuoteItemReference -> sapQuoteItemReference.getMaterialReference()
+                    .equals(quoteTestOrder.getProduct())).collect(Collectors.toSet()).iterator().next();
+
+            QuoteItem dollarLimitedItem = multDollarLimited.getQuoteItemByDescriptionMap().get("Dollar Limited 1")
+                .iterator().next();
+
+            assertThat(primaryProductReferences.getQuoteLineReference(),
+                is(equalTo(dollarLimitedItem.getQuoteItemNumber().toString())));
+
+            quoteTestOrder.getAddOns().forEach(pdoAddon -> {
+                SapQuoteItemReference addOnProductReferences = quoteReferences.stream()
+                    .filter(sapQuoteItemReference -> sapQuoteItemReference.getMaterialReference()
+                        .equals(pdoAddon.getAddOn())).findAny().orElseThrow(() -> new RuntimeException("Ref not found"));
+
+                assertThat(addOnProductReferences.getQuoteLineReference(),
+                    is(equalTo(dollarLimitedItem.getQuoteItemNumber().toString())));
+            });
+
+        } catch (SAPInterfaceException e) {
+            Assert.fail(e.getMessage(), e);
         }
 
     }

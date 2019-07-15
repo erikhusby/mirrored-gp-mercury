@@ -2816,22 +2816,21 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         List<QuoteItem> quoteItems = new ArrayList<>();
         Optional<Collection<QuoteItem>> quoteItemsForProduct = Optional.ofNullable(sapQuote.getQuoteItemMap().get(product.getPartNumber()));
         quoteItemsForProduct.ifPresent(quoteItems::addAll);
-        if (CollectionUtils.isEmpty(quoteItems)) {
 
-            final Set<String> quoteItemDescriptions = sapQuote.getQuoteItemByDescriptionMap().keySet();
-            final Optional<String> singleDescriptorResult = quoteItemDescriptions.stream()
-                    .filter(description -> description.contains(QuoteItem.DOLLAR_LIMIT_MATERIAL_DESCRIPTOR)).collect(
-                            MoreCollectors.toOptional());
+        Set<String> dollarLimitedQuoteItems = sapQuote.getQuoteItems().stream()
+            .filter(QuoteItem::isDollarLimitedMaterial).map(QuoteItem::getMaterialDescription)
+            .collect(Collectors.toSet());
+        boolean hasSingleLineItemMatch = CollectionUtils.isNotEmpty(quoteItems) && quoteItems.size() == 1;
+        boolean hasDollarLimitedQuoteItems = CollectionUtils.isNotEmpty(dollarLimitedQuoteItems);
 
-            singleDescriptorResult.ifPresent(singleDollarLimitDescriptor ->{
-                    quoteItems.addAll(sapQuote.getQuoteItemByDescriptionMap().get(singleDollarLimitDescriptor));
-            });
+        dollarLimitedQuoteItems.forEach(singleDollarLimitDescriptor -> {
+            quoteItems.addAll(sapQuote.getQuoteItemByDescriptionMap().get(singleDollarLimitDescriptor));
+        });
 
-        }
         if (CollectionUtils.isNotEmpty(quoteItems)) {
-            if (quoteItems.size() == 1) {
+            if (hasSingleLineItemMatch || hasDollarLimitedQuoteItems) {
                 updatedLineItemReferences.add(new SapQuoteItemReference(
-                        product, quoteItems.iterator().next().getQuoteItemNumber().toString()));
+                    product, quoteItems.iterator().next().getQuoteItemNumber().toString()));
             } else {
                 List<Integer> lineItems =
                     quoteItems.stream().map(QuoteItem::getQuoteItemNumber).sorted().collect(Collectors.toList());
