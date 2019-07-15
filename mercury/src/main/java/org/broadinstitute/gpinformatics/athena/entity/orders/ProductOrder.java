@@ -2820,15 +2820,15 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         Set<String> dollarLimitedQuoteItems = sapQuote.getQuoteItems().stream()
             .filter(QuoteItem::isDollarLimitedMaterial).map(QuoteItem::getMaterialDescription)
             .collect(Collectors.toSet());
+        boolean hasSingleLineItemMatch = CollectionUtils.isNotEmpty(quoteItems) && quoteItems.size() == 1;
+        boolean hasDollarLimitedQuoteItems = CollectionUtils.isNotEmpty(dollarLimitedQuoteItems);
 
         dollarLimitedQuoteItems.forEach(singleDollarLimitDescriptor -> {
             quoteItems.addAll(sapQuote.getQuoteItemByDescriptionMap().get(singleDollarLimitDescriptor));
         });
-        boolean hasAllDollarLimitedQuoteItems =
-            CollectionUtils.isNotEmpty(dollarLimitedQuoteItems) && dollarLimitedQuoteItems.size() == quoteItems.size();
 
         if (CollectionUtils.isNotEmpty(quoteItems)) {
-            if (quoteItems.size() == 1 || hasAllDollarLimitedQuoteItems) {
+            if (hasSingleLineItemMatch || hasDollarLimitedQuoteItems) {
                 updatedLineItemReferences.add(new SapQuoteItemReference(
                     product, quoteItems.iterator().next().getQuoteItemNumber().toString()));
             } else {
