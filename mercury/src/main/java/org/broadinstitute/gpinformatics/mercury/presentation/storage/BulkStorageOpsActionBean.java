@@ -177,7 +177,7 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
 
         for( StorageLocation location : locations ){
             int capacity = location.getStorageCapacity();
-            int storedCount = storageLocationDao.getStoredContainerCount( location );
+            int storedCount = storageLocationDao.getSlotStoredContainerCount( location );
 
             String locationPath = storageLocPaths.get(location.getStorageLocationId());
             if( locationPath == null ) {

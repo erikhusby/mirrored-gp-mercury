@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.storage;
 
+import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation_;
@@ -10,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
+import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -93,9 +95,10 @@ public class StorageLocationDao extends GenericDao {
     }
 
     /**
-     * Find count of racks and plates in a location
+     * Find count of racks and plates in a location (slot) <br/>
+     * Use getRackStoredContainerCount for performance purposes if summing up everything in a GUAGERACK or BOX
      */
-    public int getStoredContainerCount(StorageLocation location ) {
+    public int getSlotStoredContainerCount(StorageLocation location ) {
         int count = 0;
         CriteriaBuilder cb = getCriteriaBuilder();
 
@@ -114,6 +117,41 @@ public class StorageLocationDao extends GenericDao {
         count += getEntityManager().createQuery(cq).getSingleResult().intValue();
 
         return count;
+    }
+
+    /**
+     * Find count values in all SLOT types in a GUAGERACK or BOX type
+     * @return Triple of 3 values : <br/>
+     * Number of child SLOT types in the parent <br/>
+     * Sum of the number of racks and static plates stored in all child SLOT types <br/>
+     * Sum of the capacities of all child SLOT types
+     *
+     */
+    public Triple<Integer,Integer,Integer> getRackStoredContainerCount(StorageLocation location ) {
+        Integer slotCount, allocatedCount, capacityCount;
+        Query q = getEntityManager().createNativeQuery("select count(storage_location_id) " +
+                "     , sum(stored_count) " +
+                "     , sum(capacity) " +
+                "  from ( " +
+                "    select storage_location_id " +
+                "         , nvl( storage_capacity, 0 ) as capacity " +
+                "         , ( select count(*) " +
+                "               from lab_vessel " +
+                "              where dtype in ( 'RackOfTubes', 'StaticPlate' ) " +
+                "                and storage_location = storage_location_id ) as stored_count " +
+                "      from storage_location " +
+                "     where parent_storage_location = :parent_id " +
+                "       and location_type = 'SLOT'  )");
+        q.setParameter("parent_id", location.getStorageLocationId());
+        try {
+            Object[] counts = (Object[]) q.getSingleResult();
+            slotCount = new Integer(counts[0].toString());
+            allocatedCount = new Integer(counts[1].toString());
+            capacityCount = new Integer(counts[2].toString());
+        } catch ( NoResultException nre ){
+            slotCount = allocatedCount = capacityCount = new Integer(0);
+        }
+        return Triple.of(slotCount, allocatedCount, capacityCount);
     }
 
     /**

@@ -77,30 +77,14 @@ public class StorageAllocationActionBean extends CoreActionBean {
 
         StorageLocation.LocationType type = parent.getLocationType();
         if( type.expectSlots() ) {
-            // Get summary and stop recursion
-            Triple<Integer,Integer,Integer> usage = getSpaceAlloc(parent);
+            // Get summary and stop recursion  Triple is: [slots, used, total]
+            Triple<Integer,Integer,Integer> usage = storageLocationDao.getRackStoredContainerCount(parent);
             childCapacityMap.put(parent.getStorageLocationId(), usage);
         } else {
-
             for( StorageLocation child : parent.getSortedChildLocations() ) {
                 buildHierarchy( child, childNode );
             }
         }
-    }
-
-    private Triple<Integer,Integer,Integer> getSpaceAlloc(StorageLocation parent) {
-        int slots = 0;
-        int used = 0;
-        int total = 0;
-        for( StorageLocation child : parent.getChildrenStorageLocation() ) {
-            StorageLocation.LocationType type = child.getLocationType();
-            if( type == StorageLocation.LocationType.SLOT ) {
-                slots++;
-                total += child.getStorageCapacity();
-                used += storageLocationDao.getStoredContainerCount(child);
-            }
-        }
-        return Triple.of( slots, used, total);
     }
 
     /**
