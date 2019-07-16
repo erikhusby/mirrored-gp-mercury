@@ -32,6 +32,7 @@ import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcGtConcordance;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueries;
+import org.broadinstitute.gpinformatics.mercury.boundary.run.InfiniumRunResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -509,7 +510,7 @@ public class MetricsViewActionBean extends RackScanActionBean {
             metadata.add(Metadata.create("Chip Well Barcode", arraysQc.getChipWellBarcode()));
             metadata.add(Metadata.create("Autocall Date", DATE_FORMAT.format( arraysQc.getAutocallDate() )));
 
-            // Sample ID metadata
+            // Sample ID and PDO metadata
             VesselPosition vesselPosition = VesselPosition.getByName(startPosition);
             if (vesselPosition != null) {
                 Set<SampleInstanceV2> sampleInstancesAtPositionV2 = staticPlate.getContainerRole()
@@ -518,6 +519,17 @@ public class MetricsViewActionBean extends RackScanActionBean {
                     SampleInstanceV2 sampleInstanceV2 = sampleInstancesAtPositionV2.iterator().next();
                     String mercuryRootSampleName = sampleInstanceV2.getMercuryRootSampleName();
                     metadata.add(Metadata.create("Sample ID", mercuryRootSampleName));
+
+                    try {
+                        ProductOrder productOrder =
+                                InfiniumRunResource.fetchProductOrder(staticPlate, sampleInstanceV2);
+                        if (productOrder != null) {
+                            metadata.add(Metadata.create("PDO", productOrder.getBusinessKey()));
+                        }
+                    } catch (Exception e) {
+                        log.error("Failed to lookup product order for " + staticPlate + " sample " + mercuryRootSampleName, e);
+                        addGlobalValidationError(e.getMessage());
+                    }
                 }
             }
 
