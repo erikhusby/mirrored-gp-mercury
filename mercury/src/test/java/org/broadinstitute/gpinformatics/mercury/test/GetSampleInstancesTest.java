@@ -849,8 +849,8 @@ public class GetSampleInstancesTest {
         ProductOrder ulpPdo = ProductOrderTestFactory.createDummyProductOrder(3, "PDO-ULP",
                 Workflow.CELL_FREE_HYPER_PREP_UMIS, 101L, "Test research project", "Test research project", false, "UlpWgs", "1",
                 "UlpWgsQuoteId");
-        ulpLcset.addBucketEntry(new BucketEntry(dnaTube1, ulpPdo, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, 1));
-        ulpLcset.addBucketEntry(new BucketEntry(dnaTube2, ulpPdo, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, 2));
+        ulpLcset.addBucketEntry(new BucketEntry(dnaTube1, ulpPdo, bucket, BucketEntry.BucketEntryType.PDO_ENTRY));
+        ulpLcset.addBucketEntry(new BucketEntry(dnaTube2, ulpPdo, bucket, BucketEntry.BucketEntryType.PDO_ENTRY));
 
         // DNA Rack
         HashMap<VesselPosition, BarcodedTube> dnaMapPositionToTube = new HashMap<>();
@@ -894,8 +894,8 @@ public class GetSampleInstancesTest {
         ProductOrder icePdo = ProductOrderTestFactory.createDummyProductOrder(3, "PDO-EXOME",
                 Workflow.ICE_EXOME_EXPRESS_HYPER_PREP_UMIS, 101L, "Test research project", "Test research project",
                 false, "Exome", "1", "ExomeQuoteId");
-        exomeLcset.addBucketEntry(new BucketEntry(pondTube1, icePdo, iceBucket, BucketEntry.BucketEntryType.PDO_ENTRY, 1));
-        exomeLcset.addBucketEntry(new BucketEntry(pondTube2, icePdo, iceBucket, BucketEntry.BucketEntryType.PDO_ENTRY, 2));
+        exomeLcset.addBucketEntry(new BucketEntry(pondTube1, icePdo, iceBucket, BucketEntry.BucketEntryType.PDO_ENTRY));
+        exomeLcset.addBucketEntry(new BucketEntry(pondTube2, icePdo, iceBucket, BucketEntry.BucketEntryType.PDO_ENTRY));
 
         // Selection Pool rack
         BarcodedTube selPoolTube = new BarcodedTube("ExPool");
