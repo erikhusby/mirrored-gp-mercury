@@ -1811,52 +1811,27 @@ public class LabVesselSearchDefinition {
                 }
 
                 reasons = new HashSet<>();
-                String reason;
                 MultiValuedMap<LabVessel, AbandonVessel> abandonMap = abandonCriteria.getAncestorAbandonVessels();
 
                 // Display each reason with a group of positions (if container) in parentheses
                 if( abandonMap.size() == 1 && abandonMap.mapIterator().next().getAbandonVessels().size() == 1 ) {
                     // Only one abandon - could be a tube so show position only if available
                     AbandonVessel abandonVessel = abandonMap.mapIterator().next().getAbandonVessels().iterator().next();
-                    reason = abandonVessel.getReason().getDisplayName();
+                    String reason = abandonVessel.getReason().getDisplayName();
                     if( abandonVessel.getVesselPosition() != null ) {
                         reason += "(" + abandonVessel.getVesselPosition().name() + ")";
                     }
                     reasons.add( reason );
                 } else {
-                    // Gather reasons and positions
-                    // TODO JMS Display can get ugly when ancestor abandons/positions are mixed in with current vessel
-                    String position;
-                    Map<String,Set<String>> reasonPositionMap = new HashMap<>();
-
-                    for( AbandonVessel abandonVessel : abandonMap.values() ) {
-                        reason = abandonVessel.getReason().getDisplayName();
-                        if( !reasonPositionMap.containsKey( reason ) ) {
-                            reasonPositionMap.put(reason, new TreeSet<String>());
-                        }
-                        position = abandonVessel.getVesselPosition() == null?"":abandonVessel.getVesselPosition().name();
-                        reasonPositionMap.get(reason).add( position );
-                    }
-                    for( String key : reasonPositionMap.keySet() ) {
-                        StringBuilder posDisplay = new StringBuilder(64);
-                        for( String pos : reasonPositionMap.get(key)) {
-                            if( pos.length() > 0 ) {
-                                posDisplay.append(pos).append(",");
-                            }
-                        }
-                        if( posDisplay.length() > 1 ) {
-                            posDisplay.deleteCharAt(posDisplay.length() - 1);
-                            posDisplay.append(")");
-                            posDisplay.insert(0,"(");
-                            posDisplay.insert(0,key );
-                            reasons.add( posDisplay.toString() );
-                        }
-                    }
+                    formatAbandonReasons(reasons, abandonMap.values());
                 }
                 return reasons;
             }
         });
-        searchTerm.setHelpText("These abandon terms only looks backwards in transfers and gather any past vessel abandons, otherwise results would be ambiguous for reworks looking forward.  Infinium related logic requires using 'Infinium Array Metrics' term.");
+        String abandonTraverseHelpText = "This abandon term only looks backwards in transfers and gathers any past " +
+                "vessel abandons, otherwise results would be ambiguous for reworks looking forward.  Infinium related " +
+                "logic requires using 'Infinium Array Metrics' term.";
+        searchTerm.setHelpText(abandonTraverseHelpText);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -1888,6 +1863,65 @@ public class LabVesselSearchDefinition {
                 return dateVal;
             }
         });
+        searchTerm.setHelpText(abandonTraverseHelpText);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Direct Abandon Reason");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                LabVessel currentVessel = (LabVessel) entity;
+                Set<String> reasons = new HashSet<>();
+                VesselContainer<?> vesselContainer = currentVessel.getContainerRole();
+                if (vesselContainer == null) {
+                    for (AbandonVessel abandonVessel : currentVessel.getAbandonVessels()) {
+                        reasons.add(abandonVessel.getReason().getDisplayName());
+                    }
+                } else {
+                    Set<AbandonVessel> abandonVessels = new HashSet<>();
+                    for (VesselPosition vesselPosition : vesselContainer.getEmbedder().getVesselGeometry().getVesselPositions()) {
+                        AbandonVessel abandonVessel = currentVessel.getAbandonPositionForWell(vesselPosition);
+                        if (abandonVessel != null) {
+                            abandonVessels.add(abandonVessel);
+                        }
+                    }
+                    formatAbandonReasons(reasons, abandonVessels);
+                }
+                return reasons;
+            }
+        });
+        String abandonNoTraverseHelpText = "This abandon term does not traverse ancestors.  Infinium related " +
+                "logic requires using 'Infinium Array Metrics' term.";
+        searchTerm.setHelpText(abandonNoTraverseHelpText);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Direct Abandon Date");
+        searchTerm.setValueType(ColumnValueType.DATE);
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<Date> evaluate(Object entity, SearchContext context) {
+                LabVessel currentVessel = (LabVessel) entity;
+                Set<Date> dates = new HashSet<>();
+
+                VesselContainer<?> vesselContainer = currentVessel.getContainerRole();
+                if (vesselContainer == null) {
+                    for (AbandonVessel abandonVessel : currentVessel.getAbandonVessels()) {
+                        dates.add(abandonVessel.getAbandonedOn());
+                    }
+                } else {
+                    for (VesselPosition vesselPosition : vesselContainer.getEmbedder().getVesselGeometry().getVesselPositions()) {
+                        AbandonVessel abandonVessel = currentVessel.getAbandonPositionForWell(vesselPosition);
+                        if (abandonVessel != null) {
+                            dates.add(abandonVessel.getAbandonedOn());
+                        }
+                    }
+                }
+                return dates;
+            }
+        });
+        searchTerm.setHelpText(abandonNoTraverseHelpText);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -1969,6 +2003,36 @@ public class LabVesselSearchDefinition {
         return searchTerms;
 
         // todo jmt break some of these "metadata" terms into their own group
+    }
+
+    private void formatAbandonReasons(Set<String> reasons, Collection<AbandonVessel> abandonVessels) {
+        // Gather reasons and positions
+        // TODO JMS Display can get ugly when ancestor abandons/positions are mixed in with current vessel
+        Map<String,Set<String>> reasonPositionMap = new HashMap<>();
+
+        for( AbandonVessel abandonVessel : abandonVessels) {
+            String reason = abandonVessel.getReason().getDisplayName();
+            if( !reasonPositionMap.containsKey( reason ) ) {
+                reasonPositionMap.put(reason, new TreeSet<String>());
+            }
+            String position = abandonVessel.getVesselPosition() == null ? "" : abandonVessel.getVesselPosition().name();
+            reasonPositionMap.get(reason).add( position );
+        }
+        for(Map.Entry<String, Set<String>> stringSetEntry : reasonPositionMap.entrySet()) {
+            StringBuilder posDisplay = new StringBuilder(64);
+            for( String pos : stringSetEntry.getValue()) {
+                if(!pos.isEmpty()) {
+                    posDisplay.append(pos).append(",");
+                }
+            }
+            if( posDisplay.length() > 1 ) {
+                posDisplay.deleteCharAt(posDisplay.length() - 1);
+                posDisplay.append(")");
+                posDisplay.insert(0,"(");
+                posDisplay.insert(0, stringSetEntry.getKey());
+                reasons.add( posDisplay.toString() );
+            }
+        }
     }
 
     /**
