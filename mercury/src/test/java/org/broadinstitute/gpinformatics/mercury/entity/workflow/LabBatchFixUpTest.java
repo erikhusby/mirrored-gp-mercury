@@ -59,6 +59,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -1540,6 +1541,7 @@ public class LabBatchFixUpTest extends Arquillian {
      * ...
      */
     @Test(enabled = false)
+    @Deprecated // This version kept for audit purposes, but deprecated because it does not remove computed lcsets.
     public void fixupPo9128() throws Exception {
         userBean.loginOSUser();
         userTransaction.begin();
@@ -1555,7 +1557,7 @@ public class LabBatchFixUpTest extends Arquillian {
                 BucketEntry bucketEntry = badBucketEntryIter.next();
                 LabVessel labVessel = bucketEntry.getLabVessel();
                 System.out.println("Removing bucket entry " + bucketEntry + " from " + labBatch.getBatchName());
-                labVessel.getBucketEntries().remove(bucketEntry);
+                labVessel.removeBucketEntry(bucketEntry);
             }
 
             for (LabEvent labEvent : labBatchDao.findListByList(LabEvent.class, LabEvent_.manualOverrideLcSet,
@@ -1564,6 +1566,71 @@ public class LabBatchFixUpTest extends Arquillian {
                                    labEvent.getLabEventType().name() + " (labEventId " + labEvent.getLabEventId() + ")");
                 labEvent.setManualOverrideLcSet(null);
             }
+            System.out.println("Deleting " + labBatch.getBatchName());
+            labBatchDao.remove(labBatch.getJiraTicket());
+            labBatch.getReworks().clear();
+            labBatchDao.remove(labBatch);
+        }
+        labBatchDao.persist(new FixupCommentary(lines.get(0) + " delete cancelled LCSET"));
+        labBatchDao.flush();
+        userTransaction.commit();
+    }
+
+    /*
+     * This test is used to delete LCSETs that are canceled in JIRA.  It reads its parameters from a file,
+     * testdata/DeleteLabBatch.txt, so it can be used for other similar fixups, without writing a new test.
+     * Example contents of the file are:
+     * PO-9128
+     * LCSET-11312
+     * LCSET-11553
+     * ...
+     */
+    @Test(enabled = false)
+    public void deleteCancelledLcset() throws Exception {
+        userBean.loginOSUser();
+        userTransaction.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("DeleteLabBatch.txt"));
+        // If the LCSET has batch_starting_vessels but no bucket entries, these batch_starting_vessels
+        // orphans will be removed by cascade when the labBatch is removed.
+        for (int i = 1; i < lines.size(); ++i) {
+            LabBatch labBatch = labBatchDao.findByName(lines.get(i));
+            labBatch.getBucketEntries().forEach(bucketEntry -> {
+                LabVessel labVessel = bucketEntry.getLabVessel();
+                System.out.println("Removing bucket entry " + bucketEntry);
+                labVessel.removeBucketEntry(bucketEntry);
+            });
+            // This is needed to avoid "removing detached bucketEntry" when removing the batch.
+            labBatch.getBucketEntries().clear();
+
+            // Removes manual lcset overrides.
+            for (LabEvent labEvent : labBatchDao.findListByList(LabEvent.class, LabEvent_.manualOverrideLcSet,
+                    Collections.singletonList(labBatch))) {
+                System.out.println("Removing manual override of " + labBatch.getBatchName() + " from " +
+                                   labEvent.getLabEventType().name() + " (labEventId " + labEvent.getLabEventId() + ")");
+                labEvent.setManualOverrideLcSet(null);
+            }
+
+            // Removes the lcset from lab event computed lcsets.
+            String query = String.format("select lab_event from le_computed_lcsets where computed_lcsets = %d",
+                    labBatch.getLabBatchId());
+            List<Long> labEventIds = (List<Long>)labBatchDao.getEntityManager().createNativeQuery(query).
+                    getResultList().stream().
+                    map(id -> ((BigDecimal) id).longValueExact()).
+                    distinct().
+                    collect(Collectors.toList());
+            for (LabEvent labEvent : labBatchDao.findListByList(LabEvent.class, LabEvent_.labEventId, labEventIds)) {
+                String remainingLcsets = labEvent.getComputedLcSets().stream().
+                        map(LabBatch::getBatchName).
+                        filter(name -> !name.equals(labBatch.getBatchName())).
+                        collect(Collectors.joining(" "));
+                System.out.println("Removing " + labBatch.getBatchName() +
+                        " from Computed Lcsets for " + labEvent.getLabEventType().getName() +
+                        " (labEventId " + labEvent.getLabEventId() + ")" +
+                        " leaving " + (remainingLcsets.isEmpty() ? "none" : remainingLcsets));
+                labEvent.getComputedLcSets().remove(labBatch);
+            }
+
             System.out.println("Deleting " + labBatch.getBatchName());
             labBatchDao.remove(labBatch.getJiraTicket());
             labBatch.getReworks().clear();
@@ -1862,7 +1929,7 @@ public class LabBatchFixUpTest extends Arquillian {
         for (BucketEntry bucketEntry : bucketEntriesToRemove) {
             labBatch.getBucketEntries().remove(bucketEntry);
             LabVessel labVessel = bucketEntry.getLabVessel();
-            labVessel.getBucketEntries().remove(bucketEntry);
+            labVessel.removeBucketEntry(bucketEntry);
             ProductOrder productOrder = bucketEntry.getProductOrder();
             productOrder.getBucketEntries().remove(bucketEntry);
             labBatchDao.remove(bucketEntry);
@@ -1950,5 +2017,97 @@ public class LabBatchFixUpTest extends Arquillian {
                     destLabBatch.getBusinessKey() + " to get a single LCSET for the first event.");
         }
         utx.commit();
+    }
+
+
+    @Test(enabled = false)
+    public void backfillInference() throws SystemException, NotSupportedException, HeuristicRollbackException,
+            HeuristicMixedException, RollbackException, IOException {
+        userBean.loginOSUser();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("BackfillLabBatchInference.txt"));
+        for (String line : lines) {
+            if (line.startsWith("#")) {
+                continue;
+            }
+            userTransaction.begin();
+            LabBatch labBatch = labBatchDao.findByName(line);
+            System.out.println(labBatch.getBatchName());
+            for (BucketEntry bucketEntry : labBatch.getBucketEntries()) {
+                TransferTraverserCriteria transferTraverserCriteria = new ComputeLabBatchTtc(false);
+                bucketEntry.getLabVessel().evaluateCriteria(transferTraverserCriteria,
+                        TransferTraverserCriteria.TraversalDirection.Descendants);
+            }
+
+            userTransaction.commit();
+            labBatchDao.clear();
+        }
+    }
+
+    public static class ComputeLabBatchTtc extends TransferTraverserCriteria {
+        private boolean force;
+
+        public ComputeLabBatchTtc(boolean force) {
+            this.force = force;
+        }
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            LabVessel contextVessel = context.getContextVessel();
+            VesselContainer<?> contextVesselContainer = context.getContextVesselContainer();
+            LabVessel.VesselEvent contextVesselEvent = context.getVesselEvent();
+
+            if(contextVesselEvent != null ) {
+                compute(contextVesselEvent.getLabEvent());
+            }
+
+            if( contextVessel != null ) {
+                for (LabEvent labEvent : contextVessel.getInPlaceLabEvents()) {
+                    compute(labEvent);
+                }
+
+                for (VesselContainer<?> containerVessel : contextVessel.getVesselContainers()) {
+                    // In place events may apply to containers
+                    for (LabEvent labEvent : containerVessel.getEmbedder().getInPlaceLabEvents()) {
+                        compute(labEvent);
+                    }
+                }
+            }
+
+            // Check for in place events on vessel container (e.g. EndRepair, ABase, APWash)
+            if( contextVesselContainer != null ) {
+                LabVessel containerVessel = contextVesselContainer.getEmbedder();
+                if (containerVessel != null) {
+                    for (LabEvent labEvent : containerVessel.getInPlaceLabEvents()) {
+                        compute(labEvent);
+                    }
+
+                    // Look for what comes in from the side (e.g. IndexedAdapterLigation, BaitAddition)
+                    for (LabEvent containerEvent : containerVessel.getTransfersTo()) {
+                        compute(containerEvent);
+                        for (LabVessel ancestorLabVessel : containerEvent.getSourceLabVessels()) {
+                            if( ancestorLabVessel.getContainerRole() != null ){
+                                for (LabEvent labEvent : ancestorLabVessel.getContainerRole().getEmbedder().getTransfersTo()) {
+                                    compute(labEvent);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return TraversalControl.ContinueTraversing;
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {
+
+        }
+
+        private void compute(LabEvent labEvent) {
+            if (force || !labEvent.isLabBatchComputed()) {
+                labEvent.computeLabBatches();
+            }
+        }
     }
 }

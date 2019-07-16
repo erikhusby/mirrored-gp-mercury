@@ -748,6 +748,16 @@
                         </div>
 
                         <div class="control-group">
+                            <stripes:label for="negativeControlsProject" name="Negative Controls Project" class="control-label"/>
+                            <div class="controls">
+                                <stripes:select id="negativeControlsProject" name="negativeControlsProject">
+                                    <stripes:option value="">Select One</stripes:option>
+                                    <stripes:options-collection collection="${actionBean.controlsProjects}" label="displayName" value="businessKey"/>
+                                </stripes:select>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
                             <stripes:label for="readLength" name="ReadLength" class="control-label"/>
                             <div class="controls">
                                 <stripes:text id="readLength" name="editProduct.readLength"
@@ -797,6 +807,16 @@
                             </stripes:label>
                             <div class="controls">
                                 <stripes:checkbox id="analyzeUmi" name="editProduct.analyzeUmi" style="margin-top: 10px;"/>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <stripes:label for="coverageTypeKey" name="Coverage" class="control-label"/>
+                            <div class="controls">
+                                <stripes:select id="coverageTypeKey" name="editProduct.coverageTypeKey">
+                                    <stripes:option value="">Select One</stripes:option>
+                                    <stripes:options-collection collection="${actionBean.coverageTypes}" label="displayName" value="businessKey"/>
+                                </stripes:select>
                             </div>
                         </div>
                     </fieldset>

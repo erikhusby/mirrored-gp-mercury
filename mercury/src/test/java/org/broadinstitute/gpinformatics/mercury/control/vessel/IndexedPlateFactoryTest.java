@@ -66,7 +66,7 @@ public class IndexedPlateFactoryTest extends StubbyContainerTest {
                 continue;
             }
             if (row != null) {
-                Cell broadBarcodeCell = row.getCell(3, Row.RETURN_BLANK_AS_NULL);
+                Cell broadBarcodeCell = row.getCell(3, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
                 if (broadBarcodeCell != null) {
                     broadBarcodeCell.setCellValue(plateBarcode);
                 }

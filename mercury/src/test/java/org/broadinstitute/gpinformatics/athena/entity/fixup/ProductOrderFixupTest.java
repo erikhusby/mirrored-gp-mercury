@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.MoreCollectors;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
@@ -8,11 +9,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.util.MessageCollection;
-import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
@@ -43,13 +42,10 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerExceptio
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
@@ -102,6 +98,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -123,9 +120,6 @@ public class ProductOrderFixupTest extends Arquillian {
 
     public ProductOrderFixupTest() {
     }
-
-    @Inject
-    BucketEjb bucketEjb;
 
     @Inject
     private ProductOrderDao productOrderDao;
@@ -161,18 +155,6 @@ public class ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private UserTransaction utx;
-
-    @Inject
-    private SapIntegrationService sapIntegrationService;
-
-    @Inject
-    private BillingSessionDao billingSessionDao;
-
-    @Inject
-    private BillingEjb billingEjb;
-
-    @Inject
-    private LabBatchDao labBatchDao;
 
     @Inject
     private BucketEntryDao bucketEntryDao;
@@ -1643,7 +1625,7 @@ public class ProductOrderFixupTest extends Arquillian {
      * @throws ProductOrderEjb.NoSuchPDOException
      * @throws SAPInterfaceException
      */
-    public void abandonSamplesForSapOrder(String pdoKey, List<String> sampleList, String abandonReason)
+    private void abandonSamplesForSapOrder(String pdoKey, List<String> sampleList, String abandonReason)
             throws ProductOrderEjb.SampleDeliveryStatusChangeException, QuoteNotFoundException, QuoteServerException,
             InvalidProductException, SAPIntegrationException, IOException, ProductOrderEjb.NoSuchPDOException,
             SAPInterfaceException {
@@ -1732,7 +1714,7 @@ public class ProductOrderFixupTest extends Arquillian {
      * @throws QuoteNotFoundException
      * @throws InvalidProductException
      */
-    public boolean isOrderEligibleForSAP(ProductOrder editedProductOrder, Date effectiveDate)
+    private boolean isOrderEligibleForSAP(ProductOrder editedProductOrder, Date effectiveDate)
             throws QuoteServerException, QuoteNotFoundException, InvalidProductException {
         Quote orderQuote = editedProductOrder.getQuote(quoteService);
         SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
@@ -1783,5 +1765,108 @@ public class ProductOrderFixupTest extends Arquillian {
         }
 
         productOrderDao.persist(new FixupCommentary(fixupLines.get(0)));
+    }
+
+    /**
+     * When a PDO is submitted, if auto-bucketing exceeds the transaction timeout and fails, this test can be used to
+     * add the PDO samples to the bucket.
+     * It reads its parameters from a file, mercury/src/test/resources/testdata/AddPdosSamplesToBucket.txt, so it
+     * can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-5265
+     * PDO-17968
+     */
+    @Test(enabled = false)
+    public void fixupSupport5265() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("AddPdosSamplesToBucket.txt"));
+        ProductOrder pdo = productOrderDao.findByBusinessKey(fixupLines.get(1));
+        pdo.loadSampleData();
+        List<String> messages = new ArrayList<>();
+        productOrderEjb.handleSamplesAdded(pdo.getBusinessKey(), pdo.getSamples(), (message, arguments) -> {
+            messages.add(message);
+            return null;
+        });
+        if (messages.size() == 1 && messages.get(0).equals("{0} samples have been added to the {1}.")) {
+            // No FixupCommentary, because it creates huge ETL activity, and this isn't altering anything in the
+            // database, just re-triggering a normal process.
+            System.out.println("Added samples to bucket for " + pdo.getBusinessKey());
+            commitTransaction();
+        } else {
+            for (String message : messages) {
+                System.out.println(message);
+            }
+            utx.rollback();
+        }
+    }
+
+    /**
+     * Useful for cases when an order has been completed by billing all of the primary product, but then still needs to
+     * bill add-onds.   The structure of the file is as follows:
+     * <ol><li>SUPPORT-XXXX  reason for updating order status</li>
+     * <li>PDO-xxx1</li>
+     * <li>PDO-xxx2</li>
+     * <li>PDO-xxx3</li></ol>
+     * @throws Exception
+     */
+    @Test(enabled = false)
+    public void reOpenProductOrder() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("ReOpenProductOrders.txt"));
+
+        for(String line: fixupLines.subList(1, fixupLines.size())) {
+
+            ProductOrder orderToOpen = productOrderDao.findByBusinessKey(line);
+            orderToOpen.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+            System.out.println("Changed the status of product order " + line + " to " + ProductOrder.OrderStatus.Submitted.getDisplayName());
+        }
+
+        productOrderDao.persist(new FixupCommentary(fixupLines.get(0)));
+        commitTransaction();
+    }
+
+    private void addOrspToPdo(String pdoKey, String orspId) throws Exception {
+        final ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoKey);
+        Assert.assertNotNull(productOrder);
+        final Optional<RegulatoryInfo> foundInfo = productOrder.getResearchProject().getRegulatoryInfos().stream()
+                .filter(regulatoryInfo -> StringUtils.equals(regulatoryInfo.getIdentifier(), orspId)).collect(
+                        MoreCollectors.toOptional());
+
+        Assert.assertTrue(foundInfo.isPresent());
+
+        productOrder.setSkipRegulatoryReason(null);
+        productOrder.addRegulatoryInfo(foundInfo.get());
+
+        System.out.println(String.format("Added %s to order %s", foundInfo.get(), productOrder.getJiraTicketKey()));
+    }
+
+    /**
+     * file example for input
+     * File name: UpdatePdoORSP.txt
+     *
+     * Content example
+     *
+     * <ol><li>SUPPORT-5472: adding ORSP IDentifier for PDOs which do not have one</li>
+     * <li>PDO-XXXX,ORSP-182</li>
+     * <li>PDO-XXX2,ORSP-8382</li></ol>
+     * @throws Exception
+     */
+    @Test(enabled = false)
+    public void batchAddORSPToPdos() throws Exception {
+        userBean.loginOSUser();
+
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("UpdatePdoORSP.txt"));
+        String commentary = fixupLines.get(0);
+
+        for(String line: fixupLines.subList(1, fixupLines.size())) {
+            final String[] pdoOrspInfo = line.split(",");
+            addOrspToPdo(pdoOrspInfo[0], pdoOrspInfo[1]);
+        }
+        beginTransaction();
+
+        productOrderDao.persist(new FixupCommentary(commentary));
+        commitTransaction();
     }
 }

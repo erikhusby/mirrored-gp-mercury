@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
@@ -27,6 +29,8 @@ public class FCTJiraFieldFactory extends AbstractBatchJiraFieldFactory {
      * The header columns of the lane info table found in FCT or MISEQ Jira tickets.
      */
     public static String LANE_INFO_HEADER = "||Lane||Loading Vessel||Loading Concentration||LCSET||Product||\n";
+
+    private static final Log logger = LogFactory.getLog(FCTJiraFieldFactory.class);
 
     public FCTJiraFieldFactory(@Nonnull LabBatch batch, SequencingTemplateFactory sequencingTemplateFactory) {
         super(batch, CreateFields.ProjectType.FCT_PROJECT, sequencingTemplateFactory, null, null);
@@ -59,14 +63,19 @@ public class FCTJiraFieldFactory extends AbstractBatchJiraFieldFactory {
                 laneInfoBuilder.toString()));
 
         // Build read structure String of the form 151x8x8x151
-        SequencingTemplateType sequencingTemplate = sequencingTemplateFactory.getSequencingTemplate(this.batch, false);
-        String readStructure = sequencingTemplate.getReadStructure();
-        readStructure = readStructure.replaceAll("T", "x");
-        readStructure = readStructure.replaceAll("B", "x");
-        if (readStructure.endsWith("x")) {
-            readStructure = readStructure.substring(0, readStructure.length() - 1);
+        try {
+            SequencingTemplateType sequencingTemplate =
+                    sequencingTemplateFactory.getSequencingTemplate(this.batch, false);
+            String readStructure = sequencingTemplate.getReadStructure();
+            readStructure = readStructure.replaceAll("T", "x");
+            readStructure = readStructure.replaceAll("B", "x");
+            if (readStructure.endsWith("x")) {
+                readStructure = readStructure.substring(0, readStructure.length() - 1);
+            }
+            customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.READ_STRUCTURE, readStructure));
+        } catch (Exception e) {
+            logger.error("Failed to build read structure", e);
         }
-        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.READ_STRUCTURE, readStructure));
 
         return customFields;
     }

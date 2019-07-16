@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.control.zims;
 
 import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -27,6 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchety
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.Aligner;
+import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
@@ -189,15 +189,14 @@ public class ZimsIlluminaRunFactory {
                     }
                 }
                 sampleIds.add(sampleId);
+
                 LabVessel libraryVessel = flowcell.getNearestTubeAncestorsForLanes().get(vesselPosition);
                 if (flowcellDesignation == null) {
-                    // Only need one designation since all of them constituting this flowcell will have been
-                    // grouped by and therefore have the same flowcell parameters.
-                    List<FlowcellDesignation> flowcellDesignations =
-                            flowcellDesignationEjb.getFlowcellDesignations(Collections.singleton(libraryVessel));
-                    if (CollectionUtils.isNotEmpty(flowcellDesignations)) {
-                        flowcellDesignation = flowcellDesignations.get(0);
-                    }
+                    // Gets the flowcell designation from batch starting vessel.
+                    flowcellDesignation = laneSampleInstance.getAllBatchVessels(LabBatch.LabBatchType.FCT).stream().
+                            filter(lbsVessel -> lbsVessel.getFlowcellDesignation() != null).
+                            map(LabBatchStartingVessel::getFlowcellDesignation).
+                            findFirst().orElse(null);
                 }
                 boolean isCrspLane;
                 if (mixedLaneOk && singleBucketEntry != null) {
@@ -322,6 +321,7 @@ public class ZimsIlluminaRunFactory {
         Set<String> aggregationDataTypes = new HashSet<>();
         Set<String> insertSizes = new HashSet<>();
         Set<ResearchProject> positiveControlResearchProjects = new HashSet<>();
+        Set<ResearchProject> negativeControlResearchProjects = new HashSet<>();
         for (SampleInstanceDto sampleInstanceDto : sampleInstanceDtos) {
             String analysisType = sampleInstanceDto.getSampleInstance().getAnalysisType() != null ?
                     sampleInstanceDto.getSampleInstance().getAnalysisType().getName() : null;
@@ -336,8 +336,12 @@ public class ZimsIlluminaRunFactory {
                 Product product = productOrder.getProduct();
                 ResearchProject project = productOrder.getResearchProject();
                 ResearchProject positiveControlResearchProject = product.getPositiveControlResearchProject();
+                ResearchProject negativeControlResearchProject = product.getNegativeControlResearchProject();
                 if (positiveControlResearchProject != null) {
                     positiveControlResearchProjects.add(positiveControlResearchProject);
+                }
+                if (negativeControlResearchProject != null) {
+                    negativeControlResearchProjects.add(negativeControlResearchProject);
                 }
                 if (analysisType == null) {
                     analysisType = product.getAnalysisTypeKey();
@@ -440,19 +444,26 @@ public class ZimsIlluminaRunFactory {
 
             SampleData sampleData = mapSampleIdToDto.get(sampleInstanceDto.getSampleId());
             Boolean isPooledTube = sampleInstance.getIsPooledTube();
-            if (isPooledTube && sampleData instanceof MercurySampleData) {
+            if (sampleData instanceof MercurySampleData) {
                 MercurySampleData mercurySampleData = (MercurySampleData) sampleData;
-                mercurySampleData.setRootSampleId(sampleInstance.getMercuryRootSampleName());
-                mercurySampleData.setSampleId(sampleInstance.getNearestMercurySampleName());
+                if (isPooledTube) {
+                    mercurySampleData.setRootSampleId(sampleInstance.getMercuryRootSampleName());
+                    mercurySampleData.setSampleId(sampleInstance.getNearestMercurySampleName());
+                }
+                // Uses External Library root sample metadata if it is present.
+                if (StringUtils.isNotBlank(sampleInstance.getExternalRootSampleName())) {
+                    mercurySampleData.setRootSampleId(sampleInstance.getExternalRootSampleName());
+                }
             }
+
             TZDevExperimentData devExperimentData = sampleInstance.getTzDevExperimentData();
             WorkflowMetadata workflowMetadata = mapWorkflowToMetadata.get(sampleInstance.getWorkflowName());
             libraryBeans.add(createLibraryBean(sampleInstanceDto, productOrder, sampleData, lcSet,
                     baitName, indexingSchemeEntity, catNames, sampleInstanceDto.getSampleInstance().getWorkflowName(),
                     indexingSchemeDto, mapNameToControl, sampleInstanceDto.getPdoSampleName(),
                     sampleInstanceDto.isCrspLane(), sampleInstanceDto.getMetadataSourceForPipelineAPI(), analysisTypes,
-                    referenceSequenceKeys, aggregationDataTypes, positiveControlResearchProjects, insertSizes,
-                    devExperimentData, isPooledTube, workflowMetadata));
+                    referenceSequenceKeys, aggregationDataTypes, positiveControlResearchProjects,
+                    negativeControlResearchProjects, insertSizes, devExperimentData, isPooledTube, workflowMetadata));
         }
 
         // Make order predictable.  Include library name because for ICE there are 8 ancestor catch tubes, all with
@@ -470,8 +481,8 @@ public class ZimsIlluminaRunFactory {
                 molIndexSecheme = libraryBean.getMolecularIndexingScheme().getName();
             }
 
-            String consolidationKey =
-                    makeConsolidationKey(libraryBean.getSampleId(), molIndexSecheme);
+            String consolidationKey = makeConsolidationKey(molIndexSecheme,
+                    libraryBean.isImpliedSampleName() ? libraryBean.getLibrary() : libraryBean.getSampleId());
             if (!previouslySeenSampleAndMis.add(consolidationKey)) {
                 iter.remove();
             }
@@ -490,8 +501,9 @@ public class ZimsIlluminaRunFactory {
             Map<String, Control> mapNameToControl, String pdoSampleName,
             boolean isCrspLane, String metadataSourceForPipelineAPI, Set<String> analysisTypes,
             Set<String> referenceSequenceKeys, Set<String> aggregationDataTypes,
-            Set<ResearchProject> positiveControlProjects, Set<String> insertSizes,
-            TZDevExperimentData devExperimentData, boolean isPooledTube, WorkflowMetadata workflowMetadata) {
+            Set<ResearchProject> positiveControlProjects, Set<ResearchProject> negativeControlProjects,
+            Set<String> insertSizes, TZDevExperimentData devExperimentData, boolean isPooledTube,
+            WorkflowMetadata workflowMetadata) {
 
         Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
 
@@ -500,7 +512,7 @@ public class ZimsIlluminaRunFactory {
 
         //If this is an uploaded pooled tube, create the label based on the provided library name.
         if(isPooledTube) {
-            label = sampleInstanceDto.getSampleInstance().getSampleLibraryName();
+            label = sampleInstanceDto.getSampleInstance().getLibraryName();
             libraryCreationDate = dateFormat.format(sampleInstanceDto.getSampleInstance().getLibraryCreationDate());
         }
         else {
@@ -524,6 +536,7 @@ public class ZimsIlluminaRunFactory {
         String gssrSampleType = null;
         Boolean doAggregation = Boolean.TRUE;
         ResearchProject positiveControlProject = null;
+        ResearchProject negativeControlProject = null;
 
         String analysisType = null;
         String referenceSequence = null;
@@ -545,10 +558,6 @@ public class ZimsIlluminaRunFactory {
                         String[] referenceSequenceValues = referenceSequenceKeys.iterator().next().split("\\|");
                         referenceSequence = referenceSequenceValues[0];
                         referenceSequenceVersion = referenceSequenceValues[1];
-                        if (ReferenceSequence.NO_REFERENCE_SEQUENCE.equals(referenceSequence)) {
-                            referenceSequence = null;
-                            referenceSequenceVersion = null;
-                        }
                         aggregationDataType = aggregationDataTypes.iterator().next();
                         if (positiveControlProjects.size() == 1) {
                             positiveControlProject = positiveControlProjects.iterator().next();
@@ -560,13 +569,25 @@ public class ZimsIlluminaRunFactory {
                     break;
                 case NEGATIVE:
                     negativeControl = true;
+                    if (analysisTypes.size() == 1 && referenceSequenceKeys.size() == 1 &&
+                        aggregationDataTypes.size() == 1 && negativeControlProjects.size() <= 1 &&
+                        insertSizes.size() <= 1) {
+                        analysisType = analysisTypes.iterator().next();
+                        String[] referenceSequenceValues = referenceSequenceKeys.iterator().next().split("\\|");
+                        referenceSequence = referenceSequenceValues[0];
+                        referenceSequenceVersion = referenceSequenceValues[1];
+                        aggregationDataType = aggregationDataTypes.iterator().next();
+                        if (negativeControlProjects.size() == 1) {
+                            negativeControlProject = negativeControlProjects.iterator().next();
+                        }
+                        if (insertSizes.size() == 1) {
+                            expectedInsertSize = String.valueOf(insertSizes.iterator().next());
+                        }
+                    }
                     break;
                 }
             }
         }
-
-        // default to the passed in bait name, but override if there is product specified version.
-        String bait = baitName;
 
         // These items are pulled off the project, product, or SampleInstanceEntity.
         String aligner = null;
@@ -580,6 +601,7 @@ public class ZimsIlluminaRunFactory {
             expectedInsertSize = sampleInstanceDto.sampleInstance.getExpectedInsertSize();
         }
         String aggregationParticle = sampleInstanceDto.sampleInstance.getAggregationParticle();
+        Boolean isImpliedSampleName = sampleInstanceDto.sampleInstance.getImpliedSampleName();
         if (aggregationDataType == null) {
             aggregationDataType = sampleInstanceDto.sampleInstance.getAggregationDataType();
         }
@@ -587,6 +609,8 @@ public class ZimsIlluminaRunFactory {
             referenceSequence = sampleInstanceDto.sampleInstance.getReferenceSequence().getName();
             referenceSequenceVersion = sampleInstanceDto.sampleInstance.getReferenceSequence().getVersion();
         }
+
+        String bait = baitName;
 
         if (productOrder != null) {
             Product product = productOrder.getProduct();
@@ -599,7 +623,6 @@ public class ZimsIlluminaRunFactory {
             if (analysisType == null) {
                 analysisType = product.getAnalysisTypeKey();
             }
-            // If there was no bait on the actual samples, use the one defined on the product or pdo if unlocked.
             if (bait == null) {
                 bait = productOrder.getReagentDesignKey();
             }
@@ -621,6 +644,9 @@ public class ZimsIlluminaRunFactory {
             referenceSequence = null;
             referenceSequenceVersion = null;
         }
+        if (AnalysisType.NO_ANALYSIS.equals(analysisType)) {
+            analysisType = null;
+        }
 
         List<SubmissionMetadata> submissionMetadataList = new ArrayList<>();
             if (workflowMetadata != null) {
@@ -639,7 +665,7 @@ public class ZimsIlluminaRunFactory {
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
                 catNames, productOrder, lcSet, sampleData, labWorkflow, libraryCreationDate, pdoSampleName,
                 metadataSourceForPipelineAPI, aggregationDataType, jiraService, submissionMetadataList,
-                Boolean.TRUE.equals(analyzeUmi), aggregationParticle);
+                Boolean.TRUE.equals(analyzeUmi), aggregationParticle, Boolean.TRUE.equals(isImpliedSampleName));
         if (isCrspLane) {
             crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, bait);
         }
@@ -652,6 +678,17 @@ public class ZimsIlluminaRunFactory {
                 libraryBean.setResearchProjectId(positiveControlProject.getBusinessKey());
                 libraryBean.setResearchProjectName(positiveControlProject.getTitle());
                 libraryBean.setRegulatoryDesignation(positiveControlProject.getRegulatoryDesignationCodeForPipeline());
+            }
+        }
+        if (Boolean.TRUE.equals(libraryBean.isNegativeControl())) {
+            String participantWithLcSetName = libraryBean.getCollaboratorParticipantId() + "_" + lcSet;
+            libraryBean.setCollaboratorSampleId(participantWithLcSetName);
+            libraryBean.setCollaboratorParticipantId(participantWithLcSetName);
+
+            if (negativeControlProject != null) {
+                libraryBean.setResearchProjectId(negativeControlProject.getBusinessKey());
+                libraryBean.setResearchProjectName(negativeControlProject.getTitle());
+                libraryBean.setRegulatoryDesignation(negativeControlProject.getRegulatoryDesignationCodeForPipeline());
             }
         }
 

@@ -108,6 +108,9 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @Column(name = "REAGENT_DESIGN_KEY", nullable = true, length = 200)
     private String reagentDesignKey;
 
+    @Column(name = "COVERAGE_TYPE_KEY", nullable = true, length = 200)
+    private String coverageTypeKey;
+
 
     @Column(name = "PART_NUMBER")
     private String partNumber;
@@ -206,6 +209,10 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @JoinColumn(name = "POSITIVE_CONTROL_RP_ID")
     private ResearchProject positiveControlResearchProject;
 
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST})
+    @JoinColumn(name = "NEGATIVE_CONTROL_RP_ID")
+    private ResearchProject negativeControlResearchProject;
+
     @Column(name ="EXTERNAL_ONLY_PRODUCT")
     private Boolean externalOnlyProduct = false;
 
@@ -252,9 +259,11 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
         clonedProduct.setAggregationDataType(productToClone.getAggregationDataType());
         clonedProduct.setAnalysisTypeKey(productToClone.getAnalysisTypeKey());
+        clonedProduct.setCoverageTypeKey(productToClone.getCoverageTypeKey());
         clonedProduct.setReagentDesignKey(productToClone.getReagentDesignKey());
         clonedProduct.setBaitLocked(productToClone.getBaitLocked());
         clonedProduct.setPositiveControlResearchProject(productToClone.getPositiveControlResearchProject());
+        clonedProduct.setNegativeControlResearchProject(productToClone.getNegativeControlResearchProject());
         clonedProduct.setReadLength(productToClone.getReadLength());
         clonedProduct.setInsertSize(productToClone.getInsertSize());
         clonedProduct.setLoadingConcentration(productToClone.getLoadingConcentration());
@@ -558,6 +567,14 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.reagentDesignKey = reagentDesignKey;
     }
 
+    public String getCoverageTypeKey() {
+        return coverageTypeKey;
+    }
+
+    public void setCoverageTypeKey(String covereageTypeKey) {
+        this.coverageTypeKey = covereageTypeKey;
+    }
+
     public boolean isPdmOrderableOnly() {
         return pdmOrderableOnly;
     }
@@ -762,6 +779,15 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public void setPositiveControlResearchProject(ResearchProject positiveControlResearchProject) {
         this.positiveControlResearchProject = positiveControlResearchProject;
+    }
+
+    public ResearchProject getNegativeControlResearchProject() {
+        return negativeControlResearchProject;
+    }
+
+    public void setNegativeControlResearchProject(
+            ResearchProject negativeControlResearchProject) {
+        this.negativeControlResearchProject = negativeControlResearchProject;
     }
 
     /**

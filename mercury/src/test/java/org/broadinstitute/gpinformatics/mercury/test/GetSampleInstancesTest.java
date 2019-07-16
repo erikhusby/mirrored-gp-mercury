@@ -446,7 +446,7 @@ public class GetSampleInstancesTest {
             BarcodedTube barcodedTube = new BarcodedTube("tube1." + i, BarcodedTube.BarcodedTubeType.MatrixTube);
             productOrderSample.setMercurySample(new MercurySample(productOrderSample.getSampleKey(),
                     MercurySample.MetadataSource.BSP));
-            barcodedTube.getMercurySamples().add(productOrderSample.getMercurySample());
+            barcodedTube.addSample(productOrderSample.getMercurySample());
             mapPositionToTube.put(SBSSection.ALL96.getWells().get(i), barcodedTube);
             starterVessels1.add(barcodedTube);
             i++;
@@ -546,9 +546,9 @@ public class GetSampleInstancesTest {
         // Create LCSET 1 with 2 new tubes
         Map<VesselPosition, BarcodedTube> mapLcset1Pos1ToTube = new HashMap<>();
         BarcodedTube lcset1T1 = new BarcodedTube("LCSET1T1");
-        lcset1T1.getMercurySamples().add(new MercurySample("S1_1", MercurySample.MetadataSource.MERCURY));
+        lcset1T1.addSample(new MercurySample("S1_1", MercurySample.MetadataSource.MERCURY));
         BarcodedTube lcset1T2 = new BarcodedTube("LCSET1T2");
-        lcset1T2.getMercurySamples().add(new MercurySample("S1_2", MercurySample.MetadataSource.MERCURY));
+        lcset1T2.addSample(new MercurySample("S1_2", MercurySample.MetadataSource.MERCURY));
         mapLcset1Pos1ToTube.put(VesselPosition.A01, lcset1T1);
         mapLcset1Pos1ToTube.put(VesselPosition.A02, lcset1T2);
         LabBatch lcset1 = new LabBatch("LCSET1", new HashSet<LabVessel>(mapLcset1Pos1ToTube.values()),
@@ -558,7 +558,7 @@ public class GetSampleInstancesTest {
         // Create LCSET 2 with 1 new tube and 1 rework
         Map<VesselPosition, BarcodedTube> mapLcset2Pos1ToTube = new HashMap<>();
         BarcodedTube lcset2T1 = new BarcodedTube("LCSET2T1");
-        lcset2T1.getMercurySamples().add(new MercurySample("S2_1", MercurySample.MetadataSource.MERCURY));
+        lcset2T1.addSample(new MercurySample("S2_1", MercurySample.MetadataSource.MERCURY));
         mapLcset2Pos1ToTube.put(VesselPosition.A01, lcset2T1);
         mapLcset2Pos1ToTube.put(VesselPosition.A02, lcset1T2);
         LabBatch lcset2 = new LabBatch("LCSET2", Collections.<LabVessel>singleton(lcset2T1),
@@ -770,12 +770,61 @@ public class GetSampleInstancesTest {
                 targetTf.getContainerRole(), VesselPosition.A02, null, labEvent));
         Assert.assertEquals(labEvent.getComputedLcSets().size(), 2);
         Assert.assertEquals(labEvent.getMapPositionToLcSets().size(), 2);
-        Assert.assertEquals(labEvent.getMapPositionToLcSets().get(VesselPosition.A01).iterator().next(), lcset1);
-        Assert.assertEquals(labEvent.getMapPositionToLcSets().get(VesselPosition.A02).iterator().next(), lcset2);
+        Assert.assertEquals(labEvent.getMapPositionToLcSets().get(VesselPosition.A01).getLabBatchSet().iterator().next(), lcset1);
+        Assert.assertEquals(labEvent.getMapPositionToLcSets().get(VesselPosition.A02).getLabBatchSet().iterator().next(), lcset2);
         Assert.assertEquals(l1T3.getSampleInstancesV2().iterator().next().getSingleBatch(), lcset1);
         Assert.assertEquals(l2T3.getSampleInstancesV2().iterator().next().getSingleBatch(), lcset2);
 
         BaseEventTest.runTransferVisualizer(l1T1);
+    }
+
+    /**
+     * Some daughter transfers backfilled from BSP contain daughter and grand daughter transfers in the same cherry
+     * pick.  Test that this does not cause a stack overflow.
+     */
+    public void testGrandDaughter() {
+        BarcodedTube parentTube1 = new BarcodedTube("P1");
+        String sampleKey = "SM-1";
+        MercurySample mercurySample1 = new MercurySample(sampleKey, MercurySample.MetadataSource.BSP);
+        mercurySample1.addLabVessel(parentTube1);
+
+        BarcodedTube parentTube2 = new BarcodedTube("P2");
+        MercurySample mercurySample2 = new MercurySample("SM-2", MercurySample.MetadataSource.BSP);
+        mercurySample2.addLabVessel(parentTube2);
+
+        HashMap<VesselPosition, BarcodedTube> mapPositionToParentTube = new HashMap<>();
+        mapPositionToParentTube.put(VesselPosition.A01, parentTube1);
+        mapPositionToParentTube.put(VesselPosition.A02, parentTube2);
+        TubeFormation parentTf = new TubeFormation(mapPositionToParentTube, RackOfTubes.RackType.Matrix96);
+
+        HashMap<VesselPosition, BarcodedTube> mapPositionToDaughterTube = new HashMap<>();
+        BarcodedTube daughterTube1 = new BarcodedTube("D1");
+        mapPositionToDaughterTube.put(VesselPosition.A01, daughterTube1);
+        BarcodedTube daughterTube2 = new BarcodedTube("D2");
+        mapPositionToDaughterTube.put(VesselPosition.A02, daughterTube2);
+        TubeFormation daughterTf = new TubeFormation(mapPositionToDaughterTube, RackOfTubes.RackType.Matrix96);
+
+        HashMap<VesselPosition, BarcodedTube> mapPositionToGrandDaughterTube = new HashMap<>();
+        BarcodedTube grandDaughterTube1 = new BarcodedTube("GD1");
+        mapPositionToGrandDaughterTube.put(VesselPosition.A01, grandDaughterTube1);
+        BarcodedTube grandDaughterTube2 = new BarcodedTube("GD2");
+        mapPositionToGrandDaughterTube.put(VesselPosition.A02, grandDaughterTube2);
+        TubeFormation grandDaughterTf = new TubeFormation(mapPositionToGrandDaughterTube, RackOfTubes.RackType.Matrix96);
+
+        LabEvent grandDaughterEvent = new LabEvent(LabEventType.SAMPLES_DAUGHTER_PLATE_CREATION, new Date(), "BATMAN", 1L, 101L, "Bravo");
+        grandDaughterEvent.getCherryPickTransfers().add(new CherryPickTransfer(parentTf.getContainerRole(), VesselPosition.A01, null,
+                daughterTf.getContainerRole(), VesselPosition.A01, null, grandDaughterEvent));
+        grandDaughterEvent.getCherryPickTransfers().add(new CherryPickTransfer(parentTf.getContainerRole(), VesselPosition.A02, null,
+                daughterTf.getContainerRole(), VesselPosition.A02, null, grandDaughterEvent));
+        grandDaughterEvent.getCherryPickTransfers().add(new CherryPickTransfer(daughterTf.getContainerRole(), VesselPosition.A01, null,
+                grandDaughterTf.getContainerRole(), VesselPosition.A01, null, grandDaughterEvent));
+        grandDaughterEvent.getCherryPickTransfers().add(new CherryPickTransfer(daughterTf.getContainerRole(), VesselPosition.A02, null,
+                grandDaughterTf.getContainerRole(), VesselPosition.A02, null, grandDaughterEvent));
+
+        Set<SampleInstanceV2> sampleInstances = grandDaughterTube1.getSampleInstancesV2();
+        Assert.assertEquals(sampleInstances.size(), 1);
+        Assert.assertEquals(sampleInstances.iterator().next().getRootOrEarliestMercurySampleName(),
+                sampleKey);
     }
 
     /**

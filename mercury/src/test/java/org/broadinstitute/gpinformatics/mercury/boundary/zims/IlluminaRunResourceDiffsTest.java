@@ -16,6 +16,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.net.URL;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -35,7 +36,8 @@ public class IlluminaRunResourceDiffsTest extends Arquillian {
 
     @Test(groups = TestGroups.STANDARD, enabled = false)
     public void testCompareAll() {
-        List<IlluminaSequencingRun> illuminaSequencingRuns = illuminaSequencingRunDao.findAllOrderByRunName();
+        List<IlluminaSequencingRun> illuminaSequencingRuns = illuminaSequencingRunDao.findAllOrderByRunName().stream().
+                sorted((o1, o2) -> o2.getRunName().compareTo(o1.getRunName())).collect(Collectors.toList());
         for (IlluminaSequencingRun illuminaSequencingRun : illuminaSequencingRuns) {
             // Exclude runs created by tests
             if (!illuminaSequencingRun.getRunName().contains("Flowcell") &&
@@ -55,13 +57,17 @@ public class IlluminaRunResourceDiffsTest extends Arquillian {
     private void compareRun(IlluminaSequencingRun illuminaSequencingRun) {
         System.out.println("Comparing run " + illuminaSequencingRun.getRunName());
         try {
-            String localRun = IlluminaRunResourceLiveTest.getZimsIlluminaRunString(
+            long t1 = System.currentTimeMillis();
+            String newRun = IlluminaRunResourceLiveTest.getZimsIlluminaRunString(
                     new URL(ImportFromSquidTest.TEST_MERCURY_URL + "/"),
                     illuminaSequencingRun.getRunName());
+            long t2 = System.currentTimeMillis();
             String referenceRun = IlluminaRunResourceLiveTest.getZimsIlluminaRunString(
                     new URL("https://mercurydev:8443/Mercury/"),
                     illuminaSequencingRun.getRunName());
-            JSONCompareResult jsonCompareResult = JSONCompare.compareJSON(referenceRun, localRun,
+            long t3 = System.currentTimeMillis();
+            System.out.println("New: " + (t2 - t1) + ". Reference " + (t3 - t2));
+            JSONCompareResult jsonCompareResult = JSONCompare.compareJSON(referenceRun, newRun,
                     JSONCompareMode.LENIENT);
             if (jsonCompareResult.failed()) {
                 System.out.println(jsonCompareResult.getMessage());

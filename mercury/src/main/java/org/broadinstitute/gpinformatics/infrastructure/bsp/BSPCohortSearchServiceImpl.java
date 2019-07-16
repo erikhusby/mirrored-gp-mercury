@@ -1,18 +1,17 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import com.sun.jersey.api.client.ClientHandlerException;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
-import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
+import org.broadinstitute.gpinformatics.mercury.BSPJaxRsClient;
 
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Default;
-import javax.ws.rs.core.MediaType;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -25,7 +24,7 @@ import java.util.TreeSet;
  */
 @Dependent
 @Default
-public class BSPCohortSearchServiceImpl extends BSPJerseyClient implements BSPCohortSearchService {
+public class BSPCohortSearchServiceImpl extends BSPJaxRsClient implements BSPCohortSearchService {
 
     private static final long serialVersionUID = -1765914773249771569L;
 
@@ -71,16 +70,16 @@ public class BSPCohortSearchServiceImpl extends BSPJerseyClient implements BSPCo
         String urlString = getUrl(Endpoint.ALL_COHORTS.getSuffixUrl());
         SortedSet<Cohort> usersCohorts = new TreeSet<>(Cohort.COHORT_BY_ID);
 
+        Response clientResponse = null;
         try {
-            WebResource webResource = getJerseyClient().resource(urlString);
-            ClientResponse clientResponse =
-                    webResource.type(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(ClientResponse.class, urlString);
+            WebTarget webResource = getJaxRsClient().target(urlString);
+            clientResponse = webResource.request().get();
 
-            InputStream is = clientResponse.getEntityInputStream();
+            InputStream is = clientResponse.readEntity(InputStream.class);
             rdr = new BufferedReader(new InputStreamReader(is));
 
             // Check for OK status.
-            if (clientResponse.getStatus() != ClientResponse.Status.OK.getStatusCode()) {
+            if (clientResponse.getStatus() != Response.Status.OK.getStatusCode()) {
                 String errMsg = "Cannot retrieve all cohorts from BSP platform. Received response code : " + clientResponse.getStatus();
                 logger.error(errMsg + " : " + rdr.readLine());
                 throw new RuntimeException(errMsg);
@@ -108,7 +107,7 @@ public class BSPCohortSearchServiceImpl extends BSPJerseyClient implements BSPCo
 
                 readLine = rdr.readLine();
             }
-        } catch(ClientHandlerException e) {
+        } catch(WebApplicationException e) {
             String errMsg = "Could not communicate with BSP platform to get all cohorts";
             logger.error(errMsg + " at " + urlString, e);
             throw e;
@@ -118,6 +117,9 @@ public class BSPCohortSearchServiceImpl extends BSPJerseyClient implements BSPCo
         } finally {
             // Close the reader, which will close the underlying input stream.
             IOUtils.closeQuietly(rdr);
+            if (clientResponse != null) {
+                clientResponse.close();
+            }
         }
 
         return usersCohorts;

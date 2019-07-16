@@ -26,9 +26,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResourceTest;
-import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.ReworkReasonDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
@@ -130,7 +128,7 @@ public class ReworkEjbTest extends Arquillian {
     private ProductOrderDao productOrderDao;
 
     @Inject
-    PriceItemDao priceItemDao;
+    private PriceItemDao priceItemDao;
 
     @Inject
     private ProductFamilyDao productFamilyDao;
@@ -164,13 +162,6 @@ public class ReworkEjbTest extends Arquillian {
 
     @Inject
     private BSPSampleDataFetcher bspSampleDataFetcher;
-
-    @Inject
-    private LabBatchEjb labBatchEJB;
-
-    @Inject
-    private ReworkReasonDao reworkReasonDao;
-
 
     private Map<String, BarcodedTube> mapBarcodeToTube = new HashMap<>();
     private ProductOrder exExProductOrder1;
@@ -487,11 +478,11 @@ public class ReworkEjbTest extends Arquillian {
         if (pBucket == null) {
 
             pBucket = new Bucket(bucketName);
+            bucketDao.persist(pBucket);
         }
 
         existingReworks = reworkEjb.getVesselsForRework("Pico/Plating Bucket").size();
 
-        bucketDao.persist(pBucket);
         resetExExProductWorkflow();
     }
 
@@ -536,21 +527,14 @@ public class ReworkEjbTest extends Arquillian {
         extraProductOrder.setOrderStatus(ProductOrder.OrderStatus.Completed);
         resetExExProductWorkflow();
 
-        List<ProductOrder> ordersToUpdate = new ArrayList<>();
-
-        Collections
-                .addAll(ordersToUpdate, exExProductOrder1, exExProductOrder2, nonExExProductOrder, extraProductOrder);
         for (BarcodedTube vessel : mapBarcodeToTube.values()) {
             BarcodedTube tempVessel = barcodedTubeDao.findByBarcode(vessel.getLabel());
             for (BucketEntry bucketEntry : tempVessel.getBucketEntries()) {
                 bucketEntry.setStatus(BucketEntry.Status.Archived);
             }
-            barcodedTubeDao.persist(tempVessel);
         }
-        productOrderDao.persistAll(ordersToUpdate);
         productOrderDao.flush();
         productOrderDao.clear();
-        mapBarcodeToTube.clear();
     }
 
     /**
@@ -673,11 +657,11 @@ public class ReworkEjbTest extends Arquillian {
 
         for (String barcode : mapBarcodeToTube.keySet()) {
 
-            bucketDao.findByName(bucketName);
+            pBucket = bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(exExProductOrder1, barcodedTubeDao.findByBarcode(barcode),
                                                     BucketEntry.BucketEntryType.PDO_ENTRY);
             newEntry.setStatus(BucketEntry.Status.Archived);
-            bucketDao.persist(pBucket);
+            bucketDao.flush();
 
             candidates.addAll(reworkEjb.findBucketCandidates(barcode));
         }
@@ -694,11 +678,11 @@ public class ReworkEjbTest extends Arquillian {
     public void testCannotReworkDraftPdoSamples() throws Exception {
         createInitialTubes(bucketSamplesDraft, String.valueOf((new Date()).getTime()) + "tst2draft");
         for (String barcode : mapBarcodeToTube.keySet()) {
-            bucketDao.findByName(bucketName);
+            pBucket = bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(draftProductOrder, barcodedTubeDao.findByBarcode(barcode),
                                                     BucketEntry.BucketEntryType.PDO_ENTRY);
             newEntry.setStatus(BucketEntry.Status.Archived);
-            bucketDao.persist(pBucket);
+            bucketDao.flush();
             Assert.assertEquals(reworkEjb.findBucketCandidates(barcode).size(), 0);
         }
     }
@@ -708,11 +692,11 @@ public class ReworkEjbTest extends Arquillian {
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst2");
 
         for (String barcode : mapBarcodeToTube.keySet()) {
-            bucketDao.findByName(bucketName);
+            pBucket = bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(exExProductOrder1, barcodedTubeDao.findByBarcode(barcode),
                                                     BucketEntry.BucketEntryType.PDO_ENTRY);
             newEntry.setStatus(BucketEntry.Status.Archived);
-            bucketDao.persist(pBucket);
+            bucketDao.flush();
         }
 
         Collection<ReworkEjb.BucketCandidate> candidates = reworkEjb.findBucketCandidates(new ArrayList<>(
@@ -749,11 +733,11 @@ public class ReworkEjbTest extends Arquillian {
             String barcode = entry.getKey();
             BarcodedTube tube = entry.getValue();
 
-            bucketDao.findByName(bucketName);
+            pBucket = bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(exExProductOrder1, barcodedTubeDao.findByBarcode(barcode),
                                                     BucketEntry.BucketEntryType.PDO_ENTRY);
             newEntry.setStatus(BucketEntry.Status.Archived);
-            bucketDao.persist(pBucket);
+            bucketDao.flush();
 
             candidates
                     .addAll(reworkEjb.findBucketCandidates(tube.getMercurySamples().iterator().next().getSampleKey()));
@@ -776,11 +760,11 @@ public class ReworkEjbTest extends Arquillian {
             String barcode = entry.getKey();
             BarcodedTube tube = entry.getValue();
 
-            bucketDao.findByName(bucketName);
+            pBucket = bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(exExProductOrder1, barcodedTubeDao.findByBarcode(barcode),
                                                     BucketEntry.BucketEntryType.PDO_ENTRY);
             newEntry.setStatus(BucketEntry.Status.Archived);
-            bucketDao.persist(pBucket);
+            bucketDao.flush();
 
             sampleIds.add(tube.getMercurySamples().iterator().next().getSampleKey());
         }
@@ -827,13 +811,13 @@ public class ReworkEjbTest extends Arquillian {
 
         BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(true);
 
+        pBucket = bucketDao.findByName(bucketName);
         for (Map.Entry<String, BarcodedTube> currEntry : mapBarcodeToTube.entrySet()) {
 
-            bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(exExProductOrder1, barcodedTubeDao.findByBarcode(
                     currEntry.getKey()), BucketEntry.BucketEntryType.PDO_ENTRY);
             newEntry.setStatus(BucketEntry.Status.Archived);
-            bucketDao.persist(pBucket);
+            bucketDao.flush();
         }
 
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettaLimsMessageResourceTest
@@ -843,13 +827,14 @@ public class ReworkEjbTest extends Arquillian {
                                        reagentDesignDao, barcodedTubeDao,
                                        appConfig.getUrl(), 2);
 
+        exExProductOrder1 = refreshPdo(exExProductOrder1.getBusinessKey());
         for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
 
-            bucketDao.findByName(bucketName);
+            pBucket = bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(exExProductOrder1, barcodedTubeDao.findByBarcode(barcode),
                                                     BucketEntry.BucketEntryType.PDO_ENTRY);
             newEntry.setStatus(BucketEntry.Status.Archived);
-            bucketDao.persist(pBucket);
+            bucketDao.flush();
 
             for (Map.Entry<String, BarcodedTube> currEntry : mapBarcodeToTube.entrySet()) {
                 candidates.addAll(reworkEjb
@@ -876,11 +861,11 @@ public class ReworkEjbTest extends Arquillian {
         List<ReworkEjb.BucketCandidate> candidates = new ArrayList<>();
 
         for (String barcode : mapBarcodeToTube.keySet()) {
-            bucketDao.findByName(bucketName);
+            pBucket = bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(nonExExProductOrder, barcodedTubeDao.findByBarcode(barcode),
                                                     BucketEntry.BucketEntryType.PDO_ENTRY);
             newEntry.setStatus(BucketEntry.Status.Archived);
-            bucketDao.persist(pBucket);
+            bucketDao.flush();
 
             candidates.addAll(reworkEjb.findBucketCandidates(barcode));
         }
@@ -901,11 +886,11 @@ public class ReworkEjbTest extends Arquillian {
 
         for (Map.Entry<String, BarcodedTube> currEntry : mapBarcodeToTube.entrySet()) {
 
-            bucketDao.findByName(bucketName);
+            pBucket = bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(nonExExProductOrder, barcodedTubeDao.findByBarcode(
                     currEntry.getKey()), BucketEntry.BucketEntryType.PDO_ENTRY);
             newEntry.setStatus(BucketEntry.Status.Archived);
-            bucketDao.persist(pBucket);
+            bucketDao.flush();
         }
 
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettaLimsMessageResourceTest
@@ -915,12 +900,13 @@ public class ReworkEjbTest extends Arquillian {
                                        reagentDesignDao, barcodedTubeDao,
                                        appConfig.getUrl(), 2);
 
+        nonExExProductOrder = refreshPdo(nonExExProductOrder.getBusinessKey());
         for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
-            bucketDao.findByName(bucketName);
+            pBucket = bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(nonExExProductOrder, barcodedTubeDao.findByBarcode(barcode),
                                                     BucketEntry.BucketEntryType.PDO_ENTRY);
             newEntry.setStatus(BucketEntry.Status.Archived);
-            bucketDao.persist(pBucket);
+            bucketDao.flush();
 
             for (Map.Entry<String, BarcodedTube> currEntry : mapBarcodeToTube.entrySet()) {
                 candidates.addAll(reworkEjb
@@ -1001,11 +987,11 @@ public class ReworkEjbTest extends Arquillian {
 
         for (Map.Entry<String, BarcodedTube> currEntry : mapBarcodeToTube.entrySet()) {
 
-            bucketDao.findByName(bucketName);
+            pBucket = bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(exExProductOrder1, barcodedTubeDao.findByBarcode(
                     currEntry.getKey()), BucketEntry.BucketEntryType.PDO_ENTRY);
             newEntry.setStatus(BucketEntry.Status.Archived);
-            bucketDao.persist(pBucket);
+            bucketDao.flush();
 
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(currEntry.getKey(), exExProductOrder1);
@@ -1041,11 +1027,11 @@ public class ReworkEjbTest extends Arquillian {
         try {
             for (Map.Entry<String, BarcodedTube> currEntry : mapBarcodeToTube.entrySet()) {
 
-                bucketDao.findByName(bucketName);
+                pBucket = bucketDao.findByName(bucketName);
                 bucketCleanupItems.add(pBucket.addEntry(exExProductOrder1, barcodedTubeDao.findByBarcode(
                         currEntry.getKey()), BucketEntry.BucketEntryType.PDO_ENTRY));
 
-                bucketDao.persist(pBucket);
+                bucketDao.flush();
             }
             for (Map.Entry<String, BarcodedTube> currEntry : mapBarcodeToTube.entrySet()) {
                 ReworkEjb.BucketCandidate bucketCandidate =
@@ -1083,6 +1069,7 @@ public class ReworkEjbTest extends Arquillian {
                                        reagentDesignDao, barcodedTubeDao,
                                        appConfig.getUrl(), 2);
 
+        exExProductOrder1 = refreshPdo(exExProductOrder1.getBusinessKey());
         for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(barcode, exExProductOrder1);
@@ -1110,8 +1097,8 @@ public class ReworkEjbTest extends Arquillian {
             for (BucketEntry currentEntry : currentTube.getBucketEntries()) {
                 currentEntry.setStatus(BucketEntry.Status.Archived);
             }
-            barcodedTubeDao.persist(currentTube);
         }
+        barcodedTubeDao.flush();
 
     }
 
@@ -1162,6 +1149,7 @@ public class ReworkEjbTest extends Arquillian {
                                        reagentDesignDao, barcodedTubeDao,
                                        appConfig.getUrl(), 2);
 
+        exExProductOrder2 = refreshPdo(exExProductOrder2.getBusinessKey());
         for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(barcode, exExProductOrder2);
@@ -1189,12 +1177,12 @@ public class ReworkEjbTest extends Arquillian {
             for (BucketEntry currentEntry : currentTube.getBucketEntries()) {
                 currentEntry.setStatus(BucketEntry.Status.Archived);
             }
-            barcodedTubeDao.persist(currentTube);
         }
+        barcodedTubeDao.flush();
 
     }
 
-    @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
+    @Test(enabled = true)
     public void testMixedDNAWithValidationAndAncestorsPreviouslyInBucket() throws Exception {
 
         List<String> validationMessages = new ArrayList<>();
@@ -1205,11 +1193,11 @@ public class ReworkEjbTest extends Arquillian {
 
         for (Map.Entry<String, BarcodedTube> currEntry : mapBarcodeToTube.entrySet()) {
 
-            bucketDao.findByName(bucketName);
+            pBucket = bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(exExProductOrder2, barcodedTubeDao.findByBarcode(
                     currEntry.getKey()), BucketEntry.BucketEntryType.PDO_ENTRY);
             newEntry.setStatus(BucketEntry.Status.Archived);
-            bucketDao.persist(pBucket);
+            bucketDao.flush();
         }
 
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettaLimsMessageResourceTest
@@ -1219,6 +1207,7 @@ public class ReworkEjbTest extends Arquillian {
                                        reagentDesignDao, barcodedTubeDao,
                                        appConfig.getUrl(), 2);
 
+        exExProductOrder2 = refreshPdo(exExProductOrder2.getBusinessKey());
         for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(barcode, exExProductOrder2);
@@ -1246,8 +1235,8 @@ public class ReworkEjbTest extends Arquillian {
             for (BucketEntry currentEntry : currentTube.getBucketEntries()) {
                 currentEntry.setStatus(BucketEntry.Status.Archived);
             }
-            barcodedTubeDao.persist(currentTube);
         }
+        barcodedTubeDao.flush();
 
     }
 
@@ -1270,12 +1259,13 @@ public class ReworkEjbTest extends Arquillian {
 
         List<BucketEntry> bucketCleanupItems = new ArrayList<>();
 
+        exExProductOrder2 = refreshPdo(exExProductOrder2.getBusinessKey());
         for (Map.Entry<String, BarcodedTube> currEntry : mapBarcodeToTube.entrySet()) {
 
-            bucketDao.findByName(bucketName);
+            pBucket = bucketDao.findByName(bucketName);
             bucketCleanupItems.add(pBucket.addEntry(exExProductOrder2, barcodedTubeDao.findByBarcode(
                     currEntry.getKey()), BucketEntry.BucketEntryType.PDO_ENTRY));
-            bucketDao.persist(pBucket);
+            bucketDao.flush();
         }
 
         for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
@@ -1309,8 +1299,8 @@ public class ReworkEjbTest extends Arquillian {
             for (BucketEntry currentEntry : currentTube.getBucketEntries()) {
                 currentEntry.setStatus(BucketEntry.Status.Archived);
             }
-            barcodedTubeDao.persist(currentTube);
         }
+        barcodedTubeDao.flush();
 
     }
 
@@ -1385,11 +1375,11 @@ public class ReworkEjbTest extends Arquillian {
 
         for (Map.Entry<String, BarcodedTube> tubes : mapBarcodeToTube.entrySet()) {
 
-            bucketDao.findByName(bucketName);
+            pBucket = bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(duplicatePO, barcodedTubeDao.findByBarcode(tubes.getKey()),
                                                     BucketEntry.BucketEntryType.PDO_ENTRY);
             newEntry.setStatus(BucketEntry.Status.Archived);
-            bucketDao.persist(pBucket);
+            bucketDao.flush();
 
             candidates.addAll(reworkEjb.findBucketCandidates(tubes.getValue().getSampleNames().iterator().next()));
         }
@@ -1455,7 +1445,7 @@ public class ReworkEjbTest extends Arquillian {
             Thread.sleep(2L);
             bucketEntries.add(pBucket.addEntry(exExProductOrder2, barcodedTubeDao.findByBarcode(currEntry.getKey()),
                                                BucketEntry.BucketEntryType.PDO_ENTRY));
-            bucketDao.persist(pBucket);
+            bucketDao.flush();
             for (BucketEntry bucketEntry : bucketEntries) {
                 bucketEntryIds.add(bucketEntry.getBucketEntryId());
             }
@@ -1478,4 +1468,12 @@ public class ReworkEjbTest extends Arquillian {
         }
     }
 
+    private ProductOrder refreshPdo(String key) {
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(key);
+        for (ProductOrderSample sample : productOrder.getSamples()) {
+            sample.getMercurySample().setSampleData(sampleDataMap.get(sample.getSampleKey()));
+        }
+
+        return productOrder;
+    }
 }

@@ -84,7 +84,7 @@ public class VesselContainer<T extends LabVessel> {
     @MapKeyEnumerated(EnumType.STRING)
     // hbm2ddl always uses mapkey
     @MapKeyColumn(name = "mapkey")
-    @BatchSize(size = 100)
+    // No @BatchSize, fetching many containers of tubes is counterproductive
     // the map value has to be LabVessel, not T, because JPAMetaModelEntityProcessor can't handle type parameters
     private final Map<VesselPosition, LabVessel> mapPositionToVessel = new LinkedHashMap<>();
 
@@ -1157,7 +1157,7 @@ public class VesselContainer<T extends LabVessel> {
             // Apply events to clones
             for (LabVessel.VesselEvent ancestorEvent : ancestorEvents) {
                 for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
-                    currentSampleInstance.applyEvent(ancestorEvent.getLabEvent(), labVessel);
+                    currentSampleInstance.applyEvent(ancestorEvent, labVessel);
                 }
             }
 

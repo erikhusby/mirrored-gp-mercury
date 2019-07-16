@@ -2,8 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Factory;
 import org.apache.commons.collections4.map.LazyMap;
@@ -75,6 +73,8 @@ import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
@@ -816,7 +816,12 @@ public class LabBatchEjb {
                         // limit this logic to WGS.
                         if (Objects.equals(bucketEntry.getProductOrder().getProduct().getAggregationDataType(),
                                 Aggregation.DATA_TYPE_WGS)) {
-                            addAndRemoveSamples = true;
+                            // Microbial is also WGS but LCSETs are made up of multiple racks
+                            // Limit to just lab batches with total size less than 96
+                            int labBatchSize = bucketEntry.getLabBatch().getLabBatchStartingVessels().size();
+                            if (labBatchSize <= 96) {
+                                addAndRemoveSamples = true;
+                            }
                         }
                         found = true;
                         break;
@@ -981,7 +986,7 @@ public class LabBatchEjb {
                 throw new RuntimeException("Rack barcode is required to auto-export");
             }
             // Update rack in BSP, to add control
-            WebResource webResource = bspRestClient.getWebResource(bspRestClient.getUrl(BSP_CONTAINER_UPDATE_LAYOUT));
+            WebTarget webTarget = bspRestClient.getWebResource(bspRestClient.getUrl(BSP_CONTAINER_UPDATE_LAYOUT));
             PlateTransferEventType plateTransferEventType = new PlateTransferEventType();
             PositionMapType positionMap = new PositionMapType();
             positionMap.setBarcode(rackBarcode);
@@ -1010,11 +1015,13 @@ public class LabBatchEjb {
             plateTransferEventType.setPlate(plateType);
             BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
             bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
-            ClientResponse response = webResource.type(MediaType.APPLICATION_XML).post(ClientResponse.class, bettaLIMSMessage);
+            Response response = webTarget.request(MediaType.TEXT_PLAIN).post(Entity.xml(bettaLIMSMessage));
             if (response.getStatus() == Response.Status.OK.getStatusCode()) {
                 bspExportsService.export(rackBarcode, userBean.getLoginUserName());
+                response.close();
             } else {
-                messageReporter.addMessage(response.getEntity(String.class));
+                messageReporter.addMessage(response.readEntity(String.class));
+                response.close();
                 throw new RuntimeException("Failed to update layout in BSP.");
             }
         }

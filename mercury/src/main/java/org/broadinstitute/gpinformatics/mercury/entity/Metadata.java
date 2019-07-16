@@ -302,7 +302,14 @@ public class Metadata {
         CELL_TYPE(Category.SAMPLE, DataType.STRING, "Cell Type", Visibility.USER),
         CELLS_PER_WELL(Category.SAMPLE, DataType.NUMBER, "Cells Per Well", Visibility.USER),
         POSITIVE_CONTROL(Category.SAMPLE, DataType.STRING, "Positive Control", Visibility.USER),
-        NEGATIVE_CONTROL(Category.SAMPLE, DataType.STRING, "Negative Control", Visibility.USER);
+        NEGATIVE_CONTROL(Category.SAMPLE, DataType.STRING, "Negative Control", Visibility.USER),
+        ROOT_SAMPLE(Category.SAMPLE, DataType.STRING, "Root Sample", Visibility.USER),
+        SYNTHESIS_DATE(Category.REAGENT, DataType.DATE, "Synthesis Date", Visibility.USER),
+        MANUFACTURING_DATE(Category.REAGENT, DataType.DATE, "Manufacturing Date", Visibility.USER),
+        STORAGE_CONDITIONS(Category.REAGENT, DataType.STRING, "Storage Conditions", Visibility.USER),
+        MANUFACTURER_DESIGN_ID(Category.REAGENT, DataType.STRING, "Manufacturer Design ID", Visibility.USER),
+        MARK_STOCK(Category.SAMPLE, DataType.STRING, "Mark Stock", Visibility.USER);
+
 
         private final Category category;
         private final DataType dataType;

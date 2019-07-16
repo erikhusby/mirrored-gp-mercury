@@ -1353,6 +1353,30 @@
         </addColumn>
     </changeSet>
 
+    <changeSet author="jowalsh" id="GPLIM-5831-1">
+        <addColumn tableName="PRODUCT" schemaName="ATHENA">
+            <column name="COVERAGE_TYPE_KEY" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-5831-2">
+        <addColumn tableName="PRODUCT_AUD" schemaName="ATHENA">
+            <column name="COVERAGE_TYPE_KEY" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-5831-3">
+        <addColumn tableName="PRODUCT_ORDER" schemaName="ATHENA">
+            <column name="COVERAGE_TYPE_KEY" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-5831-4">
+        <addColumn tableName="PRODUCT_ORDER_AUD" schemaName="ATHENA">
+            <column name="COVERAGE_TYPE_KEY" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
     <changeSet author="jowalsh" id="GPLIM-5893-1">
         <addColumn tableName="PRODUCT" schemaName="ATHENA">
             <column name="INDEX_TYPE" type="VARCHAR2(200)" />
@@ -1384,5 +1408,21 @@
         <addColumn tableName="PRODUCT_ORDER_AUD" schemaName="ATHENA">
             <column name="DEFAULT_AGGREGATION_PARTICLE" type="varchar(30)"/>
         </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6440-1" author="jowalsh">
+        <addColumn schemaName="ATHENA" tableName="PRODUCT">
+            <column name="NEGATIVE_CONTROL_RP_ID" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6440-2" author="jowalsh">
+        <addColumn schemaName="ATHENA" tableName="PRODUCT_AUD">
+            <column name="NEGATIVE_CONTROL_RP_ID" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6440-3" author="jowalsh">
+        <addForeignKeyConstraint constraintName="FK_PRODUCT_NEG_CONTROL_RP"
+                                 baseTableSchemaName="ATHENA" baseTableName="PRODUCT" baseColumnNames="NEGATIVE_CONTROL_RP_ID"
+                                 referencedTableSchemaName="ATHENA" referencedTableName="RESEARCH_PROJECT"
+                                 referencedColumnNames="RESEARCH_PROJECT_ID"/>
     </changeSet>
 </databaseChangeLog>

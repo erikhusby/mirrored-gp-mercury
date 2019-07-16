@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.entity.zims;
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
-import org.codehaus.jackson.annotate.JsonProperty;
 
 public class IndexComponent {
 

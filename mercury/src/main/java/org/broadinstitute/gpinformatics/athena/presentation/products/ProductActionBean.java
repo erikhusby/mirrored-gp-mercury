@@ -42,6 +42,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.CoverageTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
@@ -117,6 +118,9 @@ public class ProductActionBean extends CoreActionBean {
     private AnalysisTypeDao analysisTypeDao;
 
     @Inject
+    private CoverageTypeDao coverageTypeDao;
+
+    @Inject
     private ReagentDesignDao reagentDesignDao;
 
     @Inject
@@ -158,6 +162,8 @@ public class ProductActionBean extends CoreActionBean {
     private Long productFamilyId;
 
     private String controlsProject;
+
+    private String negativeControlsProject;
 
     @ValidateNestedProperties({
             @Validate(field = "productName", required = true, maxlength = 255, on = {SAVE_ACTION},
@@ -267,6 +273,12 @@ public class ProductActionBean extends CoreActionBean {
             editProduct.setPositiveControlResearchProject(controlsProject == null ? null :
                     researchProjectDao.findByBusinessKey(controlsProject));
         }
+
+        if (editProduct.getNegativeControlResearchProject() == null ||
+            !editProduct.getNegativeControlResearchProject().getBusinessKey().equals(negativeControlsProject)) {
+            editProduct.setNegativeControlResearchProject(negativeControlsProject == null ? null :
+                    researchProjectDao.findByBusinessKey(negativeControlsProject));
+        }
     }
 
     /**
@@ -280,6 +292,9 @@ public class ProductActionBean extends CoreActionBean {
             }
             if (editProduct.getPositiveControlResearchProject() != null) {
                 controlsProject = editProduct.getPositiveControlResearchProject().getBusinessKey();
+            }
+            if (editProduct.getNegativeControlResearchProject() != null) {
+                negativeControlsProject = editProduct.getNegativeControlResearchProject().getBusinessKey();
             }
 
             List<ProductOrder> productOrderList = null;
@@ -741,6 +756,27 @@ public class ProductActionBean extends CoreActionBean {
     }
 
     /**
+     * Get the list of available analysis types.
+     *
+     * @return List of strings representing the analysis types
+     */
+    public Collection<DisplayableItem> getCoverageTypes() {
+        return makeDisplayableItemCollection(coverageTypeDao.findAll());
+    }
+
+    /**
+     * Get the coverage type.
+     *
+     * @param businessKey the businessKey
+     *
+     * @return UI helper object {@link DisplayableItem} representing the coverage type
+     */
+    public DisplayableItem getCoverageType(String businessKey) {
+        return getDisplayableItemInfo(businessKey, coverageTypeDao);
+    }
+
+
+    /**
      * Get the list of research projects for controls.
      *
      * @return List of strings representing research project names
@@ -795,6 +831,14 @@ public class ProductActionBean extends CoreActionBean {
 
     public void setControlsProject(String controlsProject) {
         this.controlsProject = controlsProject;
+    }
+
+    public String getNegativeControlsProject() {
+        return negativeControlsProject;
+    }
+
+    public void setNegativeControlsProject(String negativeControlsProject) {
+        this.negativeControlsProject = negativeControlsProject;
     }
 
     public String[] getGenotypingChipTechnologies() {

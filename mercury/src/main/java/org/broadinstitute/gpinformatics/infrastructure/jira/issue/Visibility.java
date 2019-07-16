@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.issue;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JsonLabopsJiraVisibilitySerializer;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import java.io.Serializable;
 
