@@ -766,6 +766,16 @@
                         </div>
 
                         <div class="control-group">
+                            <stripes:label for="negativeControlsProject" name="Negative Controls Project" class="control-label"/>
+                            <div class="controls">
+                                <stripes:select id="negativeControlsProject" name="negativeControlsProject">
+                                    <stripes:option value="">Select One</stripes:option>
+                                    <stripes:options-collection collection="${actionBean.controlsProjects}" label="displayName" value="businessKey"/>
+                                </stripes:select>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
                             <stripes:label for="readLength" name="ReadLength" class="control-label"/>
                             <div class="controls">
                                 <stripes:text id="readLength" name="editProduct.readLength"

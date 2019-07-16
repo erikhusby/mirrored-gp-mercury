@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import com.opencsv.CSVReader;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -23,8 +24,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme_;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent_;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample_;
@@ -1045,7 +1049,7 @@ public class LabVesselFixupTest extends Arquillian {
         barcodedTubeDao.persist(new FixupCommentary("QUAL-623 update volumes"));
         barcodedTubeDao.flush();
     }
-    
+
     @Test(enabled = false)
     public void gplim3525UpdateVolume() {
         userBean.loginOSUser();
@@ -1778,6 +1782,66 @@ public class LabVesselFixupTest extends Arquillian {
 
         labVesselDao.persist(new FixupCommentary(flowcellUpdateLines.get(0)));
         labVesselDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void undoIndexedPlateFactoryTest() throws Exception {
+        userBean.loginOSUser();
+        long rev = 3532152L;
+        String plateBarcode = "20190710090153_DualIndexPlate";
+
+        String query = "select r.reagent_id, mis.molecular_indexing_scheme_id from reagent r " +
+                "join molecular_indexing_scheme_aud mis " +
+                "   on r.molecular_indexing_scheme = mis.molecular_indexing_scheme_id " +
+                "where not exists (select 1 from reagent_aud ra " +
+                "  where ra.reagent_id = r.reagent_id and ra.rev != mis.rev) " +
+                "and not exists (select 1 from sample_instance_entity sie " +
+                "  where sie.molecular_indexing_scheme = mis.molecular_indexing_scheme_id) " +
+                "and mis.rev = " + rev;
+
+        List<Long> reagentIds = new ArrayList<>();
+        List<Long> misIds = new ArrayList<>();
+        ((List<Object[]>)labVesselDao.getEntityManager().createNativeQuery(query).getResultList()).
+                forEach(item -> {
+                    reagentIds.add(((BigDecimal)item[0]).longValueExact());
+                    misIds.add(((BigDecimal)item[1]).longValueExact());
+                });
+
+        utx.begin();
+        StaticPlate plate = staticPlateDao.findByBarcode(plateBarcode);
+        Assert.assertNotNull(plate);
+        Collection<PlateWell> wells = plate.getContainerRole().getContainedVessels();
+        for (PlateWell well : wells) {
+            well.getReagentContents().clear();
+        }
+
+        System.out.println("Removing reagents " + StringUtils.join(reagentIds, " "));
+        labVesselDao.findListByList(Reagent.class, Reagent_.reagentId, reagentIds).
+                forEach(reagent -> {
+                    reagent.getMetadata().clear();
+                    labVesselDao.remove(reagent);
+                });
+
+        System.out.println("Removing molecular index schemes " + StringUtils.join(misIds, " "));
+        labVesselDao.findListByList(MolecularIndexingScheme.class,
+                MolecularIndexingScheme_.molecularIndexingSchemeId, misIds).
+                forEach(molecularIndexingScheme ->  {
+                    labVesselDao.remove(molecularIndexingScheme);
+                });
+
+        plate.getContainerRole().getMapPositionToVessel().clear();
+
+        System.out.println("Removing " + wells.size() + " wells in plate " + plate.getLabel());
+        for (PlateWell well : wells) {
+            labVesselDao.remove(well);
+        }
+
+        System.out.println("Removing static plate " + plate.getLabel());
+        labVesselDao.remove(plate);
+
+        labVesselDao.persist(new FixupCommentary("Undo accidental run of IndexedPlateFactoryTest"));
+        labVesselDao.flush();
+        utx.commit();
     }
 
 }

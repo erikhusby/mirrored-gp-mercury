@@ -346,6 +346,18 @@
                 </div>
 
                 <div class="view-control-group control-group">
+                    <label class="control-label label-form">Negative Controls Project</label>
+                    <div class="controls">
+                        <div class="form-value">
+                            <c:if test="${!empty actionBean.editProduct.negativeControlResearchProject}">
+                                ${actionBean.editProduct.negativeControlResearchProject.businessKey} -
+                                ${actionBean.editProduct.negativeControlResearchProject.title}
+                            </c:if>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-control-group control-group">
                     <label class="control-label label-form">Read Length</label>
                     <div class="controls">
                         <div class="form-value">

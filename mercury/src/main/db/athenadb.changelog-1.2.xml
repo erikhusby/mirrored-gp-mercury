@@ -1409,6 +1409,22 @@
             <column name="DEFAULT_AGGREGATION_PARTICLE" type="varchar(30)"/>
         </addColumn>
     </changeSet>
+    <changeSet id="GPLIM-6440-1" author="jowalsh">
+        <addColumn schemaName="ATHENA" tableName="PRODUCT">
+            <column name="NEGATIVE_CONTROL_RP_ID" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6440-2" author="jowalsh">
+        <addColumn schemaName="ATHENA" tableName="PRODUCT_AUD">
+            <column name="NEGATIVE_CONTROL_RP_ID" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6440-3" author="jowalsh">
+        <addForeignKeyConstraint constraintName="FK_PRODUCT_NEG_CONTROL_RP"
+                                 baseTableSchemaName="ATHENA" baseTableName="PRODUCT" baseColumnNames="NEGATIVE_CONTROL_RP_ID"
+                                 referencedTableSchemaName="ATHENA" referencedTableName="RESEARCH_PROJECT"
+                                 referencedColumnNames="RESEARCH_PROJECT_ID"/>
+    </changeSet>
 
     <changeSet author="scottmat" id="GPLIM-4924-11">
         <dropNotNullConstraint columnName="PRIMARY_PRICE_ITEM" schemaName="ATHENA" tableName="PRODUCT" />
