@@ -5,7 +5,6 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.MoreCollectors;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -792,18 +791,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 // Keep the old Add on instead of just creating a new one
                 pdoAddOn = existingAddonMap.get(addOn);
             } else {
-
                 // Create a new addon for any potential add ons which are not already existing
                 pdoAddOn = new ProductOrderAddOn(addOn, this);
-
-                // For SAP Company code 2000 orders, create a custom price adjustment to lock in the price at the time
-                // of the order
-                if (addOn.getSapMaterials() != null && (addOn.isClinicalProduct() || addOn.isExternalOnlyProduct())) {
-                    final ProductOrderAddOnPriceAdjustment customPriceAdjustment =
-                            new ProductOrderAddOnPriceAdjustment();
-                    customPriceAdjustment.setAdjustmentValue(new BigDecimal(addOn.getSapMaterials().get(getOrderType().salesOrg).getBasePrice()));
-                    pdoAddOn.setCustomPriceAdjustment(customPriceAdjustment);
-                }
             }
             addOns.add(pdoAddOn);
         }
