@@ -1211,8 +1211,9 @@ public class ProductOrderActionBeanTest {
         SapIntegrationClientImpl.SAPCompanyConfiguration broad = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
         final Product primaryOrderProduct = testOrder.getProduct();
         returnMaterials.add(new SAPMaterial(primaryOrderProduct.getPartNumber(), broad, broad.getDefaultWbs(),
-            "test description", "2000", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", null,
-            null, null, null, Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
+            "test description", "2000", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,
+                null, null, Collections.emptyMap(),
+                Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
             broad.getSalesOrganization()));
 
         final String priceItemPrice = "2000";
@@ -1228,7 +1229,7 @@ public class ProductOrderActionBeanTest {
         addonNonSeqProduct.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.ALTERNATE_LIBRARY_PREP_DEVELOPMENT.getFamilyName()));
 
         returnMaterials.add(new SAPMaterial(addonNonSeqProduct.getPartNumber(), broad, broad.getDefaultWbs(), "test description", "1573",
-                    SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                    SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, new Date(), new Date(),
                     Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
                     broad.getSalesOrganization()));
 
@@ -2792,8 +2793,7 @@ public class ProductOrderActionBeanTest {
                                SapIntegrationClientImpl.SAPCompanyConfiguration broad){
         final SAPMaterial material =
                 new SAPMaterial(product.getPartNumber(),broad, broad.getDefaultWbs(),"description",
-                        basePrice,SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,"Test Description",
-                        "", "",
+                        basePrice,SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,
                         new Date(), new Date(),Collections.<Condition, BigDecimal>emptyMap(),
                         Collections.<DeliveryCondition, BigDecimal>emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
                         broad.getSalesOrganization());
@@ -3355,7 +3355,7 @@ public class ProductOrderActionBeanTest {
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getDefaultWbs(),
                         pdo.getProduct().getName(),pricedMoreThanQuote.toString(),
-                        "EA",BigDecimal.ONE,"", "", "",
+                        "EA",BigDecimal.ONE,
                         new Date(),new Date(),
                         Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
@@ -3374,7 +3374,7 @@ public class ProductOrderActionBeanTest {
                             SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getDefaultWbs(),
                             pdo.getProduct().getName(),
                             pricedMoreThanQuote.multiply(BigDecimal.valueOf(2)).toString(),"EA",
-                            BigDecimal.ONE,"", "", "",
+                            BigDecimal.ONE,
                             new Date(), new Date(),
                             Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
             addonMaterial.updateCompanyConfiguration(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
@@ -3640,7 +3640,7 @@ public class ProductOrderActionBeanTest {
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getDefaultWbs(),
                         pdo.getProduct().getName(),pricePerSample.toString(),"EA",
-                        BigDecimal.ONE, "", "", "", new Date(), new Date(),
+                        BigDecimal.ONE,new Date(), new Date(),
                         Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
         productMaterial.updateCompanyConfiguration(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
@@ -3656,7 +3656,6 @@ public class ProductOrderActionBeanTest {
                             SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getDefaultWbs(),
                             pdo.getProduct().getName(),
                             pricePerSample.toString(), "EA",BigDecimal.ONE,
-                            "", "", "",
                             new Date(),new Date(),Collections.emptyMap(), Collections.emptyMap(),
                             SAPMaterial.MaterialStatus.ENABLED,
                             SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
@@ -3938,7 +3937,7 @@ public class ProductOrderActionBeanTest {
                             companyCode,
                             defaultWbs.orElse("888"),
                             pdo.getProduct().getName(),pricedMoreThanQuote.toString(),
-                            "EA",BigDecimal.ONE,"sdsf", "sdfsd", "sdfs",
+                            "EA",BigDecimal.ONE,
                             new Date(),new Date(),
                             Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
                             companyCode.getSalesOrganization());
@@ -3956,7 +3955,7 @@ public class ProductOrderActionBeanTest {
                                 defaultWbs.orElse("888"),
                                 pdo.getProduct().getName(),
                                 pricedMoreThanQuote.multiply(BigDecimal.valueOf(2)).toString(),"EA",
-                                BigDecimal.ONE,"sdf", "dsf", "sfd",
+                                BigDecimal.ONE,
                                 new Date(), new Date(),
                                 Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
                                 companyCode.getSalesOrganization());

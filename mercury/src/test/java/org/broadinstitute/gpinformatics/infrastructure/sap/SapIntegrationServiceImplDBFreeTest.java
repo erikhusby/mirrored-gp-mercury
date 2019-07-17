@@ -798,32 +798,28 @@ public class SapIntegrationServiceImplDBFreeTest {
         SAPMaterial primaryMaterial = new SAPMaterial(primaryTestMaterialId,
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getDefaultWbs(), "test description",
-                "1000", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description",
-                "","",new Date(), new Date(), Collections.emptyMap(),
+                "1000", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, new Date(), new Date(), Collections.emptyMap(),
                 Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
 
         SAPMaterial primaryExternalMaterial = new SAPMaterial(primaryTestMaterialId,
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES,
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getDefaultWbs(), "test description",
-                "1000", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description",
-                "","",new Date(), new Date(), Collections.emptyMap(),
+                "1000", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,new Date(), new Date(), Collections.emptyMap(),
                 Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization());
 
         SAPMaterial primaryPrismMaterial = new SAPMaterial(primaryTestMaterialId,
                 SapIntegrationClientImpl.SAPCompanyConfiguration.PRISM,
                 SapIntegrationClientImpl.SAPCompanyConfiguration.PRISM.getDefaultWbs(), "test description",
-                "1000", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description",
-                "","",new Date(), new Date(), Collections.emptyMap(),
+                "1000", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,new Date(), new Date(), Collections.emptyMap(),
                 Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
                 SapIntegrationClientImpl.SAPCompanyConfiguration.PRISM.getSalesOrganization());
 
         SAPMaterial primaryGPPMaterial = new SAPMaterial(primaryTestMaterialId,
                 SapIntegrationClientImpl.SAPCompanyConfiguration.GPP,
                 SapIntegrationClientImpl.SAPCompanyConfiguration.GPP.getDefaultWbs(), "test description",
-                "1000", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description",
-                "","",new Date(), new Date(), Collections.emptyMap(),
+                "1000", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,new Date(), new Date(), Collections.emptyMap(),
                 Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
                 SapIntegrationClientImpl.SAPCompanyConfiguration.GPP.getSalesOrganization());
 
@@ -916,7 +912,7 @@ public class SapIntegrationServiceImplDBFreeTest {
                                                    Product primaryProduct, String quoteId) {
         SapIntegrationClientImpl.SAPCompanyConfiguration broad = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
         SAPMaterial primaryMaterial = new SAPMaterial(primaryProduct.getPartNumber(), broad, broad.getDefaultWbs(), "test description", primaryMaterialBasePrice,
-            SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "","",new Date(), new Date(),
+            SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,new Date(), new Date(),
             Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
             broad.getSalesOrganization());
         materials.add(primaryMaterial);
