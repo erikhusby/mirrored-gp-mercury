@@ -145,6 +145,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
@@ -4120,9 +4121,18 @@ public class ProductOrderActionBeanTest {
                 pricedMoreThanQuote.toString(), "20", pricedMoreThanQuote.toString());
 
         EnumSet<SapIntegrationClientImpl.SAPCompanyConfiguration> sapCompanyConfigurations =
-            EnumSet.complementOf(EnumSet.of(SapIntegrationClientImpl.SAPCompanyConfiguration.UNKNOWN));
+                EnumSet.copyOf(SapIntegrationServiceImpl.EXTENDED_PLATFORMS);
+        sapCompanyConfigurations.add(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
 
         for (SapIntegrationClientImpl.SAPCompanyConfiguration companyCode : sapCompanyConfigurations) {
+
+            final Set<SapIntegrationClientImpl.SAPCompanyConfiguration> llcCompanyCodes =
+                    Stream.of(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
+                            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES).collect(Collectors.toSet());
+            if(scenarioForProductSalesOrg == ProductScenario.LLC &&
+               !llcCompanyCodes.contains(companyCode )) {
+                break;
+            }
             Optional<String> defaultWbs = Optional.ofNullable(companyCode.getDefaultWbs());
             final SAPMaterial productMaterial =
                     new SAPMaterial(pdo.getProduct().getPartNumber(),
@@ -4199,18 +4209,22 @@ public class ProductOrderActionBeanTest {
 
         try {
             actionBean.updateAndValidateQuoteSource(ProductOrder.getAllProductsOrdered(pdo));
-            if(quoteMatchSalesOrg != QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT && quoteIsValid) {
+
+            if((quoteMatchSalesOrg == QuoteSalesOrgScenario.OPPOSITE_PRODUCT &&
+                scenarioForProductSalesOrg != ProductScenario.EXTENDS_TO_LLC) ||
+
+               quoteMatchSalesOrg == QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT ||
+
+               (quoteMatchSalesOrg == QuoteSalesOrgScenario.EXTENDED_ORG &&
+                scenarioForProductSalesOrg == ProductScenario.LLC) ||
+
+               !quoteIsValid
+            ) {
+                Assert.fail("An exception should have been thrown");
+            } else {
                 Assert.assertEquals(pdo.getQuoteSource(), expectedSourceType);
                 Assert.assertTrue(actionBean.getValidationErrors().isEmpty(),
                         "No validations should have been thrown in this scenario");
-            } else {
-                Assert.fail("An exception should have been thrown in this case.");
-            }
-            if((quoteMatchSalesOrg == QuoteSalesOrgScenario.OPPOSITE_PRODUCT &&
-                scenarioForProductSalesOrg != ProductScenario.EXTENDS_TO_LLC)  ||
-               quoteMatchSalesOrg == QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT
-            ) {
-                Assert.fail("An exception should have been thrown");
             }
         } catch (InvalidProductException e) {
 
