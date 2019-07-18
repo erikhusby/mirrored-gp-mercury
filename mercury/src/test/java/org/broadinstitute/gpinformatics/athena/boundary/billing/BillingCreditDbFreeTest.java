@@ -49,7 +49,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderT
 import org.broadinstitute.sap.entity.SAPDeliveryDocument;
 import org.broadinstitute.sap.entity.SAPReturnOrder;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
-import org.broadinstitute.sap.entity.order.SAPOrderItem;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
@@ -165,7 +164,7 @@ public class BillingCreditDbFreeTest {
         SapIntegrationClientImpl.SAPCompanyConfiguration broad = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
         Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.anyString()))
             .thenReturn(new SAPMaterial("test", broad, broad.getDefaultWbs(), "test description", "100",
-                SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(),
+                SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, new Date(),
                 new Date(), Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
                 broad.getSalesOrganization()));
         TemplateEngine templateEngine = new TemplateEngine();

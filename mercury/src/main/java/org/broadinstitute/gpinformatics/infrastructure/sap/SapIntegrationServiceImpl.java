@@ -411,7 +411,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         return new SAPMaterial(product.getPartNumber(), companyCode, companyCode.getDefaultWbs(),
             product.getProductName(), null, SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, minimumOrderQuantity,
-            product.getDescription(), product.getDeliverables(), product.getInputRequirements(),new Date(), new Date(),
+            new Date(), new Date(),
             Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, productHeirarchy);
     }
 
