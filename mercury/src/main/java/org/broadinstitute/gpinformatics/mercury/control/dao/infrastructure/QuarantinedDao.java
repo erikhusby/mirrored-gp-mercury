@@ -40,6 +40,10 @@ public class QuarantinedDao extends GenericDao {
         return quarantined;
     }
 
+    /**
+     * Unquarantines the item, which does not have to be already quarantined.
+     * @return true if the item was quarantined, false if not previously quarantined.
+     */
     public boolean unQuarantine(Quarantined.ItemSource itemSource, Quarantined.ItemType itemType, String item) {
         CriteriaDelete<Quarantined> criteriaDelete = getCriteriaBuilder().createCriteriaDelete(Quarantined.class);
         Root<Quarantined> root = criteriaDelete.from(Quarantined.class);

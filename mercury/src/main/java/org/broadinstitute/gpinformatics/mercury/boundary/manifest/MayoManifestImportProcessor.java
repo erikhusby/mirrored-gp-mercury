@@ -63,6 +63,7 @@ public class MayoManifestImportProcessor {
         WELL_POSITION("well position", Metadata.Key.WELL_POSITION, Attribute.REQUIRED),
         SAMPLE_ID("sample id", Metadata.Key.COLLAB_SAMPLE_ID2, Attribute.REQUIRED),
         PARENT_SAMPLE_ID("parent sample id", Metadata.Key.COLLAB_PARTICIPANT_ID2),
+        // The tube barcode is also used as the Broad sample name (equivalent to the SM-id).
         MATRIX_ID("matrix id", Metadata.Key.BROAD_2D_BARCODE, Attribute.REQUIRED),
         COLLECTION_DATE("collection date", null, Attribute.IGNORE),
         BIOBANK_ID("biobank id", Metadata.Key.PATIENT_ID, Attribute.REQUIRED),

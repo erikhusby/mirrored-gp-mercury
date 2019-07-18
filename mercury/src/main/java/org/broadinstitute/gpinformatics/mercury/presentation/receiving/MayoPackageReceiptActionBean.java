@@ -169,7 +169,7 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
     }
 
     public void setFilename(String filename) {
-        this.filename = filename;
+        this.filename = StringUtils.trim(filename);
     }
 
     public String getPackageBarcode() {

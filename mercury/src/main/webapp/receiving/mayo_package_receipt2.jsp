@@ -70,7 +70,7 @@
             <stripes:hidden name="packageBarcode" value="${actionBean.packageBarcode}"/>
             <stripes:hidden name="rackCount" value="${actionBean.rackCount}"/>
             <stripes:hidden name="rackBarcodeString" value="${actionBean.rackBarcodeString}"/>
-            <stripes:hidden name="filename" value="${actionBean.filename}"/>
+            <input type="hidden" name="filename" value="${actionBean.filename}"/>
 
             <div class="inputGroup">
                 <div class="inputRow">

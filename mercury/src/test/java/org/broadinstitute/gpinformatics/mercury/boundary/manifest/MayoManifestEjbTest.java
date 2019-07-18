@@ -102,7 +102,7 @@ public class MayoManifestEjbTest extends Arquillian {
         String testDigits = DATE_FORMAT.format(new Date());
         String packageId = "PKG-" + testDigits;
 
-        // Seeds the storage bucket with an unreceived manifest file.
+        // Writes a random manifest file.
         String unreceivedDigits = String.valueOf(Long.parseLong(testDigits) - 1);
         String unreceivedPkg = "PKG-" + unreceivedDigits;
         String unreceivedRack = "Bx-" + unreceivedDigits;
@@ -112,19 +112,18 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
 
-        // Makes a spreadsheet with a racks having 1 tube, 1 tube, 2 tubes, and 94 tubes.
+        // Writes a usable manifest file.
+        // Spreadsheet has racks with 1 tube, 1 tube, 2 tubes, and 94 tubes.
         String[] barcodes = {
                 String.format("Bx-%s%d", testDigits, 1),
                 String.format("Bx-%s%d", testDigits, 2),
                 String.format("Bx-%s%d", testDigits, 3),
                 String.format("Bx-%s%d", testDigits, 4)};
-
         List<List<String>> cellGrid = makeCellGrid(testDigits, packageId, "CS", ImmutableMap.of(
                 barcodes[0], 1,
                 barcodes[1], 1,
                 barcodes[2], 2,
                 barcodes[3], 94));
-        // Writes the spreadsheet to a manifest file.
         String filename = "BROAD_" + packageId + ".csv";
         googleBucketDao.upload(filename, makeContent(cellGrid), messageCollection);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
@@ -217,9 +216,6 @@ public class MayoManifestEjbTest extends Arquillian {
             mayoManifestEjb.packageReceiptValidation(pkgBean);
             Assert.assertFalse(messageCollection.hasErrors(),
                     StringUtils.join(messageCollection.getErrors(), "; "));
-            Assert.assertEquals(messageCollection.getWarnings().get(0),
-                    String.format(MayoManifestEjb.QUARANTINE_DELETES, barcodes[0]),
-                    StringUtils.join(messageCollection.getWarnings(), "; "));
             // Package receipt page2.
             pkgBean.setShipmentCondition("Fair.");
             pkgBean.setDeliveryMethod("FedEx");
@@ -417,20 +413,36 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertTrue(messageCollection.getWarnings().contains(
                 String.format(MayoManifestEjb.MULTIPLE_FILES, packageId, StringUtils.joinWith(" ", file1, file2))),
                 StringUtils.join(messageCollection.getWarnings(), "; "));
-        Assert.assertTrue(messageCollection.getWarnings().contains(MayoManifestEjb.NEEDS_MANUAL_LINKING),
-                StringUtils.join(messageCollection.getWarnings(), "; "));
+        Assert.assertTrue(messageCollection.getInfos().contains(MayoManifestEjb.NEEDS_MANUAL_LINKING),
+                StringUtils.join(messageCollection.getInfos(), "; "));
+        Assert.assertEquals(StringUtils.trimToEmpty(pkgBean.getFilename()), "");
 
+        // Sets a non-existent filename.
+        String nonexistent = "NO" + file1;
+        pkgBean.setFilename(nonexistent);
+        messageCollection.clearAll();
+        mayoManifestEjb.packageReceiptValidation(pkgBean);
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertTrue(messageCollection.getWarnings().contains(
+                String.format(MayoManifestEjb.NO_SUCH_FILE, nonexistent)),
+                StringUtils.join(messageCollection.getWarnings(), "; "));
+        Assert.assertTrue(messageCollection.getInfos().contains(MayoManifestEjb.NEEDS_MANUAL_LINKING),
+                StringUtils.join(messageCollection.getInfos(), "; "));
+        Assert.assertEquals(StringUtils.trimToEmpty(pkgBean.getFilename()), "");
+
+        // Package receipt page 2.
         pkgBean.setShipmentCondition("Pretty good.");
         pkgBean.setDeliveryMethod("None");
         pkgBean.setTrackingNumber("TRK" + testDigits2);
         mayoManifestEjb.packageReceipt(pkgBean);
 
-        // Checks the manifest session. There should be no manifest records.
+        // Checks the manifest session. There should be no manifest records. The filename should not be set.
         ManifestSession session = manifestSessionDao.getSessionByPrefix(packageId);
         Assert.assertNotNull(session);
         Assert.assertEquals(session.getVesselLabels().stream().sorted().collect(Collectors.joining(" ")),
                 StringUtils.join(barcodes, " "));
         Assert.assertTrue(session.getRecords().isEmpty());
+        Assert.assertEquals(StringUtils.trimToEmpty(session.getManifestFilename()), "");
 
         // Links the second file to the received package.
         // The ActionBean should only supply a packageId and filename for the link up operation.
@@ -445,18 +457,23 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertTrue(messageCollection.getErrors().contains(
                 String.format(MayoManifestEjb.MULTIPLE_FILES, packageId, StringUtils.joinWith(" ", file1, file2))),
                 StringUtils.join(messageCollection.getErrors(), "; "));
-        // Tries again with the correct filename.
+        Assert.assertEquals(StringUtils.trimToEmpty(pkgBean.getFilename()), "");
+
+        // Should succeed with the correct filename.
         pkgBean2.setFilename(file2);
+        pkgBean2.setAllowUpdate(true);
         messageCollection.clearAll();
         mayoManifestEjb.updateManifest(pkgBean2);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
+        Assert.assertEquals(StringUtils.trimToEmpty(pkgBean2.getFilename()), file2);
 
         // The manifestSession should have manifest records.
         ManifestSession session2 = manifestSessionDao.getSessionByPrefix(packageId);
         Assert.assertEquals(session2.getVesselLabels().stream().sorted().collect(Collectors.joining(" ")),
                 StringUtils.join(barcodes, " "));
         Assert.assertTrue(CollectionUtils.isNotEmpty(session2.getRecords()));
+        Assert.assertEquals(session2.getManifestFilename(), file2);
 
         // The package should no longer be quarantined.
         Assert.assertNull(quarantinedDao.findItem(ItemSource.MAYO, ItemType.PACKAGE, packageId));
@@ -473,7 +490,7 @@ public class MayoManifestEjbTest extends Arquillian {
         String[] barcodes = {"Bx-" + testDigits};
         String[] alternativeBarcodes = {"SU-" + testDigits};
 
-        // Receives the package before the manifest is written, using the wrong rack barcode.
+        // Receives the package before the manifest is written. Lab user enters the wrong rack and quarantines it.
         MayoPackageReceiptActionBean pkgBean = new MayoPackageReceiptActionBean();
         pkgBean.setMessageCollection(messageCollection);
         pkgBean.setPackageBarcode(packageId);
@@ -483,18 +500,18 @@ public class MayoManifestEjbTest extends Arquillian {
         mayoManifestEjb.packageReceiptValidation(pkgBean);
         Assert.assertTrue(StringUtils.isBlank(pkgBean.getFilename()));
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
-        Assert.assertTrue(messageCollection.getWarnings().contains(MayoManifestEjb.NEEDS_MANUAL_LINKING),
-                StringUtils.join(messageCollection.getWarnings()));
+        Assert.assertTrue(messageCollection.getInfos().contains(MayoManifestEjb.NEEDS_MANUAL_LINKING),
+                StringUtils.join(messageCollection.getInfos()));
         // Package receipt page2.
         pkgBean.setShipmentCondition("A-OK.");
         pkgBean.setDeliveryMethod("FedEx");
         pkgBean.setTrackingNumber("TRK" + testDigits);
+        pkgBean.setQuarantineBarcodeAndReason(ImmutableMap.of(alternativeBarcodes[0],
+                Quarantined.getRackReasons().get(0)));
         messageCollection.clearAll();
         mayoManifestEjb.packageReceipt(pkgBean);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
-        Assert.assertTrue(messageCollection.getWarnings().contains(
-                String.format(MayoManifestEjb.QUARANTINED, pkgBean.getPackageBarcode(), Quarantined.MISSING_MANIFEST)),
-                StringUtils.join(messageCollection.getWarnings(), "; "));
+        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
 
         // There should be a manifestSession, linked to an RCT, but with no manifestFile nor manifestRecords.
         final ManifestSession manifestSession = manifestSessionDao.getSessionByPrefix(packageId);
@@ -511,6 +528,8 @@ public class MayoManifestEjbTest extends Arquillian {
         Quarantined quarantined = quarantinedDao.findItem(ItemSource.MAYO, ItemType.PACKAGE, packageId);
         Assert.assertNotNull(quarantined);
         Assert.assertEquals(quarantined.getReason(), Quarantined.MISSING_MANIFEST);
+        // The rack should be quarantined.
+        Assert.assertNotNull(quarantinedDao.findItem(ItemSource.MAYO, ItemType.RACK, alternativeBarcodes[0]));
 
         // Re-receives the package to fixup the wrong rack barcode.
         pkgBean = new MayoPackageReceiptActionBean();
@@ -523,11 +542,11 @@ public class MayoManifestEjbTest extends Arquillian {
         mayoManifestEjb.packageReceiptValidation(pkgBean);
         Assert.assertTrue(StringUtils.isBlank(pkgBean.getFilename()));
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
-        Assert.assertTrue(messageCollection.getWarnings().contains(MayoManifestEjb.NEEDS_MANUAL_LINKING),
-                StringUtils.join(messageCollection.getWarnings()));
         Assert.assertTrue(messageCollection.getWarnings().contains(
-                String.format(MayoManifestEjb.QUARANTINE_DELETES, packageId)),
-                StringUtils.join(messageCollection.getWarnings()));
+                String.format(MayoManifestEjb.NO_SUCH_FILE, packageId)),
+                StringUtils.join(messageCollection.getWarnings(), "; "));
+        Assert.assertTrue(messageCollection.getInfos().contains(MayoManifestEjb.NEEDS_MANUAL_LINKING),
+                StringUtils.join(messageCollection.getInfos()));
         // Package receipt page2.
         pkgBean.setShipmentCondition("A-OK.");
         pkgBean.setDeliveryMethod("FedEx");
@@ -535,17 +554,23 @@ public class MayoManifestEjbTest extends Arquillian {
         messageCollection.clearAll();
         mayoManifestEjb.packageReceipt(pkgBean);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
-        Assert.assertTrue(messageCollection.getWarnings().contains(
-                String.format(MayoManifestEjb.QUARANTINED, pkgBean.getPackageBarcode(), Quarantined.MISSING_MANIFEST)),
-                StringUtils.join(messageCollection.getWarnings(), "; "));
-        // The session for the packageId should have the correct vessel and have the same RCT ticket (it gets updated).
+        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
+        Assert.assertTrue(messageCollection.getInfos().contains(
+                String.format(MayoManifestEjb.RECEIVED_QUARANTINED, packageId, Quarantined.MISSING_MANIFEST)),
+                StringUtils.join(messageCollection.getInfos(), "; "));
+        // The previous rack should be unquarantined.
+        Assert.assertTrue(messageCollection.getInfos().contains(
+                String.format(MayoManifestEjb.UNQUARANTINED, alternativeBarcodes[0])),
+                StringUtils.join(messageCollection.getInfos(), "; "));
+        Assert.assertNull(quarantinedDao.findItem(ItemSource.MAYO, ItemType.RACK, alternativeBarcodes[0]));
+        // The session should now have the correct vessel and have the same RCT ticket (it gets updated).
         ManifestSession manifestSession2 = manifestSessionDao.getSessionByPrefix(packageId);
         Assert.assertTrue(StringUtils.isNotBlank(pkgBean.getRctUrl()));
         Assert.assertNotNull(manifestSession2);
         Assert.assertEquals(manifestSession2.getVesselLabels().size(), 1);
         Assert.assertEquals(manifestSession2.getVesselLabels().iterator().next(), barcodes[0]);
         Assert.assertEquals(manifestSession2.getReceiptTicket(), rctTicket);
-        // There should be no manifest records.
+        // There should still be no manifest records.
         Assert.assertTrue(CollectionUtils.isEmpty(manifestSession2.getRecords()));
 
         int sampleCount = 4;
@@ -580,6 +605,7 @@ public class MayoManifestEjbTest extends Arquillian {
         pkgBean2.setMessageCollection(messageCollection);
         pkgBean2.setPackageBarcode(packageId);
         pkgBean2.setFilename("");
+        pkgBean2.setAllowUpdate(true);
         messageCollection.clearAll();
         mayoManifestEjb.updateManifest(pkgBean2);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
@@ -626,7 +652,8 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
 
-        // Receives the package but it contains the wrong barcode. The UI warning is ignored.
+        // Receives the package but the manifest does not match the entered rack barcodes.
+        // This should cause the manifest to be rejected.
         String[] wrongBarcodes = {String.format("SU-%s%d", testDigits, 1), String.format("SU-%s%d", testDigits, 2)};
         MayoPackageReceiptActionBean pkgBean = new MayoPackageReceiptActionBean();
         pkgBean.setMessageCollection(messageCollection);
@@ -636,20 +663,24 @@ public class MayoManifestEjbTest extends Arquillian {
         messageCollection.clearAll();
         mayoManifestEjb.packageReceiptValidation(pkgBean);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
-        Assert.assertTrue(messageCollection.hasWarnings());
-        // Package receipt page2.
+        Assert.assertTrue(messageCollection.getWarnings().contains(
+                String.format(MayoManifestEjb.NOT_IN_MANIFEST, "rack barcode", StringUtils.join(wrongBarcodes, " "))),
+                StringUtils.join(messageCollection.getWarnings(), "; "));
+        // Lab user chooses to ignore warnings and do a receipt-only operation.
         pkgBean.setShipmentCondition("Unsure.");
         pkgBean.setDeliveryMethod("None");
         pkgBean.setTrackingNumber("TRK" + testDigits);
         mayoManifestEjb.packageReceipt(pkgBean);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
-        Assert.assertTrue(messageCollection.getWarnings().contains(
-                String.format(MayoManifestEjb.NOT_IN_MANIFEST, "rack barcode", StringUtils.join(wrongBarcodes, " "))),
-                StringUtils.join(messageCollection.getWarnings(), "; "));
+        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
+        Assert.assertTrue(messageCollection.getInfos().contains(
+                String.format(MayoManifestEjb.RECEIVED_QUARANTINED, packageId, Quarantined.MISSING_MANIFEST)),
+                StringUtils.join(messageCollection.getInfos(), "; "));
         ManifestSession session = manifestSessionDao.getSessionByPrefix(packageId);
         Assert.assertNotNull(session);
         Assert.assertEquals(session.getVesselLabels().stream().sorted().collect(Collectors.joining(" ")),
                 StringUtils.join(wrongBarcodes, " "));
+        Assert.assertTrue(session.getRecords().isEmpty());
 
         // Fails to accession the received racks.
         MayoSampleReceiptActionBean bean = new MayoSampleReceiptActionBean();

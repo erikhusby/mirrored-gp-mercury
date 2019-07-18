@@ -26,7 +26,7 @@
                 display: table-cell;
                 width: 10em;
                 vertical-align: middle;
-                padding-top: 15px;
+                padding-top: 10px;
                 padding-right: 20px;            }
             div.inputGroup > div.inputRow > div.controls {
                 display: table-cell;
@@ -59,7 +59,7 @@
                     </div>
                 </div>
             </div>
-            <div class="inputGroup">
+            <div class="inputGroup receiveMode">
                 <div class="inputRow receiveMode">
                     <div class="firstCol">Number of racks</div>
                     <div class="controls">
@@ -72,16 +72,21 @@
                         <stripes:textarea rows="5" id="rackBarcodeString" name="rackBarcodeString"/>
                     </div>
                 </div>
-                 <div class="inputRow updateMode" style="display: none;" title="Leave blank if you want Mercury to search for the file."/>
+            </div>
+            <div class="inputGroup">
+                <div class="inputRow" title="Full path to the file including folder names, slashes, and the file suffix.
+Leave this blank if you want Mercury to search for the file.">
                     <div class="firstCol">Manifest filename</div>
                     <div class="controls">
                         <stripes:text id="filename" name="filename"/>
                     </div>
                 </div>
                 <div class="inputRow" title="Check this to allow an existing package receipt to be updated with new values.">
-                    <div class="firstCol">Allow Update</div>
-                    <div class="controls">
-                        <stripes:checkbox id="allowUpdate" name="allowUpdate"/>
+                    <div class="firstCol">
+                        <div style="float: left;">Allow Update</div>
+                        <div style="float: right;">
+                            <stripes:checkbox style="" id="allowUpdate" name="allowUpdate"/>
+                        </div>
                     </div>
                 </div>
             </div>

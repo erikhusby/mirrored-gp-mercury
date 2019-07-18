@@ -111,6 +111,10 @@ public class Metadata {
         throw new RuntimeException("Unhandled data type " + key.getDataType());
     }
 
+    public String toString() {
+        return key.displayName + ":" + getValue();
+    }
+
     public String getStringValue() {
         return stringValue;
     }
