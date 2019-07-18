@@ -121,7 +121,7 @@ public class PrintingMessageBean implements MessageListener {
 
         // Print out the ZPL message, for debuging the random missed label problem
         Printer printer = message.getPrinter();
-        logger.info("Printing ZPL to " + printer.getHostName() + ":" + printer.getPort() + "\n" + message.getZplScript());
+        logger.info("Printing " +message.getLabelName() + " ZPL to " + printer.getHostName() + ":" + printer.getPort() + "\n" + message.getZplScript());
 
         // Initialization section:
         // Try to open a socket

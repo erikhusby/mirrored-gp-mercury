@@ -67,30 +67,7 @@ public class PrintingMessageBeanTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV);
     }
 
-    @Test
-    public void testActualPrinting() throws Exception {
-
-        printingMessageResource.sendPrinterMessage(printingManager
-                .createPrintingMessage(new LabelData("CO-44556677"), PaperType.PLATE_MATRIX, LabLocation.LAB_1182));
-
-        // Sleep for 5-10 secs to give queue time to process the message.
-        Thread.sleep(1000 * 5);
-    }
-
-    @Test(enabled = false)
-    public void loopPrinterStuff() {
-
-        List<Printer> wrapAroundLabelPrinters = printingManager.getPrinter(PaperType.SAMPLE_WRAP_AROUND);
-        for (Printer printer : wrapAroundLabelPrinters) {
-
-            System.out.println("Printer found for wrap around label, " + printer.getHostName());
-        }
-
-        Printer containerPrinter = printingManager.getPrinter(PaperType.CONTAINER, LabLocation.LAB_1182);
-        System.out.println("Printer found for container label in lab 1182, " + containerPrinter.getHostName());
-    }
-
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void testCreatingPrintingMessage() {
         PaperType testPaper = PaperType.SAMPLE_WRAP_AROUND;
         String testBarcode = "SM-1234";
@@ -116,7 +93,20 @@ public class PrintingMessageBeanTest extends Arquillian {
     }
 
     /**
-     * Creates serveral printer message and adds them to the queue using the JMS API.
+     * Note: this is an arquillian test, so requires a empty Wildfly server running to be able to run.
+     */
+    @Test(enabled = false)
+    public void testActualPrinting() throws Exception {
+
+        printingMessageResource.sendPrinterMessage(printingManager
+                .createPrintingMessage(new LabelData("CO-44556677"), PaperType.PLATE_MATRIX, LabLocation.LAB_1182));
+
+        // Sleep for 5-10 secs to give queue time to process the message.
+        Thread.sleep(1000 * 5);
+    }
+
+   /**
+     * Creates several printer message and adds them to the queue using the JMS API (local configuration).
      */
     @Test(enabled = false)
     public void testSendingMultiplePrintingMessages() {
