@@ -75,5 +75,27 @@
                 </activation-config-property>
             </activation-config>
         </message-driven>
+        <message-driven>
+            <ejb-name>PrintingMessageBean</ejb-name>
+            <ejb-class>org.broadinstitute.gpinformatics.mercury.boundary.printing.PrintingMessageBean</ejb-class>
+            <activation-config>
+                <activation-config-property>
+                    <activation-config-property-name>destination</activation-config-property-name>
+                    <activation-config-property-value>queue/broad.queue.mercury.printing.production
+                    </activation-config-property-value>
+                </activation-config-property>
+                <!--
+                Remote broker only for production.  Other environments use local broker, and inherent host / port uniqueness.
+                -->
+                <activation-config-property>
+                    <activation-config-property-name>connectorClassName</activation-config-property-name>
+                    <activation-config-property-value>org.apache.activemq.artemis.core.remoting.impl.netty.NettyConnectorFactory</activation-config-property-value>
+                </activation-config-property>
+                <activation-config-property>
+                    <activation-config-property-name>connectionParameters</activation-config-property-name>
+                    <activation-config-property-value>host=gpinfx-jms;port=5445</activation-config-property-value>
+                </activation-config-property>
+            </activation-config>
+        </message-driven>
     </enterprise-beans>
 </ejb-jar>

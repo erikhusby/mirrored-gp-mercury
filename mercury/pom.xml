@@ -1752,7 +1752,15 @@ nodePrinter.print(webapp)
             <scope>test</scope>
         </dependency>
 
-        <!--  BettaLimsMessageBeanTest, WorkCompleteMessageBeanTest, and InfiniumPipelineClient -->
+        <!--  BettaLimsMessageBeanTest, WorkCompleteMessageBeanTest -->
+        <dependency>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>artemis-jms-client-all</artifactId>
+            <version>2.5.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!--  InfiniumPipelineClient -->
         <dependency>
             <groupId>org.apache.activemq</groupId>
             <artifactId>activemq-client</artifactId>
