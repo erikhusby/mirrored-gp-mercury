@@ -3638,7 +3638,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
                     if(sapQuote.isPresent()) {
                         SapQuote quote = sapQuote.get();
-                        boolean canSwitch = true;
 
                         String salesOrganization = quote.getQuoteHeader().getSalesOrganization();
                         final Optional<SapIntegrationClientImpl.SAPCompanyConfiguration> sapCompanyConfiguration =
@@ -3652,20 +3651,31 @@ public class ProductOrderActionBean extends CoreActionBean {
                             if (currentProduct.isPresent()) {
                                 Optional<SAPMaterial> materialForSalesOrg = Optional.ofNullable(productPriceCache
                                         .findByProduct(currentProduct.get(), salesOrganization));
+                                final String errorMessage = String.format("%s is invalid for your quote %s because "
+                                                                          + "the product is not available for that quotes sales"
+                                                                          + " organization (%s).  Please check either"
+                                                                          + " the selected product or the quote you"
+                                                                          + " are using.",
+                                        currentProduct.get().getDisplayName(), quote.getQuoteHeader().getQuoteNumber(),
+                                        sapCompanyConfiguration.orElse(SapIntegrationClientImpl.SAPCompanyConfiguration.UNKNOWN).getDisplayName());
                                 if (!materialForSalesOrg.isPresent()) {
-                                    canSwitch = false;
-                                    final String errorMessage = String.format("%s is invalid for your quote %s because "
-                                                                              + "the product is not available for that quotes sales"
-                                                                              + " organization (%s).  Please check either"
-                                                                              + " the selected product or the quote you"
-                                                                              + " are using.",
-                                            currentProduct.get().getDisplayName(), quote.getQuoteHeader().getQuoteNumber(),
-                                            sapCompanyConfiguration.orElse(SapIntegrationClientImpl.SAPCompanyConfiguration.UNKNOWN).getDisplayName());
                                     throw new InvalidProductException(errorMessage);
+                                } else {
+                                    if(sapCompanyConfiguration.isPresent()) {
+                                        SapIntegrationClientImpl.SAPCompanyConfiguration companyConfig = sapCompanyConfiguration.get();
+                                        if(companyConfig == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES &&
+                                           !orderProduct.isLLCProduct() &&
+                                           !orderProduct.getOfferedAsCommercialProduct()) {
+                                            throw new InvalidProductException(errorMessage);
+                                        } else if (companyConfig == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD &&
+                                                   orderProduct.isLLCProduct()) {
+
+                                            throw new InvalidProductException(errorMessage);
+                                        }
+                                    }
                                 }
                             }
                         }
-
                     }
 
                 } catch (SAPIntegrationException e) {
