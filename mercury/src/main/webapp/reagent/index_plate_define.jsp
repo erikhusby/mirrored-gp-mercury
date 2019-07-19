@@ -284,7 +284,7 @@ instances. If it does, you can remove unused ones using the
                     <div class="inputRow">
                         <div class="firstCol"></div>
                         <div class="control-group controls">
-                            <stripes:submit id="renameDefintion" name="renameDefinition" value="Rename" class="btn btn-primary"/>
+                            <stripes:submit id="renameDefinition" name="renameDefinition" value="Rename" class="btn btn-primary"/>
                             <span style="padding-left: 10px;">
                                 <stripes:text id="newDefinitionName" name="newDefinitionName" value="[new plate definition name]"/>
                             </span>
@@ -320,7 +320,7 @@ instances. If it does, you can remove unused ones using the
                             <div class="controls">
                                     <span>
                                         <p>In Use Plate Barcodes </p>
-                                        <stripes:textarea id="plateBarcodeTextarea" readonly="true" cols="104" rows="4" style="width: 100%;"
+                                        <stripes:textarea id="inUsePlateBarcodes" readonly="true" cols="104" rows="4" style="width: 100%;"
                                                           name="readonly1" value="${actionBean.unusedAndInUse.right}"/>
                                     </span>
                             </div>
@@ -336,7 +336,7 @@ instances. If it does, you can remove unused ones using the
                             <div class="controls">
                                     <span>
                                         <p>Unused Plate Barcodes </p>
-                                        <stripes:textarea id="plateBarcodeTextarea" readonly="true" cols="104" rows="4" style="width: 100%;"
+                                        <stripes:textarea id="unusedPlateBarcodes" readonly="true" cols="104" rows="4" style="width: 100%;"
                                                           name="readonly2" value="${actionBean.unusedAndInUse.left}"/>
                                     </span>
                             </div>
