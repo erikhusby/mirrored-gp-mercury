@@ -63,6 +63,7 @@ public class MolecularIndexPlateActionBean extends CoreActionBean {
     @Validate(required = true, on = {CREATE_DEFINITION})
     private String plateName;
 
+    // selectedPlateName is one of the plateNameSelection list and has a reagent type suffix.
     @Validate(required = true, on = {RENAME_DEFINITION, DELETE_DEFINITION, FIND_INSTANCES, CREATE_INSTANCE})
     private String selectedPlateName;
 
@@ -76,8 +77,10 @@ public class MolecularIndexPlateActionBean extends CoreActionBean {
     private String plateBarcodeString;
 
     private MessageCollection messageCollection = new MessageCollection();
-    private List<String> plateNames = new ArrayList<>();
-    private List<List<String>> plateLayout = new ArrayList<>();
+    // plateNameSelection is the display list and has a reagent type suffix.
+    private List<String> plateNameSelection = new ArrayList<>();
+    private List<List<String>> plateLayoutNames = new ArrayList<>();
+    private List<List<String>> plateLayoutSequences = new ArrayList<>();
     private List<String> plateBarcodes = new ArrayList<>();
     private List<Pair<String, String>> definitionToBarcode;
     private Boolean isManagePage;
@@ -106,7 +109,7 @@ public class MolecularIndexPlateActionBean extends CoreActionBean {
     @DefaultHandler
     @HandlesEvent(DEFINITION_ACTION)
     public Resolution definitionAction() {
-        plateNames = indexedPlateFactory.findPlateDefinitionNames();
+        indexedPlateFactory.findPlateDefinitionNames(plateNameSelection);
         return new ForwardResolution(PLATE_DEFINITION_PAGE);
     }
 
@@ -131,7 +134,7 @@ public class MolecularIndexPlateActionBean extends CoreActionBean {
                         VesselGeometry.G24x16;
                 indexedPlateFactory.makeIndexPlateDefinition(plateName, rows, vesselGeometry,
                         IndexPlateDefinition.ReagentType.valueOf(reagentType), replaceExisting, messageCollection);
-                plateNames = indexedPlateFactory.findPlateDefinitionNames();
+                indexedPlateFactory.findPlateDefinitionNames(plateNameSelection);
             }
         }
         addMessages(messageCollection);
@@ -140,26 +143,22 @@ public class MolecularIndexPlateActionBean extends CoreActionBean {
 
     @HandlesEvent(INSTANCE_ACTION)
     public Resolution makeInstance() {
-        plateNames = indexedPlateFactory.findPlateDefinitionNames();
+        indexedPlateFactory.findPlateDefinitionNames(plateNameSelection);
         return new ForwardResolution(PLATE_INSTANCE_PAGE);
     }
 
     @HandlesEvent(FIND_LAYOUT_D)
     public Resolution findLayoutD() {
-        return findLayout(true);
+        indexedPlateFactory.findLayout(selectedPlateName, plateLayoutNames, plateLayoutSequences, messageCollection);
+        addMessages(messageCollection);
+        return new ForwardResolution(PLATE_DEFINITION_PAGE);
     }
 
     @HandlesEvent(FIND_LAYOUT_I)
     public Resolution findLayoutI() {
-        return findLayout(false);
-    }
-
-    private Resolution findLayout(boolean isDefPage) {
-        // Populates the plateLayout.
-        plateLayout = new ArrayList<>();
-        indexedPlateFactory.findLayout(selectedPlateName, plateLayout, messageCollection);
+        indexedPlateFactory.findLayout(selectedPlateName, plateLayoutNames, plateLayoutSequences, messageCollection);
         addMessages(messageCollection);
-        return new ForwardResolution(isDefPage ? PLATE_DEFINITION_PAGE : PLATE_INSTANCE_PAGE);
+        return new ForwardResolution(PLATE_INSTANCE_PAGE);
     }
 
     /**
@@ -191,7 +190,7 @@ public class MolecularIndexPlateActionBean extends CoreActionBean {
         } else {
             indexedPlateFactory.renameDefinition(selectedPlateName, newDefinitionName, messageCollection);
             if (!messageCollection.hasErrors()) {
-                plateNames = indexedPlateFactory.findPlateDefinitionNames();
+                indexedPlateFactory.findPlateDefinitionNames(plateNameSelection);
             }
         }
         addMessages(messageCollection);
@@ -202,7 +201,7 @@ public class MolecularIndexPlateActionBean extends CoreActionBean {
     public Resolution deleteDefinition() {
         indexedPlateFactory.deleteDefinition(selectedPlateName, messageCollection);
         if (!messageCollection.hasErrors()) {
-            plateNames = indexedPlateFactory.findPlateDefinitionNames();
+            indexedPlateFactory.findPlateDefinitionNames(plateNameSelection);
         }
         addMessages(messageCollection);
         return new ForwardResolution(PLATE_DEFINITION_PAGE);
@@ -298,20 +297,28 @@ public class MolecularIndexPlateActionBean extends CoreActionBean {
         return spreadsheet;
     }
 
-    public List<String> getPlateNames() {
-        return plateNames;
+    public List<String> getPlateNameSelection() {
+        return plateNameSelection;
     }
 
-    public void setPlateNames(List<String> plateNames) {
-        this.plateNames = plateNames;
+    public void setPlateNameSelection(List<String> plateNameSelection) {
+        this.plateNameSelection = plateNameSelection;
     }
 
-    public List<List<String>> getPlateLayout() {
-        return plateLayout;
+    public List<List<String>> getPlateLayoutNames() {
+        return plateLayoutNames;
     }
 
-    public void setPlateLayout(List<List<String>> plateLayout) {
-        this.plateLayout = plateLayout;
+    public void setPlateLayoutNames(List<List<String>> plateLayoutNames) {
+        this.plateLayoutNames = plateLayoutNames;
+    }
+
+    public List<List<String>> getPlateLayoutSequences() {
+        return plateLayoutSequences;
+    }
+
+    public void setPlateLayoutSequences(List<List<String>> plateLayoutSequences) {
+        this.plateLayoutSequences = plateLayoutSequences;
     }
 
     public List<String> getPlateBarcodes() {

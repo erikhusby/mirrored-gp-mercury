@@ -12,6 +12,7 @@
 
             $j(document).ready(function() {
                 managementLayout(<c:if test="${actionBean.managePage}">true</c:if>);
+                layoutNames(true);
             });
 
             function managementLayout(isManagement) {
@@ -26,11 +27,24 @@
                 }
             }
 
-            function hidePlateInfo() {
+            function layoutNames(isName) {
+                if (isName) {
+                    $j("#plateLayoutSequences").hide();
+                    $j("#plateLayoutNames").show();
+                    $j("#showIndexNames").attr('checked', 'checked');
+                } else {
+                    $j("#plateLayoutSequences").show();
+                    $j("#plateLayoutNames").hide();
+                    $j("#showIndexSequences").attr('checked', 'checked');
+                }
+            }
+
+            function plateNameChange() {
                 $j("#plateContents").hide();
                 $j("#inUseBarcodes").hide();
                 $j("#unusedBarcodes").hide();
             }
+
         </script>
     </stripes:layout-component>
 
@@ -69,11 +83,13 @@
         </style>
 
         <stripes:form beanclass="${actionBean.class.name}" id="plateDefinitionForm">
-            <c:forEach items="${actionBean.plateNames}" varStatus="item">
-                <stripes:hidden name="plateNames[${item.index}]"/>
+            <c:forEach items="${actionBean.plateNameSelection}" varStatus="item">
+                <input type="hidden" name="plateNameSelection[${item.index}]"
+                       value="${actionBean.plateNameSelection[item.index]}"/>
             </c:forEach>
             <c:forEach items="${actionBean.definitionToBarcode}" varStatus="item">
-                <stripes:hidden name="definitionToBarcode[${item.index}]"/>
+                <input type="hidden" name="definitionToBarcode[${item.index}]"
+                       value="${actionBean.definitionToBarcode[item.index]}"/>
             </c:forEach>
 
             <!-- Radio button group for type of operation. -->
@@ -199,9 +215,10 @@ instances. If it does, you can remove unused ones using the
                     <div class="inputRow">
                         <div class="firstCol">Plate Definition Name</div>
                         <div class="control-group controls">
-                            <stripes:select name="selectedPlateName" value="${actionBean.selectedPlateName}" onchange="hidePlateInfo()">
+                            <stripes:select id="selectedPlateName" name="selectedPlateName"
+                                            value="${actionBean.selectedPlateName}" onchange="plateNameChange()">
                                 <stripes:option value=" "/>
-                                <stripes:options-collection collection="${actionBean.plateNames}"/>
+                                <stripes:options-collection collection="${actionBean.plateNameSelection}"/>
                             </stripes:select>
                         </div>
                     </div>
@@ -217,13 +234,40 @@ instances. If it does, you can remove unused ones using the
                     </div>
                 </div>
 
-
                 <!-- Displays the layout data. -->
-                <c:if test="${not empty actionBean.plateLayout}">
+                <c:if test="${not empty actionBean.plateLayoutNames}">
+                    <!-- Radio button group to flip between names and sequences. -->
+                    <div class="inputGroup" title="Show index names or show index sequences.">
+                        <div class="inputRow">
+                            <div class="control-group controls">
+                                <span>
+                                    <input type="radio" id="showIndexNames" name="namesOrSequences" value="true" onclick="layoutNames(true)"/>
+                                    <label for="showIndexNames">Show names</label>
+                                </span>
+                                <span style="padding-left: 20px;">
+                                    <input type="radio" id="showIndexSequences" name="namesOrSequences" value="false" onclick="layoutNames(false)"/>
+                                    <label for="showIndexSequences">Show sequences</label>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div id="plateContents" style="padding-top: 10px;">
-                        <table border="2">
+                        <table id="plateLayoutNames" border="2">
                             <tbody>
-                            <c:forEach items="${actionBean.plateLayout}" var="layoutRow">
+                            <c:forEach items="${actionBean.plateLayoutNames}" var="layoutRow">
+                                <tr>
+                                    <c:forEach items="${layoutRow}" var="layoutCell">
+                                        <td class="layoutCell">${layoutCell}</td>
+                                    </c:forEach>
+                                </tr>
+                            </c:forEach>
+                            </tbody>
+                        </table>
+
+                        <table id="plateLayoutSequences" border="2">
+                            <tbody>
+                            <c:forEach items="${actionBean.plateLayoutSequences}" var="layoutRow">
                                 <tr>
                                     <c:forEach items="${layoutRow}" var="layoutCell">
                                         <td class="layoutCell">${layoutCell}</td>

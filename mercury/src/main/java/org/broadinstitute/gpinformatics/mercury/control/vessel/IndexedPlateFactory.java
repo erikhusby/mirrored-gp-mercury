@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDa
 import org.broadinstitute.gpinformatics.mercury.control.reagent.MolecularIndexingSchemeFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.IndexPlateDefinition;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.IndexPlateDefinitionWell;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
@@ -160,7 +161,7 @@ public class IndexedPlateFactory {
         return uploadIndexedPlates(associations, technologiesAndParsers.getPlateType());
     }
 
-    public Map<String, StaticPlate> uploadIndexedPlates(List<PlateWellIndexAssociation> plateWellIndexes,
+    private Map<String, StaticPlate> uploadIndexedPlates(List<PlateWellIndexAssociation> plateWellIndexes,
                                                         StaticPlate.PlateType plateType) {
         Map<String, StaticPlate> platesByBarcode = new HashMap<>();
         Set<PlateWell> previousWells = new HashSet<>();
@@ -204,32 +205,51 @@ public class IndexedPlateFactory {
         return plate;
     }
 
-    public void findLayout(String plateName, List<List<String>> layout, MessageCollection messageCollection) {
-        layout.clear();
+    public void findLayout(String selectedPlateName, List<List<String>> names, List<List<String>> sequences,
+            MessageCollection messageCollection) {
+        String plateName = selectionNameToPlateName(selectedPlateName);
+        names.clear();
+        sequences.clear();
         IndexPlateDefinition definition = indexPlateDefinitionDao.findByName(plateName);
         if (definition == null) {
             messageCollection.addWarning(NOT_FOUND, DEFINITION_SUFFIX, plateName);
         } else {
             Map<VesselGeometry.RowColumn, String> rowColumnToName = new HashMap<>();
+            Map<VesselGeometry.RowColumn, String> rowColumnToSequences = new HashMap<>();
             for (IndexPlateDefinitionWell well : definition.getDefinitionWells()) {
                 VesselGeometry.RowColumn rowColumn =
                         definition.getVesselGeometry().getRowColumnForVesselPosition(well.getVesselPosition());
                 rowColumnToName.put(rowColumn, well.getMolecularIndexingScheme().getName());
+                String joinedPositions = well.getMolecularIndexingScheme().getIndexes().keySet().stream().
+                        map(MolecularIndexingScheme.IndexPosition::getPosition).
+                        collect(Collectors.joining(","));
+                String joinedSequences = well.getMolecularIndexingScheme().getIndexes().values().stream().
+                        map(MolecularIndex::getSequence).
+                        collect(Collectors.joining(","));
+                rowColumnToSequences.put(rowColumn, joinedPositions + ": " + joinedSequences);
             }
+
             // The first layout row has the column names and the first column of every row has the row name.
-            layout.add(new ArrayList<String>() {{
+            names.add(new ArrayList<String>() {{
                 add("");
                 addAll(Arrays.asList(definition.getVesselGeometry().getColumnNames()));
             }});
-            // Puts a value in the layout for each vessel position using either the reagent name or a blank if none.
+            sequences.add(names.get(0));
+
+            // For each well position, puts a value in the layout names and layout sequences, or blanks if none.
             for (int rowIdx = 0; rowIdx < definition.getVesselGeometry().getRowCount(); ++rowIdx) {
+                List<String> nameRow = new ArrayList<>();
+                List<String> sequenceRow = new ArrayList<>();
+                names.add(nameRow);
+                sequences.add(sequenceRow);
                 String rowName = definition.getVesselGeometry().getRowNames()[rowIdx];
-                List<String> row = new ArrayList<>();
-                layout.add(row);
-                row.add(rowName);
+                nameRow.add(rowName);
+                sequenceRow.add(rowName);
                 for (int colIdx = 0; colIdx < definition.getVesselGeometry().getColumnCount(); ++colIdx) {
-                    row.add(StringUtils.trimToEmpty(
-                            rowColumnToName.get(definition.getVesselGeometry().makeRowColumn(rowIdx + 1, colIdx + 1))));
+                    VesselGeometry.RowColumn rowCol =
+                            definition.getVesselGeometry().makeRowColumn(rowIdx + 1, colIdx + 1);
+                    nameRow.add(StringUtils.trimToEmpty(rowColumnToName.get(rowCol)));
+                    sequenceRow.add(StringUtils.trimToEmpty(rowColumnToSequences.get(rowCol)));
                 }
             }
         }
@@ -258,16 +278,23 @@ public class IndexedPlateFactory {
         return processor.getHeaderAndDataRows().stream().filter(row -> row.size() > 0).collect(Collectors.toList());
     }
 
-    public List<String> findPlateDefinitionNames() {
-        return indexPlateDefinitionDao.findIndexPlateDefinitionNames();
+    /**
+     * Populates the list with index plate definition names with reagent suffix.
+     */
+    public void findPlateDefinitionNames(List<String> plateNameSelection) {
+        plateNameSelection.clear();
+        indexPlateDefinitionDao.findAll(IndexPlateDefinition.class).forEach(definition ->
+                plateNameSelection.add(
+                        plateNameToSelectionName(definition.getDefinitionName(), definition.getReagentType())));
+        plateNameSelection.sort(Comparator.naturalOrder());
     }
 
-	public void renameDefinition(String plateName, String newDefinitionName, MessageCollection messageCollection) {
+	public void renameDefinition(String selectedPlateName, String newDefinitionName, MessageCollection messageCollection) {
         if (indexPlateDefinitionDao.findByName(newDefinitionName) != null) {
             messageCollection.addError(IN_USE, DEFINITION_SUFFIX, newDefinitionName);
             return;
         }
-
+        String plateName = selectionNameToPlateName(selectedPlateName);
         IndexPlateDefinition definition = indexPlateDefinitionDao.findByName(plateName);
         if (definition == null) {
             messageCollection.addError(NOT_FOUND, DEFINITION_SUFFIX, plateName);
@@ -277,7 +304,8 @@ public class IndexedPlateFactory {
         }
     }
 
-    public void deleteDefinition(String plateName, MessageCollection messageCollection) {
+    public void deleteDefinition(String selectedPlateName, MessageCollection messageCollection) {
+        String plateName = selectionNameToPlateName(selectedPlateName);
         IndexPlateDefinition definition = indexPlateDefinitionDao.findByName(plateName);
         if (definition == null) {
             messageCollection.addError(NOT_FOUND, DEFINITION_SUFFIX, plateName);
@@ -300,7 +328,8 @@ public class IndexedPlateFactory {
      *
      * @return pair of joined lists of plate barcodes, the left for unused plates, the right for plates in use.
      */
-    public Pair<String, String> findInstances(String plateName, MessageCollection messageCollection) {
+    public Pair<String, String> findInstances(String selectedPlateName, MessageCollection messageCollection) {
+        String plateName = selectionNameToPlateName(selectedPlateName);
         IndexPlateDefinition definition = indexPlateDefinitionDao.findByName(plateName);
         if (definition == null) {
             messageCollection.addWarning(NOT_FOUND, DEFINITION_SUFFIX, plateName);
@@ -443,12 +472,12 @@ public class IndexedPlateFactory {
     /**
      * Instantiates one or more index plates for the barcodes found in the spreadsheet.
      *
-     * @param plateName identifies an existing index plate definition.
+     * @param selectedPlateName identifies an existing index plate definition.
      * @param spreadsheet is a list of barcodes. These will be leading zero filled as necessary. A header row
      *                    is optional and if present it is ignored.
      * @param messageCollection used to pass errors, warnings, and info back to the UI.
      */
-    public void makeIndexPlate(String plateName, List<List<String>> spreadsheet, @Nullable String salesOrderNumber,
+    public void makeIndexPlate(String selectedPlateName, List<List<String>> spreadsheet, @Nullable String salesOrderNumber,
             boolean replaceExisting, MessageCollection messageCollection) {
 
         if (CollectionUtils.isEmpty(spreadsheet) || CollectionUtils.isEmpty(spreadsheet.get(0))) {
@@ -476,6 +505,7 @@ public class IndexedPlateFactory {
                 map(StaticPlate::getLabel).sorted().collect(Collectors.joining(" ")));
         }
         // Index plate definition must exist.
+        String plateName = selectionNameToPlateName(selectedPlateName);
         StaticPlate.PlateType plateType = null;
         IndexPlateDefinition definition = indexPlateDefinitionDao.findByName(plateName);
         if (definition == null) {
@@ -535,5 +565,17 @@ public class IndexedPlateFactory {
                         userBean.getBspUser().getUsername(), newCount, overwriteCount, plateName));
             }
         }
+    }
+
+    private final static String SEPARATOR = " - ";
+
+    /** Converts a plate name and reagent type into a plateSelectionName for the UI. */
+    public String plateNameToSelectionName(String plateName, IndexPlateDefinition.ReagentType reagentType) {
+        return plateName + SEPARATOR + reagentType.name();
+    }
+
+    /** Converts a plateSelectionName into a plate name. */
+    public String selectionNameToPlateName(String plateNameSelection) {
+        return StringUtils.substringBeforeLast(plateNameSelection, SEPARATOR);
     }
 }

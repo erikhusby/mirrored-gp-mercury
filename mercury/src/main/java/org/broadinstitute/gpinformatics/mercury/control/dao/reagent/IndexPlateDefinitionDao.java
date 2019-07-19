@@ -36,13 +36,4 @@ public class IndexPlateDefinitionDao extends GenericDao {
         }
         return null;
     }
-
-    /** Returns an ordered list of the index plate definition names. */
-    public List<String> findIndexPlateDefinitionNames() {
-        CriteriaQuery<String> criteriaQuery = getCriteriaBuilder().createQuery(String.class);
-        Root<IndexPlateDefinition> root = criteriaQuery.from(IndexPlateDefinition.class);
-        criteriaQuery.select(root.get(IndexPlateDefinition_.definitionName)).
-                orderBy(getCriteriaBuilder().asc(root.get(IndexPlateDefinition_.definitionName)));
-        return getEntityManager().createQuery(criteriaQuery).getResultList();
-    }
 }

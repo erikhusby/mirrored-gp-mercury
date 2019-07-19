@@ -92,8 +92,9 @@
 
             <div class="creationLayout">
 
-                <c:forEach items="${actionBean.plateNames}" varStatus="item">
-                    <stripes:hidden name="plateNames[${item.index}]"/>
+                <c:forEach items="${actionBean.plateNameSelection}" varStatus="item">
+                    <input type="hidden" name="plateNameSelection[${item.index}]"
+                           value="${actionBean.plateNameSelection[item.index]}"/>
                 </c:forEach>
 
                 <!-- Selects a plate definition. -->
@@ -103,7 +104,7 @@
                         <div class="control-group controls">
                             <stripes:select name="selectedPlateName" value="${actionBean.selectedPlateName}">
                                 <stripes:option value=" "/>
-                                <stripes:options-collection collection="${actionBean.plateNames}"/>
+                                <stripes:options-collection collection="${actionBean.plateNameSelection}"/>
                             </stripes:select>
                         </div>
                     </div>
@@ -130,7 +131,7 @@ provided the plate(s) have not been used in a transfer.">
                     </div>
                 </div>
 
-                <div style="float: left; width: 50%;">
+                <div style="float: left; width: 30%;">
                     <!-- File chooser to upload Excel spreadsheet of barcodes of the plates to be created. -->
                     <div class="inputGroup" title="Provide an Excel spreadsheet.">
                         <div class="inputRow">
@@ -153,13 +154,14 @@ definition to determine the well positions and reagent content.">
                     </div>
                 </div>
 
-                <div style="float: right; width: 50%;">
+                <div style="float: right; width: 70%;">
                     <p>Accepts an Excel spreadsheet.
                     <ul>
                         <li>The header row is optional. If present it is ignored, but it must not have<br/>
                             a number in column A or else it will be mistaken for a data row.</li>
                         <li>The data rows should have one column.<br/>
-                            Column A should contain the plate barcode (such as 012345678901).
+                            Column A should contain a numeric plate barcode (such as 10507722).<br/>
+                            Mercury will add leading zeros up to 12 digits (10507722 is saved as 000010507722).
                         </li>
                     </ul>
                     </p>
