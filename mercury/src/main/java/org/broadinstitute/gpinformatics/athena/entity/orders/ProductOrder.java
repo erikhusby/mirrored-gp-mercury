@@ -5,7 +5,6 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.MoreCollectors;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -792,18 +791,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 // Keep the old Add on instead of just creating a new one
                 pdoAddOn = existingAddonMap.get(addOn);
             } else {
-
                 // Create a new addon for any potential add ons which are not already existing
                 pdoAddOn = new ProductOrderAddOn(addOn, this);
-
-                // For SAP Company code 2000 orders, create a custom price adjustment to lock in the price at the time
-                // of the order
-                if (addOn.getSapMaterials() != null && (addOn.isClinicalProduct() || addOn.isExternalOnlyProduct())) {
-                    final ProductOrderAddOnPriceAdjustment customPriceAdjustment =
-                            new ProductOrderAddOnPriceAdjustment();
-                    customPriceAdjustment.setAdjustmentValue(new BigDecimal(addOn.getSapMaterials().get(getOrderType().salesOrg).getBasePrice()));
-                    pdoAddOn.setCustomPriceAdjustment(customPriceAdjustment);
-                }
             }
             addOns.add(pdoAddOn);
         }
@@ -2816,22 +2805,21 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         List<QuoteItem> quoteItems = new ArrayList<>();
         Optional<Collection<QuoteItem>> quoteItemsForProduct = Optional.ofNullable(sapQuote.getQuoteItemMap().get(product.getPartNumber()));
         quoteItemsForProduct.ifPresent(quoteItems::addAll);
-        if (CollectionUtils.isEmpty(quoteItems)) {
 
-            final Set<String> quoteItemDescriptions = sapQuote.getQuoteItemByDescriptionMap().keySet();
-            final Optional<String> singleDescriptorResult = quoteItemDescriptions.stream()
-                    .filter(description -> description.contains(QuoteItem.DOLLAR_LIMIT_MATERIAL_DESCRIPTOR)).collect(
-                            MoreCollectors.toOptional());
+        Set<String> dollarLimitedQuoteItems = sapQuote.getQuoteItems().stream()
+            .filter(QuoteItem::isDollarLimitedMaterial).map(QuoteItem::getMaterialDescription)
+            .collect(Collectors.toSet());
+        boolean hasSingleLineItemMatch = CollectionUtils.isNotEmpty(quoteItems) && quoteItems.size() == 1;
+        boolean hasDollarLimitedQuoteItems = CollectionUtils.isNotEmpty(dollarLimitedQuoteItems);
 
-            singleDescriptorResult.ifPresent(singleDollarLimitDescriptor ->{
-                    quoteItems.addAll(sapQuote.getQuoteItemByDescriptionMap().get(singleDollarLimitDescriptor));
-            });
+        dollarLimitedQuoteItems.forEach(singleDollarLimitDescriptor -> {
+            quoteItems.addAll(sapQuote.getQuoteItemByDescriptionMap().get(singleDollarLimitDescriptor));
+        });
 
-        }
         if (CollectionUtils.isNotEmpty(quoteItems)) {
-            if (quoteItems.size() == 1) {
+            if (hasSingleLineItemMatch || hasDollarLimitedQuoteItems) {
                 updatedLineItemReferences.add(new SapQuoteItemReference(
-                        product, quoteItems.iterator().next().getQuoteItemNumber().toString()));
+                    product, quoteItems.iterator().next().getQuoteItemNumber().toString()));
             } else {
                 List<Integer> lineItems =
                     quoteItems.stream().map(QuoteItem::getQuoteItemNumber).sorted().collect(Collectors.toList());

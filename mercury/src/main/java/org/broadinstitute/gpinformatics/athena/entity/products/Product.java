@@ -215,6 +215,10 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @JoinColumn(name = "POSITIVE_CONTROL_RP_ID")
     private ResearchProject positiveControlResearchProject;
 
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST})
+    @JoinColumn(name = "NEGATIVE_CONTROL_RP_ID")
+    private ResearchProject negativeControlResearchProject;
+
     @Column(name ="EXTERNAL_ONLY_PRODUCT")
     private Boolean externalOnlyProduct = false;
 
@@ -268,6 +272,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         clonedProduct.setReagentDesignKey(productToClone.getReagentDesignKey());
         clonedProduct.setBaitLocked(productToClone.getBaitLocked());
         clonedProduct.setPositiveControlResearchProject(productToClone.getPositiveControlResearchProject());
+        clonedProduct.setNegativeControlResearchProject(productToClone.getNegativeControlResearchProject());
         clonedProduct.setReadLength(productToClone.getReadLength());
         clonedProduct.setInsertSize(productToClone.getInsertSize());
         clonedProduct.setLoadingConcentration(productToClone.getLoadingConcentration());
@@ -783,6 +788,15 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public void setPositiveControlResearchProject(ResearchProject positiveControlResearchProject) {
         this.positiveControlResearchProject = positiveControlResearchProject;
+    }
+
+    public ResearchProject getNegativeControlResearchProject() {
+        return negativeControlResearchProject;
+    }
+
+    public void setNegativeControlResearchProject(
+            ResearchProject negativeControlResearchProject) {
+        this.negativeControlResearchProject = negativeControlResearchProject;
     }
 
     /**

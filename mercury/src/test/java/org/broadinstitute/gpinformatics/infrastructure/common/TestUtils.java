@@ -149,6 +149,21 @@ public class TestUtils {
                 quoteItems.add(new QuoteItem(lambdaItem));
             });
             break;
+        case MULTIPLE_DOLLAR_LIMITED:
+            item = ZESDQUOTEITEM.Factory.newInstance();
+            item.setMAKTX(QuoteItem.DOLLAR_LIMIT_MATERIAL_DESCRIPTOR + " 1");
+            item.setMATNR("GPDL-001");
+            item.setQUOTEITEM(String.valueOf((quoteItems.size() + 1) * 10));
+            item.setQUOTATION(testQuoteIdentifier);
+            quoteItems.add(new QuoteItem(item));
+
+            item = ZESDQUOTEITEM.Factory.newInstance();
+            item.setMAKTX(QuoteItem.DOLLAR_LIMIT_MATERIAL_DESCRIPTOR + " 2");
+            item.setMATNR("GPDL-002");
+            item.setQUOTEITEM(String.valueOf((quoteItems.size() + 1) * 10));
+            item.setQUOTATION(testQuoteIdentifier);
+            quoteItems.add(new QuoteItem(item));
+            break;
         }
 
         final Set<FundingDetail> fundingDetailsCollection = new HashSet<>();
@@ -181,7 +196,7 @@ public class TestUtils {
         SAPMaterial otherPlatformMaterial =
                 new SAPChangeMaterial(testProduct.getPartNumber(), copmanyConfig, copmanyConfig.getDefaultWbs(),
                         testProduct.getName(), "50", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,
-                        "description", "", "", new Date(), new Date(),
+                       new Date(), new Date(),
                         Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
                         testProduct.determineCompanyConfiguration().getSalesOrganization());
         return otherPlatformMaterial;
@@ -227,6 +242,7 @@ public class TestUtils {
     }
 
     public enum SapQuoteTestScenario {
-       PRODUCTS_MATCH_QUOTE_ITEMS, DOLLAR_LIMITED, MATCH_QUOTE_ITEMS_AND_DOLLAR_LIMITED, PRODUCTS_DIFFER;
+       PRODUCTS_MATCH_QUOTE_ITEMS, DOLLAR_LIMITED, MATCH_QUOTE_ITEMS_AND_DOLLAR_LIMITED, PRODUCTS_DIFFER,
+        MULTIPLE_DOLLAR_LIMITED
     }
 }

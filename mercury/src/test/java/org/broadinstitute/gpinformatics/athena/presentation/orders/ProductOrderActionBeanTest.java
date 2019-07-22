@@ -146,6 +146,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
@@ -1213,8 +1214,9 @@ public class ProductOrderActionBeanTest {
         SapIntegrationClientImpl.SAPCompanyConfiguration broad = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
         final Product primaryOrderProduct = testOrder.getProduct();
         returnMaterials.add(new SAPMaterial(primaryOrderProduct.getPartNumber(), broad, broad.getDefaultWbs(),
-            "test description", "2000", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", null,
-            null, null, null, Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
+            "test description", "2000", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,
+                null, null, Collections.emptyMap(),
+                Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
             broad.getSalesOrganization()));
 
         final String priceItemPrice = "2000";
@@ -1230,7 +1232,7 @@ public class ProductOrderActionBeanTest {
         addonNonSeqProduct.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.ALTERNATE_LIBRARY_PREP_DEVELOPMENT.getFamilyName()));
 
         returnMaterials.add(new SAPMaterial(addonNonSeqProduct.getPartNumber(), broad, broad.getDefaultWbs(), "test description", "1573",
-                    SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
+                    SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, new Date(), new Date(),
                     Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
                     broad.getSalesOrganization()));
 
@@ -2794,8 +2796,7 @@ public class ProductOrderActionBeanTest {
                                SapIntegrationClientImpl.SAPCompanyConfiguration broad){
         final SAPMaterial material =
                 new SAPMaterial(product.getPartNumber(),broad, broad.getDefaultWbs(),"description",
-                        basePrice,SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,"Test Description",
-                        "", "",
+                        basePrice,SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,
                         new Date(), new Date(),Collections.<Condition, BigDecimal>emptyMap(),
                         Collections.<DeliveryCondition, BigDecimal>emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
                         broad.getSalesOrganization());
@@ -3384,7 +3385,7 @@ public class ProductOrderActionBeanTest {
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getDefaultWbs(),
                         pdo.getProduct().getName(),pricedMoreThanQuote.toString(),
-                        "EA",BigDecimal.ONE,"", "", "",
+                        "EA",BigDecimal.ONE,
                         new Date(),new Date(),
                         Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
@@ -3403,7 +3404,7 @@ public class ProductOrderActionBeanTest {
                             SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getDefaultWbs(),
                             pdo.getProduct().getName(),
                             pricedMoreThanQuote.multiply(BigDecimal.valueOf(2)).toString(),"EA",
-                            BigDecimal.ONE,"", "", "",
+                            BigDecimal.ONE,
                             new Date(), new Date(),
                             Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
             addonMaterial.updateCompanyConfiguration(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
@@ -3669,7 +3670,7 @@ public class ProductOrderActionBeanTest {
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getDefaultWbs(),
                         pdo.getProduct().getName(),pricePerSample.toString(),"EA",
-                        BigDecimal.ONE, "", "", "", new Date(), new Date(),
+                        BigDecimal.ONE,new Date(), new Date(),
                         Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
         productMaterial.updateCompanyConfiguration(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
@@ -3685,7 +3686,6 @@ public class ProductOrderActionBeanTest {
                             SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getDefaultWbs(),
                             pdo.getProduct().getName(),
                             pricePerSample.toString(), "EA",BigDecimal.ONE,
-                            "", "", "",
                             new Date(),new Date(),Collections.emptyMap(), Collections.emptyMap(),
                             SAPMaterial.MaterialStatus.ENABLED,
                             SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
@@ -3889,52 +3889,216 @@ public class ProductOrderActionBeanTest {
         Assert.assertTrue(CollectionUtils.isNotEmpty(pdo.getCustomPriceAdjustments()));
     }
 
+    private enum ProductScenario {LLC, EXTENDS_TO_LLC, JUST_SSF}
+    private enum QuoteSalesOrgScenario {MATCHES_PRODUCT, OPPOSITE_PRODUCT, EXTENDED_ORG, NOT_VALID_FOR_PRODUCT}
+
     @DataProvider(name = "provideAlternateQuoteTypes")
     public Iterator<Object[]> provideAlternateQuoteTypes() {
         List<Object[]> testCases = new ArrayList<>();
-        //                          Quote ID,       expected source type,               Order status,       Will the product be offered in the sales org of the quote, is the quote valid
-        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     true, true});
-        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   true, true});
-        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, true, true});
-        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, true, true});
-        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, true, true});
+        // Quote ID,  expected source type,  Order status,  Will the product be offered in the sales org of the quote, is the quote valid, Scenaro for Product configuration
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"027000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.LLC});
 
-        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     true, true});
-        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   true, true});
-        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, true, true});
-        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, true, true});
-        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, true, true});
-        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     false, true});
-        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   false, true});
-        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, false, true});
-        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, false, true});
-        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, false, true});
-        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     true, false});
-        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   true, false});
-        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, true, false});
-        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, true, false});
-        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, true, false});
-        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     false, false});
-        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   false, false});
-        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, false, false});
-        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, false, false});
-        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, false, false});
 
-        testCases.add(new Object[]{"GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Draft,      true, true});
-        testCases.add(new Object[]{"GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Pending,    true, true});
-        testCases.add(new Object[]{"GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Submitted,  true, true});
-        testCases.add(new Object[]{"GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Abandoned,  true, true});
-        testCases.add(new Object[]{"GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Completed,  true, true});
-        testCases.add(new Object[]{"0GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Draft,      true, true});
-        testCases.add(new Object[]{"0GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Pending,    true, true});
-        testCases.add(new Object[]{"0GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Submitted,  true, true});
-        testCases.add(new Object[]{"0GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Abandoned,  true, true});
-        testCases.add(new Object[]{"0GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Completed,  true, true});
-        testCases.add(new Object[]{"027oooo1", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Draft,     true, true});
-        testCases.add(new Object[]{"027oooo1", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Pending,   true, true});
-        testCases.add(new Object[]{"027oooo1", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Submitted, true, true});
-        testCases.add(new Object[]{"027oooo1", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Abandoned, true, true});
-        testCases.add(new Object[]{"027oooo1", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Completed, true, true});
+
+
+
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.EXTENDED_ORG, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, true, ProductScenario.LLC});
+
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.MATCHES_PRODUCT, false, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.MATCHES_PRODUCT, false, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.MATCHES_PRODUCT, false, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.MATCHES_PRODUCT, false, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.MATCHES_PRODUCT, false, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.OPPOSITE_PRODUCT, false, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.OPPOSITE_PRODUCT, false, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, false, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, false, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, false, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.EXTENDED_ORG, false, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.EXTENDED_ORG, false, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.EXTENDED_ORG, false, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.EXTENDED_ORG, false, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.EXTENDED_ORG, false, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, false, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, false, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, false, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, false, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, false, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.MATCHES_PRODUCT, false, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.MATCHES_PRODUCT, false, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.MATCHES_PRODUCT, false, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.MATCHES_PRODUCT, false, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.MATCHES_PRODUCT, false, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.OPPOSITE_PRODUCT, false, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.OPPOSITE_PRODUCT, false, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, false, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, false, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, false, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.EXTENDED_ORG, false, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.EXTENDED_ORG, false, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.EXTENDED_ORG, false, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.EXTENDED_ORG, false, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.EXTENDED_ORG, false, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, false, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, false, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, false, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, false, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, false, ProductScenario.EXTENDS_TO_LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.MATCHES_PRODUCT, false, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.MATCHES_PRODUCT, false, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.MATCHES_PRODUCT, false, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.MATCHES_PRODUCT, false, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.MATCHES_PRODUCT, false, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.OPPOSITE_PRODUCT, false, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.OPPOSITE_PRODUCT, false, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, false, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, false, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.OPPOSITE_PRODUCT, false, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.EXTENDED_ORG, false, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.EXTENDED_ORG, false, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.EXTENDED_ORG, false, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.EXTENDED_ORG, false, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.EXTENDED_ORG, false, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, false, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, false, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, false, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, false, ProductScenario.LLC});
+        testCases.add(new Object[]{"27000001", ProductOrder.QuoteSourceType.SAP_SOURCE, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT, false, ProductScenario.LLC});
+
+        //Quote Server Quotes
+        testCases.add(new Object[]{"GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Draft,      QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Pending,    QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Submitted,  QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Abandoned,  QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Completed,  QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"0GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Draft,      QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"0GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Pending,    QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"0GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Submitted,  QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"0GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Abandoned,  QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"0GPF91", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Completed,  QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"027oooo1", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Draft,     QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"027oooo1", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Pending,   QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"027oooo1", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Submitted, QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"027oooo1", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Abandoned, QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.JUST_SSF});
+        testCases.add(new Object[]{"027oooo1", ProductOrder.QuoteSourceType.QUOTE_SERVER, ProductOrder.OrderStatus.Completed, QuoteSalesOrgScenario.MATCHES_PRODUCT, true, ProductScenario.JUST_SSF});
 
 
 
@@ -3943,11 +4107,38 @@ public class ProductOrderActionBeanTest {
 
     @Test(dataProvider = "provideAlternateQuoteTypes")
     public void testValidateQuoteSoure(String quote, ProductOrder.QuoteSourceType expectedSourceType,
-                                       ProductOrder.OrderStatus orderStatus, boolean quoteMatchSalesOrg, boolean quoteIsValid)
+                                       ProductOrder.OrderStatus orderStatus, QuoteSalesOrgScenario quoteMatchSalesOrg,
+                                       boolean quoteIsValid, ProductScenario scenarioForProductSalesOrg)
             throws Exception{
         pdo = ProductOrderTestFactory.createDummyProductOrder(3, "");
         pdo.setQuoteId(quote);
         pdo.setOrderStatus(orderStatus);
+        String quoteSalesOrgMatch = null;
+        String quoteSalesOrgOpposite = null;
+        for (Product product : ProductOrder.getAllProductsOrdered(pdo)) {
+            switch (scenarioForProductSalesOrg) {
+            case LLC:
+                product.setExternalOnlyProduct(true);
+                quoteSalesOrgMatch =
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization();
+                quoteSalesOrgOpposite = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization();
+                break;
+            case EXTENDS_TO_LLC:
+                product.setOfferedAsCommercialProduct(true);
+                quoteSalesOrgMatch =
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization();
+                quoteSalesOrgOpposite = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization();
+                break;
+            case JUST_SSF:
+            default:
+                product.setExternalOnlyProduct(false);
+                product.setOfferedAsCommercialProduct(false);
+                quoteSalesOrgMatch =
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization();
+                quoteSalesOrgOpposite = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization();
+                break;
+            }
+        }
 
         PriceList priceList = new PriceList();
         Collection<QuoteItem> quoteItems = new HashSet<>();
@@ -3958,16 +4149,25 @@ public class ProductOrderActionBeanTest {
                 pricedMoreThanQuote.toString(), "20", pricedMoreThanQuote.toString());
 
         EnumSet<SapIntegrationClientImpl.SAPCompanyConfiguration> sapCompanyConfigurations =
-            EnumSet.complementOf(EnumSet.of(SapIntegrationClientImpl.SAPCompanyConfiguration.UNKNOWN));
+                EnumSet.copyOf(SapIntegrationServiceImpl.EXTENDED_PLATFORMS);
+        sapCompanyConfigurations.add(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
 
         for (SapIntegrationClientImpl.SAPCompanyConfiguration companyCode : sapCompanyConfigurations) {
+
+            final Set<SapIntegrationClientImpl.SAPCompanyConfiguration> llcCompanyCodes =
+                    Stream.of(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
+                            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES).collect(Collectors.toSet());
+            if(scenarioForProductSalesOrg == ProductScenario.LLC &&
+               !llcCompanyCodes.contains(companyCode )) {
+                break;
+            }
             Optional<String> defaultWbs = Optional.ofNullable(companyCode.getDefaultWbs());
             final SAPMaterial productMaterial =
                     new SAPMaterial(pdo.getProduct().getPartNumber(),
                             companyCode,
                             defaultWbs.orElse("888"),
                             pdo.getProduct().getName(),pricedMoreThanQuote.toString(),
-                            "EA",BigDecimal.ONE,"sdsf", "sdfsd", "sdfs",
+                            "EA",BigDecimal.ONE,
                             new Date(),new Date(),
                             Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
                             companyCode.getSalesOrganization());
@@ -3985,7 +4185,7 @@ public class ProductOrderActionBeanTest {
                                 defaultWbs.orElse("888"),
                                 pdo.getProduct().getName(),
                                 pricedMoreThanQuote.multiply(BigDecimal.valueOf(2)).toString(),"EA",
-                                BigDecimal.ONE,"sdf", "dsf", "sfd",
+                                BigDecimal.ONE,
                                 new Date(), new Date(),
                                 Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
                                 companyCode.getSalesOrganization());
@@ -3998,12 +4198,28 @@ public class ProductOrderActionBeanTest {
             Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(returnMaterials);
             stubProductPriceCache.refreshCache();
             if (quoteIsValid) {
+                String matchOrg = quoteSalesOrgMatch;
+                String oppositeOrg = quoteSalesOrgOpposite;
                 Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenAnswer(new Answer<SapQuote>() {
                     @Override
                     public SapQuote answer(InvocationOnMock invocationOnMock) throws Throwable {
+                        String salesOrg = null;
+                        switch (quoteMatchSalesOrg) {
+                        case EXTENDED_ORG:
+                            salesOrg = SapIntegrationClientImpl.SAPCompanyConfiguration.GPP.getSalesOrganization();
+                            break;
+                        case OPPOSITE_PRODUCT:
+                            salesOrg = oppositeOrg;
+                            break;
+                        case MATCHES_PRODUCT:
+                            salesOrg = matchOrg;
+                            break;
+                        case NOT_VALID_FOR_PRODUCT:
+                            salesOrg = "GP03";
+                        }
                         return TestUtils.buildTestSapQuote("27000001",
                                 30000d, 37387d, pdo,
-                                TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, (quoteMatchSalesOrg) ? "GP01" : "GP03");
+                                TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, salesOrg);
                     }
                 });
             } else {
@@ -4021,14 +4237,25 @@ public class ProductOrderActionBeanTest {
 
         try {
             actionBean.updateAndValidateQuoteSource(ProductOrder.getAllProductsOrdered(pdo));
-            if(quoteMatchSalesOrg && quoteIsValid) {
+
+            if((quoteMatchSalesOrg == QuoteSalesOrgScenario.OPPOSITE_PRODUCT &&
+                scenarioForProductSalesOrg != ProductScenario.EXTENDS_TO_LLC) ||
+
+               quoteMatchSalesOrg == QuoteSalesOrgScenario.NOT_VALID_FOR_PRODUCT ||
+
+               (quoteMatchSalesOrg == QuoteSalesOrgScenario.EXTENDED_ORG &&
+                scenarioForProductSalesOrg == ProductScenario.LLC) ||
+
+               !quoteIsValid
+            ) {
+                Assert.fail("An exception should have been thrown");
+            } else {
                 Assert.assertEquals(pdo.getQuoteSource(), expectedSourceType);
                 Assert.assertTrue(actionBean.getValidationErrors().isEmpty(),
                         "No validations should have been thrown in this scenario");
-            } else {
-                Assert.fail("An exception should have been thrown in this case.");
             }
         } catch (InvalidProductException e) {
+
         }
     }
 
