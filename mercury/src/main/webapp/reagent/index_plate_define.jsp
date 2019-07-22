@@ -138,7 +138,7 @@
                     <div class="inputRow">
                         <div class="firstCol">Reagent Type</div>
                         <div class="control-group controls">
-                            <stripes:select name="reagentType">
+                            <stripes:select name="reagentType" id="reagentType">
                                 <stripes:options-collection collection="${actionBean.reagentTypes}"/>
                             </stripes:select>
                         </div>
@@ -297,7 +297,7 @@ instances. If it does, you can remove unused ones using the
                     <div class="inputRow">
                         <div class="firstCol"></div>
                         <div class="control-group controls">
-                            <stripes:submit id="deleteDefintion" name="deleteDefinition" value="Delete" class="btn btn-primary"/>
+                            <stripes:submit id="deleteDefinition" name="deleteDefinition" value="Delete" class="btn btn-primary"/>
                         </div>
                     </div>
                 </div>

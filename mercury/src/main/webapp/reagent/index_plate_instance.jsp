@@ -102,7 +102,7 @@
                     <div class="inputRow">
                         <div class="firstCol">Plate Definition Name</div>
                         <div class="control-group controls">
-                            <stripes:select name="selectedPlateName" value="${actionBean.selectedPlateName}">
+                            <stripes:select name="selectedPlateName" id="selectedPlateName" value="${actionBean.selectedPlateName}">
                                 <stripes:option value=" "/>
                                 <stripes:options-collection collection="${actionBean.plateNameSelection}"/>
                             </stripes:select>
@@ -195,7 +195,7 @@ definition to determine the well positions and reagent content.">
 
                 <!-- Displays the definitions and their barcodes. -->
                 <c:if test="${not empty actionBean.definitionToBarcode}">
-                    <div class="inputGroup">
+                    <div class="inputGroup" id="definitionsAndBarcodes">
                         <c:forEach items="${actionBean.definitionToBarcode}" var="row" varStatus="item">
                             <div class="inputRow ${item.index%2==0 ? "even" : "odd"}">
                                 <div class="firstCol">Plates made from ${row.left}</div>
