@@ -1006,7 +1006,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     }
 
     public Boolean getOfferedAsCommercialProduct() {
-        return offeredAsCommercialProduct==null || offeredAsCommercialProduct;
+        return offeredAsCommercialProduct != null && offeredAsCommercialProduct;
     }
 
     public void setOfferedAsCommercialProduct(Boolean offeredAsCommercialProduct) {
