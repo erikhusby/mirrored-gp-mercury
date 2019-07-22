@@ -964,7 +964,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         if (fundsRemaining <= 0d ||
             (fundsRemaining < (outstandingEstimate+valueOfCurrentOrder))) {
-            String inssuficientFundsMessage = "Insufficient funds are available on " + quote.getName() + " to place a new Product order";
+            String inssuficientFundsMessage = "Insufficient funds are available on " + quote.getName();
             addGlobalValidationError( inssuficientFundsMessage);
         }
     }
@@ -1007,11 +1007,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             if ((fundsRemaining.compareTo(BigDecimal.ZERO) <= 0)
                 || (fundsRemaining.compareTo(BigDecimal.valueOf(outstandingEstimate + valueOfCurrentOrder))<0)) {
-                String insufficientFundsMessage =
-                        "Insufficient funds are available on " +
+                String insufficientFundsMessage = "Insufficient funds are available on " +
                         //todo replace the following with a helper method for quote display
-                        quote.getQuoteHeader().getQuoteNumber()+" -- " + quote.getQuoteHeader().getProjectName() +
-                        " to place a new Product order";
+                        quote.getQuoteHeader().getQuoteNumber()+" -- " + quote.getQuoteHeader().getProjectName();
                 addGlobalValidationError(insufficientFundsMessage);
             }
         } catch (SAPInterfaceException e) {
