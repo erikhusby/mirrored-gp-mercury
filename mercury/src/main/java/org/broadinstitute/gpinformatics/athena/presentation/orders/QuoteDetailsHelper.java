@@ -41,7 +41,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 @ApplicationScoped
@@ -113,16 +112,11 @@ public class QuoteDetailsHelper {
                                                 funding.getFundsReservationNumber(), funding.getCostObject(),
                                                 funding.getGrantStatus(), funding.getGrantEndDate(),
                                                 StringUtils.equals(funding.getGrantStatus(), "Active"));
-                                            if (StringUtils.isNotBlank(fundingLevel.getPercent())) {
-                                                fundingInfo.addSplitPercentage(fundingLevel.getPercent());
-                                            }
                                             quoteDetail.addFundingInfo(fundingInfo);
-
                                         }
-
                                     } else {
                                         quoteDetail.addFundingInfo(FundingInfo
-                                            .pdoFunding(funding.getPurchaseOrderNumber(),
+                                            .purchaseOrderFunding(funding.getPurchaseOrderNumber(),
                                                 FundingStatus.APPROVED.getStatusText()));
                                     }
                                 });
@@ -160,7 +154,7 @@ public class QuoteDetailsHelper {
                                         quoteDetail.addFundingInfo(fundingInfo);
                                     } else {
                                         quoteDetail.addFundingInfo(FundingInfo
-                                            .pdoFunding(fundingDetail.getCustomerPoNumber(),
+                                            .purchaseOrderFunding(fundingDetail.getCustomerPoNumber(),
                                                 fundingDetail.getFundingStatus().getStatusText()));
                                     }
                                 } else {
@@ -201,7 +195,7 @@ public class QuoteDetailsHelper {
             this(null);
         }
 
-        public static FundingInfo pdoFunding(String pdoName, String status) {
+        public static FundingInfo purchaseOrderFunding(String pdoName, String status) {
             FundingInfo fundingInfo = new FundingInfo(Funding.PURCHASE_ORDER);
             if (!status.equals(FundingStatus.APPROVED.getStatusText()) || !status
                 .equals(ApprovalStatus.APPROVED.getValue())) {

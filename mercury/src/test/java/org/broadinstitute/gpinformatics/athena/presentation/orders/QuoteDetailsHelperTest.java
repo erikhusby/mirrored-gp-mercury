@@ -125,8 +125,6 @@ public class QuoteDetailsHelperTest {
         assertThat(fundingInfo.getFundingInfoString(), containsString("Funds Reservation [<b>FR -- 1996, CO -- 6010040</b>]"));
         assertThat(fundingInfo.getFundingInfoString(), containsString("Active"));
         assertThat(fundingInfo.getFundingInfoString(), containsString("Expires 12/31/2999"));
-        assertThat(fundingInfo.getFundingInfoString(), containsString("funding split percentage = 100%"));
-
     }
 
     public void testQuoteServerExpired() throws Exception {
@@ -153,7 +151,6 @@ public class QuoteDetailsHelperTest {
         assertThat(fundingInfo.getFundingInfoString(), containsString("Funds Reservation [<b>FR -- 1383, CO -- 5210500</b>]"));
         assertThat(fundingInfo.getFundingInfoString(), containsString("Active"));
         assertThat(fundingInfo.getFundingInfoString(), containsString("-- Expired"));
-        assertThat(fundingInfo.getFundingInfoString(), containsString("funding split percentage = 100%"));
     }
 
     public void testQuoteServerExpiringSoon() throws Exception {
@@ -186,8 +183,6 @@ public class QuoteDetailsHelperTest {
         assertThat(fundingInfo.getFundingInfoString(), containsString("Funds Reservation [<b>FR -- 1383, CO -- 5210500</b>]"));
         assertThat(fundingInfo.getFundingInfoString(), containsString("Active"));
         assertThat(fundingInfo.getFundingInfoString(), containsString("-- Expires in 10 days. If it is likely this work will not be completed by then, please work on updating the Funding Source so billing errors can be avoided."));
-
-        assertThat(fundingInfo.getFundingInfoString(), containsString("funding split percentage = 100%"));
     }
 
 }

@@ -3053,7 +3053,6 @@ public class ProductOrderActionBeanTest {
         assertThat(quoteDetails.quoteIdentifier, equalTo(quoteId));
         assertThat(fundingInfoString, containsString("Active"));
         assertThat(fundingInfoString, containsString(DateUtils.getDate(oneHeckOfALongTime)));
-        assertThat(fundingInfoString, containsString("funding split percentage = 100%"));
         assertThat(fundingInfo.isQuoteWarning(), is(false));
     }
 
