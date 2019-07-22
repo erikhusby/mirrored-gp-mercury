@@ -1,4 +1,4 @@
- @ftlvariable name="quoteDetail" type="org.broadinstitute.gpinformatics.athena.presentation.orders.QuoteDetailsHelper.QuoteDetail"
+<#-- @ftlvariable name="quoteDetail" type="org.broadinstitute.gpinformatics.athena.presentation.orders.QuoteDetailsHelper.QuoteDetail" -->
 
 <div class="form-value">
     <div id="fundsRemaining"
