@@ -891,81 +891,17 @@ function updateFundsRemaining() {
 }
 
 function updateFunds(data) {
+    var $fundsRemaining = $j("#fundsRemaining");
+    $fundsRemaining.html(data.quoteInfo);
 
-    var quoteWarning = false;
-
-    if (data.fundsRemaining && !data.error) {
-        var fundsRemainingNotification = 'Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining +
-            ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
-        var fundingDetails = data.fundingDetails;
-
-        if((data.status != ((data.quoteType == "Quote Server Quote")?"Funded":"Approved" ))  ||
-            Number(data.outstandingEstimate.replace(/[^0-9\.]+/g,"")) > Number(data.fundsRemaining.replace(/[^0-9\.]+/g,""))) {
-            quoteWarning = true;
-        }
-        if(fundingDetails) {
-            fundsRemainingNotification += '<br><B>Funding Information</b>';
-        }
-        fundsRemainingNotification+='<ul>';
-        for(var detailIndex in fundingDetails) {
-            fundsRemainingNotification += '<li>' + fundingDetails[detailIndex].fundingType;
-            if(["FUNDS_RESERVATION", "Funds Reservation"].indexOf(fundingDetails[detailIndex].fundingType) !== -1) {
-                fundsRemainingNotification += ' [<B>';
-                if(fundingDetails[detailIndex].fundsReservationNumber !== undefined && fundingDetails[detailIndex].fundsReservationNumber !== null) {
-                    fundsRemainingNotification += 'FR -- '+fundingDetails[detailIndex].fundsReservationNumber + ',';
-                }
-                fundsRemainingNotification += ' CO -- '+fundingDetails[detailIndex].costObject+ '</B>] ';
-            } else {
-                fundsRemainingNotification += ' [<B>'+ fundingDetails[detailIndex].purchaseOrderNumber + '</B>] ';
-            }
-            fundsRemainingNotification += ": " + fundingDetails[detailIndex].fundingStatus;
-
-            if(["Approved","Active"].indexOf(fundingDetails[detailIndex].fundingStatus) === -1) {
-                quoteWarning = true;
-            }
-
-            if(fundingDetails[detailIndex].fundingType &&
-                ["FUNDS_RESERVATION", "Funds Reservation"].indexOf(fundingDetails[detailIndex].fundingType) !== -1) {
-
-                if (fundingDetails[detailIndex].activeCostObject !== 'undefined' && fundingDetails[detailIndex].activeCostObject !== null) {
-                    if (fundingDetails[detailIndex].activeCostObject) {
-                        fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].fundsReservationEndDate;
-                        if (fundingDetails[detailIndex].daysTillExpire !== 'undefined' &&
-                            fundingDetails[detailIndex].daysTillExpire < 45) {
-                            fundsRemainingNotification += ' in ' + fundingDetails[detailIndex].daysTillExpire +
-                                ' days. If it is likely this work will not be completed by then, please work on updating the ' +
-                                'Funding Source so Billing Errors can be avoided.';
-                            quoteWarning = true;
-                        }
-                    } else {
-                        fundsRemainingNotification += ' -- Has Expired '
-
-                        if (fundingDetails[detailIndex].fundsReservationEndDate) {
-                            fundsRemainingNotification += fundingDetails[detailIndex].fundsReservationEndDate;
-                        }
-                        quoteWarning = true;
-                    }
-                }
-            }
-            if(fundingDetails[detailIndex].fundingSplit !== 'undefined') {
-                fundsRemainingNotification += '<br>funding split percentage=' + fundingDetails[detailIndex].fundingSplit + ' ';
-            }
-
-            fundsRemainingNotification += '<br>';
-        }
-        fundsRemainingNotification+='<ul>';
-        $j("#fundsRemaining").html(fundsRemainingNotification);
+    if (data.warning) {
+        $fundsRemaining.find("li").attr('class', '');
+        $fundsRemaining.addClass("alert alert-error");
     } else {
-        $j("#fundsRemaining").text('Error: ' + data.error);
-        quoteWarning = true;
-    }
-
-    if(quoteWarning) {
-        $j("#fundsRemaining").addClass("alert alert-error");
-    } else {
-        $j("#fundsRemaining").removeClass("alert alert-error");
+        $fundsRemaining.removeClass("alert alert-error");
     }
 }
+
 function showRecalculateRiskDialog() {
     var numChecked = $("input.shiftCheckbox:checked").size();
     if (numChecked) {
