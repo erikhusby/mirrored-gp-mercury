@@ -106,10 +106,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJ
 import org.broadinstitute.gpinformatics.infrastructure.presentation.SampleLink;
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
-import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
@@ -156,7 +154,6 @@ import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -300,6 +297,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     private SampleDataSourceResolver sampleDataSourceResolver;
 
     private PriceListCache priceListCache;
+
+    @Inject
+    private QuoteDetailsHelper quoteDetailsHelper;
 
     private SAPProductPriceCache productPriceCache;
 
@@ -1538,182 +1538,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     @HandlesEvent("getQuoteFunding")
-    public Resolution getQuoteFunding() {
-        JSONObject item = getQuoteFundingJson();
-
-        return createTextResolution(item.toString());
-    }
-
-    public JSONObject getQuoteFundingJson() {
-        JSONObject item = new JSONObject();
-
-        try {
-            item.put("key", quoteIdentifier);
-            if (StringUtils.isNotBlank(quoteIdentifier)) {
-                final Date todayTruncated =
-                        org.apache.commons.lang3.time.DateUtils.truncate(new Date(), Calendar.DATE);
-
-                quoteSource = StringUtils.isNumeric(quoteIdentifier) ?
-                    ProductOrder.QuoteSourceType.SAP_SOURCE :
-                    ProductOrder.QuoteSourceType.QUOTE_SERVER;
-                if ( ! quoteSource.isSapType()) {
-
-                    Quote quote = quoteService.getQuoteByAlphaId(quoteIdentifier);
-                    final QuoteFunding quoteFunding = quote.getQuoteFunding();
-                    double fundsRemaining = Double.parseDouble(quoteFunding.getFundsRemaining());
-                    item.put("quoteType", quoteSource.getDisplayName());
-                    item.put("fundsRemaining", NumberFormat.getCurrencyInstance().format(fundsRemaining));
-                    item.put("status", quote.getApprovalStatus().getValue());
-
-                    double outstandingOrdersValue = estimateOutstandingOrders(quote, 0, null);
-                    item.put("outstandingEstimate", NumberFormat.getCurrencyInstance().format(
-                            outstandingOrdersValue));
-                    JSONArray fundingDetails = new JSONArray();
-
-                    if (CollectionUtils.isEmpty(quoteFunding.getFundingLevel())) {
-                        item.put("error", "This quote has no active Funding Sources.");
-                    } else {
-                        quoteFunding.getFundingLevel().forEach(fundingLevel -> {
-                            fundingLevel.getFunding().forEach(funding -> {
-                                try {
-                                    JSONObject fundingInfo;
-                                    if (funding.isFundsReservation()) {
-                                        fundingInfo = new JSONObject();
-                                        if(StringUtils.isNotBlank(funding.getCostObject())) {
-                                            fundingInfo.put("fundingType",
-                                                    SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION
-                                                            .getDisplayName());
-                                            fundingInfo.put("fundingStatus", funding.getGrantStatus());
-                                            fundingInfo.put("grantTitle", funding.getDisplayName());
-                                            fundingInfo.put("fundsReservationEndDate",
-                                                    DateUtils.getDate(funding.getGrantEndDate()));
-                                            fundingInfo.put("costObject", funding.getCostObject());
-                                            if(StringUtils.isNotBlank(funding.getFundsReservationNumber())) {
-                                                fundingInfo
-                                                        .put("fundsReservationNumber",
-                                                                funding.getFundsReservationNumber());
-                                            }
-                                            if (StringUtils.isNotBlank(funding.getGrantNumber())) {
-                                                fundingInfo
-                                                        .put("activeCostObject",
-                                                                FundingLevel.isGrantActiveForDate(todayTruncated,
-                                                                        funding.getGrantEndDate()));
-                                                fundingInfo.put("daysTillExpire",
-                                                        DateUtils.getNumDaysBetween(todayTruncated,
-                                                                funding.getGrantEndDate()));
-                                            } else {
-                                                fundingInfo
-                                                        .put("activeCostObject", true);
-
-                                            }
-                                        }
-                                    } else {
-                                        fundingInfo = new JSONObject();
-                                        fundingInfo.put("fundingType", SapIntegrationClientImpl.FundingType.PURCHASE_ORDER);
-                                        fundingInfo.put("fundingStatus", FundingStatus.APPROVED.getStatusText());
-                                        fundingInfo.put("purchaseOrderNumber", funding.getPurchaseOrderNumber());
-                                    }
-                                    if(fundingInfo != null) {
-                                        fundingInfo.put("fundingSplit",  fundingLevel.getPercent()+ "%");
-
-                                        fundingDetails.put(fundingInfo);
-
-                                    }
-                                } catch (JSONException e) {
-                                    throw new RuntimeException(e);
-                                }
-                            });
-                        });
-                    }
-                    item.put("fundingDetails", fundingDetails);
-                } else if (quoteSource.isSapType()) {
-                    SapQuote quote = sapService.findSapQuote(quoteIdentifier);
-                    item.put("quoteType", quoteSource.getDisplayName());
-                    item.put("fundsRemaining",
-                        NumberFormat.getCurrencyInstance().format(quote.getQuoteHeader().fundsRemaining()));
-
-                    Optional<FundingStatus> fundingHeaderStatus =
-                        Optional.ofNullable(quote.getQuoteHeader().getFundingHeaderStatus());
-                    if(fundingHeaderStatus.isPresent()) {
-                        item.put("status", fundingHeaderStatus.get().getStatusText());
-                    }
-                    item.put("outstandingEstimate",
-                            NumberFormat.getCurrencyInstance().format(estimateSapOutstandingOrders(quote, 0, null)));
-
-                    if(CollectionUtils.isEmpty(quote.getFundingDetails())) {
-                        item.put("error", "This quote has no active Funding Sources.");
-                    } else {
-
-                        JSONArray fundingDetails = new JSONArray();
-
-                        quote.getFundingDetails().forEach(fundingDetail -> {
-
-                            JSONObject fundingInfo = new JSONObject();
-
-                            try {
-                                final Optional<SapIntegrationClientImpl.FundingType> fundingType = Optional.ofNullable(fundingDetail.getFundingType());
-
-                                if(fundingType.isPresent()) {
-                                    fundingInfo.put("fundingType", fundingType.get().getDisplayName());
-                                } else {
-                                    fundingInfo.put("fundingType", "Unable to determine funding type");
-
-                                }
-
-                                final Optional<FundingStatus> fundingStatus = Optional.ofNullable(fundingDetail.getFundingStatus());
-
-                                if(fundingStatus.isPresent() ){
-                                    fundingInfo.put("fundingStatus", fundingStatus.get().getStatusText());
-                                }
-
-                                fundingInfo.put("fundingSplit", fundingDetail.getSplitPercentage() + "%");
-                                if (fundingType.isPresent()) {
-                                    if (fundingType.get() == SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION) {
-                                        fundingInfo.put("fundsReservationNumber", fundingDetail.getDocumentNumber());
-                                        final Optional<Date> grantDateEnd = Optional.ofNullable(fundingDetail.getFundingHeaderChangeDate());
-                                        if (grantDateEnd.isPresent()) {
-                                            Date endDate = grantDateEnd.get();
-                                            fundingInfo.put("fundsReservationEndDate", DateUtils.getDate(endDate));
-                                            long daysUntilExpired = DateUtils.getNumDaysBetween(todayTruncated, endDate);
-                                            fundingInfo.put("activeCostObject", daysUntilExpired > 0);
-                                            fundingInfo.put("daysTillExpire", daysUntilExpired);
-                                        } else {
-                                            fundingInfo.put("activeCostObject", fundingDetail.getFundingStatus()==FundingStatus.APPROVED);
-                                            fundingInfo.put("fundsReservationEndDate", "No funds Reservation end date found");
-                                            fundingInfo.put("daysTillExpire", "unable to determine expiration date");
-                                        }
-                                        if (StringUtils.isNotBlank(fundingDetail.getCostObject())) {
-                                            fundingInfo.put("costObject", fundingDetail.getCostObject());
-                                        } else {
-                                            fundingInfo.put("activeCostObject", "unable to determine if the cost Object is active");
-                                        }
-                                    } else {
-                                        fundingInfo.put("purchaseOrderNumber", fundingDetail.getCustomerPoNumber());
-                                    }
-                                } else {
-                                    fundingInfo.put("grantTitle", "unable to determine funding type");
-
-                                }
-                                fundingDetails.put(fundingInfo);
-                            } catch ( Exception e) {
-                                throw new RuntimeException(e);
-                            }
-                        });
-
-                        item.put("fundingDetails", fundingDetails);
-                    }
-                }
-            }
-
-        } catch (Exception ex) {
-            logger.error("Error occured calculating quote funding", ex);
-            try {
-                item.put("error", "Unable to complete evaluating order values:  " + ex.getMessage());
-            } catch (Exception ex1) {
-                // Don't really care if this gets an exception.
-            }
-        }
-        return item;
+    public Resolution getQuoteFunding() throws Exception {
+        JSONObject item = quoteDetailsHelper.getQuoteDetailsJson(this, quoteIdentifier);
+        return new StreamingResolution("text/json", item.toString());
     }
 
     @DefaultHandler

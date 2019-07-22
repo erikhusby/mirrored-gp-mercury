@@ -82,6 +82,7 @@ import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapConfig;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
+import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
@@ -107,12 +108,12 @@ import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.entity.quote.FundingDetail;
 import org.broadinstitute.sap.entity.quote.FundingStatus;
 import org.broadinstitute.sap.entity.quote.QuoteHeader;
+import org.broadinstitute.sap.entity.quote.QuoteStatus;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.easymock.EasyMock;
 import org.jetbrains.annotations.NotNull;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mockito.Mockito;
@@ -150,6 +151,7 @@ import java.util.stream.Stream;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -2989,9 +2991,10 @@ public class ProductOrderActionBeanTest {
         funding.setGrantStartDate(new Date());
         Date oneWeek = DateUtils.getOneWeek();
         funding.setGrantEndDate(oneWeek);
+        funding.setFundsReservationNumber("CO-1234");
+        funding.setGrantStatus("Active");
         fundingLevel.setFunding(Collections.singleton(funding));
         fundingLevel.setPercent("100");
-
         Collection<FundingLevel> fundingLevelCollection = Collections.singleton(fundingLevel);
         QuoteFunding quoteFunding = new QuoteFunding("100", fundingLevelCollection);
         Quote testQuote = buildSingleTestQuote(quoteId, "2");
@@ -2999,13 +3002,20 @@ public class ProductOrderActionBeanTest {
         Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
         actionBean.setQuoteIdentifier(quoteId);
 
-        JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
-        JSONObject fundingDetails = (JSONObject) quoteFundingJson.getJSONArray("fundingDetails").get(0);
+        TemplateEngine templateEngine = new TemplateEngine();
+        templateEngine.postConstruct();
 
-        assertThat(fundingDetails.get("grantTitle"), equalTo("CO-1234"));
-        assertThat(fundingDetails.get("fundsReservationEndDate"), equalTo(DateUtils.getDate(oneWeek)));
-        assertThat(fundingDetails.get("activeCostObject"), is(true));
-        assertThat(fundingDetails.get("daysTillExpire"), equalTo(7l));
+        QuoteDetailsHelper quoteDetailsHelper =
+            new QuoteDetailsHelper(mockQuoteService, mockSAPService, templateEngine);
+        QuoteDetailsHelper.QuoteDetail quoteDetails = quoteDetailsHelper.getQuoteDetails(quoteId, actionBean);
+
+        QuoteDetailsHelper.FundingInfo fundingInfo = quoteDetails.getFundingDetails().iterator().next();
+        String fundingInfoString = fundingInfo.getFundingInfoString();
+        assertThat(quoteDetails.quoteIdentifier, equalTo(quoteId));
+        assertThat(fundingInfoString, containsString("Active"));
+        assertThat(fundingInfoString, containsString("Expires in 7 days. If it is likely this work will not be completed by then, please work on updating the Funding Source so billing errors can be avoided."));
+        assertThat(fundingInfo.isQuoteWarning(), is(true));
+
     }
 
     public void testQuoteOptionsFundsReservationExpiresAfterLeapYear() throws Exception {
@@ -3018,6 +3028,8 @@ public class ProductOrderActionBeanTest {
         Date oneHeckOfALongTime =
             Date.from(LocalDate.now().plusYears(1000).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
         funding.setGrantEndDate(oneHeckOfALongTime);
+        funding.setFundsReservationNumber("CO-1234");
+        funding.setGrantStatus("Active");
         fundingLevel.setFunding(Collections.singleton(funding));
         fundingLevel.setPercent("100");
 
@@ -3029,13 +3041,19 @@ public class ProductOrderActionBeanTest {
         actionBean.setQuoteIdentifier(quoteId);
         actionBean.setQuoteService(mockQuoteService);
 
-        JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
-        JSONObject fundingDetails = (JSONObject) quoteFundingJson.getJSONArray("fundingDetails").get(0);
+        TemplateEngine templateEngine = new TemplateEngine();
+        templateEngine.postConstruct();
 
-        assertThat(fundingDetails.get("grantTitle"), equalTo("CO-1234"));
-        assertThat(fundingDetails.get("fundsReservationEndDate"), equalTo(DateUtils.getDate(oneHeckOfALongTime)));
-        assertThat(fundingDetails.get("activeCostObject"), is(true));
-        assertThat(fundingDetails.get("daysTillExpire"), equalTo(365242L));
+        QuoteDetailsHelper quoteDetailsHelper =
+            new QuoteDetailsHelper(mockQuoteService, mockSAPService, templateEngine);
+        QuoteDetailsHelper.QuoteDetail quoteDetails = quoteDetailsHelper.getQuoteDetails(quoteId, actionBean);
+
+        QuoteDetailsHelper.FundingInfo fundingInfo = quoteDetails.getFundingDetails().iterator().next();
+        String fundingInfoString = fundingInfo.getFundingInfoString();
+        assertThat(quoteDetails.quoteIdentifier, equalTo(quoteId));
+        assertThat(fundingInfoString, containsString("Active"));
+        assertThat(fundingInfoString, containsString(DateUtils.getDate(oneHeckOfALongTime)));
+        assertThat(fundingInfo.isQuoteWarning(), is(false));
     }
 
     public void testSapQuoteOptionsFundsReservation() throws Exception {
@@ -3114,26 +3132,22 @@ public class ProductOrderActionBeanTest {
 
 
         actionBean.setQuoteIdentifier(quoteId);
+        TemplateEngine templateEngine = new TemplateEngine();
+        templateEngine.postConstruct();
 
-        JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
-        JSONObject fundingDetails = (JSONObject) quoteFundingJson.getJSONArray("fundingDetails").get(0);
+        QuoteDetailsHelper quoteDetailsHelper =
+            new QuoteDetailsHelper(mockQuoteService, mockSAPService, templateEngine);
+        QuoteDetailsHelper.QuoteDetail quoteDetails = quoteDetailsHelper.getQuoteDetails(quoteId, actionBean);
 
-//        assertThat(fundingDetails.get("fundsReservationNumber"), equalTo("CO-1234"));
-        assertThat(fundingDetails.get("fundsReservationEndDate"), equalTo(DateUtils.getDate(oneWeek)));
-        assertThat(fundingDetails.get("activeCostObject"), is(true));
-        assertThat(fundingDetails.get("daysTillExpire"), equalTo(7L));
-
-        assertThat(quoteFundingJson.getString("status"), equalTo(FundingStatus.SUBMITTED.getStatusText()));
-        assertThat(quoteFundingJson.getString("quoteType"), equalTo(ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName()));
-        assertThat(quoteFundingJson.getString("outstandingEstimate"), equalTo("$98.00"));
-
-
-        assertThat(fundingDetails.getString("fundingStatus"), equalTo(FundingStatus.APPROVED.getStatusText()));
-        assertThat(fundingDetails.getString("fundingType"), equalTo(
-                SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION.getDisplayName()));
-        assertThat(fundingDetails.getString("fundingSplit"),equalTo("100%"));
-        assertThat(fundingDetails.getString("fundsReservationNumber"), equalTo("2341"));
-
+        QuoteDetailsHelper.FundingInfo fundingInfo = quoteDetails.getFundingDetails().iterator().next();
+        String fundingInfoString = fundingInfo.getFundingInfoString();
+        assertThat(quoteDetails.quoteIdentifier, equalTo(quoteId));
+        assertThat(fundingInfoString, containsString(FundingStatus.APPROVED.getStatusText()));
+        assertThat(fundingInfoString,
+            containsString(SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION.getDisplayName()));
+        assertThat(fundingInfoString, containsString("Expires in 7 days."));
+        assertThat(fundingInfoString, containsString("funding split percentage = 100%"));
+        assertThat(fundingInfo.isQuoteWarning(), is(true));
     }
 
     public void testQuoteOptionsPurchaseOrder() throws Exception {
@@ -3154,12 +3168,20 @@ public class ProductOrderActionBeanTest {
         testQuote.setQuoteFunding(quoteFunding);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
         actionBean.setQuoteIdentifier(quoteId);
+        TemplateEngine templateEngine = new TemplateEngine();
+        templateEngine.postConstruct();
 
-        JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
-        JSONArray fundingDetails = quoteFundingJson.getJSONArray("fundingDetails");
-        assertThat(quoteFundingJson.getString("key"), is(quoteId));
-        assertThat(quoteFundingJson.getString("fundsRemaining"), equalTo("$100.00"));
-        assertThat(quoteFundingJson.getString("status"), equalTo("Funded"));
+        QuoteDetailsHelper quoteDetailsHelper =
+            new QuoteDetailsHelper(mockQuoteService, mockSAPService, templateEngine);
+        QuoteDetailsHelper.QuoteDetail quoteDetails = quoteDetailsHelper.getQuoteDetails(quoteId, actionBean);
+        QuoteDetailsHelper.FundingInfo fundingInfo = quoteDetails.getFundingDetails().iterator().next();
+
+        assertThat(quoteDetails.getQuoteIdentifier(), equalTo(quoteId));
+        assertThat(quoteDetails.getStatus(), is(ApprovalStatus.FUNDED.getValue()));
+        assertThat(quoteDetails.getFundsRemaining(), containsString("Funds Remaining: $100.00"));
+        String fundingInfoString = fundingInfo.getFundingInfoString();
+        assertThat(fundingInfoString, not(containsString("funding split percentage")));
+        assertThat(fundingInfo.isQuoteWarning(), is(false));
     }
 
     public void testSapQuoteOptionsPurchaseOrder() throws Exception {
@@ -3236,21 +3258,21 @@ public class ProductOrderActionBeanTest {
         });
 
         actionBean.setQuoteIdentifier(quoteId);
+        TemplateEngine templateEngine = new TemplateEngine();templateEngine.postConstruct();
 
-        JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
-        JSONArray fundingDetails = quoteFundingJson.getJSONArray("fundingDetails");
-        assertThat(quoteFundingJson.getString("key"), is(quoteId));
-        assertThat(quoteFundingJson.getString("fundsRemaining"), equalTo("$100.00"));
-        assertThat(quoteFundingJson.getString("status"), equalTo(FundingStatus.APPROVED.getStatusText()));
-        assertThat(quoteFundingJson.getString("quoteType"), equalTo(ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName()));
-        assertThat(quoteFundingJson.getString("outstandingEstimate"), equalTo("$98.00"));
+        QuoteDetailsHelper quoteDetailsHelper =
+             new QuoteDetailsHelper(mockQuoteService, mockSAPService, templateEngine);
+         QuoteDetailsHelper.QuoteDetail quoteDetails = quoteDetailsHelper.getQuoteDetails(quoteId, actionBean);
 
-
-        assertThat(fundingDetails.getJSONObject(0).getString("fundingStatus"), equalTo(FundingStatus.APPROVED.getStatusText()));
-        assertThat(fundingDetails.getJSONObject(0).getString("fundingType"), equalTo(
-                SapIntegrationClientImpl.FundingType.PURCHASE_ORDER.getDisplayName()));
-        assertThat(fundingDetails.getJSONObject(0).getString("fundingSplit"),equalTo("100%"));
-        assertThat(fundingDetails.getJSONObject(0).getString("purchaseOrderNumber"), equalTo("1234"));
+        QuoteDetailsHelper.FundingInfo fundingInfo = quoteDetails.getFundingDetails().iterator().next();
+        assertThat(fundingInfo.isQuoteWarning(), is(false));
+        assertThat(quoteDetails.getQuoteIdentifier(), equalTo(quoteId));
+        assertThat(quoteDetails.getStatus(), equalTo(QuoteStatus.Z4.getStatusText()));
+        assertThat(quoteDetails.getFundsRemaining(), containsString("Funds Remaining: $100.00"));
+        String fundingInfoString = fundingInfo.getFundingInfoString();
+        assertThat(fundingInfoString, not(containsString("funding split percentage")));
+        assertThat(fundingInfoString, containsString(SapIntegrationClientImpl.FundingType.PURCHASE_ORDER.getDisplayName()));
+        assertThat(fundingInfoString, containsString("<b>1234</b>"));
     }
 
     public void testQuoteOptionsNoFunding() throws Exception {
@@ -3264,11 +3286,14 @@ public class ProductOrderActionBeanTest {
         testQuote.setQuoteFunding(quoteFunding);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
         actionBean.setQuoteIdentifier(quoteId);
+        TemplateEngine templateEngine = new TemplateEngine();
+        templateEngine.postConstruct();
 
-        JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
-        assertThat(quoteFundingJson.getString("error"), is("Unable to complete evaluating order values:  null"));
-        assertThat(quoteFundingJson.getString("key"), equalTo(quoteId));
-     }
+        QuoteDetailsHelper quoteDetailsHelper = new QuoteDetailsHelper(mockQuoteService, mockSAPService, templateEngine);
+        QuoteDetailsHelper.QuoteDetail quoteDetails = quoteDetailsHelper.getQuoteDetails(quoteId, actionBean);
+        assertThat(quoteDetails.getError(), is("Unable to complete evaluating order values:  null"));
+        assertThat(quoteDetails.getQuoteIdentifier(), is(quoteId));
+    }
 
     public void testSapQuoteOptionsNoFunding() throws Exception {
         String quoteId = "12345";
@@ -3296,9 +3321,12 @@ public class ProductOrderActionBeanTest {
 
         actionBean.setQuoteIdentifier(quoteId);
 
-        JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
-        assertThat(quoteFundingJson.getString("error"), is("This quote has no active Funding Sources."));
-        assertThat(quoteFundingJson.getString("key"), equalTo(quoteId));
+        TemplateEngine templateEngine = new TemplateEngine();
+        templateEngine.postConstruct();
+        QuoteDetailsHelper quoteDetailsHelper = new QuoteDetailsHelper(mockQuoteService, mockSAPService, templateEngine);
+        QuoteDetailsHelper.QuoteDetail quoteDetails = quoteDetailsHelper.getQuoteDetails(quoteId, actionBean);
+        assertThat(quoteDetails.getError(), is("This quote has no active Funding Sources."));
+        assertThat(quoteDetails.getQuoteIdentifier(), is(quoteId));
      }
 
     /**
