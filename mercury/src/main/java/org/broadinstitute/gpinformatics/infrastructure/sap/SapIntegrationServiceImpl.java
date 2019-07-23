@@ -24,7 +24,6 @@ import org.broadinstitute.sap.entity.OrderCriteria;
 import org.broadinstitute.sap.entity.SAPDeliveryDocument;
 import org.broadinstitute.sap.entity.SAPDeliveryItem;
 import org.broadinstitute.sap.entity.SAPReturnOrder;
-import org.broadinstitute.sap.entity.material.SAPChangeMaterial;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.entity.order.SAPOrder;
 import org.broadinstitute.sap.entity.order.SAPOrderItem;
@@ -133,7 +132,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * Getter for the common sap client utilized to communicate to SAP
      * @return
      */
-    private SapIntegrationClientImpl getClient() {
+    public SapIntegrationClientImpl getClient() {
         if(wrappedClient == null) {
             initializeClient();
         }
@@ -399,7 +398,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @NotNull
-    protected SAPMaterial initializeSapMaterialObject(Product product) throws SAPIntegrationException {
+    public SAPMaterial initializeSapMaterialObject(Product product) throws SAPIntegrationException {
         SAPCompanyConfiguration companyCode = SAPCompanyConfiguration.BROAD;
         String productHeirarchy = SAPCompanyConfiguration.BROAD.getSalesOrganization();
 
@@ -443,7 +442,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         applyMaterialUpdate(product, publishType, sapMaterial);
 
-        Set<SAPMaterial> extendedProducts = new HashSet<>();
+        List<SAPMaterial> extendedProducts = new ArrayList<>();
 
         Set<SAPCompanyConfiguration> platformsToExtend = EXTENDED_PLATFORMS
                 .stream()
@@ -454,7 +453,6 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 .collect(Collectors.toSet());
 
         for (SAPCompanyConfiguration sapCompanyConfiguration : platformsToExtend) {
-            log.debug("Current company config is " + sapCompanyConfiguration.name());
             SAPMaterial tempMaterial = null;
             if (sapCompanyConfiguration == SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) {
 
@@ -462,10 +460,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             } else {
 
                 if(!product.isExternalOnlyProduct() && !product.isClinicalProduct()) {
-                    log.debug("Saving material for " + sapCompanyConfiguration.name());
                     tempMaterial = initializeSapMaterialObject(product);
                 } else {
-                    log.debug("current product is either External or Clinical");
                 }
             }
 
@@ -492,7 +488,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      *                              other than GP SSF or GP LLC product list.  True means we wish to extend the product
      * @throws SAPIntegrationException
      */
-    private void applyMaterialUpdate(Product product, PublishType publishType, SAPMaterial extendedProduct)
+    public void applyMaterialUpdate(Product product, PublishType publishType, SAPMaterial extendedProduct)
             throws SAPIntegrationException {
         if (productPriceCache.findByProduct(product,
                 SAPCompanyConfiguration.fromSalesOrgForMaterial(extendedProduct.getSalesOrg()).getSalesOrganization()) == null) {
@@ -504,15 +500,24 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                     return;
                 }
                 log.debug("Creating product " + extendedProduct.getMaterialIdentifier());
-                getClient().createMaterial(extendedProduct);
+                log.debug(String.format("    ---  Sales org %s, hierarchy is %s, extending status is %s, disable status %s\n", extendedProduct.getSalesOrg(), extendedProduct.getProductHierarchy(), product.getOfferedAsCommercialProduct().toString(), extendedProduct.getStatus()));
+
+//                getClient().createMaterial(extendedProduct);
             }
         } else {
             if (publishType != PublishType.CREATE_ONLY) {
                 log.debug("Updating product " + extendedProduct.getMaterialIdentifier());
                 if(product.isSSFProduct() && !product.getOfferedAsCommercialProduct()) {
+                    /**
+                     *                 if(product.isSSFProduct()
+                     *                    && StringUtils.equals(extendedProduct.getSalesOrg(),
+                     *                         SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization())
+                     *                    && !product.getOfferedAsCommercialProduct()) {
+                     */
                     extendedProduct.setStatus(SAPMaterial.MaterialStatus.DISABLED);
                 }
-                getClient().changeMaterialDetails(SAPChangeMaterial.fromSAPMaterial(extendedProduct));
+                log.debug(String.format("    ---  Sales org %s, hierarchy is %s, extending status is %s, disable status %s\n", extendedProduct.getSalesOrg(), extendedProduct.getProductHierarchy(), product.getOfferedAsCommercialProduct().toString(), extendedProduct.getStatus()));
+//                getClient().changeMaterialDetails(SAPChangeMaterial.fromSAPMaterial(extendedProduct));
             }
         }
     }
