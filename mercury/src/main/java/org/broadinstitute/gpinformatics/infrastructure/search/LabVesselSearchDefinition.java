@@ -154,6 +154,9 @@ public class LabVesselSearchDefinition {
         searchTerms = buildBsp();
         mapGroupSearchTerms.put("BSP", searchTerms);
 
+        // todo jmt BSP search terms
+//        mapGroupSearchTerms.put("BSP", LabMetricSearchDefinition.buildBsp(sampleKeyCriteriaPath));
+
         searchTerms = srchDef.buildLabVesselMetadata();
         mapGroupSearchTerms.put("Mercury Metadata", searchTerms);
 
@@ -181,46 +184,6 @@ public class LabVesselSearchDefinition {
         mapGroupSearchTerms.put("Multi-Columns", searchTerms);
 
         mapGroupSearchTerms.put("Nested Data", Collections.singletonList(layoutTerm));
-
-        // Raising volume to 65ul - sample annotation?
-        // Billing Risk - from PDO
-        // Kapa QC Score - uploaded
-        // Pull sample if low input and Kapa QC? - sample annotation?
-
-        // Exported/Daughter Volume - ?
-        // Exported/Daughter Concentration - ?
-        // Calculated ng into shearing - ?
-        // Lab Risk - sample annotation?
-        // Requested Sequencing Deliverable - from PDO?
-        // Pond Quant - upload
-        // Rework low pond - sample annotation?
-        // Index adapter - reagent?
-        // Remaining Pond Volume after Plex / SPRI Concentration - ?
-        // Plex Tube Barcode - lab event
-        // Plexed SPRI Concentration Tube Barcode - lab event
-        // MiSeq Sample Barcode - lab event
-        // Per Pool Eco Quant for MiSeq Sample - lab event
-        // Normalization Tube Barcode for MiSeq Sample - lab event
-        // Denature Barcode for MiSeq Sample - lab event
-        // % representation of each sample within each plex - ?
-        // SPRI Concentration tube / Catch Tube Pooling Penalty - ?
-        // Catch Quant - upload
-        // Rework Low Catch - sample annotation?
-        // Per Plex Eco Quant for Catch Tube - ?
-        // Normalization Tube Barcode for Catch Tube - lab event
-        // Denature IDs and which samples are in those tubes - lab event
-        // Total lanes sequenced per Denature tube - ?
-        // HiSeq FCTs and Barcode and which samples were on those - partly lab batch
-        // Mean Target Coverage - PDO?
-        // % Target Bases 20x - PDO?
-        // Penalty 20x - PDO?
-        // HS Library Size - ?
-        // PF Reads - ?
-        // % Duplication - ?
-        // % Contamination - ?
-        // Status on requested coverage - ?
-        // Total Lanes Sequenced per Sample - ?
-        // Comments - sample annotation?
 
         List<ConfigurableSearchDefinition.CriteriaProjection> criteriaProjections = new ArrayList<>();
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("bucketEntries", "labVesselId",

@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.SampleDataFetcherAddRowsListener;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,18 +26,7 @@ class QueueGroupingSearchDefinition {
         sampleKeyCriteriaPath.setPropertyName("sampleKey");
 
         mapGroupSearchTerms.put("BSP", LabMetricSearchDefinition.buildBsp(sampleKeyCriteriaPath));
-        /*
-        PM
-        WR requestor
-        Collection
-        Pico JIRA ticket
-        Kit WRID
-        PDO
-        WRID
-        Sample ID
-        Added date
-        Drill down to lab vessel
-         */
+
         List<ConfigurableSearchDefinition.CriteriaProjection> criteriaProjections = new ArrayList<>();
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("queuedEntities", "queueGroupingId",
                 "queueGrouping", QueueEntity.class));
@@ -96,6 +86,51 @@ class QueueGroupingSearchDefinition {
             });
             searchTerms.add(searchTerm);
         }
+        {
+            SearchTerm searchTerm = new SearchTerm();
+            searchTerm.setName("Sample ID");
+            searchTerm.setRackScanSupported(Boolean.TRUE);
+            SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+            criteriaPath.setCriteria(Arrays.asList("queuedEntities", "queueGrouping", "queuedEntities", "labVessel", "mercurySamples"));
+            criteriaPath.setPropertyName("sampleKey");
+            searchTerm.setCriteriaPaths(Collections.singletonList(criteriaPath));
+            searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+                @Override
+                public List<String> evaluate(Object entity, SearchContext context) {
+                    QueueGrouping queueGrouping = (QueueGrouping) entity;
+                    List<String> results = new ArrayList<>();
+                    for (QueueEntity queuedEntity : queueGrouping.getQueuedEntities()) {
+                        for (MercurySample mercurySample : queuedEntity.getLabVessel().getMercurySamples()) {
+                            results.add(mercurySample.getSampleKey());
+                        }
+                    }
+
+                    return results;
+                }
+            });
+            searchTerms.add(searchTerm);
+        }
+        {
+            SearchTerm searchTerm = new SearchTerm();
+            searchTerm.setName("Status");
+            searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+                @Override
+                public String evaluate(Object entity, SearchContext context) {
+                    QueueGrouping queueGrouping = (QueueGrouping) entity;
+                    if (queueGrouping.getQueuedEntities() != null) {
+                        for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
+                            if (queueEntity.getQueueStatus().isStillInQueue()) {
+                                return "In Queue";
+                            }
+                        }
+                    }
+                    // todo jmt "In Rework"
+                    return "Complete";
+                }
+            });
+            searchTerms.add(searchTerm);
+        }
+        // todo jmt Research Project
         {
             SearchTerm searchTerm = new SearchTerm();
             searchTerm.setName("Vessel Drill Downs");

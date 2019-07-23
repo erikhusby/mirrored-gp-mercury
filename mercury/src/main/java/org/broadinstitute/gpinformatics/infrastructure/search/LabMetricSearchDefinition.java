@@ -671,6 +671,15 @@ public class LabMetricSearchDefinition {
             return runBspSearch(searchItem);
         });
         workRequestTerm.setCriteriaPaths(Collections.singletonList(sampleKeyCriteriaPath));
+        workRequestTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
+/*
+        workRequestTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                return "TBD";
+            }
+        });
+*/
         searchTerms.add(workRequestTerm);
         // todo jmt needs a display expression
 
@@ -693,6 +702,7 @@ public class LabMetricSearchDefinition {
             }
         });
         collectionTerm.setCriteriaPaths(Collections.singletonList(sampleKeyCriteriaPath));
+        initBspTerm(collectionTerm, DisplayExpression.COLLECTION);
         collectionTerm.setNewDetachedCriteria(true);
 
         SearchTerm groupTerm = new SearchTerm();
@@ -718,7 +728,6 @@ public class LabMetricSearchDefinition {
                 return "NoHibernateCriteria";
             }
         });
-        // todo jmt are both terms being displayed as result columns?
         searchTerms.add(groupTerm);
 
         SearchTerm collabSampleTerm = new SearchTerm();
