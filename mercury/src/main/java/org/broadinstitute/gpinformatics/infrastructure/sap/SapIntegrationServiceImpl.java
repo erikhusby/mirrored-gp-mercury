@@ -508,13 +508,11 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         } else {
             if (publishType != PublishType.CREATE_ONLY) {
                 log.debug("Updating product " + extendedProduct.getMaterialIdentifier());
-                if(product.isSSFProduct() && !product.getOfferedAsCommercialProduct()) {
-                    /**
-                     *                 if(product.isSSFProduct()
-                     *                    && StringUtils.equals(extendedProduct.getSalesOrg(),
-                     *                         SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization())
-                     *                    && !product.getOfferedAsCommercialProduct()) {
-                     */
+                if (product.isSSFProduct()
+                    && StringUtils.equals(extendedProduct.getSalesOrg(),
+                        SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization())
+                    && !product.getOfferedAsCommercialProduct()) {
+
                     extendedProduct.setStatus(SAPMaterial.MaterialStatus.DISABLED);
                 }
                 log.debug(String.format("    ---  Sales org %s, hierarchy is %s, extending status is %s, disable status %s\n", extendedProduct.getSalesOrg(), extendedProduct.getProductHierarchy(), product.getOfferedAsCommercialProduct().toString(), extendedProduct.getStatus()));
