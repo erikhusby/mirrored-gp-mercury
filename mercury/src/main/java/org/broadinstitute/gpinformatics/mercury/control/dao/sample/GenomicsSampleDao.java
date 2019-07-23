@@ -20,6 +20,6 @@ public class GenomicsSampleDao extends GenericDao {
         String sql = "select SEQ_GS_SAMPLE.nextval from dual";
         Query query = getEntityManager().createNativeQuery(sql);
         BigDecimal id = (BigDecimal) query.getSingleResult();
-        return GS_PREFIX + Long.toString(id.longValue(), 36);
+        return GS_PREFIX + Long.toString(id.longValue(), 36).toUpperCase();
     }
 }

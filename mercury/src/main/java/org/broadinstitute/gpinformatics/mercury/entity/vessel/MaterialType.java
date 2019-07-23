@@ -129,6 +129,7 @@ public enum MaterialType implements Displayable {
     WHOLE_BLOOD_WHOLE_BLOOD_FRESH("Whole Blood:Whole Blood Fresh"),
     WHOLE_BLOOD_WHOLE_BLOOD_FROZEN("Whole Blood:Whole Blood Frozen"),
     WHOLE_BLOOD_WHOLE_BLOOD("Whole Blood:Whole Blood"),
+    WHOLE_BLOOD_STRECK_CELL_FREE_PRESERVED("Whole Blood:Streck Cell-Free Preserved"),
     WHOLE_ORGANISM_MOSQUITO_SUPERNATANT("Whole Organism:Mosquito Supernatant"),
     WHOLE_ORGANISM_MULTIPLE_ETOH("Whole Organism:Multiple, ETOH"),
     WHOLE_ORGANISM_MULTIPLE_FROZEN("Whole Organism:Multiple, Frozen"),

@@ -104,7 +104,7 @@ public class DDPConfig extends AbstractConfig implements Serializable, TokenGene
 
         // JW: My mac is 10 seconds ahead, not sure how this'll affect produciton
         Instant iat = LocalDateTime.now()
-                .minusSeconds(10)
+                .minusSeconds(60)
                 .atZone(ZoneId.systemDefault())
                 .toInstant();
 
