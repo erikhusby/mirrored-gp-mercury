@@ -24,6 +24,7 @@ import org.broadinstitute.sap.entity.OrderCriteria;
 import org.broadinstitute.sap.entity.SAPDeliveryDocument;
 import org.broadinstitute.sap.entity.SAPDeliveryItem;
 import org.broadinstitute.sap.entity.SAPReturnOrder;
+import org.broadinstitute.sap.entity.material.SAPChangeMaterial;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.entity.order.SAPOrder;
 import org.broadinstitute.sap.entity.order.SAPOrderItem;
@@ -502,7 +503,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 log.debug("Creating product " + extendedProduct.getMaterialIdentifier());
                 log.debug(String.format("    ---  Sales org %s, hierarchy is %s, extending status is %s, disable status %s\n", extendedProduct.getSalesOrg(), extendedProduct.getProductHierarchy(), product.getOfferedAsCommercialProduct().toString(), extendedProduct.getStatus()));
 
-//                getClient().createMaterial(extendedProduct);
+                getClient().createMaterial(extendedProduct);
             }
         } else {
             if (publishType != PublishType.CREATE_ONLY) {
@@ -517,7 +518,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                     extendedProduct.setStatus(SAPMaterial.MaterialStatus.DISABLED);
                 }
                 log.debug(String.format("    ---  Sales org %s, hierarchy is %s, extending status is %s, disable status %s\n", extendedProduct.getSalesOrg(), extendedProduct.getProductHierarchy(), product.getOfferedAsCommercialProduct().toString(), extendedProduct.getStatus()));
-//                getClient().changeMaterialDetails(SAPChangeMaterial.fromSAPMaterial(extendedProduct));
+                getClient().changeMaterialDetails(SAPChangeMaterial.fromSAPMaterial(extendedProduct));
             }
         }
     }
