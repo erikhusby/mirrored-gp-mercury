@@ -1701,16 +1701,12 @@ public class ProductOrderActionBean extends CoreActionBean {
             addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
             originalBusinessKey = null;
 
-            if (editOrder.hasSapQuote()) {
-                productOrderEjb.publishProductOrderToSAP(editOrder, placeOrderMessageCollection, true);
-            }
             addMessages(placeOrderMessageCollection);
 
             /*
              While fixing GPLIM-4481 we came across a scenario that left certain collections on the product order
              uninitialized which caused a lazy initialization exception when they were access accessed on the
              orders/view.jsp page. For this reason the calls to Hibernate.initialize were added below.
-
              */
             Hibernate.initialize(editOrder.getChildOrders());
             Hibernate.initialize(editOrder.getSapReferenceOrders());

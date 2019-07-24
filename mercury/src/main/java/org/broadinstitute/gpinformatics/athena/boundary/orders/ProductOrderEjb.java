@@ -1534,6 +1534,10 @@ public class ProductOrderEjb {
         editOrder.prepareToSave(userBean.getBspUser());
         try {
             if (editOrder.isDraft()) {
+                if (editOrder.hasSapQuote()) {
+
+                    publishProductOrderToSAP(editOrder, messageCollection, true);
+                }
                 // Only Draft orders are not already created in JIRA.
                 productOrderJiraUtil.createIssueForOrder(editOrder);
             }
@@ -1545,7 +1549,20 @@ public class ProductOrderEjb {
             productOrderJiraUtil.addSampleComments(editOrder);
 
         } catch (IOException e) {
-            String message = "Unable to create the Product Order in Jira";
+
+            StringBuffer message = new StringBuffer("Unable to create the Product Order in Jira");
+            if(StringUtils.isNotBlank(editOrder.getSapOrderNumber())) {
+                try {
+                    updateOrderInSap(editOrder,ProductOrder.getAllProductsOrdered(editOrder),messageCollection, true);
+                } catch (SAPIntegrationException ex) {
+                    log.error("Unable to reset the SAP order to zero quantity", ex);
+                }
+            }
+
+            log.error(message.toString(), e);
+            throw new InformaticsServiceException(message.toString(), e);
+        } catch (SAPInterfaceException e) {
+            String message = "Unable to create the SAP order for this Product Order";
             log.error(message, e);
             throw new InformaticsServiceException(message, e);
         }
