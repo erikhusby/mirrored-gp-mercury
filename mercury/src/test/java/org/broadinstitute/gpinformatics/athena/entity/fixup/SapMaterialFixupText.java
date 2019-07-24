@@ -40,13 +40,13 @@ import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -124,10 +124,9 @@ public class SapMaterialFixupText extends Arquillian {
                 partNumbersByPartNumberValidity.get(Boolean.TRUE).stream().map(Product::getPartNumber)
                         .collect(Collectors.toList());
 
-        Set<SapIntegrationClientImpl.SAPCompanyConfiguration> platformsToExtend =
-                Stream.of(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
-                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES)
-                        .collect(Collectors.toSet());
+        final EnumSet<SapIntegrationClientImpl.SAPCompanyConfiguration> platformsToExtend =
+                EnumSet.of(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES);
 
         List<SAPMaterial> productsToDisable = new ArrayList<>();
 

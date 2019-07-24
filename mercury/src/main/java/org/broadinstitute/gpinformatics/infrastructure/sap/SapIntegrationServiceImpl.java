@@ -462,7 +462,6 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
                 if(!product.isExternalOnlyProduct() && !product.isClinicalProduct()) {
                     tempMaterial = initializeSapMaterialObject(product);
-                } else {
                 }
             }
 
