@@ -978,11 +978,8 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     protected void validateSapQuoteDetails(SapQuote quote, int additionalSampleCount) throws InvalidProductException,
             SAPIntegrationException {
-        if (!quote.getQuoteHeader().getQuoteStatus().equals(QuoteStatus.Z4)) {
-            String unFundedMessage = "A quote should be approved in order to be used for a product order.";
-            addGlobalValidationError(unFundedMessage);
-            addGlobalValidationError(unFundedMessage);
-        } else if (!quote.getQuoteHeader().getFundingHeaderStatus().equals(FundingStatus.APPROVED)) {
+        if (!quote.getQuoteHeader().getQuoteStatus().equals(QuoteStatus.Z4) ||
+            !quote.getQuoteHeader().getFundingHeaderStatus().equals(FundingStatus.APPROVED)) {
             String unFundedMessage = "A quote should be approved in order to be used for a product order.";
             addGlobalValidationError(unFundedMessage);
         } else if (!quote.isAllFundingApproved()) {
