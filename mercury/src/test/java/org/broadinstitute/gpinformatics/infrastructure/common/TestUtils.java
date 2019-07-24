@@ -15,6 +15,7 @@ import org.broadinstitute.sap.entity.quote.FundingDetail;
 import org.broadinstitute.sap.entity.quote.FundingStatus;
 import org.broadinstitute.sap.entity.quote.QuoteHeader;
 import org.broadinstitute.sap.entity.quote.QuoteItem;
+import org.broadinstitute.sap.entity.quote.QuoteStatus;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
@@ -79,7 +80,7 @@ public class TestUtils {
         ZESDQUOTEHEADER sapQHeader = ZESDQUOTEHEADER.Factory.newInstance();
         sapQHeader.setPROJECTNAME("TestProject");
         sapQHeader.setQUOTENAME(testQuoteIdentifier);
-        sapQHeader.setQUOTESTATUS(FundingStatus.APPROVED.name());
+        sapQHeader.setQUOTESTATUS(QuoteStatus.Z4.name());
         sapQHeader.setSALESORG(salesorg);
         sapQHeader.setQUOTATION(testQuoteIdentifier);
         sapQHeader.setFUNDHEADERSTATUS(FundingStatus.APPROVED.name());
