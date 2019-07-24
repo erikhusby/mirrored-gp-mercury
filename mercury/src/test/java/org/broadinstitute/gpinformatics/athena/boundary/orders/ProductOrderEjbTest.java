@@ -495,7 +495,6 @@ public class ProductOrderEjbTest {
                 Mockito.anyString(),
                 Mockito.anyBoolean(), 
                 Mockito.anyBoolean());
-
     }
 
     public void testAbandonOrderWithServiceNowTicket() throws Exception {
