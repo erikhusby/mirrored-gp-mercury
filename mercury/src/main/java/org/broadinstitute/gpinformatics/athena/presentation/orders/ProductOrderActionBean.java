@@ -132,6 +132,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchAction
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.entity.quote.FundingStatus;
+import org.broadinstitute.sap.entity.quote.QuoteStatus;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
@@ -977,7 +978,11 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     protected void validateSapQuoteDetails(SapQuote quote, int additionalSampleCount) throws InvalidProductException,
             SAPIntegrationException {
-        if (!quote.getQuoteHeader().getFundingHeaderStatus().equals(FundingStatus.APPROVED)) {
+        if (!quote.getQuoteHeader().getQuoteStatus().equals(QuoteStatus.Z4)) {
+            String unFundedMessage = "A quote should be approved in order to be used for a product order.";
+            addGlobalValidationError(unFundedMessage);
+            addGlobalValidationError(unFundedMessage);
+        } else if (!quote.getQuoteHeader().getFundingHeaderStatus().equals(FundingStatus.APPROVED)) {
             String unFundedMessage = "A quote should be approved in order to be used for a product order.";
             addGlobalValidationError(unFundedMessage);
         } else if (!quote.isAllFundingApproved()) {
