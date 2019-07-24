@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.sap.entity.quote.FundingStatus;
+import org.broadinstitute.sap.entity.quote.QuoteStatus;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.json.JSONObject;
@@ -97,6 +98,10 @@ public class QuoteDetailsHelper {
                     quoteDetail.setFundsRemaining(fundsRemaining);
                     quoteDetail.setStatus(quote.getApprovalStatus().getValue());
 
+                    if(quote.getApprovalStatus() != ApprovalStatus.FUNDED) {
+                        quoteDetail.setError("This quote is not yet Funded");
+                    }
+
                     double outstandingOrdersValue = actionBean.estimateOutstandingOrders(quote, 0, null);
                     quoteDetail.setOutstandingEstimate(outstandingOrdersValue);
 
@@ -130,8 +135,15 @@ public class QuoteDetailsHelper {
 
                     Optional<FundingStatus> fundingHeaderStatus =
                         Optional.ofNullable(quote.getQuoteHeader().getFundingHeaderStatus());
-                    fundingHeaderStatus.ifPresent(status -> quoteDetail.setStatus(status.getStatusText()));
+                    fundingHeaderStatus.ifPresent(status -> {
+                        quoteDetail.setStatus(quote.getQuoteHeader().getQuoteStatus().getStatusText());
+                        quoteDetail.setOverallFundingStatus(status.getStatusText());
+                    });
                     quoteDetail.setOutstandingEstimate(actionBean.estimateSapOutstandingOrders(quote, 0, null));
+
+                    if(quote.getQuoteHeader().getQuoteStatus() != QuoteStatus.Z4) {
+                        quoteDetail.setError("This quote has not yet been Approved");
+                    }
 
                     if (CollectionUtils.isEmpty(quote.getFundingDetails())) {
                         quoteDetail.setError("This quote has no active Funding Sources.");
@@ -152,6 +164,9 @@ public class QuoteDetailsHelper {
                                                 fundingDetail.getFundingStatus() == FundingStatus.APPROVED);
                                         fundingInfo.addSplitPercentage(fundingDetail.getSplitPercentage());
                                         quoteDetail.addFundingInfo(fundingInfo);
+                                        if(fundingDetail.getFundingStatus() != FundingStatus.APPROVED) {
+                                            quoteDetail.setError("Funding for this quote is not yet fully approved");
+                                        }
                                     } else {
                                         quoteDetail.addFundingInfo(FundingInfo
                                             .purchaseOrderFunding(fundingDetail.getCustomerPoNumber(),
@@ -278,14 +293,15 @@ public class QuoteDetailsHelper {
         String quoteIdentifier;
         String status;
         String error;
+        private String overallFundingStatus;
 
         public String getFundsRemaining() {
             String fundsRemainingString = "";
-            if (StringUtils.isBlank(error)) {
-                fundsRemainingString = String.format(FUNDS_REMAINING_FORMAT, status,
+                fundsRemainingString = String.format(FUNDS_REMAINING_FORMAT,
+                        (quoteType == ProductOrder.QuoteSourceType.QUOTE_SERVER)?status:String.format("%s, Funding Status: %s ",
+                        status, overallFundingStatus),
                     NumberFormat.getCurrencyInstance().format(Optional.ofNullable(fundsRemaining).orElse(0D)),
                     NumberFormat.getCurrencyInstance().format(Optional.ofNullable(outstandingEstimate).orElse(0D)));
-            }
             return fundsRemainingString;
         }
 
@@ -327,6 +343,14 @@ public class QuoteDetailsHelper {
 
         public void setStatus(String status) {
             this.status = status;
+        }
+
+        public String getOverallFundingStatus() {
+            return overallFundingStatus;
+        }
+
+        public void setOverallFundingStatus(String overallFundingStatus) {
+            this.overallFundingStatus = overallFundingStatus;
         }
 
         public String getError() {
