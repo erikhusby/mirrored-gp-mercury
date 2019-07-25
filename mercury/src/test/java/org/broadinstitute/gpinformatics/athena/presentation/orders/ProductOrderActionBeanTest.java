@@ -3099,7 +3099,7 @@ public class ProductOrderActionBeanTest {
                 ZESDQUOTEHEADER sapQHeader = ZESDQUOTEHEADER.Factory.newInstance();
                 sapQHeader.setPROJECTNAME("TestProject");
                 sapQHeader.setQUOTENAME(quoteId);
-                sapQHeader.setQUOTESTATUS(FundingStatus.SUBMITTED.name());
+                sapQHeader.setQUOTESTATUS(QuoteStatus.Z4.name());
                 sapQHeader.setSALESORG("GP01");
                 sapQHeader.setFUNDHEADERSTATUS(FundingStatus.SUBMITTED.name());
                 sapQHeader.setCUSTOMER("");
@@ -3228,7 +3228,7 @@ public class ProductOrderActionBeanTest {
                 ZESDQUOTEHEADER sapQHeader = ZESDQUOTEHEADER.Factory.newInstance();
                 sapQHeader.setPROJECTNAME("TestProject");
                 sapQHeader.setQUOTENAME(quoteId);
-                sapQHeader.setQUOTESTATUS(FundingStatus.SUBMITTED.name());
+                sapQHeader.setQUOTESTATUS(QuoteStatus.Z4.name());
                 sapQHeader.setSALESORG("GP01");
                 sapQHeader.setFUNDHEADERSTATUS(FundingStatus.APPROVED.name());
                 sapQHeader.setCUSTOMER("");
@@ -3306,7 +3306,7 @@ public class ProductOrderActionBeanTest {
                 ZESDQUOTEHEADER sapQHeader = ZESDQUOTEHEADER.Factory.newInstance();
                 sapQHeader.setPROJECTNAME("TestProject");
                 sapQHeader.setQUOTENAME(quoteId);
-                sapQHeader.setQUOTESTATUS(FundingStatus.SUBMITTED.getStatusText());
+                sapQHeader.setQUOTESTATUS(QuoteStatus.Z4.getStatusText());
                 sapQHeader.setSALESORG("GP01");
                 sapQHeader.setFUNDHEADERSTATUS("");
                 sapQHeader.setCUSTOMER("");
