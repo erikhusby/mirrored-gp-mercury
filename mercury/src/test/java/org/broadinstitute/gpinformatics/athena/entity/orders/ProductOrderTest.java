@@ -1,9 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import com.google.common.collect.MoreCollectors;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -14,12 +14,15 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.sap.entity.quote.QuoteItem;
+import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matchers;
@@ -44,11 +47,14 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus;
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.InBspFormatSample.inBspFormat;
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.MetadataMatcher.isMetadataSource;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.hasItem;
@@ -65,7 +71,7 @@ public class ProductOrderTest {
     private static final Long TEST_CREATOR = 1111L;
     public static final String PDO_JIRA_KEY = "PDO-8";
     private static final String PDO_TITLE = "title";
-    private static final String QUOTE = "quote";
+    private static final String QUOTE = "09282821";
     private final List<ProductOrderSample> sixSamplesWithNamesInBspFormatNoDupes =
             ProductOrderSampleTestFactory
                     .createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-2ACGC", "SM-2ABDD", "SM-2ACKV", "SM-2AB1B", "SM-2ACJC", "SM-2AD5D");
@@ -146,6 +152,8 @@ public class ProductOrderTest {
                 .ignoreProperty("reagentDesignKey")
                 .ignoreProperty("defaultAggregationParticle")
                 .ignoreProperty("coverageTypeKey")
+                .ignoreProperty("quoteSource")
+                .ignoreProperty("quoteReferences")
                 .build();
         tester.testBean(ProductOrder.class, configuration);
 
@@ -368,11 +376,11 @@ public class ProductOrderTest {
 
         Assert.assertEquals(testProductOrder.getUnbilledSampleCount(), 2);
 
-        billSampleOut(testProductOrder, sample1, 2);
+        TestUtils.billSampleOut(testProductOrder, sample1, 2);
 
         Assert.assertEquals(testProductOrder.getUnbilledSampleCount(), 1);
 
-        billSampleOut(testProductOrder, sample2, 1);
+        TestUtils.billSampleOut(testProductOrder, sample2, 1);
 
         Assert.assertEquals(testProductOrder.getUnbilledSampleCount(), 0);
     }
@@ -381,7 +389,7 @@ public class ProductOrderTest {
         ProductOrder testParentOrder = new ProductOrder(TEST_CREATOR, "Test order with Abandoned Count",
                 sixMercurySamplesNoDupes, QUOTE, null, null);
         testParentOrder.addSapOrderDetail(new SapOrderDetail("testParentNumber", testParentOrder.getNonAbandonedCount(),
-                testParentOrder.getQuoteId(), SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", ""));
+                testParentOrder.getQuoteId(), SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode()));
 
         Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL),6);
         Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),6);
@@ -492,10 +500,10 @@ public class ProductOrderTest {
 
         final String sapOrderNumber = "SAP_001";
         final SapOrderDetail orderDetail1 = new SapOrderDetail(sapOrderNumber, 5, QUOTE,
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", "");
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode());
         orderDetail1.getUpdateData().setCreatedDate(new Date());
         final SapOrderDetail orderDetail2 = new SapOrderDetail(sapOrderNumber + "2", 5, QUOTE,
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", "");
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode());
         orderDetail2.getUpdateData().setCreatedDate(new Date());
         testProductOrder.addSapOrderDetail(orderDetail1);
 
@@ -505,47 +513,6 @@ public class ProductOrderTest {
         testProductOrder.addSapOrderDetail(orderDetail2);
         assertThat(testProductOrder.latestSapOrderDetail(), is(not(nullValue())));
         assertThat(testProductOrder.getSapOrderNumber(), is(equalTo(sapOrderNumber+"2")));
-    }
-
-    // This is a utility method and NOT a test method.  Will FAIL with arguments as it should.
-    @Test(enabled = false)
-    public static void billSampleOut(ProductOrder productOrder, ProductOrderSample sample, int expected) {
-
-        billSamplesOut(productOrder, Collections.singleton(sample), expected);
-
-    }
-
-    @Test(enabled = false)
-    public static void billSamplesOut(ProductOrder productOrder, Collection<ProductOrderSample> samples, int expected) {
-        BillingSession billingSession = null;
-        for (ProductOrderSample sample : samples) {
-            LedgerEntry primaryItemSampleEntry = new LedgerEntry(sample,
-                    productOrder.getProduct().getPrimaryPriceItem(), new Date(), /*productOrder.getProduct(),*/ 1);
-            primaryItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
-
-            LedgerEntry addonItemSampleEntry = new LedgerEntry(sample,
-                    productOrder.getAddOns().iterator().next().getAddOn().getPrimaryPriceItem(),
-                    new Date(), /*productOrder.getProduct(),*/ 1);
-            addonItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM);
-            sample.getLedgerItems().add(primaryItemSampleEntry);
-            sample.getLedgerItems().add(addonItemSampleEntry);
-
-            Assert.assertEquals(productOrder.getUnbilledSampleCount(), expected);
-
-            billingSession = new BillingSession(4L, sample.getLedgerItems());
-        }
-
-        Assert.assertEquals(productOrder.getUnbilledSampleCount(), expected);
-
-        for (LedgerEntry ledgerEntry : billingSession.getLedgerEntryItems()) {
-            ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
-        }
-
-        Assert.assertEquals(productOrder.getUnbilledSampleCount(), expected-samples.size());
-        billingSession.setBilledDate(new Date());
-        if(productOrder.isSavedInSAP()) {
-            productOrder.latestSapOrderDetail().addLedgerEntries(billingSession.getLedgerEntryItems());
-        }
     }
 
     public void testQuoteGrantValidityWithUnallocatedFundingSources() throws Exception{
@@ -576,7 +543,8 @@ public class ProductOrderTest {
             Assert.fail();
         }
     }
-   public void testQuoteGrantValidityWithGrantExpired() throws Exception{
+
+    public void testQuoteGrantValidityWithGrantExpired() throws Exception {
         QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
 
         Quote expiringNowQuote = stubbedQuoteService.getQuoteByAlphaId("STCIL1");
@@ -587,16 +555,17 @@ public class ProductOrderTest {
         }
     }
 
+    // TODO disabling this test until the proper way to guarde against this scenario is worked out.
+    @Test(enabled = false)
     public void testGuardCompanyCodeSwtiching() throws Exception {
         ProductOrder testProductOrder = ProductOrderTestFactory.createDummyProductOrder();
 
         testProductOrder.addSapOrderDetail(new SapOrderDetail("test number",
                 testProductOrder.getSampleCount(), testProductOrder.getQuoteId(),
-                testProductOrder.getSapCompanyConfigurationForProductOrder().getCompanyCode(), "",
-                ""));
+                testProductOrder.getSapCompanyConfigurationForProductOrder().getCompanyCode()));
 
         assertThat(testProductOrder.getSapCompanyConfigurationForProductOrder(), is(equalTo(
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD)) );
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD)));
 
         assertThat(testProductOrder.isSavedInSAP(), is(true));
 
@@ -607,7 +576,7 @@ public class ProductOrderTest {
             testProductOrder.setProduct(externalProduct);
             Assert.fail("Setting an external product on a research order should be an exception");
         } catch (InvalidProductException e) {
-            
+
         }
 
         Product clinicalProduct = ProductTestFactory.createTestProduct();
@@ -640,5 +609,191 @@ public class ProductOrderTest {
 
         assertThat(StringUtils.isNotBlank(displayValue), CoreMatchers.is(true));
         assertThat(productOrder.getAggregationParticleDisplayName(), equalTo(displayValue));
+    }
+
+    public void testSapOrderStatus() throws Exception {
+        ProductOrder stateCheckOrder = ProductOrderTestFactory.createDummyProductOrder();
+        stateCheckOrder.setQuoteId(null);
+        assertThat(stateCheckOrder.hasSapQuote(), is(equalTo(false)));
+        assertThat(stateCheckOrder.hasQuoteServerQuote(), is(equalTo(false)));
+        assertThat(stateCheckOrder.isQuoteIdSet(), is(equalTo(false)));
+
+        stateCheckOrder.setQuoteId("GPP71");
+        assertThat(stateCheckOrder.hasSapQuote(), is(equalTo(false)));
+        assertThat(stateCheckOrder.hasQuoteServerQuote(), is(equalTo(true)));
+        assertThat(stateCheckOrder.isQuoteIdSet(), is(equalTo(true)));
+
+        stateCheckOrder.setQuoteId("2700039");
+        assertThat(stateCheckOrder.hasSapQuote(), is(equalTo(true)));
+        assertThat(stateCheckOrder.hasQuoteServerQuote(), is(equalTo(false)));
+        assertThat(stateCheckOrder.isQuoteIdSet(), is(equalTo(true)));
+
+    }
+
+    public void testQuoteSet() throws Exception {
+        ProductOrder quoteTestOrder = ProductOrderTestFactory
+                .createDummyProductOrder();
+
+        // Calling create dummy product order with setting the quote specifically to null does no good because the quote
+        // is ALWAYS set to a default value in the create Dummy order method.  Not sure what other test cases may rely
+        // on that so I will null out the value here.
+        quoteTestOrder.setQuoteId(null);
+
+        assertThat(quoteTestOrder.hasSapQuote(), is(equalTo(false)));
+        assertThat(quoteTestOrder.hasQuoteServerQuote(), is(equalTo(false)));
+        assertThat(quoteTestOrder.isQuoteIdSet(), is(equalTo(false)));
+
+        assertThat(quoteTestOrder.hasSapQuote(), is(equalTo(false)));
+        assertThat(quoteTestOrder.hasQuoteServerQuote(), is(equalTo(false)));
+        assertThat(quoteTestOrder.isQuoteIdSet(), is(equalTo(false)));
+
+        assertThat(quoteTestOrder.hasSapQuote(), is(equalTo(false)));
+        assertThat(quoteTestOrder.hasQuoteServerQuote(), is(equalTo(false)));
+        assertThat(quoteTestOrder.isQuoteIdSet(), is(equalTo(false)));
+
+        quoteTestOrder.setQuoteId(QUOTE);
+        assertThat(quoteTestOrder.hasSapQuote(), is(equalTo(true)));
+        assertThat(quoteTestOrder.hasQuoteServerQuote(), is(equalTo(false)));
+        assertThat(quoteTestOrder.isQuoteIdSet(), is(equalTo(true)));
+
+        quoteTestOrder.setQuoteId(QUOTE+"x");
+        assertThat(quoteTestOrder.hasSapQuote(), is(equalTo(false)));
+        assertThat(quoteTestOrder.hasQuoteServerQuote(), is(equalTo(true)));
+        assertThat(quoteTestOrder.isQuoteIdSet(), is(equalTo(true)));
+    }
+
+    public void testDeterminingQuoteItemsForOrder() throws Exception {
+        ProductOrder quoteTestOrder = ProductOrderTestFactory.createDummyProductOrder();
+        SapQuote sapQuote =
+                TestUtils.buildTestSapQuote("00332883", 20000d, 100000d,
+                        quoteTestOrder, TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
+
+        try {
+            quoteTestOrder.updateQuoteItems(sapQuote);
+            final Set<SapQuoteItemReference> quoteReferences = quoteTestOrder.getQuoteReferences();
+            assertThat(quoteReferences, is(not(empty())));
+
+            final SapQuoteItemReference primaryProductReference =
+                    quoteReferences.stream().filter(sapQuoteItemReference -> sapQuoteItemReference.getMaterialReference().equals(quoteTestOrder.getProduct())).collect(
+                            MoreCollectors.onlyElement());
+            assertThat(primaryProductReference.getQuoteLineReference(),
+                    is(equalTo(sapQuote.getQuoteItemMap().get(quoteTestOrder.getProduct().getPartNumber()).iterator().next().getQuoteItemNumber().toString())));
+
+            quoteTestOrder.getAddOns().forEach(productOrderAddOn -> {
+                final Set<SapQuoteItemReference> collectionOfAddOnProductReferences = quoteReferences.stream().filter(sapQuoteItemReference ->
+                        sapQuoteItemReference.getMaterialReference().equals(productOrderAddOn.getAddOn())).collect(
+                        Collectors.toSet());
+                assertThat(collectionOfAddOnProductReferences.size(), is(equalTo(1)));
+                assertThat(collectionOfAddOnProductReferences.iterator().next().getQuoteLineReference(),
+                        is(equalTo(sapQuote.getQuoteItemMap().get(productOrderAddOn.getAddOn().getPartNumber()).iterator().next().getQuoteItemNumber().toString())));
+            });
+        } catch (SAPInterfaceException e) {
+            Assert.fail();
+        }
+
+        SapQuote mixedQuote =
+                TestUtils.buildTestSapQuote("00332883", 20000d, 100000d,
+                        quoteTestOrder, TestUtils.SapQuoteTestScenario.MATCH_QUOTE_ITEMS_AND_DOLLAR_LIMITED,
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
+        quoteTestOrder.setQuoteId(mixedQuote.getQuoteHeader().getQuoteNumber());
+
+        try {
+            quoteTestOrder.updateQuoteItems(mixedQuote);
+            final Set<SapQuoteItemReference> quoteReferences = quoteTestOrder.getQuoteReferences();
+            assertThat(quoteReferences, is(not(empty())));
+
+            final Set<SapQuoteItemReference> collectionOfPrimaryProductReferences =
+                    quoteReferences.stream().filter(sapQuoteItemReference -> sapQuoteItemReference.getMaterialReference().equals(quoteTestOrder.getProduct())).collect(
+                            Collectors.toSet());
+            assertThat(collectionOfPrimaryProductReferences.size(), is(equalTo(1)));
+            assertThat(collectionOfPrimaryProductReferences.iterator().next().getQuoteLineReference(),
+                    is(equalTo(mixedQuote.getQuoteItemMap().get(quoteTestOrder.getProduct().getPartNumber()).iterator().next().getQuoteItemNumber().toString())));
+
+            quoteTestOrder.getAddOns().forEach(productOrderAddOn -> {
+                final Set<SapQuoteItemReference> collectionOfAddOnProductReferences = quoteReferences.stream().filter(sapQuoteItemReference ->
+                        sapQuoteItemReference.getMaterialReference().equals(productOrderAddOn.getAddOn())).collect(
+                        Collectors.toSet());
+                assertThat(collectionOfAddOnProductReferences.size(), is(equalTo(1)));
+                assertThat(collectionOfAddOnProductReferences.iterator().next().getQuoteLineReference(),
+                        is(equalTo(mixedQuote.getQuoteItemMap().get(productOrderAddOn.getAddOn().getPartNumber()).iterator().next().getQuoteItemNumber().toString())));
+            });
+        } catch (SAPInterfaceException e) {
+            Assert.fail();
+        }
+
+        SapQuote dollarLimitQuote =
+                TestUtils.buildTestSapQuote("00332883", 20000d, 100000d,
+                        quoteTestOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED,
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
+        quoteTestOrder.setQuoteId(dollarLimitQuote.getQuoteHeader().getQuoteNumber());
+        try {
+            quoteTestOrder.updateQuoteItems(dollarLimitQuote);
+            final Set<SapQuoteItemReference> quoteReferences = quoteTestOrder.getQuoteReferences();
+            assertThat(quoteReferences, is(not(empty())));
+
+            final SapQuoteItemReference primaryProductReferences =
+                    quoteReferences.stream().filter(sapQuoteItemReference -> sapQuoteItemReference.getMaterialReference().equals(quoteTestOrder.getProduct())).collect(
+                            MoreCollectors.onlyElement());
+            assertThat(primaryProductReferences.getQuoteLineReference(),
+                    is(equalTo(dollarLimitQuote.getQuoteItemByDescriptionMap().get("GP01 Generic Material-Dollar Limited").iterator().next().getQuoteItemNumber().toString())));
+
+            quoteTestOrder.getAddOns().forEach(productOrderAddOn -> {
+                final SapQuoteItemReference addOnProductReferences = quoteReferences.stream().filter(sapQuoteItemReference ->
+                        sapQuoteItemReference.getMaterialReference().equals(productOrderAddOn.getAddOn())).collect(
+                        MoreCollectors.onlyElement());
+                assertThat(addOnProductReferences.getQuoteLineReference(),
+                        is(equalTo(dollarLimitQuote.getQuoteItemByDescriptionMap().get("GP01 Generic Material-Dollar Limited").iterator().next().getQuoteItemNumber().toString())));
+            });
+        } catch (SAPInterfaceException e) {
+            Assert.fail();
+        }
+
+
+        SapQuote differingQuote =
+                TestUtils.buildTestSapQuote("00332883", 20000d, 100000d,
+                        quoteTestOrder, TestUtils.SapQuoteTestScenario.PRODUCTS_DIFFER,
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
+        quoteTestOrder.setQuoteId(differingQuote.getQuoteHeader().getQuoteNumber());
+        try {
+            quoteTestOrder.updateQuoteItems(differingQuote);
+            Assert.fail();
+        } catch (SAPInterfaceException e) {
+        }
+
+        SapQuote multDollarLimited =
+            TestUtils.buildTestSapQuote("00332883", 20000d, 100000d,
+                quoteTestOrder, TestUtils.SapQuoteTestScenario.MULTIPLE_DOLLAR_LIMITED,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
+        quoteTestOrder.setQuoteId(multDollarLimited.getQuoteHeader().getQuoteNumber());
+        try {
+            quoteTestOrder.updateQuoteItems(multDollarLimited);
+            Collection<SapQuoteItemReference> quoteReferences = quoteTestOrder.getQuoteReferences();
+
+            assertThat(quoteReferences, is(not(empty())));
+
+            SapQuoteItemReference primaryProductReferences = quoteReferences.stream().filter(
+                sapQuoteItemReference -> sapQuoteItemReference.getMaterialReference()
+                    .equals(quoteTestOrder.getProduct())).collect(Collectors.toSet()).iterator().next();
+
+            QuoteItem dollarLimitedItem = multDollarLimited.getQuoteItemByDescriptionMap().get("Dollar Limited 1")
+                .iterator().next();
+
+            assertThat(primaryProductReferences.getQuoteLineReference(),
+                is(equalTo(dollarLimitedItem.getQuoteItemNumber().toString())));
+
+            quoteTestOrder.getAddOns().forEach(pdoAddon -> {
+                SapQuoteItemReference addOnProductReferences = quoteReferences.stream()
+                    .filter(sapQuoteItemReference -> sapQuoteItemReference.getMaterialReference()
+                        .equals(pdoAddon.getAddOn())).findAny().orElseThrow(() -> new RuntimeException("Ref not found"));
+
+                assertThat(addOnProductReferences.getQuoteLineReference(),
+                    is(equalTo(dollarLimitedItem.getQuoteItemNumber().toString())));
+            });
+
+        } catch (SAPInterfaceException e) {
+            Assert.fail(e.getMessage(), e);
+        }
+
     }
 }

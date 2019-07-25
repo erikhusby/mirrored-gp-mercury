@@ -164,17 +164,15 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
                         businessKey = billingKey.get().getBusinessKey();
                     }
 
-                    final List<String> cellList = new ArrayList(Arrays.asList(
-                            getBillingSessionLink(businessKey, singleWorkItem.isPresent()?singleWorkItem.get():"",
-                                    context),
-                            billedDate.isPresent()?dateFormatter.format(billedDate.get()):"",
-                            getQuoteLink(quoteImportItem.getQuoteId(), context),
-                            getWorkItemLink(singleWorkItem.isPresent()?singleWorkItem.get():"",
-                                    quoteImportItem.getQuoteId(), context),
-                            sapItems.isPresent()?sapItems.get():"",
+                    final List<String> cellList = new ArrayList<String>(Arrays.asList(
+                            getBillingSessionLink(businessKey, singleWorkItem.orElse(""), context),
+                            billedDate.map(dateFormatter::format).orElse(""),
+                            getQuoteLink(quoteImportItem, context),
+                            getWorkItemLink(singleWorkItem.orElse(""), quoteImportItem.getQuoteId(), context),
+                            sapItems.orElse(""),
                             quoteImportItem.getProduct().getDisplayName(),
                             quoteImportItem.getRoundedQuantity(), quoteImportItem.getNumSamples(),
-                            workCompleteDate.isPresent()?dateFormatter.format(workCompleteDate.get()):"",
+                            workCompleteDate.map(dateFormatter::format).orElse(""),
                             quoteImportItem.getBillingMessage()));
                     ConfigurableList.ResultRow row =
                             new ConfigurableList.ResultRow(null, cellList, String.valueOf(count));
@@ -196,21 +194,25 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
 
     /**
      * Creates a link to the definition of the quote on the quote server
-     * @param quoteId Unique identifier of the quote as it is found in the Quote server
+     * @param importItem Unique identifier of the quote as it is found in the Quote server
      * @param context Search context object which contains injectable services that typically cannot be injected
      *                through the search process
      * @return Anchor link to the quote definition on the quote server
      */
-    private String getQuoteLink(String quoteId, SearchContext context) {
+    private String getQuoteLink(QuoteImportItem importItem, SearchContext context) {
 
         StringBuffer quoteLink = new StringBuffer();
-        if(StringUtils.isNotBlank(quoteId)) {
+        if(StringUtils.isNotBlank(importItem.getQuoteId())) {
             if(context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB) {
                 quoteLink.append("<a class=\"external\" target=\"QUOTE\" href=\"");
-                quoteLink.append(context.getQuoteLink().quoteUrl(quoteId));
-                quoteLink.append("\">").append(quoteId).append("</a>");
+                if(importItem.isSapOrder()) {
+                    quoteLink.append(context.getSapQuoteLink().sapUrl(importItem.getQuoteId()));
+                } else {
+                    quoteLink.append(context.getQuoteLink().quoteUrl(importItem.getQuoteId()));
+                }
+                quoteLink.append("\">").append(importItem).append("</a>");
             } else {
-                quoteLink.append(quoteId);
+                quoteLink.append(importItem);
             }
         }
         return quoteLink.toString();

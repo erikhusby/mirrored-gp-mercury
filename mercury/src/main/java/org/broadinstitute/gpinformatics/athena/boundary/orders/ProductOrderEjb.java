@@ -18,7 +18,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
-import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
@@ -64,9 +63,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.broadinstitute.sap.entity.SAPMaterial;
+import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
-import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -275,7 +273,9 @@ public class ProductOrderEjb {
                     updateJiraIssue(childProductOrder);
                 }
             }
-            publishProductOrderToSAP(editedProductOrder, messageCollection, false);
+            if (editedProductOrder.hasSapQuote()) {
+                publishProductOrderToSAP(editedProductOrder, messageCollection, false);
+            }
         }
         attachMercurySamples(editedProductOrder.getSamples());
         for (ProductOrder childProductOrder : editedProductOrder.getChildOrders()) {
@@ -313,7 +313,9 @@ public class ProductOrderEjb {
         if (!editedProductOrder.isDraft()) {
             updateJiraIssue(editedProductOrder);
 
-            publishProductOrderToSAP(editedProductOrder, messageCollection, false);
+            if (editedProductOrder.hasSapQuote()) {
+                publishProductOrderToSAP(editedProductOrder, messageCollection, false);
+            }
         }
         attachMercurySamples(editedProductOrder.getSamples());
 
@@ -335,67 +337,36 @@ public class ProductOrderEjb {
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection,
                                          boolean allowCreateOrder) throws SAPInterfaceException {
-        ProductOrder orderToPublish = editedProductOrder;
 
-        final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(orderToPublish);
-        if(editedProductOrder.getParentOrder() != null && editedProductOrder.getSapOrderNumber() != null) {
-            orderToPublish = editedProductOrder.getParentOrder();
+        if (!editedProductOrder.hasSapQuote()) {
+            throw new SAPInterfaceException("This order is ineligible to create in SAP since it is not associated with "
+                                            + "an SAP quote");
         }
-        if (!areProductsOnOrderBlocked(orderToPublish)) {
-            try {
-                if (isOrderEligibleForSAP(orderToPublish)
-                    && !orderToPublish.getOrderStatus().canPlace()) {
-                    Quote quote = orderToPublish.getQuote(quoteService);
-                    final List<String> effectivePricesForProducts = productPriceCache
-                        .getEffectivePricesForProducts(allProductsOrdered, editedProductOrder, quote);
 
-                    final boolean quoteIdChange = orderToPublish.isSavedInSAP() &&
-                                                  !orderToPublish.getQuoteId()
-                                                      .equals(orderToPublish.latestSapOrderDetail().getQuoteId());
+        List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(editedProductOrder);
+        try {
+            SapQuote sapQuote = editedProductOrder.getSapQuote(sapService);
 
-                    boolean priceChangeForNewOrder = false;
-                    if (orderToPublish.isSavedInSAP() && orderToPublish.isPriorToSAP1_5()) {
-                        priceChangeForNewOrder =
-                            !StringUtils.equals(orderToPublish.latestSapOrderDetail().getOrderPricesHash(),
-                                MercuryStringUtils.makeDigest(effectivePricesForProducts))
-                            && orderToPublish.hasAtLeastOneBilledLedgerEntry();
-                    }
+            productPriceCache.determineIfProductsExist(allProductsOrdered,
+                    sapQuote.getQuoteHeader().getSalesOrganization());
 
-                    if ((!orderToPublish.isSavedInSAP() && allowCreateOrder) || quoteIdChange
-                        || priceChangeForNewOrder) {
-                        createOrderInSAP(orderToPublish, quoteIdChange, allProductsOrdered,
-                                effectivePricesForProducts, messageCollection, priceChangeForNewOrder, true);
-                    } else if (orderToPublish.isSavedInSAP()) {
+            final boolean quoteIdChange = editedProductOrder.isSavedInSAP() && !editedProductOrder.isLatestSapQuote();
 
-                        updateOrderInSap(orderToPublish, allProductsOrdered, effectivePricesForProducts,
-                            messageCollection, orderToPublish.getOrderStatus().canClose()
-                                               && !orderToPublish.isPriorToSAP1_5());
+            if ((!editedProductOrder.isSavedInSAP() && allowCreateOrder) || quoteIdChange) {
+                createOrderInSAP(editedProductOrder, quoteIdChange, allProductsOrdered, messageCollection, true);
 
-                        for (ProductOrder childProductOrder : orderToPublish.getChildOrders()) {
+            } else if (editedProductOrder.isSavedInSAP()) {
+                updateOrderInSap(editedProductOrder, allProductsOrdered, messageCollection,
+                        CollectionUtils.containsAny(Arrays.asList(OrderStatus.Abandoned, OrderStatus.Completed),
+                                Collections.singleton(editedProductOrder.getOrderStatus()))
+                        && !editedProductOrder.isPriorToSAP1_5());
 
-                            if (childProductOrder.isSubmitted() &&
-                                !StringUtils.equals(childProductOrder.getSapOrderNumber(),
-                                    orderToPublish.getSapOrderNumber())) {
-
-                                updateOrderInSap(childProductOrder, allProductsOrdered, effectivePricesForProducts,
-                                    messageCollection, orderToPublish.getOrderStatus().canClose()
-                                                       && !orderToPublish.isPriorToSAP1_5());
-                            }
-                        }
-                    }
-                    productOrderDao.persist(orderToPublish);
-                } else {
-                    final String inelligiblOrderError = "This order is ineligible to post to SAP: ";
-                    if (orderToPublish.isSavedInSAP()) {
-                        throw new SAPInterfaceException(inelligiblOrderError);
-                    } else {
-                        messageCollection.addInfo(inelligiblOrderError);
-                    }
-                }
-        } catch (SAPIntegrationException | QuoteServerException | QuoteNotFoundException | InvalidProductException e) {
+            }
+            productOrderDao.persist(editedProductOrder);
+        } catch (SAPIntegrationException | InvalidProductException e) {
             StringBuilder errorMessage = new StringBuilder();
-                errorMessage.append("Unable to ");
-            if (!orderToPublish.isSavedInSAP()) {
+            errorMessage.append("Unable to ");
+            if (!editedProductOrder.isSavedInSAP()) {
                 errorMessage.append("create ");
             } else {
                 errorMessage.append("update ");
@@ -403,8 +374,8 @@ public class ProductOrderEjb {
             errorMessage.append("this order in SAP at this point in time: ").append(e.getMessage());
             messageCollection.addError(errorMessage.toString());
             log.error(errorMessage, e);
-            if(orderToPublish.isSavedInSAP()) {
-                throw new SAPInterfaceException(errorMessage.toString(), e);}
+            if (editedProductOrder.isSavedInSAP()) {
+                throw new SAPInterfaceException(errorMessage.toString(), e);
             }
         }
     }
@@ -419,26 +390,22 @@ public class ProductOrderEjb {
      * @throws SAPIntegrationException
      */
     public void updateOrderInSap(ProductOrder orderToUpdate, List<Product> allProductsOrdered,
-                                  List<String> effectivePricesForProducts, MessageCollection messageCollection,
-                                  boolean closingOrder)
+                                  MessageCollection messageCollection, boolean closingOrder)
             throws SAPIntegrationException {
+        SapIntegrationService.Option serviceOptions =
+            SapIntegrationService.Option.create(SapIntegrationService.Option.isClosing(closingOrder));
         sapService.updateOrder(orderToUpdate, closingOrder);
         BigDecimal sampleCount = BigDecimal.ZERO ;
         if(orderToUpdate.isPriorToSAP1_5()) {
-            sampleCount = SapIntegrationServiceImpl.getSampleCount(orderToUpdate,
-                    orderToUpdate.getProduct(), 0, false, closingOrder, false);
+            sampleCount =
+                SapIntegrationServiceImpl.getSampleCount(orderToUpdate, orderToUpdate.getProduct(), 0, serviceOptions);
         }
-        orderToUpdate.updateSapDetails(sampleCount.intValue(),
-            MercuryStringUtils.makeDigest(allProductsOrdered),
-            MercuryStringUtils.makeDigest(effectivePricesForProducts));
-        messageCollection.addInfo("Order "+orderToUpdate.getJiraTicketKey() +
-                                  " has been successfully updated in SAP");
-
+        orderToUpdate.updateSapDetails(sampleCount.intValue(), MercuryStringUtils.makeDigest(allProductsOrdered),"");
+        messageCollection.addInfo("Order "+orderToUpdate.getJiraTicketKey() + " has been successfully updated in SAP");
     }
 
     /**
      * This method contains the specific logic surrounding the creation and persistence of an SAP order
-     * @param priceChangeForNewOrder
      * @param closingOrder
      * @param orderToPublish  The Product Order from which a new SAP order will be created
      * @param quoteIdChange   Indicates that creating the SAP order is as a result of the Quote being changed
@@ -447,14 +414,11 @@ public class ProductOrderEjb {
      */
     private String createOrderInSAP(ProductOrder orderToPublish, boolean quoteIdChange,
                                     List<Product> allProductsOrdered,
-                                    List<String> effectivePricesForProducts,
-                                    MessageCollection messageCollection, boolean priceChangeForNewOrder,
-                                    boolean closingOrder)
+                                    MessageCollection messageCollection, boolean closingOrder)
             throws SAPIntegrationException {
 
         if(closingOrder && orderToPublish.isSavedInSAP()) {
-            updateOrderInSap(orderToPublish, allProductsOrdered, effectivePricesForProducts, messageCollection,
-                    closingOrder);
+            updateOrderInSap(orderToPublish, allProductsOrdered, messageCollection, closingOrder);
         }
 
         String sapOrderIdentifier = sapService.createOrder(orderToPublish);
@@ -463,13 +427,12 @@ public class ProductOrderEjb {
         if(StringUtils.isNotBlank(orderToPublish.getSapOrderNumber())) {
             oldNumber = orderToPublish.getSapOrderNumber();
         }
+        SapQuote quote = orderToPublish.getSapQuote(sapService);
         orderToPublish.addSapOrderDetail(new SapOrderDetail(sapOrderIdentifier,0,
                 orderToPublish.getQuoteId(),
-                SapIntegrationServiceImpl.determineCompanyCode(orderToPublish).getCompanyCode(),
-                MercuryStringUtils.makeDigest(allProductsOrdered),
-                MercuryStringUtils.makeDigest(effectivePricesForProducts)));
+                orderToPublish.getSapCompanyConfigurationForProductOrder(quote).getCompanyCode()));
 
-        if(quoteIdChange || priceChangeForNewOrder) {
+        if(quoteIdChange ) {
             String body = "The SAP order " + oldNumber + " for PDO "+ orderToPublish.getBusinessKey()+
                           " is being associated with a new quote by "+
                           userBean.getBspUser().getFullName() +" and needs" + " to be short closed.";
@@ -480,75 +443,6 @@ public class ProductOrderEjb {
                                   " has been successfully created in SAP");
 
         return sapOrderIdentifier;
-    }
-
-    /**
-     * Helper method to determine if, based on certain criteria, the order is allowed to be pushed to SAP at the time
-     * that the method is called.
-     * Criteria determining eligibility are:
-     * <ul>
-     *     <li> Has Quote </li>
-     *     <li> Has Primary Price Item </li>
-     *     <li> Access is enabled for price items </li>
-     * </ul>
-     *
-     * @param productOrder The order to be tested for SAP eligibility
-     * @return Boolean indicator identifying SAP eligibility
-     */
-    public boolean isOrderEligibleForSAP(ProductOrder productOrder)
-        throws QuoteServerException, QuoteNotFoundException, InvalidProductException {
-        Quote orderQuote = productOrder.getQuote(quoteService);
-        SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
-        Set<AccessItem> priceItemNameList = new HashSet<>();
-        boolean priceItemsValid = areProductPricesValid(productOrder, priceItemNameList, orderQuote);
-
-        boolean eligibilityResult = false;
-        if (accessControl.isEnabled()) {
-            eligibilityResult =
-                productOrder.getProduct() != null && productOrder.getProduct().getPrimaryPriceItem() != null
-                && orderQuote != null && orderQuote.isEligibleForSAP()
-                && !CollectionUtils.containsAny(accessControl.getDisabledItems(), priceItemNameList);
-        }
-
-        if(eligibilityResult && !priceItemsValid) {
-            throw new InvalidProductException("One of the Price items associated with " +
-                                              productOrder.getBusinessKey() + ": " +
-                                              productOrder.getName() + " is invalid");
-        }
-        return eligibilityResult;
-    }
-
-    public boolean isOrderFunded(ProductOrder productOrder) throws QuoteNotFoundException, QuoteServerException {
-        return isOrderFunded(productOrder, new Date());
-    }
-
-    public boolean isOrderFunded(ProductOrder productOrder, Date effectiveDate) throws QuoteNotFoundException, QuoteServerException {
-        Quote orderQuote = productOrder.getQuote(quoteService);
-        return orderQuote.isFunded(effectiveDate);
-    }
-
-    private boolean areProductsOnOrderBlocked(ProductOrder targetOrder) {
-        Set<AccessItem> priceItemNameList = new HashSet<>();
-
-        if(targetOrder.getProduct() != null) {
-            priceItemNameList.add(new AccessItem(targetOrder.getProduct().getPrimaryPriceItem().getName()));
-        }
-        for (ProductOrderAddOn productOrderAddOn : targetOrder.getAddOns()) {
-            priceItemNameList.add(new AccessItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getName()));
-        }
-
-        return areProductsBlocked(priceItemNameList);
-
-    }
-
-    public boolean areProductsBlocked(String priceItemName) {
-        return areProductsBlocked(Collections.singleton(new AccessItem(priceItemName)));
-    }
-
-    public boolean areProductsBlocked(Set<AccessItem> priceItemNameList) {
-        SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
-        return !accessControl.isEnabled() ||
-               CollectionUtils.containsAny(accessControl.getDisabledItems(), priceItemNameList);
     }
 
     public boolean areProductPricesValid(ProductOrder editedProductOrder, Set<AccessItem> priceItemNameList,
@@ -590,50 +484,38 @@ public class ProductOrderEjb {
                     break;
                 }
 
-                validateSAPAndQuoteServerPrices(orderQuote, product, productOrder);
+                validateQuoteAndGetPrice(orderQuote, product, productOrder);
             }
 
         }
         return allItemsValid;
     }
 
-    public String validateSAPAndQuoteServerPrices(Quote orderQuote, Product product,
-                                                  ProductOrder productOrder)
+    /**
+     * Returns the current effective price of the product for the given date.
+     *
+     * @param orderQuote    The quote server Quote against which the product order is to be placed
+     * @param product       The Product for which the price will be validated
+     * @param productOrder  The Product Order on which the product whos price is to be validated can be found
+     * @return
+     * @throws InvalidProductException
+     */
+    public String validateQuoteAndGetPrice(Quote orderQuote, Product product, ProductOrder productOrder)
             throws InvalidProductException {
-        SAPMaterial sapMaterial = null;
-        SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = null;
 
-        SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
-
-        try {
-            companyCode = SapIntegrationServiceImpl.determineCompanyCode(productOrder);
-        } catch (SAPIntegrationException e) {
-            throw new InvalidProductException(e);
+        if(orderQuote == null) {
+            throw new InvalidProductException("Unable to continue since the quote against which the prices are "
+                                              + "being validated is not set");
         }
-
-        // todo sgm check quote and throw exception if it is null
-
-        if(accessControl.isEnabled() &&
-           !CollectionUtils.containsAny(accessControl.getDisabledItems(),
-                   Collections.singleton(new AccessItem(product.getPrimaryPriceItem().getName())))) {
-            sapMaterial = productPriceCache.findByProduct(product, companyCode);
+        if(productOrder == null) {
+            throw new InvalidProductException("Unable to continue since the Product Order for which the prices are being validated is not set");
         }
 
         PriceItem priceItem = productOrder.determinePriceItemByCompanyCode(product);
         final QuotePriceItem priceListItem = priceListCache.findByKeyFields(priceItem);
-        if (priceListItem != null) {
-            final BigDecimal effectivePrice = new BigDecimal(priceListItem.getPrice());
-            if (sapMaterial != null && StringUtils.isNotBlank(sapMaterial.getBasePrice())) {
-                final BigDecimal basePrice = new BigDecimal(sapMaterial.getBasePrice());
-                if (basePrice.compareTo(effectivePrice) != 0) {
-                    throw new InvalidProductException("Unable to continue since the price for the product " +
-                                                      product.getDisplayName() + " has not been properly set up in SAP");
-                }
-            }
-        } else {
-            throw new InvalidProductException("Unable to continue since the price list item " +
-                                              priceItem.getDisplayName() + " for " + product.getDisplayName() +
-                                              " is invalid.");
+        if (priceListItem == null) {
+            throw new InvalidProductException("Unable to continue since the price list of " +
+                                              priceItem.getDisplayName() + ".");
         }
         return priceListCache.getEffectivePrice(priceItem, orderQuote);
     }
@@ -642,11 +524,15 @@ public class ProductOrderEjb {
      * Looks up the quote for the pdo (if the pdo has one) in the
      * quote server.
      */
-    void validateQuote(ProductOrder productOrder, QuoteService quoteService) throws QuoteNotFoundException {
+    void validateQuote(ProductOrder productOrder) throws QuoteNotFoundException {
         if (!StringUtils.isEmpty(productOrder.getQuoteId())) {
             try {
-                productOrder.getQuote(quoteService);
-            } catch (QuoteServerException e) {
+                if(productOrder.hasSapQuote()) {
+                    productOrder.getSapQuote(sapService);
+                } else {
+                    productOrder.getQuote(quoteService);
+                }
+            } catch (QuoteServerException |SAPIntegrationException e) {
                 throw new RuntimeException("Failed to find quote for " + productOrder.getQuoteId(), e);
             }
         }
@@ -811,7 +697,7 @@ public class ProductOrderEjb {
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void updateJiraIssue(ProductOrder productOrder) throws IOException, QuoteNotFoundException {
-        validateQuote(productOrder, quoteService);
+        validateQuote(productOrder);
 
         Transition transition = jiraService.findAvailableTransitionByName(productOrder.getJiraTicketKey(),
                 JiraTransition.DEVELOPER_EDIT.getStateName());
@@ -1095,7 +981,9 @@ public class ProductOrderEjb {
         transitionSamples(order, acceptableStartingStatuses, targetStatus, samples);
 
         try {
-            publishProductOrderToSAP(order, messageCollection, false);
+            if (order.hasSapQuote()) {
+                publishProductOrderToSAP(order, messageCollection, false);
+            }
         } catch (SAPInterfaceException e) {
             log.error("SAP Error when attempting to abandon samples", e);
             throw e;
@@ -1367,21 +1255,14 @@ public class ProductOrderEjb {
              targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY) < targetSapPdo.latestSapOrderDetail().getPrimaryQuantity()
            ) || CollectionUtils.containsAny(Arrays.asList(OrderStatus.Abandoned, OrderStatus.Completed),Collections.singleton(targetSapPdo.getOrderStatus())))) {
 
-            boolean orderEligibleForSAP = true;
-            try {
-                orderEligibleForSAP = isOrderEligibleForSAP(productOrder);
-            } catch (QuoteServerException | QuoteNotFoundException | InvalidProductException e) {
-                orderEligibleForSAP = false;
-            }
-            if(productOrder.isPriorToSAP1_5() || !orderEligibleForSAP ||
-               targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY) <1 ) {
+            if(targetSapPdo.hasSapQuote()) {
+                publishProductOrderToSAP(productOrder, new MessageCollection(), false);
+
+            }   else {
                 sendSapOrderShortCloseRequest(
                         "The SAP order " + productOrder.getSapOrderNumber() + " for PDO "+productOrder.getBusinessKey() +
                         " has been marked as completed in Mercury by " +
                         userBean.getBspUser().getFullName() + " and may need to be short closed.");
-
-            }   else {
-                publishProductOrderToSAP(productOrder, new MessageCollection(), false);
             }
         }
     }
@@ -1464,7 +1345,9 @@ public class ProductOrderEjb {
         productOrderJiraUtil.setCustomField(issue, ProductOrder.JiraField.NUMBER_OF_SAMPLES, order.getSamples().size());
 
         MessageCollection collection = new MessageCollection();
-        publishProductOrderToSAP(order, collection, false);
+        if (order.hasSapQuote()) {
+            publishProductOrderToSAP(order, collection, false);
+        }
         for (String error : collection.getErrors()) {
             reporter.addMessage(error);
         }
@@ -1714,10 +1597,10 @@ public class ProductOrderEjb {
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void updateSampleLedgers(Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> ledgerUpdates)
-            throws ValidationWithRollbackException, QuoteNotFoundException, QuoteServerException {
+            throws ValidationWithRollbackException, QuoteNotFoundException, QuoteServerException,
+            SAPIntegrationException {
         List<String> errorMessages = new ArrayList<>();
 
-        Map<String, Quote> usedQuotesMiniCache = new HashMap<>();
 
         Map<String, Boolean> updatedOrderMap = new HashMap<>();
 
@@ -1727,13 +1610,6 @@ public class ProductOrderEjb {
 
             if(!updatedOrderMap.containsKey(productOrderSample.getProductOrder().getBusinessKey()) ||
                !updatedOrderMap.get(productOrderSample.getProductOrder().getBusinessKey())) {
-
-                Quote orderQuote = usedQuotesMiniCache.get(productOrderSample.getProductOrder().getQuoteId());
-
-                if(orderQuote == null) {
-                    orderQuote = quoteService.getQuoteByAlphaId(productOrderSample.getProductOrder().getQuoteId());
-                    usedQuotesMiniCache.put(orderQuote.getAlphanumericId(), orderQuote);
-                }
 
                 updatedOrderMap.put(productOrderSample.getProductOrder().getBusinessKey(), Boolean.TRUE);
             }
