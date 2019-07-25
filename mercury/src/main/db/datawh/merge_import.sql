@@ -736,6 +736,17 @@ AS
             -- ELSE ignore older ETL extract
           END IF;
 
+          -- Full refresh metadata
+          DELETE FROM LAB_METRIC_METADATA WHERE LAB_METRIC_ID = new.lab_metric_id;
+          INSERT INTO LAB_METRIC_METADATA (
+              LAB_METRIC_ID, METADATA_ID, METADATA_KEY,
+              VALUE, DATE_VALUE, NUMBER_VALUE, ETL_DATE )
+          SELECT LAB_METRIC_ID, METADATA_ID, METADATA_KEY,
+              VALUE, DATE_VALUE, NUMBER_VALUE, ETL_DATE
+            FROM IM_LAB_METRIC_METADATA
+           WHERE LAB_METRIC_ID = new.lab_metric_id;
+          V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+
           EXCEPTION WHEN OTHERS THEN
           errmsg := SQLERRM;
           DBMS_OUTPUT.PUT_LINE(

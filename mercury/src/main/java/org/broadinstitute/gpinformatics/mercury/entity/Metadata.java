@@ -93,6 +93,10 @@ public class Metadata {
         throw new RuntimeException("Unhandled data type " + key.getDataType());
     }
 
+    public Long getId() {
+        return id;
+    }
+
     @Nonnull
     public Key getKey() {
         return key;
