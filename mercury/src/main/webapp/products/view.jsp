@@ -34,7 +34,7 @@
                 <div class="controls">
                     <div class="form-value">
                         <img src="${ctxpath}/images/pdficon_small.png" alt="">
-                        <stripes:link beanclass="${actionBean.class.name}" event="downloadProductDescriptions">
+                        <stripes:link id="partNumber" beanclass="${actionBean.class.name}" event="downloadProductDescriptions">
                             ${actionBean.editProduct.partNumber}
                             <stripes:param name="editProduct.partNumber" value="${actionBean.editProduct.partNumber}"/>
                         </stripes:link>
@@ -50,15 +50,15 @@
             </div>
 
 
-            <%--Saving this implementation for the final 2.0 SAP/GP release of Mercury--%>
-            <%--<c:if test="${actionBean.editProduct.alternateExternalName != null}">--%>
-                <%--<div class="view-control-group control-group">--%>
-                    <%--<label class="control-label label-form">Alternate (External) Product Name</label>--%>
-                    <%--<div class="controls">--%>
-                        <%--<div class="form-value">${actionBean.editProduct.alternateExternalName}</div>--%>
-                    <%--</div>--%>
-                <%--</div>--%>
-            <%--</c:if>--%>
+            Saving this implementation for the final 2.0 SAP/GP release of Mercury
+            <c:if test="${actionBean.editProduct.alternateExternalName != null}">
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Alternate (External) Product Name</label>
+                    <div class="controls">
+                        <div class="form-value">${actionBean.editProduct.alternateExternalName}</div>
+                    </div>
+                </div>
+            </c:if>
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Product Family</label>
@@ -137,19 +137,16 @@
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Primary Price Items</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.editProduct.primaryPriceItem.displayName}</div>
+                    <div class="form-value">${actionBean.editProduct.priceItemDisplayName}</div>
                 </div>
             </div>
 
-                <%--Saving this implementation for the final 2.0 SAP/GP release of Mercury--%>
-            <%--<c:if test="${actionBean.editProduct.externalPriceItem != null}">--%>
-                <%--<div class="view-control-group control-group">--%>
-                    <%--<label class="control-label label-form">Alternate (External) Price Items</label>--%>
-                    <%--<div class="controls">--%>
-                        <%--<div class="form-value">${actionBean.editProduct.externalPriceItem.displayName}</div>--%>
-                    <%--</div>--%>
-                <%--</div>--%>
-            <%--</c:if>--%>
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Product WBS</label>
+                <div class="controls">
+                    <div class="form-value">${actionBean.editProduct.determineCompanyConfiguration().defaultWbs}</div>
+                </div>
+            </div>
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">PDM Orderable Only</label>
@@ -244,6 +241,15 @@
                     <div class="controls">
                         <div class="form-value">
                                 ${actionBean.editProduct.clinicalProduct ? "Yes" : "No"}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Allow for Commercial Orders?</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.offeredAsCommercialProduct ? "Yes" : "No"}
                         </div>
                     </div>
                 </div>
@@ -446,10 +452,7 @@
                         <td>${addOnProduct.productName}</td>
                         <td>${addOnProduct.productFamily.name}</td>
                         <td>
-                            ${addOnProduct.primaryPriceItem.displayName}
-                            <c:if test="${addOnProduct.externalPriceItem != null}">
-                                external price item ${addOnProduct.externalPriceItem.displayName}
-                            </c:if>
+                            ${addOnProduct.priceItemDisplayName}
                         </td>
                     </tr>
                 </c:forEach>

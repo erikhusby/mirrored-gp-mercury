@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.test.dbfree;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
@@ -10,12 +11,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.Date;
-import java.util.UUID;
 
 public class ProductTestFactory {
+    private static final String DEFAULT_PART_NUMBER_PREFIX = "P-";
+
     public static Product createTestProduct() {
-        String uuid = UUID.randomUUID().toString();
-        return createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber " + uuid);
+        return createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, generateProductPartNumber());
     }
 
     public static Product createDummyProduct(String workflow, String partNumber) {
@@ -68,4 +69,15 @@ public class ProductTestFactory {
         }
         return product;
     }
+
+    public static String generateProductPartNumber() {
+        int adjustedMaxLength = Product.MAX_PART_NUMBER_LENGTH - DEFAULT_PART_NUMBER_PREFIX.length();
+        String filler = String.valueOf(Math.random() * 111).replace(".", "");
+        String nanos = filler + System.nanoTime();
+        if (nanos.length() > adjustedMaxLength) {
+            nanos = StringUtils.substring(nanos, nanos.length() - adjustedMaxLength);
+        }
+        return DEFAULT_PART_NUMBER_PREFIX + nanos;
+    }
+
 }

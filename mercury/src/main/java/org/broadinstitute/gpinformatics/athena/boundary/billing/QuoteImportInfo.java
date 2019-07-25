@@ -108,10 +108,12 @@ public class QuoteImportInfo {
                 for (Map.Entry<ProductLedgerIndex, Map<Date, List<LedgerEntry>>> ledgerEntrybyLedgerIndex : quotePriceItems
                         .get(orderIndex).entrySet()) {
                     ProductLedgerIndex ledgerIndex = ledgerEntrybyLedgerIndex.getKey();
-                    final QuotePriceItem ledgerIndexPriceItem =
-                            priceListCache.findByKeyFields(ledgerIndex.getPriceItem());
-                    if(ledgerIndexPriceItem != null) {
-                        ledgerIndex.getPriceItem().setPrice(ledgerIndexPriceItem.getPrice());
+                    if (orderIndex.getQuoteSource() == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
+                        final QuotePriceItem ledgerIndexPriceItem =
+                                priceListCache.findByKeyFields(ledgerIndex.getPriceItem());
+                        if(ledgerIndexPriceItem != null) {
+                            ledgerIndex.getPriceItem().setPrice(ledgerIndexPriceItem.getPrice());
+                        }
                     }
 
                     for (Date bucketDate : ledgerEntrybyLedgerIndex.getValue().keySet()) {
