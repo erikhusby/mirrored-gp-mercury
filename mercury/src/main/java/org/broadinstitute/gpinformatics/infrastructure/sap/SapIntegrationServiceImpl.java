@@ -41,6 +41,7 @@ import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -441,9 +442,21 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                         quoteItemForBilling.getProductOrder().getSapCompanyConfigurationForProductOrder(),
                         quoteItemForBilling.getProductOrder().getSapOrderNumber(), workCompleteDate);
 
+        final String quantityString = String.valueOf(quoteItemForBilling.getQuantityForSAP());
+
+        log.debug("The converted quantity is " + quantityString);
+
+        final String[] quantitySplitArray = quantityString.split("\\.");
+
+        log.debug("The size of the split array is "+quantitySplitArray.length);
+
+        Optional<String> decimalOfQuantity = Optional.ofNullable(quantitySplitArray[1]);
+
+        int maxScale = decimalOfQuantity.orElse("").length();
+
         SAPDeliveryItem lineItem =
                 new SAPDeliveryItem(quoteItemForBilling.getProduct().getPartNumber(),
-                        (quantityOverride == null)?new BigDecimal(quoteItemForBilling.getQuantityForSAP()):quantityOverride);
+                        (quantityOverride == null)?new BigDecimal(quoteItemForBilling.getQuantityForSAP()).setScale(maxScale, RoundingMode.CEILING):quantityOverride);
 
         if(StringUtils.equals(quoteItemForBilling.getQuotePriceType(), LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType())) {
             lineItem.addCondition(DeliveryCondition.LATE_DELIVERY_DISCOUNT);
