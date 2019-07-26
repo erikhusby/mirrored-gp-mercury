@@ -30,7 +30,7 @@ public class IndexPlateDefinitionWell {
     @Column(name = "definition_well_id")
     private Long definitionWellId;
 
-    @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST})
+    @ManyToOne(cascade = {CascadeType.PERSIST})
     @JoinColumn(name="index_plate_definition", referencedColumnName = "definition_id")
     private IndexPlateDefinition indexPlateDefinition;
 

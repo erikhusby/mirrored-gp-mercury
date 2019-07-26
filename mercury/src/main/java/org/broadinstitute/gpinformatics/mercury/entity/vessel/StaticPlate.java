@@ -213,7 +213,7 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
     @Enumerated(EnumType.STRING)
     private PlateType plateType;
 
-    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
+    @ManyToOne(cascade = {CascadeType.PERSIST})
     @JoinColumn(name="index_plate_definition", referencedColumnName = "definition_id")
     private IndexPlateDefinition indexPlateDefinition;
 

@@ -2455,5 +2455,10 @@
             baseTableSchemaName="mercury" baseTableName="lab_vessel" baseColumnNames="index_plate_definition"
             referencedTableSchemaName="mercury" referencedTableName="index_plate_definition" referencedColumnNames="definition_id"/>
     </changeSet>
+    <changeSet id="GPLIM-6138-045" author="epolk">
+        <createIndex indexName="ix_reagent_mis" tableName="reagent" schemaName="mercury">
+            <column name="molecular_indexing_scheme"/>
+        </createIndex>
+    </changeSet>
 
 </databaseChangeLog>

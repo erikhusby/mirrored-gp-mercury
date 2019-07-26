@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.CharUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -486,7 +486,8 @@ public class IndexedPlateFactory {
         }
 
         int overwriteCount = 0;
-        boolean hasHeaderRow = !NumberUtils.isDigits(spreadsheet.get(0).get(0));
+        // If it starts with a number, it's a rack barcode.
+        boolean hasHeaderRow = !CharUtils.isAsciiNumeric(spreadsheet.get(0).get(0).charAt(0));
         // Reads the plate barcodes from the spreadsheet and does leading zero fill as needed.
         List<String> plateBarcodes = spreadsheet.subList(hasHeaderRow ? 1 : 0, spreadsheet.size()).
                 stream().flatMap(List::stream).distinct().
@@ -528,22 +529,36 @@ public class IndexedPlateFactory {
 
             // Makes a map of position and reagent from the index plate definition.
             Map<VesselPosition, MolecularIndexReagent> reagentMap = definition.getDefinitionWells().stream().
-                    collect(Collectors.toMap(IndexPlateDefinitionWell::getVesselPosition,
-                            well -> new MolecularIndexReagent(well.getMolecularIndexingScheme())));
+                    collect(Collectors.toMap(well -> well.getVesselPosition(),
+                            well -> {
+                                MolecularIndexingScheme mis = well.getMolecularIndexingScheme();
+                                MolecularIndexReagent reagent = molecularIndexingSchemeDao.reagentFor(mis);
+                                return (reagent == null) ? new MolecularIndexReagent(mis) : reagent;
+                            }));
+            molecularIndexingSchemeDao.persistAll(reagentMap.values());
 
             List<StaticPlate> plateBatch = new ArrayList<>();
             for (String barcode : plateBarcodes) {
                 // Persists batches periodically and also at the end to avoid out of memory errors.
                 if (plateBatch.size() >= 100) {
                     staticPlateDao.persistAll(plateBatch);
-                    definition.getPlateInstances().addAll(plateBatch);
+                    staticPlateDao.persist(definition);
+                    staticPlateDao.flush();
+                    staticPlateDao.clear();
                     plateBatch.clear();
+                    // These will continue to be needed.
+                    definition = indexPlateDefinitionDao.findByName(plateName);
+                    reagentMap = definition.getDefinitionWells().stream().
+                            collect(Collectors.toMap(well -> well.getVesselPosition(),
+                                    well -> molecularIndexingSchemeDao.reagentFor(well.getMolecularIndexingScheme())));
                 }
+                // Creates the new index plate instance.
                 StaticPlate staticPlate = new StaticPlate(barcode, plateType);
                 staticPlate.setCreatedOn(new Date());
                 staticPlate.setIndexPlateDefinition(definition);
                 staticPlate.setSalesOrderNumber(salesOrderNumber);
                 plateBatch.add(staticPlate);
+                definition.getPlateInstances().add(staticPlate);
                 reagentMap.forEach((vesselPosition, molecularIndexReagent) -> {
                     PlateWell plateWell = new PlateWell(staticPlate, vesselPosition);
                     plateWell.addReagent(molecularIndexReagent);
@@ -551,7 +566,7 @@ public class IndexedPlateFactory {
                 });
             }
             staticPlateDao.persistAll(plateBatch);
-            definition.getPlateInstances().addAll(plateBatch);
+
             // Shows username, plate count, definition name.
             int newCount = plateBarcodes.size() - overwriteCount;
             if (overwriteCount == 0) {

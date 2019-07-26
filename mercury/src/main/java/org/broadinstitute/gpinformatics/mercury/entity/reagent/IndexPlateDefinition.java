@@ -9,6 +9,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -34,10 +35,10 @@ public class IndexPlateDefinition {
     private Long definitionId;
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true,
-            mappedBy = "indexPlateDefinition")
+            mappedBy = "indexPlateDefinition", fetch = FetchType.LAZY)
     private Set<IndexPlateDefinitionWell> definitionWells = new HashSet<>();
 
-    @OneToMany(mappedBy = "indexPlateDefinition")
+    @OneToMany(mappedBy = "indexPlateDefinition", fetch = FetchType.LAZY)
     private Set<StaticPlate> plateInstances = new HashSet<>();
 
     private String definitionName;
