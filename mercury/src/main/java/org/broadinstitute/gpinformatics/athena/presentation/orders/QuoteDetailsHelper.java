@@ -134,12 +134,22 @@ public class QuoteDetailsHelper {
                     Optional<FundingStatus> fundingHeaderStatus =
                         Optional.ofNullable(quote.getQuoteHeader().getFundingHeaderStatus());
 
-                    OrderCalculatedValues sapOrderCalculatedValues = actionBean.getSapOrderCalculatedValues(quote, 0, null);
+                    Optional<OrderCalculatedValues> sapOrderCalculatedValues =
+                            Optional.ofNullable(sapService.calculateOpenOrderValues(0, quote, null));
 
                     quoteDetail.setQuoteType(quoteSource);
                     fundingHeaderStatus.ifPresent(status -> quoteDetail.setStatus(status.getStatusText()));
-                    quoteDetail.setFundsRemaining(sapOrderCalculatedValues.calculateFundsRemaining(null).doubleValue());
-                    quoteDetail.setOutstandingEstimate(sapOrderCalculatedValues.calculateTotalOpenOrderValue(null).doubleValue());
+                    BigDecimal fundsRemaining = quote.getQuoteHeader().fundsRemaining();
+                    if(sapOrderCalculatedValues.isPresent()) {
+                        fundsRemaining =fundsRemaining.subtract(sapOrderCalculatedValues.get().openDeliveryValues());
+                    }
+                    quoteDetail.setFundsRemaining(fundsRemaining.doubleValue());
+                    double openOrderEstimate = 0;
+                    if(sapOrderCalculatedValues.isPresent()) {
+                        openOrderEstimate =
+                                sapOrderCalculatedValues.get().calculateTotalOpenOrderValue(null).doubleValue();
+                    }
+                    quoteDetail.setOutstandingEstimate(openOrderEstimate);
 
                     if(quote.getQuoteHeader().getQuoteStatus() != QuoteStatus.Z4) {
                         quoteDetail.setError("This quote has not yet been Approved");

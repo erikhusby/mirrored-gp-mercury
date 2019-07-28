@@ -991,8 +991,21 @@ public class ProductOrderActionBean extends CoreActionBean {
         try {
             editOrder.updateQuoteItems(quote);
 
+            final Optional<OrderCalculatedValues> sapOrderCalculatedValues =
+                    Optional.ofNullable(sapService.calculateOpenOrderValues(additionalSampleCount, quote, editOrder));
+            Optional<String> orderNumber = Optional.empty();
+            if(editOrder != null) {
+                orderNumber = Optional.ofNullable(editOrder.getSapOrderNumber());
+            }
+            double outstandingEstimate = 0;
+            if(sapOrderCalculatedValues.isPresent()) {
+                outstandingEstimate =
+                        sapOrderCalculatedValues.get().calculateTotalOpenOrderValue(orderNumber.orElse(null)).doubleValue();
+            }
             BigDecimal fundsRemaining = quote.getQuoteHeader().fundsRemaining();
-            double outstandingEstimate = estimateSapOutstandingOrders(quote, additionalSampleCount, editOrder);
+            if(sapOrderCalculatedValues.isPresent()) {
+                fundsRemaining = fundsRemaining.subtract(sapOrderCalculatedValues.get().openDeliveryValues());
+            }
             double valueOfCurrentOrder = 0;
 
             if ((fundsRemaining.compareTo(BigDecimal.ZERO) <= 0)
@@ -1008,7 +1021,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             logger.error(e);
             addGlobalValidationError(e.getMessage());
         }
-
     }
 
     /**
@@ -1033,47 +1045,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         return value + getValueOfOpenOrders(ordersWithCommonQuote, foundQuote);
-    }
-
-    /**
-     * Retrieves and determines the monitary value of a subset of Open Orders within Mercury
-     * @return total dollar amount of the monitary value of orders associated with the given quote
-     */
-    double estimateSapOutstandingOrders(OrderCalculatedValues calculatedValues, ProductOrder productOrder) {
-        double value = 0d;
-        Optional<BigDecimal> openSalesValue = Optional.empty();
-        if (calculatedValues != null) {
-            Optional<ProductOrder> sapOrder = Optional.ofNullable(productOrder);
-            String sapNumber = null;
-            if (sapOrder.isPresent()) {
-                sapNumber = sapOrder.get().getSapOrderNumber();
-            }
-
-            value = calculatedValues.calculateTotalOpenOrderValue(sapNumber)
-                .add(calculatedValues.getPotentialOrderValue()).doubleValue();
-        }
-
-        return value;
-
-    }
-    /**
-     * Retrieves and determines the monitary value of a subset of Open Orders within Mercury
-     * @return total dollar amount of the monitary value of orders associated with the given quote
-     */
-
-    double estimateSapOutstandingOrders(SapQuote foundQuote, int addedSampleCount, ProductOrder productOrder) {
-        double value = 0;
-        try {
-            value = estimateSapOutstandingOrders(getSapOrderCalculatedValues(foundQuote, addedSampleCount, productOrder), productOrder);
-        } catch (SAPIntegrationException e) {
-            logger.info("Attempting to calculate order from SAP yielded an error", e);
-        }
-        return value;
-    }
-
-    OrderCalculatedValues getSapOrderCalculatedValues(SapQuote foundQuote, int addedSampleCount,
-                                                      ProductOrder productOrder) throws SAPIntegrationException {
-        return sapService.calculateOpenOrderValues(addedSampleCount, foundQuote, productOrder);
     }
 
     /**
