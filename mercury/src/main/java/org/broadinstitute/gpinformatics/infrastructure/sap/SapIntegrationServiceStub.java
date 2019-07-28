@@ -296,8 +296,7 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     @Override
     public OrderCalculatedValues calculateOpenOrderValues(int addedSampleCount, SapQuote sapQuote,
                                                           ProductOrder productOrder) throws SAPIntegrationException {
-        return new OrderCalculatedValues(BigDecimal.ONE, Collections.<OrderValue>emptySet(),
-            sapQuote.getQuoteHeader().getQuoteOpenValue());
+        return new OrderCalculatedValues(BigDecimal.ONE, Collections.<OrderValue>emptySet());
     }
 
     @Override

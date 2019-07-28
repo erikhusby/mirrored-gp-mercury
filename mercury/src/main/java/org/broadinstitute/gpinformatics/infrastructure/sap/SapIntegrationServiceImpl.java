@@ -555,7 +555,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 create(Type.ORDER_VALUE_QUERY));
 
         orderCalculatedValues =
-            getClient().calculateOrderValues(sapQuote, potentialOrderCriteria);
+            getClient().calculateOrderValues(sapQuote.getQuoteHeader().getQuoteNumber(), potentialOrderCriteria);
         return orderCalculatedValues;
     }
 
