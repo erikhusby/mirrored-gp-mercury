@@ -4518,6 +4518,7 @@
             <workflowStepDefs>
                 <name>Germline Exome PCR Cleanup</name>
                 <labEventTypes>GERMLINE_EXOME_PCR_CLEANUP</labEventTypes>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
                 <optional>false</optional>
             </workflowStepDefs>
             <workflowStepDefs>
