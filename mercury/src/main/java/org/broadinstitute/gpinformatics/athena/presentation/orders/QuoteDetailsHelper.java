@@ -147,7 +147,7 @@ public class QuoteDetailsHelper {
                     double openOrderEstimate = 0;
                     if(sapOrderCalculatedValues.isPresent()) {
                         openOrderEstimate =
-                                sapOrderCalculatedValues.get().calculateTotalOpenOrderValue(null).doubleValue();
+                                sapOrderCalculatedValues.get().calculateTotalOpenOrderValue().doubleValue();
                     }
                     quoteDetail.setOutstandingEstimate(openOrderEstimate);
 

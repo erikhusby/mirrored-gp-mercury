@@ -1000,7 +1000,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             double outstandingEstimate = 0;
             if(sapOrderCalculatedValues.isPresent()) {
                 outstandingEstimate =
-                        sapOrderCalculatedValues.get().calculateTotalOpenOrderValue(orderNumber.orElse(null)).doubleValue();
+                        sapOrderCalculatedValues.get().calculateTotalOpenOrderValue().doubleValue();
             }
             BigDecimal fundsRemaining = quote.getQuoteHeader().fundsRemaining();
             if(sapOrderCalculatedValues.isPresent()) {
