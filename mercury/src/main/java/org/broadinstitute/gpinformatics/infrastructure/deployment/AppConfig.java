@@ -41,6 +41,8 @@ public class AppConfig extends AbstractConfig implements Serializable {
 
     private Set<String> gpBillingManagers;
 
+    private String printingQueue;
+
     public String getUrl() {
         return "https://" + host + ":" + port + "/Mercury/";
     }
@@ -93,6 +95,10 @@ public class AppConfig extends AbstractConfig implements Serializable {
     public Set<String> getGpBillingManagers() {
         return gpBillingManagers;
     }
+
+    public String getPrintingQueue() { return this.printingQueue; }
+
+    public void setPrintingQueue(String printingQueue) { this.printingQueue = printingQueue; }
 
     public static AppConfig produce(Deployment deployment) {
         return produce(AppConfig.class, deployment);

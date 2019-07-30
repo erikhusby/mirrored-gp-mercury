@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.printing;
 
 import org.broadinstitute.bsp.client.printing.PrintingMessage;
 import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtility;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 
 import javax.annotation.Resource;
 import javax.enterprise.context.Dependent;
@@ -25,6 +26,9 @@ import java.util.List;
 public class PrintingMessageResource {
 
     @Inject
+    private AppConfig appConfig;
+
+    @Inject
     SessionContextUtility sessionContextUtility;
 
     @Resource(lookup="java:/jms/RemoteMercuryConnectionFactory")
@@ -40,7 +44,7 @@ public class PrintingMessageResource {
             connection.start();
 
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            Destination destination = session.createQueue(PrintingMessageBean.QUEUE_NAME);
+            Destination destination = session.createQueue(getQueueName());
             MessageProducer producer = session.createProducer(destination);
             producer.setDeliveryMode(DeliveryMode.PERSISTENT);
 
@@ -65,5 +69,12 @@ public class PrintingMessageResource {
         ObjectMessage message = session.createObjectMessage();
         message.setObject(printingMessage);
         return message;
+    }
+
+    /**
+     * @return Get the queue name for the environment loaded.
+     */
+    private String getQueueName() {
+        return appConfig.getPrintingQueue();
     }
 }

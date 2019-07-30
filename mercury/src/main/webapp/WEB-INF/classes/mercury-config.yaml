@@ -9,6 +9,7 @@ app:
       jmsPort:  5445
       workflowValidationEmail:
       gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
+      printingQueue:  broad.queue.mercury.printing.dev
 
     AUTO_BUILD:
       host:     vmercurydev.broadinstitute.org
@@ -16,6 +17,7 @@ app:
       jmsPort:  5445
       workflowValidationEmail:
       gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
+      printingQueue:  broad.queue.mercury.printing.dev
 
     TEST:
       host:     mercuryfb.broadinstitute.org
@@ -23,12 +25,15 @@ app:
       jmsPort:  5445
       workflowValidationEmail:
       gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
+      printingQueue:  broad.queue.mercury.printing.test
+
     QA:
       host:     mercuryqa.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
       gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
+      printingQueue:  broad.queue.mercury.printing.qa
 
     RC:
       host:     mercuryrc.broadinstitute.org
@@ -36,6 +41,7 @@ app:
       jmsPort:  5445
       workflowValidationEmail:
       gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
+      printingQueue:  broad.queue.mercury.printing.rc
 
     PROD:
       host:     mercury.broadinstitute.org
@@ -44,6 +50,7 @@ app:
       workflowValidationEmail: mercury-dev@broadinstitute.org
       #limsworkflowvalidation@broadinstitute.org
       gpBillingManagers: !!set { suhamil@broadinstitute.org, sferrier@broadinstitute.org }
+      printingQueue:  broad.queue.mercury.printing.production
 
 bsp:
 

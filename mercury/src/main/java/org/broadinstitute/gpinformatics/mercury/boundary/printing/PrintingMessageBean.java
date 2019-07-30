@@ -48,9 +48,6 @@ public class PrintingMessageBean implements MessageListener {
 
     private static final Log logger = LogFactory.getLog(PrintingMessageBean.class);
 
-    // todo this needs to be loaded from a configuration of some kind to ensure environment specific settings.
-    public static final String QUEUE_NAME = "broad.queue.mercury.printing.dev";
-
     @Inject
     private BoundSessionContext sessionContext;
 
