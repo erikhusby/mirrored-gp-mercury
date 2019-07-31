@@ -4,21 +4,6 @@
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoPackageReceiptActionBean"/>
 <stripes:layout-render name="/layout.jsp" pageTitle="Mayo Package Receipt" sectionTitle="Mayo Package Receipt">
 
-    <stripes:layout-component name="extraHead">
-        <script type="text/javascript">
-            function showIt() {
-                $j("#manifestContents").show();
-                $j("#showBtn").hide();
-                $j("#hideBtn").show();
-            }
-            function hideIt() {
-                $j("#manifestContents").hide();
-                $j("#showBtn").show();
-                $j("#hideBtn").hide();
-            }
-        </script>
-    </stripes:layout-component>
-
     <stripes:layout-component name="content">
         <style type="text/css">
             div.inputGroup {
@@ -41,36 +26,23 @@
             }
         </style>
 
-        <!-- The manifest file in a grid. -->
-        <c:if test="${!actionBean.getManifestCellGrid().isEmpty()}">
-            <div>
-                <span>Found manifest file: ${actionBean.filename}</span>
-                <span style="padding-left: 15px;">
-                    <button id="showBtn" onclick="showIt()">Show</button>
-                    <button id="hideBtn" onclick="hideIt()" style="display: none;">Hide</button>
-                </span>
-            </div>
-            <div id="manifestContents" style="padding-top: 10px; display: none";>
-                <table id="manifestCellGrid" border="2">
-                    <tbody>
-                    <c:forEach items="${actionBean.getManifestCellGrid()}" var="manifestRow">
-                        <tr>
-                            <c:forEach items="${manifestRow}" var="manifestColumn">
-                                <td align="center">${manifestColumn}</td>
-                            </c:forEach>
-                        </tr>
-                    </c:forEach>
-                    </tbody>
-                </table>
-            </div>
-        </c:if>
-
         <stripes:form beanclass="${actionBean.class.name}" id="saveForm" class="form-horizontal">
             <!-- The hidden variables to pass back to the action bean. -->
-            <stripes:hidden name="packageBarcode" value="${actionBean.packageBarcode}"/>
-            <stripes:hidden name="rackCount" value="${actionBean.rackCount}"/>
-            <stripes:hidden name="rackBarcodeString" value="${actionBean.rackBarcodeString}"/>
+            <input type="hidden" name="packageBarcode" value="${actionBean.packageBarcode}"/>
+            <input type="hidden" name="rackCount" value="${actionBean.rackCount}"/>
+            <input type="hidden" name="rackBarcodeString" value="${actionBean.rackBarcodeString}"/>
             <input type="hidden" name="filename" value="${actionBean.filename}"/>
+
+            <!-- Shows the manifest filename and button to download it. -->
+            <c:if test="${!empty actionBean.filename}">
+                <div>
+                    <span>Found manifest file: ${actionBean.filename}</span>
+                    <span style="padding-left: 15px;">
+                        <stripes:submit id="downloadBtn" name="downloadBtn" value="Download" class="btn btn-primary"
+                                        title="Downloads the manifest file."/>
+                    </span>
+                </div>
+            </c:if>
 
             <div class="inputGroup">
                 <div class="inputRow">
@@ -99,7 +71,7 @@
                     <p>To quarantine a rack, select a reason:</p>
                 </div>
                 <c:forEach items="${actionBean.rackBarcodes}" var="barcode" varStatus="item">
-                    <stripes:hidden name="rackBarcodes[${item.index}]" value="${barcode}"/>
+                    <input type="hidden" name="rackBarcodes[${item.index}]" value="${barcode}"/>
                     <div class="inputRow">
                         <div class="firstCol" style="float: right;">${barcode}</div>
                         <div class="secondCol">

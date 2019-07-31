@@ -14,7 +14,7 @@
                 <!-- After doing the test access, a list of files is obtained and can be downloaded as a txt file. -->
                 <c:if test="${fn:length(actionBean.bucketList) > 0}">
                     <c:forEach items="${actionBean.bucketList}" var="filename" varStatus="item">
-                        <stripes:hidden name="bucketList[${item.index}]" value="${filename}"/>
+                        <input type="hidden"  name="bucketList[${item.index}]" value="${filename}"/>
                     </c:forEach>
 
                     <span style="margin-left: 20px;">
@@ -33,7 +33,7 @@
                                     title="Click to display contents of a manifest file."/>
                     <span style="margin-left: 20px;">
                         Filename:
-                        <stripes:text id="filename" name="filename"/>
+                        <input type="text" id="filename" name="filename"/>
                     </span>
                 </span>
             </div>
@@ -64,7 +64,7 @@
                                         title="Click to cause a new Google login key to be generated."/>
                     </div>
                     <div style="padding-left: 20px;">
-                        <stripes:checkbox id="rotateAcknowledgement" name="rotateAcknowledgement"/>
+                        <input type=":checkbox" id="rotateAcknowledgement" name="rotateAcknowledgement"/>
                         <stripes:label for="rotateAcknowledgement">
                             OK to lock out other Mercury servers using the Google storage bucket.
                         </stripes:label>
@@ -84,7 +84,7 @@
                     </span>
                 </span>
                 <div style="padding-left: 20px;">
-                    <stripes:checkbox id="uploadCredentialAcknowledgement" name="uploadCredentialAcknowledgement"/>
+                    <input type="checkbox" id="uploadCredentialAcknowledgement" name="uploadCredentialAcknowledgement"/>
                     <stripes:label for="uploadCredentialAcknowledgement">
                         OK to lock out other Mercury servers using the Google storage bucket.
                     </stripes:label>

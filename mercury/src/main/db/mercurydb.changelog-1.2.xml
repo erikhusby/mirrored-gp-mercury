@@ -2340,15 +2340,15 @@
     </changeSet>
     <changeSet id="GPLIM-6005-010" author="epolk">
         <createTable schemaName="mercury" tableName="manifest_vessel_labels">
-            <column name="manifest_session" type="number(19,0)">
+            <column name="vessel_labels" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="vessel_labels" type="varchar(255)">
+            <column name="manifest_session" type="number(19,0)">
                 <constraints nullable="false"/>
             </column>
         </createTable>
         <addPrimaryKey constraintName="pk_manifest_vessel_labels" tableName="manifest_vessel_labels"
-                       columnNames="manifest_session, vessel_labels"/>
+                       columnNames="vessel_labels"/>
     </changeSet>
     <changeSet id="GPLIM-6005-011" author="epolk">
         <createTable schemaName="mercury" tableName="manifest_vessel_labels_aud">
@@ -2358,26 +2358,32 @@
             <column name="revtype" type="number(3,0)">
                 <constraints nullable="false"/>
             </column>
-            <column name="manifest_session" type="number(19,0)">
+            <column name="vessel_labels" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="vessel_labels" type="varchar(255)"/>
+            <column name="manifest_session" type="number(19,0)"/>
         </createTable>
         <addPrimaryKey constraintName="pk_manifest_vessl_labl_aud" tableName="manifest_vessel_labels_aud"
-                       columnNames="rev, manifest_session, vessel_labels"/>
+                       columnNames="rev, vessel_labels"/>
     </changeSet>
     <changeSet id="GPLIM-6005-012" author="epolk">
-        <createIndex indexName="ix_manifest_vessl_lbl_aud" tableName="manifest_vessel_labels_aud">
+        <createIndex indexName="ix_manifest_vssl_lbl_m_aud" tableName="manifest_vessel_labels_aud">
             <column name="manifest_session"/>
             <column name="rev"/>
         </createIndex>
     </changeSet>
     <changeSet id="GPLIM-6005-013" author="epolk">
-        <createIndex indexName="ix_manifest_vessel_labels" tableName="manifest_vessel_labels">
+        <createIndex indexName="ix_manifest_vssl_lbl_l_aud" tableName="manifest_vessel_labels_aud">
             <column name="vessel_labels"/>
+            <column name="rev"/>
         </createIndex>
     </changeSet>
     <changeSet id="GPLIM-6005-014" author="epolk">
+        <createIndex indexName="ix_manifest_vessel_labels" tableName="manifest_vessel_labels">
+            <column name="manifest_session"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-6005-015" author="epolk">
         <addForeignKeyConstraint constraintName="fk_manifest_vessel_lbl"
                                  baseTableSchemaName="mercury" referencedTableSchemaName="mercury"
                                  baseTableName="manifest_vessel_labels" baseColumnNames="manifest_session"
@@ -2385,7 +2391,7 @@
     </changeSet>
 
 
-    <changeSet id="GPLIM-6005-015" author="epolk">
+    <changeSet id="GPLIM-6005-016" author="epolk">
         <createTable schemaName="mercury" tableName="quarantined">
             <column name="quarantined_id" type="number(19,0)">
                 <constraints nullable="false"/>
@@ -2406,11 +2412,11 @@
         <addPrimaryKey constraintName="pk_quarantined" tableName="quarantined"
                        columnNames="quarantined_id"/>
     </changeSet>
-    <changeSet id="GPLIM-6005-016" author="epolk">
+    <changeSet id="GPLIM-6005-017" author="epolk">
         <createSequence schemaName="mercury" sequenceName="SEQ_QUARANTINED" incrementBy="50"/>
     </changeSet>
 
-    <changeSet id="GPLIM-6005-017" author="epolk">
+    <changeSet id="GPLIM-6005-018" author="epolk">
         <createTable schemaName="mercury" tableName="quarantined_aud">
             <column name="rev" type="number(19,0)">
                 <constraints nullable="false"/>
@@ -2429,13 +2435,13 @@
         <addPrimaryKey constraintName="pk_quarantined_aud" tableName="quarantined_aud"
                        columnNames="rev, quarantined_id"/>
     </changeSet>
-    <changeSet id="GPLIM-6005-018" author="epolk">
+    <changeSet id="GPLIM-6005-019" author="epolk">
         <createIndex indexName="ix_quarantined_aud" tableName="quarantined_aud">
             <column name="quarantined_id"/>
             <column name="rev"/>
         </createIndex>
     </changeSet>
-    <changeSet id="GPLIM-6005-019" author="epolk">
+    <changeSet id="GPLIM-6005-020" author="epolk">
         <addUniqueConstraint tableName="quarantined" columnNames="item_source, item_type, item"
                              constraintName="u_quarantined" schemaName="mercury" />
     </changeSet>

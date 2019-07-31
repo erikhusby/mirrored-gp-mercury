@@ -89,20 +89,18 @@ public class ManifestSessionDao extends GenericDao {
     }
 
     /**
-     * Returns the most recent manifest with the given sessionPrefix.
+     * Returns the manifest for the given sessionPrefix. For Mayo manifests there will be one, or none.
      */
     public ManifestSession getSessionByPrefix(String prefix) {
-        return findList(ManifestSession.class, ManifestSession_.sessionPrefix, prefix).
-                stream().
-                sorted((o1, o2) ->
-                        o2.getUpdateData().getModifiedDate().compareTo(o1.getUpdateData().getModifiedDate())).
-                findFirst().orElse(null);
+        return findSingle(ManifestSession.class, ManifestSession_.sessionPrefix, prefix);
     }
 
     /**
-     * Returns the most recent manifest for the given vessel label.
+     * Returns the manifest for the given vessel label. For Mayo manifests there will be one, or none.
      */
     public ManifestSession getSessionByVesselLabel(String label) {
+        // FYI this code was observed to be doing an inner join with manifest_vessel_labels
+        // using the label in the where clause, so it will be an efficient indexed lookup.
         CriteriaBuilder builder = getCriteriaBuilder();
         CriteriaQuery<ManifestSession> query = builder.createQuery(ManifestSession.class);
         Root<ManifestSession> root = query.from(ManifestSession.class);
@@ -111,9 +109,6 @@ public class ManifestSessionDao extends GenericDao {
         query.where(builder.equal(vesselLabels, param));
         TypedQuery<ManifestSession> manifestQuery = getEntityManager().createQuery(query);
         manifestQuery.setParameter(param, label);
-        return manifestQuery.getResultList().stream().
-                sorted((o1, o2) ->
-                        o2.getUpdateData().getModifiedDate().compareTo(o1.getUpdateData().getModifiedDate())).
-                findFirst().orElse(null);
+        return manifestQuery.getResultList().stream().findFirst().orElse(null);
     }
 }

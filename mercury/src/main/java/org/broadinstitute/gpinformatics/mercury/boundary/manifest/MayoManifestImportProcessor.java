@@ -27,9 +27,11 @@ import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -43,6 +45,8 @@ import java.util.stream.Stream;
 public class MayoManifestImportProcessor {
     public static final String CANNOT_PARSE = "Manifest file %s cannot be parsed due to %s.";
     public static final String DUPLICATE_HEADER = "Manifest file %s has duplicate header %s.";
+    public static final String DUPLICATE_POSITION = "Manifest file %s has duplicate rack position %s.";
+    public static final String DUPLICATE_TUBE = "Manifest file %s has duplicate tube barcode %s.";
     public static final String INCONSISTENT = "Manifest file %s has inconsistent values for %s.";
     public static final String INVALID_DATA = "Manifest file %s has invalid values for %s.";
     public static final String MISSING_DATA = "Manifest file %s is missing required values for %s.";
@@ -59,7 +63,8 @@ public class MayoManifestImportProcessor {
         // For initHeaders() to match, defines names in lower case, space delimited, no parenthetical part.
         PACKAGE_ID("package id", Metadata.Key.PACKAGE_ID, Attribute.REQUIRED),
         BIOBANK_SAMPLE_ID("biobank id sample id", Metadata.Key.SAMPLE_ID, Attribute.REQUIRED),
-        BOX_ID("box id", Metadata.Key.BOX_ID, Attribute.REQUIRED),
+        BOX_ID("box id", Metadata.Key.BOX_ID),
+        RACK_BARCODE("package storageunit id", Metadata.Key.RACK_LABEL, Attribute.REQUIRED),
         WELL_POSITION("well position", Metadata.Key.WELL_POSITION, Attribute.REQUIRED),
         SAMPLE_ID("sample id", Metadata.Key.COLLAB_SAMPLE_ID2, Attribute.REQUIRED),
         PARENT_SAMPLE_ID("parent sample id", Metadata.Key.COLLAB_PARTICIPANT_ID2),
@@ -225,12 +230,12 @@ public class MayoManifestImportProcessor {
             initHeaders(cellGrid.get(0), unknownUnits, unknownHeaders);
 
             // Finds missing required headers.
-            List<String> missingHeaders = Arrays.asList(Header.values()).stream().
+            List<String> missingHeaders = Arrays.stream(Header.values()).
                     filter(header -> header.isRequired() && !sheetHeaders.contains(header)).
                     map(Header::getText).collect(Collectors.toList());
             // Finds duplicate headers.
             List<String> duplicateHeaders = CollectionUtils.getCardinalityMap(
-                    sheetHeaders.stream().filter(header -> header != null).collect(Collectors.toList())).
+                    sheetHeaders.stream().filter(Objects::nonNull).collect(Collectors.toList())).
                     entrySet().stream().
                     filter(mapEntry -> mapEntry.getValue() > 1).
                     map(mapEntry -> mapEntry.getKey().getText()).
@@ -240,10 +245,15 @@ public class MayoManifestImportProcessor {
             Set<String> badValues = new HashSet<>();
             Set<String> missingValues = new HashSet<>();
             Set<String> packageIds = new HashSet<>();
-            if (missingHeaders.isEmpty() && unknownUnits.isEmpty() && unknownHeaders.isEmpty() &&
-                    duplicateHeaders.isEmpty()) {
+            Set<String> rackAndPosition = new HashSet<>();
+            List<String> duplicateRackAndPosition = new ArrayList<>();
+            Set<String> tubeBarcodes = new HashSet<>();
+            List<String> duplicateTubeBarcodes = new ArrayList<>();
+            if (missingHeaders.isEmpty() && unknownUnits.isEmpty() && duplicateHeaders.isEmpty()) {
                 // Validates the data before attempting to persist ManifestRecords.
                 for (List<String> row : cellGrid.subList(1, cellGrid.size())) {
+                    String rackBarcode = null;
+                    String position = null;
                     for (int columnIndex = 0; columnIndex < sheetHeaders.size(); ++columnIndex) {
                         Header header = sheetHeaders.get(columnIndex);
                         if (header != null && !header.isIgnored()) {
@@ -260,39 +270,65 @@ public class MayoManifestImportProcessor {
                                 }
                                 if (header == Header.PACKAGE_ID) {
                                     packageIds.add(value);
+                                } else if (header == Header.MATRIX_ID) {
+                                    if (!tubeBarcodes.add(value)) {
+                                        duplicateTubeBarcodes.add(value);
+                                    }
+                                } else if (header == Header.RACK_BARCODE) {
+                                    rackBarcode = value;
+                                } else if (header == Header.WELL_POSITION) {
+                                    position = value;
                                 }
                             } else if (header.isRequired()) {
                                 missingValues.add(header.getText());
                             }
                         }
                     }
-
+                    if (!rackAndPosition.add(rackBarcode + position)) {
+                        duplicateRackAndPosition.add(rackBarcode + " " + position);
+                    }
                 }
             }
+            // Error if the data is unacceptable. Otherwise make it informational.
+            boolean dataOk = true;
             if (!missingHeaders.isEmpty()) {
                 messages.addError(MISSING_HEADER, filename, StringUtils.join(missingHeaders, ", "));
+                dataOk = false;
             }
             if (!unknownHeaders.isEmpty()) {
-                messages.addWarning(UNKNOWN_HEADER, filename, StringUtils.join(unknownHeaders, ", "));
+                messages.addInfo(UNKNOWN_HEADER, filename, StringUtils.join(unknownHeaders, ", "));
             }
             if (!unknownUnits.isEmpty()) {
                 messages.addError(UNKNOWN_UNITS, filename, StringUtils.join(unknownUnits, ", "));
+                dataOk = false;
             }
             if (!duplicateHeaders.isEmpty()) {
                 messages.addError(DUPLICATE_HEADER, filename, StringUtils.join(duplicateHeaders, ", "));
+                dataOk = false;
             }
             if (!missingValues.isEmpty()) {
                 messages.addError(MISSING_DATA, filename, StringUtils.join(missingValues, ", "));
+                dataOk = false;
             }
             if (!badValues.isEmpty()) {
                 messages.addError(INVALID_DATA, filename, StringUtils.join(badValues, ", "));
+                dataOk = false;
             }
             if (packageIds.size() > 1) {
                 messages.addError(String.format(INCONSISTENT, filename, StringUtils.join(packageIds, ", ")));
+                dataOk = false;
             }
-
-            if (missingHeaders.isEmpty() && unknownUnits.isEmpty() && unknownHeaders.isEmpty() &&
-                    duplicateHeaders.isEmpty() && badValues.isEmpty() && missingValues.isEmpty()) {
+            if (!duplicateTubeBarcodes.isEmpty()) {
+                duplicateTubeBarcodes.sort(Comparator.naturalOrder());
+                messages.addError(DUPLICATE_TUBE, filename, StringUtils.join(duplicateTubeBarcodes, ", "));
+                dataOk = false;
+            }
+            if (!duplicateRackAndPosition.isEmpty()) {
+                duplicateRackAndPosition.sort(Comparator.naturalOrder());
+                messages.addError(DUPLICATE_POSITION, filename, StringUtils.join(duplicateRackAndPosition, ", "));
+                dataOk = false;
+            }
+            if (dataOk) {
                 // Makes a ManifestRecord for each row of data.
                 for (List<String> row : cellGrid.subList(1, cellGrid.size())) {
                     ManifestRecord manifestRecord = new ManifestRecord();
@@ -322,13 +358,13 @@ public class MayoManifestImportProcessor {
     private void initHeaders(List<String> headerRow, @Nullable List<String> unknownUnits,
             @Nullable List<String> unknownHeaders) {
         sheetHeaders.clear();
-        sheetHeaders.addAll(MayoManifestImportProcessor.extractHeaders(headerRow, unknownUnits, unknownHeaders));
+        sheetHeaders.addAll(extractHeaders(headerRow, unknownUnits, unknownHeaders));
     }
 
     /**
      * Parses the header text, extracts the units if any, and sets the header's conversion factor.
      */
-    static List<Header> extractHeaders(List<String> headerRow, @Nullable List<String> unknownUnits,
+    private List<Header> extractHeaders(List<String> headerRow, @Nullable List<String> unknownUnits,
             @Nullable List<String> unknownHeaders) {
 
         Map<String, Header> nameToHeader = Stream.of(Header.values()).
@@ -372,7 +408,7 @@ public class MayoManifestImportProcessor {
      * Returns the string stripped of control characters, line breaks, and >7-bit ascii
      * (which become upside-down ? characters in the database).
      */
-    public static String cleanupValue(String value) {
+    private String cleanupValue(String value) {
         return cleanupValue(value, "");
     }
 

@@ -5,7 +5,6 @@ import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
-import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -17,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.infrastructure.Quarantine
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,6 +38,7 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
     private static final String UPDATE_MANIFEST_BTN = "updateManifestBtn";
 
     private static final String PAGE2 = "mayo_package_receipt2.jsp";
+    private static final String DOWNLOAD_BTN = "downloadBtn";
     private static final String RECEIVE_BTN = "receiveBtn";
     private static final String CANCEL_BTN = "cancelBtn";
 
@@ -51,37 +52,24 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
     private QuarantinedDao quarantinedDao;
 
     private MessageCollection messageCollection = new MessageCollection();
-    private List<List<String>> manifestCellGrid = new ArrayList<>();
-
-    @Validate(required = true, on = {CONTINUE_BTN, UPDATE_MANIFEST_BTN, RECEIVE_BTN})
     private String packageBarcode;
-
     private String filename;
-
-    @Validate(required = true, on = {RECEIVE_BTN})
     private String shipmentCondition;
-
-    @Validate(required = true, on = {RECEIVE_BTN})
     private String deliveryMethod;
-
-    @Validate(required = true, on = {RECEIVE_BTN})
     private String trackingNumber;
-
-    @Validate(required = true, on = {CONTINUE_BTN, RECEIVE_BTN})
     private String rackBarcodeString;
-
-    @Validate(required = true, minvalue = 1, on = {CONTINUE_BTN})
     private String rackCount;
-
     private String rctUrl;
     private List<String> rackBarcodes = Collections.emptyList();
     private Map<String, String> quarantineBarcodeAndReason = new HashMap<>();
     private List<Quarantined> quarantined = new ArrayList<>();
-    private boolean allowUpdate = false;
+    private boolean allowUpdate;
+    private boolean clearFields = false;
 
     @DefaultHandler
     @HandlesEvent(CANCEL_BTN)
     public Resolution page1() {
+        clearFields = true;
         return new ForwardResolution(PAGE1);
     }
 
@@ -90,14 +78,19 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
      */
     @HandlesEvent(CONTINUE_BTN)
     public Resolution receiptContinue() {
+        if (StringUtils.isBlank(packageBarcode)) {
+            addValidationError("packageBarcode", "Package barcode is required.");
+        }
         if (StringUtils.isBlank(rackBarcodeString)) {
-            addValidationError(rackBarcodeString, "One or more rack barcodes are required.");
-        } else if (CollectionUtils.isEmpty(rackBarcodes)) {
-            addValidationError(rackBarcodeString, "Cannot parse rack barcode(s)");
-        } else if (StringUtils.isBlank(rackCount) || !NumberUtils.isDigits(rackCount)) {
-            addValidationError(rackBarcodeString, "Number of racks is required");
+            addValidationError("rackBarcodeString", "One or more rack barcodes are required.");
+        }
+        if (CollectionUtils.isEmpty(rackBarcodes)) {
+            addValidationError("rackBarcodeString", "Cannot parse rack barcode(s)");
+        }
+        if (StringUtils.isBlank(rackCount) || !NumberUtils.isDigits(rackCount)) {
+            addValidationError("rackBarcodeString", "Number of racks is required");
         } else if (rackBarcodes.size() != Integer.parseInt(rackCount)) {
-            addValidationError(rackBarcodeString, "Number of rack barcodes does not match the number of racks.");
+            addValidationError("rackBarcodeString", "Number of rack barcodes does not match the number of racks.");
         } else {
             String duplicates = rackBarcodes.stream().
                     collect(Collectors.groupingBy(Function.identity(), Collectors.counting())).entrySet().stream().
@@ -105,14 +98,15 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
                     map(Map.Entry::getKey).
                     collect(Collectors.joining(", "));
             if (!duplicates.isEmpty()) {
-                addValidationError(rackBarcodeString, "Found duplicate rack barcodes: " + duplicates);
+                addValidationError("rackBarcodeString", "Found duplicate rack barcodes: " + duplicates);
             }
         }
         if (getValidationErrors().isEmpty()) {
             mayoManifestEjb.packageReceiptValidation(this);
+            addMessages(messageCollection);
+            return new ForwardResolution(hasErrors() ? PAGE1 : PAGE2);
         }
-        addMessages(messageCollection);
-        return hasErrors() ? new ForwardResolution(PAGE1) : new ForwardResolution(PAGE2);
+        return new ForwardResolution(PAGE1);
     }
 
     /**
@@ -120,9 +114,24 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
      */
     @HandlesEvent(RECEIVE_BTN)
     public Resolution receiveBtn() {
-        mayoManifestEjb.packageReceipt(this);
-        addMessages(messageCollection);
-        return new ForwardResolution(PAGE1);
+        assert(StringUtils.isNotBlank(packageBarcode));
+        assert(StringUtils.isNotBlank(rackBarcodeString));
+        if (StringUtils.isBlank(shipmentCondition)) {
+            addValidationError("shipmentCondition", "Shipment condition must not be blank.");
+        }
+        if (StringUtils.isBlank(deliveryMethod)) {
+            addValidationError("deliveryMethod", "Delivery method must not be blank.");
+        }
+        if (StringUtils.isBlank(trackingNumber)) {
+            addValidationError("trackingNumber", "Tracking number must not be blank.");
+        }
+        if (getValidationErrors().isEmpty()) {
+            mayoManifestEjb.packageReceipt(this);
+            addMessages(messageCollection);
+            clearFields = true;
+            return new ForwardResolution(PAGE1);
+        }
+        return new ForwardResolution(PAGE2);
     }
 
     /**
@@ -130,9 +139,36 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
      */
     @HandlesEvent(UPDATE_MANIFEST_BTN)
     public Resolution updateManifestBtn() {
-        mayoManifestEjb.updateManifest(this);
-        addMessages(messageCollection);
+        if (StringUtils.isBlank(packageBarcode)) {
+            addValidationError("packageBarcode", "Package barcode is required.");
+        } else {
+            mayoManifestEjb.updateManifest(this);
+            addMessages(messageCollection);
+            clearFields = !messageCollection.hasErrors();
+        }
         return new ForwardResolution(PAGE1);
+    }
+
+    /**
+     * Downloads the manifest file.
+     */
+    @HandlesEvent(DOWNLOAD_BTN)
+    public Resolution download() {
+        final byte[] bytes = mayoManifestEjb.download(this);
+        if (bytes == null) {
+            addMessages(messageCollection);
+            return new ForwardResolution(PAGE2);
+        } else {
+            return (request, response) -> {
+                response.setContentType("application/text");
+                response.setContentLength(bytes.length);
+                response.setHeader("Expires:", "0"); // eliminates browser caching
+                response.setHeader("Content-Disposition", "attachment; filename=" + filename);
+                OutputStream outStream = response.getOutputStream();
+                outStream.write(bytes);
+                outStream.flush();
+            };
+        }
     }
 
     /**
@@ -154,14 +190,6 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
 
     public void setMessageCollection(MessageCollection messageCollection) {
         this.messageCollection = messageCollection;
-    }
-
-    public List<List<String>> getManifestCellGrid() {
-        return manifestCellGrid;
-    }
-
-    public void setManifestCellGrid(List<List<String>> manifestCellGrid) {
-        this.manifestCellGrid = manifestCellGrid;
     }
 
     public String getFilename() {
@@ -263,7 +291,12 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
         return allowUpdate;
     }
 
-    public void setAllowUpdate(boolean allowReceiptUpdate) {
-        this.allowUpdate = allowReceiptUpdate;
+    public void setAllowUpdate(boolean allowUpdate) {
+        this.allowUpdate = allowUpdate;
+    }
+
+    /** Indicates whether the UI should clear the text fields. */
+    public boolean getClearFields() {
+        return clearFields;
     }
 }

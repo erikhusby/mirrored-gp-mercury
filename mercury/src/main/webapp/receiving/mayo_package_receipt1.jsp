@@ -2,18 +2,28 @@
 <%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoPackageReceiptActionBean"/>
-<script type="text/javascript">
-    function receiveIt() {
-        $j(".updateMode").css('display', 'none');
-        $j(".receiveMode").css('display', 'block');
-    };
-    function updateIt() {
-        $j(".updateMode").css('display', 'block');
-        $j(".receiveMode").css('display', 'none');
-    };
-</script>
-
 <stripes:layout-render name="/layout.jsp" pageTitle="Mayo Package Receipt" sectionTitle="Mayo Package Receipt">
+    <stripes:layout-component name="extraHead">
+        <script type="text/javascript">
+            $j(document).ready(function () {
+                if (${actionBean.clearFields}) {
+                    $j("#packageBarcode").val('');
+                    $j("#rackCount").val('');
+                    $j("#rackBarcodeString").val('');
+                    $j("#filename").val('');
+                }
+            });
+            function receiveIt() {
+                $j(".updateMode").css('display', 'none');
+                $j(".receiveMode").css('display', 'block');
+            };
+            function updateIt() {
+                $j(".updateMode").css('display', 'block');
+                $j(".receiveMode").css('display', 'none');
+            };
+        </script>
+    </stripes:layout-component>
+
     <stripes:layout-component name="content">
         <style type="text/css">
             div.inputGroup {
@@ -73,7 +83,7 @@
                     </div>
                 </div>
             </div>
-            <div class="inputGroup">
+            <div class="inputGroup updateMode" style="display: none">
                 <div class="inputRow" title="Full path to the file including folder names, slashes, and the file suffix.
 Leave this blank if you want Mercury to search for the file.">
                     <div class="firstCol">Manifest filename</div>
@@ -81,11 +91,13 @@ Leave this blank if you want Mercury to search for the file.">
                         <stripes:text id="filename" name="filename"/>
                     </div>
                 </div>
+            </div>
+            <div class="inputGroup">
                 <div class="inputRow" title="Check this to allow an existing package receipt to be updated with new values.">
                     <div class="firstCol">
                         <div style="float: left;">Allow Update</div>
                         <div style="float: right;">
-                            <stripes:checkbox style="" id="allowUpdate" name="allowUpdate"/>
+                            <input type="checkbox" style="" id="allowUpdate" name="allowUpdate"/>
                         </div>
                     </div>
                 </div>

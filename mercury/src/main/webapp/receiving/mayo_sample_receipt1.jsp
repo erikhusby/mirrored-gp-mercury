@@ -36,7 +36,7 @@
                 <div class="control-group">
                     <div class="control-label">Rack Barcode</div>
                     <div class="controls">
-                        <stripes:text id="rackBarcode" name="rackBarcode"/>
+                        <input type="text" id="rackBarcode" name="rackBarcode"/>
                     </div>
                 </div>
 

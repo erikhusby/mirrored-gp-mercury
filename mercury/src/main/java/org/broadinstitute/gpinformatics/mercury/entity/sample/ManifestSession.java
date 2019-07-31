@@ -121,6 +121,7 @@ public class ManifestSession implements Updatable {
     @Column
     private String manifestFilename;
 
+    // A vessel label can only refer to one manifest. There is a unique index on manifest_vessel_labels.vessel_labels.
     @ElementCollection
     @CollectionTable(name = "MANIFEST_VESSEL_LABELS", joinColumns=@JoinColumn(name="MANIFEST_SESSION"))
     private Set<String> vesselLabels = new HashSet<>();

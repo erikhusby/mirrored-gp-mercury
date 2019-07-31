@@ -23,7 +23,7 @@
         </style>
 
         <stripes:form beanclass="${actionBean.class.name}" id="quarantinesForm" class="form-horizontal">
-            <div class="displayGroup">
+            <div class="displayGroup" id="quarantinedItems">
                 <c:forEach items="${actionBean.quarantined}" var="qItem">
                     <div class="displayRow">
                         <div class="firstCol">${qItem.item}</div>

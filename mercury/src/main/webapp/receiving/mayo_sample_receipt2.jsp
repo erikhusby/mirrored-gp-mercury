@@ -13,9 +13,9 @@
 
         <stripes:form beanclass="${actionBean.class.name}" id="saveForm" class="form-horizontal">
             <!-- The hidden variables to pass back to the action bean. -->
-            <stripes:hidden name="rackBarcode" value="${actionBean.rackBarcode}"/>
+            <input type="hidden" name="rackBarcode" value="${actionBean.rackBarcode}"/>
             <c:forEach items="${actionBean.rackScanEntries}" var="mapEntry" varStatus="item">
-                <stripes:hidden name="rackScanEntries[${item.index}]" value="${mapEntry}"/>
+                <input type="hidden" name="rackScanEntries[${item.index}]" value="${mapEntry}"/>
             </c:forEach>
 
             <!-- Displays the scan result as a table of positions. -->

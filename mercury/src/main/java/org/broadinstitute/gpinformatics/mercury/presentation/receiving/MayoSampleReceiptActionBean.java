@@ -33,7 +33,6 @@ public class MayoSampleReceiptActionBean extends RackScanActionBean {
 
     private MessageCollection messageCollection = new MessageCollection();
     private List<String> rackScanEntries = new ArrayList<>();
-    private Long manifestSessionId;
 
     @Inject
     private MayoManifestEjb mayoManifestEjb;
@@ -130,11 +129,4 @@ public class MayoSampleReceiptActionBean extends RackScanActionBean {
         this.rackBarcode = rackBarcode;
     }
 
-    public Long getManifestSessionId() {
-        return manifestSessionId;
-    }
-
-    public void setManifestSessionId(Long manifestSessionId) {
-        this.manifestSessionId = manifestSessionId;
-    }
 }
