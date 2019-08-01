@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.billing;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.meanbean.test.BeanTester;
 import org.meanbean.test.EqualsMethodTester;
@@ -41,19 +42,19 @@ public class LedgerEntryTest {
     public static LedgerEntry createOneLedgerEntry(String sampleName, String priceItemName, double quantity,
                                                    Date workCompleteDate) {
         return new LedgerEntry(createSample(sampleName),
-                new PriceItem("quoteServerId", "platform", "category", priceItemName), workCompleteDate, quantity);
+                new PriceItem("quoteServerId", "platform", "category", priceItemName), workCompleteDate, new Product(), quantity);
     }
 
     public static LedgerEntry createOneLedgerEntry(ProductOrderSample sample, String priceItemName, double quantity,
                                                    Date workCompleteDate) {
         return new LedgerEntry(sample,
-                new PriceItem("quoteServerId", "platform", "category", priceItemName), workCompleteDate, quantity);
+                new PriceItem("quoteServerId", "platform", "category", priceItemName), workCompleteDate, new Product(), quantity);
     }
 
     public static LedgerEntry createBilledLedgerEntry(ProductOrderSample sample,
                                                       LedgerEntry.PriceItemType priceItemType) {
         LedgerEntry entry = new LedgerEntry(sample,
-                new PriceItem("quoteServerId", "platform", "category", "priceItem"), new Date(), 1);
+                new PriceItem("quoteServerId", "platform", "category", "priceItem"), new Date(), new Product(), 1);
         entry.setPriceItemType(priceItemType);
         entry.setBillingMessage(BillingSession.SUCCESS);
         return entry;

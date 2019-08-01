@@ -70,8 +70,15 @@ public class CreateBillingDataTest extends Arquillian {
 
             for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
                 if (productOrderSample.getName().contains("B")) {
-                    productOrderDao.persist(new LedgerEntry(productOrderSample, productOrder.getProduct().getPrimaryPriceItem(),
-                            new Date(), 1.1));
+                    if(productOrder.hasSapQuote()) {
+                        productOrderDao.persist(
+                                new LedgerEntry(productOrderSample, productOrder.getProduct(),
+                                        new Date(), 1.1));
+                    } else {
+                        productOrderDao.persist(
+                                new LedgerEntry(productOrderSample, productOrder.getProduct().getPrimaryPriceItem(),
+                                        new Date(), productOrder.getProduct(), 1.1));
+                    }
                 }
             }
 

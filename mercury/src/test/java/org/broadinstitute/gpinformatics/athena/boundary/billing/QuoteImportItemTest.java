@@ -5,17 +5,16 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -89,9 +88,12 @@ public class QuoteImportItemTest {
         for (int i = 0; i < numSamples; i++) {
             ProductOrderSample sample = new ProductOrderSample("sam" + System.currentTimeMillis() + "." + i + pdo.getSamples().size());
             pdo.addSample(sample);
-            LedgerEntry ledgerEntry = new LedgerEntry(sample, priceItem,new Date(),
-//                    pdo.getProduct(),
-                    amountPerLedgerEntry);
+            LedgerEntry ledgerEntry;
+            if(pdo.hasSapQuote()) {
+                ledgerEntry = new LedgerEntry(sample, pdo.getProduct(), new Date(), amountPerLedgerEntry);
+            } else {
+                ledgerEntry = new LedgerEntry(sample, priceItem, new Date(), pdo.getProduct(), amountPerLedgerEntry);
+            }
             ledgerEntry.setWorkItem(workItem);
             sample.getLedgerItems().add(ledgerEntry);
         }
@@ -170,9 +172,12 @@ public class QuoteImportItemTest {
         pdo.addSample(blah);
         PriceItem priceItem = new PriceItem();
         product.setPrimaryPriceItem(priceItem);
-        LedgerEntry ledgerEntry = new LedgerEntry(blah, priceItem,new Date(),
-//                new Product(),
-                2);
+        LedgerEntry ledgerEntry;
+        if(pdo.hasSapQuote()) {
+            ledgerEntry = new LedgerEntry(blah, product, new Date(),2);
+        } else {
+            ledgerEntry = new LedgerEntry(blah, priceItem, new Date(), new Product(), 2);
+        }
         ledgerEntry.setWorkItem(WORK_ITEM2);
         List<LedgerEntry> ledgerEntries = new ArrayList<>();
         ledgerEntries.add(ledgerEntry);

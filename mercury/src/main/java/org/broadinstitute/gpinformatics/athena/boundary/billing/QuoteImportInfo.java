@@ -128,13 +128,13 @@ public class QuoteImportInfo {
                         // Separate the items into debits and credits so that the quote server will not cancel out items.
                         for (LedgerEntry ledger : ledgerItems) {
                             if (ledger.getQuantity() < 0) {
-                                if (isReplacementPriceItem(priceListCache, ledger)) {
+                                if (!orderIndex.hasSapQuote() && isReplacementPriceItem(priceListCache, ledger)) {
                                     replacementCreditLedgerItems.add(ledger);
                                 } else {
                                     creditLedgerItems.add(ledger);
                                 }
                             } else {
-                                if (isReplacementPriceItem(priceListCache, ledger)) {
+                                if (!orderIndex.hasSapQuote() && isReplacementPriceItem(priceListCache, ledger)) {
                                     replacementDebitLedgerItems.add(ledger);
                                 } else {
                                     debitLedgerItems.add(ledger);

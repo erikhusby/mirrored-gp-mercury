@@ -36,7 +36,11 @@ public class PDOSampleBilledStatusTest {
         }
         pdo.addSample(pdoSample);
         pdo.getProduct().setPrimaryPriceItem(primaryPriceItem);
-        pdoSample.addLedgerItem(new Date(System.currentTimeMillis()), primaryPriceItem,3d);
+        if(pdo.hasSapQuote()) {
+            pdoSample.addLedgerItem(new Date(System.currentTimeMillis()), pdo.getProduct(),3d);
+        } else {
+            pdoSample.addLedgerItem(new Date(System.currentTimeMillis()), primaryPriceItem, pdo.getProduct(),3d);
+        }
 
         BillingSession billingSession = new BillingSession(3L,pdoSample.getLedgerItems());
         billingSession.setBilledDate(new Date(System.currentTimeMillis()));
