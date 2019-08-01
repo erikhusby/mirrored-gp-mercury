@@ -991,8 +991,17 @@ public class ProductOrderActionBean extends CoreActionBean {
         try {
             editOrder.updateQuoteItems(quote);
 
+            final Optional<OrderCalculatedValues> sapOrderCalculatedValues =
+                    Optional.ofNullable(sapService.calculateOpenOrderValues(additionalSampleCount, quote, editOrder));
+            double outstandingEstimate = 0;
+            if(sapOrderCalculatedValues.isPresent()) {
+                outstandingEstimate =
+                        sapOrderCalculatedValues.get().calculateTotalOpenOrderValue().doubleValue();
+            }
             BigDecimal fundsRemaining = quote.getQuoteHeader().fundsRemaining();
-            double outstandingEstimate = estimateSapOutstandingOrders(quote, additionalSampleCount, editOrder);
+            if(sapOrderCalculatedValues.isPresent()) {
+                fundsRemaining = fundsRemaining.subtract(sapOrderCalculatedValues.get().openDeliveryValues());
+            }
             double valueOfCurrentOrder = 0;
 
             if ((fundsRemaining.compareTo(BigDecimal.ZERO) <= 0)
@@ -1008,7 +1017,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             logger.error(e);
             addGlobalValidationError(e.getMessage());
         }
-
     }
 
     /**
@@ -1033,30 +1041,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         return value + getValueOfOpenOrders(ordersWithCommonQuote, foundQuote);
-    }
-
-    /**
-     * Retrieves and determines the monitary value of a subset of Open Orders within Mercury
-     * @return total dollar amount of the monitary value of orders associated with the given quote
-     */
-    double estimateSapOutstandingOrders(SapQuote foundQuote, int addedSampleCount, ProductOrder productOrder) {
-        double value = 0d;
-        Optional<BigDecimal> openSalesValue = Optional.empty();
-        try {
-            OrderCalculatedValues calculatedValues =
-                sapService.calculateOpenOrderValues(addedSampleCount, foundQuote, productOrder);
-            if (calculatedValues != null) {
-                Optional<ProductOrder> sapOrder = Optional.ofNullable(productOrder);
-                String sapNumber = null;
-                if(sapOrder.isPresent()) {
-                    sapNumber = sapOrder.get().getSapOrderNumber();
-                }
-                value = calculatedValues.calculateTotalOpenOrderValue(sapNumber).doubleValue();
-            }
-        } catch (SAPIntegrationException e) {
-            logger.info("Attempting to calculate order from SAP yielded an error", e);
-        }
-        return value;
     }
 
     /**
