@@ -5,6 +5,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
@@ -96,6 +97,10 @@ public class LedgerEntry implements Serializable {
     @JoinColumn(name = "SAP_ORDER_DETAIL_ID")
     private SapOrderDetail sapOrderDetail;
 
+    @ManyToOne
+    @JoinColumn("PRODUCT_ID")
+    private Product product;
+
     /**
      * Package private constructor for JPA use.
      */
@@ -103,11 +108,23 @@ public class LedgerEntry implements Serializable {
     protected LedgerEntry() {}
 
     public LedgerEntry(@Nonnull ProductOrderSample productOrderSample,
-                       @Nonnull PriceItem priceItem,
+                       PriceItem priceItem,
                        @Nonnull Date workCompleteDate,
+                       Product product,
                        double quantity) {
         this.productOrderSample = productOrderSample;
         this.priceItem = priceItem;
+        this.product = product;
+        this.quantity = quantity;
+        this.workCompleteDate = workCompleteDate;
+    }
+
+    public LedgerEntry(@Nonnull ProductOrderSample productOrderSample,
+                       Product product,
+                       @Nonnull Date workCompleteDate,
+                       double quantity) {
+        this.productOrderSample = productOrderSample;
+        this.product = product;
         this.quantity = quantity;
         this.workCompleteDate = workCompleteDate;
     }
@@ -167,7 +184,13 @@ public class LedgerEntry implements Serializable {
         this.billingMessage = billingMessage;
     }
 
+    public Product getProduct() {
+        return product;
+    }
 
+    public void setProduct(Product product) {
+        this.product = product;
+    }
 
     /**
      * A ledger item is billed if either its message is the success status or the session has been billed. The
@@ -264,6 +287,7 @@ public class LedgerEntry implements Serializable {
         return new EqualsBuilder()
                 .append(productOrderSample, castOther.getProductOrderSample())
                 .append(priceItem, castOther.getPriceItem())
+                .append(product, castOther.getProduct())
                 .append(priceItemType, castOther.getPriceItemType())
                 .append(quoteId, castOther.getQuoteId())
                 .append(billingSession, castOther.getBillingSession()).isEquals();
@@ -274,6 +298,7 @@ public class LedgerEntry implements Serializable {
         return new HashCodeBuilder()
                 .append(productOrderSample)
                 .append(priceItem)
+                .append(product)
                 .append(priceItemType)
                 .append(quoteId)
                 .append(billingSession).toHashCode();

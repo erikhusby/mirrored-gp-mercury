@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductE
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntryTest;
+import org.broadinstitute.gpinformatics.athena.entity.billing.ProductLedgerIndex;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
@@ -78,7 +79,11 @@ public class ProductOrderSampleTest {
         } else {
             billedPriceItem = new PriceItem(priceItemType.name(), "", null, priceItemType.name());
         }
-        sample.addLedgerItem(new Date(), billedPriceItem, 1);
+        if(sample.getProductOrder().hasSapQuote()) {
+            sample.addLedgerItem(new Date(), sample.getProductOrder().getProduct(), 1);
+        } else {
+            sample.addLedgerItem(new Date(), billedPriceItem, sample.getProductOrder().getProduct(), 1);
+        }
         LedgerEntry entry = sample.getLedgerItems().iterator().next();
         entry.setPriceItemType(priceItemType);
         new BillingSession(0L, Collections.singleton(entry));
@@ -149,7 +154,13 @@ public class ProductOrderSampleTest {
 
         // credit the price item already billed
         PriceItem billedPriceItem = sample.getProductOrder().getProduct().getPrimaryPriceItem();
-        sample.addLedgerItem(new Date(), billedPriceItem, -1);
+        if(sample.getProductOrder().hasSapQuote()) {
+
+            sample.addLedgerItem(new Date(), sample.getProductOrder().getProduct(), -1);
+        } else {
+
+            sample.addLedgerItem(new Date(), billedPriceItem, sample.getProductOrder().getProduct(), -1);
+        }
         // Flag the credit ledger entry as billed successfully
         for( LedgerEntry entry : sample.getLedgerItems() ) {
             entry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
@@ -179,7 +190,12 @@ public class ProductOrderSampleTest {
 
         // credit the price item with an add-on ledger entry
         PriceItem billedPriceItem = sample.getProductOrder().getProduct().getPrimaryPriceItem();
-        sample.addLedgerItem(new Date(), billedPriceItem, -1/*, sample.getProductOrder().getProduct()*/);
+        if(sample.getProductOrder().hasSapQuote()) {
+
+            sample.addLedgerItem(new Date(), sample.getProductOrder().getProduct(), -1);
+        } else {
+            sample.addLedgerItem(new Date(), billedPriceItem, sample.getProductOrder().getProduct(), -1);
+        }
         LedgerEntry entry = sample.getLedgerItems().iterator().next();
         entry.setPriceItemType(LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM);
         entry.setBillingMessage(BillingSession.SUCCESS);
@@ -220,13 +236,11 @@ public class ProductOrderSampleTest {
     public static Object[][] makeAutoBillSampleData() {
         TestPDOData data = new TestPDOData("GSP-123");
         Date completedDate = new Date();
-        LedgerEntry ledgerEntry = new LedgerEntry(data.sample1, data.product.getPrimaryPriceItem(),
-                completedDate,
-//                data.product,
-                1);
+        LedgerEntry ledgerEntry = new LedgerEntry(data.sample1, data.product.getPrimaryPriceItem(), completedDate,
+                data.product,1);
 
         // Bill sample2.
-        data.sample2.addLedgerItem(completedDate, data.product.getPrimaryPriceItem(), 1/*, data.product*/);
+        data.sample2.addLedgerItem(completedDate, data.product.getPrimaryPriceItem(), data.product, 1/*, data.product*/);
         LedgerEntry ledger = data.sample2.getLedgerItems().iterator().next();
         ledger.setBillingMessage(BillingSession.SUCCESS);
         ledger.setBillingSession(new BillingSession(0L, Collections.singleton(ledger)));
@@ -644,17 +658,32 @@ public class ProductOrderSampleTest {
 
 //        ProductLedgerIndex quantityIndex = new ProductLedgerIndex(productOrderSample.getProductOrder().getProduct(), priceItem);
 //        ProductOrderSample.LedgerQuantities ledgerQuantities = productOrderSample.getLedgerQuantities().get(quantityIndex );
-        ProductOrderSample.LedgerQuantities ledgerQuantities = productOrderSample.getLedgerQuantities().get(priceItem );
+        ProductOrderSample.LedgerQuantities ledgerQuantities = productOrderSample.getLedgerQuantities().get(
+                ProductLedgerIndex.create(productOrderSample.getProductOrder().getProduct(), priceItem));
         double quantityBefore = ledgerQuantities != null ? ledgerQuantities.getTotal() : 0;
         double currentQuantity = quantityBefore; // these tests all assume no external changes
         Date workCompleteDate = new Date();
 
-        ProductOrderSample.LedgerUpdate ledgerUpdate =
-                new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem, quantityBefore,
-                        currentQuantity, quantityRequested, workCompleteDate);
+        ProductOrderSample.LedgerUpdate ledgerUpdate;
+        if(productOrderSample.getProductOrder().hasSapQuote()) {
+            ledgerUpdate =
+                    new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), productOrderSample.getProductOrder().getProduct(), quantityBefore,
+                            currentQuantity, quantityRequested, workCompleteDate);
+        } else {
+            ledgerUpdate =
+                    new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem,
+                            productOrderSample.getProductOrder().getProduct(), quantityBefore, currentQuantity,
+                            quantityRequested, workCompleteDate);
+        }
         productOrderSample.applyLedgerUpdate(ledgerUpdate);
 
-        LedgerEntry ledgerEntry = productOrderSample.findUnbilledLedgerEntryForPriceItem(priceItem);
+        LedgerEntry ledgerEntry;
+        if(productOrderSample.getProductOrder().hasSapQuote()) {
+
+            ledgerEntry = productOrderSample.findUnbilledLedgerEntryForProduct(productOrderSample.getProductOrder().getProduct());
+        } else {
+            ledgerEntry = productOrderSample.findUnbilledLedgerEntryForPriceItem(priceItem, productOrderSample.getProductOrder().getProduct());
+        }
         if (expectedQuantityReadyToBill == 0) {
             assertThat(ledgerEntry, nullValue());
             assertThat(productOrderSample.getBillableLedgerItems(), empty());
@@ -669,8 +698,14 @@ public class ProductOrderSampleTest {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DAY_OF_MONTH, -1);
         Date oldWorkCompleteDate = calendar.getTime();
-        productOrderSample.addLedgerItem(oldWorkCompleteDate, priceItem, quantityReadyToBill/*,
-                productOrderSample.getProductOrder().getProduct()*/);
+        if(productOrderSample.getProductOrder().hasSapQuote()) {
+
+            productOrderSample.addLedgerItem(oldWorkCompleteDate,
+                    productOrderSample.getProductOrder().getProduct(), quantityReadyToBill);
+        } else {
+            productOrderSample.addLedgerItem(oldWorkCompleteDate, priceItem,
+                    productOrderSample.getProductOrder().getProduct(), quantityReadyToBill);
+        }
     }
 
     @Test
@@ -678,8 +713,17 @@ public class ProductOrderSampleTest {
         ProductOrderSample productOrderSample = createOrderedSample("TEST");
         PriceItem priceItem = productOrderSample.getProductOrder().getProduct().getPrimaryPriceItem();
 
-        ProductOrderSample.LedgerUpdate ledgerUpdate =
-                new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem, 1, 0, 2, new Date());
+        ProductOrderSample.LedgerUpdate ledgerUpdate;
+        if(productOrderSample.getProductOrder().hasSapQuote()) {
+            ledgerUpdate =
+                    new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(),
+                            productOrderSample.getProductOrder().getProduct(), 1, 0, 2,
+                            new Date());
+        } else {
+            ledgerUpdate =
+                    new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem, productOrderSample.getProductOrder().getProduct(), 1, 0, 2,
+                            new Date());
+        }
         Exception caught = null;
         try {
             productOrderSample.applyLedgerUpdate(ledgerUpdate);
@@ -693,8 +737,16 @@ public class ProductOrderSampleTest {
         ProductOrderSample productOrderSample = createOrderedSample("TEST");
         PriceItem priceItem = productOrderSample.getProductOrder().getProduct().getPrimaryPriceItem();
 
-        ProductOrderSample.LedgerUpdate ledgerUpdate =
-                new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem, 0, 0, 1, null);
+        ProductOrderSample.LedgerUpdate ledgerUpdate;
+        if(productOrderSample.getProductOrder().hasSapQuote()) {
+            ledgerUpdate =
+                    new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(),
+                            productOrderSample.getProductOrder().getProduct(), 0, 0, 1, null);
+        } else {
+            ledgerUpdate =
+                    new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem,
+                            productOrderSample.getProductOrder().getProduct(), 0, 0, 1, null);
+        }
         Exception caught = null;
         try {
             productOrderSample.applyLedgerUpdate(ledgerUpdate);

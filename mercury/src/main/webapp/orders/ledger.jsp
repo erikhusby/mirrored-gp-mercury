@@ -230,9 +230,9 @@
                     {'bSortable': true, 'sSortDataType': 'input-value', 'sType': 'date'},   // 9: date complete
 
                     // price item columns
-                    <c:forEach items="${actionBean.priceItems}" var="priceItem" varStatus="status">
+                    <c:forEach items="${actionBean.potentialBillings}" var="billingIndex" varStatus="status">
                     {'bVisible': false},
-                    {'bSortable': true, 'sSortDataType': 'input-value', 'sType': 'numeric'}, // ${10 + status.index}: ${priceItem.name}
+                    {'bSortable': true, 'sSortDataType': 'input-value', 'sType': 'numeric'}, // ${10 + status.index}: ${billingIndex.name}
                     </c:forEach>
 
                     {'bSortable': true, 'sType': 'title-string'}    // billed
@@ -640,7 +640,7 @@
         /*
          * Filter functions
          */
-        var numPriceItems = ${actionBean.priceItems.size()};
+        var numPriceItems = ${actionBean.potentialBillings.size()};
 
         var allFilter = function(oSettings, aData, iDataIndex) { return true; };
 
@@ -839,7 +839,15 @@
 
     <div class="row-fluid">
         <div class="span3"><span class="label-form">Product</span><br>${actionBean.productOrder.product.name}</div>
-        <div class="span3"><span class="label-form">Price Item</span><br>${actionBean.productOrder.determinePriceItemByCompanyCode(actionBean.productOrder.product).name}</div>
+        <c:choose>
+            <c:when test="${actionBean.productOrder.hasSapQuote()}">
+                <div class="span3"><span class="label-form">Product</span><br>${actionBean.productOrder.product.displayName}</div>
+            </c:when>
+            <c:otherwise>
+
+                <div class="span3"><span class="label-form">Price Item</span><br>${actionBean.productOrder.determinePriceItemByCompanyCode(actionBean.productOrder.product).name}</div>
+            </c:otherwise>
+        </c:choose>
         <div class="span2"><span class="label-form">Quote</span><br>${actionBean.productOrder.quoteId}</div>
         <div class="span1">${actionBean.productOrder.samples.size()} samples</div>
         <div class="span2" style="text-align: right">
@@ -954,7 +962,7 @@
             <tr>
                 <th colspan="4"></th>
                 <th colspan="5" style="text-align: center">Sample Information</th>
-                <th colspan="${actionBean.priceItems.size() * 2 + 2}" style="text-align: center">Billing</th>
+                <th colspan="${actionBean.potentialBillings.size() * 2 + 2}" style="text-align: center">Billing</th>
             </tr>
             <tr>
                 <th>
@@ -970,10 +978,20 @@
                 <th style="text-align: center">Status</th>
                 <th title="Date Coverage First Met">DCFM</th>
                 <th style="text-align: center">Date Complete</th>
-                <c:forEach items="${actionBean.priceItems}" var="priceItem">
-                    <th>Original value for ${priceItem.name}</th>
-                    <th style="text-align: center">${priceItem.name}</th>
-                </c:forEach>
+                <c:choose>
+                    <c:when test="${actionBean.productOrder.hasSapQuote()}">
+                        <c:forEach items="${actionBean.products}" var="product">
+                            <th>Original value for ${product.displayName}</th>
+                            <th style="...">${product.displayName}</th>
+                        </c:forEach>
+                    </c:when>
+                    <c:otherwise>
+                        <c:forEach items="${actionBean.potentialBillings}" var="billingIndex">
+                            <th>Original value for ${billingIndex.name}</th>
+                            <th style="text-align: center">${billingIndex.name}</th>
+                        </c:forEach>
+                    </c:otherwise>
+                </c:choose>
                 <th style="text-align: center">Billed</th>
             </tr>
         </thead>
@@ -1047,25 +1065,25 @@
                         </c:choose>
                     </td>
 
-                    <c:forEach items="${actionBean.priceItems}" var="priceItem">
+                    <c:forEach items="${actionBean.potentialBillings}" var="billingIndex">
                         <td>
-                                ${info.getTotalForPriceItem(priceItem)}
+                                ${info.getTotalForPriceItem(billingIndex)}
                         </td>
                         <td style="text-align: center">
                             <input type="hidden" data-rownum = "${info.sample.samplePosition}"
-                                   name="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].originalQuantity"
-                                   value="${info.getTotalForPriceItem(priceItem)}"/>
-                            <c:set var="submittedQuantity" value="${actionBean.ledgerData[info.sample.samplePosition].quantities[priceItem.priceItemId].submittedQuantity}"/>
+                                   name="ledgerData[${info.sample.samplePosition}].quantities[${billingIndex.priceItemId}].originalQuantity"
+                                   value="${info.getTotalForPriceItem(billingIndex)}"/>
+                            <c:set var="submittedQuantity" value="${actionBean.ledgerData[info.sample.samplePosition].quantities[billingIndex.priceItemId].submittedQuantity}"/>
                                 <c:if test="${!disableAbandon}">
-                                    <input id="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
-                                           name="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
-                                           value="${submittedQuantity != null ? submittedQuantity : info.getTotalForPriceItem(priceItem)}"
+                                    <input id="ledgerData[${info.sample.samplePosition}].quantities[${billingIndex.priceItemId}].submittedQuantity"
+                                           name="ledgerData[${info.sample.samplePosition}].quantities[${billingIndex.priceItemId}].submittedQuantity"
+                                           value="${submittedQuantity != null ? submittedQuantity : info.getTotalForPriceItem(billingIndex)}"
                                            class="ledgerQuantity" data-rownum = "${info.sample.samplePosition}"
-                                           priceItemId="${priceItem.priceItemId}"
-                                           billedQuantity="${info.getBilledForPriceItem(priceItem)}">
+                                           priceItemId="${billingIndex.priceItemId}"
+                                           billedQuantity="${info.getBilledForPriceItem(billingIndex)}">
 
                                 </c:if>
-                            <c:if test="${priceItem == actionBean.productOrder.determinePriceItemByCompanyCode(actionBean.productOrder.product) && info.autoFillQuantity != 0}">
+                            <c:if test="${billingIndex == actionBean.productOrder.determinePriceItemByCompanyCode(actionBean.productOrder.product) && info.autoFillQuantity != 0}">
                                 <input type="hidden"
                                        name="${info.sample.samplePosition}-autoFill-${info.sample.name}"
                                        value="${info.autoFillQuantity}"

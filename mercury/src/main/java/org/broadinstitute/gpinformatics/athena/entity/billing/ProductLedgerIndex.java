@@ -27,6 +27,32 @@ public class ProductLedgerIndex {
         return priceItem;
     }
 
+    public String getDisplayValue() {
+        String display = "";
+
+        if(priceItem == null) {
+            display = product.getDisplayName();
+        } else {
+            display = priceItem.getDisplayName();
+        }
+
+        return display.toString();
+    }
+
+    public String getName() {
+        String name = "";
+        if(priceItem == null) {
+            name = product.getPartNumber();
+        } else {
+            name = priceItem.getName();
+        }
+        return name;
+    }
+
+    public static ProductLedgerIndex create(Product product, PriceItem priceItem) {
+        return new ProductLedgerIndex(product, priceItem);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

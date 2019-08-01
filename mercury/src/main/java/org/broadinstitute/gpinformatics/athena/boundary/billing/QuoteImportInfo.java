@@ -58,7 +58,7 @@ public class QuoteImportInfo {
             quantitiesByQuotePriceItem.put(quoteId, new HashMap<ProductOrder, Map<ProductLedgerIndex, Map<Date, List<LedgerEntry>>>> ());
         }
 
-        ProductLedgerIndex index = new ProductLedgerIndex(product, priceItem);
+        ProductLedgerIndex index = ProductLedgerIndex.create(product, priceItem);
 
         ProductOrder orderIndex = ledger.getProductOrderSample().getProductOrder();
 
