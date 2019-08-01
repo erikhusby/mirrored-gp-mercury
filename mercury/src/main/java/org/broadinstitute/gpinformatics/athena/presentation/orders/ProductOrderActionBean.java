@@ -993,10 +993,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             final Optional<OrderCalculatedValues> sapOrderCalculatedValues =
                     Optional.ofNullable(sapService.calculateOpenOrderValues(additionalSampleCount, quote, editOrder));
-            Optional<String> orderNumber = Optional.empty();
-            if(editOrder != null) {
-                orderNumber = Optional.ofNullable(editOrder.getSapOrderNumber());
-            }
             double outstandingEstimate = 0;
             if(sapOrderCalculatedValues.isPresent()) {
                 outstandingEstimate =
