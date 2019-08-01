@@ -76,7 +76,7 @@
                 <div class="inputRow">
                     <div class="firstCol">Package ID</div>
                     <div class="control-group controls">
-                        <stripes:text id="packageBarcode" name="packageBarcode"/>
+                        <stripes:textarea rows="1" id="packageBarcode" name="packageBarcode"/>
                     </div>
                 </div>
             </div>
@@ -96,13 +96,11 @@
             </div>
             <div class="inputGroup updateMode downloadMode" style="display: none">
                 <div class="inputRow" title="
-Either the full path to the file including folder names and slashes, and the file suffix. It's the fastest.
+Either the full path to the file including folder names with slashes and the file suffix. It's the fastest.
 
-Or, just give part of the filename and Mercury will search for you.
-
-Or, leave it blank and Mercury will search using the package id.">
+Or, just give part of the filename and Mercury will search for you.">
                     <div class="firstCol updateMode">Full or partial filename</div>
-                    <div class="firstCol downloadMode">Full filename, partial filename, or pacakge id</div>
+                    <div class="firstCol downloadMode">Full or partial filename,<br/>or package id</div>
                     <div class="controls">
                         <stripes:text id="filename" name="filename"/>
                     </div>

@@ -50,7 +50,7 @@
                 <div class="inputRow">
                     <div class="firstCol">Tracking number</div>
                     <div class="secondCol">
-                        <stripes:text id="trackingNumber" name="trackingNumber"/>
+                        <stripes:textarea rows="1" id="trackingNumber" name="trackingNumber"/>
                     </div>
                 </div>
                 <div class="inputRow">

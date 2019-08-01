@@ -18,7 +18,7 @@
                     </c:forEach>
 
                     <span style="margin-left: 20px;">
-                        <stripes:submit id="showBucketListBtn" name="showBucketListBtn" value="Show Filename List"
+                        <stripes:submit id="showBucketListBtn" name="showBucketListBtn" value="Download Filename List"
                                         class="btn btn-primary"
                                         title="Provides a download txt file of all filenames in the bucket."/>
                     </span>

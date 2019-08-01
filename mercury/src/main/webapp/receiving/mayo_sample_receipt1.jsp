@@ -3,6 +3,14 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoSampleReceiptActionBean"/>
 <stripes:layout-render name="/layout.jsp" pageTitle="Mayo Sample Receipt" sectionTitle="Mayo Sample Receipt">
+    <stripes:layout-component name="extraHead">
+        <script type="text/javascript">
+            $j(document).ready(function () {
+                $j("#rackBarcode").val('');
+            });
+        </script>
+    </stripes:layout-component>
+
     <stripes:layout-component name="content">
         <style type="text/css">
             div.inputGroup {
@@ -36,7 +44,7 @@
                 <div class="control-group">
                     <div class="control-label">Rack Barcode</div>
                     <div class="controls">
-                        <input type="text" id="rackBarcode" name="rackBarcode"/>
+                        <stripes:textarea rows="1" id="rackBarcode" name="rackBarcode"/>
                     </div>
                 </div>
 

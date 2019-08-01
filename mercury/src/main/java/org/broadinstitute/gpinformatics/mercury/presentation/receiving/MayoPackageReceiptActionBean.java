@@ -88,9 +88,9 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
             addValidationError("rackBarcodeString", "Cannot parse rack barcode(s)");
         }
         if (StringUtils.isBlank(rackCount) || !NumberUtils.isDigits(rackCount)) {
-            addValidationError("rackBarcodeString", "Number of racks is required");
+            addValidationError("rackCount", "Number of racks is required");
         } else if (rackBarcodes.size() != Integer.parseInt(rackCount)) {
-            addValidationError("rackBarcodeString", "Number of rack barcodes does not match the number of racks.");
+            addValidationError("rackCount", "Number of rack barcodes does not match the number of racks.");
         } else {
             String duplicates = rackBarcodes.stream().
                     collect(Collectors.groupingBy(Function.identity(), Collectors.counting())).entrySet().stream().
@@ -154,8 +154,8 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
      */
     @HandlesEvent(DOWNLOAD_BTN)
     public Resolution download() {
-        if (StringUtils.isBlank(filename) && StringUtils.isBlank(packageBarcode)) {
-            addGlobalValidationError("Needs either a package barcode or a filename.");
+        if (StringUtils.isBlank(filename)) {
+            addValidationError("filename", "Filename is required.");
         } else {
             final byte[] bytes = mayoManifestEjb.download(this);
             if (bytes != null) {
