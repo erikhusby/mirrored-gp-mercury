@@ -14,12 +14,19 @@
                 }
             });
             function receiveIt() {
+                $j(".downloadMode").css('display', 'none');
                 $j(".updateMode").css('display', 'none');
                 $j(".receiveMode").css('display', 'block');
             };
             function updateIt() {
-                $j(".updateMode").css('display', 'block');
+                $j(".downloadMode").css('display', 'none');
                 $j(".receiveMode").css('display', 'none');
+                $j(".updateMode").css('display', 'block');
+            };
+            function downloadIt() {
+                $j(".updateMode").css('display', 'none');
+                $j(".receiveMode").css('display', 'none');
+                $j(".downloadMode").css('display', 'block');
             };
         </script>
     </stripes:layout-component>
@@ -60,8 +67,12 @@
                     <input type="radio" id="selectUpdate" onchange="updateIt()" name="mode" style="display:inline;">
                     <label for="selectUpdate" style="display:inline;">Update manifest</label>
                 </span>
+                <span style="padding-left: 20px;">
+                    <input type="radio" id="selectDownload" onchange="downloadIt()" name="mode" style="display:inline;">
+                    <label for="selectDownload" style="display:inline;">Download manifest</label>
+                </span>
             </div>
-            <div class="inputGroup" title="The package barcode, starting with 'PKG'">
+            <div class="inputGroup receiveMode updateMode" title="The package barcode, starting with 'PKG'">
                 <div class="inputRow">
                     <div class="firstCol">Package ID</div>
                     <div class="control-group controls">
@@ -83,16 +94,21 @@
                     </div>
                 </div>
             </div>
-            <div class="inputGroup updateMode" style="display: none">
-                <div class="inputRow" title="Full path to the file including folder names, slashes, and the file suffix.
-Leave this blank if you want Mercury to search for the file.">
-                    <div class="firstCol">Manifest filename</div>
+            <div class="inputGroup updateMode downloadMode" style="display: none">
+                <div class="inputRow" title="
+Either the full path to the file including folder names and slashes, and the file suffix. It's the fastest.
+
+Or, just give part of the filename and Mercury will search for you.
+
+Or, leave it blank and Mercury will search using the package id.">
+                    <div class="firstCol updateMode">Full or partial filename</div>
+                    <div class="firstCol downloadMode">Full filename, partial filename, or pacakge id</div>
                     <div class="controls">
                         <stripes:text id="filename" name="filename"/>
                     </div>
                 </div>
             </div>
-            <div class="inputGroup">
+            <div class="inputGroup receiveMode updateMode">
                 <div class="inputRow" title="Check this to allow an existing package receipt to be updated with new values.">
                     <div class="firstCol">
                         <div style="float: left;">Allow Update</div>
@@ -105,6 +121,7 @@ Leave this blank if you want Mercury to search for the file.">
             <div style="padding-top: 20px;">
                 <stripes:submit id="continueBtn" name="continueBtn" value="Continue" class="btn btn-primary receiveMode"/>
                 <stripes:submit id="updateManifestBtn" name="updateManifestBtn" value="Update Manifest" class="btn btn-primary updateMode" style="display: none;"/>
+                <stripes:submit id="downloadBtn" name="downloadBtn" value="Download Manifest" class="btn btn-primary downloadMode" style="display: none;"/>
             </div>
         </stripes:form>
 

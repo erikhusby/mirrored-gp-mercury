@@ -37,10 +37,6 @@
             <c:if test="${!empty actionBean.filename}">
                 <div>
                     <span>Found manifest file: ${actionBean.filename}</span>
-                    <span style="padding-left: 15px;">
-                        <stripes:submit id="downloadBtn" name="downloadBtn" value="Download" class="btn btn-primary"
-                                        title="Downloads the manifest file."/>
-                    </span>
                 </div>
             </c:if>
 

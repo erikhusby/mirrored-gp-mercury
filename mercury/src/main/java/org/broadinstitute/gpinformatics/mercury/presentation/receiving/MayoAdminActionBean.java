@@ -36,7 +36,6 @@ public class MayoAdminActionBean extends CoreActionBean {
     private MayoManifestEjb mayoManifestEjb;
 
     private MessageCollection messageCollection = new MessageCollection();
-    private List<List<String>> manifestCellGrid = new ArrayList<>();
 
     @Validate(required = true, on = {VIEW_FILE_BTN})
     private String filename;
@@ -92,19 +91,6 @@ public class MayoAdminActionBean extends CoreActionBean {
     /**
      * Generates a cell grid for the contents of the specified manifest file.
      */
-    @HandlesEvent(VIEW_FILE_BTN)
-    public Resolution viewFile() {
-        mayoManifestEjb.readManifestFileCellGrid(this);
-        if (manifestCellGrid.isEmpty()) {
-            messageCollection.addError("Cannot find %s in manifest file storage.", filename);
-        }
-        addMessages(messageCollection);
-        return new ForwardResolution(MANIFEST_ADMIN_PAGE);
-    }
-
-    /**
-     * Generates a cell grid for the contents of the specified manifest file.
-     */
     @HandlesEvent(UPLOAD_CREDENTIAL_BTN)
     public Resolution uploadCredential() {
         if (uploadCredentialAcknowledgement) {
@@ -118,14 +104,6 @@ public class MayoAdminActionBean extends CoreActionBean {
         }
         addMessages(messageCollection);
         return new ForwardResolution(MANIFEST_ADMIN_PAGE);
-    }
-
-    public List<List<String>> getManifestCellGrid() {
-        return manifestCellGrid;
-    }
-
-    public void setManifestCellGrid(List<List<String>> manifestCellGrid) {
-        this.manifestCellGrid = manifestCellGrid;
     }
 
     public MessageCollection getMessageCollection() {

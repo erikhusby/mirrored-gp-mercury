@@ -70,6 +70,7 @@ public class MayoManifestEjb {
     public static final String ALREADY_ACCESSIONED = "Rack and samples are already accessioned %s.";
     public static final String CANNOT_ADD_ACCESSIONED = "Package receipt cannot add existing rack %s.";
     public static final String CANNOT_ADD_RECEIVED = "Package receipt cannot add rack %s received with %s.";
+    public static final String CANNOT_UNRECEIVE = "Package re-receipt cannot un-receive accessioned rack %s.";
     public static final String EXTRA_IN_MANIFEST = "Manifest contains rack %s that was not in the package receipt.";
     public static final String INVALID_MANIFEST = "File %s does not contain a manifest.";
     public static final String IN_QUARANTINED_PKG = "Rack is part of a quarantined package %s.";
@@ -182,6 +183,19 @@ public class MayoManifestEjb {
             records = manifestSession.getRecords();
             bean.setFilename(manifestSession.getManifestFilename());
         }
+        // Package receipt cannot un-receive an accessioned rack.
+        List<String> removedRacks = records.stream().
+                map(manifestRecord -> manifestRecord.getMetadataByKey(Metadata.Key.RACK_LABEL).getValue()).
+                distinct().
+                collect(Collectors.toList());
+        removedRacks.removeAll(bean.getRackBarcodes());
+        String accessionedRemovedRacks = labVesselDao.findByListIdentifiers(removedRacks).stream().
+                map(LabVessel::getLabel).sorted().distinct().collect(Collectors.joining(" "));
+        if (!accessionedRemovedRacks.isEmpty()) {
+            messages.addError(CANNOT_UNRECEIVE, accessionedRemovedRacks);
+            return;
+        }
+
         // Warns about rack barcode mismatches.
         validateRackBarcodes(bean.getRackBarcodes(), records, messages);
         // Any errors are turned into warnings since a receipt-only operation does not need to have a manifest.
@@ -264,9 +278,9 @@ public class MayoManifestEjb {
 
         String reReceiptPrefix = StringUtils.isBlank(manifestSession.getReceiptTicket()) ? "" : "re-";
         if (CollectionUtils.isEmpty(manifestSession.getRecords()) || mismatchedRacks) {
-            quarantinedDao.addOrUpdate(Quarantined.ItemSource.MAYO, Quarantined.ItemType.PACKAGE, packageId,
-                    mismatchedRacks ? Quarantined.RACK_BARCODE_MISMATCH : Quarantined.MISSING_MANIFEST);
-            String msg = String.format(RECEIVED_QUARANTINED, packageId, reReceiptPrefix, Quarantined.MISSING_MANIFEST);
+            String reason = mismatchedRacks ? Quarantined.RACK_BARCODE_MISMATCH : Quarantined.MISSING_MANIFEST;
+            quarantinedDao.addOrUpdate(Quarantined.ItemSource.MAYO, Quarantined.ItemType.PACKAGE, packageId, reason);
+            String msg = String.format(RECEIVED_QUARANTINED, packageId, reReceiptPrefix, reason);
             rctTicketComments.add(msg);
             messages.addInfo(msg);
         } else {
@@ -433,7 +447,9 @@ public class MayoManifestEjb {
         manifestSession.setManifestFilename(filename);
     }
 
+    /** Returns the contents of the Google bucket file given by bean.getFilename() or bean.getPackageId(). */
     public byte[] download(MayoPackageReceiptActionBean bean) {
+        bean.setFilename(searchForFile(bean));
         if (StringUtils.isNotBlank(bean.getFilename())) {
             if (googleBucketDao.exists(bean.getFilename(), bean.getMessageCollection())) {
                 return googleBucketDao.download(bean.getFilename(), bean.getMessageCollection());
@@ -445,31 +461,28 @@ public class MayoManifestEjb {
     }
 
     /**
-     * If the bean does not provide a filename, search the storage bucket for one that matches the package barcode.
-     * If none found or multiple found, return empty string and generate error message.
+     * If the bean provides an exact filename (including any parent folders and '/' path delimiters)
+     * and the file exists, uses that file. If it doesn't exist, the listing of filenames found in the
+     * storage bucket is checked to see if any names contain the given match token (partial filename or
+     * package barcode). If exactly one filename is found then returns that name. Otherwise generates
+     * a message about none found or multiple found.
      */
-    private String searchForFile(MayoPackageReceiptActionBean bean){
+    public String searchForFile(MayoPackageReceiptActionBean bean) {
         String filename = "";
-        if (StringUtils.isNotBlank(bean.getFilename())) {
-            if (googleBucketDao.exists(bean.getFilename(), bean.getMessageCollection())) {
-                filename = bean.getFilename();
-            } else {
-                bean.getMessageCollection().addError(NO_SUCH_FILE, bean.getFilename());
-            }
+        if (StringUtils.isNotBlank(bean.getFilename()) &&
+                googleBucketDao.exists(bean.getFilename(), bean.getMessageCollection())) {
+            filename = bean.getFilename();
         } else {
+            String token = StringUtils.isBlank(bean.getFilename()) ? bean.getPackageBarcode() : bean.getFilename();
             List<String> matchingFilenames = googleBucketDao.list(bean.getMessageCollection()).stream().
-                    filter(name -> name.endsWith(".csv") && name.contains(bean.getPackageBarcode())).
-                    collect(Collectors.toList());
-            switch (matchingFilenames.size()) {
-            case 0:
-                bean.getMessageCollection().addError(NO_SUCH_FILE, bean.getPackageBarcode());
-                break;
-            case 1:
+                    filter(name -> name.contains(token)).
+                    sorted().collect(Collectors.toList());
+            if (matchingFilenames.isEmpty()) {
+                bean.getMessageCollection().addError(NO_SUCH_FILE, token);
+            } else if (matchingFilenames.size() > 1) {
+                bean.getMessageCollection().addError(MULTIPLE_FILES, token, StringUtils.join(matchingFilenames, "  "));
+            } else {
                 filename = matchingFilenames.get(0);
-                break;
-            default:
-                bean.getMessageCollection().addError(MULTIPLE_FILES, bean.getPackageBarcode(),
-                        matchingFilenames.stream().sorted().collect(Collectors.joining(" ")));
             }
         }
         return filename;
@@ -481,15 +494,20 @@ public class MayoManifestEjb {
      * @return list of manifest records from the file (empty if parsing or validation errors were found)
      */
     private List<ManifestRecord> extractManifestRecords(String filename, String packageId, MessageCollection messages) {
+        if (StringUtils.isBlank(filename)) {
+            return Collections.emptyList();
+        }
         // Reads and parses the spreadsheet.
-        List<List<String>> cellGrid = readManifestFileCellGrid(filename, messages);
+        // Bucket access or csv parsing errors are put in the MessageCollection.
+        byte[] spreadsheet = googleBucketDao.download(filename, messages);
+        List<List<String>> cellGrid = (spreadsheet == null || spreadsheet.length == 0) ?
+            Collections.emptyList() : MayoManifestImportProcessor.parseAsCellGrid(spreadsheet, filename, messages);
+        // Makes manifest records from the spreadsheet cell grid.
         MayoManifestImportProcessor processor = new MayoManifestImportProcessor();
         List<ManifestRecord> records = processor.makeManifestRecords(cellGrid, filename, messages);
         if (records.isEmpty()) {
-            if (StringUtils.isNotBlank(filename)) {
-                // The manifest is unacceptable if cannot be parsed into sample records.
-                messages.addError(INVALID_MANIFEST, filename);
-            }
+            // The manifest is unacceptable if cannot be parsed into sample records.
+            messages.addError(INVALID_MANIFEST, filename);
         } else if (!packageId.equals(records.get(0).getMetadataByKey(Metadata.Key.PACKAGE_ID).getValue())) {
             // The manifest is unacceptable if the package doesn't match.
             messages.addError(NOT_IN_MANIFEST, "package", packageId);
@@ -810,13 +828,6 @@ public class MayoManifestEjb {
     }
 
     /**
-     * Obtains the manifest file in a cell grid for the filename given.
-     */
-    public void readManifestFileCellGrid(MayoAdminActionBean bean) {
-        bean.setManifestCellGrid(readManifestFileCellGrid(bean.getFilename(), bean.getMessageCollection()));
-    }
-
-    /**
      * Runs a step by step credentialing and access of the configured Google bucket.
      * Status is put into info messages for the UI.
      * Puts a listing of all bucket filenames in the bean.
@@ -846,25 +857,6 @@ public class MayoManifestEjb {
     public void rotateServiceAccountKey(MayoAdminActionBean bean) {
         googleBucketDao.rotateServiceAccountKey(bean.getMessageCollection());
     }
-
-    /**
-     * Looks for the file in Google Storage using filename and returns the cell data for each sheet.
-     * Returns empty if the manifest file doesn't exist or could not be read.
-     * Bucket access or csv parsing errors are put in the MessageCollection.
-     */
-    private @NotNull
-    List<List<String>> readManifestFileCellGrid(String filename, MessageCollection messages) {
-        if (StringUtils.isNotBlank(filename)) {
-            byte[] spreadsheet = googleBucketDao.download(filename, messages);
-            if (spreadsheet == null || spreadsheet.length == 0) {
-                return Collections.emptyList();
-            } else {
-                return MayoManifestImportProcessor.parseAsCellGrid(spreadsheet, filename, messages);
-            }
-        }
-        return Collections.emptyList();
-    }
-
 
     /** Makes a new RCT in Jira for the Mayo package or updates an existing RCT. */
     private JiraTicket makeOrUpdatePackageRct(MayoPackageReceiptActionBean bean,

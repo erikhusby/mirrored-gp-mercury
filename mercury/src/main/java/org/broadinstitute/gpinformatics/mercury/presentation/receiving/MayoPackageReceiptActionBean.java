@@ -154,21 +154,26 @@ public class MayoPackageReceiptActionBean extends CoreActionBean {
      */
     @HandlesEvent(DOWNLOAD_BTN)
     public Resolution download() {
-        final byte[] bytes = mayoManifestEjb.download(this);
-        if (bytes == null) {
-            addMessages(messageCollection);
-            return new ForwardResolution(PAGE2);
+        if (StringUtils.isBlank(filename) && StringUtils.isBlank(packageBarcode)) {
+            addGlobalValidationError("Needs either a package barcode or a filename.");
         } else {
-            return (request, response) -> {
-                response.setContentType("application/text");
-                response.setContentLength(bytes.length);
-                response.setHeader("Expires:", "0"); // eliminates browser caching
-                response.setHeader("Content-Disposition", "attachment; filename=" + filename);
-                OutputStream outStream = response.getOutputStream();
-                outStream.write(bytes);
-                outStream.flush();
-            };
+            final byte[] bytes = mayoManifestEjb.download(this);
+            if (bytes != null) {
+                clearFields = true;
+                return (request, response) -> {
+                    response.setContentType("application/text");
+                    response.setContentLength(bytes.length);
+                    response.setHeader("Expires:", "0"); // eliminates browser caching
+                    response.setHeader("Content-Disposition", "attachment; filename=" + filename);
+                    OutputStream outStream = response.getOutputStream();
+                    outStream.write(bytes);
+                    outStream.flush();
+                };
+            }
         }
+        addMessages(messageCollection);
+        return new ForwardResolution(PAGE1);
+
     }
 
     /**

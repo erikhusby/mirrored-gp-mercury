@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.storage.GoogleBucketDao;
 import org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoAdminActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoPackageReceiptActionBean;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
@@ -19,7 +20,6 @@ import javax.inject.Inject;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -48,19 +48,18 @@ public class MayoManifestEjbTest extends Arquillian {
     }
 
     @Test
-    public void testAdminBucketAccessAndViewFileByFilename() {
-        String testDigits = DATE_FORMAT.format(new Date());
-        String packageId = "PKG-" + testDigits;
-        String rackBarcode = "Bx-" + testDigits;
-
+    public void testAdminBucketAccessAndDownload() {
         mayoManifestEjb.getUserBean().loginTestUser();
         MessageCollection messageCollection = new MessageCollection();
         MayoAdminActionBean bean = new MayoAdminActionBean();
         bean.setMessageCollection(messageCollection);
 
         // Make sure bucket has at least one manifest file to display.
-        List<List<String>> cellGrid = makeCellGrid(testDigits, packageId, ImmutableMap.of(rackBarcode, 1));
-        String filename = String.format("test_%s_1.csv", testDigits);
+        String testDigits = DATE_FORMAT.format(new Date());
+        String packageId = "PKG-" + testDigits;
+        String rackBarcode = "Bx-" + testDigits;
+        List<List<String>> cellGrid = makeCellGrid(testDigits, packageId, ImmutableMap.of(rackBarcode, 3));
+        String filename = String.format("test-%1$s/test_%1$s_1.csv", testDigits);
         googleBucketDao.upload(filename, makeContent(cellGrid), messageCollection);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
@@ -73,16 +72,42 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertTrue(messageCollection.hasInfos());
         Assert.assertTrue(bean.getBucketList().contains(filename));
 
-        // Reads the file by its filename and compares the displayed content to the spreadsheet.
-        bean.setFilename(filename);
-        bean.getManifestCellGrid().clear();
+        // Using the Package Receipt action bean, reads and download the file.
+        MayoPackageReceiptActionBean pkgBean = new MayoPackageReceiptActionBean();
+        pkgBean.setFilename(filename);
+        pkgBean.setMessageCollection(messageCollection);
         messageCollection.clearAll();
-        mayoManifestEjb.readManifestFileCellGrid(bean);
+        // Reads by full filename.
+        Assert.assertEquals(mayoManifestEjb.searchForFile(pkgBean), filename);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
-        List<List<String>> displayCellGrid = bean.getManifestCellGrid();
-        Assert.assertEquals(displayCellGrid.stream().flatMap(Collection::stream).collect(Collectors.joining(" ")),
-                cellGrid.stream().flatMap(Collection::stream).collect(Collectors.joining(" ")));
+        // Reads by partial filename.
+        pkgBean.setFilename(testDigits);
+        byte[] bytes = mayoManifestEjb.download(pkgBean);
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
+        Assert.assertTrue(bytes.length > 1);
+        // Compares the downloaded content to the spreadsheet.
+        String byteString = new String(bytes).replaceAll("\n", ";");
+        String cellGridString = cellGrid.stream().
+                map(row -> StringUtils.join(row, ",")).
+                collect(Collectors.joining(";"));
+        Assert.assertEquals(byteString,  cellGridString);
+
+        // Search of nonexistent file should fail.
+        pkgBean.setFilename("pSm4Q1Q#fgDzgzTBG7vqSv-URQbS2fypm_nH0nDEoPX");
+        Assert.assertEquals(mayoManifestEjb.searchForFile(pkgBean), "");
+        Assert.assertEquals(messageCollection.getErrors().get(0),
+                "Cannot find a file for " + pkgBean.getFilename() + ".");
+        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
+        messageCollection.clearAll();
+
+        // Search should return multiple matches.
+        pkgBean.setFilename("/");
+        Assert.assertEquals(mayoManifestEjb.searchForFile(pkgBean), "");
+        Assert.assertTrue(messageCollection.getErrors().get(0).contains("Found multiple files for /"));
+        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
+        messageCollection.clearAll();
     }
 
     private byte[] makeContent (List<List<String>> cellGrid) {

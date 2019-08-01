@@ -25,37 +25,6 @@
                 </c:if>
             </div>
 
-            <!-- Displays the contents of a manifest file using the filename. -->
-            <div style="padding-top: 20px;">
-                <span>
-                    <stripes:submit id="viewFileBtn" name="viewFileBtn" value="View A Manifest File"
-                                    class="btn btn-primary"
-                                    title="Click to display contents of a manifest file."/>
-                    <span style="margin-left: 20px;">
-                        Filename:
-                        <input type="text" id="filename" name="filename"/>
-                    </span>
-                </span>
-            </div>
-
-            <!-- Manifest file contents. -->
-            <c:if test="${!actionBean.getManifestCellGrid().isEmpty()}">
-                <div style="padding-top: 20px;">
-                    <p>Filename: ${actionBean.filename}</p>
-                    <table id="manifestCellGrid" border="2">
-                        <tbody>
-                        <c:forEach items="${actionBean.getManifestCellGrid()}" var="manifestRow">
-                            <tr>
-                                <c:forEach items="${manifestRow}" var="manifestColumn">
-                                    <td align="center">${manifestColumn}</td>
-                                </c:forEach>
-                            </tr>
-                        </c:forEach>
-                        </tbody>
-                    </table>
-                </div>
-            </c:if>
-
             <div style="padding-top: 20px;">
                 <span>
                     <div>
@@ -64,7 +33,7 @@
                                         title="Click to cause a new Google login key to be generated."/>
                     </div>
                     <div style="padding-left: 20px;">
-                        <input type=":checkbox" id="rotateAcknowledgement" name="rotateAcknowledgement"/>
+                        <input type="checkbox" id="rotateAcknowledgement" name="rotateAcknowledgement"/>
                         <stripes:label for="rotateAcknowledgement">
                             OK to lock out other Mercury servers using the Google storage bucket.
                         </stripes:label>
