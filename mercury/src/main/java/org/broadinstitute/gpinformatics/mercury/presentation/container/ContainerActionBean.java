@@ -10,14 +10,11 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
+import org.broadinstitute.gpinformatics.mercury.boundary.storage.StorageEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -28,6 +25,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
 
 import javax.inject.Inject;
+import javax.persistence.LockModeType;
 import java.util.*;
 
 
@@ -66,7 +64,7 @@ public class ContainerActionBean extends RackScanActionBean {
     private StorageLocationDao storageLocationDao;
 
     @Inject
-    private LabEventFactory labEventFactory;
+    private StorageEjb storageEjb;
 
     @Inject
     private LabEventDao labEventDao;
@@ -79,7 +77,7 @@ public class ContainerActionBean extends RackScanActionBean {
     private StaticPlate staticPlate;
     private RackOfTubes.RackType rackType;
     private RackOfTubes rackOfTubes;
-    private Map<VesselPosition, LabVessel> mapPositionToVessel;
+    private Map<VesselPosition, BarcodedTube> mapPositionToVessel;
     private Map<VesselPosition, String> mapPositionToSampleId;
     private Map<String, String> mapBarcodeToSampleId;
 
@@ -219,23 +217,10 @@ public class ContainerActionBean extends RackScanActionBean {
             return;
         }
 
-        LabEvent latestEvent = findLatestCheckInEvent(rackOfTubes);
+        LabEvent latestEvent = storageEjb.findLatestCheckInEvent(rackOfTubes);
         mapPositionToVessel = findStoredTubesFromCheckIn(latestEvent);
         mapPositionToSampleId = getSamplesForTubes(mapPositionToVessel);
 
-    }
-
-    /**
-     * Find latest check-in event for a lab vessel (rack of tubes, static plate) <br/>
-     * If a check-out occurs after a check-in, do not report the check-in event
-     */
-    private LabEvent findLatestCheckInEvent(LabVessel labVessel ) {
-        LabEvent latestStorageEvent = labVessel.getLatestStorageEvent();
-        if( latestStorageEvent != null && latestStorageEvent.getLabEventType() == LabEventType.STORAGE_CHECK_IN ) {
-            return latestStorageEvent;
-        } else {
-            return null;
-        }
     }
 
     /**
@@ -243,9 +228,9 @@ public class ContainerActionBean extends RackScanActionBean {
      * which are still in the same storage location as the rack.  <br/>
      * Handles the case where a tube may have been removed from the rack without a storage checkout.
      */
-    private Map<VesselPosition, LabVessel> findStoredTubesFromCheckIn(LabEvent checkInEvent ) {
+    private Map<VesselPosition, BarcodedTube> findStoredTubesFromCheckIn(LabEvent checkInEvent ) {
 
-        Map<VesselPosition, LabVessel> mapPositionToStoredVessel = new HashMap<>();
+        Map<VesselPosition, BarcodedTube> mapPositionToStoredVessel = new HashMap<>();
 
         // Spare the caller having to test
         if( checkInEvent == null ) {
@@ -290,13 +275,13 @@ public class ContainerActionBean extends RackScanActionBean {
     /**
      * Build a map of positions to sample ids corresponding to positions and vessels in a rack
      */
-    private Map<VesselPosition,String> getSamplesForTubes(Map<VesselPosition, LabVessel> vesselPositionMap ) {
+    private Map<VesselPosition,String> getSamplesForTubes(Map<VesselPosition, BarcodedTube> vesselPositionMap ) {
         Map<VesselPosition, String> mapPositionToSampleId = new HashMap<>();
         if( vesselPositionMap == null ) {
             return mapPositionToSampleId;
         }
 
-        for (Map.Entry<VesselPosition, LabVessel> posVesselEntry : vesselPositionMap.entrySet()) {
+        for (Map.Entry<VesselPosition, BarcodedTube> posVesselEntry : vesselPositionMap.entrySet()) {
             LabVessel vessel = posVesselEntry.getValue();
             Set<MercurySample> samples = vessel.getMercurySamples();
             String display = "";
@@ -396,7 +381,7 @@ public class ContainerActionBean extends RackScanActionBean {
                 return new ForwardResolution(CONTAINER_VIEW_PAGE);
             }
         } else {
-            LabEvent latestCheckInEvent = findLatestCheckInEvent(getViewVessel());
+            LabEvent latestCheckInEvent = storageEjb.findLatestCheckInEvent(getViewVessel());
             mapPositionToVessel = findStoredTubesFromCheckIn(latestCheckInEvent);
         }
 
@@ -488,8 +473,8 @@ public class ContainerActionBean extends RackScanActionBean {
                     , storageLocationDao.getLocationTrail(storageLocation));
 
             // Now the part where all tubes associated with rack check-in have to be removed also
-            LabEvent checkInEvent = findLatestCheckInEvent( rackOfTubes );
-            Collection<LabVessel> vesselsToAlsoRemove = findStoredTubesFromCheckIn( checkInEvent ).values();
+            LabEvent checkInEvent = storageEjb.findLatestCheckInEvent( rackOfTubes );
+            Collection<BarcodedTube> vesselsToAlsoRemove = findStoredTubesFromCheckIn( checkInEvent ).values();
             for( LabVessel tube : vesselsToAlsoRemove ) {
                 tube.setStorageLocation(null);
             }
@@ -510,7 +495,7 @@ public class ContainerActionBean extends RackScanActionBean {
             return;
         }
 
-        for( Map.Entry<VesselPosition,LabVessel> pv : mapPositionToVessel.entrySet() ) {
+        for( Map.Entry<VesselPosition,BarcodedTube> pv : mapPositionToVessel.entrySet() ) {
             if (pv.getValue().getStorageLocation() != null) {
                 // Report relocated tubes only when entire rack not relocated
                 if( !rackWasRemovedFromStorage ) {
@@ -532,7 +517,6 @@ public class ContainerActionBean extends RackScanActionBean {
      * @param messageCollection Holds any errors (vessel not found)
      */
     private void buildTubeLayoutFromPost(MessageCollection messageCollection) {
-
         mapPositionToVessel = new HashMap<>();
 
         if (rackOfTubes == null) {
@@ -549,13 +533,13 @@ public class ContainerActionBean extends RackScanActionBean {
                 ReceptacleType receptacleType = iterator.next();
                 if (!StringUtils.isEmpty(receptacleType.getBarcode())) {
                     String barcode = receptacleType.getBarcode();
-                    LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
-                    if (labVessel == null) {
+                    BarcodedTube tube = labVesselDao.findSingleSafely(BarcodedTube.class, BarcodedTube_.label, barcode, LockModeType.NONE);
+                    if (tube == null) {
                         // Won't even add non-existent vessel to layout map  TODO: JMS Should we?
                         messageCollection.addError("No vessel with barcode %s found.", barcode);
                         continue;
                     }
-                    mapPositionToVessel.put(VesselPosition.getByName(receptacleType.getPosition()), labVessel);
+                    mapPositionToVessel.put(VesselPosition.getByName(receptacleType.getPosition()), tube);
                 } else {
                     iterator.remove();
                 }
@@ -564,7 +548,7 @@ public class ContainerActionBean extends RackScanActionBean {
 
         // Some critical validation
         Set<String> barcodes = new HashSet<>();
-        for( Map.Entry<VesselPosition,LabVessel> ptov : mapPositionToVessel.entrySet() ) {
+        for( Map.Entry<VesselPosition,BarcodedTube> ptov : mapPositionToVessel.entrySet() ) {
             String barcode = ptov.getValue().getLabel();
             if (!OrmUtil.proxySafeIsInstance(ptov.getValue(), BarcodedTube.class)) {
                 messageCollection.addError("Barcode isn't a tube type: " + barcode);
@@ -615,14 +599,15 @@ public class ContainerActionBean extends RackScanActionBean {
                         continue;
                     }
 
-                    if( mapPositionToVessel.put(vesselPosition, labVessel) != null ) {
-                        messageCollection.addError("Duplicate position: " + position);
+                    BarcodedTube tube = OrmUtil.proxySafeCast( labVessel, BarcodedTube.class );
+                    if( mapPositionToVessel.put(vesselPosition, tube ) != null ) {
+                        messageCollection.addError("Duplicate position: " + position + " for tube: " + tube.getLabel() );
                     }
 
                     if( labVessel.getStorageLocation() != null ) {
                         messageCollection.addWarning("%s [ %s ] will be removed from [%s] when layout update performed."
-                                , labVessel.getLabel(), vesselPosition
-                                , storageLocationDao.getLocationTrail( labVessel.getStorageLocation()));
+                                , tube.getLabel(), vesselPosition
+                                , storageLocationDao.getLocationTrail( tube.getStorageLocation()));
                     }
                 }
             }
@@ -643,62 +628,6 @@ public class ContainerActionBean extends RackScanActionBean {
         return new ForwardResolution(CONTAINER_VIEW_PAGE);
     }
 
-    /**
-     * Builds a bettalims plate event from posting a web layout
-     */
-    private PlateEventType buildPlateEventFromPost(LabEventType eventType) {
-        PlateEventType plateEventType = new PlateEventType();
-        plateEventType.setEventType(eventType.getName());
-        plateEventType.setStart(new Date());
-        plateEventType.setDisambiguator(1L);
-        plateEventType.setOperator(getUserBean().getLoginUserName());
-        plateEventType.setProgram(LabEvent.UI_PROGRAM_NAME);
-        plateEventType.setStation(LabEvent.UI_PROGRAM_NAME);
-        PlateType plateType = new PlateType();
-        plateEventType.setPlate(plateType);
-        plateType.setBarcode(getViewVessel().getLabel());
-        plateType.setSection("ALL96");
-        if (rackOfTubes != null) {
-            PositionMapType positionMapType = new PositionMapType();
-            positionMapType.getReceptacle().addAll(receptacleTypes);
-            plateEventType.setPositionMap(positionMapType);
-            positionMapType.setBarcode(getViewVessel().getLabel());
-            plateType.setPhysType(rackOfTubes.getRackType().getDisplayName());
-        } else if (staticPlate != null) {
-            plateType.setPhysType(staticPlate.getAutomationName());
-        }
-        return plateEventType;
-    }
-
-    /**
-     * Builds a bettalims plate event from rack and vessel positions
-     */
-    private PlateEventType buildPlateEventFromVessels(
-            LabVessel vessel, Map<VesselPosition,LabVessel> mapPositionVessel, LabEventType eventType) {
-        PlateEventType plateEventType = new PlateEventType();
-        plateEventType.setEventType(eventType.getName());
-        plateEventType.setStart(new Date());
-        plateEventType.setDisambiguator(1L);
-        plateEventType.setOperator(getUserBean().getLoginUserName());
-        plateEventType.setProgram(LabEvent.UI_PROGRAM_NAME);
-        plateEventType.setStation(LabEvent.UI_PROGRAM_NAME);
-        PlateType plateType = new PlateType();
-        plateEventType.setPlate(plateType);
-        plateType.setBarcode(vessel.getLabel());
-        plateType.setSection("ALL96");
-        PositionMapType positionMapType = new PositionMapType();
-        positionMapType.setBarcode(vessel.getLabel());
-        for( Map.Entry<VesselPosition,LabVessel> posVesselEntry : mapPositionVessel.entrySet() ) {
-            ReceptacleType receptacleType = new ReceptacleType();
-            receptacleType.setBarcode(posVesselEntry.getValue().getLabel());
-            receptacleType.setPosition(posVesselEntry.getKey().name());
-            positionMapType.getReceptacle().add(receptacleType);
-        }
-        plateEventType.setPositionMap(positionMapType);
-        plateType.setPhysType(rackOfTubes.getRackType().getDisplayName());
-        return plateEventType;
-    }
-
     @HandlesEvent(CANCEL_SAVE_ACTION)
     public Resolution cancelSave() {
         return new ForwardResolution(CONTAINER_VIEW_PAGE);
@@ -713,12 +642,10 @@ public class ContainerActionBean extends RackScanActionBean {
             return new ForwardResolution(CONTAINER_VIEW_PAGE);
         }
         storageLocation = storageLocationDao.findById(StorageLocation.class, Long.valueOf(storageId));
-
-        LabEvent checkInEvent;
+        Long userId = getUserBean().getBspUser().getUserId();
 
         if( looseTubes != null ) {
             isLooseTubes = true;
-
             // Put loose tubes in 'Loose' pseudo location
             StorageLocation looseSubLocation = null;
             if( !storageLocation.getLocationType().equals(StorageLocation.LocationType.LOOSE ) ) {
@@ -736,12 +663,14 @@ public class ContainerActionBean extends RackScanActionBean {
                 }
                 storageLocation = looseSubLocation;
             }
+
+            // Set all tube checkins to same time
+            Date now = new Date();
+            long count = 0L;
             for( LabVessel tube : looseTubes ) {
                 tube.setStorageLocation(storageLocation);
-                checkInEvent = new LabEvent(LabEventType.STORAGE_CHECK_IN, new Date(), LabEvent.UI_PROGRAM_NAME
-                        , 1L, getUserBean().getBspUser().getUserId(), LabEvent.UI_PROGRAM_NAME );
-                checkInEvent.setInPlaceLabVessel(tube);
-                storageLocationDao.persist(checkInEvent);
+                count++;
+                storageEjb.createDisambiguatedStorageEvent( LabEventType.STORAGE_CHECK_IN, tube, storageLocation, null, userId, now, count );
             }
         } else if ( rackOfTubes != null ) {
             mapPositionToVessel = new HashMap<>();
@@ -755,21 +684,18 @@ public class ContainerActionBean extends RackScanActionBean {
             for( LabVessel vessel : mapPositionToVessel.values() ) {
                 vessel.setStorageLocation(storageLocation);
             }
-            PlateEventType plateEventType =
-                    buildPlateEventFromVessels(rackOfTubes, mapPositionToVessel, LabEventType.STORAGE_CHECK_IN);
-            checkInEvent = labEventFactory.buildFromBettaLims(plateEventType);
-            storageLocationDao.persist(checkInEvent);
+            // Persist tubeFormation if required or get persisted instance
+            LabVessel tubeFormation = storageEjb.tryPersistRackOrTubes( new TubeFormation( mapPositionToVessel, rackOfTubes.getRackType() ) );
+            storageEjb.createStorageEvent(LabEventType.STORAGE_CHECK_IN, tubeFormation, storageLocation, rackOfTubes, getUserBean().getBspUser().getUserId() );
+
             messageCollection.addInfo("Rack of tubes %s checked in to [%s]."
                     , rackOfTubes.getLabel()
                     , storageLocationDao.getLocationTrail(storageLocation));
         } else {
-            // static plate
+            // Static plate
             LabVessel checkInVessel = getViewVessel();
             checkInVessel.setStorageLocation(storageLocation);
-            checkInEvent = new LabEvent(LabEventType.STORAGE_CHECK_IN, new Date(), LabEvent.UI_PROGRAM_NAME
-                    , 1L, getUserBean().getBspUser().getUserId(), LabEvent.UI_PROGRAM_NAME );
-            checkInEvent.setInPlaceLabVessel(checkInVessel);
-            storageLocationDao.persist(checkInEvent);
+            storageEjb.createStorageEvent( LabEventType.STORAGE_CHECK_IN, checkInVessel, storageLocation, null, userId );
         }
 
         storageLocationDao.flush();
@@ -800,11 +726,10 @@ public class ContainerActionBean extends RackScanActionBean {
                         barcodedTube.setStorageLocation(null);
                     }
                 }
-                PlateEventType plateEventType = buildPlateEventFromPost(LabEventType.STORAGE_CHECK_OUT);
-                LabEvent labEvent = labEventFactory.buildFromBettaLims(plateEventType);
-                labEvent.setStorageLocation(storageLocation);
 
-                storageLocationDao.persist(labEvent);
+                // Persist tubeFormation if required or get persisted instance
+                LabVessel tubeFormation = storageEjb.tryPersistRackOrTubes( new TubeFormation( mapPositionToVessel, rackOfTubes.getRackType() ) );
+                storageEjb.createStorageEvent(LabEventType.STORAGE_CHECK_OUT, tubeFormation, storageLocation, rackOfTubes, getUserBean().getBspUser().getUserId() );
                 storageLocationDao.flush();
                 labVesselDao.flush();
                 storageLocation = null;
@@ -829,6 +754,8 @@ public class ContainerActionBean extends RackScanActionBean {
 
         Long userId = getUserBean().getBspUser().getUserId();
         if( selectedLooseVesselBarcodes != null && !selectedLooseVesselBarcodes.isEmpty()) {
+            Date now = new Date();
+            long count = 0;
             for (String barcode : selectedLooseVesselBarcodes) {
                 LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
                 if (labVessel == null) {
@@ -836,12 +763,8 @@ public class ContainerActionBean extends RackScanActionBean {
                 } else {
                     if (OrmUtil.proxySafeIsInstance(labVessel, BarcodedTube.class)) {
                         StorageLocation storageLocation = labVessel.getStorageLocation();
+                        storageEjb.createDisambiguatedStorageEvent(LabEventType.STORAGE_CHECK_OUT, labVessel, storageLocation, null, userId, now, ++count );
                         labVessel.setStorageLocation(null);
-                        LabEvent checkInEvent = new LabEvent(LabEventType.STORAGE_CHECK_OUT, new Date(), LabEvent.UI_PROGRAM_NAME
-                                , 1L, userId, LabEvent.UI_PROGRAM_NAME );
-                        checkInEvent.setInPlaceLabVessel(labVessel);
-                        checkInEvent.setStorageLocation(storageLocation);
-                        storageLocationDao.persist(checkInEvent);
                         addMessage("Vessel " + labVessel.getLabel() + " removed from storage.");
                     } else {
                         // Loose tubes are allowed to be stored ONLY in LOOSE location! How did this get here?
@@ -986,12 +909,10 @@ public class ContainerActionBean extends RackScanActionBean {
         return storageLocation;
     }
 
-    /**
-     * Test only
-     */
-    public void setStorageLocation(StorageLocation storageLocation) {
-        this.storageLocation = storageLocation;
-    }
+    /** Testing only */
+    public void setStorageLocation(StorageLocation storageLocation) { this.storageLocation = storageLocation; }
+    /** Testing only */
+    public void setStorageEjb( StorageEjb storageEjb ) { this.storageEjb = storageEjb; }
 
     public String getStorageName() {
         return storageName;
@@ -1036,11 +957,6 @@ public class ContainerActionBean extends RackScanActionBean {
     /** For testing. **/
     void setUserBean(UserBean userBean) {
         this.userBean = userBean;
-    }
-
-    /** For testing. **/
-    public void setLabEventFactory(LabEventFactory labEventFactory) {
-        this.labEventFactory = labEventFactory;
     }
 
     /** For testing. **/

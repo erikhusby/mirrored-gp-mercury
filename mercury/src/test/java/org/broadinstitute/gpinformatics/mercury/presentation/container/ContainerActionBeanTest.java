@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
+import org.broadinstitute.gpinformatics.mercury.boundary.storage.StorageEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -16,10 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.mockito.Mockito;
@@ -27,6 +25,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.persistence.LockModeType;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -47,10 +46,10 @@ public class ContainerActionBeanTest {
     private RackOfTubes rackOfTubes;
     private StorageLocation storageLocation;
     private LabVesselDao mockLabVesselDao;
-    private LabEventFactory mockLabEventFactory;
     private LabEventDao mockLabEventDao;
     private MockRoundtrip roundTrip;
     private StorageLocationDao mockStorageLocationDao;
+    private StorageEjb mockStorageEjb;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -61,20 +60,21 @@ public class ContainerActionBeanTest {
         actionBean.setRackOfTubes(rackOfTubes);
         storageLocation = new StorageLocation("GageRack_A1", StorageLocation.LocationType.SLOT, null);
         mockLabVesselDao = mock(LabVesselDao.class);
+        mockStorageEjb = mock( StorageEjb.class );
         when(mockLabVesselDao.findByIdentifier(barcodedTube.getLabel())).thenReturn(barcodedTube);
         when(mockLabVesselDao.findByIdentifier(rackOfTubes.getLabel())).thenReturn(rackOfTubes);
+        when(mockLabVesselDao.findSingleSafely(BarcodedTube.class, BarcodedTube_.label, barcodedTube.getLabel(), LockModeType.NONE)).thenReturn(barcodedTube);
         actionBean.setLabVesselDao(mockLabVesselDao);
 
         UserBean userBean = Mockito.mock(UserBean.class);
         BspUser qaDudeUser = new BSPUserList.QADudeUser(RoleType.PM.name(), 1L);
         Mockito.when(userBean.getBspUser()).thenReturn(qaDudeUser);
         actionBean.setUserBean(userBean);
-        mockLabEventFactory = mock(LabEventFactory.class);
-        actionBean.setLabEventFactory(mockLabEventFactory);
         mockLabEventDao = mock(LabEventDao.class);
         actionBean.setLabEventDao(mockLabEventDao);
         mockStorageLocationDao = mock(StorageLocationDao.class);
         actionBean.setStorageLocationDao(mockStorageLocationDao);
+        actionBean.setStorageEjb(mockStorageEjb);
         roundTrip = StripesMockTestUtils.createMockRoundtrip(ContainerActionBean.class);
     }
 
@@ -88,9 +88,9 @@ public class ContainerActionBeanTest {
     public void testBuildPositionMapWithEvent() {
         Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
         mapPositionToTube.put(VesselPosition.A01, barcodedTube);
-        LabEvent event = addEventToRack(rackOfTubes, mapPositionToTube, LabEventType.STORAGE_CHECK_IN);
-        actionBean.setShowLayout(true);
+        LabEvent event = addEventToRack(rackOfTubes, mapPositionToTube, LabEventType.STORAGE_CHECK_IN, storageLocation);
         when(mockLabEventDao.findInPlaceByAncillaryVessel(rackOfTubes)).thenReturn(Collections.singletonList(event));
+        when(mockStorageEjb.findLatestCheckInEvent(rackOfTubes) ).thenReturn(event);
         actionBean.buildPositionMappingForInStorage();
         Assert.assertEquals(actionBean.getMapPositionToVessel().get(VesselPosition.A01), barcodedTube);
     }
@@ -105,7 +105,7 @@ public class ContainerActionBeanTest {
 
         Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
         mapPositionToTube.put(VesselPosition.A01, barcodedTube);
-        addEventToRack(rackOfTubes, mapPositionToTube, LabEventType.STORAGE_CHECK_IN);
+        addEventToRack(rackOfTubes, mapPositionToTube, LabEventType.STORAGE_CHECK_IN, storageLocation);
 
         mapPositionToTube = new HashMap<>();
         mapPositionToTube.put(VesselPosition.A05, barcodedTube);
@@ -134,11 +134,15 @@ public class ContainerActionBeanTest {
         receptacleType.setBarcode(barcodedTube.getLabel());
         receptacleType.setPosition(VesselPosition.A01.name());
         receptacleTypeList.add(receptacleType);
-        LabEvent labEvent = new LabEvent(LabEventType.STORAGE_CHECK_IN, new Date(), "", 1L, 1L, "");
-        when(mockLabEventFactory.buildFromBettaLims(any(PlateEventType.class))).thenReturn(labEvent);
         actionBean.setReceptacleTypes(receptacleTypeList);
-        actionBean.buildPositionMappingForInStorage();
 
+        Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
+        mapPositionToTube.put(VesselPosition.A01, barcodedTube);
+        LabEvent event = addEventToRack(rackOfTubes, mapPositionToTube, LabEventType.STORAGE_CHECK_IN, storageLocation);
+        when(mockLabEventDao.findInPlaceByAncillaryVessel(rackOfTubes)).thenReturn(Collections.singletonList(event));
+        when(mockStorageEjb.findLatestCheckInEvent(rackOfTubes) ).thenReturn(event);
+
+        actionBean.buildPositionMappingForInStorage();
         MessageCollection messageCollection = new MessageCollection();
         actionBean.handleSaveContainer(messageCollection);
         Assert.assertEquals(messageCollection.hasErrors(), false);
@@ -146,15 +150,14 @@ public class ContainerActionBeanTest {
     }
 
     private LabEvent addEventToRack(RackOfTubes rackOfTubes, Map<VesselPosition, BarcodedTube> mapPositionToTube,
-                                LabEventType labEventType) {
+                                LabEventType labEventType, StorageLocation storageLocation ) {
+
         TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, rackOfTubes.getRackType());
         tubeFormation.addRackOfTubes(rackOfTubes);
         rackOfTubes.getTubeFormations().add(tubeFormation);
-        LabEvent labEvent = new LabEvent(labEventType, new Date(), "UnitTest", 1L, 1L, "UnitTest");
-        labEvent.setInPlaceLabVessel(tubeFormation);
-        labEvent.setAncillaryInPlaceVessel(rackOfTubes);
-        labEvent.setStorageLocation(storageLocation);
-        tubeFormation.addInPlaceEvent(labEvent);
+        // Use DAOFree
+        LabEvent labEvent = ( new StorageEjb() ).createStorageEvent( labEventType, tubeFormation, storageLocation, rackOfTubes, 1L );
+
         return labEvent;
     }
 }

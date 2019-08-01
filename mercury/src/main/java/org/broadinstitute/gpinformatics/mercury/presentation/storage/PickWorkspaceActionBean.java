@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableListActionBean;
 
 import javax.inject.Inject;
+import javax.persistence.LockModeType;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -40,7 +41,7 @@ public class PickWorkspaceActionBean extends CoreActionBean {
     private static final String EVT_PROCESS_BATCHES = "processBatches";
     private static final String EVT_DOWNLOAD_XFER_FILE = "buildXferFile";
     private static final String EVT_BULK_CHECKOUT = "processBulkCheckOut";
-
+    private static final String EVT_CLOSE_BATCHES = "closeBatches";
     // UI Resolutions
     private static final String UI_DEFAULT = "/storage/picklist_workspace.jsp";
     private static final String UI_BULK_CHECKOUT = "/storage/bulk_checkout.jsp";
@@ -125,7 +126,7 @@ public class PickWorkspaceActionBean extends CoreActionBean {
             }
         }
 
-        // TODO:  This is actually do-able on the client side, but just because something can be done, should it be done?
+        // Remove deselected batches
         if( !batchIdsToRemove.isEmpty()) {
             pickerDataRows = pickerDataRows.stream()
                     .filter(row -> !batchIdsToRemove.contains(row.getBatchId()))
@@ -143,6 +144,10 @@ public class PickWorkspaceActionBean extends CoreActionBean {
 
         for( LabBatch batchToAdd : batchListToAdd ) {
             pickerDataRows.addAll(getDataRowsForBatch(batchToAdd));
+        }
+
+        if( pickerDataRows.isEmpty()) {
+            addMessage("No batches selected.");
         }
 
         return new ForwardResolution(UI_DEFAULT);
@@ -244,6 +249,45 @@ public class PickWorkspaceActionBean extends CoreActionBean {
 
         return new ForwardResolution(UI_DEFAULT);
     }
+
+    /**
+     * Close (inactivate) selected batches and register layout of depleted racks in an InPlace event
+     */
+    @HandlesEvent(EVT_CLOSE_BATCHES)
+    public Resolution eventCloseBatches() {
+        Map<Long,LabBatch> batches = new HashMap<>();
+        Map<RackOfTubes,TubeFormation> racksAndLayouts = new HashMap<>();
+        for( PickerDataRow row : pickerDataRows ) {
+            Long batchId = row.getBatchId();
+            if( !batches.containsKey(batchId) ) {
+                batches.put( batchId, labBatchDao.findById( LabBatch.class, batchId ) );
+            }
+            String srcBarcode = row.getSourceVessel();
+            LabVessel src = labBatchDao.findSingleSafely(LabVessel.class, LabVessel_.label, srcBarcode, LockModeType.NONE);
+            // Only create InPlace to register rack layout
+            if( OrmUtil.proxySafeIsInstance( src, RackOfTubes.class ) ) {
+                RackOfTubes rack = OrmUtil.proxySafeCast( src, RackOfTubes.class );
+                TubeFormation tubes = null;
+                TreeSet<LabEvent> sortedEvents = new TreeSet<>( LabEvent.BY_EVENT_DATE );
+                sortedEvents.addAll( rack.getAncillaryInPlaceEvents() );
+                for( Iterator<LabEvent> iter = sortedEvents.descendingIterator() ; iter.hasNext(); ) {
+                    LabEvent evt = iter.next();
+                    LabEventType evtType = evt.getLabEventType();
+                    if( evtType == LabEventType.IN_PLACE ) {
+                        // Something registered layout, use it.  Always a tube formation when ancillary is a rack of tubes
+                        tubes = OrmUtil.proxySafeCast( src, TubeFormation.class );
+                        racksAndLayouts.put( rack, tubes );
+                        break;
+                    }
+
+                }
+            }
+        }
+
+        // Start from clean slate - remove inactive batches
+        return eventInit();
+    }
+
 
     /**
      * Refreshes list of SRS batches and merges with existing
@@ -379,16 +423,6 @@ public class PickWorkspaceActionBean extends CoreActionBean {
                         Long storageLocationId = storageLocation.getStorageLocationId();
                         pickerDataRow.setStorageLocId(storageLocationId);
                         pickerDataRow.setStorageLocPath(storageLocationDao.getLocationTrail(storageLocation));
-                        if (storedTubeFormation != null) {
-                            // Total sample count value - only need to do it once
-                            int vesselCount = 0;
-                            for (LabVessel tube : storedTubeFormation.getContainerRole().getContainedVessels()) {
-                                if (tube.getStorageLocation() != null && tube.getStorageLocation().getStorageLocationId().equals(storageLocationId)) {
-                                    vesselCount++;
-                                }
-                            }
-                            pickerDataRow.setTotalVesselCount(vesselCount);
-                        }
                     } else {
                         if( storageEvent == null || storageEvent.getLabEventType() != LabEventType.STORAGE_CHECK_OUT ) {
                             pickerDataRow.setStorageLocPath("(Not in Storage)");
@@ -402,8 +436,20 @@ public class PickWorkspaceActionBean extends CoreActionBean {
                             }
                         }
                     }
+                    if (storedTubeFormation != null) {
+                        // Total sample count value - only need to do it once
+                        int vesselCount = storedTubeFormation.getContainerRole().getContainedVessels().size();
+                        // Trust latest layout - assumes a checkout was done before a check-in
+                        // for (LabVessel tube : storedTubeFormation.getContainerRole().getContainedVessels()) {
+                        //     if (tube.getStorageLocation() != null && tube.getStorageLocation().getStorageLocationId().equals(storageLocationId)) {
+                        //         vesselCount++;
+                        //     }
+                        // }
+                        pickerDataRow.setTotalVesselCount(vesselCount);
+                    }
                     containerRows.put(rackOrPlate, pickerDataRow);
-                }
+                }  // End logic to build pickerDataRow - only done once
+
                 // For tube formations, build out the source lab vessel label and position
                 VesselPosition position = storedTubeFormation.getContainerRole().getPositionOfVessel(batchVessel);
                 PickerVessel pickerVessel = new PickerVessel(batchVessel.getLabel(), position.name());
@@ -492,7 +538,7 @@ public class PickWorkspaceActionBean extends CoreActionBean {
             } else {
                 singleTubeFormation = null;
             }
-            return Triple.of(latestCheckOutEvent.getAncillaryInPlaceVessel(), singleTubeFormation, latestCheckInEvent);
+            return Triple.of(latestCheckOutEvent.getAncillaryInPlaceVessel(), singleTubeFormation, latestCheckOutEvent);
         } else {
             TreeSet<LabEvent> sortedEvents = new TreeSet<>(LabEvent.BY_EVENT_DATE);
             // Which event owns which tube formation?

@@ -49,10 +49,10 @@
              * level:  Error, Info,
              */
             var showFeedbackAlerts = function(level, content) {
-                    var id = "#ajax" + level;
-                    $j(id).css("display", "block");
-                    $j(id + "Text").html(content);
-                };
+                var id = "#ajax" + level;
+                $j(id).css("display", "block");
+                $j(id + "Text").html(content);
+            };
 
             /**
              * level:  Error, Info,
@@ -61,8 +61,18 @@
                 var theDialog = $j("#dialog-message");
                 theDialog.attr("title", level);
                 var theOutput = $j("#dialog-message span");
-                theOutput.text(content);
+                theOutput.html(content);
                 theOutput.attr("class", "alert-" + level.toLowerCase());
+                theDialog.dialog("open");
+            };
+
+            /**
+             * Display a confirmation message and provide a function to execute if user clicks OK
+             */
+            var showConfirmDialog = function(content, acceptAction) {
+                var theDialog = $j("#dialog-confirm");
+                theDialog.data("acceptAction", acceptAction );
+                $j( "span", theDialog ).html(content);
                 theDialog.dialog("open");
             };
 
@@ -121,7 +131,7 @@
                     }
                 }
                 return batchPickerData;
-            }
+            };
 
             /**
              * Handles assignment of target rack barcodes
@@ -295,6 +305,19 @@
                 return true;
             };
 
+            var confirmCloseBatches = function(){
+                showConfirmDialog("Are you sure?<br/>This action will:<ol><li>Set the status of selected pick batches to inactive.</li><li>Record the layout of all source racks with picked tubes removed from them.</li></ol>", closeBatches);
+            };
+
+            /**
+             * User confirmed closing batches is confirmed - do it
+             */
+            var closeBatches = function(){
+                var theForm = $j("#formPickType");
+                theForm.prepend('<input name="closeBatches" type="hidden" value=""/>');
+                theForm.submit();
+            };
+
             /**
              * Sets up DOM plugins (batch multi-list and datatable) and event listeners
              */
@@ -306,6 +329,19 @@
                     autoOpen: false,
                     buttons: {
                         Ok: function() {
+                            $j( this ).dialog( "close" );
+                        }
+                    }
+                });
+                $j( "#dialog-confirm" ).dialog({
+                    modal: true,
+                    autoOpen: false,
+                    buttons: {
+                        Ok: function() {
+                            $j( this ).dialog( "close" );
+                            $j( this ).data("acceptAction")();
+                        },
+                        Cancel: function() {
                             $j( this ).dialog( "close" );
                         }
                     }
@@ -324,7 +360,7 @@
                             {data: "batchName", title: "SRS Batch"},
                             {data: "storageLocPath", title: "Storage Location"},
                             {data: "sourceVessel", title: "Rack Barcode"},
-                            {data: "targetRack", // Never any real value here, just a placeholder
+                            {data: "targetRack", // Never any real value from server here, just a placeholder
                                 name: "targetRack",
                                 render: function(data, type, row){
                                     if(row.rackScannable) {
@@ -357,6 +393,7 @@
                     $j("#btnReBalance").click(layoutTargets);
                     $j("#btnConflicts").click(checkConflict);
                     $j("#btnBuildXferFile").click(doXferFileBuild);
+                    $j("#btnCloseBatches").click(confirmCloseBatches);
                 } else {
                     $j("#divAssignTargets").css("display", "none");
                 }
@@ -378,7 +415,8 @@
             <div class="span2">
                         <div class="controls"><p><input type="submit" name="processBatches" id="btnProcessBatches" value="View Batches" style="width:120px"/></p>
                             <p><input type="button" id="btnConflicts" value="Check Conflicts" data-conflict-state="pending" style="width:120px"/></p><%-- States are pending, success, fail --%>
-                            <p><input type="submit" name="processBulkCheckOut" id="btnBulkCheckout" value="Bulk Check-Out" style="width:120px"/></p></div>
+                            <p><input type="submit" name="processBulkCheckOut" id="btnBulkCheckout" value="Bulk Check-Out" style="width:120px"/></p>
+                            <p><input type="button" name="closeBatches" id="btnCloseBatches" value="Close Batches" style="width:120px"/></p></div>
             </div>
             <div class="span6">
                 <div id="ajaxError" class="alert-error" style="margin-left:12px;margin-right:12px;display: none"><button type="button" class="close" onclick="dismissAlert('Error');">&times;</button><span id="ajaxErrorText"></span></div>
@@ -402,6 +440,7 @@
         </div>
         </div><%--container-fluid--%>
         <div id="dialog-message" title="Error"><p><span class="alert-error" style="float:left; margin:0 7px 50px 0;"></span></p></div>
+        <div id="dialog-confirm" title="Confirm"><p><span class="alert-warning" style="float:left; margin:0 7px 50px 0;"></span></p></div>
     </stripes:layout-component>
 
 </stripes:layout-render>

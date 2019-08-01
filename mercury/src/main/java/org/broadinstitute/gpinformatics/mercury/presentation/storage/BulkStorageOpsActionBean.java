@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.presentation.storage;
 import net.sourceforge.stripes.action.*;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
+import org.broadinstitute.gpinformatics.mercury.boundary.storage.StorageEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocationDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.*;
@@ -60,6 +61,9 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
 
     @Inject
     private StorageLocationDao storageLocationDao;
+
+    @Inject
+    StorageEjb storageEjb;
 
     /**
      * Check-Out page (or non-specified event)
@@ -225,15 +229,16 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
         if( storageLocation == null ) {
             return buildAjaxOutcome( Pair.of("danger", "Barcode : " + barcode + " - No storage location exists for ID: " + storageLocationId ) );
         }
+
         String locationTrail = storageLocationDao.getLocationTrail(storageLocation);
+        Long userId = getUserBean().getBspUser().getUserId();
 
         Pair<String, String> statusMessage = null;
         if( OrmUtil.proxySafeIsInstance( vessel, BarcodedTube.class ) ) {
             BarcodedTube tube = OrmUtil.proxySafeCast( vessel, BarcodedTube.class );
             if( storageLocation.getLocationType() == StorageLocation.LocationType.LOOSE ) {
                 tube.setStorageLocation(storageLocation);
-                LabEvent checkInEvent = createStorageEvent( LabEventType.STORAGE_CHECK_IN, tube, storageLocation,null );
-                storageLocationDao.persist(checkInEvent);
+                LabEvent checkInEvent = storageEjb.createStorageEvent( LabEventType.STORAGE_CHECK_IN, tube, storageLocation, null, userId );
                 statusMessage = Pair.of("success", "Vessel barcode " + barcode
                         + " checked into 'loose' location " + locationTrail + ".");
             } else {
@@ -242,13 +247,12 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
         } else if( OrmUtil.proxySafeIsInstance( vessel, StaticPlate.class ) ) {
             StaticPlate plate = OrmUtil.proxySafeCast( vessel, StaticPlate.class );
             plate.setStorageLocation(storageLocation);
-            LabEvent checkInEvent = createStorageEvent( LabEventType.STORAGE_CHECK_IN, plate, storageLocation,null );
-            storageLocationDao.persist(checkInEvent);
+            LabEvent checkInEvent = storageEjb.createStorageEvent( LabEventType.STORAGE_CHECK_IN, plate, storageLocation, null, userId  );
             statusMessage = Pair.of("success", "Plate " + barcode
                     + " checked into location " + locationTrail + ".");
         } else if( OrmUtil.proxySafeIsInstance( vessel, RackOfTubes.class ) ) {
             RackOfTubes rack = OrmUtil.proxySafeCast( vessel, RackOfTubes.class );
-            statusMessage = doCheckIn( rack, storageLocation );
+            statusMessage = doCheckIn( rack, storageLocation, userId );
         } else if( statusMessage == null ) {
             // How did a flowcell get into storage?  Probably not a real case
             statusMessage = Pair.of("danger", "Vessel barcode " + barcode + " type currently not storable.");
@@ -319,8 +323,7 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
         StorageLocation storageLocation = tube.getStorageLocation();
         String locationTrail = storageLocationDao.getLocationTrail( storageLocation );
         tube.setStorageLocation(null);
-        LabEvent checkOutEvent = createStorageEvent( LabEventType.STORAGE_CHECK_OUT, tube, storageLocation,null );
-        storageLocationDao.persist(checkOutEvent);
+        LabEvent checkOutEvent = storageEjb.createStorageEvent( LabEventType.STORAGE_CHECK_OUT, tube, storageLocation, null, getUserBean().getBspUser().getUserId() );
         return Pair.of("success", "Checked out vessel barcode " + barcode
                 + " from 'loose' location " + locationTrail + ".");
     }
@@ -329,8 +332,7 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
         StorageLocation storageLocation = plate.getStorageLocation();
         String locationTrail = storageLocationDao.getLocationTrail( storageLocation );
         plate.setStorageLocation(null);
-        LabEvent checkOutEvent = createStorageEvent( LabEventType.STORAGE_CHECK_OUT, plate, storageLocation, null );
-        storageLocationDao.persist(checkOutEvent);
+        LabEvent checkOutEvent = storageEjb.createStorageEvent( LabEventType.STORAGE_CHECK_OUT, plate, storageLocation, null, getUserBean().getBspUser().getUserId() );
         return Pair.of("success", "Checked out plate barcode " + barcode + " from " + locationTrail + ".");
     }
 
@@ -381,8 +383,7 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
                 }
             }
 
-            LabEvent checkOutEvent = createStorageEvent( LabEventType.STORAGE_CHECK_OUT, checkOutTubes, rackLocation, rack );
-            storageLocationDao.persist(checkOutEvent);
+            LabEvent checkOutEvent = storageEjb.createStorageEvent( LabEventType.STORAGE_CHECK_OUT, checkOutTubes, rackLocation, rack, getUserBean().getBspUser().getUserId() );
         }
 
         return Pair.of("success", "Checked out rack barcode " + barcode
@@ -393,7 +394,7 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
      * Look for recent events to determine if TubeFormation is trust-able for layout and reject or do check in
      * @return Pair of values, if left not 'success', then nothing was done
      */
-    private Pair<String, String> doCheckIn( RackOfTubes rack, StorageLocation storageLocation ) {
+    private Pair<String, String> doCheckIn( RackOfTubes rack, StorageLocation storageLocation, Long userId ) {
 
         TreeSet<LabEvent> sortedEvents = new TreeSet<>(LabEvent.BY_EVENT_DATE);
         LabVessel tubeFormation = null;
@@ -444,8 +445,7 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
             }
         }
 
-        LabEvent checkInEvent = createStorageEvent( LabEventType.STORAGE_CHECK_IN, tubeFormation, storageLocation, rack );
-        storageLocationDao.persist(checkInEvent);
+        LabEvent checkInEvent = storageEjb.createStorageEvent( LabEventType.STORAGE_CHECK_IN, tubeFormation, storageLocation, rack, getUserBean().getBspUser().getUserId() );
         rack.setStorageLocation(storageLocation);
         for( LabVessel tube : tubeFormation.getContainerRole().getContainedVessels() ) {
             tube.setStorageLocation(storageLocation);
@@ -455,14 +455,6 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
         return Pair.of("success", "Rack barcode " + barcode
                 + " and all tubes checked into "
                 + storageLocationDao.getLocationTrail( storageLocation ) + ".");
-    }
-
-    private LabEvent createStorageEvent(LabEventType labEventType, LabVessel inPlaceVessel, StorageLocation storageLocation, LabVessel ancillaryInPlaceVessel ){
-        LabEvent storageEvent = new LabEvent(labEventType, new Date(), LabEvent.UI_PROGRAM_NAME, 01L, getUserBean().getBspUser().getUserId(), LabEvent.UI_PROGRAM_NAME );
-        storageEvent.setInPlaceLabVessel(inPlaceVessel);
-        storageEvent.setStorageLocation(storageLocation);
-        storageEvent.setAncillaryInPlaceVessel(ancillaryInPlaceVessel);
-        return storageEvent;
     }
 
     /**
