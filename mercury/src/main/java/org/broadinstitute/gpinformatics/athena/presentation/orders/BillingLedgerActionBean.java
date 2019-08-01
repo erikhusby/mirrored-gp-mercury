@@ -646,12 +646,12 @@ public class BillingLedgerActionBean extends CoreActionBean {
             return workCompleteDate != null ? new SimpleDateFormat("MMM d, yyyy").format(workCompleteDate) : null;
         }
 
-        public double getTotalForPriceItem(ProductLedgerIndex index) {
+        public double getTotalForPriceIndex(ProductLedgerIndex index) {
             ProductOrderSample.LedgerQuantities quantities = ledgerQuantities.get(index);
             return quantities != null ? quantities.getTotal() : 0;
         }
 
-        public double getBilledForPriceItem(ProductLedgerIndex index) {
+        public double getBilledForPriceIndex(ProductLedgerIndex index) {
             ProductOrderSample.LedgerQuantities quantities = ledgerQuantities.get(index);
             return quantities != null ? quantities.getBilled() : 0;
         }

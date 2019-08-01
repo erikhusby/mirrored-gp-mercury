@@ -49,6 +49,16 @@ public class ProductLedgerIndex {
         return name;
     }
 
+    public Long getIndexId() {
+        Long id;
+        if(priceItem == null) {
+            id = priceItem.getPriceItemId();
+        } else {
+            id = product.getProductId();
+        }
+        return id;
+    }
+
     public static ProductLedgerIndex create(Product product, PriceItem priceItem) {
         return new ProductLedgerIndex(product, priceItem);
     }

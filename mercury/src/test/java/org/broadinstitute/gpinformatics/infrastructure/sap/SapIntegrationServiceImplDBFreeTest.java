@@ -358,11 +358,17 @@ public class SapIntegrationServiceImplDBFreeTest {
             assertThat(sapOrderItem.getProductAlias(), is(emptyOrNullString()));
         }
 
-
         final SapOrderDetail sapOrderDetail = conversionPdo.latestSapOrderDetail();
-        final LedgerEntry ledgerEntry =
-                new LedgerEntry(conversionPdo.getSamples().get(0), conversionPdo.getProduct().getPrimaryPriceItem(),
-                        new Date(), 3d);
+        final LedgerEntry ledgerEntry;
+        if(conversionPdo.hasSapQuote()) {
+            ledgerEntry =
+                    new LedgerEntry(conversionPdo.getSamples().get(0), conversionPdo.getProduct(),
+                            new Date(), 3d);
+        } else {
+            ledgerEntry =
+                    new LedgerEntry(conversionPdo.getSamples().get(0), conversionPdo.getProduct().getPrimaryPriceItem(),
+                            new Date(), conversionPdo.getProduct(), 3d);
+        }
         sapOrderDetail.addLedgerEntry(ledgerEntry);
 
         sapOrder = integrationService.initializeSAPOrder(sapQuote, conversionPdo, Option.create(Option.Type.CLOSING));
@@ -406,9 +412,19 @@ public class SapIntegrationServiceImplDBFreeTest {
         Map<String, Double> productToQuantityMapping = new HashMap<>();
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
             productToQuantityMapping.put(productOrderAddOn.getAddOn().getPartNumber(), initialQuantity++);
-            LedgerEntry addonLedgerEntry = new LedgerEntry(conversionPdo.getSamples().get(0),
-                    productOrderAddOn.getAddOn().getPrimaryPriceItem(), new Date(),
-                    productToQuantityMapping.get(productOrderAddOn.getAddOn().getPartNumber()));
+            LedgerEntry addonLedgerEntry;
+
+            if(conversionPdo.hasSapQuote()) {
+                addonLedgerEntry = new LedgerEntry(conversionPdo.getSamples().get(0),
+                        productOrderAddOn.getAddOn(), new Date(),
+                        productToQuantityMapping.get(productOrderAddOn.getAddOn().getPartNumber()));
+            } else {
+                addonLedgerEntry = new LedgerEntry(conversionPdo.getSamples().get(0),
+                        productOrderAddOn.getAddOn().getPrimaryPriceItem(), new Date(),
+                        productOrderAddOn.getAddOn(),
+                        productToQuantityMapping.get(productOrderAddOn.getAddOn().getPartNumber()));
+            }
+
             addonLedgerEntry.setBillingMessage(BillingSession.SUCCESS);
             addonLedgerEntry.setSapDeliveryDocumentId(productOrderAddOn.getAddOn().getPartNumber() + "delivery");
             sapOrderDetail.addLedgerEntry(addonLedgerEntry);
@@ -890,9 +906,21 @@ public class SapIntegrationServiceImplDBFreeTest {
     private void addLedgerItems(ProductOrder order, int ledgerCount) {
         for (ProductOrderSample productOrderSample : order.getSamples()) {
             if(!productOrderSample.isCompletelyBilled()) {
-                productOrderSample.addLedgerItem(new Date(), order.getProduct().getPrimaryPriceItem(), ledgerCount * 1d);
-                for (ProductOrderAddOn productOrderAddOn : order.getAddOns()) {
-                    productOrderSample.addLedgerItem(new Date(), productOrderAddOn.getAddOn().getPrimaryPriceItem(), ledgerCount * 1d);
+                if(order.hasSapQuote()) {
+                    productOrderSample
+                            .addLedgerItem(new Date(), order.getProduct(), ledgerCount * 1d);
+                    for (ProductOrderAddOn productOrderAddOn : order.getAddOns()) {
+                        productOrderSample.addLedgerItem(new Date(), productOrderAddOn.getAddOn(),
+                                ledgerCount * 1d);
+                    }
+                } else {
+                    productOrderSample
+                            .addLedgerItem(new Date(), order.getProduct().getPrimaryPriceItem(), order.getProduct(),
+                                    ledgerCount * 1d);
+                    for (ProductOrderAddOn productOrderAddOn : order.getAddOns()) {
+                        productOrderSample.addLedgerItem(new Date(), productOrderAddOn.getAddOn().getPrimaryPriceItem(),
+                                productOrderAddOn.getAddOn(),ledgerCount * 1d);
+                    }
                 }
 
                 BillingSession newSession = new BillingSession(1L, productOrderSample.getLedgerItems());

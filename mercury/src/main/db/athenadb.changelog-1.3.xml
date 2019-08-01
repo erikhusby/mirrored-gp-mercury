@@ -76,4 +76,9 @@
             <column name="OFFERED_AS_COMMERCIAL" type="number(1,0)" />
         </addColumn>
     </changeSet>
+    <changeSet author="scottmat" id="GPLIM-6514-drop-null-constraint-ledger-entry">
+        <dropNotNullConstraint columnName="PRICE_ITEM_ID" schemaName="ATHENA" tableName="BILLING_LEDGER" />
+    </changeSet>
+
+
 </databaseChangeLog>

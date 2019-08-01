@@ -7,44 +7,30 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
-import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapConfig;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
-import org.broadinstitute.sap.entity.DeliveryCondition;
-import org.broadinstitute.sap.entity.material.SAPMaterial;
-import org.broadinstitute.sap.entity.quote.FundingDetail;
-import org.broadinstitute.sap.entity.quote.FundingPartner;
-import org.broadinstitute.sap.entity.quote.FundingStatus;
-import org.broadinstitute.sap.entity.quote.QuoteHeader;
-import org.broadinstitute.sap.entity.quote.QuoteItem;
-import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.mockito.Mockito;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
-import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -113,10 +99,17 @@ public class BillingEjbJiraDownTest extends Arquillian {
         final ProductOrderSample sampleA = samplesByName.get(SM_A).iterator().next();
         final ProductOrderSample sampleB = samplesByName.get(SM_B).iterator().next();
 
-        LedgerEntry ledgerEntryA =
-                new LedgerEntry(sampleA, productOrder.getProduct().getPrimaryPriceItem(), new Date(), 3);
-        LedgerEntry ledgerEntryB =
-                new LedgerEntry(sampleB, productOrder.getProduct().getPrimaryPriceItem(), new Date(), 3);
+        LedgerEntry ledgerEntryA;
+        LedgerEntry ledgerEntryB;
+        if(productOrder.hasSapQuote()) {
+            ledgerEntryA = new LedgerEntry(sampleA, productOrder.getProduct(), new Date(), 3);
+            ledgerEntryB = new LedgerEntry(sampleB, productOrder.getProduct(), new Date(), 3);
+        } else {
+            ledgerEntryA = new LedgerEntry(sampleA, productOrder.getProduct().getPrimaryPriceItem(), new Date(),
+                    productOrder.getProduct(), 3);
+            ledgerEntryB = new LedgerEntry(sampleB, productOrder.getProduct().getPrimaryPriceItem(), new Date(),
+                    productOrder.getProduct(), 3);
+        }
 
         final Collection<QuotePriceItem> quotePriceItems = priceListCache.getQuotePriceItems();
 

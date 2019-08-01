@@ -53,8 +53,15 @@ public class CreateBillingDataTest extends Arquillian {
             Set<LedgerEntry> ledgerEntries = new HashSet<>();
             for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
                 if (productOrderSample.getName().contains("A")) {
-                    ledgerEntries.add(new LedgerEntry(productOrderSample, productOrder.getProduct().getPrimaryPriceItem(),
-                            new Date(), 0.5));
+                    if(productOrder.hasSapQuote()) {
+                        ledgerEntries.add(new LedgerEntry(productOrderSample,
+                                productOrder.getProduct(),
+                                new Date(), 0.5));
+                    } else {
+                        ledgerEntries.add(new LedgerEntry(productOrderSample,
+                                productOrder.getProduct().getPrimaryPriceItem(),
+                                new Date(), productOrder.getProduct(), 0.5));
+                    }
                 }
             }
 

@@ -154,19 +154,17 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
 
     public Map<Product, Double> getNumberOfBilledEntriesByProduct() {
         Map<Product, Double> billedCount = new HashMap<>();
-
         for (LedgerEntry ledgerEntry : this.ledgerEntries) {
             final ProductOrder productOrder = ledgerEntry.getProductOrderSample().getProductOrder();
             Product aggregatingProduct = null;
 
-            if(productOrder.getProduct().getPrimaryPriceItem().equals(ledgerEntry.getPriceItem())) {
+            if(hasLedgerMatch(productOrder, productOrder.getProduct().getPrimaryPriceItem(),
+                    productOrder.getProduct(), ledgerEntry)) {
                 aggregatingProduct = productOrder.getProduct();
             } else {
                 for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
-                    PriceItem addonPriceItem =
-                            productOrder.determinePriceItemByCompanyCode(productOrderAddOn.getAddOn());
-
-                    if(addonPriceItem.equals(ledgerEntry.getPriceItem())) {
+                    if(hasLedgerMatch(productOrder, productOrderAddOn.getAddOn().getPrimaryPriceItem(),
+                            productOrderAddOn.getAddOn(), ledgerEntry)) {
                         aggregatingProduct = productOrderAddOn.getAddOn();
                         break;
                     }
@@ -180,6 +178,22 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
         }
 
         return billedCount;
+    }
+
+    private boolean hasLedgerMatch(ProductOrder order, PriceItem priceItem, Product product, LedgerEntry ledgerEntry) {
+        boolean ledgerIndexMatch = false;
+
+        if(order.hasSapQuote()) {
+            if (ledgerEntry.getProduct().equals(product)) {
+                ledgerIndexMatch = true;
+            }
+        } else {
+            if(ledgerEntry.getPriceItem().equals(priceItem)) {
+                ledgerIndexMatch = true;
+            }
+        }
+
+        return ledgerIndexMatch;
     }
 
     @Override

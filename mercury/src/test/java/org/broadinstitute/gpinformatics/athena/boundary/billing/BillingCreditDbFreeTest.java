@@ -494,7 +494,13 @@ public class BillingCreditDbFreeTest {
     private List<BillingEjb.BillingResult> bill(Map<ProductOrderSample, Pair<PriceItem, Double>> samplePairMap) {
         final Date date = new Date();
         samplePairMap.forEach((productOrderSample, pricItemQtyPair) ->  {
-            productOrderSample.addLedgerItem(date, pricItemQtyPair.getKey(), pricItemQtyPair.getValue());
+            if(productOrderSample.getProductOrder().hasSapQuote()) {
+                productOrderSample.addLedgerItem(date, productOrderSample.getProductOrder().getProduct(),
+                        pricItemQtyPair.getValue());
+            } else {
+                productOrderSample.addLedgerItem(date, pricItemQtyPair.getKey(),
+                        productOrderSample.getProductOrder().getProduct(), pricItemQtyPair.getValue());
+            }
         });
         Set<LedgerEntry> ledgerItems = new HashSet<>();
         samplePairMap.keySet().stream().map(ProductOrderSample::getLedgerItems).forEach(ledgerItems::addAll);

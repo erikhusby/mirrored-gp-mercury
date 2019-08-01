@@ -98,7 +98,7 @@ public class LedgerEntry implements Serializable {
     private SapOrderDetail sapOrderDetail;
 
     @ManyToOne
-    @JoinColumn("PRODUCT_ID")
+    @JoinColumn(name = "PRODUCT_ID")
     private Product product;
 
     /**

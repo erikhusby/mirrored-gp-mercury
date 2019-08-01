@@ -845,7 +845,7 @@
             </c:when>
             <c:otherwise>
 
-                <div class="span3"><span class="label-form">Price Item</span><br>${actionBean.productOrder.determinePriceItemByCompanyCode(actionBean.productOrder.product).name}</div>
+                <div class="span3"><span class="label-form">Price Item</span><br>${actionBean.productOrder.product.primaryPriceItem.name}</div>
             </c:otherwise>
         </c:choose>
         <div class="span2"><span class="label-form">Quote</span><br>${actionBean.productOrder.quoteId}</div>
@@ -1067,27 +1067,35 @@
 
                     <c:forEach items="${actionBean.potentialBillings}" var="billingIndex">
                         <td>
-                                ${info.getTotalForPriceItem(billingIndex)}
+                                ${info.getTotalForPriceIndex(billingIndex)}
                         </td>
                         <td style="text-align: center">
                             <input type="hidden" data-rownum = "${info.sample.samplePosition}"
-                                   name="ledgerData[${info.sample.samplePosition}].quantities[${billingIndex.priceItemId}].originalQuantity"
-                                   value="${info.getTotalForPriceItem(billingIndex)}"/>
-                            <c:set var="submittedQuantity" value="${actionBean.ledgerData[info.sample.samplePosition].quantities[billingIndex.priceItemId].submittedQuantity}"/>
+                                   name="ledgerData[${info.sample.samplePosition}].quantities[${billingIndex.indexId}].originalQuantity"
+                                   value="${info.getTotalForPriceIndex(billingIndex)}"/>
+                            <c:set var="submittedQuantity" value="${actionBean.ledgerData[info.sample.samplePosition].quantities[billingIndex.indexId].submittedQuantity}"/>
                                 <c:if test="${!disableAbandon}">
-                                    <input id="ledgerData[${info.sample.samplePosition}].quantities[${billingIndex.priceItemId}].submittedQuantity"
-                                           name="ledgerData[${info.sample.samplePosition}].quantities[${billingIndex.priceItemId}].submittedQuantity"
-                                           value="${submittedQuantity != null ? submittedQuantity : info.getTotalForPriceItem(billingIndex)}"
+                                    <input id="ledgerData[${info.sample.samplePosition}].quantities[${billingIndex.indexId}].submittedQuantity"
+                                           name="ledgerData[${info.sample.samplePosition}].quantities[${billingIndex.indexId}].submittedQuantity"
+                                           value="${submittedQuantity != null ? submittedQuantity : info.getTotalForPriceIndex(billingIndex)}"
                                            class="ledgerQuantity" data-rownum = "${info.sample.samplePosition}"
-                                           priceItemId="${billingIndex.priceItemId}"
-                                           billedQuantity="${info.getBilledForPriceItem(billingIndex)}">
+                                           priceItemId="${billingIndex.indexId}"
+                                           billedQuantity="${info.getBilledForPriceIndex(billingIndex)}"/>
 
                                 </c:if>
-                            <c:if test="${billingIndex == actionBean.productOrder.determinePriceItemByCompanyCode(actionBean.productOrder.product) && info.autoFillQuantity != 0}">
+                            <c:choose>
+                                <c:when test="${actionBean.productOrder.hasSapQuote()}">
+                                    <c:set var="indexMatched" value="${billingIndex.product.equals(actionBean.productOrder.product)}" />
+                                </c:when>
+                                <c:otherwise>
+                                    <c:set var="indexMatched" value="${billingIndex.priceItem.equals(actionBean.productOrder.product.primaryPriceItem)}" />
+                                </c:otherwise>
+                            </c:choose>
+                            <c:if test="${indexMatched && info.autoFillQuantity != 0}">
                                 <input type="hidden"
                                        name="${info.sample.samplePosition}-autoFill-${info.sample.name}"
                                        value="${info.autoFillQuantity}"
-                                       class="autoFillQuantity">
+                                       class="autoFillQuantity"/>
                             </c:if>
                         </td>
                     </c:forEach>

@@ -169,9 +169,15 @@ public class ProductOrderListEntryDaoTest extends StubbyContainerTest {
 
     public void testOneLedgerEntryNoBillingSession() {
 
-        LedgerEntry ledgerEntry =
-                new LedgerEntry(order.getSamples().iterator().next(), order.getProduct().getPrimaryPriceItem(),
-                        new Date(), 2);
+        LedgerEntry ledgerEntry;
+        if(order.hasSapQuote()) {
+            ledgerEntry =
+                    new LedgerEntry(order.getSamples().iterator().next(), order.getProduct(),
+                            new Date(), 2);
+        } else {
+            ledgerEntry = new LedgerEntry(order.getSamples().iterator().next(), order.getProduct().getPrimaryPriceItem(),
+                    new Date(), order.getProduct(), 2);
+        }
 
         ledgerEntryDao.persist(ledgerEntry);
         ledgerEntryDao.flush();
@@ -185,9 +191,16 @@ public class ProductOrderListEntryDaoTest extends StubbyContainerTest {
     }
 
     public void testOneLedgerEntryWithBillingSession() {
-        LedgerEntry ledgerEntry =
-                new LedgerEntry(order.getSamples().iterator().next(), order.getProduct().getPrimaryPriceItem(),
-                        new Date(), 2);
+        LedgerEntry ledgerEntry;
+        if(order.hasSapQuote()) {
+            ledgerEntry = new LedgerEntry(order.getSamples().iterator().next(), order.getProduct(),
+                    new Date(), 2);
+
+        } else {
+            ledgerEntry = new LedgerEntry(order.getSamples().iterator().next(), order.getProduct().getPrimaryPriceItem(),
+                    new Date(), order.getProduct(), 2);
+
+        }
 
         BillingSession billingSession = new BillingSession(1L, Collections.singleton(ledgerEntry));
 
