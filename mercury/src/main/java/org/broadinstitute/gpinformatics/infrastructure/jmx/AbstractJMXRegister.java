@@ -19,7 +19,7 @@ import java.lang.management.ManagementFactory;
  */
 abstract class AbstractJMXRegister {
 
-    private Log log = LogFactory.getLog(this.getClass());
+    private Log log = LogFactory.getLog(getClass());
 
     private MBeanServer platformMBeanServer;
 

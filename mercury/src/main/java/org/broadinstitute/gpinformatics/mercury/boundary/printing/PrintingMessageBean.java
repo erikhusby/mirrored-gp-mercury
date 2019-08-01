@@ -106,9 +106,9 @@ public class PrintingMessageBean implements MessageListener {
         // For each printer with content for printing open a direct socket and stream the ZPL
 
         if (!isPrintingEnabled()) {
-            logger.info("Printing disabled, otherwise a label would be getting printed now.");
-            logger.info("Sending to: "+ message.getPrinterHostName());
-            logger.info("Printing ZPL: " + message.getZplScript());
+            logger.debug("Printing disabled, otherwise a label would be getting printed now.");
+            logger.debug("Sending to: "+ message.getPrinterHostName());
+            logger.debug("Printing ZPL: " + message.getZplScript());
             return;
         }
 
@@ -118,7 +118,7 @@ public class PrintingMessageBean implements MessageListener {
 
         // Print out the ZPL message, for debuging the random missed label problem
         Printer printer = message.getPrinter();
-        logger.info("Printing " +message.getLabelName() + " ZPL to " + printer.getHostName() + ":" + printer.getPort() + "\n" + message.getZplScript());
+        logger.debug("Printing " +message.getLabelName() + " ZPL to " + printer.getHostName() + ":" + printer.getPort() + "\n" + message.getZplScript());
 
         // Initialization section:
         // Try to open a socket
