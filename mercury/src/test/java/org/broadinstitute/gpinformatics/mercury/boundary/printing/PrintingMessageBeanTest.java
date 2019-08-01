@@ -95,31 +95,36 @@ public class PrintingMessageBeanTest extends Arquillian {
     /**
      * Note: this is an arquillian test, so requires a empty Wildfly server running to be able to run.
      */
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void testActualPrinting() throws Exception {
 
-        printingMessageResource.sendPrinterMessage(printingManager
-                .createPrintingMessage(new LabelData("CO-44556677"), PaperType.PLATE_MATRIX, LabLocation.LAB_1182));
+        try {
+            printingMessageResource.sendPrinterMessage(printingManager
+                    .createPrintingMessage(new LabelData("CO-4445566"), PaperType.CONTAINER, LabLocation.LAB_1182));
 
-        // Sleep for 5-10 secs to give queue time to process the message.
-        Thread.sleep(1000 * 5);
+            // Sleep for 5-10 secs to give queue time to process the message.
+            Thread.sleep(1000 * 5);
+        }
+        catch (Exception exception) {
+            Assert.fail("Unexpected exception occurred while sending the printer message. ", exception);
+        }
     }
 
    /**
      * Creates several printer message and adds them to the queue using the JMS API (local configuration).
      */
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void testSendingMultiplePrintingMessages() {
         PrintingMessageTestFactory printingMessageTestFactory = new PrintingMessageTestFactory();
         try {
             List<PrintingMessage> messages = new ArrayList<>();
 
             messages.add(printingMessageTestFactory
-                        .createPrintingMessage("CO-44556677", null, PaperType.PLATE_MATRIX, LabLocation.LAB_1182));
+                        .createPrintingMessage("CO-112233", null, PaperType.CONTAINER, LabLocation.LAB_1182));
             messages.add(printingMessageTestFactory
-                    .createPrintingMessage("SM-112233", null, PaperType.SAMPLE_WRAP_AROUND, LabLocation.LAB_1182));
+                    .createPrintingMessage("SM-223344", null, PaperType.SAMPLE_WRAP_AROUND, LabLocation.LAB_1182));
             messages.add(printingMessageTestFactory
-                    .createPrintingMessage("SM-445566", null, PaperType.SAMPLE_PAPER, LabLocation.LAB_1182));
+                    .createPrintingMessage("SM-33223", null, PaperType.SAMPLE_PAPER, LabLocation.LAB_1182));
 
             sendMessages(messages);
         } catch (Exception exception) {
