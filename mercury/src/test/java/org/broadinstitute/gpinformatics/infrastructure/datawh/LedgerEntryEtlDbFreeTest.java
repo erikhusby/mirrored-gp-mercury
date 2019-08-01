@@ -36,6 +36,7 @@ public class LedgerEntryEtlDbFreeTest {
     private static final String FORMATTED_BILLING_SESSION_MESSAGE = BILLING_SESSION_MESSAGE.replace('\n', ' ');
     private static final Date WORK_COMPLETE_DATE = new Date();
     private static final String WORK_ITEM_ID = "2201";
+    private static final String SAP_DELIVERY_DOCUMENT_ID = "0200003194";
     private String datafileDir;
     private LedgerEntryEtl ledgerEntryEtl;
 
@@ -101,6 +102,7 @@ public class LedgerEntryEtlDbFreeTest {
         EasyMock.expect(ledgerEntry.getBillingMessage()).andReturn(BILLING_SESSION_MESSAGE);
         EasyMock.expect(ledgerEntry.getWorkCompleteDate()).andReturn(WORK_COMPLETE_DATE);
         EasyMock.expect(ledgerEntry.getWorkItem()).andReturn(WORK_ITEM_ID);
+        EasyMock.expect(ledgerEntry.getSapDeliveryDocumentId()).andReturn(SAP_DELIVERY_DOCUMENT_ID);
         EasyMock.replay(mocks);
 
         Collection<String> records = ledgerEntryEtl.dataRecords(etlDateStr, false, LEDGER_ID);
@@ -126,6 +128,7 @@ public class LedgerEntryEtlDbFreeTest {
         Assert.assertEquals(parts[i++], FORMATTED_BILLING_SESSION_MESSAGE);
         Assert.assertEquals(parts[i++], EtlTestUtilities.format(WORK_COMPLETE_DATE));
         Assert.assertEquals(parts[i++], WORK_ITEM_ID);
+        Assert.assertEquals(parts[i++], SAP_DELIVERY_DOCUMENT_ID);
         Assert.assertEquals(parts.length, i);
     }
 }

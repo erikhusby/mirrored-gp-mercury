@@ -59,12 +59,14 @@ public class SampleSheetFactory {
         // todo jmt include controls?
         // Infinium bucket entries are always DNA plate wells
         for (BucketEntry bucketEntry : productOrder.getBucketEntries()) {
-            for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions :
-                    InfiniumVesselTraversalEvaluator.getChipDetailsForDnaWell(
-                            bucketEntry.getLabVessel(), CHIP_EVENT_TYPES, null).asMap().entrySet()) {
-                vesselPositionPairs.add(new ImmutablePair<>(labVesselAndPositions.getKey(),
-                        labVesselAndPositions.getValue().iterator().next() ) );
-                break;
+            if (bucketEntry.getBucket().getBucketDefinitionName().startsWith("Infinium")) {
+                for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions :
+                        InfiniumVesselTraversalEvaluator.getChipDetailsForDnaWell(
+                                bucketEntry.getLabVessel(), CHIP_EVENT_TYPES, null).asMap().entrySet()) {
+                    vesselPositionPairs.add(new ImmutablePair<>(labVesselAndPositions.getKey(),
+                            labVesselAndPositions.getValue().iterator().next() ) );
+                    break;
+                }
             }
         }
 

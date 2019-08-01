@@ -18,7 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTe
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.broadinstitute.sap.entity.SAPMaterial;
+import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -41,6 +41,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 /**
  *
@@ -358,7 +360,8 @@ public class ProductFixupTest extends Arquillian {
             final QuotePriceItem byKeyFields = priceListCache.findByKeyFields(currentProduct.getPrimaryPriceItem());
             if(byKeyFields != null) {
                 BigDecimal qsPrice = new BigDecimal(byKeyFields.getPrice());
-                final SAPMaterial material = productPriceCache.findByProduct(currentProduct, configuration);
+                final SAPMaterial material = productPriceCache.findByProduct(currentProduct,
+                        configuration.getSalesOrganization());
                 if (material != null) {
                     BigDecimal sapPrice = new BigDecimal(material.getBasePrice());
                     if (sapPrice.compareTo(qsPrice) != 0) {
@@ -458,5 +461,42 @@ public class ProductFixupTest extends Arquillian {
         final List<Product> doubleCheck = productDao.findListByList(Product.class, Product_.productId, badProductIds);
         Assert.assertEquals(doubleCheck.size(), 0, "The products should have been removed");
 
+    }
+
+    @Test(enabled = false)
+    public void gplim6286rename93114() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        Product wes010241Bad = productDao.findById(Product.class, 93114L);
+        assertThat(wes010241Bad.getPartNumber(), is("WES-010241 Express Somatic Human WES (Deep Coverage)"));
+        wes010241Bad.setPartNumber("WES-010241_BAD");
+
+        productDao.persist(new FixupCommentary("GPLIM-6286 Rename invalid partNumber"));
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void gplim6362InitializeOfferAsCommercialFlag() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<String> offeredAsCommercialPartNumbers =
+                Stream.of("P-ALT-0018", "P-ALT-0019", "P-ALT-0023", "P-ALT-0034", "P-ESH-0002", "P-ESH-0021",
+                        "P-ESH-0053", "P-ESH-0055", "P-ESH-0056", "P-ESH-0057", "P-ESH-0063", "P-ESH-0064",
+                        "P-ESH-0072", "P-ESH-0073", "P-ESH-0078", "P-EX-0018", "P-EX-0039", "P-EX-0040", "P-EX-0041",
+                        "P-EX-0042", "P-EX-0048", "P-EX-0049", "P-EX-0051", "P-MCV-0012", "P-MCV-0013", "P-MCV-0014",
+                        "P-MCV-0015", "P-MCV-0016", "P-RNA-0016", "P-RNA-0019", "P-RNA-0022", "P-WG-0058", "P-WG-0072",
+                        "P-WG-0073", "P-WG-0083", "P-WG-0086", "P-WG-0087", "P-WG-0088", "P-WG-0090", "P-WG-0101",
+                        "P-WG-0102", "P-WG-0104", "P-WG-0105", "P-WG-0106", "P-WG-0107").collect(Collectors.toList());
+
+        List<Product> productsToUpdate = productDao.findByPartNumbers(offeredAsCommercialPartNumbers);
+        productsToUpdate.forEach(product -> {
+            product.setOfferedAsCommercialProduct(true);
+            System.out.println("Updated " + product.getDisplayName() + " to be offered as a commercial product");
+        });
+
+        productDao.persist(new FixupCommentary("GPLIM-6362: pre-setting the Offered as Commercial flag on all relevant products upon SAP 2.0 rollout"));
+        utx.commit();
     }
 }

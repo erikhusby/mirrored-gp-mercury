@@ -1075,8 +1075,7 @@ public class ProductOrderFixupTest extends Arquillian {
                 }
                 SapOrderDetail newDetail = new SapOrderDetail(orderWithSap.getSapOrderNumber(),
                         sampleCount.intValue(),
-                        orderWithSap.getQuoteId(), SapIntegrationServiceImpl.determineCompanyCode(orderWithSap).getCompanyCode(),
-                        "", "");
+                        orderWithSap.getQuoteId(), SapIntegrationServiceImpl.determineCompanyCode(orderWithSap).getCompanyCode());
                 orderWithSap.addSapOrderDetail(newDetail);
             } else {
                 SapOrderDetail latestDetail = orderWithSap.latestSapOrderDetail();
@@ -1647,7 +1646,7 @@ public class ProductOrderFixupTest extends Arquillian {
             final List<String> effectivePricesForProducts = productPriceCache
                     .getEffectivePricesForProducts(allProductsOrdered,orderToModify, quote);
 
-            productOrderEjb.updateOrderInSap(orderToModify, allProductsOrdered, effectivePricesForProducts, new MessageCollection(),
+            productOrderEjb.updateOrderInSap(orderToModify, allProductsOrdered, new MessageCollection(),
                     CollectionUtils.containsAny(Arrays.asList(
                             ProductOrder.OrderStatus.Abandoned, ProductOrder.OrderStatus.Completed),
                             Collections.singleton(orderToModify.getOrderStatus()))
