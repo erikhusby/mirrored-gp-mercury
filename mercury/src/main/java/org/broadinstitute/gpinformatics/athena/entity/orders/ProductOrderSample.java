@@ -1271,7 +1271,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     }
 
     public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, Product product, double delta, Date autoLedgerTimestamp) {
-        LedgerEntry ledgerEntry = new LedgerEntry(this, priceItem, workCompleteDate, null, delta);
+        LedgerEntry ledgerEntry = new LedgerEntry(this, priceItem, workCompleteDate, product, delta);
         ledgerEntry.setAutoLedgerTimestamp(autoLedgerTimestamp);
         ledgerItems.add(ledgerEntry);
         String priceItemName = "";
