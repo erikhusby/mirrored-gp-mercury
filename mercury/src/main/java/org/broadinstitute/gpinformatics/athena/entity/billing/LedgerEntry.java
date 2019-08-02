@@ -101,6 +101,8 @@ public class LedgerEntry implements Serializable {
     @JoinColumn(name = "PRODUCT_ID")
     private Product product;
 
+    private Boolean sapReplacementCondition = Boolean.FALSE;
+
     /**
      * Package private constructor for JPA use.
      */
@@ -190,6 +192,18 @@ public class LedgerEntry implements Serializable {
 
     public void setProduct(Product product) {
         this.product = product;
+    }
+
+    public Boolean getSapReplacementCondition() {
+        return sapReplacementCondition;
+    }
+
+    public boolean hasSapReplacementCondition() {
+        return sapReplacementCondition != null && sapReplacementCondition;
+    }
+
+    public void setSapReplacementCondition(Boolean sapReplacementCondition) {
+        this.sapReplacementCondition = sapReplacementCondition;
     }
 
     /**

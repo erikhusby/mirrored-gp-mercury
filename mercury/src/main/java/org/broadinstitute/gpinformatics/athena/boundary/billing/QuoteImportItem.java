@@ -291,7 +291,7 @@ public class QuoteImportItem {
         if (itemIsReplacing != null) {
             type = LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM;
         } else {
-            PriceItem priceItem = getProductOrder().determinePriceItemByCompanyCode(getPrimaryProduct());
+            PriceItem priceItem = getPrimaryProduct().getPrimaryPriceItem();
             if (priceItem.getName().equals(getPriceItem().getName())
                 || replacementPriceItemNames.contains(getPriceItem().getName())) {
                 type = LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM;

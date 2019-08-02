@@ -978,20 +978,10 @@
                 <th style="text-align: center">Status</th>
                 <th title="Date Coverage First Met">DCFM</th>
                 <th style="text-align: center">Date Complete</th>
-                <c:choose>
-                    <c:when test="${actionBean.productOrder.hasSapQuote()}">
-                        <c:forEach items="${actionBean.products}" var="product">
-                            <th>Original value for ${product.displayName}</th>
-                            <th style="...">${product.displayName}</th>
-                        </c:forEach>
-                    </c:when>
-                    <c:otherwise>
-                        <c:forEach items="${actionBean.potentialBillings}" var="billingIndex">
-                            <th>Original value for ${billingIndex.name}</th>
-                            <th style="text-align: center">${billingIndex.name}</th>
-                        </c:forEach>
-                    </c:otherwise>
-                </c:choose>
+                <c:forEach items="${actionBean.potentialBillings}" var="billingIndex">
+                    <th>Original value for ${billingIndex.name}</th>
+                    <th style="text-align: center">${billingIndex.name}</th>
+                </c:forEach>
                 <th style="text-align: center">Billed</th>
             </tr>
         </thead>

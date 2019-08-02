@@ -128,13 +128,13 @@ public class QuoteImportInfo {
                         // Separate the items into debits and credits so that the quote server will not cancel out items.
                         for (LedgerEntry ledger : ledgerItems) {
                             if (ledger.getQuantity() < 0) {
-                                if (!orderIndex.hasSapQuote() && isReplacementPriceItem(priceListCache, ledger)) {
+                                if (isReplacementPriceItem(priceListCache, ledger)) {
                                     replacementCreditLedgerItems.add(ledger);
                                 } else {
                                     creditLedgerItems.add(ledger);
                                 }
                             } else {
-                                if (!orderIndex.hasSapQuote() && isReplacementPriceItem(priceListCache, ledger)) {
+                                if (isReplacementPriceItem(priceListCache, ledger)) {
                                     replacementDebitLedgerItems.add(ledger);
                                 } else {
                                     debitLedgerItems.add(ledger);
@@ -197,20 +197,25 @@ public class QuoteImportInfo {
             return LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM == ledger.getPriceItemType();
         }
 
-        // No quote, so calculate what it would be given the state of things now.
-        final Product product = ledger.getProductOrderSample().getProductOrder().getProduct();
-
-        final PriceItem priceItem =
-                ledger.getProductOrderSample().getProductOrder().determinePriceItemByCompanyCode(product);
-        Collection<QuotePriceItem> quotePriceItems =
-            priceListCache.getReplacementPriceItems(priceItem);
-
-        for (QuotePriceItem quotePriceItem : quotePriceItems) {
-            if (ledger.getPriceItem().getName().equals(quotePriceItem.getName())) {
+        if(ledger.getProductOrderSample().getProductOrder().hasSapQuote()) {
+            if(ledger.hasSapReplacementCondition()) {
                 return true;
+            } else {
+                return false;
+            }
+        } else {
+            // No quote, so calculate what it would be given the state of things now.
+            final Product product = ledger.getProductOrderSample().getProductOrder().getProduct();
+
+            final PriceItem priceItem = product.getPrimaryPriceItem();
+            Collection<QuotePriceItem> quotePriceItems = priceListCache.getReplacementPriceItems(priceItem);
+
+            for (QuotePriceItem quotePriceItem : quotePriceItems) {
+                if (ledger.getPriceItem().getName().equals(quotePriceItem.getName())) {
+                    return true;
+                }
             }
         }
-
         return false;
     }
 }

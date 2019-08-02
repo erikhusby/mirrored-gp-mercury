@@ -598,7 +598,8 @@ CREATE TABLE im_ledger_entry (
   billing_message         VARCHAR2(500),
   work_complete_date      DATE,
   quote_server_work_item varchar2(255),
-  sap_delivery_document  VARCHAR2(255)
+  sap_delivery_document  VARCHAR2(255),
+  product_id              NUMERIC(19)
 );
 
 CREATE TABLE im_billing_session (

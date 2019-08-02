@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.easymock.EasyMock;
@@ -37,6 +38,7 @@ public class LedgerEntryEtlDbFreeTest {
     private static final Date WORK_COMPLETE_DATE = new Date();
     private static final String WORK_ITEM_ID = "2201";
     private static final String SAP_DELIVERY_DOCUMENT_ID = "0200003194";
+    private static final long productId = 3383L;
     private String datafileDir;
     private LedgerEntryEtl ledgerEntryEtl;
 
@@ -44,6 +46,7 @@ public class LedgerEntryEtlDbFreeTest {
     private final LedgerEntry ledgerEntry = EasyMock.createMock(LedgerEntry.class);
     private final LedgerEntryDao ledgerEntryDao = EasyMock.createMock(LedgerEntryDao.class);
     private final ProductOrderSample productOrderSample = EasyMock.createMock(ProductOrderSample.class);
+
     private final PriceItem priceItem = EasyMock.createMock(PriceItem.class);
     private final BillingSession billingSession = EasyMock.createMock(BillingSession.class);
     private final Object[] mocks = new Object[]{auditReader, ledgerEntry, ledgerEntryDao, productOrderSample,
@@ -103,6 +106,9 @@ public class LedgerEntryEtlDbFreeTest {
         EasyMock.expect(ledgerEntry.getWorkCompleteDate()).andReturn(WORK_COMPLETE_DATE);
         EasyMock.expect(ledgerEntry.getWorkItem()).andReturn(WORK_ITEM_ID);
         EasyMock.expect(ledgerEntry.getSapDeliveryDocumentId()).andReturn(SAP_DELIVERY_DOCUMENT_ID);
+        Product testProduct = new Product();
+        EasyMock.expect(ledgerEntry.getProduct()).andReturn(testProduct);
+        EasyMock.expect(testProduct.getProductId()).andReturn(productId);
         EasyMock.replay(mocks);
 
         Collection<String> records = ledgerEntryEtl.dataRecords(etlDateStr, false, LEDGER_ID);
@@ -129,6 +135,7 @@ public class LedgerEntryEtlDbFreeTest {
         Assert.assertEquals(parts[i++], EtlTestUtilities.format(WORK_COMPLETE_DATE));
         Assert.assertEquals(parts[i++], WORK_ITEM_ID);
         Assert.assertEquals(parts[i++], SAP_DELIVERY_DOCUMENT_ID);
+        Assert.assertEquals(parts[i++], String.valueOf(productId));
         Assert.assertEquals(parts.length, i);
     }
 }
