@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 public class ProductLedgerIndex {
     private Product product;
     private PriceItem priceItem;
+    private boolean sapIndex = false;
 
     public ProductLedgerIndex(Product product, PriceItem priceItem) {
         this.product = product;
@@ -30,7 +31,7 @@ public class ProductLedgerIndex {
     public String getDisplayValue() {
         String display = "";
 
-        if(priceItem == null) {
+        if(sapIndex) {
             display = product.getDisplayName();
         } else {
             display = priceItem.getDisplayName();
@@ -41,7 +42,7 @@ public class ProductLedgerIndex {
 
     public String getName() {
         String name = "";
-        if(priceItem == null) {
+        if(sapIndex) {
             name = product.getPartNumber();
         } else {
             name = priceItem.getName();
@@ -51,7 +52,7 @@ public class ProductLedgerIndex {
 
     public Long getIndexId() {
         Long id;
-        if(priceItem == null) {
+        if(sapIndex) {
             id = priceItem.getPriceItemId();
         } else {
             id = product.getProductId();
@@ -59,8 +60,15 @@ public class ProductLedgerIndex {
         return id;
     }
 
-    public static ProductLedgerIndex create(Product product, PriceItem priceItem) {
-        return new ProductLedgerIndex(product, priceItem);
+    public static ProductLedgerIndex create(Product product, PriceItem priceItem, boolean sapOrder) {
+        ProductLedgerIndex ledgerIndex;
+        if(sapOrder) {
+            ledgerIndex = new ProductLedgerIndex(product, null);
+        } else {
+            ledgerIndex = new ProductLedgerIndex(null, priceItem);
+        }
+        ledgerIndex.sapIndex = sapOrder;
+        return ledgerIndex;
     }
 
     @Override

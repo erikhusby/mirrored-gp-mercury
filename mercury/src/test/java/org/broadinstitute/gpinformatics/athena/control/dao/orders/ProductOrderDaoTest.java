@@ -284,7 +284,7 @@ public class ProductOrderDaoTest extends StubbyContainerTest {
             } else {
                 ledgerEntry =
                         new LedgerEntry(productOrderSample, productOrder.getProduct().getPrimaryPriceItem(),
-                                new Date(), productOrder.getProduct(),1);
+                                new Date(),1);
             }
             ledgerEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
             ledgerEntries.add(ledgerEntry);

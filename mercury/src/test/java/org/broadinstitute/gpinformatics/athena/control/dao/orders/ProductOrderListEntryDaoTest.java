@@ -176,7 +176,7 @@ public class ProductOrderListEntryDaoTest extends StubbyContainerTest {
                             new Date(), 2);
         } else {
             ledgerEntry = new LedgerEntry(order.getSamples().iterator().next(), order.getProduct().getPrimaryPriceItem(),
-                    new Date(), order.getProduct(), 2);
+                    new Date(), 2);
         }
 
         ledgerEntryDao.persist(ledgerEntry);
@@ -198,7 +198,7 @@ public class ProductOrderListEntryDaoTest extends StubbyContainerTest {
 
         } else {
             ledgerEntry = new LedgerEntry(order.getSamples().iterator().next(), order.getProduct().getPrimaryPriceItem(),
-                    new Date(), order.getProduct(), 2);
+                    new Date(), 2);
 
         }
 

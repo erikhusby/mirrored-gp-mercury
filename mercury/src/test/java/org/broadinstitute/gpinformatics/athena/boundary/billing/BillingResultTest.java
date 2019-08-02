@@ -46,7 +46,7 @@ public class BillingResultTest {
             if(testProductOrder.hasSapQuote()) {
                 ledgerEntry = new LedgerEntry(pdoSample, testProduct, new Date(), 3);
             }else {
-                ledgerEntry = new LedgerEntry(pdoSample, new PriceItem(), new Date(), testProduct, 3);
+                ledgerEntry = new LedgerEntry(pdoSample, new PriceItem(), new Date(), 3);
             }
             ledgerEntries.add(ledgerEntry);
         }

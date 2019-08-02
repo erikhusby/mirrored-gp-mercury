@@ -367,7 +367,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         } else {
             ledgerEntry =
                     new LedgerEntry(conversionPdo.getSamples().get(0), conversionPdo.getProduct().getPrimaryPriceItem(),
-                            new Date(), conversionPdo.getProduct(), 3d);
+                            new Date(), 3d);
         }
         sapOrderDetail.addLedgerEntry(ledgerEntry);
 
@@ -421,7 +421,6 @@ public class SapIntegrationServiceImplDBFreeTest {
             } else {
                 addonLedgerEntry = new LedgerEntry(conversionPdo.getSamples().get(0),
                         productOrderAddOn.getAddOn().getPrimaryPriceItem(), new Date(),
-                        productOrderAddOn.getAddOn(),
                         productToQuantityMapping.get(productOrderAddOn.getAddOn().getPartNumber()));
             }
 
@@ -915,11 +914,10 @@ public class SapIntegrationServiceImplDBFreeTest {
                     }
                 } else {
                     productOrderSample
-                            .addLedgerItem(new Date(), order.getProduct().getPrimaryPriceItem(), order.getProduct(),
-                                    ledgerCount * 1d);
+                            .addLedgerItem(new Date(), order.getProduct().getPrimaryPriceItem(), ledgerCount * 1d);
                     for (ProductOrderAddOn productOrderAddOn : order.getAddOns()) {
                         productOrderSample.addLedgerItem(new Date(), productOrderAddOn.getAddOn().getPrimaryPriceItem(),
-                                productOrderAddOn.getAddOn(),ledgerCount * 1d);
+                                ledgerCount * 1d);
                     }
                 }
 

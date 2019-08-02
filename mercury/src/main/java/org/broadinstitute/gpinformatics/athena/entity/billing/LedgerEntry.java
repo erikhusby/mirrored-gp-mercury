@@ -101,7 +101,8 @@ public class LedgerEntry implements Serializable {
     @JoinColumn(name = "PRODUCT_ID")
     private Product product;
 
-    private Boolean sapReplacementCondition = Boolean.FALSE;
+    @Column(name = "SAP_REPLACEMENT_PRICING")
+    private Boolean sapReplacementPricing = Boolean.FALSE;
 
     /**
      * Package private constructor for JPA use.
@@ -112,11 +113,11 @@ public class LedgerEntry implements Serializable {
     public LedgerEntry(@Nonnull ProductOrderSample productOrderSample,
                        PriceItem priceItem,
                        @Nonnull Date workCompleteDate,
-                       Product product,
+//                       Product product,
                        double quantity) {
         this.productOrderSample = productOrderSample;
         this.priceItem = priceItem;
-        this.product = product;
+//        this.product = product;
         this.quantity = quantity;
         this.workCompleteDate = workCompleteDate;
     }
@@ -194,16 +195,16 @@ public class LedgerEntry implements Serializable {
         this.product = product;
     }
 
-    public Boolean getSapReplacementCondition() {
-        return sapReplacementCondition;
+    public Boolean getSapReplacementPricing() {
+        return sapReplacementPricing;
     }
 
-    public boolean hasSapReplacementCondition() {
-        return sapReplacementCondition != null && sapReplacementCondition;
+    public boolean hasSapReplacementPricing() {
+        return sapReplacementPricing != null && sapReplacementPricing;
     }
 
-    public void setSapReplacementCondition(Boolean sapReplacementCondition) {
-        this.sapReplacementCondition = sapReplacementCondition;
+    public void setSapReplacementPricing(Boolean sapReplacementCondition) {
+        this.sapReplacementPricing = sapReplacementCondition;
     }
 
     /**
@@ -298,24 +299,27 @@ public class LedgerEntry implements Serializable {
         }
 
         LedgerEntry castOther = (LedgerEntry) other;
-        return new EqualsBuilder()
+        EqualsBuilder ledgerEntryEqualsBuilder = new EqualsBuilder()
                 .append(productOrderSample, castOther.getProductOrderSample())
                 .append(priceItem, castOther.getPriceItem())
-                .append(product, castOther.getProduct())
                 .append(priceItemType, castOther.getPriceItemType())
                 .append(quoteId, castOther.getQuoteId())
-                .append(billingSession, castOther.getBillingSession()).isEquals();
+                .append(billingSession, castOther.getBillingSession());
+
+                    ledgerEntryEqualsBuilder.append(product, castOther.getProduct());
+        return ledgerEntryEqualsBuilder.isEquals();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder()
+        HashCodeBuilder ledgerEntryHashcodeBuilder = new HashCodeBuilder()
                 .append(productOrderSample)
                 .append(priceItem)
-                .append(product)
                 .append(priceItemType)
                 .append(quoteId)
-                .append(billingSession).toHashCode();
+                .append(billingSession);
+                    ledgerEntryHashcodeBuilder.append(product);
+        return ledgerEntryHashcodeBuilder.toHashCode();
     }
 
     public Date getBucketDate() {

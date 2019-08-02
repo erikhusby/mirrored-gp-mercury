@@ -127,7 +127,7 @@ public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
 
                 ledgerEntry = new LedgerEntry(pdoSample, pdo.getProduct(), new Date(), 3);
             } else {
-                ledgerEntry = new LedgerEntry(pdoSample, priceItem, new Date(), pdo.getProduct(), 3);
+                ledgerEntry = new LedgerEntry(pdoSample, priceItem, new Date(), 3);
             }
             pdoSample.getLedgerItems().add(ledgerEntry);
             ledgerEntries.add(ledgerEntry);

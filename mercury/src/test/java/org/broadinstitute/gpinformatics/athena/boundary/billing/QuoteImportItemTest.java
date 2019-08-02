@@ -92,7 +92,7 @@ public class QuoteImportItemTest {
             if(pdo.hasSapQuote()) {
                 ledgerEntry = new LedgerEntry(sample, pdo.getProduct(), new Date(), amountPerLedgerEntry);
             } else {
-                ledgerEntry = new LedgerEntry(sample, priceItem, new Date(), pdo.getProduct(), amountPerLedgerEntry);
+                ledgerEntry = new LedgerEntry(sample, priceItem, new Date(), amountPerLedgerEntry);
             }
             ledgerEntry.setWorkItem(workItem);
             sample.getLedgerItems().add(ledgerEntry);
@@ -176,7 +176,7 @@ public class QuoteImportItemTest {
         if(pdo.hasSapQuote()) {
             ledgerEntry = new LedgerEntry(blah, product, new Date(),2);
         } else {
-            ledgerEntry = new LedgerEntry(blah, priceItem, new Date(), new Product(), 2);
+            ledgerEntry = new LedgerEntry(blah, priceItem, new Date(), 2);
         }
         ledgerEntry.setWorkItem(WORK_ITEM2);
         List<LedgerEntry> ledgerEntries = new ArrayList<>();

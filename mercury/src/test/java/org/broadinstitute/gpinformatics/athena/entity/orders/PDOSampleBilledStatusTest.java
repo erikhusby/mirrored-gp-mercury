@@ -39,7 +39,7 @@ public class PDOSampleBilledStatusTest {
         if(pdo.hasSapQuote()) {
             pdoSample.addLedgerItem(new Date(System.currentTimeMillis()), pdo.getProduct(),3d);
         } else {
-            pdoSample.addLedgerItem(new Date(System.currentTimeMillis()), primaryPriceItem, pdo.getProduct(),3d);
+            pdoSample.addLedgerItem(new Date(System.currentTimeMillis()), primaryPriceItem,3d);
         }
 
         BillingSession billingSession = new BillingSession(3L,pdoSample.getLedgerItems());

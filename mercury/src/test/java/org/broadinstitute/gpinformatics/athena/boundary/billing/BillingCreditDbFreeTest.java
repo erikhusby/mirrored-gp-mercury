@@ -498,8 +498,7 @@ public class BillingCreditDbFreeTest {
                 productOrderSample.addLedgerItem(date, productOrderSample.getProductOrder().getProduct(),
                         pricItemQtyPair.getValue());
             } else {
-                productOrderSample.addLedgerItem(date, pricItemQtyPair.getKey(),
-                        productOrderSample.getProductOrder().getProduct(), pricItemQtyPair.getValue());
+                productOrderSample.addLedgerItem(date, pricItemQtyPair.getKey(), pricItemQtyPair.getValue());
             }
         });
         Set<LedgerEntry> ledgerItems = new HashSet<>();

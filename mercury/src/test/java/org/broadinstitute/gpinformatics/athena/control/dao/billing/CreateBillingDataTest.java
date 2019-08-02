@@ -59,8 +59,7 @@ public class CreateBillingDataTest extends Arquillian {
                                 new Date(), 0.5));
                     } else {
                         ledgerEntries.add(new LedgerEntry(productOrderSample,
-                                productOrder.getProduct().getPrimaryPriceItem(),
-                                new Date(), productOrder.getProduct(), 0.5));
+                                productOrder.getProduct().getPrimaryPriceItem(), new Date(), 0.5));
                     }
                 }
             }
@@ -77,7 +76,7 @@ public class CreateBillingDataTest extends Arquillian {
                     } else {
                         productOrderDao.persist(
                                 new LedgerEntry(productOrderSample, productOrder.getProduct().getPrimaryPriceItem(),
-                                        new Date(), productOrder.getProduct(), 1.1));
+                                        new Date(), 1.1));
                     }
                 }
             }

@@ -254,7 +254,7 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
                 if(productOrder.hasSapQuote()) {
                     billingSessionEntries.add(new LedgerEntry(ledgerSample, productOrder.getProduct(), new Date(), 5));
                 } else {
-                    billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), productOrder.getProduct(), 5));
+                    billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), 5));
                 }
             }
         }

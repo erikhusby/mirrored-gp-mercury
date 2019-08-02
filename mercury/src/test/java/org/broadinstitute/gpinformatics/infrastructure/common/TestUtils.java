@@ -238,12 +238,12 @@ public class TestUtils {
                         new Date(),1);
             } else {
                 primaryItemSampleEntry = new LedgerEntry(sample, productOrder.getProduct().getPrimaryPriceItem(),
-                        new Date(), productOrder.getProduct(), 1);
+                        new Date(), 1);
                 primaryItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
 
                 addonItemSampleEntry = new LedgerEntry(sample,
                         productOrder.getAddOns().iterator().next().getAddOn().getPrimaryPriceItem(),
-                        new Date(), productOrder.getAddOns().iterator().next().getAddOn(), 1);
+                        new Date(),1);
 
             }
             addonItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM);

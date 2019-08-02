@@ -92,7 +92,7 @@ public class ProductOrderSampleTestFactory {
         if(sampleToBeBilled.getProductOrder().hasSapQuote()) {
             sampleToBeBilled.addLedgerItem(new Date(), sampleToBeBilled.getProductOrder().getProduct(), 1d);
         } else {
-            sampleToBeBilled.addLedgerItem(new Date(), priceItem, sampleToBeBilled.getProductOrder().getProduct(), 1d);
+            sampleToBeBilled.addLedgerItem(new Date(), priceItem, 1d);
         }
 
         LedgerEntry toclose = sampleToBeBilled.getLedgerItems().iterator().next();

@@ -16,6 +16,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * This is the information needed to import a quantity of some price item on a quote.
@@ -49,16 +50,18 @@ public class QuoteImportInfo {
         String quoteId = getLedgerQuoteId(ledger);
 
         // The price item on the ledger entry.
-        PriceItem priceItem = ledger.getPriceItem();
+        Optional<PriceItem> priceItem = Optional.ofNullable(ledger.getPriceItem());
 
-        Product product = ledger.getProductOrderSample().getProductForPriceItem(priceItem);
+
+        Product product = ledger.getProductOrderSample().getProductForPriceItem(priceItem.orElse(null));
 
         // If we have not seen the quote yet, create the map entry for it.
         if (!quantitiesByQuotePriceItem.containsKey(quoteId)) {
             quantitiesByQuotePriceItem.put(quoteId, new HashMap<ProductOrder, Map<ProductLedgerIndex, Map<Date, List<LedgerEntry>>>> ());
         }
 
-        ProductLedgerIndex index = ProductLedgerIndex.create(product, priceItem);
+        ProductLedgerIndex index;
+            index = ProductLedgerIndex.create(product, null, ledger.getProductOrderSample().getProductOrder().hasSapQuote());
 
         ProductOrder orderIndex = ledger.getProductOrderSample().getProductOrder();
 
@@ -198,7 +201,7 @@ public class QuoteImportInfo {
         }
 
         if(ledger.getProductOrderSample().getProductOrder().hasSapQuote()) {
-            if(ledger.hasSapReplacementCondition()) {
+            if(ledger.hasSapReplacementPricing()) {
                 return true;
             } else {
                 return false;

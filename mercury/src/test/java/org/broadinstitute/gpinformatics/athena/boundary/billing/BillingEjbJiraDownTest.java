@@ -106,9 +106,9 @@ public class BillingEjbJiraDownTest extends Arquillian {
             ledgerEntryB = new LedgerEntry(sampleB, productOrder.getProduct(), new Date(), 3);
         } else {
             ledgerEntryA = new LedgerEntry(sampleA, productOrder.getProduct().getPrimaryPriceItem(), new Date(),
-                    productOrder.getProduct(), 3);
+                    3);
             ledgerEntryB = new LedgerEntry(sampleB, productOrder.getProduct().getPrimaryPriceItem(), new Date(),
-                    productOrder.getProduct(), 3);
+                    3);
         }
 
         final Collection<QuotePriceItem> quotePriceItems = priceListCache.getQuotePriceItems();

@@ -346,7 +346,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                     if(productOrder.hasSapQuote()) {
                         billingSessionEntries.add(new LedgerEntry(ledgerSample, productOrder.getProduct(), new Date(), 5));
                     } else {
-                        billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), productOrder.getProduct(), 5));
+//                        billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), productOrder.getProduct(), 5));
+                        billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), 5));
                     }
                 } else {
                     if(productOrder.hasSapQuote()) {
@@ -354,9 +355,11 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                         billingSessionEntries.add(new LedgerEntry(ledgerSample, productOrder.getProduct(),
                                 new Date(), 3));
                     } else {
+//                        billingSessionEntries.add(new LedgerEntry(ledgerSample,
+//                                productOrder.getProduct().getPrimaryPriceItem(), new Date(), productOrder.getProduct(),
+//                                3));
                         billingSessionEntries.add(new LedgerEntry(ledgerSample,
-                                productOrder.getProduct().getPrimaryPriceItem(), new Date(), productOrder.getProduct(),
-                                3));
+                                productOrder.getProduct().getPrimaryPriceItem(), new Date(),3));
                     }
                 }
             }
@@ -411,7 +414,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
                         billingSessionEntries.add(new LedgerEntry(ledgerSample, productOrder.getProduct(), new Date(), 5));
                     } else {
-                        billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), productOrder.getProduct(), 5));
+//                        billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), productOrder.getProduct(), 5));
+                        billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), 5));
                     }
                 } else {
                     if(ledgerSample.getProductOrder().hasSapQuote()) {
@@ -419,9 +423,11 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                                 3));
 
                     } else {
+//                        billingSessionEntries.add(new LedgerEntry(ledgerSample,
+//                                productOrder.getProduct().getPrimaryPriceItem(), new Date(), productOrder.getProduct(),
+//                                3));
                         billingSessionEntries.add(new LedgerEntry(ledgerSample,
-                                productOrder.getProduct().getPrimaryPriceItem(), new Date(), productOrder.getProduct(),
-                                3));
+                                productOrder.getProduct().getPrimaryPriceItem(), new Date(), 3));
                     }
                 }
             }
@@ -581,8 +587,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         LedgerEntry ledgerEntry2;
         ProductOrder productOrder = new ProductOrder();
 
-        ledgerEntry1 = new LedgerEntry(new ProductOrderSample("SM-1234"), priceItem, new Date(), null, 5);
-        ledgerEntry2 = new LedgerEntry(new ProductOrderSample("SM-5678"), priceItem, new Date(), null, 5);
+        ledgerEntry1 = new LedgerEntry(new ProductOrderSample("SM-1234"), priceItem, new Date(), 5);
+        ledgerEntry2 = new LedgerEntry(new ProductOrderSample("SM-5678"), priceItem, new Date(), 5);
         List<LedgerEntry> ledgerItems = Arrays.asList(ledgerEntry1, ledgerEntry2);
         QuoteImportItem quoteImportItem =
                 new QuoteImportItem("QUOTE-1", priceItem, "priceType", ledgerItems, new Date(), product, productOrder);

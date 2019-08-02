@@ -316,7 +316,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
         for (Product addOn : addOns) {
             final PriceItem addonPriceItem = productOrder.determinePriceItemByCompanyCode(addOn);
 
-            ProductLedgerIndex addOnPricingIndex = ProductLedgerIndex.create(addOn, addonPriceItem);
+            ProductLedgerIndex addOnPricingIndex = ProductLedgerIndex.create(addOn, addonPriceItem, productOrder.hasSapQuote());
 
             potentialBillings.add(addOnPricingIndex);
         }
@@ -427,12 +427,10 @@ public class BillingLedgerActionBean extends CoreActionBean {
                 for (Map.Entry<Long, ProductOrderSampleQuantities> entry : data.getQuantities().entrySet()) {
                     PriceItem priceItem = null;
                     Product product = null;
-                    if(data.sapOrder) {
                         product = productDao.findById(Product.class, entry.getKey());
-                    } else {
                         priceItem = priceItemDao.findById(PriceItem.class, entry.getKey());
-                    }
-                    ProductLedgerIndex quantityIndex = ProductLedgerIndex.create(product, priceItem);
+                    ProductLedgerIndex quantityIndex = ProductLedgerIndex.create(product, priceItem,
+                            productOrder.hasSapQuote());
                     ProductOrderSampleQuantities quantities = entry.getValue();
                     ProductOrderSample.LedgerQuantities ledgerQuantities = ledgerQuantitiesMap.get(quantityIndex);
                     double currentQuantity = ledgerQuantities != null ? ledgerQuantities.getTotal() : 0;
@@ -612,7 +610,8 @@ public class BillingLedgerActionBean extends CoreActionBean {
             boolean primaryBilled = false;
             for (LedgerEntry ledgerEntry : productOrderSample.getLedgerItems()) {
                 PriceItem priceItem = ledgerEntry.getPriceItem();
-                ProductLedgerIndex index = ProductLedgerIndex.create(ledgerEntry.getProduct(), ledgerEntry.getPriceItem());
+                ProductLedgerIndex index = ProductLedgerIndex.create(ledgerEntry.getProduct(),
+                        ledgerEntry.getPriceItem(), productOrderSample.getProductOrder().hasSapQuote());
                 ledgerEntriesByPriceItem.get(index).add(ledgerEntry);
                 LedgerEntry.PriceItemType priceItemType = ledgerEntry.getPriceItemType();
                 if (priceItemType == LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM
@@ -750,9 +749,9 @@ public class BillingLedgerActionBean extends CoreActionBean {
         List<ProductLedgerIndex> allPriceItems = new ArrayList<>();
 
         // First add the primary price item.
-        PriceItem primaryPriceItem = productOrder.determinePriceItemByCompanyCode(product);
+        PriceItem primaryPriceItem = product.getPrimaryPriceItem();
 
-        allPriceItems.add(ProductLedgerIndex.create(product, primaryPriceItem));
+        allPriceItems.add(ProductLedgerIndex.create(product, primaryPriceItem, productOrder.hasSapQuote()));
 
         if(primaryPriceItem != null) {
             // Now add the replacement price items.
@@ -775,7 +774,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
                     priceItemDao.persist(priceItem);
                 }
 
-                allPriceItems.add(ProductLedgerIndex.create(product, priceItem));
+                allPriceItems.add(ProductLedgerIndex.create(product, priceItem, productOrder.hasSapQuote()));
             }
         }
 
@@ -802,7 +801,8 @@ public class BillingLedgerActionBean extends CoreActionBean {
                                     .collect(Collectors.toSet());
                     if (productOrder.hasSapQuote() ||
                         (!priceItems.contains(priceItem) && addOnPriceItems.isEmpty())) {
-                        historicalPriceItems.add(ProductLedgerIndex.create(ledgerEntry.getProduct(),priceItem));
+                        historicalPriceItems.add(ProductLedgerIndex.create(ledgerEntry.getProduct(),priceItem,
+                                productOrderSample.getProductOrder().hasSapQuote()));
                     }
                 }
             }
