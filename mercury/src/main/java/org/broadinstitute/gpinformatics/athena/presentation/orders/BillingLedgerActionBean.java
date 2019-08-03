@@ -77,8 +77,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
 
     private static final Log logger = LogFactory.getLog(BillingLedgerActionBean.class);
 
-    private static final String BILLING_LEDGER_PAGE = "/orders/"
-                                                      + "";
+    private static final String BILLING_LEDGER_PAGE = "/orders/ledger.jsp";
 
     @Inject
     private ProductOrderEjb productOrderEjb;
@@ -306,10 +305,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
         }
         Collections.sort(addOns);
 
-        List<PriceItem> potentialBillingsPriceItems =
-                potentialBillings.stream().map(ProductLedgerIndex::getPriceItem).collect(Collectors.toList());
-
-        potentialBillings.addAll(getHistoricalPriceItems(productOrder, potentialBillingsPriceItems, addOns,
+        potentialBillings.addAll(getHistoricalBillableItems(productOrder, potentialBillings, addOns,
                 priceItemDao, priceListCache));
 
         // Collect add-on price items
@@ -746,14 +742,14 @@ public class BillingLedgerActionBean extends CoreActionBean {
                                                           PriceListCache priceItemListCache,
                                                           ProductOrder productOrder) {
 
-        List<ProductLedgerIndex> allPriceItems = new ArrayList<>();
+        List<ProductLedgerIndex> allBillingIndices = new ArrayList<>();
 
         // First add the primary price item.
         PriceItem primaryPriceItem = product.getPrimaryPriceItem();
 
-        allPriceItems.add(ProductLedgerIndex.create(product, primaryPriceItem, productOrder.hasSapQuote()));
+        allBillingIndices.add(ProductLedgerIndex.create(product, primaryPriceItem, productOrder.hasSapQuote()));
 
-        if(primaryPriceItem != null) {
+        if(!productOrder.hasSapQuote()) {
             // Now add the replacement price items.
             // Get the replacement items from the quote cache.
             Collection<QuotePriceItem> quotePriceItems =
@@ -774,18 +770,19 @@ public class BillingLedgerActionBean extends CoreActionBean {
                     priceItemDao.persist(priceItem);
                 }
 
-                allPriceItems.add(ProductLedgerIndex.create(product, priceItem, productOrder.hasSapQuote()));
+                allBillingIndices.add(ProductLedgerIndex.create(product, priceItem, productOrder.hasSapQuote()));
             }
         }
 
-        return allPriceItems;
+        return allBillingIndices;
     }
 
 
-    public SortedSet<ProductLedgerIndex> getHistoricalPriceItems(ProductOrder productOrder,
-                                                               List<PriceItem> priceItems, List<Product> addOns,
-                                                               PriceItemDao priceItemDao,
-                                                               PriceListCache priceListCache) {
+    public SortedSet<ProductLedgerIndex> getHistoricalBillableItems(ProductOrder productOrder,
+                                                                    List<ProductLedgerIndex> ledgerIndices,
+                                                                    List<Product> addOns,
+                                                                    PriceItemDao priceItemDao,
+                                                                    PriceListCache priceListCache) {
         Set<ProductLedgerIndex> addOnPriceItems = new HashSet<>();
         for (Product addOn : addOns) {
             addOnPriceItems.addAll(getPotentialBillables(addOn, priceItemDao, priceListCache, productOrder));
@@ -795,19 +792,23 @@ public class BillingLedgerActionBean extends CoreActionBean {
 
             for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
                 for (LedgerEntry ledgerEntry : productOrderSample.getLedgerItems()) {
+
                     PriceItem priceItem = ledgerEntry.getPriceItem();
-                    Set<ProductLedgerIndex> priorUsedItems =
-                            addOnPriceItems.stream().filter(index -> index.getPriceItem().equals(priceItem))
+                    ProductLedgerIndex ledgerIndex = ProductLedgerIndex.create(ledgerEntry.getProduct(), priceItem,
+                            productOrderSample.getProductOrder().hasSapQuote());
+
+                    Set<ProductLedgerIndex> priorUsedAddOnItems =
+                            addOnPriceItems.stream().filter(index -> index.equals(ledgerIndex))
                                     .collect(Collectors.toSet());
-                    if (productOrder.hasSapQuote() ||
-                        (!priceItems.contains(priceItem) && addOnPriceItems.isEmpty())) {
-                        historicalPriceItems.add(ProductLedgerIndex.create(ledgerEntry.getProduct(),priceItem,
-                                productOrderSample.getProductOrder().hasSapQuote()));
+
+                    Set<ProductLedgerIndex> currentLedgerIndices = ledgerIndices.stream().filter(index -> index.equals(ledgerIndex))
+                            .collect(Collectors.toSet());
+
+                    if (priorUsedAddOnItems.isEmpty() && currentLedgerIndices.isEmpty()) {
+                        historicalPriceItems.add(ledgerIndex);
                     }
                 }
             }
-
         return historicalPriceItems;
     }
-
 }
