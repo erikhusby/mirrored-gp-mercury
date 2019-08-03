@@ -979,8 +979,8 @@
                 <th title="Date Coverage First Met">DCFM</th>
                 <th style="text-align: center">Date Complete</th>
                 <c:forEach items="${actionBean.potentialBillings}" var="billingIndex">
-                    <th>Original value for ${billingIndex.name}</th>
-                    <th style="text-align: center">${billingIndex.name}</th>
+                    <th>Original value for ${billingIndex.ledgerDisplay}</th>
+                    <th style="text-align: center">${billingIndex.ledgerDisplay}</th>
                 </c:forEach>
                 <th style="text-align: center">Billed</th>
             </tr>

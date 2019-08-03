@@ -30,6 +30,14 @@ public class ProductLedgerIndex implements Comparable<ProductLedgerIndex> {
         return priceItem;
     }
 
+    public boolean hasSapIndex() {
+        return sapIndex;
+    }
+
+    public void setSapIndex(boolean sapIndex) {
+        this.sapIndex = sapIndex;
+    }
+
     public String getDisplayValue() {
         String display = "";
 
@@ -40,6 +48,10 @@ public class ProductLedgerIndex implements Comparable<ProductLedgerIndex> {
         }
 
         return display.toString();
+    }
+
+    public String getLedgerDisplay() {
+        return (sapIndex)?product.getDisplayName():priceItem.getName();
     }
 
     public String getName() {
