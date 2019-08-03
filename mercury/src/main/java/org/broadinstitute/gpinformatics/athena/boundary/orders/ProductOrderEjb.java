@@ -451,12 +451,12 @@ public class ProductOrderEjb {
         Set<Product> productListFromOrder = new HashSet<>();
         if (editedProductOrder.getProduct() != null) {
             productListFromOrder.add(editedProductOrder.getProduct());
-            PriceItem priceItem = editedProductOrder.determinePriceItemByCompanyCode(editedProductOrder.getProduct());
+            PriceItem priceItem = editedProductOrder.getProduct().getPrimaryPriceItem();
             priceItemNameList.add(new AccessItem(priceItem.getName()));
         }
         for (ProductOrderAddOn productOrderAddOn : editedProductOrder.getAddOns()) {
             productListFromOrder.add(productOrderAddOn.getAddOn());
-            PriceItem addonPricItem = editedProductOrder.determinePriceItemByCompanyCode(productOrderAddOn.getAddOn());
+            PriceItem addonPricItem = productOrderAddOn.getAddOn().getPrimaryPriceItem();
             priceItemNameList.add(new AccessItem(addonPricItem.getName()));
         }
         return determineProductAndPriceItemValidity(productListFromOrder, orderQuote, editedProductOrder);
@@ -469,7 +469,7 @@ public class ProductOrderEjb {
         if (CollectionUtils.isNotEmpty(productsToConsider)) {
             for (Product product : productsToConsider) {
                 try {
-                    PriceItem priceItem = productOrder.determinePriceItemByCompanyCode(product);
+                    PriceItem priceItem = product.getPrimaryPriceItem();
                     
                     primaryPriceItem =
                             priceListCache.findByKeyFields(priceItem.getPlatform(),
@@ -511,7 +511,7 @@ public class ProductOrderEjb {
             throw new InvalidProductException("Unable to continue since the Product Order for which the prices are being validated is not set");
         }
 
-        PriceItem priceItem = productOrder.determinePriceItemByCompanyCode(product);
+        PriceItem priceItem = product.getPrimaryPriceItem();
         final QuotePriceItem priceListItem = priceListCache.findByKeyFields(priceItem);
         if (priceListItem == null) {
             throw new InvalidProductException("Unable to continue since the price list of " +

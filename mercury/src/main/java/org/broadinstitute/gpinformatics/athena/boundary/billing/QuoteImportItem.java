@@ -269,7 +269,7 @@ public class QuoteImportItem {
      * @return null if this is not a replacement item or the primary price item if it is one.
      */
     public QuotePriceItem getPrimaryForReplacement(PriceList priceListCache) {
-        PriceItem derivedPriceItem = getProductOrder().determinePriceItemByCompanyCode(getPrimaryProduct());
+        PriceItem derivedPriceItem = getPrimaryProduct().getPrimaryPriceItem();
 
         // If this is optional, then return the primary as the 'is replacing.' This is comparing the quote price item
         // to the values on the product's price item, so do the item by item compare.

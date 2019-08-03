@@ -314,7 +314,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
 
         // Collect add-on price items
         for (Product addOn : addOns) {
-            final PriceItem addonPriceItem = productOrder.determinePriceItemByCompanyCode(addOn);
+            final PriceItem addonPriceItem = addOn.getPrimaryPriceItem();
 
             ProductLedgerIndex addOnPricingIndex = ProductLedgerIndex.create(addOn, addonPriceItem, productOrder.hasSapQuote());
 

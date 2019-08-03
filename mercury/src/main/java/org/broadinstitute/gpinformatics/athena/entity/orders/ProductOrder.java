@@ -2150,7 +2150,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         for (ProductOrderSample targetSample : order.getSamples()) {
             for (LedgerEntry ledgerItem: targetSample.getLedgerItems()) {
-                PriceItem priceItem = order.determinePriceItemByCompanyCode(targetProduct);
+                PriceItem priceItem = targetProduct.getPrimaryPriceItem();
 
                 if(ledgerItem.getPriceItem().equals(priceItem)) {
                     existingCount += ledgerItem.getQuantity();
@@ -2704,12 +2704,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
 
         return foundAdjustment;
-    }
-
-    // todo remove this code since it seems no longer valid
-    @Deprecated
-    public PriceItem determinePriceItemByCompanyCode(Product product) {
-        return product.getPrimaryPriceItem();
     }
 
     @NotNull
