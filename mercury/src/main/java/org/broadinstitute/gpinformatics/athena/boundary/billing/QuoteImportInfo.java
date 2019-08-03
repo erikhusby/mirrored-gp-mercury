@@ -61,7 +61,8 @@ public class QuoteImportInfo {
         }
 
         ProductLedgerIndex index;
-            index = ProductLedgerIndex.create(product, null, ledger.getProductOrderSample().getProductOrder().hasSapQuote());
+            index = ProductLedgerIndex
+                    .create(product, priceItem.orElse(null), ledger.getProductOrderSample().getProductOrder().hasSapQuote());
 
         ProductOrder orderIndex = ledger.getProductOrderSample().getProductOrder();
 

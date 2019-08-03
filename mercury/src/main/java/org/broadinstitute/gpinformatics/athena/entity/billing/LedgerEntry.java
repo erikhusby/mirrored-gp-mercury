@@ -113,11 +113,9 @@ public class LedgerEntry implements Serializable {
     public LedgerEntry(@Nonnull ProductOrderSample productOrderSample,
                        PriceItem priceItem,
                        @Nonnull Date workCompleteDate,
-//                       Product product,
                        double quantity) {
         this.productOrderSample = productOrderSample;
         this.priceItem = priceItem;
-//        this.product = product;
         this.quantity = quantity;
         this.workCompleteDate = workCompleteDate;
     }

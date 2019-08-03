@@ -761,8 +761,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         countTestPDO.setOrderStatus(testOrderStatus);
 
         final Product primaryProduct = countTestPDO.getProduct();
-        addTestProductMaterialPrice("50.00", priceList, materials, primaryProduct,
-                SAP_QUOTE_ID);
+        addTestProductMaterialPrice("50.00", priceList, materials, primaryProduct, SAP_QUOTE_ID);
 
         for (ProductOrderAddOn addOn : countTestPDO.getAddOns()) {
             addTestProductMaterialPrice("30.00", priceList, materials, addOn.getAddOn(),
@@ -772,18 +771,16 @@ public class SapIntegrationServiceImplDBFreeTest {
         double closingCount = 0d;
 
         while (closingCount <= countTestPDO.getSamples().size()) {
-            double primarySampleCount = SapIntegrationServiceImpl
-                .getSampleCount(countTestPDO, countTestPDO.getProduct(), extraSamples, Option.NONE).doubleValue();
-            double primaryClosingCount = SapIntegrationServiceImpl
-                .getSampleCount(countTestPDO, countTestPDO.getProduct(), extraSamples,
-                    Option.create(Option.Type.CLOSING)).doubleValue();
-            double primaryOrderValueQueryCount = SapIntegrationServiceImpl
-                .getSampleCount(countTestPDO, countTestPDO.getProduct(), extraSamples,
+            double primarySampleCount = SapIntegrationServiceImpl.getSampleCount(countTestPDO,
+                    countTestPDO.getProduct(), extraSamples, Option.NONE).doubleValue();
+            double primaryClosingCount = SapIntegrationServiceImpl.getSampleCount(countTestPDO,
+                    countTestPDO.getProduct(), extraSamples, Option.create(Option.Type.CLOSING)).doubleValue();
+            double primaryOrderValueQueryCount = SapIntegrationServiceImpl.getSampleCount(countTestPDO,
+                    countTestPDO.getProduct(), extraSamples,
                     Option.create(Option.Type.ORDER_VALUE_QUERY)).doubleValue();
             assertThat(primarySampleCount, is(equalTo((double) countTestPDO.getSamples().size()+extraSamples)));
             assertThat(primaryClosingCount, is(equalTo(closingCount)));
             assertThat(primaryOrderValueQueryCount, is(equalTo((double) countTestPDO.getSamples().size()+extraSamples)));
-
 
             for (ProductOrderAddOn addOn : countTestPDO.getAddOns()) {
                 final double addonSampleCount =
@@ -906,8 +903,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         for (ProductOrderSample productOrderSample : order.getSamples()) {
             if(!productOrderSample.isCompletelyBilled()) {
                 if(order.hasSapQuote()) {
-                    productOrderSample
-                            .addLedgerItem(new Date(), order.getProduct(), ledgerCount * 1d);
+                    productOrderSample.addLedgerItem(new Date(), order.getProduct(), ledgerCount * 1d);
                     for (ProductOrderAddOn productOrderAddOn : order.getAddOns()) {
                         productOrderSample.addLedgerItem(new Date(), productOrderAddOn.getAddOn(),
                                 ledgerCount * 1d);

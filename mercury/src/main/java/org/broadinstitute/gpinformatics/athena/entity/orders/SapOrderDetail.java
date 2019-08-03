@@ -217,8 +217,7 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
 
                     @Override
                     public boolean apply(@Nullable LedgerEntry ledgerEntry) {
-                        return (ledgerEntry.getPriceItem() == null ||
-                                Objects.equals(ledgerEntry.getPriceItem(),targetProduct.getPrimaryPriceItem())) &&
+                        return (Objects.equals(ledgerEntry.getProduct(),targetProduct)) &&
                                StringUtils.equals(ledgerEntry.getBillingMessage(),BillingSession.SUCCESS);
                     }
                 });

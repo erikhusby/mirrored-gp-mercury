@@ -610,8 +610,8 @@ public class BillingLedgerActionBean extends CoreActionBean {
             boolean primaryBilled = false;
             for (LedgerEntry ledgerEntry : productOrderSample.getLedgerItems()) {
                 PriceItem priceItem = ledgerEntry.getPriceItem();
-                ProductLedgerIndex index = ProductLedgerIndex.create(ledgerEntry.getProduct(),
-                        ledgerEntry.getPriceItem(), productOrderSample.getProductOrder().hasSapQuote());
+                ProductLedgerIndex index = ProductLedgerIndex.create(ledgerEntry.getProduct(), priceItem,
+                        productOrderSample.getProductOrder().hasSapQuote());
                 ledgerEntriesByPriceItem.get(index).add(ledgerEntry);
                 LedgerEntry.PriceItemType priceItemType = ledgerEntry.getPriceItemType();
                 if (priceItemType == LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM

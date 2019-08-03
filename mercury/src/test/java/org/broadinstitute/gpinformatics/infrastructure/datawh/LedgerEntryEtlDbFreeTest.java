@@ -127,8 +127,6 @@ public class LedgerEntryEtlDbFreeTest {
         Mockito.verify(ledgerEntry).getSapDeliveryDocumentId();
         Mockito.verify(ledgerEntry).getProduct();
         Mockito.verify(testProduct).getProductId();
-        Mockito.verify(auditReader).fetchEnversAudits(Mockito.anySet(), Mockito.anyObject());
-
     }
 
     private void verifyRecord(String record) {
