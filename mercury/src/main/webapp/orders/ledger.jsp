@@ -982,6 +982,9 @@
                     <th>Original value for ${billingIndex.ledgerDisplay}</th>
                     <th style="text-align: center">${billingIndex.ledgerDisplay}</th>
                 </c:forEach>
+                <c:if test="${actionBean.ledgerData[info.sample.samplePosition].sapOrder && actionBean.ledgerData[info.sample.samplePosition].deliveryConditionAvailable}">
+                    <th>Use Replacement Pricing for Primary Product</th>
+                </c:if>
                 <th style="text-align: center">Billed</th>
             </tr>
         </thead>
@@ -1089,6 +1092,10 @@
                             </c:if>
                         </td>
                     </c:forEach>
+                    <c:if test="${actionBean.ledgerData[info.sample.samplePosition].sapOrder && actionBean.ledgerData[info.sample.samplePosition].deliveryConditionAvailable}">
+                        <input type="checkbox" name="ledgerData[${info.sample.samplePosition}].primaryReplacement"
+                               data-rownum = "${info.sample.samplePosition}">
+                    </c:if>
 
                     <td style="text-align: center">
                         <c:if test="${info.sample.completelyBilled}">

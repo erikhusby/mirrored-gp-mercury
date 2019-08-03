@@ -43,8 +43,10 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.sap.entity.DeliveryCondition;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -93,6 +95,9 @@ public class BillingLedgerActionBean extends CoreActionBean {
 
     @Inject
     private PriceListCache priceListCache;
+
+    @Inject
+    private SAPProductPriceCache productPriceCache;
 
     @Inject
     private SampleCoverageFirstMetFetcher sampleCoverageFirstMetFetcher;
@@ -224,8 +229,8 @@ public class BillingLedgerActionBean extends CoreActionBean {
     @HandlesEvent("updateLedgers")
     public Resolution updateLedgers() {
         if (isOrderModified() && isSubmittedPriceItemListValid()) {
-            Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> ledgerUpdates = buildLedgerUpdates();
             try {
+                Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> ledgerUpdates = buildLedgerUpdates();
                 productOrderEjb.updateSampleLedgers(ledgerUpdates);
                 addMessage("{1} ledgers have been updated.", ledgerUpdates.size());
             } catch (ValidationException e) {
@@ -412,7 +417,8 @@ public class BillingLedgerActionBean extends CoreActionBean {
      *
      * @return a map of LedgerUpdate instances by ProductOrderSample to be applied
      */
-    private Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> buildLedgerUpdates() {
+    private Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> buildLedgerUpdates()
+            throws SAPIntegrationException {
         Multimap<ProductOrderSample, ProductOrderSample.LedgerUpdate> ledgerUpdates = LinkedListMultimap.create();
         for (int i = 0; i < ledgerData.size(); i++) {
             LedgerData data = ledgerData.get(i);
@@ -433,9 +439,14 @@ public class BillingLedgerActionBean extends CoreActionBean {
 
                     ProductOrderSample.LedgerUpdate ledgerUpdate;
                     if(data.sapOrder) {
+                        if(productPriceCache.findByProduct(product,
+                                productOrder.getSapCompanyConfigurationForProductOrder(productOrder.getSapQuote(sapService)).getSalesOrganization()).getPossibleDeliveryConditions().containsKey(
+                                DeliveryCondition.LATE_DELIVERY_DISCOUNT)) {
+                            data.setDeliveryConditionAvailable(true);
+                        }
                         ledgerUpdate = new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), product,
                                 quantities.originalQuantity, currentQuantity, quantities.submittedQuantity,
-                                data.getWorkCompleteDate());
+                                data.getWorkCompleteDate(), data.isPrimaryReplacement());
 
                     } else {
                         ledgerUpdate =
@@ -668,6 +679,8 @@ public class BillingLedgerActionBean extends CoreActionBean {
         private Date workCompleteDate;
         private boolean sapOrder;
         private Map<Long, ProductOrderSampleQuantities> quantities;
+        private boolean primaryReplacement;
+        private boolean deliveryConditionAvailable;
 
         public String getSampleName() {
             return sampleName;
@@ -701,6 +714,21 @@ public class BillingLedgerActionBean extends CoreActionBean {
             this.quantities = quantities;
         }
 
+        public boolean isPrimaryReplacement() {
+            return primaryReplacement;
+        }
+
+        public void setPrimaryReplacement(boolean primaryReplacement) {
+            this.primaryReplacement = primaryReplacement;
+        }
+
+        public boolean isDeliveryConditionAvailable() {
+            return deliveryConditionAvailable;
+        }
+
+        public void setDeliveryConditionAvailable(boolean deliveryConditionAvailable) {
+            this.deliveryConditionAvailable = deliveryConditionAvailable;
+        }
     }
 
     /**

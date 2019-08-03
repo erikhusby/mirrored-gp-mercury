@@ -37,7 +37,7 @@ public class PDOSampleBilledStatusTest {
         pdo.addSample(pdoSample);
         pdo.getProduct().setPrimaryPriceItem(primaryPriceItem);
         if(pdo.hasSapQuote()) {
-            pdoSample.addLedgerItem(new Date(System.currentTimeMillis()), pdo.getProduct(),3d);
+            pdoSample.addLedgerItem(new Date(System.currentTimeMillis()), pdo.getProduct(),3d, false);
         } else {
             pdoSample.addLedgerItem(new Date(System.currentTimeMillis()), primaryPriceItem,3d);
         }

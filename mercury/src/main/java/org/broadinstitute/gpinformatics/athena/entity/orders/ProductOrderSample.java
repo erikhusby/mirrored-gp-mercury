@@ -730,7 +730,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         if (quantities == null) {
             // No ledger item exists for this price item, create it using the current order's price item
             if(getProductOrder().hasSapQuote()) {
-                addAutoLedgerItem(completedDate, product, quantity, now);
+                addAutoLedgerItem(completedDate, product, quantity, now, false);
             } else {
                 addAutoLedgerItem(completedDate, nullablePriceItem.orElse(null), quantity, now);
             }
@@ -1025,6 +1025,8 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          */
         private Date workCompleteDate;
 
+        private boolean replacementUsed;
+
         /**
          * Create a new LedgerUpdate. This is only a representation of the requested change; no updates are performed.
          *
@@ -1048,21 +1050,22 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
         /**
          * Create a new LedgerUpdate. This is only a representation of the requested change; no updates are performed.
-         *
-         * @param sampleName          the sample being updated
+         *  @param sampleName          the sample being updated
          * @param oldQuantity         the quantity at the time the form was rendered
          * @param currentQuantity     the quantity at the time the form was submitted
          * @param newQuantity         the requested quantity
          * @param workCompleteDate    the date that work was completed
+         * @param replacementUsed
          */
         public LedgerUpdate(String sampleName, Product product, double oldQuantity, double currentQuantity,
-                            double newQuantity, Date workCompleteDate) {
+                            double newQuantity, Date workCompleteDate, boolean replacementUsed) {
             this.sampleName = sampleName;
             this.product = product;
             this.currentQuantity = currentQuantity;
             this.oldQuantity = oldQuantity;
             this.newQuantity = newQuantity;
             this.workCompleteDate = workCompleteDate;
+            this.replacementUsed = replacementUsed;
         }
 
         /**
@@ -1197,7 +1200,8 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
                         if(ledgerUpdate.getPriceItem() == null) {
 
-                            addLedgerItem(ledgerUpdate.getWorkCompleteDate(), ledgerUpdate.getProduct(), quantityDelta);
+                            addLedgerItem(ledgerUpdate.getWorkCompleteDate(), ledgerUpdate.getProduct(), quantityDelta,
+                                    ledgerUpdate.replacementUsed);
                         } else {
                             addLedgerItem(ledgerUpdate.getWorkCompleteDate(), ledgerUpdate.getPriceItem(),
                                     quantityDelta);
@@ -1224,6 +1228,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
             // Update work complete date for existing entry, whether or not the quantity is changing.
             if (haveExistingEntry) {
                 existingLedgerEntry.setWorkCompleteDate(ledgerUpdate.getWorkCompleteDate());
+                existingLedgerEntry.setSapReplacementPricing(ledgerUpdate.replacementUsed);
             }
         }
     }
@@ -1249,9 +1254,11 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * @param product        The product to charge.
      * @param delta            The plus or minus value to bill to the quote server.
      * @param currentDate      The ledger entry needs a date to say when the auto entry was made.
+     * @param sapReplacement
      */
-    public void addAutoLedgerItem(Date workCompleteDate, Product product, double delta, Date currentDate) {
-        addLedgerItem(workCompleteDate, product, delta, currentDate);
+    public void addAutoLedgerItem(Date workCompleteDate, Product product, double delta, Date currentDate,
+                                  Boolean sapReplacement) {
+        addLedgerItem(workCompleteDate, product, delta, currentDate, sapReplacement);
     }
 
     /**
@@ -1273,9 +1280,10 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * @param workCompleteDate The date completed.
      * @param product        The productto charge.
      * @param delta            The plus or minus value to bill to the quote server.
+     * @param sapReplacement
      */
-    public void addLedgerItem(Date workCompleteDate, Product product, double delta) {
-        addLedgerItem(workCompleteDate, product, delta, null);
+    public void addLedgerItem(Date workCompleteDate, Product product, double delta, Boolean sapReplacement) {
+        addAutoLedgerItem(workCompleteDate, product, delta, null, sapReplacement);
     }
 
     public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta, Date autoLedgerTimestamp) {
@@ -1291,9 +1299,11 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
                 sampleName, productOrder.getBusinessKey(), priceItemName , delta));
     }
 
-    public void addLedgerItem(Date workCompleteDate, Product product, double delta, Date autoLedgerTimestamp) {
+    public void addLedgerItem(Date workCompleteDate, Product product, double delta, Date autoLedgerTimestamp,
+                              Boolean sapReplacement) {
         LedgerEntry ledgerEntry = new LedgerEntry(this, product, workCompleteDate, delta);
         ledgerEntry.setAutoLedgerTimestamp(autoLedgerTimestamp);
+        ledgerEntry.setSapReplacementPricing(sapReplacement);
         ledgerItems.add(ledgerEntry);
         log.debug(MessageFormat.format(
                 "Added LedgerEntry item for sample {0} to PDO {1} for partNumber: {2} - Quantity:{3}",
