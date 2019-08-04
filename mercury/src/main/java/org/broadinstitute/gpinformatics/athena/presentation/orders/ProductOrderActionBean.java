@@ -70,6 +70,7 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefinitionValue;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
@@ -1097,7 +1098,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         return value;
     }
 
-    protected int getUnbilledCountForProduct(ProductOrder productOrder, int sampleCount, Product product) {
+    protected int getUnbilledCountForProduct(ProductOrder productOrder, int sampleCount, Product product)
+            throws InvalidProductException {
         int unbilledCount = sampleCount;
 
         final PriceAdjustment adjustmentForProduct = productOrder.getAdjustmentForProduct(product);
@@ -2501,8 +2503,11 @@ public class ProductOrderActionBean extends CoreActionBean {
             priceForFormat = new BigDecimal(productPriceCache.findByPartNumber(productEntity.getPartNumber(),
                     companyCode.getSalesOrganization()).getBasePrice());
         } else {
-            priceForFormat =
-                    new BigDecimal(priceListCache.findByKeyFields(productEntity.getPrimaryPriceItem()).getPrice());
+            Optional<PriceItem> primaryPriceItem = Optional.ofNullable(productEntity.getPrimaryPriceItem());
+            if(primaryPriceItem.isPresent()) {
+                priceForFormat =
+                        new BigDecimal(priceListCache.findByKeyFields(primaryPriceItem.get()).getPrice());
+            }
         }
         productInfo.put(priceTitle, NumberFormat.getCurrencyInstance().format(priceForFormat));
     }

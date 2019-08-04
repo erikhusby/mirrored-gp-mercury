@@ -88,6 +88,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -469,12 +470,18 @@ public class ProductOrderEjb {
         if (CollectionUtils.isNotEmpty(productsToConsider)) {
             for (Product product : productsToConsider) {
                 try {
-                    PriceItem priceItem = product.getPrimaryPriceItem();
+                    Optional<PriceItem> priceItem = Optional.ofNullable(product.getPrimaryPriceItem());
                     
                     primaryPriceItem =
-                            priceListCache.findByKeyFields(priceItem.getPlatform(),
-                                    priceItem.getCategory(),
-                                    priceItem.getName());
+                            priceListCache.findByKeyFields(priceItem.orElseThrow(() ->
+                                            new InvalidProductException(String.format("Unable to determine prices for %s since there is no price item with which it is associated",
+                                                    product.getDisplayName()))).getPlatform(),
+                                    priceItem.orElseThrow(() ->
+                                            new InvalidProductException(String.format("Unable to determine prices for %s since there is no price item with which it is associated",
+                                                    product.getDisplayName()))).getCategory(),
+                                    priceItem.orElseThrow(() ->
+                                            new InvalidProductException(String.format("Unable to determine prices for %s since there is no price item with which it is associated",
+                                                    product.getDisplayName()))).getName());
                     if (primaryPriceItem == null) {
                         allItemsValid = false;
                         break;
@@ -511,13 +518,14 @@ public class ProductOrderEjb {
             throw new InvalidProductException("Unable to continue since the Product Order for which the prices are being validated is not set");
         }
 
-        PriceItem priceItem = product.getPrimaryPriceItem();
-        final QuotePriceItem priceListItem = priceListCache.findByKeyFields(priceItem);
+        Optional<PriceItem> priceItem = Optional.ofNullable(product.getPrimaryPriceItem());
+
+        final QuotePriceItem priceListItem = priceListCache.findByKeyFields(priceItem.orElseThrow(() -> new InvalidProductException("Unable to continue since the product for which the prices are being validated does not have a price item set")));
         if (priceListItem == null) {
             throw new InvalidProductException("Unable to continue since the price list of " +
-                                              priceItem.getDisplayName() + ".");
+                                              priceItem.get().getDisplayName() + ".");
         }
-        return priceListCache.getEffectivePrice(priceItem, orderQuote);
+        return priceListCache.getEffectivePrice(priceItem.get(), orderQuote);
     }
 
     /**

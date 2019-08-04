@@ -168,7 +168,7 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
                     final List<String> cellList = new ArrayList<String>(Arrays.asList(
                             getBillingSessionLink(businessKey, singleWorkItem.orElse(""), context),
                             billedDate.map(dateFormatter::format).orElse(""),
-                            quoteImportItem.getQuoteId(),
+                            getQuoteLink(quoteImportItem, context),
                             getWorkItemLink(singleWorkItem.orElse(""), quoteImportItem.getQuoteId(), context),
                             sapItems.orElse(""),
                             quoteImportItem.getProduct().getDisplayName(),
@@ -206,7 +206,7 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
         if(StringUtils.isNotBlank(importItem.getQuoteId())) {
             if(context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB) {
                 quoteLink.append("<a class=\"external\" target=\"QUOTE\" href=\"");
-                if(importItem.isSapOrder()) {
+                if(StringUtils.isNumeric(importItem.getQuoteId())) {
                     quoteLink.append(context.getSapQuoteLink().sapUrl(importItem.getQuoteId()));
                 } else {
                     quoteLink.append(context.getQuoteLink().quoteUrl(importItem.getQuoteId()));
