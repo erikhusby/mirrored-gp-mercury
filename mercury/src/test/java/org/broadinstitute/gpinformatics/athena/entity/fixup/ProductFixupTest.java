@@ -476,7 +476,7 @@ public class ProductFixupTest extends Arquillian {
         utx.commit();
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim6362InitializeOfferAsCommercialFlag() throws Exception {
         userBean.loginOSUser();
         utx.begin();
