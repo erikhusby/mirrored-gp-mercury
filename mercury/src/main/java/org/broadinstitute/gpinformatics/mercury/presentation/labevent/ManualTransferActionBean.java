@@ -706,7 +706,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                 mapSampleIdToData = sampleDataFetcher.fetchSampleData(rootSampleIds);
                                 for (SampleData sampleData : mapSampleIdToData.values()) {
                                     if (StringUtils.isEmpty(sampleData.getCollaboratorParticipantId())) {
-                                        messageCollection.addError("No collaborator participant ID for " +
+                                        messageCollection.addWarning("No collaborator participant ID for " +
                                                 sampleData.getSampleId());
                                     }
                                 }
