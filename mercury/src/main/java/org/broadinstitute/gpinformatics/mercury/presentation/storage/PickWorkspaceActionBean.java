@@ -6,6 +6,7 @@ import net.sourceforge.stripes.action.*;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.storage.StorageEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -51,6 +52,9 @@ public class PickWorkspaceActionBean extends CoreActionBean {
 
     @Inject
     private LabBatchDao labBatchDao;
+
+    @Inject
+    private StorageEjb storageEjb;
 
     /**
      * JSON display collections - default to empty
@@ -267,25 +271,65 @@ public class PickWorkspaceActionBean extends CoreActionBean {
             // Only create InPlace to register rack layout
             if( OrmUtil.proxySafeIsInstance( src, RackOfTubes.class ) ) {
                 RackOfTubes rack = OrmUtil.proxySafeCast( src, RackOfTubes.class );
-                TubeFormation tubes = null;
+                TubeFormation priorTubeLayout = null;
+                TubeFormation newTubeLayout = null;
                 TreeSet<LabEvent> sortedEvents = new TreeSet<>( LabEvent.BY_EVENT_DATE );
                 sortedEvents.addAll( rack.getAncillaryInPlaceEvents() );
-                for( Iterator<LabEvent> iter = sortedEvents.descendingIterator() ; iter.hasNext(); ) {
-                    LabEvent evt = iter.next();
+                // Preferably last is a check-out as part of this pick or an old check-in, otherwise, force a scan
+                LabEvent evt = sortedEvents.last();
+                if( evt != null ) {
                     LabEventType evtType = evt.getLabEventType();
-                    if( evtType == LabEventType.IN_PLACE ) {
+                    if( evtType == LabEventType.STORAGE_CHECK_IN || evtType == LabEventType.STORAGE_CHECK_OUT ) {
                         // Something registered layout, use it.  Always a tube formation when ancillary is a rack of tubes
-                        tubes = OrmUtil.proxySafeCast( src, TubeFormation.class );
-                        racksAndLayouts.put( rack, tubes );
+                        priorTubeLayout = OrmUtil.proxySafeCast( evt.getInPlaceLabVessel(), TubeFormation.class );
+                        newTubeLayout = removePicksFromLayout( priorTubeLayout, row.getPickerVessels() );
+                        racksAndLayouts.put( rack, newTubeLayout );
                         break;
                     }
-
+                } else {
+                    addMessage("Cannot determine layout for rack " + rack.getLabel() + " - check-in will require a scan.");
                 }
             }
         }
 
+        long count = 0;
+        Date now = new Date();
+        Long userId = getUserBean().getBspUser().getUserId();
+        for( Map.Entry<RackOfTubes,TubeFormation> rackAndLayout : racksAndLayouts.entrySet() ) {
+            RackOfTubes rack = rackAndLayout.getKey();
+            LabVessel newTubeFormation = rackAndLayout.getValue();
+            newTubeFormation = storageEjb.tryPersistRackOrTubes(newTubeFormation);
+            LabEvent rackLayoutRegistrationEvent = storageEjb.createDisambiguatedStorageEvent(
+                    LabEventType.IN_PLACE, newTubeFormation, rack.getStorageLocation(), rack, userId, now, ++count );
+            storageLocationDao.persist( rackLayoutRegistrationEvent );
+            addMessage("New layout for rack " + rack.getLabel() + " recorded.");
+        }
+        for( LabBatch batch : batches.values() ) {
+            batch.setActive(false);
+            addMessage("Batch " + batch.getBatchName() + " set to inactive.");
+        }
+        storageLocationDao.flush();
+
         // Start from clean slate - remove inactive batches
         return eventInit();
+    }
+
+    /**
+     * Builds a new tube formation based upon removing picked vessel from prior tube formation <br/>
+     * Does no persistence existence check
+     */
+    private TubeFormation removePicksFromLayout(TubeFormation priorTubeFormation, List<PickerVessel> pickerVessels) {
+        Set<String> barcodesToRemove = new HashSet<>();
+        for( PickerVessel pick : pickerVessels ) {
+            barcodesToRemove.add( pick.getSourceVessel() );
+        }
+        Map<VesselPosition,BarcodedTube> newLayoutMap = new HashMap<>();
+        for( Map.Entry<VesselPosition,BarcodedTube> priorLayoutEntry : priorTubeFormation.getContainerRole().getMapPositionToVessel().entrySet() ) {
+            if( !barcodesToRemove.contains(priorLayoutEntry.getValue().getLabel() ) ) {
+                newLayoutMap.put( priorLayoutEntry.getKey(), priorLayoutEntry.getValue() );
+            }
+        }
+        return new TubeFormation(newLayoutMap, priorTubeFormation.getRackType());
     }
 
 
