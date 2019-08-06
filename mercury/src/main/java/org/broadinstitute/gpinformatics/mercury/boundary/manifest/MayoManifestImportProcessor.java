@@ -31,7 +31,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -88,7 +87,8 @@ public class MayoManifestImportProcessor {
         EMAIL("email", Metadata.Key.CONTACT_EMAIL),
         REQUESTING_PHYSICIAN("requesting physician", Metadata.Key.REQUESTING_PHYSICIAN),
         TEST_NAME("test name", Metadata.Key.PRODUCT_TYPE),
-        FAILURE_MODE("failure mode", null, Attribute.IGNORE);
+        FAILURE_MODE("failure mode", null, Attribute.IGNORE),
+        FAILURE_MODE_DESC("failure mode desc", null, Attribute.IGNORE);
 
         @NotNull
         private final String columnName;
@@ -149,44 +149,23 @@ public class MayoManifestImportProcessor {
         };
 
         /**
-         * Calculates a numeric conversion factor to represent concentration in ng/ul, and quantity in ul.
+         * Calculates a numeric conversion factor to represent concentration in ng/ul, quantity in ul, mass in ng.
+         * @return true if conversion factor was successfully set, false if not.
          */
-        private void setFactor(String headerSuffix, @Nullable List<String> unknownUnits) {
-            if (StringUtils.isBlank(headerSuffix)) {
-                if (unknownUnits != null) {
-                    unknownUnits.add(getText());
-                }
-            } else{
-                // Splits the header suffix into numerator and denominator, or just numerator.
-                String[] parts = headerSuffix.split("/", 2);
-                // The only ratio should be concentration.
-                if (getMetadataKey() == Metadata.Key.CONCENTRATION ^ parts.length != 1) {
-                    if (unknownUnits != null) {
-                        unknownUnits.add(getText());
-                    }
-                } else {
-                    BigDecimal number = null;
-                    for (int idx = 0; idx < parts.length; ++idx) {
-                        for (Pair<String, String> pair : conversionFactors) {
-                            if (parts[idx].startsWith(pair.getLeft())) {
-                                number = new BigDecimal(pair.getRight());
-                                break;
-                            }
-                        }
-                        if (number == null) {
-                            if (unknownUnits != null) {
-                                unknownUnits.add(getText());
-                            }
-                            factor = BigDecimal.ZERO;
-                            break;
-                        } else if (idx == 0) {
-                            factor = number;
-                        } else {
-                            factor = factor.divide(number, BigDecimal.ROUND_UNNECESSARY);
-                        }
-                    }
-                }
+        private boolean setFactor(String parentheticalPart) {
+            // Splits the header suffix into numerator and denominator, or just numerator.
+            final String[] parts = parentheticalPart.split("/", 2);
+            factor = new BigDecimal(Stream.of(conversionFactors).
+                    filter(pair -> parts[0].startsWith((String)pair.getLeft())).
+                    map(pair -> (String)pair.getRight()).
+                    findFirst().orElse("0"));
+            if (parts.length > 1) {
+                factor = factor.divide(new BigDecimal(Stream.of(conversionFactors).
+                        filter(pair -> parts[1].startsWith((String) pair.getLeft())).
+                        map(pair -> (String) pair.getRight()).
+                        findFirst().orElse("-1")), BigDecimal.ROUND_UNNECESSARY);
             }
+            return factor.signum() > 0;
         }
     }
 
@@ -230,12 +209,13 @@ public class MayoManifestImportProcessor {
             initHeaders(cellGrid.get(0), unknownUnits, unknownHeaders);
 
             // Finds missing required headers.
-            List<String> missingHeaders = Arrays.stream(Header.values()).
-                    filter(header -> header.isRequired() && !sheetHeaders.contains(header)).
-                    map(Header::getText).collect(Collectors.toList());
-            // Finds duplicate headers.
-            List<String> duplicateHeaders = CollectionUtils.getCardinalityMap(
-                    sheetHeaders.stream().filter(Objects::nonNull).collect(Collectors.toList())).
+            List<String> missingHeaders = CollectionUtils.subtract(
+                    Arrays.stream(Header.values()).filter(header -> header.isRequired()).collect(Collectors.toList()),
+                    sheetHeaders).
+                    stream().map(Header::getText).collect(Collectors.toList());
+            // Finds duplicate non-ignored headers.
+            List<String> duplicateHeaders = CollectionUtils.getCardinalityMap(sheetHeaders.stream().
+                    filter(header -> header != null && !header.isIgnored()).collect(Collectors.toList())).
                     entrySet().stream().
                     filter(mapEntry -> mapEntry.getValue() > 1).
                     map(mapEntry -> mapEntry.getKey().getText()).
@@ -372,33 +352,41 @@ public class MayoManifestImportProcessor {
 
         List<Header> headers = new ArrayList<>();
         for (String column : headerRow) {
-            String header = column.toLowerCase().replaceAll("_", " ").replace('(', ' ').replace(')', ' ').
-                    // Put space between name and id (e.g. sampleId -> sample id)
-                    // and between "<name>id " and <name> id (e.g. biobankid sample id -> biobank id sample id)
+            // Only keeps the substring before '/' (e.g. box id/plate id -> box id) and before parenthesis.
+            String header = StringUtils.substringBefore(StringUtils.substringBefore(column.toLowerCase(), "("), "/").
+                    // Removes underscores
+                            replaceAll("_", " ").
+                    // Puts space between name and id e.g. "sampleId" -> "sample id"
+                    // and "biobankid sample id" -> "biobank id sample id"
                             replaceAll("id$", " id").
                             replaceAll("id ", " id ").
-                    // Removes spaces around '/' so that if units are present they are always the last single token.
-                            replace(" /", "/").replace("/ ", "/").
                     // Collapse multiple spaces into one and trim.
                             replaceAll("[ ]+", " ").trim();
-            // Looks for the header name. If no match, try without the last token in case it's the units.
-            // If still no match try the substring before '/' (i.e. box_id/plate_id)
             Header match = nameToHeader.get(header);
-            String units = "";
-            if (match == null && header.contains(" ")) {
-                match = nameToHeader.get(StringUtils.substringBeforeLast(header, " "));
-                units = StringUtils.substringAfterLast(header, " ");
+            if (match == null) {
+                if (unknownHeaders != null) {
+                    unknownHeaders.add(column);
+                }
+            } else {
+                if (match.getMetadataKey() == Metadata.Key.CONCENTRATION ||
+                        match.getMetadataKey() == Metadata.Key.VOLUME ||
+                        match.getMetadataKey() == Metadata.Key.MASS) {
+                    String parentheticalPart = StringUtils.substringAfter(column.toLowerCase(), "(").
+                            // Removes parentheses and spaces including embedded ones.
+                                    replace("(", "").replace(")", "").replace(" ", "");
+                    if (parentheticalPart.isEmpty() ||
+                            match.getMetadataKey() == Metadata.Key.CONCENTRATION ^ parentheticalPart.contains("/")) {
+                        if (unknownUnits != null) {
+                            unknownUnits.add(column);
+                        }
+                    } else if (!match.setFactor(parentheticalPart)) {
+                        if (unknownUnits != null) {
+                            unknownUnits.add(column);
+                        }
+                    }
+                }
             }
-            if (match == null && header.contains("/")) {
-                match = nameToHeader.get(StringUtils.substringBeforeLast(header, "/"));
-                units = "";
-            }
-            if (match == null && unknownHeaders != null) {
-                unknownHeaders.add(column);
-            } else if (match != null && match.hasUnits()) {
-                match.setFactor(units, unknownUnits);
-            }
-            // An unknown header is added as a null, to maintain a corresponding index with data rows.
+            // An unknown header is still added as a null, to maintain a corresponding index with data rows.
             headers.add(match);
         }
         return headers;
