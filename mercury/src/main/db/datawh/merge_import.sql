@@ -1013,6 +1013,7 @@ AS
               placed_date = new.placed_date,
               skip_regulatory_reason = new.skip_regulatory_reason,
               sap_order_number = new.sap_order_number,
+              order_type = new.order_type,
               array_chip_type = new.array_chip_type,
               call_rate_threshold = new.call_rate_threshold,
               etl_date = new.etl_date
@@ -1035,6 +1036,7 @@ AS
               placed_date,
               skip_regulatory_reason,
               sap_order_number,
+              order_type,
               array_chip_type,
               call_rate_threshold,
               etl_date
@@ -1052,6 +1054,7 @@ AS
               new.placed_date,
               new.skip_regulatory_reason,
               new.sap_order_number,
+              new.order_type,
               new.array_chip_type,
               new.call_rate_threshold,
               new.etl_date );
