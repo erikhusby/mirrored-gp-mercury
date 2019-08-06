@@ -95,21 +95,29 @@ public class LabMetricEtlDbFreeTest {
     public void testVesselNotTube() throws Exception {
         EasyMock.expect(dao.findById(LabMetric.class, entityId)).andReturn(obj);
         EasyMock.expect(obj.getLabVessel()).andReturn(labVessel).times(2);
+        EasyMock.expect(obj.getLabMetricRun()).andReturn(run);
         EasyMock.expect(obj.getLabMetricId()).andReturn(entityId);
-        EasyMock.expect(labVessel.getType()).andReturn(LabVessel.ContainerType.PLATE_WELL);
+        EasyMock.expect(labVessel.getLabel()).andReturn(vesselBarcode);
+        EasyMock.expect(labVessel.getLabVesselId()).andReturn(vesselID);
+        EasyMock.expect(obj.getName()).andReturn(type);
+        EasyMock.expect(obj.getUnits()).andReturn(units);
+        EasyMock.expect(obj.getValue()).andReturn(value);
+        EasyMock.expect(obj.getVesselPosition()).andReturn(vesselPosition);
+        EasyMock.expect(obj.getLabMetricDecision()).andReturn(null).anyTimes();
+        EasyMock.expect(run.getRunName()).andReturn(runName);
+        EasyMock.expect(run.getRunDate()).andReturn(runDate);
         EasyMock.replay(mocks);
-        Assert.assertEquals(tst.dataRecords(etlDateStr, false, entityId).size(), 0);
+        Assert.assertEquals(tst.dataRecords(etlDateStr, false, entityId).size(), 1);
         EasyMock.verify(mocks);
     }
 
     public void testWithoutLabMetricRun() throws Exception {
         EasyMock.expect(dao.findById(LabMetric.class, entityId)).andReturn(obj);
-        EasyMock.expect(obj.getLabVessel()).andReturn(labVessel).times(3);
+        EasyMock.expect(obj.getLabVessel()).andReturn(labVessel).times(2);
         EasyMock.expect(obj.getLabMetricRun()).andReturn(null);
         EasyMock.expect(obj.getLabMetricId()).andReturn(entityId);
         EasyMock.expect(labVessel.getLabel()).andReturn(vesselBarcode);
         EasyMock.expect(labVessel.getLabVesselId()).andReturn(vesselID);
-        EasyMock.expect(labVessel.getType()).andReturn(LabVessel.ContainerType.TUBE);
         EasyMock.expect(obj.getName()).andReturn(type);
         EasyMock.expect(obj.getUnits()).andReturn(units);
         EasyMock.expect(obj.getValue()).andReturn(value);
@@ -128,13 +136,12 @@ public class LabMetricEtlDbFreeTest {
 
     public void testWithLabMetricRun() throws Exception {
         EasyMock.expect(dao.findById(LabMetric.class, entityId)).andReturn(obj);
-        EasyMock.expect(obj.getLabVessel()).andReturn(labVessel).times(3);
+        EasyMock.expect(obj.getLabVessel()).andReturn(labVessel).times(2);
         EasyMock.expect(obj.getLabMetricRun()).andReturn(run);
 
         EasyMock.expect(obj.getLabMetricId()).andReturn(entityId);
         EasyMock.expect(labVessel.getLabel()).andReturn(vesselBarcode);
         EasyMock.expect(labVessel.getLabVesselId()).andReturn(vesselID);
-        EasyMock.expect(labVessel.getType()).andReturn(LabVessel.ContainerType.TUBE);
         EasyMock.expect(obj.getName()).andReturn(type);
         EasyMock.expect(obj.getUnits()).andReturn(units);
         EasyMock.expect(obj.getValue()).andReturn(value);
@@ -153,13 +160,12 @@ public class LabMetricEtlDbFreeTest {
 
     public void testWithLabMetricDecision() throws Exception {
         EasyMock.expect(dao.findById(LabMetric.class, entityId)).andReturn(obj);
-        EasyMock.expect(obj.getLabVessel()).andReturn(labVessel).times(3);
+        EasyMock.expect(obj.getLabVessel()).andReturn(labVessel).times(2);
         EasyMock.expect(obj.getLabMetricRun()).andReturn(run);
 
         EasyMock.expect(obj.getLabMetricId()).andReturn(entityId);
         EasyMock.expect(labVessel.getLabel()).andReturn(vesselBarcode);
         EasyMock.expect(labVessel.getLabVesselId()).andReturn(vesselID);
-        EasyMock.expect(labVessel.getType()).andReturn(LabVessel.ContainerType.TUBE);
         EasyMock.expect(obj.getName()).andReturn(type);
         EasyMock.expect(obj.getUnits()).andReturn(units);
         EasyMock.expect(obj.getValue()).andReturn(value);
