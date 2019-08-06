@@ -22,6 +22,7 @@ import javax.persistence.criteria.Root;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Optional;
 
 @Stateful
 @TransactionManagement(TransactionManagementType.BEAN)
@@ -105,6 +106,11 @@ public class ProductOrderEtl extends GenericEntityAndStatusEtl<ProductOrder, Pro
                 }
             }
         }
+        ProductOrder.OrderAccessType orderType = entity.getOrderType();
+        String orderTypeString = "";
+        if (orderType != null) {
+            orderTypeString = format(orderType.getCompanyCode());
+        }
 
         return genericRecord(etlDateStr, isDelete,
                 entity.getProductOrderId(),
@@ -122,7 +128,8 @@ public class ProductOrderEtl extends GenericEntityAndStatusEtl<ProductOrder, Pro
                 format(entity.getSapOrderNumber()),
                 format(arrayChipType),
                 format(callThreshold),
-                format(regInfoData)
+                format(regInfoData),
+                orderTypeString
         );
     }
 

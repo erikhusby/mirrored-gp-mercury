@@ -22,5 +22,6 @@ TRAILING NULLCOLS
  sap_order_number,
  array_chip_type,
  call_rate_threshold,
- reg_info_ids
+ reg_info_ids,
+ order_type
 )

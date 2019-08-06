@@ -101,6 +101,7 @@ CREATE TABLE product_order (
   placed_date            DATE,
   skip_regulatory_reason VARCHAR2(255),
   sap_order_number VARCHAR2(255),
+  order_type VARCHAR2(255),
   etl_date               DATE           NOT NULL
 );
 
@@ -438,6 +439,7 @@ CREATE TABLE im_product_order (
   placed_date            DATE,
   skip_regulatory_reason VARCHAR2(255),
   sap_order_number VARCHAR2(255),
+  order_type VARCHAR2(255),
   reg_info_ids           VARCHAR2(255)
 );
 
