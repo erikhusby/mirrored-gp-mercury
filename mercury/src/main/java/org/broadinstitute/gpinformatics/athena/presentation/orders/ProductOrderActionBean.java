@@ -2509,7 +2509,11 @@ public class ProductOrderActionBean extends CoreActionBean {
                         new BigDecimal(priceListCache.findByKeyFields(primaryPriceItem.get()).getPrice());
             }
         }
-        productInfo.put(priceTitle, NumberFormat.getCurrencyInstance().format(priceForFormat));
+        String formattedPrice = "";
+        if (priceForFormat != null) {
+            formattedPrice = NumberFormat.getCurrencyInstance().format(priceForFormat);
+        }
+        productInfo.put(priceTitle, formattedPrice);
     }
 
     @HandlesEvent("getSupportsNumberOfLanes")
