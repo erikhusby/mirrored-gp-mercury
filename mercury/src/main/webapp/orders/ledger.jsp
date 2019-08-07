@@ -1023,6 +1023,9 @@
                         <input type="hidden" data-rownum = "${info.sample.samplePosition}"
                                name="ledgerData[${info.sample.samplePosition}].sampleName"
                                value="${info.sample.name}"/>
+                        <input type="hidden" data-rownum = "${info.sample.samplePosition}"
+                               name="ledgerData[${info.sample.samplePosition}].sapOrder"
+                               value="${actionBean.productOrder.hasSapQuote()}"/>
                     </td>
                     <td>
                         ${info.sample.sampleData.collaboratorsSampleName}
