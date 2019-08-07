@@ -95,8 +95,8 @@ public class StorageLocationFixupTest extends Arquillian {
     }
 
     /**
-     * This test reads its parameters from a file, mercury/src/test/resources/testdata/CreateStorageLocation.json, so it can
-     * be used for other similar fixups, without writing a new test. The json object is the CreateStorageLocation.class:
+     * This test assigns rack barcodes to in-place events as ancillary_in_place_vessel, currently the tube formation
+     * is only stored with in place events as in_place_lab_vessel making it difficult to locate in-place events using rack barcode
      */
     @Test(enabled = false)
     public void fixupGplim6012BackfillInPlaceRacks() throws Exception {
