@@ -2546,15 +2546,21 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public enum OrderAccessType implements StatusType {
-        BROAD_PI_ENGAGED_WORK("Broad PI engaged Work (1000)", SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization()),
-        COMMERCIAL("Commercial (2000)", SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization());
+        BROAD_PI_ENGAGED_WORK("Broad PI engaged Work (1000)",
+            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization(),
+            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode()),
+        COMMERCIAL("Commercial (2000)",
+            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization(),
+            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getCompanyCode());
 
-        private String displayName;
-        private String salesOrg;
+        private final String displayName;
+        private final String salesOrg;
+        private final String companyCode;
 
-        OrderAccessType(String displayName, String salesOrg) {
+        OrderAccessType(String displayName, String salesOrg, String companyCode) {
             this.displayName = displayName;
             this.salesOrg = salesOrg;
+            this.companyCode = companyCode;
         }
 
         @Override
@@ -2564,6 +2570,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         public String getSalesOrg() {
             return salesOrg;
+        }
+
+        public String getCompanyCode() {
+            return companyCode;
         }
 
         public static List<String> displayNames() {
