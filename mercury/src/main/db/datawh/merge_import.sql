@@ -2355,7 +2355,8 @@ AS
               work_complete_date = new.work_complete_date,
               etl_date = new.etl_date,
               quote_server_work_item = new.quote_server_work_item,
-              sap_delivery_document = new.sap_delivery_document
+              sap_delivery_document = new.sap_delivery_document,
+              product_id = new.product_id
             WHERE ledger_id = new.ledger_id;
 
             V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
@@ -2372,7 +2373,8 @@ AS
               work_complete_date,
               etl_date,
               quote_server_work_item,
-              sap_delivery_document
+              sap_delivery_document,
+              product_id
             ) VALUES (
               new.ledger_id,
               new.product_order_sample_id,
@@ -2385,7 +2387,8 @@ AS
               new.work_complete_date,
               new.etl_date,
               new.quote_server_work_item,
-              new.sap_delivery_document );
+              new.sap_delivery_document,
+              new.product_id);
 
             V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
             -- ELSE ignore older ETL extract

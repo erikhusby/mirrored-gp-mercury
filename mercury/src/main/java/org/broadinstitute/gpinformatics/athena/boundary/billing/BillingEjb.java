@@ -209,11 +209,13 @@ public class BillingEjb {
         // Now that we have successfully billed, update the Ledger Entries associated with this QuoteImportItem
         // with the quote for the QuoteImportItem, add the priceItemType, and the success message.
         Collection<String> replacementPriceItemNames = new ArrayList<>();
-        PriceItem priceItem = item.getProductOrder().determinePriceItemByCompanyCode(item.getPrimaryProduct());
-        Collection<QuotePriceItem> replacementPriceItems =
-                priceListCache.getReplacementPriceItems(priceItem);
-        for (QuotePriceItem replacementPriceItem : replacementPriceItems) {
-            replacementPriceItemNames.add(replacementPriceItem.getName());
+        PriceItem priceItem = item.getPrimaryProduct().getPrimaryPriceItem();
+        if(!item.isSapOrder()) {
+            Collection<QuotePriceItem> replacementPriceItems =
+                    priceListCache.getReplacementPriceItems(priceItem);
+            for (QuotePriceItem replacementPriceItem : replacementPriceItems) {
+                replacementPriceItemNames.add(replacementPriceItem.getName());
+            }
         }
         item.updateLedgerEntries(quoteIsReplacing, billingMessage, quoteServerWorkItem,
                 replacementPriceItemNames, sapDeliveryId);

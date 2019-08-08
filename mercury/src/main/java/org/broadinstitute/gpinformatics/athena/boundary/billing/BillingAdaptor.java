@@ -253,8 +253,9 @@ public class BillingAdaptor implements Serializable {
 
                                 billingEjb
                                         .updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId,
-                                                BillingSession.BILLED_FOR_QUOTES);
+                                                BillingSession.SUCCESS);
                             }
+                            result.setWorkId(workId);
                         }
 
                         if(StringUtils.isBlank(sapBillingId)){
@@ -269,8 +270,7 @@ public class BillingAdaptor implements Serializable {
                                     sapBillingId = sapService.billOrder(item, null, new Date());
                                     result.setSapBillingId(sapBillingId);
                                     billingEjb.updateSapLedgerEntries(item, workId, sapBillingId,
-                                            BillingSession.BILLED_FOR_SAP + " "
-                                            + BillingSession.BILLED_FOR_QUOTES);
+                                            BillingSession.SUCCESS);
                                 } else {
                                     Set<LedgerEntry> priorSapBillings = new HashSet<>();
                                     item.getBillingCredits().stream()
@@ -298,7 +298,7 @@ public class BillingAdaptor implements Serializable {
                                         sapBillingId = BILLING_CREDIT_REQUESTED_INDICATOR;
                                         result.setSapBillingId(sapBillingId);
                                         billingEjb.updateSapLedgerEntries(item, workId, sapBillingId,
-                                                BillingSession.BILLING_CREDIT);
+                                                BillingSession.SUCCESS);
                                     }
                                 }
                                 item.getProductOrder().latestSapOrderDetail().addLedgerEntries(item.getLedgerItems());
@@ -309,12 +309,6 @@ public class BillingAdaptor implements Serializable {
                     }
 
                     Set<String> billedPdoKeys = getBilledPdoKeys(result);
-
-                    // Not sure I see the point of the next two lines!!!!
-                    result.setWorkId(workId);
-                    logBilling(workId, item, priceItemBeingBilled, billedPdoKeys, sapBillingId);
-                    billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId,
-                            BillingSession.SUCCESS);
                 } catch (Exception ex) {
 
                     StringBuilder errorMessageBuilder = new StringBuilder();

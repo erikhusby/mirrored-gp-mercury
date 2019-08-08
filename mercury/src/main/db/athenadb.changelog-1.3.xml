@@ -76,4 +76,19 @@
             <column name="OFFERED_AS_COMMERCIAL" type="number(1,0)" />
         </addColumn>
     </changeSet>
+    <changeSet author="scottmat" id="GPLIM-6514-drop-null-constraint-ledger-entry">
+        <dropNotNullConstraint columnName="PRICE_ITEM_ID" schemaName="ATHENA" tableName="BILLING_LEDGER" />
+    </changeSet>
+    <changeSet id="GPLIM-6514-add-sap-replacement-to-ledger-entry" author="scottmat">
+        <addColumn tableName="BILLING_LEDGER" schemaName="ATHENA">
+            <column name="SAP_REPLACEMENT_PRICING" type="number(1,0)"></column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6514-add-sap-replacement-to-ledger-entry-audit" author="scottmat">
+        <addColumn tableName="BILLING_LEDGER_aud" schemaName="ATHENA">
+            <column name="SAP_REPLACEMENT_PRICING" type="number(1,0)"></column>
+        </addColumn>
+    </changeSet>
+
+
 </databaseChangeLog>

@@ -266,17 +266,17 @@ public class ProductOrderTest {
 
     @DataProvider(name = "testUpdateOrderStatus")
     public Object[][] createUpdateOrderStatusData() {
-        List<ProductOrderSample> billedSamples = Arrays.asList(ProductOrderSampleTest.createBilledSample("ABC"),
-                ProductOrderSampleTest.createBilledSample("DEF"));
+        List<ProductOrderSample> billedSamples = Arrays.asList(ProductOrderSampleTest.createBilledSample("ABC", false),
+                ProductOrderSampleTest.createBilledSample("DEF", false));
         List<ProductOrderSample> abandonedSamples = ProductOrderSampleTestFactory.createDBFreeSampleList("123", "456");
         for (ProductOrderSample sample : abandonedSamples) {
             sample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.ABANDONED);
         }
         List<ProductOrderSample> notBilledSamples = ProductOrderSampleTestFactory.createDBFreeSampleList("ZZZ", "YYY");
-        List<ProductOrderSample> atLeastOneNotBilled = Arrays.asList(ProductOrderSampleTest.createBilledSample("ABC"),
+        List<ProductOrderSample> atLeastOneNotBilled = Arrays.asList(ProductOrderSampleTest.createBilledSample("ABC", false),
                 new ProductOrderSample("ZZZ"));
-        List<ProductOrderSample> billedToAddOnSamples = Arrays.asList(ProductOrderSampleTest.createBilledSample("ABC"),
-                ProductOrderSampleTest.createBilledSample("ZZZ", LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM));
+        List<ProductOrderSample> billedToAddOnSamples = Arrays.asList(ProductOrderSampleTest.createBilledSample("ABC", false),
+                ProductOrderSampleTest.createBilledSample("ZZZ", LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM, false));
         return new Object[][]{
                 // Can't transition from Draft or Abandoned, regardless of the sample state.
                 {createOrderWithSamples(billedSamples, OrderStatus.Draft), false, OrderStatus.Draft},
