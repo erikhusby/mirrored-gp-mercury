@@ -81,6 +81,12 @@ public class BspMigrationMapping {
         if( wellType != null ) {
             return Pair.of( PlateWell.class, wellType );
         }
+
+        // Misspelled and don't want to add to Mercury, the BSP fix may or may not have been run by this time
+        if (bspReceptacleType.equals("Eppendoff Flip-top [1.5mL] (Gates)")) {
+            return Pair.of(BarcodedTube.class, BarcodedTube.BarcodedTubeType.EppendorfFliptop15_Gates);
+        }
+
         // Caller has to deal with nothing found
         return null;
     }
