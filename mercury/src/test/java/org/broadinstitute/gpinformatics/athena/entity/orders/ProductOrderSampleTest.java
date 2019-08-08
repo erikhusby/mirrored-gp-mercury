@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductE
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntryTest;
+import org.broadinstitute.gpinformatics.athena.entity.billing.ProductLedgerIndex;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
@@ -54,11 +55,16 @@ import static org.hamcrest.Matchers.nullValue;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderSampleTest {
 
-    private static ProductOrderSample createOrderedSample(String name) {
+    private static ProductOrderSample createOrderedSample(String name, boolean sapOrder) {
         ProductOrderSample sample = new ProductOrderSample(name);
         ProductOrder order = new ProductOrder();
         Product product = new Product();
         PriceItem primaryPriceItem = new PriceItem("primary", "", null, "primary");
+        if(sapOrder) {
+            order.setQuoteId("2700039");
+        } else {
+            order.setQuoteId("GP-TEST");
+        }
         product.setPrimaryPriceItem(primaryPriceItem);
         try {
             order.setProduct(product);
@@ -69,8 +75,9 @@ public class ProductOrderSampleTest {
         return sample;
     }
 
-    public static ProductOrderSample createBilledSample(String name, LedgerEntry.PriceItemType priceItemType) {
-        ProductOrderSample sample = createOrderedSample(name);
+    public static ProductOrderSample createBilledSample(String name, LedgerEntry.PriceItemType priceItemType,
+                                                        boolean sapOrder) {
+        ProductOrderSample sample = createOrderedSample(name, sapOrder);
 
         PriceItem billedPriceItem;
         if (priceItemType == LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM) {
@@ -78,7 +85,11 @@ public class ProductOrderSampleTest {
         } else {
             billedPriceItem = new PriceItem(priceItemType.name(), "", null, priceItemType.name());
         }
-        sample.addLedgerItem(new Date(), billedPriceItem, 1);
+        if(sample.getProductOrder().hasSapQuote()) {
+            sample.addLedgerItem(new Date(), sample.getProductOrder().getProduct(), 1, false);
+        } else {
+            sample.addLedgerItem(new Date(), billedPriceItem, 1);
+        }
         LedgerEntry entry = sample.getLedgerItems().iterator().next();
         entry.setPriceItemType(priceItemType);
         new BillingSession(0L, Collections.singleton(entry));
@@ -87,12 +98,12 @@ public class ProductOrderSampleTest {
         return sample;
     }
 
-    public static ProductOrderSample createBilledSample(String name) {
-        return createBilledSample(name, LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+    public static ProductOrderSample createBilledSample(String name, boolean sapOrder) {
+        return createBilledSample(name, LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM, sapOrder);
     }
 
-    private static ProductOrderSample createUnbilledSampleWithLedger(String name) {
-        ProductOrderSample sample = createOrderedSample(name);
+    private static ProductOrderSample createUnbilledSampleWithLedger(String name, boolean sapOrder) {
+        ProductOrderSample sample = createOrderedSample(name, sapOrder);
         LedgerEntry billedEntry = LedgerEntryTest.createOneLedgerEntry(sample, "price item", 1, new Date());
         sample.getLedgerItems().add(billedEntry);
         return sample;
@@ -101,11 +112,11 @@ public class ProductOrderSampleTest {
     @DataProvider(name = "testIsBilled")
     public Object[][] createIsBilledData() {
         return new Object[][]{
-                {createBilledSample("ABC"), true},
-                {createBilledSample("ABC", LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM), false},
-                {createBilledSample("ABC", LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM), true},
-                {createUnbilledSampleWithLedger("ABC"), false},
-                {createOrderedSample("ABC"), false}
+                {createBilledSample("ABC", false), true},
+                {createBilledSample("ABC", LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM, false), false},
+                {createBilledSample("ABC", LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM, false), true},
+                {createUnbilledSampleWithLedger("ABC", false), false},
+                {createOrderedSample("ABC", false), false}
         };
     }
 
@@ -123,7 +134,7 @@ public class ProductOrderSampleTest {
      */
     @Test(dataProvider = "getPriceItemTypes")
     public void testIsCompletelyBilledHandlesAllPriceItemTypes(LedgerEntry.PriceItemType priceItemType) {
-        ProductOrderSample productOrderSample = createBilledSample("SM-123", priceItemType);
+        ProductOrderSample productOrderSample = createBilledSample("SM-123", priceItemType, false);
 
         // No assert here, just making sure that an exception is not thrown if an unknown PriceItemType is encountered.
         productOrderSample.isCompletelyBilled();
@@ -145,11 +156,17 @@ public class ProductOrderSampleTest {
      * credited, bringing the net quantity billed back to 0.
      */
     public void testIsBilledWithCredits() {
-        ProductOrderSample sample = createBilledSample("test");
+        ProductOrderSample sample = createBilledSample("test", false);
 
         // credit the price item already billed
         PriceItem billedPriceItem = sample.getProductOrder().getProduct().getPrimaryPriceItem();
-        sample.addLedgerItem(new Date(), billedPriceItem, -1);
+        if(sample.getProductOrder().hasSapQuote()) {
+
+            sample.addLedgerItem(new Date(), sample.getProductOrder().getProduct(), -1, false);
+        } else {
+
+            sample.addLedgerItem(new Date(), billedPriceItem, -1);
+        }
         // Flag the credit ledger entry as billed successfully
         for( LedgerEntry entry : sample.getLedgerItems() ) {
             entry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
@@ -175,11 +192,16 @@ public class ProductOrderSampleTest {
      * then probably either the new case needs a data fix-up or the old cases will need data fix-ups.
      */
     public void testIsBilledWithCreditsAndAddOn() {
-        ProductOrderSample sample = createBilledSample("test");
+        ProductOrderSample sample = createBilledSample("test", false);
 
         // credit the price item with an add-on ledger entry
         PriceItem billedPriceItem = sample.getProductOrder().getProduct().getPrimaryPriceItem();
-        sample.addLedgerItem(new Date(), billedPriceItem, -1/*, sample.getProductOrder().getProduct()*/);
+        if(sample.getProductOrder().hasSapQuote()) {
+
+            sample.addLedgerItem(new Date(), sample.getProductOrder().getProduct(), -1, false);
+        } else {
+            sample.addLedgerItem(new Date(), billedPriceItem, -1);
+        }
         LedgerEntry entry = sample.getLedgerItems().iterator().next();
         entry.setPriceItemType(LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM);
         entry.setBillingMessage(BillingSession.SUCCESS);
@@ -220,16 +242,24 @@ public class ProductOrderSampleTest {
     public static Object[][] makeAutoBillSampleData() {
         TestPDOData data = new TestPDOData("GSP-123");
         Date completedDate = new Date();
-        LedgerEntry ledgerEntry = new LedgerEntry(data.sample1, data.product.getPrimaryPriceItem(),
-                completedDate,
-//                data.product,
+        LedgerEntry ledgerEntry = new LedgerEntry(data.sample1, data.product.getPrimaryPriceItem(), completedDate,
                 1);
 
         // Bill sample2.
-        data.sample2.addLedgerItem(completedDate, data.product.getPrimaryPriceItem(), 1/*, data.product*/);
+        data.sample2.addLedgerItem(completedDate, data.product.getPrimaryPriceItem(), 1);
         LedgerEntry ledger = data.sample2.getLedgerItems().iterator().next();
         ledger.setBillingMessage(BillingSession.SUCCESS);
         ledger.setBillingSession(new BillingSession(0L, Collections.singleton(ledger)));
+
+        TestPDOData dataSap = new TestPDOData("2700039");
+        completedDate = new Date();
+        LedgerEntry ledgerEntrySap = new LedgerEntry(dataSap.sample1, dataSap.product, completedDate,1);
+
+        // Bill sample2.
+        dataSap.sample2.addLedgerItem(completedDate, dataSap.product, 1, false);
+        LedgerEntry ledgerSap = dataSap.sample2.getLedgerItems().iterator().next();
+        ledgerSap.setBillingMessage(BillingSession.SUCCESS);
+        ledgerSap.setBillingSession(new BillingSession(0L, Collections.singleton(ledgerSap)));
 
         return new Object[][]{
                 // Create ledger items from a single sample.
@@ -237,7 +267,13 @@ public class ProductOrderSampleTest {
                 // Update existing ledger items with "new" bill count.
                 new Object[]{data.sample1, completedDate, Collections.singleton(ledgerEntry)},
                 // If sample is already billed, don't create any ledger items.
-                new Object[]{data.sample2, completedDate, Collections.emptySet()}
+                new Object[]{data.sample2, completedDate, Collections.emptySet()},
+                // Create ledger items from a single sample.
+                new Object[]{dataSap.sample1, completedDate, Collections.singleton(ledgerEntrySap)},
+                // Update existing ledger items with "new" bill count.
+                new Object[]{dataSap.sample1, completedDate, Collections.singleton(ledgerEntrySap)},
+                // If sample is already billed, don't create any ledger items.
+                new Object[]{dataSap.sample2, completedDate, Collections.emptySet()}
         };
     }
 
@@ -632,9 +668,9 @@ public class ProductOrderSampleTest {
 
         ProductOrderSample productOrderSample;
         if (quantityBilled == 0) {
-            productOrderSample = createOrderedSample("TEST");
+            productOrderSample = createOrderedSample("TEST", false);
         } else {
-            productOrderSample = createBilledSample("TEST");
+            productOrderSample = createBilledSample("TEST", false);
         }
 
         PriceItem priceItem = productOrderSample.getProductOrder().getProduct().getPrimaryPriceItem();
@@ -644,17 +680,33 @@ public class ProductOrderSampleTest {
 
 //        ProductLedgerIndex quantityIndex = new ProductLedgerIndex(productOrderSample.getProductOrder().getProduct(), priceItem);
 //        ProductOrderSample.LedgerQuantities ledgerQuantities = productOrderSample.getLedgerQuantities().get(quantityIndex );
-        ProductOrderSample.LedgerQuantities ledgerQuantities = productOrderSample.getLedgerQuantities().get(priceItem );
+        ProductOrderSample.LedgerQuantities ledgerQuantities = productOrderSample.getLedgerQuantities().get(
+                ProductLedgerIndex.create(null, priceItem, productOrderSample.getProductOrder().hasSapQuote()));
         double quantityBefore = ledgerQuantities != null ? ledgerQuantities.getTotal() : 0;
         double currentQuantity = quantityBefore; // these tests all assume no external changes
         Date workCompleteDate = new Date();
 
-        ProductOrderSample.LedgerUpdate ledgerUpdate =
-                new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem, quantityBefore,
-                        currentQuantity, quantityRequested, workCompleteDate);
+        ProductOrderSample.LedgerUpdate ledgerUpdate;
+        if(productOrderSample.getProductOrder().hasSapQuote()) {
+            ledgerUpdate =
+                    new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(),
+                            productOrderSample.getProductOrder().getProduct(), quantityBefore, currentQuantity,
+                            quantityRequested, workCompleteDate, false);
+        } else {
+            ledgerUpdate =
+                    new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem,
+                            productOrderSample.getProductOrder().getProduct(), quantityBefore, currentQuantity,
+                            quantityRequested, workCompleteDate);
+        }
         productOrderSample.applyLedgerUpdate(ledgerUpdate);
 
-        LedgerEntry ledgerEntry = productOrderSample.findUnbilledLedgerEntryForPriceItem(priceItem);
+        LedgerEntry ledgerEntry;
+        if(productOrderSample.getProductOrder().hasSapQuote()) {
+
+            ledgerEntry = productOrderSample.findUnbilledLedgerEntryForProduct(productOrderSample.getProductOrder().getProduct());
+        } else {
+            ledgerEntry = productOrderSample.findUnbilledLedgerEntryForPriceItem(priceItem);
+        }
         if (expectedQuantityReadyToBill == 0) {
             assertThat(ledgerEntry, nullValue());
             assertThat(productOrderSample.getBillableLedgerItems(), empty());
@@ -669,17 +721,32 @@ public class ProductOrderSampleTest {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DAY_OF_MONTH, -1);
         Date oldWorkCompleteDate = calendar.getTime();
-        productOrderSample.addLedgerItem(oldWorkCompleteDate, priceItem, quantityReadyToBill/*,
-                productOrderSample.getProductOrder().getProduct()*/);
+        if(productOrderSample.getProductOrder().hasSapQuote()) {
+
+            productOrderSample.addLedgerItem(oldWorkCompleteDate,
+                    productOrderSample.getProductOrder().getProduct(), quantityReadyToBill, false);
+        } else {
+            productOrderSample.addLedgerItem(oldWorkCompleteDate, priceItem,
+                    quantityReadyToBill);
+        }
     }
 
     @Test
     public void testApplyUpdateWithOutdatedInformationThrowsException() {
-        ProductOrderSample productOrderSample = createOrderedSample("TEST");
+        ProductOrderSample productOrderSample = createOrderedSample("TEST", false);
         PriceItem priceItem = productOrderSample.getProductOrder().getProduct().getPrimaryPriceItem();
 
-        ProductOrderSample.LedgerUpdate ledgerUpdate =
-                new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem, 1, 0, 2, new Date());
+        ProductOrderSample.LedgerUpdate ledgerUpdate;
+        if(productOrderSample.getProductOrder().hasSapQuote()) {
+            ledgerUpdate =
+                    new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(),
+                            productOrderSample.getProductOrder().getProduct(), 1, 0, 2,
+                            new Date(), false);
+        } else {
+            ledgerUpdate =
+                    new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem, productOrderSample.getProductOrder().getProduct(), 1, 0, 2,
+                            new Date());
+        }
         Exception caught = null;
         try {
             productOrderSample.applyLedgerUpdate(ledgerUpdate);
@@ -690,11 +757,19 @@ public class ProductOrderSampleTest {
     }
 
     public void testAddLedgerEntryWithNoWorkCompleteDateThrowsException() {
-        ProductOrderSample productOrderSample = createOrderedSample("TEST");
+        ProductOrderSample productOrderSample = createOrderedSample("TEST", false);
         PriceItem priceItem = productOrderSample.getProductOrder().getProduct().getPrimaryPriceItem();
 
-        ProductOrderSample.LedgerUpdate ledgerUpdate =
-                new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem, 0, 0, 1, null);
+        ProductOrderSample.LedgerUpdate ledgerUpdate;
+        if(productOrderSample.getProductOrder().hasSapQuote()) {
+            ledgerUpdate =
+                    new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(),
+                            productOrderSample.getProductOrder().getProduct(), 0, 0, 1, null, false);
+        } else {
+            ledgerUpdate =
+                    new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem,
+                            productOrderSample.getProductOrder().getProduct(), 0, 0, 1, null);
+        }
         Exception caught = null;
         try {
             productOrderSample.applyLedgerUpdate(ledgerUpdate);

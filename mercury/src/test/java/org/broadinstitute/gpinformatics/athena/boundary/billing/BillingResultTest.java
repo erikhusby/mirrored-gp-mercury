@@ -42,7 +42,12 @@ public class BillingResultTest {
         for (int i = 0; i < numEntries; i++) {
             ProductOrderSample pdoSample = new ProductOrderSample("SM-123" + i);
             pdoSample.setProductOrder(testProductOrder);
-            LedgerEntry ledgerEntry = new LedgerEntry(pdoSample,new PriceItem(),new Date(), 3);
+            LedgerEntry ledgerEntry;
+            if(testProductOrder.hasSapQuote()) {
+                ledgerEntry = new LedgerEntry(pdoSample, testProduct, new Date(), 3);
+            }else {
+                ledgerEntry = new LedgerEntry(pdoSample, new PriceItem(), new Date(), 3);
+            }
             ledgerEntries.add(ledgerEntry);
         }
         return new QuoteImportItem(null,null,null,ledgerEntries,null, testProduct, testProductOrder);

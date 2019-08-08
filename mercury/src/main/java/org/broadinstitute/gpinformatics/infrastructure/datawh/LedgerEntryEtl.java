@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 
 import javax.ejb.Stateful;
 import javax.ejb.TransactionManagement;
@@ -46,6 +47,7 @@ public class LedgerEntryEtl extends GenericEntityEtl<LedgerEntry, LedgerEntry> {
     String dataRecord(String etlDateStr, boolean isDelete, LedgerEntry entity) {
         ProductOrderSample pdoSample = entity.getProductOrderSample();
         PriceItem priceItem = entity.getPriceItem();
+        Product product = entity.getProduct();
         if (pdoSample == null || priceItem == null) {
             return null;
         }
@@ -62,7 +64,8 @@ public class LedgerEntryEtl extends GenericEntityEtl<LedgerEntry, LedgerEntry> {
                 format(entity.getBillingMessage()),
                 format(entity.getWorkCompleteDate()),
                 format(entity.getWorkItem()),
-                format(entity.getSapDeliveryDocumentId())
+                format(entity.getSapDeliveryDocumentId()),
+                format(product.getProductId())
                 );
     }
 }
