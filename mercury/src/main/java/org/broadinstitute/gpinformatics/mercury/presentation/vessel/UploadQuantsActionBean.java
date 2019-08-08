@@ -43,6 +43,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate.TubeFormationByWellCriteria.Result;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -55,9 +56,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -212,7 +215,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
             }
             case GEMINI: {
                 MessageCollection messageCollection = new MessageCollection();
-                Triple<LabMetricRun, List<Result>, Set<StaticPlate>> triple = vesselEjb.createGeminiRun(
+                Triple<LabMetricRun, List<Result>, Map<String, String>> triple = vesselEjb.createGeminiRun(
                         quantStream, quantSpreadsheet.getFileName(), getQuantType(), userBean.getBspUser().getUserId(),
                         messageCollection, acceptRePico);
                 if (triple != null) {
@@ -221,6 +224,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
                         tubeFormationLabels = triple.getMiddle().stream()
                                 .map(r -> r.getTubeFormation().getLabel()).collect(Collectors.toList());
                     }
+                    sendTubeQuantsToBsp(triple.getRight(), messageCollection);
                 }
 
                 addMessages(messageCollection);
@@ -253,6 +257,42 @@ public class UploadQuantsActionBean extends CoreActionBean {
                 quantSpreadsheet.delete();
             } catch (IOException ignored) {
                 // If cannot delete, oh well.
+            }
+        }
+    }
+
+    public void sendTubeQuantsToBsp(Map<String, String> tubeBarcodeToQuantValue, MessageCollection messageCollection) {
+        List<BarcodedTube> tubes = tubeFormationDao.findListByList(TubeFormation.class, TubeFormation_.label,
+                tubeFormationLabels).
+                stream().
+                flatMap(tubeFormation -> tubeFormation.getContainerRole().getContainedVessels().stream()).
+                filter(tube -> tubeBarcodeToQuantValue.containsKey(tube.getLabel())).
+                sorted(Comparator.comparing(BarcodedTube::getLabel)).
+                distinct().
+                collect(Collectors.toList());
+        // Removes the clinical sample tubes so they don't go to BSP.
+        for (Iterator<BarcodedTube> iterator = tubes.iterator(); iterator.hasNext(); ) {
+            if (iterator.next().getSampleInstancesV2().stream().
+                    filter(sampleInstance ->
+                            sampleInstance.getRootOrEarliestMercurySample() != null &&
+                                    sampleInstance.getRootOrEarliestMercurySample().canSampleBeUsedForClinical()).
+                    findFirst().isPresent()) {
+                iterator.remove();
+            }
+        }
+        if (!tubes.isEmpty()) {
+            List<String> tubeBarcodes = tubes.stream().
+                    map(BarcodedTube::getLabel).collect(Collectors.toList());
+            List<String> quants = tubeBarcodes.stream().
+                    map(label -> tubeBarcodeToQuantValue.get(label)).collect(Collectors.toList());
+            List<String> volumes = tubes.stream()
+                    .map(tube -> tube.getVolume().toPlainString()).collect(Collectors.toList());
+            String user = userBean.getBspUser().getUsername();
+            BSPRestSender.TubeQuants tubeQuants = new BSPRestSender.TubeQuants(user, tubeBarcodes, quants, volumes);
+            try {
+                bspRestSender.postToBsp(tubeQuants, BSPRestSender.BSP_UPDATE_TUBE_QUANTS_URL, messageCollection);
+            } catch (Exception e) {
+                messageCollection.addError("Failed to send quants to BSP: " + e.toString());
             }
         }
     }
@@ -510,4 +550,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
         return null;
     }
 
+    public UserBean getUserBean() {
+        return userBean;
+    }
 }
