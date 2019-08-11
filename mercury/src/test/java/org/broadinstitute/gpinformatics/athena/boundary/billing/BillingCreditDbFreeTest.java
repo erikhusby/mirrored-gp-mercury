@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductE
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.billing.ProductLedgerIndex;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
@@ -223,14 +224,15 @@ public class BillingCreditDbFreeTest {
                     .thenThrow(new RuntimeException("SAP Should not be called in this case"));
         }
 
-        HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
-        billingMap.put(pdoSample, Pair.of(priceItem, qtyPositiveTwo));
+        HashMap<ProductOrderSample, Pair<ProductLedgerIndex, Double>> billingMap = new HashMap<>();
+        billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem, pdo.hasSapQuote()), qtyPositiveTwo));
 
         List<BillingEjb.BillingResult> billingResults = bill(billingMap);
         validateBillingResults(pdoSample, billingResults, qtyPositiveTwo);
 
         billingMap.clear();
-        billingMap.put(pdoSample, Pair.of(priceItem, qtyNegativeTwo));
+        billingMap.put(pdoSample,
+                Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem, pdo.hasSapQuote()), qtyNegativeTwo));
         billingResults = bill(billingMap);
         validateBillingResults(pdoSample, billingResults, 0);
 
@@ -278,8 +280,8 @@ public class BillingCreditDbFreeTest {
                     .thenThrow(new RuntimeException("SAP Should not be called in this case"));
         }
 
-        HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
-        billingMap.put(pdoSample, Pair.of(priceItem, qtyPositiveTwo));
+        HashMap<ProductOrderSample, Pair<ProductLedgerIndex, Double>> billingMap = new HashMap<>();
+        billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem,pdo.hasSapQuote()), qtyPositiveTwo));
 
         List<BillingEjb.BillingResult> billingResults = bill(billingMap);
         validateBillingResults(pdoSample, billingResults, qtyPositiveTwo);
@@ -297,7 +299,7 @@ public class BillingCreditDbFreeTest {
 
 
         billingMap.clear();
-        billingMap.put(pdoSample, Pair.of(priceItem, qtyNegativeTwo));
+        billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem,pdo.hasSapQuote()), qtyNegativeTwo));
         billingResults = bill(billingMap);
         validateBillingResults(pdoSample, billingResults, 0);
 
@@ -345,8 +347,8 @@ public class BillingCreditDbFreeTest {
 
         }
 
-        HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
-        billingMap.put(pdoSample, Pair.of(priceItem, qtyNegativeTwo));
+        HashMap<ProductOrderSample, Pair<ProductLedgerIndex, Double>> billingMap = new HashMap<>();
+        billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem,pdo.hasSapQuote()), qtyNegativeTwo));
         List<BillingEjb.BillingResult> billingResults = bill(billingMap);
 
         if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
@@ -401,8 +403,8 @@ public class BillingCreditDbFreeTest {
 
         }
 
-        HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
-        billingMap.put(pdoSample, Pair.of(priceItem, qtyPositiveTwo));
+        HashMap<ProductOrderSample, Pair<ProductLedgerIndex, Double>> billingMap = new HashMap<>();
+        billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem, pdo.hasSapQuote()), qtyPositiveTwo));
         List<BillingEjb.BillingResult> billingResults = bill(billingMap);
         billingResults.forEach(
             billingResult -> {
@@ -457,14 +459,14 @@ public class BillingCreditDbFreeTest {
 
         }
 
-        HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
-        billingMap.put(pdoSample, Pair.of(priceItem, 1d));
+        HashMap<ProductOrderSample, Pair<ProductLedgerIndex, Double>> billingMap = new HashMap<>();
+        billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem,pdo.hasSapQuote()), 1d));
 
         List<BillingEjb.BillingResult> billingResults = bill(billingMap);
         validateBillingResults(pdoSample, billingResults, 1);
 
         billingMap.clear();
-        billingMap.put(pdoSample, Pair.of(priceItem, qtyNegativeTwo));
+        billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem,pdo.hasSapQuote()), qtyNegativeTwo));
         billingResults = bill(billingMap);
 
         if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
@@ -491,10 +493,15 @@ public class BillingCreditDbFreeTest {
         assertThat(totalBilled, equalTo(quantity));
     }
 
-    private List<BillingEjb.BillingResult> bill(Map<ProductOrderSample, Pair<PriceItem, Double>> samplePairMap) {
+    private List<BillingEjb.BillingResult> bill(Map<ProductOrderSample, Pair<ProductLedgerIndex, Double>> samplePairMap) {
         final Date date = new Date();
         samplePairMap.forEach((productOrderSample, pricItemQtyPair) ->  {
-            productOrderSample.addLedgerItem(date, pricItemQtyPair.getKey(), pricItemQtyPair.getValue());
+            if(productOrderSample.getProductOrder().hasSapQuote()) {
+                productOrderSample.addLedgerItem(date, productOrderSample.getProductOrder().getProduct(),
+                        pricItemQtyPair.getValue(), false);
+            } else {
+                productOrderSample.addLedgerItem(date, pricItemQtyPair.getKey().getPriceItem(), pricItemQtyPair.getValue());
+            }
         });
         Set<LedgerEntry> ledgerItems = new HashSet<>();
         samplePairMap.keySet().stream().map(ProductOrderSample::getLedgerItems).forEach(ledgerItems::addAll);

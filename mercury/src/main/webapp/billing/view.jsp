@@ -18,6 +18,7 @@
                         {"bSortable": true},                   // PDOs
                         {"bSortable": true},                   // quote server work items
                         {"bSortable": true},                   // SAP Server document ID
+                        {"bSortable": true},                   // Product
                         {"bSortable": true},                   // Platform
                         {"bSortable": true},                   // Category
                         {"bSortable": true},                   // Price Item
@@ -100,6 +101,7 @@
                 <th width="250">PDOs</th>
                 <th width="50">Work Items</th>
                 <th width="90">SAP<br/>Document ID(s)</th>
+                <th>Product</th>
                 <th>Platform</th>
                 <th>Category</th>
                 <th>Price Item</th>
@@ -152,6 +154,7 @@
                             </c:forEach>
                         </span>
                     </td>
+                    <td>${item.product.displayName}</td>
                     <td>${item.priceItem.platform}</td>
                     <td>${item.priceItem.category}</td>
                     <td>${item.priceItem.name}</td>

@@ -404,16 +404,14 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
             orderedPlatformNames.add(targetedPriceItemCriterion.getPriceItem().getPlatform());
             orderedEffectiveDates.add(FastDateFormat.getInstance(EFFECTIVE_DATE_FORMAT).format(targetedPriceItemCriterion.getWorkCompleteDate()));
 
-            final PriceItem primaryPriceItem =
-                    targetedPriceItemCriterion.getProductOrder().determinePriceItemByCompanyCode(targetedPriceItemCriterion.getProductOrder().getProduct());
+            final PriceItem primaryPriceItem = targetedPriceItemCriterion.getProductOrder().getProduct().getPrimaryPriceItem();
             orderedPriceItemNames.add(primaryPriceItem.getName());
             orderedCategoryNames.add(primaryPriceItem.getCategory());
             orderedPlatformNames.add(primaryPriceItem.getPlatform());
             orderedEffectiveDates.add(FastDateFormat.getInstance(EFFECTIVE_DATE_FORMAT).format(targetedPriceItemCriterion.getWorkCompleteDate()));
 
             for (ProductOrderAddOn productOrderAddOn : targetedPriceItemCriterion.getProductOrder().getAddOns()) {
-                final PriceItem addonPriceItem =
-                        targetedPriceItemCriterion.getProductOrder().determinePriceItemByCompanyCode(productOrderAddOn.getAddOn());
+                final PriceItem addonPriceItem = productOrderAddOn.getAddOn().getPrimaryPriceItem();
                 orderedPriceItemNames.add(addonPriceItem.getName());
                 orderedCategoryNames.add(addonPriceItem.getCategory());
                 orderedPlatformNames.add(addonPriceItem.getPlatform());
