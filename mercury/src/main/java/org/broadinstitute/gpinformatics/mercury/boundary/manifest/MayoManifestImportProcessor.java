@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -49,28 +50,32 @@ public class MayoManifestImportProcessor {
     public static final String INCONSISTENT = "Manifest file %s has inconsistent values for %s.";
     public static final String INVALID_DATA = "Manifest file %s has invalid values for %s.";
     public static final String MISSING_DATA = "Manifest file %s is missing required values for %s.";
-    // The next one is used in gpuitest. If you change it here, change it there too.
     public static final String MISSING_HEADER = "Manifest file %s is missing header %s.";
+    public static final String NEEDS_HEADER = "Manifest file %s needs a header for every data column.";
     public static final String UNKNOWN_UNITS = "Manifest file %s has unknown units in headers: %s.";
     public static final String UNKNOWN_HEADER = "Manifest file %s has unknown headers: %s.";
 
     private List<Header> sheetHeaders = new ArrayList<>();
-
-    private enum Attribute {REQUIRED, HAS_UNITS, IS_DATE, IGNORE}
+    /**
+     * Header attributes.
+     * IS_SAMPLE means a non-blank value indicates the row is a sample row.
+     * FOR_SAMPLE means a value is required if the row is a sample row.
+     */
+    private enum Attribute {IS_SAMPLE, FOR_SAMPLE, HAS_UNITS, IS_DATE, IGNORE}
 
     public enum Header {
-        // For initHeaders() to match, defines names in lower case, space delimited, no parenthetical part.
-        PACKAGE_ID("package id", Metadata.Key.PACKAGE_ID, Attribute.REQUIRED),
-        BIOBANK_SAMPLE_ID("biobank id sample id", Metadata.Key.SAMPLE_ID, Attribute.REQUIRED),
+        // For initHeaders() to match, names are in lower case, space delimited, no parenthetical part.
+        PACKAGE_ID("package id", Metadata.Key.PACKAGE_ID),
+        BIOBANK_SAMPLE_ID("biobank id sample id", Metadata.Key.SAMPLE_ID, Attribute.FOR_SAMPLE, Attribute.IS_SAMPLE),
         BOX_ID("box id", Metadata.Key.BOX_ID),
-        RACK_BARCODE("package storageunit id", Metadata.Key.RACK_LABEL, Attribute.REQUIRED),
-        WELL_POSITION("well position", Metadata.Key.WELL_POSITION, Attribute.REQUIRED),
-        SAMPLE_ID("sample id", Metadata.Key.COLLAB_SAMPLE_ID2, Attribute.REQUIRED),
-        PARENT_SAMPLE_ID("parent sample id", Metadata.Key.COLLAB_PARTICIPANT_ID2),
+        RACK_BARCODE("box storageunit id", Metadata.Key.RACK_LABEL, Attribute.FOR_SAMPLE),
+        WELL_POSITION("well position", Metadata.Key.WELL_POSITION, Attribute.FOR_SAMPLE),
+        SAMPLE_ID("sample id", Metadata.Key.COLLAB_SAMPLE_ID2, Attribute.FOR_SAMPLE, Attribute.IS_SAMPLE),
+        PARENT_SAMPLE_ID("parent sample id", Metadata.Key.COLLAB_PARTICIPANT_ID2, Attribute.IS_SAMPLE),
         // The tube barcode is also used as the Broad sample name (equivalent to the SM-id).
-        MATRIX_ID("matrix id", Metadata.Key.BROAD_2D_BARCODE, Attribute.REQUIRED),
+        MATRIX_ID("matrix id", Metadata.Key.BROAD_2D_BARCODE, Attribute.FOR_SAMPLE),
         COLLECTION_DATE("collection date", null, Attribute.IGNORE),
-        BIOBANK_ID("biobank id", Metadata.Key.PATIENT_ID, Attribute.REQUIRED),
+        BIOBANK_ID("biobank id", Metadata.Key.PATIENT_ID, Attribute.FOR_SAMPLE, Attribute.IS_SAMPLE),
         SEX("sex at birth", Metadata.Key.GENDER),
         AGE("age", null, Attribute.IGNORE),
         NY_STATE("ny state", Metadata.Key.NY_STATE),
@@ -111,8 +116,12 @@ public class MayoManifestImportProcessor {
             return metadataKey;
         }
 
-        public boolean isRequired() {
-            return attributes.contains(Attribute.REQUIRED);
+        public boolean indicatesSample () {
+            return attributes.contains(Attribute.IS_SAMPLE);
+        }
+
+        public boolean isRequiredForSample () {
+            return attributes.contains(Attribute.FOR_SAMPLE);
         }
 
         public boolean isIgnored() {
@@ -194,13 +203,17 @@ public class MayoManifestImportProcessor {
      */
     @NotNull
     List<ManifestRecord> makeManifestRecords(List<List<String>> cellGrid, String filename, MessageCollection messages) {
-
+        List<List<String>> sampleRows = new ArrayList<>();
         List<ManifestRecord> records = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(cellGrid)) {
+            int maxColumnIndex = -1;
             // Cleans up headers and values by removing characters that may present a problem later.
             for (List<String> columns : cellGrid) {
                 for (int i = 0; i < columns.size(); ++i) {
                     columns.set(i, cleanupValue(columns.get(i)));
+                    if (StringUtils.isNotBlank(columns.get(i))) {
+                        maxColumnIndex = Math.max(maxColumnIndex, i);
+                    }
                 }
             }
             // Makes headers from the first row in the cell grid.
@@ -208,9 +221,15 @@ public class MayoManifestImportProcessor {
             List<String> unknownHeaders = new ArrayList<>();
             initHeaders(cellGrid.get(0), unknownUnits, unknownHeaders);
 
-            // Finds missing required headers.
+            // Every data column must have a header.
+            if (sheetHeaders.size() < maxColumnIndex + 1) {
+                messages.addError(NEEDS_HEADER, filename);
+            }
+            // Finds missing required headers. Assumes a spreadsheet will have at least one sample row.
             List<String> missingHeaders = CollectionUtils.subtract(
-                    Arrays.stream(Header.values()).filter(header -> header.isRequired()).collect(Collectors.toList()),
+                    Arrays.stream(Header.values()).
+                            filter(header -> header.isRequiredForSample()).
+                            collect(Collectors.toList()),
                     sheetHeaders).
                     stream().map(Header::getText).collect(Collectors.toList());
             // Finds duplicate non-ignored headers.
@@ -229,16 +248,33 @@ public class MayoManifestImportProcessor {
             List<String> duplicateRackAndPosition = new ArrayList<>();
             Set<String> tubeBarcodes = new HashSet<>();
             List<String> duplicateTubeBarcodes = new ArrayList<>();
-            if (missingHeaders.isEmpty() && unknownUnits.isEmpty() && duplicateHeaders.isEmpty()) {
+            if (!messages.hasErrors() && missingHeaders.isEmpty() && unknownUnits.isEmpty() &&
+                    duplicateHeaders.isEmpty()) {
                 // Validates the data before attempting to persist ManifestRecords.
                 for (List<String> row : cellGrid.subList(1, cellGrid.size())) {
                     String rackBarcode = null;
                     String position = null;
+                    // Scans row for any non-blank sample indicators.
+                    boolean isSampleRow = IntStream.range(0, sheetHeaders.size()).
+                            anyMatch(columnIndex -> {
+                                Header header = sheetHeaders.get(columnIndex);
+                                return header != null && header.indicatesSample() &&
+                                        row.size() > columnIndex &&
+                                        StringUtils.isNotBlank(row.get(columnIndex));
+                            });
+                    if (isSampleRow) {
+                        sampleRows.add(row);
+                    }
+                    // Validates each column's data.
                     for (int columnIndex = 0; columnIndex < sheetHeaders.size(); ++columnIndex) {
                         Header header = sheetHeaders.get(columnIndex);
                         if (header != null && !header.isIgnored()) {
                             String value = (row.size() > columnIndex) ? row.get(columnIndex) : null;
-                            if (StringUtils.isNotBlank(value)) {
+                            if (StringUtils.isBlank(value)) {
+                                if (header.isRequiredForSample() && isSampleRow) {
+                                    missingValues.add(header.getText());
+                                }
+                            } else {
                                 if (header.hasUnits()) {
                                     // Strips out any commas if the value is expected to be a number.
                                     value = value.replaceAll(",", "");
@@ -259,8 +295,6 @@ public class MayoManifestImportProcessor {
                                 } else if (header == Header.WELL_POSITION) {
                                     position = value;
                                 }
-                            } else if (header.isRequired()) {
-                                missingValues.add(header.getText());
                             }
                         }
                     }
@@ -270,7 +304,7 @@ public class MayoManifestImportProcessor {
                 }
             }
             // Error if the data is unacceptable. Otherwise make it informational.
-            boolean dataOk = true;
+            boolean dataOk = !messages.hasErrors();
             if (!missingHeaders.isEmpty()) {
                 messages.addError(MISSING_HEADER, filename, StringUtils.join(missingHeaders, ", "));
                 dataOk = false;
@@ -295,7 +329,8 @@ public class MayoManifestImportProcessor {
                 dataOk = false;
             }
             if (packageIds.size() > 1) {
-                messages.addError(String.format(INCONSISTENT, filename, StringUtils.join(packageIds, ", ")));
+                messages.addError(String.format(INCONSISTENT, filename,
+                        packageIds.stream().sorted().collect(Collectors.joining(", "))));
                 dataOk = false;
             }
             if (!duplicateTubeBarcodes.isEmpty()) {
@@ -309,8 +344,8 @@ public class MayoManifestImportProcessor {
                 dataOk = false;
             }
             if (dataOk) {
-                // Makes a ManifestRecord for each row of data.
-                for (List<String> row : cellGrid.subList(1, cellGrid.size())) {
+                // Makes a ManifestRecord for each row having sample data.
+                for (List<String> row : sampleRows) {
                     ManifestRecord manifestRecord = new ManifestRecord();
                     records.add(manifestRecord);
                     for (int columnIndex = 0; columnIndex < sheetHeaders.size(); ++columnIndex) {
@@ -363,6 +398,10 @@ public class MayoManifestImportProcessor {
                     // Collapse multiple spaces into one and trim.
                             replaceAll("[ ]+", " ").trim();
             Header match = nameToHeader.get(header);
+            // Accepts either package storageunit id or box storageunit id.
+            if (match == null && header.endsWith("storageunit id")) {
+                match = Header.RACK_BARCODE;
+            }
             if (match == null) {
                 if (unknownHeaders != null) {
                     unknownHeaders.add(column);

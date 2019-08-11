@@ -28,6 +28,13 @@ public class MayoManifestImportProcessorDbFreeTest {
                         "Total_Dna(ng),Visit_Description,Sample_Source," +
                         "Study,Tracking_Number,Contact,Email,Requesting_Physician,Test_Name," +
                         "Failure Mode,Failure Mode Desc",
+                // Alternative StorageUnit Id
+                "Package_Id,BiobankId_SampleId,Box StorageUnit Id,Box_Id/Plate_Id,Well_Position," +
+                        "Sample_Id,Parent_Sample_Id,Matrix_Id,Collection_Date,Biobank_Id,Sex_At_Birth," +
+                        "Age,NY_State_(Y/N),Sample_Type,Treatments,Quantity_(ul),Total_Concentration_(ng/ul)," +
+                        "Total_Dna(ng),Visit_Description,Sample_Source," +
+                        "Study,Tracking_Number,Contact,Email,Requesting_Physician,Test_Name," +
+                        "Failure Mode,Failure Mode Desc",
                 // With run-on Id, no parens.
                 "PackageId,BiobankId SampleId,Package StorageunitId,BoxId,Well Position,SampleId,Parent SampleId," +
                         "MatrixId,Collection Date,BiobankId,Sex At Birth,Age,NY State Y/N,Sample Type,Treatments," +
@@ -62,7 +69,7 @@ public class MayoManifestImportProcessorDbFreeTest {
         // Does multiple runs, removing a different one of the required headers each time.
         // Tests failure to make manifest records and also that the missing header message is given.
         Stream.of(MayoManifestImportProcessor.Header.values()).
-                filter(header -> header.isRequired()).
+                filter(header -> header.isRequiredForSample()).
                 forEach(dropThisHeader -> {
                     String headerString = Stream.of(MayoManifestImportProcessor.Header.values()).
                             filter(header -> header != dropThisHeader).
@@ -139,7 +146,7 @@ public class MayoManifestImportProcessorDbFreeTest {
         List<ManifestRecord> records = processor.makeManifestRecords(
                 processor.parseAsCellGrid(content.getBytes(), CSV, messageCollection), CSV, messageCollection);
         Assert.assertTrue(expectSuccess && !messageCollection.hasErrors() && !messageCollection.hasWarnings() ||
-                !expectSuccess && (messageCollection.hasErrors() || messageCollection.hasWarnings()),
+                        !expectSuccess && (messageCollection.hasErrors() || messageCollection.hasWarnings()),
                 headerString + " has Errors " + StringUtils.join(messageCollection.getErrors(), "; ") +
                         " and Warnings " + StringUtils.join(messageCollection.getWarnings(), "; "));
         Assert.assertEquals(records.size(), expectSuccess ? 1 : 0,
@@ -148,15 +155,18 @@ public class MayoManifestImportProcessorDbFreeTest {
         return messageCollection;
     }
 
-    /** Parser should strip out spurious characters that are not 7-bit ASCII from the headers and values. */
+    /**
+     * Parser should strip out spurious characters that are not 7-bit ASCII from the headers and values.
+     */
     public void testHeaderParsing2() {
-        char[] invalidChars = {(char)0x9a, (char)0xa2, (char)0x07, (char)0x0a, (char)0x0b, (char)0x0c, (char)0x0d};
+        char[] invalidChars =
+                {(char) 0x9a, (char) 0xa2, (char) 0x07, (char) 0x0a, (char) 0x0b, (char) 0x0c, (char) 0x0d};
         String[] contentPieces = {"", "P", "ackage_Id", ",Biobankid_Samp", "leid,Package Sto", "rageunitid,Box_id,We",
                 "ll_Position,", "", "Sample_Id", "", ",Parent_Sa", "mple_Id,",
                 "Matrix_Id,Collection_Date,Biobank_Id,Sex_At_B", "irth,Age,Sample_Type,Treatments,Quantity_(",
                 "ul", "),Total_Concen", "tration_(n", "g/ul),",
                 "Total_Dna(ng),Visit_Description,Sample_Source,Study,", "Tracking_Number,Contact,Email,Reques",
-                "ting_Physician,Test_Name\n9317", "107,", "2816424,71","33,584,C12", ",6963270,6016485,6607943,01",
+                "ting_Physician,Test_Name\n9317", "107,", "2816424,71", "33,584,C12", ",6963270,6016485,6607943,01",
                 "/01/2019,8109786,M,43,DNA,None,3", "42.18,103.", "87,348,First,8043153,7153373,3912376,15",
                 "06172,5338480,", "", ","};
         // Joins the header and values with invalid chars that should be stripped out.
@@ -175,8 +185,25 @@ public class MayoManifestImportProcessorDbFreeTest {
         Assert.assertEquals(record.getMetadataByKey(Metadata.Key.CONCENTRATION).getStringValue(), "103.87");
     }
 
+    public void testNotEnoughHeaders() {
+        String headers = "Package Id,Biobankid Sampleid,Package Storageunitid,Box ID,Well Position," +
+                "Sample Id,Parent Sample Id," +
+                "Matrix Id,Collection Date,Biobank Id,Sex At Birth,Age,Sample Type,Treatments," +
+                "Quantity (ul),Total Concentration (ng/ul),Total Dna(ng),Visit Description,Sample Source," +
+                "Study,Tracking Number,Contact,Email,Requesting Physician,Test Name";
+        String values = "\nPK001,B001_S001,S-1,B001,A1,S001,PS001,M001,03/26/2019,B001,F,22,DNA,None,0.01,1.01," +
+                "2400,2nd Visit,Whole Blood,The Study Title,TRK001,theContact,email1@email.org,The Name,all,extra1";
+        MessageCollection messages = new MessageCollection();
+        MayoManifestImportProcessor processor = new MayoManifestImportProcessor();
+        Assert.assertEquals(processor.makeManifestRecords(processor.parseAsCellGrid(
+                (headers + values).getBytes(), CSV, messages), CSV, messages).size(), 0);
+        Assert.assertEquals(messages.getErrors().get(0), String.format(MayoManifestImportProcessor.NEEDS_HEADER, CSV));
+    }
 
-    /** A file that is not a csv spreadsheet should be parsed as empty and not throw exceptions. */
+
+    /**
+     * A file that is not a csv spreadsheet should be parsed as empty and not throw exceptions.
+     */
     public void testNotAManifest() {
         byte[] content = {24, 55, 66, 71, 67, 116, 84, 8, 11, 122, 14, 65, 106, 36, 64, 30, 57, 110, 39, 70, 108,
                 85, 7, 95, 2, 104, 15, 18, 21, 105, 56, 82, 28, 96, 47, 86, 107, 109, 27, 25, 22, 90, 74, 98, 9,
@@ -209,7 +236,8 @@ public class MayoManifestImportProcessorDbFreeTest {
                 "Matrix Id,Collection Date,Biobank Id,Sex At Birth,Age,Sample Type,Treatments," +
                 "Quantity (ul),Total Concentration (ng/ul),Total Dna(ng),Visit Description,Sample Source," +
                 "Study,Tracking Number,Contact,Email,Requesting Physician,Test Name";
-        String values = "\nPK001,B001_S001,S-1,B001,A1,S001,PS001,M001,03/26/2019,B001,F,22,DNA,None,0.01,1.01," +
+        String values = "\nPKG-001,B001_S001,SU-0000001,B001,A1,S001,PS001," +
+                "089728001,03/26/2019,B001,F,22,DNA,None,0.01,1.01," +
                 // Tests if parser can handle a quoted Total Dna(ng) field that has a comma.
                 "\"2,400\",2nd Visit,Whole Blood,The Study Title,TRK001,theContact,email1@email.org,The Name,all";
         MessageCollection messages = new MessageCollection();
@@ -224,15 +252,25 @@ public class MayoManifestImportProcessorDbFreeTest {
         Assert.assertFalse(messages.hasErrors(), StringUtils.join(messages.getErrors(), "; "));
         Assert.assertFalse(messages.hasWarnings(), StringUtils.join(messages.getWarnings(), "; "));
 
+        // OK without a package id
+        processor = new MayoManifestImportProcessor();
+        messages.clearAll();
+        Assert.assertEquals(processor.makeManifestRecords(processor.parseAsCellGrid(
+                (headers + values.replace("PKG-001", "")).getBytes(), CSV, messages), CSV, messages).size(), 1);
+        Assert.assertFalse(messages.hasErrors(), StringUtils.join(messages.getErrors(), "; "));
+        Assert.assertFalse(messages.hasWarnings(), StringUtils.join(messages.getWarnings(), "; "));
+
+        // Not ok if there are two different package ids.
         processor = new MayoManifestImportProcessor();
         messages.clearAll();
         Assert.assertTrue(processor.makeManifestRecords(processor.parseAsCellGrid(
-                (headers + values.replace("PK001", "")).getBytes(), CSV, messages), CSV, messages).isEmpty());
-        expected = String.format(MayoManifestImportProcessor.MISSING_DATA, CSV,
-                MayoManifestImportProcessor.Header.PACKAGE_ID.getText());
-        Assert.assertTrue(messages.getErrors().contains(expected), StringUtils.join(messages.getErrors()));
-        Assert.assertFalse(messages.hasWarnings(), StringUtils.join(messages.getWarnings(), "; "));
+                (headers + values + values.replace("PKG-001,", "PKG-002,")).getBytes(), CSV, messages), CSV, messages)
+                .isEmpty());
+        Assert.assertTrue(StringUtils.join(messages.getErrors()).contains(
+                String.format(MayoManifestImportProcessor.INCONSISTENT, CSV, "PKG-001, PKG-002")),
+                StringUtils.join(messages.getErrors(), "; "));
 
+        // Not ok if quantity is NaN.
         processor = new MayoManifestImportProcessor();
         messages.clearAll();
         Assert.assertTrue(processor.makeManifestRecords(processor.parseAsCellGrid(
@@ -241,6 +279,7 @@ public class MayoManifestImportProcessorDbFreeTest {
                 CSV, MayoManifestImportProcessor.Header.VOLUME.getText());
         Assert.assertTrue(messages.getErrors().contains(expected), StringUtils.join(messages.getErrors()));
 
+        // Not ok if concentration is spelled out zero.
         processor = new MayoManifestImportProcessor();
         messages.clearAll();
         Assert.assertTrue(processor.makeManifestRecords(processor.parseAsCellGrid(
@@ -249,22 +288,26 @@ public class MayoManifestImportProcessorDbFreeTest {
                 CSV, MayoManifestImportProcessor.Header.CONCENTRATION.getText());
         Assert.assertTrue(messages.getErrors().contains(expected), StringUtils.join(messages.getErrors()));
 
+        // Not ok if two rows have duplicate tubes.
         processor = new MayoManifestImportProcessor();
         messages.clearAll();
         Assert.assertTrue(processor.makeManifestRecords(processor.parseAsCellGrid(
-                (headers + values + values.replace(",A1,", ",A2,")).getBytes(), CSV, messages), CSV, messages).isEmpty());
+                (headers + values + values.replace(",A1,", ",A2,")).getBytes(), CSV, messages), CSV, messages)
+                .isEmpty());
         Assert.assertEquals(messages.getErrors().size(), 1, StringUtils.join(messages.getErrors()));
         Assert.assertEquals(messages.getErrors().get(0),
-                String.format(MayoManifestImportProcessor.DUPLICATE_TUBE, CSV, "M001"));
+                String.format(MayoManifestImportProcessor.DUPLICATE_TUBE, CSV, "089728001"));
 
+        // Not ok if two rows have rack well positions.
         processor = new MayoManifestImportProcessor();
         messages.clearAll();
         Assert.assertTrue(processor.makeManifestRecords(processor.parseAsCellGrid(
-                (headers + values + values.replace(",M001,", ",M002,")).getBytes(), CSV, messages), CSV, messages).isEmpty());
+                (headers + values + values.replace(",089728001,", ",089728002,")).getBytes(), CSV, messages),
+                CSV, messages).isEmpty());
         Assert.assertEquals(messages.getErrors().size(), 1, StringUtils.join(messages.getErrors()));
         Assert.assertEquals(messages.getErrors().get(0),
-                String.format(MayoManifestImportProcessor.DUPLICATE_POSITION, CSV, "S-1 A1"));
-}
+                String.format(MayoManifestImportProcessor.DUPLICATE_POSITION, CSV, "SU-0000001 A1"));
+    }
 
     public void testUnits() {
         String headers = "Quantity(%s),Total Concentration(%s),Total Dna(%s),Package Id," +
@@ -309,19 +352,19 @@ public class MayoManifestImportProcessorDbFreeTest {
                 "Total Concentration (ng/ul),Total Dna(ng),Visit Description,Sample Source," +
                 "Study,Tracking Number,Contact,Email,Requesting Physician,Test Name\n" +
 
-                "PK001,B001_S001,SU001,BX001," +
+                "PK001,B001_S001,SU-001,BX001," +
                 "A1,S001,PS001,M001,03/26/2019," +
                 "B001,F,22,DNA,No Treatments,10," +
                 "1,2,2nd Visit,Whole Blood," +
                 "The Study Title,TRK001,theContact,email1@email.org,The Name,all\n" +
 
-                "PK001,B001_S002,SU001,BX001,B1,S002,PS001,M002,03/26/2019,B001,F,22,DNA,No Treatments,10,1,2," +
+                "PK001,B001_S002,SU-001,BX001,B1,S002,PS001,M002,03/26/2019,B001,F,22,DNA,No Treatments,10,1,2," +
                 "2nd Visit,Whole Blood,The Study Title,TRK001,theContact,email2@email.org,The Name,all\n" +
 
-                "PK001,B002_S003,SU002,BX002,B1,S003,PS002,M003,03/26/2019,B002,M,33,DNA,No Treatments,10,1,2," +
+                "PK001,B002_S003,SU-002,BX002,B1,S003,PS002,M003,03/26/2019,B002,M,33,DNA,No Treatments,10,1,2," +
                 "2nd Visit,Whole Blood,The Study Title,TRK001,theContact,email3@email.org,Other,some\n" +
 
-                "PK001,B002_S004,SU002,BX002,C1,S004,PS002,M004,03/26/2019,B002,M,33,DNA,No Treatments,10,1,2," +
+                "PK001,B002_S004,SU-002,BX002,C1,S004,PS002,M004,03/26/2019,B002,M,33,DNA,No Treatments,10,1,2," +
                 "2nd Visit,Whole Blood,The Study Title,TRK001,theContact,email4@email.org,Other,a few\n";
 
         List<List<String>> cellGrid = processor.parseAsCellGrid(content.getBytes(), CSV, messageCollection);
@@ -329,10 +372,38 @@ public class MayoManifestImportProcessorDbFreeTest {
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors()));
         Assert.assertEquals(records.stream().
                 map(manifestRecord -> manifestRecord.getMetadataByKey(Metadata.Key.RACK_LABEL).getValue()).
-                filter(value -> value.equals("SU001")).count(), 2);
+                filter(value -> value.equals("SU-001")).count(), 2);
         Assert.assertEquals(records.stream().
                 map(manifestRecord -> manifestRecord.getMetadataByKey(Metadata.Key.RACK_LABEL).getValue()).
-                filter(value -> value.equals("SU002")).count(), 2);
+                filter(value -> value.equals("SU-002")).count(), 2);
     }
 
+    public void testNoTubeRowsAreOk() {
+        MayoManifestImportProcessor processor = new MayoManifestImportProcessor();
+        MessageCollection messageCollection = new MessageCollection();
+        String content = StringUtils.joinWith("\n", "Package Id,Biobankid Sampleid,Box Storageunit Id," +
+                        "Box Id/plate Id,Well Position,Sample Id,Parent Sample Id,Matrix Id,Collection Date," +
+                        "Biobank Id,Sex At Birth,Age,Ny State (y/n),Sample Type,Treatments,Quantity (ul)," +
+                        "Total Concentration (ng/ul),Total Dna(ng),Visit Description,Sample Source,Study," +
+                        "Tracking Number,Contact,Email,Requesting Physician,Test Name,Failure Mode,Failure Mode Desc",
+                "PKG-1907-120820,T792687523_19816200399,SU-0013058994,BX-00147944,A01,19816200399," +
+                        "19812007779,1194525422,2019-04-29T21:28:00Z,T792687523,M,,N,DNA,Water,40,60,2400," +
+                        "Baseline,Whole Blood,16-005532 (PMI) Thibodeau - LVInt,486630257960,Samantha Wirkus," +
+                        "Wirkus.Samantha@mayo.edu,Josh Denny,aou_wgs,,",
+                "PKG-1907-120820,,SU-0013058994,BX-00147944,G12,,,,,,,,,,,,,,,Other,,486630257960," +
+                        " ,,Josh Denny,aou_wgs,,",
+                "PKG-1907-120820,T736295373_19816200406,SU-0013058994,BX-00147944,H01,19816200406," +
+                        "19812007890,1194525429,2019-04-26T15:47:00Z,T736295373,F,,N,DNA,Water,40,60,2400," +
+                        "Baseline,Whole Blood,16-005532 (PMI) Thibodeau - LVInt,486630257960,Samantha Wirkus," +
+                        "Wirkus.Samantha@mayo.edu,Josh Denny,aou_wgs,,",
+                "PKG-1907-120820,,SU-0013058994,BX-00147944,H12,,,,,,,,,,,,,,,Other,,486630257960," +
+                        " ,,Josh Denny,aou_wgs,,");
+        List<List<String>> cellGrid = processor.parseAsCellGrid(content.getBytes(), CSV, messageCollection);
+        List<ManifestRecord> records = processor.makeManifestRecords(cellGrid, CSV, messageCollection);
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors()));
+        Assert.assertEquals(records.size(), 2);
+        Assert.assertEquals(records.stream().
+                map(manifestRecord -> manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue()).
+                sorted().collect(Collectors.joining(" ")), "T736295373_19816200406 T792687523_19816200399");
+    }
 }
