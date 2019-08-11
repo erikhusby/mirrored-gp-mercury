@@ -399,14 +399,18 @@ public class VesselEjb {
             }
 
             // Filter out any plate well results that don't have an ancestor tube
+            Set<String> tubeBarcodes = new HashSet<>();
             List<VarioskanPlateProcessor.PlateWellResult> filteredResults = new ArrayList<>();
             for (Map.Entry<String, Result> entry: mapBarcodeToTraverserResult.entrySet()) {
                 for (VarioskanPlateProcessor.PlateWellResult plateWellResult: plateWellResults) {
                     if (plateWellResult.getPlateBarcode().equals(entry.getKey())) {
                         VesselPosition srcPos =
                                 entry.getValue().getWellToTubePosition().get(plateWellResult.getVesselPosition());
-                        if (entry.getValue().getTubeFormation().getContainerRole().getVesselAtPosition(srcPos) != null) {
+                        BarcodedTube tube =
+                                entry.getValue().getTubeFormation().getContainerRole().getVesselAtPosition(srcPos);
+                        if (tube != null) {
                             filteredResults.add(plateWellResult);
+                            tubeBarcodes.add(tube.getLabel());
                         }
                     }
                 }
@@ -428,9 +432,10 @@ public class VesselEjb {
                         decidingUser, messageCollection, mapBarcodeToTraverserResult, false);
             }
             Map<String, String> tubeToQuant = run.getLabMetrics().stream().
-                    filter(labMetric -> labMetric.getName() == metricType).
+                    filter(labMetric -> tubeBarcodes.contains(labMetric.getLabVessel().getLabel())).
                     collect(Collectors.toMap(labMetric -> labMetric.getLabVessel().getLabel(),
                             labMetric -> labMetric.getValue().toPlainString()));
+
             triple = Triple.of(run, traverserResults, tubeToQuant);
             if (messageCollection.hasErrors()) {
                 ejbContext.setRollbackOnly();
