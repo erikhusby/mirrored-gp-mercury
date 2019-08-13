@@ -311,11 +311,18 @@ public class QuoteDetailsHelper {
 
         public String getFundsRemaining() {
             String fundsRemainingString = "";
-            fundsRemainingString = String.format(FUNDS_REMAINING_FORMAT,
-                StringUtils.isBlank(overallFundingStatus) ? status :
-                    String.format("%s, Funding Status: %s ", status, overallFundingStatus),
-                NumberFormat.getCurrencyInstance().format(Optional.ofNullable(fundsRemaining).orElse(0D)),
-                NumberFormat.getCurrencyInstance().format(Optional.ofNullable(outstandingEstimate).orElse(0D)));
+            String formattedFundsRemaining =
+                NumberFormat.getCurrencyInstance().format(Optional.ofNullable(fundsRemaining).orElse(0D));
+            String outstandingEstimateString =
+                NumberFormat.getCurrencyInstance().format(Optional.ofNullable(outstandingEstimate).orElse(0D));
+            if (!quoteType.isSapType()) {
+                fundsRemainingString =
+                    String.format(FUNDS_REMAINING_FORMAT, status, formattedFundsRemaining, outstandingEstimateString);
+            } else {
+                fundsRemainingString = String.format(FUNDS_REMAINING_FORMAT,
+                    String.format("%s, Funding Status: %s ", status, overallFundingStatus), formattedFundsRemaining,
+                    outstandingEstimateString);
+            }
             return fundsRemainingString;
         }
 
