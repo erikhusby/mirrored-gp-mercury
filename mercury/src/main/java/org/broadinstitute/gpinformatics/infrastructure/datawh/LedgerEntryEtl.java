@@ -15,6 +15,7 @@ import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
 import java.util.Collection;
+import java.util.Optional;
 
 @Stateful
 @TransactionManagement(TransactionManagementType.BEAN)
@@ -46,26 +47,26 @@ public class LedgerEntryEtl extends GenericEntityEtl<LedgerEntry, LedgerEntry> {
     @Override
     String dataRecord(String etlDateStr, boolean isDelete, LedgerEntry entity) {
         ProductOrderSample pdoSample = entity.getProductOrderSample();
-        PriceItem priceItem = entity.getPriceItem();
-        Product product = entity.getProduct();
-        if (pdoSample == null || priceItem == null) {
+        Optional<PriceItem> optionalPriceItem = Optional.ofNullable(entity.getPriceItem());
+        Optional<Product> optionalProduct = Optional.ofNullable(entity.getProduct());
+        if (pdoSample == null) {
             return null;
         }
         BillingSession billingSession = entity.getBillingSession();
         LedgerEntry.PriceItemType priceItemType = entity.getPriceItemType();
         return genericRecord(etlDateStr, isDelete,
-                entity.getLedgerId(),
-                format(pdoSample.getProductOrderSampleId()),
-                format(entity.getQuoteId()),
-                format(priceItem.getPriceItemId()),
-                format(priceItemType != null ? priceItemType.toString() : null),
-                format(entity.getQuantity()),
-                format(billingSession != null ? billingSession.getBillingSessionId() : null),
-                format(entity.getBillingMessage()),
-                format(entity.getWorkCompleteDate()),
-                format(entity.getWorkItem()),
-                format(entity.getSapDeliveryDocumentId()),
-                format(product.getProductId())
-                );
+            entity.getLedgerId(),
+            format(pdoSample.getProductOrderSampleId()),
+            format(entity.getQuoteId()),
+            optionalPriceItem.map(priceItem -> format(priceItem.getPriceItemId())).orElse(""),
+            format(priceItemType != null ? priceItemType.toString() : null),
+            format(entity.getQuantity()),
+            format(billingSession != null ? billingSession.getBillingSessionId() : null),
+            format(entity.getBillingMessage()),
+            format(entity.getWorkCompleteDate()),
+            format(entity.getWorkItem()),
+            format(entity.getSapDeliveryDocumentId()),
+            optionalProduct.map(product -> format(product.getProductId())).orElse("")
+        );
     }
 }
