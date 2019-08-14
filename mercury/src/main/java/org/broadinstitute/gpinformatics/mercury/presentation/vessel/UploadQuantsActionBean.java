@@ -60,7 +60,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -224,7 +223,10 @@ public class UploadQuantsActionBean extends CoreActionBean {
                         tubeFormationLabels = triple.getMiddle().stream()
                                 .map(r -> r.getTubeFormation().getLabel()).collect(Collectors.toList());
                     }
-                    sendTubeQuantsToBsp(triple.getRight(), messageCollection);
+                    if (quantType == LabMetric.MetricType.PLATING_PICO ||
+                            quantType == LabMetric.MetricType.INITIAL_PICO) {
+                        sendTubeQuantsToBsp(triple.getRight(), messageCollection);
+                    }
                 }
 
                 addMessages(messageCollection);
@@ -266,20 +268,12 @@ public class UploadQuantsActionBean extends CoreActionBean {
                 tubeFormationLabels).
                 stream().
                 flatMap(tubeFormation -> tubeFormation.getContainerRole().getContainedVessels().stream()).
-                filter(tube -> tubeBarcodeToQuantValue.containsKey(tube.getLabel())).
+                filter(tube -> tubeBarcodeToQuantValue.containsKey(tube.getLabel()) &&
+                        // Clinical sample tubes should not go to BSP.
+                        tube.getMercurySamples().stream().noneMatch(sample -> sample.canSampleBeUsedForClinical())).
                 sorted(Comparator.comparing(BarcodedTube::getLabel)).
                 distinct().
                 collect(Collectors.toList());
-        // Removes the clinical sample tubes so they don't go to BSP.
-        for (Iterator<BarcodedTube> iterator = tubes.iterator(); iterator.hasNext(); ) {
-            if (iterator.next().getSampleInstancesV2().stream().
-                    filter(sampleInstance ->
-                            sampleInstance.getRootOrEarliestMercurySample() != null &&
-                                    sampleInstance.getRootOrEarliestMercurySample().canSampleBeUsedForClinical()).
-                    findFirst().isPresent()) {
-                iterator.remove();
-            }
-        }
         if (!tubes.isEmpty()) {
             List<String> tubeBarcodes = tubes.stream().
                     map(BarcodedTube::getLabel).collect(Collectors.toList());

@@ -307,7 +307,8 @@ public class VesselEjb {
 
     /**
      * Nexomes and Single Cell Source is from a Library Plate, not a set of tubes. Should use a Pond Pico
-     * Or analogous event type, not the Initial Pico Microfluor event type
+     * Or analogous event type, not the Initial Pico Microfluor event type.
+     * For the case of tube rack -> dilution plate -> pico plate it's not Nexome style.
      */
     private boolean checkIfNexomeStylePico(Set<StaticPlate> microfluorPlates) {
         StaticPlate plate = microfluorPlates.iterator().next();
@@ -315,6 +316,14 @@ public class VesselEjb {
         SectionTransfer sectionTransfer = sectionTransfersTo.iterator().next();
         LabEventType labEventType = sectionTransfer.getLabEvent().getLabEventType();
         LabVessel sourceVessel = sectionTransfer.getSourceVessel();
+        Set<SectionTransfer> transfersToSource = sourceVessel.getContainerRole().getSectionTransfersTo();
+        if (CollectionUtils.isNotEmpty(transfersToSource)) {
+            SectionTransfer sectionToSource = transfersToSource.iterator().next();
+            if (sectionToSource.getLabEvent().getLabEventType() == LabEventType.PICO_DILUTION_TRANSFER &&
+                    sectionToSource.getSourceVessel().getType() == LabVessel.ContainerType.TUBE_FORMATION) {
+                return false;
+            }
+        }
         return OrmUtil.proxySafeIsInstance(sourceVessel, StaticPlate.class) &&
                labEventType != LabEventType.PICO_MICROFLUOR_TRANSFER;
     }
