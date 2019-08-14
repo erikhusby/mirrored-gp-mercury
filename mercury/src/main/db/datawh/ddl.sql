@@ -101,6 +101,7 @@ CREATE TABLE product_order (
   placed_date            DATE,
   skip_regulatory_reason VARCHAR2(255),
   sap_order_number VARCHAR2(255),
+  order_type VARCHAR2(255),
   etl_date               DATE           NOT NULL
 );
 
@@ -438,6 +439,7 @@ CREATE TABLE im_product_order (
   placed_date            DATE,
   skip_regulatory_reason VARCHAR2(255),
   sap_order_number VARCHAR2(255),
+  order_type VARCHAR2(255),
   reg_info_ids           VARCHAR2(255)
 );
 
@@ -598,7 +600,8 @@ CREATE TABLE im_ledger_entry (
   billing_message         VARCHAR2(500),
   work_complete_date      DATE,
   quote_server_work_item varchar2(255),
-  sap_delivery_document  VARCHAR2(255)
+  sap_delivery_document  VARCHAR2(255),
+  product_id              NUMERIC(19)
 );
 
 CREATE TABLE im_billing_session (

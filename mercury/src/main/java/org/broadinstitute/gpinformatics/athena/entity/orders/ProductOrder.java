@@ -2140,20 +2140,26 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return (filteredResults != null) ? Iterators.size(filteredResults.iterator()) : 0;
     }
 
-    public static double getUnbilledNonSampleCount(ProductOrder order, Product targetProduct, double totalCount) {
+    public static double getUnbilledNonSampleCount(ProductOrder order, Product targetProduct, double totalCount)
+            throws InvalidProductException {
         double existingCount = getBilledSampleCount(order, targetProduct);
         return totalCount - existingCount;
     }
 
-    public static double getBilledSampleCount(ProductOrder order, Product targetProduct) {
+    public static double getBilledSampleCount(ProductOrder order, Product targetProduct)
+            throws InvalidProductException {
         double existingCount = 0;
 
         for (ProductOrderSample targetSample : order.getSamples()) {
             for (LedgerEntry ledgerItem: targetSample.getLedgerItems()) {
-                PriceItem priceItem = order.determinePriceItemByCompanyCode(targetProduct);
+                Optional<PriceItem> priceItem = Optional.ofNullable(targetProduct.getPrimaryPriceItem());
 
-                if(ledgerItem.getPriceItem().equals(priceItem)) {
-                    existingCount += ledgerItem.getQuantity();
+                if(order.hasSapQuote() && ledgerItem.getProduct().equals(targetProduct) ||
+                   (!order.hasSapQuote() && ledgerItem.getPriceItem()
+                           .equals(priceItem.orElseThrow(() -> new InvalidProductException(
+                           String.format("Unable to get sample count because the product %s does not have a valid "
+                                         + "price item associated with it", targetProduct.getDisplayName())))))) {
+                        existingCount += ledgerItem.getQuantity();
                 }
             }
 
@@ -2540,15 +2546,21 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public enum OrderAccessType implements StatusType {
-        BROAD_PI_ENGAGED_WORK("Broad PI engaged Work (1000)", SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization()),
-        COMMERCIAL("Commercial (2000)", SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization());
+        BROAD_PI_ENGAGED_WORK("Broad PI engaged Work (1000)",
+            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization(),
+            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode()),
+        COMMERCIAL("Commercial (2000)",
+            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization(),
+            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getCompanyCode());
 
-        private String displayName;
-        private String salesOrg;
+        private final String displayName;
+        private final String salesOrg;
+        private final String companyCode;
 
-        OrderAccessType(String displayName, String salesOrg) {
+        OrderAccessType(String displayName, String salesOrg, String companyCode) {
             this.displayName = displayName;
             this.salesOrg = salesOrg;
+            this.companyCode = companyCode;
         }
 
         @Override
@@ -2558,6 +2570,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         public String getSalesOrg() {
             return salesOrg;
+        }
+
+        public String getCompanyCode() {
+            return companyCode;
         }
 
         public static List<String> displayNames() {
@@ -2704,12 +2720,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
 
         return foundAdjustment;
-    }
-
-    // todo remove this code since it seems no longer valid
-    @Deprecated
-    public PriceItem determinePriceItemByCompanyCode(Product product) {
-        return product.getPrimaryPriceItem();
     }
 
     @NotNull
