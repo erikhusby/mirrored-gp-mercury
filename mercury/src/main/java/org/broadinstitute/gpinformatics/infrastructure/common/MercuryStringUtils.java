@@ -16,7 +16,9 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.UUID;
 import java.util.zip.CRC32;
@@ -40,6 +42,12 @@ public class MercuryStringUtils {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(beanClass);
+    }
+
+    public static <T> void serializeJsonBeanToStream(T beanClass, OutputStream outputStream) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        objectMapper.writerWithDefaultPrettyPrinter().writeValue(outputStream, beanClass);
     }
 
     public static <T> T deSerializeJsonBean(String jsonString, Class<T> beanClass) throws IOException {

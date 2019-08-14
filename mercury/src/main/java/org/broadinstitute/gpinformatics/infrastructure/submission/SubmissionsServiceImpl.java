@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -127,14 +128,19 @@ public class SubmissionsServiceImpl implements SubmissionsService {
      */
     @Override
     public Collection<SubmissionStatusDetailBean> postSubmissions(SubmissionRequestBean submissions) {
-        Response response =
-                JaxRsUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.SUBMIT_ACTION),
-                        MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
-                           .post(Entity.json(submissions));
-        validateResponseStatus("posting submissions", response);
-        List<SubmissionStatusDetailBean> submissionStatuses =
-            response.readEntity(SubmissionStatusResultBean.class).getSubmissionStatuses();
-        response.close();
+//        Response response =
+//                JaxRsUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.SUBMIT_ACTION),
+//                        MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
+//                           .post(Entity.json(submissions));
+//        validateResponseStatus("posting submissions", response);
+        List<SubmissionStatusDetailBean> submissionStatuses = new ArrayList<>();
+        submissions.getSubmissions().forEach(bean -> {
+            submissionStatuses.add(new SubmissionStatusDetailBean(bean.getUuid(),
+                SubmissionStatusDetailBean.Status.READY_FOR_SUBMISSION, bean.getSubmissionRepository(),
+                bean.getSubmissionDatatype(), new Date()));
+        });
+//            response.readEntity(SubmissionStatusResultBean.class).getSubmissionStatuses();
+//        response.close();
         return submissionStatuses;
     }
 

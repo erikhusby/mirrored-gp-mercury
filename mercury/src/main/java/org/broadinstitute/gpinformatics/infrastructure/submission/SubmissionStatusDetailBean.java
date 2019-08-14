@@ -178,7 +178,8 @@ public class SubmissionStatusDetailBean implements Serializable {
         FAILURE("Failure", "Failure"),
         READY_FOR_SUBMISSION("ReadyForSubmission", "Ready For Submission"),
         VALIDATED("Validated", "Validated"),
-        PROCESSING("Processing", "Processing");
+        PROCESSING("Processing", "Processing"),
+        OTHER("Other", "Unknown Status");
 
         Status(String key, String label) {
             this.key = key;
@@ -204,7 +205,7 @@ public class SubmissionStatusDetailBean implements Serializable {
                     return testValue;
                 }
             }
-            throw new RuntimeException("Unable to find a matching Status");
+            return OTHER;
         }
     }
 }

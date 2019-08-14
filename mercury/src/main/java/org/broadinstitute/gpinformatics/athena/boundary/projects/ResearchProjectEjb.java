@@ -56,6 +56,8 @@ import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -298,6 +300,10 @@ public class ResearchProjectEjb {
 
         SubmissionRequestBean requestBean = new SubmissionRequestBean(submissionBeans);
         try {
+            MercuryStringUtils.serializeJsonBeanToStream(requestBean,
+                new FileOutputStream(String
+                    .format("/tmp/%s_%s_%s.json", researchProjectBusinessKey, submissionLibraryDescriptor.getName(),
+                        repository.getName())));
             log.debug(MercuryStringUtils.serializeJsonBean(requestBean));
         } catch (IOException e) {
             log.error("Error serializing " + SubmissionRequestBean.class.getName(), e);
