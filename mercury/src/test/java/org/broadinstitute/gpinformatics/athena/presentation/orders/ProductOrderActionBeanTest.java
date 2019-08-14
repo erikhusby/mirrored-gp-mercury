@@ -3320,6 +3320,7 @@ public class ProductOrderActionBeanTest {
                 sapQHeader.setQUOTESTATUS(QuoteStatus.Z4.getStatusText());
                 sapQHeader.setSALESORG("GP01");
                 sapQHeader.setFUNDHEADERSTATUS(FundingStatus.SUBMITTED.name());
+                sapQHeader.setQUOTESTATUS(QuoteStatus.Z4.name());
                 sapQHeader.setCUSTOMER("");
                 sapQHeader.setDISTCHANNEL("GE");
                 sapQHeader.setFUNDTYPE(SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION.name());
@@ -3460,6 +3461,7 @@ public class ProductOrderActionBeanTest {
                 sapQHeader.setQUOTESTATUS(QuoteStatus.Z4.getStatusText());
                 sapQHeader.setSALESORG("GP01");
                 sapQHeader.setFUNDHEADERSTATUS(FundingStatus.APPROVED.name());
+                sapQHeader.setQUOTESTATUS(QuoteStatus.Z4.name());
                 sapQHeader.setCUSTOMER("");
                 sapQHeader.setDISTCHANNEL("GE");
                 sapQHeader.setFUNDTYPE(SapIntegrationClientImpl.FundingType.PURCHASE_ORDER.name());
