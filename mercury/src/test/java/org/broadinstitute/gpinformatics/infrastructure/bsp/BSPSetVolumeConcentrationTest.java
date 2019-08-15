@@ -51,17 +51,6 @@ public class BSPSetVolumeConcentrationTest  {
             Assert.assertTrue(valueDifference <= ERROR_BAND,
                     String.format(errorString, "Concentration", scaledValue, valueDifference, currentConcentration));
         }
-
-        // Test terminating depleted a sample.
-        String testSampleId2 = "SM-11HX";
-        String result = bspSetVolumeConcentration.setVolumeAndConcentration(
-                testSampleId2, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
-                BSPSetVolumeConcentration.TerminateAction.TERMINATE_DEPLETED);
-        Assert.assertEquals(result, BSPSetVolumeConcentration.RESULT_OK);
-
-        SampleData bspSampleData = dataFetcher.fetchSingleSampleFromBSP(testSampleId2);
-        Double currentVolume = bspSampleData.getVolume();
-        Assert.assertTrue(currentVolume == 0);
     }
 
     /**

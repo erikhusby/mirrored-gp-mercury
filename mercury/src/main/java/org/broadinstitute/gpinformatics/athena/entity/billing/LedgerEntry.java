@@ -5,6 +5,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
@@ -96,6 +97,13 @@ public class LedgerEntry implements Serializable {
     @JoinColumn(name = "SAP_ORDER_DETAIL_ID")
     private SapOrderDetail sapOrderDetail;
 
+    @ManyToOne
+    @JoinColumn(name = "PRODUCT_ID")
+    private Product product;
+
+    @Column(name = "SAP_REPLACEMENT_PRICING")
+    private Boolean sapReplacementPricing = Boolean.FALSE;
+
     /**
      * Package private constructor for JPA use.
      */
@@ -103,11 +111,21 @@ public class LedgerEntry implements Serializable {
     protected LedgerEntry() {}
 
     public LedgerEntry(@Nonnull ProductOrderSample productOrderSample,
-                       @Nonnull PriceItem priceItem,
+                       PriceItem priceItem,
                        @Nonnull Date workCompleteDate,
                        double quantity) {
         this.productOrderSample = productOrderSample;
         this.priceItem = priceItem;
+        this.quantity = quantity;
+        this.workCompleteDate = workCompleteDate;
+    }
+
+    public LedgerEntry(@Nonnull ProductOrderSample productOrderSample,
+                       Product product,
+                       @Nonnull Date workCompleteDate,
+                       double quantity) {
+        this.productOrderSample = productOrderSample;
+        this.product = product;
         this.quantity = quantity;
         this.workCompleteDate = workCompleteDate;
     }
@@ -167,7 +185,25 @@ public class LedgerEntry implements Serializable {
         this.billingMessage = billingMessage;
     }
 
+    public Product getProduct() {
+        return product;
+    }
 
+    public void setProduct(Product product) {
+        this.product = product;
+    }
+
+    public Boolean getSapReplacementPricing() {
+        return sapReplacementPricing;
+    }
+
+    public boolean hasSapReplacementPricing() {
+        return sapReplacementPricing != null && sapReplacementPricing;
+    }
+
+    public void setSapReplacementPricing(Boolean sapReplacementCondition) {
+        this.sapReplacementPricing = sapReplacementCondition;
+    }
 
     /**
      * A ledger item is billed if either its message is the success status or the session has been billed. The
@@ -200,7 +236,7 @@ public class LedgerEntry implements Serializable {
      * This ledger entry has a positively successful billing message.
      */
     public boolean isSuccessfullyBilled() {
-        return BillingSession.SUCCESS.equals(billingMessage);
+        return BillingSession.SUCCESS.equals(billingMessage) || BillingSession.BILLING_CREDIT.equals(billingMessage);
     }
 
     /**
@@ -261,22 +297,27 @@ public class LedgerEntry implements Serializable {
         }
 
         LedgerEntry castOther = (LedgerEntry) other;
-        return new EqualsBuilder()
+        EqualsBuilder ledgerEntryEqualsBuilder = new EqualsBuilder()
                 .append(productOrderSample, castOther.getProductOrderSample())
                 .append(priceItem, castOther.getPriceItem())
                 .append(priceItemType, castOther.getPriceItemType())
                 .append(quoteId, castOther.getQuoteId())
-                .append(billingSession, castOther.getBillingSession()).isEquals();
+                .append(billingSession, castOther.getBillingSession());
+
+                    ledgerEntryEqualsBuilder.append(product, castOther.getProduct());
+        return ledgerEntryEqualsBuilder.isEquals();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder()
+        HashCodeBuilder ledgerEntryHashcodeBuilder = new HashCodeBuilder()
                 .append(productOrderSample)
                 .append(priceItem)
                 .append(priceItemType)
                 .append(quoteId)
-                .append(billingSession).toHashCode();
+                .append(billingSession);
+                    ledgerEntryHashcodeBuilder.append(product);
+        return ledgerEntryHashcodeBuilder.toHashCode();
     }
 
     public Date getBucketDate() {

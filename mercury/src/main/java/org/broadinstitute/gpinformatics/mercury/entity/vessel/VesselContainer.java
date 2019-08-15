@@ -1094,9 +1094,9 @@ public class VesselContainer<T extends LabVessel> {
             }
 
             // BaitSetup has a bait in the source, but no samples in the target (until BaitAddition), so avoid throwing
-            // away the bait.
+            // away the bait.  Avoid merging multiple molecular indexes for an empty ancestor well.
             List<SampleInstanceV2> currentSampleInstances = new ArrayList<>();
-            if (ancestorSampleInstances.isEmpty()) {
+            if (ancestorSampleInstances.isEmpty() && reagentSampleInstances.size() == 1) {
                 currentSampleInstances.add(new SampleInstanceV2());
             } else {
                 // Clone ancestors
