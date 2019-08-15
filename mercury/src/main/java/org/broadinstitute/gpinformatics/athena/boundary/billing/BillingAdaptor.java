@@ -309,6 +309,7 @@ public class BillingAdaptor implements Serializable {
                     }
 
                     Set<String> billedPdoKeys = getBilledPdoKeys(result);
+                    logBilling(workId, item, priceItemBeingBilled, billedPdoKeys, sapBillingId);
                 } catch (Exception ex) {
 
                     StringBuilder errorMessageBuilder = new StringBuilder();
