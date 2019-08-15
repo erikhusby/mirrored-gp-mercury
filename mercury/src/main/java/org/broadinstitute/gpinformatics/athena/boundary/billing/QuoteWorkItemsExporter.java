@@ -58,9 +58,15 @@ public class QuoteWorkItemsExporter extends AbstractSpreadsheetExporter<Abstract
         for (QuoteImportItem item : quoteItems) {
             getWriter().nextRow();
             getWriter().writeCell(item.getQuoteId());
-            getWriter().writeCell(item.getPriceItem().getPlatform());
-            getWriter().writeCell(item.getPriceItem().getCategory());
-            getWriter().writeCell(item.getPriceItem().getName());
+            if (!item.isSapOrder()) {
+                getWriter().writeCell(item.getPriceItem().getPlatform());
+                getWriter().writeCell(item.getPriceItem().getCategory());
+                getWriter().writeCell(item.getPriceItem().getName());
+            }else {
+                getWriter().writeCell("");
+                getWriter().writeCell("");
+                getWriter().writeCell("");
+            }
             getWriter().writeCell(item.getQuantity());
             getWriter().writeCell((item.getWorkCompleteDate() == null) ? "" : item.getWorkCompleteDate().toString());
             getWriter().writeCell(item.getBillingMessage());
