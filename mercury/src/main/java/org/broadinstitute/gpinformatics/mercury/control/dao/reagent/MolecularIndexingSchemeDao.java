@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.reagent;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent_;
@@ -130,6 +131,7 @@ public class MolecularIndexingSchemeDao extends GenericDao {
                 molecularIndexingScheme));
         TypedQuery<MolecularIndexReagent> query = getEntityManager().createQuery(criteriaQuery);
         // Some molecular indexing schemes have multiple identical reagents for them. Any one of them is fine to use.
-        return query.setMaxResults(1).getSingleResult();
+        List<MolecularIndexReagent> reagents = query.setMaxResults(1).getResultList();
+        return CollectionUtils.isEmpty(reagents) ? null : reagents.get(0);
     }
 }
