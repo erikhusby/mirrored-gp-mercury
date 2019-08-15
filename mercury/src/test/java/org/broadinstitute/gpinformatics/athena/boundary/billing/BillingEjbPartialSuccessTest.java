@@ -64,6 +64,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.matchers.NullOrEmp
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.SuccessfullyBilled.successfullyBilled;
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.UnsuccessfullyBilled.unsuccessfullyBilled;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -492,13 +493,10 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         String successMessagePattern = String.format(BillingAdaptor.BILLING_LOG_TEXT_FORMAT, GOOD_WORK_ID,
             BillingAdaptor.NOT_ELIGIBLE_FOR_SAP_INDICATOR, "", "", 0f, "", "", "").substring(0, 50) + ".*";
         assertThat(failMessage, notNullValue());
-        for (LogRecord testLogHandlerLog : testLogHandler.getLogs()) {
-            System.out.println(testLogHandlerLog.getMessage());
-        }
 
         assertThat(testLogHandler.messageMatches(failMessage), is(true));
         Collection<LogRecord> successLogs = testLogHandler.findLogs(successMessagePattern);
-        assertThat(successLogs.isEmpty(), is(false));
+        assertThat(successLogs, not(empty()));
         for (LogRecord successLog : successLogs) {
             assertThat(successLog.getLevel(), is(Level.INFO));
         }
