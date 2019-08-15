@@ -138,7 +138,11 @@ public class QuoteDetailsHelper {
                             Optional.ofNullable(sapService.calculateOpenOrderValues(0, quote, null));
 
                     quoteDetail.setQuoteType(quoteSource);
-                    fundingHeaderStatus.ifPresent(status -> quoteDetail.setStatus(status.getStatusText()));
+                    fundingHeaderStatus.ifPresent(status -> {
+                        quoteDetail.setStatus(quote.getQuoteHeader().getQuoteStatus().getStatusText());
+                        quoteDetail.setOverallFundingStatus(status.getStatusText());
+                    });
+
                     BigDecimal fundsRemaining = quote.getQuoteHeader().fundsRemaining();
                     if(sapOrderCalculatedValues.isPresent()) {
                         fundsRemaining =fundsRemaining.subtract(sapOrderCalculatedValues.get().openDeliveryValues());
@@ -307,11 +311,18 @@ public class QuoteDetailsHelper {
 
         public String getFundsRemaining() {
             String fundsRemainingString = "";
+            String formattedFundsRemaining =
+                NumberFormat.getCurrencyInstance().format(Optional.ofNullable(fundsRemaining).orElse(0D));
+            String outstandingEstimateString =
+                NumberFormat.getCurrencyInstance().format(Optional.ofNullable(outstandingEstimate).orElse(0D));
+            if (!quoteType.isSapType()) {
+                fundsRemainingString =
+                    String.format(FUNDS_REMAINING_FORMAT, status, formattedFundsRemaining, outstandingEstimateString);
+            } else {
                 fundsRemainingString = String.format(FUNDS_REMAINING_FORMAT,
-                        (quoteType == ProductOrder.QuoteSourceType.QUOTE_SERVER)?status:String.format("%s, Funding Status: %s ",
-                        status, overallFundingStatus),
-                    NumberFormat.getCurrencyInstance().format(Optional.ofNullable(fundsRemaining).orElse(0D)),
-                    NumberFormat.getCurrencyInstance().format(Optional.ofNullable(outstandingEstimate).orElse(0D)));
+                    String.format("%s, Funding Status: %s ", status, overallFundingStatus), formattedFundsRemaining,
+                    outstandingEstimateString);
+            }
             return fundsRemainingString;
         }
 

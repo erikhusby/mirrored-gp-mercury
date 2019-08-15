@@ -52,8 +52,12 @@ public class QuoteImportInfo {
         // The price item on the ledger entry.
         Optional<PriceItem> priceItem = Optional.ofNullable(ledger.getPriceItem());
 
-
-        Product product = ledger.getProductOrderSample().getProductForPriceItem(priceItem.orElse(null));
+        Product product;
+        if(ledger.getProductOrderSample().getProductOrder().hasSapQuote()) {
+            product = ledger.getProduct();
+        } else {
+            product = ledger.getProductOrderSample().getProductForPriceItem(priceItem.orElse(null));
+        }
 
         // If we have not seen the quote yet, create the map entry for it.
         if (!quantitiesByQuotePriceItem.containsKey(quoteId)) {

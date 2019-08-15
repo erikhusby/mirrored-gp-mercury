@@ -89,6 +89,16 @@
             <column name="SAP_REPLACEMENT_PRICING" type="number(1,0)"></column>
         </addColumn>
     </changeSet>
+    
+    <changeSet id="GPLIM-6537-sap-unique-ledger-constraint" author="scottmat">
+        <addUniqueConstraint tableName="BILLING_LEDGER"
+                             columnNames="PRODUCT_ORDER_SAMPLE_ID, PRICE_ITEM_ID, PRODUCT_ID, BILLING_SESSION"
+                             schemaName="ATHENA" constraintName="UK_BILLING_LEDGER_SAP"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6537-drop-old-ledger-constraint" author="scottmat">
+        <dropUniqueConstraint tableName="BILLING_LEDGER" schemaName="ATHENA" constraintName="UK_BILLING_LEDGER"/>
+    </changeSet>
 
 
 </databaseChangeLog>
