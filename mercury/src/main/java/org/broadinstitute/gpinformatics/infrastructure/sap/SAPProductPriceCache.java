@@ -127,12 +127,16 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
 
         final PriceItem determinePriceItemByCompanyCode = product.getPrimaryPriceItem();
         String price = cachedMaterial.getBasePrice();
-        QuoteItem foundMatchingQuoteItem = orderQuote.findCachedQuoteItem(determinePriceItemByCompanyCode.getPlatform(),
-                determinePriceItemByCompanyCode.getCategory(), determinePriceItemByCompanyCode.getName());
+        if(determinePriceItemByCompanyCode != null) {
+            QuoteItem foundMatchingQuoteItem =
+                    orderQuote.findCachedQuoteItem(determinePriceItemByCompanyCode.getPlatform(),
+                            determinePriceItemByCompanyCode.getCategory(), determinePriceItemByCompanyCode.getName());
 
-        if (foundMatchingQuoteItem  != null && !orderQuote.getExpired()) {
-            if (new BigDecimal(foundMatchingQuoteItem.getPrice()).compareTo(new BigDecimal(cachedMaterial.getBasePrice())) < 0) {
-                price = foundMatchingQuoteItem .getPrice();
+            if (foundMatchingQuoteItem != null && !orderQuote.getExpired()) {
+                if (new BigDecimal(foundMatchingQuoteItem.getPrice())
+                            .compareTo(new BigDecimal(cachedMaterial.getBasePrice())) < 0) {
+                    price = foundMatchingQuoteItem.getPrice();
+                }
             }
         }
         return price;

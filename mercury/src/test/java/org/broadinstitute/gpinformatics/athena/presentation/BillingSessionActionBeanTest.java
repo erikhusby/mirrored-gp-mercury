@@ -298,11 +298,15 @@ public class BillingSessionActionBeanTest {
         ProductOrder pdo = ProductOrderTestFactory.createDummyProductOrder("PDO-1234");
         pdo.setQuoteId(quoteId);
         List<LedgerEntry> ledgerItems = new ArrayList<>();
-        if (!quoteSourceType.isSapType()){
-            LedgerEntry ledgerEntry = new LedgerEntry(null, new PriceItem(), new Date(), 2);
+        LedgerEntry ledgerEntry = null;
+        if (!pdo.hasSapQuote()){
+            ledgerEntry = new LedgerEntry(null, new PriceItem(), new Date(), 2);
             ledgerEntry.setWorkItem(TEST_WORKID);
-            ledgerItems.add(ledgerEntry);
+        } else {
+            ledgerEntry = new LedgerEntry(null, pdo.getProduct(), new Date(), 2);
+            ledgerEntry.setWorkItem(TEST_WORKID);
         }
+        ledgerItems.add(ledgerEntry);
 
         return new QuoteImportItem(quoteId, new PriceItem(), null, ledgerItems, new Date(), null, pdo);
     }

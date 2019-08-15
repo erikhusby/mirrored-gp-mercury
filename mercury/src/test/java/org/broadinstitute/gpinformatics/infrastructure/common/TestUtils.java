@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.common;
 import functions.rfc.sap.document.sap_com.ZESDFUNDINGDET;
 import functions.rfc.sap.document.sap_com.ZESDQUOTEHEADER;
 import functions.rfc.sap.document.sap_com.ZESDQUOTEITEM;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -33,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Methods useful when testing.
@@ -102,13 +104,19 @@ public class TestUtils {
         case PRODUCTS_MATCH_QUOTE_ITEMS:
 
             allProductsOrdered.forEach(product -> {
-                ZESDQUOTEITEM sapItem = ZESDQUOTEITEM.Factory.newInstance();
-                sapItem.setMAKTX(product.getProductName());
-                sapItem.setMATNR(product.getPartNumber());
-                sapItem.setQUOTEITEM(String.valueOf((quoteItems.size() + 1) * 10));
-                sapItem.setQUOTATION(testQuoteIdentifier);
+                final Set<QuoteItem> priorProduct = quoteItems.stream()
+                        .filter(quoteItem -> StringUtils.equals(quoteItem.getMaterialNumber(), product.getPartNumber()))
+                        .collect(
+                                Collectors.toSet());
+                if(priorProduct.isEmpty()) {
+                    ZESDQUOTEITEM sapItem = ZESDQUOTEITEM.Factory.newInstance();
+                    sapItem.setMAKTX(product.getProductName());
+                    sapItem.setMATNR(product.getPartNumber());
+                    sapItem.setQUOTEITEM(String.valueOf((quoteItems.size() + 1) * 10));
+                    sapItem.setQUOTATION(testQuoteIdentifier);
 
-                quoteItems.add(new QuoteItem(sapItem));
+                    quoteItems.add(new QuoteItem(sapItem));
+                }
             });
             break;
         case DOLLAR_LIMITED:
@@ -124,7 +132,7 @@ public class TestUtils {
             allProductsOrdered.forEach(product -> {
                 ZESDQUOTEITEM sapItemDiffering = ZESDQUOTEITEM.Factory.newInstance();
                 sapItemDiffering.setMAKTX(product.getProductName());
-                sapItemDiffering.setMATNR(product.getPartNumber()+"mismatch");
+                sapItemDiffering.setMATNR(product.getPartNumber() + "mismatch");
                 sapItemDiffering.setQUOTEITEM(String.valueOf((quoteItems.size() + 1) * 10));
                 sapItemDiffering.setQUOTATION(testQuoteIdentifier);
 
@@ -141,13 +149,19 @@ public class TestUtils {
 
             quoteItems.add(new QuoteItem(item));
             allProductsOrdered.forEach(product -> {
-                ZESDQUOTEITEM lambdaItem = ZESDQUOTEITEM.Factory.newInstance();
-                lambdaItem.setMAKTX(product.getProductName());
-                lambdaItem.setMATNR(product.getPartNumber());
-                lambdaItem.setQUOTEITEM(String.valueOf((quoteItems.size() + 1) * 10));
-                lambdaItem.setQUOTATION(testQuoteIdentifier);
+                final Set<QuoteItem> priorProduct = quoteItems.stream()
+                        .filter(quoteItem -> StringUtils.equals(quoteItem.getMaterialNumber(), product.getPartNumber()))
+                        .collect(
+                                Collectors.toSet());
+                if(priorProduct.isEmpty()) {
+                    ZESDQUOTEITEM lambdaItem = ZESDQUOTEITEM.Factory.newInstance();
+                    lambdaItem.setMAKTX(product.getProductName());
+                    lambdaItem.setMATNR(product.getPartNumber());
+                    lambdaItem.setQUOTEITEM(String.valueOf((quoteItems.size() + 1) * 10));
+                    lambdaItem.setQUOTATION(testQuoteIdentifier);
 
-                quoteItems.add(new QuoteItem(lambdaItem));
+                    quoteItems.add(new QuoteItem(lambdaItem));
+                }
             });
             break;
         case MULTIPLE_DOLLAR_LIMITED:
@@ -213,13 +227,25 @@ public class TestUtils {
     public static void billSamplesOut(ProductOrder productOrder, Collection<ProductOrderSample> samples, int expected) {
         BillingSession billingSession = null;
         for (ProductOrderSample sample : samples) {
-            LedgerEntry primaryItemSampleEntry = new LedgerEntry(sample,
-                    productOrder.getProduct().getPrimaryPriceItem(), new Date(), /*productOrder.getProduct(),*/ 1);
-            primaryItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+            LedgerEntry primaryItemSampleEntry;
+            LedgerEntry addonItemSampleEntry;
+            if(productOrder.hasSapQuote()) {
+                primaryItemSampleEntry = new LedgerEntry(sample, productOrder.getProduct(), new Date(),1);
+                primaryItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
 
-            LedgerEntry addonItemSampleEntry = new LedgerEntry(sample,
-                    productOrder.getAddOns().iterator().next().getAddOn().getPrimaryPriceItem(),
-                    new Date(), /*productOrder.getProduct(),*/ 1);
+                addonItemSampleEntry = new LedgerEntry(sample,
+                        productOrder.getAddOns().iterator().next().getAddOn(),
+                        new Date(),1);
+            } else {
+                primaryItemSampleEntry = new LedgerEntry(sample, productOrder.getProduct().getPrimaryPriceItem(),
+                        new Date(), 1);
+                primaryItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+
+                addonItemSampleEntry = new LedgerEntry(sample,
+                        productOrder.getAddOns().iterator().next().getAddOn().getPrimaryPriceItem(),
+                        new Date(),1);
+
+            }
             addonItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM);
             sample.getLedgerItems().add(primaryItemSampleEntry);
             sample.getLedgerItems().add(addonItemSampleEntry);

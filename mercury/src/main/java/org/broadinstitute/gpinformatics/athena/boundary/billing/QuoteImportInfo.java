@@ -16,6 +16,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * This is the information needed to import a quantity of some price item on a quote.
@@ -49,16 +50,23 @@ public class QuoteImportInfo {
         String quoteId = getLedgerQuoteId(ledger);
 
         // The price item on the ledger entry.
-        PriceItem priceItem = ledger.getPriceItem();
+        Optional<PriceItem> priceItem = Optional.ofNullable(ledger.getPriceItem());
 
-        Product product = ledger.getProductOrderSample().getProductForPriceItem(priceItem);
+        Product product;
+        if(ledger.getProductOrderSample().getProductOrder().hasSapQuote()) {
+            product = ledger.getProduct();
+        } else {
+            product = ledger.getProductOrderSample().getProductForPriceItem(priceItem.orElse(null));
+        }
 
         // If we have not seen the quote yet, create the map entry for it.
         if (!quantitiesByQuotePriceItem.containsKey(quoteId)) {
             quantitiesByQuotePriceItem.put(quoteId, new HashMap<ProductOrder, Map<ProductLedgerIndex, Map<Date, List<LedgerEntry>>>> ());
         }
 
-        ProductLedgerIndex index = new ProductLedgerIndex(product, priceItem);
+        ProductLedgerIndex index;
+        index = new ProductLedgerIndex(product, priceItem.orElse(null));
+        index.setSapIndex(ledger.getProductOrderSample().getProductOrder().hasSapQuote());
 
         ProductOrder orderIndex = ledger.getProductOrderSample().getProductOrder();
 
@@ -197,20 +205,25 @@ public class QuoteImportInfo {
             return LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM == ledger.getPriceItemType();
         }
 
-        // No quote, so calculate what it would be given the state of things now.
-        final Product product = ledger.getProductOrderSample().getProductOrder().getProduct();
-
-        final PriceItem priceItem =
-                ledger.getProductOrderSample().getProductOrder().determinePriceItemByCompanyCode(product);
-        Collection<QuotePriceItem> quotePriceItems =
-            priceListCache.getReplacementPriceItems(priceItem);
-
-        for (QuotePriceItem quotePriceItem : quotePriceItems) {
-            if (ledger.getPriceItem().getName().equals(quotePriceItem.getName())) {
+        if(ledger.getProductOrderSample().getProductOrder().hasSapQuote()) {
+            if(ledger.hasSapReplacementPricing()) {
                 return true;
+            } else {
+                return false;
+            }
+        } else {
+            // No quote, so calculate what it would be given the state of things now.
+            final Product product = ledger.getProductOrderSample().getProductOrder().getProduct();
+
+            final PriceItem priceItem = product.getPrimaryPriceItem();
+            Collection<QuotePriceItem> quotePriceItems = priceListCache.getReplacementPriceItems(priceItem);
+
+            for (QuotePriceItem quotePriceItem : quotePriceItems) {
+                if (ledger.getPriceItem().getName().equals(quotePriceItem.getName())) {
+                    return true;
+                }
             }
         }
-
         return false;
     }
 }

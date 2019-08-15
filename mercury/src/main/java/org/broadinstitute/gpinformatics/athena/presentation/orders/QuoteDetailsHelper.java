@@ -25,6 +25,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
+import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.quote.FundingStatus;
 import org.broadinstitute.sap.entity.quote.QuoteStatus;
 import org.broadinstitute.sap.entity.quote.SapQuote;
@@ -130,16 +131,29 @@ public class QuoteDetailsHelper {
                     }
                 } else if (quoteSource.isSapType()) {
                     SapQuote quote = sapService.findSapQuote(quoteIdentifier);
-                    quoteDetail.setQuoteType(quoteSource);
-                    quoteDetail.setFundsRemaining(quote.getQuoteHeader().fundsRemaining().doubleValue());
-
                     Optional<FundingStatus> fundingHeaderStatus =
                         Optional.ofNullable(quote.getQuoteHeader().getFundingHeaderStatus());
+
+                    Optional<OrderCalculatedValues> sapOrderCalculatedValues =
+                            Optional.ofNullable(sapService.calculateOpenOrderValues(0, quote, null));
+
+                    quoteDetail.setQuoteType(quoteSource);
                     fundingHeaderStatus.ifPresent(status -> {
                         quoteDetail.setStatus(quote.getQuoteHeader().getQuoteStatus().getStatusText());
                         quoteDetail.setOverallFundingStatus(status.getStatusText());
                     });
-                    quoteDetail.setOutstandingEstimate(actionBean.estimateSapOutstandingOrders(quote, 0, null));
+
+                    BigDecimal fundsRemaining = quote.getQuoteHeader().fundsRemaining();
+                    if(sapOrderCalculatedValues.isPresent()) {
+                        fundsRemaining =fundsRemaining.subtract(sapOrderCalculatedValues.get().openDeliveryValues());
+                    }
+                    quoteDetail.setFundsRemaining(fundsRemaining.doubleValue());
+                    double openOrderEstimate = 0;
+                    if(sapOrderCalculatedValues.isPresent()) {
+                        openOrderEstimate =
+                                sapOrderCalculatedValues.get().calculateTotalOpenOrderValue().doubleValue();
+                    }
+                    quoteDetail.setOutstandingEstimate(openOrderEstimate);
 
                     if(quote.getQuoteHeader().getQuoteStatus() != QuoteStatus.Z4) {
                         quoteDetail.setError("This quote has not yet been Approved");
@@ -297,11 +311,18 @@ public class QuoteDetailsHelper {
 
         public String getFundsRemaining() {
             String fundsRemainingString = "";
+            String formattedFundsRemaining =
+                NumberFormat.getCurrencyInstance().format(Optional.ofNullable(fundsRemaining).orElse(0D));
+            String outstandingEstimateString =
+                NumberFormat.getCurrencyInstance().format(Optional.ofNullable(outstandingEstimate).orElse(0D));
+            if (!quoteType.isSapType()) {
+                fundsRemainingString =
+                    String.format(FUNDS_REMAINING_FORMAT, status, formattedFundsRemaining, outstandingEstimateString);
+            } else {
                 fundsRemainingString = String.format(FUNDS_REMAINING_FORMAT,
-                        (quoteType == ProductOrder.QuoteSourceType.QUOTE_SERVER)?status:String.format("%s, Funding Status: %s ",
-                        status, overallFundingStatus),
-                    NumberFormat.getCurrencyInstance().format(Optional.ofNullable(fundsRemaining).orElse(0D)),
-                    NumberFormat.getCurrencyInstance().format(Optional.ofNullable(outstandingEstimate).orElse(0D)));
+                    String.format("%s, Funding Status: %s ", status, overallFundingStatus), formattedFundsRemaining,
+                    outstandingEstimateString);
+            }
             return fundsRemainingString;
         }
 
