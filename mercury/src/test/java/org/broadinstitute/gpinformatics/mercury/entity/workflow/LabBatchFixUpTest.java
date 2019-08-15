@@ -50,6 +50,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation_;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -1579,9 +1580,11 @@ public class LabBatchFixUpTest extends Arquillian {
     /*
      * This test is used to delete LCSETs that are canceled in JIRA.  It reads its parameters from a file,
      * testdata/DeleteLabBatch.txt, so it can be used for other similar fixups, without writing a new test.
+     * A flowcell designation lcset cannot be deleted (database FK violation) so use the optional
+     *  "replace with LCSET-nnnn" suffix to give a replacement LCSET in the file.
      * Example contents of the file are:
      * PO-9128
-     * LCSET-11312
+     * LCSET-11312 replace with LCSET-10023
      * LCSET-11553
      * ...
      */
@@ -1594,7 +1597,10 @@ public class LabBatchFixUpTest extends Arquillian {
         // If the LCSET has batch_starting_vessels but no bucket entries, these batch_starting_vessels
         // orphans will be removed by cascade when the labBatch is removed.
         for (int i = 1; i < lines.size(); ++i) {
-            LabBatch labBatch = labBatchDao.findByName(lines.get(i));
+            String lcsetName = lines.get(i).split("replace with")[0].trim();
+            String replacementLcset = StringUtils.substringAfter(lines.get(i), "replace with").trim();
+
+            LabBatch labBatch = labBatchDao.findByName(lcsetName);
             labBatch.getBucketEntries().forEach(bucketEntry -> {
                 LabVessel labVessel = bucketEntry.getLabVessel();
                 System.out.println("Removing bucket entry " + bucketEntry);
@@ -1630,7 +1636,21 @@ public class LabBatchFixUpTest extends Arquillian {
                         " leaving " + (remainingLcsets.isEmpty() ? "none" : remainingLcsets));
                 labEvent.getComputedLcSets().remove(labBatch);
             }
-
+            // Fixes up flowcell designation lcset.
+            List<FlowcellDesignation> designations =
+                    labBatchDao.findList(FlowcellDesignation.class, FlowcellDesignation_.chosenLcset, labBatch);
+            if (!designations.isEmpty()) {
+                String designationIds = designations.stream().
+                        map(designation -> String.valueOf(designation.getDesignationId())).
+                        sorted().collect(Collectors.joining(" "));
+                Assert.assertFalse(StringUtils.isBlank(replacementLcset), "Please supply a replacement lcset for " +
+                        lcsetName + " used in flowcell designation " + designationIds);
+                LabBatch replacementLabBatch = labBatchDao.findByName(replacementLcset);
+                Assert.assertNotNull(replacementLabBatch, "Cannot find LCSET for '" + replacementLcset + "'.");
+                System.out.println("Updating flowcell designation lcset choice to " + replacementLcset +
+                        " for designationIds " + designationIds);
+                designations.forEach(flowcellDesignation -> flowcellDesignation.setChosenLcset(replacementLabBatch));
+            }
             System.out.println("Deleting " + labBatch.getBatchName());
             labBatchDao.remove(labBatch.getJiraTicket());
             labBatch.getReworks().clear();
