@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -65,7 +66,7 @@ public class QuoteWorkItemsExporter extends AbstractSpreadsheetExporter<Abstract
             getWriter().writeCell(optionalPriceItem.map(priceItem -> priceItem.getCategory()).orElse(""));
             getWriter().writeCell(optionalPriceItem.map(priceItem -> priceItem.getName()).orElse(""));
             getWriter().writeCell(item.getQuantity());
-            getWriter().writeCell((item.getWorkCompleteDate() == null) ? "" : item.getWorkCompleteDate().toString());
+            getWriter().writeCell(Optional.ofNullable(item.getWorkCompleteDate()).map(Date::toString).orElse(""));
             getWriter().writeCell(item.getBillingMessage());
         }
 
