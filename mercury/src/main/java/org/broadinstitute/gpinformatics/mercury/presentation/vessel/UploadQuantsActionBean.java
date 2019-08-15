@@ -43,7 +43,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate.TubeFormationByWellCriteria.Result;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -264,8 +263,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
     }
 
     public void sendTubeQuantsToBsp(Map<String, String> tubeBarcodeToQuantValue, MessageCollection messageCollection) {
-        List<BarcodedTube> tubes = tubeFormationDao.findListByList(TubeFormation.class, TubeFormation_.label,
-                tubeFormationLabels).
+        List<BarcodedTube> tubes = tubeFormationDao.findByLabels(tubeFormationLabels).
                 stream().
                 flatMap(tubeFormation -> tubeFormation.getContainerRole().getContainedVessels().stream()).
                 filter(tube -> tubeBarcodeToQuantValue.containsKey(tube.getLabel()) &&
