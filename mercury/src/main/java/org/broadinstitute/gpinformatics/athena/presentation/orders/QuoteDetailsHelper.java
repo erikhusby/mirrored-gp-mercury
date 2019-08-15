@@ -203,7 +203,7 @@ public class QuoteDetailsHelper {
         } catch (QuoteServerException | QuoteNotFoundException e) {
             String quoteServerError = String.format("Error contacting Quote Server %s", e.getMessage());
             logger.error(quoteServerError);
-            quoteDetail.setError(StringEscapeUtils.escapeEcmaScript(quoteServerError));
+            quoteDetail.setError(StringEscapeUtils.escapeHtml4(quoteServerError));
         } catch (Exception ex) {
             logger.error("Error occured calculating quote funding", ex);
             try {
