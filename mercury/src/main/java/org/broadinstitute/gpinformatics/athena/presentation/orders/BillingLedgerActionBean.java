@@ -57,7 +57,6 @@ import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -304,11 +303,8 @@ public class BillingLedgerActionBean extends CoreActionBean {
                 productOrder));
 
         // Collect historical price items (need add-ons to do that)
-        List<Product> addOns = new ArrayList<>();
-        for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
-            addOns.add(productOrderAddOn.getAddOn());
-        }
-        Collections.sort(addOns);
+        List<Product> addOns = productOrder.getAddOns().stream().map(ProductOrderAddOn::getAddOn).sorted()
+                .collect(Collectors.toList());
 
         potentialBillings.addAll(getHistoricalBillableItems(productOrder, potentialBillings, addOns,
                 priceItemDao, priceListCache));

@@ -909,15 +909,19 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
             String priceItemName = "";
             String partNumber= "";
             if(product.isPresent()) {
-
                 partNumber = product.get().getPartNumber();
             }
             if(priceItem.isPresent()) {
                 priceItemName = priceItem.get().getName();
             }
             Set<ProductLedgerIndex> indexForPriceItem=
-                    sampleStatus.keySet().stream().filter(index -> index.getPriceItem().equals(priceItem.orElse(null)))
-                            .collect(Collectors.toSet());
+                    sampleStatus.keySet().stream().filter(index -> {
+                        if(getProductOrder().hasSapQuote()) {
+                            return index.getProduct().equals(product.orElse(null));
+                        } else {
+                            return index.getPriceItem().equals(priceItem.orElse(null));
+                        }
+                    }).collect(Collectors.toSet());
             if (indexForPriceItem.isEmpty()) {
                 sampleStatus.put(ProductLedgerIndex.create(product.orElse(null), priceItem.orElse(null),
                         getProductOrder().hasSapQuote()), new LedgerQuantities(sampleName, priceItemName, partNumber));
