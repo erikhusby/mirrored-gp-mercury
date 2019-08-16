@@ -11,6 +11,7 @@ import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
@@ -263,15 +264,24 @@ public class UploadQuantsActionBean extends CoreActionBean {
     }
 
     public void sendTubeQuantsToBsp(Map<String, String> tubeBarcodeToQuantValue, MessageCollection messageCollection) {
-        List<BarcodedTube> tubes = tubeFormationDao.findByLabels(tubeFormationLabels).
-                stream().
+        List<String> tubesNotSent = new ArrayList<>();
+        List<BarcodedTube> tubes = new ArrayList<>();
+        tubeFormationDao.findByLabels(tubeFormationLabels).stream().
                 flatMap(tubeFormation -> tubeFormation.getContainerRole().getContainedVessels().stream()).
-                filter(tube -> tubeBarcodeToQuantValue.containsKey(tube.getLabel()) &&
-                        // Clinical sample tubes should not go to BSP.
-                        tube.getMercurySamples().stream().noneMatch(sample -> sample.canSampleBeUsedForClinical())).
-                sorted(Comparator.comparing(BarcodedTube::getLabel)).
-                distinct().
-                collect(Collectors.toList());
+                filter(tube -> tubeBarcodeToQuantValue.containsKey(tube.getLabel())).
+                forEach(tube -> {
+                    // Clinical sample tubes should not go to BSP.
+                    if (tube.getMercurySamples().stream().anyMatch(sample -> sample.canSampleBeUsedForClinical())) {
+                        tubesNotSent.add(tube.getLabel());
+                    } else {
+                        tubes.add(tube);
+                    }
+                });
+        if (!tubesNotSent.isEmpty()) {
+            tubesNotSent.sort(Comparator.naturalOrder());
+            messageCollection.addInfo("Mercury withheld " + tubesNotSent.size() + " CRSP samples from BSP (" +
+                    StringUtils.join(tubesNotSent, " ") + ").");
+        }
         if (!tubes.isEmpty()) {
             List<String> tubeBarcodes = tubes.stream().
                     map(BarcodedTube::getLabel).collect(Collectors.toList());
