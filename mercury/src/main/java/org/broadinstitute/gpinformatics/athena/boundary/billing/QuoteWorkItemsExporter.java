@@ -59,15 +59,17 @@ public class QuoteWorkItemsExporter extends AbstractSpreadsheetExporter<Abstract
         }
 
         for (QuoteImportItem item : quoteItems) {
-            getWriter().nextRow();
-            getWriter().writeCell(item.getQuoteId());
-            Optional<PriceItem> optionalPriceItem = Optional.ofNullable(item.getPriceItem());
-            getWriter().writeCell(optionalPriceItem.map(priceItem -> priceItem.getPlatform()).orElse(""));
-            getWriter().writeCell(optionalPriceItem.map(priceItem -> priceItem.getCategory()).orElse(""));
-            getWriter().writeCell(optionalPriceItem.map(priceItem -> priceItem.getName()).orElse(""));
-            getWriter().writeCell(item.getQuantity());
-            getWriter().writeCell(Optional.ofNullable(item.getWorkCompleteDate()).map(Date::toString).orElse(""));
-            getWriter().writeCell(item.getBillingMessage());
+            if (!item.isSapOrder()) {
+                getWriter().nextRow();
+                getWriter().writeCell(item.getQuoteId());
+                Optional<PriceItem> optionalPriceItem = Optional.ofNullable(item.getPriceItem());
+                getWriter().writeCell(optionalPriceItem.map(priceItem -> priceItem.getPlatform()).orElse(""));
+                getWriter().writeCell(optionalPriceItem.map(priceItem -> priceItem.getCategory()).orElse(""));
+                getWriter().writeCell(optionalPriceItem.map(priceItem -> priceItem.getName()).orElse(""));
+                getWriter().writeCell(item.getQuantity());
+                getWriter().writeCell(Optional.ofNullable(item.getWorkCompleteDate()).map(Date::toString).orElse(""));
+                getWriter().writeCell(item.getBillingMessage());
+            }
         }
 
         getWorkbook().write(out);
