@@ -32,6 +32,7 @@ import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.quote.FundingStatus;
 import org.broadinstitute.sap.entity.quote.QuoteStatus;
 import org.broadinstitute.sap.entity.quote.SapQuote;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.json.JSONObject;
 
@@ -133,7 +134,13 @@ public class QuoteDetailsHelper {
                         });
                     }
                 } else if (quoteSource.isSapType()) {
-                    SapQuote quote = sapService.findSapQuote(quoteIdentifier);
+                    final SapQuote quote;
+                    try {
+                        quote = sapService.findSapQuote(quoteIdentifier);
+                    } catch (SAPIntegrationException e) {
+                        throw new SAPIntegrationException(String.format("Quote '%s' not found", quoteIdentifier), e);
+                    }
+
                     Optional<FundingStatus> fundingHeaderStatus =
                         Optional.ofNullable(quote.getQuoteHeader().getFundingHeaderStatus());
 
@@ -201,7 +208,7 @@ public class QuoteDetailsHelper {
             }
 
         } catch (QuoteServerException | QuoteNotFoundException e) {
-            String quoteServerError = String.format("Error contacting Quote Server %s", e.getMessage());
+            String quoteServerError = String.format("Error Obtaining Quote Information: %s.", e.getMessage());
             logger.error(quoteServerError);
             quoteDetail.setError(StringEscapeUtils.escapeHtml4(quoteServerError));
         } catch (Exception ex) {
