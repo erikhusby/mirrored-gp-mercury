@@ -500,7 +500,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                     return;
                 }
                 log.debug("Creating product " + extendedProduct.getMaterialIdentifier());
-                log.debug(String.format("    ---  Sales org %s, hierarchy is %s, extending status is %s, disable status %s\n", extendedProduct.getSalesOrg(), extendedProduct.getProductHierarchy(), product.getOfferedAsCommercialProduct().toString(), extendedProduct.getStatus()));
+                log.debug(String.format("    ---  Sales org %s, hierarchy is %s, extending status is %s, disable status %s\n", extendedProduct.getSalesOrg(), extendedProduct.getProductHierarchy(), product.getOfferedAsCommercialProduct().toString(), extendedProduct.getSalesOrgStatus()));
 
                 getClient().createMaterial(extendedProduct);
             }
@@ -512,9 +512,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                         SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization())
                     && !product.getOfferedAsCommercialProduct()) {
 
-                    extendedProduct.setStatus(SAPMaterial.MaterialStatus.DISABLED);
+                    extendedProduct.setSalesOrgStatus(SAPMaterial.MaterialStatus.DISABLED);
                 }
-                log.debug(String.format("    ---  Sales org %s, hierarchy is %s, extending status is %s, disable status %s\n", extendedProduct.getSalesOrg(), extendedProduct.getProductHierarchy(), product.getOfferedAsCommercialProduct().toString(), extendedProduct.getStatus()));
+                log.debug(String.format("    ---  Sales org %s, hierarchy is %s, extending status is %s, disable status %s\n", extendedProduct.getSalesOrg(), extendedProduct.getProductHierarchy(), product.getOfferedAsCommercialProduct().toString(), extendedProduct.getSalesOrgStatus()));
                 getClient().changeMaterialDetails(SAPChangeMaterial.fromSAPMaterial(extendedProduct));
             }
         }
