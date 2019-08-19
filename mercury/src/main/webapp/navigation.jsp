@@ -344,9 +344,24 @@
                         class="icon-bullhorn"></span> HSA <b class="caret"></b></a>
                 <ul class="dropdown-menu" role="menu">
                     <li>
+                        <stripes:link id="listWorkflows"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.FiniteStateMachineActionBean"
+                                      event="list">List</stripes:link>
+                    </li>
+                    <li>
                         <stripes:link id="createDragenWorkflow"
-                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.DragenActionBean"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.FiniteStateMachineActionBean"
                                       event="create">Create Workflow</stripes:link>
+                    </li>
+                    <li>
+                        <stripes:link id="createDemultiplexWorkflow"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.FiniteStateMachineActionBean"
+                                      event="createDemultiplex">Create Demultiplex Task</stripes:link>
+                    </li>
+                    <li>
+                        <stripes:link id="createAlignmentWorkflow"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.AlignmentActionBean"
+                                      event="view">Create Alignment Task</stripes:link>
                     </li>
                 </ul>
             </li>

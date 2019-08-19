@@ -4,7 +4,9 @@ import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.DragenConfig;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.ProcessTask;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.zeroturnaround.exec.ProcessResult;
 
 import javax.enterprise.context.Dependent;
@@ -21,27 +23,33 @@ public class SlurmController implements SchedulerController {
     @Inject
     private ShellUtils shellUtils;
 
+    @Inject
+    private DragenConfig dragenConfig;
+
     @Override
     public List<PartitionInfo> listPartitions() {
-        return runProcesssParseList(Arrays.asList("sinfo", "-o", "\"%all\""), PartitionInfo.class, 1);
+        return runProcesssParseList(Arrays.asList("ssh", dragenConfig.getSlurmHost(), "sinfo", "-o", "\"%all\""),
+                PartitionInfo.class, 1);
     }
 
     @Override
     public List<QueueInfo> listQueue() {
-        return runProcesssParseList(Arrays.asList("squeue", "-o", "\"%all\""), QueueInfo.class, 1);
+        return runProcesssParseList(Arrays.asList("ssh", dragenConfig.getSlurmHost(), "squeue", "-o", "\"%all\""), QueueInfo.class, 1);
     }
 
     @Override
     public String batchJob(String partition, ProcessTask processTask) {
         List<String> cmd;
+        String dragenCmd = String.format("--wrap=\"%s%s\"", dragenConfig.getDragenPath(), processTask.getCommandLineArgument());
         if (partition == null) {
-            cmd = Arrays.asList( "sbatch", "-J", processTask.getTaskName(), "-wrap", processTask.getCommandLineArgument());
+            cmd = Arrays.asList( "ssh", dragenConfig.getSlurmHost(), "sbatch",  "-J", processTask.getTaskName(), dragenCmd);
         } else {
-            cmd = Arrays.asList( "sbatch", "-J", processTask.getTaskName(), "-p", partition, "-wrap", processTask.getCommandLineArgument());
+            cmd = Arrays.asList( "ssh", dragenConfig.getSlurmHost(), "sbatch", "-J", processTask.getTaskName(), "-p", partition, dragenCmd);
         }
         ProcessResult processResult = runProcess(cmd);
-        if (processResult.getExitValue() != 0 || !processResult.hasOutput()) {
-            throw new RuntimeException("Failed to batch job with exit code");
+        if (processResult.getExitValue() != 0) {
+            String output = processResult.hasOutput() ? processResult.getOutput().getString() : "";
+            throw new RuntimeException("Failed to batch job with exit code: " + processResult.getExitValue() + " " + output);
         }
         String str = processResult.getOutput().getString();
         return str.replaceAll("[^0-9]", "");
@@ -49,21 +57,54 @@ public class SlurmController implements SchedulerController {
 
     @Override
     public boolean cancelJob(String jobId) {
-        List<String> cmd = Arrays.asList("scancel", jobId);
+        List<String> cmd = Arrays.asList("ssh", dragenConfig.getSlurmHost(), "scancel", jobId);
         ProcessResult processResult = runProcess(cmd);
-        return false;
+        return processResult.getExitValue() == 0;
     }
 
     @Override
-    public boolean isJobComplete(String jobName, long jobId) {
-        return listQueue().stream().noneMatch(queueInfo ->
-                queueInfo.getName().equalsIgnoreCase(jobName) && queueInfo.getJobId() == jobId);
+    public Status fetchJobStatus(long jobId) {
+        JobInfo jobInfo = fetchJobInfo(jobId);
+        SlurmStateCode slurmStateCode = SlurmStateCode.getByName(jobInfo.getState());
+        switch (slurmStateCode) {
+            case BOOT_FAIL:
+            case FAILED:
+            case OUT_OF_MEMORY:
+            case DEADLINE:
+            case NODE_FAIL:
+            case PREEMPTED:
+            case SPECIAL_EXIT:
+            case STOPPED:
+            case TIMEOUT:
+            case REVOKED:
+                return Status.FAILED;
+            case CANCELLED:
+                return Status.CANCELLED;
+            case COMPLETED:
+                return Status.COMPLETE;
+            case PENDING:
+            case REQUEUE_HOLD:
+            case REQUEUE_FED:
+            case REQUEUED:
+            case STAGE_OUT:
+            case SIGNALING:
+                return Status.QUEUED;
+            case RUNNING:
+            case COMPLETING:
+            case RESIZING:
+                return Status.RUNNING;
+            case RESV_DEL_HOLD:
+            case SUSPENDED:
+                return Status.SUSPENDED;
+            default:
+                return Status.QUEUED;
+        }
     }
 
     @Override
-    public JobInfo fetchJobInfo(int jobId) {
+    public JobInfo fetchJobInfo(long jobId) {
         List<JobInfo> jobInfoList =
-                runProcesssParseList(Arrays.asList("sacct", "-j", String.valueOf(jobId), "-p"), JobInfo.class);
+                runProcesssParseList(Arrays.asList("ssh", dragenConfig.getSlurmHost(), "sacct", "-j", String.valueOf(jobId), "-p"), JobInfo.class);
         if (jobInfoList.size() > 0) {
             return jobInfoList.get(0);
         }
@@ -72,8 +113,8 @@ public class SlurmController implements SchedulerController {
     }
 
     private ProcessResult runProcess(List<String> cmd) {
-        try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-            return shellUtils.runSyncProcess(cmd, os);
+        try {
+            return shellUtils.runSyncProcess(cmd);
         } catch (Exception e) {
             log.error("Error attempting to run sync process", e);
             throw new RuntimeException(e);
@@ -85,8 +126,8 @@ public class SlurmController implements SchedulerController {
     }
 
     private <T> List<T> runProcesssParseList(List<String> cmd, Class<T> beanClass, int skipLines) {
-        try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-            ProcessResult processResult = shellUtils.runSyncProcess(cmd, os);
+        try {
+            ProcessResult processResult = shellUtils.runSyncProcess(cmd);
             if (processResult.getExitValue() != -1 && processResult.hasOutput()) {
                 String output = processResult.getOutput().getString();
                 CsvToBean<T> csvToBean = new CsvToBeanBuilder<T>(new StringReader(output)).
@@ -107,5 +148,9 @@ public class SlurmController implements SchedulerController {
     // For Testing
     public void setShellUtils(ShellUtils shellUtils) {
         this.shellUtils = shellUtils;
+    }
+
+    public void setDragenConfig(DragenConfig dragenConfig) {
+        this.dragenConfig = dragenConfig;
     }
 }

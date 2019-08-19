@@ -12,7 +12,7 @@
   --%>
 
 <stripes:useActionBean var="actionBean"
-                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.DragenActionBean"/>
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.FiniteStateMachineActionBean"/>
 
 <stripes:layout-render name="/layout.jsp"
                        pageTitle="${actionBean.submitString}: ${actionBean.editFiniteStateMachine.stateMachineName}"

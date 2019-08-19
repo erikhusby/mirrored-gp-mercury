@@ -287,13 +287,19 @@ decoder:
 dragen:
 
     DEV:
-      demultiplexOutputDirectory:  /seq/dragen/bcl2fastq/
+      demultiplexOutputPath:  /seq/illumina/proc/
+      dragenPath: /opt/edico/bin/
+      slurmHost: login00
 
     QA:
-      demultiplexOutputDirectory:  /seq/dragen/bcl2fastq/
+      demultiplexOutputPath:  /seq/illumina/proc/
+      dragenPath: /opt/edico/bin/
+      slurmHost: login00
 
     PROD:
-      demultiplexOutputDirectory:  /seq/dragen/bcl2fastq/
+      demultiplexOutputPath:  /seq/illumina/proc/
+      dragenPath: /opt/edico/bin/
+      slurmHost: login00
 
 hipchat:
     DEV:

@@ -1,8 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.dragen;
 
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.io.File;
@@ -46,8 +49,8 @@ public class AlignmentTask extends ProcessTask {
      * --enable-duplicate-marking true \
      * --enable-map-align-output true
      */
-    public AlignmentTask(File reference, File fastQList, String fastQSampleId, File outputDirectory, File intermediateResultsDir,
-                         String outputFilePrefix, String vcSampleName) {
+    public AlignmentTask(File reference, File fastQList, String fastQSampleId,
+                         File outputDirectory, File intermediateResultsDir, String outputFilePrefix, String vcSampleName) {
         this.reference = reference;
         this.fastQList = fastQList;
         this.fastQSampleId = fastQSampleId;
@@ -95,6 +98,10 @@ public class AlignmentTask extends ProcessTask {
     }
 
     public File getOutputDir() {
+        if (outputDir == null) {
+            outputDir = new File(DragenTaskBuilder.parseCommandFromArgument(
+                    DragenTaskBuilder.OUTPUT_DIRECTORY, getCommandLineArgument()));
+        }
         return outputDir;
     }
 

@@ -9,7 +9,10 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.DisplayExpression;
 import org.broadinstitute.gpinformatics.infrastructure.columns.PassingFingerprintPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.SampleDataFetcherAddRowsListener;
+import org.broadinstitute.gpinformatics.infrastructure.columns.SampleMetadataAlignmentMetricsPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.SampleMetadataPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.columns.SampleMetadataSequencingMetricPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.columns.SampleMetadataVariantCallingMetricsPlugin;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FpGenotype;
@@ -361,6 +364,22 @@ public class MercurySampleSearchDefinition {
                 searchTerms.add(searchTerm);
             }
         }
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Sequencing Demultiplex Metrics");
+        searchTerm.setIsNestedParent(Boolean.TRUE);
+        searchTerm.setPluginClass(SampleMetadataSequencingMetricPlugin.class);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Alignment Metrics");
+        searchTerm.setPluginClass(SampleMetadataAlignmentMetricsPlugin.class);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Variant Calling Metrics");
+        searchTerm.setPluginClass(SampleMetadataVariantCallingMetricsPlugin.class);
+        searchTerms.add(searchTerm);
 
         return searchTerms;
     }

@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.Dragen;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenSimulator;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.ProcessTask;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.TaskResult;
 
 import java.util.Arrays;
@@ -20,13 +21,14 @@ public class SchedulerControllerStub implements SchedulerController {
         broadPartition.setNodeList("slurm-[0001-0002,0004-0005]");
         broadPartition.setState("idle");
         broadPartition.setNodes(4);
+        broadPartition.setVersion("slurm 19.05.0");
         return Arrays.asList(broadPartition);
     }
 
     @Override
     public List<QueueInfo> listQueue() {
         QueueInfo queueInfo = new QueueInfo();
-        queueInfo.setJobId(34541);
+        queueInfo.setJobId("34541");
         queueInfo.setName("testname");
         queueInfo.setNodes(1);
         queueInfo.setPartition("broad");
@@ -47,12 +49,12 @@ public class SchedulerControllerStub implements SchedulerController {
     }
 
     @Override
-    public boolean isJobComplete(String jobName, long pid) {
-        return true;
+    public Status fetchJobStatus(long pid) {
+        return Status.COMPLETE;
     }
 
     @Override
-    public JobInfo fetchJobInfo(int jobId) {
+    public JobInfo fetchJobInfo(long jobId) {
         return null;
     }
 }

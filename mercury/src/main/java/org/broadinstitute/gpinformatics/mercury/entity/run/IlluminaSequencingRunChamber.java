@@ -7,6 +7,7 @@ import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import java.util.HashSet;
@@ -23,8 +24,8 @@ public class IlluminaSequencingRunChamber extends SequencingRunChamber {
     @JoinColumn(name = "ILLUMINA_SEQUENCING_RUN")
     private IlluminaSequencingRun illuminaSequencingRun;
 
-    @OneToMany(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY, mappedBy = "runChamber")
-    private Set<DemultiplexState> states = new HashSet<>();
+    @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "sequencingRunChambers")
+    private Set<DemultiplexState> demultiplexStates = new HashSet<>();
 
     private int laneNumber;
 
@@ -58,11 +59,7 @@ public class IlluminaSequencingRunChamber extends SequencingRunChamber {
         this.actualReadStructure = actualReadStructure;
     }
 
-    public Set<DemultiplexState> getStates() {
-        return states;
-    }
-
-    public void setStates(Set<DemultiplexState> states) {
-        this.states = states;
+    public Set<DemultiplexState> getDemultiplexStates() {
+        return demultiplexStates;
     }
 }

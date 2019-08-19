@@ -13,6 +13,7 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,6 +22,8 @@ import java.util.stream.Collectors;
 @Audited
 @Table(schema = "mercury")
 public class FiniteStateMachine {
+
+    private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd--HH-mm-ss");
 
     @Id
     @SequenceGenerator(name = "SEQ_FINITE_STATE_MACHINE", schema = "mercury", sequenceName = "SEQ_FINITE_STATE_MACHINE")
@@ -47,6 +50,7 @@ public class FiniteStateMachine {
 
     public FiniteStateMachine() {
         dateQueued = new Date();
+        status = Status.QUEUED;
     }
 
     public List<State> getStates() {
@@ -73,6 +77,14 @@ public class FiniteStateMachine {
         return transitions.stream()
                 .filter(t -> t.getFromState().equals(state))
                 .collect(Collectors.toList());
+    }
+
+    public int getNumberOfActiveIssues() {
+        int ctr = 0;
+        for (State state: getActiveStates()) {
+            ctr += state.getTasksWithStatus(Status.SUSPENDED).size();
+        }
+        return ctr;
     }
 
     public Long getFiniteStateMachineId() {
@@ -125,5 +137,17 @@ public class FiniteStateMachine {
 
     public List<State> getActiveStates() {
         return states.stream().filter(State::isAlive).collect(Collectors.toList());
+    }
+
+    public List<String> getActiveStateNames() {
+        return states.stream().filter(State::isAlive).map(State::getStateName).collect(Collectors.toList());
+    }
+
+    public String getDateQueuedString() {
+        return sdf.format(getDateQueued());
+    }
+
+    public boolean isAlive() {
+        return getActiveStates().size() > 0;
     }
 }

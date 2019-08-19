@@ -2329,6 +2329,10 @@
             <column name="STATUS" type="VARCHAR2(50)">
                 <constraints nullable="false"/>
             </column>
+            <column name="STATE_MACHINE_NAME" type="VARCHAR2(200)" />
+            <column name="DATE_QUEUED" type="timestamp" />
+            <column name="DATE_STARTED" type="timestamp" />
+            <column name="DATE_COMPLETED" type="timestamp" />
         </createTable>
     </changeSet>
 
@@ -2350,6 +2354,10 @@
             <column name="revtype" type="int">
                 <constraints nullable="false"/>
             </column>
+            <column name="STATE_MACHINE_NAME" type="VARCHAR2(200)" />
+            <column name="DATE_QUEUED" type="timestamp" />
+            <column name="DATE_STARTED" type="timestamp" />
+            <column name="DATE_COMPLETED" type="timestamp" />
         </createTable>
     </changeSet>
 
@@ -2367,7 +2375,6 @@
             <column name="DTYPE" type="varchar2(31)">
                 <constraints nullable="false"/>
             </column>
-            <column name="RUN_CHAMBER" type="number(19,0)"/>
             <column name="MERCURY_SAMPLE" type="number(19,0)"/>
             <column name="FINITE_STATE_MACHINE" type="number(19,0)">
                 <constraints nullable="false"/>
@@ -2383,7 +2390,7 @@
             </column>
             <column name="START_TIME" type="timestamp"/>
             <column name="END_TIME" type="timestamp"/>
-            <column name="TASK" type="number(19,0)"/>
+            <column name="EXIT_TASK" type="number(19,0)"/>
         </createTable>
     </changeSet>
 
@@ -2392,27 +2399,13 @@
     </changeSet>
 
     <changeSet id="GPLIM-6242-6" author="jowalsh">
-        <addForeignKeyConstraint baseTableName="STATE" baseColumnNames="RUN_CHAMBER"
-                                 constraintName="fk_state_run_chamber"
-                                 referencedTableName="sequencing_run_chamber"
-                                 referencedColumnNames="sequencing_run_chamber_id"/>
-    </changeSet>
-
-    <changeSet id="GPLIM-6242-7" author="jowalsh">
-        <addForeignKeyConstraint baseTableName="STATE" baseColumnNames="MERCURY_SAMPLE"
-                                 constraintName="fk_state_mercury_sample"
-                                 referencedTableName="mercury_sample"
-                                 referencedColumnNames="mercury_sample_id"/>
-    </changeSet>
-
-    <changeSet id="GPLIM-6242-8" author="jowalsh">
         <addForeignKeyConstraint baseTableName="STATE" baseColumnNames="FINITE_STATE_MACHINE"
                                  constraintName="fk_state_state_machine"
                                  referencedTableName="FINITE_STATE_MACHINE"
                                  referencedColumnNames="FINITE_STATE_MACHINE_ID"/>
     </changeSet>
 
-    <changeSet id="GPLIM-6242-9" author="jowalsh">
+    <changeSet id="GPLIM-6242-7" author="jowalsh">
         <createTable tableName="STATE_AUD" schemaName="mercury">
             <column name="STATE_ID" type="number(19,0)">
                 <constraints nullable="false"/>
@@ -2420,8 +2413,6 @@
             <column name="DTYPE" type="varchar2(31)">
                 <constraints nullable="false"/>
             </column>
-            <column name="RUN_CHAMBER" type="number(19,0)"/>
-            <column name="MERCURY_SAMPLE" type="number(19,0)"/>
             <column name="FINITE_STATE_MACHINE" type="number(19,0)">
                 <constraints nullable="false"/>
             </column>
@@ -2436,6 +2427,7 @@
             </column>
             <column name="START_TIME" type="timestamp"/>
             <column name="END_TIME" type="timestamp"/>
+            <column name="EXIT_TASK" type="number(19,0)"/>
             <column name="TASK" type="number(19,0)"/>
             <column name="rev" type="int">
                 <constraints nullable="false"/>
@@ -2446,20 +2438,20 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="GPLIM-6242-10" author="jowalsh">
+    <changeSet id="GPLIM-6242-8" author="jowalsh">
         <addPrimaryKey schemaName="MERCURY" tableName="STATE_AUD"
                        constraintName="PK_STATE_AUD"
                        columnNames="rev, STATE_ID"/>
     </changeSet>
 
-    <changeSet id="GPLIM-6242-11" author="jowalsh">
+    <changeSet id="GPLIM-6242-9" author="jowalsh">
         <createIndex indexName="IX_STATE_AUD" tableName="STATE_AUD" schemaName="mercury">
             <column name="STATE_ID"/>
             <column name="REV"/>
         </createIndex>
     </changeSet>
 
-    <changeSet id="GPLIM-6242-12" author="jowalsh">
+    <changeSet id="GPLIM-6242-10" author="jowalsh">
         <createTable tableName="TASK" schemaName="mercury">
             <column name="TASK_ID" type="number(19,0)">
                 <constraints primaryKey="true" nullable="false"/>
@@ -2470,17 +2462,27 @@
             <column name="STATUS" type="VARCHAR2(50)">
                 <constraints nullable="false"/>
             </column>
+            <column name="TASK_NAME" type="varchar2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="STATE" type="number(19,0)"/>
             <column name="FILE_PATH" type="varchar2(255)"/>
+            <column name="ERROR_MESSAGE" type="varchar2(255)"/>
             <column name="PROCESS_ID" type="number(19,0)"/>
-            <column name="COMMAND_LINE_ARGUMENT" type="varchar2(550)"/>
+            <column name="COMMAND_LINE_ARGUMENT" type="varchar2(600)"/>
+            <column name="START_TIME" type="timestamp"/>
+            <column name="END_TIME" type="timestamp"/>
+            <column name="TASK_ACTION_TIME" type="varchar2(20)"/>
         </createTable>
+        <addUniqueConstraint tableName="TASK" schemaName="mercury"
+                             columnNames="TASK_NAME, STATE" constraintName="uk_task_name_date"/>
     </changeSet>
 
-    <changeSet id="GPLIM-6242-13" author="jowalsh">
-        <createSequence sequenceName="SEQ_TASK" schemaName="mercury" startValue="1" incrementBy="10"/>
+    <changeSet id="GPLIM-6242-11" author="jowalsh">
+        <createSequence sequenceName="SEQ_TASK" schemaName="mercury" startValue="1" incrementBy="50"/>
     </changeSet>
 
-    <changeSet id="GPLIM-6242-14" author="jowalsh">
+    <changeSet id="GPLIM-6242-12" author="jowalsh">
         <createTable tableName="TASK_AUD" schemaName="mercury">
             <column name="TASK_ID" type="number(19,0)">
                 <constraints nullable="false"/>
@@ -2491,9 +2493,17 @@
             <column name="STATUS" type="VARCHAR2(50)">
                 <constraints nullable="false"/>
             </column>
+            <column name="TASK_NAME" type="varchar2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="STATE" type="number(19,0)"/>
             <column name="PROCESS_ID" type="number(19,0)"/>
-            <column name="COMMAND_LINE_ARGUMENT" type="varchar2(550)"/>
+            <column name="COMMAND_LINE_ARGUMENT" type="varchar2(600)"/>
+            <column name="ERROR_MESSAGE" type="varchar2(255)"/>
             <column name="FILE_PATH" type="varchar2(255)"/>
+            <column name="START_TIME" type="timestamp"/>
+            <column name="END_TIME" type="timestamp"/>
+            <column name="TASK_ACTION_TIME" type="varchar2(20)"/>
             <column name="rev" type="int">
                 <constraints nullable="false"/>
             </column>
@@ -2517,10 +2527,10 @@
     </changeSet>
 
     <changeSet id="GPLIM-6242-17" author="jowalsh">
-        <addForeignKeyConstraint baseTableName="STATE" baseColumnNames="TASK"
-                                 constraintName="fk_state_task"
-                                 referencedTableName="TASK"
-                                 referencedColumnNames="TASK_ID"/>
+        <addForeignKeyConstraint baseTableName="TASK" baseColumnNames="STATE"
+                                 constraintName="fk_task_state"
+                                 referencedTableName="STATE"
+                                 referencedColumnNames="STATE_ID"/>
     </changeSet>
 
     <changeSet id="GPLIM-6242-18" author="jowalsh">
@@ -2607,52 +2617,309 @@
         </createIndex>
     </changeSet>
 
-    <changeSet id="GPLIM-6242-26" author="jowalsh">
-        <addColumn tableName="FINITE_STATE_MACHINE" schemaName="mercury">
-            <column name="DATE_QUEUED" type="timestamp" />
-        </addColumn>
-        <addColumn tableName="FINITE_STATE_MACHINE" schemaName="mercury">
-            <column name="DATE_STARTED" type="timestamp" />
-        </addColumn>
-        <addColumn tableName="FINITE_STATE_MACHINE" schemaName="mercury">
-            <column name="DATE_COMPLETED" type="timestamp" />
-        </addColumn>
+    <changeSet author="jowalsh" id="GPLIM-6242-26">
+        <createTable schemaName="mercury" tableName="src_demultiplix_state">
+            <column name="sequencing_run_chamber" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="demultiplex_state" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="src_demultiplix_state" columnNames="sequencing_run_chamber, demultiplex_state"/>
     </changeSet>
 
-    <changeSet id="GPLIM-6242-27" author="jowalsh">
-        <addColumn tableName="FINITE_STATE_MACHINE_AUD" schemaName="mercury">
-            <column name="DATE_QUEUED" type="timestamp" />
-        </addColumn>
-        <addColumn tableName="FINITE_STATE_MACHINE_AUD" schemaName="mercury">
-            <column name="DATE_STARTED" type="timestamp" />
-        </addColumn>
-        <addColumn tableName="FINITE_STATE_MACHINE_AUD" schemaName="mercury">
-            <column name="DATE_COMPLETED" type="timestamp" />
-        </addColumn>
+    <changeSet author="jowalsh" id="GPLIM-6242-27">
+        <createTable schemaName="mercury" tableName="src_demultiplix_state_aud">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sequencing_run_chamber" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="demultiplex_state" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)" />
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="src_demultiplix_state_aud" columnNames="rev, sequencing_run_chamber, demultiplex_state"/>
     </changeSet>
 
-    <changeSet id="GPLIM-6242-28" author="jowalsh">
-        <addColumn tableName="TASK" schemaName="mercury">
-            <column name="TASK_NAME" type="VARCHAR2(200)" />
-        </addColumn>
+    <changeSet author="jowalsh" id="GPLIM-6242-28">
+        <addForeignKeyConstraint baseTableName="src_demultiplix_state" baseTableSchemaName="mercury" baseColumnNames="demultiplex_state"
+                                 constraintName="fk_src_demux_state"
+                                 referencedTableName="state" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="state_id"/>
     </changeSet>
 
-    <changeSet id="GPLIM-6242-29" author="jowalsh">
-        <addColumn tableName="TASK_AUD" schemaName="mercury">
-            <column name="TASK_NAME" type="VARCHAR2(200)" />
-        </addColumn>
+    <changeSet author="jowalsh" id="GPLIM-6242-29">
+        <addForeignKeyConstraint baseTableName="src_demultiplix_state" baseTableSchemaName="mercury" baseColumnNames="sequencing_run_chamber"
+                                 constraintName="fk_demux_state_src"
+                                 referencedTableName="sequencing_run_chamber" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="sequencing_run_chamber_id"/>
     </changeSet>
 
-    <changeSet id="GPLIM-6242-30" author="jowalsh">
-        <addColumn tableName="FINITE_STATE_MACHINE" schemaName="mercury">
-            <column name="STATE_MACHINE_NAME" type="VARCHAR2(200)" />
-        </addColumn>
+    <changeSet author="jowalsh" id="GPLIM-6242-30">
+        <addForeignKeyConstraint baseTableName="state" baseColumnNames="exit_task"
+                                 baseTableSchemaName="mercury" constraintName="fk_state_exit_task"
+                                 referencedTableName="task" referencedColumnNames="task_id"
+                                 referencedTableSchemaName="mercury"/>
     </changeSet>
 
-    <changeSet id="GPLIM-6242-31" author="jowalsh">
-        <addColumn tableName="FINITE_STATE_MACHINE_AUD" schemaName="mercury">
-            <column name="STATE_MACHINE_NAME" type="VARCHAR2(200)" />
-        </addColumn>
+    <changeSet author="jowalsh" id="GPLIM-6242-32">
+        <createTable schemaName="mercury" tableName="sample_alignment_state">
+            <column name="mercury_sample" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="alignment_state" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="sample_alignment_state" columnNames="alignment_state, mercury_sample"/>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-6242-33">
+        <createTable schemaName="mercury" tableName="sample_alignment_state_aud">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="mercury_sample" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="alignment_state" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)" />
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="sample_alignment_state_aud" columnNames="rev, mercury_sample, alignment_state"/>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-6242-34">
+        <addForeignKeyConstraint baseTableName="sample_alignment_state" baseTableSchemaName="mercury" baseColumnNames="alignment_state"
+                                 constraintName="fk_ms_align_state"
+                                 referencedTableName="state" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="state_id"/>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-6242-35">
+        <addForeignKeyConstraint baseTableName="sample_alignment_state" baseTableSchemaName="mercury" baseColumnNames="mercury_sample"
+                                 constraintName="fk_align_state_ms"
+                                 referencedTableName="mercury_sample" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="mercury_sample_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-40" author="jowalsh">
+        <createTable tableName="SEQ_DEMULTIPLEX_RUN_METRIC" schemaName="mercury">
+            <column name="RUN_NAME" type="VARCHAR2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="FLOWCELL" type="VARCHAR2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="RUN_DATE" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="SAMPLE_ALIAS" type="VARCHAR2(55)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ANALYSIS_NAME" type="VARCHAR2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ANALYSIS_NODE" type="VARCHAR2(55)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ANALYSIS_VERSION" type="VARCHAR2(55)"/>
+            <column name="LANE" type="number(19,0)"/>
+            <column name="MEAN_QUALITY_SCORE_PF" type="number(4,2)"/>
+            <column name="NUM_OF_ONE_MISMATCH_IDX_READS" type="number(19,0)"/>
+            <column name="NUM_OF_Q30_BASES_PF" type="number(19,0)"/>
+            <column name="NUM_OF_PCT_IDX_READS" type="number(19,0)"/>
+            <column name="NUM_OF_READS" type="number(19,0)"/>
+            <column name="DRAGEN_VERSION" type="VARCHAR2(25))"/>
+        </createTable>
+
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-41" author="jowalsh">
+        <addPrimaryKey  schemaName="MERCURY" tableName="SEQUENCING_RUN_METRIC" columnNames="RUN_NAME, ANALYSIS_NAME" constraintName="PK_SEQ_RUN_METRIC"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-42" author="jowalsh">
+        <createTable tableName="vc_run_metrics" schemaName="mercury">
+            <column name="RUN_NAME" type="VARCHAR2(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="RUN_DATE" type="timestamp">
+                <constraints nullable="false" />
+            </column>
+            <column name="ANALYSIS_NODE" type="VARCHAR2(55)">
+                <constraints nullable="false" />
+            </column>
+            <column name="DRAGEN_VERSION" type="VARCHAR2(55)" />
+            <column name="NUM_SAMPLES" type="number(19,0)" />
+            <column name="READS_PROCESSED" type="number(19,0)" />
+            <column name="CHILD_SAMPLE" type="VARCHAR2(55)" />
+            <column name="VC_RUN_METRIC_ID" type="VARCHAR2(255)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <addPrimaryKey constraintName="pk_vc_run_metric" tableName="vc_run_metrics"
+                       columnNames="VC_RUN_METRIC_ID"/>
+        <createSequence schemaName="mercury" sequenceName="SEQ_VC_RUN_METRIC" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-43" author="jowalsh">
+        <createTable tableName="variant_call_metrics" schemaName="mercury">
+            <column name="run_name" type="VARCHAR2(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="metric_type" type="VARCHAR2(55)">
+                <constraints nullable="false" />
+            </column>
+            <column name="sample_alias" type="VARCHAR2(55)">
+                <constraints nullable="false" />
+            </column>
+            <column name="run_date" type="timestamp" />
+            <column name="total" type="VARCHAR2(55)" />
+            <column name="biallelic" type="number(19,0)" />
+            <column name="multiallelic" type="number(19,0)" />
+            <column name="snps" type="number(19,0)" />
+            <column name="indels" type="number(19,0)" />
+            <column name="mnps" type="number(19,0)" />
+            <column name="chr_x_number_of_snps" type="number(19,0)" />
+            <column name="chr_y_number_of_snps" type="number(19,0)" />
+            <column name="snp_transitions" type="number(19,0)" />
+            <column name="snp_tranversions" type="number(19,0)" />
+            <column name="heterozygous" type="number(19,0)" />
+            <column name="homozygous" type="number(19,0)" />
+            <column name="in_dbsnp" type="number(19,0)" />
+            <column name="not_in_dbsnp" type="number(19,0)" />
+            <column name="vc_call_metrics_id" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <addPrimaryKey constraintName="pk_variant_call_metrics" tableName="variant_call_metrics"
+                       columnNames="vc_call_metrics_id"/>
+        <createSequence schemaName="mercury" sequenceName="SEQ_VC_METRIC" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-44" author="jowalsh">
+        <createTable tableName="mapping_run_metrics" schemaName="mercury">
+            <column name="run_name" type="VARCHAR2(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="run_date" type="timestamp">
+                <constraints nullable="false" />
+            </column>
+            <column name="analysis_node" type="VARCHAR2(55)" />
+            <column name="dragen_version" type="VARCHAR2(55)" />
+            <column name="total_input_reads" type="number(19,0)" />
+            <column name="num_dup_marked_reads" type="number(19,0)" />
+            <column name="num_dup_marked_removed" type="VARCHAR2(55)" />
+            <column name="num_unique_reads" type="number(19,0)" />
+            <column name="num_reads_mate_sequenced" type="VARCHAR2(55)" />
+            <column name="num_reads_wo_mate_sequenced" type="VARCHAR2(55)" />
+            <column name="num_qc_failed_reads" type="number(19,0)" />
+            <column name="num_mapped_reads" type="number(19,0)" />
+            <column name="num_unq_mapped_reads" type="number(19,0)" />
+            <column name="num_unmapped_reads" type="number(19,0)" />
+            <column name="num_singleton_reads" type="number(19,0)" />
+            <column name="num_paired_reads" type="number(19,0)" />
+            <column name="num_properly_paired_reads" type="number(19,0)" />
+            <column name="num_not_properly_paired_reads" type="number(19,0)" />
+            <column name="mapq_40_inf" type="number(19,0)" />
+            <column name="mapq_30_40" type="number(19,0)" />
+            <column name="mapq_20_30" type="number(19,0)" />
+            <column name="mapq_10_20" type="number(19,0)" />
+            <column name="mapq_0_10" type="number(19,0)" />
+            <column name="mapq_na" type="number(19,0)" />
+            <column name="reads_indel_r1" type="number(19,0)" />
+            <column name="reads_indel_r2" type="number(19,0)" />
+            <column name="soft_clipped_bases_r1" type="number(19,0)" />
+            <column name="soft_clipped_bases_r2" type="number(19,0)" />
+            <column name="total_alignments" type="number(19,0)" />
+            <column name="secondary_alignments" type="number(19,0)" />
+            <column name="supplementary_alignments" type="number(19,0)" />
+            <column name="est_read_length" type="number(19,0)" />
+            <column name="bases_in_ref_genome" type="number(19,0)" />
+            <column name="bases_in_target_bed" type="varchar2(55)" />
+            <column name="avg_seq_coverage" type="number(19,0)" />
+            <column name="avg_alignment_coverage" type="number(19,0)" />
+            <column name="pct_coverage_100x_inf" type="number(19,0)" />
+            <column name="pct_coverage_50x_100x" type="number(19,0)" />
+            <column name="pct_coverage_20x_50x" type="number(19,0)" />
+            <column name="pct_coverage_10x_20x" type="number(19,0)" />
+            <column name="pct_coverage_3x_10x" type="number(19,0)" />
+            <column name="pct_coverage_0x_3x" type="number(19,0)" />
+            <column name="avg_x_chr_coverage" type="number(19,0)" />
+            <column name="avg_y_chr_coverage" type="number(19,0)" />
+            <column name="avg_mito_coverage" type="number(19,0)" />
+            <column name="avg_autosomal_coverage" type="number(19,0)" />
+            <column name="median_autosomal_coverage" type="number(19,0)" />
+            <column name="mean_median_autosomal_coverage" type="number(19,0)" />
+            <column name="x_y_avg_coverage_ratio" type="number(19,0)" />
+            <column name="x_autosomal_avg_coverage_ratio" type="number(19,0)" />
+            <column name="y_autosomal_avg_coverage_ratio" type="number(19,0)" />
+            <column name="provided_sex_chr_ploidy" type="VARCHAR2(55)" />
+            <column name="predicted_sex_chr_ploidy" type="VARCHAR2(55)" />
+            <column name="capture_spec_target_region" type="VARCHAR2(55)" />
+            <column name="dragen_mapping_rate" type="number(5,0)" />
+
+            <column name="mapping_run_metric_id" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <addPrimaryKey constraintName="pk_mapping_run_metric_id" tableName="mapping_run_metrics"
+                       columnNames="mapping_run_metric_id"/>
+        <createSequence schemaName="mercury" sequenceName="SEQ_MAP_RUN_METRIC" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-45" author="jowalsh">
+        <createTable tableName="mapping_rg_metrics" schemaName="mercury">
+            <column name="run_name" type="VARCHAR2(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="run_date" type="timestamp" />
+            <column name="read_group" type="VARCHAR2(55)" />
+            <column name="sample_alias" type="VARCHAR2(55)" />
+            <column name="total_reads" type="number(19,0)" />
+            <column name="num_dup_marked_reads" type="number(19,0)" />
+            <column name="num_dup_marked_removed" type="VARCHAR2(55)" />
+            <column name="num_unique_reads" type="number(19,0)" />
+            <column name="num_reads_mate_sequenced" type="VARCHAR2(55)" />
+            <column name="num_reads_wo_mate_sequenced" type="VARCHAR2(55)" />
+            <column name="num_qc_failed_reads" type="number(19,0)" />
+            <column name="num_mapped_reads" type="number(19,0)" />
+            <column name="num_unq_mapped_reads" type="number(19,0)" />
+            <column name="num_unmapped_reads" type="number(19,0)" />
+            <column name="num_singleton_reads" type="number(19,0)" />
+            <column name="num_paired_reads" type="number(19,0)" />
+            <column name="num_properly_paired_reads" type="number(19,0)" />
+            <column name="num_not_properly_paired_reads" type="number(19,0)" />
+            <column name="mapq_40_inf" type="number(19,0)" />
+            <column name="mapq_30_40" type="number(19,0)" />
+            <column name="mapq_20_30" type="number(19,0)" />
+            <column name="mapq_10_20" type="number(19,0)" />
+            <column name="mapq_0_10" type="number(19,0)" />
+            <column name="mapq_na" type="number(19,0)" />
+            <column name="reads_indel_r1" type="number(19,0)" />
+            <column name="reads_indel_r2" type="number(19,0)" />
+            <column name="soft_clipped_bases_r1" type="number(19,0)" />
+            <column name="soft_clipped_bases_r2" type="number(19,0)" />
+            <column name="total_alignments" type="number(19,0)" />
+            <column name="secondary_alignments" type="number(19,0)" />
+            <column name="supplementary_alignments" type="number(19,0)" />
+            <column name="est_read_length" type="number(19,0)" />
+            <column name="avg_seq_coverage" type="number(19,0)" />
+            <column name="insert_length_mean" type="number(19,0)" />
+            <column name="insert_length_std" type="number(19,0)" />
+            <column name="mapping_rg_metric_id" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <addPrimaryKey constraintName="pk_mapping_rg_metric_id" tableName="mapping_rg_metrics"
+                       columnNames="mapping_rg_metric_id"/>
+        <createSequence schemaName="mercury" sequenceName="SEQ_MAP_RG_METRIC" incrementBy="50"/>
     </changeSet>
 
 </databaseChangeLog>

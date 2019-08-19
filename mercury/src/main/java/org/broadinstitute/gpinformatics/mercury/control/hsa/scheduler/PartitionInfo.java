@@ -17,8 +17,11 @@ public class PartitionInfo {
     @CsvBindByPosition(position = 15)
     private String state;
 
-    @CsvBindByPosition(position = 8)
+    @CsvBindByPosition(position = 31)
     private String nodeList;
+
+    @CsvBindByPosition(position = 17)
+    private String version;
 
     public PartitionInfo() {
     }
@@ -61,5 +64,13 @@ public class PartitionInfo {
 
     public void setNodeList(String nodeList) {
         this.nodeList = nodeList;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
     }
 }

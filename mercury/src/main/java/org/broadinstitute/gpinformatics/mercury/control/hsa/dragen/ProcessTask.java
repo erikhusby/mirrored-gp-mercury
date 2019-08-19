@@ -11,7 +11,7 @@ public class ProcessTask extends Task {
 
     private String commandLineArgument;
 
-    private long processId;
+    private Long processId;
 
     private String taskName;
 
@@ -23,11 +23,11 @@ public class ProcessTask extends Task {
         this.commandLineArgument = commandLineArgument;
     }
 
-    public long getProcessId() {
+    public Long getProcessId() {
         return processId;
     }
 
-    public void setProcessId(long processId) {
+    public void setProcessId(Long processId) {
         this.processId = processId;
     }
 

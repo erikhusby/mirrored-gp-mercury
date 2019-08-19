@@ -11,16 +11,11 @@ public class SchedulerContext {
     @Inject
     private SchedulerController schedulerController;
 
-    @Inject
-    private DragenAppContext dragenAppContext;
-
     public SchedulerContext() {
     }
 
-    public SchedulerContext(SchedulerController schedulerController,
-                            DragenAppContext dragenAppContext) {
+    public SchedulerContext(SchedulerController schedulerController) {
         this.schedulerController = schedulerController;
-        this.dragenAppContext = dragenAppContext;
     }
 
     public SchedulerController getInstance() {
