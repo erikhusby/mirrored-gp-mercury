@@ -222,7 +222,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public static final String GET_SAMPLE_SUMMARY = "getSampleSummary";
     public static final String OPEN_CUSTOM_VIEW_ACTION = "openCustomView";
 
-    public static final List<String> EXCLUDED_QUOTES_FROM_VALUE = Stream.of("GP87U", "CRSPEVER", "GPSPGR7").collect(Collectors.toList());
+    public static final List<String> EXCLUDED_QUOTES_FROM_VALUE = Stream.of("GP87U", "CRSPEVR", "GPSPGR7").collect(Collectors.toList());
 
     private String sampleSummary;
     private State state;
