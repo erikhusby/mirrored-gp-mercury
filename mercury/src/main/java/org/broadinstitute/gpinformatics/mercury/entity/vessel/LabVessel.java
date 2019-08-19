@@ -1073,6 +1073,7 @@ public abstract class LabVessel implements Serializable {
      *  Get the AbandonVessel entry for a specific well <br/>
      *  Return null if well has not been abandoned.
      */
+    @Nullable
     public AbandonVessel getAbandonPositionForWell( VesselPosition well ) {
         for (AbandonVessel abandonVessel : getAbandonVessels() ) {
             if( abandonVessel.getVesselPosition() == well ){

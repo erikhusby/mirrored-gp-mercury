@@ -46,7 +46,10 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
+import org.broadinstitute.sap.entity.quote.SapQuote;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.owasp.encoder.Encode;
 
 import javax.annotation.Nonnull;
@@ -128,7 +131,7 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     protected QuoteService quoteService;
-
+    protected SapIntegrationService sapService;
 
     public enum ErrorLevel {
         WARNING,
@@ -649,6 +652,16 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
         return quoteDetails;
     }
 
+    protected SapQuote validateSapQuote(ProductOrder productOrder) {
+        SapQuote quoteDetails = null;
+        try {
+            quoteDetails = productOrder.getSapQuote(sapService);
+        } catch (SAPIntegrationException e) {
+            addGlobalValidationError("The quote ''{2}'' was not found ", productOrder.getQuoteId());
+        }
+        return quoteDetails;
+    }
+
     /**
      * @return By default, edit is always allowed. Subclasses can put protections around that by overriding it.
      */
@@ -708,5 +721,10 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
     @Inject
     public void setQuoteService(QuoteService quoteService) {
         this.quoteService = quoteService;
+    }
+
+    @Inject
+    public void setSapService(SapIntegrationService sapService) {
+        this.sapService = sapService;
     }
 }

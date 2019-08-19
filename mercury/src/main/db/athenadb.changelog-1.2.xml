@@ -1425,4 +1425,13 @@
                                  referencedTableSchemaName="ATHENA" referencedTableName="RESEARCH_PROJECT"
                                  referencedColumnNames="RESEARCH_PROJECT_ID"/>
     </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-4924-11">
+        <dropNotNullConstraint columnName="PRIMARY_PRICE_ITEM" schemaName="ATHENA" tableName="PRODUCT" />
+    </changeSet>
+
+    <!--                                                                                              -->
+    <!--This file is a bit too long, please make all subsequent changes in athenadb.changelog-1.3.xml -->
+    <!--                                                                                              -->
+
 </databaseChangeLog>

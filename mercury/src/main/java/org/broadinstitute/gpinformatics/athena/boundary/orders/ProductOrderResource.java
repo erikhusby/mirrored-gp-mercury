@@ -36,6 +36,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
@@ -144,6 +145,9 @@ public class ProductOrderResource {
 
     @Inject
     private ProductEjb productEjb;
+
+    @Inject
+    private SapIntegrationService sapService;
 
     /**
      * Should be used only by test code
@@ -297,7 +301,8 @@ public class ProductOrderResource {
 
         validateAndLoginUser(productOrderData);
 
-        ProductOrder productOrder = productOrderData.toProductOrder(productOrderDao, researchProjectDao, productDao);
+        ProductOrder productOrder = productOrderData.toProductOrder(productOrderDao, researchProjectDao, productDao,
+                sapService);
 
         // Figure out who called this so we can record the owner.
         BspUser user = userBean.getBspUser();
@@ -312,7 +317,6 @@ public class ProductOrderResource {
             productOrder.setOrderStatus(ProductOrder.OrderStatus.Pending);
             if(productOrder.getProduct().isClinicalProduct()) {
                 productOrder.setClinicalAttestationConfirmed(true);
-                productOrder.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
             }
 
             // The PDO's IRB information is copied from its RP. For Collaboration PDOs, we require that there

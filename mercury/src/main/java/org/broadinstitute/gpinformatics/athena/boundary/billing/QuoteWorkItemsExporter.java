@@ -2,11 +2,14 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * This class creates a spreadsheet version of a product order's sample billing status, also called the sample
@@ -56,14 +59,17 @@ public class QuoteWorkItemsExporter extends AbstractSpreadsheetExporter<Abstract
         }
 
         for (QuoteImportItem item : quoteItems) {
-            getWriter().nextRow();
-            getWriter().writeCell(item.getQuoteId());
-            getWriter().writeCell(item.getPriceItem().getPlatform());
-            getWriter().writeCell(item.getPriceItem().getCategory());
-            getWriter().writeCell(item.getPriceItem().getName());
-            getWriter().writeCell(item.getQuantity());
-            getWriter().writeCell((item.getWorkCompleteDate() == null) ? "" : item.getWorkCompleteDate().toString());
-            getWriter().writeCell(item.getBillingMessage());
+            if (!item.isSapOrder()) {
+                getWriter().nextRow();
+                getWriter().writeCell(item.getQuoteId());
+                Optional<PriceItem> optionalPriceItem = Optional.ofNullable(item.getPriceItem());
+                getWriter().writeCell(optionalPriceItem.map(priceItem -> priceItem.getPlatform()).orElse(""));
+                getWriter().writeCell(optionalPriceItem.map(priceItem -> priceItem.getCategory()).orElse(""));
+                getWriter().writeCell(optionalPriceItem.map(priceItem -> priceItem.getName()).orElse(""));
+                getWriter().writeCell(item.getQuantity());
+                getWriter().writeCell(Optional.ofNullable(item.getWorkCompleteDate()).map(Date::toString).orElse(""));
+                getWriter().writeCell(item.getBillingMessage());
+            }
         }
 
         getWorkbook().write(out);

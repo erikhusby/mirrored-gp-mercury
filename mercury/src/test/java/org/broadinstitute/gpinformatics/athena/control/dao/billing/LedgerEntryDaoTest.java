@@ -71,7 +71,12 @@ public class LedgerEntryDaoTest extends StubbyContainerTest {
 
         // Create first ledger item.
         Date date1 = formatter.parse("12/5/12");
-        LedgerEntry unBilledLedger1 = new LedgerEntry(productOrderSample1, priceItem, date1, 1);
+        LedgerEntry unBilledLedger1;
+        if(order.hasSapQuote()) {
+            unBilledLedger1 = new LedgerEntry(productOrderSample1, order.getProduct(), date1, 1);
+        } else {
+            unBilledLedger1 = new LedgerEntry(productOrderSample1, priceItem, date1,1);
+        }
 
         // Add one ledger item to sample 1.
         productOrderSample1.getLedgerItems().add(unBilledLedger1);
@@ -89,8 +94,16 @@ public class LedgerEntryDaoTest extends StubbyContainerTest {
 
         // Create two ledger items for the new order one for each productOrderSample different quantities.
         Date date2 = formatter.parse("12/6/12");
-        LedgerEntry unBilledLedger1ForDupes = new LedgerEntry(productOrderSample1ForDupes, priceItem, date2, 8);
-        LedgerEntry unBilledLedger2ForDupes = new LedgerEntry(productOrderSample2ForDupes, priceItem, date2, 16);
+        LedgerEntry unBilledLedger1ForDupes;
+        LedgerEntry unBilledLedger2ForDupes;
+        if(orderWithDupes.hasSapQuote()) {
+
+            unBilledLedger1ForDupes = new LedgerEntry(productOrderSample1ForDupes, orderWithDupes.getProduct(), date2, 8);
+            unBilledLedger2ForDupes = new LedgerEntry(productOrderSample2ForDupes, orderWithDupes.getProduct(), date2, 16);
+        } else {
+            unBilledLedger1ForDupes = new LedgerEntry(productOrderSample1ForDupes, priceItem, date2, 8);
+            unBilledLedger2ForDupes = new LedgerEntry(productOrderSample2ForDupes, priceItem, date2, 16);
+        }
 
         // Add the ledger items one to each of the dupes samples.
         productOrderSample1ForDupes.getLedgerItems().add(unBilledLedger1ForDupes);

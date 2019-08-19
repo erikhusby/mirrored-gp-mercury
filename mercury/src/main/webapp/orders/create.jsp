@@ -3,6 +3,7 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
+<%@ page import="static org.broadinstitute.sap.services.SapIntegrationClientImpl.FundingType.*" %>
 
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
@@ -716,6 +717,7 @@
         function updateUIForProductChoice() {
 
             var productKey = $j("#product").val();
+            var quote = $j("#quote").val();
             if ((productKey === null) || (productKey === "")) {
                 $j("#customizationJsonString").val("");
                 customizationValues = {};
@@ -739,7 +741,8 @@
                     $j("#sampleInitiationKitRequestEdit").hide();
                 }
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getProductInfo=&product=" + productKey,
+                    url: "${ctxpath}/orders/order.action?getProductInfo=&product=" + productKey +
+                    "&quoteIdentifier=" + quote,
                     dataType: 'json',
                     success: selectedProductFollowup,
                     complete: detectNumberOfLanesVisibility
@@ -850,6 +853,7 @@
             var skipQuoteDiv = $j("#skipQuoteDiv");
             var quoteDiv = $j("#quote");
             if (data.supportsSkippingQuote) {
+
                 skipQuoteDiv.show();
                 quoteDiv.hide();
             }
@@ -1104,7 +1108,8 @@
             var productOrderKey = $j("input[name='productOrder']").val();
             if (quoteIdentifier && quoteIdentifier !== quoteTitle) {
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier + "&productOrder=" + productOrderKey,
+                    url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier +
+                        "&productOrder=" + productOrderKey ,
                     dataType: 'json',
                     success: updateFunds
                 });
@@ -1114,48 +1119,14 @@
         }
 
         function updateFunds(data) {
+            var $fundsRemaining = $j("#fundsRemaining");
+            $fundsRemaining.html(data.quoteInfo);
 
-            var quoteWarning = false;
-
-            if (data.fundsRemaining && !data.error) {
-                var fundsRemainingNotification = 'Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining +
-                        ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
-                var fundingDetails = data.fundingDetails;
-
-                if(data.status != "Funded" ||
-                        Number(data.outstandingEstimate.replace(/[^0-9\.]+/g,"")) > Number(data.fundsRemaining.replace(/[^0-9\.]+/g,""))) {
-                    quoteWarning = true;
-                }
-
-                for(var detailIndex in fundingDetails) {
-                    fundsRemainingNotification += '\n'+fundingDetails[detailIndex].grantTitle;
-                    if(fundingDetails[detailIndex].activeGrant) {
-                        fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].grantEndDate;
-                        if(fundingDetails[detailIndex].daysTillExpire < 45) {
-                            fundsRemainingNotification += ' in ' + fundingDetails[detailIndex].daysTillExpire +
-                                ' days. If it is likely this work will not be completed by then, please work on updating the ' +
-                                'Funding Source so Billing Errors can be avoided.';
-                            quoteWarning = true;
-                        }
-                    } else {
-                        fundsRemainingNotification += ' -- Has Expired ' + fundingDetails[detailIndex].grantEndDate;
-                        quoteWarning = true;
-                    }
-                    if(fundingDetails[detailIndex].grantStatus != "Active") {
-                        quoteWarning = true;
-                    }
-                    fundsRemainingNotification += '\n';
-                }
-                $j("#fundsRemaining").text(fundsRemainingNotification);
+            if (data.warning) {
+                $fundsRemaining.find("li").attr('class', '');
+                $fundsRemaining.addClass("alert alert-error");
             } else {
-                $j("#fundsRemaining").text('Error: ' + data.error);
-                quoteWarning = true;
-            }
-
-            if(quoteWarning) {
-                $j("#fundsRemaining").addClass("alert alert-error");
-            } else {
-                $j("#fundsRemaining").removeClass("alert alert-error");
+                $fundsRemaining.removeClass("alert alert-error");
             }
         }
 
@@ -1243,7 +1214,8 @@
             $j.ajax({
                 url: "${ctxpath}/orders/order.action?openCustomView=",
                 data: {
-                    'customizationJsonString': JSON.stringify(customizationValues)
+                    'customizationJsonString': JSON.stringify(customizationValues),
+                    'quoteIdentifier': $j("#quote").val()
                 },
                 datatype: 'html',
                 success: function (html) {

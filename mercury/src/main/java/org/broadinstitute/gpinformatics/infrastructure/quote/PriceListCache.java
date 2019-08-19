@@ -171,15 +171,6 @@ public class PriceListCache extends AbstractCache implements Serializable {
         return null;
     }
 
-    public String getPriceItemName(long priceItemId) {
-        QuotePriceItem item = findById(priceItemId);
-        if (item != null) {
-            return item.getName();
-        }
-
-        return "invalid price item id " + priceItemId;
-    }
-
     public QuotePriceItem findByKeyFields(String platform, String category, String name) {
 
         QuotePriceItem foundItem = null;
@@ -200,7 +191,11 @@ public class PriceListCache extends AbstractCache implements Serializable {
     }
 
     public Collection<QuotePriceItem> getReplacementPriceItems(Product product) {
-        return getReplacementPriceItems(product.getPrimaryPriceItem());
+        Collection<QuotePriceItem> replacementPriceItems = new ArrayList<>();
+        if(product.getPrimaryPriceItem() != null) {
+            replacementPriceItems.addAll(getReplacementPriceItems(product.getPrimaryPriceItem()));
+        }
+        return replacementPriceItems;
     }
 
     public Collection<QuotePriceItem> getReplacementPriceItems(PriceItem primaryPriceItem) {
@@ -248,17 +243,6 @@ public class PriceListCache extends AbstractCache implements Serializable {
             }
         }
         return price;
-    }
-
-    public List<String> getEffectivePricesForProducts(List<Product> products, Quote orderQuote)
-            throws InvalidProductException {
-        List<String> orderedPrices = new ArrayList<>();
-
-        for (Product product : products) {
-            orderedPrices.add(getEffectivePrice(product.getPrimaryPriceItem(), orderQuote));
-        }
-
-        return orderedPrices;
     }
 
     public enum PriceGrouping {
