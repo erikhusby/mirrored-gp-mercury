@@ -2169,7 +2169,7 @@ public class LabBatchFixUpTest extends Arquillian {
 
             LabBatch labBatch = labBatchDao.findByName(fields[2]);
             if (labBatch == null) {
-                labBatch = new LabBatch(fields[2], vessels, LabBatch.LabBatchType.WORKFLOW);;
+                labBatch = new LabBatch(fields[2], vessels, LabBatch.LabBatchType.WORKFLOW);
             }
             System.out.println("Adding " + labVessel.getLabel() + " to " + labBatch.getBatchName());
             LabBatchResource.addToBatch(vessels, labBatch, fields[1],
