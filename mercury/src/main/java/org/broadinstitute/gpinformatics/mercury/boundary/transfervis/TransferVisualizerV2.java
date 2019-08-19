@@ -199,12 +199,14 @@ public class TransferVisualizerV2 {
                 for (CherryPickTransfer cherryPickTransfer : event.getCherryPickTransfers()) {
                     LabVessel sourceVessel = cherryPickTransfer.getSourceVesselContainer().getVesselAtPosition(
                             cherryPickTransfer.getSourcePosition());
-                    String sourceVesselLabel = sourceVessel == null ? cherryPickTransfer.getSourcePosition().name() :
-                            sourceVessel.getLabel();
+                    String sourceVesselLabel = sourceVessel != null && sourceVessel.getType() == LabVessel.ContainerType.TUBE ?
+                            sourceVessel.getLabel() :
+                            cherryPickTransfer.getSourcePosition().name();
                     LabVessel targetVessel = cherryPickTransfer.getTargetVesselContainer().getVesselAtPosition(
                             cherryPickTransfer.getTargetPosition());
-                    String targetVesselLabel = targetVessel == null ? cherryPickTransfer.getTargetPosition().name() :
-                            targetVessel.getLabel();
+                    String targetVesselLabel = targetVessel != null && targetVessel.getType() == LabVessel.ContainerType.TUBE ?
+                            targetVessel.getLabel() :
+                            cherryPickTransfer.getTargetPosition().name();
 
                     renderContainer(cherryPickTransfer.getSourceVesselContainer(),
                             cherryPickTransfer.getAncillarySourceVessel(), labVessel, false);
