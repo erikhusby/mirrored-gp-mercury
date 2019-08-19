@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingAdaptor;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportInfo;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
@@ -164,17 +165,15 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
                         businessKey = billingKey.get().getBusinessKey();
                     }
 
-                    final List<String> cellList = new ArrayList(Arrays.asList(
-                            getBillingSessionLink(businessKey, singleWorkItem.isPresent()?singleWorkItem.get():"",
-                                    context),
-                            billedDate.isPresent()?dateFormatter.format(billedDate.get()):"",
-                            getQuoteLink(quoteImportItem.getQuoteId(), context),
-                            getWorkItemLink(singleWorkItem.isPresent()?singleWorkItem.get():"",
-                                    quoteImportItem.getQuoteId(), context),
-                            sapItems.isPresent()?sapItems.get():"",
+                    final List<String> cellList = new ArrayList<String>(Arrays.asList(
+                            getBillingSessionLink(businessKey, singleWorkItem.orElse(""), context),
+                            billedDate.map(dateFormatter::format).orElse(""),
+                            getQuoteLink(quoteImportItem, context),
+                            getWorkItemLink(singleWorkItem.orElse(""), quoteImportItem.getQuoteId(), context),
+                            sapItems.orElse(""),
                             quoteImportItem.getProduct().getDisplayName(),
                             quoteImportItem.getRoundedQuantity(), quoteImportItem.getNumSamples(),
-                            workCompleteDate.isPresent()?dateFormatter.format(workCompleteDate.get()):"",
+                            workCompleteDate.map(dateFormatter::format).orElse(""),
                             quoteImportItem.getBillingMessage()));
                     ConfigurableList.ResultRow row =
                             new ConfigurableList.ResultRow(null, cellList, String.valueOf(count));
@@ -196,21 +195,25 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
 
     /**
      * Creates a link to the definition of the quote on the quote server
-     * @param quoteId Unique identifier of the quote as it is found in the Quote server
+     * @param importItem Unique identifier of the quote as it is found in the Quote server
      * @param context Search context object which contains injectable services that typically cannot be injected
      *                through the search process
      * @return Anchor link to the quote definition on the quote server
      */
-    private String getQuoteLink(String quoteId, SearchContext context) {
+    private String getQuoteLink(QuoteImportItem importItem, SearchContext context) {
 
         StringBuffer quoteLink = new StringBuffer();
-        if(StringUtils.isNotBlank(quoteId)) {
+        if(StringUtils.isNotBlank(importItem.getQuoteId())) {
             if(context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB) {
                 quoteLink.append("<a class=\"external\" target=\"QUOTE\" href=\"");
-                quoteLink.append(context.getQuoteLink().quoteUrl(quoteId));
-                quoteLink.append("\">").append(quoteId).append("</a>");
+                if(StringUtils.isNumeric(importItem.getQuoteId())) {
+                    quoteLink.append(context.getSapQuoteLink().sapUrl(importItem.getQuoteId()));
+                } else {
+                    quoteLink.append(context.getQuoteLink().quoteUrl(importItem.getQuoteId()));
+                }
+                quoteLink.append("\">").append(importItem.getQuoteId()).append("</a>");
             } else {
-                quoteLink.append(quoteId);
+                quoteLink.append(importItem.getQuoteId());
             }
         }
         return quoteLink.toString();
@@ -228,13 +231,17 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
         StringBuffer workLink = new StringBuffer();
         final boolean webDisplay = StringUtils.isNotBlank(workItemId) &&
                           context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB;
-        if(webDisplay) {
-            workLink.append("<a class=\"external\" target=\"QUOTE\" href=\"");
-            workLink.append(context.getQuoteLink().workUrl(quoteId, workItemId));
-            workLink.append("\">");
+        boolean eligibleForLink = StringUtils.isNotBlank(workItemId) && !workItemId
+                .contains(BillingAdaptor.NOT_ELLIGIBLE_FOR_QUOTE_SERVER_INDICATOR)
+                    && !workItemId.contains(BillingAdaptor.NOT_ELIGIBLE_FOR_SAP_INDICATOR);
+        if(webDisplay && eligibleForLink) {
+
+                workLink.append("<a class=\"external\" target=\"QUOTE\" href=\"");
+                workLink.append(context.getQuoteLink().workUrl(quoteId, workItemId));
+                workLink.append("\">");
         }
         workLink.append(workItemId);
-        if(webDisplay) {
+        if(webDisplay && eligibleForLink) {
             if(context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB) {
                 workLink.append("</a>");
             }

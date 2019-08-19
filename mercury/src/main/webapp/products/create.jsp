@@ -1,6 +1,7 @@
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.products.Product" %>
+<%@ page import="org.broadinstitute.sap.services.SapIntegrationClientImpl" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -60,6 +61,18 @@
             var criteriaCount = 0;
             var genotypingChipCount = 0;
 
+            function loadDefaultWbs() {
+                var wbs = "";
+                var tokenInput = $j("#primaryPriceItem").tokenInput("get");
+                if (tokenInput.length > 0) {
+                    wbs = "<%= SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getDefaultWbs() %>";
+                    if ($j("#clinicalProduct, #externalOrderOnly").is(":checked")) {
+                        wbs = "<%= SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getDefaultWbs() %>";
+                    }
+                }
+                $j("#defaultWbs").text(wbs);
+            }
+
             $j(document).ready(
                 function () {
                     $j("#primaryPriceItem").tokenInput(
@@ -72,21 +85,9 @@
                             tokenLimit: 1,
                             tokenDelimiter: "${actionBean.priceItemTokenInput.separator}",
                             preventDuplicates: true,
-                            autoSelectFirstResult: true
-                        }
-                    );
-
-                    $j("#externalPriceItem").tokenInput(
-                        "${ctxpath}/products/product.action?externalPriceItemAutocomplete=&product=${actionBean.editProduct.businessKey}", {
-                            hintText: "Type an External Price Item name",
-                            <enhance:out escapeXml="false">
-                            prePopulate: ${actionBean.ensureStringResult(actionBean.externalPriceItemTokenInput.completeData)},
-                            </enhance:out>
-                            resultsFormatter: formatInput,
-                            tokenLimit: 1,
-                            tokenDelimiter: "${actionBean.externalPriceItemTokenInput.separator}",
-                            preventDuplicates: true,
-                            autoSelectFirstResult: true
+                            autoSelectFirstResult: true,
+                            onAdd: loadDefaultWbs,
+                            onDelete: loadDefaultWbs
                         }
                     );
 
@@ -153,6 +154,11 @@
                         $j("#reagentDesignKey").prop('disabled', false);
                         return true;
                     });
+
+                    $j(function () {
+                        loadDefaultWbs();
+                    });
+                    $j("#clinicalProduct, #externalOrderOnly").on("click", loadDefaultWbs);
                 }
             );
 
@@ -425,6 +431,23 @@
                                 </c:if>
                             </div>
                         </div>
+
+                        <c:if test="${actionBean.editProduct.SSFProduct}">
+
+                            <div class="control-group">
+                                <stripes:label for="offeredAsCommercialProduct" class="control-label">
+                                    Allow for Commercial Orders
+                                </stripes:label>
+                                <div class="controls">
+                                    <stripes:checkbox id="offeredAsCommercialProduct" name="editProduct.offeredAsCommercialProduct" style="margin-top: 10px;" disabled="${actionBean.productUsedInOrders}"/>
+                                    <c:if test="${actionBean.productUsedInLLCOrders}">
+                                        <stripes:hidden name="editProduct.offeredAsCommercialProduct" value="${actionBean.editProduct.offeredAsCommercialProduct}" />
+                                    </c:if>
+                                </div>
+                            </div>
+                        </c:if>
+
+
                     </security:authorizeBlock>
 
                     <div class="control-group">
@@ -450,16 +473,15 @@
                     </div>
                 </div>
 
-                        <%--Saving this implementation for the final 2.0 SAP/GP release of Mercury--%>
-                <%--<div class="control-group">--%>
-                    <%--<stripes:label for="alternateExternalName" class="control-label">--%>
-                        <%--Alternate (External) Product Name--%>
-                    <%--</stripes:label>--%>
-                    <%--<div class="controls">--%>
-                        <%--<stripes:text id="alternateExternalName" name="editProduct.alternateExternalName" class="defaultText input-xxlarge"--%>
-                            <%--title="Enter the Commercial/Clinical (External) name of the new product"/>--%>
-                    <%--</div>--%>
-                <%--</div>--%>
+                <div class="control-group">
+                    <stripes:label for="alternateExternalName" class="control-label">
+                        Alternate (External) Product Name
+                    </stripes:label>
+                    <div class="controls">
+                        <stripes:text id="alternateExternalName" name="editProduct.alternateExternalName" class="defaultText input-xxlarge"
+                            title="Enter the Commercial/Clinical (External) name of the new product"/>
+                    </div>
+                </div>
 
                 <div class="control-group">
                     <stripes:label for="description" class="control-label">
@@ -477,7 +499,8 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="partNumber" name="editProduct.partNumber" class="defaultText input-xxlarge"
-                            title="Enter the part number of the new product"
+                                      title="Enter the part number of the new product"
+                                      maxlength="<%=String.valueOf(Product.MAX_PART_NUMBER_LENGTH)%>"
                                       readonly="${actionBean.productInSAP(actionBean.editProduct.partNumber,
                                                                           actionBean.editProduct.determineCompanyConfiguration())}"/>
                     </div>
@@ -574,7 +597,7 @@
 
                 <div class="control-group">
                     <stripes:label for="primaryPriceItem" class="control-label">
-                        Primary Price Item *
+                        Primary Price Item
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="primaryPriceItem" name="priceItemTokenInput.listOfKeys"
@@ -582,19 +605,14 @@
                     </div>
                 </div>
 
-                        <%--Saving this implementation for the final 2.0 SAP/GP release of Mercury--%>
-                    <%--<div class="control-group">--%>
-                        <%--<stripes:label for="externalPriceItem" class="control-label">--%>
-                            <%--Alternate (External) Price Item--%>
-                        <%--</stripes:label>--%>
-                        <%--<div class="controls">--%>
-                            <%--<stripes:text id="externalPriceItem" name="externalPriceItemTokenInput.listOfKeys"--%>
-                                          <%--class="defaultText" title="Type to search for matching price items"/>--%>
-                        <%--</div>--%>
-                    <%--</div>--%>
+                <div class="control-group">
+                    <label for="defaultWbs" class="control-label">Product WBS</label>
+                    <div class="controls">
+                        <div id="defaultWbs" class="form-value" style="margin-top: 10px;"></div>
+                    </div>
+                </div>
 
-
-                    <div class="control-group">
+                <div class="control-group">
                     <stripes:label for="addOns" class="control-label">
                         Add-ons
                     </stripes:label>
@@ -741,6 +759,16 @@
                             <stripes:label for="controlsProject" name="Positive Controls Project" class="control-label"/>
                             <div class="controls">
                                 <stripes:select id="controlsProject" name="controlsProject">
+                                    <stripes:option value="">Select One</stripes:option>
+                                    <stripes:options-collection collection="${actionBean.controlsProjects}" label="displayName" value="businessKey"/>
+                                </stripes:select>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <stripes:label for="negativeControlsProject" name="Negative Controls Project" class="control-label"/>
+                            <div class="controls">
+                                <stripes:select id="negativeControlsProject" name="negativeControlsProject">
                                     <stripes:option value="">Select One</stripes:option>
                                     <stripes:options-collection collection="${actionBean.controlsProjects}" label="displayName" value="businessKey"/>
                                 </stripes:select>

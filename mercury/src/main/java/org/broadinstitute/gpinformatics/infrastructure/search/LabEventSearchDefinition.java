@@ -562,7 +562,7 @@ public class LabEventSearchDefinition {
                 for( LabVessel labVessel : eventVessels ) {
                     for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
                         for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples() ) {
-                            productNames.add(productOrderSample.getProductOrder().getJiraTicketKey());
+                            productNames.add(productOrderSample.getProductOrder().getBusinessKey());
                         }
                     }
                 }

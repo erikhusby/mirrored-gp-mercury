@@ -41,7 +41,7 @@ public class ReagentSearchTest extends Arquillian {
                 SearchDefinitionFactory.getForEntity(ColumnEntity.REAGENT.getEntityName());
 
         SearchInstance searchInstance = new SearchInstance();
-        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("LCSET", configurableSearchDefinition);
+        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("Lab Batch", configurableSearchDefinition);
         searchValue.setOperator(SearchInstance.Operator.EQUALS);
         searchValue.setValues(Collections.singletonList("LCSET-6049"));
 
@@ -74,7 +74,7 @@ public class ReagentSearchTest extends Arquillian {
                 SearchDefinitionFactory.getForEntity(ColumnEntity.REAGENT.getEntityName());
 
         SearchInstance searchInstance = new SearchInstance();
-        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("LCSET", configurableSearchDefinition);
+        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("Lab Batch", configurableSearchDefinition);
         searchValue.setOperator(SearchInstance.Operator.EQUALS);
         // Choose a simple and fast rework LCSET
         searchValue.setValues(Collections.singletonList("LCSET-6049"));

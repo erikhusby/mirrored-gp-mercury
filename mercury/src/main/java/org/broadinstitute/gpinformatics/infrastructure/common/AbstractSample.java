@@ -63,7 +63,11 @@ public abstract class AbstractSample {
      */
     @Nonnull
     public SampleData getSampleData() {
-        if (!hasBspSampleDataBeenInitialized) {
+        return getSampleData(false);
+    }
+
+    public SampleData getSampleData(boolean refetch) {
+        if (!hasBspSampleDataBeenInitialized || refetch) {
             SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
             SampleData sampleDataTemp = sampleDataFetcher.fetchSampleData(getSampleKey());
 

@@ -484,16 +484,14 @@ public class MercurySampleSearchDefinition {
             Set<ProductOrderSample> productOrderSamples = findPdoSamples(sample);
 
             Set<String> results = new TreeSet<>();
-            String jiraTicketKey;
-            String sampleDeliveryStatus;
 
             for( ProductOrderSample productOrderSample : productOrderSamples ) {
-                jiraTicketKey = productOrderSample.getProductOrder().getJiraTicketKey();
-                sampleDeliveryStatus = productOrderSample.getDeliveryStatus().getDisplayName();
+                String businessKey = productOrderSample.getProductOrder().getBusinessKey();
+                String sampleDeliveryStatus = productOrderSample.getDeliveryStatus().getDisplayName();
                 if( includeSampleStatus && !sampleDeliveryStatus.isEmpty()) {
-                    results.add(jiraTicketKey + "->(" + sampleDeliveryStatus + ")");
+                    results.add(businessKey + "->(" + sampleDeliveryStatus + ")");
                 } else {
-                    results.add( jiraTicketKey );
+                    results.add( businessKey );
                 }
             }
 

@@ -1541,6 +1541,7 @@ public class LabBatchFixUpTest extends Arquillian {
      * ...
      */
     @Test(enabled = false)
+    @Deprecated // This version kept for audit purposes, but deprecated because it does not remove computed lcsets.
     public void fixupPo9128() throws Exception {
         userBean.loginOSUser();
         userTransaction.begin();
@@ -1565,6 +1566,71 @@ public class LabBatchFixUpTest extends Arquillian {
                                    labEvent.getLabEventType().name() + " (labEventId " + labEvent.getLabEventId() + ")");
                 labEvent.setManualOverrideLcSet(null);
             }
+            System.out.println("Deleting " + labBatch.getBatchName());
+            labBatchDao.remove(labBatch.getJiraTicket());
+            labBatch.getReworks().clear();
+            labBatchDao.remove(labBatch);
+        }
+        labBatchDao.persist(new FixupCommentary(lines.get(0) + " delete cancelled LCSET"));
+        labBatchDao.flush();
+        userTransaction.commit();
+    }
+
+    /*
+     * This test is used to delete LCSETs that are canceled in JIRA.  It reads its parameters from a file,
+     * testdata/DeleteLabBatch.txt, so it can be used for other similar fixups, without writing a new test.
+     * Example contents of the file are:
+     * PO-9128
+     * LCSET-11312
+     * LCSET-11553
+     * ...
+     */
+    @Test(enabled = false)
+    public void deleteCancelledLcset() throws Exception {
+        userBean.loginOSUser();
+        userTransaction.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("DeleteLabBatch.txt"));
+        // If the LCSET has batch_starting_vessels but no bucket entries, these batch_starting_vessels
+        // orphans will be removed by cascade when the labBatch is removed.
+        for (int i = 1; i < lines.size(); ++i) {
+            LabBatch labBatch = labBatchDao.findByName(lines.get(i));
+            labBatch.getBucketEntries().forEach(bucketEntry -> {
+                LabVessel labVessel = bucketEntry.getLabVessel();
+                System.out.println("Removing bucket entry " + bucketEntry);
+                labVessel.removeBucketEntry(bucketEntry);
+            });
+            // This is needed to avoid "removing detached bucketEntry" when removing the batch.
+            labBatch.getBucketEntries().clear();
+
+            // Removes manual lcset overrides.
+            for (LabEvent labEvent : labBatchDao.findListByList(LabEvent.class, LabEvent_.manualOverrideLcSet,
+                    Collections.singletonList(labBatch))) {
+                System.out.println("Removing manual override of " + labBatch.getBatchName() + " from " +
+                                   labEvent.getLabEventType().name() + " (labEventId " + labEvent.getLabEventId() + ")");
+                labEvent.setManualOverrideLcSet(null);
+            }
+
+            // Removes the lcset from lab event computed lcsets.
+            String query = String.format("select lab_event from le_computed_lcsets where computed_lcsets = %d",
+                    labBatch.getLabBatchId());
+            List<Long> labEventIds = (List<Long>)labBatchDao.getEntityManager().createNativeQuery(query).
+                    getResultList().stream().
+                    map(id -> ((BigDecimal) id).longValueExact()).
+                    distinct().
+                    collect(Collectors.toList());
+            for (LabEvent labEvent : labBatchDao.findListByList(LabEvent.class, LabEvent_.labEventId, labEventIds)) {
+                String remainingLcsets = labEvent.getComputedLcSets().stream().
+                        map(LabBatch::getBatchName).
+                        filter(name -> !name.equals(labBatch.getBatchName())).
+                        collect(Collectors.joining(" "));
+                System.out.println("Removing " + labBatch.getBatchName() +
+                        " from Computed Lcsets for " + labEvent.getLabEventType().getName() +
+                        " (labEventId " + labEvent.getLabEventId() + ")" +
+                        " leaving " + (remainingLcsets.isEmpty() ? "none" : remainingLcsets));
+                labEvent.getComputedLcSets().remove(labBatch);
+            }
+
             System.out.println("Deleting " + labBatch.getBatchName());
             labBatchDao.remove(labBatch.getJiraTicket());
             labBatch.getReworks().clear();
