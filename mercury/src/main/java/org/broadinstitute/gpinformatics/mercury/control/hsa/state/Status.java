@@ -4,8 +4,11 @@ public enum Status {
     QUEUED("Queued"),
     RUNNING("Running"),
     COMPLETE("Complete"),
-    STOPPED("Stopped"),
-    FAILED("Failed");
+    CANCELLED("Cancelled"),
+    SUSPENDED("Suspended"),
+    FAILED("Failed"),
+    RETRY("Retry"),
+    UNKNOWN("Unknown");
 
     private final String statusName;
 

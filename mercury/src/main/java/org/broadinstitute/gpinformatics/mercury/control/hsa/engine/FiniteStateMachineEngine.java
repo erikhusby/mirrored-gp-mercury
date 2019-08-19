@@ -4,19 +4,23 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.StateMachineDao;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenAppContext;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.TaskManager;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerContext;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Transition;
 
+import javax.annotation.Resource;
+import javax.ejb.EJBContext;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionManagement;
 import javax.ejb.TransactionManagementType;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -36,6 +40,9 @@ public class FiniteStateMachineEngine {
     @Inject
     private StateMachineDao stateMachineDao;
 
+    @Resource
+    private EJBContext ejbContext;
+
     private static final AtomicBoolean busy = new AtomicBoolean(false);
 
     public FiniteStateMachineEngine() {
@@ -45,18 +52,23 @@ public class FiniteStateMachineEngine {
         this.context = context;
     }
 
-    public void resumeMachine(FiniteStateMachine stateMachine) {
+    public void resumeMachine(FiniteStateMachine stateMachine) throws SystemException {
 
         if (!busy.compareAndSet(false, true)) {
             return;
         }
+        if (stateMachine.getActiveStates().isEmpty()) {
+            throw new RuntimeException("No active states for " + stateMachine);
+        }
 
+        UserTransaction utx = ejbContext.getUserTransaction();
         try {
-            if (stateMachine.getActiveStates().isEmpty()) {
-                throw new RuntimeException("No active states for " + stateMachine);
-            }
-
+            utx.begin();
             executeProcess(stateMachine);
+            utx.commit();
+        } catch (Exception e) {
+            utx.rollback();
+            log.error("Error occured when resuming state machine " + stateMachine, e);
         } finally {
             busy.set(false);
         }
@@ -64,8 +76,8 @@ public class FiniteStateMachineEngine {
 
     public void executeProcess(FiniteStateMachine stateMachine) {
         executeProcessDaoFree(stateMachine);
-        stateMachineDao.persist(stateMachine);
-        stateMachineDao.flush();
+//        stateMachineDao.persist(stateMachine);
+//        stateMachineDao.flush();
     }
 
     @DaoFree
@@ -74,20 +86,70 @@ public class FiniteStateMachineEngine {
 
             if (state.isStartState() && stateMachine.getDateStarted() == null) {
                 stateMachine.setDateStarted(new Date());
+                state.OnEnter();
+                for (Task task: state.getTasks()) {
+                    try {
+                        taskManager.fireEvent(task, context);
+                    } catch (Exception e) {
+                        log.error("Error starting machine tasks " + task.getTaskName(), e);
+                        task.setStatus(Status.SUSPENDED);
+                    }
+                }
             }
 
             log.debug("Checking transitions from " + state);
-            if (taskManager.isTaskComplete(state.getTask(), context)) {
-                List<Transition> transitionsFromState = stateMachine.getTransitionsFromState(state);
-                for (Transition transition : transitionsFromState) {
-                    log.info("Processing Transition " + transition);
-                    State toState = transition.getToState();
-                    taskManager.fireEvent(toState.getTask(), context);
-                    toState.setAlive(true);
-                    toState.setStartTime(new Date());
+            for (Task task: state.getActiveTasks()) {
+                Status taskStatus = taskManager.checkTaskStatus(task, context);
+                task.setStatus(taskStatus);
+                if (taskStatus == Status.COMPLETE) {
+                    task.setEndTime(new Date());
                 }
+            }
+
+            if (state.isMainTasksComplete()) {
+                if (state.getExitTask().isPresent()) {
+                    Task exitTask = state.getExitTask().get();
+                    if (state.isExitTaskPending()) {
+                        try {
+                            taskManager.fireEvent(exitTask, context);
+                        } catch (Exception e) {
+                            log.error("Failed to fire exit task " + exitTask.getTaskName(), e);
+                            exitTask.setStatus(Status.SUSPENDED);
+                        }
+                    }
+                    if (exitTask.getStatus() == Status.COMPLETE) {
+                        exitTask.setEndTime(new Date());
+                    }
+                }
+            }
+
+            if (state.isComplete()) {
                 state.setAlive(false);
                 state.setEndTime(new Date());
+                List<Transition> transitionsFromState = stateMachine.getTransitionsFromState(state);
+                for (Transition transition : transitionsFromState) {
+                    State toState = transition.getToState();
+                    toState.setAlive(true);
+                    toState.setStartTime(new Date());
+                    toState.OnEnter();
+                    for (Task task: toState.getTasks()) {
+                        try {
+                            taskManager.fireEvent(task, context);
+                        } catch (Exception e) {
+                            log.error("Error firing next task " + task.getTaskName(), e);
+                            task.setStatus(Status.SUSPENDED);
+                        }
+                    }
+                }
+            } else {
+                for (Task task: state.getTasksWithStatus(Status.RETRY)) {
+                    try {
+                        taskManager.fireEvent(task, context);
+                    } catch (Exception e) {
+                        log.error("Error retrying failed task " + task.getTaskName(), e);
+                        task.setStatus(Status.SUSPENDED);
+                    }
+                }
             }
         }
 

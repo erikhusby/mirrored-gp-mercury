@@ -45,4 +45,8 @@ public class IlluminaSequencingRunDao extends GenericDao{
             }
         });
     }
+
+    public List<IlluminaSequencingRun> findByFlowcellBarcode(String flowcellBarcode) {
+        return findListWithWildcard(IlluminaSequencingRun.class, flowcellBarcode, true, IlluminaSequencingRun_.runBarcode);
+    }
 }

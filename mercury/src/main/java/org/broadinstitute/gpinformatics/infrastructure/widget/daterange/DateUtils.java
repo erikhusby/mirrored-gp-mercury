@@ -43,6 +43,8 @@ public class DateUtils {
 
     private static final String DATE_TIME_PATTERN_YY_DASH = "yy-MM-dd hh:mm a";
 
+    private static final String DATE_TIME_FILE_PATTERN_YY_DASH = "yy-MM-dd_hh-mm-ss";
+
     private static final String DATE_TIME_PATTERN_YYYYMMDD_DASH = "yyyy-MMM-dd hh:mm a";
 
     public static final String LONG_DATE_TIME_MILLIS = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
@@ -59,6 +61,8 @@ public class DateUtils {
     public static final Format dateTimeFormat = FastDateFormat.getInstance(DATE_TIME_PATTERN_YY_DASH);
 
     public static final FastDateFormat yyyymmmdddDateTimeFormat = FastDateFormat.getInstance(DATE_TIME_PATTERN_YYYYMMDD_DASH);
+
+    public static final FastDateFormat dateTimeFileFormat = FastDateFormat.getInstance(DATE_TIME_FILE_PATTERN_YY_DASH);
 
     /**
      * Return default DATE_PATTERN (MM/dd/yyyy)
@@ -193,6 +197,14 @@ public class DateUtils {
         }
 
         return (returnValue);
+    }
+
+    public static String getFileDateTime(Date aDate) {
+        if (aDate == null) {
+            return "";
+        }
+
+        return dateTimeFileFormat.format(aDate);
     }
 
     /**

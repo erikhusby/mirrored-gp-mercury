@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexing
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunChamber;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
@@ -20,9 +21,11 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 
 @Dependent
@@ -52,6 +55,8 @@ public class SampleSheetBuilder {
                 br, ',', SampleData.class, colToFieldMap, null, 0);
     }
 
+
+    // TODO NextSeq reverse complement of index 2
     public SampleSheet makeSampleSheet(IlluminaSequencingRun illuminaRun) {
         RunCartridge flowcell = illuminaRun.getSampleCartridge();
 
@@ -152,6 +157,7 @@ public class SampleSheetBuilder {
 
         private Boolean dualIndex;
         private Map<String, SampleData> mapSampleNameToData = new HashMap<>();
+        private Set<MercurySample> mercurySamples = new HashSet<>();
 
         public Data() {
             super("[Data]");
@@ -168,14 +174,16 @@ public class SampleSheetBuilder {
 
         public void addSample(SampleInstanceV2 sampleInstanceV2, int lane) {
             String pdoSampleName;
+            MercurySample mercurySample = null;
             ProductOrderSample productOrderSample = sampleInstanceV2.getSingleProductOrderSample();
             if (productOrderSample != null) {
-                pdoSampleName = productOrderSample.getSampleKey();
+                mercurySample = productOrderSample.getMercurySample();
             } else {
                 // Controls won't have a ProductOrderSample, so use root sample ID.
-                pdoSampleName = sampleInstanceV2.getMercuryRootSampleName();
+                mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
             }
-
+            mercurySamples.add(mercurySample);
+            pdoSampleName = mercurySample.getSampleKey();
             MolecularIndexingScheme molecularIndexingScheme = sampleInstanceV2.getMolecularIndexingScheme();
             SortedMap<MolecularIndexingScheme.IndexPosition, MolecularIndex> indexes =
                     molecularIndexingScheme.getIndexes();
@@ -185,16 +193,16 @@ public class SampleSheetBuilder {
                 createSubHeader();
             }
 
-            Iterator<MolecularIndex> iterator = indexes.values().iterator();
-            String index1 = iterator.next().getSequence();
+            // TODO Grab the correct index.
             SampleData data = null;
+            MolecularIndex p7 = indexes.get(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7);
             if (dualIndex) {
-                String index2 = iterator.next().getSequence();
-                data = new SampleData(pdoSampleName, pdoSampleName, lane, index1, index2);
-                appendLine(pdoSampleName, pdoSampleName, String.valueOf(lane), index1, index2);
+                MolecularIndex p5 = indexes.get(MolecularIndexingScheme.IndexPosition.ILLUMINA_P5);
+                data = new SampleData(pdoSampleName, pdoSampleName, lane, p7.getSequence(), p5.getSequence());
+                appendLine(pdoSampleName, pdoSampleName, String.valueOf(lane), p7.getSequence(), p5.getSequence());
             } else {
-                data = new SampleData(pdoSampleName, pdoSampleName, lane, index1, null);
-                appendLine(pdoSampleName, pdoSampleName, String.valueOf(lane), index1);
+                data = new SampleData(pdoSampleName, pdoSampleName, lane, p7.getSequence(), null);
+                appendLine(pdoSampleName, pdoSampleName, String.valueOf(lane), p7.getSequence());
             }
             mapSampleNameToData.put(pdoSampleName, data);
         }
@@ -203,6 +211,9 @@ public class SampleSheetBuilder {
             return mapSampleNameToData;
         }
 
+        public Set<MercurySample> getMercurySamples() {
+            return mercurySamples;
+        }
     }
 
     public static class SampleData {

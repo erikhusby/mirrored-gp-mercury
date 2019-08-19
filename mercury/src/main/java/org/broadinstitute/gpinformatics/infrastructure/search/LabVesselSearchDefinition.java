@@ -11,11 +11,13 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.DisplayExpression;
+import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselAlignmentMetricPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselArrayMetricPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselLatestEventPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselLatestPositionPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetadataPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetricPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselSequencingMetricPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.SampleDataFetcherAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.columns.VesselLayoutPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.VesselMetricDetailsPlugin;
@@ -2620,6 +2622,18 @@ public class LabVesselSearchDefinition {
         searchTerm = new SearchTerm();
         searchTerm.setName("Most Recent Rack and Event");
         searchTerm.setPluginClass(LabVesselLatestPositionPlugin.class);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Demultiplex Metrics");
+        searchTerm.setIsNestedParent(Boolean.TRUE);
+        searchTerm.setPluginClass(LabVesselSequencingMetricPlugin.class);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Alignment Metrics");
+        searchTerm.setIsNestedParent(Boolean.TRUE);
+        searchTerm.setPluginClass(LabVesselAlignmentMetricPlugin.class);
         searchTerms.add(searchTerm);
 
         return searchTerms;

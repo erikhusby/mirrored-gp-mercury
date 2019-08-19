@@ -9,7 +9,12 @@ import java.io.Serializable;
 @ConfigKey("dragen")
 @ApplicationScoped
 public class DragenConfig extends AbstractConfig implements Serializable {
-    private String demultiplexOutputDirectory;
+
+    private String demultiplexOutputPath;
+
+    private String dragenPath;
+
+    private String slurmHost;
 
     public DragenConfig() {
     }
@@ -19,11 +24,27 @@ public class DragenConfig extends AbstractConfig implements Serializable {
         super(deploymentConfig);
     }
 
-    public String getDemultiplexOutputDirectory() {
-        return demultiplexOutputDirectory;
+    public String getDemultiplexOutputPath() {
+        return demultiplexOutputPath;
     }
 
-    public void setDemultiplexOutputDirectory(String demultiplexOutputDirectory) {
-        this.demultiplexOutputDirectory = demultiplexOutputDirectory;
+    public void setDemultiplexOutputPath(String demultiplexOutputPath) {
+        this.demultiplexOutputPath = demultiplexOutputPath;
+    }
+
+    public String getDragenPath() {
+        return dragenPath;
+    }
+
+    public void setDragenPath(String dragenPath) {
+        this.dragenPath = dragenPath;
+    }
+
+    public String getSlurmHost() {
+        return slurmHost;
+    }
+
+    public void setSlurmHost(String slurmHost) {
+        this.slurmHost = slurmHost;
     }
 }

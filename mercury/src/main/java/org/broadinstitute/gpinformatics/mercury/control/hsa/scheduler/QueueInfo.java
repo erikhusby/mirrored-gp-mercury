@@ -5,7 +5,7 @@ import com.opencsv.bean.CsvBindByPosition;
 public class QueueInfo {
 
     @CsvBindByPosition(position = 8)
-    private long jobId;
+    private String jobId;
 
     @CsvBindByPosition(position = 9)
     private String name;
@@ -28,11 +28,11 @@ public class QueueInfo {
     public QueueInfo() {
     }
 
-    public long getJobId() {
+    public String getJobId() {
         return jobId;
     }
 
-    public void setJobId(long jobId) {
+    public void setJobId(String jobId) {
         this.jobId = jobId;
     }
 

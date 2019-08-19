@@ -5,8 +5,10 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVesselFixupTest;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -16,24 +18,20 @@ import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.HashMap;
-import java.util.Map;
-
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.startsWith;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * Fixups to the SequencingRun entity.
@@ -395,6 +393,39 @@ public class SequencingRunFixupTest extends Arquillian {
         }
 
         illuminaSequencingRunDao.persist(new FixupCommentary(sampleUpdateLines.get(0)));
+        illuminaSequencingRunDao.flush();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/UpdateFlowcellChambers.txt,
+     * so it can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * PO-136444 run folder moved after registration
+     * 180721_SL-MAC_0453_FC000000000-BV4PM
+     */
+    @Test(enabled = false)
+    public void addMissingSequencingRunChambers() throws Exception {
+        userBean.loginOSUser();
+
+        List<String> runLines = IOUtils.readLines(VarioskanParserTest.getTestResource("UpdateFlowcellChambers.txt"));
+        for(int i = 1; i < runLines.size(); i++) {
+            IlluminaSequencingRun run = illuminaSequencingRunDao.findByRunName(runLines.get(i));
+            RunCartridge sampleCartridge = run.getSampleCartridge();
+            if (run.getSequencingRunChambers() != null && !run.getSequencingRunChambers().isEmpty()) {
+                throw new RuntimeException(run.getRunName() + " already has run chambers.");
+            }
+            if (OrmUtil.proxySafeIsInstance(sampleCartridge, IlluminaFlowcell.class)) {
+                IlluminaFlowcell flowcell = OrmUtil.proxySafeCast(sampleCartridge, IlluminaFlowcell.class);
+                for (VesselPosition vesselPosition : flowcell.getFlowcellType().getVesselGeometry()
+                        .getVesselPositions()) {
+                    if (vesselPosition.name().startsWith("LANE")) {
+                        int laneNum = Integer.parseInt(vesselPosition.name().replace("LANE", ""));
+                        run.addSequencingRunChamber(new IlluminaSequencingRunChamber(run, laneNum));
+                    }
+                }
+            }
+        }
+
+        illuminaSequencingRunDao.persist(new FixupCommentary(runLines.get(0)));
         illuminaSequencingRunDao.flush();
     }
 }

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler;
 
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.ProcessTask;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 
 import java.util.List;
 
@@ -9,6 +10,6 @@ public interface SchedulerController {
     List<QueueInfo> listQueue();
     String batchJob(String partition, ProcessTask processTask);
     boolean cancelJob(String jobId);
-    boolean isJobComplete(String jobName, long pid);
-    JobInfo fetchJobInfo(int jobId);
+    Status fetchJobStatus(long pid);
+    JobInfo fetchJobInfo(long jobId);
 }

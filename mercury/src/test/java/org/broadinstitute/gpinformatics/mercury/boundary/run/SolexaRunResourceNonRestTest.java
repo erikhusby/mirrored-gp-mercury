@@ -313,7 +313,8 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         IlluminaSequencingRun run;
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
-                                      SquidConnectorProducer.stubInstance(), squidConfig, reagentKitDao);
+                                      SquidConnectorProducer.stubInstance(), squidConfig, reagentKitDao
+                );
 
         SolexaRunBean runBean =
                 new SolexaRunBean(miSeqBarcode, miSeqRunBarcode, runDate, machineName, runFileDirectory,
@@ -353,7 +354,8 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     public void testGetReadStructureByName() {
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
-                                      SquidConnectorProducer.stubInstance(), squidConfig, reagentKitDao);
+                                      SquidConnectorProducer.stubInstance(), squidConfig, reagentKitDao
+                );
         SolexaRunBean runBean =
                 new SolexaRunBean(miSeqBarcode, miSeqRunBarcode, runDate, machineName, runFileDirectory,
                                   reagentKitBarcode);
@@ -381,7 +383,8 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     public void testLaneReadStructure() {
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
-                                      SquidConnectorProducer.stubInstance(), squidConfig, reagentKitDao);
+                                      SquidConnectorProducer.stubInstance(), squidConfig, reagentKitDao
+                );
         SolexaRunBean runBean =
                 new SolexaRunBean(miSeqBarcode, miSeqRunBarcode, runDate, machineName, runFileDirectory,
                                   reagentKitBarcode);
@@ -420,7 +423,8 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         IlluminaSequencingRun run;
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
-                                      SquidConnectorProducer.stubInstance(), squidConfig, reagentKitDao);
+                                      SquidConnectorProducer.stubInstance(), squidConfig, reagentKitDao
+                );
 
         SolexaRunBean runBean =
                 new SolexaRunBean(flowcellBarcode, runBarcode, runDate, machineName, runFileDirectory,

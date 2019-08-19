@@ -11,16 +11,26 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
 @Audited
-@Table(schema = "mercury")
+@Table(schema = "mercury",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"TASK_NAME", "STATE"}))
 public abstract class Task {
+
+    public enum TaskActionTime {
+        ENTRY, EXIT, DEFAULT
+    }
 
     @Id
     @SequenceGenerator(name = "SEQ_TASK", schema = "mercury", sequenceName = "SEQ_TASK")
@@ -31,11 +41,25 @@ public abstract class Task {
     @Enumerated(EnumType.STRING)
     private Status status;
 
-    @OneToMany(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY, mappedBy = "task")
-    private Set<State> states = new HashSet<>();
+    @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST}, optional = false)
+    @JoinColumn(name = "state")
+    private State state;
+
+    @Enumerated(EnumType.STRING)
+    private TaskActionTime taskActionTime;
+
+    private String taskName;
+
+    private Date startTime;
+
+    private Date endTime;
+
+    private String errorMessage;
 
     public Task() {
         status = Status.QUEUED;
+        taskActionTime = TaskActionTime.DEFAULT;
+        startTime = new Date();
     }
 
     public Task(Status status) {
@@ -54,11 +78,51 @@ public abstract class Task {
         this.status = status;
     }
 
-    public Set<State> getStates() {
-        return states;
+    public State getState() {
+        return state;
     }
 
-    public void setStates(Set<State> states) {
-        this.states = states;
+    public void setState(State state) {
+        this.state = state;
+    }
+
+    public String getTaskName() {
+        return taskName;
+    }
+
+    public void setTaskName(String taskName) {
+        this.taskName = taskName;
+    }
+
+    public Date getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(Date startTime) {
+        this.startTime = startTime;
+    }
+
+    public Date getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(Date endTime) {
+        this.endTime = endTime;
+    }
+
+    public TaskActionTime getTaskActionTime() {
+        return taskActionTime;
+    }
+
+    public void setTaskActionTime(TaskActionTime taskActionTime) {
+        this.taskActionTime = taskActionTime;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
     }
 }

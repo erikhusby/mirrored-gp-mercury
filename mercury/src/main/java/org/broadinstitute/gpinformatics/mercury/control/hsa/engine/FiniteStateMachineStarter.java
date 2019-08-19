@@ -4,14 +4,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtility;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.StateMachineDao;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenAppContext;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenSimulator;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerContext;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerControllerStub;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SlurmController;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -27,6 +23,8 @@ import javax.ejb.Timer;
 import javax.ejb.TimerConfig;
 import javax.ejb.TimerService;
 import javax.inject.Inject;
+import javax.transaction.SystemException;
+import java.util.Arrays;
 import java.util.Date;
 
 import static javax.ejb.ConcurrencyManagementType.BEAN;
@@ -41,7 +39,7 @@ public class FiniteStateMachineStarter {
     /**
      * Interval in minutes for the timer to fire off.
      */
-    private int timerPeriod = 5;
+    private int timerPeriod = 2;
 
     private static Date previousNextTimeout = new Date(0);
 
@@ -59,6 +57,9 @@ public class FiniteStateMachineStarter {
 
     @Inject
     private FiniteStateMachineEngine engine;
+
+    @Inject
+    private SlurmController slurmController;
 
     @PostConstruct
     public void initialize() {
@@ -89,16 +90,16 @@ public class FiniteStateMachineStarter {
             sessionContextUtility.executeInContext(new SessionContextUtility.Function() {
                 @Override
                 public void apply() {
-                    //TODO User bean for audit trail
-
                     userBean.login("seqsystem");
-                    // FOr testing
-                    DragenAppContext appContext = new DragenAppContext(new DragenSimulator());
-                    SchedulerContext schedulerContext = new SchedulerContext(new SchedulerControllerStub(), appContext);
+                    SchedulerContext schedulerContext = new SchedulerContext(slurmController);
 
-                    for (FiniteStateMachine stateMachine: stateMachineDao.findByStatus(Status.RUNNING)) {
+                    for (FiniteStateMachine stateMachine: stateMachineDao.findByStatuses(Arrays.asList(Status.RUNNING, Status.QUEUED))) {
                         engine.setContext(schedulerContext);
-                        engine.resumeMachine(stateMachine);
+                        try {
+                            engine.resumeMachine(stateMachine);
+                        } catch (SystemException e) {
+                            log.error("Error starting state machines", e);
+                        }
                     }
                 }
             });

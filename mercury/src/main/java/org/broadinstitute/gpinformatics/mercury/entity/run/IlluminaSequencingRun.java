@@ -1,10 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.DemultiplexState;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.OneToMany;
 import java.util.Date;
 import java.util.HashSet;
@@ -35,6 +38,13 @@ public class IlluminaSequencingRun extends SequencingRun {
                                  boolean isTestRun,
                                  Date runDate, String runDirectory) {
         super(runName, runBarcode, machineName, operator, isTestRun, runDate, flowcell, runDirectory);
+
+        for (VesselPosition vesselPosition: flowcell.getFlowcellType().getVesselGeometry().getVesselPositions()) {
+            if (vesselPosition.name().startsWith("LANE")) {
+                int laneNum = Integer.parseInt(vesselPosition.name().replace("LANE", ""));
+                addSequencingRunChamber(new IlluminaSequencingRunChamber(this, laneNum));
+            }
+        }
     }
 
     protected IlluminaSequencingRun() {

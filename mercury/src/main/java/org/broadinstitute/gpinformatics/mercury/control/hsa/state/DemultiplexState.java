@@ -1,36 +1,81 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.state;
 
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
+import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRunChamber;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 
 @Entity
 @Audited
 public class DemultiplexState extends State {
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST})
-    @JoinColumn(name = "RUN_CHAMBER")
-    private IlluminaSequencingRunChamber runChamber;
+    @ManyToMany(cascade = {CascadeType.PERSIST})
+    @JoinTable(schema = "mercury", name = "src_demultiplix_state"
+            , joinColumns = {@JoinColumn(name = "DEMULTIPLEX_STATE")}
+            , inverseJoinColumns = {@JoinColumn(name = "SEQUENCING_RUN_CHAMBER")})
+    private Set<IlluminaSequencingRunChamber> sequencingRunChambers = new HashSet<>();
 
     protected DemultiplexState() {
     }
 
-    public DemultiplexState(String name, FiniteStateMachine finiteStateMachine, IlluminaSequencingRunChamber runChamber) {
+    public DemultiplexState(String name, Set<IlluminaSequencingRunChamber> sequencingRunChambers, FiniteStateMachine finiteStateMachine) {
         super(name, finiteStateMachine);
-        this.runChamber = runChamber;
+
+        for (IlluminaSequencingRunChamber sequencingRunChamber: sequencingRunChambers) {
+            addSequencingRunChamber(sequencingRunChamber);
+        }
     }
 
-    public IlluminaSequencingRunChamber getRunChamber() {
-        return runChamber;
+    /**
+     * If no sample sheet was supplied
+     */
+    @Override
+    public void OnEnter() {
+
     }
 
-    public void setRunChamber(IlluminaSequencingRunChamber runChamber) {
-        this.runChamber = runChamber;
+    @Override
+    public Optional<Task> getExitTask() {
+        return super.getExitTask();
+    }
+
+    public IlluminaSequencingRun getRun() {
+        if (sequencingRunChambers != null && !sequencingRunChambers.isEmpty()) {
+            SequencingRunChamber runChamber = sequencingRunChambers.iterator().next();
+            if (OrmUtil.proxySafeIsInstance(runChamber, IlluminaSequencingRunChamber.class)) {
+                IlluminaSequencingRunChamber illuminaSequencingRunChamber =
+                        OrmUtil.proxySafeCast(runChamber, IlluminaSequencingRunChamber.class);
+                return illuminaSequencingRunChamber.getIlluminaSequencingRun();
+            }
+
+        }
+        return null;
+    }
+
+    public String getAnalysisKey() {
+        return null;
+    }
+
+    public void addSequencingRunChamber(IlluminaSequencingRunChamber sequencingRunChamber) {
+        sequencingRunChambers.add(sequencingRunChamber);
+    }
+
+    public Set<IlluminaSequencingRunChamber> getSequencingRunChambers() {
+        return sequencingRunChambers;
+    }
+
+    public void setSequencingRunChambers(
+            Set<IlluminaSequencingRunChamber> sequencingRunChamberList) {
+        this.sequencingRunChambers = sequencingRunChamberList;
     }
 }

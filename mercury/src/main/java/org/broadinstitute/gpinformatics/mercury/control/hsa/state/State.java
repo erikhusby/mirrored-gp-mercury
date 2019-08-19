@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.state;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DemultiplexMetricsTask;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -16,7 +17,11 @@ import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Audited
@@ -29,9 +34,8 @@ public abstract class State {
     @Column(name = "STATE_ID")
     private Long stateId;
 
-    @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST}, optional = false)
-    @JoinColumn(name = "task")
-    private Task task;
+    @OneToMany(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY, mappedBy = "state")
+    private Set<Task> tasks = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
     @JoinColumn(name = "FINITE_STATE_MACHINE")
@@ -55,12 +59,26 @@ public abstract class State {
         this.finiteStateMachine = finiteStateMachine;
     }
 
-    public void setTask(Task task) {
-        this.task = task;
+    public void addTask(Task task) {
+        tasks.add(task);
+        task.setState(this);
     }
 
-    public Task getTask() {
-        return task;
+    public Set<Task> getTasks() {
+        return tasks.stream()
+                .filter(t -> t.getTaskActionTime() == Task.TaskActionTime.DEFAULT)
+                .collect(Collectors.toSet());
+    }
+
+    public Set<Task> getTasksWithStatus(Status status) {
+        return tasks.stream()
+                .filter(t -> t.getTaskActionTime() == Task.TaskActionTime.DEFAULT &&
+                             t.getStatus() == status)
+                .collect(Collectors.toSet());
+    }
+
+    public void setTasks(Set<Task> tasks) {
+        this.tasks = tasks;
     }
 
     public String getStateName() {
@@ -107,9 +125,41 @@ public abstract class State {
         return finiteStateMachine;
     }
 
-    public void setFiniteStateMachine(
-            FiniteStateMachine finiteStateMachine) {
+    public void setFiniteStateMachine(FiniteStateMachine finiteStateMachine) {
         this.finiteStateMachine = finiteStateMachine;
+    }
+
+    public void OnEnter() {
+
+    }
+
+    public Optional<Task> getExitTask() {
+        return tasks.stream().filter(t -> t.getTaskActionTime() == Task.TaskActionTime.EXIT).findFirst();
+    }
+
+    public boolean isExitTaskPending() {
+        return getExitTask().isPresent() && getExitTask().get().getStatus() == Status.QUEUED ||
+               getExitTask().get().getStatus() == Status.RETRY;
+    }
+
+    public List<Task> getActiveTasks() {
+        return getTasks().stream().filter(t -> t.getStatus() == Status.RUNNING).collect(Collectors.toList());
+    }
+
+    public boolean isMainTasksComplete() {
+        return getTasks().stream().allMatch(t -> t.getStatus() == Status.COMPLETE || t.getStatus() == Status.CANCELLED);
+    }
+
+    public boolean isComplete() {
+        boolean mainTasksComplete = isMainTasksComplete();
+        boolean exitTasksComplete = !getExitTask().isPresent() || getExitTask().get().getStatus() == Status.COMPLETE;
+        return mainTasksComplete && exitTasksComplete;
+    }
+
+    public void addExitTask(Task task) {
+        task.setTaskActionTime(Task.TaskActionTime.EXIT);
+        tasks.add(task);
+        task.setState(this);
     }
 
     @Override
@@ -119,7 +169,7 @@ public abstract class State {
                 .append("stateName", stateName)
                 .append("finiteStateMachine", finiteStateMachine)
                 .append("alive", alive)
-                .append("task", task)
+                .append("tasks", tasks)
                 .append("startState", startState)
                 .append("startTime", startTime)
                 .append("end", endTime)
