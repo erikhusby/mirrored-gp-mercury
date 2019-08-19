@@ -824,9 +824,9 @@ public class ProductOrderActionBeanTest {
                 {"GP87U",ProductOrder.QuoteSourceType.QUOTE_SERVER, TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS}, //Second Parameter does not apply to quote Server case
                 {"GP87U",ProductOrder.QuoteSourceType.QUOTE_SERVER, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED}, //Second Parameter does not apply to quote Server case
                 {"GP87U",ProductOrder.QuoteSourceType.QUOTE_SERVER, TestUtils.SapQuoteTestScenario.PRODUCTS_DIFFER}, //Second Parameter does not apply to quote Server case
-                {"CRSPEVER",ProductOrder.QuoteSourceType.QUOTE_SERVER, TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS}, //Second Parameter does not apply to quote Server case
-                {"CRSPEVER",ProductOrder.QuoteSourceType.QUOTE_SERVER, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED}, //Second Parameter does not apply to quote Server case
-                {"CRSPEVER",ProductOrder.QuoteSourceType.QUOTE_SERVER, TestUtils.SapQuoteTestScenario.PRODUCTS_DIFFER}, //Second Parameter does not apply to quote Server case
+                {"CRSPEVR",ProductOrder.QuoteSourceType.QUOTE_SERVER, TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS}, //Second Parameter does not apply to quote Server case
+                {"CRSPEVR",ProductOrder.QuoteSourceType.QUOTE_SERVER, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED}, //Second Parameter does not apply to quote Server case
+                {"CRSPEVR",ProductOrder.QuoteSourceType.QUOTE_SERVER, TestUtils.SapQuoteTestScenario.PRODUCTS_DIFFER}, //Second Parameter does not apply to quote Server case
                 {"GPSPGR7",ProductOrder.QuoteSourceType.QUOTE_SERVER, TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS}, //Second Parameter does not apply to quote Server case
                 {"GPSPGR7",ProductOrder.QuoteSourceType.QUOTE_SERVER, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED}, //Second Parameter does not apply to quote Server case
                 {"GPSPGR7",ProductOrder.QuoteSourceType.QUOTE_SERVER, TestUtils.SapQuoteTestScenario.PRODUCTS_DIFFER}, //Second Parameter does not apply to quote Server case
