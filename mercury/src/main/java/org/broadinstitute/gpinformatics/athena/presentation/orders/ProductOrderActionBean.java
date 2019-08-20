@@ -180,6 +180,8 @@ import static org.broadinstitute.gpinformatics.mercury.presentation.datatables.D
 @UrlBinding(ProductOrderActionBean.ACTIONBEAN_URL_BINDING)
 public class ProductOrderActionBean extends CoreActionBean {
 
+    public static final String SWITCHING_QUOTES_NOT_PERMITTED =
+        "Switching between Quote Server and SAP quotes is not permitted once an order has been placed.";
     private static final Log logger = LogFactory.getLog(ProductOrderActionBean.class);
 
     public static final String ACTIONBEAN_URL_BINDING = "/orders/order.action";
@@ -372,6 +374,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     // used only as part of ajax call to get funds remaining.  Quote field is bound to editOrder.
     private String quoteIdentifier;
+    private String originalQuote;
 
     private String product;
     private String selectedAddOns;
@@ -622,9 +625,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         if(editOrder.getProduct() != null) {
 
             if(editOrder.hasSapQuote()) {
-                final SapQuote sapQuote = editOrder.getSapQuote(sapService);
-                final String salesOrganization =
-                        sapQuote.getQuoteHeader().getSalesOrganization();
+                SapQuote sapQuote;
+                try {
+                    sapQuote = editOrder.getSapQuote(sapService);
+                } catch (SAPIntegrationException e) {
+                    addGlobalValidationError(e.getMessage());
+                    return;
+                }
+                final String salesOrganization = sapQuote.getQuoteHeader().getSalesOrganization();
 
                 SapIntegrationClientImpl.SAPCompanyConfiguration companyCode =
                         SapIntegrationClientImpl.SAPCompanyConfiguration
@@ -953,6 +961,9 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     protected void validateQuoteDetails(Quote quote, int additionalSampleCount) throws InvalidProductException,
             SAPIntegrationException {
+        if (!canChangeQuote(editOrder, originalQuote, quote.getAlphanumericId())) {
+            addGlobalValidationError(SWITCHING_QUOTES_NOT_PERMITTED);
+        }
         if (!quote.getApprovalStatus().equals(ApprovalStatus.FUNDED)) {
             String unFundedMessage = "A quote should be funded in order to be used for a product order.";
             addGlobalValidationError(unFundedMessage);
@@ -979,6 +990,9 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     protected void validateSapQuoteDetails(SapQuote quote, int additionalSampleCount) throws InvalidProductException,
             SAPIntegrationException {
+        if (!canChangeQuote(editOrder, originalQuote, quote.getQuoteHeader().getQuoteNumber())) {
+            addGlobalValidationError(SWITCHING_QUOTES_NOT_PERMITTED);
+        }
         if (!quote.getQuoteHeader().getQuoteStatus().equals(QuoteStatus.Z4) ||
             !quote.getQuoteHeader().getFundingHeaderStatus().equals(FundingStatus.APPROVED)) {
             String unFundedMessage = "A quote should be approved in order to be used for a product order.";
@@ -1525,7 +1539,11 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("getQuoteFunding")
     public Resolution getQuoteFunding() throws Exception {
-        JSONObject item = quoteDetailsHelper.getQuoteDetailsJson(this, quoteIdentifier);
+        productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
+        if (!StringUtils.isBlank(productOrder)) {
+            editOrder = productOrderDao.findByBusinessKey(productOrder);
+        }
+        JSONObject item = quoteDetailsHelper.getQuoteDetailsJson(this, quoteIdentifier, originalQuote);
         return new StreamingResolution("text/json", item.toString());
     }
 
@@ -3061,6 +3079,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.quoteIdentifier = quoteIdentifier;
     }
 
+    public String getOriginalQuote() {
+        return originalQuote;
+    }
+
+    public void setOriginalQuote(String originalQuote) {
+        this.originalQuote = originalQuote;
+    }
+
     public UserTokenInput getOwner() {
         return owner;
     }
@@ -3976,6 +4002,21 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public Boolean canEditPrice(String units) {
         return StringUtils.equalsIgnoreCase(units, "Sample") && (userBean.isPDMUser() || userBean.isDeveloperUser()) || !StringUtils.equalsIgnoreCase(units, "Sample") ;
+    }
+
+    public static boolean canChangeQuote(ProductOrder productOrder, String oldQuote, String newQuote) {
+        boolean sameQuote = Objects.equals(oldQuote, newQuote);
+        if (sameQuote){
+            return true;
+        }
+        if (productOrder!=null) {
+            if (!productOrder.getOrderStatus().canPlace()) {
+                boolean sameQuoteType = StringUtils.isNumeric(oldQuote) == StringUtils.isNumeric(newQuote);
+                boolean bothNotBlank = StringUtils.isNotBlank(oldQuote) && StringUtils.isNotBlank(newQuote);
+                return sameQuoteType && bothNotBlank;
+            }
+        }
+        return true;
     }
 
     /**
