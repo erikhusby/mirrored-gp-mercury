@@ -58,7 +58,6 @@ public class BillingAdaptor implements Serializable {
     private static final Log log = LogFactory.getLog(BillingAdaptor.class);
     public static final String NOT_ELIGIBLE_FOR_SAP_INDICATOR = "NotEligible";
     public static final String BILLING_CREDIT_REQUESTED_INDICATOR = "Credit Requested";
-    public static final String NOT_ELLIGIBLE_FOR_QUOTE_SERVER_INDICATOR = "Not Elligible for Quote Server.";
     public static final String BILLING_LOG_TEXT_FORMAT =
         "Work item '%s' and SAP Document '%s' with completion date of '%s' posted at '%s' for '%2.2f' units of '%s' on behalf of %s in '%s'";
 
@@ -223,7 +222,7 @@ public class BillingAdaptor implements Serializable {
                     }
 
                     if (item.isSapOrder()) {
-                        workId = NOT_ELLIGIBLE_FOR_QUOTE_SERVER_INDICATOR;
+                        workId = null;
                         sapBillingId = item.getSapItems();
                     } else {
                         workId = CollectionUtils.isEmpty(item.getWorkItems())?null:item.getWorkItems().toArray(new String[item.getWorkItems().size()])[0];
