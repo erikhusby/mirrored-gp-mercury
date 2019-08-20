@@ -141,7 +141,7 @@ public class SapMaterialFixupText extends Arquillian {
                             sapMaterial.getMaterialName(), sapMaterial.getBasePrice(),
                             sapMaterial.getBaseUnitOfMeasure(), sapMaterial.getMinimumOrderQuantity(), new Date(),
                             new Date(),sapMaterial.getPossibleOrderConditions(),
-                            sapMaterial.getPossibleDeliveryConditions(), sapMaterial.getStatus(),
+                            sapMaterial.getPossibleDeliveryConditions(), sapMaterial.getSalesOrgStatus(),
                             null));
                 }
             }
@@ -165,9 +165,10 @@ public class SapMaterialFixupText extends Arquillian {
                                         !partNumbersToUpdate.contains(material.getMaterialIdentifier()))
                     .forEach(material -> {
                         try {
-                            material.setStatus(SAPMaterial.MaterialStatus.DISABLED);
+                            material.setSalesOrgStatus(SAPMaterial.MaterialStatus.DISABLED);
                             log.debug(String.format("Disabling material %s in sales org %s.  Disable status is %s",
-                                    material.getMaterialIdentifier(), material.getSalesOrg(), material.getStatus()));
+                                    material.getMaterialIdentifier(), material.getSalesOrg(), material.getSalesOrgStatus()));
+                            log.debug("Material to disable\n"+material);
                             ((SapIntegrationServiceImpl) sapIntegrationService).getClient().changeMaterialDetails(SAPChangeMaterial.fromSAPMaterial(material));
                         } catch (SAPIntegrationException e) {
                             log.debug(String.format("Failed to UPDATe SAP for material %s in sales org %s:  %s",
