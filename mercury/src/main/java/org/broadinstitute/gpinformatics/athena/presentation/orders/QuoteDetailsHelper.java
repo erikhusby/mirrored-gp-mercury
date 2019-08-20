@@ -70,10 +70,17 @@ public class QuoteDetailsHelper {
         this.sapService = sapService;
     }
 
-    protected JSONObject getQuoteDetailsJson(ProductOrderActionBean actionBean, String quoteIdentifier)
+    protected JSONObject getQuoteDetailsJson(ProductOrderActionBean actionBean, String quoteIdentifier, String originalQuote)
         throws Exception {
         Map<String, Object> rootMap = new HashMap<>();
-        QuoteDetail quoteDetails = getQuoteDetails(quoteIdentifier, actionBean);
+        QuoteDetail quoteDetails;
+        if (!ProductOrderActionBean.canChangeQuote(actionBean.getEditOrder(), originalQuote, quoteIdentifier)) {
+            quoteDetails = new QuoteDetail();
+            quoteDetails.setError(ProductOrderActionBean.SWITCHING_QUOTES_NOT_PERMITTED);
+        } else {
+            quoteDetails = getQuoteDetails(quoteIdentifier, actionBean);
+        }
+
         rootMap.put("quoteDetail", quoteDetails);
         StringWriter stringWriter = new StringWriter();
         templateEngine.processTemplate("QuoteDetails.ftl", rootMap, stringWriter);

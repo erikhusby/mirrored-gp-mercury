@@ -1104,12 +1104,13 @@
 
         function updateFundsRemaining() {
             var quoteIdentifier = $j("#quote").val().trim();
+            var originalQuote = "${actionBean.editOrder.quoteId}";
             var quoteTitle = $j("#quote").attr('title');
             var productOrderKey = $j("input[name='productOrder']").val();
             if (quoteIdentifier && quoteIdentifier !== quoteTitle) {
                 $j.ajax({
                     url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier +
-                        "&productOrder=" + productOrderKey ,
+                        "&productOrder=" + productOrderKey + "&originalQuote=" + originalQuote,
                     dataType: 'json',
                     success: updateFunds
                 });
@@ -1705,6 +1706,7 @@
                         Quote <c:if test="${not actionBean.editOrder.draft}">*</c:if>
                     </stripes:label>
                     <div class="controls">
+                        <input type="hidden" name="originalQuote" value="${actionBean.editOrder.quoteId}"/>
                         <stripes:text id="quote" name="editOrder.quoteId" class="defaultText"
                                       onchange="updateFundsRemaining()"
                                       title="Enter the Quote ID for this order"/>
