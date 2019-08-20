@@ -14,6 +14,16 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.management.Attribute;
+import javax.management.AttributeNotFoundException;
+import javax.management.InstanceNotFoundException;
+import javax.management.InvalidAttributeValueException;
+import javax.management.MBeanException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+import javax.management.ReflectionException;
+import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
@@ -38,10 +48,16 @@ public class PrintingMessageBeanTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV);
     }
 
+    private PaperType testPaper = PaperType.SAMPLE_WRAP_AROUND;
+    private String testBarcode = "SM-1234";
+
+    // Allows testing to be able to test enabling live printing.
+    boolean enableLivePrinting = false;
+
     @Test(enabled = true)
-    public void testCreatingAndSendingPrintingMessage() {
-        PaperType testPaper = PaperType.SAMPLE_WRAP_AROUND;
-        String testBarcode = "SM-1234";
+    public void testCreatingPrintingMessage() {
+
+        enableTestPrinting();
 
         Assert.assertFalse(printingManagerImpl.getPrinterAndLabelDetailByLabLocationAndPaper().isEmpty(), "Unable to load printer settings.");
 
@@ -52,6 +68,12 @@ public class PrintingMessageBeanTest extends Arquillian {
         Assert.assertTrue(labelDetailByPaperType.getZplScript().contains("#root[\"labelData\"]"));
         // Check to ensure the test barcode isn't magically in the script
         Assert.assertFalse(labelDetailByPaperType.getZplScript().contains(testBarcode));
+    }
+
+    @Test(enabled = true)
+    public void testSendingPrintingMessage() {
+
+        enableTestPrinting();
 
         try {
             printingManagerImpl
@@ -74,6 +96,38 @@ public class PrintingMessageBeanTest extends Arquillian {
             printingManagerImpl.print(Arrays.asList("CO-112233"), PaperType.CONTAINER, BarcodeType.LINEAR, LabLocation.LAB_1182);
         } catch (Exception exception) {
             Assert.fail("Unexpected exception when printing.", exception);
+        }
+    }
+
+    /**
+     * Utility method used to enable printing via the PrintingControl MX bean. The enableLivePrinting field needs to be
+     * true for live printing in all tests.
+     */
+    private void enableTestPrinting() {
+        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+        try {
+            Boolean isEnabled = (Boolean) server.getAttribute(new ObjectName( "Mercury:class=org.broadinstitute.gpinformatics.infrastructure.jmx.PrintingControl"), "PrintingManuallyEnabled");
+            if (isEnabled == null) {
+                System.out.println("returned null!");
+            }
+            server.setAttribute(new ObjectName( "Mercury:class=org.broadinstitute.gpinformatics.infrastructure.jmx.PrintingControl"), new Attribute("PrintingManuallyEnabled", enableLivePrinting));
+
+            isEnabled = (Boolean) server.getAttribute(new ObjectName( "Mercury:class=org.broadinstitute.gpinformatics.infrastructure.jmx.PrintingControl"), "PrintingManuallyEnabled");
+            if (isEnabled) {
+                System.out.println("returned " + isEnabled);
+            }
+        } catch (InstanceNotFoundException e) {
+            e.printStackTrace();
+        } catch (MalformedObjectNameException e) {
+            e.printStackTrace();
+        } catch (MBeanException e) {
+            e.printStackTrace();
+        } catch (ReflectionException e) {
+            e.printStackTrace();
+        } catch (AttributeNotFoundException e) {
+            e.printStackTrace();
+        } catch (InvalidAttributeValueException e) {
+            e.printStackTrace();
         }
     }
 }

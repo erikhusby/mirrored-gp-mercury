@@ -153,11 +153,6 @@ public class PrintingMessageBean implements MessageListener {
                 // close the output stream
                 // close the input stream
                 // close the socket
-                try {
-                    Thread.sleep(1000);
-                } catch (Exception ex) {
-                }
-
                 os.close();
                 is.close();
                 zebraSocket.close();
