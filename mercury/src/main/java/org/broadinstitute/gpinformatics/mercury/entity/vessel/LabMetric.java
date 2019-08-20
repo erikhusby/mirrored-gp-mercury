@@ -197,6 +197,7 @@ public class LabMetric implements Comparable<LabMetric> {
         ECO_QPCR("ECO QPCR", true, Category.CONCENTRATION, LabUnit.NM, null),
         VIIA_QPCR("VIIA QPCR", true, Category.CONCENTRATION, LabUnit.NM, null),
         VVP_VOLUME("VVP Volume", false, Category.VOLUME, LabUnit.UL, null),
+        XL20_VOLUME("XL20 Volume", false, Category.VOLUME, LabUnit.UL, null),
         INITIAL_RNA_CALIPER("Initial RNA Caliper", true, Category.QUALITY, LabUnit.NG_PER_UL, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {

@@ -372,7 +372,9 @@ public abstract class LabVessel implements Serializable {
         Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleData(samplesBySampleKey.keySet(),
                 BSPSampleSearchColumn.BUCKET_PAGE_COLUMNS);
         for (Map.Entry<String, SampleData> sampleDataEntry : sampleDataMap.entrySet()) {
-            samplesBySampleKey.get(sampleDataEntry.getKey()).setSampleData(sampleDataEntry.getValue());
+            if (sampleDataEntry.getValue() != null) {
+                samplesBySampleKey.get(sampleDataEntry.getKey()).setSampleData(sampleDataEntry.getValue());
+            }
         }
     }
 
@@ -1056,6 +1058,7 @@ public abstract class LabVessel implements Serializable {
      *  Get the AbandonVessel entry for a specific well <br/>
      *  Return null if well has not been abandoned.
      */
+    @Nullable
     public AbandonVessel getAbandonPositionForWell( VesselPosition well ) {
         for (AbandonVessel abandonVessel : getAbandonVessels() ) {
             if( abandonVessel.getVesselPosition() == well ){

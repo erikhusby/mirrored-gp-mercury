@@ -4,7 +4,6 @@ import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;

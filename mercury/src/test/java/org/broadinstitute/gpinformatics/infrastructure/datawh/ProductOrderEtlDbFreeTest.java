@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
+import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -117,6 +118,7 @@ public class ProductOrderEtlDbFreeTest {
         expect(pdo.getSkipRegulatoryReason()).andReturn(null);
         expect(pdo.getRegulatoryInfos()).andReturn(regulatoryInfos);
         expect(pdo.getSapOrderNumber()).andReturn(sapMockOrderNumber);
+        expect(pdo.getOrderType()).andReturn(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
 
         expect(researchProject.getResearchProjectId()).andReturn(researchProjectId);
         expect(product.getProductId()).andReturn(productId);
@@ -139,7 +141,7 @@ public class ProductOrderEtlDbFreeTest {
 
     private void verifyRecord(String record) {
         int i = 0;
-        String[] parts = record.split(",", 18);
+        String[] parts = record.split(",", 19);
         assertEquals(parts[i++], etlDateString);
         assertEquals(parts[i++], "F");
         assertEquals(parts[i++], String.valueOf(entityId));
@@ -153,11 +155,12 @@ public class ProductOrderEtlDbFreeTest {
         assertEquals(parts[i++], jiraTicketKey);
         assertEquals(parts[i++], ownerName);
         assertEquals(parts[i++], ExtractTransform.formatTimestamp(modifiedDate));
-        assertEquals(parts[i++], "");
+        assertEquals(parts[i++], "");// SkipRegulatoryReason
         assertEquals(parts[i++], sapMockOrderNumber);
         assertEquals(parts[i++], arrayChipType);
         assertEquals(parts[i++], callThresholdOverride);
-        assertEquals(parts[i++], "");
+        assertEquals(parts[i++], ""); // regInfoData
+        assertEquals(parts[i++], ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK.getCompanyCode());
         assertEquals(parts.length, i);
     }
 }
