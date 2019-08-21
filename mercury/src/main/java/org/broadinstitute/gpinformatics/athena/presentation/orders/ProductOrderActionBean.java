@@ -133,6 +133,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchAction
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.entity.quote.FundingStatus;
+import org.broadinstitute.sap.entity.quote.QuoteHeader;
 import org.broadinstitute.sap.entity.quote.QuoteStatus;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
@@ -626,17 +627,16 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             if(editOrder.hasSapQuote()) {
                 SapQuote sapQuote;
+                String salesOrganization;
                 try {
                     sapQuote = editOrder.getSapQuote(sapService);
+                    salesOrganization =
+                        Optional.ofNullable(sapQuote.getQuoteHeader()).map(QuoteHeader::getSalesOrganization)
+                            .orElseThrow(() -> new SAPIntegrationException("Error Obtaining Quote Information."));
                 } catch (SAPIntegrationException e) {
                     addGlobalValidationError(e.getMessage());
                     return;
                 }
-                final String salesOrganization = sapQuote.getQuoteHeader().getSalesOrganization();
-
-                SapIntegrationClientImpl.SAPCompanyConfiguration companyCode =
-                        SapIntegrationClientImpl.SAPCompanyConfiguration
-                                .fromSalesOrgForMaterial(salesOrganization);
                 Optional<SAPMaterial> cachedProduct =
                         Optional.ofNullable(productPriceCache.findByPartNumber(editOrder.getProduct().getPartNumber(),
                                 salesOrganization));
