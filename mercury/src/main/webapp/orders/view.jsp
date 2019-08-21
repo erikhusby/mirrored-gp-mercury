@@ -878,10 +878,11 @@ function renderPico(data, type, row, meta) {
 function updateFundsRemaining() {
     var quoteIdentifier = '${actionBean.editOrder.quoteId}';
     var productOrderKey = $j("input[name='productOrder']").val();
+    var originalQuote = "${actionBean.editOrder.quoteId}"
 
     if ($j.trim(quoteIdentifier)) {
         $j.ajax({
-            url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier="+quoteIdentifier+"&productOrder=" + productOrderKey,
+            url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier="+quoteIdentifier+"&productOrder=" + productOrderKey+"&originalQuote=" + originalQuote,
             dataType: 'json',
             success: updateFunds
         });
