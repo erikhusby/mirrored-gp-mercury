@@ -4548,7 +4548,9 @@ public class ProductOrderActionBeanTest {
     @DataProvider(name = "changeQuoteDataProvider")
     public Iterator<Object[]> changeQuoteDataProvider() {
         final String sapQuote = "1234";
+        final String sapQuote2 = "1234567";
         final String qsQuote = "GPP1";
+        final String qsQuote2 = "GPP1234";
         List<Object[]> testCases = new ArrayList<>();
 
         // All of these statuses should not allow changing of quotes
@@ -4564,7 +4566,9 @@ public class ProductOrderActionBeanTest {
             // not chaning quote type is OK
             testCases.add(new Object[]{orderStatus, sapQuote, sapQuote, true});
             testCases.add(new Object[]{orderStatus, qsQuote, qsQuote, true});
-            
+            testCases.add(new Object[]{orderStatus, sapQuote, sapQuote2, true});
+            testCases.add(new Object[]{orderStatus, qsQuote, qsQuote2, true});
+
             testCases.add(new Object[]{orderStatus, null, qsQuote, false});
             testCases.add(new Object[]{orderStatus, qsQuote, null, false});
             testCases.add(new Object[]{orderStatus, null, sapQuote, false});
@@ -4585,6 +4589,8 @@ public class ProductOrderActionBeanTest {
             testCases.add(new Object[]{orderStatus, qsQuote, sapQuote, true});
             testCases.add(new Object[]{orderStatus, sapQuote, sapQuote, true});
             testCases.add(new Object[]{orderStatus, qsQuote, qsQuote, true});
+            testCases.add(new Object[]{orderStatus, sapQuote, sapQuote2, true});
+            testCases.add(new Object[]{orderStatus, qsQuote, qsQuote2, true});
 
             testCases.add(new Object[]{orderStatus, null, qsQuote, true});
             testCases.add(new Object[]{orderStatus, qsQuote, null, true});
