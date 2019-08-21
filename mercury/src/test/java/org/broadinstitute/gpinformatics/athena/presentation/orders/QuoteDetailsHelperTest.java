@@ -170,7 +170,7 @@ public class QuoteDetailsHelperTest {
         quoteDetailsHelper = new QuoteDetailsHelper(stubbedQuoteService, null, templateEngine);
         JSONObject quoteDetails = null;
         try {
-            quoteDetails = quoteDetailsHelper.getQuoteDetailsJson(actionBean, quoteId);
+            quoteDetails = quoteDetailsHelper.getQuoteDetailsJson(actionBean, quoteId, quoteId);
             String error = quoteDetails.getString("error");
             assertThat(error, containsString(quoteNotFoundMessage));
 
@@ -194,7 +194,7 @@ public class QuoteDetailsHelperTest {
         quoteDetailsHelper = new QuoteDetailsHelper(null, sapIntegrationService, templateEngine);
         JSONObject quoteDetails = null;
         try {
-            quoteDetails = quoteDetailsHelper.getQuoteDetailsJson(actionBean, quoteId);
+            quoteDetails = quoteDetailsHelper.getQuoteDetailsJson(actionBean, quoteId, quoteId);
             String error = quoteDetails.getString("error");
             assertThat(error, containsString(String.format("Quote '%s' not found", quoteId)));
             assertThat(quoteDetails.getBoolean("warning"), is(false));

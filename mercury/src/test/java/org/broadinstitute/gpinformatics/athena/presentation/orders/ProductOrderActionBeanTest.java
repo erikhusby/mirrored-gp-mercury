@@ -4544,4 +4544,73 @@ public class ProductOrderActionBeanTest {
         potentialOrderValue = potentialOrderValue.add(BigDecimal.valueOf(pdo.getSamples().size()).multiply(primaryMultiplier));
         return potentialOrderValue;
     }
+
+    @DataProvider(name = "changeQuoteDataProvider")
+    public Iterator<Object[]> changeQuoteDataProvider() {
+        final String sapQuote = "1234";
+        final String sapQuote2 = "1234567";
+        final String qsQuote = "GPP1";
+        final String qsQuote2 = "GPP1234";
+        List<Object[]> testCases = new ArrayList<>();
+
+        // All of these statuses should not allow changing of quotes
+        EnumSet<ProductOrder.OrderStatus> statusesForChangeAllowed = EnumSet
+            .of(ProductOrder.OrderStatus.Draft, ProductOrder.OrderStatus.Pending);
+        EnumSet<ProductOrder.OrderStatus> statusesForChangeNotAllowed = EnumSet.complementOf(statusesForChangeAllowed);
+
+        statusesForChangeNotAllowed.forEach(orderStatus -> {
+            assertThat(orderStatus.canPlace(), is(false));
+            testCases.add(new Object[]{orderStatus, sapQuote, qsQuote, false});
+            testCases.add(new Object[]{orderStatus, qsQuote, sapQuote, false});
+
+            // not chaning quote type is OK
+            testCases.add(new Object[]{orderStatus, sapQuote, sapQuote, true});
+            testCases.add(new Object[]{orderStatus, qsQuote, qsQuote, true});
+            testCases.add(new Object[]{orderStatus, sapQuote, sapQuote2, true});
+            testCases.add(new Object[]{orderStatus, qsQuote, qsQuote2, true});
+
+            testCases.add(new Object[]{orderStatus, null, qsQuote, false});
+            testCases.add(new Object[]{orderStatus, qsQuote, null, false});
+            testCases.add(new Object[]{orderStatus, null, sapQuote, false});
+            testCases.add(new Object[]{orderStatus, sapQuote, null, false});
+            testCases.add(new Object[]{orderStatus, null, null, true});
+
+            testCases.add(new Object[]{orderStatus, "", qsQuote, false});
+            testCases.add(new Object[]{orderStatus, qsQuote, "", false});
+            testCases.add(new Object[]{orderStatus, "", sapQuote, false});
+            testCases.add(new Object[]{orderStatus, sapQuote, "", false});
+            testCases.add(new Object[]{orderStatus, "", "", true});
+        });
+
+        // These should always allow changing status
+        statusesForChangeAllowed.forEach(orderStatus -> {
+            assertThat(orderStatus.canPlace(), is(true));
+            testCases.add(new Object[]{orderStatus, sapQuote, qsQuote, true});
+            testCases.add(new Object[]{orderStatus, qsQuote, sapQuote, true});
+            testCases.add(new Object[]{orderStatus, sapQuote, sapQuote, true});
+            testCases.add(new Object[]{orderStatus, qsQuote, qsQuote, true});
+            testCases.add(new Object[]{orderStatus, sapQuote, sapQuote2, true});
+            testCases.add(new Object[]{orderStatus, qsQuote, qsQuote2, true});
+
+            testCases.add(new Object[]{orderStatus, null, qsQuote, true});
+            testCases.add(new Object[]{orderStatus, qsQuote, null, true});
+            testCases.add(new Object[]{orderStatus, null, sapQuote, true});
+            testCases.add(new Object[]{orderStatus, sapQuote, null, true});
+            testCases.add(new Object[]{orderStatus, null, null, true});
+
+            testCases.add(new Object[]{orderStatus, "", qsQuote, true});
+            testCases.add(new Object[]{orderStatus, qsQuote, "", true});
+            testCases.add(new Object[]{orderStatus, "", sapQuote, true});
+            testCases.add(new Object[]{orderStatus, sapQuote, "", true});
+            testCases.add(new Object[]{orderStatus, "", "", true});
+        });
+        return testCases.iterator();
+    }
+
+    @Test(dataProvider = "changeQuoteDataProvider")
+    public void testChangeQuote(ProductOrder.OrderStatus orderStatus, String oldQuote, String newQuote, boolean canChange) {
+        pdo.setOrderStatus(orderStatus);
+        assertThat(ProductOrderActionBean.canChangeQuote(pdo, oldQuote, newQuote), is(canChange));
+    }
+
 }
