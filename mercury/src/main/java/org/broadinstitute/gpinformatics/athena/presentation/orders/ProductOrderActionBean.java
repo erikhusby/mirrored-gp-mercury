@@ -3549,8 +3549,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                 requireField(editOrder.canSkipRegulatoryRequirements(),
                         "a reason for bypassing the regulatory requirements", action);
             }
-            if (editOrder.isRegulatoryInfoEditAllowed()) {
+            if (editOrder.isRegulatoryInfoEditAllowed() && editOrder.getResearchProject() != null) {
                 if (CollectionUtils.isNotEmpty(selectedRegulatoryIds)) {
+
                     List<RegulatoryInfo> selectedRegulatoryInfos = regulatoryInfoDao
                             .findListByList(RegulatoryInfo.class, RegulatoryInfo_.regulatoryInfoId,
                                     selectedRegulatoryIds);
@@ -3564,9 +3565,10 @@ public class ProductOrderActionBean extends CoreActionBean {
                     }
 
                     if (!missingRegulatoryRequirements.isEmpty()) {
+                        Optional<ResearchProject> safeResearchProject = Optional.ofNullable(editOrder.getResearchProject());
                         addGlobalValidationError("Regulatory info {2} is not associated with research project {3}",
                                 StringUtils.join(missingRegulatoryRequirements, ", "),
-                                editOrder.getResearchProject().getName());
+                                safeResearchProject.map(ResearchProject::getName).orElse(""));
                     }
                 }
             }
