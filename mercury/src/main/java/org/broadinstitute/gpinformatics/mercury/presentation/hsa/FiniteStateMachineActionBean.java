@@ -167,7 +167,8 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
     public Resolution updateTaskStatus() {
         List<Task> tasks = taskDao.findTasksById(selectedIds);
         for (Task task: tasks) {
-            if (overrideStatus == Status.CANCELLED && task.getStatus() == Status.RUNNING
+            if (overrideStatus == Status.CANCELLED &&
+                (task.getStatus() == Status.RUNNING || task.getStatus() == Status.QUEUED)
                 && OrmUtil.proxySafeIsInstance(task, ProcessTask.class)) {
                 ProcessTask processTask = OrmUtil.proxySafeCast(task, ProcessTask.class);
                 if (slurmController.cancelJob(String.valueOf(processTask.getProcessId()))) {

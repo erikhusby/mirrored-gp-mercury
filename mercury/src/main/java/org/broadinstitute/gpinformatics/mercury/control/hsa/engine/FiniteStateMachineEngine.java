@@ -64,7 +64,7 @@ public class FiniteStateMachineEngine {
         UserTransaction utx = ejbContext.getUserTransaction();
         try {
             utx.begin();
-            executeProcess(stateMachine);
+            executeProcessDaoFree(stateMachine);
             utx.commit();
         } catch (Exception e) {
             utx.rollback();
@@ -72,12 +72,6 @@ public class FiniteStateMachineEngine {
         } finally {
             busy.set(false);
         }
-    }
-
-    public void executeProcess(FiniteStateMachine stateMachine) {
-        executeProcessDaoFree(stateMachine);
-//        stateMachineDao.persist(stateMachine);
-//        stateMachineDao.flush();
     }
 
     @DaoFree
@@ -145,6 +139,9 @@ public class FiniteStateMachineEngine {
                 for (Task task: state.getTasksWithStatus(Status.RETRY)) {
                     try {
                         taskManager.fireEvent(task, context);
+                        if (task.getStatus() == Status.COMPLETE) {
+                            task.setEndTime(new Date());
+                        }
                     } catch (Exception e) {
                         log.error("Error retrying failed task " + task.getTaskName(), e);
                         task.setStatus(Status.SUSPENDED);

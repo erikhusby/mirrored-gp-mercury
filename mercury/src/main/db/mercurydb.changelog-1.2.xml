@@ -2469,9 +2469,10 @@
             <column name="FILE_PATH" type="varchar2(255)"/>
             <column name="ERROR_MESSAGE" type="varchar2(255)"/>
             <column name="PROCESS_ID" type="number(19,0)"/>
-            <column name="COMMAND_LINE_ARGUMENT" type="varchar2(600)"/>
+            <column name="COMMAND_LINE_ARGUMENT" type="varchar2(700)"/>
             <column name="START_TIME" type="timestamp"/>
             <column name="END_TIME" type="timestamp"/>
+            <column name="PARTITION" type="varchar2(20)"/>
             <column name="TASK_ACTION_TIME" type="varchar2(20)"/>
         </createTable>
         <addUniqueConstraint tableName="TASK" schemaName="mercury"
@@ -2503,6 +2504,7 @@
             <column name="FILE_PATH" type="varchar2(255)"/>
             <column name="START_TIME" type="timestamp"/>
             <column name="END_TIME" type="timestamp"/>
+            <column name="PARTITION" type="varchar2(20)"/>
             <column name="TASK_ACTION_TIME" type="varchar2(20)"/>
             <column name="rev" type="int">
                 <constraints nullable="false"/>
@@ -2708,7 +2710,7 @@
                                  referencedColumnNames="mercury_sample_id"/>
     </changeSet>
 
-    <changeSet id="GPLIM-6242-40" author="jowalsh">
+    <changeSet id="GPLIM-6242-36" author="jowalsh">
         <createTable tableName="SEQ_DEMULTIPLEX_RUN_METRIC" schemaName="mercury">
             <column name="RUN_NAME" type="VARCHAR2(255)">
                 <constraints nullable="false"/>
@@ -2740,11 +2742,7 @@
 
     </changeSet>
 
-    <changeSet id="GPLIM-6242-41" author="jowalsh">
-        <addPrimaryKey  schemaName="MERCURY" tableName="SEQUENCING_RUN_METRIC" columnNames="RUN_NAME, ANALYSIS_NAME" constraintName="PK_SEQ_RUN_METRIC"/>
-    </changeSet>
-
-    <changeSet id="GPLIM-6242-42" author="jowalsh">
+    <changeSet id="GPLIM-6242-37" author="jowalsh">
         <createTable tableName="vc_run_metrics" schemaName="mercury">
             <column name="RUN_NAME" type="VARCHAR2(255)">
                 <constraints nullable="false" />
@@ -2768,7 +2766,7 @@
         <createSequence schemaName="mercury" sequenceName="SEQ_VC_RUN_METRIC" incrementBy="50"/>
     </changeSet>
 
-    <changeSet id="GPLIM-6242-43" author="jowalsh">
+    <changeSet id="GPLIM-6242-38" author="jowalsh">
         <createTable tableName="variant_call_metrics" schemaName="mercury">
             <column name="run_name" type="VARCHAR2(255)">
                 <constraints nullable="false" />
@@ -2803,7 +2801,7 @@
         <createSequence schemaName="mercury" sequenceName="SEQ_VC_METRIC" incrementBy="50"/>
     </changeSet>
 
-    <changeSet id="GPLIM-6242-44" author="jowalsh">
+    <changeSet id="GPLIM-6242-39" author="jowalsh">
         <createTable tableName="mapping_run_metrics" schemaName="mercury">
             <column name="run_name" type="VARCHAR2(255)">
                 <constraints nullable="false" />
@@ -2864,7 +2862,6 @@
             <column name="predicted_sex_chr_ploidy" type="VARCHAR2(55)" />
             <column name="capture_spec_target_region" type="VARCHAR2(55)" />
             <column name="dragen_mapping_rate" type="number(5,0)" />
-
             <column name="mapping_run_metric_id" type="number(19,0)">
                 <constraints nullable="false" />
             </column>
@@ -2874,7 +2871,7 @@
         <createSequence schemaName="mercury" sequenceName="SEQ_MAP_RUN_METRIC" incrementBy="50"/>
     </changeSet>
 
-    <changeSet id="GPLIM-6242-45" author="jowalsh">
+    <changeSet id="GPLIM-6242-40" author="jowalsh">
         <createTable tableName="mapping_rg_metrics" schemaName="mercury">
             <column name="run_name" type="VARCHAR2(255)">
                 <constraints nullable="false" />

@@ -8,6 +8,9 @@ public class DragenTaskBuilder {
     public static final String OUTPUT_FILE_PREFIX = "output-file-prefix";
     public static final String FASTQ_LIST = "fastq-list";
     public static final String FASTQ_LIST_SAMPLE_ID = "fastq-list-sample-id";
+    public static final String VC_SAMPLE_NAME = "vc-sample-name";
+    public static final String ENABLE_VARIANT_CALLER = "enable-variant-caller";
+    public static final String REFERENCE = "-r";
 
     private final StringBuilder commandBuilder;
 
@@ -37,7 +40,7 @@ public class DragenTaskBuilder {
     }
 
     public DragenTaskBuilder reference(File reference) {
-        appendCommand(String.format("-f -r %s", reference.getPath()));
+        appendCommand(String.format("-f " + REFERENCE + " %s", reference.getPath()));
         return this;
     }
 
@@ -62,12 +65,12 @@ public class DragenTaskBuilder {
     }
 
     public DragenTaskBuilder vcSampleName(String vcSampleName) {
-        appendCommand(String.format("--vc-sample-name %s", vcSampleName));
+        appendCommand(String.format("--" + VC_SAMPLE_NAME + " %s", vcSampleName));
         return this;
     }
 
     public DragenTaskBuilder enableVariantCaller(boolean b) {
-        appendCommand(String.format("--enable-variant-caller %b", b));
+        appendCommand(String.format("--" + ENABLE_VARIANT_CALLER + " %b", b));
         return this;
     }
 
@@ -98,15 +101,30 @@ public class DragenTaskBuilder {
         return this;
     }
 
+    public DragenTaskBuilder outputForm(String format) {
+        appendCommand(String.format("--output-format=%s", format));
+        return this;
+    }
+
     public String build() {
         return this.commandBuilder.toString();
     }
 
     public static String parseCommandFromArgument(String commandFlag, String commandLine) {
+        return parseCommandFromArgument(commandFlag, commandLine, false);
+    }
+
+    public static String parseCommandFromArgument(String commandFlag, String commandLine, boolean matchExact) {
         String[] split = commandLine.split("\\s");
         for (int i = 0; i < split.length; i++) {
-            if (split[i].contains(commandFlag) && i + 1 != split.length) {
-                return split[i + 1];
+            if (matchExact) {
+                if (split[i].equals(commandFlag) && i + 1 != split.length) {
+                    return split[i + 1];
+                }
+            } else {
+                if (split[i].contains(commandFlag) && i + 1 != split.length) {
+                    return split[i + 1];
+                }
             }
         }
         return null;

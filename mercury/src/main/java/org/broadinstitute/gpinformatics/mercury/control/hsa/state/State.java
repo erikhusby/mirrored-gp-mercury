@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.state;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DemultiplexMetricsTask;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -143,11 +142,25 @@ public abstract class State {
     }
 
     public List<Task> getActiveTasks() {
-        return getTasks().stream().filter(t -> t.getStatus() == Status.RUNNING).collect(Collectors.toList());
+        return getTasks().stream()
+                .filter(t -> t.getStatus() == Status.RUNNING || t.getStatus() == Status.QUEUED)
+                .collect(Collectors.toList());
     }
 
     public boolean isMainTasksComplete() {
         return getTasks().stream().allMatch(t -> t.getStatus() == Status.COMPLETE || t.getStatus() == Status.CANCELLED);
+    }
+
+    public long getNumberOfRunningTasks() {
+        return getTasks().stream().filter(t -> t.getStatus() == Status.RUNNING).count();
+    }
+
+    public long getNumberOfQueuedTasks() {
+        return getTasks().stream().filter(t -> t.getStatus() == Status.QUEUED).count();
+    }
+
+    public long getNumberOfFailedTasks() {
+        return getTasks().stream().filter(t -> t.getStatus() == Status.FAILED).count();
     }
 
     public boolean isComplete() {

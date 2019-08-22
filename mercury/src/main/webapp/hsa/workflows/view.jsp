@@ -15,16 +15,24 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.FiniteStateMachineActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="View Workflows"
-                       sectionTitle="View Workflows ${actionBean.editFiniteStateMachine.stateMachineName}">
+<stripes:layout-render name="/layout.jsp" pageTitle="View Workflow"
+                       sectionTitle="View Workflow: ${actionBean.editFiniteStateMachine.stateMachineName}">
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function () {
 
-                $j('#samplesTable').DataTable({
+                $j('#taskList').DataTable({
                     "oTableTools": {
-                        "aButtons": ["copy", "csv"]
+                        "sSwfPath": "/Mercury/resources/scripts/DataTables-1.9.4/extras/TableTools/media/swf/copy_csv_xls.swf",
+                        "aButtons": [
+                            {
+                                "sExtends" : "csv",
+                                "bHeader" : false,
+                                "sFieldBoundary": "",
+                                "mColumns": [ 1, 2, 3, 4, 5 ]
+                            }
+                        ]
                     },
                     "aoColumns": [
                         {"bSortable": false},
@@ -67,6 +75,18 @@
                     <tr>
                         <td>Alive?</td>
                         <td>${state.alive}</td>
+                    </tr>
+                    <tr>
+                        <td># Tasks Running?</td>
+                        <td>${state.getNumberOfRunningTasks()}</td>
+                    </tr>
+                    <tr>
+                        <td># Tasks Queued?</td>
+                        <td>${state.getNumberOfQueuedTasks()}</td>
+                    </tr>
+                    <tr>
+                        <td># Tasks Failed?</td>
+                        <td>${state.getNumberOfFailedTasks()}</td>
                     </tr>
                 </table>
 

@@ -88,7 +88,6 @@ public class DragenSimulator implements Dragen {
 
         reportsDir.mkdirs();
 
-        // TODO write any more real files other than fastq
         StringBuilder sb = new StringBuilder();
         sb.append("RGID,RGSM,RGLB,Lane,Read1File,Read2File").append("\n");
         Map<String, File> sampleNameToOutputDir = new HashMap<>();
@@ -103,7 +102,6 @@ public class DragenSimulator implements Dragen {
             File alignmentOutputDir = new File(outputDir, sampleData.getSampleName());
             alignmentOutputDir.mkdir();
 
-            // TODO Make
             createAlignmentAndVariantCallingMetrics(alignmentOutputDir, sampleData, rgId);
             sampleNameToOutputDir.put(sampleData.getSampleName(), alignmentOutputDir);
         }

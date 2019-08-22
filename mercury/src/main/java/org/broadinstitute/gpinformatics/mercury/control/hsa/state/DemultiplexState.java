@@ -28,6 +28,7 @@ public class DemultiplexState extends State {
     protected DemultiplexState() {
     }
 
+    // TODO Should take a list of samples as well. Say I just want to do 2 samples from 1 lane.
     public DemultiplexState(String name, Set<IlluminaSequencingRunChamber> sequencingRunChambers, FiniteStateMachine finiteStateMachine) {
         super(name, finiteStateMachine);
 

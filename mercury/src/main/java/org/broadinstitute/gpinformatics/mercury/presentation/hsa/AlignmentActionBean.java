@@ -253,14 +253,33 @@ public class AlignmentActionBean extends CoreActionBean {
     }
 
     public enum ReferenceGenome {
-        HG38("hg38", "/staging/reference/hg38/v1/");
+        HG38("hg38", "/staging/reference/hg38/v1/", "/seq/references/Homo_sapiens_assembly38/v0/Homo_sapiens_assembly38.haplotype_database.txt");
 
         private final String name;
         private final String path;
+        private final String haplotypeDatabase;
 
-        ReferenceGenome(String name, String path) {
+        private final static Map<String, ReferenceGenome> MAP_PATH_TO_REF = new HashMap<>();
+
+        ReferenceGenome(String name, String path, String haplotypeDatabase) {
             this.name = name;
             this.path = path;
+            this.haplotypeDatabase = haplotypeDatabase;
+        }
+
+        static {
+            for (ReferenceGenome referenceGenome: ReferenceGenome.values()) {
+                MAP_PATH_TO_REF.put(referenceGenome.getPath(), referenceGenome);
+            }
+        }
+
+        public static ReferenceGenome getByDragenPath(String path) {
+            ReferenceGenome referenceGenome = MAP_PATH_TO_REF.get(path);
+            if (referenceGenome == null) {
+                path += "/";
+                return MAP_PATH_TO_REF.get(path);
+            }
+            return null;
         }
 
         public String getName() {
@@ -269,6 +288,10 @@ public class AlignmentActionBean extends CoreActionBean {
 
         public String getPath() {
             return path;
+        }
+
+        public String getHaplotypeDatabase() {
+            return haplotypeDatabase;
         }
     }
 

@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.metrics;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.testng.annotations.Test;
 
@@ -8,8 +9,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.testng.Assert.*;
 
 public class AlignmentStatsParserTest {
 
@@ -25,7 +24,8 @@ public class AlignmentStatsParserTest {
 
         Map<String, String> mapReadGroupToSample = new HashMap<>();
         mapReadGroupToSample.put("CAATTAAC.CGAGATAT.2", "TCGA-CF-A9FH-01A-11D-A38G-08");
+        Pair<String, String> pair = Pair.of("SL-NVD_91_AADSX", "2019-08-27--04-05-05");
         parser.parseStats(dragenDir, "TCGA-CF-A9FH-01A-11D-A38G-08", dragenReplayInfo, messageCollection,
-                mapReadGroupToSample);
+                mapReadGroupToSample, pair);
     }
 }

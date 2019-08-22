@@ -37,20 +37,28 @@ public class SlurmController implements SchedulerController {
         return runProcesssParseList(Arrays.asList("ssh", dragenConfig.getSlurmHost(), "squeue", "-o", "\"%all\""), QueueInfo.class, 1);
     }
 
+    /**
+     * Schedule a job through slurm with exclusive flag - meaning job allocation can not share nodes with other running jobs.
+     * @param partition - Request a specific partition to be used
+     * @param processTask - Task object defining the command line argument to be supplied
+     * @return Process ID of the task being started
+     */
     @Override
     public String batchJob(String partition, ProcessTask processTask) {
         List<String> cmd;
         String dragenCmd = String.format("--wrap=\"%s%s\"", dragenConfig.getDragenPath(), processTask.getCommandLineArgument());
         if (partition == null) {
-            cmd = Arrays.asList( "ssh", dragenConfig.getSlurmHost(), "sbatch",  "-J", processTask.getTaskName(), dragenCmd);
+            cmd = Arrays.asList( "ssh", dragenConfig.getSlurmHost(), "sbatch", "--exclusive",  "-J", processTask.getTaskName(), dragenCmd);
         } else {
-            cmd = Arrays.asList( "ssh", dragenConfig.getSlurmHost(), "sbatch", "-J", processTask.getTaskName(), "-p", partition, dragenCmd);
+            cmd = Arrays.asList( "ssh", dragenConfig.getSlurmHost(), "sbatch", "--exclusive", "-J", processTask.getTaskName(), "-p", partition, dragenCmd);
         }
         ProcessResult processResult = runProcess(cmd);
         if (processResult.getExitValue() != 0) {
             String output = processResult.hasOutput() ? processResult.getOutput().getString() : "";
             throw new RuntimeException("Failed to batch job with exit code: " + processResult.getExitValue() + " " + output);
         }
+
+        // Outputs: Submitted batch job {process ID} - just grab the job ID portion
         String str = processResult.getOutput().getString();
         return str.replaceAll("[^0-9]", "");
     }

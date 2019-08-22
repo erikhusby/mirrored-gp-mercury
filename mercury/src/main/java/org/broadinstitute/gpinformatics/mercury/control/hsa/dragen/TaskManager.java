@@ -26,8 +26,7 @@ public class TaskManager {
         task.setStartTime(new Date());
         if (OrmUtil.proxySafeIsInstance(task, ProcessTask.class)) {
             handleStartProcess(task, schedulerContext);
-            // Slurm Docs recommend a slight delay between job creation
-            Thread.sleep(1000L);
+            Thread.sleep(1000L); // Slurm Docs recommend a slight delay between job creation
         } else if (OrmUtil.proxySafeIsInstance(task, DemultiplexMetricsTask.class)) {
             demultiplexMetricsTaskHandler.handleTask(task, schedulerContext);
         } else if (OrmUtil.proxySafeIsInstance(task, AlignmentMetricsTask.class)) {
@@ -37,7 +36,7 @@ public class TaskManager {
 
     private void handleStartProcess(Task task, SchedulerContext schedulerContext) {
         ProcessTask processTask = OrmUtil.proxySafeCast(task, ProcessTask.class);
-        String pid = schedulerContext.getInstance().batchJob("dragen", processTask);
+        String pid = schedulerContext.getInstance().batchJob(processTask.getPartition(), processTask);
         processTask.setProcessId(Long.parseLong(pid));
     }
 

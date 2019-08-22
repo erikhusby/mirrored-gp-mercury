@@ -363,6 +363,11 @@
                                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.AlignmentActionBean"
                                       event="view">Create Alignment Task</stripes:link>
                     </li>
+                    <li>
+                        <stripes:link id="createFingerprintWorkflow"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.FingerprintWorkflowActionBean"
+                                      event="view">Create Fingerprint Task</stripes:link>
+                    </li>
                 </ul>
             </li>
         </ul>
