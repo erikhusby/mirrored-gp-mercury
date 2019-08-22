@@ -5,6 +5,7 @@ TRAILING NULLCOLS
 (
   run_name,
   run_date DATE "YYYYMMDDHH24MISS",
+  analysis_name,
   metric_type,
   sample_alias,
   total,

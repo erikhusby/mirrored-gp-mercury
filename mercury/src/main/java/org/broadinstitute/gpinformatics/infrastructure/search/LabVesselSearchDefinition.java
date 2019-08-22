@@ -91,7 +91,7 @@ public class LabVesselSearchDefinition {
     public static final List<LabEventType> CHIP_EVENT_TYPES = Collections.singletonList(
             LabEventType.INFINIUM_HYBRIDIZATION);
 
-    static final List<LabEventType> FLOWCELL_LAB_EVENT_TYPES = new ArrayList<>();
+    public static final List<LabEventType> FLOWCELL_LAB_EVENT_TYPES = new ArrayList<>();
     static final String PDO_SEARCH_TERM = "PDO";
 
     static {

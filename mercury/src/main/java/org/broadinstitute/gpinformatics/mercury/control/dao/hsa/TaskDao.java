@@ -18,4 +18,8 @@ public class TaskDao extends GenericDao {
     public List<Task> findTasksById(List<Long> taskIds) {
         return findListByList(Task.class, Task_.taskId, taskIds);
     }
+
+    public Task findTaskById(long taskId) {
+        return findSingle(Task.class, Task_.taskId, taskId);
+    }
 }

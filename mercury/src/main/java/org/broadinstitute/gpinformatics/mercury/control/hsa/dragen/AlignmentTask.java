@@ -51,6 +51,7 @@ public class AlignmentTask extends ProcessTask {
      */
     public AlignmentTask(File reference, File fastQList, String fastQSampleId,
                          File outputDirectory, File intermediateResultsDir, String outputFilePrefix, String vcSampleName) {
+        super("dragen");
         this.reference = reference;
         this.fastQList = fastQList;
         this.fastQSampleId = fastQSampleId;
@@ -75,8 +76,10 @@ public class AlignmentTask extends ProcessTask {
                 intermediateResultsDir(intermediateResultsDir).
                 outputFilePrefix(outputFilePrefix).
                 vcSampleName(vcSampleName).
+                outputForm("cram").
                 enableVariantCaller(true).
                 enableDuplicateMarking(true).
+                enableMapAlignOutput(true).
                 build();
 
         setCommandLineArgument(dragenTaskBuilder);
@@ -86,6 +89,10 @@ public class AlignmentTask extends ProcessTask {
     }
 
     public File getReference() {
+        if (reference == null) {
+            reference = new File(DragenTaskBuilder.parseCommandFromArgument(
+                    DragenTaskBuilder.REFERENCE, getCommandLineArgument(), true));
+        }
         return reference;
     }
 
@@ -94,6 +101,10 @@ public class AlignmentTask extends ProcessTask {
     }
 
     public String getFastQSampleId() {
+        if (fastQSampleId == null) {
+            fastQSampleId = DragenTaskBuilder.parseCommandFromArgument(
+                    DragenTaskBuilder.FASTQ_LIST_SAMPLE_ID, getCommandLineArgument());
+        }
         return fastQSampleId;
     }
 
@@ -114,6 +125,19 @@ public class AlignmentTask extends ProcessTask {
     }
 
     public String getVcSampleName() {
+        if (vcSampleName == null) {
+            vcSampleName = DragenTaskBuilder.parseCommandFromArgument(
+                    DragenTaskBuilder.VC_SAMPLE_NAME, getCommandLineArgument());
+        }
         return vcSampleName;
+    }
+
+    public boolean isEnableVariantCaller() {
+        String arg = DragenTaskBuilder.parseCommandFromArgument(
+                DragenTaskBuilder.ENABLE_VARIANT_CALLER, getCommandLineArgument());
+        if (arg != null) {
+            return Boolean.valueOf(arg);
+        }
+        return false;
     }
 }

@@ -64,17 +64,8 @@ public class SlurmControllerTest {
 
     @Test
     public void tempTest() {
-        JobInfo status = slurmController.fetchJobInfo(148L);
+        JobInfo status = slurmController.fetchJobInfo(291);
         System.out.println(status);
         slurmController.cancelJob("149");
-    }
-
-    @Test
-    public void testBatch() {
-        ProcessTask processTask = new ProcessTask();
-        processTask.setTaskName("JWTestsSlurmFromSSH1");
-        processTask.setCommandLineArgument("dragen -f -r /staging/reference/hg38/v1/ --fastq-list /seq/dragen/bcl2fastq/190508_A00764_0025_AHFJNJDSXX/fastq/Reports/fastq_list.csv --fastq-list-sample-id TCGA-ZF-A9RE-01A-11D-A38G-08 --output-directory /seq/dragen/bcl2fastq/190508_A00764_0025_AHFJNJDSXX/fastq/TCGA-ZF-A9RE-01A-11D-A38G-08/ --intermediate-results-dir /staging/out/ --output-file-prefix TCGA-ZF-A9RE-01A-11D-A38G-08 --vc-sample-name TTCGA-ZF-A9RE-01A-11D-A38G-08 --enable-variant-caller true --enable-duplicate-marking true --enable-map-align-output true");
-        String jobId = slurmController.batchJob("dragen", processTask);
-        slurmController.fetchJobStatus(Long.parseLong(jobId));
     }
 }

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers;
 
 import com.opencsv.CSVReader;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
@@ -33,12 +34,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Dependent
 public class AlignmentMetricsTaskHandler extends AbstractTaskHandler {
 
     private static final Log log = LogFactory.getLog(AlignmentMetricsTaskHandler.class);
+
+    private static final Pattern RUN_NAME_PATTERN =
+            Pattern.compile("/seq/illumina/proc/SL-[A-Z]{3}/(.*)/dragen/(.*)/fastq/.*");
 
     @Inject
     private ShellUtils shellUtils;
@@ -72,6 +78,12 @@ public class AlignmentMetricsTaskHandler extends AbstractTaskHandler {
                 if (!outputDirectory.exists()) {
                     messageCollection.addError(
                             "Output directory for task " + alignmentTask + " doesn't exist" + outputDirectory);
+                    continue;
+                }
+
+                Pair<String, String> runNameDatePair = parseRunNameAndAnalysisDateFromOutputDir(outputDirectory);
+                if (runNameDatePair == null) {
+                    messageCollection.addError("Failed to parse run name and date from output " + outputDirectory.getPath());
                     continue;
                 }
 
@@ -111,7 +123,7 @@ public class AlignmentMetricsTaskHandler extends AbstractTaskHandler {
                 AlignmentStatsParser alignmentStatsParser = new AlignmentStatsParser();
                 AlignmentStatsParser.AlignmentDataFiles alignmentDataFiles = alignmentStatsParser
                         .parseStats(outputDirectory, outputFilePrefix, dragenReplayInfo, messageCollection,
-                                mapReadGroupToSample);
+                                mapReadGroupToSample, runNameDatePair);
 
                 List<ProcessResult> processResults = new ArrayList<>();
 
@@ -139,23 +151,22 @@ public class AlignmentMetricsTaskHandler extends AbstractTaskHandler {
                     task.setStatus(Status.FAILED);
                 }
 
-            } catch (IOException e) {
-                String message = "I/O Error processing alignment task metric " + alignmentMetricsTask;
-                messageCollection.addError(message);
-                log.error(message, e);
-                task.setStatus(Status.FAILED);
-            } catch (InterruptedException e) {
-                String message = "I/O Error processing alignment task metric " + alignmentMetricsTask;
-                messageCollection.addError(message);
-                log.error(message, e);
-                task.setStatus(Status.FAILED);
-            } catch (TimeoutException e) {
-                String message = "I/O Error processing alignment task metric " + alignmentMetricsTask;
-                messageCollection.addError(message);
+            } catch (Exception e) {
+                String message = "Error processing alignment task metric " + alignmentMetricsTask;
                 log.error(message, e);
                 task.setStatus(Status.FAILED);
             }
         }
+    }
+
+    private Pair<String, String> parseRunNameAndAnalysisDateFromOutputDir(File outputDirectory) {
+        Matcher matcher = RUN_NAME_PATTERN.matcher(outputDirectory.getPath());
+        if (matcher.matches()) {
+            String runName = matcher.group(1);
+            String date = matcher.group(2);
+            return Pair.of(runName, date);
+        }
+        return null;
     }
 
     private ProcessResult uploadMetric(String ctlFilePath, File dataPath)

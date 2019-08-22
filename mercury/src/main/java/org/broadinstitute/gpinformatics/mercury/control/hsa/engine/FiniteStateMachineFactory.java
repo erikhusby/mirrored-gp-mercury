@@ -4,9 +4,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
-import org.broadinstitute.gpinformatics.infrastructure.datawh.ExtractTransform;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.DragenConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.StateMachineDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.SampleSheetBuilder;
@@ -15,9 +15,12 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AlignmentTask
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DemultiplexMetricsTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DemultiplexTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenFolderUtil;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.FingerprintTask;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.FingerprintUploadTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.WaitForFileTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AlignmentState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.DemultiplexState;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FingerprintState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.GenericState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
@@ -25,6 +28,7 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Transition;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.presentation.hsa.FingerprintWorkflowActionBean;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
@@ -32,11 +36,12 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -57,6 +62,9 @@ public class FiniteStateMachineFactory {
 
     @Inject
     private StateMachineDao stateMachineDao;
+
+    @Inject
+    private MercurySampleDao mercurySampleDao;
 
     public FiniteStateMachine createFiniteStateMachineForRun(IlluminaSequencingRun run, String runName,
                                                              MessageCollection messageCollection) {
@@ -131,13 +139,13 @@ public class FiniteStateMachineFactory {
             File intermediateResults = new File("/staging/out");
             AlignmentTask alignmentTask = new AlignmentTask(referenceFile, fastQList, sampleData.getSampleName(),
                     outputDir, intermediateResults, sampleData.getSampleName(), sampleData.getSampleName());
-            alignmentTask.setTaskName("Alignment_" + sampleData.getSampleName() + " " + runName);
+            alignmentTask.setTaskName("Alignment_" + sampleData.getSampleName() + "_" + runName);
             alignmentState.addTask(alignmentTask);
             samplesAligned.add(sampleData.getSampleName());
         }
 
         AlignmentMetricsTask alignmentMetricsTask = new AlignmentMetricsTask();
-        alignmentMetricsTask.setTaskName("Alignment_Metrics " + runName);
+        alignmentMetricsTask.setTaskName("Alignment_Metric_" + runName);
         alignmentState.addExitTask(alignmentMetricsTask);
 
         Transition demuxToAlignment = new Transition("Demultiplexing To Alignment", finiteStateMachine);
@@ -149,6 +157,49 @@ public class FiniteStateMachineFactory {
         finiteStateMachine.setStates(states);
         finiteStateMachine.setTransitions(transitions);
         return finiteStateMachine;
+    }
+
+    public void createFingerprintTasks(List<FingerprintWorkflowActionBean.AlignmentDirectoryDto> alignmentDtos) {
+        List<String> sampleKeys = alignmentDtos.stream()
+                .map(FingerprintWorkflowActionBean.AlignmentDirectoryDto::getSampleKey)
+                .collect(Collectors.toList());
+        Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(sampleKeys);
+        createFingerprintTasksDaoFree(alignmentDtos, mapIdToMercurySample);
+    }
+
+    @DaoFree
+    private List<FiniteStateMachine> createFingerprintTasksDaoFree(
+            List<FingerprintWorkflowActionBean.AlignmentDirectoryDto> alignmentDtos,
+            Map<String, MercurySample> mapIdToMercurySample) {
+        List<FiniteStateMachine> finiteStateMachines = new ArrayList<>();
+        for (FingerprintWorkflowActionBean.AlignmentDirectoryDto dto: alignmentDtos) {
+            List<State> states = new ArrayList<>();
+
+            String name = "FP_" + dto.getSampleKey() + "_" + DateUtils.getFileDateTime(new Date());
+            FiniteStateMachine finiteStateMachine = new FiniteStateMachine();
+            finiteStateMachine.setStateMachineName(name);
+
+            MercurySample mercurySample = mapIdToMercurySample.get(dto.getSampleKey());
+            FingerprintState fingerprintState = new FingerprintState(mercurySample);
+            fingerprintState.setStateName(name);
+            states.add(fingerprintState);
+
+            FingerprintTask fpTask = new FingerprintTask(new File(dto.getBamFile()), new File(dto.getVcfFile()),
+                    new File(dto.getHaplotypeDatabase()), "Fingerprint");
+            fpTask.setTaskName(name);
+            fingerprintState.addTask(fpTask);
+
+            name = "FP_Upload_" + dto.getSampleKey() + "_" + DateUtils.getFileDateTime(new Date());
+            FingerprintUploadTask fingerprintUploadTask = new FingerprintUploadTask();
+            fingerprintUploadTask.setTaskName(name);
+            fingerprintState.addExitTask(fingerprintUploadTask);
+
+            finiteStateMachine.setStatus(Status.RUNNING);
+            finiteStateMachine.setStates(states);
+            finiteStateMachine.setTransitions(Collections.emptyList());
+            finiteStateMachines.add(finiteStateMachine);
+        }
+        return finiteStateMachines;
     }
 
     private boolean writeFile(File f, String content, MessageCollection messageCollection) {

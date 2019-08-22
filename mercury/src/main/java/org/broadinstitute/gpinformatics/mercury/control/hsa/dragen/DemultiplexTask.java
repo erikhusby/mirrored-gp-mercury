@@ -27,6 +27,7 @@ public class DemultiplexTask extends ProcessTask {
      * --sample-sheet /seq/illumina/proc/<instrument>/<runfolder>/<SampleSheet.csv>
      */
     public DemultiplexTask(File bclInputDirectory, File outputDirectory, File sampleSheet) {
+        super("dragen");
         this.bclInputDirectory = bclInputDirectory;
         this.outputDirectory = outputDirectory;
         this.sampleSheet = sampleSheet;

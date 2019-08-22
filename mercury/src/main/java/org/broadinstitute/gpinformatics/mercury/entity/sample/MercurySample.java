@@ -8,7 +8,8 @@ import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AlignmentTask;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AlignmentState;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FingerprintState;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -181,8 +182,14 @@ public class MercurySample extends AbstractSample {
     @OneToMany(mappedBy = "mercurySample", cascade = CascadeType.PERSIST)
     private Set<Fingerprint> fingerprints = new HashSet<>();
 
-//    @OneToMany(mappedBy = "mercurySample", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-//    private Set<AlignmentTask> alignmentTasks = new HashSet<>();
+    @ManyToMany(cascade = {CascadeType.PERSIST})
+    @JoinTable(schema = "mercury", name = "sample_alignment_state"
+            , joinColumns = {@JoinColumn(name = "MERCURY_SAMPLE")}
+            , inverseJoinColumns = {@JoinColumn(name = "ALIGNMENT_STATE")})
+    private Set<AlignmentState> alignmentStates = new HashSet<>();
+
+    @OneToMany(mappedBy = "mercurySample", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    private Set<FingerprintState> fingerprintStates = new HashSet<>();
 
     /**
      * For JPA
@@ -463,5 +470,23 @@ public class MercurySample extends AbstractSample {
     public void addLabVessel(LabVessel vesselToAdd) {
         getLabVessel().add(vesselToAdd);
         vesselToAdd.addSample(this);
+    }
+
+    public Set<AlignmentState> getAlignmentStates() {
+        return alignmentStates;
+    }
+
+    public Set<FingerprintState> getFingerprintStates() {
+        return fingerprintStates;
+    }
+
+    public void setFingerprintStates(
+            Set<FingerprintState> fingerprintStates) {
+        this.fingerprintStates = fingerprintStates;
+    }
+
+    public void addFingerprintState(FingerprintState fingerprintState) {
+        getFingerprintStates().add(fingerprintState);
+        fingerprintState.setMercurySample(this);
     }
 }
