@@ -32,6 +32,7 @@ import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcGtConcordance;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueries;
+import org.broadinstitute.gpinformatics.mercury.boundary.run.InfiniumRunResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -476,8 +477,8 @@ public class MetricsViewActionBean extends RackScanActionBean {
                 addOption("Fail", "-3", RED).
                 addOption("Not Comparable", String.valueOf(Integer.MIN_VALUE), YELLOW).build();
 
-        List<Options> hapMapConcordanceOptions = new OptionsBuilder().addOption(">= 90", "90", GREEN).
-                addOption(">= 85", "85", YELLOW).
+        List<Options> hapMapConcordanceOptions = new OptionsBuilder().addOption(">= 98", "98", GREEN).
+                addOption(">= 95", "95", YELLOW).
                 addOption("Fail", "0", RED).build();
 
         List<Options> emptyOptions = new OptionsBuilder().build();
@@ -509,7 +510,7 @@ public class MetricsViewActionBean extends RackScanActionBean {
             metadata.add(Metadata.create("Chip Well Barcode", arraysQc.getChipWellBarcode()));
             metadata.add(Metadata.create("Autocall Date", DATE_FORMAT.format( arraysQc.getAutocallDate() )));
 
-            // Sample ID metadata
+            // Sample ID and PDO metadata
             VesselPosition vesselPosition = VesselPosition.getByName(startPosition);
             if (vesselPosition != null) {
                 Set<SampleInstanceV2> sampleInstancesAtPositionV2 = staticPlate.getContainerRole()
@@ -518,16 +519,29 @@ public class MetricsViewActionBean extends RackScanActionBean {
                     SampleInstanceV2 sampleInstanceV2 = sampleInstancesAtPositionV2.iterator().next();
                     String mercuryRootSampleName = sampleInstanceV2.getMercuryRootSampleName();
                     metadata.add(Metadata.create("Sample ID", mercuryRootSampleName));
+
+                    try {
+                        ProductOrder productOrder =
+                                InfiniumRunResource.fetchProductOrder(staticPlate, sampleInstanceV2);
+                        if (productOrder != null) {
+                            metadata.add(Metadata.create("PDO", productOrder.getBusinessKey()));
+                        }
+                    } catch (Exception e) {
+                        log.error("Failed to lookup product order for " + staticPlate + " sample " + mercuryRootSampleName, e);
+                        addGlobalValidationError(e.getMessage());
+                    }
                 }
             }
 
             // Blacklisting
             if( wellBlacklistMap.containsKey(chipWellbarcode) ) {
-                plateMap.setWellStatus(startPosition, WellStatus.Blacklisted);
                 for( ArraysQcBlacklisting blacklisting : wellBlacklistMap.get(chipWellbarcode)) {
-                    metadata.add(Metadata.create("Pipeline Blacklist", DATE_FORMAT.format(blacklisting.getBlacklistedOn()) + " - " + blacklisting.getBlacklistReason()));
-                    if( blacklisting.getWhitelistedOn() != null ) {
-                        metadata.add(Metadata.create("Whitelisted", DATE_FORMAT.format(blacklisting.getWhitelistedOn())));
+                    if (blacklisting.getAnalysisVersion().equals(arraysQc.getAnalysisVersion())) {
+                        plateMap.setWellStatus(startPosition, WellStatus.Blacklisted);
+                        metadata.add(Metadata.create("Pipeline Blacklist", DATE_FORMAT.format(blacklisting.getBlacklistedOn()) + " - " + blacklisting.getBlacklistReason()));
+                        if (blacklisting.getWhitelistedOn() != null) {
+                            metadata.add(Metadata.create("Whitelisted", DATE_FORMAT.format(blacklisting.getWhitelistedOn())));
+                        }
                     }
                 }
             }

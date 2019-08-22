@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
+
+    <changeSet author="scottmat" id="GPLIM-5815-create-quote-item-storage">
+
+        <createTable tableName="SAP_QUOTE_ITEM_REFERENCE" schemaName="ATHENA">
+            <column name="SAP_QUOTE_ITEM_REFERENCE_ID" type="number(19,0)" >
+                <constraints nullable="false" />
+            </column>
+            <column name="QUOTE_LINE_REFERENCE" type="varchar(255)"/>
+            <column name="MATERIAL_REFERENCE_PRODUCT_ID" type="number(19,0)"/>
+            <column name="PARENT_PRODUCT_ORDER" type="number(19,0)" />
+        </createTable>
+
+        <addPrimaryKey tableName="SAP_QUOTE_ITEM_REFERENCE" columnNames="SAP_QUOTE_ITEM_REFERENCE_ID"
+                       schemaName="ATHENA" constraintName="PK_SAP_QUOTE_ITEM" />
+        <createSequence sequenceName="SEQ_SAP_QUOTE_ITEM_REF" schemaName="ATHENA" startValue="1" incrementBy="50" />
+        <addForeignKeyConstraint baseTableName="SAP_QUOTE_ITEM_REFERENCE"
+                                 baseColumnNames="MATERIAL_REFERENCE_PRODUCT_ID"
+                                 constraintName="FK_SAP_QUOTE_ITEM_PRODUCT" referencedTableName="PRODUCT"
+                                 referencedColumnNames="PRODUCT_ID" baseTableSchemaName="ATHENA"
+                                 referencedTableSchemaName="ATHENA" />
+        <addForeignKeyConstraint baseTableName="SAP_QUOTE_ITEM_REFERENCE" baseColumnNames="PARENT_PRODUCT_ORDER"
+                                 constraintName="FK_SAP_QUOTE_ITEM_ORDER" referencedTableName="PRODUCT_ORDER"
+                                 referencedColumnNames="PRODUCT_ORDER_ID" referencedTableSchemaName="ATHENA"
+                                 baseTableSchemaName="ATHENA"/>
+
+    </changeSet>
+    <changeSet author="scottmat" id="GPLIM-5815-create-quote-item-storage-aud">
+
+        <createTable tableName="SAP_QUOTE_ITEM_REFERENCE_AUD" schemaName="ATHENA">
+            <column name="SAP_QUOTE_ITEM_REFERENCE_ID" type="number(19,0)" >
+            </column>
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="revtype" type="number(3,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="QUOTE_LINE_REFERENCE" type="varchar(255)"/>
+            <column name="MATERIAL_REFERENCE_PRODUCT_ID" type="number(19,0)"/>
+            <column name="PARENT_PRODUCT_ORDER" type="number(19,0)" />
+        </createTable>
+
+        <addPrimaryKey tableName="SAP_QUOTE_ITEM_REFERENCE_AUD" columnNames="SAP_QUOTE_ITEM_REFERENCE_ID, rev" schemaName="ATHENA" constraintName="PK_SAP_QUOTE_ITEM_AUD" />
+        <addForeignKeyConstraint baseTableName="SAP_QUOTE_ITEM_REFERENCE_AUD" baseTableSchemaName="athena"
+                                 baseColumnNames="rev" constraintName="FK_SAP_QUOTE_ITEM_REV_INFO"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
+
+    </changeSet>
+    <changeSet author="scottmat" id="GPLIM-5815-drop_aud_primary_key">
+        <dropPrimaryKey tableName="SAP_QUOTE_ITEM_REFERENCE_AUD" constraintName="PK_SAP_QUOTE_ITEM_AUD" schemaName="ATHENA" />
+    </changeSet>
+    <changeSet id="GPLIM-5815-RE-ADD-AUD-PK" author="scottmat">
+        <addPrimaryKey tableName="SAP_QUOTE_ITEM_REFERENCE_AUD" columnNames="rev, SAP_QUOTE_ITEM_REFERENCE_ID" schemaName="ATHENA" constraintName="PK_SAP_QUOTE_ITEM_AUD" />
+    </changeSet>
+    <changeSet id="GPLIM-5815-ADD-AUD-IDX" author="scottmat">
+        <createIndex tableName="SAP_QUOTE_ITEM_REFERENCE_AUD" indexName="IDX_SAP_QUOTE_ITEM_REV_AUD">
+            <column name="SAP_QUOTE_ITEM_REFERENCE_ID"/>
+            <column name="rev"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-6362-add-commercial-flag" author="scottmat">
+        <addColumn tableName="PRODUCT" schemaName="ATHENA">
+            <column name="OFFERED_AS_COMMERCIAL" type="number(1,0)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6362-add-commercial-flag-to-audit" author="scottmat">
+        <addColumn tableName="PRODUCT_AUD" schemaName="ATHENA">
+            <column name="OFFERED_AS_COMMERCIAL" type="number(1,0)" />
+        </addColumn>
+    </changeSet>
+    <changeSet author="scottmat" id="GPLIM-6514-drop-null-constraint-ledger-entry">
+        <dropNotNullConstraint columnName="PRICE_ITEM_ID" schemaName="ATHENA" tableName="BILLING_LEDGER" />
+    </changeSet>
+    <changeSet id="GPLIM-6514-add-sap-replacement-to-ledger-entry" author="scottmat">
+        <addColumn tableName="BILLING_LEDGER" schemaName="ATHENA">
+            <column name="SAP_REPLACEMENT_PRICING" type="number(1,0)"></column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6514-add-sap-replacement-to-ledger-entry-audit" author="scottmat">
+        <addColumn tableName="BILLING_LEDGER_aud" schemaName="ATHENA">
+            <column name="SAP_REPLACEMENT_PRICING" type="number(1,0)"></column>
+        </addColumn>
+    </changeSet>
+    
+    <changeSet id="GPLIM-6537-sap-unique-ledger-constraint" author="scottmat">
+        <addUniqueConstraint tableName="BILLING_LEDGER"
+                             columnNames="PRODUCT_ORDER_SAMPLE_ID, PRICE_ITEM_ID, PRODUCT_ID, BILLING_SESSION"
+                             schemaName="ATHENA" constraintName="UK_BILLING_LEDGER_SAP"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6537-drop-old-ledger-constraint" author="scottmat">
+        <dropUniqueConstraint tableName="BILLING_LEDGER" schemaName="ATHENA" constraintName="UK_BILLING_LEDGER"/>
+    </changeSet>
+
+
+</databaseChangeLog>

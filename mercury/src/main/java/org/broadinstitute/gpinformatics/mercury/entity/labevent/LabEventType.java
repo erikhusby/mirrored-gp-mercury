@@ -1926,12 +1926,12 @@ public enum LabEventType {
             LibraryType.NONE_ASSIGNED),
     GERMLINE_EXOME_PCR_CLEANUP("GermlineExomePCRCleanup",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED),
+            PlasticToValidate.SOURCE, PipelineTransformation.PCR, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.GERMLINE_POND),
     GERMLINE_EXOME_NORM_TRANSFER("GermlineExomeNormTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.PCR, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.GERMLINE_POND),
+            LibraryType.GERMLINE_NORMALIZED_POND),
 
     // Custom Selection (e.g. twist)
     CUSTOM_SELECTION_BUCKET("CustomSelectionBucket",
@@ -2686,6 +2686,7 @@ public enum LabEventType {
         PCR_FREE_POND("PCR-Free Pond", "Pond"),
         PCR_PLUS_POND("PCR-Plus Pond", "Pond"),
         GERMLINE_POND("Germline Pond", "Pond"),
+        GERMLINE_NORMALIZED_POND("Germline Norm Pond", "Pond"),
         CF_POND("CF Pond", "Pond"),
         PCR_PLUS_NORMALIZED_POND("PCR-Plus Norm Pond", "Norm Pond"),
         HYBRID_SELECTION_AGILENT_CATCH("Enriched Catch", "Catch"),
