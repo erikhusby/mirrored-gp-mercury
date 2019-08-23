@@ -2790,16 +2790,23 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      */
     public void updateQuoteItems(SapQuote sapQuote) throws SAPInterfaceException {
 
-        Set<SapQuoteItemReference> updatedLineItemReferences = new HashSet<>();
-
-        if(product != null) {
-            updatedLineItemReferences.addAll(determineQuoteReferenceForProduct(sapQuote, product));
-        }
-        for (ProductOrderAddOn addOn : getAddOns()) {
-            updatedLineItemReferences.addAll(determineQuoteReferenceForProduct(sapQuote, addOn.getAddOn()));
-        }
+        Set<SapQuoteItemReference> updatedLineItemReferences = createSapQuoteItemReferences(this, sapQuote);
 
         setQuoteReferences(updatedLineItemReferences);
+    }
+
+    @NotNull
+    public static Set<SapQuoteItemReference> createSapQuoteItemReferences(ProductOrder productOrder, SapQuote sapQuote) throws SAPInterfaceException {
+        Set<SapQuoteItemReference> updatedLineItemReferences = new HashSet<>();
+
+        if(productOrder.product != null) {
+            updatedLineItemReferences.addAll(
+                    productOrder.determineQuoteReferenceForProduct(sapQuote, productOrder.product));
+        }
+        for (ProductOrderAddOn addOn : productOrder.getAddOns()) {
+            updatedLineItemReferences.addAll(productOrder.determineQuoteReferenceForProduct(sapQuote, addOn.getAddOn()));
+        }
+        return updatedLineItemReferences;
     }
 
     /**

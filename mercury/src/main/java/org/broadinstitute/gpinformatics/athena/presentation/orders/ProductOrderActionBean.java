@@ -1818,6 +1818,15 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
+//        try {
+//            /*
+//            if this order is not destined to go to SAP, validate Quote order values and only send a warning if
+//            there is an issue
+//            */
+//            validateQuoteDetails(editOrder, !editOrder.hasJiraTicketKey());
+//        } catch (InvalidProductException | SAPIntegrationException ipe) {
+//            addGlobalValidationError("Unable to determine the existing value of open orders for " + editOrder.getQuoteId() +": " +ipe.getMessage());
+//        }
         try {
             productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails, saveOrderMessageCollection);
             originalBusinessKey = null;
@@ -1837,15 +1846,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             addGlobalValidationError(e.getMessage());
             getSourcePageResolution();
-        }
-        try {
-            /*
-            if this order is not destined to go to SAP, validate Quote order values and only send a warning if
-            there is an issue
-            */
-            validateQuoteDetails(editOrder, !editOrder.hasJiraTicketKey());
-        } catch (InvalidProductException | SAPIntegrationException ipe) {
-            addGlobalValidationError("Unable to determine the existing value of open orders for " + editOrder.getQuoteId() +": " +ipe.getMessage());
         }
         if (chipDefaults != null && attributes != null) {
             if (!chipDefaults.equals(attributes)) {

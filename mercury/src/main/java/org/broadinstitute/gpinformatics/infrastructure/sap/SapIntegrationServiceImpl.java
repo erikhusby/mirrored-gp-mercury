@@ -306,9 +306,21 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     protected SAPOrderItem getOrderItem(SapQuote sapQuote, ProductOrder placedOrder, Product product,
                                         int additionalSampleCount, SapIntegrationService.Option serviceOptions) {
         BigDecimal sampleCount = getSampleCount(placedOrder, product, additionalSampleCount, serviceOptions);
-        if (sapQuote != null) {
+        Set<SapQuoteItemReference> quoteReferences;
+        if(serviceOptions.hasOption(Type.CLOSING)) {
+            try {
+                SapQuote oldQuote = findSapQuote(placedOrder.latestSapOrderDetail().getQuoteId());
+                quoteReferences = ProductOrder.createSapQuoteItemReferences(placedOrder, oldQuote);
+            } catch (SAPInterfaceException | SAPIntegrationException e) {
+                return null;
+            }
+        } else {
+            quoteReferences = placedOrder.getQuoteReferences();
+        }
 
-            final Optional<SapQuoteItemReference> quoteItemReference = placedOrder.getQuoteReferences().stream()
+        if (!quoteReferences.isEmpty()) {
+
+            final Optional<SapQuoteItemReference> quoteItemReference = quoteReferences.stream()
                     .filter(sapQuoteItemReference -> sapQuoteItemReference.getMaterialReference().equals(product))
                     .collect(toOptional());
             if(quoteItemReference.isPresent()) {
