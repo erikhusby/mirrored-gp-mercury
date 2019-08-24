@@ -1805,28 +1805,19 @@ public class ProductOrderActionBean extends CoreActionBean {
             saveType = ProductOrder.SaveType.CREATING;
         }
 
-//        if (editOrder.getProduct() != null && editOrder.hasSapQuote()) {
-//            final SapQuote sapQuote = editOrder.getSapQuote(sapService);
-//            final ProductOrder.OrderAccessType orderType =
-//                    ProductOrder.OrderAccessType.fromSalesOrg(sapQuote.getQuoteHeader().getSalesOrganization());
-//
-//            editOrder.setOrderType(orderType);
-//        }
-
         if (editOrder.isRegulatoryInfoEditAllowed()) {
             updateRegulatoryInformation();
         }
 
         Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
-//        try {
-//            /*
-//            if this order is not destined to go to SAP, validate Quote order values and only send a warning if
-//            there is an issue
-//            */
-//            validateQuoteDetails(editOrder, !editOrder.hasJiraTicketKey());
-//        } catch (InvalidProductException | SAPIntegrationException ipe) {
-//            addGlobalValidationError("Unable to determine the existing value of open orders for " + editOrder.getQuoteId() +": " +ipe.getMessage());
-//        }
+        try {
+            /*
+            Validate Quote order values and send a warning if there is an issue
+            */
+            validateQuoteDetails(editOrder, !editOrder.hasJiraTicketKey());
+        } catch (InvalidProductException | SAPIntegrationException ipe) {
+            addGlobalValidationError("Unable to determine the existing value of open orders for " + editOrder.getQuoteId() +": " +ipe.getMessage());
+        }
         try {
             productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails, saveOrderMessageCollection);
             originalBusinessKey = null;
