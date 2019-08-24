@@ -2841,23 +2841,23 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         Optional<Collection<QuoteItem>> quoteItemsForProduct = Optional.ofNullable(sapQuote.getQuoteItemMap().get(product.getPartNumber()));
         quoteItemsForProduct.ifPresent(quoteItems::addAll);
 
-        Set<String> dollarLimitedQuoteItems = sapQuote.getQuoteItems().stream()
+        List<String> dollarLimitedQuoteItems = sapQuote.getQuoteItems().stream()
             .filter(QuoteItem::isDollarLimitedMaterial).map(QuoteItem::getMaterialDescription)
-            .collect(Collectors.toSet());
+            .collect(Collectors.toList());
         boolean hasSingleLineItemMatch = CollectionUtils.isNotEmpty(quoteItems) && quoteItems.size() == 1;
-        boolean hasDollarLimitedQuoteItems = CollectionUtils.isNotEmpty(dollarLimitedQuoteItems);
+        boolean hasSingleDollarLimitedQuoteItems = CollectionUtils.isNotEmpty(dollarLimitedQuoteItems) && dollarLimitedQuoteItems.size() == 1;
 
         dollarLimitedQuoteItems.forEach(singleDollarLimitDescriptor -> {
             quoteItems.addAll(sapQuote.getQuoteItemByDescriptionMap().get(singleDollarLimitDescriptor));
         });
 
         if (CollectionUtils.isNotEmpty(quoteItems)) {
-            if (hasSingleLineItemMatch || hasDollarLimitedQuoteItems) {
+            if (hasSingleLineItemMatch || hasSingleDollarLimitedQuoteItems) {
                 updatedLineItemReferences.add(new SapQuoteItemReference(
                     product, quoteItems.iterator().next().getQuoteItemNumber().toString()));
             } else {
-                List<Integer> lineItems =
-                    quoteItems.stream().map(QuoteItem::getQuoteItemNumber).sorted().collect(Collectors.toList());
+                Set<String> lineItems = new HashSet<>();
+                quoteItems.stream().sorted().forEach(quoteItem -> lineItems.add(quoteItem.getQuoteItemNumber() + " - " + quoteItem.getMaterialDescription()));
                 throw new SAPInterfaceException(String.format(
                     "Product '%s' found on multiple line items in quote '%s' %s. Please contact the project manager or billing contact to correct this.",
                     product.getPartNumber(), sapQuote.getQuoteHeader().getQuoteNumber(), lineItems.toString()));
