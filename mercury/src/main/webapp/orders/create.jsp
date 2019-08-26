@@ -147,20 +147,18 @@
             return true;
         }
 
-        function myTrim(x) {
-            return x.replace(/^\s+|\s+$/gm,'');
-        }
-
         function validateChangeQuote(originalQuote, currentQuote) {
 
-            var productOrderID = "${actionBean.editOrder.productOrderId}";
+            var productOrderKey = $j("input[name='productOrder']");
             var originalIsQuoteServer = isNaN(originalQuote);
             var currentIsQuoteServer = isNaN(currentQuote);
             var originalNotBlank = originalQuote !== 'undefined' && originalQuote !== "" && originalQuote !== 'null';
-            var currentNotBlank = currentQuote !== 'undefined' && currentQuote !== "" && currentQuote !== 'null';
+            var currentNotBlank = (currentQuote !== 'undefined' && currentQuote !== "" && currentQuote !== 'null' &&
+            currentQuote !== "Enter the Quote ID for this order");
 
             var result = true;
-            if(productOrderID !== 'undefined' && productOrderID !== "" && productOrderID !== 'null') {
+            if(productOrderKey.val() !== 'undefined' && productOrderKey.val() !== "" && productOrderKey.val() !== 'null'
+                && !productOrderKey.val().includes("Draft")) {
                 result = (originalIsQuoteServer === currentIsQuoteServer) && (originalNotBlank === currentNotBlank);
             }
 
