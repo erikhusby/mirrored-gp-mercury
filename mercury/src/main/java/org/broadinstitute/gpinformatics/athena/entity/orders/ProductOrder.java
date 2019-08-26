@@ -2292,10 +2292,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public OrderAccessType getOrderType() {
-        OrderAccessType orderType = null;
-        if(hasSapQuote()) {
-            orderType = this.orderType;
-        }
         return orderType;
     }
 
