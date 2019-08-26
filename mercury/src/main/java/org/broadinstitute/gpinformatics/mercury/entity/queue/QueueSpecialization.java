@@ -10,8 +10,8 @@ import java.util.List;
  * This is meant to be used as informational only.
  */
 public enum QueueSpecialization {
-    MALARIA("Malaria", QueueType.PICO),
-    FFPE("FFPE", QueueType.PICO);
+    MALARIA("Malaria", QueueType.DNA_QUANT),
+    FFPE("FFPE", QueueType.DNA_QUANT);
 
     private final String displayName;
     private final QueueType queueType;

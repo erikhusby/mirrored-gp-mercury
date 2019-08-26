@@ -215,6 +215,14 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexNamingActionBean"
                                           event="view">Make Molecular Index Names</stripes:link>
                         </li>
+                        <li>
+                            <stripes:link id="dnaQuantQueue"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean"
+                                          event="view">
+                                <stripes:param name="queueType" value="DNA_QUANT"/>
+                                DNA Quant Queue
+                            </stripes:link>
+                        </li>
                     </ul>
                 </li>
             </security:authorizeBlock>

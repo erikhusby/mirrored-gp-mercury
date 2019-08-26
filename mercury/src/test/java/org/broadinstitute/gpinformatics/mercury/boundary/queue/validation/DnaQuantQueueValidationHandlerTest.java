@@ -1,16 +1,16 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.queue.validation;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.PicoEnqueueOverride;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.DnaQuantEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueuePriority;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-public class PicoQueueValidationHandlerTest {
+public class DnaQuantQueueValidationHandlerTest {
 
     @Test
     public void checkQueuePriorityOrderContentsTest() {
-        QueuePriority[] queuePriorityOrder = new PicoEnqueueOverride().getQueuePriorityOrder();
+        QueuePriority[] queuePriorityOrder = new DnaQuantEnqueueOverride().getQueuePriorityOrder();
         // Makes sure something in place
         Assert.assertTrue(ArrayUtils.isNotEmpty(queuePriorityOrder));
 

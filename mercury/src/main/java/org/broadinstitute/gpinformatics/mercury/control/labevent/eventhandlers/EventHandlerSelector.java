@@ -4,7 +4,7 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
-import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.PicoEnqueueOverride;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.DnaQuantEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueSpecialization;
@@ -90,9 +90,9 @@ public class EventHandlerSelector {
             MessageCollection messageCollection = new MessageCollection();
             Set<LabVessel> targetLabVessels = targetEvent.getTargetLabVessels();
 
-            QueueSpecialization queueSpecialization = PicoEnqueueOverride.determinePicoQueueSpecialization(targetLabVessels);
+            QueueSpecialization queueSpecialization = DnaQuantEnqueueOverride.determineDnaQuantQueueSpecialization(targetLabVessels);
 
-            queueEjb.enqueueLabVessels(targetLabVessels, QueueType.PICO, "Extracted" +
+            queueEjb.enqueueLabVessels(targetLabVessels, QueueType.DNA_QUANT, "Extracted" +
                     " on " + DateUtils.convertDateTimeToString(targetEvent.getEventDate()), messageCollection,
                     QueueOrigin.EXTRACTION, queueSpecialization);
         }

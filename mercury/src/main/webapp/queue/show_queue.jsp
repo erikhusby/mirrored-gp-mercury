@@ -137,7 +137,7 @@
         </stripes:form>
 
         <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean">
-            <stripes:param name="queueType" />
+            <stripes:param name="queueType" value="${actionBean.queueType}" />
             <stripes:param name="downloadFullQueueData" />
             Download Data Dump
         </stripes:link>

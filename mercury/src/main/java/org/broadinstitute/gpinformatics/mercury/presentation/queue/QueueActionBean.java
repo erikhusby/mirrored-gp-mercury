@@ -100,6 +100,7 @@ public class QueueActionBean extends CoreActionBean {
             return new RedirectResolution(SecurityActionBean.HOME_PAGE);
         }
 
+        // todo jmt need DAO call that returns only QueueStatus.isStillInQueue
         queue = queueEjb.findQueueByType(queueType);
         for (QueueGrouping grouping : queue.getQueueGroupings()) {
 

@@ -1,20 +1,20 @@
 package org.broadinstitute.gpinformatics.mercury.entity.queue;
 
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.datadump.AbstractDataDumpGenerator;
-import org.broadinstitute.gpinformatics.mercury.boundary.queue.datadump.PicoDataDumpGenerator;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.datadump.DnaQuantDataDumpGenerator;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.dequeueRules.AbstractPostDequeueHandler;
-import org.broadinstitute.gpinformatics.mercury.boundary.queue.dequeueRules.PicoPostDequeueHandler;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.dequeueRules.DnaQuantPostDequeueHandler;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.AbstractEnqueueOverride;
-import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.PicoEnqueueOverride;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.DnaQuantEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.validation.AbstractQueueValidator;
-import org.broadinstitute.gpinformatics.mercury.boundary.queue.validation.PicoQueueValidator;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.validation.DnaQuantQueueValidator;
 
 /**
  * Enum which defines a queue and its implementation.
  */
 public enum QueueType {
-    PICO("Pico", PicoQueueValidator.class, PicoEnqueueOverride.class, PicoPostDequeueHandler.class,
-            PicoDataDumpGenerator.class, QueueContainerRule.TUBES_ONLY);
+    DNA_QUANT("DNA Quant", DnaQuantQueueValidator.class, DnaQuantEnqueueOverride.class, DnaQuantPostDequeueHandler.class,
+            DnaQuantDataDumpGenerator.class, QueueContainerRule.TUBES_ONLY);
 
     // Name displayed in the queue page
     private final String textName;

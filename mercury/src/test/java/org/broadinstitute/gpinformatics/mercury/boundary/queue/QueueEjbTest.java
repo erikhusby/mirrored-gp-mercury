@@ -79,19 +79,19 @@ public class QueueEjbTest extends Arquillian {
     }
 
     @Test(groups = TestGroups.STANDARD)
-    public void enqueueToPicoQueueTest() {
+    public void enqueueToDnaQuantQueueTest() {
         MessageCollection messageCollection = new MessageCollection();
-        queueEjb.enqueueLabVessels(generateLabVesselsForTest(), QueueType.PICO, "Whatever", messageCollection, QueueOrigin.EXTRACTION, null);
+        queueEjb.enqueueLabVessels(generateLabVesselsForTest(), QueueType.DNA_QUANT, "Whatever", messageCollection, QueueOrigin.EXTRACTION, null);
 
         Assert.assertFalse(messageCollection.hasErrors());
         Assert.assertFalse(messageCollection.hasWarnings());
     }
 
     @Test(groups = TestGroups.STANDARD)
-    public void dequeueFromPicoQueueTest() {
+    public void dequeueFromDnaQuantQueueTest() {
         MessageCollection messageCollection = new MessageCollection();
-        queueEjb.enqueueLabVessels(generateLabVesselsForTest(), QueueType.PICO, "Whatever", messageCollection, QueueOrigin.EXTRACTION, null);
-        queueEjb.dequeueLabVessels(generateLabVesselsForTest(), QueueType.PICO, messageCollection,
+        queueEjb.enqueueLabVessels(generateLabVesselsForTest(), QueueType.DNA_QUANT, "Whatever", messageCollection, QueueOrigin.EXTRACTION, null);
+        queueEjb.dequeueLabVessels(generateLabVesselsForTest(), QueueType.DNA_QUANT, messageCollection,
                 DequeueingOptions.OVERRIDE);
 
         Assert.assertFalse(messageCollection.hasErrors());
@@ -103,23 +103,23 @@ public class QueueEjbTest extends Arquillian {
         MessageCollection messageCollection = new MessageCollection();
         Collection<? extends LabVessel> labVessels = generateLabVesselsForTest();
         for (LabVessel labVessel : labVessels) {
-            queueEjb.enqueueLabVessels(Collections.singletonList(labVessel), QueueType.PICO, "Whatever", messageCollection, QueueOrigin.EXTRACTION, null);
+            queueEjb.enqueueLabVessels(Collections.singletonList(labVessel), QueueType.DNA_QUANT, "Whatever", messageCollection, QueueOrigin.EXTRACTION, null);
         }
 
-        SortedSet<QueueGrouping> queueGroupings = queueEjb.findQueueByType(QueueType.PICO).getQueueGroupings();
+        SortedSet<QueueGrouping> queueGroupings = queueEjb.findQueueByType(QueueType.DNA_QUANT).getQueueGroupings();
         Assert.assertNotNull(queueGroupings);
 
         Long firstGroupindId = queueGroupings.first().getQueueGroupingId();
 
         Long lastGroupingId = queueGroupings.last().getQueueGroupingId();
 
-        queueEjb.reOrderQueue(firstGroupindId, POSITION_TO_MOVE_TO_4, QueueType.PICO, messageCollection);
+        queueEjb.reOrderQueue(firstGroupindId, POSITION_TO_MOVE_TO_4, QueueType.DNA_QUANT, messageCollection);
         queueDao.flush();
         queueDao.clear();
 
         verifyReorderSuccess(firstGroupindId, POSITION_TO_MOVE_TO_4);
 
-        queueEjb.reOrderQueue(lastGroupingId, POSITION_TO_MOVE_TO_2, QueueType.PICO, messageCollection);
+        queueEjb.reOrderQueue(lastGroupingId, POSITION_TO_MOVE_TO_2, QueueType.DNA_QUANT, messageCollection);
         queueDao.flush();
         queueDao.clear();
 
@@ -129,7 +129,7 @@ public class QueueEjbTest extends Arquillian {
     }
 
     private void verifyReorderSuccess(Long positionToCheck, int positionToMoveTo) {
-        SortedSet<QueueGrouping> updatedQueueGroupings = queueEjb.findQueueByType(QueueType.PICO).getQueueGroupings();
+        SortedSet<QueueGrouping> updatedQueueGroupings = queueEjb.findQueueByType(QueueType.DNA_QUANT).getQueueGroupings();
 
         int i = 0;
         for (QueueGrouping queueGrouping : updatedQueueGroupings) {
@@ -144,8 +144,8 @@ public class QueueEjbTest extends Arquillian {
     public void excludeTest() {
 
         MessageCollection messageCollection = new MessageCollection();
-        queueEjb.enqueueLabVessels(generateLabVesselsForTest(), QueueType.PICO, "Whatever", messageCollection, QueueOrigin.EXTRACTION, null);
-        queueEjb.excludeItems(generateLabVesselsForTest(), QueueType.PICO, messageCollection);
+        queueEjb.enqueueLabVessels(generateLabVesselsForTest(), QueueType.DNA_QUANT, "Whatever", messageCollection, QueueOrigin.EXTRACTION, null);
+        queueEjb.excludeItems(generateLabVesselsForTest(), QueueType.DNA_QUANT, messageCollection);
 
         Assert.assertFalse(messageCollection.hasErrors());
         Assert.assertFalse(messageCollection.hasWarnings());
@@ -159,31 +159,31 @@ public class QueueEjbTest extends Arquillian {
     public void moveToBottomTest() {
 
         MessageCollection messageCollection = new MessageCollection();
-        queueEjb.enqueueLabVessels(generateLabVesselsForTest(), QueueType.PICO, "Whatever", messageCollection, QueueOrigin.EXTRACTION, null);
+        queueEjb.enqueueLabVessels(generateLabVesselsForTest(), QueueType.DNA_QUANT, "Whatever", messageCollection, QueueOrigin.EXTRACTION, null);
 
-        SortedSet<QueueGrouping> queueGroupings = queueEjb.findQueueByType(QueueType.PICO).getQueueGroupings();
+        SortedSet<QueueGrouping> queueGroupings = queueEjb.findQueueByType(QueueType.DNA_QUANT).getQueueGroupings();
         Long idOfItemBeingMoved = queueGroupings.first().getQueueGroupingId();
-        queueEjb.moveToBottom(QueueType.PICO, idOfItemBeingMoved);
+        queueEjb.moveToBottom(QueueType.DNA_QUANT, idOfItemBeingMoved);
 
         queueDao.flush();
         queueDao.clear();
 
-        Assert.assertEquals(queueEjb.findQueueByType(QueueType.PICO).getQueueGroupings().last().getQueueGroupingId(), idOfItemBeingMoved);
+        Assert.assertEquals(queueEjb.findQueueByType(QueueType.DNA_QUANT).getQueueGroupings().last().getQueueGroupingId(), idOfItemBeingMoved);
     }
 
     @Test
     public void moveToTopTest() {
 
         MessageCollection messageCollection = new MessageCollection();
-        queueEjb.enqueueLabVessels(generateLabVesselsForTest(), QueueType.PICO, "Whatever", messageCollection, QueueOrigin.EXTRACTION, null);
+        queueEjb.enqueueLabVessels(generateLabVesselsForTest(), QueueType.DNA_QUANT, "Whatever", messageCollection, QueueOrigin.EXTRACTION, null);
 
-        SortedSet<QueueGrouping> queueGroupings = queueEjb.findQueueByType(QueueType.PICO).getQueueGroupings();
+        SortedSet<QueueGrouping> queueGroupings = queueEjb.findQueueByType(QueueType.DNA_QUANT).getQueueGroupings();
         Long idOfItemBeingMoved = queueGroupings.last().getQueueGroupingId();
-        queueEjb.moveToTop(QueueType.PICO, idOfItemBeingMoved);
+        queueEjb.moveToTop(QueueType.DNA_QUANT, idOfItemBeingMoved);
 
         queueDao.flush();
         queueDao.clear();
 
-        Assert.assertEquals(queueEjb.findQueueByType(QueueType.PICO).getQueueGroupings().first().getQueueGroupingId(), idOfItemBeingMoved);
+        Assert.assertEquals(queueEjb.findQueueByType(QueueType.DNA_QUANT).getQueueGroupings().first().getQueueGroupingId(), idOfItemBeingMoved);
     }
 }

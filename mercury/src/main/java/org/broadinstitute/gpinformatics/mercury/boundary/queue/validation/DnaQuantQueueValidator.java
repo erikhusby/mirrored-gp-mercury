@@ -6,13 +6,11 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,7 +20,7 @@ import java.util.Map;
  */
 @Stateful
 @RequestScoped
-public class PicoQueueValidator implements AbstractQueueValidator {
+public class DnaQuantQueueValidator implements AbstractQueueValidator {
 
     /**
      * Verify is DNA

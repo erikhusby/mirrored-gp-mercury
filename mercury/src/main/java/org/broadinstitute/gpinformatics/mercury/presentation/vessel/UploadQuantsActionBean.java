@@ -46,7 +46,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate.TubeFormationByWellCriteria.Result;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.sample.PicoDispositionActionBean;
@@ -187,7 +186,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
                     labMetricRun = pair.getLeft();
                     tubeFormationLabels = pair.getRight();
 
-                    queueEjb.dequeueLabVessels(labMetricRun, QueueType.PICO, messageCollection);
+                    queueEjb.dequeueLabVessels(labMetricRun, QueueType.DNA_QUANT, messageCollection);
                 }
                 addMessages(messageCollection);
                 break;
@@ -227,7 +226,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
                                 .map(r -> r.getTubeFormation().getLabel()).collect(Collectors.toList());
                     }
 
-                    queueEjb.dequeueLabVessels(labMetricRun, QueueType.PICO, messageCollection);
+                    queueEjb.dequeueLabVessels(labMetricRun, QueueType.DNA_QUANT, messageCollection);
                 }
 
                 addMessages(messageCollection);

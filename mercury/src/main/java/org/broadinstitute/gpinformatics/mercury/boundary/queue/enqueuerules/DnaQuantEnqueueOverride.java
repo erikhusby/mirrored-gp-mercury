@@ -26,13 +26,13 @@ import java.util.Map;
  * Logic for overriding default handling for enqueueing for the Pico Queue.
  */
 @RequestScoped
-public class PicoEnqueueOverride extends AbstractEnqueueOverride {
+public class DnaQuantEnqueueOverride extends AbstractEnqueueOverride {
 
-    public PicoEnqueueOverride() {
+    public DnaQuantEnqueueOverride() {
         this(ServiceAccessUtility.getBean(BSPRestClient.class));
     }
 
-    public PicoEnqueueOverride(BSPRestClient bspRestClientImpl) {
+    public DnaQuantEnqueueOverride(BSPRestClient bspRestClientImpl) {
         this.bspRestClientImpl = bspRestClientImpl;
     }
 
@@ -42,7 +42,7 @@ public class PicoEnqueueOverride extends AbstractEnqueueOverride {
      * Currently only specialization is if something is FFPE
      */
     @Nullable
-    public static QueueSpecialization determinePicoQueueSpecialization(Collection<LabVessel> targetLabVessels) {
+    public static QueueSpecialization determineDnaQuantQueueSpecialization(Collection<LabVessel> targetLabVessels) {
         List<MercurySample> mercurySamples = new ArrayList<>();
 
         QueueSpecialization queueSpecialization = null;
