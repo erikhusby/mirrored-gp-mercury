@@ -625,9 +625,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         if(editOrder.getProduct() != null) {
 
-            if(editOrder.hasSapQuote()) {
+            String salesOrganization=null;
+            if (editOrder.hasSapQuote()) {
                 SapQuote sapQuote;
-                String salesOrganization;
                 try {
                     sapQuote = editOrder.getSapQuote(sapService);
                     salesOrganization =
@@ -638,9 +638,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                     return;
                 }
                 Optional<SAPMaterial> cachedProduct =
-                        Optional.ofNullable(productPriceCache.findByPartNumber(editOrder.getProduct().getPartNumber(),
-                                salesOrganization));
-                if(!cachedProduct.isPresent()) {
+                    Optional.ofNullable(productPriceCache.findByPartNumber(editOrder.getProduct().getPartNumber(),
+                        salesOrganization));
+                if (!cachedProduct.isPresent()) {
                     addGlobalValidationError("The product you selected " +
                                              editOrder.getProduct().getDisplayName() + " is invalid for your quote " +
                                              sapQuote.getQuoteHeader().getQuoteNumber() +
@@ -648,29 +648,11 @@ public class ProductOrderActionBean extends CoreActionBean {
                                              salesOrganization +
                                              ".  Please check either the selected product or the quote you are using.");
                 }
-
-                if (editOrder.hasSapQuote()) {
-                    final ProductOrder.OrderAccessType orderType =
-                            ProductOrder.OrderAccessType.fromSalesOrg(salesOrganization);
-
-                    if((editOrder.getProduct().isExternalProduct() || editOrder.getProduct().isClinicalProduct()) &&
-                       orderType != ProductOrder.OrderAccessType.COMMERCIAL) {
-                        addGlobalValidationError("Broad PI Engaged quotes cannot be used for Commercial or Clinical Products");
-                    } else {
-
-                        editOrder.setOrderType(orderType);
-                    }
-                } else if(editOrder.hasQuoteServerQuote()) {
-                    Optional<Product> typeDeterminant = Optional.ofNullable(editOrder.getProduct());
-                    typeDeterminant.ifPresent(product -> {
-                        if(product.isLLCProduct()) {
-                            editOrder.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
-                        } else {
-                            editOrder.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
-                        }
-                    });
-                }
-
+            }
+            try {
+                editOrder.setOrderType(ProductOrder.determineOrderType(editOrder, salesOrganization));
+            } catch (Exception e) {
+                addGlobalValidationError(e.getMessage());
             }
         }
         /*

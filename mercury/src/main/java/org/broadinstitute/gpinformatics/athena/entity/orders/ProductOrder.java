@@ -117,6 +117,28 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private static final String REQUISITION_PREFIX = "REQ-";
 
     public static final String IRB_REQUIRED_START_DATE_STRING = "04/01/2014";
+    public static final String QUOTES_CANNOT_BE_USED_FOR_COMMERCIAL_OR_CLINICAL_PRODUCTS =
+        "Broad PI Engaged quotes cannot be used for Commercial or Clinical Products";
+
+    public static OrderAccessType determineOrderType(ProductOrder productOrder, String salesOrganization) {
+        ProductOrder.OrderAccessType orderType = OrderAccessType.BROAD_PI_ENGAGED_WORK;
+        if (productOrder.hasSapQuote()) {
+            if (StringUtils.isNotBlank(salesOrganization)) {
+                orderType = OrderAccessType.fromSalesOrg(salesOrganization);
+            }
+            if ((productOrder.getProduct().isExternalProduct() || productOrder.getProduct().isClinicalProduct()) &&
+                orderType != ProductOrder.OrderAccessType.COMMERCIAL) {
+                throw new RuntimeException(QUOTES_CANNOT_BE_USED_FOR_COMMERCIAL_OR_CLINICAL_PRODUCTS);
+            } else {
+                productOrder.setOrderType(orderType);
+            }
+        } else if (productOrder.hasQuoteServerQuote()) {
+            Optional<Product> typeDeterminant = Optional.ofNullable(productOrder.getProduct());
+            orderType = typeDeterminant.filter(Product::isLLCProduct).map(p -> OrderAccessType.COMMERCIAL)
+                .orElse(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
+        }
+        return orderType;
+    }
 
     public Quote getQuote(QuoteService quoteService) throws QuoteNotFoundException, QuoteServerException {
         if (cachedQuote == null ||
