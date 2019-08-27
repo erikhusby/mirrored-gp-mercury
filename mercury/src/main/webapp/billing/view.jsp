@@ -139,7 +139,7 @@
                     </td>
                     <td>
                         <c:forEach items="${item.workItems}" var="quoteServerWorkItem">
-                            <c:choose><c:when test="${!item.sapOrder}">
+                            <c:choose><c:when test="${item.quoteServerOrder}">
                                 <a class="billed-workItems"
                                    href="${actionBean.getQuoteWorkItemUrl(item.quoteId,quoteServerWorkItem)}"
                                    target="QUOTE">${quoteServerWorkItem}</a><br/>

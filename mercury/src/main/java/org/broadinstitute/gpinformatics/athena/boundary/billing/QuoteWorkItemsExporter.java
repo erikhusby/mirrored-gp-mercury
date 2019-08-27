@@ -59,7 +59,7 @@ public class QuoteWorkItemsExporter extends AbstractSpreadsheetExporter<Abstract
         }
 
         for (QuoteImportItem item : quoteItems) {
-            if (!item.isSapOrder()) {
+            if (item.isQuoteServerOrder()) {
                 getWriter().nextRow();
                 getWriter().writeCell(item.getQuoteId());
                 Optional<PriceItem> optionalPriceItem = Optional.ofNullable(item.getPriceItem());
