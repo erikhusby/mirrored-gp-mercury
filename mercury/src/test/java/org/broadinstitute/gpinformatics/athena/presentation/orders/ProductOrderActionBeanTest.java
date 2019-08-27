@@ -4421,6 +4421,10 @@ public class ProductOrderActionBeanTest {
                 EnumSet.copyOf(SapIntegrationServiceImpl.EXTENDED_PLATFORMS);
         sapCompanyConfigurations.add(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
 
+        ProductOrder.OrderAccessType testOrderAccessType =
+            ProductOrder.determineOrderType(pdo, quoteSalesOrgMatch);
+        assertThat(testOrderAccessType.getSalesOrg(), equalTo(quoteSalesOrgMatch));
+
         for (SapIntegrationClientImpl.SAPCompanyConfiguration companyCode : sapCompanyConfigurations) {
 
             final Set<SapIntegrationClientImpl.SAPCompanyConfiguration> llcCompanyCodes =
@@ -4611,6 +4615,21 @@ public class ProductOrderActionBeanTest {
     public void testChangeQuote(ProductOrder.OrderStatus orderStatus, String oldQuote, String newQuote, boolean canChange) {
         pdo.setOrderStatus(orderStatus);
         assertThat(ProductOrderActionBean.canChangeQuote(pdo, oldQuote, newQuote), is(canChange));
+    }
+
+    @Test
+    public void testDetermineOrderType() throws InvalidProductException {
+        Product product = createSimpleProduct("1234",ProductFamily.WHOLE_GENOME_GENOTYPING);
+        product.setExternalOnlyProduct(true);
+        product.setClinicalProduct(true);
+        pdo.setQuoteId("12345");
+        pdo.setProduct(product);
+        try {
+                ProductOrder.determineOrderType(pdo, ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK.getSalesOrg());
+                Assert.fail("An exception should have been thrown");
+        } catch (Exception e) {
+            assertThat(e.getMessage(), is(ProductOrder.QUOTES_CANNOT_BE_USED_FOR_COMMERCIAL_OR_CLINICAL_PRODUCTS));
+        }
     }
 
 }
