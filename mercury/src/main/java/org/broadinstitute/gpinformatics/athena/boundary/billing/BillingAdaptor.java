@@ -312,7 +312,7 @@ public class BillingAdaptor implements Serializable {
                 } catch (Exception ex) {
 
                     StringBuilder errorMessageBuilder = new StringBuilder();
-                    if (!result.isBilledInQuoteServer() && StringUtils.isBlank(workId)) {
+                    if (!result.isBilledInQuoteServer() && StringUtils.isBlank(workId) && item.isQuoteServerOrder()) {
 
 
                         errorMessageBuilder.append("A problem occurred attempting to post to the quote server for ")
