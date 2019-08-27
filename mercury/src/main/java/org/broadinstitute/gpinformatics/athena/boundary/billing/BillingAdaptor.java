@@ -312,19 +312,13 @@ public class BillingAdaptor implements Serializable {
                 } catch (Exception ex) {
 
                     StringBuilder errorMessageBuilder = new StringBuilder();
-                    if (!result.isBilledInQuoteServer() && StringUtils.isBlank(workId)) {
-
-
-                        errorMessageBuilder.append("A problem occurred attempting to post to the quote server for ")
-                                .append(billingSession.getBusinessKey()).append(".");
-
-                    } else if (!result.isBilledInSap() && isQuoteFunded && item.isSapOrder()) {
-
+                    if (!result.isBilledInSap() && isQuoteFunded && item.isSapOrder()) {
                         errorMessageBuilder.append("A problem occured attempting to post to SAP for ")
-                                .append(billingSession.getBusinessKey()).append(".");
-
-                    }
-                    else {
+                            .append(billingSession.getBusinessKey()).append(".");
+                    } else if (!result.isBilledInQuoteServer() && StringUtils.isBlank(workId)) {
+                        errorMessageBuilder.append("A problem occurred attempting to post to the quote server for ")
+                            .append(billingSession.getBusinessKey()).append(".");
+                    } else {
                         errorMessageBuilder.append("A problem occurred saving the ledger entries for ")
                             .append(billingSession.getBusinessKey()).append(" with an SAP ID of ")
                             .append(result.isBilledInSap() ? result.getSapBillingId() : sapBillingId).append(",")
