@@ -125,10 +125,18 @@
             }
         }
 
-        function validateNumberOfLanes() {
+        function validateSaveOrder() {
             var numberOfLanes = $j("#numberOfLanes");
             var lanesFieldDiv = $j("#numberOfLanesDiv");
             var productOrderKey = $j("input[name='productOrder']");
+
+            var originalQuote = $j("input[name='originalQuote']");
+            var currentQuote = $j("#quote");
+
+            if(!validateChangeQuote(originalQuote.val().trim(), currentQuote.val().trim())) {
+                alert("Switching between Quote Server and SAP quotes is not permitted once an order has been placed.");
+                return false;
+            }
 
             if (lanesFieldDiv.css('display') !== 'none' && lanesFieldDiv.css("visibility") !== 'hidden' &&
                 lanesFieldDiv.css('opacity') !== 0 && numberOfLanes.length && productOrderKey.val().includes("Draft")) {
@@ -138,6 +146,25 @@
 
             return true;
         }
+
+        function validateChangeQuote(originalQuote, currentQuote) {
+
+            var productOrderKey = $j("input[name='productOrder']");
+            var originalIsQuoteServer = isNaN(originalQuote);
+            var currentIsQuoteServer = isNaN(currentQuote);
+            var originalNotBlank = originalQuote !== 'undefined' && originalQuote !== "" && originalQuote !== 'null';
+            var currentNotBlank = (currentQuote !== 'undefined' && currentQuote !== "" && currentQuote !== 'null' &&
+            currentQuote !== "Enter the Quote ID for this order");
+
+            var result = true;
+            if(productOrderKey.val() !== 'undefined' && productOrderKey.val() !== "" && productOrderKey.val() !== 'null'
+                && !productOrderKey.val().includes("Draft")) {
+                result = (originalIsQuoteServer === currentIsQuoteServer) && (originalNotBlank === currentNotBlank);
+            }
+
+            return result;
+        }
+
         $j(document).ready(
 
                 function () {
@@ -1779,7 +1806,7 @@
                         <stripes:submit name="save" value="${actionBean.saveButtonText}"
                                         disabled="${!actionBean.canSave}"
                                         style="margin-right: 10px;" class="btn btn-primary"
-                                        onclick="return validateNumberOfLanes();"/>
+                                        onclick="return validateSaveOrder();"/>
                         <c:choose>
                             <c:when test="${actionBean.creating}">
                                 <stripes:link beanclass="${actionBean.class.name}" event="list">Cancel</stripes:link>
