@@ -93,6 +93,7 @@ public abstract class AbstractDataDumpGenerator {
         int index = 0;
         for (BSPSampleSearchColumn bspSampleSearchColumn : dataDumpHeaderColumns) {
             headers[index] = bspSampleSearchColumn.columnName();
+            index++;
         }
 
         return headers;

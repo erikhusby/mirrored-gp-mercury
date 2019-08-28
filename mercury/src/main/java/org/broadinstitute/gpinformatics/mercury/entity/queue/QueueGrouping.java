@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.queue;
 
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
@@ -20,6 +21,8 @@ import javax.persistence.Version;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Used to group together Queue Entities.  It is expected that, for whatever reason, the samples within a grouping are
@@ -93,6 +96,16 @@ public class QueueGrouping {
         this.queueSpecialization = queueSpecialization;
 
         this.queuedEntities = new ArrayList<>();
+    }
+
+    public Set<String> bspLocations() {
+        Set<String> locations = new TreeSet<>();
+        for (QueueEntity queuedEntity : queuedEntities) {
+            for (MercurySample mercurySample : queuedEntity.getLabVessel().getMercurySamples()) {
+                locations.add(mercurySample.getSampleData().getBspStorageLocation());
+            }
+        }
+        return locations;
     }
 
     public Long getQueueGroupingId() {

@@ -309,7 +309,7 @@ public class LabEvent {
         Set<LabVessel> eventVessels = new HashSet<>();
         for (LabVessel targetVessel : getTargetLabVessels()) {
             if (targetVessel.getContainerRole() != null &&
-                OrmUtil.proxySafeIsInstance(targetVessel, TubeFormation.class)) {
+                    OrmUtil.proxySafeIsInstance(targetVessel, TubeFormation.class)) {
                 eventVessels.addAll(targetVessel.getContainerRole().getContainedVessels());
             } else {
                 eventVessels.add(targetVessel);
@@ -322,7 +322,7 @@ public class LabEvent {
         Set<LabVessel> eventVessels = new HashSet<>();
         for (LabVessel sourceVessel : getSourceLabVessels()) {
             if (sourceVessel.getContainerRole() != null &&
-                OrmUtil.proxySafeIsInstance(sourceVessel, TubeFormation.class)) {
+                    OrmUtil.proxySafeIsInstance(sourceVessel, TubeFormation.class)) {
                 eventVessels.addAll(sourceVessel.getContainerRole().getContainedVessels());
             } else {
                 eventVessels.add(sourceVessel);

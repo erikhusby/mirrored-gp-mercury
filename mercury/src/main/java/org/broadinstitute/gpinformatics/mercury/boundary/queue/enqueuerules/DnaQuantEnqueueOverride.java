@@ -29,7 +29,7 @@ import java.util.Map;
 public class DnaQuantEnqueueOverride extends AbstractEnqueueOverride {
 
     public DnaQuantEnqueueOverride() {
-        this(ServiceAccessUtility.getBean(BSPRestClient.class));
+        this(ServiceAccessUtility.getBean(BSPRestClient.class)); // todo jmt why not inject?
     }
 
     public DnaQuantEnqueueOverride(BSPRestClient bspRestClientImpl) {
@@ -53,7 +53,7 @@ public class DnaQuantEnqueueOverride extends AbstractEnqueueOverride {
             }
         }
 
-        SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
+        SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class); // todo jmt why not inject?
         Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleDataForSamples(mercurySamples, BSPSampleSearchColumn.MATERIAL_TYPE, BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE);
 
         // Check for FFPE

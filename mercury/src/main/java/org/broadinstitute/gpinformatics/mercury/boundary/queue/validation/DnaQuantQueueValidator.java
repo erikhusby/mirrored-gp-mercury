@@ -57,7 +57,7 @@ public class DnaQuantQueueValidator implements AbstractQueueValidator {
 
         // We determined that there are some BSP Samples, therefore we can use BSP to verify whether it is DNA or not.
         if (!bspSampleIdsByVesselId.isEmpty()) {
-            BSPSampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
+            BSPSampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class); // todo jmt why not inject?
 
             Map<String, BspSampleData> sampleIdToData =
                     sampleDataFetcher.fetchSampleData(bspSampleIdsByVesselId.values(), BSPSampleSearchColumn.SAMPLE_ID,

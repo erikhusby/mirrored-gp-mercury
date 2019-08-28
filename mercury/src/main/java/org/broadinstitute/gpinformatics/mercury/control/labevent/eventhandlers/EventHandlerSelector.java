@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
@@ -9,10 +10,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueSpecialization;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -88,12 +92,24 @@ public class EventHandlerSelector {
                 && targetEvent.getLabEventType().getResultingMaterialType().containsIgnoringCase("dna")) {
 
             MessageCollection messageCollection = new MessageCollection();
-            Set<LabVessel> targetLabVessels = targetEvent.getTargetLabVessels();
+            Set<LabVessel> targetLabVessels = targetEvent.getTargetVesselTubes();
 
             QueueSpecialization queueSpecialization = DnaQuantEnqueueOverride.determineDnaQuantQueueSpecialization(targetLabVessels);
 
-            queueEjb.enqueueLabVessels(targetLabVessels, QueueType.DNA_QUANT, "Extracted" +
-                    " on " + DateUtils.convertDateTimeToString(targetEvent.getEventDate()), messageCollection,
+            Set<String> xtrBatches = new HashSet<>();
+            for (LabVessel targetLabVessel : targetLabVessels) {
+                for (SampleInstanceV2 sampleInstanceV2 : targetLabVessel.getSampleInstancesV2()) {
+                    LabBatch singleBatch = sampleInstanceV2.getSingleBatch();
+                    if (singleBatch != null && singleBatch.getBatchName().startsWith("XTR")) {
+                        xtrBatches.add(singleBatch.getBatchName());
+                    }
+                }
+            }
+            String readableText = xtrBatches.isEmpty() ?
+                    "Extracted on " + DateUtils.convertDateTimeToString(targetEvent.getEventDate()) :
+                    StringUtils.join(xtrBatches, ",");
+
+            queueEjb.enqueueLabVessels(targetLabVessels, QueueType.DNA_QUANT, readableText, messageCollection,
                     QueueOrigin.EXTRACTION, queueSpecialization);
         }
     }

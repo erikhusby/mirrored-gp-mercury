@@ -16,7 +16,6 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.StreamCreatedSpreadsheetUtil;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
@@ -51,7 +50,7 @@ import java.util.Map;
  */
 @UrlBinding("/queue/Queue.action")
 public class QueueActionBean extends CoreActionBean {
-    private static final Log log = LogFactory.getLog(CoreActionBean.class);
+    private static final Log log = LogFactory.getLog(QueueActionBean.class);
     private static final String SPREADSHEET_FILENAME = "_queue_data_dump.xls";
 
     private QueueType queueType;
@@ -75,6 +74,10 @@ public class QueueActionBean extends CoreActionBean {
 
     @Inject
     private BSPUserList userList;
+
+    @Inject
+    private SampleDataFetcher sampleDataFetcher;
+
     private static final String READABLE_TEXT = "Manually added on ";
     private Map<String, SampleData> sampleIdToSampleData;
     private Map<Long, String> labVesselIdToSampleId;
@@ -102,6 +105,7 @@ public class QueueActionBean extends CoreActionBean {
 
         // todo jmt need DAO call that returns only QueueStatus.isStillInQueue
         queue = queueEjb.findQueueByType(queueType);
+        List<MercurySample> mercurySamples = new ArrayList<>();
         for (QueueGrouping grouping : queue.getQueueGroupings()) {
 
             QueuePriority queuePriority = grouping.getQueuePriority();
@@ -126,7 +130,13 @@ public class QueueActionBean extends CoreActionBean {
                         break;
                     default:
                 }
+                mercurySamples.addAll(queueEntity.getLabVessel().getMercurySamples());
             }
+        }
+
+        Map<String, SampleData> mapIdToData = loadData(mercurySamples);
+        for (MercurySample mercurySample : mercurySamples) {
+            mercurySample.setSampleData(mapIdToData.get(mercurySample.getSampleKey()));
         }
 
         return new ForwardResolution("/queue/show_queue.jsp");
@@ -138,17 +148,19 @@ public class QueueActionBean extends CoreActionBean {
     @HandlesEvent("viewGrouping")
     public Resolution viewGrouping() {
         if (queueGroupingId == null) {
+            addGlobalValidationError("queueGroupingId not specified");
             return getSourcePageResolution();
         }
 
         queueGrouping = queueDao.findById(QueueGrouping.class, queueGroupingId);
 
-        List<Long> userIds = new ArrayList<>();
+        List<Long> userIds = new ArrayList<>(); // todo jmt queried but never updated
         List<LabVessel> labVessels = new ArrayList<>();
         labVesselIdToSampleId = new HashMap<>();
         labVesselIdToMercurySample = new HashMap<>();
         for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
             labVessels.add(queueEntity.getLabVessel());
+            // todo jmt add to userIds?
         }
 
         List<MercurySample> mercurySamples = new ArrayList<>();
@@ -165,7 +177,6 @@ public class QueueActionBean extends CoreActionBean {
     }
 
     private Map<String, SampleData> loadData(List<MercurySample> mercurySamples) {
-        SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
         return sampleDataFetcher.fetchSampleDataForSamples(mercurySamples, getSearchColumns());
     }
 
@@ -183,6 +194,7 @@ public class QueueActionBean extends CoreActionBean {
     public Resolution downloadGroupingData() {
         try {
             if (queueGroupingId == null) {
+                addGlobalValidationError("queueGroupingId not specified");
                 return getSourcePageResolution();
             }
 
