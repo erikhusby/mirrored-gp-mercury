@@ -113,7 +113,7 @@ public class RegulatoryInfoFixupTest extends Arquillian {
      * testdata/OrspFixup.txt format:
      * SUPPORT-5713    ORSP-750    ORSP_NOT_ENGAGED    ORSP_NOT_HUMAN_SUBJECTS_RESEARCH
      */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void updateRegulatoryInfoType() throws Exception {
         userBean.loginOSUser();
         utx.begin();
