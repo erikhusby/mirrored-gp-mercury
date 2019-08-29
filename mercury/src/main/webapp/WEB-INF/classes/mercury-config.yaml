@@ -137,7 +137,7 @@ quote:
     PROD:
       login:    mercuryquote
       password: ml1m5qu0t3
-      url:      http://quoteprod:8080
+      url:      https://apps.broadinstitute.org
 
 
 squid:
