@@ -159,7 +159,11 @@
                         loadDefaultWbs();
                     });
                     $j("#clinicalProduct, #externalOrderOnly").on("click", loadDefaultWbs);
+                    $j("#partNumber").on('keyup', function(event) {
+                        $(this).val($(this).val().toUpperCase());
+                    });
                 }
+
             );
 
             function formatInput(item) {
