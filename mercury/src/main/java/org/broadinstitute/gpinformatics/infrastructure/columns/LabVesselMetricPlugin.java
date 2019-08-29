@@ -125,9 +125,7 @@ public class LabVesselMetricPlugin implements ListPlugin {
                 @Override
                 public int compare(LabMetric o1, LabMetric o2) {
                     // Puts tubes before plates.
-                    LabVessel.ContainerType containerType1 = o1.getLabVessel().getType();
-                    LabVessel.ContainerType containerType2 = o2.getLabVessel().getType();
-                    int o1plate = (o1.getLabVessel().getType() == LabVessel.ContainerType.PLATE_WELL) ? 1 : 0;
+                    int o1plate = (o1.getLabVessel().getType() == LabVessel.ContainerType.PLATE_WELL) ? 1 : 0; // todo jmt
                     int o2plate = (o2.getLabVessel().getType() == LabVessel.ContainerType.PLATE_WELL) ? 1 : 0;
                     if (o1plate != o2plate) {
                         return o1plate - o2plate;

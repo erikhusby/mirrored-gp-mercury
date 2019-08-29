@@ -147,9 +147,9 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
 
         List<LabMetric> metricList = new ArrayList<>();
 
-        // Interested in tubes only
+        // Prefer the vessel on which the decision was made (e.g. source of pico transfer)
         for( LabMetric labMetric : metrics ) {
-            if( labMetric.getLabVessel().getType() != LabVessel.ContainerType.PLATE_WELL ) {
+            if (labMetric.getLabMetricDecision() != null || labMetric.getName().getDecider() == null) {
                 metricList.add(labMetric);
             }
         }

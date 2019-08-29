@@ -499,7 +499,7 @@ public abstract class TransferTraverserCriteria {
             } else if (context.getContextVesselContainer() != null) {
                 vesselList.add(context.getContextVesselContainer().getEmbedder());
             }
-            labVesselAtHopCount.put(context.getHopCount(), vesselList);
+            labVesselAtHopCount.put(context.getHopCount(), vesselList); // todo jmt what if two branches with same depths?
 
             return TraversalControl.ContinueTraversing;
         }
