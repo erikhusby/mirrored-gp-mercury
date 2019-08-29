@@ -117,6 +117,28 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private static final String REQUISITION_PREFIX = "REQ-";
 
     public static final String IRB_REQUIRED_START_DATE_STRING = "04/01/2014";
+    public static final String QUOTES_CANNOT_BE_USED_FOR_COMMERCIAL_OR_CLINICAL_PRODUCTS =
+        "Broad PI Engaged quotes cannot be used for Commercial or Clinical Products";
+
+    public static OrderAccessType determineOrderType(ProductOrder productOrder, String salesOrganization) {
+        ProductOrder.OrderAccessType orderType = OrderAccessType.BROAD_PI_ENGAGED_WORK;
+        if (productOrder.hasSapQuote()) {
+            if (StringUtils.isNotBlank(salesOrganization)) {
+                orderType = OrderAccessType.fromSalesOrg(salesOrganization);
+            }
+            if ((productOrder.getProduct().isExternalProduct() || productOrder.getProduct().isClinicalProduct()) &&
+                orderType != ProductOrder.OrderAccessType.COMMERCIAL) {
+                throw new RuntimeException(QUOTES_CANNOT_BE_USED_FOR_COMMERCIAL_OR_CLINICAL_PRODUCTS);
+            } else {
+                productOrder.setOrderType(orderType);
+            }
+        } else if (productOrder.hasQuoteServerQuote()) {
+            Optional<Product> typeDeterminant = Optional.ofNullable(productOrder.getProduct());
+            orderType = typeDeterminant.filter(Product::isLLCProduct).map(p -> OrderAccessType.COMMERCIAL)
+                .orElse(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
+        }
+        return orderType;
+    }
 
     public Quote getQuote(QuoteService quoteService) throws QuoteNotFoundException, QuoteServerException {
         if (cachedQuote == null ||
@@ -2292,10 +2314,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public OrderAccessType getOrderType() {
-        OrderAccessType orderType = null;
-        if(hasSapQuote()) {
-            orderType = this.orderType;
-        }
         return orderType;
     }
 
@@ -2790,16 +2808,23 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      */
     public void updateQuoteItems(SapQuote sapQuote) throws SAPInterfaceException {
 
-        Set<SapQuoteItemReference> updatedLineItemReferences = new HashSet<>();
-
-        if(product != null) {
-            updatedLineItemReferences.addAll(determineQuoteReferenceForProduct(sapQuote, product));
-        }
-        for (ProductOrderAddOn addOn : getAddOns()) {
-            updatedLineItemReferences.addAll(determineQuoteReferenceForProduct(sapQuote, addOn.getAddOn()));
-        }
+        Set<SapQuoteItemReference> updatedLineItemReferences = createSapQuoteItemReferences(this, sapQuote);
 
         setQuoteReferences(updatedLineItemReferences);
+    }
+
+    @NotNull
+    public static Set<SapQuoteItemReference> createSapQuoteItemReferences(ProductOrder productOrder, SapQuote sapQuote) throws SAPInterfaceException {
+        Set<SapQuoteItemReference> updatedLineItemReferences = new HashSet<>();
+
+        if(productOrder.product != null) {
+            updatedLineItemReferences.addAll(
+                    productOrder.determineQuoteReferenceForProduct(sapQuote, productOrder.product));
+        }
+        for (ProductOrderAddOn addOn : productOrder.getAddOns()) {
+            updatedLineItemReferences.addAll(productOrder.determineQuoteReferenceForProduct(sapQuote, addOn.getAddOn()));
+        }
+        return updatedLineItemReferences;
     }
 
     /**
@@ -2816,23 +2841,23 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         Optional<Collection<QuoteItem>> quoteItemsForProduct = Optional.ofNullable(sapQuote.getQuoteItemMap().get(product.getPartNumber()));
         quoteItemsForProduct.ifPresent(quoteItems::addAll);
 
-        Set<String> dollarLimitedQuoteItems = sapQuote.getQuoteItems().stream()
+        List<String> dollarLimitedQuoteItems = sapQuote.getQuoteItems().stream()
             .filter(QuoteItem::isDollarLimitedMaterial).map(QuoteItem::getMaterialDescription)
-            .collect(Collectors.toSet());
+            .collect(Collectors.toList());
         boolean hasSingleLineItemMatch = CollectionUtils.isNotEmpty(quoteItems) && quoteItems.size() == 1;
-        boolean hasDollarLimitedQuoteItems = CollectionUtils.isNotEmpty(dollarLimitedQuoteItems);
+        boolean hasSingleDollarLimitedQuoteItems = CollectionUtils.isNotEmpty(dollarLimitedQuoteItems) && dollarLimitedQuoteItems.size() == 1;
 
         dollarLimitedQuoteItems.forEach(singleDollarLimitDescriptor -> {
             quoteItems.addAll(sapQuote.getQuoteItemByDescriptionMap().get(singleDollarLimitDescriptor));
         });
 
         if (CollectionUtils.isNotEmpty(quoteItems)) {
-            if (hasSingleLineItemMatch || hasDollarLimitedQuoteItems) {
+            if (hasSingleLineItemMatch || hasSingleDollarLimitedQuoteItems) {
                 updatedLineItemReferences.add(new SapQuoteItemReference(
                     product, quoteItems.iterator().next().getQuoteItemNumber().toString()));
             } else {
-                List<Integer> lineItems =
-                    quoteItems.stream().map(QuoteItem::getQuoteItemNumber).sorted().collect(Collectors.toList());
+                Set<String> lineItems = new HashSet<>();
+                quoteItems.stream().sorted().forEach(quoteItem -> lineItems.add(quoteItem.getQuoteItemNumber() + " - " + quoteItem.getMaterialDescription()));
                 throw new SAPInterfaceException(String.format(
                     "Product '%s' found on multiple line items in quote '%s' %s. Please contact the project manager or billing contact to correct this.",
                     product.getPartNumber(), sapQuote.getQuoteHeader().getQuoteNumber(), lineItems.toString()));

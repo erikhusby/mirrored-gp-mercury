@@ -392,4 +392,8 @@ public class QuoteImportItem {
     }
 
     public boolean isSapOrder() { return productOrder.hasSapQuote();}
+
+    public boolean isQuoteServerOrder() {
+        return productOrder.hasQuoteServerQuote();
+    }
 }
