@@ -13,23 +13,17 @@
                 $j('#quoteReporting').dataTable( {
                     "oTableTools": ttExportDefines,
                     "aaSorting": [[0,'desc']],
-                    "aoColumns": [
-                        {"bSortable": true},                   // Quote
-                        {"bSortable": true},                   // PDOs
-                        {"bSortable": true},                   // quote server work items
-                        {"bSortable": true},                   // SAP Server document ID
-                        {"bSortable": true},                   // Product
-                        {"bSortable": true},                   // Platform
-                        {"bSortable": true},                   // Category
-                        {"bSortable": true},                   // Price Item
-                        {"bSortable": true},                   // Quantity
-                        {"bSortable": true, "sType": "date"},  // Work Completed
-                        {"bSortable": true, "sType": "date"},  // Work Reported
-                        {"bSortable": false}]                  // Billed Message
+                    'aoColumnDefs': [
+                        {'aTargets': [11], "sType": "date"},
+                        {'aTargets': [12], "bSortable": false}
+                    ],
                 })
             });
 
             $j(window).load(function() {
+                if ("${actionBean.workItemIdToHighlight}" == "") {
+                    return;
+                }
                 var workItemIdToHighlight = '#'.concat(${actionBean.workItemIdToHighlight});
                 // if the url contains a quote server work item, highlight the corresponding row
                 $j(workItemIdToHighlight).attr('class','highlighted');
