@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.queue.dequeueRules.Abst
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.AbstractEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.validation.QueueValidationHandler;
 import org.broadinstitute.gpinformatics.mercury.control.dao.queue.GenericQueueDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.queue.QueueEntityDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueContainerRule;
@@ -54,6 +55,9 @@ public class QueueEjb {
 
     @Inject
     private GenericQueueDao genericQueueDao;
+
+    @Inject
+    private QueueEntityDao queueEntityDao;
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -200,8 +204,9 @@ public class QueueEjb {
         List<Long> labVesselIds = getApplicableLabVesselIds(queueType, labVessels);
 
         // Finds all the Active entities by the vessel Ids
-        List<QueueEntity> completedQueueEntities = genericQueueDao.findActiveEntitiesByVesselIds(queueType, labVesselIds);
+        List<QueueEntity> completedQueueEntities = queueEntityDao.findActiveEntitiesByVesselIds(queueType, labVesselIds);
 
+        Set<QueueGrouping> queueGroupings = new HashSet<>();
         // Check for completeness, then if complete update status.
         for (QueueEntity queueEntity : completedQueueEntities) {
             if (!queueValidationHandler.isComplete(queueEntity.getLabVessel(), queueType, messageCollection)
@@ -211,6 +216,13 @@ public class QueueEjb {
                         + " from the " + queueType.getTextName() + " queue.");
             } else {
                 updateQueueEntityStatus(messageCollection, queueEntity, QueueStatus.Completed);
+                queueGroupings.add(queueEntity.getQueueGrouping());
+            }
+        }
+
+        for (QueueGrouping queueGrouping : queueGroupings) {
+            if (queueGrouping.getRemainingEntities() == 0) {
+                queueGrouping.setQueueStatus(QueueStatus.Completed);
             }
         }
 
@@ -235,24 +247,26 @@ public class QueueEjb {
         List<LabVessel> repeats = new ArrayList<>();
 
         for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
-            switch (labMetric.getLabMetricDecision().getDecision()) {
-                case FAIL:
-                    // Note:  There is no functional differnce between failling due to low ng, and passing as both are meant to fall out of the queue.
-                case PASS:
-                case RISK:
-                    completed.add(labMetric.getLabVessel());
-                    break;
-                case BAD_TRIP:
-                case OVER_THE_CURVE:
-                case REPEAT:
-                case RUN_FAILED:
-                case TEN_PERCENT_DIFF_REPEAT:
-                case NORM:
-                    repeats.add(labMetric.getLabVessel());
-                    break;
+            if (labMetric.getLabMetricDecision() != null) {
+                switch (labMetric.getLabMetricDecision().getDecision()) {
+                    case FAIL:
+                        // Note:  There is no functional differnce between failling due to low ng, and passing as both are meant to fall out of the queue.
+                    case PASS:
+                    case RISK:
+                        completed.add(labMetric.getLabVessel());
+                        break;
+                    case BAD_TRIP:
+                    case OVER_THE_CURVE:
+                    case REPEAT:
+                    case RUN_FAILED:
+                    case TEN_PERCENT_DIFF_REPEAT:
+                    case NORM:
+                        repeats.add(labMetric.getLabVessel());
+                        break;
 
-                default:
-                    throw new RuntimeException("Unknown Metric Decision.");
+                    default:
+                        throw new RuntimeException("Unknown Metric Decision.");
+                }
             }
         }
 
@@ -264,7 +278,7 @@ public class QueueEjb {
         List<Long> labVesselIds = getApplicableLabVesselIds(queueType, repeats);
 
         // Finds all the Active entities by the vessel Ids
-        List<QueueEntity> queueEntities = genericQueueDao.findActiveEntitiesByVesselIds(queueType, labVesselIds);
+        List<QueueEntity> queueEntities = queueEntityDao.findActiveEntitiesByVesselIds(queueType, labVesselIds);
 
         for (QueueEntity queueEntity : queueEntities) {
             queueEntity.setQueueStatus(QueueStatus.Repeat);
@@ -330,7 +344,7 @@ public class QueueEjb {
             labVesselIds.add(labVessel.getLabVesselId());
         }
 
-        List<QueueEntity> queueEntities = genericQueueDao.findActiveEntitiesByVesselIds(queueType, labVesselIds);
+        List<QueueEntity> queueEntities = queueEntityDao.findActiveEntitiesByVesselIds(queueType, labVesselIds);
 
         for (QueueEntity queueEntity : queueEntities) {
             updateQueueEntityStatus(messageCollection, queueEntity, QueueStatus.Excluded);
@@ -398,7 +412,7 @@ public class QueueEjb {
             }
 
             // Find the existing entities
-            List<QueueEntity> entitiesByVesselIds = genericQueueDao.findActiveEntitiesByVesselIds(queueGrouping.getAssociatedQueue().getQueueType(), vesselIds);
+            List<QueueEntity> entitiesByVesselIds = queueEntityDao.findActiveEntitiesByVesselIds(queueGrouping.getAssociatedQueue().getQueueType(), vesselIds);
 
             Set<Long> uniqueVesselIdsAlreadyInQueue = new HashSet<>();
             for (QueueEntity entity : entitiesByVesselIds) {

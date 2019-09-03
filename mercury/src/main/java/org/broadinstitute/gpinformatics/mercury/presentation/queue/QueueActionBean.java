@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtil
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.datadump.AbstractDataDumpGenerator;
 import org.broadinstitute.gpinformatics.mercury.control.dao.queue.GenericQueueDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.queue.QueueGroupingDao;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
@@ -73,6 +74,9 @@ public class QueueActionBean extends CoreActionBean {
     private GenericQueueDao queueDao;
 
     @Inject
+    private QueueGroupingDao queueGroupingDao;
+
+    @Inject
     private BSPUserList userList;
 
     @Inject
@@ -87,6 +91,7 @@ public class QueueActionBean extends CoreActionBean {
     private int totalNeedRework;
     private Map<Long, Long> remainingEntities = new HashMap<>();
     private Map<QueuePriority, Long> entitiesInQueueByPriority = new HashMap<>();
+    private List<QueueGrouping> queueGroupings;
 
     /**
      * Shows the main Queue page.
@@ -103,10 +108,10 @@ public class QueueActionBean extends CoreActionBean {
             return new RedirectResolution(SecurityActionBean.HOME_PAGE);
         }
 
-        // todo jmt need DAO call that returns only QueueStatus.isStillInQueue
         queue = queueEjb.findQueueByType(queueType);
+        queueGroupings = queueGroupingDao.findActiveGroupsByQueueType(queueType);
         List<MercurySample> mercurySamples = new ArrayList<>();
-        for (QueueGrouping grouping : queue.getQueueGroupings()) {
+        for (QueueGrouping grouping : queueGroupings) {
 
             QueuePriority queuePriority = grouping.getQueuePriority();
 
@@ -136,7 +141,10 @@ public class QueueActionBean extends CoreActionBean {
 
         Map<String, SampleData> mapIdToData = loadData(mercurySamples);
         for (MercurySample mercurySample : mercurySamples) {
-            mercurySample.setSampleData(mapIdToData.get(mercurySample.getSampleKey()));
+            SampleData sampleData = mapIdToData.get(mercurySample.getSampleKey());
+            if (sampleData != null) {
+                mercurySample.setSampleData(sampleData);
+            }
         }
 
         return new ForwardResolution("/queue/show_queue.jsp");
@@ -410,5 +418,9 @@ public class QueueActionBean extends CoreActionBean {
 
     public Map<QueuePriority, Long> getEntitiesInQueueByPriority() {
         return entitiesInQueueByPriority;
+    }
+
+    public List<QueueGrouping> getQueueGroupings() {
+        return queueGroupings;
     }
 }

@@ -86,6 +86,10 @@ public class QueueGrouping {
     @Enumerated(EnumType.STRING)
     private QueueSpecialization queueSpecialization;
 
+    @Column(name = "queue_status", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private QueueStatus queueStatus;
+
     public QueueGrouping() {
     }
 
@@ -94,6 +98,7 @@ public class QueueGrouping {
         this.sortOrder = Long.MAX_VALUE;
         this.associatedQueue = genericQueue;
         this.queueSpecialization = queueSpecialization;
+        this.queueStatus = QueueStatus.Active;
 
         this.queuedEntities = new ArrayList<>();
     }
@@ -211,10 +216,18 @@ public class QueueGrouping {
         this.queueSpecialization = queueSpecialization;
     }
 
+    public QueueStatus getQueueStatus() {
+        return queueStatus;
+    }
+
+    public void setQueueStatus(QueueStatus queueStatus) {
+        this.queueStatus = queueStatus;
+    }
+
     public long getRemainingEntities() {
         int remainingEntities = 0;
         for (QueueEntity queueEntity : getQueuedEntities()) {
-            if (queueEntity.getQueueStatus() != QueueStatus.Completed) {
+            if (queueEntity.getQueueStatus() != QueueStatus.Completed) { // todo jmt Excluded?
                 remainingEntities++;
             }
         }

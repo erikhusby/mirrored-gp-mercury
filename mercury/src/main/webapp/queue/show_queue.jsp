@@ -57,7 +57,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <c:forEach items="${actionBean.queue.queueGroupings}" var="queueGrouping" varStatus="status">
+                    <c:forEach items="${actionBean.queueGroupings}" var="queueGrouping" varStatus="status">
                         <tr>
                             <td>
                                 <c:set var="popupText" value=""/>
