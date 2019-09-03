@@ -1013,6 +1013,7 @@ AS
               placed_date = new.placed_date,
               skip_regulatory_reason = new.skip_regulatory_reason,
               sap_order_number = new.sap_order_number,
+              order_type = new.order_type,
               array_chip_type = new.array_chip_type,
               call_rate_threshold = new.call_rate_threshold,
               etl_date = new.etl_date
@@ -1035,6 +1036,7 @@ AS
               placed_date,
               skip_regulatory_reason,
               sap_order_number,
+              order_type,
               array_chip_type,
               call_rate_threshold,
               etl_date
@@ -1052,6 +1054,7 @@ AS
               new.placed_date,
               new.skip_regulatory_reason,
               new.sap_order_number,
+              new.order_type,
               new.array_chip_type,
               new.call_rate_threshold,
               new.etl_date );
@@ -2354,7 +2357,9 @@ AS
               billing_message = new.billing_message,
               work_complete_date = new.work_complete_date,
               etl_date = new.etl_date,
-              quote_server_work_item = new.quote_server_work_item
+              quote_server_work_item = new.quote_server_work_item,
+              sap_delivery_document = new.sap_delivery_document,
+              product_id = new.product_id
             WHERE ledger_id = new.ledger_id;
 
             V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
@@ -2370,7 +2375,9 @@ AS
               billing_message,
               work_complete_date,
               etl_date,
-              quote_server_work_item
+              quote_server_work_item,
+              sap_delivery_document,
+              product_id
             ) VALUES (
               new.ledger_id,
               new.product_order_sample_id,
@@ -2382,7 +2389,9 @@ AS
               new.billing_message,
               new.work_complete_date,
               new.etl_date,
-              new.quote_server_work_item );
+              new.quote_server_work_item,
+              new.sap_delivery_document,
+              new.product_id);
 
             V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
             -- ELSE ignore older ETL extract

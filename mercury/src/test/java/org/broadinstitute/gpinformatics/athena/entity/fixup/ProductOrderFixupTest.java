@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.MoreCollectors;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
@@ -97,6 +98,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -1073,8 +1075,7 @@ public class ProductOrderFixupTest extends Arquillian {
                 }
                 SapOrderDetail newDetail = new SapOrderDetail(orderWithSap.getSapOrderNumber(),
                         sampleCount.intValue(),
-                        orderWithSap.getQuoteId(), SapIntegrationServiceImpl.determineCompanyCode(orderWithSap).getCompanyCode(),
-                        "", "");
+                        orderWithSap.getQuoteId(), SapIntegrationServiceImpl.determineCompanyCode(orderWithSap).getCompanyCode());
                 orderWithSap.addSapOrderDetail(newDetail);
             } else {
                 SapOrderDetail latestDetail = orderWithSap.latestSapOrderDetail();
@@ -1645,7 +1646,7 @@ public class ProductOrderFixupTest extends Arquillian {
             final List<String> effectivePricesForProducts = productPriceCache
                     .getEffectivePricesForProducts(allProductsOrdered,orderToModify, quote);
 
-            productOrderEjb.updateOrderInSap(orderToModify, allProductsOrdered, effectivePricesForProducts, new MessageCollection(),
+            productOrderEjb.updateOrderInSap(orderToModify, allProductsOrdered, new MessageCollection(),
                     CollectionUtils.containsAny(Arrays.asList(
                             ProductOrder.OrderStatus.Abandoned, ProductOrder.OrderStatus.Completed),
                             Collections.singleton(orderToModify.getOrderStatus()))
@@ -1822,6 +1823,49 @@ public class ProductOrderFixupTest extends Arquillian {
         }
 
         productOrderDao.persist(new FixupCommentary(fixupLines.get(0)));
+        commitTransaction();
+    }
+
+    private void addOrspToPdo(String pdoKey, String orspId) throws Exception {
+        final ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoKey);
+        Assert.assertNotNull(productOrder);
+        final Optional<RegulatoryInfo> foundInfo = productOrder.getResearchProject().getRegulatoryInfos().stream()
+                .filter(regulatoryInfo -> StringUtils.equals(regulatoryInfo.getIdentifier(), orspId)).collect(
+                        MoreCollectors.toOptional());
+
+        Assert.assertTrue(foundInfo.isPresent());
+
+        productOrder.setSkipRegulatoryReason(null);
+        productOrder.addRegulatoryInfo(foundInfo.get());
+
+        System.out.println(String.format("Added %s to order %s", foundInfo.get(), productOrder.getJiraTicketKey()));
+    }
+
+    /**
+     * file example for input
+     * File name: UpdatePdoORSP.txt
+     *
+     * Content example
+     *
+     * <ol><li>SUPPORT-5472: adding ORSP IDentifier for PDOs which do not have one</li>
+     * <li>PDO-XXXX,ORSP-182</li>
+     * <li>PDO-XXX2,ORSP-8382</li></ol>
+     * @throws Exception
+     */
+    @Test(enabled = false)
+    public void batchAddORSPToPdos() throws Exception {
+        userBean.loginOSUser();
+
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("UpdatePdoORSP.txt"));
+        String commentary = fixupLines.get(0);
+
+        for(String line: fixupLines.subList(1, fixupLines.size())) {
+            final String[] pdoOrspInfo = line.split(",");
+            addOrspToPdo(pdoOrspInfo[0], pdoOrspInfo[1]);
+        }
+        beginTransaction();
+
+        productOrderDao.persist(new FixupCommentary(commentary));
         commitTransaction();
     }
 }

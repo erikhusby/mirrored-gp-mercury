@@ -3,6 +3,7 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
+<%@ page import="static org.broadinstitute.sap.services.SapIntegrationClientImpl.FundingType.*" %>
 
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
@@ -124,10 +125,18 @@
             }
         }
 
-        function validateNumberOfLanes() {
+        function validateSaveOrder() {
             var numberOfLanes = $j("#numberOfLanes");
             var lanesFieldDiv = $j("#numberOfLanesDiv");
             var productOrderKey = $j("input[name='productOrder']");
+
+            var originalQuote = $j("input[name='originalQuote']");
+            var currentQuote = $j("#quote");
+
+            if(!validateChangeQuote(originalQuote.val().trim(), currentQuote.val().trim())) {
+                alert("Switching between Quote Server and SAP quotes is not permitted once an order has been placed.");
+                return false;
+            }
 
             if (lanesFieldDiv.css('display') !== 'none' && lanesFieldDiv.css("visibility") !== 'hidden' &&
                 lanesFieldDiv.css('opacity') !== 0 && numberOfLanes.length && productOrderKey.val().includes("Draft")) {
@@ -137,6 +146,25 @@
 
             return true;
         }
+
+        function validateChangeQuote(originalQuote, currentQuote) {
+
+            var productOrderKey = $j("input[name='productOrder']");
+            var originalIsQuoteServer = isNaN(originalQuote);
+            var currentIsQuoteServer = isNaN(currentQuote);
+            var originalNotBlank = originalQuote !== 'undefined' && originalQuote !== "" && originalQuote !== 'null';
+            var currentNotBlank = (currentQuote !== 'undefined' && currentQuote !== "" && currentQuote !== 'null' &&
+            currentQuote !== "Enter the Quote ID for this order");
+
+            var result = true;
+            if(productOrderKey.val() !== 'undefined' && productOrderKey.val() !== "" && productOrderKey.val() !== 'null'
+                && !productOrderKey.val().includes("Draft")) {
+                result = (originalIsQuoteServer === currentIsQuoteServer) && (originalNotBlank === currentNotBlank);
+            }
+
+            return result;
+        }
+
         $j(document).ready(
 
                 function () {
@@ -716,6 +744,7 @@
         function updateUIForProductChoice() {
 
             var productKey = $j("#product").val();
+            var quote = $j("#quote").val();
             if ((productKey === null) || (productKey === "")) {
                 $j("#customizationJsonString").val("");
                 customizationValues = {};
@@ -739,7 +768,8 @@
                     $j("#sampleInitiationKitRequestEdit").hide();
                 }
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getProductInfo=&product=" + productKey,
+                    url: "${ctxpath}/orders/order.action?getProductInfo=&product=" + productKey +
+                    "&quoteIdentifier=" + quote,
                     dataType: 'json',
                     success: selectedProductFollowup,
                     complete: detectNumberOfLanesVisibility
@@ -850,6 +880,7 @@
             var skipQuoteDiv = $j("#skipQuoteDiv");
             var quoteDiv = $j("#quote");
             if (data.supportsSkippingQuote) {
+
                 skipQuoteDiv.show();
                 quoteDiv.hide();
             }
@@ -1100,11 +1131,13 @@
 
         function updateFundsRemaining() {
             var quoteIdentifier = $j("#quote").val().trim();
+            var originalQuote = "${actionBean.editOrder.quoteId}";
             var quoteTitle = $j("#quote").attr('title');
             var productOrderKey = $j("input[name='productOrder']").val();
             if (quoteIdentifier && quoteIdentifier !== quoteTitle) {
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier + "&productOrder=" + productOrderKey,
+                    url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier +
+                        "&productOrder=" + productOrderKey + "&originalQuote=" + originalQuote,
                     dataType: 'json',
                     success: updateFunds
                 });
@@ -1114,48 +1147,14 @@
         }
 
         function updateFunds(data) {
+            var $fundsRemaining = $j("#fundsRemaining");
+            $fundsRemaining.html(data.quoteInfo);
 
-            var quoteWarning = false;
-
-            if (data.fundsRemaining && !data.error) {
-                var fundsRemainingNotification = 'Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining +
-                        ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
-                var fundingDetails = data.fundingDetails;
-
-                if(data.status != "Funded" ||
-                        Number(data.outstandingEstimate.replace(/[^0-9\.]+/g,"")) > Number(data.fundsRemaining.replace(/[^0-9\.]+/g,""))) {
-                    quoteWarning = true;
-                }
-
-                for(var detailIndex in fundingDetails) {
-                    fundsRemainingNotification += '\n'+fundingDetails[detailIndex].grantTitle;
-                    if(fundingDetails[detailIndex].activeGrant) {
-                        fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].grantEndDate;
-                        if(fundingDetails[detailIndex].daysTillExpire < 45) {
-                            fundsRemainingNotification += ' in ' + fundingDetails[detailIndex].daysTillExpire +
-                                ' days. If it is likely this work will not be completed by then, please work on updating the ' +
-                                'Funding Source so Billing Errors can be avoided.';
-                            quoteWarning = true;
-                        }
-                    } else {
-                        fundsRemainingNotification += ' -- Has Expired ' + fundingDetails[detailIndex].grantEndDate;
-                        quoteWarning = true;
-                    }
-                    if(fundingDetails[detailIndex].grantStatus != "Active") {
-                        quoteWarning = true;
-                    }
-                    fundsRemainingNotification += '\n';
-                }
-                $j("#fundsRemaining").text(fundsRemainingNotification);
+            if (data.warning) {
+                $fundsRemaining.find("li").attr('class', '');
+                $fundsRemaining.addClass("alert alert-error");
             } else {
-                $j("#fundsRemaining").text('Error: ' + data.error);
-                quoteWarning = true;
-            }
-
-            if(quoteWarning) {
-                $j("#fundsRemaining").addClass("alert alert-error");
-            } else {
-                $j("#fundsRemaining").removeClass("alert alert-error");
+                $fundsRemaining.removeClass("alert alert-error");
             }
         }
 
@@ -1243,7 +1242,8 @@
             $j.ajax({
                 url: "${ctxpath}/orders/order.action?openCustomView=",
                 data: {
-                    'customizationJsonString': JSON.stringify(customizationValues)
+                    'customizationJsonString': JSON.stringify(customizationValues),
+                    'quoteIdentifier': $j("#quote").val()
                 },
                 datatype: 'html',
                 success: function (html) {
@@ -1733,6 +1733,7 @@
                         Quote <c:if test="${not actionBean.editOrder.draft}">*</c:if>
                     </stripes:label>
                     <div class="controls">
+                        <input type="hidden" name="originalQuote" value="${actionBean.editOrder.quoteId}"/>
                         <stripes:text id="quote" name="editOrder.quoteId" class="defaultText"
                                       onchange="updateFundsRemaining()"
                                       title="Enter the Quote ID for this order"/>
@@ -1805,7 +1806,7 @@
                         <stripes:submit name="save" value="${actionBean.saveButtonText}"
                                         disabled="${!actionBean.canSave}"
                                         style="margin-right: 10px;" class="btn btn-primary"
-                                        onclick="return validateNumberOfLanes();"/>
+                                        onclick="return validateSaveOrder();"/>
                         <c:choose>
                             <c:when test="${actionBean.creating}">
                                 <stripes:link beanclass="${actionBean.class.name}" event="list">Cancel</stripes:link>

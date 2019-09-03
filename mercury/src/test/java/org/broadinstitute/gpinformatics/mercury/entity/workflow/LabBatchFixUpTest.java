@@ -33,8 +33,10 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -49,6 +51,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
@@ -56,7 +59,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -84,6 +89,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Writer;
 import java.math.BigDecimal;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -110,6 +116,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 public class LabBatchFixUpTest extends Arquillian {
 
     private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s");
+    private static final Pattern COMMA_PATTERN = Pattern.compile(",");
 
     @Inject
     private LabBatchDao labBatchDao;
@@ -149,6 +156,9 @@ public class LabBatchFixUpTest extends Arquillian {
 
     @Inject
     private JiraService jiraService;
+
+    @Inject
+    private BucketEjb bucketEjb;
 
     @Inject
     private UserTransaction utx;
@@ -1541,6 +1551,7 @@ public class LabBatchFixUpTest extends Arquillian {
      * ...
      */
     @Test(enabled = false)
+    @Deprecated // This version kept for audit purposes, but deprecated because it does not remove computed lcsets.
     public void fixupPo9128() throws Exception {
         userBean.loginOSUser();
         userTransaction.begin();
@@ -1565,6 +1576,71 @@ public class LabBatchFixUpTest extends Arquillian {
                                    labEvent.getLabEventType().name() + " (labEventId " + labEvent.getLabEventId() + ")");
                 labEvent.setManualOverrideLcSet(null);
             }
+            System.out.println("Deleting " + labBatch.getBatchName());
+            labBatchDao.remove(labBatch.getJiraTicket());
+            labBatch.getReworks().clear();
+            labBatchDao.remove(labBatch);
+        }
+        labBatchDao.persist(new FixupCommentary(lines.get(0) + " delete cancelled LCSET"));
+        labBatchDao.flush();
+        userTransaction.commit();
+    }
+
+    /*
+     * This test is used to delete LCSETs that are canceled in JIRA.  It reads its parameters from a file,
+     * testdata/DeleteLabBatch.txt, so it can be used for other similar fixups, without writing a new test.
+     * Example contents of the file are:
+     * PO-9128
+     * LCSET-11312
+     * LCSET-11553
+     * ...
+     */
+    @Test(enabled = false)
+    public void deleteCancelledLcset() throws Exception {
+        userBean.loginOSUser();
+        userTransaction.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("DeleteLabBatch.txt"));
+        // If the LCSET has batch_starting_vessels but no bucket entries, these batch_starting_vessels
+        // orphans will be removed by cascade when the labBatch is removed.
+        for (int i = 1; i < lines.size(); ++i) {
+            LabBatch labBatch = labBatchDao.findByName(lines.get(i));
+            labBatch.getBucketEntries().forEach(bucketEntry -> {
+                LabVessel labVessel = bucketEntry.getLabVessel();
+                System.out.println("Removing bucket entry " + bucketEntry);
+                labVessel.removeBucketEntry(bucketEntry);
+            });
+            // This is needed to avoid "removing detached bucketEntry" when removing the batch.
+            labBatch.getBucketEntries().clear();
+
+            // Removes manual lcset overrides.
+            for (LabEvent labEvent : labBatchDao.findListByList(LabEvent.class, LabEvent_.manualOverrideLcSet,
+                    Collections.singletonList(labBatch))) {
+                System.out.println("Removing manual override of " + labBatch.getBatchName() + " from " +
+                                   labEvent.getLabEventType().name() + " (labEventId " + labEvent.getLabEventId() + ")");
+                labEvent.setManualOverrideLcSet(null);
+            }
+
+            // Removes the lcset from lab event computed lcsets.
+            String query = String.format("select lab_event from le_computed_lcsets where computed_lcsets = %d",
+                    labBatch.getLabBatchId());
+            List<Long> labEventIds = (List<Long>)labBatchDao.getEntityManager().createNativeQuery(query).
+                    getResultList().stream().
+                    map(id -> ((BigDecimal) id).longValueExact()).
+                    distinct().
+                    collect(Collectors.toList());
+            for (LabEvent labEvent : labBatchDao.findListByList(LabEvent.class, LabEvent_.labEventId, labEventIds)) {
+                String remainingLcsets = labEvent.getComputedLcSets().stream().
+                        map(LabBatch::getBatchName).
+                        filter(name -> !name.equals(labBatch.getBatchName())).
+                        collect(Collectors.joining(" "));
+                System.out.println("Removing " + labBatch.getBatchName() +
+                        " from Computed Lcsets for " + labEvent.getLabEventType().getName() +
+                        " (labEventId " + labEvent.getLabEventId() + ")" +
+                        " leaving " + (remainingLcsets.isEmpty() ? "none" : remainingLcsets));
+                labEvent.getComputedLcSets().remove(labBatch);
+            }
+
             System.out.println("Deleting " + labBatch.getBatchName());
             labBatchDao.remove(labBatch.getJiraTicket());
             labBatch.getReworks().clear();
@@ -2043,5 +2119,68 @@ public class LabBatchFixUpTest extends Arquillian {
                 labEvent.computeLabBatches();
             }
         }
+    }
+
+    /**
+     * For a given container, creates bucket entries for the given PDO and given batch name.  Intended for plates
+     * backfilled from GAP.
+     * The test reads its input from file mercury/src/test/resources/testdata/CreateLabBatchesForContainers.txt.
+     * The format is: first line is ticket ID; second and subsequent lines are comma separated container barcode,
+     * PDO-ID, LabBatch name, date, user ID
+     * SUPPORT-5677
+     * WG0069502-MSA3,PDO-1403,ARRAY-WG0069502-MSA3,2013-07-23 12:55:07,mdasilva
+     * WG0069503-MSA3,PDO-1403,ARRAY-WG0069503-MSA3,2013-07-23 12:55:09,mdasilva
+     */
+    @Test(enabled = false)
+    public void fixupSupport5677LabBatchForContainer()
+            throws SystemException, NotSupportedException, IOException, ParseException, HeuristicRollbackException,
+            HeuristicMixedException, RollbackException {
+        userBean.loginOSUser();
+
+        userTransaction.begin();
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("CreateLabBatchesForContainers.txt"));
+        for (int i = 1; i < lines.size(); i++) {
+            String[] fields = COMMA_PATTERN.split(lines.get(i));
+            Assert.assertEquals(fields.length, 5);
+            // Allow commenting out of lines
+            if (fields[0].startsWith("#")) {
+                continue;
+            }
+            LabVessel labVessel = labVesselDao.findByIdentifier(fields[0]);
+            Assert.assertNotNull(labVessel);
+            VesselContainer<?> containerRole = labVessel.getContainerRole();
+            Assert.assertNotNull(containerRole);
+
+            // If plate has no wells, create them
+            if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class) &&
+                    containerRole.getContainedVessels().isEmpty()) {
+                StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
+                for (VesselPosition vesselPosition : labVessel.getVesselGeometry().getVesselPositions()) {
+                    PlateWell plateWell = new PlateWell(staticPlate, vesselPosition);
+                    staticPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
+                }
+            }
+
+            // Filter out wells with no samples
+            Set<LabVessel> vessels = containerRole.getContainedVessels().stream().
+                    filter(lv -> lv.getSampleInstancesV2().stream().
+                            anyMatch(sampleInstanceV2 -> sampleInstanceV2.getMercuryRootSampleName() != null)).
+                    collect(Collectors.toSet());
+
+            LabBatch labBatch = labBatchDao.findByName(fields[2]);
+            if (labBatch == null) {
+                labBatch = new LabBatch(fields[2], vessels, LabBatch.LabBatchType.WORKFLOW);
+            }
+            System.out.println("Adding " + labVessel.getLabel() + " to " + labBatch.getBatchName());
+            LabBatchResource.addToBatch(vessels, labBatch, fields[1],
+                    fields[4], ArchetypeAttribute.dateFormat.parse(fields[3]), bucketEjb);
+            TransferTraverserCriteria transferTraverserCriteria = new LabBatchFixUpTest.ComputeLabBatchTtc(true);
+            for (VesselPosition vesselPosition : labVessel.getVesselGeometry().getVesselPositions()) {
+                containerRole.evaluateCriteria(vesselPosition, transferTraverserCriteria,
+                        TransferTraverserCriteria.TraversalDirection.Descendants, 0);
+            }
+        }
+        labVesselDao.persist(new FixupCommentary(lines.get(0)));
+        userTransaction.commit();
     }
 }

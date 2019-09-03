@@ -826,7 +826,12 @@ public class LabBatchEjb {
                         // limit this logic to WGS.
                         if (Objects.equals(bucketEntry.getProductOrder().getProduct().getAggregationDataType(),
                                 Aggregation.DATA_TYPE_WGS)) {
-                            addAndRemoveSamples = true;
+                            // Microbial is also WGS but LCSETs are made up of multiple racks
+                            // Limit to just lab batches with total size less than 96
+                            int labBatchSize = bucketEntry.getLabBatch().getLabBatchStartingVessels().size();
+                            if (labBatchSize <= 96) {
+                                addAndRemoveSamples = true;
+                            }
                         }
                         found = true;
                         break;

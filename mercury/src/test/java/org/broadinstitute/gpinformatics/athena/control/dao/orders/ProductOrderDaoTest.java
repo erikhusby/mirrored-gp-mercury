@@ -275,8 +275,17 @@ public class ProductOrderDaoTest extends StubbyContainerTest {
         for (int i = 3; i < 6; i++) {
             ProductOrderSample productOrderSample = productOrder.getSamples().get(i);
             productOrderSample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.DELIVERED);
-            LedgerEntry ledgerEntry =
-                    new LedgerEntry(productOrderSample, productOrder.getProduct().getPrimaryPriceItem(), new Date(), 1);
+            LedgerEntry ledgerEntry;
+            if(productOrder.hasSapQuote()) {
+
+                ledgerEntry =
+                        new LedgerEntry(productOrderSample, productOrder.getProduct(), new Date(),
+                                1);
+            } else {
+                ledgerEntry =
+                        new LedgerEntry(productOrderSample, productOrder.getProduct().getPrimaryPriceItem(),
+                                new Date(),1);
+            }
             ledgerEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
             ledgerEntries.add(ledgerEntry);
         }

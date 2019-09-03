@@ -51,9 +51,6 @@ public class ProductOrderPriceAdjustment extends PriceAdjustment{
     @Transient
     private Condition priceAdjustmentCondition;
 
-    @Transient
-    private BigDecimal listPrice;
-
     public ProductOrderPriceAdjustment() {
     }
 
@@ -89,15 +86,6 @@ public class ProductOrderPriceAdjustment extends PriceAdjustment{
 
     public void setPriceAdjustmentCondition(Condition priceAdjustmentCondition) {
         this.priceAdjustmentCondition = priceAdjustmentCondition;
-    }
-
-    @Override
-    public BigDecimal getListPrice() {
-        return listPrice;
-    }
-
-    public void setListPrice(BigDecimal listPrice) {
-        this.listPrice = listPrice;
     }
 
     @Override

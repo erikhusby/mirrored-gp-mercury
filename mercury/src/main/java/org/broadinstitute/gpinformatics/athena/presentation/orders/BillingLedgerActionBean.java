@@ -25,8 +25,10 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.billing.ProductLedgerIndex;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
@@ -41,8 +43,10 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.sap.entity.DeliveryCondition;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -53,7 +57,6 @@ import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -61,6 +64,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 // TODO: Move anything that is needed from SampleLedgerExporter into another class
 
@@ -92,7 +96,13 @@ public class BillingLedgerActionBean extends CoreActionBean {
     private PriceListCache priceListCache;
 
     @Inject
+    private SAPProductPriceCache productPriceCache;
+
+    @Inject
     private SampleCoverageFirstMetFetcher sampleCoverageFirstMetFetcher;
+
+    @Inject
+    private ProductDao productDao;
 
     /**
      * The ID of the order being billed.
@@ -117,9 +127,9 @@ public class BillingLedgerActionBean extends CoreActionBean {
     /**
      * The price items that are in effect for this product order.
      *
-     * @see BillingLedgerActionBean#gatherPriceItems
+     * @see BillingLedgerActionBean#gatherPotentialBillables
      */
-    private List<PriceItem> priceItems = new ArrayList<>();
+    private List<ProductLedgerIndex> potentialBillings = new ArrayList<>();
 
     /**
      * The modified date of this product order. This is saved into the form and checked against the order when
@@ -159,6 +169,8 @@ public class BillingLedgerActionBean extends CoreActionBean {
      * another json response;
      */
     boolean redirectOnSuccess=false;
+    private List<Product> products;
+
     /**
      * Load the product order, price items, sample data, and various other information based on the orderId parameter.
      * All of this data is needed for rendering the billing ledger UI.
@@ -167,7 +179,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
     public void loadAllDataForView() {
         loadProductOrder();
         try {
-            gatherPriceItems();
+            gatherPotentialBillables();
         } catch (SAPIntegrationException e) {
             addGlobalValidationError(e.getMessage());
         }
@@ -216,14 +228,14 @@ public class BillingLedgerActionBean extends CoreActionBean {
     @HandlesEvent("updateLedgers")
     public Resolution updateLedgers() {
         if (isOrderModified() && isSubmittedPriceItemListValid()) {
-            Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> ledgerUpdates = buildLedgerUpdates();
             try {
+                Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> ledgerUpdates = buildLedgerUpdates();
                 productOrderEjb.updateSampleLedgers(ledgerUpdates);
                 addMessage("{1} ledgers have been updated.", ledgerUpdates.size());
             } catch (ValidationException e) {
                 logger.error(e);
                 addGlobalValidationErrors(e.getValidationMessages());
-            } catch (QuoteNotFoundException | QuoteServerException e) {
+            } catch (QuoteNotFoundException | QuoteServerException | SAPIntegrationException e) {
                 logger.error(e);
                 addGlobalValidationError(e.getMessage());
             }
@@ -285,25 +297,25 @@ public class BillingLedgerActionBean extends CoreActionBean {
      * configured replacement price items, add-on price items, and any "historical" price items (ones that have been
      * billed for this PDO but are otherwise no longer related).
      */
-    private void gatherPriceItems() throws SAPIntegrationException {
+    private void gatherPotentialBillables() throws SAPIntegrationException {
         // Collect primary and replacement price items
-        priceItems.addAll(getPriceItems(productOrder.getProduct(), priceItemDao, priceListCache,
+        potentialBillings.addAll(getPotentialBillables(productOrder.getProduct(), priceItemDao, priceListCache,
                 productOrder));
 
         // Collect historical price items (need add-ons to do that)
-        List<Product> addOns = new ArrayList<>();
-        for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
-            addOns.add(productOrderAddOn.getAddOn());
-        }
-        Collections.sort(addOns);
-        priceItems.addAll(getHistoricalPriceItems(productOrder, priceItems, addOns, priceItemDao,
-                        priceListCache));
+        List<Product> addOns = productOrder.getAddOns().stream().map(ProductOrderAddOn::getAddOn).sorted()
+                .collect(Collectors.toList());
+
+        potentialBillings.addAll(getHistoricalBillableItems(productOrder, potentialBillings, addOns,
+                priceItemDao, priceListCache));
 
         // Collect add-on price items
         for (Product addOn : addOns) {
-            final PriceItem addonPriceItem = productOrder.determinePriceItemByCompanyCode(addOn);
+            final PriceItem addonPriceItem = addOn.getPrimaryPriceItem();
 
-            priceItems.add(addonPriceItem);
+            ProductLedgerIndex addOnPricingIndex = ProductLedgerIndex.create(addOn, addonPriceItem, productOrder.hasSapQuote());
+
+            potentialBillings.add(addOnPricingIndex);
         }
     }
 
@@ -319,7 +331,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
         productOrderSampleLedgerInfos = gatherSampleInfo();
 
         // Capture data to render into the form to verify that nothing changed when the form is submitted
-        renderedPriceItemNames = buildPriceItemNameList();
+        renderedPriceItemNames = buildPotentialBillableNameList();
     }
 
     /**
@@ -355,12 +367,12 @@ public class BillingLedgerActionBean extends CoreActionBean {
      *
      * @return a list of the price item names for the product order
      */
-    private ArrayList<String> buildPriceItemNameList() {
-        ArrayList<String> priceItemNames = new ArrayList<>();
-        for (PriceItem priceItem : priceItems) {
-            priceItemNames.add(priceItem.getName());
+    private ArrayList<String> buildPotentialBillableNameList() {
+        ArrayList<String> potentialBillableNames = new ArrayList<>();
+        for (ProductLedgerIndex priceItem : potentialBillings) {
+            potentialBillableNames.add(priceItem.getName());
         }
-        return priceItemNames;
+        return potentialBillableNames;
     }
 
     /**
@@ -385,7 +397,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
      * @return true if the price item names have not changed; false otherwise
      */
     private boolean isSubmittedPriceItemListValid() {
-        List<String> priceItemNames = buildPriceItemNameList();
+        List<String> priceItemNames = buildPotentialBillableNameList();
         if (!priceItemNames.equals(renderedPriceItemNames)) {
             addGlobalValidationError(
                     "The price items in effect for this order's product have changed since loading the page. Changes have not been saved. Please reevaluate your billing decisions and reapply your changes as appropriate.");
@@ -401,23 +413,43 @@ public class BillingLedgerActionBean extends CoreActionBean {
      *
      * @return a map of LedgerUpdate instances by ProductOrderSample to be applied
      */
-    private Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> buildLedgerUpdates() {
+    private Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> buildLedgerUpdates()
+            throws SAPIntegrationException {
         Multimap<ProductOrderSample, ProductOrderSample.LedgerUpdate> ledgerUpdates = LinkedListMultimap.create();
         for (int i = 0; i < ledgerData.size(); i++) {
             LedgerData data = ledgerData.get(i);
             if (data != null) {
                 ProductOrderSample productOrderSample = productOrder.getSamples().get(i);
-                Map<PriceItem, ProductOrderSample.LedgerQuantities> ledgerQuantitiesMap =
+                Map<ProductLedgerIndex, ProductOrderSample.LedgerQuantities> ledgerQuantitiesMap =
                         productOrderSample.getLedgerQuantities();
                 for (Map.Entry<Long, ProductOrderSampleQuantities> entry : data.getQuantities().entrySet()) {
-                    PriceItem priceItem = priceItemDao.findById(PriceItem.class, entry.getKey());
+                    PriceItem priceItem = null;
+                    Product product = null;
+                        product = productDao.findById(Product.class, entry.getKey());
+                        priceItem = priceItemDao.findById(PriceItem.class, entry.getKey());
+                    ProductLedgerIndex quantityIndex = ProductLedgerIndex.create(product, priceItem,
+                            productOrder.hasSapQuote());
                     ProductOrderSampleQuantities quantities = entry.getValue();
-                    ProductOrderSample.LedgerQuantities ledgerQuantities = ledgerQuantitiesMap.get(priceItem);
+                    ProductOrderSample.LedgerQuantities ledgerQuantities = ledgerQuantitiesMap.get(quantityIndex);
                     double currentQuantity = ledgerQuantities != null ? ledgerQuantities.getTotal() : 0;
-                    ProductOrderSample.LedgerUpdate ledgerUpdate =
-                            new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem,
-                                    quantities.originalQuantity, currentQuantity, quantities.submittedQuantity,
-                                    data.getWorkCompleteDate());
+
+                    ProductOrderSample.LedgerUpdate ledgerUpdate;
+                    if(data.sapOrder) {
+                        if(productPriceCache.findByProduct(product,
+                                productOrder.getSapCompanyConfigurationForProductOrder(productOrder.getSapQuote(sapService)).getSalesOrganization()).getPossibleDeliveryConditions().containsKey(
+                                DeliveryCondition.LATE_DELIVERY_DISCOUNT)) {
+                            data.setDeliveryConditionAvailable(true);
+                        }
+                        ledgerUpdate = new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), product,
+                                quantities.originalQuantity, currentQuantity, quantities.submittedQuantity,
+                                data.getWorkCompleteDate(), data.isPrimaryReplacement());
+
+                    } else {
+                        ledgerUpdate =
+                                new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem,product,
+                                        quantities.originalQuantity, currentQuantity, quantities.submittedQuantity,
+                                        data.getWorkCompleteDate());
+                    }
                     ledgerUpdates.put(productOrderSample, ledgerUpdate);
                 }
             }
@@ -449,7 +481,11 @@ public class BillingLedgerActionBean extends CoreActionBean {
     private JSONArray makeLedgerEntryJson(LedgerEntry ledgerEntry) {
         JSONArray result = new JSONArray();
 
-        result.put(ledgerEntry.getPriceItem().getName());
+        if(ledgerEntry.getProductOrderSample().getProductOrder().hasSapQuote()) {
+            result.put(ledgerEntry.getProduct().getPartNumber());
+        } else {
+            result.put(ledgerEntry.getPriceItem().getName());
+        }
         result.put(Double.valueOf(ledgerEntry.getQuantity()));
         result.put(ledgerEntry.getQuoteId());
         result.put(new SimpleDateFormat("MMM d, yyyy").format(ledgerEntry.getWorkCompleteDate()));
@@ -478,8 +514,8 @@ public class BillingLedgerActionBean extends CoreActionBean {
         return productOrderListEntry;
     }
 
-    public List<PriceItem> getPriceItems() {
-        return priceItems;
+    public List<ProductLedgerIndex> getPotentialBillings() {
+        return potentialBillings;
     }
 
     public List<String> getRenderedPriceItemNames() {
@@ -536,6 +572,14 @@ public class BillingLedgerActionBean extends CoreActionBean {
         this.modifiedDate = modifiedDate;
     }
 
+    public List<Product> getProducts() {
+        return products;
+    }
+
+    public void setProducts(List<Product> products) {
+        this.products = products;
+    }
+
     /**
      * Data used to render the billing ledger UI.
      */
@@ -543,8 +587,8 @@ public class BillingLedgerActionBean extends CoreActionBean {
         private ProductOrderSample productOrderSample;
         private Date coverageFirstMet;
         private Date workCompleteDate;
-        private Map<PriceItem, ProductOrderSample.LedgerQuantities> ledgerQuantities;
-        private ListMultimap<PriceItem, LedgerEntry> ledgerEntriesByPriceItem = ArrayListMultimap.create();
+        private Map<ProductLedgerIndex, ProductOrderSample.LedgerQuantities> ledgerQuantities;
+        private ListMultimap<ProductLedgerIndex, LedgerEntry> ledgerEntriesByPriceItem = ArrayListMultimap.create();
         private int autoFillQuantity = 0;
         private boolean anyQuantitySet = false;
 
@@ -560,7 +604,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
 
             ledgerQuantities = productOrderSample.getLedgerQuantities();
 
-            for(Map.Entry<PriceItem, ProductOrderSample.LedgerQuantities> quantityEntry: ledgerQuantities.entrySet()) {
+            for(Map.Entry<ProductLedgerIndex, ProductOrderSample.LedgerQuantities> quantityEntry: ledgerQuantities.entrySet()) {
                 if(quantityEntry.getValue().getTotal()>0) {
                     anyQuantitySet = true;
                 }
@@ -569,7 +613,9 @@ public class BillingLedgerActionBean extends CoreActionBean {
             boolean primaryBilled = false;
             for (LedgerEntry ledgerEntry : productOrderSample.getLedgerItems()) {
                 PriceItem priceItem = ledgerEntry.getPriceItem();
-                ledgerEntriesByPriceItem.get(priceItem).add(ledgerEntry);
+                ProductLedgerIndex index = ProductLedgerIndex.create(ledgerEntry.getProduct(), priceItem,
+                        productOrderSample.getProductOrder().hasSapQuote());
+                ledgerEntriesByPriceItem.get(index).add(ledgerEntry);
                 LedgerEntry.PriceItemType priceItemType = ledgerEntry.getPriceItemType();
                 if (priceItemType == LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM
                     || priceItemType == LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM) {
@@ -602,13 +648,13 @@ public class BillingLedgerActionBean extends CoreActionBean {
             return workCompleteDate != null ? new SimpleDateFormat("MMM d, yyyy").format(workCompleteDate) : null;
         }
 
-        public double getTotalForPriceItem(PriceItem priceItem) {
-            ProductOrderSample.LedgerQuantities quantities = ledgerQuantities.get(priceItem);
+        public double getTotalForPriceIndex(ProductLedgerIndex index) {
+            ProductOrderSample.LedgerQuantities quantities = ledgerQuantities.get(index);
             return quantities != null ? quantities.getTotal() : 0;
         }
 
-        public double getBilledForPriceItem(PriceItem priceItem) {
-            ProductOrderSample.LedgerQuantities quantities = ledgerQuantities.get(priceItem);
+        public double getBilledForPriceIndex(ProductLedgerIndex index) {
+            ProductOrderSample.LedgerQuantities quantities = ledgerQuantities.get(index);
             return quantities != null ? quantities.getBilled() : 0;
         }
 
@@ -627,7 +673,10 @@ public class BillingLedgerActionBean extends CoreActionBean {
     public static class LedgerData {
         private String sampleName;
         private Date workCompleteDate;
+        private boolean sapOrder;
         private Map<Long, ProductOrderSampleQuantities> quantities;
+        private boolean primaryReplacement;
+        private boolean deliveryConditionAvailable;
 
         public String getSampleName() {
             return sampleName;
@@ -648,11 +697,34 @@ public class BillingLedgerActionBean extends CoreActionBean {
             this.workCompleteDate = workCompleteDate;
         }
 
+        public boolean isSapOrder() {
+            return sapOrder;
+        }
+
+        public void setSapOrder(boolean sapOrder) {
+            this.sapOrder = sapOrder;
+        }
+
         public Map<Long, ProductOrderSampleQuantities> getQuantities() { return quantities; }
         public void setQuantities(Map<Long, ProductOrderSampleQuantities> quantities) {
             this.quantities = quantities;
         }
 
+        public boolean isPrimaryReplacement() {
+            return primaryReplacement;
+        }
+
+        public void setPrimaryReplacement(boolean primaryReplacement) {
+            this.primaryReplacement = primaryReplacement;
+        }
+
+        public boolean isDeliveryConditionAvailable() {
+            return deliveryConditionAvailable;
+        }
+
+        public void setDeliveryConditionAvailable(boolean deliveryConditionAvailable) {
+            this.deliveryConditionAvailable = deliveryConditionAvailable;
+        }
     }
 
     /**
@@ -690,65 +762,77 @@ public class BillingLedgerActionBean extends CoreActionBean {
      * @param productOrder
      * @return The real price item objects.
      */
-    public List<PriceItem> getPriceItems(Product product, PriceItemDao priceItemDao,
-                                                PriceListCache priceItemListCache,
-                                                ProductOrder productOrder) {
+    public List<ProductLedgerIndex> getPotentialBillables(Product product, PriceItemDao priceItemDao,
+                                                          PriceListCache priceItemListCache,
+                                                          ProductOrder productOrder) {
 
-        List<PriceItem> allPriceItems = new ArrayList<>();
+        List<ProductLedgerIndex> allBillingIndices = new ArrayList<>();
 
         // First add the primary price item.
-        PriceItem primaryPriceItem = productOrder.determinePriceItemByCompanyCode(product);
+        PriceItem primaryPriceItem = product.getPrimaryPriceItem();
 
-        allPriceItems.add(primaryPriceItem);
+        allBillingIndices.add(ProductLedgerIndex.create(product, primaryPriceItem, productOrder.hasSapQuote()));
 
-        // Now add the replacement price items.
-        // Get the replacement items from the quote cache.
-        Collection<QuotePriceItem> quotePriceItems =
-                priceItemListCache.getReplacementPriceItems(primaryPriceItem);
+        if(!productOrder.hasSapQuote()) {
+            // Now add the replacement price items.
+            // Get the replacement items from the quote cache.
+            Collection<QuotePriceItem> quotePriceItems =
+                    priceItemListCache.getReplacementPriceItems(primaryPriceItem);
 
-        // Now add the replacement items as mercury price item objects.
-        for (QuotePriceItem quotePriceItem : quotePriceItems) {
-            // Find the price item object.
-            PriceItem priceItem =
-                    priceItemDao.find(
-                            quotePriceItem.getPlatformName(), quotePriceItem.getCategoryName(), quotePriceItem.getName());
+            // Now add the replacement items as mercury price item objects.
+            for (QuotePriceItem quotePriceItem : quotePriceItems) {
+                // Find the price item object.
+                PriceItem priceItem =
+                        priceItemDao.find(
+                                quotePriceItem.getPlatformName(), quotePriceItem.getCategoryName(),
+                                quotePriceItem.getName());
 
-            // If it does not exist create it.
-            if (priceItem == null) {
-                priceItem = new PriceItem(quotePriceItem.getId(), quotePriceItem.getPlatformName(),
-                        quotePriceItem.getCategoryName(), quotePriceItem.getName());
-                priceItemDao.persist(priceItem);
+                // If it does not exist create it.
+                if (priceItem == null) {
+                    priceItem = new PriceItem(quotePriceItem.getId(), quotePriceItem.getPlatformName(),
+                            quotePriceItem.getCategoryName(), quotePriceItem.getName());
+                    priceItemDao.persist(priceItem);
+                }
+
+                allBillingIndices.add(ProductLedgerIndex.create(product, priceItem, productOrder.hasSapQuote()));
             }
-
-            allPriceItems.add(priceItem);
         }
 
-        return allPriceItems;
+        return allBillingIndices;
     }
 
 
-    public SortedSet<PriceItem> getHistoricalPriceItems(ProductOrder productOrder,
-                                                               List<PriceItem> priceItems, List<Product> addOns,
-                                                               PriceItemDao priceItemDao,
-                                                               PriceListCache priceListCache) {
-        Set<PriceItem> addOnPriceItems = new HashSet<>();
+    public SortedSet<ProductLedgerIndex> getHistoricalBillableItems(ProductOrder productOrder,
+                                                                    List<ProductLedgerIndex> ledgerIndices,
+                                                                    List<Product> addOns,
+                                                                    PriceItemDao priceItemDao,
+                                                                    PriceListCache priceListCache) {
+        Set<ProductLedgerIndex> addOnPriceItems = new HashSet<>();
         for (Product addOn : addOns) {
-            addOnPriceItems.addAll(getPriceItems(addOn, priceItemDao, priceListCache, productOrder));
+            addOnPriceItems.addAll(getPotentialBillables(addOn, priceItemDao, priceListCache, productOrder));
         }
 
-        SortedSet<PriceItem> historicalPriceItems = new TreeSet<>();
+        SortedSet<ProductLedgerIndex> historicalPriceItems = new TreeSet<>();
 
             for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
                 for (LedgerEntry ledgerEntry : productOrderSample.getLedgerItems()) {
+
                     PriceItem priceItem = ledgerEntry.getPriceItem();
-                    if (!priceItems.contains(priceItem) && !addOnPriceItems
-                            .contains(priceItem)) {
-                        historicalPriceItems.add(priceItem);
+                    ProductLedgerIndex ledgerIndex = ProductLedgerIndex.create(ledgerEntry.getProduct(), priceItem,
+                            productOrderSample.getProductOrder().hasSapQuote());
+
+                    Set<ProductLedgerIndex> priorUsedAddOnItems =
+                            addOnPriceItems.stream().filter(index -> index.equals(ledgerIndex))
+                                    .collect(Collectors.toSet());
+
+                    Set<ProductLedgerIndex> currentLedgerIndices = ledgerIndices.stream().filter(index -> index.equals(ledgerIndex))
+                            .collect(Collectors.toSet());
+
+                    if (priorUsedAddOnItems.isEmpty() && currentLedgerIndices.isEmpty()) {
+                        historicalPriceItems.add(ledgerIndex);
                     }
                 }
             }
-
         return historicalPriceItems;
     }
-
 }
