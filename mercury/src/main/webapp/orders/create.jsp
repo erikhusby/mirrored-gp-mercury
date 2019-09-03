@@ -152,13 +152,14 @@
             var productOrderKey = $j("input[name='productOrder']");
             var originalIsQuoteServer = isNaN(originalQuote);
             var currentIsQuoteServer = isNaN(currentQuote);
+            var orderCanPlace = ${actionBean.editOrder.orderStatus.canPlace()}
             var originalNotBlank = originalQuote !== 'undefined' && originalQuote !== "" && originalQuote !== 'null';
             var currentNotBlank = (currentQuote !== 'undefined' && currentQuote !== "" && currentQuote !== 'null' &&
             currentQuote !== "Enter the Quote ID for this order");
 
             var result = true;
             if(productOrderKey.val() !== 'undefined' && productOrderKey.val() !== "" && productOrderKey.val() !== 'null'
-                && !productOrderKey.val().includes("Draft")) {
+                && !orderCanPlace) {
                 result = (originalIsQuoteServer === currentIsQuoteServer) && (originalNotBlank === currentNotBlank);
             }
 
