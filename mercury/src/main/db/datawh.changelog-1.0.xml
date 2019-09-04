@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
+
+    <changeSet id="GPLIM-6242-36" author="jowalsh">
+        <createTable tableName="SEQ_DEMULTIPLEX_RUN_METRIC" schemaName="mercury">
+            <column name="RUN_NAME" type="VARCHAR2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="FLOWCELL" type="VARCHAR2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="RUN_DATE" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="SAMPLE_ALIAS" type="VARCHAR2(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ANALYSIS_NAME" type="VARCHAR2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ANALYSIS_NODE" type="VARCHAR2(55)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ANALYSIS_VERSION" type="VARCHAR2(55)"/>
+            <column name="LANE" type="number(19,0)"/>
+            <column name="MEAN_QUALITY_SCORE_PF" type="number(4,2)"/>
+            <column name="NUM_OF_ONE_MISMATCH_IDX_READS" type="number(19,0)"/>
+            <column name="NUM_OF_Q30_BASES_PF" type="number(19,0)"/>
+            <column name="NUM_OF_PCT_IDX_READS" type="number(19,0)"/>
+            <column name="NUM_OF_READS" type="number(19,0)"/>
+            <column name="DRAGEN_VERSION" type="VARCHAR2(25))"/>
+        </createTable>
+
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-37" author="jowalsh">
+        <createTable tableName="vc_run_metrics" schemaName="mercury">
+            <column name="RUN_NAME" type="VARCHAR2(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="RUN_DATE" type="timestamp">
+                <constraints nullable="false" />
+            </column>
+            <column name="ANALYSIS_NODE" type="VARCHAR2(55)">
+                <constraints nullable="false" />
+            </column>
+            <column name="DRAGEN_VERSION" type="VARCHAR2(55)" />
+            <column name="NUM_SAMPLES" type="number(19,0)" />
+            <column name="READS_PROCESSED" type="number(19,0)" />
+            <column name="CHILD_SAMPLE" type="VARCHAR2(55)" />
+            <column name="VC_RUN_METRIC_ID" type="VARCHAR2(255)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <addPrimaryKey constraintName="pk_vc_run_metric" tableName="vc_run_metrics"
+                       columnNames="VC_RUN_METRIC_ID"/>
+        <createSequence schemaName="mercury" sequenceName="SEQ_VC_RUN_METRIC" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-38" author="jowalsh">
+        <createTable tableName="variant_call_metrics" schemaName="mercury">
+            <column name="run_name" type="VARCHAR2(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="metric_type" type="VARCHAR2(55)">
+                <constraints nullable="false" />
+            </column>
+            <column name="sample_alias" type="VARCHAR2(200)">
+                <constraints nullable="false" />
+            </column>
+            <column name="run_date" type="timestamp" />
+            <column name="total" type="VARCHAR2(55)" />
+            <column name="biallelic" type="number(19,0)" />
+            <column name="multiallelic" type="number(19,0)" />
+            <column name="snps" type="number(19,0)" />
+            <column name="indels" type="number(19,0)" />
+            <column name="mnps" type="number(19,0)" />
+            <column name="chr_x_number_of_snps" type="number(19,0)" />
+            <column name="chr_y_number_of_snps" type="number(19,0)" />
+            <column name="snp_transitions" type="number(19,0)" />
+            <column name="snp_tranversions" type="number(19,0)" />
+            <column name="heterozygous" type="number(19,0)" />
+            <column name="homozygous" type="number(19,0)" />
+            <column name="in_dbsnp" type="number(19,0)" />
+            <column name="not_in_dbsnp" type="number(19,0)" />
+            <column name="vc_call_metrics_id" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <addPrimaryKey constraintName="pk_variant_call_metrics" tableName="variant_call_metrics"
+                       columnNames="vc_call_metrics_id"/>
+        <createSequence schemaName="mercury" sequenceName="SEQ_VC_METRIC" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-39" author="jowalsh">
+        <createTable tableName="mapping_run_metrics" schemaName="mercury">
+            <column name="run_name" type="VARCHAR2(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="run_date" type="timestamp">
+                <constraints nullable="false" />
+            </column>
+            <column name="analysis_node" type="VARCHAR2(55)" />
+            <column name="dragen_version" type="VARCHAR2(55)" />
+            <column name="total_input_reads" type="number(19,0)" />
+            <column name="num_dup_marked_reads" type="number(19,0)" />
+            <column name="num_dup_marked_removed" type="VARCHAR2(55)" />
+            <column name="num_unique_reads" type="number(19,0)" />
+            <column name="num_reads_mate_sequenced" type="VARCHAR2(55)" />
+            <column name="num_reads_wo_mate_sequenced" type="VARCHAR2(55)" />
+            <column name="num_qc_failed_reads" type="number(19,0)" />
+            <column name="num_mapped_reads" type="number(19,0)" />
+            <column name="num_unq_mapped_reads" type="number(19,0)" />
+            <column name="num_unmapped_reads" type="number(19,0)" />
+            <column name="num_singleton_reads" type="number(19,0)" />
+            <column name="num_paired_reads" type="number(19,0)" />
+            <column name="num_properly_paired_reads" type="number(19,0)" />
+            <column name="num_not_properly_paired_reads" type="number(19,0)" />
+            <column name="mapq_40_inf" type="number(19,0)" />
+            <column name="mapq_30_40" type="number(19,0)" />
+            <column name="mapq_20_30" type="number(19,0)" />
+            <column name="mapq_10_20" type="number(19,0)" />
+            <column name="mapq_0_10" type="number(19,0)" />
+            <column name="mapq_na" type="number(19,0)" />
+            <column name="reads_indel_r1" type="number(19,0)" />
+            <column name="reads_indel_r2" type="number(19,0)" />
+            <column name="soft_clipped_bases_r1" type="number(19,0)" />
+            <column name="soft_clipped_bases_r2" type="number(19,0)" />
+            <column name="total_alignments" type="number(19,0)" />
+            <column name="secondary_alignments" type="number(19,0)" />
+            <column name="supplementary_alignments" type="number(19,0)" />
+            <column name="est_read_length" type="number(19,0)" />
+            <column name="bases_in_ref_genome" type="number(19,0)" />
+            <column name="bases_in_target_bed" type="varchar2(55)" />
+            <column name="avg_seq_coverage" type="number(19,0)" />
+            <column name="avg_alignment_coverage" type="number(19,0)" />
+            <column name="pct_coverage_100x_inf" type="number(19,0)" />
+            <column name="pct_coverage_50x_100x" type="number(19,0)" />
+            <column name="pct_coverage_20x_50x" type="number(19,0)" />
+            <column name="pct_coverage_10x_20x" type="number(19,0)" />
+            <column name="pct_coverage_3x_10x" type="number(19,0)" />
+            <column name="pct_coverage_0x_3x" type="number(19,0)" />
+            <column name="avg_x_chr_coverage" type="number(19,0)" />
+            <column name="avg_y_chr_coverage" type="number(19,0)" />
+            <column name="avg_mito_coverage" type="number(19,0)" />
+            <column name="avg_autosomal_coverage" type="number(19,0)" />
+            <column name="median_autosomal_coverage" type="number(19,0)" />
+            <column name="mean_median_autosomal_coverage" type="number(19,0)" />
+            <column name="x_y_avg_coverage_ratio" type="number(19,0)" />
+            <column name="x_autosomal_avg_coverage_ratio" type="number(19,0)" />
+            <column name="y_autosomal_avg_coverage_ratio" type="number(19,0)" />
+            <column name="provided_sex_chr_ploidy" type="VARCHAR2(55)" />
+            <column name="predicted_sex_chr_ploidy" type="VARCHAR2(55)" />
+            <column name="capture_spec_target_region" type="VARCHAR2(55)" />
+            <column name="dragen_mapping_rate" type="number(5,0)" />
+            <column name="mapping_run_metric_id" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <addPrimaryKey constraintName="pk_mapping_run_metric_id" tableName="mapping_run_metrics"
+                       columnNames="mapping_run_metric_id"/>
+        <createSequence schemaName="mercury" sequenceName="SEQ_MAP_RUN_METRIC" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-40" author="jowalsh">
+        <createTable tableName="mapping_rg_metrics" schemaName="mercury">
+            <column name="run_name" type="VARCHAR2(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="run_date" type="timestamp" />
+            <column name="read_group" type="VARCHAR2(55)" />
+            <column name="sample_alias" type="VARCHAR2(200)" />
+            <column name="total_reads" type="number(19,0)" />
+            <column name="num_dup_marked_reads" type="number(19,0)" />
+            <column name="num_dup_marked_removed" type="VARCHAR2(55)" />
+            <column name="num_unique_reads" type="number(19,0)" />
+            <column name="num_reads_mate_sequenced" type="VARCHAR2(55)" />
+            <column name="num_reads_wo_mate_sequenced" type="VARCHAR2(55)" />
+            <column name="num_qc_failed_reads" type="number(19,0)" />
+            <column name="num_mapped_reads" type="number(19,0)" />
+            <column name="num_unq_mapped_reads" type="number(19,0)" />
+            <column name="num_unmapped_reads" type="number(19,0)" />
+            <column name="num_singleton_reads" type="number(19,0)" />
+            <column name="num_paired_reads" type="number(19,0)" />
+            <column name="num_properly_paired_reads" type="number(19,0)" />
+            <column name="num_not_properly_paired_reads" type="number(19,0)" />
+            <column name="mapq_40_inf" type="number(19,0)" />
+            <column name="mapq_30_40" type="number(19,0)" />
+            <column name="mapq_20_30" type="number(19,0)" />
+            <column name="mapq_10_20" type="number(19,0)" />
+            <column name="mapq_0_10" type="number(19,0)" />
+            <column name="mapq_na" type="number(19,0)" />
+            <column name="reads_indel_r1" type="number(19,0)" />
+            <column name="reads_indel_r2" type="number(19,0)" />
+            <column name="soft_clipped_bases_r1" type="number(19,0)" />
+            <column name="soft_clipped_bases_r2" type="number(19,0)" />
+            <column name="total_alignments" type="number(19,0)" />
+            <column name="secondary_alignments" type="number(19,0)" />
+            <column name="supplementary_alignments" type="number(19,0)" />
+            <column name="est_read_length" type="number(19,0)" />
+            <column name="avg_seq_coverage" type="number(19,0)" />
+            <column name="insert_length_mean" type="number(19,0)" />
+            <column name="insert_length_std" type="number(19,0)" />
+            <column name="mapping_rg_metric_id" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <addPrimaryKey constraintName="pk_mapping_rg_metric_id" tableName="mapping_rg_metrics"
+                       columnNames="mapping_rg_metric_id"/>
+        <createSequence schemaName="mercury" sequenceName="SEQ_MAP_RG_METRIC" incrementBy="50"/>
+    </changeSet>
+</databaseChangeLog>
