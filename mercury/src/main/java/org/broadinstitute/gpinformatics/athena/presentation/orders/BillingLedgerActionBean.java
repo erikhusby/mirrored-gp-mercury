@@ -203,6 +203,12 @@ public class BillingLedgerActionBean extends CoreActionBean {
      */
     @DefaultHandler
     public Resolution view() {
+        if(productOrder.hasSapQuote() && StringUtils.isBlank(productOrder.getSapOrderNumber())) {
+            addGlobalValidationError("Unable to begin billing for this order since it has not been "
+                                     + "submitted to SAP.  Please go back and click the "
+                                     + "\"Publish Product Order to SAP\" button before continuing");
+            return getSourcePageResolution();
+        }
         String successMessage = getContext().getRequest().getParameter("successMessage");
         if (StringUtils.isNotBlank(successMessage)) {
             addMessage(successMessage);
