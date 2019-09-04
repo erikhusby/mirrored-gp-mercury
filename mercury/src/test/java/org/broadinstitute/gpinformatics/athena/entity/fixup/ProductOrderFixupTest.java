@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.MoreCollectors;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
@@ -97,6 +98,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -1073,8 +1075,7 @@ public class ProductOrderFixupTest extends Arquillian {
                 }
                 SapOrderDetail newDetail = new SapOrderDetail(orderWithSap.getSapOrderNumber(),
                         sampleCount.intValue(),
-                        orderWithSap.getQuoteId(), SapIntegrationServiceImpl.determineCompanyCode(orderWithSap).getCompanyCode(),
-                        "", "");
+                        orderWithSap.getQuoteId(), SapIntegrationServiceImpl.determineCompanyCode(orderWithSap).getCompanyCode());
                 orderWithSap.addSapOrderDetail(newDetail);
             } else {
                 SapOrderDetail latestDetail = orderWithSap.latestSapOrderDetail();
@@ -1623,7 +1624,7 @@ public class ProductOrderFixupTest extends Arquillian {
      * @throws ProductOrderEjb.NoSuchPDOException
      * @throws SAPInterfaceException
      */
-    public void abandonSamplesForSapOrder(String pdoKey, List<String> sampleList, String abandonReason)
+    private void abandonSamplesForSapOrder(String pdoKey, List<String> sampleList, String abandonReason)
             throws ProductOrderEjb.SampleDeliveryStatusChangeException, QuoteNotFoundException, QuoteServerException,
             InvalidProductException, SAPIntegrationException, IOException, ProductOrderEjb.NoSuchPDOException,
             SAPInterfaceException {
@@ -1645,7 +1646,7 @@ public class ProductOrderFixupTest extends Arquillian {
             final List<String> effectivePricesForProducts = productPriceCache
                     .getEffectivePricesForProducts(allProductsOrdered,orderToModify, quote);
 
-            productOrderEjb.updateOrderInSap(orderToModify, allProductsOrdered, effectivePricesForProducts, new MessageCollection(),
+            productOrderEjb.updateOrderInSap(orderToModify, allProductsOrdered, new MessageCollection(),
                     CollectionUtils.containsAny(Arrays.asList(
                             ProductOrder.OrderStatus.Abandoned, ProductOrder.OrderStatus.Completed),
                             Collections.singleton(orderToModify.getOrderStatus()))
@@ -1712,7 +1713,7 @@ public class ProductOrderFixupTest extends Arquillian {
      * @throws QuoteNotFoundException
      * @throws InvalidProductException
      */
-    public boolean isOrderEligibleForSAP(ProductOrder editedProductOrder, Date effectiveDate)
+    private boolean isOrderEligibleForSAP(ProductOrder editedProductOrder, Date effectiveDate)
             throws QuoteServerException, QuoteNotFoundException, InvalidProductException {
         Quote orderQuote = editedProductOrder.getQuote(quoteService);
         SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
@@ -1796,5 +1797,75 @@ public class ProductOrderFixupTest extends Arquillian {
             }
             utx.rollback();
         }
+    }
+
+    /**
+     * Useful for cases when an order has been completed by billing all of the primary product, but then still needs to
+     * bill add-onds.   The structure of the file is as follows:
+     * <ol><li>SUPPORT-XXXX  reason for updating order status</li>
+     * <li>PDO-xxx1</li>
+     * <li>PDO-xxx2</li>
+     * <li>PDO-xxx3</li></ol>
+     * @throws Exception
+     */
+    @Test(enabled = false)
+    public void reOpenProductOrder() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("ReOpenProductOrders.txt"));
+
+        for(String line: fixupLines.subList(1, fixupLines.size())) {
+
+            ProductOrder orderToOpen = productOrderDao.findByBusinessKey(line);
+            orderToOpen.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+            System.out.println("Changed the status of product order " + line + " to " + ProductOrder.OrderStatus.Submitted.getDisplayName());
+        }
+
+        productOrderDao.persist(new FixupCommentary(fixupLines.get(0)));
+        commitTransaction();
+    }
+
+    private void addOrspToPdo(String pdoKey, String orspId) throws Exception {
+        final ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoKey);
+        Assert.assertNotNull(productOrder);
+        final Optional<RegulatoryInfo> foundInfo = productOrder.getResearchProject().getRegulatoryInfos().stream()
+                .filter(regulatoryInfo -> StringUtils.equals(regulatoryInfo.getIdentifier(), orspId)).collect(
+                        MoreCollectors.toOptional());
+
+        Assert.assertTrue(foundInfo.isPresent());
+
+        productOrder.setSkipRegulatoryReason(null);
+        productOrder.addRegulatoryInfo(foundInfo.get());
+
+        System.out.println(String.format("Added %s to order %s", foundInfo.get(), productOrder.getJiraTicketKey()));
+    }
+
+    /**
+     * file example for input
+     * File name: UpdatePdoORSP.txt
+     *
+     * Content example
+     *
+     * <ol><li>SUPPORT-5472: adding ORSP IDentifier for PDOs which do not have one</li>
+     * <li>PDO-XXXX,ORSP-182</li>
+     * <li>PDO-XXX2,ORSP-8382</li></ol>
+     * @throws Exception
+     */
+    @Test(enabled = false)
+    public void batchAddORSPToPdos() throws Exception {
+        userBean.loginOSUser();
+
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("UpdatePdoORSP.txt"));
+        String commentary = fixupLines.get(0);
+
+        for(String line: fixupLines.subList(1, fixupLines.size())) {
+            final String[] pdoOrspInfo = line.split(",");
+            addOrspToPdo(pdoOrspInfo[0], pdoOrspInfo[1]);
+        }
+        beginTransaction();
+
+        productOrderDao.persist(new FixupCommentary(commentary));
+        commitTransaction();
     }
 }

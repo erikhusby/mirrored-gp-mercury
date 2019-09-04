@@ -67,7 +67,7 @@ public class BSPKitRequestServiceIntegrationTest {
                 new MaterialInfoDto(KitTypeAllowanceSpecification.DNA_MATRIX_KIT.getText(),
                         MaterialInfo.DNA_DERIVED_FROM_BUCAL_CELLS_OR_SALIVA.getText());
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(
-                "BSPKitRequestServiceIntegrationTest.testSendKitRequest " + System.currentTimeMillis(), "breilly",
+                "BSPKitRequestServiceIntegrationTest.testSendKitRequest " + System.currentTimeMillis(), "ktracy",
                 ProductOrderTest.PDO_JIRA_KEY, ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID,
                 ELANDER_DOMAIN_USER_ID, TEST_SITE.getId(),
                 TEST_COLLECTION.getCollectionId(), "hrafal@broadinstitute.org",
@@ -86,7 +86,7 @@ public class BSPKitRequestServiceIntegrationTest {
                 new MaterialInfoDto(KitTypeAllowanceSpecification.DNA_MATRIX_KIT.getText(),
                         MaterialInfo.DNA_DERIVED_FROM_BUCAL_CELLS_OR_SALIVA.getText());
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(
-                "BSPKitRequestServiceIntegrationTest.testSendKitRequest " + System.currentTimeMillis(), "breilly",
+                "BSPKitRequestServiceIntegrationTest.testSendKitRequest " + System.currentTimeMillis(), "ktracy",
                 ProductOrderTest.PDO_JIRA_KEY, ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID, ELANDER_DOMAIN_USER_ID,
                 TEST_SITE.getId(),
                 TEST_COLLECTION.getCollectionId(), "hrafal@broadinstitute.org",

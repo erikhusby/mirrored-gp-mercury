@@ -3855,7 +3855,11 @@
                     <targetSection>ALL96</targetSection>
                     <sourceMassRemoved>true</sourceMassRemoved>
                     <targetWellTypeString>WellType.Well2000</targetWellTypeString>
-                    <reagentNames>AllPrep 96 PowerFecal DNA/RNA"</reagentNames>
+                    <sourceBarcodedTubeTypeString>BarcodedTubeType.Cryovial2018</sourceBarcodedTubeTypeString>
+                    <reagentRequirements>
+                        <reagentName>AllPrep 96 PowerFecal DNA/RNA</reagentName>
+                        <expirationDateIncluded>true</expirationDateIncluded>
+                    </reagentRequirements>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -3984,6 +3988,7 @@
                     <sourceSection>ALL96</sourceSection>
                     <targetVesselTypeGeometryString>RackType.Matrix96SlotRack075</targetVesselTypeGeometryString>
                     <targetSection>ALL96</targetSection>
+                    <targetBarcodedTubeTypeString>BarcodedTubeType.MatrixTube075</targetBarcodedTubeTypeString>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -4024,6 +4029,7 @@
                     <sourceSection>ALL96</sourceSection>
                     <targetVesselTypeGeometryString>RackType.Matrix96SlotRack075</targetVesselTypeGeometryString>
                     <targetSection>ALL96</targetSection>
+                    <targetBarcodedTubeTypeString>BarcodedTubeType.MatrixTube075</targetBarcodedTubeTypeString>
                 </manualTransferDetails>
             </workflowStepDefs>
         </workflowProcessDefVersions>
@@ -4042,6 +4048,7 @@
                 <bucketEntryEvaluator>
                     <materialTypes>RNA</materialTypes>
                     <materialTypes>RNA_TOTAL_RNA</materialTypes>
+                    <materialTypes>OTHER_LYSATE</materialTypes>
                 </bucketEntryEvaluator>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -4132,6 +4139,120 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>10X Extraction</name>
+        <workflowProcessDefVersions>
+            <version>01</version>
+            <effectiveDate>2019-04-16T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>10X Extraction</name>
+                <labEventTypes>TENX_EXTRACTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <materialTypes>CELLS_PELLET_FROZEN</materialTypes>
+                    <materialTypes>CELL_SUSPENSION</materialTypes>
+                    <materialTypes>TISSUE_FRESH_TISSUE</materialTypes>
+                    <materialTypes>TISSUE_FRESH_FROZEN_TISSUE</materialTypes>
+                    <materialTypes>NUCLEI_SUSPENSION</materialTypes>
+                    <workflows>10X Extraction</workflows>
+                </bucketEntryEvaluator>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Chip Loading</name>
+                <labEventTypes>TENX_EXTRACTION_CHIP_LOADING</labEventTypes>
+                <workflowQualifier>TENX_EXTRACTION_CHIP_LOADING</workflowQualifier>
+                <instructions>
+                    Manually place a 2D barcode sticker onto the 10X chip. Scan in matrix container barcode and 10X chip barcode.
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.Matrix96SlotRack075</sourceVesselTypeGeometryString>
+                    <sourceSection>P96_COL1</sourceSection>
+                    <sourceBarcodedTubeTypeString>BarcodedTubeType.MatrixTube075</sourceBarcodedTubeTypeString>
+                    <targetVesselTypeGeometryString>PlateType.Plate96Well200PCR</targetVesselTypeGeometryString>
+                    <targetSection>P96_COL1</targetSection>
+                    <targetWellTypeString>WellType.Well200</targetWellTypeString>
+                    <targetExpectedEmpty>true</targetExpectedEmpty>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Chip Unloading and RT</name>
+                <labEventTypes>TENX_EXTRACTION_CHIP_UNLOADING</labEventTypes>
+                <workflowQualifier>TENX_EXTRACTION_CHIP_UNLOADING</workflowQualifier>
+                <instructions>
+                    Scan in 10X chip barcode and new RT plate barcode.
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96Well200PCR</sourceVesselTypeGeometryString>
+                    <sourceSection>P96_COL1</sourceSection>
+                    <targetVesselTypeGeometryString>PlateType.Plate96Well200PCR</targetVesselTypeGeometryString>
+                    <targetSection>P96_COL1</targetSection>
+                    <targetWellTypeString>WellType.Well200</targetWellTypeString>
+                    <targetExpectedEmpty>true</targetExpectedEmpty>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Break and Recover and Consolidation</name>
+                <labEventTypes>TENX_EXTRACTION_CONSOLIDATION</labEventTypes>
+                <workflowQualifier>TENX_EXTRACTION_CONSOLIDATION</workflowQualifier>
+                <instructions>
+                    Scan in all of the source PCR plate barcodes (1 barcode per plate), then scan in the new consolidated plate barcode.
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96Well200PCR</sourceVesselTypeGeometryString>
+                    <sourceSection>P96_COL1</sourceSection>
+                    <targetVesselTypeGeometryString>PlateType.Plate96Well200PCR</targetVesselTypeGeometryString>
+                    <targetSections>P96_COL1</targetSections>
+                    <targetSections>P96_COL2</targetSections>
+                    <targetSections>P96_COL3</targetSections>
+                    <targetSections>P96_COL4</targetSections>
+                    <targetSections>P96_COL5</targetSections>
+                    <targetSections>P96_COL6</targetSections>
+                    <targetSections>P96_COL7</targetSections>
+                    <targetSections>P96_COL8</targetSections>
+                    <targetSections>P96_COL9</targetSections>
+                    <targetSections>P96_COL10</targetSections>
+                    <targetSections>P96_COL11</targetSections>
+                    <targetSections>P96_COL12</targetSections>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Silane Cleanup</name>
+                <labEventTypes>TENX_EXTRACTION_SILANE_CLEANUP</labEventTypes>
+                <workflowQualifier>TENX_EXTRACTION_SILANE_CLEANUP</workflowQualifier>
+                <instructions>
+                    Scan in source plate (consolidated plate) and final plate (&quot;cDNA&quot; plate).
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96Well200PCR</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>PlateType.Plate96Well200PCR</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>cDNA Cleanup</name>
+                <labEventTypes>TENX_EXTRACTION_CDNA_CLEANUP</labEventTypes>
+                <workflowQualifier>TENX_EXTRACTION_CDNA_CLEANUP</workflowQualifier>
+                <instructions>
+                    Scan in source barcode (&quot;cDNA Amp&quot; plate) and scan in new matrix rack (&quot;cDNA&quot; rack) barcodes and tube IDs
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96Well200PCR</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.Matrix96SlotRack075</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                    <targetBarcodedTubeTypeString>BarcodedTubeType.MatrixTube075</targetBarcodedTubeTypeString>
+                </manualTransferDetails>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -4397,6 +4518,7 @@
             <workflowStepDefs>
                 <name>Germline Exome PCR Cleanup</name>
                 <labEventTypes>GERMLINE_EXOME_PCR_CLEANUP</labEventTypes>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
                 <optional>false</optional>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -4762,6 +4884,47 @@
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>
+        <name>Somatic Exome from gDNA with UMIs</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>SOMATIC_EXOME</batchJiraIssueType>
+            <effectiveDate>2018-09-22T12:04:23.932-04:00</effectiveDate>
+            <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
+            <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
+            <workflowProcessDefs>Cell Free Library Construction Hyper Prep UMI</workflowProcessDefs>
+            <workflowProcessDefs>Custom Selection</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
+            <routingRule>MERCURY</routingRule>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Cell Free Custom LC and Selection</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>SOMATIC_EXOME</batchJiraIssueType>
+            <effectiveDate>2018-09-22T12:04:23.932-04:00</effectiveDate>
+            <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
+            <workflowProcessDefs>Cell Free Library Construction Hyper Prep UMI</workflowProcessDefs>
+            <workflowProcessDefs>Custom Selection</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
+            <routingRule>MERCURY</routingRule>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
         <name>Clinical Whole Blood Extraction</name>
         <productWorkflowDefVersions>
             <version>02</version>
@@ -5003,6 +5166,17 @@
             <batchJiraIssueType>ALLPREP</batchJiraIssueType>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowProcessDefs>DNA and RNA from Cell Pellets BSP</workflowProcessDefs>
+            <routingRule>MERCURY</routingRule>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>10X Extraction</name>
+        <productWorkflowDefVersions>
+            <version>01</version>
+            <batchJiraProjectType>XTR</batchJiraProjectType>
+            <batchJiraIssueType>CDNA_EXTRACTION</batchJiraIssueType>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>10X Extraction</workflowProcessDefs>
             <routingRule>MERCURY</routingRule>
         </productWorkflowDefVersions>
     </productWorkflowDefs>

@@ -819,11 +819,12 @@ function updateSampleInformation(samples, table, includeSampleSummary) {
             },
             success: function (json) {
                 if (json) {
-                    for (var item of json.data) {
+                    // for (var item of json.data) {
+                    json.data.forEach(function(item) {
                         var row = table.row("#"+item.rowId);
                         row.data(item);
                         row.invalidate;
-                    }
+                    });
 
                     updateSampleDataProgress(json.rowsWithSampleData, recordsTotal);
                 }
@@ -877,9 +878,11 @@ function renderPico(data, type, row, meta) {
 function updateFundsRemaining() {
     var quoteIdentifier = '${actionBean.editOrder.quoteId}';
     var productOrderKey = $j("input[name='productOrder']").val();
+    var originalQuote = "${actionBean.editOrder.quoteId}"
+
     if ($j.trim(quoteIdentifier)) {
         $j.ajax({
-            url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier="+quoteIdentifier+"&productOrder=" + productOrderKey,
+            url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier="+quoteIdentifier+"&productOrder=" + productOrderKey+"&originalQuote=" + originalQuote,
             dataType: 'json',
             success: updateFunds
         });
@@ -889,48 +892,14 @@ function updateFundsRemaining() {
 }
 
 function updateFunds(data) {
+    var $fundsRemaining = $j("#fundsRemaining");
+    $fundsRemaining.html(data.quoteInfo);
 
-    var quoteWarning = false;
-
-    if (data.fundsRemaining && !data.error) {
-        var fundsRemainingNotification = 'Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining +
-                ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
-        var fundingDetails = data.fundingDetails;
-
-        if(data.status != "Funded" ||
-                Number(data.outstandingEstimate.replace(/[^0-9\.]+/g,"")) > Number(data.fundsRemaining.replace(/[^0-9\.]+/g,""))) {
-            quoteWarning = true;
-        }
-
-        for(var detailIndex in fundingDetails) {
-            fundsRemainingNotification += '\n'+fundingDetails[detailIndex].grantTitle;
-            if(fundingDetails[detailIndex].activeGrant) {
-                fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].grantEndDate;
-                if(fundingDetails[detailIndex].daysTillExpire < 45) {
-                    fundsRemainingNotification += ' in ' + fundingDetails[detailIndex].daysTillExpire +
-                        ' days. If it is likely this work will not be completed by then, please work on updating the ' +
-                        'Funding Source so Billing Errors can be avoided.';
-                    quoteWarning = true;
-                }
-            } else {
-                fundsRemainingNotification += ' -- Has Expired ' + fundingDetails[detailIndex].grantEndDate;
-                quoteWarning = true;
-            }
-            if(fundingDetails[detailIndex].grantStatus != "Active") {
-                quoteWarning = true;
-            }
-            fundsRemainingNotification += '\n';
-        }
-        $j("#fundsRemaining").text(fundsRemainingNotification);
+    if (data.warning) {
+        $fundsRemaining.find("li").attr('class', '');
+        $fundsRemaining.addClass("alert alert-error");
     } else {
-        $j("#fundsRemaining").text('Error: ' + data.error);
-        quoteWarning = true;
-    }
-
-    if(quoteWarning) {
-        $j("#fundsRemaining").addClass("alert alert-error");
-    } else {
-        $j("#fundsRemaining").removeClass("alert alert-error");
+        $fundsRemaining.removeClass("alert alert-error");
     }
 }
 
@@ -1252,8 +1221,10 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
 <stripes:hidden id="unAbandonComment" name="unAbandonComment" value=""/>
 <stripes:hidden id="attestationConfirmed" name="editOrder.attestationConfirmed" value=""/>
 <stripes:hidden name="customizationJsonString" id="customizationJsonString" />
+    <stripes:hidden name="originalQuote" value="${actionBean.editOrder.quoteId}"/>
 
-<div class="actionButtons">
+
+    <div class="actionButtons">
     <c:choose>
         <c:when test="${actionBean.editOrder.draft}">
             <%-- PDOs can be placed by PM or PDMs, so the security tag accepts either of those roles for 'Place Order'. --%>
@@ -1551,7 +1522,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
 
 <c:if test="${actionBean.editOrder.requiresLaneCount()}">
     <div class="view-control-group control-group">
-        <label class="control-label label-form">Number of Lanes Per Sample</label>
+        <label class="control-label label-form">Number of Lanes For the Order</label>
 
         <div class="controls">
             <div class="form-value">${actionBean.editOrder.laneCount}</div>
@@ -1584,9 +1555,15 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
 
         <div class="controls">
             <div class="form-value">
-                <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
-                        ${actionBean.editOrder.quoteId}
-                </a>
+                <c:if test="${actionBean.editOrder.quoteIdSet}">
+                    <c:if test="${actionBean.editOrder.hasSapQuote()}">
+                        <b>SAP Quote: </b>
+                        <a href="${actionBean.sapQuoteUrl}" class="external" target="QUOTE">${actionBean.editOrder.quoteId}</a>
+                    </c:if>
+                    <c:if test="${actionBean.editOrder.hasQuoteServerQuote()}">
+                        <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">${actionBean.editOrder.quoteId}</a>
+                    </c:if>
+                </c:if>
                 <div id="fundsRemaining"></div>
             </div>
         </div>

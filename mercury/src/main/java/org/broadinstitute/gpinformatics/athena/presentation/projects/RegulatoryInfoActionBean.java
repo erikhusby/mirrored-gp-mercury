@@ -98,12 +98,14 @@ public class RegulatoryInfoActionBean extends CoreActionBean {
                 final Set<String> regulatoryInfoIdentifiers =
                         searchResults.stream().map(RegulatoryInfo::getIdentifier).collect(Collectors.toSet());
                 final List<OrspProject> orspResults = orspProjectDao.findOrspProjectListByIdList(regulatoryInfoIdentifiers);
-                final Optional<Set<String>> orspResultNames = Optional.ofNullable(orspResults.stream().map(OrspProject::getName).collect(Collectors.toSet()));
+                final Optional<Set<RegulatoryInfo>> orspResultValidResults = Optional.ofNullable(orspResults.stream()
+                        .map(orspProject -> new RegulatoryInfo(orspProject.getName(), orspProject.getType(),
+                                    orspProject.getProjectKey())).collect(Collectors.toSet()));
 
-                if(orspResultNames.isPresent() && !orspResultNames.get().isEmpty()) {
+                if(orspResultValidResults.isPresent() && !orspResultValidResults.get().isEmpty()) {
 
                     searchResults.forEach(regulatoryInfo -> {
-                        regulatoryInfo.setUserEdit(orspResultNames.get().contains(regulatoryInfo.getIdentifier()));
+                        regulatoryInfo.setUserEdit(!orspResultValidResults.get().contains(regulatoryInfo));
                     });
                 } else {
                     searchResults.clear();

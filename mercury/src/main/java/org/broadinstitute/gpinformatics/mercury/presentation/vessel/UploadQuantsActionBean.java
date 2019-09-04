@@ -18,6 +18,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
+import org.broadinstitute.gpinformatics.athena.presentation.links.SapQuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
@@ -118,6 +119,8 @@ public class UploadQuantsActionBean extends CoreActionBean {
     private PriceListCache priceListCache;
     @Inject
     private QuoteLink quoteLink;
+    @Inject
+    private SapQuoteLink sapQuoteLink;
 
     @Validate(required = true, on = UPLOAD_QUANT)
     private FileBean quantSpreadsheet;
@@ -390,6 +393,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
         searchContext.setJiraConfig(jiraConfig);
         searchContext.setPriceListCache(priceListCache);
         searchContext.setQuoteLink(quoteLink);
+        searchContext.setSapQuoteLink(sapQuoteLink);
         ConfigurableList configurableList = configurableListFactory.create(labMetricList, "Default",
                 ColumnEntity.LAB_METRIC, searchContext,
                 SearchDefinitionFactory.getForEntity(ColumnEntity.LAB_METRIC.getEntityName()));

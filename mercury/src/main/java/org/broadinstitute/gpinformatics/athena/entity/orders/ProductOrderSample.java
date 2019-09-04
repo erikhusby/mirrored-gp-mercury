@@ -6,6 +6,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.billing.ProductLedgerIndex;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -51,8 +52,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * Class to describe Athena's view of a Sample. A Sample is identified by a sample Id and
@@ -158,20 +162,18 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     public Product getProductForPriceItem(PriceItem priceItem) {
         Product result = getProductOrder().getProduct();
-        if(getProductOrder().getProduct().getPrimaryPriceItem().equals(priceItem) ||
-           priceItem.equals(getProductOrder().getProduct().getExternalPriceItem())) {
+        if(Objects.equals(getProductOrder().getProduct().getPrimaryPriceItem(),priceItem)) {
             result = getProductOrder().getProduct();
         } else {
             for(ProductOrderAddOn addOn:getProductOrder().getAddOns()) {
-                if(addOn.getAddOn().getPrimaryPriceItem().equals(priceItem) ||
-                   priceItem.equals(addOn.getAddOn().getExternalPriceItem())) {
+                if(Objects.equals(addOn.getAddOn().getPrimaryPriceItem(),priceItem)) {
                     result = addOn.getAddOn();
                     break;
                 }
             }
         }
         if(result == null) {
-            throw new RuntimeException("Unable to find a product associated with the given addon");
+            throw new RuntimeException("Unable to find a product associated with the given price item");
         }
         return result;
     }
@@ -373,17 +375,17 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          * contribute to this calculation in different ways. This is like {@link getLedgerQuantities}, but only counts
          * quantities actually billed and also separates the quantities depending on price item type.
          */
-        Map<PriceItem, Double> primaryAndReplacementQuantities = new HashMap<>();
-        Map<PriceItem, Double> addOnQuantities = new HashMap<>();
+        Map<ProductLedgerIndex, Double> primaryAndReplacementQuantities = new HashMap<>();
+        Map<ProductLedgerIndex, Double> addOnQuantities = new HashMap<>();
         collectLedgerEntryDetails(primaryAndReplacementQuantities, addOnQuantities);
 
-        for (Map.Entry<PriceItem, Double> entry : primaryAndReplacementQuantities.entrySet()) {
-            PriceItem priceItem = entry.getKey();
+        for (Map.Entry<ProductLedgerIndex, Double> entry : primaryAndReplacementQuantities.entrySet()) {
+            ProductLedgerIndex ledgerIndex = entry.getKey();
             Double quantity = entry.getValue();
 
             // Include add-on quantities if this price item was accidentally billed as an add-on as well as a primary.
-            if (addOnQuantities.containsKey(priceItem)) {
-                quantity += addOnQuantities.get(priceItem);
+            if (addOnQuantities.containsKey(ledgerIndex)) {
+                quantity += addOnQuantities.get(ledgerIndex);
             }
             if (quantity > 0) {
                 return true;
@@ -399,31 +401,35 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          * contribute to this calculation in different ways. This is like {@link getLedgerQuantities}, but only counts
          * quantities actually billed and also separates the quantities depending on price item type.
          */
-        Map<PriceItem, Double> primaryAndReplacementQuantities = new HashMap<>();
-        Map<PriceItem, Double> addOnQuantities = new HashMap<>();
+        Map<ProductLedgerIndex, Double> primaryAndReplacementQuantities = new HashMap<>();
+        Map<ProductLedgerIndex, Double> addOnQuantities = new HashMap<>();
 
         List<String> results = new ArrayList<>();
 
         collectLedgerEntryDetails(primaryAndReplacementQuantities, addOnQuantities);
-        for (Map.Entry<PriceItem, Double> priceItemDoubleEntry : primaryAndReplacementQuantities.entrySet()) {
-            results.add("Billed "+priceItemDoubleEntry.getValue() + " samples for " + priceItemDoubleEntry.getKey().getDisplayName());
+        for (Map.Entry<ProductLedgerIndex, Double> priceItemDoubleEntry : primaryAndReplacementQuantities.entrySet()) {
+            String doubleEntryIndexName = "";
+
+            String resultsMessage = String.format("Billed %s samples for " + priceItemDoubleEntry.getKey()
+                    .getDisplayValue(), priceItemDoubleEntry.getValue());
+            results.add(resultsMessage);
         }
 
-        for (Map.Entry<PriceItem, Double> addOnPriceItemDoubleEntry : addOnQuantities.entrySet()) {
-            results.add("Billed "+addOnPriceItemDoubleEntry.getValue() + " samples for " + addOnPriceItemDoubleEntry.getKey().getDisplayName());
+        for (Map.Entry<ProductLedgerIndex, Double> addOnPriceItemDoubleEntry : addOnQuantities.entrySet()) {
+            results.add("Billed "+addOnPriceItemDoubleEntry.getValue() + " samples for " + addOnPriceItemDoubleEntry.getKey().getDisplayValue());
         }
 
         return results;
     }
 
-    public void collectLedgerEntryDetails(Map<PriceItem, Double> primaryAndReplacementQuantities,
-                                          Map<PriceItem, Double> addOnQuantities) {
+    public void collectLedgerEntryDetails(Map<ProductLedgerIndex, Double> primaryAndReplacementQuantities,
+                                          Map<ProductLedgerIndex, Double> addOnQuantities) {
         for (LedgerEntry item : ledgerItems) {
             if (item.isBilled()) {
 
                 // Guard against some initial testing data that is billed but doesn't have a price item type.
                 if (item.getPriceItemType() != null) {
-                    Map<PriceItem, Double> typeSpecificQuantities = null;
+                    Map<ProductLedgerIndex, Double> typeSpecificQuantities = null;
                     switch (item.getPriceItemType()) {
                     case PRIMARY_PRICE_ITEM:
                     case REPLACEMENT_PRICE_ITEM:
@@ -434,7 +440,8 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
                         break;
                     }
 
-                    PriceItem priceItem = item.getPriceItem();
+                    ProductLedgerIndex priceItem = ProductLedgerIndex.create(item.getProduct(), item.getPriceItem(),
+                            item.getProductOrderSample().productOrder.hasSapQuote());
                     Double currentQuantity = typeSpecificQuantities.get(priceItem);
                     if (currentQuantity == null) {
                         currentQuantity = 0.0;
@@ -717,27 +724,42 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      */
     public void autoBillSample(Date completedDate, double quantity) {
         Date now = new Date();
-        Map<PriceItem, LedgerQuantities> ledgerQuantitiesMap = getLedgerQuantities();
-        PriceItem priceItem = getProductOrder().determinePriceItemByCompanyCode(getProductOrder().getProduct());
+        Map<ProductLedgerIndex, LedgerQuantities> ledgerQuantitiesMap = getLedgerQuantities();
+        Product product = getProductOrder().getProduct();
+        Optional<PriceItem> nullablePriceItem = Optional.ofNullable(product.getPrimaryPriceItem());
+        PriceItem priceItem = null;
+        if(nullablePriceItem.isPresent()) {
+            priceItem = product.getPrimaryPriceItem();
+        }
 
-        LedgerQuantities quantities = ledgerQuantitiesMap.get(priceItem);
+        LedgerQuantities quantities = ledgerQuantitiesMap.get(ProductLedgerIndex.create(product, nullablePriceItem.orElse(null),
+                getProductOrder().hasSapQuote()));
         if (quantities == null) {
             // No ledger item exists for this price item, create it using the current order's price item
-            addAutoLedgerItem(completedDate, priceItem, quantity, now);
+            if(getProductOrder().hasSapQuote()) {
+                addAutoLedgerItem(completedDate, product, quantity, now, false);
+            } else {
+                addAutoLedgerItem(completedDate, nullablePriceItem.orElse(null), quantity, now);
+            }
         } else {
             // This price item already has a ledger entry.
             // - If it's been billed, don't bill it again, but report this as an issue.
             // - If it hasn't been billed check & see if the quantity is the same as the current.  If they differ,
             // replace the existing quantity with the new quantity. When replacing, also set the timestamp so
             // the PDM can be warned about downloading the spreadsheet AFTER this change.
+            String priceItemName = "";
+            if (nullablePriceItem.isPresent()) {
+                priceItemName = priceItem.getName();
+            }
+
             if (quantities.getBilled() != 0) {
                 log.debug(MessageFormat.format(
-                        "Trying to update an already billed sample, PDO: {0}, sample: {1}, price item: {2}",
-                        productOrder.getJiraTicketKey(), sampleName, priceItem.getName()));
+                        "Trying to update an already billed sample, PDO: {0}, sample: {1}, price item: {2}, Product: [3]",
+                        productOrder.getJiraTicketKey(), sampleName, priceItemName, product.getDisplayName()));
             } else if (MathUtils.isSame(quantities.getTotal(), quantity)) {
                 log.debug(MessageFormat.format(
-                        "Sample already has the same quantity to bill, PDO: {0}, sample: {1}, price item: {2}, quantity {3}",
-                        productOrder.getJiraTicketKey(), sampleName, priceItem.getName(), quantity));
+                        "Sample already has the same quantity to bill, PDO: {0}, sample: {1}, price item: {2}, Product: [3], quantity {4}",
+                        productOrder.getJiraTicketKey(), sampleName, priceItemName, product.getDisplayName(), quantity));
             } else {
                 // This price item already has a ledger entry.
                 // - If it's been billed, don't bill it again, but report this as an issue.
@@ -746,18 +768,19 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
                 // the PDM can be warned about downloading the spreadsheet AFTER this change.
                 if (quantities.getBilled() != 0) {
                     log.debug(MessageFormat.format(
-                            "Trying to update an already billed sample, PDO: {0}, sample: {1}, price item: {2}",
-                            productOrder.getJiraTicketKey(), sampleName, priceItem.getName()));
+                            "Trying to update an already billed sample, PDO: {0}, sample: {1}, price item: {2}, Product: [3]",
+                            productOrder.getJiraTicketKey(), sampleName, priceItemName, product.getDisplayName()));
                 } else if (MathUtils.isSame(quantities.getTotal(), quantity)) {
                     log.debug(MessageFormat.format(
-                            "Sample already has the same quantity to bill, PDO: {0}, sample: {1}, price item: {2}, quantity {3}",
-                            productOrder.getJiraTicketKey(), sampleName, priceItem.getName(), quantity));
+                            "Sample already has the same quantity to bill, PDO: {0}, sample: {1}, price item: {2}, Product: [3], quantity {4}",
+                            productOrder.getJiraTicketKey(), sampleName, priceItemName, product.getDisplayName(), quantity));
                 } else {
                     /*
                      * Why overwrite what a user likely manually uploaded? This seems wrong and/or dangerous.
                      */
                     for (LedgerEntry item : getLedgerItems()) {
-                        if (item.getPriceItem().equals(priceItem)) {
+                        if ((getProductOrder().hasSapQuote() && item.getProduct().equals(product)) ||
+                            !getProductOrder().hasSapQuote() && item.getPriceItem().equals(priceItem)) {
                             item.setQuantity(quantity);
                             item.setAutoLedgerTimestamp(now);
                             break;
@@ -784,6 +807,11 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         private String priceItemName;
 
         /**
+         * The Product Partnumber associated with these Quantities
+         */
+        private String productPartNumber;
+
+        /**
          * The quantity uploaded to Mercury that is pending billing (not yet in a billing session).
          */
         private double uploaded;
@@ -798,9 +826,10 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          */
         private double billed;
 
-        public LedgerQuantities(String sampleName, String priceItemName) {
+        public LedgerQuantities(String sampleName, String priceItemName, String partNumber) {
             this.sampleName = sampleName;
             this.priceItemName = priceItemName;
+            this.productPartNumber = partNumber;
         }
 
         /**
@@ -813,8 +842,10 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         public void addToUploaded(double quantity) {
             if (uploaded != 0) {
                 throw new RuntimeException(String.format(
-                        "There should only be one unbilled LedgerEntry for sample %s and price item %s. This needs to be corrected in the database to avoid data inconsistencies and possible double-billing.",
-                        sampleName, priceItemName));
+                        "There should only be one unbilled LedgerEntry for sample %s, price item %s, and product %s. "
+                        + "This needs to be corrected in the database to avoid data inconsistencies and possible "
+                        + "double-billing.",
+                        sampleName, priceItemName, productPartNumber));
             }
             uploaded += quantity;
         }
@@ -831,8 +862,10 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         public void addToInProgress(double quantity) {
             if (inProgress != 0) {
                 throw new RuntimeException(String.format(
-                        "There should only be one in-progress LedgerEntry for sample %s and price item %s. This needs to be corrected in the database to avoid data inconsistencies and possible double-billing.",
-                        sampleName, priceItemName));
+                        "There should only be one in-progress LedgerEntry for sample %s, price item %s, "
+                        + "and product %s. This needs to be corrected in the database to avoid data inconsistencies "
+                        + "and possible double-billing.",
+                        sampleName, priceItemName, productPartNumber));
             }
             inProgress += quantity;
         }
@@ -871,26 +904,47 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         }
     }
 
-    public Map<PriceItem, LedgerQuantities> getLedgerQuantities() {
+    public Map<ProductLedgerIndex, LedgerQuantities> getLedgerQuantities() {
         if (ledgerItems.isEmpty()) {
             return Collections.emptyMap();
         }
 
-        Map<PriceItem, LedgerQuantities> sampleStatus = new HashMap<>();
+        Map<ProductLedgerIndex, LedgerQuantities> sampleStatus = new HashMap<>();
         for (LedgerEntry item : ledgerItems) {
-            PriceItem priceItem = item.getPriceItem();
-            if (!sampleStatus.containsKey(priceItem)) {
-                sampleStatus.put(priceItem, new LedgerQuantities(sampleName, priceItem.getName()));
+            Optional<PriceItem> priceItem = Optional.ofNullable(item.getPriceItem());
+            Optional<Product> product = Optional.ofNullable(item.getProduct());
+            String priceItemName = "";
+            String partNumber= "";
+            if(product.isPresent()) {
+                partNumber = product.get().getPartNumber();
+            }
+            if(priceItem.isPresent()) {
+                priceItemName = priceItem.get().getName();
+            }
+            Set<ProductLedgerIndex> indexForPriceItem=
+                    sampleStatus.keySet().stream().filter(index -> {
+                        if(getProductOrder().hasSapQuote()) {
+                            return index.getProduct().equals(product.orElse(null));
+                        } else {
+                            return index.getPriceItem().equals(priceItem.orElse(null));
+                        }
+                    }).collect(Collectors.toSet());
+            if (indexForPriceItem.isEmpty()) {
+                sampleStatus.put(ProductLedgerIndex.create(product.orElse(null), priceItem.orElse(null),
+                        getProductOrder().hasSapQuote()), new LedgerQuantities(sampleName, priceItemName, partNumber));
             }
 
             if (item.isBilled()) {
-                sampleStatus.get(priceItem).addToBilled(item.getQuantity());
+                sampleStatus.get(ProductLedgerIndex.create(product.orElse(null), priceItem.orElse(null),
+                        getProductOrder().hasSapQuote())).addToBilled(item.getQuantity());
             } else if (item.isBeingBilled()) {
                 // The item is part of an active billing session.
-                sampleStatus.get(priceItem).addToInProgress(item.getQuantity());
+                sampleStatus.get(ProductLedgerIndex.create(product.orElse(null), priceItem.orElse(null),
+                        getProductOrder().hasSapQuote())).addToInProgress(item.getQuantity());
             } else {
                 // The item is not part of a completed billed session or successfully billed item from an active session.
-                sampleStatus.get(priceItem).addToUploaded(item.getQuantity());
+                sampleStatus.get(ProductLedgerIndex.create(product.orElse(null), priceItem.orElse(null),
+                        getProductOrder().hasSapQuote())).addToUploaded(item.getQuantity());
             }
         }
 
@@ -905,6 +959,22 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
                     throw new RuntimeException(
                             "Found multiple unbilled ledger entries for sample '" + sampleName + "' and price item '"
                             + priceItem.getName()
+                            + "'. This situation has been known to lead to serious billing problems in the past!");
+                }
+                ledgerEntry = ledgerItem;
+            }
+        }
+        return ledgerEntry;
+    }
+
+    public LedgerEntry findUnbilledLedgerEntryForProduct(Product product) {
+        LedgerEntry ledgerEntry = null;
+        for (LedgerEntry ledgerItem : ledgerItems) {
+            if (ledgerItem.getProduct().equals(product) && !ledgerItem.isBilled()) {
+                if (ledgerEntry != null) {
+                    throw new RuntimeException(
+                            "Found multiple unbilled ledger entries for sample '" + sampleName + "' and product '"
+                            + product.getDisplayName()
                             + "'. This situation has been known to lead to serious billing problems in the past!");
                 }
                 ledgerEntry = ledgerItem;
@@ -939,6 +1009,11 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         private PriceItem priceItem;
 
         /**
+         * The product for the ledger update
+         */
+        private Product product;
+
+        /**
          * The total quantity that the user was viewing when deciding what the new quantity should be.
          */
         private double oldQuantity;
@@ -961,6 +1036,8 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          */
         private Date workCompleteDate;
 
+        private boolean replacementUsed;
+
         /**
          * Create a new LedgerUpdate. This is only a representation of the requested change; no updates are performed.
          *
@@ -971,14 +1048,35 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          * @param newQuantity         the requested quantity
          * @param workCompleteDate    the date that work was completed
          */
-        public LedgerUpdate(String sampleName, PriceItem priceItem, double oldQuantity, double currentQuantity,
+        public LedgerUpdate(String sampleName, PriceItem priceItem, Product product, double oldQuantity, double currentQuantity,
                             double newQuantity, Date workCompleteDate) {
             this.sampleName = sampleName;
             this.priceItem = priceItem;
+            this.product = product;
             this.currentQuantity = currentQuantity;
             this.oldQuantity = oldQuantity;
             this.newQuantity = newQuantity;
             this.workCompleteDate = workCompleteDate;
+        }
+
+        /**
+         * Create a new LedgerUpdate. This is only a representation of the requested change; no updates are performed.
+         *  @param sampleName          the sample being updated
+         * @param oldQuantity         the quantity at the time the form was rendered
+         * @param currentQuantity     the quantity at the time the form was submitted
+         * @param newQuantity         the requested quantity
+         * @param workCompleteDate    the date that work was completed
+         * @param replacementUsed
+         */
+        public LedgerUpdate(String sampleName, Product product, double oldQuantity, double currentQuantity,
+                            double newQuantity, Date workCompleteDate, boolean replacementUsed) {
+            this.sampleName = sampleName;
+            this.product = product;
+            this.currentQuantity = currentQuantity;
+            this.oldQuantity = oldQuantity;
+            this.newQuantity = newQuantity;
+            this.workCompleteDate = workCompleteDate;
+            this.replacementUsed = replacementUsed;
         }
 
         /**
@@ -1039,6 +1137,10 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
             return priceItem;
         }
 
+        public Product getProduct() {
+            return product;
+        }
+
         public double getOldQuantity() {
             return oldQuantity;
         }
@@ -1069,7 +1171,12 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      *                          or if an update would need to be made to a ledger entry in an active billing session
      */
     public void applyLedgerUpdate(LedgerUpdate ledgerUpdate) throws StaleLedgerUpdateException {
-        LedgerEntry existingLedgerEntry = findUnbilledLedgerEntryForPriceItem(ledgerUpdate.getPriceItem());
+        LedgerEntry existingLedgerEntry;
+        if(ledgerUpdate.getPriceItem() == null) {
+            existingLedgerEntry = findUnbilledLedgerEntryForProduct(ledgerUpdate.getProduct());
+        } else {
+            existingLedgerEntry = findUnbilledLedgerEntryForPriceItem(ledgerUpdate.getPriceItem());
+        }
 
         /*
          * These 2 conditions both require validation of the work complete date. The actions taken beyond that depend on
@@ -1102,7 +1209,14 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
                     if (!haveExistingEntry) {
 
-                        addLedgerItem(ledgerUpdate.getWorkCompleteDate(), ledgerUpdate.getPriceItem(), quantityDelta);
+                        if(ledgerUpdate.getPriceItem() == null) {
+
+                            addLedgerItem(ledgerUpdate.getWorkCompleteDate(), ledgerUpdate.getProduct(), quantityDelta,
+                                    ledgerUpdate.replacementUsed);
+                        } else {
+                            addLedgerItem(ledgerUpdate.getWorkCompleteDate(), ledgerUpdate.getPriceItem(),
+                                    quantityDelta);
+                        }
                     } else {
 
                         if (existingLedgerEntry.isBeingBilled()) {
@@ -1125,6 +1239,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
             // Update work complete date for existing entry, whether or not the quantity is changing.
             if (haveExistingEntry) {
                 existingLedgerEntry.setWorkCompleteDate(ledgerUpdate.getWorkCompleteDate());
+                existingLedgerEntry.setSapReplacementPricing(ledgerUpdate.replacementUsed);
             }
         }
     }
@@ -1143,6 +1258,21 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     }
 
     /**
+     * This adds an automatically uploaded ledger entry. The auto timestamp is set to right now to indicate that the
+     * upload happened and needs to be reviewed.
+     *
+     * @param workCompleteDate The date completed.
+     * @param product        The product to charge.
+     * @param delta            The plus or minus value to bill to the quote server.
+     * @param currentDate      The ledger entry needs a date to say when the auto entry was made.
+     * @param sapReplacement
+     */
+    public void addAutoLedgerItem(Date workCompleteDate, Product product, double delta, Date currentDate,
+                                  Boolean sapReplacement) {
+        addLedgerItem(workCompleteDate, product, delta, currentDate, sapReplacement);
+    }
+
+    /**
      * This adds a manually uploaded ledger entry. The auto timestamp of NULL indicates that the upload happened, which
      * will lock out auto billing and sets to Can Bill.
      *
@@ -1154,13 +1284,41 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         addLedgerItem(workCompleteDate, priceItem, delta, null);
     }
 
+    /**
+     * This adds a manually uploaded ledger entry. The auto timestamp of NULL indicates that the upload happened, which
+     * will lock out auto billing and sets to Can Bill.
+     *
+     * @param workCompleteDate The date completed.
+     * @param product        The productto charge.
+     * @param delta            The plus or minus value to bill to the quote server.
+     * @param sapReplacement
+     */
+    public void addLedgerItem(Date workCompleteDate, Product product, double delta, Boolean sapReplacement) {
+        addAutoLedgerItem(workCompleteDate, product, delta, null, sapReplacement);
+    }
+
     public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta, Date autoLedgerTimestamp) {
         LedgerEntry ledgerEntry = new LedgerEntry(this, priceItem, workCompleteDate, delta);
         ledgerEntry.setAutoLedgerTimestamp(autoLedgerTimestamp);
         ledgerItems.add(ledgerEntry);
+        String priceItemName = "";
+        if(priceItem != null) {
+            priceItemName = priceItem.getName();
+        }
         log.debug(MessageFormat.format(
                 "Added LedgerEntry item for sample {0} to PDO {1} for PriceItemName: {2} - Quantity:{3}",
-                sampleName, productOrder.getBusinessKey(), priceItem.getName(), delta));
+                sampleName, productOrder.getBusinessKey(), priceItemName , delta));
+    }
+
+    public void addLedgerItem(Date workCompleteDate, Product product, double delta, Date autoLedgerTimestamp,
+                              Boolean sapReplacement) {
+        LedgerEntry ledgerEntry = new LedgerEntry(this, product, workCompleteDate, delta);
+        ledgerEntry.setAutoLedgerTimestamp(autoLedgerTimestamp);
+        ledgerEntry.setSapReplacementPricing(sapReplacement);
+        ledgerItems.add(ledgerEntry);
+        log.debug(MessageFormat.format(
+                "Added LedgerEntry item for sample {0} to PDO {1} for partNumber: {2} - Quantity:{3}",
+                sampleName, productOrder.getBusinessKey(), product.getName(), delta));
     }
 
     /**
