@@ -3981,7 +3981,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public static boolean canChangeQuote(ProductOrder productOrder, String oldQuote, String newQuote) {
         boolean sameQuote = StringUtils.equals(oldQuote, newQuote);
-        if (sameQuote){
+        if (sameQuote || productOrder.canSkipQuote()){
             return true;
         }
         if (productOrder!=null) {

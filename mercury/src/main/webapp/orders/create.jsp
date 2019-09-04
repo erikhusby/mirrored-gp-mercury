@@ -133,7 +133,9 @@
             var originalQuote = $j("input[name='originalQuote']");
             var currentQuote = $j("#quote");
 
-            if(!validateChangeQuote(originalQuote.val().trim(), currentQuote.val().trim())) {
+            var quoteSkipped = $j("#skipQuote").prop('checked');
+            var canChangeQuote = validateChangeQuote(originalQuote.val().trim(), currentQuote.val().trim());
+            if(!canChangeQuote && !quoteSkipped) {
                 alert("Switching between Quote Server and SAP quotes is not permitted once an order has been placed.");
                 return false;
             }
