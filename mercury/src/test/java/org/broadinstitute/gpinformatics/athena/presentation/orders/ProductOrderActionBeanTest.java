@@ -4567,8 +4567,8 @@ public class ProductOrderActionBeanTest {
             assertThat(orderStatus.canPlace(), is(false));
             testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, qsQuote, false});
             testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, sapQuote, false});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, qsQuote, true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, sapQuote, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, qsQuote, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, sapQuote, false});
             // not chaning quote type is OK
             testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, sapQuote, true});
             testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, qsQuote, true});
@@ -4584,10 +4584,10 @@ public class ProductOrderActionBeanTest {
             testCases.add(new Object[]{orderStatus, quoteRequired, null, sapQuote, false});
             testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, null, false});
             testCases.add(new Object[]{orderStatus, quoteRequired, null, null, true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, qsQuote, true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, null, true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, sapQuote, true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, null, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, qsQuote, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, null, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, sapQuote, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, null, false});
             testCases.add(new Object[]{orderStatus, noQuoteRequired, null, null, true});
 
             testCases.add(new Object[]{orderStatus, quoteRequired, "", qsQuote, false});
@@ -4595,10 +4595,10 @@ public class ProductOrderActionBeanTest {
             testCases.add(new Object[]{orderStatus, quoteRequired, "", sapQuote, false});
             testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, "", false});
             testCases.add(new Object[]{orderStatus, quoteRequired, "", "", true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", qsQuote, true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, "", true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", sapQuote, true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, "", true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", qsQuote, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, "", false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", sapQuote, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, "", false});
             testCases.add(new Object[]{orderStatus, noQuoteRequired, "", "", true});
         });
 
