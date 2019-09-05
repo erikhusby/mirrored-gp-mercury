@@ -9,8 +9,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
-import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMapping;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
@@ -33,16 +31,13 @@ import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
@@ -323,26 +318,26 @@ public class ProductEjb {
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void publishProductToSAP(Product productToPublish) throws SAPIntegrationException {
-        SAPAccessControl control = accessController.getCurrentControlDefinitions();
-        List<AccessItem> accessItemList = new ArrayList<>();
-        accessItemList.add(new AccessItem(productToPublish.getPrimaryPriceItem().getName()));
-        if(productToPublish.getExternalPriceItem() != null) {
-            accessItemList.add(new AccessItem(productToPublish.getExternalPriceItem().getName()));
-        }
-        if (!CollectionUtils.containsAll(control.getDisabledItems(), accessItemList)
-            && control.isEnabled()) {
-            try {
-                sapService.publishProductInSAP(productToPublish);
-                productToPublish.setSavedInSAP(true);
+        publishProductToSAP(productToPublish, true, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
+    }
 
-            } catch (SAPIntegrationException e) {
-                throw new SAPIntegrationException(e.getMessage());
-            }
-        } else {
-            throw new SAPIntegrationException(productToPublish.getName() +
-                              " has a price item that makes it ineligible to be reflected in SAP.");
-        }
+    /**
+     * This method has the responsibility to take the given product and attempt to publish it to SAP
+     * @param productToPublish A product which needs to have its information either created or updated in SAP
+     * @param extendProductsToOtherPlatforms
+     * @param publishType
+     * @throws SAPIntegrationException
+     */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    private void publishProductToSAP(Product productToPublish, boolean extendProductsToOtherPlatforms,
+                                    SapIntegrationService.PublishType publishType) throws SAPIntegrationException {
+        try {
+            sapService.publishProductInSAP(productToPublish, extendProductsToOtherPlatforms, publishType);
+            productToPublish.setSavedInSAP(true);
 
+        } catch (SAPIntegrationException e) {
+            throw new SAPIntegrationException(e.getMessage());
+        }
     }
 
     /**
@@ -353,12 +348,26 @@ public class ProductEjb {
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void publishProductsToSAP(Collection<Product> productsToPublish) throws ValidationException {
+        publishProductsToSAP(productsToPublish, true, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
+    }
+
+    /**
+     * This method has the responsibility of taking the products passed to it and attempting to publish them to SAP.
+     * @param productsToPublish a collection of products which needs to have their information either created or
+     *                          updated in SAP
+     * @param extendProductsToOtherPlatforms
+     * @param publishType
+     * @throws SAPIntegrationException
+     */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void publishProductsToSAP(Collection<Product> productsToPublish, boolean extendProductsToOtherPlatforms,
+                                      SapIntegrationService.PublishType publishType) throws ValidationException {
         List<String> errorMessages = new ArrayList<>();
         for (Product productToPublish : productsToPublish) {
             try {
-                publishProductToSAP(productToPublish);
+                publishProductToSAP(productToPublish, extendProductsToOtherPlatforms, publishType);
             } catch (SAPIntegrationException e) {
-                errorMessages.add(e.getMessage());
+                errorMessages.add(productToPublish.getPartNumber() + ": " + e.getMessage());
                 log.error(e.getMessage());
             }
         }

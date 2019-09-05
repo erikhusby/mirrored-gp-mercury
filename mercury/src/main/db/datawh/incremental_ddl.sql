@@ -1,8 +1,16 @@
--- GPLIM-5550 Add VOLUME to LAB_VESSEL table
+-- GPLIM-6212 requires indexes on array_process_flow table
+DROP INDEX IDX_ARRAY_PROCESS_FLOW_PDO_ETL;
 
-ALTER TABLE MERCURYDW.LAB_VESSEL
-  ADD VOLUME FLOAT NULL;
+CREATE INDEX IDX_ARRAY_PROCESS_FLOW_ETL
+ON ARRAY_PROCESS_FLOW( BATCH_NAME, LCSET_SAMPLE_NAME );
 
-ALTER TABLE MERCURYDW.IM_LAB_VESSEL
-  ADD VOLUME FLOAT NULL;
+-- GPLIM-4108 add column for sap delivery document
+alter table ledger_entry add sap_delivery_document varchar2(255);
+alter table im_ledger_entry add sap_delivery_document varchar2(255);
 
+alter table ledger_entry add product_id numeric(19);
+alter table im_ledger_entry add product_id numeric(19);
+
+-- GPLIM-6508 add column for order type
+alter table product_order add order_type varchar2(255);
+alter table im_product_order add order_type varchar2(255);

@@ -644,8 +644,6 @@ public class LimsQueryResource {
 
         List<String> fileOutput;
         String fileChipType;
-        ProductOrder productOrder;
-        Set<ProductOrder> productOrders = new HashSet<>();
 
         LabVessel labVessel = labVesselDao.findByIdentifier(plateBarcode);
         if (labVessel == null) {
@@ -653,27 +651,24 @@ public class LimsQueryResource {
                     Response.Status.INTERNAL_SERVER_ERROR);
         }
 
+        GenotypingChip chipType = null;
         for (SampleInstanceV2 sampleInstanceV2: labVessel.getSampleInstancesV2()) {
             ProductOrderSample pdoSampleForSingleBucket = sampleInstanceV2.getProductOrderSampleForSingleBucket();
             if (pdoSampleForSingleBucket == null) {
                 for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
-                    productOrders.add(productOrderSample.getProductOrder());
+                    chipType = findChipType(productOrderSample.getProductOrder(), new Date());
+                    // this may be NA12878, so continue looping, and hope to find a non-null single bucket
                 }
             } else {
-                productOrders.add(pdoSampleForSingleBucket.getProductOrder());
+                chipType = findChipType(pdoSampleForSingleBucket.getProductOrder(), new Date());
+                if (chipType != null) {
+                    break;
+                }
             }
         }
 
-        if (productOrders.size() >= 1) {
-            productOrder = productOrders.iterator().next();
-        } else {
-            throw new ResourceException("Found no product orders ", Response.Status.INTERNAL_SERVER_ERROR);
-        }
-
-        GenotypingChip chipType = findChipType(productOrder, new Date());
         if (chipType == null) {
-            throw new ResourceException("Failed to find PDO " + productOrder.getBusinessKey(),
-                     Response.Status.INTERNAL_SERVER_ERROR);
+            throw new ResourceException("Found no array product orders ", Response.Status.INTERNAL_SERVER_ERROR);
         }
         String PDOChipType = chipType.getChipName();
         List<String> PDOChipTypeList = parseChipName(PDOChipType);

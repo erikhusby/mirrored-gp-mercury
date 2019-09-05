@@ -38,6 +38,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -443,6 +444,117 @@ public class LabMetricFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void fixupSupport3463() throws Exception {
+        long[] wrongLabMetricIds = new long[]{
+                335907L,
+                335908L,
+                335909L,
+                335910L,
+                335911L,
+                335912L,
+                335913L,
+                335914L,
+                335915L,
+                335916L,
+                335917L,
+                335918L,
+                335919L,
+                335920L,
+                335921L,
+                335922L,
+                335923L,
+                335924L,
+                335925L,
+                335926L,
+                335927L,
+                335928L,
+                335929L,
+                335930L,
+                335931L,
+                335932L,
+                335933L,
+                335934L,
+                335935L,
+                335936L,
+                335937L,
+                335938L,
+                335939L,
+                335940L,
+                335941L,
+                335942L,
+                335943L,
+                335944L,
+                335945L,
+                335946L,
+                335947L,
+                335948L,
+                335949L,
+                335950L,
+                335951L,
+                335952L,
+                335953L,
+                335954L,
+                335955L,
+                335956L,
+                335957L,
+                335958L,
+                335959L,
+                335960L,
+                335961L,
+                335962L,
+                335963L,
+                335964L,
+                335965L,
+                335966L,
+                335967L,
+                335968L,
+                335969L,
+                335970L,
+                335971L,
+                335972L,
+                335973L,
+                335974L,
+                335975L,
+                335976L,
+                335977L,
+                335978L,
+                335979L,
+                335980L,
+                335981L,
+                335982L,
+                335983L,
+                335984L,
+                335985L,
+                335986L,
+                335987L,
+                335988L,
+                335989L,
+                335990L,
+                335991L,
+                335992L,
+                335993L,
+                335994L,
+                335995L,
+                335996L,
+                335997L,
+                335998L,
+                335999L
+        };
+        userBean.loginOSUser();
+        utx.begin();
+        for (long metricId : wrongLabMetricIds) {
+            LabMetric labMetric = labVesselDao.findById(LabMetric.class, metricId);
+            Assert.assertEquals(labMetric.getName(), LabMetric.MetricType.SHEARING_PICO);
+            Assert.assertEquals(labMetric.getCreatedDate().toString(), "2017-07-26 15:05:00.245");
+            System.out.println("Deleting LabMetric " + labMetric.getLabMetricId());
+            labVesselDao.remove(labMetric);
+        }
+        dao.persist(new FixupCommentary("SUPPORT-3463 delete shearing metric"));
+        dao.flush();
+        utx.commit();
+    }
+
     private void deleteRun(String runName, String reason) {
         LabMetricRun labMetricRun = dao.findByName(runName);
         for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
@@ -497,6 +609,46 @@ public class LabMetricFixupTest extends Arquillian {
         }
         dao.persist(new FixupCommentary(jiraTicket));
         dao.flush();
+    }
+
+    /**
+     * This test reads its parameters from a file, testdata/DeleteGenericMetric.txt, so it can be used for other similar fixups,
+     * without writing a new test.  Example contents of the file are:
+     * GPLIM-6452
+     * Plating Pico
+     * 0185769113
+     * 0185769029
+     */
+    @Test(enabled = false)
+    public void fixupGplim6452() throws Exception {
+        utx.begin();
+        userBean.loginOSUser();
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("DeleteGenericMetric.txt"));
+        String jiraTicket = lines.get(0);
+        LabMetric.MetricType metricType = LabMetric.MetricType.getByDisplayName(lines.get(1));
+        for (int i = 2; i < lines.size(); i++) {
+            String barcode = lines.get(i).trim();
+            LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
+            if (labVessel == null) {
+                throw new RuntimeException("Failed to find lab vessel " + barcode);
+            }
+
+            Set<LabMetric> deleteMetrics = new HashSet<>();
+            for (LabMetric labMetric: labVessel.getMetrics()) {
+                if (labMetric.getName() == metricType) {
+                    deleteMetrics.add(labMetric);
+                    System.out.println("delete lab metric " + labMetric.getLabMetricId() + " from " +
+                                       labVessel.getLabel());
+                }
+            }
+            labVessel.getMetrics().removeAll(deleteMetrics);
+            for (LabMetric labMetric: deleteMetrics) {
+                labMetricDao.remove(labMetric);
+            }
+        }
+        labVesselDao.persist(new FixupCommentary(jiraTicket + " deleted lab metrics of type " + lines.get(1)));
+        labVesselDao.flush();
+        utx.commit();
     }
 
     private void updateRisk(Set<LabMetric> labMetrics) {

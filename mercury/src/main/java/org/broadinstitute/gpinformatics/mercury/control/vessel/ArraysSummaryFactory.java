@@ -254,11 +254,13 @@ public class ArraysSummaryFactory {
                 String blon = "", reas = "", wlon = "";
                 boolean isFirst = true;
                 for( ArraysQcBlacklisting blacklist : arraysQcBlacklistings ) {
-                    blon += (isFirst?"":", ") + DATE_FORMAT.format(blacklist.getBlacklistedOn());
-                    reas += (isFirst?"":", ") + blacklist.getBlacklistReason();
-                    // Retain only the latest
-                    wlon = blacklist.getWhitelistedOn() == null?"":DATE_FORMAT.format(blacklist.getWhitelistedOn());
-                    isFirst = false;
+                    if (blacklist.getAnalysisVersion().equals(arraysQc.getAnalysisVersion())) {
+                        blon += (isFirst?"":", ") + DATE_FORMAT.format(blacklist.getBlacklistedOn());
+                        reas += (isFirst?"":", ") + blacklist.getBlacklistReason();
+                        // Retain only the latest
+                        wlon = blacklist.getWhitelistedOn() == null?"":DATE_FORMAT.format(blacklist.getWhitelistedOn());
+                        isFirst = false;
+                    }
                 }
                 printStream.print(blon + "\t");
                 printStream.print(reas + "\t");

@@ -66,6 +66,7 @@ public class ArraysQcDao {
      * Note:  Schema design allows more than one blacklist entry per chip well barcode so caller should account
      *    for possibility of multiples if details (e.g reasons, dates) required
      */
+    @SuppressWarnings("WeakerAccess")
     public List<ArraysQcBlacklisting> findBlacklistByBarcodes(List<String> chipWellBarcodes) {
         if( chipWellBarcodes == null || chipWellBarcodes.isEmpty() ) {
             return Collections.emptyList();
