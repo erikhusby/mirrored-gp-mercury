@@ -4670,5 +4670,4 @@ public class ProductOrderActionBeanTest {
             assertThat(e.getMessage(), is(ProductOrder.QUOTES_CANNOT_BE_USED_FOR_COMMERCIAL_OR_CLINICAL_PRODUCTS));
         }
     }
-
 }
