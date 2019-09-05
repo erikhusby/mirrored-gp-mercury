@@ -12,6 +12,7 @@ import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Message;
+import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
@@ -207,7 +208,8 @@ public class BillingLedgerActionBean extends CoreActionBean {
             addGlobalValidationError("Unable to begin billing for this order since it has not been "
                                      + "submitted to SAP.  Please go back and click the "
                                      + "\"Publish Product Order to SAP\" button before continuing");
-            return getSourcePageResolution();
+            return new RedirectResolution(ProductOrderActionBean.class, ProductOrderActionBean.VIEW_ACTION)
+                    .addParameter("productOrder", orderId);
         }
         String successMessage = getContext().getRequest().getParameter("successMessage");
         if (StringUtils.isNotBlank(successMessage)) {
