@@ -133,7 +133,7 @@
             var originalQuote = $j("input[name='originalQuote']");
             var currentQuote = $j("#quote");
 
-            if(!validateChangeQuote(originalQuote.val().trim(), currentQuote.val().trim())) {
+            if(validateChangeQuote(originalQuote.val().trim(), currentQuote.val().trim())) {
                 alert("Switching between Quote Server and SAP quotes is not permitted once an order has been placed.");
                 return false;
             }
@@ -150,9 +150,9 @@
         function validateChangeQuote(originalQuote, currentQuote) {
 
             var productOrderKey = $j("input[name='productOrder']");
-            var originalIsQuoteServer = isNaN(originalQuote);
-            var currentIsQuoteServer = isNaN(currentQuote);
-            var orderCanPlace = ${actionBean.editOrder.orderStatus.canPlace()}
+            var originalIsQuoteServer = isNaN(originalQuote) || originalQuote === "" || originalQuote === null;
+            var currentIsQuoteServer = isNaN(currentQuote) || currentQuote === "" || currentQuote === null;
+            var orderCanPlace = ${actionBean.editOrder.orderStatus.canPlace()};
             var originalNotBlank = originalQuote !== 'undefined' && originalQuote !== "" && originalQuote !== 'null';
             var currentNotBlank = (currentQuote !== 'undefined' && currentQuote !== "" && currentQuote !== 'null' &&
             currentQuote !== "Enter the Quote ID for this order");
