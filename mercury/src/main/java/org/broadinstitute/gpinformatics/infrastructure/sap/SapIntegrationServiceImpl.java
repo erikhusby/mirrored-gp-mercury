@@ -37,6 +37,7 @@ import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -399,7 +400,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         SAPDeliveryItem lineItem =
                 new SAPDeliveryItem(quoteItemForBilling.getProduct().getPartNumber(),
-                        (quantityOverride == null)?new BigDecimal(quoteItemForBilling.getQuantityForSAP()):quantityOverride);
+                        (quantityOverride == null)?generateScaledBigDecimal(quoteItemForBilling.getQuantityForSAP()):quantityOverride);
 
         if(StringUtils.equals(quoteItemForBilling.getQuotePriceType(), LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType())) {
             lineItem.addCondition(DeliveryCondition.LATE_DELIVERY_DISCOUNT);
@@ -408,6 +409,26 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         deliveryDocument.addDeliveryItem(lineItem);
 
         return getClient().createDeliveryDocument(deliveryDocument);
+    }
+
+    /**
+     * Returns a BigDecimal with a forced scale set.  Intended to counteract issues found in GPLIM-6607
+     * @param quantityForSAP Quantity
+     * @return
+     */
+    protected static BigDecimal generateScaledBigDecimal(double quantityForSAP) {
+        String quantityString = String.valueOf(quantityForSAP);
+        String decimalPortion = "";
+        if(quantityString.contains(".")) {
+            String[] quantitySplit = quantityString.split("\\.");
+            if(Integer.valueOf(quantitySplit[quantitySplit.length-1]) != 0) {
+                decimalPortion = quantitySplit[quantitySplit.length - 1];
+            }
+        }
+        int scale = decimalPortion.length();
+        System.out.println(String.format("The quantity to use is %s and the found scale is %s.", quantityForSAP, scale));
+
+        return new BigDecimal(quantityForSAP).setScale(scale, RoundingMode.HALF_UP);
     }
 
     @NotNull
