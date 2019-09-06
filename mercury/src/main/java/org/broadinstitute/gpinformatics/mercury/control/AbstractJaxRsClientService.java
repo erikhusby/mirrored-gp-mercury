@@ -15,6 +15,7 @@ import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.ClientRequestContext;
+import javax.ws.rs.client.ClientRequestFilter;
 import javax.ws.rs.client.ClientResponseContext;
 import javax.ws.rs.client.ClientResponseFilter;
 import javax.ws.rs.client.Entity;
@@ -84,6 +85,12 @@ public abstract class AbstractJaxRsClientService implements Serializable {
         customizeBuilder(clientBuilder);
 
         Client jerseyClient = clientBuilder.build();
+        jerseyClient.register(new ClientRequestFilter() {
+            @Override
+            public void filter(ClientRequestContext clientRequestContext) throws IOException {
+                System.out.println(clientRequestContext.getEntity().toString());
+            }
+        });
         customizeClient(jerseyClient);
         return jerseyClient;
     }

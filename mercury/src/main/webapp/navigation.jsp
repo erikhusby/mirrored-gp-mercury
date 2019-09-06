@@ -215,6 +215,11 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexNamingActionBean"
                                           event="view">Make Molecular Index Names</stripes:link>
                         </li>
+                        <li>
+                            <stripes:link id="fingerprintReport"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.FingerprintReportActionBean"
+                                          event="view">Fingerprint Report</stripes:link>
+                        </li>
                     </ul>
                 </li>
             </security:authorizeBlock>

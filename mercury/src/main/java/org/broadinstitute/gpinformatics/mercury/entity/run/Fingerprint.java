@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.hibernate.envers.Audited;
+import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -34,7 +35,8 @@ import java.util.Set;
 @Audited
 @Table(schema = "mercury",
     indexes = {@Index(name = "IX_FP_MERCURY_SAMPLE", columnList = "MERCURY_SAMPLE", unique = false)})
-public class Fingerprint {
+public class Fingerprint implements Comparable <Fingerprint> {
+
 
     public enum Disposition {
         PASS("P"),
@@ -186,6 +188,26 @@ public class Fingerprint {
 
         return fpGenotypesOrdered;
     }
+
+    @Override
+    public int compareTo(@NotNull Fingerprint o) {
+
+        String patientId = getMercurySample().getSampleData().getPatientId();
+        String patientId2 = o.getMercurySample().getSampleData().getPatientId();
+        String root1 = getMercurySample().getSampleData().getRootSample();
+        String root2 = o.getMercurySample().getSampleData().getRootSample();
+        String aliquot1 = getMercurySample().getSampleKey();
+        String aliquot2 = o.getMercurySample().getSampleKey();
+
+        if (patientId.compareTo(patientId2) == 0) {
+            if (root1.compareTo(root2) == 0) {
+                return aliquot1.compareTo(aliquot2);
+            }
+            return root1.compareTo(root2);
+        }
+        return patientId.compareTo(patientId2);
+    }
+
 
     public Set<FpGenotype> getFpGenotypes() {
         return fpGenotypes;
