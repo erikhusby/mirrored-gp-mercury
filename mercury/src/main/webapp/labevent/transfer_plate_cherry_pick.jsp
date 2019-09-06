@@ -76,16 +76,20 @@ plate / rack.
             <label for="updateAllDestinationVolumes">Update All Destination Volumes:</label><input type="text" id="updateAllDestinationVolumes"/>
         </p>
     </c:if>
-
-    <label>Type </label>${plate[0].physType}
-    <input type="hidden" name="stationEvents[${stationEventIndex}].${source ? 'sourcePlate[0]' : 'plate[0]'}.physType"
+    <p class="control-group">
+        <label>Container Type </label>${plate[0].physType}
+        <input type="hidden" name="stationEvents[${stationEventIndex}].${source ? 'sourcePlate[0]' : 'plate[0]'}.physType"
            value="${plate[0].physType}"/>
 
-    <label for="${source ? 'src' : 'dst'}PltBcd${stationEventIndex}">Barcode</label>
-    <input type="text" ${vesselTypeGeometry.barcoded ? "" : "readonly"} id="${source ? 'src' : 'dst'}PltBcd${stationEventIndex}" autocomplete="off"
-           name="stationEvents[${stationEventIndex}].${source ? 'sourcePlate[0]' : 'plate[0]'}.barcode"
-           value="${plate[0].barcode}" class="container-barcode ${vesselTypeGeometry.barcoded ? "clearable" : ""} barcode unique" ${stationEventIndex == 0 ? "required" : ""}/>
+        <label for="${source ? 'src' : 'dst'}PltBcd${stationEventIndex}">Barcode</label>
+        <input type="text" ${vesselTypeGeometry.barcoded ? "" : "readonly"} id="${source ? 'src' : 'dst'}PltBcd${stationEventIndex}" autocomplete="off"
+               name="stationEvents[${stationEventIndex}].${source ? 'sourcePlate[0]' : 'plate[0]'}.barcode"
+               value="${plate[0].barcode}" class="container-barcode ${vesselTypeGeometry.barcoded ? "clearable" : ""} barcode unique" ${stationEventIndex == 0 ? "required" : ""}/>
 
+        <c:if test="${!source}">
+            <label>Tube Type</label>${actionBean.selectedTargetChildReceptacleType}
+        </c:if>
+    </p>
     <c:if test="${stationEvent.class.simpleName == 'PlateCherryPickEvent'}">
         <div style="display: none;">
         <stripes:label for="${source ? 'src' : 'dst'}Section">Section</stripes:label>
@@ -169,9 +173,12 @@ plate / rack.
                             <input type="hidden"
                                    name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap[0]' : 'positionMap[0]'}.receptacle[${receptacleIndex}].position"
                                    value="${geometry.vesselPositions[receptacleIndex]}"/>
+
+                            <c:set var="targetTubeReceptacleType" value="${source ? actionBean.labEventTypeByIndex(stationEventIndex).manualTransferDetails.sourceBarcodedTubeType : actionBean.selectedTargetChildReceptacleType != null ? actionBean.selectedTargetChildReceptacleType : actionBean.labEventTypeByIndex(stationEventIndex).manualTransferDetails.targetBarcodedTubeType}"/>
+
                             <input type="hidden"
                                     name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}[0].receptacle[${receptacleIndex}].receptacleType"
-                                    value="${source ? actionBean.labEventTypeByIndex(stationEventIndex).manualTransferDetails.sourceBarcodedTubeType : actionBean.labEventTypeByIndex(stationEventIndex).manualTransferDetails.targetBarcodedTubeType}"/>
+                                    value="${targetTubeReceptacleType}"/>
                             <c:if test="${volumeType == 'text'}">
                                 </br>
                             </c:if>

@@ -350,7 +350,7 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.MISEQ_FLOWCELL),
 
-    PIZZABOX_DAUGHTER_TRANSFER("PizzaBoxDaughterTransfer",
+    VARIOUS_TUBE_TRANSFER("VariousTubeTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP_APPLY_SM_IDS,
             VolumeConcUpdate.BSP_AND_MERCURY,

@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.labevent;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
@@ -49,7 +50,6 @@ import org.broadinstitute.gpinformatics.mercury.control.vessel.LimsFileType;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.QiagenRackFileParser;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
@@ -61,7 +61,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -81,6 +80,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -109,6 +109,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
     public static final String DECODE_IMAGE_ACTION = "decodeImage";
     public static final String BAD_STATION_NAME = "None";
     private static final String VIEW_TRANSFER_ACTION = "viewTransfer";
+    private static final String SELECTABLE_BARCODED_TUBE_TYPE_ACTION = "selectableTargetBarcodedTubeTypes";
 
     private final String syntheticBarcode = String.valueOf(System.currentTimeMillis());
 
@@ -181,6 +182,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
     private VesselTypeGeometry selectedSourceGeometry;
 
     private VesselTypeGeometry selectedTargetGeometry;
+
+    private String selectedTargetChildReceptacleType;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -271,6 +274,11 @@ public class ManualTransferActionBean extends RackScanActionBean {
         String targetVesselTypeGeometryString = getContext().getRequest().getParameter("stationEvents[0].plate[0].physType");
         if (targetVesselTypeGeometryString != null) {
             selectedTargetGeometry = RackOfTubes.RackType.getByName(targetVesselTypeGeometryString);
+        } else {
+            String targetTubeTypeGeometryString = getContext().getRequest().getParameter("targetVesselTypeGeometryString");
+            if (targetTubeTypeGeometryString != null) {
+                selectedTargetGeometry = RackOfTubes.RackType.getByName(targetTubeTypeGeometryString);
+            }
         }
     }
 
@@ -948,6 +956,32 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 }
             }
         }
+    }
+
+    /**
+     * Based off the selected 'selectedTargetGeometry', return list of allowed BarcodedTubeType objects.
+     * @return
+     */
+    @HandlesEvent(SELECTABLE_BARCODED_TUBE_TYPE_ACTION)
+    public Resolution selectableTargetBarcodedTubeTypes() throws JsonProcessingException {
+        List<BarcodedTube.BarcodedTubeType> found = new ArrayList<>();
+        if (selectedTargetGeometry != null) {
+            EnumSet<org.broadinstitute.bsp.client.workrequest.kit.ReceptacleType> childReceptacleTypes =
+                    org.broadinstitute.bsp.client.workrequest.kit.ReceptacleType
+                            .findByName(selectedTargetGeometry.getDisplayName()).getChildReceptacleTypes();
+            // For each type returned grab the BarcodedTubeType.
+            for (org.broadinstitute.bsp.client.workrequest.kit.ReceptacleType childReceptacleType : childReceptacleTypes) {
+                BarcodedTube.BarcodedTubeType childBarcodedTubeType =
+                        BarcodedTube.BarcodedTubeType.getByAutomationName(childReceptacleType.name());
+                if (childBarcodedTubeType != null ) {
+                    found.add(childBarcodedTubeType);
+                } else {
+                    log.error("Unable to find a BarcodedTubeType for " + childReceptacleType.name());
+                }
+            }
+        }
+        ObjectMapper mapper = new ObjectMapper();
+        return new StreamingResolution("application/json", mapper.writeValueAsString(found));
     }
 
     private enum Direction {
@@ -1655,4 +1689,12 @@ public class ManualTransferActionBean extends RackScanActionBean {
     }
 
     public void setSelectedTargetGeometry(VesselTypeGeometry selectedTargetGeometry) { this.selectedTargetGeometry = selectedTargetGeometry; }
+
+    public String getSelectedTargetChildReceptacleType() {
+        return selectedTargetChildReceptacleType;
+    }
+
+    public void setSelectedTargetChildReceptacleType(String selectedTargetChildReceptacleType) {
+        this.selectedTargetChildReceptacleType = selectedTargetChildReceptacleType;
+    }
 }

@@ -250,6 +250,42 @@
                         displayCamera();
                     });
                 </c:if>
+
+                $j('#targetReceptacleType').change(function() {
+
+                    console.log("within change of 'targetReceptacleType'");
+                    console.log($j('#targetReceptacleType').val());
+
+                    var data = new FormData();
+                    var eventClass = $j('input[name=\"eventClass[0]\"').val();
+                    console.log(eventClass);
+                    data.append("eventClass", eventClass);
+
+                    // Get the selectable barcoded tube types based off container type 'targetReceptacleType'
+                    $j.ajax({
+                        url: '/Mercury/labevent/manualtransfer.action?selectableTargetBarcodedTubeTypes&targetVesselTypeGeometryString='+$j('#targetReceptacleType').val(),
+                        datatype: "application/json",
+                        type: 'GET',
+                        success: function (data) {
+                            console.log(data);
+
+                            if (!data.hasErrors) {
+                                // Clear old values so we ensure nothing is doubling up.
+                                $j('#selectedTargetChildReceptacleType').empty();
+                                $j('#selectedTargetChildReceptacleType').append($j('<option value="">Select One</option>'));
+                                // Loop through the options returned
+                                $j.each(data, function (i, selectOption) {
+                                    $j('#selectedTargetChildReceptacleType').append($j('<option></option>').attr('value', selectOption).text(selectOption));
+                                });
+                            }
+                        },
+                        error: function (req, textstatus, msg) {
+                            console.log(req);
+                            console.log(msg);
+                        }
+                    });
+
+                });
             });
 
             // Some scanners send carriage return, we don't want this to submit the form
@@ -471,12 +507,20 @@
                                     </c:if>
                                     <c:choose>
                                         <c:when test="${not empty actionBean.manualTransferDetails.targetVesselTypeGeometries && empty actionBean.selectedTargetGeometry}">
-                                            <stripes:label for="targetReceptacleType">Type </stripes:label>
-                                            <stripes:select name="stationEvents[${stationEventStatus.index}].plate[0].physType"
-                                                            id="targetReceptacleType">
-                                                <stripes:option value="">Select One</stripes:option>
-                                                <stripes:options-collection collection="${actionBean.manualTransferDetails.targetVesselTypeGeometriesString}"/>
-                                            </stripes:select>
+                                            <div>
+                                                <stripes:label for="targetReceptacleType">Type </stripes:label>
+                                                <stripes:select name="stationEvents[${stationEventStatus.index}].plate[0].physType"
+                                                                id="targetReceptacleType">
+                                                    <stripes:option value="">Select One</stripes:option>
+                                                    <stripes:options-collection collection="${actionBean.manualTransferDetails.targetVesselTypeGeometriesString}"/>
+                                                </stripes:select>
+
+                                                <stripes:label for="selectedTargetChildReceptacleType">Type </stripes:label>
+                                                <stripes:select name="selectedTargetChildReceptacleType"
+                                                                id="selectedTargetChildReceptacleType">
+                                                    <stripes:option value="">Select One</stripes:option>
+                                                </stripes:select>
+                                            </div>
                                         </c:when>
                                         <c:otherwise>
                                                 <c:set var="stationEvent" value="${stationEvent}" scope="request"/>
