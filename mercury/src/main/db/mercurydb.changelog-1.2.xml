@@ -1941,6 +1941,7 @@
             <column name="abandoned_by" type="number(19,0)"/>
         </addColumn>
     </changeSet>
+
     <changeSet id="GPLIM-6078" author="jsacco">
         <createIndex tableName="BUCKET_ENTRY" indexName="IX_BUCKET_BATCH_FK">
             <column name="LAB_BATCH"/>
@@ -2318,6 +2319,22 @@
     <changeSet id="GPLIM-6065-12" author="epolk">
         <addUniqueConstraint constraintName="U_SAMPL_INST_TUBE_LIBRARY"
 	    tableName="sample_instance_entity" columnNames="lab_vessel, library_name"/>
+    </changeSet>
+
+    <changeSet author="thompson" id="GPLIM-6080-1">
+        <addColumn schemaName="mercury" tableName="mercury_control">
+            <column name="CONCORDANCE_SAMPLE_ID" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-6080-2">
+        <addColumn schemaName="mercury" tableName="mercury_control_aud">
+            <column name="CONCORDANCE_SAMPLE_ID" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-6080-3">
+        <addForeignKeyConstraint constraintName="FK_MC_MERCURY_SAMPLE"
+                baseTableSchemaName="mercury" baseTableName="mercury_control" baseColumnNames="CONCORDANCE_SAMPLE_ID"
+                referencedTableSchemaName="mercury" referencedTableName="mercury_sample" referencedColumnNames="mercury_sample_id"/>
     </changeSet>
 
 </databaseChangeLog>
