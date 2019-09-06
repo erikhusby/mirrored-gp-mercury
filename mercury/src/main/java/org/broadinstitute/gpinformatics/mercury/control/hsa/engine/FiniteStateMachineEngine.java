@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.engine;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
@@ -93,10 +94,10 @@ public class FiniteStateMachineEngine {
 
             log.debug("Checking transitions from " + state);
             for (Task task: state.getActiveTasks()) {
-                Status taskStatus = taskManager.checkTaskStatus(task, context);
-                task.setStatus(taskStatus);
-                if (taskStatus == Status.COMPLETE) {
-                    task.setEndTime(new Date());
+                Pair<Status, Date> statusDatePair = taskManager.checkTaskStatus(task, context);
+                task.setStatus(statusDatePair.getLeft());
+                if (task.getStatus() == Status.COMPLETE) {
+                    task.setEndTime(statusDatePair.getRight());
                 }
             }
 

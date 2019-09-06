@@ -16,9 +16,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.mercury.boundary.run.FingerprintResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.StateMachineDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.TaskDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.ProcessTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.FiniteStateMachineFactory;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SlurmController;
@@ -27,11 +29,16 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 @UrlBinding(FiniteStateMachineActionBean.ACTION_BEAN_URL)
 public class FiniteStateMachineActionBean extends CoreActionBean {
@@ -69,6 +76,9 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
     @Inject
     private SlurmController slurmController;
 
+    @Inject
+    private MercurySampleDao mercurySampleDao;
+
     @ValidateNestedProperties({
             @Validate(field = "stateMachineName", label = "State Machine Name", required = true, maxlength = 255,
                     on = {SAVE_ACTION})
@@ -87,7 +97,11 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
 
     private List<Long> selectedIds = new ArrayList<>();
 
+    private String sampleIds;
+
     private Status overrideStatus;
+
+    private Map<String, MercurySample> mapIdToMercurySample = new HashMap<>();
 
     public FiniteStateMachineActionBean() {
         super(CREATE_MACHINE, EDIT_MACHINE, MACHINE_PARAMETER);
@@ -130,6 +144,18 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
         if (illuminaSequencingRun == null) {
             addValidationError("runName", "Failed to find sequencing run with name " + runName);
         }
+
+        if (sampleIds != null) {
+            String[] split = sampleIds.split("\\s+");
+            mapIdToMercurySample =
+                    mercurySampleDao.findMapIdToMercurySample(new HashSet<>(Arrays.asList(split)));
+
+            for (String sampleId: split) {
+                if (mapIdToMercurySample.get(sampleId) == null) {
+                    addValidationError("sampleIds", "Failed to find Sample: " + sampleId);
+                }
+            }
+        }
     }
 
     @HandlesEvent(SAVE_ACTION)
@@ -138,7 +164,7 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
 
         try {
             FiniteStateMachine finiteStateMachine = finiteStateMachineFactory.createFiniteStateMachineForRun(
-                    illuminaSequencingRun, runName, messageCollection);
+                    illuminaSequencingRun, null, runName, mapIdToMercurySample.keySet(), messageCollection);
         } catch (Exception e) {
             addGlobalValidationError(e.getMessage());
             return new ForwardResolution(getContext().getSourcePage());
@@ -247,5 +273,13 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
 
     public void setOverrideStatus(Status overrideStatus) {
         this.overrideStatus = overrideStatus;
+    }
+
+    public String getSampleIds() {
+        return sampleIds;
+    }
+
+    public void setSampleIds(String sampleIds) {
+        this.sampleIds = sampleIds;
     }
 }

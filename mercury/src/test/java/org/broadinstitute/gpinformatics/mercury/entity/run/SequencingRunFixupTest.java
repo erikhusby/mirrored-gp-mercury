@@ -414,7 +414,7 @@ public class SequencingRunFixupTest extends Arquillian {
      * PO-136444 run folder moved after registration
      * 180721_SL-MAC_0453_FC000000000-BV4PM
      */
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void addMissingSequencingRunChambers() throws Exception {
         userBean.loginOSUser();
 

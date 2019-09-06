@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AlignmentTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.FiniteStateMachineFactory;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AlignmentState;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -121,6 +122,10 @@ public class FingerprintWorkflowActionBean extends CoreActionBean {
             }
         }
 
+        if (alignmentDirectoryDtos.isEmpty()) {
+            addGlobalValidationError("Failed to find any alignments.");
+        }
+
         return new ForwardResolution(FP_CREATE_PAGE);
     }
 
@@ -137,7 +142,9 @@ public class FingerprintWorkflowActionBean extends CoreActionBean {
         List<AlignmentDirectoryDto> selectedAlignments = alignmentDirectoryDtos.stream()
                 .filter(dto -> selectedDirectories.contains(dto.getOutputDirectory()))
                 .collect(Collectors.toList());
-        finiteStateMachineFactory.createFingerprintTasks(selectedAlignments);
+        List<FiniteStateMachine> fpStateMachines =
+                finiteStateMachineFactory.createFingerprintTasks(selectedAlignments);
+        addMessage(String.format("Created %d state machines", fpStateMachines.size()));
         return new ForwardResolution(FP_CREATE_PAGE);
     }
 
@@ -148,6 +155,9 @@ public class FingerprintWorkflowActionBean extends CoreActionBean {
 
     private Pair<File, File> grabBamAndVcfFiles(File outputDir, String fastQSampleId, String vcSampleName) {
         File bam = new File(outputDir, fastQSampleId + ".bam");
+        if (!bam.exists()) {
+            bam = new File(outputDir, fastQSampleId + ".cram");
+        }
         File vcf = new File(outputDir, fastQSampleId + ".vcf.gz");
         return Pair.of(bam, vcf);
     }

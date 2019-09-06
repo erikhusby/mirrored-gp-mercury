@@ -52,6 +52,15 @@
             </div>
 
             <div class="control-group">
+                <stripes:label for="sampleIds" class="control-label">
+                    Filter Samples
+                </stripes:label>
+                <div class="controls">
+                    <stripes:textarea id="sampleIds" name="sampleIds" title="Demultiplex/Align only certain samples."/>
+                </div>
+            </div>
+
+            <div class="control-group">
                 <div class="controls">
                     <div class="row-fluid">
                         <div class="span2">

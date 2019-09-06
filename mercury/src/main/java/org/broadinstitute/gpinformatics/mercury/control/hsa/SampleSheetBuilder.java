@@ -19,6 +19,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,19 +56,41 @@ public class SampleSheetBuilder {
                 br, ',', SampleData.class, colToFieldMap, null, 0);
     }
 
-
-    // TODO NextSeq reverse complement of index 2
     public SampleSheet makeSampleSheet(IlluminaSequencingRun illuminaRun) {
+        return makeSampleSheet(illuminaRun, null, Collections.emptySet());
+    }
+
+    /**
+     * For a sequencing run filter only the lanes and samples we care about if any.
+     */
+    public SampleSheet makeSampleSheet(IlluminaSequencingRun illuminaRun, Set<VesselPosition> lanes,
+                                       Set<String> filterSampleIds) {
         RunCartridge flowcell = illuminaRun.getSampleCartridge();
 
         Data data = new Data();
         Header header = null;
         for (VesselPosition vesselPosition: flowcell.getVesselGeometry().getVesselPositions()) {
+            if (lanes != null && !lanes.contains(vesselPosition)) {
+                continue;
+            }
             int laneNum = Integer.parseInt(vesselPosition.name().substring(vesselPosition.name().length() - 1));
             for (SampleInstanceV2 laneSampleInstance : flowcell.getContainerRole().getSampleInstancesAtPositionV2(
                     vesselPosition)) {
-                data.addSample(laneSampleInstance, laneNum);
+
                 ProductOrderSample productOrderSample = laneSampleInstance.getSingleProductOrderSample();
+                MercurySample mercurySample;
+                if (productOrderSample != null) {
+                    mercurySample = productOrderSample.getMercurySample();
+                } else {
+                    // Controls won't have a ProductOrderSample, so use root sample ID.
+                    mercurySample = laneSampleInstance.getRootOrEarliestMercurySample();
+                }
+
+                if (!filterSampleIds.isEmpty() && !filterSampleIds.contains(mercurySample.getSampleKey())) {
+                    continue;
+                }
+
+                data.addSample(laneSampleInstance, mercurySample, laneNum);
                 if (productOrderSample != null) {
                     header = createHeader(laneSampleInstance);
                 }
@@ -84,8 +107,16 @@ public class SampleSheetBuilder {
         Header header = null;
         for (SampleInstanceV2 laneSampleInstance : flowcell.getContainerRole().getSampleInstancesAtPositionV2(
                 vesselPosition)) {
-            data.addSample(laneSampleInstance, laneNum);
             ProductOrderSample productOrderSample = laneSampleInstance.getSingleProductOrderSample();
+            MercurySample mercurySample;
+            if (productOrderSample != null) {
+                mercurySample = productOrderSample.getMercurySample();
+            } else {
+                // Controls won't have a ProductOrderSample, so use root sample ID.
+                mercurySample = laneSampleInstance.getRootOrEarliestMercurySample();
+            }
+
+            data.addSample(laneSampleInstance, mercurySample, laneNum);
             if (productOrderSample != null) {
                 header = createHeader(laneSampleInstance);
             }
@@ -172,9 +203,8 @@ public class SampleSheetBuilder {
             }
         }
 
-        public void addSample(SampleInstanceV2 sampleInstanceV2, int lane) {
+        public void addSample(SampleInstanceV2 sampleInstanceV2, MercurySample mercurySample, int lane) {
             String pdoSampleName;
-            MercurySample mercurySample = null;
             ProductOrderSample productOrderSample = sampleInstanceV2.getSingleProductOrderSample();
             if (productOrderSample != null) {
                 mercurySample = productOrderSample.getMercurySample();

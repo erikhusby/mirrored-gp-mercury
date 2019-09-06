@@ -67,23 +67,27 @@ public class AlignmentMetricsTaskHandler extends AbstractTaskHandler {
         MessageCollection messageCollection = new MessageCollection();
         for (AlignmentTask alignmentTask: alignmentTasks) {
             try {
+                // TODO needs to be 4 separate tasks to handle retries
                 String commandLineArgument = alignmentTask.getCommandLineArgument();
                 String outputDirectoryPath = alignmentTask.getOutputDir().getPath();
                 if (outputDirectoryPath == null) {
-                    messageCollection.addError("Failed to parse output directory from task " + alignmentTask);
+                    task.setErrorMessage("Failed to parse output directory from task " + alignmentTask);
+                    task.setStatus(Status.FAILED);
                     continue;
                 }
 
                 File outputDirectory = new File(outputDirectoryPath);
                 if (!outputDirectory.exists()) {
-                    messageCollection.addError(
+                    task.setErrorMessage(
                             "Output directory for task " + alignmentTask + " doesn't exist" + outputDirectory);
+                    task.setStatus(Status.FAILED);
                     continue;
                 }
 
                 Pair<String, String> runNameDatePair = parseRunNameAndAnalysisDateFromOutputDir(outputDirectory);
                 if (runNameDatePair == null) {
-                    messageCollection.addError("Failed to parse run name and date from output " + outputDirectory.getPath());
+                    task.setErrorMessage("Failed to parse run name and date from output " + outputDirectory.getPath());
+                    task.setStatus(Status.FAILED);
                     continue;
                 }
 
@@ -91,20 +95,22 @@ public class AlignmentMetricsTaskHandler extends AbstractTaskHandler {
                         DragenTaskBuilder
                                 .parseCommandFromArgument(DragenTaskBuilder.OUTPUT_FILE_PREFIX, commandLineArgument);
                 if (outputFilePrefix == null) {
-                    messageCollection.addError("Failed to parse output file prefix from task " + alignmentTask);
+                    task.setErrorMessage("Failed to parse output file prefix from task " + alignmentTask);
+                    task.setStatus(Status.FAILED);
                     continue;
                 }
 
                 String fastQFilePath =
                         DragenTaskBuilder.parseCommandFromArgument(DragenTaskBuilder.FASTQ_LIST, commandLineArgument);
                 if (fastQFilePath == null) {
-                    messageCollection.addError("Failed to parse fastq list file from task " + alignmentTask);
+                    task.setErrorMessage("Failed to parse fastq list file from task " + alignmentTask);
+                    task.setStatus(Status.FAILED);
                     continue;
                 }
                 File fastQFile = new File(fastQFilePath);
                 if (!fastQFile.exists()) {
-                    messageCollection
-                            .addError("Fastq list file for task " + alignmentTask + " doesn't exist" + outputDirectory);
+                    task.setErrorMessage("Fastq list file for task " + alignmentTask + " doesn't exist" + outputDirectory);
+                    task.setStatus(Status.FAILED);
                     continue;
                 }
 
@@ -115,7 +121,9 @@ public class AlignmentMetricsTaskHandler extends AbstractTaskHandler {
                 } catch (IOException e) {
                     String errMsg = "Failed to read replay file " + replayJsonFile.getPath();
                     log.error(errMsg, e);
-                    messageCollection.addError(errMsg);
+                    task.setErrorMessage(errMsg);
+                    task.setStatus(Status.FAILED);
+                    continue;
                 }
 
                 Map<String, String> mapReadGroupToSample = buildMapOfReadGroupToSampleAlias(fastQFile);
@@ -154,6 +162,7 @@ public class AlignmentMetricsTaskHandler extends AbstractTaskHandler {
             } catch (Exception e) {
                 String message = "Error processing alignment task metric " + alignmentMetricsTask;
                 log.error(message, e);
+                task.setErrorMessage(message);
                 task.setStatus(Status.FAILED);
             }
         }

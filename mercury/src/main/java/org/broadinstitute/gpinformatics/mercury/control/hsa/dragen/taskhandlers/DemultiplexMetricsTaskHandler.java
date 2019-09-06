@@ -80,7 +80,9 @@ public class DemultiplexMetricsTaskHandler extends AbstractTaskHandler {
         DragenFolderUtil dragenFolderUtil = new DragenFolderUtil(dragenConfig, demultiplexState.getRun(), demultiplexState.getStateName());
         File demultiplexMetricsFile = dragenFolderUtil.getDemultiplexStatsFile();
         if (!demultiplexMetricsFile.exists()) {
-            log.info("Demultiplex Metrics file doesn't exist: " + demultiplexMetricsFile.getPath());
+            String errMsg = "Demultiplex Metrics file doesn't exist: " + demultiplexMetricsFile.getPath();
+            log.info(errMsg);
+            task.setErrorMessage(errMsg);
             task.setStatus(Status.QUEUED);
             return;
         }
@@ -92,7 +94,7 @@ public class DemultiplexMetricsTaskHandler extends AbstractTaskHandler {
         } catch (IOException e) {
             String errMsg = "Failed to read demultiplex stats file " + demultiplexMetricsFile.getPath();
             log.error(errMsg, e);
-            messageCollection.addError(errMsg);
+            task.setErrorMessage(errMsg);
             task.setStatus(Status.SUSPENDED);
             return;
         }
@@ -103,7 +105,7 @@ public class DemultiplexMetricsTaskHandler extends AbstractTaskHandler {
         } catch (IOException e) {
             String errMsg = "Failed to read replay file " + replayJsonFile.getPath();
             log.error(errMsg, e);
-            messageCollection.addError(errMsg);
+            task.setErrorMessage(errMsg);
             task.setStatus(Status.SUSPENDED);
             return;
         }
@@ -144,21 +146,26 @@ public class DemultiplexMetricsTaskHandler extends AbstractTaskHandler {
             } catch (CsvDataTypeMismatchException e) {
                 String errMsg = "Data type mismatch";
                 log.error(errMsg, e);
+                task.setErrorMessage(errMsg);
                 task.setStatus(Status.FAILED);
             } catch (CsvRequiredFieldEmptyException e) {
                 String errMsg = "Missing required field";
                 log.error(errMsg, e);
+                task.setErrorMessage(errMsg);
                 task.setStatus(Status.FAILED);
             } catch (IOException e) {
                 String errMsg = "Error writing to file";
+                task.setErrorMessage(errMsg);
                 log.error(errMsg, e);
                 task.setStatus(Status.FAILED);
             } catch (InterruptedException e) {
                 String errMsg = "sqlloader process thread interrupted";
+                task.setErrorMessage(errMsg);
                 log.error(errMsg, e);
                 task.setStatus(Status.FAILED);
             } catch (TimeoutException e) {
                 String errMsg = "sqlloader process thread timed out.";
+                task.setErrorMessage(errMsg);
                 log.error(errMsg, e);
                 task.setStatus(Status.FAILED);
             }
