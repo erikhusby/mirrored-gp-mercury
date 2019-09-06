@@ -20,7 +20,7 @@ import java.util.Set;
 @Audited
 public class AlignmentState extends State {
 
-    @ManyToMany(cascade = {CascadeType.PERSIST})
+    @ManyToMany
     @JoinTable(schema = "mercury", name = "sample_alignment_state"
             , joinColumns = {@JoinColumn(name = "ALIGNMENT_STATE")}
             , inverseJoinColumns = {@JoinColumn(name = "MERCURY_SAMPLE")})

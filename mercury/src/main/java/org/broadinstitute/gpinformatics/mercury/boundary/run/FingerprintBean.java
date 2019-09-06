@@ -49,35 +49,71 @@ public class FingerprintBean {
         return queriedLsid;
     }
 
+    public void setQueriedLsid(String queriedLsid) {
+        this.queriedLsid = queriedLsid;
+    }
+
     public String getDisposition() {
         return disposition;
+    }
+
+    public void setDisposition(String disposition) {
+        this.disposition = disposition;
     }
 
     public String getAliquotLsid() {
         return aliquotLsid;
     }
 
+    public void setAliquotLsid(String aliquotLsid) {
+        this.aliquotLsid = aliquotLsid;
+    }
+
     public String getPlatform() {
         return platform;
+    }
+
+    public void setPlatform(String platform) {
+        this.platform = platform;
     }
 
     public String getGenomeBuild() {
         return genomeBuild;
     }
 
+    public void setGenomeBuild(String genomeBuild) {
+        this.genomeBuild = genomeBuild;
+    }
+
     public String getSnpListName() {
         return snpListName;
+    }
+
+    public void setSnpListName(String snpListName) {
+        this.snpListName = snpListName;
     }
 
     public Date getDateGenerated() {
         return dateGenerated;
     }
 
+    public void setDateGenerated(Date dateGenerated) {
+        this.dateGenerated = dateGenerated;
+    }
+
     public String getGender() {
         return gender;
     }
 
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
     public List<FingerprintCallsBean> getCalls() {
         return calls;
+    }
+
+    public void setCalls(List<FingerprintCallsBean> calls) {
+        this.calls = calls;
     }
 }

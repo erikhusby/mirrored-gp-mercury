@@ -1,5 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.dragen;
 
+import htsjdk.samtools.metrics.MetricBase;
+import htsjdk.samtools.metrics.MetricsFile;
+import htsjdk.samtools.util.CloserUtil;
+import htsjdk.samtools.util.IOUtil;
 import org.apache.commons.io.FileUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.datawh.EtlConfig;
@@ -44,6 +48,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.presentation.hsa.AlignmentActionBean;
 import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
@@ -58,9 +63,12 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.zeroturnaround.exec.ProcessOutput;
 import org.zeroturnaround.exec.ProcessResult;
+import picard.analysis.FingerprintingDetailMetrics;
+import picard.analysis.FingerprintingSummaryMetrics;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -362,7 +370,8 @@ public class DragenSimulatorTest extends BaseEventTest {
                 // One sample across two lanes, ignore 2nd alignment.
                 if (!mapSmToAlignment.containsKey(fastQSampleId)) {
                     alignment.addTask(new AlignmentTask(referenceFile, fastQList, fastQSampleId, alignmentOutputDir,
-                            intermediateResults, fastQSampleId, fastQSampleId));
+                            intermediateResults, fastQSampleId, fastQSampleId,
+                            new File(AlignmentActionBean.ReferenceGenome.HG38.getContamFile())));
                     mapSmToAlignment.put(mercurySample.getSampleKey(), mercurySample);
                 }
             }
@@ -374,4 +383,35 @@ public class DragenSimulatorTest extends BaseEventTest {
 
         return finiteStateMachine;
     }
+
+    @Test
+    public void testFingerprint() {
+        File bam = new File("/seq/illumina/proc/SL-NVD/190702_SL-NVD_0213_AHK735DSXX/dragen/2019-08-19--12-39-39/fastq/SM-IN8EV/SM-IN8EV.bam");
+        File vcf = new File("/seq/illumina/proc/SL-NVD/190702_SL-NVD_0213_AHK735DSXX/dragen/2019-08-19--12-39-39/fastq/SM-IN8EV/SM-IN8EV.vcf.gz");
+        File hapDb = new File(AlignmentActionBean.ReferenceGenome.HG38.getHaplotypeDatabase());
+        FingerprintTask fp = new FingerprintTask(bam, vcf, hapDb, "test", null);
+        System.out.println(fp.getBamFile());
+
+
+        final File fingerprintingSummaryFile = new File("/seq/illumina/proc/SL-NVD/190702_SL-NVD_0213_AHK735DSXX/dragen/2019-08-19--12-39-39/fastq/SM-IN8EV/SM-IN8EV.fingerprinting_summary_metrics").getAbsoluteFile();
+        final MetricsFile<FingerprintingSummaryMetrics, ?> fingerprintingSummaryMetrics = loadMetricsIfPresent(fingerprintingSummaryFile);
+        System.out.println(fingerprintingSummaryMetrics);
+
+        final File fingerprintingDetailFile = new File("/seq/illumina/proc/SL-NVD/190702_SL-NVD_0213_AHK735DSXX/dragen/2019-08-19--12-39-39/fastq/SM-IN8EV/SM-IN8EV.fingerprinting_detail_metrics").getAbsoluteFile();
+        final MetricsFile<FingerprintingDetailMetrics, ?> fingerprintingDetailMetrics = loadMetricsIfPresent(fingerprintingDetailFile);
+        System.out.println(fingerprintingDetailFile);
+    }
+
+    private <M extends MetricBase> MetricsFile<M,?> loadMetricsIfPresent(final File file) {
+        IOUtil.assertFileIsReadable(file);
+
+        final MetricsFile<M,?> metrics = new MetricsFile<>();
+        final InputStreamReader in = new InputStreamReader(IOUtil.openFileForReading(file));
+        metrics.read(in);
+        CloserUtil.close(in);
+
+        return metrics;
+    }
+
+
 }

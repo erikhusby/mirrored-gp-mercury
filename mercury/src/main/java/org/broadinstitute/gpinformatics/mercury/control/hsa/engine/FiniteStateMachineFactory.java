@@ -27,7 +27,10 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Transition;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.presentation.hsa.AlignmentActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.hsa.FingerprintWorkflowActionBean;
 
 import javax.enterprise.context.Dependent;
@@ -37,9 +40,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -68,7 +73,18 @@ public class FiniteStateMachineFactory {
 
     public FiniteStateMachine createFiniteStateMachineForRun(IlluminaSequencingRun run, String runName,
                                                              MessageCollection messageCollection) {
-        FiniteStateMachine finiteStateMachine = createFiniteStateMachineForRunDaoFree(run, runName, messageCollection);
+        RunCartridge flowcell = run.getSampleCartridge();
+        Set<VesselPosition> lanes = new HashSet<>(Arrays.asList(flowcell.getVesselGeometry().getVesselPositions()));
+        return createFiniteStateMachineForRun(run, lanes, runName, Collections.emptySet(), messageCollection);
+    }
+
+    public FiniteStateMachine createFiniteStateMachineForRun(IlluminaSequencingRun run,
+                                                             Set<VesselPosition> lanes,
+                                                             String runName,
+                                                             Set<String> filterSampleIds,
+                                                             MessageCollection messageCollection) {
+        FiniteStateMachine finiteStateMachine = createFiniteStateMachineForRunDaoFree(run, lanes, runName,
+                filterSampleIds, messageCollection);
         if (!messageCollection.hasErrors()) {
             stateMachineDao.persist(finiteStateMachine);
         }
@@ -77,7 +93,10 @@ public class FiniteStateMachineFactory {
     }
 
     @DaoFree
-    public FiniteStateMachine createFiniteStateMachineForRunDaoFree(IlluminaSequencingRun run, String runName,
+    public FiniteStateMachine createFiniteStateMachineForRunDaoFree(IlluminaSequencingRun run,
+                                                                    Set<VesselPosition> lanes,
+                                                                    String runName,
+                                                                    Set<String> filterSampleIds,
                                                                     MessageCollection messageCollection) {
         List<State> states = new ArrayList<>();
         List<Transition> transitions = new ArrayList<>();
@@ -107,7 +126,7 @@ public class FiniteStateMachineFactory {
 
         // Default is to create 1 Sample Sheet for all of the lanes
         File SampleSheetFile = new File(dragenFolderUtil.getAnalysisFolder(), "SampleSheet_hsa.csv");
-        SampleSheetBuilder.SampleSheet sampleSheet = sampleSheetBuilder.makeSampleSheet(run);
+        SampleSheetBuilder.SampleSheet sampleSheet = sampleSheetBuilder.makeSampleSheet(run, lanes, filterSampleIds);
         writeFile(SampleSheetFile, sampleSheet.toCsv(), messageCollection);
 
         DemultiplexTask demultiplexTask = new DemultiplexTask(runDir, dragenFolderUtil.getFastQFolder(), SampleSheetFile);
@@ -138,7 +157,8 @@ public class FiniteStateMachineFactory {
             File outputDir = new File(dragenFolderUtil.getFastQFolder(), sampleData.getSampleName());
             File intermediateResults = new File("/staging/out");
             AlignmentTask alignmentTask = new AlignmentTask(referenceFile, fastQList, sampleData.getSampleName(),
-                    outputDir, intermediateResults, sampleData.getSampleName(), sampleData.getSampleName());
+                    outputDir, intermediateResults, sampleData.getSampleName(), sampleData.getSampleName(),
+                    new File(AlignmentActionBean.ReferenceGenome.HG38.getContamFile()));
             alignmentTask.setTaskName("Alignment_" + sampleData.getSampleName() + "_" + runName);
             alignmentState.addTask(alignmentTask);
             samplesAligned.add(sampleData.getSampleName());
@@ -159,12 +179,15 @@ public class FiniteStateMachineFactory {
         return finiteStateMachine;
     }
 
-    public void createFingerprintTasks(List<FingerprintWorkflowActionBean.AlignmentDirectoryDto> alignmentDtos) {
+    public List<FiniteStateMachine> createFingerprintTasks(List<FingerprintWorkflowActionBean.AlignmentDirectoryDto> alignmentDtos) {
         List<String> sampleKeys = alignmentDtos.stream()
                 .map(FingerprintWorkflowActionBean.AlignmentDirectoryDto::getSampleKey)
                 .collect(Collectors.toList());
         Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(sampleKeys);
-        createFingerprintTasksDaoFree(alignmentDtos, mapIdToMercurySample);
+        List<FiniteStateMachine> stateMachines =
+                createFingerprintTasksDaoFree(alignmentDtos, mapIdToMercurySample);
+        stateMachineDao.persistAll(stateMachines);
+        return stateMachines;
     }
 
     @DaoFree
@@ -176,16 +199,21 @@ public class FiniteStateMachineFactory {
             List<State> states = new ArrayList<>();
 
             String name = "FP_" + dto.getSampleKey() + "_" + DateUtils.getFileDateTime(new Date());
+            String stateName = "FP_State" + dto.getSampleKey() + "_" + DateUtils.getFileDateTime(new Date());
             FiniteStateMachine finiteStateMachine = new FiniteStateMachine();
             finiteStateMachine.setStateMachineName(name);
 
             MercurySample mercurySample = mapIdToMercurySample.get(dto.getSampleKey());
-            FingerprintState fingerprintState = new FingerprintState(mercurySample);
-            fingerprintState.setStateName(name);
+            FingerprintState fingerprintState = new FingerprintState(stateName, mercurySample, finiteStateMachine);
+            fingerprintState.setStartState(true);
+            fingerprintState.setAlive(true);
             states.add(fingerprintState);
 
+            File outputDir = new File(dto.getOutputDirectory());
+            File outputFilePrefix = new File(outputDir, "Fingerprint");
             FingerprintTask fpTask = new FingerprintTask(new File(dto.getBamFile()), new File(dto.getVcfFile()),
-                    new File(dto.getHaplotypeDatabase()), "Fingerprint");
+                    new File(dto.getHaplotypeDatabase()), outputFilePrefix.getPath(),
+                    new File(AlignmentActionBean.ReferenceGenome.HG38.getFasta()));
             fpTask.setTaskName(name);
             fingerprintState.addTask(fpTask);
 

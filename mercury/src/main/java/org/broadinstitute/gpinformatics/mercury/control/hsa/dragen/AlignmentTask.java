@@ -36,6 +36,9 @@ public class AlignmentTask extends ProcessTask {
     @Transient
     private String vcSampleName;
 
+    @Transient
+    private File qcContaminationFile;
+
     /**
      * Syntax
      * dragen -f -r /staging/reference/<reference> \
@@ -49,8 +52,9 @@ public class AlignmentTask extends ProcessTask {
      * --enable-duplicate-marking true \
      * --enable-map-align-output true
      */
-    public AlignmentTask(File reference, File fastQList, String fastQSampleId,
-                         File outputDirectory, File intermediateResultsDir, String outputFilePrefix, String vcSampleName) {
+    public AlignmentTask(File reference, File fastQList, String fastQSampleId, File outputDirectory,
+                         File intermediateResultsDir, String outputFilePrefix, String vcSampleName,
+                         File qcContaminationFile) {
         super("dragen");
         this.reference = reference;
         this.fastQList = fastQList;
@@ -59,6 +63,7 @@ public class AlignmentTask extends ProcessTask {
         this.intermediateResultsDir = intermediateResultsDir;
         this.outputFilePrefix = outputFilePrefix;
         this.vcSampleName = vcSampleName;
+        this.qcContaminationFile = qcContaminationFile;
 
         Objects.requireNonNull(reference, "reference directory must not be null.");
         Objects.requireNonNull(fastQList, "fastQList must not be null.");
@@ -67,6 +72,7 @@ public class AlignmentTask extends ProcessTask {
         Objects.requireNonNull(intermediateResultsDir, "intermediateResultsDir must not be null.");
         Objects.requireNonNull(outputFilePrefix, "outputFilePrefix must not be null.");
         Objects.requireNonNull(vcSampleName, "vcSampleName must not be null.");
+        Objects.requireNonNull(vcSampleName, "qcContaminationFile must not be null.");
 
         String dragenTaskBuilder = new DragenTaskBuilder().
                 reference(reference).
@@ -80,6 +86,7 @@ public class AlignmentTask extends ProcessTask {
                 enableVariantCaller(true).
                 enableDuplicateMarking(true).
                 enableMapAlignOutput(true).
+                qcCrossContaminationVcf(qcContaminationFile).
                 build();
 
         setCommandLineArgument(dragenTaskBuilder);

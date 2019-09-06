@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.control.hsa.metrics;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.Test;
 
 import java.io.File;
@@ -10,6 +11,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+@Test(groups = TestGroups.DATABASE_FREE)
 public class AlignmentStatsParserTest {
 
     @Test

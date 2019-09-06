@@ -84,6 +84,11 @@ public class DragenTaskBuilder {
         return this;
     }
 
+    public DragenTaskBuilder qcCrossContaminationVcf(File file) {
+        appendCommand(String.format("--qc-cross-cont-vcf %s", file.getPath()));
+        return this;
+    }
+
     /**
      * To process all samples together in the same run, regardless of the RGSM value
      */

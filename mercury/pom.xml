@@ -200,6 +200,9 @@
         <database.delimiterType>normal</database.delimiterType>
         <!--<passwords.properties>must be specified as the location of the password properties file</passwords.properties>-->
 
+        <!-- Default database settings for datawh Liquibase plugin -->
+        <datawh.database.url>jdbc:postgresql://localhost/postgres</datawh.database.url>
+
         <!-- Note - For the Feature branch builds, the mercury.fb.ip must contain an @ otherwise the resources-fb/mercury-dev-ds.xml will not be syntactically correct.
         The @ is a meta character to the maven filtering such that the combination of
         @${mercury.fb.ip} does not get subsituted at all. Hence the resources-fb/mercury-dev-ds.xml only contains ${mercury.rc.ip} -->
@@ -1885,11 +1888,15 @@ nodePrinter.print(webapp)
             <artifactId>picard</artifactId>
             <version>2.16.0</version>
         </dependency>
-
+-->
+        <!--
+        Use the following command to store picard-private.jar in prodinfosvn, get the version from https://github.com/broadinstitute/picard-private/releases
+        ~releng/mvndeployfile.groovy /seq/software/picard/current/bin/picard-private.jar org.broadinstitute picard-private-all 1.1408
+        -->
         <dependency>
-            <groupId>com.github.broadinstitute</groupId>
-            <artifactId>picard-private</artifactId>
-            <version>1.1</version>
+            <groupId>org.broadinstitute</groupId>
+            <artifactId>picard-private-mercury</artifactId>
+            <version>1.1423</version>
         </dependency>
 -->
 

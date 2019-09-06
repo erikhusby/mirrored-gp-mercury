@@ -13,6 +13,7 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.DragenConfig;
 import org.broadinstitute.gpinformatics.infrastructure.search.LabVesselSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.AlignmentStateDao;
@@ -25,7 +26,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -72,6 +72,9 @@ public class AlignmentActionBean extends CoreActionBean {
 
     @Inject
     private MercurySampleDao mercurySampleDao;
+
+    @Inject
+    private DragenConfig dragenConfig;
 
     private String alignmentStateName;
 
@@ -174,21 +177,27 @@ public class AlignmentActionBean extends CoreActionBean {
     @HandlesEvent(CREATE_ACTION)
     public Resolution create() {
         FiniteStateMachine finiteStateMachine = new FiniteStateMachine();
-        finiteStateMachine.setStateMachineName("ManualAlignmentMachine_" + DateUtils.getFileDateTime(new Date()));
+        String fileDateTime = DateUtils.getFileDateTime(new Date());
+        finiteStateMachine.setStateMachineName("ManualAlignmentMachine_" + fileDateTime);
         AlignmentState alignmentState = new AlignmentState();
 
         Map<String, MercurySample> mapKeyToSample =
                 mercurySampleDao.findMapIdToMercurySample(sampleRunByKey.keySet());
         for (Map.Entry<String, List<SampleRunData>> entry: sampleRunByKey.entrySet()) {
-            MercurySample mercurySample = mapKeyToSample.get(entry.getKey());
-            File referenceFile = new File(referenceGenome.getPath());
-            File fastQList = null;
-            File outputDir = null;
-            File intermediateResults = new File("/staging/out");
-            AlignmentTask alignmentTask = new AlignmentTask(referenceFile, fastQList, mercurySample.getSampleKey(),
-                    outputDir, intermediateResults, mercurySample.getSampleKey(), mercurySample.getSampleKey());
-            alignmentTask.setTaskName("Alignment_" + mercurySample.getSampleKey() + " ");
-            alignmentState.addTask(alignmentTask);
+            for (SampleRunData sampleRunData: entry.getValue()) {
+                IlluminaSequencingRun run = illuminaSequencingRunDao.findByRunName(sampleRunData.getRunName());
+
+                MercurySample mercurySample = mapKeyToSample.get(entry.getKey());
+                File referenceFile = new File(referenceGenome.getPath());
+                File fastQList = null;
+                File outputDir = null;
+                File intermediateResults = new File("/staging/out");
+                AlignmentTask alignmentTask = new AlignmentTask(referenceFile, fastQList, mercurySample.getSampleKey(),
+                        outputDir, intermediateResults, mercurySample.getSampleKey(), mercurySample.getSampleKey(),
+                        new File(referenceGenome.getContamFile()));
+                alignmentTask.setTaskName("Alignment_" + mercurySample.getSampleKey() + " ");
+                alignmentState.addTask(alignmentTask);
+            }
         }
         return new ForwardResolution(ALIGNMENT_CREATE_PAGE);
     }
@@ -252,19 +261,31 @@ public class AlignmentActionBean extends CoreActionBean {
         this.selectedRuns = selectedRuns;
     }
 
+    // TODO JW Move somewhere better
     public enum ReferenceGenome {
-        HG38("hg38", "/staging/reference/hg38/v1/", "/seq/references/Homo_sapiens_assembly38/v0/Homo_sapiens_assembly38.haplotype_database.txt");
+        HG19("hg19", "/staging/reference/hg19/v1/",
+                "/seq/reference«s/Homo_sapiens_assembly19/v1/Homo_sapiens_assembly19.haplotype_database.txt",
+                "/seq/references/Homo_sapiens_assembly19/v1/Homo_sapiens_assembly19.fasta",
+                "/opt/edico/config/sample_cross_contamination_resource_hg19.vcf"),
+        HG38("hg38", "/staging/reference/hg38/v1/",
+                "/seq/references/Homo_sapiens_assembly38/v0/Homo_sapiens_assembly38.haplotype_database.txt",
+                "/seq/references/Homo_sapiens_assembly38/v0/Homo_sapiens_assembly38.fasta",
+                "/opt/edico/config/sample_cross_contamination_resource_hg38.vcf");
 
         private final String name;
         private final String path;
         private final String haplotypeDatabase;
+        private final String fasta;
+        private final String contamFile;
 
         private final static Map<String, ReferenceGenome> MAP_PATH_TO_REF = new HashMap<>();
 
-        ReferenceGenome(String name, String path, String haplotypeDatabase) {
+        ReferenceGenome(String name, String path, String haplotypeDatabase, String fasta, String contamFile) {
             this.name = name;
             this.path = path;
             this.haplotypeDatabase = haplotypeDatabase;
+            this.fasta = fasta;
+            this.contamFile = contamFile;
         }
 
         static {
@@ -292,6 +313,14 @@ public class AlignmentActionBean extends CoreActionBean {
 
         public String getHaplotypeDatabase() {
             return haplotypeDatabase;
+        }
+
+        public String getFasta() {
+            return fasta;
+        }
+
+        public String getContamFile() {
+            return contamFile;
         }
     }
 

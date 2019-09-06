@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.FingerprintDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.SnpListDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
+import org.broadinstitute.gpinformatics.mercury.control.run.ConcordanceCalculator;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FpGenotype;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Snp;
@@ -47,6 +48,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.util.Comparator.reverseOrder;
 
@@ -273,6 +275,12 @@ public class FingerprintResource {
             throw new ResourceException("snpListName not found", Response.Status.BAD_REQUEST);
         }
 
+        List<Fingerprint> fluidigmFingerprints = mercurySample.getFingerprints().stream()
+                .filter(fp -> fp.getPlatform() == Fingerprint.Platform.FLUIDIGM &&
+                              fp.getDisposition() == Fingerprint.Disposition.PASS)
+                .sorted(Comparator.comparing(Fingerprint::getDateGenerated))
+                .collect(Collectors.toList());
+
         Fingerprint fingerprint = fingerprintDao.findBySampleAndDateGenerated(mercurySample,
                 fingerprintBean.getDateGenerated());
         if (fingerprint == null) {
@@ -338,6 +346,14 @@ public class FingerprintResource {
         MatchResults matchResults = FingerprintChecker.calculateMatchResults(observedFp, expectedFp);
         matchResults.getLOD();
 */
+
+        // TODO get any prior fluidigm fingerprints
+        if (!fluidigmFingerprints.isEmpty()) {
+            Fingerprint fluidigmFp = fluidigmFingerprints.iterator().next();
+            ConcordanceCalculator concordanceCalculator = new ConcordanceCalculator();
+            double lodScore = concordanceCalculator.calculateLodScore(fingerprint, fluidigmFp);
+            concordanceCalculator.done();
+        }
 
         mercurySampleDao.flush();
         return "Stored fingerprint";

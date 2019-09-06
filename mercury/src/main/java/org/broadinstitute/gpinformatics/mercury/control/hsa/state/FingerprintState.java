@@ -6,16 +6,20 @@ import org.hibernate.envers.Audited;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
 @Entity
 @Audited
 public class FingerprintState extends State {
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "MERCURY_SAMPLE")
     private MercurySample mercurySample;
 
-    public FingerprintState(MercurySample mercurySample) {
+    public FingerprintState(String name, MercurySample mercurySample,
+                            FiniteStateMachine finiteStateMachine) {
+        super(name, finiteStateMachine);
         this.mercurySample = mercurySample;
     }
 

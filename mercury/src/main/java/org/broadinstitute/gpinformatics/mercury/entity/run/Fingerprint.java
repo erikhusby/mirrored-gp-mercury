@@ -86,23 +86,38 @@ public class Fingerprint {
     }
 
     public enum Gender {
-        MALE("M"),
-        FEMALE("F"),
-        UNKNOWN("U");
+        MALE("M", "Male"),
+        FEMALE("F", "Female"),
+        UNKNOWN("U", "");
 
         private final String abbreviation;
+        private final String displayName;
 
-        Gender(String abbreviation) {
+        Gender(String abbreviation, String displayName) {
             this.abbreviation = abbreviation;
+            this.displayName = displayName;
         }
 
         public String getAbbreviation() {
             return abbreviation;
         }
 
+        public String getDisplayName() {
+            return displayName;
+        }
+
         public static Gender byAbbreviation(String abbreviation) {
             for (Gender gender : Gender.values()) {
                 if (gender.getAbbreviation().equals(abbreviation)) {
+                    return gender;
+                }
+            }
+            return null;
+        }
+
+        public static Gender byDisplayname(String displayName) {
+            for (Gender gender : Gender.values()) {
+                if (gender.getDisplayName().equals(displayName)) {
                     return gender;
                 }
             }

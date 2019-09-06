@@ -18,6 +18,12 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="List Dragen Workflows" sectionTitle="List Dragen Workflows" showCreate="true">
 
     <stripes:layout-component name="extraHead">
+        <style type="text/css">
+            td.highlight {
+                font-weight: bold;
+                color: red;
+            }
+        </style>
         <script type="text/javascript">
             $j(document).ready(function() {
                 $j('#machineList').dataTable( {
@@ -30,7 +36,13 @@
                         {"bSortable": true},
                         {"bSortable": true},
                         {"bSortable": true}
-                    ]
+                    ],
+                    "fnRowCallback": function ( row, data, index ) {
+                        console.log(data[4].trim());
+                        if ( data[4].trim() > 0 ) {
+                            $j('td', row).eq(4).addClass('highlight');
+                        }
+                    }
                 });
 
                 $j('.machine-checkbox').enableCheckboxRangeSelection({
@@ -93,7 +105,7 @@
                         <td>${machine.activeStateNames}</td>
                         <td>
                             <c:if test="${machine.getNumberOfActiveIssues() > 0}">
-                                ${machine.getNumberOfActiveIssues()}!
+                                ${machine.getNumberOfActiveIssues()}
                             </c:if>
                         </td>
                         <td>${machine.dateStarted}</td>

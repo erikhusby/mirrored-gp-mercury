@@ -290,16 +290,19 @@ dragen:
       demultiplexOutputPath:  /seq/illumina/proc/
       dragenPath: /opt/edico/bin/
       slurmHost: login00
+      referenceFileServer: helium
 
     QA:
       demultiplexOutputPath:  /seq/illumina/proc/
       dragenPath: /opt/edico/bin/
       slurmHost: login00
+      referenceFileServer: helium
 
     PROD:
       demultiplexOutputPath:  /seq/illumina/proc/
       dragenPath: /opt/edico/bin/
       slurmHost: login00
+      referenceFileServer: helium
 
 hipchat:
     DEV:

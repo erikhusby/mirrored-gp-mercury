@@ -2425,6 +2425,7 @@
             <column name="START_STATE" type="number(1,0)">
                 <constraints nullable="false"/>
             </column>
+            <column name="MERCURY_SAMPLE" type="number(19,0)"/>
             <column name="START_TIME" type="timestamp"/>
             <column name="END_TIME" type="timestamp"/>
             <column name="EXIT_TASK" type="number(19,0)"/>

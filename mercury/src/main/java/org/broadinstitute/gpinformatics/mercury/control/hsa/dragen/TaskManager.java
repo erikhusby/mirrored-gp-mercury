@@ -1,7 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.dragen;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.AlignmentMetricsTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.DemultiplexMetricsTaskHandler;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.FingerprintTaskHandler;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.JobInfo;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerContext;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
@@ -21,6 +24,9 @@ public class TaskManager {
     @Inject
     private AlignmentMetricsTaskHandler alignmentMetricsTaskHandler;
 
+    @Inject
+    private FingerprintTaskHandler fingerprintTaskHandler;
+
     public void fireEvent(Task task, SchedulerContext schedulerContext) throws InterruptedException {
         task.setStatus(Status.RUNNING);
         task.setStartTime(new Date());
@@ -31,6 +37,8 @@ public class TaskManager {
             demultiplexMetricsTaskHandler.handleTask(task, schedulerContext);
         } else if (OrmUtil.proxySafeIsInstance(task, AlignmentMetricsTask.class)) {
             alignmentMetricsTaskHandler.handleTask(task, schedulerContext);
+        } else if (OrmUtil.proxySafeIsInstance(task, FingerprintUploadTask.class)) {
+            fingerprintTaskHandler.handleTask(task, schedulerContext);
         }
     }
 
@@ -40,17 +48,23 @@ public class TaskManager {
         processTask.setProcessId(Long.parseLong(pid));
     }
 
-    public Status checkTaskStatus(Task task, SchedulerContext schedulerContext) {
+    public Pair<Status, Date> checkTaskStatus(Task task, SchedulerContext schedulerContext) {
         if (OrmUtil.proxySafeIsInstance(task, ProcessTask.class)) {
             ProcessTask processTask = OrmUtil.proxySafeCast(task, ProcessTask.class);
-            return schedulerContext.getInstance().fetchJobStatus(processTask.getProcessId());
+            JobInfo jobInfo = schedulerContext.getInstance().fetchJobInfo(processTask.getProcessId());
+            Status status = jobInfo.getStatus();
+            Date end = jobInfo.getEnd();
+            return Pair.of(status, end);
         } else if (OrmUtil.proxySafeIsInstance(task, WaitForFileTask.class)) {
             WaitForFileTask waitForFileTask = OrmUtil.proxySafeCast(task, WaitForFileTask.class);
             File file = new File(waitForFileTask.getFilePath());
-            return file.exists() ? Status.COMPLETE : Status.RUNNING;
+
+            Status status = file.exists() ? Status.COMPLETE : Status.RUNNING;
+            Date endTime = file.exists() ? new Date(file.lastModified()) : null;
+            return Pair.of(status, endTime);
         }
 
-        return Status.UNKNOWN;
+        return Pair.of(Status.UNKNOWN, null);
     }
 
     // For Testing

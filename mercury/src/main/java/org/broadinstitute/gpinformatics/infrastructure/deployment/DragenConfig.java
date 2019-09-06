@@ -16,6 +16,8 @@ public class DragenConfig extends AbstractConfig implements Serializable {
 
     private String slurmHost;
 
+    private String referenceFileServer;
+
     public DragenConfig() {
     }
 
@@ -46,5 +48,13 @@ public class DragenConfig extends AbstractConfig implements Serializable {
 
     public void setSlurmHost(String slurmHost) {
         this.slurmHost = slurmHost;
+    }
+
+    public String getReferenceFileServer() {
+        return referenceFileServer;
+    }
+
+    public void setReferenceFileServer(String referenceFileServer) {
+        this.referenceFileServer = referenceFileServer;
     }
 }

@@ -66,6 +66,5 @@ public class SlurmControllerTest {
     public void tempTest() {
         JobInfo status = slurmController.fetchJobInfo(291);
         System.out.println(status);
-        slurmController.cancelJob("149");
     }
 }

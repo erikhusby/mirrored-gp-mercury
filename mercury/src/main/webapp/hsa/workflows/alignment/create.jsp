@@ -21,17 +21,6 @@
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function() {
-                <%--$j("#runName").tokenInput(--%>
-                    <%--"${ctxpath}/hsa/workflows/alignment/alignment.action?runNamesAutocomplete=", {--%>
-                        <%--hintText: "Type a run name",--%>
-                        <%--<enhance:out escapeXml="false">--%>
-                        <%--prePopulate: ${actionBean.ensureStringResult(actionBean.runNameTokenInput.completeData)},--%>
-                        <%--</enhance:out>--%>
-                        <%--tokenDelimiter: "${actionBean.runNameTokenInput.separator}",--%>
-                        <%--resultsFormatter: formatInput,--%>
-                        <%--autoSelectFirstResult: true--%>
-                    <%--}--%>
-                <%--);--%>
 
                 $j('#sampleRunList').dataTable( {
                     "oTableTools": ttExportDefines,
@@ -134,6 +123,16 @@
                         <stripes:select name="referenceGenome" id="eventType">
                             <stripes:options-enumeration enum="org.broadinstitute.gpinformatics.mercury.presentation.hsa.AlignmentActionBean.ReferenceGenome" label="name"/>
                         </stripes:select>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <stripes:label for="fastQList" class="control-label"/>
+                    <div class="controls">
+                        <stripes:text id="fastQList"
+                                      name="fastQList"
+                                      class="defaultText"
+                                      title="FASTQ List"/>
+
                     </div>
                 </div>
                 <div class="control-group">
