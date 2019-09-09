@@ -232,8 +232,8 @@ public class BillingAdaptor implements Serializable {
                     double quantityForSAP = item.getQuantityForSAP();
 
                     if (item.getProductOrder().getQuoteSource() != null) {
-                        if(StringUtils.isBlank(workId)) {
-                            if (item.getProductOrder().hasQuoteServerQuote()) {
+                        if (item.getProductOrder().hasQuoteServerQuote()) {
+                            if(StringUtils.isBlank(workId)) {
                                 PriceAdjustment singlePriceAdjustment =
                                         item.getProductOrder().getAdjustmentForProduct(item.getProduct());
 
@@ -257,50 +257,70 @@ public class BillingAdaptor implements Serializable {
                             result.setWorkId(workId);
                         }
 
-                        if(StringUtils.isBlank(sapBillingId)){
+                        if(item.getProductOrder().hasSapQuote()) {
+                            if (StringUtils.isBlank(sapBillingId)) {
 
-                            if (item.getProductOrder().hasSapQuote()
-                                && !item.getProductOrder().getOrderStatus().canPlace()
-                                && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
-                                && StringUtils.isBlank(item.getSapItems())) {
+                                if (!item.getProductOrder().getOrderStatus().canPlace()) {
+                                    if (StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
 
-                                if (quantityForSAP > 0) {
-                                    //todo, validate if the quantity override parameter is still necessary
-                                    sapBillingId = sapService.billOrder(item, null, new Date());
-                                    result.setSapBillingId(sapBillingId);
-                                    billingEjb.updateSapLedgerEntries(item, workId, sapBillingId,
-                                            BillingSession.SUCCESS);
-                                } else {
-                                    Set<LedgerEntry> priorSapBillings = new HashSet<>();
-                                    item.getBillingCredits().stream()
-                                        .filter(ledgerEntry -> ledgerEntry.getProductOrderSample().getProductOrder()
-                                            .getProduct().equals(item.getProduct()))
-                                        .forEach(ledgerEntry -> { ledgerEntry.getPreviouslyBilled().stream()
-                                                .filter(previousBilled -> previousBilled.getSapDeliveryDocumentId() != null)
-                                                .sorted(Comparator.comparing(LedgerEntry::getSapDeliveryDocumentId).reversed())
-                                                .collect(Collectors.toCollection(() -> priorSapBillings));
-                                        });
+                                        if (quantityForSAP > 0) {
+                                            //todo, validate if the quantity override parameter is still necessary
+                                            sapBillingId = sapService.billOrder(item, null, new Date());
+                                            result.setSapBillingId(sapBillingId);
+                                            billingEjb.updateSapLedgerEntries(item, workId, sapBillingId,
+                                                    BillingSession.SUCCESS);
+                                        } else {
+                                            Set<LedgerEntry> priorSapBillings = new HashSet<>();
+                                            item.getBillingCredits().stream()
+                                                    .filter(ledgerEntry -> ledgerEntry.getProductOrderSample()
+                                                            .getProductOrder()
+                                                            .getProduct().equals(item.getProduct()))
+                                                    .forEach(ledgerEntry -> {
+                                                        ledgerEntry.getPreviouslyBilled().stream()
+                                                                .filter(previousBilled ->
+                                                                        previousBilled.getSapDeliveryDocumentId()
+                                                                        != null)
+                                                                .sorted(Comparator
+                                                                        .comparing(
+                                                                                LedgerEntry::getSapDeliveryDocumentId)
+                                                                        .reversed())
+                                                                .collect(Collectors
+                                                                        .toCollection(() -> priorSapBillings));
+                                                    });
 
-                                    // Negative billing is allowed if the same positive number has been previously billed.
-                                    // When this is not the case throw an exception.
-                                    double previouslyBilledQty =
-                                            priorSapBillings.stream().map(LedgerEntry::getQuantity)
-                                                    .mapToDouble(Double::doubleValue)
-                                                    .sum();
-                                    if (quantityForSAP + previouslyBilledQty < 0) {
-                                        result.setErrorMessage(NEGATIVE_BILL_ERROR);
-                                        throw new BillingException(NEGATIVE_BILL_ERROR);
-                                    } else if (quantityForSAP < 0) {
-                                        billingEjb.sendBillingCreditRequestEmail(item, priorSapBillings,
-                                                billingSession.getCreatedBy());
-                                        item.setBillingMessages(BillingSession.BILLING_CREDIT);
-                                        sapBillingId = BILLING_CREDIT_REQUESTED_INDICATOR;
-                                        result.setSapBillingId(sapBillingId);
-                                        billingEjb.updateSapLedgerEntries(item, workId, sapBillingId,
-                                                BillingSession.SUCCESS);
+                                            // Negative billing is allowed if the same positive number has been previously billed.
+                                            // When this is not the case throw an exception.
+                                            double previouslyBilledQty =
+                                                    priorSapBillings.stream().map(LedgerEntry::getQuantity)
+                                                            .mapToDouble(Double::doubleValue)
+                                                            .sum();
+                                            if (quantityForSAP + previouslyBilledQty < 0) {
+                                                result.setErrorMessage(NEGATIVE_BILL_ERROR);
+                                                throw new BillingException(NEGATIVE_BILL_ERROR);
+                                            } else if (quantityForSAP < 0) {
+                                                billingEjb.sendBillingCreditRequestEmail(item, priorSapBillings,
+                                                        billingSession.getCreatedBy());
+                                                item.setBillingMessages(BillingSession.BILLING_CREDIT);
+                                                sapBillingId = BILLING_CREDIT_REQUESTED_INDICATOR;
+                                                result.setSapBillingId(sapBillingId);
+                                                billingEjb.updateSapLedgerEntries(item, workId, sapBillingId,
+                                                        BillingSession.SUCCESS);
+                                            }
+                                        }
+                                        item.getProductOrder().latestSapOrderDetail()
+                                                .addLedgerEntries(item.getLedgerItems());
+                                    } else {
+                                        throw new BillingException("This order"
+                                                                   + " is not associated with an SAP Order.  Please "
+                                                                   + "return to the Product Order view page and "
+                                                                   + "publish to SAP");
                                     }
+                                } else {
+                                    throw new BillingException("This order has a status of " +
+                                                               item.getProductOrder().getOrderStatus().getDisplayName()
+                                                               + " and is not in a state to bill.  The order must not "
+                                                               + "be Draft or Pending to proceed.");
                                 }
-                                item.getProductOrder().latestSapOrderDetail().addLedgerEntries(item.getLedgerItems());
                             }
                         }
                     } else {
