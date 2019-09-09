@@ -4561,59 +4561,98 @@ public class ProductOrderActionBeanTest {
         EnumSet<ProductOrder.OrderStatus> statusesForChangeAllowed = EnumSet
             .of(ProductOrder.OrderStatus.Draft, ProductOrder.OrderStatus.Pending);
         EnumSet<ProductOrder.OrderStatus> statusesForChangeNotAllowed = EnumSet.complementOf(statusesForChangeAllowed);
-
+        boolean quoteRequired = true;
+        boolean noQuoteRequired = false;
         statusesForChangeNotAllowed.forEach(orderStatus -> {
             assertThat(orderStatus.canPlace(), is(false));
-            testCases.add(new Object[]{orderStatus, sapQuote, qsQuote, false});
-            testCases.add(new Object[]{orderStatus, qsQuote, sapQuote, false});
-
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, qsQuote, false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, sapQuote, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, qsQuote, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, sapQuote, false});
             // not chaning quote type is OK
-            testCases.add(new Object[]{orderStatus, sapQuote, sapQuote, true});
-            testCases.add(new Object[]{orderStatus, qsQuote, qsQuote, true});
-            testCases.add(new Object[]{orderStatus, sapQuote, sapQuote2, true});
-            testCases.add(new Object[]{orderStatus, qsQuote, qsQuote2, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, sapQuote, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, qsQuote, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, sapQuote2, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, qsQuote2, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, sapQuote, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, qsQuote, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, sapQuote2, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, qsQuote2, true});
 
-            testCases.add(new Object[]{orderStatus, null, qsQuote, false});
-            testCases.add(new Object[]{orderStatus, qsQuote, null, false});
-            testCases.add(new Object[]{orderStatus, null, sapQuote, false});
-            testCases.add(new Object[]{orderStatus, sapQuote, null, false});
-            testCases.add(new Object[]{orderStatus, null, null, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, null, qsQuote, false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, null, false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, null, sapQuote, false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, null, false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, null, null, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, qsQuote, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, null, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, sapQuote, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, null, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, null, true});
 
-            testCases.add(new Object[]{orderStatus, "", qsQuote, false});
-            testCases.add(new Object[]{orderStatus, qsQuote, "", false});
-            testCases.add(new Object[]{orderStatus, "", sapQuote, false});
-            testCases.add(new Object[]{orderStatus, sapQuote, "", false});
-            testCases.add(new Object[]{orderStatus, "", "", true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, "", qsQuote, false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, "", false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, "", sapQuote, false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, "", false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, "", "", true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", qsQuote, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, "", false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", sapQuote, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, "", false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", "", true});
         });
 
         // These should always allow changing status
         statusesForChangeAllowed.forEach(orderStatus -> {
             assertThat(orderStatus.canPlace(), is(true));
-            testCases.add(new Object[]{orderStatus, sapQuote, qsQuote, true});
-            testCases.add(new Object[]{orderStatus, qsQuote, sapQuote, true});
-            testCases.add(new Object[]{orderStatus, sapQuote, sapQuote, true});
-            testCases.add(new Object[]{orderStatus, qsQuote, qsQuote, true});
-            testCases.add(new Object[]{orderStatus, sapQuote, sapQuote2, true});
-            testCases.add(new Object[]{orderStatus, qsQuote, qsQuote2, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, qsQuote, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, sapQuote, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, sapQuote, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, qsQuote, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, sapQuote2, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, qsQuote2, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, qsQuote, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, sapQuote, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, sapQuote, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, qsQuote, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, sapQuote2, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, qsQuote2, true});
 
-            testCases.add(new Object[]{orderStatus, null, qsQuote, true});
-            testCases.add(new Object[]{orderStatus, qsQuote, null, true});
-            testCases.add(new Object[]{orderStatus, null, sapQuote, true});
-            testCases.add(new Object[]{orderStatus, sapQuote, null, true});
-            testCases.add(new Object[]{orderStatus, null, null, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, null, qsQuote, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, null, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, null, sapQuote, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, null, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, null, null, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, qsQuote, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, null, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, sapQuote, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, null, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, null, true});
 
-            testCases.add(new Object[]{orderStatus, "", qsQuote, true});
-            testCases.add(new Object[]{orderStatus, qsQuote, "", true});
-            testCases.add(new Object[]{orderStatus, "", sapQuote, true});
-            testCases.add(new Object[]{orderStatus, sapQuote, "", true});
-            testCases.add(new Object[]{orderStatus, "", "", true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, "", qsQuote, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, "", true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, "", sapQuote, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, "", true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, "", "", true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", qsQuote, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, "", true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", sapQuote, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, "", true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", "", true});
         });
         return testCases.iterator();
     }
 
     @Test(dataProvider = "changeQuoteDataProvider")
-    public void testChangeQuote(ProductOrder.OrderStatus orderStatus, String oldQuote, String newQuote, boolean canChange) {
+    public void testChangeQuote(ProductOrder.OrderStatus orderStatus, boolean quoteRequired, String oldQuote,
+                                String newQuote, boolean canChange) throws InvalidProductException {
         pdo.setOrderStatus(orderStatus);
+        Product product = Mockito.mock(Product.class);
+        Mockito.when(product.getSupportsSkippingQuote()).thenReturn(true);
+        pdo.setProduct(product);
+        if (!quoteRequired) {
+            pdo.setSkipQuoteReason("quote not required");
+        }
         assertThat(ProductOrderActionBean.canChangeQuote(pdo, oldQuote, newQuote), is(canChange));
     }
 
@@ -4631,5 +4670,4 @@ public class ProductOrderActionBeanTest {
             assertThat(e.getMessage(), is(ProductOrder.QUOTES_CANNOT_BE_USED_FOR_COMMERCIAL_OR_CLINICAL_PRODUCTS));
         }
     }
-
 }

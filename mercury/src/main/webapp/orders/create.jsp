@@ -150,9 +150,9 @@
         function validateChangeQuote(originalQuote, currentQuote) {
 
             var productOrderKey = $j("input[name='productOrder']");
-            var originalIsQuoteServer = isNaN(originalQuote);
-            var currentIsQuoteServer = isNaN(currentQuote);
-            var orderCanPlace = ${actionBean.editOrder.orderStatus.canPlace()}
+            var originalIsQuoteServer = isNaN(originalQuote) || originalQuote === "" || originalQuote === null;
+            var currentIsQuoteServer = isNaN(currentQuote) || currentQuote === "" || currentQuote === null;
+            var orderCanPlace = ${actionBean.editOrder.orderStatus.canPlace()};
             var originalNotBlank = originalQuote !== 'undefined' && originalQuote !== "" && originalQuote !== 'null';
             var currentNotBlank = (currentQuote !== 'undefined' && currentQuote !== "" && currentQuote !== 'null' &&
             currentQuote !== "Enter the Quote ID for this order");
