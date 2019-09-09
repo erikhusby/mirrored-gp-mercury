@@ -1048,7 +1048,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         if (determineCompanyConfiguration()
             == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) {
             final BigDecimal feeByCondition = getFeeByCondition(Condition.CLINICAL_CHARGE);
-            if(feeByCondition.compareTo(BigDecimal.ZERO) > 0) {
+            if(feeByCondition.compareTo(BigDecimal.ZERO) >= 0) {
                 clinicalDisplayCharge = NumberFormat.getCurrencyInstance().format(
                         feeByCondition);
             }
@@ -1059,7 +1059,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public String getSapCommercialCharge() {
         String commercialDisplayCharge = "";
         BigDecimal feeByCondition = getFeeByCondition(Condition.COMMERCIAL_CHARGE);
-        if (feeByCondition.compareTo(BigDecimal.ZERO) > 0) {
+        if (feeByCondition.compareTo(BigDecimal.ZERO) >= 0) {
             commercialDisplayCharge = NumberFormat.getCurrencyInstance().format(
                 feeByCondition);
         }
@@ -1069,7 +1069,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public String getSapSSFIntercompanyCharge() {
         String interCompanyDisplayCharge = "";
         BigDecimal feeByCondition = getFeeByCondition(Condition.INTERCOMPANY_FEE);
-        if (feeByCondition.compareTo(BigDecimal.ZERO) > 0) {
+        if (feeByCondition.compareTo(BigDecimal.ZERO) >= 0) {
             interCompanyDisplayCharge = NumberFormat.getCurrencyInstance().format(
                 feeByCondition);
         }
@@ -1080,7 +1080,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         BigDecimal sapFullPrice =
             getSapFullPrice(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
         String format = "";
-        if(sapFullPrice.compareTo(BigDecimal.ZERO) > 0) {
+        if(sapFullPrice.compareTo(BigDecimal.ZERO) >= 0) {
             format = NumberFormat.getCurrencyInstance().format(sapFullPrice);
         }
         return format;
@@ -1089,7 +1089,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public String getSapLLCFullPrice() {
         BigDecimal sapFullLLCPrice = getRawLLCFullPrice();
         String format = "";
-        if(sapFullLLCPrice.compareTo(BigDecimal.ZERO) > 0) {
+        if(sapFullLLCPrice.compareTo(BigDecimal.ZERO) >= 0) {
             format = NumberFormat.getCurrencyInstance().format(sapFullLLCPrice);
         }
         return format;
