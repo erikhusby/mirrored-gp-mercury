@@ -228,7 +228,7 @@ public class DragenSimulatorTest extends BaseEventTest {
 
         ShellUtils shellUtils = mock(ShellUtils.class);
         AlignmentMetricsTaskHandler alignmentMetricsTaskHandler = new AlignmentMetricsTaskHandler();
-        alignmentMetricsTaskHandler.setShellUtils(shellUtils);
+        alignmentMetricsTaskHandler.setShellUtils(new ShellUtils());
 
         ProcessResult processResult = new ProcessResult(0, new ProcessOutput("".getBytes()));
         when(shellUtils.runSyncProcess(anyList())).thenReturn(processResult);
@@ -278,6 +278,7 @@ public class DragenSimulatorTest extends BaseEventTest {
         Assert.assertNotNull(dragenReplayInfo);
 
         // Alignment ran so state machine should now be complete
+        engine.executeProcessDaoFree(finiteStateMachine);
         engine.executeProcessDaoFree(finiteStateMachine);
         Assert.assertEquals(true, finiteStateMachine.isComplete());
     }
@@ -383,35 +384,4 @@ public class DragenSimulatorTest extends BaseEventTest {
 
         return finiteStateMachine;
     }
-
-    @Test
-    public void testFingerprint() {
-        File bam = new File("/seq/illumina/proc/SL-NVD/190702_SL-NVD_0213_AHK735DSXX/dragen/2019-08-19--12-39-39/fastq/SM-IN8EV/SM-IN8EV.bam");
-        File vcf = new File("/seq/illumina/proc/SL-NVD/190702_SL-NVD_0213_AHK735DSXX/dragen/2019-08-19--12-39-39/fastq/SM-IN8EV/SM-IN8EV.vcf.gz");
-        File hapDb = new File(AlignmentActionBean.ReferenceGenome.HG38.getHaplotypeDatabase());
-        FingerprintTask fp = new FingerprintTask(bam, vcf, hapDb, "test", null);
-        System.out.println(fp.getBamFile());
-
-
-        final File fingerprintingSummaryFile = new File("/seq/illumina/proc/SL-NVD/190702_SL-NVD_0213_AHK735DSXX/dragen/2019-08-19--12-39-39/fastq/SM-IN8EV/SM-IN8EV.fingerprinting_summary_metrics").getAbsoluteFile();
-        final MetricsFile<FingerprintingSummaryMetrics, ?> fingerprintingSummaryMetrics = loadMetricsIfPresent(fingerprintingSummaryFile);
-        System.out.println(fingerprintingSummaryMetrics);
-
-        final File fingerprintingDetailFile = new File("/seq/illumina/proc/SL-NVD/190702_SL-NVD_0213_AHK735DSXX/dragen/2019-08-19--12-39-39/fastq/SM-IN8EV/SM-IN8EV.fingerprinting_detail_metrics").getAbsoluteFile();
-        final MetricsFile<FingerprintingDetailMetrics, ?> fingerprintingDetailMetrics = loadMetricsIfPresent(fingerprintingDetailFile);
-        System.out.println(fingerprintingDetailFile);
-    }
-
-    private <M extends MetricBase> MetricsFile<M,?> loadMetricsIfPresent(final File file) {
-        IOUtil.assertFileIsReadable(file);
-
-        final MetricsFile<M,?> metrics = new MetricsFile<>();
-        final InputStreamReader in = new InputStreamReader(IOUtil.openFileForReading(file));
-        metrics.read(in);
-        CloserUtil.close(in);
-
-        return metrics;
-    }
-
-
 }

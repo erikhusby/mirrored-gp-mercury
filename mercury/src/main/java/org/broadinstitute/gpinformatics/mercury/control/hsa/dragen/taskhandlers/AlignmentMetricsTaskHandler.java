@@ -136,13 +136,13 @@ public class AlignmentMetricsTaskHandler extends AbstractTaskHandler {
                 List<ProcessResult> processResults = new ArrayList<>();
 
                 if (!messageCollection.hasErrors()) {
-                    processResults.add(uploadMetric("/seq/lims/datawh/dev/new/mapping_run_metrics.ctl",
+                    processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/mapping_run_metrics.ctl",
                             alignmentDataFiles.getMappingSummaryOutputFile()));
-                    processResults.add(uploadMetric("/seq/lims/datawh/dev/new/mapping_rg_metrics.ctl",
+                    processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/mapping_rg_metrics.ctl",
                             alignmentDataFiles.getMappingMetricsOutputFile()));
-                    processResults.add(uploadMetric("/seq/lims/datawh/dev/new/variant_call_run_metrics.ctl",
+                    processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/variant_call_run_metrics.ctl",
                             alignmentDataFiles.getVcSummaryOutputFile()));
-                    processResults.add(uploadMetric("/seq/lims/datawh/dev/new/variant_call_metrics.ctl",
+                    processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/variant_call_metrics.ctl",
                             alignmentDataFiles.getVcMetricsOutputFile()));
                     boolean failed = false;
                     for (ProcessResult processResult : processResults) {
@@ -168,6 +168,7 @@ public class AlignmentMetricsTaskHandler extends AbstractTaskHandler {
         }
     }
 
+    // TODO FAils simulator
     private Pair<String, String> parseRunNameAndAnalysisDateFromOutputDir(File outputDirectory) {
         Matcher matcher = RUN_NAME_PATTERN.matcher(outputDirectory.getPath());
         if (matcher.matches()) {
@@ -178,9 +179,10 @@ public class AlignmentMetricsTaskHandler extends AbstractTaskHandler {
         return null;
     }
 
+    // TODO share between both tasks
     private ProcessResult uploadMetric(String ctlFilePath, File dataPath)
             throws IOException, TimeoutException, InterruptedException {
-        String ldruid = "mercury/guest@\"(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=192.168.194.136)(PORT=1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SID=gpgold)))\"";
+        String ldruid = "mercurydw/seq_dev3@\"(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=seqdev.broad.mit.edu)(PORT=1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SID=seqdev3)))\"";
         List<String> cmds = Arrays.asList("/Users/jowalsh/opt/oracle/sqlldr",
                 String.format("control=%s", ctlFilePath),
                 "log=load.log",

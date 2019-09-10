@@ -162,6 +162,8 @@ public class FiniteStateMachineFactory {
             alignmentTask.setTaskName("Alignment_" + sampleData.getSampleName() + "_" + runName);
             alignmentState.addTask(alignmentTask);
             samplesAligned.add(sampleData.getSampleName());
+
+            // TODO Fingerprint for each alignment
         }
 
         AlignmentMetricsTask alignmentMetricsTask = new AlignmentMetricsTask();

@@ -87,6 +87,10 @@ public class JobInfo {
         return null;
     }
 
+    public void setEnd(String end) {
+        this.end = end;
+    }
+
     public Status getStatus() {
         SlurmStateCode slurmStateCode = SlurmStateCode.getByName(state);
         switch (slurmStateCode) {

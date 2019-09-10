@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 @Entity
-@Table(schema = "MERCURY", name = "VARIANT_CALL_METRICS")
+@Table(schema = "MERCURYDW", name = "VARIANT_CALL_METRICS")
 public class VariantCallMetric {
     @Id
     private Long vcCallMetricsId;
