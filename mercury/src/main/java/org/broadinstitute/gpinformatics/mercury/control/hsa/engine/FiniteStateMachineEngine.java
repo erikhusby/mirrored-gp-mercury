@@ -15,7 +15,10 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Transition;
 
 import javax.annotation.Resource;
 import javax.ejb.EJBContext;
+import javax.ejb.Stateful;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.ejb.TransactionManagement;
 import javax.ejb.TransactionManagementType;
 import javax.enterprise.context.Dependent;
@@ -26,9 +29,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@Stateless
+@Stateful
 @Dependent
-@TransactionManagement(value= TransactionManagementType.BEAN)
+@TransactionManagement(value= TransactionManagementType.CONTAINER)
 public class FiniteStateMachineEngine {
     private static final Log log = LogFactory.getLog(FiniteStateMachineEngine.class);
 
@@ -44,8 +47,6 @@ public class FiniteStateMachineEngine {
     @Resource
     private EJBContext ejbContext;
 
-    private static final AtomicBoolean busy = new AtomicBoolean(false);
-
     public FiniteStateMachineEngine() {
     }
 
@@ -55,23 +56,16 @@ public class FiniteStateMachineEngine {
 
     public void resumeMachine(FiniteStateMachine stateMachine) throws SystemException {
 
-        if (!busy.compareAndSet(false, true)) {
-            return;
-        }
         if (stateMachine.getActiveStates().isEmpty()) {
             throw new RuntimeException("No active states for " + stateMachine);
         }
 
-        UserTransaction utx = ejbContext.getUserTransaction();
         try {
-            utx.begin();
             executeProcessDaoFree(stateMachine);
-            utx.commit();
+            stateMachineDao.persist(stateMachine);
+            stateMachineDao.flush();
         } catch (Exception e) {
-            utx.rollback();
-            log.error("Error occured when resuming state machine " + stateMachine, e);
-        } finally {
-            busy.set(false);
+            log.error("Error occurred when resuming state machine " + stateMachine, e);
         }
     }
 

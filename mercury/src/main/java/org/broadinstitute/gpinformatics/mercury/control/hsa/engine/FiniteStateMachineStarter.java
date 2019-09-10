@@ -26,12 +26,12 @@ import javax.inject.Inject;
 import javax.transaction.SystemException;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static javax.ejb.ConcurrencyManagementType.BEAN;
 
 @Startup
 @Singleton
-@ConcurrencyManagement(BEAN)
 public class FiniteStateMachineStarter {
 
     private static final Log log = LogFactory.getLog(FiniteStateMachineStarter.class);
@@ -60,6 +60,8 @@ public class FiniteStateMachineStarter {
 
     @Inject
     private SlurmController slurmController;
+
+    private static final AtomicBoolean busy = new AtomicBoolean(false);
 
     @PostConstruct
     public void initialize() {
@@ -90,16 +92,28 @@ public class FiniteStateMachineStarter {
             sessionContextUtility.executeInContext(new SessionContextUtility.Function() {
                 @Override
                 public void apply() {
-                    userBean.login("seqsystem");
-                    SchedulerContext schedulerContext = new SchedulerContext(slurmController);
 
-                    for (FiniteStateMachine stateMachine: stateMachineDao.findByStatuses(Arrays.asList(Status.RUNNING, Status.QUEUED))) {
-                        engine.setContext(schedulerContext);
-                        try {
-                            engine.resumeMachine(stateMachine);
-                        } catch (SystemException e) {
-                            log.error("Error starting state machines", e);
+                    if (!busy.compareAndSet(false, true)) {
+                        return;
+                    }
+
+                    try {
+                        userBean.login("seqsystem");
+                        SchedulerContext schedulerContext = new SchedulerContext(slurmController);
+
+                        for (FiniteStateMachine stateMachine : stateMachineDao
+                                .findByStatuses(Arrays.asList(Status.RUNNING, Status.QUEUED))) {
+                            engine.setContext(schedulerContext);
+                            try {
+                                engine.resumeMachine(stateMachine);
+                            } catch (SystemException e) {
+                                log.error("Error starting state machines", e);
+                            }
                         }
+                    } catch (Exception e) {
+                        log.error("Error occured when resuming state machines ", e);
+                    } finally {
+                        busy.set(false);
                     }
                 }
             });

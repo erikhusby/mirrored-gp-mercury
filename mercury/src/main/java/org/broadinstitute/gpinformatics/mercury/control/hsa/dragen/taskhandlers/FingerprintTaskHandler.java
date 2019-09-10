@@ -10,6 +10,7 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FingerprintBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FingerprintCallsBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.run.FingerprintEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FingerprintResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.SnpListDao;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.FingerprintTask;
@@ -44,10 +45,10 @@ public class FingerprintTaskHandler extends AbstractTaskHandler {
     private static final String FINGERPRINTING_DETAIL_METRICS = "%s.fingerprinting_detail_metrics";
 
     @Inject
-    private SnpListDao snpListDao;
+    private FingerprintResource fingerprintResource;
 
     @Inject
-    private FingerprintResource fingerprintResource;
+    private FingerprintEjb fingerprintEjb;
 
     @Override
     public void handleTask(Task task, SchedulerContext schedulerContext) {
@@ -72,32 +73,32 @@ public class FingerprintTaskHandler extends AbstractTaskHandler {
         // TODO get name somehow or just always use this for now
         // TODO not in a transaction
         // TODO Remove
-        SnpList snpList = snpListDao.findByName("HG19HaplotypeDbSnps");
-
-        FingerprintBean fingerprintBean = handleTaskDaoFree(fpTask, fingerprintState.getMercurySample(), snpList);
+        FingerprintBean fingerprintBean = handleTaskDaoFree(fpTask, fingerprintState.getMercurySample());
         if (fingerprintBean != null) {
-            String postResult = fingerprintResource.post(fingerprintBean);
-            if (postResult == null || !postResult.equals("Stored fingerprint")) {
+            Fingerprint fingerprint = fingerprintEjb.handleNewFingerprint(fingerprintBean, fingerprintState.getMercurySample());
+
+            if (fingerprint == null) {
                 fpTask.setErrorMessage("Failed to create fingerprint for " + fingerprintState.getMercurySample().getSampleKey());
                 fpTask.setStatus(Status.FAILED);
             } else {
                 // TODO Handle success and suspended
                 fpTask.setStatus(Status.COMPLETE);
             }
+        } else {
+            fpTask.setStatus(Status.FAILED);
+            fpTask.setErrorMessage("Failed to build fingerprint bean");
         }
     }
 
     @DaoFree
-    public FingerprintBean handleTaskDaoFree(FingerprintTask task, MercurySample mercurySample, SnpList snpList) {
-        File bamFile = task.getBamFile();
-        File parentFile = bamFile.getParentFile();
+    public FingerprintBean handleTaskDaoFree(FingerprintTask task, MercurySample mercurySample) {
         String outputPrefix = task.getOutputPrefix();
 
-        File summaryFile = new File(parentFile, String.format(FINGERPRINTING_SUMMARY_METRICS, outputPrefix));
-        File detailFile = new File(parentFile, String.format(FINGERPRINTING_DETAIL_METRICS, outputPrefix));
+        File summaryFile = new File(String.format(FINGERPRINTING_SUMMARY_METRICS, outputPrefix));
+        File detailFile = new File(String.format(FINGERPRINTING_DETAIL_METRICS, outputPrefix));
 
         if (!summaryFile.exists() || !detailFile.exists()) {
-            task.setErrorMessage("Alignment summary and detail files don't exist in " + parentFile.getPath());
+            task.setErrorMessage("Alignment summary and detail files don't exist in " + detailFile.getPath());
             task.setStatus(Status.FAILED);
             return null;
         }
@@ -107,9 +108,7 @@ public class FingerprintTaskHandler extends AbstractTaskHandler {
 
         MetricsFile<FingerprintingDetailMetrics, ?> fingerprintingDetailMetrics = loadMetricsIfPresent(detailFile);
 
-        //TODO How do I know which reference it came from? See above, need some map?
-        Map<String, Snp> mapRsIdToSnp = snpList.getMapRsIdToSnp();
-
+        // TODO This uses a dao
         Fingerprint.Gender gender = Fingerprint.Gender.byDisplayname(mercurySample.getSampleData().getGender());
         if (gender == null) {
             gender = Fingerprint.Gender.UNKNOWN;
@@ -120,23 +119,17 @@ public class FingerprintTaskHandler extends AbstractTaskHandler {
         fingerprintBean.setDisposition(Fingerprint.Disposition.PASS.getAbbreviation()); // TODO based on some threshold (qscore?)
         fingerprintBean.setGender(gender.getAbbreviation());// TODO just assume gender from sample data?
         fingerprintBean.setGenomeBuild(Fingerprint.GenomeBuild.HG38.name());// TODO build later
-        fingerprintBean.setSnpListName(snpList.getName());
+        fingerprintBean.setSnpListName("HG19HaplotypeDbSnps");
         fingerprintBean.setDateGenerated(new Date());
         fingerprintBean.setAliquotLsid(mercurySample.getSampleData().getSampleLsid()); // TODO
         fingerprintBean.setQueriedLsid(mercurySample.getSampleData().getSampleLsid());
 
         List<FingerprintCallsBean> fingerprintCallBeans = new ArrayList<>();
         fingerprintBean.setCalls(fingerprintCallBeans);
-        MessageCollection messageCollection = new MessageCollection();
         for (FingerprintingDetailMetrics metrics: fingerprintingDetailMetrics.getMetrics()) {
-            Snp snp = mapRsIdToSnp.get(metrics.SNP);
-            if (snp == null) {
-                messageCollection.addError("Failed to find snp " + metrics.SNP + " in snplist " + snpList.getName());
-            } else {
-                FingerprintCallsBean fingerprintCallsBean = new FingerprintCallsBean(metrics.SNP,
-                        metrics.OBSERVED_GENOTYPE,  null); //TODO Call confidence? gq/pl? lod score?
-                fingerprintCallBeans.add(fingerprintCallsBean);
-            }
+            FingerprintCallsBean fingerprintCallsBean = new FingerprintCallsBean(metrics.SNP,
+                    metrics.OBSERVED_GENOTYPE,  null); //TODO Call confidence? gq/pl? lod score?
+            fingerprintCallBeans.add(fingerprintCallsBean);
         }
 
         return fingerprintBean;

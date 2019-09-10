@@ -1,0 +1,22 @@
+<datasources xmlns="http://www.jboss.org/ironjacamar/schema"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="
+        http://www.jboss.org/ironjacamar/schema
+        http://docs.jboss.org/ironjacamar/schema/datasources_1_0.xsd">
+    <datasource jndi-name="java:jboss/jdbc/mercurydw_pool" pool-name="mercurydw_pool" enabled="true">
+        <connection-url>jdbc:oracle:thin:@seqdev.broad.mit.edu:1521:seqdev3</connection-url>
+        <driver>oracle</driver>
+        <security>
+            <user-name>mercurydw</user-name>
+            <password>seq_dev3</password>
+            <!--<password>mercury_local</password>-->
+        </security>
+        <validation>
+            <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
+            <background-validation>true</background-validation>
+            <background-validation-millis>60000</background-validation-millis>
+            <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker"/>
+            <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter"/>
+        </validation>
+    </datasource>
+</datasources>

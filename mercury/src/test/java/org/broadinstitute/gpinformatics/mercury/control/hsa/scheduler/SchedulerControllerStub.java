@@ -55,6 +55,9 @@ public class SchedulerControllerStub implements SchedulerController {
 
     @Override
     public JobInfo fetchJobInfo(long jobId) {
-        return null;
+        JobInfo jobInfo = new JobInfo();
+        jobInfo.setEnd("2019-08-28T04:28:45");
+        jobInfo.setState("COMPLETED");
+        return jobInfo;
     }
 }

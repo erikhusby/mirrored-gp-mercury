@@ -1168,6 +1168,22 @@ nodePrinter.print(webapp)
                                     <goal>update</goal>
                                 </goals>
                             </execution>
+                            <execution>
+                                <id>Mercurydw</id>
+                                <phase>initialize</phase>
+                                <configuration>
+                                    <changeLogFile>src/main/db/datawh.changelog-master.xml</changeLogFile>
+                                    <driver>oracle.jdbc.driver.OracleDriver</driver>
+                                    <url>jdbc:oracle:thin:@seqdev.broad.mit.edu:1521:seqdev3</url>
+                                    <username>mercurydw</username>
+                                    <password>seq_dev3</password>
+                                    <defaultSchemaName>mercurydw</defaultSchemaName>
+                                    <promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
+                                </configuration>
+                                <goals>
+                                    <goal>update</goal>
+                                </goals>
+                            </execution>
                         </executions>
                     </plugin>
                     <plugin>

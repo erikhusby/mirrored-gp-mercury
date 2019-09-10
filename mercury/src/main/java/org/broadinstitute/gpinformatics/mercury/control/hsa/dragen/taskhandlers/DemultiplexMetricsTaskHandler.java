@@ -121,13 +121,10 @@ public class DemultiplexMetricsTaskHandler extends AbstractTaskHandler {
                 File outputRecord = new File(dragenFolderUtil.getReportsFolder(), "demultiplex_metrics.dat");
                 metricsRecordWriter.writeBeanRecord(sequencingMetricRun, outputRecord, mappingStrategy);
 
-                // TODO Run Process with actual ldruid
-                String ldruid = "mercury/guest@\"(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=192.168.194.136)(PORT=1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SID=gpgold)))\"";
+                String ldruid = "mercurydw/seq_dev3@\"(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=seqdev.broad.mit.edu)(PORT=1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SID=seqdev3)))\"";
 
-                // TODO etl folder locaiton to ctl
-                // TODO path to sqlldr in config?
                 List<String> cmds = Arrays.asList("/Users/jowalsh/opt/oracle/sqlldr",
-                        "control=/seq/lims/datawh/dev/new/demultiplex_metric.ctl",
+                        "control=/seq/lims/datawh/dev/dragen/demultiplex_metric.ctl",
                         "log=load.log",
                         "bad=load.bad",
                         String.format("data=%s", outputRecord.getPath()),

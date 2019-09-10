@@ -8,7 +8,10 @@ import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
+import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
+import javax.persistence.PersistenceContextType;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Expression;
@@ -23,7 +26,10 @@ import java.util.List;
 @RequestScoped
 @Stateful
 @TransactionAttribute(TransactionAttributeType.NEVER)
-public class AlignmentMetricsDao extends GenericDao {
+public class AlignmentMetricsDao {
+
+    @PersistenceContext(type = PersistenceContextType.EXTENDED, unitName = "mercurydw_pu")
+    private EntityManager entityManager;
 
     public List<AlignmentMetric> findBySampleAlias(List<String> sampleAlias) {
         if (sampleAlias == null || sampleAlias.isEmpty()) {
@@ -32,7 +38,7 @@ public class AlignmentMetricsDao extends GenericDao {
 
         List<AlignmentMetric> resultList = new ArrayList<>();
 
-        CriteriaBuilder cb = getEntityManager().getCriteriaBuilder();
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<AlignmentMetric> query = cb.createQuery(AlignmentMetric.class);
         Root<AlignmentMetric> root = query.from(AlignmentMetric.class);
 
@@ -49,7 +55,7 @@ public class AlignmentMetricsDao extends GenericDao {
         query.where(cb.and(parentPredicate, subQueryPredicate));
 
         try {
-            resultList.addAll(getEntityManager().createQuery(query).getResultList());
+            resultList.addAll(entityManager.createQuery(query).getResultList());
         } catch (NoResultException ignored) {
             return resultList;
         }

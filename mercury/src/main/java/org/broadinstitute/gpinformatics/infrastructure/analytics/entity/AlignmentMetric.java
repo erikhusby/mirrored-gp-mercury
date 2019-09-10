@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 @Entity
-@Table(schema = "MERCURY", name = "MAPPING_RG_METRICS")
+@Table(schema = "MERCURYDW", name = "MAPPING_RG_METRICS")
 public class AlignmentMetric {
 
     @Id

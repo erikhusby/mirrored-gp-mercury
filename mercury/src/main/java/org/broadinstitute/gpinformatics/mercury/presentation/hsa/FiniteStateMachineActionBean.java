@@ -56,7 +56,6 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
     private static final String DRAGEN_VIEW_PAGE = "/hsa/workflows/view.jsp";
     private static final String DEMULTIPLEX_CREATE_PAGE = "/hsa/workflows/create_demultiplex.jsp";
 
-    public static final String CUSTOMIZE_ACTION = "customize";
     public static final String CREATE_DEMULTIPLEX_ACTION = "createDemultiplex";
     public static final String UPDATE_STATE_STATUS_ACTION = "updateStateStatus";
     public static final String UPDATE_TASK_STATUS_ACTION = "updateTaskStatus";

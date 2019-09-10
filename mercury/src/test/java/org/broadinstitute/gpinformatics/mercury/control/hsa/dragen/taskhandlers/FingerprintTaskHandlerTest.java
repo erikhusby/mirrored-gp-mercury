@@ -51,13 +51,7 @@ public class FingerprintTaskHandlerTest extends Arquillian {
         fpState.addTask(fp);
         fpState.addExitTask(fpUploadTask);
 
-        SnpList snpList = mock(SnpList.class);
-        Map rsidMap = mock(Map.class);
-
-        when(snpList.getMapRsIdToSnp()).thenReturn(rsidMap);
-        when(rsidMap.get(anyString())).thenReturn(null);
-
-        FingerprintBean fingerprintBean = fingerprintTaskHandler.handleTaskDaoFree(fp, mercurySample, snpList);
+        FingerprintBean fingerprintBean = fingerprintTaskHandler.handleTaskDaoFree(fp, mercurySample);
 
         Assert.assertNotNull(fingerprintBean);
 

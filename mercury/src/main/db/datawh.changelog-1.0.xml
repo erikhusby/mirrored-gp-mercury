@@ -6,7 +6,7 @@
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
 
     <changeSet id="GPLIM-6242-36" author="jowalsh">
-        <createTable tableName="SEQ_DEMULTIPLEX_RUN_METRIC" schemaName="mercury">
+        <createTable tableName="SEQ_DEMULTIPLEX_RUN_METRIC" schemaName="mercurydw">
             <column name="RUN_NAME" type="VARCHAR2(255)">
                 <constraints nullable="false"/>
             </column>
@@ -32,13 +32,15 @@
             <column name="NUM_OF_Q30_BASES_PF" type="number(19,0)"/>
             <column name="NUM_OF_PCT_IDX_READS" type="number(19,0)"/>
             <column name="NUM_OF_READS" type="number(19,0)"/>
+            <column name="NUM_PERFECT_READS" type="number(19,0)"/>
             <column name="DRAGEN_VERSION" type="VARCHAR2(25))"/>
+            <column name="SEQUENCING_RUN_METRIC_ID" type="number(19,0)"/>
         </createTable>
-
+        <createSequence schemaName="mercurydw" sequenceName="SEQ_SEQ_RUN_METRIC" incrementBy="50"/>
     </changeSet>
 
     <changeSet id="GPLIM-6242-37" author="jowalsh">
-        <createTable tableName="vc_run_metrics" schemaName="mercury">
+        <createTable tableName="vc_run_metrics" schemaName="mercurydw">
             <column name="RUN_NAME" type="VARCHAR2(255)">
                 <constraints nullable="false" />
             </column>
@@ -58,11 +60,11 @@
         </createTable>
         <addPrimaryKey constraintName="pk_vc_run_metric" tableName="vc_run_metrics"
                        columnNames="VC_RUN_METRIC_ID"/>
-        <createSequence schemaName="mercury" sequenceName="SEQ_VC_RUN_METRIC" incrementBy="50"/>
+        <createSequence schemaName="mercurydw" sequenceName="SEQ_VC_RUN_METRIC" incrementBy="50"/>
     </changeSet>
 
     <changeSet id="GPLIM-6242-38" author="jowalsh">
-        <createTable tableName="variant_call_metrics" schemaName="mercury">
+        <createTable tableName="variant_call_metrics" schemaName="mercurydw">
             <column name="run_name" type="VARCHAR2(255)">
                 <constraints nullable="false" />
             </column>
@@ -93,11 +95,11 @@
         </createTable>
         <addPrimaryKey constraintName="pk_variant_call_metrics" tableName="variant_call_metrics"
                        columnNames="vc_call_metrics_id"/>
-        <createSequence schemaName="mercury" sequenceName="SEQ_VC_METRIC" incrementBy="50"/>
+        <createSequence schemaName="mercurydw" sequenceName="SEQ_VC_METRIC" incrementBy="50"/>
     </changeSet>
 
     <changeSet id="GPLIM-6242-39" author="jowalsh">
-        <createTable tableName="mapping_run_metrics" schemaName="mercury">
+        <createTable tableName="mapping_run_metrics" schemaName="mercurydw">
             <column name="run_name" type="VARCHAR2(255)">
                 <constraints nullable="false" />
             </column>
@@ -163,11 +165,11 @@
         </createTable>
         <addPrimaryKey constraintName="pk_mapping_run_metric_id" tableName="mapping_run_metrics"
                        columnNames="mapping_run_metric_id"/>
-        <createSequence schemaName="mercury" sequenceName="SEQ_MAP_RUN_METRIC" incrementBy="50"/>
+        <createSequence schemaName="mercurydw" sequenceName="SEQ_MAP_RUN_METRIC" incrementBy="50"/>
     </changeSet>
 
     <changeSet id="GPLIM-6242-40" author="jowalsh">
-        <createTable tableName="mapping_rg_metrics" schemaName="mercury">
+        <createTable tableName="mapping_rg_metrics" schemaName="mercurydw">
             <column name="run_name" type="VARCHAR2(255)">
                 <constraints nullable="false" />
             </column>
@@ -211,6 +213,6 @@
         </createTable>
         <addPrimaryKey constraintName="pk_mapping_rg_metric_id" tableName="mapping_rg_metrics"
                        columnNames="mapping_rg_metric_id"/>
-        <createSequence schemaName="mercury" sequenceName="SEQ_MAP_RG_METRIC" incrementBy="50"/>
+        <createSequence schemaName="mercurydw" sequenceName="SEQ_MAP_RG_METRIC" incrementBy="50"/>
     </changeSet>
 </databaseChangeLog>

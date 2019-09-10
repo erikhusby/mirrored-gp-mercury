@@ -14,7 +14,7 @@ import java.util.Date;
  * Entity for sequencing demultiplex metrics
  */
 @Entity
-@Table(schema = "MERCURY", name = "SEQ_DEMULTIPLEX_RUN_METRIC")
+@Table(schema = "MERCURYDW", name = "SEQ_DEMULTIPLEX_RUN_METRIC")
 public class SequencingDemultiplexMetric {
 
     @Id
