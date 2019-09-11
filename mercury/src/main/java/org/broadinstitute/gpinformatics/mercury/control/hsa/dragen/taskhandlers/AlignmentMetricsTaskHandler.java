@@ -183,7 +183,7 @@ public class AlignmentMetricsTaskHandler extends AbstractTaskHandler {
     private ProcessResult uploadMetric(String ctlFilePath, File dataPath)
             throws IOException, TimeoutException, InterruptedException {
         String ldruid = "mercurydw/seq_dev3@\"(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=seqdev.broad.mit.edu)(PORT=1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SID=seqdev3)))\"";
-        List<String> cmds = Arrays.asList("/Users/jowalsh/opt/oracle/sqlldr",
+        List<String> cmds = Arrays.asList("sqlldr",
                 String.format("control=%s", ctlFilePath),
                 "log=load.log",
                 "bad=load.bad",

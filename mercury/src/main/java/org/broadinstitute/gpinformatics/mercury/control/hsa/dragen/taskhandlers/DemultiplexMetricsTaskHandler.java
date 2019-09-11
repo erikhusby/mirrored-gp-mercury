@@ -123,7 +123,7 @@ public class DemultiplexMetricsTaskHandler extends AbstractTaskHandler {
 
                 String ldruid = "mercurydw/seq_dev3@\"(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=seqdev.broad.mit.edu)(PORT=1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SID=seqdev3)))\"";
 
-                List<String> cmds = Arrays.asList("/Users/jowalsh/opt/oracle/sqlldr",
+                List<String> cmds = Arrays.asList("sqlldr",
                         "control=/seq/lims/datawh/dev/dragen/demultiplex_metric.ctl",
                         "log=load.log",
                         "bad=load.bad",
