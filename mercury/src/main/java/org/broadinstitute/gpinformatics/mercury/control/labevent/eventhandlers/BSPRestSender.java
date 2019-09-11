@@ -465,7 +465,7 @@ public class BSPRestSender implements Serializable {
                     List<LabEvent> labEventList = labEvents.stream().
                             filter(le -> Objects.equals(le.getStationEventType(), plateTransferEventType)).
                             collect(Collectors.toList());
-                    boolean mercury = areSourceLabVesselsNotBSPSourced(labEventList);
+                    boolean mercury = areAnySourcveLabVesselsNotBSPSourced(labEventList);
 
                     if (!mercury) {
                         copy.getPlateTransferEvent().add(plateTransferEventType);
@@ -494,7 +494,7 @@ public class BSPRestSender implements Serializable {
      *
      * @return Whether any of the lab events had source vessels that were not from BSP.
      */
-    private boolean areSourceLabVesselsNotBSPSourced(List<LabEvent> labEventList) {
+    private boolean areAnySourcveLabVesselsNotBSPSourced(List<LabEvent> labEventList) {
         boolean mercury = false;
         for (LabEvent labEvent : labEventList) {
             for (LabVessel labVessel : labEvent.getSourceLabVessels()) {
