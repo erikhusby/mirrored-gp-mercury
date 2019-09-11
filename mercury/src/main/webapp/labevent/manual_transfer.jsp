@@ -253,12 +253,8 @@
 
                 $j('#targetReceptacleType').change(function() {
 
-                    console.log("within change of 'targetReceptacleType'");
-                    console.log($j('#targetReceptacleType').val());
-
                     var data = new FormData();
                     var eventClass = $j('input[name=\"eventClass[0]\"').val();
-                    console.log(eventClass);
                     data.append("eventClass", eventClass);
 
                     // Get the selectable barcoded tube types based off container type 'targetReceptacleType'
@@ -267,7 +263,6 @@
                         datatype: "application/json",
                         type: 'GET',
                         success: function (data) {
-                            console.log(data);
 
                             if (!data.hasErrors) {
                                 // Clear old values so we ensure nothing is doubling up.
