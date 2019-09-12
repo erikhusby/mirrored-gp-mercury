@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
-import org.broadinstitute.gpinformatics.infrastructure.analytics.SequencingDemultiplexDao;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.DemultiplexSampleDao;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.DemultiplexSampleMetric;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.search.LabVesselSearchDefinition;
@@ -61,7 +61,7 @@ public class LabVesselSequencingMetricPlugin implements ListPlugin {
         List<ConfigurableList.Header> headers = buildHeaders();
         headers.add(VALUE_COLUMN_TYPE.SAMPLE_ALIAS.getResultHeader());
 
-        SequencingDemultiplexDao sequencingDemultiplexDao = ServiceAccessUtility.getBean(SequencingDemultiplexDao.class);
+        DemultiplexSampleDao demultiplexSampleDao = ServiceAccessUtility.getBean(DemultiplexSampleDao.class);
         IlluminaSequencingRunDao sequencingRunDao = ServiceAccessUtility.getBean(IlluminaSequencingRunDao.class);
 
         LabVessel labVessel = (LabVessel) entity;
@@ -93,7 +93,7 @@ public class LabVesselSequencingMetricPlugin implements ListPlugin {
             runNames.addAll(runNamesList);
         }
 
-        List<DemultiplexSampleMetric> runMetrics = sequencingDemultiplexDao.findByRunName(new ArrayList<>(runNames));
+        List<DemultiplexSampleMetric> runMetrics = demultiplexSampleDao.findByRunName(new ArrayList<>(runNames));
 
         for (DemultiplexSampleMetric metric: runMetrics) {
             if (!mapSampleToSampleInstance.containsKey(metric.getSampleAlias())) {

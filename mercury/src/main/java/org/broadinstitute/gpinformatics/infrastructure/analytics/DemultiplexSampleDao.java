@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.analytics;
 
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.DemultiplexSampleMetric;
-import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.SequencingDemultiplexMetric_;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.DemultiplexSampleMetric_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.CriteriaInClauseCreator;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.JPASplitter;
 
@@ -29,7 +29,7 @@ import java.util.List;
 @RequestScoped
 @Stateful
 @TransactionAttribute(TransactionAttributeType.NEVER)
-public class SequencingDemultiplexDao {
+public class DemultiplexSampleDao {
 
     @PersistenceContext(type = PersistenceContextType.EXTENDED, unitName = "mercurydw_pu")
     private EntityManager entityManager;
@@ -47,11 +47,11 @@ public class SequencingDemultiplexDao {
 
                 Subquery<Date> sq = query.subquery(Date.class);
                 Root<DemultiplexSampleMetric> subRoot = sq.from(DemultiplexSampleMetric.class);
-                sq.select(cb.greatest(subRoot.get(SequencingDemultiplexMetric_.runDate)));
-                sq.where(cb.equal(root.get(SequencingDemultiplexMetric_.sampleAlias), subRoot.get(SequencingDemultiplexMetric_.sampleAlias)));
-                Predicate subQueryPredicate = cb.equal(root.get(SequencingDemultiplexMetric_.runDate), sq);
+                sq.select(cb.greatest(subRoot.get(DemultiplexSampleMetric_.runDate)));
+                sq.where(cb.equal(root.get(DemultiplexSampleMetric_.sampleAlias), subRoot.get(DemultiplexSampleMetric_.sampleAlias)));
+                Predicate subQueryPredicate = cb.equal(root.get(DemultiplexSampleMetric_.runDate), sq);
 
-                Expression<String> parentExpression = root.get(SequencingDemultiplexMetric_.sampleAlias);
+                Expression<String> parentExpression = root.get(DemultiplexSampleMetric_.sampleAlias);
                 Predicate parentPredicate = parentExpression.in(sampleAlias);
 
                 query.where(cb.and(parentPredicate, subQueryPredicate));
@@ -73,15 +73,15 @@ public class SequencingDemultiplexDao {
 
         List<Predicate> predicates = new ArrayList<>();
         for (String run: runNames) {
-            predicates.add(cb.equal(root.get(SequencingDemultiplexMetric_.runName), run));
+            predicates.add(cb.equal(root.get(DemultiplexSampleMetric_.runName), run));
         }
 
         query.where(cb.or(predicates.toArray(new Predicate[predicates.size()])));
 
         Subquery<Date> sq = query.subquery(Date.class);
         Root<DemultiplexSampleMetric> subRoot = sq.from(DemultiplexSampleMetric.class);
-        sq.select(cb.greatest(root.get(SequencingDemultiplexMetric_.runDate)));
-        sq.where(cb.equal(root.get(SequencingDemultiplexMetric_.runName), subRoot.get(SequencingDemultiplexMetric_.runName)));
+        sq.select(cb.greatest(root.get(DemultiplexSampleMetric_.runDate)));
+        sq.where(cb.equal(root.get(DemultiplexSampleMetric_.runName), subRoot.get(DemultiplexSampleMetric_.runName)));
 
         try {
             resultList.addAll(entityManager.createQuery(query).getResultList());

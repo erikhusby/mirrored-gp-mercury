@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
-import org.broadinstitute.gpinformatics.infrastructure.analytics.SequencingDemultiplexDao;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.DemultiplexSampleDao;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.DemultiplexSampleMetric;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
@@ -71,7 +71,7 @@ public class SampleMetadataSequencingMetricPlugin implements ListPlugin {
     @Override
     public ConfigurableList.ResultList getNestedTableData(Object entity, ColumnTabulation columnTabulation,
                                                           @Nonnull SearchContext context) {
-        SequencingDemultiplexDao sequencingDemultiplexDao = ServiceAccessUtility.getBean(SequencingDemultiplexDao.class);
+        DemultiplexSampleDao demultiplexSampleDao = ServiceAccessUtility.getBean(DemultiplexSampleDao.class);
 
         MercurySample sample = (MercurySample) entity;
 
@@ -79,7 +79,7 @@ public class SampleMetadataSequencingMetricPlugin implements ListPlugin {
 
         List<ConfigurableList.ResultRow> resultRows = new ArrayList<>();
 
-        List<DemultiplexSampleMetric> runMetrics = sequencingDemultiplexDao.findBySampleAlias(
+        List<DemultiplexSampleMetric> runMetrics = demultiplexSampleDao.findBySampleAlias(
                 Collections.singletonList(sample.getSampleKey()));
 
         // TODO just sort by lane...
