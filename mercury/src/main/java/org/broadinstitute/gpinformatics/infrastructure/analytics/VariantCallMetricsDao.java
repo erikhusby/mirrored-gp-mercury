@@ -1,9 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.analytics;
 
-import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc;
-import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc_;
-import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.SequencingDemultiplexMetric;
-import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.SequencingDemultiplexMetric_;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.VariantCallMetric;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.VariantCallMetric_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.CriteriaInClauseCreator;
@@ -15,7 +11,6 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceContextType;
 import javax.persistence.Query;

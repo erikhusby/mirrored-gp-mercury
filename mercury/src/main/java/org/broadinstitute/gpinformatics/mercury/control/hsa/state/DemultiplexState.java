@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.state;
 
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DemultiplexTask;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
@@ -41,8 +42,17 @@ public class DemultiplexState extends State {
      * If no sample sheet was supplied
      */
     @Override
-    public void OnEnter() {
+    public void onEnter() {
 
+    }
+
+    /**
+     * On Exit add to alignment aggregation if orphan rates are correct
+     * @return
+     */
+    @Override
+    public boolean onExit() {
+        return true;
     }
 
     @Override

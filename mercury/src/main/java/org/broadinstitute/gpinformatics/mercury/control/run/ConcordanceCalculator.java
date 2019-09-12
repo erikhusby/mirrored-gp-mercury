@@ -79,16 +79,6 @@ public class ConcordanceCalculator {
         return matchResults.getLOD();
     }
 
-    public double calculateHapMapConcordance(Fingerprint fingerprint, Control control) {
-        MercurySample concordanceMercurySample = control.getConcordanceMercurySample();
-        if (concordanceMercurySample == null) {
-            throw new RuntimeException("No concordance sample configured for " + control.getCollaboratorParticipantId());
-        }
-        // todo jmt most recent passed
-        Fingerprint controlFp = concordanceMercurySample.getFingerprints().iterator().next();
-        return calculateLodScore(fingerprint, controlFp);
-    }
-
     @NotNull
     private picard.fingerprint.Fingerprint getFingerprint(Fingerprint fingerprint, String sampleKey) {
         List<Fingerprints.Fingerprint> fingerprints = new ArrayList<>();

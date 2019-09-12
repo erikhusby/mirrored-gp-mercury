@@ -14,11 +14,11 @@ import java.util.Date;
  * Entity for sequencing demultiplex metrics
  */
 @Entity
-@Table(schema = "MERCURYDW", name = "SEQ_DEMULTIPLEX_RUN_METRIC")
-public class SequencingDemultiplexMetric {
+@Table(schema = "MERCURYDW", name = "SEQ_DEMULTIPLEX_SAMPLE_METRIC")
+public class DemultiplexSampleMetric {
 
     @Id
-    private Long sequencingRunMetricId;
+    private Long sequencingSampleMetricId;
 
     @CsvBindByPosition(position = 0)
     @Column(name = "RUN_NAME")
@@ -81,12 +81,12 @@ public class SequencingDemultiplexMetric {
     @Column(name = "MEAN_QUALITY_SCORE_PF")
     private String meanQualityScorePF;
 
-    public SequencingDemultiplexMetric(int lane, String sampleAlias) {
+    public DemultiplexSampleMetric(int lane, String sampleAlias) {
         this.lane = lane;
         this.sampleAlias = sampleAlias;
     }
 
-    public SequencingDemultiplexMetric() {
+    public DemultiplexSampleMetric() {
     }
 
     public Date getRunDate() {

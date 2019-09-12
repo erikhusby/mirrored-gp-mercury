@@ -6,7 +6,7 @@
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
 
     <changeSet id="GPLIM-6242-36" author="jowalsh">
-        <createTable tableName="SEQ_DEMULTIPLEX_RUN_METRIC" schemaName="mercurydw">
+        <createTable tableName="SEQ_DEMULTIPLEX_SAMPLE_METRIC" schemaName="mercurydw">
             <column name="RUN_NAME" type="VARCHAR2(255)">
                 <constraints nullable="false"/>
             </column>
@@ -34,7 +34,7 @@
             <column name="NUM_OF_READS" type="number(19,0)"/>
             <column name="NUM_PERFECT_READS" type="number(19,0)"/>
             <column name="DRAGEN_VERSION" type="VARCHAR2(25))"/>
-            <column name="SEQUENCING_RUN_METRIC_ID" type="number(19,0)"/>
+            <column name="SEQUENCING_SAMPLE_METRIC_ID" type="number(19,0)"/>
         </createTable>
         <createSequence schemaName="mercurydw" sequenceName="SEQ_SEQ_RUN_METRIC" incrementBy="50"/>
     </changeSet>
@@ -47,6 +47,7 @@
             <column name="RUN_DATE" type="timestamp">
                 <constraints nullable="false" />
             </column>
+            <column name="ANALYSIS_NAME" type="VARCHAR2(200)"/>
             <column name="ANALYSIS_NODE" type="VARCHAR2(55)">
                 <constraints nullable="false" />
             </column>
@@ -71,6 +72,7 @@
             <column name="metric_type" type="VARCHAR2(55)">
                 <constraints nullable="false" />
             </column>
+            <column name="analysis_name" type="VARCHAR2(200)"/>
             <column name="sample_alias" type="VARCHAR2(200)">
                 <constraints nullable="false" />
             </column>
@@ -214,5 +216,34 @@
         <addPrimaryKey constraintName="pk_mapping_rg_metric_id" tableName="mapping_rg_metrics"
                        columnNames="mapping_rg_metric_id"/>
         <createSequence schemaName="mercurydw" sequenceName="SEQ_MAP_RG_METRIC" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-41" author="jowalsh">
+        <createTable tableName="SEQ_DEMULTIPLEX_LANE_METRIC" schemaName="mercurydw">
+            <column name="RUN_NAME" type="VARCHAR2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="FLOWCELL" type="VARCHAR2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="RUN_DATE" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="SAMPLE_ALIAS" type="VARCHAR2(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ANALYSIS_NAME" type="VARCHAR2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ANALYSIS_NODE" type="VARCHAR2(55)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ANALYSIS_VERSION" type="VARCHAR2(55)"/>
+            <column name="LANE" type="number(19,0)"/>
+            <column name="ORPHAN_RATE" type="number(4,2)"/>
+            <column name="DRAGEN_VERSION" type="VARCHAR2(25))"/>
+            <column name="SEQUENCING_LANE_METRIC_ID" type="number(19,0)"/>
+        </createTable>
+        <createSequence schemaName="mercurydw" sequenceName="SEQ_SEQ_LANE_METRIC" incrementBy="50"/>
     </changeSet>
 </databaseChangeLog>

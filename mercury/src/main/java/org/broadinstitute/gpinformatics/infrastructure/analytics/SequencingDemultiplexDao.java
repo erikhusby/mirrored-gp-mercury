@@ -1,11 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.analytics;
 
-import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.SequencingDemultiplexMetric;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.DemultiplexSampleMetric;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.SequencingDemultiplexMetric_;
-import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.VariantCallMetric;
-import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.VariantCallMetric_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.CriteriaInClauseCreator;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.JPASplitter;
 
 import javax.ejb.Stateful;
@@ -37,7 +34,7 @@ public class SequencingDemultiplexDao {
     @PersistenceContext(type = PersistenceContextType.EXTENDED, unitName = "mercurydw_pu")
     private EntityManager entityManager;
 
-    public List<SequencingDemultiplexMetric> findBySampleAlias(List<String> sampleAlias) {
+    public List<DemultiplexSampleMetric> findBySampleAlias(List<String> sampleAlias) {
         if( sampleAlias == null || sampleAlias.isEmpty() ) {
             return Collections.emptyList();
         }
@@ -45,11 +42,11 @@ public class SequencingDemultiplexDao {
             @Override
             public Query createCriteriaInQuery(Collection<String> parameterList) {
                 CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-                CriteriaQuery<SequencingDemultiplexMetric> query = cb.createQuery(SequencingDemultiplexMetric.class);
-                Root<SequencingDemultiplexMetric> root = query.from(SequencingDemultiplexMetric.class);
+                CriteriaQuery<DemultiplexSampleMetric> query = cb.createQuery(DemultiplexSampleMetric.class);
+                Root<DemultiplexSampleMetric> root = query.from(DemultiplexSampleMetric.class);
 
                 Subquery<Date> sq = query.subquery(Date.class);
-                Root<SequencingDemultiplexMetric> subRoot = sq.from(SequencingDemultiplexMetric.class);
+                Root<DemultiplexSampleMetric> subRoot = sq.from(DemultiplexSampleMetric.class);
                 sq.select(cb.greatest(subRoot.get(SequencingDemultiplexMetric_.runDate)));
                 sq.where(cb.equal(root.get(SequencingDemultiplexMetric_.sampleAlias), subRoot.get(SequencingDemultiplexMetric_.sampleAlias)));
                 Predicate subQueryPredicate = cb.equal(root.get(SequencingDemultiplexMetric_.runDate), sq);
@@ -63,16 +60,16 @@ public class SequencingDemultiplexDao {
         });
     }
 
-    public List<SequencingDemultiplexMetric> findByRunName(List<String> runNames) {
+    public List<DemultiplexSampleMetric> findByRunName(List<String> runNames) {
         if (runNames == null || runNames.isEmpty()) {
             return Collections.emptyList();
         }
 
-        List<SequencingDemultiplexMetric> resultList = new ArrayList<>();
+        List<DemultiplexSampleMetric> resultList = new ArrayList<>();
 
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<SequencingDemultiplexMetric> query = cb.createQuery(SequencingDemultiplexMetric.class);
-        Root<SequencingDemultiplexMetric> root = query.from(SequencingDemultiplexMetric.class);
+        CriteriaQuery<DemultiplexSampleMetric> query = cb.createQuery(DemultiplexSampleMetric.class);
+        Root<DemultiplexSampleMetric> root = query.from(DemultiplexSampleMetric.class);
 
         List<Predicate> predicates = new ArrayList<>();
         for (String run: runNames) {
@@ -82,7 +79,7 @@ public class SequencingDemultiplexDao {
         query.where(cb.or(predicates.toArray(new Predicate[predicates.size()])));
 
         Subquery<Date> sq = query.subquery(Date.class);
-        Root<SequencingDemultiplexMetric> subRoot = sq.from(SequencingDemultiplexMetric.class);
+        Root<DemultiplexSampleMetric> subRoot = sq.from(DemultiplexSampleMetric.class);
         sq.select(cb.greatest(root.get(SequencingDemultiplexMetric_.runDate)));
         sq.where(cb.equal(root.get(SequencingDemultiplexMetric_.runName), subRoot.get(SequencingDemultiplexMetric_.runName)));
 
@@ -95,7 +92,7 @@ public class SequencingDemultiplexDao {
         return resultList;
     }
 
-    public List<SequencingDemultiplexMetric> findByBarcodes(List<String> barcodes) {
+    public List<DemultiplexSampleMetric> findByBarcodes(List<String> barcodes) {
         //TODO
         return null;
     }

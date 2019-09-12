@@ -16,18 +16,13 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Transition;
 import javax.annotation.Resource;
 import javax.ejb.EJBContext;
 import javax.ejb.Stateful;
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.ejb.TransactionManagement;
 import javax.ejb.TransactionManagementType;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.SystemException;
-import javax.transaction.UserTransaction;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Stateful
 @Dependent
@@ -75,7 +70,7 @@ public class FiniteStateMachineEngine {
 
             if (state.isStartState() && stateMachine.getDateStarted() == null) {
                 stateMachine.setDateStarted(new Date());
-                state.OnEnter();
+                state.onEnter();
                 for (Task task: state.getTasks()) {
                     try {
                         taskManager.fireEvent(task, context);
@@ -120,7 +115,7 @@ public class FiniteStateMachineEngine {
                     State toState = transition.getToState();
                     toState.setAlive(true);
                     toState.setStartTime(new Date());
-                    toState.OnEnter();
+                    toState.onEnter();
                     for (Task task: toState.getTasks()) {
                         try {
                             taskManager.fireEvent(task, context);

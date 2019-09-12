@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.broadinstitute.gpinformatics.infrastructure.analytics.SequencingDemultiplexDao;
-import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.SequencingDemultiplexMetric;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.DemultiplexSampleMetric;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -32,7 +32,6 @@ public class SampleMetadataSequencingMetricPlugin implements ListPlugin {
         NUM_OF_PCT_IDX_READS("# Perfect Index Reads"),
         NUM_OF_READS("# Reads"),
         NUM_PERFECT_READS("# Perfect Reads"),
-        ORPHAN_RATE("Orphan Rate"),
         MEAN_QUALITY_SCORE_PF("Mean Quality Score PF");
 
         private String displayName;
@@ -80,18 +79,18 @@ public class SampleMetadataSequencingMetricPlugin implements ListPlugin {
 
         List<ConfigurableList.ResultRow> resultRows = new ArrayList<>();
 
-        List<SequencingDemultiplexMetric> runMetrics = sequencingDemultiplexDao.findBySampleAlias(
+        List<DemultiplexSampleMetric> runMetrics = sequencingDemultiplexDao.findBySampleAlias(
                 Collections.singletonList(sample.getSampleKey()));
 
         // TODO just sort by lane...
-        Map<Integer, SequencingDemultiplexMetric> mapSampleToMetric = new TreeMap<>();
-        for (SequencingDemultiplexMetric metric: runMetrics) {
+        Map<Integer, DemultiplexSampleMetric> mapSampleToMetric = new TreeMap<>();
+        for (DemultiplexSampleMetric metric: runMetrics) {
             mapSampleToMetric.put(metric.getLane(), metric);
         }
 
         // Gather Sequencing Lanes
-        for( Map.Entry<Integer, SequencingDemultiplexMetric> entry : mapSampleToMetric.entrySet()) {
-            SequencingDemultiplexMetric metric = entry.getValue();
+        for( Map.Entry<Integer, DemultiplexSampleMetric> entry : mapSampleToMetric.entrySet()) {
+            DemultiplexSampleMetric metric = entry.getValue();
 
             List<String> cells = new ArrayList<>();
 
@@ -109,9 +108,6 @@ public class SampleMetadataSequencingMetricPlugin implements ListPlugin {
             cells.add(String.valueOf(metric.getNumberOfPerfectIndexReads()));
             cells.add(String.valueOf(metric.getNumberOfReads()));
             cells.add(String.valueOf(metric.getNumberOfPerfectReads()));
-            long numReadsPF = metric.getNumberOfPerfectIndexReads() + metric.getNumberOfOneMismatchIndexReads();
-            double orphanRate = (numReadsPF / (double)metric.getNumberOfReads()) * 100;
-            cells.add(String.valueOf(orphanRate));
             cells.add( String.valueOf(metric.getMeanQualityScorePF()));
 
             ConfigurableList.ResultRow resultRow = new ConfigurableList.ResultRow(null, cells, metric.getRunName() + " " + metric.getLane());

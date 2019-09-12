@@ -39,15 +39,13 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Dependent
-public class AlignmentMetricsTaskHandler extends AbstractTaskHandler {
+public class AlignmentMetricsTaskHandler extends AbstractMetricsTaskHandler {
 
     private static final Log log = LogFactory.getLog(AlignmentMetricsTaskHandler.class);
 
+    // TODO update if base file location changes
     private static final Pattern RUN_NAME_PATTERN =
             Pattern.compile("/seq/illumina/proc/SL-[A-Z]{3}/(.*)/dragen/(.*)/fastq/.*");
-
-    @Inject
-    private ShellUtils shellUtils;
 
     @Override
     public void handleTask(Task task, SchedulerContext schedulerContext) {
@@ -179,20 +177,6 @@ public class AlignmentMetricsTaskHandler extends AbstractTaskHandler {
         return null;
     }
 
-    // TODO share between both tasks
-    private ProcessResult uploadMetric(String ctlFilePath, File dataPath)
-            throws IOException, TimeoutException, InterruptedException {
-        String ldruid = "mercurydw/seq_dev3@\"(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=seqdev.broad.mit.edu)(PORT=1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SID=seqdev3)))\"";
-        List<String> cmds = Arrays.asList("sqlldr",
-                String.format("control=%s", ctlFilePath),
-                "log=load.log",
-                "bad=load.bad",
-                String.format("data=%s", dataPath.getPath()),
-                "discard=load.dsc",
-                "direct=false",
-                String.format("userId=%s", ldruid));
-        return shellUtils.runSyncProcess(cmds);
-    }
 
     public Map<String, String> buildMapOfReadGroupToSampleAlias(File fastQFile) throws IOException {
         Map<String, String> mapReadGroupToSampleAliasFromFastQ = new HashMap<>();
@@ -204,9 +188,5 @@ public class AlignmentMetricsTaskHandler extends AbstractTaskHandler {
             mapReadGroupToSampleAliasFromFastQ.put(rgId, sampleAlias);
         }
         return mapReadGroupToSampleAliasFromFastQ;
-    }
-
-    public void setShellUtils(ShellUtils shellUtils) {
-        this.shellUtils = shellUtils;
     }
 }
