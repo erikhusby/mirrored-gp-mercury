@@ -2,12 +2,12 @@ package org.broadinstitute.gpinformatics.mercury.control.hsa;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.csv.CsvParser;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.DBSPuncherFileParser;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
-import org.broadinstitute.gpinformatics.mercury.entity.run.RunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -23,7 +23,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -66,6 +65,8 @@ public class SampleSheetBuilder {
     public SampleSheet makeSampleSheet(IlluminaSequencingRun illuminaRun, Set<VesselPosition> lanes,
                                        Set<String> filterSampleIds) {
         RunCartridge flowcell = illuminaRun.getSampleCartridge();
+        IlluminaFlowcell illuminaFlowcell = OrmUtil.proxySafeCast(flowcell, IlluminaFlowcell.class);
+        boolean isReverseComplement = illuminaFlowcell.getFlowcellType().isReverseComplement();
 
         Data data = new Data();
         Header header = null;
@@ -90,7 +91,7 @@ public class SampleSheetBuilder {
                     continue;
                 }
 
-                data.addSample(laneSampleInstance, mercurySample, laneNum);
+                data.addSample(laneSampleInstance, mercurySample, laneNum, isReverseComplement);
                 if (productOrderSample != null) {
                     header = createHeader(laneSampleInstance);
                 }
@@ -102,6 +103,8 @@ public class SampleSheetBuilder {
 
     public SampleSheet makeSampleSheet(IlluminaSequencingRun illuminaRun, VesselPosition vesselPosition, int laneNum) {
         RunCartridge flowcell = illuminaRun.getSampleCartridge();
+        IlluminaFlowcell illuminaFlowcell = OrmUtil.proxySafeCast(flowcell, IlluminaFlowcell.class);
+        boolean isReverseComplement = illuminaFlowcell.getFlowcellType().isReverseComplement();
 
         Data data = new Data();
         Header header = null;
@@ -116,7 +119,7 @@ public class SampleSheetBuilder {
                 mercurySample = laneSampleInstance.getRootOrEarliestMercurySample();
             }
 
-            data.addSample(laneSampleInstance, mercurySample, laneNum);
+            data.addSample(laneSampleInstance, mercurySample, laneNum, isReverseComplement);
             if (productOrderSample != null) {
                 header = createHeader(laneSampleInstance);
             }
@@ -203,7 +206,8 @@ public class SampleSheetBuilder {
             }
         }
 
-        public void addSample(SampleInstanceV2 sampleInstanceV2, MercurySample mercurySample, int lane) {
+        public void addSample(SampleInstanceV2 sampleInstanceV2, MercurySample mercurySample, int lane,
+                              boolean isReverseComplement) {
             String pdoSampleName;
             ProductOrderSample productOrderSample = sampleInstanceV2.getSingleProductOrderSample();
             if (productOrderSample != null) {
@@ -228,8 +232,12 @@ public class SampleSheetBuilder {
             MolecularIndex p7 = indexes.get(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7);
             if (dualIndex) {
                 MolecularIndex p5 = indexes.get(MolecularIndexingScheme.IndexPosition.ILLUMINA_P5);
-                data = new SampleData(pdoSampleName, pdoSampleName, lane, p7.getSequence(), p5.getSequence());
-                appendLine(pdoSampleName, pdoSampleName, String.valueOf(lane), p7.getSequence(), p5.getSequence());
+                String p5Seq = p5.getSequence();
+                if (isReverseComplement) {
+
+                }
+                data = new SampleData(pdoSampleName, pdoSampleName, lane, p7.getSequence(), p5Seq);
+                appendLine(pdoSampleName, pdoSampleName, String.valueOf(lane), p7.getSequence(), p5Seq);
             } else {
                 data = new SampleData(pdoSampleName, pdoSampleName, lane, p7.getSequence(), null);
                 appendLine(pdoSampleName, pdoSampleName, String.valueOf(lane), p7.getSequence());

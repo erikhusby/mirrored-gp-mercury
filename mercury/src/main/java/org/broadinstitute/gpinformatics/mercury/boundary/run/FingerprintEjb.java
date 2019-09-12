@@ -27,6 +27,7 @@ public class FingerprintEjb {
     @Inject
     private FingerprintDao fingerprintDao;
 
+    // TODO refactor into resource
     public Fingerprint handleNewFingerprint(FingerprintBean fingerprintBean, MercurySample mercurySample) {
         if (fingerprintBean.getSnpListName() == null) {
             throw new RuntimeException("snpListName is required");

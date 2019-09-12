@@ -4,10 +4,13 @@ import com.opencsv.bean.ColumnPositionMappingStrategy;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.DemultiplexLaneMetric;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.DemultiplexSampleMetric;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.DragenConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DemultiplexMetricsTask;
@@ -24,7 +27,6 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
-import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.SequencingDemultiplexMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -36,8 +38,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -45,8 +48,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
+import static java.util.stream.Collectors.groupingBy;
+
 @Dependent
-public class DemultiplexMetricsTaskHandler extends AbstractTaskHandler {
+public class DemultiplexMetricsTaskHandler extends AbstractMetricsTaskHandler {
 
     private static final Log log = LogFactory.getLog(DemultiplexMetricsTaskHandler.class);
 
@@ -110,36 +115,44 @@ public class DemultiplexMetricsTaskHandler extends AbstractTaskHandler {
             return;
         }
 
-        List<SequencingDemultiplexMetric> sequencingMetricRun =
+        Pair<List<DemultiplexSampleMetric>, List<DemultiplexLaneMetric>> pair =
                 createSequencingRunMetricDaoFree(demultiplexState, messageCollection, dragenReplayInfo, demultiplexStats);
+        List<DemultiplexSampleMetric> sequencingMetricRun = pair.getLeft();
+        List<DemultiplexLaneMetric> laneMetrics = pair.getRight();
 
         if (!messageCollection.hasErrors()) {
             try {
-                ColumnPositionMappingStrategy<SequencingDemultiplexMetric> mappingStrategy =
+                // TODO Cleanup and move tasks to their own
+                ColumnPositionMappingStrategy<DemultiplexSampleMetric> mappingStrategy =
                         new ColumnPositionMappingStrategy<>();
-                mappingStrategy.setType(SequencingDemultiplexMetric.class);
+                mappingStrategy.setType(DemultiplexSampleMetric.class);
                 File outputRecord = new File(dragenFolderUtil.getReportsFolder(), "demultiplex_metrics.dat");
                 metricsRecordWriter.writeBeanRecord(sequencingMetricRun, outputRecord, mappingStrategy);
 
-                String ldruid = "mercurydw/seq_dev3@\"(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=seqdev.broad.mit.edu)(PORT=1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SID=seqdev3)))\"";
+                List<ProcessResult> processResults = new ArrayList<>();
+                processResults.add(uploadMetric(
+                        "/seq/lims/datawh/dev/dragen/demultiplex_metric.ctl", outputRecord));
 
-                List<String> cmds = Arrays.asList("sqlldr",
-                        "control=/seq/lims/datawh/dev/dragen/demultiplex_metric.ctl",
-                        "log=load.log",
-                        "bad=load.bad",
-                        String.format("data=%s", outputRecord.getPath()),
-                        "discard=load.dsc",
-                        "direct=false",
-                        String.format("userId=%s", ldruid));
-                ProcessResult processResult = shellUtils.runSyncProcess(cmds);
-                if (processResult.getExitValue() == 0) { // TODO Exit value?
-                    task.setStatus(Status.COMPLETE);
-                    if (processResult.hasOutput()) {
-                        log.info(processResult.getOutput().getString());
+                ColumnPositionMappingStrategy<DemultiplexLaneMetric> laneStrategy =
+                        new ColumnPositionMappingStrategy<>();
+                laneStrategy.setType(DemultiplexLaneMetric.class);
+                outputRecord = new File(dragenFolderUtil.getReportsFolder(), "demultiplex_lane_metrics.dat");
+                metricsRecordWriter.writeBeanRecord(laneMetrics, outputRecord, laneStrategy);
+
+                processResults.add(uploadMetric(
+                        "/seq/lims/datawh/dev/dragen/demultiplex_lane_metric.ctl", outputRecord));
+
+                boolean failed = false;
+                for (ProcessResult processResult : processResults) {
+                    if (processResult.getExitValue() != 0) {
+                        failed = true;
+                        if (processResult.hasOutput()) {
+                            log.info(processResult.getOutput().getString());
+                        }
                     }
-                } else {
-                    task.setStatus(Status.FAILED);
                 }
+
+                task.setStatus(failed ? Status.FAILED : Status.COMPLETE);
             } catch (CsvDataTypeMismatchException e) {
                 String errMsg = "Data type mismatch";
                 log.error(errMsg, e);
@@ -174,10 +187,10 @@ public class DemultiplexMetricsTaskHandler extends AbstractTaskHandler {
     }
 
     @DaoFree
-    public List<SequencingDemultiplexMetric> createSequencingRunMetricDaoFree(DemultiplexState demultiplexState,
-                                                                              MessageCollection messageCollection,
-                                                                              DragenReplayInfo dragenReplayInfo,
-                                                                              List<DemultiplexStats> demultiplexStats) {
+    public Pair<List<DemultiplexSampleMetric>, List<DemultiplexLaneMetric>> createSequencingRunMetricDaoFree(DemultiplexState demultiplexState,
+                                                                                                                   MessageCollection messageCollection,
+                                                                                                                   DragenReplayInfo dragenReplayInfo,
+                                                                                                                   List<DemultiplexStats> demultiplexStats) {
         Map<String, Set<Integer>> mapSampleToLanes = new HashMap<>();
 
         RunCartridge flowcell = demultiplexState.getRun().getSampleCartridge();
@@ -202,21 +215,26 @@ public class DemultiplexMetricsTaskHandler extends AbstractTaskHandler {
         }
 
         // Verify that the demultiplex stat is in seq run
-        List<SequencingDemultiplexMetric> sequencingMetrics = new ArrayList<>();
+        List<DemultiplexSampleMetric> sequencingMetrics = new ArrayList<>();
+
+
+        Map<Integer, Long> mapLaneToUndeterminedReads = new HashMap<>();
+        Map<Integer, DemultiplexLaneMetric> mapLaneToLaneMetric = new HashMap<>();
+        Map<Integer, Long> mapLaneToReads = new HashMap<>();
         for (DemultiplexStats stat: demultiplexStats) {
-            if (stat.getSampleID().equals("Undetermined")) {
-                // TODO JW handle undetermines
-                continue;
-            }
             if (!mapSampleToLanes.containsKey(stat.getSampleID())) {
                 messageCollection.addError("Unexpected Sample ID in Demultiplex Stats file " + stat.getSampleID());
             } else if (!mapSampleToLanes.get(stat.getSampleID()).contains(stat.getLane())) {
                 messageCollection.addError("Unexpected lane in Demultiplex Stats file " + stat.getLane());
             } else {
                 int lane = stat.getLane();
+                if (stat.getSampleID().equals("Undetermined")) {
+                    mapLaneToUndeterminedReads.put(lane,  stat.getNumberOfReads());
+                    continue;
+                }
                 String sampleAlias = stat.getSampleID();
 
-                SequencingDemultiplexMetric sequencingMetric = new SequencingDemultiplexMetric(lane, sampleAlias);
+                DemultiplexSampleMetric sequencingMetric = new DemultiplexSampleMetric(lane, sampleAlias);
                 sequencingMetric.setRunName(demultiplexState.getRun().getRunName());
                 sequencingMetric.setRunDate(demultiplexState.getRun().getRunDate());
                 sequencingMetric.setFlowcell(demultiplexState.getRun().getSampleCartridge().getLabel());
@@ -234,10 +252,31 @@ public class DemultiplexMetricsTaskHandler extends AbstractTaskHandler {
                 sequencingMetric.setNumberOfPerfectReads(stat.getNumberOfPerfectIndexReads());
                 sequencingMetric.setNumberOfOneMismatchIndexReads(stat.getNumberOfOneMismatchIndexreads());
                 sequencingMetrics.add(sequencingMetric);
+
+                if (!mapLaneToReads.containsKey(lane)) {
+                    mapLaneToReads.put(lane, 0L);
+                    DemultiplexLaneMetric laneMetric = new DemultiplexLaneMetric();
+                    laneMetric.setRunName(demultiplexState.getRun().getRunName());
+                    laneMetric.setRunDate(demultiplexState.getRun().getRunDate());
+                    laneMetric.setFlowcell(demultiplexState.getRun().getSampleCartridge().getLabel());
+                    laneMetric.setDragenVersion(dragenReplayInfo.getSystem().getDragenVersion());
+                    laneMetric.setAnalysisNode(dragenReplayInfo.getSystem().getNodename());
+                    laneMetric.setAnalysisName(demultiplexState.getStateName());
+                    mapLaneToLaneMetric.put(lane, laneMetric);
+                }
+                mapLaneToReads.put(lane, mapLaneToReads.get(lane) + stat.getNumberOfReads());
             }
         }
 
-        return sequencingMetrics;
+        for (Map.Entry<Integer, Long> undeterminedEntry: mapLaneToUndeterminedReads.entrySet()) {
+            int lane = undeterminedEntry.getKey();
+            Long mappedReads = mapLaneToReads.get(lane);
+            Long undeterminedReads = mapLaneToUndeterminedReads.get(lane);
+            double orphanRate = mappedReads / undeterminedReads;
+            mapLaneToLaneMetric.get(lane).setOrphanRate(new BigDecimal(orphanRate));
+        }
+
+        return Pair.of(sequencingMetrics, new ArrayList<>(mapLaneToLaneMetric.values()));
     }
 
     public List<DemultiplexStats> getDemultiplexStats() {

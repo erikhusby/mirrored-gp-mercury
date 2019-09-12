@@ -128,8 +128,12 @@ public abstract class State {
         this.finiteStateMachine = finiteStateMachine;
     }
 
-    public void OnEnter() {
+    public void onEnter() {
 
+    }
+
+    public boolean onExit() {
+        return true;
     }
 
     public Optional<Task> getExitTask() {

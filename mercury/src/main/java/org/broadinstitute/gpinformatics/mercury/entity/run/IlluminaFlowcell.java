@@ -63,46 +63,51 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         NO
     }
 
+    public enum ReverseComplement {
+        YES,
+        NO
+    }
+
     /**
      * See the Google doc "Illumina Flowcell Suffix Guide".
      */
     public enum FlowcellType {
         MiSeqFlowcell("Flowcell1Lane", "MiSeq Flowcell", VesselGeometry.FLOWCELL1x1, "Illumina MiSeq", "^A\\w{4}$",
                 "MiSeq", CreateFields.IssueType.MISEQ, LabBatch.LabBatchType.MISEQ, CreateFct.YES, "MiSeq",
-                LoadFromColumn.NO),
+                LoadFromColumn.NO, ReverseComplement.NO),
         HiSeqFlowcell("Flowcell8Lane", "HiSeq 2000 Flowcell", VesselGeometry.FLOWCELL1x8, "Illumina HiSeq 2000",
                 "^\\w+(AB|AC)..$", "HiSeq", CreateFields.IssueType.HISEQ_2000, LabBatch.LabBatchType.FCT, CreateFct.YES,
-                "HiSeq 2000", LoadFromColumn.NO),
+                "HiSeq 2000", LoadFromColumn.NO, ReverseComplement.NO),
         HiSeq2500Flowcell("Flowcell2Lane", "HiSeq 2500 Rapid Run Flowcell", VesselGeometry.FLOWCELL1x2,
                 "Illumina HiSeq 2500", "^\\w+(AD|AM|BC)..$", "HiSeq", CreateFields.IssueType.HISEQ_2500_RAPID_RUN,
-                LabBatch.LabBatchType.FCT, CreateFct.YES, "HiSeq 2500 Rapid Run", LoadFromColumn.NO),
+                LabBatch.LabBatchType.FCT, CreateFct.YES, "HiSeq 2500 Rapid Run", LoadFromColumn.NO, ReverseComplement.NO),
         HiSeq2500HighOutputFlowcell("Flowcell8Lane2500", "HiSeq 2500 High Output Flowcell", VesselGeometry.FLOWCELL1x8,
                 "Illumina HiSeq 2500", "^\\w+AN..$", "HiSeq", CreateFields.IssueType.HISEQ_2500_HIGH_OUTPUT,
-                LabBatch.LabBatchType.FCT, CreateFct.YES, "HiSeq 2500 High Output", LoadFromColumn.NO),
+                LabBatch.LabBatchType.FCT, CreateFct.YES, "HiSeq 2500 High Output", LoadFromColumn.NO, ReverseComplement.NO),
         HiSeq4000Flowcell("Flowcell8Lane4000", "HiSeq 4000 Flowcell", VesselGeometry.FLOWCELL1x8, "Illumina HiSeq 4000",
                 "^\\w+BB..$", "HiSeq", CreateFields.IssueType.HISEQ_4000, LabBatch.LabBatchType.FCT, CreateFct.YES,
-                "HiSeq 4000", LoadFromColumn.NO),
+                "HiSeq 4000", LoadFromColumn.NO, ReverseComplement.YES),
         HiSeqX10Flowcell("Flowcell8LaneX10", "HiSeq X 10 Flowcell", VesselGeometry.FLOWCELL1x8, "Illumina HiSeq X 10",
                 "^\\w+(CC|AL)..$", "HiSeq", CreateFields.IssueType.HISEQ_X_10, LabBatch.LabBatchType.FCT, CreateFct.YES,
-                "HiSeq X 10", LoadFromColumn.NO),
+                "HiSeq X 10", LoadFromColumn.NO, ReverseComplement.YES),
         NovaSeqFlowcell("Flowcell2LaneNovaS2", "NovaSeq Flowcell S2", VesselGeometry.FLOWCELL1x2, "Illumina NovaSeq",
                 "^\\w+DM..$", "NovaSeq", CreateFields.IssueType.NOVASEQ, LabBatch.LabBatchType.FCT, CreateFct.YES,
-                "NovaSeq S2", LoadFromColumn.YES),
+                "NovaSeq S2", LoadFromColumn.YES, ReverseComplement.NO),
         NovaSeqS1Flowcell("Flowcell2LaneNovaS1", "NovaSeq S1 Flowcell", VesselGeometry.FLOWCELL1x2, "Illumina NovaSeq",
                 "^\\w+DR..$", "NovaSeq", CreateFields.IssueType.NOVASEQ_S1, LabBatch.LabBatchType.FCT, CreateFct.YES,
-                "NovaSeq S1", LoadFromColumn.YES),
+                "NovaSeq S1", LoadFromColumn.YES, ReverseComplement.NO),
         NovaSeqS4Flowcell("Flowcell4LaneNova", "NovaSeq S4 Flowcell", VesselGeometry.FLOWCELL1x4, "Illumina NovaSeq",
                 "^\\w+DS..$", "NovaSeq", CreateFields.IssueType.NOVASEQ_S4, LabBatch.LabBatchType.FCT, CreateFct.YES,
-                "NovaSeq S4", LoadFromColumn.YES),
+                "NovaSeq S4", LoadFromColumn.YES, ReverseComplement.NO),
         NovaSeqSPFlowcell("Flowcell2LaneNovaSP", "NovaSeq SP Flowcell", VesselGeometry.FLOWCELL1x2, "Illumina NovaSeq",
                 // NovaSeq S1 and SP have the same barcode suffix.
                 "^\\w+DR..$", "NovaSeq", CreateFields.IssueType.NOVASEQ_SP, LabBatch.LabBatchType.FCT, CreateFct.YES,
-                "NovaSeq SP", LoadFromColumn.YES),
+                "NovaSeq SP", LoadFromColumn.YES, ReverseComplement.NO),
         NextSeqFlowcell("Flowcell4LaneNextSeq", "NextSeq Flowcell", VesselGeometry.FLOWCELL1x4, "Illumina NextSeq",
                 "^\\w+BG..$", "NovaSeq", CreateFields.IssueType.NEXTSEQ, LabBatch.LabBatchType.FCT, CreateFct.YES,
-                "NextSeq", LoadFromColumn.NO),
+                "NextSeq", LoadFromColumn.NO, ReverseComplement.YES),
         OtherFlowcell("FlowcellUnknown", "Unknown Flowcell", VesselGeometry.FLOWCELL1x2, "Unknown Model", ".*", null,
-                null, null, CreateFct.NO, "Unknown", LoadFromColumn.NO);
+                null, null, CreateFct.NO, "Unknown", LoadFromColumn.NO, ReverseComplement.NO);
 
         /**
          * The sequencer model (think vendor/make/model)
@@ -153,6 +158,10 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
 
         private LoadFromColumn loadFromColumn;
 
+        /** Whether the Sample Sheet will require the Reverse Complement of i5 index due to Read 2 being performed
+         *  after read 2 synthesis **/
+        private final ReverseComplement reverseComplement;
+
         /**
          * Creates a FlowcellType with an automation name, display name, and geometry.
          * @param automationName    The name that will be supplied by automation scripts
@@ -168,9 +177,9 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
          * @param loadFromColumn    Indicates whether flowcell is loaded from one column or from one row.
          */
         FlowcellType(String automationName, String displayName, VesselGeometry vesselGeometry, String model,
-                String flowcellTypeRegex, String sequencingStationName, CreateFields.IssueType issueType,
-                LabBatch.LabBatchType batchType, CreateFct createFct, String externalUiName,
-                @NotNull LoadFromColumn loadFromColumn) {
+                     String flowcellTypeRegex, String sequencingStationName, CreateFields.IssueType issueType,
+                     LabBatch.LabBatchType batchType, CreateFct createFct, String externalUiName,
+                     @NotNull LoadFromColumn loadFromColumn, ReverseComplement reverseComplement) {
             this.automationName = automationName;
             this.displayName = displayName;
             this.vesselGeometry = vesselGeometry;
@@ -182,6 +191,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
             this.flowcellTypeRegex = Pattern.compile(flowcellTypeRegex);
             this.externalUiName = externalUiName;
             this.loadFromColumn = loadFromColumn;
+            this.reverseComplement = reverseComplement;
         }
 
         /**
@@ -334,6 +344,10 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
 
         public boolean isLoadFromColumn() {
             return loadFromColumn == LoadFromColumn.YES;
+        }
+
+        public boolean isReverseComplement() {
+            return reverseComplement == ReverseComplement.YES;
         }
     }
 
