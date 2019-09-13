@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.state;
 
+import org.broadinstitute.gpinformatics.mercury.control.hsa.FastQListBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AlignmentTask;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
@@ -26,16 +27,23 @@ public class AlignmentState extends State {
             , inverseJoinColumns = {@JoinColumn(name = "MERCURY_SAMPLE")})
     private Set<MercurySample> mercurySamples = new HashSet<>();
 
+    @ManyToMany(cascade = {CascadeType.PERSIST})
+    @JoinTable(schema = "mercury", name = "src_demultiplix_state"
+            , joinColumns = {@JoinColumn(name = "DEMULTIPLEX_STATE")}
+            , inverseJoinColumns = {@JoinColumn(name = "SEQUENCING_RUN_CHAMBER")})
+    private Set<IlluminaSequencingRunChamber> sequencingRunChambers = new HashSet<>();
+
     public AlignmentState() {
     }
 
-    public AlignmentState(String name, FiniteStateMachine finiteStateMachine, Set<MercurySample> mercurySamples) {
+    public AlignmentState(String name, FiniteStateMachine finiteStateMachine, Set<MercurySample> mercurySamples,
+                          Set<IlluminaSequencingRunChamber> sequencingRunChambers) {
         super(name, finiteStateMachine);
 
         this.mercurySamples = mercurySamples;
+        this.sequencingRunChambers = sequencingRunChambers;
     }
 
-    // TODO Don't enter
     @Override
     public void onEnter() {
         for (Task t: getTasks()) {
@@ -44,11 +52,18 @@ public class AlignmentState extends State {
                 if (!alignmentTask.getOutputDir().exists()) {
                     alignmentTask.getOutputDir().mkdir();
                 }
+                if (!alignmentTask.getFastQList().exists()) {
+                    FastQListBuilder fastQListBuilder = new FastQListBuilder();
+                }
             }
         }
     }
 
     public Set<MercurySample> getMercurySamples() {
         return mercurySamples;
+    }
+
+    public Set<IlluminaSequencingRunChamber> getSequencingRunChambers() {
+        return sequencingRunChambers;
     }
 }

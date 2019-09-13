@@ -161,6 +161,7 @@
             <column name="predicted_sex_chr_ploidy" type="VARCHAR2(55)" />
             <column name="capture_spec_target_region" type="VARCHAR2(55)" />
             <column name="dragen_mapping_rate" type="number(5,0)" />
+            <column name="est_sample_contamination" type="number(15,3)"/>
             <column name="mapping_run_metric_id" type="number(19,0)">
                 <constraints nullable="false" />
             </column>

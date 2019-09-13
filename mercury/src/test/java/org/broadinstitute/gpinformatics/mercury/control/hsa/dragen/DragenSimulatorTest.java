@@ -315,7 +315,7 @@ public class DragenSimulatorTest extends BaseEventTest {
         // Demux to Alignment Transition
         State demultiplex = new DemultiplexState(demultiplexAnalysisName, run.getSequencingRunChambers(), finiteStateMachine);
         states.add(demultiplex);
-        State alignment = new AlignmentState("Alignment", finiteStateMachine, new HashSet<>());
+        State alignment = new AlignmentState("Alignment", finiteStateMachine, new HashSet<>(), new HashSet<>());
         states.add(alignment);
         Transition demuxToAlignment = new Transition("Demultiplexing To Alignment for " + run.getRunName(), finiteStateMachine);
         demuxToAlignment.setFromState(demultiplex);

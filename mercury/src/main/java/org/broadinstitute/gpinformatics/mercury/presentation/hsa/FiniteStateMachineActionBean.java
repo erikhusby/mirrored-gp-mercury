@@ -166,6 +166,7 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
                     illuminaSequencingRun, null, runName, mapIdToMercurySample.keySet(), messageCollection);
         } catch (Exception e) {
             addGlobalValidationError(e.getMessage());
+            logger.error("Failed to create machine", e);
             return new ForwardResolution(getContext().getSourcePage());
         }
 

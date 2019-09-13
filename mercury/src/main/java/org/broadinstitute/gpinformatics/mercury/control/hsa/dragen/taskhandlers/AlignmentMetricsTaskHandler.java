@@ -89,17 +89,16 @@ public class AlignmentMetricsTaskHandler extends AbstractMetricsTaskHandler {
                     continue;
                 }
 
-                String outputFilePrefix =
-                        DragenTaskBuilder
-                                .parseCommandFromArgument(DragenTaskBuilder.OUTPUT_FILE_PREFIX, commandLineArgument);
+                String outputFilePrefix =  DragenTaskBuilder.parseCommandFromArgument(
+                        DragenTaskBuilder.OUTPUT_FILE_PREFIX, commandLineArgument);
                 if (outputFilePrefix == null) {
                     task.setErrorMessage("Failed to parse output file prefix from task " + alignmentTask);
                     task.setStatus(Status.FAILED);
                     continue;
                 }
 
-                String fastQFilePath =
-                        DragenTaskBuilder.parseCommandFromArgument(DragenTaskBuilder.FASTQ_LIST, commandLineArgument);
+                String fastQFilePath = DragenTaskBuilder.parseCommandFromArgument(
+                        DragenTaskBuilder.FASTQ_LIST, commandLineArgument);
                 if (fastQFilePath == null) {
                     task.setErrorMessage("Failed to parse fastq list file from task " + alignmentTask);
                     task.setStatus(Status.FAILED);

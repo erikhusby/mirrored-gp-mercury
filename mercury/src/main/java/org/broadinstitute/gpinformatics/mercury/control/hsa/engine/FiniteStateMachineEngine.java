@@ -5,6 +5,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.StateMachineDao;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.StateManager;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.TaskManager;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerContext;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine;
@@ -13,8 +14,6 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Transition;
 
-import javax.annotation.Resource;
-import javax.ejb.EJBContext;
 import javax.ejb.Stateful;
 import javax.ejb.TransactionManagement;
 import javax.ejb.TransactionManagementType;
@@ -37,10 +36,10 @@ public class FiniteStateMachineEngine {
     private TaskManager taskManager;
 
     @Inject
-    private StateMachineDao stateMachineDao;
+    private StateManager stateManager;
 
-    @Resource
-    private EJBContext ejbContext;
+    @Inject
+    private StateMachineDao stateMachineDao;
 
     public FiniteStateMachineEngine() {
     }
@@ -49,7 +48,7 @@ public class FiniteStateMachineEngine {
         this.context = context;
     }
 
-    public void resumeMachine(FiniteStateMachine stateMachine) throws SystemException {
+    public void resumeMachine(FiniteStateMachine stateMachine) {
 
         if (stateMachine.getActiveStates().isEmpty()) {
             throw new RuntimeException("No active states for " + stateMachine);
@@ -70,13 +69,14 @@ public class FiniteStateMachineEngine {
 
             if (state.isStartState() && stateMachine.getDateStarted() == null) {
                 stateMachine.setDateStarted(new Date());
-                state.onEnter();
-                for (Task task: state.getTasks()) {
-                    try {
-                        taskManager.fireEvent(task, context);
-                    } catch (Exception e) {
-                        log.error("Error starting machine tasks " + task.getTaskName(), e);
-                        task.setStatus(Status.SUSPENDED);
+                if (stateManager.handleOnEnter(state)) {
+                    for (Task task : state.getTasks()) {
+                        try {
+                            taskManager.fireEvent(task, context);
+                        } catch (Exception e) {
+                            log.error("Error starting machine tasks " + task.getTaskName(), e);
+                            task.setStatus(Status.SUSPENDED);
+                        }
                     }
                 }
             }
@@ -115,13 +115,14 @@ public class FiniteStateMachineEngine {
                     State toState = transition.getToState();
                     toState.setAlive(true);
                     toState.setStartTime(new Date());
-                    toState.onEnter();
-                    for (Task task: toState.getTasks()) {
-                        try {
-                            taskManager.fireEvent(task, context);
-                        } catch (Exception e) {
-                            log.error("Error firing next task " + task.getTaskName(), e);
-                            task.setStatus(Status.SUSPENDED);
+                    if (stateManager.handleOnEnter(toState)) {
+                        for (Task task : toState.getTasks()) {
+                            try {
+                                taskManager.fireEvent(task, context);
+                            } catch (Exception e) {
+                                log.error("Error firing next task " + task.getTaskName(), e);
+                                task.setStatus(Status.SUSPENDED);
+                            }
                         }
                     }
                 }

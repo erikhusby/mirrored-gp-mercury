@@ -104,6 +104,10 @@ public class AlignmentTask extends ProcessTask {
     }
 
     public File getFastQList() {
+        if (fastQList == null) {
+            fastQList = new File(DragenTaskBuilder.parseCommandFromArgument(
+                    DragenTaskBuilder.FASTQ_LIST, getCommandLineArgument()));
+        }
         return fastQList;
     }
 

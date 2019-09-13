@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 @Table(schema = "mercury")
 public class FiniteStateMachine {
 
-    private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd--HH-mm-ss");
+    public static final SimpleDateFormat DEMUX_FOLDER_FORMAT = new SimpleDateFormat("yyyy-MM-dd--HH-mm-ss");
 
     @Id
     @SequenceGenerator(name = "SEQ_FINITE_STATE_MACHINE", schema = "mercury", sequenceName = "SEQ_FINITE_STATE_MACHINE")
@@ -149,7 +149,7 @@ public class FiniteStateMachine {
     }
 
     public String getDateQueuedString() {
-        return sdf.format(getDateQueued());
+        return DEMUX_FOLDER_FORMAT.format(getDateQueued());
     }
 
     public boolean isAlive() {
