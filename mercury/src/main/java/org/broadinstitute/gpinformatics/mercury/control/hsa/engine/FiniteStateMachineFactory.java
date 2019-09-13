@@ -27,7 +27,9 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Transition;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
+import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.hsa.AlignmentActionBean;
@@ -143,17 +145,24 @@ public class FiniteStateMachineFactory {
         transitions.add(seqToDemux);
 
         // Alignment
-        Set<MercurySample> mercurySamples = sampleSheet.getData().getMercurySamples();
-        AlignmentState alignmentState = new AlignmentState("Alignment_" + runName, finiteStateMachine, mercurySamples);
-        states.add(alignmentState);
-
         Set<String> samplesAligned = new HashSet<>();
         for (SampleSheetBuilder.SampleData sampleData: sampleSheet.getData().getMapSampleNameToData().values()) {
             if (!samplesAligned.add(sampleData.getSampleName())) {
                 continue;
             }
+            MercurySample mercurySample =
+                    sampleSheet.getData().getMapSampleToMercurySample().get(sampleData.getSampleName());
+
+            IlluminaSequencingRunChamber runChamber = run.getSequencingRunChambers().stream()
+                    .filter(seq -> seq.getLaneNumber() == sampleData.getLane())
+                    .findFirst().get();
+
+            AlignmentState alignmentState = new AlignmentState("Alignment_" + runName, finiteStateMachine,
+                    Collections.singleton(mercurySample), Collections.singleton(runChamber  ));
+            states.add(alignmentState);
+
             File referenceFile = new File("/staging/reference/hg38/v1");
-            File fastQList = dragenFolderUtil.getFastQListFile();
+            File fastQList = dragenFolderUtil.getFastQReadGroupFile(sampleData.getSampleId());
             File outputDir = new File(dragenFolderUtil.getFastQFolder(), sampleData.getSampleName());
             File intermediateResults = new File("/staging/out");
             AlignmentTask alignmentTask = new AlignmentTask(referenceFile, fastQList, sampleData.getSampleName(),
@@ -163,17 +172,15 @@ public class FiniteStateMachineFactory {
             alignmentState.addTask(alignmentTask);
             samplesAligned.add(sampleData.getSampleName());
 
-            // TODO Fingerprint for each alignment
+            AlignmentMetricsTask alignmentMetricsTask = new AlignmentMetricsTask();
+            alignmentMetricsTask.setTaskName("Alignment_Metric_" + runName);
+            alignmentState.addExitTask(alignmentMetricsTask);
+
+            Transition demuxToAlignment = new Transition("Demultiplexing To Alignment", finiteStateMachine);
+            demuxToAlignment.setFromState(demultiplex);
+            demuxToAlignment.setToState(alignmentState);
+            transitions.add(demuxToAlignment);
         }
-
-        AlignmentMetricsTask alignmentMetricsTask = new AlignmentMetricsTask();
-        alignmentMetricsTask.setTaskName("Alignment_Metric_" + runName);
-        alignmentState.addExitTask(alignmentMetricsTask);
-
-        Transition demuxToAlignment = new Transition("Demultiplexing To Alignment", finiteStateMachine);
-        demuxToAlignment.setFromState(demultiplex);
-        demuxToAlignment.setToState(alignmentState);
-        transitions.add(demuxToAlignment);
 
         finiteStateMachine.setStatus(Status.RUNNING);
         finiteStateMachine.setStates(states);

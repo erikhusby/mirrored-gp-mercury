@@ -206,9 +206,9 @@ public class FiniteStateMachineContainerTest extends Arquillian {
         Response response = solexaRunResource.createRun(solexaRunBean, uriInfo);
         System.out.println(response);
 
-        /*SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+        /*SimpleDateFormat DEMUX_FOLDER_FORMAT = new SimpleDateFormat("yyyyMMdd");
         ReadStructureRequest req = new ReadStructureRequest();
-        req.setRunBarcode(flowcell + sdf.format(new Date()));
+        req.setRunBarcode(flowcell + DEMUX_FOLDER_FORMAT.format(new Date()));
         req.setRunName(runBarcode);
         req.setImagedArea(999.293923);
         req.setActualReadStructure("76T8B8B76T");

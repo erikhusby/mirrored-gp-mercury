@@ -70,12 +70,10 @@ public class FingerprintTaskHandler extends AbstractTaskHandler {
 
         FingerprintTask fpTask = OrmUtil.proxySafeCast(picardTask, FingerprintTask.class);
 
-        // TODO get name somehow or just always use this for now
-        // TODO not in a transaction
-        // TODO Remove
         FingerprintBean fingerprintBean = handleTaskDaoFree(fpTask, fingerprintState.getMercurySample());
         if (fingerprintBean != null) {
-            Fingerprint fingerprint = fingerprintEjb.handleNewFingerprint(fingerprintBean, fingerprintState.getMercurySample());
+            // TODO I don't know what this will do
+            Fingerprint fingerprint = null;// fingerprintEjb.handleNewFingerprint(fingerprintBean, fingerprintState.getMercurySample());
 
             if (fingerprint == null) {
                 fpTask.setErrorMessage("Failed to create fingerprint for " + fingerprintState.getMercurySample().getSampleKey());

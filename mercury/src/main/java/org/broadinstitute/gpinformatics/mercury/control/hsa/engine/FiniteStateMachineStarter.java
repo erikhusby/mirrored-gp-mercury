@@ -104,11 +104,7 @@ public class FiniteStateMachineStarter {
                         for (FiniteStateMachine stateMachine : stateMachineDao
                                 .findByStatuses(Arrays.asList(Status.RUNNING, Status.QUEUED))) {
                             engine.setContext(schedulerContext);
-                            try {
-                                engine.resumeMachine(stateMachine);
-                            } catch (SystemException e) {
-                                log.error("Error starting state machines", e);
-                            }
+                            engine.resumeMachine(stateMachine);
                         }
                     } catch (Exception e) {
                         log.error("Error occured when resuming state machines ", e);

@@ -91,7 +91,7 @@ public class SampleSheetBuilder {
                     continue;
                 }
 
-                data.addSample(laneSampleInstance, mercurySample, laneNum, isReverseComplement);
+                data.addSample(laneSampleInstance, mercurySample, laneNum, isReverseComplement, flowcell.getLabel());
                 if (productOrderSample != null) {
                     header = createHeader(laneSampleInstance);
                 }
@@ -119,7 +119,7 @@ public class SampleSheetBuilder {
                 mercurySample = laneSampleInstance.getRootOrEarliestMercurySample();
             }
 
-            data.addSample(laneSampleInstance, mercurySample, laneNum, isReverseComplement);
+            data.addSample(laneSampleInstance, mercurySample, laneNum, isReverseComplement, flowcell.getLabel());
             if (productOrderSample != null) {
                 header = createHeader(laneSampleInstance);
             }
@@ -191,6 +191,7 @@ public class SampleSheetBuilder {
 
         private Boolean dualIndex;
         private Map<String, SampleData> mapSampleNameToData = new HashMap<>();
+        private Map<String, MercurySample> mapSampleToMercurySample = new HashMap<>();
         private Set<MercurySample> mercurySamples = new HashSet<>();
 
         public Data() {
@@ -207,7 +208,7 @@ public class SampleSheetBuilder {
         }
 
         public void addSample(SampleInstanceV2 sampleInstanceV2, MercurySample mercurySample, int lane,
-                              boolean isReverseComplement) {
+                              boolean isReverseComplement, String flowcell) {
             String pdoSampleName;
             ProductOrderSample productOrderSample = sampleInstanceV2.getSingleProductOrderSample();
             if (productOrderSample != null) {
@@ -227,22 +228,24 @@ public class SampleSheetBuilder {
                 createSubHeader();
             }
 
-            // TODO Grab the correct index.
             SampleData data = null;
+
+            String rgSmId = pdoSampleName + "." + flowcell + "." + lane;
             MolecularIndex p7 = indexes.get(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7);
             if (dualIndex) {
                 MolecularIndex p5 = indexes.get(MolecularIndexingScheme.IndexPosition.ILLUMINA_P5);
                 String p5Seq = p5.getSequence();
                 if (isReverseComplement) {
-
+                    p5Seq = DNAUtils.reverseComplement(p5Seq);
                 }
-                data = new SampleData(pdoSampleName, pdoSampleName, lane, p7.getSequence(), p5Seq);
-                appendLine(pdoSampleName, pdoSampleName, String.valueOf(lane), p7.getSequence(), p5Seq);
+                data = new SampleData(rgSmId, pdoSampleName, lane, p7.getSequence(), p5Seq);
+                appendLine(rgSmId, pdoSampleName, String.valueOf(lane), p7.getSequence(), p5Seq);
             } else {
-                data = new SampleData(pdoSampleName, pdoSampleName, lane, p7.getSequence(), null);
-                appendLine(pdoSampleName, pdoSampleName, String.valueOf(lane), p7.getSequence());
+                data = new SampleData(rgSmId, pdoSampleName, lane, p7.getSequence(), null);
+                appendLine(rgSmId, pdoSampleName, String.valueOf(lane), p7.getSequence());
             }
             mapSampleNameToData.put(pdoSampleName, data);
+            mapSampleToMercurySample.put(pdoSampleName, mercurySample);
         }
 
         public Map<String, SampleData> getMapSampleNameToData() {
@@ -251,6 +254,10 @@ public class SampleSheetBuilder {
 
         public Set<MercurySample> getMercurySamples() {
             return mercurySamples;
+        }
+
+        public Map<String, MercurySample> getMapSampleToMercurySample() {
+            return mapSampleToMercurySample;
         }
     }
 

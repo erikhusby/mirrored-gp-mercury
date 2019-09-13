@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.DemultiplexState;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -25,7 +26,7 @@ public class IlluminaSequencingRunChamber extends SequencingRunChamber {
     private IlluminaSequencingRun illuminaSequencingRun;
 
     @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "sequencingRunChambers")
-    private Set<DemultiplexState> demultiplexStates = new HashSet<>();
+    private Set<State> states = new HashSet<>();
 
     private int laneNumber;
 
@@ -59,7 +60,7 @@ public class IlluminaSequencingRunChamber extends SequencingRunChamber {
         this.actualReadStructure = actualReadStructure;
     }
 
-    public Set<DemultiplexState> getDemultiplexStates() {
-        return demultiplexStates;
+    public Set<State> getStates() {
+        return states;
     }
 }

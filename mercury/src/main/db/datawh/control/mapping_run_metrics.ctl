@@ -58,6 +58,7 @@ TRAILING NULLCOLS
   provided_sex_chr_ploidy,
   predicted_sex_chr_ploidy,
   capture_spec_target_region,
+  est_sample_contamination,
   dragen_mapping_rate,
   mapping_run_metric_id "SEQ_MAP_RUN_METRIC.NEXTVAL"
 )
