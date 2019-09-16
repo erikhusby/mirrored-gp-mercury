@@ -401,11 +401,11 @@ public class BillingAdaptor implements Serializable {
 
     void logBilling(String workId, QuoteImportItem quoteImportItem, QuotePriceItem quotePriceItem,
                     Set<String> billedPdoKeys, String sapDocumentID, String billingSessionId) {
-        String priceItemName = "";
+        String productOrPriceItemName = "";
         if(quotePriceItem == null) {
-            priceItemName = quoteImportItem.getProduct().getProductName();
+            productOrPriceItemName = quoteImportItem.getProduct().getProductName();
         } else {
-            priceItemName = quotePriceItem.getName();
+            productOrPriceItemName = quotePriceItem.getName();
         }
         String billingIdText;
         if (quoteImportItem.isSapOrder()) {
@@ -419,7 +419,7 @@ public class BillingAdaptor implements Serializable {
                 BILLING_DATE_FORMAT.format(quoteImportItem.getWorkCompleteDate()),
                 BILLING_DATETIME_FORMAT.format(new Date()),
                 quoteImportItem.getQuantity(),
-                priceItemName,
+                productOrPriceItemName,
                 quoteImportItem.getNumSamples(),
                 billedPdoKeys);
         log.info(billingLogText);
