@@ -3,6 +3,9 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
@@ -600,6 +603,11 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.useAutomatedBilling = useAutomatedBilling;
     }
 
+    /**
+     * @deprecated This column will soon be removed. Please call getPipelineDataType() or getPipelineDataTypeString()
+     *             instead.
+     */
+    @Deprecated
     public String getAggregationDataType() {
         return aggregationDataType;
     }

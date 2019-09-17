@@ -814,7 +814,7 @@ public class LabBatchEjb {
                         bucketEntries.add(bucketEntry);
                         // Exome Express currently does strange things with multiple LCSETs at shearing, so
                         // limit this logic to WGS.
-                        if (Objects.equals(bucketEntry.getProductOrder().getProduct().getAggregationDataType(),
+                        if (Objects.equals(bucketEntry.getProductOrder().getProduct().getPipelineDataTypeString(),
                                 Aggregation.DATA_TYPE_WGS)) {
                             // Microbial is also WGS but LCSETs are made up of multiple racks
                             // Limit to just lab batches with total size less than 96

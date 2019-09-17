@@ -352,7 +352,7 @@ public class ZimsIlluminaRunFactory {
                     referenceSequence = project.getReferenceSequenceKey();
                 }
                 if (aggregationDataType == null) {
-                    aggregationDataType = product.getAggregationDataType();
+                    aggregationDataType = product.getPipelineDataTypeString();
                 }
                 if (insertSize == null && product.getInsertSize() != null) {
                     insertSize = String.valueOf(product.getInsertSize());
