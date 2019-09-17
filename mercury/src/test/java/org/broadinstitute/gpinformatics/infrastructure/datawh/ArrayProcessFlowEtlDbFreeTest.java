@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.apache.commons.collections.map.MultiValueMap;
+import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -24,13 +27,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Field;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 /**
  * dbfree unit test of AbandonVessel and AbandonVesselPosition etl.
@@ -69,8 +66,8 @@ public class ArrayProcessFlowEtlDbFreeTest extends BaseEventTest {
         EasyMock.verify(mocks);
     }
 
-    public void testNotAnInfiniumEvent() throws Exception {
-        LabEvent notAnInfiniumEvent = new LabEvent(LabEventType.A_BASE, new Date(), "OZ", 1l, 1L, "Python Deck");
+    public void testNotAnEventOfInterest() throws Exception {
+        LabEvent notAnInfiniumEvent = new LabEvent(LabEventType.INFINIUM_BUCKET, new Date(), "OZ", 1l, 1L, "Python Deck");
         EasyMock.expect(dao.findById(LabEvent.class, 1L)).andReturn(notAnInfiniumEvent);
         EasyMock.replay(mocks);
 
@@ -115,34 +112,26 @@ public class ArrayProcessFlowEtlDbFreeTest extends BaseEventTest {
         InfiniumEntityBuilder infiniumEntityBuilder = runInfiniumProcess(
                 arrayPlatingEntityBuilder.getArrayPlatingPlate(), "Infinium");
 
-        StaticPlate dnaPlate = arrayPlatingEntityBuilder.getArrayPlatingPlate();
-        PlateWell wellA01 = dnaPlate.getContainerRole().getMapPositionToVessel().get(VesselPosition.A01);
+        LabEvent xstainEvent = infiniumEntityBuilder.getxStainEvents().iterator().next();
 
-        LabEvent bucketEvent = wellA01.getInPlaceLabEvents().iterator().next();
-
-        EasyMock.expect(dao.findById(LabEvent.class, 1L)).andReturn(bucketEvent);
+        EasyMock.expect(dao.findById(LabEvent.class, 1L)).andReturn(xstainEvent);
         EasyMock.replay(mocks);
 
         Collection<String> records = arrayProcessFlowEtl.dataRecords(etlDateStr, false, 1L);
-        Assert.assertEquals(records.size(), 1);
+        Assert.assertEquals(records.size(), 312);
 
-        String[] parts;
-        Iterator<String> iter = records.iterator();
+        MultiValuedMap<String,String> sampleEvents = new HashSetValuedHashMap<>();
+        for( String record : records ) {
+            String[] parts = record.split(",",12);
+            sampleEvents.put( parts[5], parts[7]);
+        }
 
-        // Plating
-        parts = iter.next().split(",",12);
-        Assert.assertEquals( parts[0], etlDateStr);
-        Assert.assertEquals( parts[1], "F");
-        Assert.assertEquals( parts[2], pdoId.toString());
-        Assert.assertEquals( parts[3], arrayBatch.getBatchName());
-        Assert.assertFalse(parts[4].isEmpty(), "A value is expected for sample name.");
-        Assert.assertEquals( parts[4],  parts[5]);
-        // Ignore event ID
-        Assert.assertEquals( parts[7], LabEventType.ARRAY_PLATING_DILUTION.getName());
-        // Ignore event location
-        // Ignore event date
-        // Ignore labVesselId
-        Assert.assertEquals( parts[11], VesselPosition.A01.toString());
+        // 24 samples
+        Assert.assertEquals(sampleEvents.keySet().size(), 24);
+        for( String key : sampleEvents.keys() ) {
+            // 13 events per sample
+            Assert.assertEquals( sampleEvents.get(key).size(), 13 );
+        }
 
         EasyMock.verify(mocks);
     }

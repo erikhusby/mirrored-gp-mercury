@@ -2,9 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
 //import com.jprofiler.api.agent.Controller;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -26,8 +23,8 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -44,7 +41,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResource;
-import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
@@ -52,7 +49,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequenci
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.IndexedPlateFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -93,6 +89,8 @@ import org.testng.annotations.Test;
 import javax.annotation.Nonnull;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -146,9 +144,6 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     private StaticPlateDao staticPlateDao;
 
     @Inject
-    private IndexedPlateFactory indexedPlateFactory;
-
-    @Inject
     private ProductDao productDao;
 
     @Inject
@@ -183,9 +178,6 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
     @Inject
     private BucketEjb bucketEjb;
-
-    @Inject
-    private JiraService jiraService;
 
     @Inject
     private ProductOrderJiraUtil productOrderJiraUtil;
@@ -951,12 +943,15 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
         List<LabBatch> exExReworkLabBatches = new ArrayList<>();
         for (int i = 0; i < numExExLcsets; i++) {
+            ProductOrder productOrder = exExBuilderMapPairs.get(i).getRight().values().iterator().next().
+                    getMercurySamples().iterator().next().getProductOrderSamples().iterator().next().getProductOrder();
             exExReworkLabBatches.add(reworkBatch(exExTestPrefixes.get(i),
-                    exExBuilderMapPairs.get(i).getRight().values().iterator().next(),
-                    exExBuilderMapPairs.get(i).getLeft().getPondRegTubeBarcodes()));
+                    exExBuilderMapPairs.get(i).getLeft().getPondRegTubeBarcodes(), productOrder.getBusinessKey()));
         }
-        LabBatch crspReworkLabBatch = reworkBatch(crspTestPrefix, crspTube,
-                libraryConstructionCrspJaxbBuilder.getPondRegTubeBarcodes());
+        ProductOrder productOrder = crspTube.getMercurySamples().iterator().next().getProductOrderSamples().
+                iterator().next().getProductOrder();
+        LabBatch crspReworkLabBatch = reworkBatch(crspTestPrefix,
+                libraryConstructionCrspJaxbBuilder.getPondRegTubeBarcodes(), productOrder.getBusinessKey());
 
         List<String> reworkTestPrefixes = new ArrayList<>();
         List<String> reworkLabBatchNames = new ArrayList<>();
@@ -993,17 +988,16 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     }
 
     @Nonnull
-    private LabBatch reworkBatch(String crspTestPrefix, BarcodedTube crspTube, List<String> tubeBarcodes)
+    private LabBatch reworkBatch(String crspTestPrefix, List<String> tubeBarcodes, String productOrderKey)
             throws ValidationException {
-        ProductOrder crspProductOrder = crspTube.getMercurySamples().iterator().next().getProductOrderSamples().
-                iterator().next().getProductOrder();
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(productOrderKey);
         Map<String, BarcodedTube> mapBarcodeToCrspPond = barcodedTubeDao.findByBarcodes(tubeBarcodes);
         HashSet<LabVessel> crspPonds = new HashSet<LabVessel>(mapBarcodeToCrspPond.values());
         Collection<ReworkEjb.BucketCandidate> bucketCandidates = new HashSet<>();
         for (LabVessel crspPond : crspPonds) {
             bucketCandidates
                     .add(new ReworkEjb.BucketCandidate(crspPond.getLabel(), crspPond.getSampleNames().iterator().next(),
-                            crspProductOrder));
+                            productOrder));
         }
          reworkEjb.addAndValidateCandidates(bucketCandidates, "", "comment", "thompson", ICE_BUCKET);
 
@@ -1128,6 +1122,9 @@ public class BettaLimsMessageResourceTest extends Arquillian {
             // In JVM
             try {
                 bettalimsMessageResource.storeAndProcess(BettaLimsMessageTestFactory.marshal(bettaLIMSMessage));
+                BarcodedTubeDao barcodedTubeDao = ServiceAccessUtility.getBean(BarcodedTubeDao.class);
+                barcodedTubeDao.flush();
+                barcodedTubeDao.clear();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -1135,14 +1132,12 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
         if (false) {
             // JAX-RS
-            ClientConfig clientConfig = new DefaultClientConfig();
-            JerseyUtils.acceptAllServerCertificates(clientConfig);
+            ClientBuilder clientBuilder = ClientBuilder.newBuilder();
+            JaxRsUtils.acceptAllServerCertificates(clientBuilder);
 
-            response = Client.create(clientConfig).resource(testMercuryUrl + "/rest/bettalimsmessage")
-                    .type(MediaType.APPLICATION_XML_TYPE)
-                    .accept(MediaType.APPLICATION_XML)
-                    .entity(bettaLIMSMessage)
-                    .post(String.class);
+            response = clientBuilder.build().target(testMercuryUrl + "/rest/bettalimsmessage")
+                    .request(MediaType.APPLICATION_XML_TYPE)
+                    .post(Entity.xml(bettaLIMSMessage), String.class);
         }
 
         if (false) {
@@ -1224,15 +1219,13 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     private void sendFile(URL baseUrl, File file) {
         try {
 
-            ClientConfig clientConfig = new DefaultClientConfig();
-            JerseyUtils.acceptAllServerCertificates(clientConfig);
+            ClientBuilder clientBuilder = ClientBuilder.newBuilder();
+            JaxRsUtils.acceptAllServerCertificates(clientBuilder);
 
-            String response = Client.create(clientConfig)
-                    .resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/bettalimsmessage")
-                    .type(MediaType.APPLICATION_XML_TYPE)
-                    .accept(MediaType.APPLICATION_XML)
-                    .entity(file)
-                    .post(String.class);
+            String response = clientBuilder.build()
+                    .target(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/bettalimsmessage")
+                    .request(MediaType.APPLICATION_XML_TYPE)
+                    .post(Entity.xml(file), String.class);
             System.out.println(response);
         } catch (Exception e) {
             System.out.println(e.getMessage());

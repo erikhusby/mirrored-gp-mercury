@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.CustomizationValues;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
@@ -36,12 +37,17 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.sap.entity.quote.QuoteItem;
+import org.broadinstitute.sap.entity.quote.SapQuote;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
@@ -89,7 +95,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("UnusedDeclaration")
 @Entity
@@ -108,12 +117,43 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private static final String REQUISITION_PREFIX = "REQ-";
 
     public static final String IRB_REQUIRED_START_DATE_STRING = "04/01/2014";
+    public static final String QUOTES_CANNOT_BE_USED_FOR_COMMERCIAL_OR_CLINICAL_PRODUCTS =
+        "Broad PI Engaged quotes cannot be used for Commercial or Clinical Products";
+
+    public static OrderAccessType determineOrderType(ProductOrder productOrder, String salesOrganization) {
+        ProductOrder.OrderAccessType orderType = OrderAccessType.BROAD_PI_ENGAGED_WORK;
+        if (productOrder.hasSapQuote()) {
+            if (StringUtils.isNotBlank(salesOrganization)) {
+                orderType = OrderAccessType.fromSalesOrg(salesOrganization);
+            }
+            if ((productOrder.getProduct().isExternalProduct() || productOrder.getProduct().isClinicalProduct()) &&
+                orderType != ProductOrder.OrderAccessType.COMMERCIAL) {
+                throw new RuntimeException(QUOTES_CANNOT_BE_USED_FOR_COMMERCIAL_OR_CLINICAL_PRODUCTS);
+            } else {
+                productOrder.setOrderType(orderType);
+            }
+        } else if (productOrder.hasQuoteServerQuote()) {
+            Optional<Product> typeDeterminant = Optional.ofNullable(productOrder.getProduct());
+            orderType = typeDeterminant.filter(Product::isLLCProduct).map(p -> OrderAccessType.COMMERCIAL)
+                .orElse(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
+        }
+        return orderType;
+    }
 
     public Quote getQuote(QuoteService quoteService) throws QuoteNotFoundException, QuoteServerException {
-        if (cachedQuote == null) {
+        if (cachedQuote == null ||
+            !StringUtils.equals(quoteId,cachedQuote.getAlphanumericId())) {
             cachedQuote = quoteService.getQuoteByAlphaId(quoteId);
         }
         return cachedQuote;
+    }
+
+    public SapQuote getSapQuote(SapIntegrationService sapService) throws SAPIntegrationException {
+        if (cachedSapQuote == null ||
+            !StringUtils.equals(cachedSapQuote.getQuoteHeader().getQuoteNumber(), quoteId)) {
+            cachedSapQuote = sapService.findSapQuote(quoteId);
+        }
+        return cachedSapQuote;
     }
 
     public enum SaveType {CREATING, UPDATING}
@@ -173,6 +213,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus = OrderStatus.Draft;
 
+    @Enumerated(EnumType.STRING)
+    private Product.AggregationParticle defaultAggregationParticle;
     /**
      * Alphanumeric Id
      */
@@ -287,8 +329,17 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Column(name = "REAGENT_DESIGN_KEY", nullable = true, length = 200)
     private String reagentDesignKey;
 
+    @Column(name = "COVERAGE_TYPE_KEY", nullable = true, length = 200)
+    private String coverageTypeKey;
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true,
+            mappedBy = "parentOrderDetail")
+    private Set<SapQuoteItemReference> quoteReferences = new HashSet<>();
+
     @Transient
     private Quote cachedQuote;
+    @Transient
+    private SapQuote cachedSapQuote;
 
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
@@ -338,9 +389,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         if (shareSapOrder & toClone.isSavedInSAP()) {
             cloned.addSapOrderDetail(new SapOrderDetail(toClone.latestSapOrderDetail().getSapOrderNumber(),
                     toClone.latestSapOrderDetail().getPrimaryQuantity(), toClone.latestSapOrderDetail().getQuoteId(),
-                    toClone.latestSapOrderDetail().getCompanyCode(),
-                    toClone.latestSapOrderDetail().getOrderProductsHash(),
-                    toClone.latestSapOrderDetail().getOrderPricesHash()));
+                    toClone.latestSapOrderDetail().getCompanyCode()));
         }
 
         toClone.addChildOrder(cloned);
@@ -350,9 +399,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public static List<Product> getAllProductsOrdered(ProductOrder order) {
         List<Product> orderedListOfProducts = new ArrayList<>();
-        orderedListOfProducts.add(order.getProduct());
+        final Optional<Product> optionalProduct = Optional.ofNullable(order.getProduct());
+        optionalProduct.ifPresent(orderedListOfProducts::add);
         for (ProductOrderAddOn addOn : order.getAddOns()) {
-            orderedListOfProducts.add(addOn.getAddOn());
+            final Optional<Product> optionalAddOn = Optional.ofNullable(addOn.getAddOn());
+            optionalAddOn.ifPresent(orderedListOfProducts::add);
         }
         Collections.sort(orderedListOfProducts);
         return orderedListOfProducts;
@@ -762,18 +813,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 // Keep the old Add on instead of just creating a new one
                 pdoAddOn = existingAddonMap.get(addOn);
             } else {
-
                 // Create a new addon for any potential add ons which are not already existing
                 pdoAddOn = new ProductOrderAddOn(addOn, this);
-
-                // For SAP Company code 2000 orders, create a custom price adjustment to lock in the price at the time
-                // of the order
-                if (addOn.getSapMaterial() != null && (addOn.isClinicalProduct() || addOn.isExternalOnlyProduct())) {
-                    final ProductOrderAddOnPriceAdjustment customPriceAdjustment =
-                            new ProductOrderAddOnPriceAdjustment();
-                    customPriceAdjustment.setAdjustmentValue(new BigDecimal(addOn.getSapMaterial().getBasePrice()));
-                    pdoAddOn.setCustomPriceAdjustment(customPriceAdjustment);
-                }
             }
             addOns.add(pdoAddOn);
         }
@@ -803,11 +844,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public void setProduct(Product product) throws InvalidProductException {
-        if(isSavedInSAP() &&
-           getSapCompanyConfigurationForProductOrder() != product.determineCompanyConfiguration()) {
-            throw new InvalidProductException("Unable to update the order.  This combination of Product and Order is "
-                                              + "attempting to change the company code to which this order will be associated.");
-        }
+
+        // todo SGM This used to be where it threw an exception if the product it was attempting to set differed
+        // in configuration code from the order.  Need something similar, but not the exact implementation from before
         this.product = product;
     }
 
@@ -822,12 +861,33 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         this.quoteId = quoteId;
     }
 
+    public boolean isQuoteIdSet() {
+        return StringUtils.isNotBlank(this.quoteId);
+    }
+
     public OrderStatus getOrderStatus() {
         return orderStatus;
     }
 
     public void setOrderStatus(OrderStatus orderStatus) {
         this.orderStatus = orderStatus;
+    }
+
+    @Transient
+    public String getAggregationParticleDisplayName() {
+        String displayValue = Product.AggregationParticle.DEFAULT_LABEL;
+        if (defaultAggregationParticle != null) {
+            displayValue = defaultAggregationParticle.getDisplayName();
+        }
+        return displayValue;
+    }
+
+    public Product.AggregationParticle getDefaultAggregationParticle() {
+        return defaultAggregationParticle;
+    }
+
+    public void setDefaultAggregationParticle(Product.AggregationParticle defaultAggregationParticle) {
+        this.defaultAggregationParticle = defaultAggregationParticle;
     }
 
     public String getComments() {
@@ -1597,6 +1657,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         public boolean canBill() {
             return EnumSet.of(Submitted, Abandoned, Completed).contains(this);
         }
+
+        /**
+         * @return true if an order can be closed from this state.
+         */
+        public boolean canClose() {
+            return EnumSet.of(Abandoned, Completed).contains(this);
+        }
         /**
          * @return true if an order can be billed from this state.
          */
@@ -2095,20 +2162,31 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return (filteredResults != null) ? Iterators.size(filteredResults.iterator()) : 0;
     }
 
-    public static double getUnbilledNonSampleCount(ProductOrder order, Product targetProduct, int totalCount) {
+    public static double getUnbilledNonSampleCount(ProductOrder order, Product targetProduct, double totalCount)
+            throws InvalidProductException {
+        double existingCount = getBilledSampleCount(order, targetProduct);
+        return totalCount - existingCount;
+    }
+
+    public static double getBilledSampleCount(ProductOrder order, Product targetProduct)
+            throws InvalidProductException {
         double existingCount = 0;
 
         for (ProductOrderSample targetSample : order.getSamples()) {
             for (LedgerEntry ledgerItem: targetSample.getLedgerItems()) {
-                PriceItem priceItem = order.determinePriceItemByCompanyCode(targetProduct);
+                Optional<PriceItem> priceItem = Optional.ofNullable(targetProduct.getPrimaryPriceItem());
 
-                if(ledgerItem.getPriceItem().equals(priceItem)) {
-                    existingCount += ledgerItem.getQuantity();
+                if(order.hasSapQuote() && ledgerItem.getProduct().equals(targetProduct) ||
+                   (!order.hasSapQuote() && ledgerItem.getPriceItem()
+                           .equals(priceItem.orElseThrow(() -> new InvalidProductException(
+                           String.format("Unable to get sample count because the product %s does not have a valid "
+                                         + "price item associated with it", targetProduct.getDisplayName())))))) {
+                        existingCount += ledgerItem.getQuantity();
                 }
             }
 
         }
-        return totalCount - existingCount;
+        return existingCount;
     }
 
     public boolean isSavedInSAP() {
@@ -2243,6 +2321,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             this.orderType = orderType;
     }
 
+    //todo This doesn't appear to be used, so we should get rid of it
+    @Deprecated
+    public boolean isCommercial() {
+        return orderType == OrderAccessType.COMMERCIAL;
+    }
+
     public String getOrderTypeDisplay() {
 
         String displayName = getOrderType().getDisplayName();
@@ -2299,25 +2383,64 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         this.reagentDesignKey = reagentDesignKey;
     }
 
-    public static void checkQuoteValidity(Quote quote) throws QuoteServerException {
-        final Date todayTruncated = DateUtils.truncate(new Date(), Calendar.DATE);
-
-        checkQuoteValidity(quote, todayTruncated);
+    /**
+     * @return - If coverage type is set on the PDO then accept as override of the value on Product. Otherwise
+     * return the value on the product.
+     */
+    public String getCoverageTypeKey() {
+        if (product != null ) {
+            if (!StringUtils.isBlank(coverageTypeKey)) {
+                return coverageTypeKey;
+            } else {
+                return product.getCoverageTypeKey();
+            }
+        }
+        return coverageTypeKey;
     }
 
-    public static void checkQuoteValidity(Quote quote, Date todayTruncated) throws QuoteServerException {
-        for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel(true)) {
-            if (CollectionUtils.isNotEmpty(fundingLevel.getFunding())) {
-                for (Funding funding : fundingLevel.getFunding()) {
+    public void setCoverageTypeKey(String coverageTypeKey) {
+        this.coverageTypeKey = coverageTypeKey;
+    }
 
-                    if (funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                        if (!FundingLevel.isGrantActiveForDate(todayTruncated, funding)) {
-                            throw new QuoteServerException("The funding source " + funding.getGrantNumber() +
-                                                           " has expired making this quote currently unfunded.");
-                        }
-                    }
-                }
-            }
+    public static void checkQuoteValidity(Quote quote) throws QuoteServerException {
+        checkQuoteValidity(quote, new Date());
+    }
+
+    public static void checkQuoteValidity(Quote quote, Date date) throws QuoteServerException {
+        final Date todayTruncated = DateUtils.truncate(date, Calendar.DATE);
+        final Set<String> errors = new HashSet<>();
+        if (Objects.nonNull(quote)) {
+            quote.getFunding().stream()
+                .filter(Funding::isFundsReservation)
+                .filter(funding -> !FundingLevel.isGrantActiveForDate(todayTruncated, funding.getGrantEndDate()))
+                .forEach(funding -> {
+                    errors.add(String.format("The funding source %s has expired making this quote currently unfunded.",
+                        funding.getGrantNumber()));
+                });
+        }
+
+        if (CollectionUtils.isNotEmpty(errors)) {
+            throw new QuoteServerException(errors.toString());
+        }
+    }
+
+    public static void checkSapQuoteValidity(SapQuote quote) throws QuoteServerException {
+        checkSapQuoteValidity(quote, new Date());
+    }
+
+    public static void checkSapQuoteValidity(SapQuote quote, Date todayTruncated) throws QuoteServerException {
+        final Date truncatedDate = DateUtils.truncate(new Date(), Calendar.DATE);
+        final Set<String> errors = new HashSet<>();
+
+        if(Objects.nonNull(quote)) {
+            quote.getFundingDetails().stream()
+                    .filter(fundingDetail -> fundingDetail.getFundingType() == SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION)
+                    .filter(fundingDetail -> !FundingLevel.isGrantActiveForDate(todayTruncated, fundingDetail.getFundingHeaderChangeDate()))
+                    .forEach(fundingDetail -> errors.add(String.format("The funding source %s has expired making this quote currently unfunded", fundingDetail.getItemNumber())));
+        }
+
+        if (CollectionUtils.isNotEmpty(errors)) {
+            throw new QuoteServerException(errors.toString());
         }
     }
 
@@ -2429,10 +2552,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public void updateSapDetails(int sampleCount, String productListHash, String pricesForProducts) {
         final SapOrderDetail sapOrderDetail = latestSapOrderDetail();
         sapOrderDetail.setPrimaryQuantity(sampleCount);
-        sapOrderDetail.setOrderProductsHash(productListHash);
-        sapOrderDetail.setOrderPricesHash(pricesForProducts);
     }
 
+    @Deprecated
     public boolean isResearchOrder () {
         boolean result = true;
         if(getOrderType() != null) {
@@ -2442,18 +2564,34 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public enum OrderAccessType implements StatusType {
-        BROAD_PI_ENGAGED_WORK("Broad PI engaged Work (1000)"),
-        COMMERCIAL("Commercial (2000)");
+        BROAD_PI_ENGAGED_WORK("Broad PI engaged Work (1000)",
+            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization(),
+            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode()),
+        COMMERCIAL("Commercial (2000)",
+            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization(),
+            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getCompanyCode());
 
-        private String displayName;
+        private final String displayName;
+        private final String salesOrg;
+        private final String companyCode;
 
-        OrderAccessType(String displayName) {
+        OrderAccessType(String displayName, String salesOrg, String companyCode) {
             this.displayName = displayName;
+            this.salesOrg = salesOrg;
+            this.companyCode = companyCode;
         }
 
         @Override
         public String getDisplayName() {
             return displayName;
+        }
+
+        public String getSalesOrg() {
+            return salesOrg;
+        }
+
+        public String getCompanyCode() {
+            return companyCode;
         }
 
         public static List<String> displayNames() {
@@ -2478,7 +2616,79 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             }
             return foundType;
         }
+
+        public static OrderAccessType fromSalesOrg(String salesOrg) {
+            OrderAccessType foundType = null;
+
+            for (OrderAccessType value : values()) {
+                if(value.getSalesOrg().equals(salesOrg)) {
+                    foundType = value;
+                    break;
+                }
+            }
+            if(foundType == null) {
+                foundType = OrderAccessType.BROAD_PI_ENGAGED_WORK;
+            }
+            return foundType;
+        }
     }
+
+    public enum QuoteSourceType implements Displayable {
+        QUOTE_SERVER("Quote Server Quote"),
+        SAP_SOURCE("SAP Quote");
+
+        private String displayName;
+
+        QuoteSourceType(String source) {
+            displayName = source;
+        }
+
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        public static QuoteSourceType getByTypeName(String name) {
+
+            QuoteSourceType foundValue = null;
+            if(StringUtils.isNotBlank(name)) {
+                foundValue = QuoteSourceType.valueOf(name);
+            }
+
+            return foundValue;
+        }
+
+        public static QuoteSourceType getByDisplayName(String displayName) {
+            QuoteSourceType foundValue = null;
+
+            for (QuoteSourceType value : QuoteSourceType.values()) {
+                if(StringUtils.equals(value.getDisplayName(), displayName)) {
+                    foundValue = value;
+                }
+            }
+
+            return foundValue;
+
+        }
+
+        public static QuoteSourceType getByQuoteId(String quoteId) {
+            return (StringUtils.isNumeric(quoteId))?SAP_SOURCE:QUOTE_SERVER;
+        }
+
+        public boolean isSapType() {
+            return this == SAP_SOURCE;
+        }
+    }
+
+    public QuoteSourceType getQuoteSource() {
+        QuoteSourceType foundType = null;
+        Optional<String> optQuote = Optional.ofNullable(quoteId);
+        if(optQuote.isPresent()) {
+            foundType = QuoteSourceType.getByQuoteId(quoteId);
+        }
+        return foundType;
+    }
+
     public boolean needsCustomization(Product product) {
         if(getProduct().equals(product)) {
             return getSinglePriceAdjustment() != null;
@@ -2493,11 +2703,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return false;
     }
 
-    public void addQuoteAdjustment(Product product, BigDecimal effectivePrice, BigDecimal listPrice) {
+    public void addQuoteAdjustment(Product product, BigDecimal effectivePrice) {
 
         if(getProduct().equals(product)) {
             final ProductOrderPriceAdjustment quoteAdjustment = new ProductOrderPriceAdjustment();
-            quoteAdjustment.setListPrice(listPrice);
             quoteAdjustment.setAdjustmentValue(effectivePrice);
 
             quotePriceMatchAdjustments.add(quoteAdjustment);
@@ -2505,7 +2714,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             for (ProductOrderAddOn productOrderAddOn : getAddOns()) {
                 if(productOrderAddOn.getAddOn().equals(product)) {
                     final ProductOrderAddOnPriceAdjustment quoteAdjustment = new ProductOrderAddOnPriceAdjustment();
-                    quoteAdjustment.setListPrice(listPrice);
                     quoteAdjustment.setAdjustmentValue(effectivePrice);
 
                     productOrderAddOn.getQuotePriceAdjustments().add(quoteAdjustment);
@@ -2532,18 +2740,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return foundAdjustment;
     }
 
-    public PriceItem determinePriceItemByCompanyCode(Product product) {
-        PriceItem priceItem = product.getPrimaryPriceItem();
-        SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = this.getSapCompanyConfigurationForProductOrder(
-        );
-        if(companyCode == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES &&
-           product.getExternalPriceItem() != null) {
-            priceItem = product.getExternalPriceItem();
-        }
-        return priceItem;
-    }
-
     @NotNull
+    @Deprecated
     public SapIntegrationClientImpl.SAPCompanyConfiguration getSapCompanyConfigurationForProductOrder() {
         SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
         if ((getOrderType() == OrderAccessType.COMMERCIAL)) {
@@ -2552,6 +2750,124 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return companyCode;
     }
 
+    public SapIntegrationClientImpl.SAPCompanyConfiguration getSapCompanyConfigurationForProductOrder(SapQuote quote) {
+        SapIntegrationClientImpl.SAPCompanyConfiguration sapCompanyConfiguration =
+                SapIntegrationClientImpl.SAPCompanyConfiguration
+                        .fromSalesOrgForMaterial(quote.getQuoteHeader().getSalesOrganization());
+        if(!EnumSet.of(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES).contains(sapCompanyConfiguration)) {
+            sapCompanyConfiguration = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+        }
+        return sapCompanyConfiguration;
+    }
 
+    public boolean hasSapQuote() {
+        return isQuoteIdSet() && StringUtils.isNumeric(quoteId);
+    }
+
+    public boolean hasQuoteServerQuote() {
+        return isQuoteIdSet() && !StringUtils.isNumeric(quoteId);
+    }
+
+    public boolean hasQuote() {
+        return hasSapQuote() || hasQuoteServerQuote();
+    }
+
+    public boolean isLatestSapQuote() {
+        return latestSapOrderDetail() != null &&
+               StringUtils.equals(latestSapOrderDetail().getQuoteId(), quoteId);
+    }
+
+    public Set<SapQuoteItemReference> getQuoteReferences() {
+        return quoteReferences;
+    }
+
+    public void addQuoteReference(SapQuoteItemReference quoteItemReference) {
+        this.quoteReferences.add(quoteItemReference);
+        quoteItemReference.setParentOrderDetail(this);
+    }
+
+    public void addQuoteReferences(Collection<SapQuoteItemReference> references) {
+        if(CollectionUtils.isNotEmpty(references)) {
+            references.forEach(this::addQuoteReference);
+        } else {
+            this.quoteReferences.clear();
+        }
+    }
+
+    public void setQuoteReferences(Set<SapQuoteItemReference> quoteReferences) {
+        this.quoteReferences.clear();
+        addQuoteReferences(quoteReferences);
+    }
+
+    /**
+     * Given an SapQuote, this method will find the matching line items on the Quote for the products
+     * defined in the current product.
+     * @param sapQuote Quote object that defines the quote for which this order is associated
+     * @throws SAPInterfaceException
+     */
+    public void updateQuoteItems(SapQuote sapQuote) throws SAPInterfaceException {
+
+        Set<SapQuoteItemReference> updatedLineItemReferences = createSapQuoteItemReferences(this, sapQuote);
+
+        setQuoteReferences(updatedLineItemReferences);
+    }
+
+    @NotNull
+    public static Set<SapQuoteItemReference> createSapQuoteItemReferences(ProductOrder productOrder, SapQuote sapQuote) throws SAPInterfaceException {
+        Set<SapQuoteItemReference> updatedLineItemReferences = new HashSet<>();
+
+        if(productOrder.product != null) {
+            updatedLineItemReferences.addAll(
+                    productOrder.determineQuoteReferenceForProduct(sapQuote, productOrder.product));
+        }
+        for (ProductOrderAddOn addOn : productOrder.getAddOns()) {
+            updatedLineItemReferences.addAll(productOrder.determineQuoteReferenceForProduct(sapQuote, addOn.getAddOn()));
+        }
+        return updatedLineItemReferences;
+    }
+
+    /**
+     * Helper method to compartmentalize the logic to find and validate the line item in the SAP quote
+     * which will match a given Product
+     * @param sapQuote Quote objec
+     * @param product
+     * @throws SAPInterfaceException
+     */
+    private Set<SapQuoteItemReference> determineQuoteReferenceForProduct(SapQuote sapQuote, Product product)
+            throws SAPInterfaceException {
+        Set<SapQuoteItemReference> updatedLineItemReferences = new HashSet<>();
+        List<QuoteItem> quoteItems = new ArrayList<>();
+        Optional<Collection<QuoteItem>> quoteItemsForProduct = Optional.ofNullable(sapQuote.getQuoteItemMap().get(product.getPartNumber()));
+        quoteItemsForProduct.ifPresent(quoteItems::addAll);
+
+        List<String> dollarLimitedQuoteItems = sapQuote.getQuoteItems().stream()
+            .filter(QuoteItem::isDollarLimitedMaterial).map(QuoteItem::getMaterialDescription)
+            .collect(Collectors.toList());
+        boolean hasSingleLineItemMatch = CollectionUtils.isNotEmpty(quoteItems) && quoteItems.size() == 1;
+        boolean hasSingleDollarLimitedQuoteItems = CollectionUtils.isNotEmpty(dollarLimitedQuoteItems) && dollarLimitedQuoteItems.size() == 1;
+
+        dollarLimitedQuoteItems.forEach(singleDollarLimitDescriptor -> {
+            quoteItems.addAll(sapQuote.getQuoteItemByDescriptionMap().get(singleDollarLimitDescriptor));
+        });
+
+        if (CollectionUtils.isNotEmpty(quoteItems)) {
+            if (hasSingleLineItemMatch || hasSingleDollarLimitedQuoteItems) {
+                updatedLineItemReferences.add(new SapQuoteItemReference(
+                    product, quoteItems.iterator().next().getQuoteItemNumber().toString()));
+            } else {
+                Set<String> lineItems = new HashSet<>();
+                quoteItems.stream().sorted().forEach(quoteItem -> lineItems.add(quoteItem.getQuoteItemNumber() + " - " + quoteItem.getMaterialDescription()));
+                throw new SAPInterfaceException(String.format(
+                    "Product '%s' found on multiple line items in quote '%s' %s. Please contact the project manager or billing contact to correct this.",
+                    product.getPartNumber(), sapQuote.getQuoteHeader().getQuoteNumber(), lineItems.toString()));
+            }
+        } else {
+            throw new SAPInterfaceException("Could not determine a matching line item of the SAP quote "
+                                            + sapQuote.getQuoteHeader().getQuoteNumber()+" for "
+                                            + product.getDisplayName());
+        }
+        return updatedLineItemReferences;
+    }
 
 }

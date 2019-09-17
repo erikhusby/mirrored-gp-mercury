@@ -20,8 +20,7 @@ public class FundingLevel {
         this.funding = funding;
     }
 
-    public static boolean isGrantActiveForDate(Date effectiveDate, Funding funding) {
-        final Date grantEndDate = funding.getGrantEndDate();
+    public static boolean isGrantActiveForDate(Date effectiveDate, Date grantEndDate) {
         return grantEndDate == null ||
                (effectiveDate.before(grantEndDate) || effectiveDate.equals(grantEndDate));
     }
@@ -42,5 +41,9 @@ public class FundingLevel {
 
     public void setFunding(Collection<Funding> funding) {
         this.funding = funding;
+    }
+    
+    public boolean isActive() {
+        return Integer.valueOf(getPercent()) != 0;
     }
 }

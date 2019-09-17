@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign_;
 import javax.ejb.LocalBean;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -35,5 +36,9 @@ public class ReagentDesignDao extends GenericDao implements BusinessObjectFinder
     @Override
     public ReagentDesign findByBusinessKey(String businessKey) {
         return findSingle(ReagentDesign.class, ReagentDesign_.designName, businessKey);
+    }
+
+    public List<ReagentDesign> findByBusinessKeys(Collection<String> businessKeys) {
+        return findListByList(ReagentDesign.class, ReagentDesign_.designName, businessKeys);
     }
 }

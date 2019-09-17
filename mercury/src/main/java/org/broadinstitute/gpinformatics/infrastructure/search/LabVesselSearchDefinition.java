@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 import org.apache.commons.collections4.MapIterator;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.SearchInstanceNameCache;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -28,6 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
@@ -78,13 +80,18 @@ import java.util.TreeSet;
 @SuppressWarnings("ReuseOfLocalVariable")
 public class LabVesselSearchDefinition {
 
-    private static final List<LabEventType> POND_LAB_EVENT_TYPES = Arrays.asList(LabEventType.POND_REGISTRATION,
-            LabEventType.PCR_FREE_POND_REGISTRATION, LabEventType.PCR_PLUS_POND_REGISTRATION);
+    private static final List<LabEventType> POND_LAB_EVENT_TYPES =
+            LabEventType.getLabEventsWithLibraryEtlDisplayName("Pond");
+
+    private static final List<LabEventType> CATCH_LAB_EVENT_TYPES =
+            LabEventType.getLabEventsWithLibraryEtlDisplayName("Catch");
 
     public static final List<LabEventType> CHIP_EVENT_TYPES = Collections.singletonList(
             LabEventType.INFINIUM_HYBRIDIZATION);
 
-    public static final List<LabEventType> FLOWCELL_LAB_EVENT_TYPES = new ArrayList<>();
+    static final List<LabEventType> FLOWCELL_LAB_EVENT_TYPES = new ArrayList<>();
+    static final String PDO_SEARCH_TERM = "PDO";
+
     static {
         FLOWCELL_LAB_EVENT_TYPES.add(LabEventType.FLOWCELL_TRANSFER);
         FLOWCELL_LAB_EVENT_TYPES.add(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER);
@@ -344,6 +351,19 @@ public class LabVesselSearchDefinition {
             public BigDecimal evaluate(Object entity, SearchContext context) {
                 LabVessel labVessel = (LabVessel) entity;
                 return labVessel.getConcentration();
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Vessel Mass");
+        searchTerm.setDbSortPath("mass");
+        searchTerm.setValueType(ColumnValueType.TWO_PLACE_DECIMAL);
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public BigDecimal evaluate(Object entity, SearchContext context) {
+                LabVessel labVessel = (LabVessel) entity;
+                return labVessel.getMass();
             }
         });
         searchTerms.add(searchTerm);
@@ -682,8 +702,28 @@ public class LabVesselSearchDefinition {
             searchTerms.add(searchTerm);
         }
         {
+            SearchTerm searchTerm = buildLabVesselBspTerm(BSPSampleSearchColumn.MATERIAL_TYPE);
+            searchTerm.setDisplayExpression(DisplayExpression.MATERIAL_TYPE);
+            searchTerms.add(searchTerm);
+        }
+        {
             SearchTerm searchTerm = buildLabVesselBspTerm(BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE);
             searchTerm.setDisplayExpression(DisplayExpression.ORIGINAL_MATERIAL_TYPE);
+            searchTerms.add(searchTerm);
+        }
+        {
+            SearchTerm searchTerm = buildLabVesselBspTerm(BSPSampleSearchColumn.SPECIES);
+            searchTerm.setDisplayExpression(DisplayExpression.SPECIES);
+            searchTerms.add(searchTerm);
+        }
+        {
+            SearchTerm searchTerm = buildLabVesselBspTerm(BSPSampleSearchColumn.GENDER);
+            searchTerm.setDisplayExpression(DisplayExpression.GENDER);
+            searchTerms.add(searchTerm);
+        }
+        {
+            SearchTerm searchTerm = buildLabVesselBspTerm(BSPSampleSearchColumn.PARTICIPANT_ID);
+            searchTerm.setDisplayExpression(DisplayExpression.PATIENT);
             searchTerms.add(searchTerm);
         }
         return searchTerms;
@@ -754,7 +794,7 @@ public class LabVesselSearchDefinition {
 
         // PDO
         searchTerm = new SearchTerm();
-        searchTerm.setName("PDO");
+        searchTerm.setName(PDO_SEARCH_TERM);
         searchTerm.setDbSortPath("bucketEntries.productOrder.jiraTicketKey");
         searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getPdoInputConverter());
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
@@ -1117,13 +1157,7 @@ public class LabVesselSearchDefinition {
                 LabVessel labVessel = (LabVessel) entity;
                 Set<String> positions = null;
 
-                List<LabEventType> labEventTypes = new ArrayList<>();
-                // ICE
-                labEventTypes.add(LabEventType.ICE_CATCH_ENRICHMENT_CLEANUP);
-                // Agilent
-                labEventTypes.add(LabEventType.NORMALIZED_CATCH_REGISTRATION);
-
-                VesselsForEventTraverserCriteria eval = new VesselsForEventTraverserCriteria(labEventTypes );
+                VesselsForEventTraverserCriteria eval = new VesselsForEventTraverserCriteria(CATCH_LAB_EVENT_TYPES);
                 labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
 
                 for(Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
@@ -1147,14 +1181,8 @@ public class LabVesselSearchDefinition {
                 LabVessel labVessel = (LabVessel) entity;
                 Set<String> barcodes = null;
 
-                List<LabEventType> labEventTypes = new ArrayList<>();
-                // ICE
-                labEventTypes.add(LabEventType.ICE_CATCH_ENRICHMENT_CLEANUP);
-                // Agilent
-                labEventTypes.add(LabEventType.NORMALIZED_CATCH_REGISTRATION);
-
                 VesselsForEventTraverserCriteria eval
-                        = new VesselsForEventTraverserCriteria(labEventTypes );
+                        = new VesselsForEventTraverserCriteria(CATCH_LAB_EVENT_TYPES);
                 labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
 
                 for(Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
@@ -1557,6 +1585,31 @@ public class LabVesselSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
+        searchTerm.setName("Bait Reagents");
+        searchTerm.setDisplayExpression(DisplayExpression.BAIT_REAGENTS);
+        searchTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
+            final String drillDownSearchName = "GLOBAL|GLOBAL_REAGENT_SEARCH_INSTANCES|Bait Reagent Lot Drill Down";
+
+            @Override
+            public String evaluate(Object value, SearchContext context) {
+                String results = null;
+                Set<DesignedReagent>  reagents = (Set<DesignedReagent>)value;
+
+                if( reagents == null || reagents.isEmpty() ) {
+                    return results;
+                }
+
+                String[] lots = reagents.stream().map(DesignedReagent::getLot).toArray(String[]::new);
+                String linkText = StringUtils.join(lots, ",");
+                Map<String, String[]> terms = new HashMap<>();
+                terms.put("Lot Number", lots);
+                return SearchDefinitionFactory.buildDrillDownLink(linkText, ColumnEntity.REAGENT, drillDownSearchName, terms, context);
+            }
+        });
+        searchTerm.setMustEscape(false);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
         searchTerm.setName("Mercury Sample Tube Barcode");
         // todo jmt replace?
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
@@ -1720,13 +1773,21 @@ public class LabVesselSearchDefinition {
 
         // ******** Allow individual selectable result columns for each sample metadata value *******
         for (Metadata.Key meta : Metadata.Key.values()) {
-            if (meta.getCategory() == Metadata.Category.SAMPLE) {
+            if (meta.getCategory() == Metadata.Category.SAMPLE &&
+                    // Need "Sample ID" for eMERGE web service
+                    (meta == Metadata.Key.SAMPLE_ID ||
+                            BSPSampleSearchColumn.getByName(meta.getDisplayName()) == null)) {
                 searchTerm = new SearchTerm();
                 searchTerm.setName(meta.getDisplayName());
                 searchTerm.setDisplayExpression(DisplayExpression.METADATA);
                 searchTerms.add(searchTerm);
             }
         }
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Metadata Source");
+        searchTerm.setDisplayExpression(DisplayExpression.METADATA_SOURCE);
+        searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Abandon Reason");
@@ -1752,52 +1813,27 @@ public class LabVesselSearchDefinition {
                 }
 
                 reasons = new HashSet<>();
-                String reason;
                 MultiValuedMap<LabVessel, AbandonVessel> abandonMap = abandonCriteria.getAncestorAbandonVessels();
 
                 // Display each reason with a group of positions (if container) in parentheses
                 if( abandonMap.size() == 1 && abandonMap.mapIterator().next().getAbandonVessels().size() == 1 ) {
                     // Only one abandon - could be a tube so show position only if available
                     AbandonVessel abandonVessel = abandonMap.mapIterator().next().getAbandonVessels().iterator().next();
-                    reason = abandonVessel.getReason().getDisplayName();
+                    String reason = abandonVessel.getReason().getDisplayName();
                     if( abandonVessel.getVesselPosition() != null ) {
                         reason += "(" + abandonVessel.getVesselPosition().name() + ")";
                     }
                     reasons.add( reason );
                 } else {
-                    // Gather reasons and positions
-                    // TODO JMS Display can get ugly when ancestor abandons/positions are mixed in with current vessel
-                    String position;
-                    Map<String,Set<String>> reasonPositionMap = new HashMap<>();
-
-                    for( AbandonVessel abandonVessel : abandonMap.values() ) {
-                        reason = abandonVessel.getReason().getDisplayName();
-                        if( !reasonPositionMap.containsKey( reason ) ) {
-                            reasonPositionMap.put(reason, new TreeSet<String>());
-                        }
-                        position = abandonVessel.getVesselPosition() == null?"":abandonVessel.getVesselPosition().name();
-                        reasonPositionMap.get(reason).add( position );
-                    }
-                    for( String key : reasonPositionMap.keySet() ) {
-                        StringBuilder posDisplay = new StringBuilder(64);
-                        for( String pos : reasonPositionMap.get(key)) {
-                            if( pos.length() > 0 ) {
-                                posDisplay.append(pos).append(",");
-                            }
-                        }
-                        if( posDisplay.length() > 1 ) {
-                            posDisplay.deleteCharAt(posDisplay.length() - 1);
-                            posDisplay.append(")");
-                            posDisplay.insert(0,"(");
-                            posDisplay.insert(0,key );
-                            reasons.add( posDisplay.toString() );
-                        }
-                    }
+                    formatAbandonReasons(reasons, abandonMap.values());
                 }
                 return reasons;
             }
         });
-        searchTerm.setHelpText("These abandon terms only looks backwards in transfers and gather any past vessel abandons, otherwise results would be ambiguous for reworks looking forward.  Infinium related logic requires using 'Infinium Array Metrics' term.");
+        String abandonTraverseHelpText = "This abandon term only looks backwards in transfers and gathers any past " +
+                "vessel abandons, otherwise results would be ambiguous for reworks looking forward.  Infinium related " +
+                "logic requires using 'Infinium Array Metrics' term.";
+        searchTerm.setHelpText(abandonTraverseHelpText);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -1829,6 +1865,65 @@ public class LabVesselSearchDefinition {
                 return dateVal;
             }
         });
+        searchTerm.setHelpText(abandonTraverseHelpText);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Direct Abandon Reason");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                LabVessel currentVessel = (LabVessel) entity;
+                Set<String> reasons = new HashSet<>();
+                VesselContainer<?> vesselContainer = currentVessel.getContainerRole();
+                if (vesselContainer == null) {
+                    for (AbandonVessel abandonVessel : currentVessel.getAbandonVessels()) {
+                        reasons.add(abandonVessel.getReason().getDisplayName());
+                    }
+                } else {
+                    Set<AbandonVessel> abandonVessels = new HashSet<>();
+                    for (VesselPosition vesselPosition : vesselContainer.getEmbedder().getVesselGeometry().getVesselPositions()) {
+                        AbandonVessel abandonVessel = currentVessel.getAbandonPositionForWell(vesselPosition);
+                        if (abandonVessel != null) {
+                            abandonVessels.add(abandonVessel);
+                        }
+                    }
+                    formatAbandonReasons(reasons, abandonVessels);
+                }
+                return reasons;
+            }
+        });
+        String abandonNoTraverseHelpText = "This abandon term does not traverse ancestors.  Infinium related " +
+                "logic requires using 'Infinium Array Metrics' term.";
+        searchTerm.setHelpText(abandonNoTraverseHelpText);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Direct Abandon Date");
+        searchTerm.setValueType(ColumnValueType.DATE);
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<Date> evaluate(Object entity, SearchContext context) {
+                LabVessel currentVessel = (LabVessel) entity;
+                Set<Date> dates = new HashSet<>();
+
+                VesselContainer<?> vesselContainer = currentVessel.getContainerRole();
+                if (vesselContainer == null) {
+                    for (AbandonVessel abandonVessel : currentVessel.getAbandonVessels()) {
+                        dates.add(abandonVessel.getAbandonedOn());
+                    }
+                } else {
+                    for (VesselPosition vesselPosition : vesselContainer.getEmbedder().getVesselGeometry().getVesselPositions()) {
+                        AbandonVessel abandonVessel = currentVessel.getAbandonPositionForWell(vesselPosition);
+                        if (abandonVessel != null) {
+                            dates.add(abandonVessel.getAbandonedOn());
+                        }
+                    }
+                }
+                return dates;
+            }
+        });
+        searchTerm.setHelpText(abandonNoTraverseHelpText);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -1910,6 +2005,36 @@ public class LabVesselSearchDefinition {
         return searchTerms;
 
         // todo jmt break some of these "metadata" terms into their own group
+    }
+
+    private void formatAbandonReasons(Set<String> reasons, Collection<AbandonVessel> abandonVessels) {
+        // Gather reasons and positions
+        // TODO JMS Display can get ugly when ancestor abandons/positions are mixed in with current vessel
+        Map<String,Set<String>> reasonPositionMap = new HashMap<>();
+
+        for( AbandonVessel abandonVessel : abandonVessels) {
+            String reason = abandonVessel.getReason().getDisplayName();
+            if( !reasonPositionMap.containsKey( reason ) ) {
+                reasonPositionMap.put(reason, new TreeSet<String>());
+            }
+            String position = abandonVessel.getVesselPosition() == null ? "" : abandonVessel.getVesselPosition().name();
+            reasonPositionMap.get(reason).add( position );
+        }
+        for(Map.Entry<String, Set<String>> stringSetEntry : reasonPositionMap.entrySet()) {
+            StringBuilder posDisplay = new StringBuilder(64);
+            for( String pos : stringSetEntry.getValue()) {
+                if(!pos.isEmpty()) {
+                    posDisplay.append(pos).append(",");
+                }
+            }
+            if( posDisplay.length() > 1 ) {
+                posDisplay.deleteCharAt(posDisplay.length() - 1);
+                posDisplay.append(")");
+                posDisplay.insert(0,"(");
+                posDisplay.insert(0, stringSetEntry.getKey());
+                reasons.add( posDisplay.toString() );
+            }
+        }
     }
 
     /**

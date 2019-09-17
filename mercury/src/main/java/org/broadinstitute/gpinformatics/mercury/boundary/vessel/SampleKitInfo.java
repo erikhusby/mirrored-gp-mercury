@@ -20,6 +20,7 @@ public class SampleKitInfo {
     private String containerId;
     private String status;
     private Boolean isPlate;
+    private String receptacleType;
 
     @XmlElement(nillable = true)
     private List<SampleInfo> sampleInfos;
@@ -30,11 +31,12 @@ public class SampleKitInfo {
     }
 
     public SampleKitInfo(String kitId, String containerId, String status, Boolean isPlate,
-                         List<SampleInfo> sampleInfos) {
+                         String receptacleType, List<SampleInfo> sampleInfos) {
         this.kitId = kitId;
         this.containerId = containerId;
         this.isPlate = isPlate;
         this.status = status;
+        this.receptacleType = receptacleType;
         this.sampleInfos = sampleInfos;
     }
 
@@ -68,6 +70,14 @@ public class SampleKitInfo {
 
     public void setPlate(Boolean plate) {
         isPlate = plate;
+    }
+
+    public String getReceptacleType() {
+        return receptacleType;
+    }
+
+    public void setReceptacleType(String receptacleType) {
+        this.receptacleType = receptacleType;
     }
 
     public List<SampleInfo> getSampleInfos() {

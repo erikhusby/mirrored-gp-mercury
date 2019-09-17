@@ -1,14 +1,15 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
 
-import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.map.JsonSerializer;
-import org.codehaus.jackson.map.SerializerProvider;
+
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
 
 import java.io.IOException;
 
-public class PlateMapMetricsJsonSerializer extends JsonSerializer<MetricsViewActionBean.PlateMapMetrics> {
+public class PlateMapMetricsJsonSerializer extends JsonSerializer<MetricsViewActionBean.DisplayMetrics> {
     @Override
-    public void serialize(MetricsViewActionBean.PlateMapMetrics value, JsonGenerator generator,
+    public void serialize(MetricsViewActionBean.DisplayMetrics value, JsonGenerator generator,
                           SerializerProvider provider) throws IOException {
         generator.writeStartObject();
         generator.writeFieldName("displayName");

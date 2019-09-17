@@ -19,6 +19,8 @@
                         {"bSortable": true} ,
                         {"bSortable": true} ,
                         {"bSortable": true} ,
+                        {"bSortable": true} ,
+                        {"bSortable": true} ,
                         {"bSortable": true}
                     ]
                 });
@@ -52,7 +54,7 @@
         <stripes:form beanclass="${actionBean.class.name}"
                       id="rackScanForm" class="form-horizontal">
             <div class="control-group">
-                <stripes:label for="rackBarcode" name="Rack Barcode" class="control-label"/>
+                <label for="rackBarcode" class="control-label">SK-ID</label>
                 <div class="controls">
                     <input type="text" id="rackBarcode" autocomplete="off" name="rackBarcode" value="${actionBean.rackBarcode}"
                            class="clearable barcode unique" required="" aria-required="true">
@@ -124,9 +126,11 @@
                         <tr>
                             <th width="30px">
                                 <input type="checkbox" class="sample-checkAll" title="Check All"/>
-                                <span id="count" class="samples-checkedCount"></span>
+                                <span id="count" class="sample-checkedCount"></span>
                             </th>
                             <th>Sample Info</th>
+                            <th>Well</th>
+                            <th>Barcode</th>
                             <th>Sample Kit</th>
                             <th>Status</th>
                             <th>Material Type</th>
@@ -140,6 +144,16 @@
                                                       value="${sampleData.sampleId}"/>
                                 </td>
                                 <td>${sampleData.sampleId}</td>
+                                <td>
+                                    ${actionBean.mapSampleToPositionAndBarcode.get(sampleData.sampleId).wellName}
+                                    <stripes:hidden name="mapSampleToPositionAndBarcode[${sampleData.sampleId}].wellName"
+                                                    value="${actionBean.mapSampleToPositionAndBarcode.get(sampleData.sampleId).wellName}"/>
+                                </td>
+                                <td>
+                                    ${actionBean.mapSampleToPositionAndBarcode.get(sampleData.sampleId).tubeBarcode}
+                                    <stripes:hidden name="mapSampleToPositionAndBarcode[${sampleData.sampleId}].tubeBarcode"
+                                                    value="${actionBean.mapSampleToPositionAndBarcode.get(sampleData.sampleId).tubeBarcode}"/>
+                                </td>
                                 <td>${sampleData.sampleKitId}</td>
                                 <td>${sampleData.sampleStatus}</td>
                                 <td>${sampleData.originalMaterialType}</td>

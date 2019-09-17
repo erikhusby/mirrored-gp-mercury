@@ -297,12 +297,22 @@ public class Metadata {
         LOWER_MARKER_TIME(Category.LAB_METRIC, DataType.NUMBER, "Lower Marker Time", Visibility.USER),
         NA(Category.LAB_METRIC, DataType.STRING, "NA", Visibility.USER),
         FLOWRATE(Category.LIQUID_HANDLER_METRIC, DataType.NUMBER, "Flowrate", Visibility.USER),
+        READ_1(Category.LIQUID_HANDLER_METRIC, DataType.NUMBER, "Read 1", Visibility.USER),
+        READ_2(Category.LIQUID_HANDLER_METRIC, DataType.NUMBER, "Read 2", Visibility.USER),
+        READ_3(Category.LIQUID_HANDLER_METRIC, DataType.NUMBER, "Read 3", Visibility.USER),
         BAIT_WELL(Category.REAGENT, DataType.STRING, "Bait Well", Visibility.USER),
         DEPLETE_WELL(Category.SAMPLE, DataType.STRING, "Deplete Well", Visibility.USER),
         CELL_TYPE(Category.SAMPLE, DataType.STRING, "Cell Type", Visibility.USER),
         CELLS_PER_WELL(Category.SAMPLE, DataType.NUMBER, "Cells Per Well", Visibility.USER),
         POSITIVE_CONTROL(Category.SAMPLE, DataType.STRING, "Positive Control", Visibility.USER),
-        NEGATIVE_CONTROL(Category.SAMPLE, DataType.STRING, "Negative Control", Visibility.USER);
+        NEGATIVE_CONTROL(Category.SAMPLE, DataType.STRING, "Negative Control", Visibility.USER),
+        ROOT_SAMPLE(Category.SAMPLE, DataType.STRING, "Root Sample", Visibility.USER),
+        SYNTHESIS_DATE(Category.REAGENT, DataType.DATE, "Synthesis Date", Visibility.USER),
+        MANUFACTURING_DATE(Category.REAGENT, DataType.DATE, "Manufacturing Date", Visibility.USER),
+        STORAGE_CONDITIONS(Category.REAGENT, DataType.STRING, "Storage Conditions", Visibility.USER),
+        MANUFACTURER_DESIGN_ID(Category.REAGENT, DataType.STRING, "Manufacturer Design ID", Visibility.USER),
+        MARK_STOCK(Category.SAMPLE, DataType.STRING, "Mark Stock", Visibility.USER);
+
 
         private final Category category;
         private final DataType dataType;

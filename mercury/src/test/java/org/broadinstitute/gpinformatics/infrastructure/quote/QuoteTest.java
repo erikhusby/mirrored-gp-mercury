@@ -13,7 +13,6 @@ import static org.hamcrest.Matchers.equalToIgnoringCase;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class QuoteTest {
@@ -36,8 +35,17 @@ public class QuoteTest {
         assertThat(testQuote.getQuoteItems(), hasSize(6));
         assertThat(testQuote.getExpirationDate(), is(notNullValue()));
 
-        assertThat(testQuote.isEligibleForSAP(), is(true));
+        assertThat(testQuote.isFunded(), is(true));
 
+    }
+
+    public void testQuoteFundingDifferingOnlyByFundsReservationNumber() throws Exception {
+        // Tests a case where a quote was mistakenly being identified as being eligible for SAP when it was not. The
+        // cause turned out to be the equals method not taking fundsReservationNumber into account
+        QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
+
+        final String quoteId = "GPLBK";
+        Quote testQuote = stubbedQuoteService.getQuoteByAlphaId(quoteId);
     }
 
     public void testQuoteValuesFundsReservation() throws Exception {
@@ -61,111 +69,31 @@ public class QuoteTest {
         assertThat(testQuote.getQuoteItems(), hasSize(5));
         assertThat(testQuote.getExpirationDate(), is(notNullValue()));
 
-        assertThat(testQuote.isEligibleForSAP(), is(false));
+        assertThat(testQuote.isFunded(), is(false));
 
         Calendar cal = Calendar.getInstance();
         cal.set(2013, Calendar.JANUARY, 9); //Year, month, day of month
         Date date = cal.getTime();
 
-        assertThat(testQuote.isEligibleForSAP(date), is(true));
+        assertThat(testQuote.isFunded(date), is(true));
 
     }
 
-    public void testQuoteIneligibiltySplitFunding() throws Exception{
-        QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
-
-        Quote gp87Uquote = stubbedQuoteService.getQuoteByAlphaId("GP87U");
-
-        boolean quoteEligibility = true;
-
-        final FundingLevel firstRelevantFundingLevel = gp87Uquote.getFirstRelevantFundingLevel();
-        assertThat(firstRelevantFundingLevel, is(nullValue()));
-
-        try {
-            quoteEligibility = gp87Uquote.isEligibleForSAP();
-            Assert.assertFalse(quoteEligibility);
-        } catch (Exception shouldNotHappen) {
-            Assert.fail(shouldNotHappen.toString());
-        }
-
-    }
-
-    public void testTrueSplitFundingEligibilty() throws Exception {
-
-        QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
-
-        Quote splitFundedQuote = stubbedQuoteService.getQuoteByAlphaId("GXP2B1");
-
-        boolean quoteEligibility = true;
-
-        try {
-            quoteEligibility = splitFundedQuote.isEligibleForSAP();
-            Assert.assertFalse(quoteEligibility);
-        } catch (Exception shouldNotHappen) {
-            Assert.fail(shouldNotHappen.toString());
-        }
-    }
-    public void testSplitCostObjectEligibilty() throws Exception {
-
-        QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
-
-        Quote splitCostObjectQuote = stubbedQuoteService.getQuoteByAlphaId("STCIL1");
-
-        boolean quoteEligibility = true;
-
-        try {
-            quoteEligibility = splitCostObjectQuote.isEligibleForSAP();
-            Assert.assertFalse(quoteEligibility);
-        } catch (Exception shouldNotHappen) {
-            Assert.fail(shouldNotHappen.toString());
-        }
-    }
-    public void testTrueEligibleQuote() throws Exception {
+    public void testUnFundedQuote() throws Exception {
 
         QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
 
         Quote eligibleQuote = stubbedQuoteService.getQuoteByAlphaId("STC3ZW");
-
-        boolean quoteEligibility = true;
+        FundingLevel fundingLevel = eligibleQuote.getQuoteFunding().getFundingLevel().iterator().next();
+        fundingLevel.setPercent("0");
 
         try {
-            quoteEligibility = eligibleQuote.isEligibleForSAP();
-            Assert.assertTrue(quoteEligibility);
+            Assert.assertFalse(eligibleQuote.isFunded());
         } catch (Exception shouldNotHappen) {
             Assert.fail(shouldNotHappen.toString());
         }
     }
-
-    public void testIssuedNoFundingIneligibleQuote() throws Exception {
-
-        QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
-
-        Quote eligibleQuote = stubbedQuoteService.getQuoteByAlphaId("BSP2A3");
-
-        boolean quoteEligibility = true;
-
-        try {
-            quoteEligibility = eligibleQuote.isEligibleForSAP();
-            Assert.assertFalse(quoteEligibility);
-        } catch (Exception shouldNotHappen) {
-            Assert.fail(shouldNotHappen.toString());
-        }
-    }
-    public void testIssuedNoFunding2IneligibleQuote() throws Exception {
-
-        QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
-
-        Quote eligibleQuote = stubbedQuoteService.getQuoteByAlphaId("BSP1CK");
-
-        boolean quoteEligibility = true;
-
-        try {
-            quoteEligibility = eligibleQuote.isEligibleForSAP();
-            Assert.assertFalse(quoteEligibility);
-        } catch (Exception shouldNotHappen) {
-            Assert.fail(shouldNotHappen.toString());
-        }
-    }
+    
     public void testInligibleCostObjectQuote() throws Exception {
 
         QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
@@ -175,7 +103,7 @@ public class QuoteTest {
         boolean quoteEligibility = true;
 
         try {
-            quoteEligibility = eligibleQuote.isEligibleForSAP();
+            quoteEligibility = eligibleQuote.isFunded();
             Assert.assertFalse(quoteEligibility);
         } catch (Exception shouldNotHappen) {
             Assert.fail(shouldNotHappen.toString());

@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -35,6 +34,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -90,10 +90,6 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE}, mappedBy = "sapReferenceOrders")
     private Set<ProductOrder> referenceProductOrder = new HashSet<>();
 
-    private String orderProductsHash;
-
-    private String orderPricesHash;
-
     @OneToMany(mappedBy = "sapOrderDetail", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
             orphanRemoval = true)
     private Set<LedgerEntry> ledgerEntries = new HashSet<>();
@@ -101,15 +97,11 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
     public SapOrderDetail() {
     }
 
-    public SapOrderDetail(String sapOrderNumber, int primaryQuantity, String quoteId, String companyCode,
-                          String productsHash, String quantitiesHash) {
+    public SapOrderDetail(String sapOrderNumber, int primaryQuantity, String quoteId, String companyCode) {
         this.sapOrderNumber = sapOrderNumber;
         this.primaryQuantity = primaryQuantity;
         this.quoteId = quoteId;
         this.companyCode = companyCode;
-        this.orderProductsHash = productsHash;
-        this.orderPricesHash = quantitiesHash;
-
     }
 
     public String getSapOrderNumber() {
@@ -145,22 +137,6 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
         this.companyCode = companyCode;
     }
 
-    public String getOrderProductsHash() {
-        return orderProductsHash;
-    }
-
-    public void setOrderProductsHash(String orderProductHash) {
-        this.orderProductsHash = orderProductHash;
-    }
-
-    public String getOrderPricesHash() {
-        return orderPricesHash;
-    }
-
-    public void setOrderPricesHash(String orderQuantitiesHash) {
-        this.orderPricesHash = orderQuantitiesHash;
-    }
-
     public Set<LedgerEntry> getLedgerEntries() {
         return ledgerEntries;
     }
@@ -176,23 +152,19 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
         this.ledgerEntries.add(ledgerEntry);
     }
 
-    public Map<Product, Integer> getNumberOfBilledEntriesByProduct() {
-        Map<Product, Integer> billedCount = new HashMap<>();
-
-
+    public Map<Product, Double> getNumberOfBilledEntriesByProduct() {
+        Map<Product, Double> billedCount = new HashMap<>();
         for (LedgerEntry ledgerEntry : this.ledgerEntries) {
             final ProductOrder productOrder = ledgerEntry.getProductOrderSample().getProductOrder();
             Product aggregatingProduct = null;
 
-            if(ledgerEntry.getPriceItemType() == LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM ||
-               ledgerEntry.getPriceItemType() == LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM) {
+            if(hasLedgerMatch(productOrder, productOrder.getProduct().getPrimaryPriceItem(),
+                    productOrder.getProduct(), ledgerEntry)) {
                 aggregatingProduct = productOrder.getProduct();
             } else {
                 for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
-                    PriceItem addonPriceItem =
-                            productOrder.determinePriceItemByCompanyCode(productOrderAddOn.getAddOn());
-
-                    if(addonPriceItem.equals(ledgerEntry.getPriceItem())) {
+                    if(hasLedgerMatch(productOrder, productOrderAddOn.getAddOn().getPrimaryPriceItem(),
+                            productOrderAddOn.getAddOn(), ledgerEntry)) {
                         aggregatingProduct = productOrderAddOn.getAddOn();
                         break;
                     }
@@ -200,12 +172,28 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
             }
 
             if (ledgerEntry.isBilled()) {
-                int oldCount = (billedCount.containsKey(aggregatingProduct))?billedCount.get(aggregatingProduct):0;
-                billedCount.put(aggregatingProduct, oldCount + 1);
+                double oldCount = billedCount.getOrDefault(aggregatingProduct, 0d);
+                billedCount.put(aggregatingProduct, oldCount + ledgerEntry.getQuantity());
             }
         }
 
         return billedCount;
+    }
+
+    private boolean hasLedgerMatch(ProductOrder order, PriceItem priceItem, Product product, LedgerEntry ledgerEntry) {
+        boolean ledgerIndexMatch = false;
+
+        if(order.hasSapQuote()) {
+            if (ledgerEntry.getProduct().equals(product)) {
+                ledgerIndexMatch = true;
+            }
+        } else {
+            if(ledgerEntry.getPriceItem().equals(priceItem)) {
+                ledgerIndexMatch = true;
+            }
+        }
+
+        return ledgerIndexMatch;
     }
 
     @Override
@@ -229,7 +217,7 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
 
                     @Override
                     public boolean apply(@Nullable LedgerEntry ledgerEntry) {
-                        return ledgerEntry.getPriceItem().equals(targetProduct.getPrimaryPriceItem()) &&
+                        return (Objects.equals(ledgerEntry.getProduct(),targetProduct)) &&
                                StringUtils.equals(ledgerEntry.getBillingMessage(),BillingSession.SUCCESS);
                     }
                 });
@@ -257,8 +245,6 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
         return new EqualsBuilder()
                 .append(sapOrderNumber, that.sapOrderNumber)
                 .append(referenceProductOrder, that.referenceProductOrder)
-                .append(orderProductsHash, that.orderProductsHash)
-                .append(orderPricesHash, that.orderPricesHash)
                 .isEquals();
     }
 
@@ -267,8 +253,6 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
         return new HashCodeBuilder(17, 37)
                 .append(sapOrderNumber)
                 .append(referenceProductOrder)
-                .append(orderProductsHash)
-                .append(orderPricesHash)
                 .toHashCode();
     }
 }

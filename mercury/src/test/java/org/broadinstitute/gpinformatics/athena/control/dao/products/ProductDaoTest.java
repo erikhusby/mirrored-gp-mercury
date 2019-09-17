@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -83,12 +84,12 @@ public class ProductDaoTest extends StubbyContainerTest {
 
         final Calendar yesterday = Calendar.getInstance();
         yesterday.add(Calendar.DATE, -1);
-
+        String partNumber = ProductTestFactory.generateProductPartNumber();
         Product product = new Product(
                 "Test Data",                               // product name
                 metagenomicsProductFamily,                 // product family
                 "test data ",                              // description
-                "PN-ProductDaoTest-" + UUID.randomUUID(),  // part number
+                partNumber,                                // part number
                 yesterday.getTime(),                       // availability date
                 null,                                      // discontinued date
                 3 * DAYS,                                  // expected cycle time

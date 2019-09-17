@@ -1,4 +1,3 @@
-<%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTransferActionBean" %>
 <%--
   This page allows the user to record a manual transfer, i.e. a transfer not done on a liquid handling deck with
   messaging.
@@ -30,6 +29,11 @@
             }
             input[type='text'].date {
                 width: 70px;
+                font-size: 12px;
+            }
+
+            select.markStock {
+                width: 75px;
                 font-size: 12px;
             }
 
@@ -211,7 +215,11 @@
                             $j("#camera_overlay").append(video);
                             var canvas = $j('<canvas id="canvas" width="' + camWidth + '" height="' + camHeight + '"></canvas>').hide();
                             $j("#camera_overlay").append(canvas);
-                            video[0].src = window.URL.createObjectURL(stream);
+                            try { // Handle deprecation on new version of Chrome better
+                                video[0].srcObject = stream;
+                            } catch (e) {
+                                video[0].src = window.URL.createObjectURL(stream);
+                            }
                             video[0].play();
                             camInitialized = true;
                             return true;
@@ -248,6 +256,44 @@
             $j(document).on("keypress", ":input:not(textarea)", function(event) {
                 return event.keyCode != 13;
             });
+
+            /*
+             * When the 'transfer' button is clicked, ensure reagents with expiration dates have valid dates.
+             */
+            function verifyReagents() {
+                var failFound = false;      // Whether found expired reagents.
+                var reagentExpirationElements = $j("input[id*='rgtExp']:visible"); // Search for 'input' objects with id starting with 'rgtExp'
+
+                if (reagentExpirationElements.length > 0) {
+                    var userApproved = false;   // Whether user decides to continue with expired reagents.
+
+                    // Loop through elements found with a visible reagent expiration date field.
+                    reagentExpirationElements.each(function (index) {
+                        // Only provide a prompt if the date is expired and the user hasn't been prompted already.
+                        if (!failFound && isDatePast(this.value)) {
+                            failFound = true;
+                            userApproved = confirm("A reagent is expired. A BQMS ticket is required to be made if an expired reagent is used.");
+                        }
+                    });
+
+                    // return true if no expiration found or if expiration found and user confirmed to continue.
+                    return !failFound || userApproved ;
+                }
+                // If no reagent expiration elements are found, then return true.
+                return true;
+            }
+
+            /* Date passed in is expected to be in the format of mm-dd-yyyy or mm/dd/yyyy. */
+            function isDatePast(dateText) {
+                var today = new Date();
+                // If a slash is found, use that as delimiter otherwise use a dash.
+                var delimUsed = dateText.indexOf("/") > 0 ? "/" : "-";
+                var inputDate = dateText.split(delimUsed);
+                // Note that we subtract one from month because of weird date indexing by Date() class.
+                inputDate = new Date(inputDate[2], (inputDate[0] - 1), inputDate[1], 0, 0, 0, 0);
+                today = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
+                return inputDate < today;
+            }
         </script>
     </stripes:layout-component>
 
@@ -293,7 +339,7 @@
                 </stripes:form>
             </c:when>
             <c:otherwise>
-                <stripes:form beanclass="${actionBean.class.name}" id="transferForm">
+                <stripes:form beanclass="${actionBean.class.name}" id="transferForm" onsubmit="return verifyReagents();">
                     <%-- See https://code.google.com/p/chromium/issues/detail?id=468153 --%>
                     <div style="display: none;">
                         <input type="text" id="PreventChromeAutocomplete" name="PreventChromeAutocomplete" autocomplete="address-level4" />
@@ -315,12 +361,17 @@
                         <%-- Set by transfer_plate.jsp --%>
                         <input type="hidden" name="scanSource" value="">
 
-                        <c:if test="${not empty actionBean.manualTransferDetails.machineNames}">
-                            <stripes:label for="station">Machine </stripes:label>
-                            <stripes:select name="stationEvents[0].station" id="station">
-                                <stripes:options-collection collection="${actionBean.manualTransferDetails.machineNames}"/>
-                            </stripes:select>
-                        </c:if>
+                        <c:choose>
+                            <c:when test="${not empty actionBean.manualTransferDetails.machineNames}">
+                                <stripes:label for="station">Machine </stripes:label>
+                                <stripes:select name="stationEvents[0].station" id="station">
+                                    <stripes:options-collection collection="${actionBean.manualTransferDetails.machineNames}"/>
+                                </stripes:select>
+                            </c:when>
+                            <c:otherwise>
+                                <stripes:hidden name="stationEvents[0].station" value="${actionBean.stationEvents[0].station}"/>
+                            </c:otherwise>
+                        </c:choose>
 
                         <c:if test="${not empty actionBean.stationEvents[0].reagent}">
                             <h5>Reagents</h5>
@@ -340,9 +391,8 @@
                                 <label for="rgtBcd${loop.index}">Barcode </label>
                                 <input type="text" id="rgtBcd${loop.index}" name="stationEvents[0].reagent[${loop.index}].barcode"
                                         value="${reagent.barcode}" class="barcode" autocomplete="off"/>
-                                <c:if test="${actionBean.manualTransferDetails.expirationDateIncluded
-                                            || (reagent.kitType != prevReagentType && not empty actionBean.manualTransferDetails.mapReagentNameToExpireDate
-                                            && not empty actionBean.manualTransferDetails.mapReagentNameToExpireDate[reagent.kitType])}">
+                                <c:if test="${(reagent.kitType != prevReagentType && not empty actionBean.manualTransferDetails.mapReagentNameToRequirements[reagent.kitType]
+                                            && actionBean.manualTransferDetails.mapReagentNameToRequirements[reagent.kitType].expirationDateIncluded)}">
                                     <label for="rgtExp${loop.index}">Expiration </label>
                                     <input type="text" id="rgtExp${loop.index}" name="stationEvents[0].reagent[${loop.index}].expiration"
                                             value="${reagent.expiration}" class="date" autocomplete="off"/>
@@ -352,17 +402,21 @@
                             </div>
                         </c:if>
                         <c:forEach items="${actionBean.stationEvents}" var="stationEvent" varStatus="stationEventStatus">
+                            <c:set var="isMultiSource" value="${not empty actionBean.manualTransferDetails.targetSections and stationEvent.class.simpleName == 'PlateTransferEventType'}"/>
                             <input type="hidden" name="stationEvents[${stationEventStatus.index}].eventType"
                                     value="${actionBean.stationEvents[stationEventStatus.index].eventType}"/>
                             <input type="hidden" name="eventClass[${stationEventStatus.index}]"
                                             value="${actionBean.stationEvents[0].class.simpleName}"/>
                             <c:if test="${fn:length(actionBean.stationEvents) > 1}">
-                                ${stationEventStatus.index + 1}
+                                <c:if test="${not isMultiSource}">
+                                    ${stationEventStatus.index + 1}
+                                </c:if>
                                 <input type="hidden" name="stationEvents[${stationEventStatus.index}].metadata[0].name" value="MessageNum"/>
                                 <input type="hidden" name="stationEvents[${stationEventStatus.index}].metadata[0].value" value="${stationEventStatus.index + 1}"/>
                             </c:if>
+
                             <c:choose>
-                                <c:when test="${stationEvent.class.simpleName == 'PlateTransferEventType' or stationEvent.class.simpleName == 'PlateEventType' or stationEvent.class.simpleName == 'PlateCherryPickEvent'}">
+                                <c:when test="${empty actionBean.manualTransferDetails.targetSections and (stationEvent.class.simpleName == 'PlateTransferEventType' or stationEvent.class.simpleName == 'PlateEventType' or stationEvent.class.simpleName == 'PlateCherryPickEvent')}">
                                     <c:set var="plateTransfer" value="${stationEvent}"/>
                                     <%--@elvariable id="plateTransfer" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType"--%>
                                     <c:if test="${stationEvent.class.simpleName == 'PlateTransferEventType' or stationEvent.class.simpleName == 'PlateCherryPickEvent'}">
@@ -416,6 +470,44 @@
                                     </c:choose>
 
                                 </c:when> <%-- end PlateTransferEventType or PlateEventType--%>
+
+                                <c:when test="${isMultiSource}">
+                                    <c:set var="plateTransfer" value="${stationEvent}"/>
+                                    <c:set var="firstPlateTransfer" value="${actionBean.stationEvents[0]}"/>
+                                    <%--@elvariable id="plateTransfer" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType"--%>
+                                    <%--@elvariable id="firstPlateTransfer" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType"--%>
+                                    <c:if test="${stationEventStatus.first}">
+                                        <h4>Plate Transfer</h4>
+                                    </c:if>
+                                    <h5>Source ${stationEventStatus.index + 1}</h5>
+
+                                    <c:set var="stationEvent" value="${stationEvent}" scope="request"/>
+                                    <c:set var="plate" value="${plateTransfer.sourcePlate}" scope="request"/>
+                                    <c:set var="positionMap" value="${plateTransfer.sourcePositionMap}" scope="request"/>
+                                    <c:set var="stationEventIndex" value="${stationEventStatus.index}" scope="request"/>
+                                    <c:set var="vesselTypeGeometry" value="${actionBean.manualTransferDetails.sourceVesselTypeGeometry}" scope="request"/>
+                                    <c:set var="section" value="${actionBean.manualTransferDetails.sourceSection}" scope="request"/>
+                                    <c:set var="source" value="${true}" scope="request"/>
+                                    <c:set var="tableName" value="sourceTable" scope="request"/>
+                                    <c:set var="transferType" value="${actionBean.stationEvents[stationEventStatus.index].eventType}"/>
+
+                                    <jsp:include page="transfer_plate.jsp"/>
+
+                                    <c:if test="${stationEventStatus.last}">
+                                        <h5>Destination</h5>
+
+                                        <c:set var="stationEvent" value="${firstPlateTransfer}" scope="request"/>
+                                        <c:set var="plate" value="${firstPlateTransfer.plate}" scope="request"/>
+                                        <c:set var="positionMap" value="${firstPlateTransfer.positionMap}" scope="request"/>
+                                        <c:set var="stationEventIndex" value="0" scope="request"/>
+                                        <c:set var="vesselTypeGeometry" value="${actionBean.manualTransferDetails.targetVesselTypeGeometry}" scope="request"/>
+                                        <c:set var="eventType" value="${firstPlateTransfer.eventType}" scope="request"/>
+                                        <c:set var="displaySection" value="false" scope="request"/>
+                                        <c:set var="source" value="${false}" scope="request"/>
+
+                                        <jsp:include page="transfer_plate.jsp"/>
+                                    </c:if>
+                                </c:when> <%-- end multi source PlateTransferEventType to single destination --%>
 
                                 <c:when test="${stationEvent.class.simpleName == 'ReceptacleTransferEventType'}">
                                     <c:set var="receptacleTransfer" value="${stationEvent}"/>

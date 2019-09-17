@@ -62,10 +62,21 @@ public class Fingerprint {
     }
 
     public enum Platform {
-        FLUIDIGM,
-        GENERAL_SEQUENCING,
-        GENERAL_ARRAY,
-        FAT_PANDA
+        FLUIDIGM(1),
+        GENERAL_SEQUENCING(3),
+        GENERAL_ARRAY(2),
+        FAT_PANDA(1);
+
+        /** Lower number indicates higher preference as "initial" fingerprint. */
+        private int precedenceForInitial;
+
+        Platform(int precedenceForInitial) {
+            this.precedenceForInitial = precedenceForInitial;
+        }
+
+        public int getPrecedenceForInitial() {
+            return precedenceForInitial;
+        }
     }
 
     public enum GenomeBuild {
@@ -126,7 +137,7 @@ public class Fingerprint {
     @JoinColumn(name = "SNP_LIST")
     private SnpList snpList;
 
-    @OneToMany(mappedBy = "fingerprint", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "fingerprint", cascade = CascadeType.PERSIST, orphanRemoval = true)
     private Set<FpGenotype> fpGenotypes = new HashSet<>();
 
     @Enumerated(EnumType.STRING)

@@ -17,6 +17,7 @@
                         {"bSortable": true} ,
                         {"bSortable": true} ,
                         {"bSortable": true} ,
+                        {"bSortable": true},
                         {"bSortable": true}
                     ]
                 });
@@ -51,18 +52,19 @@
             <stripes:form beanclass="${actionBean.class.name}"
                           id="showScanForm" class="form-horizontal">
                 <stripes:hidden name="rackBarcode" value="${actionBean.rackBarcode}"/>
-                <stripes:hidden name="isPlate" value="${actionBean.sampleKitInfo.isPlate()}"/>
+                <stripes:hidden name="isPlate" value="${actionBean.sampleKitInfo.plate}"/>
                 <table id="samplesTable" class="sample-checkbox table simple">
                     <thead>
                     <tr>
                         <th width="30px">
                             <input type="checkbox" class="sample-checkAll" title="Check All"/>
-                            <span id="count" class="samples-checkedCount"></span>
+                            <span id="count" class="sample-checkedCount"></span>
                         </th>
                         <th>Sample Info</th>
                         <th>Sample Kit</th>
                         <th>Status</th>
                         <th>Material Type</th>
+                        <th>Original Material Type</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -75,11 +77,13 @@
                             <td>${sampleData.sampleId}</td>
                             <td>${sampleData.sampleKitId}</td>
                             <td>${sampleData.sampleStatus}</td>
+                            <td>${sampleData.materialType}</td>
                             <td>${sampleData.originalMaterialType}</td>
                         </tr>
                     </c:forEach>
                     </tbody>
                 </table>
+                <br/>
                 <stripes:submit id="receiveToBsp" name="receiveBySkToBsp" value="Receive To BSP"
                                 class="btn btn-primary"/>
             </stripes:form>

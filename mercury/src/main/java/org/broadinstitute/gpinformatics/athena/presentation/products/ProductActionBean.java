@@ -44,6 +44,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.CoverageTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
@@ -122,6 +123,9 @@ public class ProductActionBean extends CoreActionBean {
     private AnalysisTypeDao analysisTypeDao;
 
     @Inject
+    private CoverageTypeDao coverageTypeDao;
+
+    @Inject
     private ReagentDesignDao reagentDesignDao;
 
     @Inject
@@ -164,11 +168,13 @@ public class ProductActionBean extends CoreActionBean {
 
     private String controlsProject;
 
+    private String negativeControlsProject;
+
     @ValidateNestedProperties({
         @Validate(field = "pipelineDataType", converter = PipelineDataTypeConverter.class),
             @Validate(field = "productName", required = true, maxlength = 255, on = {SAVE_ACTION},
                     label = "Product Name"),
-            @Validate(field = "partNumber", required = true, maxlength = 255, on = {SAVE_ACTION},
+            @Validate(field = "partNumber", required = true, maxlength = 18, on = {SAVE_ACTION},
                     label = "Part Number"),
             @Validate(field = "description", required = true, maxlength = 2000, on = {SAVE_ACTION},
                     label = "Description"),
@@ -177,6 +183,8 @@ public class ProductActionBean extends CoreActionBean {
     private Product editProduct;
 
     private boolean productUsedInOrders = false;
+    private boolean productUsedInLLCOrders = false;
+
     private List<String> suggestedValueSelections = new ArrayList();
 
     public ProductActionBean() {
@@ -273,6 +281,12 @@ public class ProductActionBean extends CoreActionBean {
             editProduct.setPositiveControlResearchProject(controlsProject == null ? null :
                     researchProjectDao.findByBusinessKey(controlsProject));
         }
+
+        if (editProduct.getNegativeControlResearchProject() == null ||
+            !editProduct.getNegativeControlResearchProject().getBusinessKey().equals(negativeControlsProject)) {
+            editProduct.setNegativeControlResearchProject(negativeControlsProject == null ? null :
+                    researchProjectDao.findByBusinessKey(negativeControlsProject));
+        }
     }
 
     /**
@@ -287,12 +301,22 @@ public class ProductActionBean extends CoreActionBean {
             if (editProduct.getPositiveControlResearchProject() != null) {
                 controlsProject = editProduct.getPositiveControlResearchProject().getBusinessKey();
             }
+            if (editProduct.getNegativeControlResearchProject() != null) {
+                negativeControlsProject = editProduct.getNegativeControlResearchProject().getBusinessKey();
+            }
 
             List<ProductOrder> productOrderList = null;
+            List<ProductOrder> llcProductOrderList = null;
             if (editProduct.getProductId() != null) {
                 productOrderList = productDao.findList(ProductOrder.class, ProductOrder_.product, editProduct);
+                llcProductOrderList = productOrderList.stream()
+                        .filter(productOrder -> productOrder.getOrderType() == ProductOrder.OrderAccessType.COMMERCIAL)
+                        .collect(
+                                Collectors.toList());
+
             }
-            productUsedInOrders = !CollectionUtils.isEmpty(productOrderList);
+            productUsedInOrders = CollectionUtils.isNotEmpty(productOrderList);
+            productUsedInLLCOrders = CollectionUtils.isNotEmpty(llcProductOrderList);
         }
     }
 
@@ -301,13 +325,16 @@ public class ProductActionBean extends CoreActionBean {
         allProducts = productDao.findProducts(availability, TopLevelOnly.NO, IncludePDMOnly.YES);
 
         for (Product product: allProducts) {
-            final QuotePriceItem quotePriceItem = priceListCache.findByKeyFields(product.getPrimaryPriceItem());
-            if (quotePriceItem != null) {
-                product.getPrimaryPriceItem().setPrice(quotePriceItem.getPrice());
-                product.getPrimaryPriceItem().setUnits(quotePriceItem.getUnit());
+            Optional <PriceItem> primaryPriceItem = Optional.ofNullable(product.getPrimaryPriceItem());
+            primaryPriceItem.ifPresent(priceItem -> {
+                final QuotePriceItem quotePriceItem = priceListCache.findByKeyFields(priceItem);
+                if (quotePriceItem != null) {
+                    priceItem.setPrice(quotePriceItem.getPrice());
+                    priceItem.setUnits(quotePriceItem.getUnit());
 
-                product.setSapMaterial(productPriceCache.findByProduct(product, product.determineCompanyConfiguration()));
-            }
+                }
+            });
+            Product.setMaterialOnProduct(product, productPriceCache);
         }
     }
 
@@ -332,23 +359,15 @@ public class ProductActionBean extends CoreActionBean {
             }
         }
 
+        if(!editProduct.getPartNumber().equalsIgnoreCase(editProduct.getPartNumber().trim())) {
+            editProduct.setPartNumber(editProduct.getPartNumber().trim());
+        }
+
         // Check that the dates are consistent.
         if ((editProduct.getAvailabilityDate() != null) &&
             (editProduct.getDiscontinuedDate() != null) &&
             (editProduct.getAvailabilityDate().after(editProduct.getDiscontinuedDate()))) {
             addGlobalValidationError("Availability date must precede discontinued date.");
-        }
-
-        if (priceItemTokenInput.getItem() == null) {
-            addValidationError("token-input-primaryPriceItem", "Primary price item is required");
-        }
-        if (StringUtils.isNotBlank(editProduct.getAlternateExternalName()) && externalPriceItemTokenInput.getItem() == null) {
-            addValidationError("token-input-externalPriceItem",
-                    "If setting an external product name, an external price item is required");
-        }
-        if (externalPriceItemTokenInput.getItem() != null && StringUtils.isBlank(editProduct.getAlternateExternalName())) {
-            addValidationError("token-input-externalPriceItem",
-                    "If setting an external price item, an external product name is required");
         }
 
         checkValidCriteria();
@@ -456,11 +475,6 @@ public class ProductActionBean extends CoreActionBean {
         PriceItem primaryPriceItem = editProduct.getPrimaryPriceItem();
         if (primaryPriceItem != null) {
             priceItemTokenInput.setup(PriceItem.getPriceItemKeys(Collections.singletonList(primaryPriceItem)));
-        }
-
-        PriceItem externalPriceItem = editProduct.getExternalPriceItem();
-        if(externalPriceItem != null) {
-            externalPriceItemTokenInput.setup(PriceItem.getPriceItemKeys(Collections.singletonList(externalPriceItem)));
         }
     }
 
@@ -760,6 +774,27 @@ public class ProductActionBean extends CoreActionBean {
     }
 
     /**
+     * Get the list of available analysis types.
+     *
+     * @return List of strings representing the analysis types
+     */
+    public Collection<DisplayableItem> getCoverageTypes() {
+        return makeDisplayableItemCollection(coverageTypeDao.findAll());
+    }
+
+    /**
+     * Get the coverage type.
+     *
+     * @param businessKey the businessKey
+     *
+     * @return UI helper object {@link DisplayableItem} representing the coverage type
+     */
+    public DisplayableItem getCoverageType(String businessKey) {
+        return getDisplayableItemInfo(businessKey, coverageTypeDao);
+    }
+
+
+    /**
      * Get the list of research projects for controls.
      *
      * @return List of strings representing research project names
@@ -797,7 +832,7 @@ public class ProductActionBean extends CoreActionBean {
 
     public boolean productInSAP(String partNumber, SapIntegrationClientImpl.SAPCompanyConfiguration companyCode) {
 
-        return productPriceCache.findByPartNumber(partNumber, companyCode) != null;
+        return productPriceCache.findByPartNumber(partNumber, companyCode.getSalesOrganization()) != null;
     }
 
     public ProductDao.Availability getAvailability() {
@@ -814,6 +849,14 @@ public class ProductActionBean extends CoreActionBean {
 
     public void setControlsProject(String controlsProject) {
         this.controlsProject = controlsProject;
+    }
+
+    public String getNegativeControlsProject() {
+        return negativeControlsProject;
+    }
+
+    public void setNegativeControlsProject(String negativeControlsProject) {
+        this.negativeControlsProject = negativeControlsProject;
     }
 
     public String[] getGenotypingChipTechnologies() {
@@ -873,6 +916,9 @@ public class ProductActionBean extends CoreActionBean {
         return productUsedInOrders;
     }
 
+    public boolean isProductUsedInLLCOrders() {
+        return productUsedInLLCOrders;
+    }
 
     public List<String> getCriteriaSelectionValues() {
         return criteriaSelectionValues;

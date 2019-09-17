@@ -79,7 +79,7 @@ public class VesselContainer<T extends LabVessel> {
     @MapKeyEnumerated(EnumType.STRING)
     // hbm2ddl always uses mapkey
     @MapKeyColumn(name = "mapkey")
-    @BatchSize(size = 100)
+    // No @BatchSize, fetching many containers of tubes is counterproductive
     // the map value has to be LabVessel, not T, because JPAMetaModelEntityProcessor can't handle type parameters
     private final Map<VesselPosition, LabVessel> mapPositionToVessel = new LinkedHashMap<>();
 
@@ -1094,9 +1094,9 @@ public class VesselContainer<T extends LabVessel> {
             }
 
             // BaitSetup has a bait in the source, but no samples in the target (until BaitAddition), so avoid throwing
-            // away the bait.
+            // away the bait.  Avoid merging multiple molecular indexes for an empty ancestor well.
             List<SampleInstanceV2> currentSampleInstances = new ArrayList<>();
-            if (ancestorSampleInstances.isEmpty()) {
+            if (ancestorSampleInstances.isEmpty() && reagentSampleInstances.size() == 1) {
                 currentSampleInstances.add(new SampleInstanceV2());
             } else {
                 // Clone ancestors
@@ -1124,7 +1124,7 @@ public class VesselContainer<T extends LabVessel> {
             // Apply events to clones
             for (LabVessel.VesselEvent ancestorEvent : ancestorEvents) {
                 for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
-                    currentSampleInstance.applyEvent(ancestorEvent.getLabEvent(), labVessel);
+                    currentSampleInstance.applyEvent(ancestorEvent, labVessel);
                 }
             }
 

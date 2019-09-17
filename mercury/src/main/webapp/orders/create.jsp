@@ -1,8 +1,9 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.products.Product" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
-<%@ page import="static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderAccessType.displayNames" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
+<%@ page import="static org.broadinstitute.sap.services.SapIntegrationClientImpl.FundingType.*" %>
 
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
@@ -74,9 +75,16 @@
         .divCell.right {
             float: right;
         }
+        .changed {
+            border: #3a87ad 1.5px solid
+        }
+        ul.token-input-list {
+            max-width: 360px;
+        }
     </style>
         <script src="${ctxpath}/resources/scripts/clipboard.min.js" type="text/javascript"></script>
         <script src="${ctxpath}/resources/scripts/bindWithDelay.js" type="text/javascript"></script>
+        <script src="${ctxpath}/resources/scripts/modalMessages.js" type="text/javascript"></script>
         <script type="text/javascript">
 
         var duration = {'duration' : 400};
@@ -117,19 +125,47 @@
             }
         }
 
-        function validateNumberOfLanes() {
+        function validateSaveOrder() {
             var numberOfLanes = $j("#numberOfLanes");
             var lanesFieldDiv = $j("#numberOfLanesDiv");
             var productOrderKey = $j("input[name='productOrder']");
+
+            var originalQuote = $j("input[name='originalQuote']");
+            var currentQuote = $j("#quote");
+
+            if(!validateChangeQuote(originalQuote.val().trim(), currentQuote.val().trim())) {
+                alert("Switching between Quote Server and SAP quotes is not permitted once an order has been placed.");
+                return false;
+            }
 
             if (lanesFieldDiv.css('display') !== 'none' && lanesFieldDiv.css("visibility") !== 'hidden' &&
                 lanesFieldDiv.css('opacity') !== 0 && numberOfLanes.length && productOrderKey.val().includes("Draft")) {
                 return confirm(numberOfLanes.val() + " for the total number of lanes on the order\n\n" +
                     "By Clicking 'OK' you are declaring that you wish to accept the entered number of lanes for the entire order.  Do you wish to continue?")
             }
-            
+
             return true;
         }
+
+        function validateChangeQuote(originalQuote, currentQuote) {
+
+            var productOrderKey = $j("input[name='productOrder']");
+            var originalIsQuoteServer = isNaN(originalQuote) || originalQuote === "" || originalQuote === null;
+            var currentIsQuoteServer = isNaN(currentQuote) || currentQuote === "" || currentQuote === null;
+            var orderCanPlace = ${actionBean.editOrder.orderStatus.canPlace()};
+            var originalNotBlank = originalQuote !== 'undefined' && originalQuote !== "" && originalQuote !== 'null';
+            var currentNotBlank = (currentQuote !== 'undefined' && currentQuote !== "" && currentQuote !== 'null' &&
+            currentQuote !== "Enter the Quote ID for this order");
+
+            var result = true;
+            if(productOrderKey.val() !== 'undefined' && productOrderKey.val() !== "" && productOrderKey.val() !== 'null'
+                && !orderCanPlace) {
+                result = (originalIsQuoteServer === currentIsQuoteServer) && (originalNotBlank === currentNotBlank);
+            }
+
+            return result;
+        }
+
         $j(document).ready(
 
                 function () {
@@ -212,6 +248,10 @@
                 return $j("<div></div>", {"class": "noOrsp", "text": "No ORSP Projects found."})[0].outerHTML
             }
 
+            // prevent datatables javascript error from appearing.
+            $j.fn.dataTable.ext.errMode = function (settings, helpPage, message) {
+                console.log(message);
+            };
             regulatorySuggestionDT = $j("#regulatoryInfoSuggestions").DataTable({
                 dom: 't',
                 stateSave: false,
@@ -236,32 +276,38 @@
                 columns: [{
                     data: "samples", title: "Sample IDs", 'class': "sample", render: {
                         display: function (samples, type, row, meta) {
-                            var linkId = 'orsp' + meta.row + meta.col;
-                            var sampleString = samples.join(", ");
-                            var sampleLength = samples.length;
-                            var linkSelector = '#' + linkId;
-                            var $href = $j("<a></a>", {
-                                'href': 'javascript:;',
-                                'id': linkId,
-                                'text': 'Click to copy',
-                                'data-placement': 'right',
-                                'data-delay': 2000,
-                                'data-toggle': "tooltip",
-                                'data-original-title': sampleLength + ' sample names copied to clipboard.',
-                                'data-clipboard-target': linkSelector,
-                                'data-clipboard-text': sampleString
-                            });
-                            var clipboard = new Clipboard("a" + linkSelector);
-                            var api = $j.fn.dataTable.Api(meta.settings);
-                            api.cell().on('click.dt', function(event) {
-                                $j(event.target).tooltip("show");
-                                setTimeout(function () {
-                                    $j(event.target).tooltip('hide');
-                                }, 2000);
-                            });
+                            if (row.errors!==undefined) {
+                                modalMessages("error").add(row.errors, "addSamples");
+                            }
 
-                            return sampleString.trunc(90) + "<br/>" + '<div>' + $href[0].outerHTML+'</div>';
+                            if (samples!==undefined) {
+                                var linkId = 'orsp' + meta.row + meta.col;
+                                var sampleString = samples.join(", ");
+                                var sampleLength = samples.length;
+                                var linkSelector = '#' + linkId;
+                                var $href = $j("<a></a>", {
+                                    'href': 'javascript:;',
+                                    'id': linkId,
+                                    'text': 'Click to copy',
+                                    'data-placement': 'right',
+                                    'data-delay': 2000,
+                                    'data-toggle': "tooltip",
+                                    'data-original-title': sampleLength + ' sample names copied to clipboard.',
+                                    'data-clipboard-target': linkSelector,
+                                    'data-clipboard-text': sampleString
+                                });
+                                var clipboard = new Clipboard("a" + linkSelector);
+                                var api = $j.fn.dataTable.Api(meta.settings);
+                                api.cell().on('click.dt', function (event) {
+                                    $j(event.target).tooltip("show");
+                                    setTimeout(function () {
+                                        $j(event.target).tooltip('hide');
+                                    }, 2000);
 
+                                });
+
+                                return sampleString.trunc(90) + "<br/>" + '<div>' + $href[0].outerHTML + '</div>';
+                            }
                         }
                     }
                 }, {
@@ -502,7 +548,8 @@
                     initializeQuoteOptions();
 
                     $j("#skipQuote").on("change", toggleSkipQuote);
-                    $j("#skipRegulatoryInfoCheckbox").on("change", toggleSkipRegulatory);
+                    $j("#notFromHumansCheckbox").on("change", toggleSkipRegulatoryReason);
+                    $j("#clinicalLineCheckbox").on("change", toggleSkipRegulatoryReason);
                     $j("#regulatorySelect").change(function () {
                         $j("#attestationConfirmed").attr("checked", false)
                     });
@@ -547,20 +594,33 @@
         </c:forEach>
 
         var quoteBeforeSkipping;
-        function toggleSkipRegulatory() {
-            var skipRegulatoryChecked = $j("#skipRegulatoryInfoCheckbox").prop("checked");
-            $j("#attestationConfirmed").attr("checked", false);
-            handleUpdateRegulatory(skipRegulatoryChecked);
-        }
 
+        function toggleSkipRegulatoryReason() {
+            var checked = $(this).prop("checked");
+            var notFromHumansElement = $j("#notFromHumansCheckbox");
+            var clinicalLineElement = $j("#clinicalLineCheckbox");
+            handleUpdateRegulatory(checked);
+            if (checked) {
+                $j("#attestationConfirmed").attr("checked", false);
+                if($(this).is(notFromHumansElement)) {
+                    $j("#skipRegulatoryInfoReason").val("${ResearchProject.NOT_FROM_HUMANS_REASON_FILL}");
+                    $j("#clinicalLineCheckbox").attr("checked", false);
+                } else {
+                    $j("#skipRegulatoryInfoReason").val("${ResearchProject.FROM_CLINICAL_CELL_LINE}");
+                    $j("#notFromHumansCheckbox").attr("checked", false);
+                }
+            }
+
+        }
         function handleUpdateRegulatory(skipRegulatoryChecked){
             if (skipRegulatoryChecked) {
-                $j("#regulatorySelect :selected").prop("selected", false)
+                $j("#regulatorySelect :selected").prop("selected", false);
                 $j("#regulatorySelect").hide();
                 $j("#skipRegulatoryDiv").show();
             } else {
                 $j("#skipRegulatoryInfoReason").val("");
-                $j("#skipRegulatoryDiv").hide();
+                $j("#notFromHumansCheckbox").attr("checked", false);
+                $j("#clinicalLineCheckbox").attr("checked", false);
                 $j("#regulatorySelect").show();
                 populateRegulatorySelect();
             }
@@ -618,11 +678,9 @@
             var projectKey = $j("#researchProject").val();
             var skipRegulatory = false;
             skipRegulatory = ${actionBean.editOrder.canSkipRegulatoryRequirements()};
-            $j("#skipRegulatoryInfoCheckbox").prop('checked', skipRegulatory);
 
             if (projectKey == null || projectKey == "") {
                 $j("#regulatorySelect").text('When you select a project, its regulatory options will show up here');
-                $j("#regulatoryActive").hide();
                 $j("#attestationDiv").hide();
                 $j("#skipRegulatoryDiv").hide();
                 $j("#regulatoryInfo").hide();
@@ -635,7 +693,7 @@
                     populateRegulatorySelect();
                  }
                 $j("#regulatoryInfo").show();
-                $j("#regulatoryActive").show();
+                $j("#skipRegulatoryDiv").show();
                 $j("#attestationDiv").show();
 
             }
@@ -687,6 +745,7 @@
         function updateUIForProductChoice() {
 
             var productKey = $j("#product").val();
+            var quote = $j("#quote").val();
             if ((productKey === null) || (productKey === "")) {
                 $j("#customizationJsonString").val("");
                 customizationValues = {};
@@ -710,7 +769,8 @@
                     $j("#sampleInitiationKitRequestEdit").hide();
                 }
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getProductInfo=&product=" + productKey,
+                    url: "${ctxpath}/orders/order.action?getProductInfo=&product=" + productKey +
+                    "&quoteIdentifier=" + quote,
                     dataType: 'json',
                     success: selectedProductFollowup,
                     complete: detectNumberOfLanesVisibility
@@ -821,6 +881,7 @@
             var skipQuoteDiv = $j("#skipQuoteDiv");
             var quoteDiv = $j("#quote");
             if (data.supportsSkippingQuote) {
+
                 skipQuoteDiv.show();
                 quoteDiv.hide();
             }
@@ -858,8 +919,10 @@
                         var input = $j('<input type = "checkbox" name="selectedRegulatoryIds" />');
                         if (regulatoryList[index].selected) {
                             $j(input).attr("checked", "");
+                        } else if (regulatoryList[index].userEdit) {
+                            $j(input).attr("disabled", "");
+                            $j(input).attr("title", "This is invalid as it is not found in the ORSP Database")
                         }
-
                         $j(input).attr('value', regulatoryList[index].key);
                         $j(row).append(input);
                         $j(row).append(regulatoryList[index].value);
@@ -909,6 +972,28 @@
 
                 priceListText += "Clinical list price: " + data.clinicalPrice;
             }
+
+            var $aggregationParticle = $j("#customAggregationParticle");
+            var agpFieldChanged = data.productAgp !== undefined && $aggregationParticle.val() !== data.productAgp;
+            if (agpFieldChanged && $j("#orderId").length === 0) {
+                if ($aggregationParticle.text() !== data.productAgp) {
+                    var agpModalMessage = modalMessages("info", {
+                        onClose: function(){
+                            $j($aggregationParticle).removeClass("changed")
+                        }
+                    });
+
+                    $aggregationParticle.val(data.productAgp);
+                    $j($aggregationParticle).addClass("changed");
+
+                    agpModalMessage
+                        .add("The selected product defines a default aggregation particle. This order will now aggregate on '"
+                            + $aggregationParticle.find(":selected").text() + "' unless you override this manually.", "AGP_CHANGED");
+                }
+            } else {
+                modalMessages("info","AGP_CHANGED").clear();
+            }
+
             $j("#primaryProductListPrice").text(priceListText);
             if(priceListText.length > 0) {
                 $j("#primaryProductListPrice").show();
@@ -1046,11 +1131,14 @@
         }
 
         function updateFundsRemaining() {
-            var quoteIdentifier = $j("#quote").val();
+            var quoteIdentifier = $j("#quote").val().trim();
+            var originalQuote = "${actionBean.editOrder.quoteId}";
+            var quoteTitle = $j("#quote").attr('title');
             var productOrderKey = $j("input[name='productOrder']").val();
-            if ($j.trim(quoteIdentifier)) {
+            if (quoteIdentifier && quoteIdentifier !== quoteTitle) {
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier + "&productOrder=" + productOrderKey,
+                    url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier +
+                        "&productOrder=" + productOrderKey + "&originalQuote=" + originalQuote,
                     dataType: 'json',
                     success: updateFunds
                 });
@@ -1060,48 +1148,14 @@
         }
 
         function updateFunds(data) {
+            var $fundsRemaining = $j("#fundsRemaining");
+            $fundsRemaining.html(data.quoteInfo);
 
-            var quoteWarning = false;
-
-            if (data.fundsRemaining && !data.error) {
-                var fundsRemainingNotification = 'Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining +
-                        ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
-                var fundingDetails = data.fundingDetails;
-
-                if(data.status != "Funded" ||
-                        Number(data.outstandingEstimate.replace(/[^0-9\.]+/g,"")) > Number(data.fundsRemaining.replace(/[^0-9\.]+/g,""))) {
-                    quoteWarning = true;
-                }
-
-                for(var detailIndex in fundingDetails) {
-                    fundsRemainingNotification += '\n'+fundingDetails[detailIndex].grantTitle;
-                    if(fundingDetails[detailIndex].activeGrant) {
-                        fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].grantEndDate;
-                        if(fundingDetails[detailIndex].daysTillExpire < 45) {
-                            fundsRemainingNotification += ' in ' + fundingDetails[detailIndex].daysTillExpire +
-                                ' days. If it is likely this work will not be completed by then, please work on updating the ' +
-                                'Funding Source so Billing Errors can be avoided.';
-                            quoteWarning = true;
-                        }
-                    } else {
-                        fundsRemainingNotification += ' -- Has Expired ' + fundingDetails[detailIndex].grantEndDate;
-                        quoteWarning = true;
-                    }
-                    if(fundingDetails[detailIndex].grantStatus != "Active") {
-                        quoteWarning = true;
-                    }
-                    fundsRemainingNotification += '\n';
-                }
-                $j("#fundsRemaining").text(fundsRemainingNotification);
+            if (data.warning) {
+                $fundsRemaining.find("li").attr('class', '');
+                $fundsRemaining.addClass("alert alert-error");
             } else {
-                $j("#fundsRemaining").text('Error: ' + data.error);
-                quoteWarning = true;
-            }
-
-            if(quoteWarning) {
-                $j("#fundsRemaining").addClass("alert alert-error");
-            } else {
-                $j("#fundsRemaining").removeClass("alert alert-error");
+                $fundsRemaining.removeClass("alert alert-error");
             }
         }
 
@@ -1189,7 +1243,8 @@
             $j.ajax({
                 url: "${ctxpath}/orders/order.action?openCustomView=",
                 data: {
-                    'customizationJsonString': JSON.stringify(customizationValues)
+                    'customizationJsonString': JSON.stringify(customizationValues),
+                    'quoteIdentifier': $j("#quote").val()
                 },
                 datatype: 'html',
                 success: function (html) {
@@ -1420,7 +1475,7 @@
         </div>
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm">
-            <div class="form-horizontal span6">
+            <div class="form-horizontal span6" style="min-width: 512px">
                 <stripes:hidden name="productOrder"/>
                 <stripes:hidden name="submitString"/>
                 <stripes:hidden name="customizationJsonString" id="customizationJsonString" />
@@ -1443,7 +1498,7 @@
                                     DRAFT
                                 </c:when>
                                 <c:otherwise>
-                                    <a target="JIRA" href="${actionBean.jiraUrl(actionBean.editOrder.jiraTicketKey)}" class="external" target="JIRA">
+                                    <a id="orderId" target="JIRA" href="${actionBean.jiraUrl(actionBean.editOrder.jiraTicketKey)}" class="external" target="JIRA">
                                             ${actionBean.editOrder.jiraTicketKey}
                                     </a>
                                 </c:otherwise>
@@ -1510,17 +1565,14 @@
                                     Regulatory Information
                                 </stripes:label>
 
-
-                                <div id="regulatoryActive" class="controls">
-                                    <stripes:checkbox name="skipRegulatoryInfo" id="skipRegulatoryInfoCheckbox"
-                                                      title="Click if no IRB/ORSP review is required."/>No IRB/ORSP
-                                    Review Required
-                                </div>
                                 <div id="skipRegulatoryDiv" class="controls controls-text">
-                                        ${actionBean.complianceStatement}<br/>
-                                    <stripes:text id="skipRegulatoryInfoReason"
-                                                  name="editOrder.skipRegulatoryReason"
-                                                  maxlength="255"/>
+
+                                    <stripes:checkbox name="notFromHumans" id="notFromHumansCheckbox" title="Click if the sample does not involve samples from Humans"/>
+                                    ${ResearchProject.NOT_FROM_HUMANS_REASON_FILL}<br/>
+                                    <stripes:checkbox name="fromClinicalLine" id="clinicalLineCheckbox" title="Click if the sample comes from a Clinical cell line"/>
+                                    ${ResearchProject.FROM_CLINICAL_CELL_LINE}<br/>
+                                    <stripes:hidden id="skipRegulatoryInfoReason"
+                                                    name="editOrder.skipRegulatoryReason"/>
                                 </div>
                                 <div id="regulatorySelect" class="controls controls-text"></div>
                                 <div id="attestationDiv" class="controls controls-text">
@@ -1602,7 +1654,36 @@
                     </div>
                 </div>
 
+                <c:if test="${not empty actionBean.editOrder.product}">
+                    <div class="control-group">
+                        <stripes:label for="coverageTypeKey" class="control-label">
+                            Coverage
+                        </stripes:label>
+                        <div class="controls">
+                            <stripes:select name="editOrder.coverageTypeKey" id="coverageTypeKey"
+                                            value="${actionBean.editOrder.coverageTypeKey}">
+                                <stripes:option value="">Select One</stripes:option>
+                                <stripes:options-collection collection="${actionBean.coverageTypes}" label="displayName" value="businessKey"/>
+                            </stripes:select>
+                        </div>
+                    </div>
+                </c:if>
 
+
+            <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                <div class="control-group">
+                    <stripes:label for="customAggregationParticle" class="control-label"/>
+                    <div class="controls">
+                        <stripes:select style="width: auto;" id="customAggregationParticle"
+                                        name="editOrder.defaultAggregationParticle"
+                                        title="Select the custom aggregation particle which the pipleine will appended to their default aggregation. By default the pipeline aggregates on the research project.">
+                            <stripes:option value=""><%=Product.AggregationParticle.DEFAULT_LABEL%></stripes:option>
+                            <stripes:options-enumeration label="displayName"
+                                                         enum="org.broadinstitute.gpinformatics.athena.entity.products.Product.AggregationParticle"/>
+                        </stripes:select>
+                    </div>
+                </div>
+            </security:authorizeBlock>
             <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
                 <c:if test="${!actionBean.editOrder.priorToSAP1_5}">
                     <div class="control-group">
@@ -1612,7 +1693,7 @@
                             <div class="form-value" id="customizationContent"></div>
                         </div>
                     </div>
-                    
+
                 </c:if>
             </security:authorizeBlock>
 
@@ -1653,6 +1734,7 @@
                         Quote <c:if test="${not actionBean.editOrder.draft}">*</c:if>
                     </stripes:label>
                     <div class="controls">
+                        <input type="hidden" name="originalQuote" value="${actionBean.editOrder.quoteId}"/>
                         <stripes:text id="quote" name="editOrder.quoteId" class="defaultText"
                                       onchange="updateFundsRemaining()"
                                       title="Enter the Quote ID for this order"/>
@@ -1725,7 +1807,7 @@
                         <stripes:submit name="save" value="${actionBean.saveButtonText}"
                                         disabled="${!actionBean.canSave}"
                                         style="margin-right: 10px;" class="btn btn-primary"
-                                        onclick="return validateNumberOfLanes();"/>
+                                        onclick="return validateSaveOrder();"/>
                         <c:choose>
                             <c:when test="${actionBean.creating}">
                                 <stripes:link beanclass="${actionBean.class.name}" event="list">Cancel</stripes:link>
@@ -1754,10 +1836,12 @@
                 <br/>
                 <br/>
                 <stripes:textarea readonly="${!actionBean.editOrder.draft}" class="controlledText" id="samplesToAdd"
-                                  name="sampleList" rows="15" style="width: 100%;"/>
+                              name="sampleList" rows="15" style="width: 95%;"/>
+
             <table id="regulatoryInfoSuggestions" class="table simple">
                 <caption style="text-align: left;margin-top:1em;"><h3>ORSP(s) associated with samples</h3></caption>
             </table>
+            </div>
             <div id="sampleInitiationKitRequestEdit" class="help-block span4" style="display: none">
             <div class="form-horizontal span5">
                 <fieldset>
@@ -1852,6 +1936,7 @@
                         <div id="kitDefinitions" style="margin-top: 5px;"></div>
                     </div>
                 </fieldset>
+            </div>
             </div>
         </stripes:form>
 

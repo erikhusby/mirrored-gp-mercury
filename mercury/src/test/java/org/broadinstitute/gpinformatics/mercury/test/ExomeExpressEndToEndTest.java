@@ -571,10 +571,6 @@ public class ExomeExpressEndToEndTest {
                 public List<FlowcellDesignation> getFlowcellDesignations(LabBatch fct) {
                 return flowcellDesignations;
             }
-                @Override
-                public List<FlowcellDesignation> getFlowcellDesignations(Collection<LabVessel> loadingTubes) {
-                    return flowcellDesignations;
-                }
             };
 
             ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(new SampleDataFetcher(),

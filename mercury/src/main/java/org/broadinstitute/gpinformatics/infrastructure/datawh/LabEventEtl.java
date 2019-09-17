@@ -524,7 +524,6 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             Collections.sort(dtos, EventFactDto.BY_SAMPLE_KEY);
         }
 
-
         postEtlLogging();
 
         return dtos;

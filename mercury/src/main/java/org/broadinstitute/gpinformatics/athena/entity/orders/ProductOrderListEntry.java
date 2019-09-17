@@ -211,6 +211,11 @@ public class ProductOrderListEntry implements Serializable {
         return orderType;
     }
 
+    public ProductOrder.QuoteSourceType getQuoteSourceType() {
+        return ProductOrder.QuoteSourceType.getByQuoteId(quoteId);
+    }
+
+
     /**
      * If the transient readyForBillingCount is set (done by the order list entry dao), then this is ready for
      * billing when there are entries ready for billing and nothing ready for review. Ready for review means there

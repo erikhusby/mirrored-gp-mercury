@@ -25,6 +25,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel_;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch_;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -265,7 +266,7 @@ public class FlowcellDesignationFixupTest extends Arquillian {
                         // Find the latest flowcell designation prior to batch creation
                         for (FlowcellDesignation flowcellDesignation : flowcellDesignationList) {
                             if (flowcellDesignation.getStatus() == FlowcellDesignation.Status.IN_FCT
-                                    && flowcellDesignation.getLoadingTube().getLabel().equals(jiraData.getValue())
+                                    && flowcellDesignation.getStartingTube().getLabel().equals(jiraData.getValue())
                                     && flowcellDesignation.getCreatedOn().before(fctBatch.getCreatedOn())) {
                                 foundMatch = true;
                                 // ******************* THIS IS IT!  Assign designation to batch starting vessel.
@@ -637,6 +638,51 @@ public class FlowcellDesignationFixupTest extends Arquillian {
             flowcellDesignation.setReadLength(76);
         }
         FixupCommentary fixupCommentary = new FixupCommentary("SUPPORT-4584 fix incorrectly entered read length.");
+        labVesselDao.persist(fixupCommentary);
+        labVesselDao.flush();
+        utx.commit();
+    }
+
+
+    /**
+     * Unassigned strip tube dilution references
+     *
+     * Batch Vessel ID  Striptube     Flowcell         Denature    FCT
+     * ---------------  ------------- ----------       ---------   ---------
+     * 4657828          000015206411  HMJN3BCX2 LANE1  0311172858  FCT-44494
+     * 4657827          000015206411  HMJN3BCX2 LANE2  0311180313  FCT-44494
+     *
+     * 4657829          000015204811  HMJYFBCX2 LANE1  0311180458  FCT-44495
+     * 4657830          000015204811  HMJYFBCX2 LANE2  0311180372  FCT-44495
+     */
+    @Test(enabled=false)
+    public void addMissingDilutionRefsGplim5675() throws Exception {
+        utx.begin();
+        userBean.loginOSUser();
+
+        LabBatchStartingVessel batchStartingVessel;
+
+        // FCT-44494
+        LabVessel stripTubeFct44494 = labVesselDao.findByIdentifier("000015206411");
+        batchStartingVessel = labVesselDao.findSingle(LabBatchStartingVessel.class,
+                    LabBatchStartingVessel_.batchStartingVesselId, 4657828L );
+        batchStartingVessel.setDilutionVessel(stripTubeFct44494);
+
+        batchStartingVessel = labVesselDao.findSingle(LabBatchStartingVessel.class,
+                LabBatchStartingVessel_.batchStartingVesselId, 4657827L );
+        batchStartingVessel.setDilutionVessel(stripTubeFct44494);
+
+        // FCT-44495
+        LabVessel stripTubeFct44495 = labVesselDao.findByIdentifier("000015204811");
+        batchStartingVessel = labVesselDao.findSingle(LabBatchStartingVessel.class,
+                LabBatchStartingVessel_.batchStartingVesselId, 4657829L );
+        batchStartingVessel.setDilutionVessel(stripTubeFct44495);
+
+        batchStartingVessel = labVesselDao.findSingle(LabBatchStartingVessel.class,
+                LabBatchStartingVessel_.batchStartingVesselId, 4657830L );
+        batchStartingVessel.setDilutionVessel(stripTubeFct44495);
+
+        FixupCommentary fixupCommentary = new FixupCommentary("GPLIM-5675 HiSeq 2500 Rapid Run batches missing dilution references.");
         labVesselDao.persist(fixupCommentary);
         labVesselDao.flush();
         utx.commit();

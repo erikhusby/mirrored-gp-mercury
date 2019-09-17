@@ -347,9 +347,21 @@
                                 </c:if>
                             </td>
                             <td>
-                                <a href="${actionBean.getQuoteUrl(order.quoteId)}" class="external" target="QUOTE">
-                                        ${order.quoteId}
-                                </a>
+
+                                <c:choose>
+                                    <c:when test="${order.quoteSourceType.sapType}">
+                                        <a href="${actionBean.getSapQuoteUrl(order.quoteId)}" class="external" target="QUOTE">
+                                                ${order.quoteId}
+                                        </a>
+
+                                    </c:when>
+                                    <c:otherwise>
+                                        <a href="${actionBean.getQuoteUrl(order.quoteId)}" class="external" target="QUOTE">
+                                                ${order.quoteId}
+                                        </a>
+
+                                    </c:otherwise>
+                                </c:choose>
                             </td>
                             <td>
                                 <!-- Do ready for review first because if there is ANYTHING auto created, then it

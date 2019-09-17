@@ -6,10 +6,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
-import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderKitTest;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
@@ -19,12 +19,13 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderTest;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
+import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
@@ -34,9 +35,8 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
@@ -44,6 +44,7 @@ import org.broadinstitute.gpinformatics.infrastructure.sap.SapConfig;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImplDBFreeTest;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
@@ -51,14 +52,13 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderT
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.broadinstitute.sap.entity.Condition;
-import org.broadinstitute.sap.entity.DeliveryCondition;
-import org.broadinstitute.sap.entity.SAPMaterial;
+import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hamcrest.Matchers;
 import org.mockito.Mockito;
@@ -72,6 +72,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -104,16 +105,17 @@ public class ProductOrderEjbTest {
 
     private static final String[] sampleNames = {"SM-1234", "SM-5678", "SM-9101", "SM-1112"};
     private ProductOrder productOrder;
+    SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+
     private Log logger = LogFactory.getLog(ProductOrderEjbTest.class);
 
     @BeforeMethod
     public void setUp() throws Exception {
-
         mockEmailSender = Mockito.mock(EmailSender.class);
         mockSapService = Mockito.mock(SapIntegrationService.class);
         mockQuoteService = Mockito.mock(QuoteServiceImpl.class);
         mockAccessController = Mockito.mock(SAPAccessControlEjb.class);
-        Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(new SAPAccessControl());
+        Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenThrow(new RuntimeException());
 
         productPriceCache = new SAPProductPriceCache(mockSapService);
         productPriceCache.setAccessControlEjb(mockAccessController);
@@ -219,8 +221,51 @@ public class ProductOrderEjbTest {
     public void testValidateQuote() throws Exception {
         ProductOrder pdo = new ProductOrder();
         pdo.setQuoteId("CASH");
-        ProductOrderEjb pdoEjb = new ProductOrderEjb();
-        pdoEjb.validateQuote(pdo, new QuoteServiceStub());
+
+        final ProductOrderDao productOrderDaoMock = Mockito.mock(ProductOrderDao.class);
+        final ProductDao productDaoMock = Mockito.mock(ProductDao.class);
+        final QuoteService quoteService= new QuoteServiceStub();
+        final JiraService jiraService= Mockito.mock(JiraService.class);
+        final UserBean userBean= Mockito.mock(UserBean.class);
+        final BSPUserList userList= Mockito.mock(BSPUserList.class);
+        final BucketEjb bucketEjb= Mockito.mock(BucketEjb.class);
+        final SquidConnector squidConnector= Mockito.mock(SquidConnector.class);
+        final MercurySampleDao mercurySampleDao= Mockito.mock(MercurySampleDao.class);
+        final ProductOrderJiraUtil productOrderJiraUtil= Mockito.mock(ProductOrderJiraUtil.class);
+        final SapIntegrationService sapService= new SapIntegrationServiceStub();
+        final PriceListCache priceListCache= Mockito.mock(PriceListCache.class);
+        final SAPProductPriceCache productPriceCache= Mockito.mock(SAPProductPriceCache.class);
+
+        ProductOrderEjb pdoEjb =
+                new ProductOrderEjb(productOrderDaoMock, productDaoMock, quoteService, jiraService, userBean, userList,
+                        bucketEjb, squidConnector, mercurySampleDao, productOrderJiraUtil, sapService, priceListCache,
+                        productPriceCache);
+        pdoEjb.validateQuote(pdo);
+    }
+
+    public void testValidateSapQuote() throws Exception {
+        ProductOrder pdo = new ProductOrder();
+        pdo.setQuoteId("SAPCASH");
+
+        final ProductOrderDao productOrderDaoMock = Mockito.mock(ProductOrderDao.class);
+        final ProductDao productDaoMock = Mockito.mock(ProductDao.class);
+        final QuoteService quoteService= new QuoteServiceStub();
+        final JiraService jiraService= Mockito.mock(JiraService.class);
+        final UserBean userBean= Mockito.mock(UserBean.class);
+        final BSPUserList userList= Mockito.mock(BSPUserList.class);
+        final BucketEjb bucketEjb= Mockito.mock(BucketEjb.class);
+        final SquidConnector squidConnector= Mockito.mock(SquidConnector.class);
+        final MercurySampleDao mercurySampleDao= Mockito.mock(MercurySampleDao.class);
+        final ProductOrderJiraUtil productOrderJiraUtil= Mockito.mock(ProductOrderJiraUtil.class);
+        final SapIntegrationService sapService= new SapIntegrationServiceStub();
+        final PriceListCache priceListCache= Mockito.mock(PriceListCache.class);
+        final SAPProductPriceCache productPriceCache= Mockito.mock(SAPProductPriceCache.class);
+
+        ProductOrderEjb pdoEjb =
+                new ProductOrderEjb(productOrderDaoMock, productDaoMock, quoteService, jiraService, userBean, userList,
+                        bucketEjb, squidConnector, mercurySampleDao, productOrderJiraUtil, sapService, priceListCache,
+                        productPriceCache);
+        pdoEjb.validateQuote(pdo);
     }
 
     public void testJiraCommentString() {
@@ -329,7 +374,7 @@ public class ProductOrderEjbTest {
             assertThat(sample.getMercurySample().getSampleKey(), is(equalTo(sample.getBusinessKey())));
         }
         Mockito.verify(mockMercurySampleDao).findMapIdToMercurySample(Mockito.eq(sampleMap.keySet()));
-        Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(Mockito.anyString());
+        Mockito.verify(mockQuoteService, Mockito.times(0)).getQuoteByAlphaId(Mockito.anyString());
     }
 
     public void testCreateOrderInSap() throws Exception {
@@ -339,35 +384,12 @@ public class ProductOrderEjbTest {
 
         Mockito.when(mockUserBean.getBspUser()).thenReturn(new BSPUserList.QADudeUser("PM", 2423L));
 
-        Quote testSingleSourceQuote;
-        String testUser = "Scott.G.MATThEws@GMail.CoM";
-        Funding fundingDefined = new Funding(Funding.PURCHASE_ORDER,null, null);
-        fundingDefined.setPurchaseOrderContact(testUser);
-        fundingDefined.setPurchaseOrderNumber("PO00Id8923");
-        FundingLevel fundingLevel = new FundingLevel("100",Collections.singleton(fundingDefined));
-
-        QuoteFunding quoteFunding = new QuoteFunding(Collections.singleton(fundingLevel));
-
-        testSingleSourceQuote = new Quote(SapIntegrationServiceImplDBFreeTest.SINGLE_SOURCE_PO_QUOTE_ID, quoteFunding, ApprovalStatus.FUNDED);
-        testSingleSourceQuote.setExpired(false);
-
-        Quote testSingleSourceQuote2;
-
-        testSingleSourceQuote2 = new Quote(SapIntegrationServiceImplDBFreeTest.SINGLE_SOURCE_PO_QUOTE_ID+"2", quoteFunding, ApprovalStatus.FUNDED);
-        testSingleSourceQuote2.setExpired(false);
-        Quote testSingleSourceQuote3;
-
-        testSingleSourceQuote3 = new Quote(SapIntegrationServiceImplDBFreeTest.SINGLE_SOURCE_PO_QUOTE_ID+"3", quoteFunding, ApprovalStatus.FUNDED);
-        testSingleSourceQuote3.setExpired(false);
 
         Mockito.when(mockSapService.createOrder(Mockito.any(ProductOrder.class))).thenReturn(SapIntegrationServiceStub.TEST_SAP_NUMBER);
-        Mockito.when(mockQuoteService.getQuoteByAlphaId(testSingleSourceQuote.getAlphanumericId())).thenReturn(testSingleSourceQuote);
-        Mockito.when(mockQuoteService.getQuoteByAlphaId(testSingleSourceQuote2.getAlphanumericId())).thenReturn(testSingleSourceQuote2);
-        Mockito.when(mockQuoteService.getQuoteByAlphaId(testSingleSourceQuote3.getAlphanumericId())).thenReturn(testSingleSourceQuote3);
 
         String jiraTicketKey= "PDO-SAP-test";
         ProductOrder conversionPdo = ProductOrderTestFactory.createDummyProductOrder(10, jiraTicketKey);
-        conversionPdo.setQuoteId(testSingleSourceQuote.getAlphanumericId() );
+        conversionPdo.setQuoteId(SapIntegrationServiceImplDBFreeTest.SAP_QUOTE_ID);
         conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         conversionPdo.setPriorToSAP1_5(Boolean.TRUE);
 
@@ -375,60 +397,46 @@ public class ProductOrderEjbTest {
 
         Set<SAPMaterial> returnMaterials = new HashSet<>();
 
+        Product conversionPdoProduct = conversionPdo.getProduct();
         final SAPMaterial primaryMaterial =
-                new SAPMaterial(conversionPdo.getProduct().getPartNumber(), "10", Collections.<Condition, BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            new SAPMaterial(conversionPdoProduct.getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                conversionPdoProduct.getDescription(), "10", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,
+                new Date(), new Date(),
+                Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
+                companyCode.getSalesOrganization());
+
         returnMaterials.add(
                 primaryMaterial);
         priceList.add(new QuotePriceItem(conversionPdo.getProduct().getPrimaryPriceItem().getCategory(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getName(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getName(), "10", "test",
                 conversionPdo.getProduct().getPrimaryPriceItem().getPlatform()));
-        quoteItems.add(new QuoteItem(testSingleSourceQuote.getAlphanumericId(),conversionPdo.getProduct().getPrimaryPriceItem().getName(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getName(),"2000", "5","each",
-                conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
-        quoteItems.add(new QuoteItem(testSingleSourceQuote2.getAlphanumericId(),conversionPdo.getProduct().getPrimaryPriceItem().getName(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getName(),"2000", "5","each",
-                conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
-        quoteItems.add(new QuoteItem(testSingleSourceQuote3.getAlphanumericId(),conversionPdo.getProduct().getPrimaryPriceItem().getName(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getName(),"2000", "5","each",
-                conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
-            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), "10",
-                    Collections.<Condition, BigDecimal>emptyMap(), Collections.<DeliveryCondition, BigDecimal>emptyMap());
-            addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            final SAPMaterial addonMaterial =
+                new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                    productOrderAddOn.getAddOn().getDescription(), "10", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA,
+                    BigDecimal.ONE, new Date(), new Date(),
+                    Collections.emptyMap(), Collections.emptyMap(),
+                    SAPMaterial.MaterialStatus.ENABLED, companyCode.getSalesOrganization());
+
             returnMaterials.add(addonMaterial);
             priceList.add(new QuotePriceItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory(),
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(), "10", "test",
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getPlatform()));
-            quoteItems.add(new QuoteItem(testSingleSourceQuote.getAlphanumericId(),productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
-                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),"2000", "5","each",
-                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getPlatform(),
-                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory()));
-            quoteItems.add(new QuoteItem(testSingleSourceQuote2.getAlphanumericId(),productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
-                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),"2000", "5","each",
-                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getPlatform(),
-                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory()));
-            quoteItems.add(new QuoteItem(testSingleSourceQuote3.getAlphanumericId(),productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
-                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),"2000", "5","each",
-                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getPlatform(),
-                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory()));
         }
-
-        testSingleSourceQuote.setQuoteItems(quoteItems);
-        testSingleSourceQuote2.setQuoteItems(quoteItems);
-        testSingleSourceQuote3.setQuoteItems(quoteItems);
 
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
         Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
         productPriceCache.refreshCache();
 
         MessageCollection messageCollection = new MessageCollection();
+
+        Mockito.when(mockSapService.findSapQuote(Mockito.anyString()))
+                .thenReturn(TestUtils.buildTestSapQuote(conversionPdo.getQuoteId(),
+                        10000,1000000,conversionPdo,
+                        TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,companyCode.getSalesOrganization()));
+
         productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, true);
         conversionPdo.setPriorToSAP1_5(Boolean.TRUE);
 
@@ -437,19 +445,19 @@ public class ProductOrderEjbTest {
         Assert.assertTrue(CollectionUtils.isNotEmpty(conversionPdo.getSapReferenceOrders()));
         Assert.assertEquals(conversionPdo.getSapReferenceOrders().size(), 1);
 
-        conversionPdo.setQuoteId(SapIntegrationServiceImplDBFreeTest.SINGLE_SOURCE_PO_QUOTE_ID+"2");
+        conversionPdo.setQuoteId(SapIntegrationServiceImplDBFreeTest.SAP_QUOTE_ID+"2");
 
         productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, false);
         Assert.assertEquals(conversionPdo.getSapReferenceOrders().size(), 2);
 
         Assert.assertFalse(conversionPdo.getPriorToSAP1_5());
 
-        conversionPdo.setQuoteId(SapIntegrationServiceImplDBFreeTest.SINGLE_SOURCE_PO_QUOTE_ID+"2");
+        conversionPdo.setQuoteId(SapIntegrationServiceImplDBFreeTest.SAP_QUOTE_ID+"2");
 
         productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, true);
         Assert.assertEquals(conversionPdo.getSapReferenceOrders().size(), 2);
 
-        conversionPdo.setQuoteId(SapIntegrationServiceImplDBFreeTest.SINGLE_SOURCE_PO_QUOTE_ID+"3");
+        conversionPdo.setQuoteId(SapIntegrationServiceImplDBFreeTest.SAP_QUOTE_ID+"3");
 
         productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, false);
         Mockito.verify(mockEmailSender, Mockito.times(2)).sendHtmlEmail(Mockito.eq(mockAppConfig),
@@ -460,15 +468,12 @@ public class ProductOrderEjbTest {
                 Mockito.anyBoolean(), 
                 Mockito.anyBoolean());
         Assert.assertEquals(conversionPdo.getSapReferenceOrders().size(), 3);
-
-        testSingleSourceQuote3.setExpired(true);
 
         for (SAPMaterial sapMaterial : returnMaterials) {
             sapMaterial.setBasePrice("10");
         }
 
-
-        ProductOrderTest.billSampleOut(conversionPdo, conversionPdo.getSamples().iterator().next(), conversionPdo.getSamples().size());
+        TestUtils.billSampleOut(conversionPdo, conversionPdo.getSamples().iterator().next(), conversionPdo.getSamples().size());
 
         productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, false);
         Mockito.verify(mockEmailSender, Mockito.times(2)).sendHtmlEmail(Mockito.eq(mockAppConfig),
@@ -483,114 +488,6 @@ public class ProductOrderEjbTest {
 
         productOrderEjb.abandon(jiraTicketKey, "testing");
 
-        Mockito.verify(mockEmailSender, Mockito.times(3)).sendHtmlEmail(Mockito.eq(mockAppConfig),
-                Mockito.anyString(),
-                Mockito.<String>anyList(),
-                Mockito.anyString(),
-                Mockito.anyString(),
-                Mockito.anyBoolean(), 
-                Mockito.anyBoolean());
-
-        Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(testSingleSourceQuote.getAlphanumericId());
-        Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(testSingleSourceQuote2.getAlphanumericId());
-        Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(testSingleSourceQuote3.getAlphanumericId());
-    }
-
-
-    public void testUpdatePriorTo15OrderInSap() throws Exception {
-
-        PriceList priceList = new PriceList();
-        Collection<QuoteItem> quoteItems = new HashSet<>();
-
-        Mockito.when(mockUserBean.getBspUser()).thenReturn(new BSPUserList.QADudeUser("PM", 2423L));
-
-        Quote testSingleSourceQuote;
-        String testUser = "Scott.G.MATThEws@GMail.CoM";
-        Funding fundingDefined = new Funding(Funding.PURCHASE_ORDER,null, null);
-        fundingDefined.setPurchaseOrderContact(testUser);
-        fundingDefined.setPurchaseOrderNumber("PO00Id8923");
-        FundingLevel fundingLevel = new FundingLevel("100",Collections.singleton(fundingDefined));
-
-        QuoteFunding quoteFunding = new QuoteFunding(Collections.singleton(fundingLevel));
-
-        testSingleSourceQuote = new Quote(SapIntegrationServiceImplDBFreeTest.SINGLE_SOURCE_PO_QUOTE_ID, quoteFunding, ApprovalStatus.FUNDED);
-        testSingleSourceQuote.setExpired(false);
-
-        Mockito.when(mockSapService.createOrder(Mockito.any(ProductOrder.class))).thenReturn(SapIntegrationServiceStub.TEST_SAP_NUMBER);
-        Mockito.when(mockQuoteService.getQuoteByAlphaId(testSingleSourceQuote.getAlphanumericId())).thenReturn(testSingleSourceQuote);
-
-        String jiraTicketKey= "PDO-SAP-test";
-        ProductOrder conversionPdo = ProductOrderTestFactory.createDummyProductOrder(10, jiraTicketKey);
-        conversionPdo.setQuoteId(testSingleSourceQuote.getAlphanumericId() );
-        conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-        conversionPdo.setPriorToSAP1_5(Boolean.TRUE);
-
-        Mockito.when(productOrderDaoMock.findByBusinessKey(jiraTicketKey)).thenReturn(conversionPdo);
-
-        Set<SAPMaterial> returnMaterials = new HashSet<>();
-
-        final SAPMaterial primaryMaterial =
-                new SAPMaterial(conversionPdo.getProduct().getPartNumber(), "10", Collections.<Condition, BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(primaryMaterial);
-        priceList.add(new QuotePriceItem(conversionPdo.getProduct().getPrimaryPriceItem().getCategory(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getName(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getName(), "10", "test",
-                conversionPdo.getProduct().getPrimaryPriceItem().getPlatform()));
-        quoteItems.add(new QuoteItem(testSingleSourceQuote.getAlphanumericId(),conversionPdo.getProduct().getPrimaryPriceItem().getName(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getName(),"2000", "5","each",
-                conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
-
-        for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
-            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), "10",
-                    Collections.<Condition, BigDecimal>emptyMap(), Collections.<DeliveryCondition, BigDecimal>emptyMap());
-            addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-            returnMaterials.add(addonMaterial);
-            priceList.add(new QuotePriceItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory(),
-                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
-                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(), "10", "test",
-                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getPlatform()));
-            quoteItems.add(new QuoteItem(testSingleSourceQuote.getAlphanumericId(),productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
-                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),"2000", "5","each",
-                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getPlatform(),
-                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory()));
-        }
-
-        testSingleSourceQuote.setQuoteItems(quoteItems);
-
-        Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
-        Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
-        productPriceCache.refreshCache();
-
-        MessageCollection messageCollection = new MessageCollection();
-        productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, true);
-        conversionPdo.setPriorToSAP1_5(Boolean.TRUE);
-
-        Assert.assertTrue(conversionPdo.getPriorToSAP1_5());
-
-        Assert.assertTrue(CollectionUtils.isNotEmpty(conversionPdo.getSapReferenceOrders()));
-        Assert.assertEquals(conversionPdo.getSapReferenceOrders().size(), 1);
-
-        ProductOrderTest.billSampleOut(conversionPdo, conversionPdo.getSamples().iterator().next(), conversionPdo.getSamples().size());
-
-        //Trick the order into thinking the price has changed so that it will think it should send a new SAP Order
-        conversionPdo.latestSapOrderDetail().setOrderPricesHash("Reset");
-        productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, false);
-        Mockito.verify(mockEmailSender, Mockito.times(1)).sendHtmlEmail(Mockito.eq(mockAppConfig),
-                Mockito.anyString(),
-                Mockito.<String>anyList(),
-                Mockito.anyString(),
-                Mockito.anyString(),
-                Mockito.anyBoolean(), 
-                Mockito.anyBoolean());
-        Assert.assertEquals(conversionPdo.getSapReferenceOrders().size(), 2);
-
-        Assert.assertFalse(conversionPdo.getPriorToSAP1_5());
-
-        productOrderEjb.abandon(jiraTicketKey, "testing");
-
         Mockito.verify(mockEmailSender, Mockito.times(2)).sendHtmlEmail(Mockito.eq(mockAppConfig),
                 Mockito.anyString(),
                 Mockito.<String>anyList(),
@@ -598,7 +495,6 @@ public class ProductOrderEjbTest {
                 Mockito.anyString(),
                 Mockito.anyBoolean(), 
                 Mockito.anyBoolean());
-        Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(Mockito.anyString());
     }
 
     public void testAbandonOrderWithServiceNowTicket() throws Exception {
@@ -609,62 +505,52 @@ public class ProductOrderEjbTest {
         String jiraTicketKey= "PDO-SAP-test";
         ProductOrder conversionPdo = ProductOrderTestFactory.createDummyProductOrder(1, jiraTicketKey);
 
-        Quote testSingleSourceQuote;
-        String testUser = "Scott.G.MATThEws@GMail.CoM";
-        Funding fundingDefined = new Funding(Funding.PURCHASE_ORDER,null, null);
-        fundingDefined.setPurchaseOrderContact(testUser);
-        fundingDefined.setPurchaseOrderNumber("PO00Id8923");
-        FundingLevel fundingLevel = new FundingLevel("100",Collections.singleton(fundingDefined));
-
-        QuoteFunding quoteFunding = new QuoteFunding(Collections.singleton(fundingLevel));
-
-        testSingleSourceQuote = new Quote(SapIntegrationServiceImplDBFreeTest.SINGLE_SOURCE_PO_QUOTE_ID, quoteFunding, ApprovalStatus.FUNDED);
-        testSingleSourceQuote.setExpired(false);
-
-        conversionPdo.setQuoteId(testSingleSourceQuote.getAlphanumericId() );
+        conversionPdo.setQuoteId(SapIntegrationServiceImplDBFreeTest.SAP_QUOTE_ID );
         conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
         Set<SAPMaterial> returnMaterials = new HashSet<>();
         PriceList priceList = new PriceList();
         Collection<QuoteItem> quoteItems = new HashSet<>();
+        Product conversionPdoProduct = conversionPdo.getProduct();
 
         final SAPMaterial primaryMaterial =
-                new SAPMaterial(conversionPdo.getProduct().getPartNumber(), "10", Collections.<Condition,BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            new SAPMaterial(conversionPdoProduct.getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                conversionPdoProduct.getDescription(), "10", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,
+                new Date(), new Date(),
+                Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
+                companyCode.getSalesOrganization());
+
+        primaryMaterial.updateCompanyConfiguration(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(
                 primaryMaterial);
         priceList.add(new QuotePriceItem(conversionPdo.getProduct().getPrimaryPriceItem().getCategory(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getName(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getName(), "10", "test",
                 conversionPdo.getProduct().getPrimaryPriceItem().getPlatform()));
-        quoteItems.add(new QuoteItem(testSingleSourceQuote.getAlphanumericId(),conversionPdo.getProduct().getPrimaryPriceItem().getName(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getName(),"2000", "10","each",
-                conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
-            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), "10",
-                    Collections.<Condition, BigDecimal>emptyMap(), Collections.<DeliveryCondition, BigDecimal>emptyMap());
-            addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                                productOrderAddOn.getAddOn().getDescription(), "10", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA,
+                                BigDecimal.ONE, new Date(), new Date(),
+                                Collections.emptyMap(), Collections.emptyMap(),
+                                SAPMaterial.MaterialStatus.ENABLED, companyCode.getSalesOrganization());
             returnMaterials.add(addonMaterial);
             priceList.add(new QuotePriceItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory(),
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(), "10", "test",
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getPlatform()));
-            quoteItems.add(new QuoteItem(testSingleSourceQuote.getAlphanumericId(),conversionPdo.getProduct().getPrimaryPriceItem().getName(),
-                    conversionPdo.getProduct().getPrimaryPriceItem().getName(),"1000", "20","each",
-                    conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
-                    conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
         }
 
-        testSingleSourceQuote.setQuoteItems(quoteItems);
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
         Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
         Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
         productPriceCache.refreshCache();
 
-        Mockito.when(mockQuoteService.getQuoteByAlphaId(testSingleSourceQuote.getAlphanumericId())).thenReturn(testSingleSourceQuote);
         Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
+        Mockito.when(mockSapService.findSapQuote(Mockito.anyString()))
+                .thenReturn(TestUtils.buildTestSapQuote(conversionPdo.getQuoteId(),
+                        10000,1000000,conversionPdo,
+                        TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,companyCode.getSalesOrganization()));
+
 
         productOrderEjb.publishProductOrderToSAP(conversionPdo, new MessageCollection(), true);
         conversionPdo.setPriorToSAP1_5(true);
@@ -673,7 +559,7 @@ public class ProductOrderEjbTest {
 
         productOrderEjb.abandon(jiraTicketKey, "testing");
 
-        Mockito.verify(mockEmailSender, Mockito.times(1)).sendHtmlEmail(Mockito.eq(mockAppConfig),
+        Mockito.verify(mockEmailSender, Mockito.times(0)).sendHtmlEmail(Mockito.eq(mockAppConfig),
                 Mockito.anyString(),
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
@@ -681,10 +567,10 @@ public class ProductOrderEjbTest {
                 Mockito.anyBoolean(), 
                 Mockito.anyBoolean());
 
-        Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(Mockito.anyString());
+        Mockito.verify(mockQuoteService, Mockito.times(0)).getQuoteByAlphaId(Mockito.anyString());
 
         productOrderEjb.updateOrderStatus(jiraTicketKey, MessageReporter.UNUSED);
-        Mockito.verify(mockEmailSender, Mockito.times(1)).sendHtmlEmail(Mockito.eq(mockAppConfig),
+        Mockito.verify(mockEmailSender, Mockito.times(0)).sendHtmlEmail(Mockito.eq(mockAppConfig),
                 Mockito.anyString(),
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
@@ -702,62 +588,52 @@ public class ProductOrderEjbTest {
         String jiraTicketKey= "PDO-SAP-test";
         ProductOrder conversionPdo = ProductOrderTestFactory.createDummyProductOrder(1, jiraTicketKey);
 
-        Quote testSingleSourceQuote;
-        String testUser = "Scott.G.MATThEws@GMail.CoM";
-        Funding fundingDefined = new Funding(Funding.PURCHASE_ORDER,null, null);
-        fundingDefined.setPurchaseOrderContact(testUser);
-        fundingDefined.setPurchaseOrderNumber("PO00Id8923");
-        FundingLevel fundingLevel = new FundingLevel("100",Collections.singleton(fundingDefined));
-
-        QuoteFunding quoteFunding = new QuoteFunding(Collections.singleton(fundingLevel));
-
-        testSingleSourceQuote = new Quote(SapIntegrationServiceImplDBFreeTest.SINGLE_SOURCE_PO_QUOTE_ID, quoteFunding, ApprovalStatus.FUNDED);
-        testSingleSourceQuote.setExpired(false);
-
-        conversionPdo.setQuoteId(testSingleSourceQuote.getAlphanumericId() );
+        conversionPdo.setQuoteId(SapIntegrationServiceImplDBFreeTest.SAP_QUOTE_ID );
         conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
         Set<SAPMaterial> returnMaterials = new HashSet<>();
         PriceList priceList = new PriceList();
         Collection<QuoteItem> quoteItems = new HashSet<>();
+        Product conversionPdoProduct = conversionPdo.getProduct();
 
         final SAPMaterial primaryMaterial =
-                new SAPMaterial(conversionPdo.getProduct().getPartNumber(), "10", Collections.<Condition,BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            new SAPMaterial(conversionPdoProduct.getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                conversionPdoProduct.getDescription(), "10", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,
+                new Date(), new Date(),
+                Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
+                companyCode.getSalesOrganization());
+
+        primaryMaterial.updateCompanyConfiguration(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(
                 primaryMaterial);
         priceList.add(new QuotePriceItem(conversionPdo.getProduct().getPrimaryPriceItem().getCategory(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getName(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getName(), "10", "test",
                 conversionPdo.getProduct().getPrimaryPriceItem().getPlatform()));
-        quoteItems.add(new QuoteItem(testSingleSourceQuote.getAlphanumericId(),conversionPdo.getProduct().getPrimaryPriceItem().getName(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getName(),"2000", "10","each",
-                conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
+
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
-            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), "10",
-                    Collections.<Condition, BigDecimal>emptyMap(), Collections.<DeliveryCondition, BigDecimal>emptyMap());
-            addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                                productOrderAddOn.getAddOn().getDescription(), "10", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA,
+                                BigDecimal.ONE, new Date(), new Date(),
+                                Collections.emptyMap(), Collections.emptyMap(),
+                                SAPMaterial.MaterialStatus.ENABLED, companyCode.getSalesOrganization());
             returnMaterials.add(addonMaterial);
             priceList.add(new QuotePriceItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory(),
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(), "10", "test",
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getPlatform()));
-            quoteItems.add(new QuoteItem(testSingleSourceQuote.getAlphanumericId(),conversionPdo.getProduct().getPrimaryPriceItem().getName(),
-                    conversionPdo.getProduct().getPrimaryPriceItem().getName(),"1000", "20","each",
-                    conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
-                    conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
         }
 
-        testSingleSourceQuote.setQuoteItems(quoteItems);
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
         Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
         Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
         productPriceCache.refreshCache();
 
-        Mockito.when(mockQuoteService.getQuoteByAlphaId(testSingleSourceQuote.getAlphanumericId())).thenReturn(testSingleSourceQuote);
         Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
+        Mockito.when(mockSapService.findSapQuote(Mockito.anyString()))
+                .thenReturn(TestUtils.buildTestSapQuote(conversionPdo.getQuoteId(),
+                        10000,1000000,conversionPdo,
+                        TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,companyCode.getSalesOrganization()));
 
         productOrderEjb.publishProductOrderToSAP(conversionPdo, new MessageCollection(), true);
 
@@ -765,23 +641,23 @@ public class ProductOrderEjbTest {
 
         productOrderEjb.abandon(jiraTicketKey, "testing");
 
-        Mockito.verify(mockEmailSender, Mockito.times(1)).sendHtmlEmail(Mockito.eq(mockAppConfig),
+        Mockito.verify(mockEmailSender, Mockito.times(0)).sendHtmlEmail(Mockito.eq(mockAppConfig),
                 Mockito.anyString(),
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
                 Mockito.anyString(),
-                Mockito.anyBoolean(), 
+                Mockito.anyBoolean(),
                 Mockito.anyBoolean());
 
-        Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(Mockito.anyString());
+        Mockito.verify(mockQuoteService, Mockito.times(0)).getQuoteByAlphaId(Mockito.anyString());
 
         productOrderEjb.updateOrderStatus(jiraTicketKey, MessageReporter.UNUSED);
-        Mockito.verify(mockEmailSender, Mockito.times(1)).sendHtmlEmail(Mockito.eq(mockAppConfig),
+        Mockito.verify(mockEmailSender, Mockito.times(0)).sendHtmlEmail(Mockito.eq(mockAppConfig),
                 Mockito.anyString(),
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
                 Mockito.anyString(),
-                Mockito.anyBoolean(), 
+                Mockito.anyBoolean(),
                 Mockito.anyBoolean());
     }
 
@@ -794,61 +670,52 @@ public class ProductOrderEjbTest {
         String jiraTicketKey= "PDO-SAP-test";
         ProductOrder conversionPdo = ProductOrderTestFactory.createDummyProductOrder(1, jiraTicketKey);
 
-        Quote testSingleSourceQuote;
-        String testUser = "Scott.G.MATThEws@GMail.CoM";
-        Funding fundingDefined = new Funding(Funding.PURCHASE_ORDER,null, null);
-        fundingDefined.setPurchaseOrderContact(testUser);
-        fundingDefined.setPurchaseOrderNumber("PO00Id8923");
-        FundingLevel fundingLevel = new FundingLevel("100",Collections.singleton(fundingDefined));
-
-        QuoteFunding quoteFunding = new QuoteFunding(Collections.singleton(fundingLevel));
-
-        testSingleSourceQuote = new Quote(SapIntegrationServiceImplDBFreeTest.SINGLE_SOURCE_PO_QUOTE_ID, quoteFunding, ApprovalStatus.FUNDED);
-        testSingleSourceQuote.setExpired(false);
-
-        conversionPdo.setQuoteId(testSingleSourceQuote.getAlphanumericId() );
+        conversionPdo.setQuoteId(SapIntegrationServiceImplDBFreeTest.SAP_QUOTE_ID );
         conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
         Set<SAPMaterial> returnMaterials = new HashSet<>();
         PriceList priceList = new PriceList();
         Collection<QuoteItem> quoteItems = new HashSet<>();
+        Product conversionPdoProduct = conversionPdo.getProduct();
 
         final SAPMaterial primaryMaterial =
-                new SAPMaterial(conversionPdo.getProduct().getPartNumber(), "10", Collections.<Condition,BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            new SAPMaterial(conversionPdoProduct.getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                conversionPdoProduct.getDescription(), "10", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,
+                new Date(), new Date(),
+                Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
+                companyCode.getSalesOrganization());
+
         returnMaterials.add(
                 primaryMaterial);
         priceList.add(new QuotePriceItem(conversionPdo.getProduct().getPrimaryPriceItem().getCategory(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getName(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getName(), "10", "test",
                 conversionPdo.getProduct().getPrimaryPriceItem().getPlatform()));
-        quoteItems.add(new QuoteItem(testSingleSourceQuote.getAlphanumericId(),conversionPdo.getProduct().getPrimaryPriceItem().getName(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getName(),"2000", "10","each",
-                conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
+;
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
-            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), "10",
-                    Collections.<Condition, BigDecimal>emptyMap(), Collections.<DeliveryCondition, BigDecimal>emptyMap());
-            addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                                productOrderAddOn.getAddOn().getDescription(), "10", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA,
+                                BigDecimal.ONE, new Date(), new Date(),
+                                Collections.emptyMap(), Collections.emptyMap(),
+                                SAPMaterial.MaterialStatus.ENABLED, companyCode.getSalesOrganization());
             returnMaterials.add(addonMaterial);
             priceList.add(new QuotePriceItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory(),
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(), "10", "test",
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getPlatform()));
-            quoteItems.add(new QuoteItem(testSingleSourceQuote.getAlphanumericId(),conversionPdo.getProduct().getPrimaryPriceItem().getName(),
-                    conversionPdo.getProduct().getPrimaryPriceItem().getName(),"1000", "20","each",
-                    conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
-                    conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
+;
         }
 
-        testSingleSourceQuote.setQuoteItems(quoteItems);
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
         Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
         Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
         productPriceCache.refreshCache();
+        Mockito.when(mockSapService.findSapQuote(Mockito.anyString()))
+                .thenReturn(TestUtils.buildTestSapQuote(conversionPdo.getQuoteId(),
+                        10000,1000000,conversionPdo,
+                        TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,companyCode.getSalesOrganization()));
 
-        Mockito.when(mockQuoteService.getQuoteByAlphaId(testSingleSourceQuote.getAlphanumericId())).thenReturn(testSingleSourceQuote);
+
         Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
 
         productOrderEjb.publishProductOrderToSAP(conversionPdo, new MessageCollection(), true);
@@ -856,14 +723,13 @@ public class ProductOrderEjbTest {
         final SAPAccessControl control = new SAPAccessControl();
         AccessItem orderAccessItem = new AccessItem(conversionPdo.getProduct().getPrimaryPriceItem().getName());
         control.setDisabledItems(Collections.singleton(orderAccessItem));
-        Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(control);
 
 
         Mockito.when(productOrderDaoMock.findByBusinessKey(jiraTicketKey)).thenReturn(conversionPdo);
 
         productOrderEjb.abandon(jiraTicketKey, "testing");
 
-        Mockito.verify(mockEmailSender, Mockito.times(1)).sendHtmlEmail(Mockito.eq(mockAppConfig),
+        Mockito.verify(mockEmailSender, Mockito.times(0)).sendHtmlEmail(Mockito.eq(mockAppConfig),
                 Mockito.anyString(),
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
@@ -871,10 +737,10 @@ public class ProductOrderEjbTest {
                 Mockito.anyBoolean(), 
                 Mockito.anyBoolean());
 
-        Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(Mockito.anyString());
+        Mockito.verify(mockQuoteService, Mockito.times(0)).getQuoteByAlphaId(Mockito.anyString());
 
         productOrderEjb.updateOrderStatus(jiraTicketKey, MessageReporter.UNUSED);
-        Mockito.verify(mockEmailSender, Mockito.times(1)).sendHtmlEmail(Mockito.eq(mockAppConfig),
+        Mockito.verify(mockEmailSender, Mockito.times(0)).sendHtmlEmail(Mockito.eq(mockAppConfig),
                 Mockito.anyString(),
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
@@ -894,35 +760,28 @@ public class ProductOrderEjbTest {
         Mockito.when(mockUserBean.getBspUser()).thenReturn(new BSPUserList.QADudeUser("PM", 2423L));
         Mockito.when(mockSapService.createOrder(Mockito.any(ProductOrder.class))).thenReturn(SapIntegrationServiceStub.TEST_SAP_NUMBER);
 
-        String testUser = "Scott.G.MATThEws@GMail.CoM";
-        Funding fundingDefined = new Funding(Funding.PURCHASE_ORDER,null, null);
-        fundingDefined.setPurchaseOrderContact(testUser);
-        fundingDefined.setPurchaseOrderNumber("PO00Id8923");
-        FundingLevel fundingLevel = new FundingLevel("100", Collections.singleton(fundingDefined));
-        QuoteFunding quoteFunding = new QuoteFunding(Collections.singleton(fundingLevel));
-        Quote testSingleSourceQuote = new Quote(SapIntegrationServiceImplDBFreeTest.SINGLE_SOURCE_PO_QUOTE_ID, quoteFunding, ApprovalStatus.FUNDED);
-        testSingleSourceQuote.setExpired(false);
-
         Set<SAPMaterial> returnMaterials = new HashSet<>();
+        Product conversionPdoProduct = conversionPdo.getProduct();
 
         final SAPMaterial primaryMaterial =
-                new SAPMaterial(conversionPdo.getProduct().getPartNumber(), "10", Collections.<Condition,BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            new SAPMaterial(conversionPdoProduct.getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                conversionPdoProduct.getDescription(), "10", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,
+                new Date(), new Date(),
+                Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
+                companyCode.getSalesOrganization());
+
         returnMaterials.add(
                 primaryMaterial);
         priceList.add(new QuotePriceItem(conversionPdo.getProduct().getPrimaryPriceItem().getCategory(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getName(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getName(), "10", "test",
                 conversionPdo.getProduct().getPrimaryPriceItem().getPlatform()));
-        quoteItems.add(new QuoteItem(testSingleSourceQuote.getAlphanumericId(),conversionPdo.getProduct().getPrimaryPriceItem().getName(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getName(),"2000", "10","each",
-                conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
-            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), "10",
-                    Collections.<Condition, BigDecimal>emptyMap(), Collections.<DeliveryCondition, BigDecimal>emptyMap());
-            addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                                productOrderAddOn.getAddOn().getDescription(), "10", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA,
+                                BigDecimal.ONE, new Date(), new Date(),
+                                Collections.emptyMap(), Collections.emptyMap(),
+                                SAPMaterial.MaterialStatus.ENABLED, companyCode.getSalesOrganization());
             returnMaterials.add(addonMaterial);
             priceList.add(new QuotePriceItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory(),
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
@@ -930,18 +789,22 @@ public class ProductOrderEjbTest {
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getPlatform()));
         }
 
-        testSingleSourceQuote.setQuoteItems(quoteItems);
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
         Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
         Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
         productPriceCache.refreshCache();
 
-        Mockito.when(mockQuoteService.getQuoteByAlphaId(testSingleSourceQuote.getAlphanumericId())).thenReturn(testSingleSourceQuote);
-
-        conversionPdo.setQuoteId(testSingleSourceQuote.getAlphanumericId() );
+        conversionPdo.setQuoteId(SapIntegrationServiceImplDBFreeTest.SAP_QUOTE_ID );
         conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
         MessageCollection messageCollection = new MessageCollection();
+
+        Mockito.when(mockSapService.findSapQuote(Mockito.anyString()))
+                .thenReturn(TestUtils.buildTestSapQuote(conversionPdo.getQuoteId(),
+                        10000,1000000,conversionPdo,
+                        TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,companyCode.getSalesOrganization()));
+
+
         productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, true);
         assertThat(conversionPdo.getSapOrderNumber(), is(notNullValue()));
 
@@ -1030,7 +893,7 @@ public class ProductOrderEjbTest {
                 Mockito.anyBoolean());
 
         // called once for conversionPdo and once for childPdoTwo
-        Mockito.verify(mockQuoteService, Mockito.times(3)).getQuoteByAlphaId(Mockito.anyString());
+        Mockito.verify(mockQuoteService, Mockito.times(0)).getQuoteByAlphaId(Mockito.anyString());
     }
 
     public void testTransitionOrderToClosedWithLateBlockedProduct() throws Exception {
@@ -1044,35 +907,28 @@ public class ProductOrderEjbTest {
         Mockito.when(mockUserBean.getBspUser()).thenReturn(new BSPUserList.QADudeUser("PM", 2423L));
         Mockito.when(mockSapService.createOrder(Mockito.any(ProductOrder.class))).thenReturn(SapIntegrationServiceStub.TEST_SAP_NUMBER);
 
-        String testUser = "Scott.G.MATThEws@GMail.CoM";
-        Funding fundingDefined = new Funding(Funding.PURCHASE_ORDER,null, null);
-        fundingDefined.setPurchaseOrderContact(testUser);
-        fundingDefined.setPurchaseOrderNumber("PO00Id8923");
-        FundingLevel fundingLevel = new FundingLevel("100", Collections.singleton(fundingDefined));
-        QuoteFunding quoteFunding = new QuoteFunding(Collections.singleton(fundingLevel));
-        Quote testSingleSourceQuote = new Quote(SapIntegrationServiceImplDBFreeTest.SINGLE_SOURCE_PO_QUOTE_ID, quoteFunding, ApprovalStatus.FUNDED);
-        testSingleSourceQuote.setExpired(false);
-
         Set<SAPMaterial> returnMaterials = new HashSet<>();
+        Product conversionPdoProduct = conversionPdo.getProduct();
 
         final SAPMaterial primaryMaterial =
-                new SAPMaterial(conversionPdo.getProduct().getPartNumber(), "10", Collections.<Condition,BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            new SAPMaterial(conversionPdoProduct.getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                    conversionPdoProduct.getDescription(), "10", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA,
+                    BigDecimal.ONE, new Date(), new Date(),
+                    Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
+                    companyCode.getSalesOrganization());
+
         returnMaterials.add(
                 primaryMaterial);
         priceList.add(new QuotePriceItem(conversionPdo.getProduct().getPrimaryPriceItem().getCategory(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getName(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getName(), "10", "test",
                 conversionPdo.getProduct().getPrimaryPriceItem().getPlatform()));
-        quoteItems.add(new QuoteItem(testSingleSourceQuote.getAlphanumericId(),conversionPdo.getProduct().getPrimaryPriceItem().getName(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getName(),"2000", "10","each",
-                conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
-            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), "10",
-                    Collections.<Condition, BigDecimal>emptyMap(), Collections.<DeliveryCondition, BigDecimal>emptyMap());
-            addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                                productOrderAddOn.getAddOn().getDescription(), "10", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA,
+                                BigDecimal.ONE, new Date(), new Date(),
+                                Collections.emptyMap(), Collections.emptyMap(),
+                                SAPMaterial.MaterialStatus.ENABLED, companyCode.getSalesOrganization());
             returnMaterials.add(addonMaterial);
             priceList.add(new QuotePriceItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory(),
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
@@ -1080,18 +936,20 @@ public class ProductOrderEjbTest {
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getPlatform()));
         }
 
-        testSingleSourceQuote.setQuoteItems(quoteItems);
-        Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
         Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
         Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
         productPriceCache.refreshCache();
 
-        Mockito.when(mockQuoteService.getQuoteByAlphaId(testSingleSourceQuote.getAlphanumericId())).thenReturn(testSingleSourceQuote);
-
-        conversionPdo.setQuoteId(testSingleSourceQuote.getAlphanumericId() );
+        conversionPdo.setQuoteId(SapIntegrationServiceImplDBFreeTest.SAP_QUOTE_ID );
         conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
         MessageCollection messageCollection = new MessageCollection();
+
+        Mockito.when(mockSapService.findSapQuote(Mockito.anyString()))
+                .thenReturn(TestUtils.buildTestSapQuote(conversionPdo.getQuoteId(),
+                        10000,1000000,conversionPdo,
+                        TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,companyCode.getSalesOrganization()));
+
         productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, true);
         assertThat(conversionPdo.getSapOrderNumber(), is(notNullValue()));
 
@@ -1107,7 +965,6 @@ public class ProductOrderEjbTest {
         final SAPAccessControl control = new SAPAccessControl();
         AccessItem orderAccessItem = new AccessItem(conversionPdo.getProduct().getPrimaryPriceItem().getName());
         control.setDisabledItems(Collections.singleton(orderAccessItem));
-        Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(control);
 
 
         Mockito.when(productOrderDaoMock.findByBusinessKey(jiraTicketKey)).thenReturn(conversionPdo);
@@ -1141,7 +998,7 @@ public class ProductOrderEjbTest {
         productOrderEjb.updateOrderStatus(conversionPdo.getBusinessKey(), MessageReporter.UNUSED);
         assertThat(conversionPdo.getOrderStatus(), equalTo(ProductOrder.OrderStatus.Completed));
 
-        Mockito.verify(mockEmailSender, Mockito.times(1)).sendHtmlEmail(Mockito.eq(mockAppConfig),
+        Mockito.verify(mockEmailSender, Mockito.times(0)).sendHtmlEmail(Mockito.eq(mockAppConfig),
                 Mockito.anyString(),
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
@@ -1150,7 +1007,7 @@ public class ProductOrderEjbTest {
                 Mockito.anyBoolean());
 
         // called once for conversionPdo and once for childPdoTwo
-        Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(Mockito.anyString());
+        Mockito.verify(mockQuoteService, Mockito.times(0)).getQuoteByAlphaId(Mockito.anyString());
     }
 
 
@@ -1162,65 +1019,49 @@ public class ProductOrderEjbTest {
         Mockito.when(mockUserBean.getBspUser()).thenReturn(new BSPUserList.QADudeUser("PM", 2423L));
         Mockito.when(mockSapService.createOrder(Mockito.any(ProductOrder.class))).thenReturn(SapIntegrationServiceStub.TEST_SAP_NUMBER);
 
-        Quote testSingleSourceQuote;
-        String testUser = "Scott.G.MATThEws@GMail.CoM";
-        Funding fundingDefined = new Funding(Funding.PURCHASE_ORDER,null, null);
-        fundingDefined.setPurchaseOrderContact(testUser);
-        fundingDefined.setPurchaseOrderNumber("PO00Id8923");
-        FundingLevel fundingLevel = new FundingLevel("100", Collections.singleton(fundingDefined));
-
-        QuoteFunding quoteFunding = new QuoteFunding(Collections.singleton(fundingLevel));
-
-        testSingleSourceQuote = new Quote(SapIntegrationServiceImplDBFreeTest.SINGLE_SOURCE_PO_QUOTE_ID, quoteFunding, ApprovalStatus.FUNDED);
-        testSingleSourceQuote.setExpired(false);
-
         ProductOrder conversionPdo = ProductOrderTestFactory.createDummyProductOrder(10, jiraTicketKey);
-        conversionPdo.setPriorToSAP1_5(true);
-        conversionPdo.setQuoteId(testSingleSourceQuote.getAlphanumericId() );
+        conversionPdo.setQuoteId(SapIntegrationServiceImplDBFreeTest.SAP_QUOTE_ID );
         conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
         Mockito.when(productOrderDaoMock.findByBusinessKey(jiraTicketKey)).thenReturn(conversionPdo);
 
         Set<SAPMaterial> returnMaterials = new HashSet<>();
+        Product conversionPdoProduct = conversionPdo.getProduct();
 
         final SAPMaterial primaryMaterial =
-                new SAPMaterial(conversionPdo.getProduct().getPartNumber(), "5", Collections.<Condition, BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(
-                primaryMaterial);
+            new SAPMaterial(conversionPdoProduct.getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                conversionPdoProduct.getDescription(), "5", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,
+                new Date(), new Date(),
+                Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
+                companyCode.getSalesOrganization());
+
+//        returnMaterials.add(primaryMaterial);
         priceList.add(new QuotePriceItem(conversionPdo.getProduct().getPrimaryPriceItem().getCategory(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getName(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getName(), "10", "test",
                 conversionPdo.getProduct().getPrimaryPriceItem().getPlatform()));
-        quoteItems.add(new QuoteItem(testSingleSourceQuote.getAlphanumericId(),conversionPdo.getProduct().getPrimaryPriceItem().getName(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getName(),"2000", "5","each",
-                conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
-            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), "5",
-                    Collections.<Condition, BigDecimal>emptyMap(), Collections.<DeliveryCondition, BigDecimal>emptyMap());
-            addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                                productOrderAddOn.getAddOn().getDescription(), "5", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA,
+                                BigDecimal.ONE, new Date(), new Date(),
+                                Collections.emptyMap(), Collections.emptyMap(),
+                                SAPMaterial.MaterialStatus.ENABLED, companyCode.getSalesOrganization());
             returnMaterials.add(addonMaterial);
+
+            Mockito.when(mockSapService.findSapQuote(Mockito.anyString()))
+                    .thenReturn(TestUtils.buildTestSapQuote(conversionPdo.getQuoteId(),
+                            10000,1000000,conversionPdo,
+                            TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,companyCode.getSalesOrganization()));
+
             priceList.add(new QuotePriceItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory(),
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(), "10", "test",
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getPlatform()));
         }
 
-        testSingleSourceQuote.setQuoteItems(quoteItems);
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
-        Mockito.when(mockQuoteService.getQuoteByAlphaId(Mockito.anyString())).thenReturn(testSingleSourceQuote);
 
         Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
-        try {
-            productOrderEjb.isOrderEligibleForSAP(conversionPdo);
-            Assert.fail("Differences in prices should have thrown an error");
-        } catch (QuoteServerException | QuoteNotFoundException e) {
-            Assert.fail("Differences in prices should have thrown an InvalidProductException");
-        } catch (InvalidProductException e) {
-            e.printStackTrace();
-        }
 
         MessageCollection messageCollection = new MessageCollection();
 
@@ -1228,7 +1069,7 @@ public class ProductOrderEjbTest {
         assertThat(conversionPdo.getBusinessKey(), is(equalTo(jiraTicketKey)));
         assertThat(messageCollection.getErrors(), is(not(Matchers.<String>empty())));
         assertThat(conversionPdo.isSavedInSAP(), is(false));
-        Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(Mockito.anyString());
+        Mockito.verify(mockQuoteService, Mockito.times(0)).getQuoteByAlphaId(Mockito.anyString());
 
     }
 }

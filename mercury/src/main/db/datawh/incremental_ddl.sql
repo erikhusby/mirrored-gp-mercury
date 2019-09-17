@@ -1,12 +1,16 @@
--- GPLIM-5784 Keep DESIGNATION_ID as PK of FLOWCELL_DESIGNATION table
+-- GPLIM-6212 requires indexes on array_process_flow table
+DROP INDEX IDX_ARRAY_PROCESS_FLOW_PDO_ETL;
 
-ALTER TABLE FLOWCELL_DESIGNATION
-  DROP CONSTRAINT PK_FCT_BATCH_VESSEL;
+CREATE INDEX IDX_ARRAY_PROCESS_FLOW_ETL
+ON ARRAY_PROCESS_FLOW( BATCH_NAME, LCSET_SAMPLE_NAME );
 
-DROP INDEX PK_FCT_BATCH_VESSEL;
+-- GPLIM-4108 add column for sap delivery document
+alter table ledger_entry add sap_delivery_document varchar2(255);
+alter table im_ledger_entry add sap_delivery_document varchar2(255);
 
-CREATE UNIQUE INDEX PK_FCT_BATCH_VESSEL ON FLOWCELL_DESIGNATION ( DESIGNATION_ID );
+alter table ledger_entry add product_id numeric(19);
+alter table im_ledger_entry add product_id numeric(19);
 
-ALTER TABLE FLOWCELL_DESIGNATION
-  ADD CONSTRAINT PK_FCT_BATCH_VESSEL PRIMARY KEY ( DESIGNATION_ID ) USING INDEX PK_FCT_BATCH_VESSEL;
-
+-- GPLIM-6508 add column for order type
+alter table product_order add order_type varchar2(255);
+alter table im_product_order add order_type varchar2(255);

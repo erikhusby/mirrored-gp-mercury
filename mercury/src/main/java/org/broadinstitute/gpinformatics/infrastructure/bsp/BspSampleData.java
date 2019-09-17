@@ -378,6 +378,8 @@ public class BspSampleData implements SampleData {
         return getValue(BSPSampleSearchColumn.STOCK_TYPE);
     }
 
+    public String getReceptacleType() { return getValue(BSPSampleSearchColumn.RECEPTACLE_TYPE); }
+
     /**
      * This method returns true when the sample is received using the following logic:
      * <ol>

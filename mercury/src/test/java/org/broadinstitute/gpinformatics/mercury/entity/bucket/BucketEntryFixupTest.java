@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 import com.google.common.collect.ArrayListMultimap;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
@@ -16,10 +17,12 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.enterprise.context.Dependent;
@@ -31,6 +34,8 @@ import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -61,12 +66,10 @@ public class BucketEntryFixupTest extends Arquillian {
     @Inject
     UserTransaction utx;
 
-    @Inject
     private BSPUserList bspUserList;
 
     @Inject
     private UserBean userBean;
-    
 
     /**
      * Use test deployment here to talk to the actual jira
@@ -138,7 +141,7 @@ public class BucketEntryFixupTest extends Arquillian {
         removeBucketEntriesFromInactiveProductOrders(jiraTicket);
     }
 
-    public void removeBucketEntriesFromInactiveProductOrders(String jiraTicket) {
+    private void removeBucketEntriesFromInactiveProductOrders(String jiraTicket) {
         List<Bucket> buckets = bucketDao.findAll(Bucket.class);
 
         ArrayListMultimap<Bucket, BucketEntry> entryMapping = ArrayListMultimap.create();
@@ -218,4 +221,51 @@ public class BucketEntryFixupTest extends Arquillian {
         bucketEntryDao.persist(new FixupCommentary(lines.get(0)));
         utx.commit();
     }
+
+    @Test(enabled = false)
+    public void gplim5419_RemoveBucketEntry() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        for (Long id : Arrays.asList(487719L, 487801L)) {
+            BucketEntry bucketEntry = bucketEntryDao.findById(BucketEntry.class, id);
+            Assert.assertNotNull(bucketEntry);
+            System.out.println("Removing bucket entry " + bucketEntry.getBucketEntryId());
+            bucketEntryDao.remove(bucketEntry);
+        }
+
+        bucketEntryDao.persist(new FixupCommentary("GPLIM-5419 Followup fixup to remove bucket entries."));
+        bucketEntryDao.flush();
+        utx.commit();
+    }
+
+    /** Adds back a bucket entry that was deleted by LabBatchFixUpTest.deleteCancelledLcset */
+    @Test(enabled = false)
+    public void support5662_addBucketEntry() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        //bucket entry id 942665 will be replaced by a new one
+        LabVessel tube = labVesselDao.findById(LabVessel.class, 7168834L);
+        Assert.assertNotNull(tube);
+        Bucket bucket = labVesselDao.findById(Bucket.class, 16052L);
+        Assert.assertNotNull(bucket);
+        Date date = FastDateFormat.getInstance("yyyy-MM-dd-HH:mm:ss").parse("2019-08-06-12:39:58");
+        LabBatch lcset = labVesselDao.findById(LabBatch.class, 401302L);
+        Assert.assertNotNull(lcset);
+        ProductOrder pdo = productOrderDao.findById(379706L);
+        Assert.assertNotNull(pdo);
+        Assert.assertTrue(pdo.getBusinessKey().equals("PDO-19098"));
+
+        System.out.println("Adding " + bucket.getBucketDefinitionName() + " bucket entry for tube " + tube.getLabel());
+        BucketEntry bucketEntry = bucket.addEntry(pdo, tube, BucketEntry.BucketEntryType.PDO_ENTRY, date);
+        bucketEntry.setLabBatch(lcset);
+        bucketEntry.setStatus(BucketEntry.Status.Archived);
+
+        bucketEntryDao.persistAll(Arrays.asList(bucket, bucketEntry, new FixupCommentary(
+                "SUPPORT-5662 Followup fixup to add bucket entry deleted by deleteCancelledLcset fixup test.")));
+        bucketEntryDao.flush();
+        utx.commit();
+    }
+
 }

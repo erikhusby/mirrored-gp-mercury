@@ -1,8 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.json.JSONConfiguration;
 import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
 import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
 import edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme;
@@ -19,7 +16,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.MockThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftFileAccessor;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
-import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ImportFromSquidTest;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.DevExperimentDataBean;
@@ -42,6 +39,7 @@ import org.testng.annotations.Test;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.MediaType;
 import java.net.URL;
 import java.util.ArrayList;
@@ -142,12 +140,11 @@ public class IlluminaRunResourceTest extends Arquillian {
             throws Exception {
         String url = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WEBSERVICE_URL;
 
-        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
-        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
-        clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);
+        ClientBuilder clientBuilder = JaxRsUtils.getClientBuilderAcceptCertificate();
+//        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
 
-        ZimsIlluminaRun run = Client.create(clientConfig).resource(url)
-                .accept(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
+        ZimsIlluminaRun run = clientBuilder.build().target(url)
+                .request(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
         Assert.assertNotNull(run);
         Assert.assertNotNull(run.getError());
     }
@@ -168,17 +165,15 @@ public class IlluminaRunResourceTest extends Arquillian {
             throws Exception {
         String url = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WEBSERVICE_URL;
 
-        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
-        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
-        clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);
+        ClientBuilder clientBuilder = JaxRsUtils.getClientBuilderAcceptCertificate();
 
-        ZimsIlluminaRun run = Client.create(clientConfig).resource(url)
+        ZimsIlluminaRun run = clientBuilder.build().target(url)
                 .queryParam("runName", RUN_NAME)
-                .accept(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
+                .request(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
 
-        String rawJson = Client.create(clientConfig).resource(url)
+        String rawJson = clientBuilder.build().target(url)
                 .queryParam("runName", RUN_NAME)
-                .accept(MediaType.APPLICATION_JSON).get(String.class);
+                .request(MediaType.APPLICATION_JSON).get(String.class);
         Assert.assertFalse(rawJson.contains("@")); // might see this if you use XmlAttribute instead of XmlElement
         // KT and others like to see field names present w/ null values instead of missing entirely.
         // LibraryBean.overrideSampleFieldsFromBSP() enforces this rule.
@@ -237,9 +232,9 @@ public class IlluminaRunResourceTest extends Arquillian {
         Assert.assertTrue(foundPdo);
         Assert.assertTrue(foundTumor);
 
-        run = Client.create(clientConfig).resource(url)
+        run = clientBuilder.build().target(url)
                 .queryParam("runName", "Cheese ball")
-                .accept(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
+                .request(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
         Assert.assertNotNull(run.getError());
         // this is important: the pipeline hardcodes the "run isn't registered yet" response
         // and retries later
@@ -254,12 +249,11 @@ public class IlluminaRunResourceTest extends Arquillian {
     public void testZimsMercury() throws Exception {
         String url = ImportFromSquidTest.TEST_MERCURY_URL + "/rest/IlluminaRun/queryMercury";
 
-        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
-        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
+        ClientBuilder clientBuilder = JaxRsUtils.getClientBuilderAcceptCertificate();
 
-        ZimsIlluminaRun run = Client.create(clientConfig).resource(url)
+        ZimsIlluminaRun run = clientBuilder.build().target(url)
                 .queryParam("runName", "TestRun03261516351364325439075.txt")
-                .accept(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
+                .request(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
         Assert.assertEquals(run.getLanes().size(), 8, "Wrong number of lanes");
     }
 

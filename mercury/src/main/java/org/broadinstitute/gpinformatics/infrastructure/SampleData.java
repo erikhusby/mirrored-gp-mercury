@@ -117,4 +117,6 @@ public interface SampleData {
     String getSampleKitId();
 
     String getSampleStatus();
+
+    String getReceptacleType();
 }

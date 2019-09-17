@@ -11,6 +11,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import java.net.URL;
 import java.util.ArrayList;
@@ -53,10 +54,9 @@ public class PDOSampleBillingStatusResourceTest extends RestServiceContainerTest
         pdoSamples.setPdoSamples(pdoSamplesList);
 
         PDOSamples returnedPdoSamples = makeWebResource(baseUrl, PDO_SAMPLE_STATUS)
-                .type(MediaType.APPLICATION_JSON)
+                .request(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
-                .entity(pdoSamples)
-                .post(PDOSamples.class);
+                .post(Entity.json(pdoSamples), PDOSamples.class);
 
         boolean foundPdoSample1 = false;
         boolean foundPdoSample2 = false;
