@@ -252,7 +252,10 @@ public class GeminiPlateProcessor extends TableProcessor {
         MEAN_CONC_WITH_HS("MeanConc with HS"),
         VALUES("Values"),
         MEAN_RESULT("MeanResult"),
-        PLATE_BARCODE("Plate Barcode");
+        PLATE_BARCODE("Plate Barcode"),
+        CONC_PASS_FAIL("Conc Pass/Fail"),
+        CV_PASS_FAIL("CV Pass/Fail");
+
 
         private final String text;
         private final boolean requiredHeader;
