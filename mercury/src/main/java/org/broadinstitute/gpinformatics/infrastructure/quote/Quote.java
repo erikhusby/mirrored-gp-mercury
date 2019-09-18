@@ -153,28 +153,6 @@ public class Quote {
         return alphanumericId != null ? alphanumericId.hashCode() : 0;
     }
 
-    /**
-     * Tests if the Quote is in a state that makes it eligible to be used on an order bound for SAP.  The criteria
-     * for this would be
-     * <ul>
-     * <li>There is only one funding source defined for the quote.  SAP Orders will only be able to handle one
-     * source of funding</li>
-     * <li>If the funding source is backed by a Grant, ensure that the grant end date has not passed.</li>
-     * </ul>
-     *
-     * @return
-     *
-     */
-    public boolean isEligibleForSAP() {
-        List<Funding> allFundingSources = new ArrayList<>();
-        Optional.ofNullable(getFirstRelevantFundingLevel())
-            .ifPresent(singleLevel -> {
-                Optional.ofNullable(singleLevel.getFunding())
-                    .ifPresent(allFundingSources::addAll);
-            });
-        return  allFundingSources.size() == 1;
-    }
-
     public boolean isFunded() {
         return isFunded(new Date());
     }

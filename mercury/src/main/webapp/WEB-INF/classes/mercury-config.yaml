@@ -137,7 +137,7 @@ quote:
     PROD:
       login:    mercuryquote
       password: ml1m5qu0t3
-      url:      http://quoteprod:8080
+      url:      https://apps.broadinstitute.org
 
 
 squid:
@@ -306,30 +306,40 @@ submission:
 
 sap:
     DEV:
+      #Maps to the SAP DEV 300 environment.  Defunct and no-longer used
       login:      GPCOMU
       password:   SAPERD300!
       sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
       sapSupportEmailSubjectPrefix: "TEST SAP Order"
+      url:  https://quote-qa.broadinstitute.org
     TEST:
+      #Maps to the SAP DEV 400 environment.  Primarily used by SAP Developers
       login:      GPCOMU
       password:   temp1!
       sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
       sapSupportEmailSubjectPrefix: "TEST SAP Order"
+      url:  https://quote-qa.broadinstitute.org
     QA:
+      #Maps to the Old SAP QA environment.  Previously used as a parallel SAP environment.  Defunct and Not used by us anymore.
       login:      GPCOMU
       password:   SAPERQ300!
       sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
       sapSupportEmailSubjectPrefix: "TEST SAP Order"
+      url:  https://quote-qa.broadinstitute.org
     RC:
+      #Maps to the primary SAP QA 400 environment.  Used for testing with Mercury DEV and Mercury QA environments
       login:      GPCOMU
       password:   temp1!
       sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
       sapSupportEmailSubjectPrefix: "TEST SAP Order"
+      url:  https://quote-qa.broadinstitute.org
     PROD:
+      #Maps to the SAP Production environment.  Used in conjunction with our Production environment
       login:      GPCOMU
       password:   SAPERP300!
       sapSupportEmail: BUSSYS@broadinstitute.org
       sapSupportEmailSubjectPrefix: "SAP Order"
+      url:  https://quote.broadinstitute.org
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 mercury:
 

@@ -9,11 +9,12 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.sap.entity.Condition;
-import org.broadinstitute.sap.entity.SAPMaterial;
+import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.AuditJoinTable;
@@ -50,10 +51,13 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * This entity represents all the stored information for a Mercury Project.
@@ -79,6 +83,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public static final String EXOME_EXPRESS = "Exome Express";
     public static final String EXOME = "Exome";
     public static final String INFINIUM = "Infinium";
+    public static final int MAX_PART_NUMBER_LENGTH = 18;
 
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT", schema = "athena", sequenceName = "SEQ_PRODUCT")
@@ -114,6 +119,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     @Column(name = "PART_NUMBER")
     private String partNumber;
+
     private Date availabilityDate;
     private Date discontinuedDate;
     private Integer expectedCycleTimeSeconds;
@@ -179,7 +185,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
 
     @Transient
-    private SAPMaterial sapMaterial;
+    private Map<String, SAPMaterial> sapMaterials = new HashMap<>();
 
     // Initialize our transient data after the object has been loaded from the database.
     @PostLoad
@@ -231,6 +237,9 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     @Column(name = "BAIT_LOCKED")
     private Boolean baitLocked;
+
+    @Column(name = "OFFERED_AS_COMMERCIAL")
+    private Boolean offeredAsCommercialProduct = Boolean.FALSE;
 
     /**
      * Helper method to allow the quick creation of a new Product based on the contents of an existing product
@@ -996,6 +1005,22 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.baitLocked = baitLocked;
     }
 
+    public Boolean getOfferedAsCommercialProduct() {
+        return offeredAsCommercialProduct != null && offeredAsCommercialProduct;
+    }
+
+    public void setOfferedAsCommercialProduct(Boolean offeredAsCommercialProduct) {
+        this.offeredAsCommercialProduct = offeredAsCommercialProduct;
+    }
+
+    public boolean isLLCProduct() {
+        return externalOnlyProduct || clinicalProduct;
+    }
+
+    public boolean isSSFProduct() {
+        return !isLLCProduct();
+    }
+
     public SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyConfiguration () {
 
         SapIntegrationClientImpl.SAPCompanyConfiguration configuration = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
@@ -1006,61 +1031,182 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return configuration;
     }
 
-    public void setSapMaterial(SAPMaterial sapMaterial) {
-        this.sapMaterial = sapMaterial;
+    public void setSapMaterials(Map<String, SAPMaterial> sapMaterials) {
+        this.sapMaterials = sapMaterials;
     }
 
-    public SAPMaterial getSapMaterial() {
-        return sapMaterial;
+    public void addSapMaterial(SAPMaterial material) {
+        this.sapMaterials.put(material.getSalesOrg(), material);
+    }
+
+    public Map<String, SAPMaterial> getSapMaterials() {
+        return sapMaterials;
     }
 
     public String getSapClinicalCharge() {
-        return (determineCompanyConfiguration() == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES)?getFeeByCondition(Condition.CLINICAL_CHARGE):"";
+        String clinicalDisplayCharge = "";
+        if (determineCompanyConfiguration()
+            == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) {
+            final BigDecimal feeByCondition = getFeeByCondition(Condition.CLINICAL_CHARGE);
+            if(feeByCondition.compareTo(BigDecimal.ZERO) > 0) {
+                clinicalDisplayCharge = NumberFormat.getCurrencyInstance().format(
+                        feeByCondition);
+            }
+        }
+        return clinicalDisplayCharge;
     }
-    
+
     public String getSapCommercialCharge() {
-        return (determineCompanyConfiguration() == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES)?getFeeByCondition(Condition.COMMERCIAL_CHARGE):"";
+        String commercialDisplayCharge = "";
+        BigDecimal feeByCondition = getFeeByCondition(Condition.COMMERCIAL_CHARGE);
+        if (feeByCondition.compareTo(BigDecimal.ZERO) > 0) {
+            commercialDisplayCharge = NumberFormat.getCurrencyInstance().format(
+                feeByCondition);
+        }
+        return commercialDisplayCharge;
     }
 
     public String getSapSSFIntercompanyCharge() {
-        return (determineCompanyConfiguration() == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES)?getFeeByCondition(Condition.INTERCOMPANY_FEE):"";
+        String interCompanyDisplayCharge = "";
+        BigDecimal feeByCondition = getFeeByCondition(Condition.INTERCOMPANY_FEE);
+        if (feeByCondition.compareTo(BigDecimal.ZERO) > 0) {
+            interCompanyDisplayCharge = NumberFormat.getCurrencyInstance().format(
+                feeByCondition);
+        }
+        return interCompanyDisplayCharge;
     }
 
-    public String getSapFullPrice() {
-        String price = "";
-        if(this.sapMaterial != null && StringUtils.isNotBlank(this.sapMaterial.getBasePrice())) {
-            final BigDecimal basePrice = new BigDecimal(this.sapMaterial.getBasePrice());
+    public String getSapSSFFullPrice() {
+        BigDecimal sapFullPrice =
+            getSapFullPrice(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
+        String format = "";
+        if(sapFullPrice.compareTo(BigDecimal.ZERO) > 0) {
+            format = NumberFormat.getCurrencyInstance().format(sapFullPrice);
+        }
+        return format;
+    }
+
+    public String getSapLLCFullPrice() {
+        BigDecimal sapFullLLCPrice = getRawLLCFullPrice();
+        String format = "";
+        if(sapFullLLCPrice.compareTo(BigDecimal.ZERO) > 0) {
+            format = NumberFormat.getCurrencyInstance().format(sapFullLLCPrice);
+        }
+        return format;
+    }
+
+    private BigDecimal getRawLLCFullPrice() {
+        return getFeeByCondition(Condition.CLINICAL_CHARGE)
+            .add(getFeeByCondition(Condition.COMMERCIAL_CHARGE).add(getFeeByCondition(Condition.INTERCOMPANY_FEE)));
+    }
+
+    private BigDecimal getSapFullPrice(String salesOrg) {
+        BigDecimal price = BigDecimal.ZERO;
+        Optional <SAPMaterial> targetMaterial = Optional.ofNullable(this.sapMaterials.get(salesOrg));
+
+        if(targetMaterial.isPresent() && StringUtils.isNotBlank(targetMaterial.get().getBasePrice())) {
+            final BigDecimal basePrice = new BigDecimal(this.sapMaterials.get(salesOrg).getBasePrice());
             if (basePrice.doubleValue() > 0d) {
-                price = NumberFormat.getCurrencyInstance().format(basePrice);
+                price = basePrice;
             }
         }
         return price;
+    }
+
+    public String getReplacementPrices()  {
+
+        final String displayValues = sapMaterials.values().stream().filter(sapMaterial -> !sapMaterial
+            .getPossibleDeliveryConditions().isEmpty())
+                .map(sapMaterial -> sapMaterial.getPossibleDeliveryConditions().entrySet())
+                .map(entries -> entries.stream()
+                        .filter(entry -> entry.getValue().compareTo(BigDecimal.ZERO) > 0)
+                        .map(deliveryConditionEntry ->
+                                deliveryConditionEntry.getKey() + " = " +
+                                NumberFormat.getCurrencyInstance().format(deliveryConditionEntry.getValue())
+                        ).collect(Collectors.joining("<br/>"))).collect(Collectors.joining("<br/>"));
+
+        return displayValues;
+    }
+
+    public boolean isQuotePriceDifferent() {
+        final boolean differenceResult;
+        if(determineCompanyConfiguration() == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD) {
+            differenceResult = getQuoteServerRawPrice().equals(getSapFullPrice(
+                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization()));
+        } else {
+            differenceResult = getQuoteServerRawPrice().equals(getRawLLCFullPrice());
+        }
+        return differenceResult;
     }
 
     public String getQuoteServerPrice() {
-        String price = "";
+        String displayPrice = "";
+        BigDecimal rawPrice = getQuoteServerRawPrice();
+        if(rawPrice.compareTo(BigDecimal.ZERO) > 0 ||
+           (getPrimaryPriceItem() != null && StringUtils.isNotBlank(getPrimaryPriceItem().getPrice()))) {
+            displayPrice = NumberFormat.getCurrencyInstance().format(rawPrice);
+        }
+        return displayPrice;
+    }
+
+    private BigDecimal getQuoteServerRawPrice() {
+        BigDecimal rawPrice = BigDecimal.ZERO;
+
         if(getPrimaryPriceItem() != null && StringUtils.isNotBlank(getPrimaryPriceItem().getPrice())) {
             final BigDecimal quotePrice = new BigDecimal(getPrimaryPriceItem().getPrice());
             if (quotePrice.doubleValue() > 0d) {
-                price = NumberFormat.getCurrencyInstance().format(quotePrice);
+                rawPrice = quotePrice;
             }
         }
-        return price;
+        return rawPrice;
     }
 
-    private String getFeeByCondition(Condition condition) {
-        String fee = "";
-        if (this.sapMaterial != null) {
-            final Map<Condition, BigDecimal> possibleOrderConditions = this.sapMaterial.getPossibleOrderConditions();
+    private BigDecimal getFeeByCondition(Condition condition) {
+        BigDecimal fee = BigDecimal.ZERO;
+        Optional <SAPMaterial> targetMaterial =
+                Optional.ofNullable(this.sapMaterials.get(SapIntegrationClientImpl.SAPCompanyConfiguration
+                        .BROAD_EXTERNAL_SERVICES.getSalesOrganization()));
+
+        if (targetMaterial.isPresent()) {
+            final Map<Condition, BigDecimal> possibleOrderConditions = targetMaterial.get().getPossibleOrderConditions();
             if(possibleOrderConditions.containsKey(condition)) {
 
                 final BigDecimal bigDecimalCharge = possibleOrderConditions.get(condition);
                 if(bigDecimalCharge != null && bigDecimalCharge.doubleValue() > 0d) {
-                    fee = NumberFormat.getCurrencyInstance().format(bigDecimalCharge);
+                    fee = bigDecimalCharge;
                 }
             }
         }
         return fee;
+    }
+
+    public String getUnitsDisplay()  {
+        String display = "";
+        if(getPrimaryPriceItem() != null) {
+            display = getPrimaryPriceItem().getUnits();
+        }
+
+        return display;
+    }
+
+    public String getPriceItemDisplayName() {
+        String display = "";
+
+        if(getPrimaryPriceItem() != null) {
+            display = getPrimaryPriceItem().getDisplayName();
+        }
+
+        return display;
+    }
+
+    public String getPlatformDisplay() {
+        String display = "";
+
+        if(getPrimaryPriceItem() != null) {
+            display = getPrimaryPriceItem().getPlatform();
+        }
+
+        return display;
     }
 
     public enum AggregationParticle implements Displayable {
@@ -1103,4 +1249,19 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
             return null;
         }
     }
+
+    public static void setMaterialOnProduct(Product product, SAPProductPriceCache productPriceCache) {
+            SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = product.determineCompanyConfiguration();
+            Optional.ofNullable(
+                productPriceCache.findByPartNumber(product.getPartNumber(),
+                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization()))
+                .ifPresent(product::addSapMaterial);
+
+            if (!product.isClinicalProduct() && !product.isExternalOnlyProduct()) {
+                Optional.ofNullable(
+                    productPriceCache.findByPartNumber(product.getPartNumber(), companyCode.getSalesOrganization()))
+                    .ifPresent(product::addSapMaterial);
+            }
+        }
 }
+

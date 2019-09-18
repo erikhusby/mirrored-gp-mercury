@@ -27,6 +27,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
@@ -93,6 +94,9 @@ public class LedgerEntryFixupTest extends Arquillian {
 
     @Inject
     private BillingEjb billingEjb;
+
+    @Inject
+    private SapIntegrationService sapService;
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
@@ -407,24 +411,29 @@ public class LedgerEntryFixupTest extends Arquillian {
         try {
             final List<QuoteImportItem> quoteImportItems = collectedEntriesByQuoteId.getQuoteImportItems(priceListCache);
             for (QuoteImportItem item : quoteImportItems) {
-                Quote quote = item.getProductOrder().getQuote(quoteService);
+                if(item.isSapOrder()) {
+                    Quote quote = item.getProductOrder().getQuote(quoteService);
 
-                System.out.println("SUPPORT-4208 For work item " + item.getSingleWorkItem() + " updating "
-                                   + item.getLedgerItems().size() + " ledger entries: "
-                                   + StringUtils.join(entriesByWorkItem.get(item.getSingleWorkItem()), ","));
-                final PriceList priceItemsForDate = quoteService.getPriceItemsForDate(Collections.singletonList(item));
-                String newWorkId = quoteService.registerNewWork(quote,
-                        QuotePriceItem.convertMercuryPriceItem(item.getPriceItem()),
-                        item.getPrimaryForReplacement(priceItemsForDate),
-                        item.getWorkCompleteDate(),
-                        item.getQuantity(),
-                        "https://gpinfojira.broadinstitute.org/jira/browse/SUPPORT-4208",
-                        "SupportTicket","SUPPORT-4208",null);
+                    System.out.println("SUPPORT-4208 For work item " + item.getSingleWorkItem() + " updating "
+                                       + item.getLedgerItems().size() + " ledger entries: "
+                                       + StringUtils.join(entriesByWorkItem.get(item.getSingleWorkItem()), ","));
+                    final PriceList priceItemsForDate =
+                            quoteService.getPriceItemsForDate(Collections.singletonList(item));
+                    String newWorkId = quoteService.registerNewWork(quote,
+                            QuotePriceItem.convertMercuryPriceItem(item.getPriceItem()),
+                            item.getPrimaryForReplacement(priceItemsForDate),
+                            item.getWorkCompleteDate(),
+                            item.getQuantity(),
+                            "https://gpinfojira.broadinstitute.org/jira/browse/SUPPORT-4208",
+                            "SupportTicket", "SUPPORT-4208", null);
 
-                newWorkItems.add(newWorkId);
+                    newWorkItems.add(newWorkId);
 
-                item.updateLedgerEntries(null, BillingSession.SUCCESS, newWorkId, Collections.emptyList(),
-                        item.getSapItems());
+                    item.updateLedgerEntries(null, BillingSession.SUCCESS, newWorkId, Collections.emptyList(),
+                            item.getSapItems());
+                }else {
+                    Assert.fail();
+                }
             }
 
         } catch (QuoteNotFoundException | QuoteServerException e) {

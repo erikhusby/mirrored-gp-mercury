@@ -24,6 +24,7 @@ public class SapConfig extends AbstractConfig implements LoginAndPassword, Seria
     private String sapSupportEmail;
 
     private String sapSupportEmailSubjectPrefix;
+    private String url;
 
     public SapConfig(){}
 
@@ -75,5 +76,13 @@ public class SapConfig extends AbstractConfig implements LoginAndPassword, Seria
 
     public void setSapSupportEmailSubjectPrefix(String sapSupportEmailSubjectPrefix) {
         this.sapSupportEmailSubjectPrefix = sapSupportEmailSubjectPrefix;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public String getUrl() {
+        return url;
     }
 }

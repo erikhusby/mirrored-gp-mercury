@@ -75,7 +75,7 @@ public class ProductPdfFactoryTest {
 
     public void testFileWritten() throws Exception {
         Product dummyProduct = ProductTestFactory
-                .createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "P-TEST-" + System.currentTimeMillis());
+                .createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, ProductTestFactory.generateProductPartNumber());
         ProductPdfFactory.toPdf(new FileOutputStream(tempFile), ProductTestFactory.createStandardExomeSequencing(),
                 dummyProduct);
         long fileSize = FileUtils.sizeOf(tempFile);
