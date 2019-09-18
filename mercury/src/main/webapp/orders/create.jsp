@@ -125,10 +125,18 @@
             }
         }
 
-        function validateNumberOfLanes() {
+        function validateSaveOrder() {
             var numberOfLanes = $j("#numberOfLanes");
             var lanesFieldDiv = $j("#numberOfLanesDiv");
             var productOrderKey = $j("input[name='productOrder']");
+
+            var originalQuote = $j("input[name='originalQuote']");
+            var currentQuote = $j("#quote");
+
+            if(!validateChangeQuote(originalQuote.val().trim(), currentQuote.val().trim())) {
+                alert("Switching between Quote Server and SAP quotes is not permitted once an order has been placed.");
+                return false;
+            }
 
             if (lanesFieldDiv.css('display') !== 'none' && lanesFieldDiv.css("visibility") !== 'hidden' &&
                 lanesFieldDiv.css('opacity') !== 0 && numberOfLanes.length && productOrderKey.val().includes("Draft")) {
@@ -138,6 +146,26 @@
 
             return true;
         }
+
+        function validateChangeQuote(originalQuote, currentQuote) {
+
+            var productOrderKey = $j("input[name='productOrder']");
+            var originalIsQuoteServer = isNaN(originalQuote) || originalQuote === "" || originalQuote === null;
+            var currentIsQuoteServer = isNaN(currentQuote) || currentQuote === "" || currentQuote === null;
+            var orderCanPlace = ${actionBean.editOrder.orderStatus.canPlace()};
+            var originalNotBlank = originalQuote !== 'undefined' && originalQuote !== "" && originalQuote !== 'null';
+            var currentNotBlank = (currentQuote !== 'undefined' && currentQuote !== "" && currentQuote !== 'null' &&
+            currentQuote !== "Enter the Quote ID for this order");
+
+            var result = true;
+            if(productOrderKey.val() !== 'undefined' && productOrderKey.val() !== "" && productOrderKey.val() !== 'null'
+                && !orderCanPlace) {
+                result = (originalIsQuoteServer === currentIsQuoteServer) && (originalNotBlank === currentNotBlank);
+            }
+
+            return result;
+        }
+
         $j(document).ready(
 
                 function () {
@@ -1104,12 +1132,13 @@
 
         function updateFundsRemaining() {
             var quoteIdentifier = $j("#quote").val().trim();
+            var originalQuote = "${actionBean.editOrder.quoteId}";
             var quoteTitle = $j("#quote").attr('title');
             var productOrderKey = $j("input[name='productOrder']").val();
             if (quoteIdentifier && quoteIdentifier !== quoteTitle) {
                 $j.ajax({
                     url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier +
-                        "&productOrder=" + productOrderKey ,
+                        "&productOrder=" + productOrderKey + "&originalQuote=" + originalQuote,
                     dataType: 'json',
                     success: updateFunds
                 });
@@ -1705,6 +1734,7 @@
                         Quote <c:if test="${not actionBean.editOrder.draft}">*</c:if>
                     </stripes:label>
                     <div class="controls">
+                        <input type="hidden" name="originalQuote" value="${actionBean.editOrder.quoteId}"/>
                         <stripes:text id="quote" name="editOrder.quoteId" class="defaultText"
                                       onchange="updateFundsRemaining()"
                                       title="Enter the Quote ID for this order"/>
@@ -1777,7 +1807,7 @@
                         <stripes:submit name="save" value="${actionBean.saveButtonText}"
                                         disabled="${!actionBean.canSave}"
                                         style="margin-right: 10px;" class="btn btn-primary"
-                                        onclick="return validateNumberOfLanes();"/>
+                                        onclick="return validateSaveOrder();"/>
                         <c:choose>
                             <c:when test="${actionBean.creating}">
                                 <stripes:link beanclass="${actionBean.class.name}" event="list">Cancel</stripes:link>
