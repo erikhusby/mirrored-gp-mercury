@@ -136,6 +136,7 @@ public class LcsetActionBean extends RackScanActionBean {
             Map<String, BarcodedTube> mapBarcodeToTube = labBatchEjb.updateLcsetFromScan(lcsetName, controlBarcodes,
                     this, addBarcodes, removeBarcodes, new ArrayList<>(rackScan.values()));
             labBatchEjb.exportRack(mapBarcodeToTube, rackBarcode, rackScan, userBean, this);
+            labBatchEjb.linkLcsetToUds(lcsetName, rackScan);
             if (getContext().getMessages().isEmpty()) {
                 addMessage("Made modifications to LCSET");
             }
