@@ -31,9 +31,12 @@ import java.util.stream.Collectors;
 public class GeminiPlateProcessor extends TableProcessor {
 
     private static final String GROUP_PREFIX = "Group: ";
-
-    // Duplicate BC will contain a (1) at the end for the bottom half of the quadrant (b1, b2, ...)
-    private static final Pattern BARCODE_PATTERN = Pattern.compile(GROUP_PREFIX + "([0-9,]+)\\(*[0-9]*\\)*");
+    // Matches one or more plate barcodes and optional suffix having this form: "Group: barcode,barcode,barcode(1)".
+    // Duplicate barcode will have a (1) suffix for the bottom half of the quadrant (b1, b2, ...).
+    // The numeric part of a barcode is expected to have at least 5 digits.
+    // Gpuitest barcodes may have mixed case letters before numbers.
+    private static final Pattern BARCODE_PATTERN =
+            Pattern.compile(GROUP_PREFIX + "([a-zA-Z]*[0-9]{5,},?[a-zA-Z0-9,]*)\\(*[0-9]*\\)*");
     private static final String UNKNOWNS_GROUP = "Group: Unknowns_NoDiln";
     public static final String DATE_PREFIX = "Original Filename: .*; Date Last Saved: ";
     public static final String DATE_REGEX = DATE_PREFIX + "(.*)";
