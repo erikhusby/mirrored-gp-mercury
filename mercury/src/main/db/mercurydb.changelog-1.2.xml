@@ -2320,4 +2320,18 @@
 	    tableName="sample_instance_entity" columnNames="lab_vessel, library_name"/>
     </changeSet>
 
+    <changeSet id="GPLIM-6643_1" author="jowalsh">
+        <createIndex indexName="IX_FSM_AUD" tableName="FINITE_STATE_MACHINE_AUD" schemaName="MERCURY">
+            <column name="FINITE_STATE_MACHINE_ID"/>
+        </createIndex>
+        <createIndex indexName="IX_SRC_STATE_AUD" tableName="SRC_DEMULTIPLIX_STATE_AUD" schemaName="MERCURY">
+            <column name="SEQUENCING_RUN_CHAMBER"/>
+            <column name="DEMULTIPLEX_STATE"/>
+        </createIndex>
+        <createIndex indexName="IX_SAMPLE_STATE_AUD" tableName="SAMPLE_ALIGNMENT_STATE_AUD" schemaName="MERCURY">
+            <column name="MERCURY_SAMPLE"/>
+            <column name="ALIGNMENT_STATE"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>
