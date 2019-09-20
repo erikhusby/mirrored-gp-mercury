@@ -359,7 +359,7 @@ public class LibraryBean {
 
             Product product = productOrder.getProduct();
             if (product != null) {
-                if (dataType == null) {
+                if (StringUtils.isBlank(dataType)) {
                     dataType = productOrder.getProduct().getPipelineDataTypeString();
                 }
                 this.product = product.getProductName();

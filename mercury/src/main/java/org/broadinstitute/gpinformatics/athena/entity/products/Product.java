@@ -1195,12 +1195,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     @Transient
     public String getPipelineDataTypeString() {
-        String dataType = "";
-
-        if (pipelineDataType != null) {
-            dataType = pipelineDataType.getName();
-        }
-        return dataType;
+        return Optional.ofNullable(pipelineDataType).map(PipelineDataType::getName).orElse("");
     }
 
     public String getUnitsDisplay()  {

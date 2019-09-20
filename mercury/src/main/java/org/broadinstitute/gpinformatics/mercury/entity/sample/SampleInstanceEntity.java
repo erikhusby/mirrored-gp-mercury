@@ -28,6 +28,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -308,6 +309,7 @@ public class SampleInstanceEntity {
         return aggregationDataType;
     }
 
+    @Transient
     public String getPipelineDataTypeString() {
         return Optional.ofNullable(pipelineDataType).map(PipelineDataType::getName).orElse("");
     }

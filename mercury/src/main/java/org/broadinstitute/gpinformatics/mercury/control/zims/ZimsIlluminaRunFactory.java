@@ -351,7 +351,7 @@ public class ZimsIlluminaRunFactory {
                 if (referenceSequence == null && !StringUtils.isBlank(project.getReferenceSequenceKey())) {
                     referenceSequence = project.getReferenceSequenceKey();
                 }
-                if (aggregationDataType == null) {
+                if (StringUtils.isBlank(aggregationDataType)) {
                     aggregationDataType = product.getPipelineDataTypeString();
                 }
                 if (insertSize == null && product.getInsertSize() != null) {
@@ -604,7 +604,7 @@ public class ZimsIlluminaRunFactory {
         }
         String aggregationParticle = sampleInstanceDto.sampleInstance.getAggregationParticle();
         Boolean isImpliedSampleName = sampleInstanceDto.sampleInstance.getImpliedSampleName();
-        if (aggregationDataType == null) {
+        if (StringUtils.isBlank(aggregationDataType)) {
             aggregationDataType = sampleInstanceDto.sampleInstance.getPipelineDataTypeString();
         }
         if (sampleInstanceDto.sampleInstance.getReferenceSequence() != null) {
