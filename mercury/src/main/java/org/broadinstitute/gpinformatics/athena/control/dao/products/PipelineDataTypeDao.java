@@ -20,7 +20,11 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @Stateful
 @RequestScoped
@@ -36,6 +40,11 @@ public class PipelineDataTypeDao extends GenericDao implements Serializable {
         return findAll(PipelineDataType.class);
     }
 
+    public List<String> findAllActiveDataTypeNames() {
+        return Optional.ofNullable(findAll()).orElse(Collections.emptyList()).stream().filter(PipelineDataType::isActive)
+            .map(PipelineDataType::getName)
+            .collect(Collectors.toList());
+    }
     public PipelineDataType findDataType(String aggregationDataType) {
         return findSingle(PipelineDataType.class, PipelineDataType_.name, aggregationDataType);
     }

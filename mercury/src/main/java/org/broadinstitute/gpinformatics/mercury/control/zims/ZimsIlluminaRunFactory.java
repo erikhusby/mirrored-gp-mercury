@@ -156,7 +156,7 @@ public class ZimsIlluminaRunFactory {
                 if (singleBucketEntry != null) {
                     if (Objects.equals(singleBucketEntry.getProductOrder().getProduct().getPipelineDataTypeString(),
                             Aggregation.DATA_TYPE_WGS) ||
-                            Aggregation.DATA_TYPE_WGS.equals(sampleInstance.getAggregationDataType())) {
+                            Aggregation.DATA_TYPE_WGS.equals(sampleInstance.getPipelineDataTypeString())) {
                         mixedLaneOk = true;
                         break;
                     }
@@ -327,7 +327,7 @@ public class ZimsIlluminaRunFactory {
                     sampleInstanceDto.getSampleInstance().getAnalysisType().getName() : null;
             String referenceSequence = sampleInstanceDto.getSampleInstance().getReferenceSequence() != null ?
                     sampleInstanceDto.getSampleInstance().getReferenceSequence().getName() : null;
-            String aggregationDataType = sampleInstanceDto.getSampleInstance().getAggregationDataType();
+            String aggregationDataType = sampleInstanceDto.getSampleInstance().getPipelineDataTypeString();
             String insertSize = sampleInstanceDto.getSampleInstance().getExpectedInsertSize();
 
             ProductOrder productOrder = (sampleInstanceDto.getProductOrderKey() != null) ?
@@ -605,7 +605,7 @@ public class ZimsIlluminaRunFactory {
         String aggregationParticle = sampleInstanceDto.sampleInstance.getAggregationParticle();
         Boolean isImpliedSampleName = sampleInstanceDto.sampleInstance.getImpliedSampleName();
         if (aggregationDataType == null) {
-            aggregationDataType = sampleInstanceDto.sampleInstance.getAggregationDataType();
+            aggregationDataType = sampleInstanceDto.sampleInstance.getPipelineDataTypeString();
         }
         if (sampleInstanceDto.sampleInstance.getReferenceSequence() != null) {
             referenceSequence = sampleInstanceDto.sampleInstance.getReferenceSequence().getName();

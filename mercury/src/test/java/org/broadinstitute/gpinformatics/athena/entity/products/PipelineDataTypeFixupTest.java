@@ -15,7 +15,10 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.PipelineData
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanceEntityDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity_;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -25,8 +28,11 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
@@ -43,6 +49,8 @@ public class PipelineDataTypeFixupTest extends Arquillian {
 
     @Inject
     private ProductDao productDao;
+
+    @Inject SampleInstanceEntityDao sampleInstanceEntityDao;
 
     @Inject
     private UserBean userBean;
@@ -62,6 +70,10 @@ public class PipelineDataTypeFixupTest extends Arquillian {
         return product.getPipelineDataType() == null;
     }
 
+    private static boolean isNullPipelineDataType(SampleInstanceEntity sampleInstanceEntity) {
+        return sampleInstanceEntity.getPipelineDataType() == null;
+    }
+
     @Test(enabled = false)
     public void gplim5221initialDataLoad() throws Exception {
         userBean.loginOSUser();
@@ -74,12 +86,15 @@ public class PipelineDataTypeFixupTest extends Arquillian {
             .map(dataType -> new PipelineDataType(dataType, true))
             .forEach(pipelineDataTypeDao::persist);
 
-        List<Product> allNotInList =
-            productDao.findAllNotInList(Product.class,
-                org.broadinstitute.gpinformatics.athena.entity.products.Product_.aggregationDataType, validDataTypes);
+        Set<String> allNotInList = productDao.findAllNotInList(Product.class,
+            org.broadinstitute.gpinformatics.athena.entity.products.Product_.aggregationDataType, validDataTypes)
+            .stream().map(Product::getAggregationDataType).collect(Collectors.toSet());
+
+        allNotInList.addAll(sampleInstanceEntityDao.findAllNotInList(SampleInstanceEntity.class,
+            SampleInstanceEntity_.aggregationDataType, validDataTypes).stream()
+            .map(SampleInstanceEntity::getAggregationDataType).collect(Collectors.toSet()));
 
         allNotInList.stream()
-            .map(Product::getAggregationDataType).distinct()
             .map(dataType -> new PipelineDataType(dataType, false))
             .forEach(pipelineDataTypeDao::persist);
 
@@ -88,11 +103,11 @@ public class PipelineDataTypeFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
-    public void gplim5221backfillProducts() throws Exception {
+    public void gplim5221backfillEntitiesWithPipelineDataType() throws Exception {
         userBean.loginOSUser();
         utx.begin();
         Map<String, PipelineDataType> dataTypeMap = pipelineDataTypeDao.findAll(PipelineDataType.class).stream()
-            .collect(Collectors.toMap(PipelineDataType::getName, pipelineDataType -> pipelineDataType));
+            .collect(Collectors.toMap(PipelineDataType::getName, Function.identity()));
 
         //noinspection unchecked
         List<Product> productsWithDataType =
@@ -100,13 +115,25 @@ public class PipelineDataTypeFixupTest extends Arquillian {
                 org.broadinstitute.gpinformatics.athena.entity.products.Product_.aggregationDataType);
 
         productsWithDataType.stream().filter(PipelineDataTypeFixupTest::isNullPipelineDataType).forEach(product -> {
-
             String aggregationDataType = product.getAggregationDataType();
             PipelineDataType pipelineDataType = dataTypeMap.get(aggregationDataType);
             if (pipelineDataType != null) {
                 product.setPipelineDataType(pipelineDataType);
             }
         });
+
+        List<SampleInstanceEntity> sampleInstancesWithEntities =
+            sampleInstanceEntityDao.findListWithWildcard(SampleInstanceEntity.class, "%", false,
+                SampleInstanceEntity_.aggregationDataType);
+
+        sampleInstancesWithEntities.stream().filter(PipelineDataTypeFixupTest::isNullPipelineDataType)
+            .forEach(sampleInstance -> {
+                String aggregationDataType = sampleInstance.getAggregationDataType();
+                PipelineDataType pipelineDataType = dataTypeMap.get(aggregationDataType);
+                if (pipelineDataType != null) {
+                    sampleInstance.setPipelineDataType(pipelineDataType);
+                }
+            });
         productDao.persist(new FixupCommentary("GPLIM-5221 back fill pipeline data type."));
         utx.commit();
     }

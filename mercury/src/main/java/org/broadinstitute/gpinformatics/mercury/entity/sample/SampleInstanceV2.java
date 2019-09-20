@@ -8,6 +8,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -40,6 +41,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -99,7 +101,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private Integer readLength1;
     private Integer readLength2;
     private String aggregationParticle;
-    private String aggregationDataType;
+    private PipelineDataType pipelineDataType;
     private Boolean umisPresent;
     private String expectedInsertSize;
     private ReferenceSequence referenceSequence;
@@ -219,7 +221,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         baitName = other.getBaitName();
         catName = other.getCatName();
         aggregationParticle = other.getAggregationParticle();
-        aggregationDataType = other.getAggregationDataType();
+        pipelineDataType = other.getPipelineDataType();
         analysisType = other.getAnalysisType();
         referenceSequence = other.getReferenceSequence();
         umisPresent = other.getUmisPresent();
@@ -562,7 +564,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             mergeLibraryName(sampleInstanceEntity.getLibraryName());
             mergeReadLength(sampleInstanceEntity);
             aggregationParticle = sampleInstanceEntity.getAggregationParticle();
-            aggregationDataType = sampleInstanceEntity.getAggregationDataType();
+            pipelineDataType = sampleInstanceEntity.getPipelineDataType();
             analysisType = sampleInstanceEntity.getAnalysisType();
             referenceSequence = sampleInstanceEntity.getReferenceSequence();
             umisPresent = sampleInstanceEntity.getUmisPresent();
@@ -814,8 +816,12 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         return aggregationParticle;
     }
 
-    public String getAggregationDataType() {
-        return aggregationDataType;
+    public PipelineDataType getPipelineDataType() {
+        return pipelineDataType;
+    }
+
+    public String getPipelineDataTypeString() {
+        return Optional.ofNullable(pipelineDataType).map(PipelineDataType::getName).orElse("");
     }
 
     public Boolean getUmisPresent() {
