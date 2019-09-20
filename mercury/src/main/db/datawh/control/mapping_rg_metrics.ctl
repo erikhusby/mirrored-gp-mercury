@@ -39,5 +39,13 @@ TRAILING NULLCOLS
   avg_seq_coverage,
   insert_length_mean,
   insert_length_std,
+  est_sample_contamination,
+  predicted_sex_chr_ploidy,
+  pct_coverage_100x_inf,
+  pct_coverage_50x_100x,
+  pct_coverage_20x_50x,
+  pct_coverage_10x_20x,
+  pct_coverage_3x_10x,
+  pct_coverage_0x_3x,
   mapping_rg_metric_id "SEQ_MAP_RG_METRIC.NEXTVAL"
 )

@@ -230,7 +230,7 @@ public class SampleSheetBuilder {
 
             SampleData data = null;
 
-            String rgSmId = pdoSampleName + "." + flowcell + "." + lane;
+            String rgSmId = pdoSampleName + "_" + flowcell + "_" + lane;
             MolecularIndex p7 = indexes.get(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7);
             if (dualIndex) {
                 MolecularIndex p5 = indexes.get(MolecularIndexingScheme.IndexPosition.ILLUMINA_P5);

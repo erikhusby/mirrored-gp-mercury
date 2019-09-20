@@ -154,7 +154,7 @@ public class DragenFolderUtil {
     }
 
     public File getFastQReadGroupFile(String readGroup) {
-        return new File(reportsFolder, String.format("fastq_%s_list.csv", readGroup));
+        return new File(fastQFolder, String.format("fastq_%s_list.csv", readGroup));
     }
 
     public File getReadOneFastQ(String sampleKey, int lane) {

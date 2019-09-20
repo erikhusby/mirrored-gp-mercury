@@ -51,10 +51,17 @@ public class TaskManager {
     public Pair<Status, Date> checkTaskStatus(Task task, SchedulerContext schedulerContext) {
         if (OrmUtil.proxySafeIsInstance(task, ProcessTask.class)) {
             ProcessTask processTask = OrmUtil.proxySafeCast(task, ProcessTask.class);
-            JobInfo jobInfo = schedulerContext.getInstance().fetchJobInfo(processTask.getProcessId());
-            Status status = jobInfo.getStatus();
-            Date end = jobInfo.getEnd();
-            return Pair.of(status, end);
+            if (processTask.getProcessId() == null) {
+                return Pair.of(Status.QUEUED, null);
+            } else {
+                JobInfo jobInfo = schedulerContext.getInstance().fetchJobInfo(processTask.getProcessId());
+                if (jobInfo == null) {
+                    return Pair.of(Status.UNKNOWN, null);
+                }
+                Status status = jobInfo.getStatus();
+                Date end = jobInfo.getEnd();
+                return Pair.of(status, end);
+            }
         } else if (OrmUtil.proxySafeIsInstance(task, WaitForFileTask.class)) {
             WaitForFileTask waitForFileTask = OrmUtil.proxySafeCast(task, WaitForFileTask.class);
             File file = new File(waitForFileTask.getFilePath());

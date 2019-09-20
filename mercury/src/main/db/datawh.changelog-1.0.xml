@@ -230,9 +230,6 @@
             <column name="RUN_DATE" type="timestamp">
                 <constraints nullable="false"/>
             </column>
-            <column name="SAMPLE_ALIAS" type="VARCHAR2(200)">
-                <constraints nullable="false"/>
-            </column>
             <column name="ANALYSIS_NAME" type="VARCHAR2(255)">
                 <constraints nullable="false"/>
             </column>
@@ -246,5 +243,18 @@
             <column name="SEQUENCING_LANE_METRIC_ID" type="number(19,0)"/>
         </createTable>
         <createSequence schemaName="mercurydw" sequenceName="SEQ_SEQ_LANE_METRIC" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-42" author="jowalsh">
+        <addColumn tableName="mapping_rg_metrics" schemaName="mercury">
+            <column name="pct_coverage_100x_inf" type="number(15,5)" />
+            <column name="pct_coverage_50x_100x" type="number(15,5)" />
+            <column name="pct_coverage_20x_50x" type="number(15,5)" />
+            <column name="pct_coverage_10x_20x" type="number(15,5)" />
+            <column name="pct_coverage_3x_10x" type="number(15,5)" />
+            <column name="pct_coverage_0x_3x" type="number(15,5)" />
+            <column name="PREDICTED_SEX_CHR_PLOIDY" type="VARCHAR2(55)" />
+            <column name="est_sample_contamination" type="number(15,3)" />
+        </addColumn>
     </changeSet>
 </databaseChangeLog>

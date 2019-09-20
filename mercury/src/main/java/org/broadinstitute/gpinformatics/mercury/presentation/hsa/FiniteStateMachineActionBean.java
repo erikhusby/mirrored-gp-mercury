@@ -25,6 +25,7 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.ProcessTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.FiniteStateMachineFactory;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SlurmController;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -35,6 +36,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -163,7 +165,7 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
 
         try {
             FiniteStateMachine finiteStateMachine = finiteStateMachineFactory.createFiniteStateMachineForRun(
-                    illuminaSequencingRun, null, runName, mapIdToMercurySample.keySet(), messageCollection);
+                    illuminaSequencingRun, runName, mapIdToMercurySample.keySet(), messageCollection);
         } catch (Exception e) {
             addGlobalValidationError(e.getMessage());
             logger.error("Failed to create machine", e);

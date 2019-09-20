@@ -33,6 +33,9 @@ public class JobInfo {
     @CsvBindByName(column = "End")
     private String end;
 
+    @CsvBindByName(column = "Start")
+    private String start;
+
     public JobInfo() {
     }
 
@@ -80,6 +83,17 @@ public class JobInfo {
         if (!end.toLowerCase().equals("unknown")) {
             try {
                 return DATE_PARSER.parse(end);
+            } catch (ParseException e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    public Date getStart() {
+        if (!start.toLowerCase().equals("unknown")) {
+            try {
+                return DATE_PARSER.parse(start);
             } catch (ParseException e) {
                 return null;
             }

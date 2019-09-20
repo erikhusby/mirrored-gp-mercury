@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.DemultiplexState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -62,5 +63,14 @@ public class IlluminaSequencingRunChamber extends SequencingRunChamber {
 
     public Set<State> getStates() {
         return states;
+    }
+
+    public VesselPosition getLanePosition() {
+        return VesselPosition.getByName("LANE" + getLaneNumber());
+    }
+
+    public void addState(State state) {
+        states.add(state);
+        state.addSequencingRunChamber(this);
     }
 }

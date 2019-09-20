@@ -81,6 +81,19 @@ public class FiniteStateMachineEngine {
                 }
             }
 
+            if (state.isStateOnEnter()) {
+                if (stateManager.handleOnEnter(state)) {
+                    for (Task task : state.getTasks()) {
+                        try {
+                            taskManager.fireEvent(task, context);
+                        } catch (Exception e) {
+                            log.error("Error firing next task " + task.getTaskName(), e);
+                            task.setStatus(Status.SUSPENDED);
+                        }
+                    }
+                }
+            }
+
             log.debug("Checking transitions from " + state);
             for (Task task: state.getActiveTasks()) {
                 Pair<Status, Date> statusDatePair = taskManager.checkTaskStatus(task, context);
@@ -108,20 +121,22 @@ public class FiniteStateMachineEngine {
             }
 
             if (state.isComplete()) {
-                state.setAlive(false);
-                state.setEndTime(new Date());
-                List<Transition> transitionsFromState = stateMachine.getTransitionsFromState(state);
-                for (Transition transition : transitionsFromState) {
-                    State toState = transition.getToState();
-                    toState.setAlive(true);
-                    toState.setStartTime(new Date());
-                    if (stateManager.handleOnEnter(toState)) {
-                        for (Task task : toState.getTasks()) {
-                            try {
-                                taskManager.fireEvent(task, context);
-                            } catch (Exception e) {
-                                log.error("Error firing next task " + task.getTaskName(), e);
-                                task.setStatus(Status.SUSPENDED);
+                if (stateManager.handleOnExit(state)) {
+                    state.setAlive(false);
+                    state.setEndTime(new Date());
+                    List<Transition> transitionsFromState = stateMachine.getTransitionsFromState(state);
+                    for (Transition transition : transitionsFromState) {
+                        State toState = transition.getToState();
+                        toState.setAlive(true);
+                        toState.setStartTime(new Date());
+                        if (stateManager.handleOnEnter(toState)) {
+                            for (Task task : toState.getTasks()) {
+                                try {
+                                    taskManager.fireEvent(task, context);
+                                } catch (Exception e) {
+                                    log.error("Error firing next task " + task.getTaskName(), e);
+                                    task.setStatus(Status.SUSPENDED);
+                                }
                             }
                         }
                     }

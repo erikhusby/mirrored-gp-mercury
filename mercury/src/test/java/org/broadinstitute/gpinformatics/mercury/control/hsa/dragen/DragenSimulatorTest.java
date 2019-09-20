@@ -72,6 +72,7 @@ import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -313,7 +314,8 @@ public class DragenSimulatorTest extends BaseEventTest {
         states.add(sequencingRunComplete);
 
         // Demux to Alignment Transition
-        State demultiplex = new DemultiplexState(demultiplexAnalysisName, run.getSequencingRunChambers(), finiteStateMachine);
+        State demultiplex = new DemultiplexState(demultiplexAnalysisName, finiteStateMachine,
+                Collections.emptySet(),run.getSequencingRunChambers());
         states.add(demultiplex);
         State alignment = new AlignmentState("Alignment", finiteStateMachine, new HashSet<>(), new HashSet<>());
         states.add(alignment);

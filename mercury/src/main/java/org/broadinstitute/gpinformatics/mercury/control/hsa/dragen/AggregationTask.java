@@ -1,4 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.dragen;
 
-public class AggregationTask {
+import org.hibernate.envers.Audited;
+
+import javax.persistence.Entity;
+
+@Entity
+@Audited
+public class AggregationTask extends ProcessTask {
 }

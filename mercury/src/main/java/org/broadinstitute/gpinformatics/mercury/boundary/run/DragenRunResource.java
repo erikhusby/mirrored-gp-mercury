@@ -16,6 +16,8 @@ import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFact
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
+import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -38,6 +40,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Stateful
 @RequestScoped
@@ -78,30 +81,31 @@ public class DragenRunResource {
 
         List<FiniteStateMachine> likeRuns = stateMachineDao.findLikeByRunName(run.getRunName());
         Set<VesselPosition> genomicLanes = verifyNewRun(solexaRunBean, likeRuns);
-        if (genomicLanes != null) {
-            String timestamp = new SimpleDateFormat("yyyy-MM-dd_hh-mm").format(new Date());
-            String stateMachineName = run.getRunName() + "-Test-" + timestamp;
-            MessageCollection messageCollection = new MessageCollection();
-            // TODO
-            finiteStateMachineFactory.createFiniteStateMachineForRun(run, genomicLanes, stateMachineName,
-                    Collections.emptySet(), messageCollection);
-            if (messageCollection.hasErrors()) {
-                String errMsg = StringUtils.join(messageCollection.getErrors(), "\n");
-                log.error(errMsg);
-                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(errMsg).type(MediaType.TEXT_PLAIN_TYPE).build();
-            } else {
-                return Response.status(Response.Status.CREATED).type(MediaType.TEXT_PLAIN_TYPE).build();
-            }
+        if (genomicLanes == null || genomicLanes.isEmpty()) {
+            return Response.status(Response.Status.OK).entity("Ignored").type(MediaType.TEXT_PLAIN_TYPE).build();
         }
 
-        return Response.status(Response.Status.OK).entity("Ignored").type(MediaType.TEXT_PLAIN_TYPE).build();
+        String timestamp = new SimpleDateFormat("yyyy-MM-dd_hh-mm").format(new Date());
+        String stateMachineName = run.getRunName() + "-Test-" + timestamp;
+        MessageCollection messageCollection = new MessageCollection();
+
+        finiteStateMachineFactory.createFiniteStateMachineForRun(run, genomicLanes, stateMachineName,
+                Collections.emptySet(), messageCollection);
+        if (messageCollection.hasErrors()) {
+            String errMsg = StringUtils.join(messageCollection.getErrors(), "\n");
+            log.error(errMsg);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(errMsg).type(MediaType.TEXT_PLAIN_TYPE).build();
+        } else {
+            return Response.status(Response.Status.CREATED).type(MediaType.TEXT_PLAIN_TYPE).build();
+        }
+
     }
 
     /**
      * @return true if run exists, on SL-NVD, and all machines are inactive.
      */
     private Set<VesselPosition> verifyNewRun(SolexaRunBean run, List<FiniteStateMachine> stateMachines) {
-        if (!run.getMachineName().equals("SL-NVD") || !run.getMachineName().equals("SL-NVE")) {
+        if (!run.getMachineName().equals("SL-NVD") && !run.getMachineName().equals("SL-NVE")) {
             return null;
         }
 

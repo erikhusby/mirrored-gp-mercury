@@ -1,6 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.state;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.ProcessTask;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
+import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRunChamber;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -11,6 +17,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
@@ -40,6 +48,18 @@ public abstract class State {
     @JoinColumn(name = "FINITE_STATE_MACHINE")
     private FiniteStateMachine finiteStateMachine;
 
+    @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(schema = "mercury", name = "sample_alignment_state"
+            , joinColumns = {@JoinColumn(name = "ALIGNMENT_STATE")}
+            , inverseJoinColumns = {@JoinColumn(name = "MERCURY_SAMPLE")})
+    private Set<MercurySample> mercurySamples = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST})
+    @JoinTable(schema = "mercury", name = "src_demultiplix_state"
+            , joinColumns = {@JoinColumn(name = "DEMULTIPLEX_STATE")}
+            , inverseJoinColumns = {@JoinColumn(name = "SEQUENCING_RUN_CHAMBER")})
+    private Set<IlluminaSequencingRunChamber> sequencingRunChambers = new HashSet<>();
+
     private String stateName;
 
     private boolean alive;
@@ -50,12 +70,55 @@ public abstract class State {
 
     private Date endTime;
 
+    public State(String stateName, FiniteStateMachine finiteStateMachine, Set<MercurySample> mercurySamples,
+                 Set<IlluminaSequencingRunChamber> sequencingRunChambers) {
+        this.stateName = stateName;
+        this.finiteStateMachine = finiteStateMachine;
+
+        for (MercurySample mercurySample: mercurySamples) {
+            mercurySample.addState(this);
+        }
+        for (IlluminaSequencingRunChamber sequencingRunChamber: sequencingRunChambers) {
+            sequencingRunChamber.addState(this);
+        }
+    }
+
     public State() {
     }
 
-    public State(String stateName, FiniteStateMachine finiteStateMachine) {
-        this.stateName = stateName;
-        this.finiteStateMachine = finiteStateMachine;
+    public IlluminaSequencingRun getRun() {
+        if (sequencingRunChambers != null && !sequencingRunChambers.isEmpty()) {
+            SequencingRunChamber runChamber = sequencingRunChambers.iterator().next();
+            if (OrmUtil.proxySafeIsInstance(runChamber, IlluminaSequencingRunChamber.class)) {
+                IlluminaSequencingRunChamber illuminaSequencingRunChamber =
+                        OrmUtil.proxySafeCast(runChamber, IlluminaSequencingRunChamber.class);
+                return illuminaSequencingRunChamber.getIlluminaSequencingRun();
+            }
+
+        }
+        return null;
+    }
+
+    public void addSequencingRunChamber(IlluminaSequencingRunChamber sequencingRunChamber) {
+        sequencingRunChambers.add(sequencingRunChamber);
+    }
+
+    public Set<IlluminaSequencingRunChamber> getSequencingRunChambers() {
+        return sequencingRunChambers;
+    }
+
+    public void setSequencingRunChambers(
+            Set<IlluminaSequencingRunChamber> sequencingRunChamberList) {
+        this.sequencingRunChambers = sequencingRunChamberList;
+    }
+
+    public Set<MercurySample> getMercurySamples() {
+        return mercurySamples;
+    }
+
+    public void setMercurySamples(
+            Set<MercurySample> mercurySamples) {
+        this.mercurySamples = mercurySamples;
     }
 
     public void addTask(Task task) {
@@ -128,14 +191,6 @@ public abstract class State {
         this.finiteStateMachine = finiteStateMachine;
     }
 
-    public void onEnter() {
-
-    }
-
-    public boolean onExit() {
-        return true;
-    }
-
     public Optional<Task> getExitTask() {
         return tasks.stream().filter(t -> t.getTaskActionTime() == Task.TaskActionTime.EXIT).findFirst();
     }
@@ -149,6 +204,15 @@ public abstract class State {
         return getTasks().stream()
                 .filter(t -> t.getStatus() == Status.RUNNING || t.getStatus() == Status.QUEUED)
                 .collect(Collectors.toList());
+    }
+
+    public boolean isStateOnEnter() {
+        Optional<Task> first = getTasks().stream()
+                .filter(t -> t.getStatus() != Status.QUEUED ||
+                             !OrmUtil.proxySafeIsInstance(t, ProcessTask.class) ||
+                             OrmUtil.proxySafeCast(t, ProcessTask.class).getProcessId() != null)
+                .findFirst();
+        return !first.isPresent();
     }
 
     public boolean isMainTasksComplete() {
@@ -191,5 +255,9 @@ public abstract class State {
                 .append("startTime", startTime)
                 .append("end", endTime)
                 .toString();
+    }
+
+    public void addSample(MercurySample mercurySample) {
+        this.mercurySamples.add(mercurySample);
     }
 }

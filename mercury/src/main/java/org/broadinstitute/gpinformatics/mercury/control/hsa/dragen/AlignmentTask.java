@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.dragen;
 
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AlignmentState;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.hibernate.envers.Audited;
 
@@ -50,7 +53,7 @@ public class AlignmentTask extends ProcessTask {
      * --vc-sample-name <Sample Name> \
      * --enable-variant-caller true \
      * --enable-duplicate-marking true \
-     * --enable-map-align-output true
+     * --enable-map-align-output false
      */
     public AlignmentTask(File reference, File fastQList, String fastQSampleId, File outputDirectory,
                          File intermediateResultsDir, String outputFilePrefix, String vcSampleName,
@@ -82,10 +85,9 @@ public class AlignmentTask extends ProcessTask {
                 intermediateResultsDir(intermediateResultsDir).
                 outputFilePrefix(outputFilePrefix).
                 vcSampleName(vcSampleName).
-                outputForm("cram").
                 enableVariantCaller(true).
                 enableDuplicateMarking(true).
-                enableMapAlignOutput(true).
+                enableMapAlignOutput(false). // TODO Test to see if this creates the bam or not
                 qcCrossContaminationVcf(qcContaminationFile).
                 build();
 
@@ -150,5 +152,9 @@ public class AlignmentTask extends ProcessTask {
             return Boolean.valueOf(arg);
         }
         return false;
+    }
+
+    public AlignmentState getAlignmentState() {
+        return OrmUtil.proxySafeCast(getState(), AlignmentState.class);
     }
 }

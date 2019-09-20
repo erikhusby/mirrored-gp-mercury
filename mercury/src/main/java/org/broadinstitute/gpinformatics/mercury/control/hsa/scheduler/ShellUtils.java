@@ -21,7 +21,7 @@ public class ShellUtils {
 
     public ProcessResult runSyncProcess(List<String> commands)
             throws InterruptedException, TimeoutException, IOException {
-        log.info(StringUtils.join(commands, " "));
+        log.debug(StringUtils.join(commands, " "));
         return new ProcessExecutor()
                 .command(commands)
                 .readOutput(true)

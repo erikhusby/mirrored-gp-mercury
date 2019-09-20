@@ -80,11 +80,30 @@ public class FiniteStateMachineFactory {
         return createFiniteStateMachineForRun(run, lanes, runName, Collections.emptySet(), messageCollection);
     }
 
+    public FiniteStateMachine createFiniteStateMachineForRun(IlluminaSequencingRun run, String runName,
+                                                             Set<String> filterSampleIds,
+                                                             MessageCollection messageCollection) {
+        RunCartridge flowcell = run.getSampleCartridge();
+        Set<VesselPosition> lanes = new HashSet<>(Arrays.asList(flowcell.getVesselGeometry().getVesselPositions()));
+        return createFiniteStateMachineForRun(run, lanes, runName, filterSampleIds, messageCollection);
+    }
+
     public FiniteStateMachine createFiniteStateMachineForRun(IlluminaSequencingRun run,
                                                              Set<VesselPosition> lanes,
                                                              String runName,
                                                              Set<String> filterSampleIds,
                                                              MessageCollection messageCollection) {
+        List<VesselPosition> runChamberPositions = run.getSequencingRunChambers().stream()
+                .map(IlluminaSequencingRunChamber::getLanePosition)
+                .collect(Collectors.toList());
+
+        for (VesselPosition vesselPosition: lanes) {
+            int laneNumber = Integer.parseInt(vesselPosition.name().replaceAll("LANE", ""));
+            if (!runChamberPositions.contains(vesselPosition)) {
+                IlluminaSequencingRunChamber sequencingRunChamber = new IlluminaSequencingRunChamber(run, laneNumber);
+                run.addSequencingRunChamber(sequencingRunChamber);
+            }
+        }
         FiniteStateMachine finiteStateMachine = createFiniteStateMachineForRunDaoFree(run, lanes, runName,
                 filterSampleIds, messageCollection);
         if (!messageCollection.hasErrors()) {
@@ -121,7 +140,10 @@ public class FiniteStateMachineFactory {
         Date dateQueued = new Date();
         finiteStateMachine.setDateQueued(dateQueued);
 
-        State demultiplex = new DemultiplexState(finiteStateMachine.getDateQueuedString(), run.getSequencingRunChambers(), finiteStateMachine);
+        List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(filterSampleIds);
+
+        State demultiplex = new DemultiplexState(finiteStateMachine.getDateQueuedString(), finiteStateMachine,
+                new HashSet<>(mercurySamples), run.getSequencingRunChambers());
         states.add(demultiplex);
 
         DragenFolderUtil dragenFolderUtil = new DragenFolderUtil(dragenConfig, run, finiteStateMachine.getDateQueuedString());
@@ -145,20 +167,19 @@ public class FiniteStateMachineFactory {
         transitions.add(seqToDemux);
 
         // Alignment
-        Set<String> samplesAligned = new HashSet<>();
+        String fcBarcode = run.getSampleCartridge().getLabel();
         for (SampleSheetBuilder.SampleData sampleData: sampleSheet.getData().getMapSampleNameToData().values()) {
-            if (!samplesAligned.add(sampleData.getSampleName())) {
-                continue;
-            }
             MercurySample mercurySample =
                     sampleSheet.getData().getMapSampleToMercurySample().get(sampleData.getSampleName());
 
             IlluminaSequencingRunChamber runChamber = run.getSequencingRunChambers().stream()
                     .filter(seq -> seq.getLaneNumber() == sampleData.getLane())
                     .findFirst().get();
+            int laneNumber = runChamber.getLaneNumber();
 
-            AlignmentState alignmentState = new AlignmentState("Alignment_" + runName, finiteStateMachine,
-                    Collections.singleton(mercurySample), Collections.singleton(runChamber  ));
+            String alignName = String.format("Align_%s_%d_%s", fcBarcode, laneNumber, sampleData.getSampleName());
+            AlignmentState alignmentState = new AlignmentState(alignName, finiteStateMachine,
+                    Collections.singleton(mercurySample), Collections.singleton(runChamber));
             states.add(alignmentState);
 
             File referenceFile = new File("/staging/reference/hg38/v1");
@@ -170,13 +191,12 @@ public class FiniteStateMachineFactory {
                     new File(AlignmentActionBean.ReferenceGenome.HG38.getContamFile()));
             alignmentTask.setTaskName("Alignment_" + sampleData.getSampleName() + "_" + runName);
             alignmentState.addTask(alignmentTask);
-            samplesAligned.add(sampleData.getSampleName());
 
             AlignmentMetricsTask alignmentMetricsTask = new AlignmentMetricsTask();
             alignmentMetricsTask.setTaskName("Alignment_Metric_" + runName);
             alignmentState.addExitTask(alignmentMetricsTask);
 
-            Transition demuxToAlignment = new Transition("Demultiplexing To Alignment", finiteStateMachine);
+            Transition demuxToAlignment = new Transition("DemuxToAlign", finiteStateMachine);
             demuxToAlignment.setFromState(demultiplex);
             demuxToAlignment.setToState(alignmentState);
             transitions.add(demuxToAlignment);

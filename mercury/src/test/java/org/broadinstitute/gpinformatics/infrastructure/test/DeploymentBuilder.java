@@ -67,6 +67,7 @@ public class DeploymentBuilder {
                 .addAsWebInfResource(new File("src/test/resources/squid-" + dataSourceEnvironment + "-ds.xml"))
                 .addAsWebInfResource(new File("src/test/resources/metrics-" + dataSourceEnvironment + "-ds.xml"))
                 .addAsWebInfResource(new File("src/test/resources/analytics-" + dataSourceEnvironment + "-ds.xml"))
+                .addAsWebInfResource(new File("src/test/resources/mercurydw-dev-ds.xml"))
                 .addAsResource(new File("src/main/resources/META-INF/persistence.xml"), "META-INF/persistence.xml")
                 .addAsResource(new File("src/main/resources/META-INF/beans.xml"), "META-INF/beans.xml")
                 .addAsWebInfResource(new File("src/main/webapp/WEB-INF/ejb-jar.xml"))

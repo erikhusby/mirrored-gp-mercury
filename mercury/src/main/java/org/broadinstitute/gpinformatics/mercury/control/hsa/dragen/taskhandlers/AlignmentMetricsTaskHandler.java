@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers;
 
 import com.opencsv.CSVReader;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -134,13 +135,13 @@ public class AlignmentMetricsTaskHandler extends AbstractMetricsTaskHandler {
 
                 if (!messageCollection.hasErrors()) {
                     processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/mapping_run_metrics.ctl",
-                            alignmentDataFiles.getMappingSummaryOutputFile()));
+                            alignmentDataFiles.getMappingSummaryOutputFile(), alignmentDataFiles.getAlignSummaryLoad()));
                     processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/mapping_rg_metrics.ctl",
-                            alignmentDataFiles.getMappingMetricsOutputFile()));
+                            alignmentDataFiles.getMappingMetricsOutputFile(),  alignmentDataFiles.getAlignMetricLoad()));
                     processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/variant_call_run_metrics.ctl",
-                            alignmentDataFiles.getVcSummaryOutputFile()));
+                            alignmentDataFiles.getVcSummaryOutputFile(),  alignmentDataFiles.getVcSummaryMetricLoad()));
                     processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/variant_call_metrics.ctl",
-                            alignmentDataFiles.getVcMetricsOutputFile()));
+                            alignmentDataFiles.getVcMetricsOutputFile(),  alignmentDataFiles.getVcRGMetricLoad()));
                     boolean failed = false;
                     for (ProcessResult processResult : processResults) {
                         if (processResult.getExitValue() != 0) {
@@ -156,12 +157,24 @@ public class AlignmentMetricsTaskHandler extends AbstractMetricsTaskHandler {
                     task.setStatus(Status.FAILED);
                 }
 
+                if (task.getStatus() == Status.COMPLETE) {
+                    doCleanup(outputDirectory);
+                }
+
             } catch (Exception e) {
                 String message = "Error processing alignment task metric " + alignmentMetricsTask;
                 log.error(message, e);
                 task.setErrorMessage(message);
                 task.setStatus(Status.FAILED);
             }
+        }
+    }
+
+    private void doCleanup(File outputDirectory) {
+        try {
+            FileUtils.deleteDirectory(outputDirectory);
+        } catch (IOException e) {
+            log.error("Error cleaning up alignment files", e);
         }
     }
 

@@ -18,6 +18,7 @@ import java.io.Writer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -53,7 +54,12 @@ public class AlignmentStatsParser {
                 messageCollection.addError("Failed to find vc metrics file " + vcMetricsFile.getPath());
             }
 
-            return new AlignmentDataFiles(mappingSummaryOutputFile, mappingMetricsOutputFile, vcSummaryOutputFile, vcMetricsOutputFile);
+            String alignSummaryLoad = String.format("%s_AlignRun_load.log", filePrefix);
+            String alignMetricLoad = String.format("%s_AlignRg_load.log", filePrefix);
+            String vcSummaryMetricLoad = String.format("%s_VCRunload.log", filePrefix);
+            String vcRGMetricLoad = String.format("%s_VCRGload.log", filePrefix);
+            return new AlignmentDataFiles(mappingSummaryOutputFile, mappingMetricsOutputFile, vcSummaryOutputFile, vcMetricsOutputFile,
+                    alignSummaryLoad, alignMetricLoad, vcSummaryMetricLoad, vcRGMetricLoad);
         } catch (Exception e) {
             log.error("Error parsing alignment/vc metrics", e);
             messageCollection.addError("Error parsing alignment/vc metrics");
@@ -157,15 +163,21 @@ public class AlignmentStatsParser {
         CSVReader csvReader = new CSVReader(new BufferedReader(new FileReader(vcMetricsFile)));
         String[] nextRecord;
         String recordType = null;
+        String recordField = null;
         String recordValue = null;
+
+        // Want to share some metrics between summary and read group since most alignments are single sample
+        Map<String, String> mapFieldToVal = new HashMap<>();
         while ((nextRecord = csvReader.readNext()) != null) {
             recordType = nextRecord[0];
+            recordField = nextRecord[2];
             recordValue = nextRecord[3];
 
             if (!recordType.equals("MAPPING/ALIGNING SUMMARY")) {
                 break;
             } else {
                 alignmentSummary.add(recordValue);
+                mapFieldToVal.put(recordField, recordValue);
             }
         }
 
@@ -193,6 +205,10 @@ public class AlignmentStatsParser {
             alignmentPerReadGroup.add(recordValue);
         }
 
+        for (SharedMetrics sharedMetrics: SharedMetrics.values()) {
+            alignmentPerReadGroup.add(mapFieldToVal.get(sharedMetrics.getRecordType()));
+        }
+
         csvWriterMetrics.writeNext(alignmentPerReadGroup.toArray(new String[0]));
         csvWriterMetrics.close();
     }
@@ -203,15 +219,25 @@ public class AlignmentStatsParser {
         private final File mappingMetricsOutputFile;
         private final File vcSummaryOutputFile;
         private final File vcMetricsOutputFile;
+        private final String alignSummaryLoad;
+        private final String alignMetricLoad;
+        private final String vcSummaryMetricLoad;
+        private final String vcRGMetricLoad;
+
 
         public AlignmentDataFiles(File mappingSummaryOutputFile, File mappingMetricsOutputFile,
                                   File vcSummaryOutputFile,
-                                  File vcMetricsOutputFile) {
+                                  File vcMetricsOutputFile, String alignSummaryLoad, String alignMetricLoad,
+                                  String vcSummaryMetricLoad, String vcRGMetricLoad) {
 
             this.mappingSummaryOutputFile = mappingSummaryOutputFile;
             this.mappingMetricsOutputFile = mappingMetricsOutputFile;
             this.vcSummaryOutputFile = vcSummaryOutputFile;
             this.vcMetricsOutputFile = vcMetricsOutputFile;
+            this.alignSummaryLoad = alignSummaryLoad;
+            this.alignMetricLoad = alignMetricLoad;
+            this.vcSummaryMetricLoad = vcSummaryMetricLoad;
+            this.vcRGMetricLoad = vcRGMetricLoad;
         }
 
         public File getMappingSummaryOutputFile() {
@@ -228,6 +254,57 @@ public class AlignmentStatsParser {
 
         public File getVcMetricsOutputFile() {
             return vcMetricsOutputFile;
+        }
+
+        public String getAlignSummaryLoad() {
+            return alignSummaryLoad;
+        }
+
+        public String getAlignMetricLoad() {
+            return alignMetricLoad;
+        }
+
+        public String getVcSummaryMetricLoad() {
+            return vcSummaryMetricLoad;
+        }
+
+        public String getVcRGMetricLoad() {
+            return vcRGMetricLoad;
+        }
+    }
+
+    public enum SharedMetrics {
+        CONTAMINATION("Estimated sample contamination"),
+        PREDICTED_SEX_CHROMOSOME("Predicted sex chromosome ploidy"),
+        PCT_COV_100_INF("PCT of genome with coverage [100x:inf)"),
+        PCT_COV_50_100("PCT of genome with coverage [50x:100x)"),
+        PCT_COV_20_50("PCT of genome with coverage [20x:50x)"),
+        PCT_COV_10_20("PCT of genome with coverage [10x:20x)"),
+        PCT_COV_3_10("PCT of genome with coverage [ 3x:10x)"),
+        PCT_COV_0_3("PCT of genome with coverage [ 0x: 3x)"),
+        ;
+
+        private final String recordType;
+
+        private static Map<String, SharedMetrics> mapKeyToMetric = new HashMap<>();
+
+        SharedMetrics(String recordType) {
+
+            this.recordType = recordType;
+        }
+
+        static {
+            for (SharedMetrics sharedMetrics: SharedMetrics.values()) {
+                mapKeyToMetric.put(sharedMetrics.getRecordType(), sharedMetrics);
+            }
+        }
+
+        public String getRecordType() {
+            return recordType;
+        }
+
+        public static boolean containsKey(String key) {
+            return mapKeyToMetric.containsKey(key);
         }
     }
 }

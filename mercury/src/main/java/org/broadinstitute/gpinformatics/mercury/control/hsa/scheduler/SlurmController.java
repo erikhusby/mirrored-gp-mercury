@@ -89,7 +89,7 @@ public class SlurmController implements SchedulerController {
 
     @Override
     public JobInfo fetchJobInfo(long jobId) {
-        String format = "--format=jobid,jobname,partition,account,alloccpus,state,exitcode,end";
+        String format = "--format=jobid,jobname,partition,account,alloccpus,state,exitcode,start,end";
         List<JobInfo> jobInfoList = runProcesssParseList(Arrays.asList(
                         "ssh", dragenConfig.getSlurmHost(), "sacct", "-j", String.valueOf(jobId), format, "-p"), JobInfo.class);
         if (jobInfoList.size() > 0) {

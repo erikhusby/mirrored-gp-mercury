@@ -217,22 +217,22 @@ public class DemultiplexMetricsTaskHandler extends AbstractMetricsTaskHandler {
         // Verify that the demultiplex stat is in seq run
         List<DemultiplexSampleMetric> sequencingMetrics = new ArrayList<>();
 
-
         Map<Integer, Long> mapLaneToUndeterminedReads = new HashMap<>();
         Map<Integer, DemultiplexLaneMetric> mapLaneToLaneMetric = new HashMap<>();
         Map<Integer, Long> mapLaneToReads = new HashMap<>();
         for (DemultiplexStats stat: demultiplexStats) {
-            if (!mapSampleToLanes.containsKey(stat.getSampleID())) {
-                messageCollection.addError("Unexpected Sample ID in Demultiplex Stats file " + stat.getSampleID());
-            } else if (!mapSampleToLanes.get(stat.getSampleID()).contains(stat.getLane())) {
+            int lane = stat.getLane();
+            String sampleId = stat.getSampleID().split("_")[0];
+            if (sampleId.equals("Undetermined")) {
+                mapLaneToUndeterminedReads.put(lane,  stat.getNumberOfReads());
+                continue;
+            }
+            if (!mapSampleToLanes.containsKey(sampleId)) {
+                messageCollection.addError("Unexpected Sample ID in Demultiplex Stats file " + sampleId);
+            } else if (!mapSampleToLanes.get(sampleId).contains(stat.getLane())) {
                 messageCollection.addError("Unexpected lane in Demultiplex Stats file " + stat.getLane());
             } else {
-                int lane = stat.getLane();
-                if (stat.getSampleID().equals("Undetermined")) {
-                    mapLaneToUndeterminedReads.put(lane,  stat.getNumberOfReads());
-                    continue;
-                }
-                String sampleAlias = stat.getSampleID();
+                String sampleAlias = sampleId;
 
                 DemultiplexSampleMetric sequencingMetric = new DemultiplexSampleMetric(lane, sampleAlias);
                 sequencingMetric.setRunName(demultiplexState.getRun().getRunName());
@@ -262,9 +262,10 @@ public class DemultiplexMetricsTaskHandler extends AbstractMetricsTaskHandler {
                     laneMetric.setDragenVersion(dragenReplayInfo.getSystem().getDragenVersion());
                     laneMetric.setAnalysisNode(dragenReplayInfo.getSystem().getNodename());
                     laneMetric.setAnalysisName(demultiplexState.getStateName());
+                    laneMetric.setLane(lane);
                     mapLaneToLaneMetric.put(lane, laneMetric);
                 }
-                mapLaneToReads.put(lane, mapLaneToReads.get(lane) + stat.getNumberOfReads());
+                mapLaneToReads.put(lane, mapLaneToReads.get(lane) + stat.getNumberOfReads() + stat.getNumberOfOneMismatchIndexreads());
             }
         }
 
@@ -272,7 +273,7 @@ public class DemultiplexMetricsTaskHandler extends AbstractMetricsTaskHandler {
             int lane = undeterminedEntry.getKey();
             Long mappedReads = mapLaneToReads.get(lane);
             Long undeterminedReads = mapLaneToUndeterminedReads.get(lane);
-            double orphanRate = mappedReads / undeterminedReads;
+            double orphanRate = ((double)mappedReads) / undeterminedReads;
             mapLaneToLaneMetric.get(lane).setOrphanRate(new BigDecimal(orphanRate));
         }
 

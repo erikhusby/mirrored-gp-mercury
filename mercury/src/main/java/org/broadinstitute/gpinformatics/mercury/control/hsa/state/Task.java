@@ -54,6 +54,9 @@ public abstract class Task {
 
     private Date endTime;
 
+    // TODO
+    //private Date queuedTime;
+
     private String errorMessage;
 
     public Task() {
