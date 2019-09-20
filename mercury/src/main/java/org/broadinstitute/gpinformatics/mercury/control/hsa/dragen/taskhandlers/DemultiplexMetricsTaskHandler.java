@@ -273,7 +273,8 @@ public class DemultiplexMetricsTaskHandler extends AbstractMetricsTaskHandler {
             int lane = undeterminedEntry.getKey();
             Long mappedReads = mapLaneToReads.get(lane);
             Long undeterminedReads = mapLaneToUndeterminedReads.get(lane);
-            double orphanRate = ((double)mappedReads) / undeterminedReads;
+            Long totalReads = mappedReads + undeterminedReads;
+            double orphanRate = (((double)undeterminedReads) / totalReads) * 100;
             mapLaneToLaneMetric.get(lane).setOrphanRate(new BigDecimal(orphanRate));
         }
 
