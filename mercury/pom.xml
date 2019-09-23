@@ -1331,7 +1331,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>24.0-jre</version>
+            <version>27.0.1-jre</version>
         </dependency>
 
         <!-- ***
@@ -1543,7 +1543,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.2</version>
+            <version>3.9</version>
         </dependency>
 
         <dependency>
@@ -1903,7 +1903,16 @@ nodePrinter.print(webapp)
             <artifactId>csrfguard</artifactId>
             <version>3.1.0</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-storage</artifactId>
+            <version>1.64.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.apis</groupId>
+            <artifactId>google-api-services-iam</artifactId>
+            <version>v1-rev285-1.25.0</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -2014,7 +2023,7 @@ nodePrinter.print(webapp)
                     <artifactId>jgitflow-maven-plugin</artifactId>
                     <version>1.0-m5.1</version>
                 </plugin>
-		
+
                 <plugin>
                     <groupId>com.amashchenko.maven.plugin</groupId>
                     <artifactId>gitflow-maven-plugin</artifactId>
@@ -2400,7 +2409,7 @@ nodePrinter.print(webapp)
                     </execution>
                 </executions>
             </plugin>
-	    
+
             <plugin>
                 <groupId>external.atlassian.jgitflow</groupId>
                 <artifactId>jgitflow-maven-plugin</artifactId>
@@ -2453,7 +2462,7 @@ nodePrinter.print(webapp)
                     <pushRemote>true</pushRemote>
                 </configuration>
             </plugin>
-            
+
         </plugins>
 
         <extensions>

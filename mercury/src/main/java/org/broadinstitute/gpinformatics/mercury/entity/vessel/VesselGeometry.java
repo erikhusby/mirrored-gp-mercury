@@ -579,6 +579,20 @@ public enum VesselGeometry {
         public int getColumn() {
             return column;
         }
+
+        @Override
+        public boolean equals(Object other) {
+            return other instanceof RowColumn &&
+                    ((RowColumn) other).getRow() == getRow() &&
+                    ((RowColumn) other).getColumn() == getColumn();
+        }
+
+        @Override
+        public int hashCode() {
+            int result = getRow();
+            result = 31 * result + getColumn();
+            return result;
+        }
     }
 
     VesselGeometry(String name, String[] columnNames, String[] rowNames) {
