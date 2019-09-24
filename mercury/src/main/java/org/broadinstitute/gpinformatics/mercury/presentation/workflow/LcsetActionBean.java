@@ -9,13 +9,12 @@ import net.sourceforge.stripes.validation.Validate;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
+import org.hibernate.exception.ConstraintViolationException;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -60,12 +59,6 @@ public class LcsetActionBean extends RackScanActionBean {
     private List<String> removeBarcodes = new ArrayList<>();
 
     private VesselGeometry vesselGeometry = RackOfTubes.RackType.Matrix96.getVesselGeometry();
-
-    @Inject
-    private BarcodedTubeDao barcodedTubeDao;
-
-    @Inject
-    private LabBatchDao labBatchDao;
 
     @Inject
     private LabBatchEjb labBatchEjb;
@@ -131,12 +124,31 @@ public class LcsetActionBean extends RackScanActionBean {
     }
 
     @HandlesEvent(CONFIRM_CONTROLS_EVENT)
-    public Resolution confirmControls() throws ScannerException {
+    public Resolution confirmControls() {
         try {
             Map<String, BarcodedTube> mapBarcodeToTube = labBatchEjb.updateLcsetFromScan(lcsetName, controlBarcodes,
                     this, addBarcodes, removeBarcodes, new ArrayList<>(rackScan.values()));
             labBatchEjb.exportRack(mapBarcodeToTube, rackBarcode, rackScan, userBean, this);
-            labBatchEjb.linkLcsetToUds(lcsetName, rackScan);
+            try {
+                labBatchEjb.linkLcsetToUds(lcsetName, rackScan);
+            } catch (Exception e) {
+                // The violation is likely due to a TubeFormation hash being persisted by SampleImportResource on
+                // another thread.  Try again.
+                Throwable cause = e.getCause();
+                boolean retry = false;
+                while (cause != null) {
+                    if (cause instanceof ConstraintViolationException) {
+                        retry = true;
+                        break;
+                    }
+                    cause = cause.getCause();
+                }
+                if (retry) {
+                    labBatchEjb.linkLcsetToUds(lcsetName, rackScan);
+                } else {
+                    throw e;
+                }
+            }
             if (getContext().getMessages().isEmpty()) {
                 addMessage("Made modifications to LCSET");
             }
@@ -149,7 +161,7 @@ public class LcsetActionBean extends RackScanActionBean {
     }
 
     @HandlesEvent(CONFIRM_TYPED_CONTROLS_EVENT)
-    public Resolution confirmTypedControls() throws ScannerException {
+    public Resolution confirmTypedControls() {
         try {
             List<String> allBarcodes = new ArrayList<>(controlBarcodes);
             allBarcodes.addAll(addBarcodes);
