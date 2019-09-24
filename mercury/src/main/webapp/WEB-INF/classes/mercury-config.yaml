@@ -11,7 +11,7 @@ app:
       gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
 
     AUTO_BUILD:
-      host:     vmercurydev.broadinstitute.org
+      host:     mercurydev.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
