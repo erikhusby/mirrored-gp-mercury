@@ -266,14 +266,13 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
         String formattedOutput = "";
         if(StringUtils.isNotBlank(billingSession)) {
             if(context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB) {
-                formattedOutput = new StringBuilder().append(
-                    "<a class=\"external\" target=\"new\" href=\"/Mercury/billing/session.action?billingSession=")
-                    .append(billingSession).append("&")
-                    .append(BillingSessionActionBean.WORK_ITEM_FROM_URL_PARAMETER).append("=").append(workItem)
-                    .append("&")
-                    .append(BillingSessionActionBean.SAP_DELIVERY_DOCUMENT_ID_URL_PARAMETER).append("=")
-                    .append(sapDocumentId).append("\">").append(billingSession).append("</a>")
-                    .toString();
+                formattedOutput = String.format(
+                    "<a class='external' target='new' href='/Mercury/billing/session.action?billingSession=%s&%s=%s&%s=%s'>%s</a>",
+                    billingSession,
+                    BillingSessionActionBean.WORK_ITEM_FROM_URL_PARAMETER, workItem,
+                    BillingSessionActionBean.SAP_DELIVERY_DOCUMENT_ID_URL_PARAMETER, sapDocumentId,
+                    billingSession
+                );
             } else {
                 formattedOutput = billingSession;
             }
