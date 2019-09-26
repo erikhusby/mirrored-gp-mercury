@@ -100,5 +100,10 @@
         <dropUniqueConstraint tableName="BILLING_LEDGER" schemaName="ATHENA" constraintName="UK_BILLING_LEDGER"/>
     </changeSet>
 
-
+    <changeSet id="GPLIM-6660-001" author="epolk">
+        <createIndex indexName="IX_SAMPLE_RCPT_VAL_AUD" tableName="SAMPLE_RECEIPT_VALIDATION_AUD" schemaName="athena">
+            <column name="VALIDATION_ID"/>
+            <column name="REV"/>
+        </createIndex>
+    </changeSet>
 </databaseChangeLog>
