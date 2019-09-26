@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.products;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
@@ -31,6 +32,7 @@ import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -42,6 +44,7 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 @Stateful
 @RequestScoped
@@ -375,5 +378,22 @@ public class ProductEjb {
             throw new ValidationException("Some errors were found pushing products", errorMessages);
         }
         productPriceCache.refreshCache();
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void disableProductsFromDate(Date startDate) {
+        List<Product> discontinuedProducts = productDao.findDiscontinuedProducts();
+        List<Product> productsDiscontinuedToday = discontinuedProducts.stream().filter(product -> {
+            Date todayTruncated = DateUtils.truncate(new Date(), Calendar.DATE);
+            return todayTruncated.compareTo(product.getDiscontinuedDate()) == 0;
+        }).collect(Collectors.toList());
+
+        for (Product product : productsDiscontinuedToday) {
+            try {
+                sapService.publishProductInSAP(product);
+            } catch (SAPIntegrationException e) {
+                log.error("Unable to call SAP to disable " + product.getDisplayName());
+            }
+        }
     }
 }
