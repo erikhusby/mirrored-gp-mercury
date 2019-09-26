@@ -424,7 +424,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         return new SAPMaterial(product.getPartNumber(), companyCode, companyCode.getDefaultWbs(),
             product.getProductName(), null, SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, minimumOrderQuantity,
             new Date(), new Date(),
-            Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, productHeirarchy);
+            Collections.emptyMap(), Collections.emptyMap(),
+                (product.isDiscontinued())?SAPMaterial.MaterialStatus.DISABLED:SAPMaterial.MaterialStatus.ENABLED,
+                productHeirarchy);
     }
 
     @Override
@@ -504,7 +506,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             throws SAPIntegrationException {
         if (productPriceCache.findByProduct(product,
                 SAPCompanyConfiguration.fromSalesOrgForMaterial(extendedProduct.getSalesOrg()).getSalesOrganization()) == null) {
-            if (publishType != PublishType.UPDATE_ONLY) {
+            if (publishType != PublishType.UPDATE_ONLY &&
+                extendedProduct.getSalesOrgStatus() != SAPMaterial.MaterialStatus.DISABLED) {
 
                 //TODO SGM Unsure about this
                 if(product.isSSFProduct() && !product.getOfferedAsCommercialProduct() &&
