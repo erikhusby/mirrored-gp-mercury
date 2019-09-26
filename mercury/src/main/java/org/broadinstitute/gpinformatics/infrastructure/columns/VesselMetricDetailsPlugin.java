@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.owasp.encoder.Encode;
 
 import javax.annotation.Nonnull;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -135,7 +136,8 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
         String fullHeaderName;
         String barcode;
         String position;
-        String metricValue;
+        String metricValueString;
+        BigDecimal metricValueNumber = null;
         String metricDate;
 
         Map<LabMetric.MetricType, Set<LabMetric>> metricGroups = cachedMetricData.get(labVessel.getLabel());
@@ -208,7 +210,8 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
                 LabMetric labMetric = metricEntry.getValue().get(0);
                 barcode = Encode.forHtml(labMetric.getLabVessel().getLabel());
                 position = labMetric.getVesselPosition();
-                metricValue = ColumnValueType.TWO_PLACE_DECIMAL.format( labMetric.getValue(), "" )
+                metricValueNumber = labMetric.getValue();
+                metricValueString = ColumnValueType.TWO_PLACE_DECIMAL.format( labMetric.getValue(), "" )
                         + " " + labMetric.getUnits().getDisplayName();
                 metricDate = ColumnValueType.DATE_TIME.format( labMetric.getCreatedDate(), "" );
             } else {
@@ -230,7 +233,7 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
                             , ColumnEntity.LAB_METRIC
                             , "GLOBAL|GLOBAL_LAB_METRIC_SEARCH_INSTANCES|Metrics by Barcode and Run"
                             , terms, context );
-                    position = metricValue = metricDate = "---";
+                    position = metricValueString = metricDate = "---";
                 } else {
                     // Text for Excel export
                     StringBuilder barcodeAppend = new StringBuilder();
@@ -253,7 +256,7 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
 
                     barcode = Encode.forHtml(barcodeAppend.toString().trim());
                     position = positionAppend.toString().trim();
-                    metricValue = valueAppend.toString().trim();
+                    metricValueString = valueAppend.toString().trim();
                 }
 
             }
@@ -267,7 +270,8 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
             row.addCell(resultCell);
 
             fullHeaderName = metricEntry.getKey() + " " + MetricColumn.VALUE.getDisplayName();
-            resultCell = new ConfigurableList.Cell(quantHeaders.get(fullHeaderName), metricValue, metricValue);
+            resultCell = new ConfigurableList.Cell(quantHeaders.get(fullHeaderName),
+                    metricValueNumber == null ? metricValueString : metricValueNumber, metricValueString);
             row.addCell(resultCell);
 
             fullHeaderName = metricEntry.getKey() + " " + MetricColumn.DATE.getDisplayName();
