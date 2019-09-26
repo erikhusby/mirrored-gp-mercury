@@ -138,6 +138,7 @@ public class TubeFormation extends LabVessel implements VesselContainerEmbedder<
 
     public void addRackOfTubes(RackOfTubes rackOfTubes) {
         racksOfTubes.add(rackOfTubes);
+        rackOfTubes.getTubeFormations().add(this);
     }
 
     public Set<RackOfTubes> getRacksOfTubes() {
