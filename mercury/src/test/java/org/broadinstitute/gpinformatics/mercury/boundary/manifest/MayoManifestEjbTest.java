@@ -47,42 +47,49 @@ public class MayoManifestEjbTest extends Arquillian {
         googleBucketDao.setConfigGoogleStorageConfig(mayoManifestConfig);
     }
 
+    /** Tests the Mayo Admin page's bucket access and the Mayo Package Receipt page's download. */
     @Test
-    public void testAdminBucketAccessAndDownload() {
+    public void testBucketAccessAndDownload() {
         mayoManifestEjb.getUserBean().loginTestUser();
         MessageCollection messageCollection = new MessageCollection();
         MayoAdminActionBean bean = new MayoAdminActionBean();
         bean.setMessageCollection(messageCollection);
 
-        // Make sure bucket has at least one manifest file to display.
+        // Puts two .csv files in the bucket. They have the same filename but in different "folders".
         String testDigits = DATE_FORMAT.format(new Date());
         String packageId = "PKG-" + testDigits;
         String rackBarcode = "Bx-" + testDigits;
         List<List<String>> cellGrid = makeCellGrid(testDigits, packageId, ImmutableMap.of(rackBarcode, 3));
-        String filename = String.format("test-%1$s/test_%1$s_1.csv", testDigits);
-        googleBucketDao.upload(filename, makeContent(cellGrid), messageCollection);
+        String filename = String.format("test_%s_1.csv", testDigits);
+        String file1 = testDigits + "a/" + filename;
+        String file2 = testDigits + "b/" + filename;
+        googleBucketDao.upload(file1, makeContent(cellGrid), messageCollection);
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
+        googleBucketDao.upload(file2, makeContent(cellGrid), messageCollection);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
 
-        // Tests access and obtains a file listing. The list should include the file that was just written.
+        // Tests access and obtains a file listing. The list should include the files just written.
         messageCollection.clearAll();
         mayoManifestEjb.testAccess(bean);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
         Assert.assertTrue(messageCollection.hasInfos());
-        Assert.assertTrue(bean.getBucketList().contains(filename));
+        Assert.assertTrue(bean.getBucketList().contains(file1));
+        Assert.assertTrue(bean.getBucketList().contains(file2));
 
         // Using the Package Receipt action bean, reads and download the file.
         MayoPackageReceiptActionBean pkgBean = new MayoPackageReceiptActionBean();
-        pkgBean.setFilename(filename);
+        pkgBean.setFilename(file1);
         pkgBean.setMessageCollection(messageCollection);
         messageCollection.clearAll();
         // Reads by full filename.
-        Assert.assertEquals(mayoManifestEjb.searchForFile(pkgBean), filename);
+        Assert.assertEquals(mayoManifestEjb.searchForFile(pkgBean), file1);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
-        // Reads by partial filename.
-        pkgBean.setFilename(testDigits);
+        // Reads by partial filename (without the .csv extension).
+        pkgBean.setFilename(file1.substring(0, file1.length() - 4));
         byte[] bytes = mayoManifestEjb.download(pkgBean);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
@@ -102,10 +109,10 @@ public class MayoManifestEjbTest extends Arquillian {
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
         messageCollection.clearAll();
 
-        // Search should return multiple matches.
-        pkgBean.setFilename("/");
+        // Search should return multiple matches when just the base filename is used.
+        pkgBean.setFilename(filename);
         Assert.assertEquals(mayoManifestEjb.searchForFile(pkgBean), "");
-        Assert.assertTrue(messageCollection.getErrors().get(0).contains("Found multiple files for /"));
+        Assert.assertTrue(messageCollection.getErrors().get(0).contains("Found multiple files for " + filename));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
         messageCollection.clearAll();
     }
