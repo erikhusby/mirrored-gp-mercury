@@ -40,6 +40,7 @@ public class Fingerprint {
         PASS("P"),
         FAIL("F"),
         NONE("N"),
+        /** Set by fixups, to indicate that the fingerprint should not be included in the pipeline's consensus fingerprint */
         IGNORE("I");
 
         private final String abbreviation;
