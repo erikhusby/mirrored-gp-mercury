@@ -19,6 +19,7 @@ import javax.persistence.criteria.SetJoin;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * DAO for ManifestSessions.
@@ -35,7 +36,10 @@ public class ManifestSessionDao extends GenericDao {
     public List<ManifestSession> findOpenSessions() {
         return findListByList(ManifestSession.class, ManifestSession_.status, EnumSet.of(
                 ManifestSession.SessionStatus.OPEN, ManifestSession.SessionStatus.ACCESSIONING,
-                ManifestSession.SessionStatus.PENDING_SAMPLE_INFO));
+                ManifestSession.SessionStatus.PENDING_SAMPLE_INFO)).stream().
+                // Excludes manifest sessions without a research project such as Mayo manifests.
+                filter(manifestSession -> manifestSession.getResearchProject() != null).
+                collect(Collectors.toList());
     }
 
     /**
