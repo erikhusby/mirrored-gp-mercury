@@ -177,7 +177,7 @@ public class MercurySample extends AbstractSample {
 
     private Boolean isRoot;
 
-    @OneToMany(mappedBy = "mercurySample", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "mercurySample", cascade = CascadeType.PERSIST, orphanRemoval = true)
     private Set<Fingerprint> fingerprints = new HashSet<>();
 
     /**
