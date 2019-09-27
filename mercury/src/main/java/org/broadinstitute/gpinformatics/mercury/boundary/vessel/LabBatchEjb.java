@@ -1055,16 +1055,17 @@ public class LabBatchEjb {
                         mapBarcodeToTube.get(positionBarcodeEntry.getValue()));
             }
 
-            TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
-            TubeFormation byDigest = tubeFormationDao.findByDigest(tubeFormation.getDigest());
+            String digest = TubeFormation.makeDigest(mapPositionToTube);
+            TubeFormation byDigest = tubeFormationDao.findByDigest(digest);
             if (byDigest == null) {
+                TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
                 barcodedTubeDao.persist(tubeFormation);
             }
             // todo jmt create in-plate event?
 
             LabBatch labBatch = labBatchDao.findByName(lcsetName);
             Map<String, String[]> terms = new HashMap<>();
-            terms.put("Container Barcode", new String[]{tubeFormation.getLabel()});
+            terms.put("Container Barcode", new String[]{digest});
             StringBuilder linkBuilder = new StringBuilder();
             SearchDefinitionFactory.buildDrillDownHref(
                     ColumnEntity.LAB_VESSEL,
