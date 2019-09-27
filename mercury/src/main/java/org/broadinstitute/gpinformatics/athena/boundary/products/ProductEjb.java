@@ -384,13 +384,14 @@ public class ProductEjb {
     public void disableProductsFromDate(Date startDate) {
         List<Product> discontinuedProducts = productDao.findDiscontinuedProducts();
         List<Product> productsDiscontinuedToday = discontinuedProducts.stream().filter(product -> {
-            Date todayTruncated = DateUtils.truncate(new Date(), Calendar.DATE);
+            Date todayTruncated = DateUtils.truncate(startDate, Calendar.DATE);
             return todayTruncated.compareTo(product.getDiscontinuedDate()) == 0;
         }).collect(Collectors.toList());
 
         for (Product product : productsDiscontinuedToday) {
             try {
                 sapService.publishProductInSAP(product);
+                log.debug(String.format("Updated the product %s in SAP to be Disabled", product.getDisplayName()));
             } catch (SAPIntegrationException e) {
                 log.error("Unable to call SAP to disable " + product.getDisplayName());
             }
