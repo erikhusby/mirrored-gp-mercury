@@ -71,8 +71,8 @@ public class FingerprintFixupTest extends Arquillian {
             }
             for (Fingerprint fingerprint : mercurySample.getFingerprints()) {
                 System.out.println("Deleting " + fingerprint.getMercurySample().getSampleKey() + " " + fingerprint.getDateGenerated());
-                fingerprintDao.remove(fingerprint);
             }
+            mercurySample.getFingerprints().clear();
         }
         fingerprintDao.persist(new FixupCommentary(lines.get(0)));
         fingerprintDao.flush();
