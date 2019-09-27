@@ -39,7 +39,8 @@ public class Fingerprint {
     public enum Disposition {
         PASS("P"),
         FAIL("F"),
-        NONE("N");
+        NONE("N"),
+        IGNORE("I");
 
         private final String abbreviation;
 
