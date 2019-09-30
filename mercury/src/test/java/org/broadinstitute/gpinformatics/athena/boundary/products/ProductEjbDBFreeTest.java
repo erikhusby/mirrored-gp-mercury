@@ -476,25 +476,27 @@ public class ProductEjbDBFreeTest {
 
         Product product1 = ProductTestFactory.createDummyProduct("", "TST-PDT-UNO");
         product1.setAvailabilityDate(DateUtils.addDays(product1.getAvailabilityDate(),-3));
-        product1.setDiscontinuedDate(DateUtils.addDays(product1.getDiscontinuedDate(),-1));
+        product1.setDiscontinuedDate(DateUtils.addDays(new Date(),-1));
 
         Product product2 = ProductTestFactory.createDummyProduct("", "TST-PDT-DOS");
         product2.setAvailabilityDate(DateUtils.addDays(product2.getAvailabilityDate(),-4));
+        product2.setDiscontinuedDate(new Date());
 
         Product product3 = ProductTestFactory.createDummyProduct("", "TST-PDT-TRES");
         product3.setAvailabilityDate(DateUtils.addDays(product3.getAvailabilityDate(),-5));
+        product3.setDiscontinuedDate(new Date());
 
         Product product4 = ProductTestFactory.createDummyProduct("", "TST-PDT-QUATRO");
         product4.setAvailabilityDate(DateUtils.addDays(product4.getAvailabilityDate(),-3));
-        product4.setDiscontinuedDate(DateUtils.addDays(product4.getDiscontinuedDate(),-1));
+        product4.setDiscontinuedDate(DateUtils.addDays(new Date(),-1));
 
         Product product5 = ProductTestFactory.createDummyProduct("", "TST-PDT-CINQO");
         product5.setAvailabilityDate(DateUtils.addDays(product5.getAvailabilityDate(),-3));
-        product5.setDiscontinuedDate(DateUtils.addDays(product5.getDiscontinuedDate(),-1));
+        product5.setDiscontinuedDate(DateUtils.addDays(new Date(),-1));
 
         Product product6 = ProductTestFactory.createDummyProduct("", "TST-PDT-SIXO");
         product6.setAvailabilityDate(DateUtils.addDays(product6.getAvailabilityDate(),-3));
-        product6.setDiscontinuedDate(DateUtils.addDays(product6.getDiscontinuedDate(),-1));
+        product6.setDiscontinuedDate(DateUtils.addDays(new Date(),-1));
 
         List<Product> discontinuedProducts =
                 Stream.of(product1, product2, product3, product4, product5, product6).collect(Collectors.toList());
