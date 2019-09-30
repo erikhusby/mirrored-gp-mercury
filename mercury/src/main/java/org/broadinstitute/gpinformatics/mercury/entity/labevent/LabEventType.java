@@ -691,7 +691,7 @@ public enum LabEventType {
                     targetVolume(true).
                     requireSingleParticipant(true).
                     build(),
-            LibraryType.NONE_ASSIGNED, "_BC", Metadata.Key.TUMOR_NORMAL, "Normal", MaterialType.WHOLE_BLOOD_BUFFY_COAT,
+            LibraryType.NONE_ASSIGNED, "BC", Metadata.Key.TUMOR_NORMAL, "Normal", MaterialType.WHOLE_BLOOD_BUFFY_COAT,
             SourceHandling.DEPLETE),
     BLOOD_PLASMA_TRANSFER("BloodPlasmaBuffyTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
@@ -728,7 +728,7 @@ public enum LabEventType {
                             MarkStock.ActiveStock, MarkStock.BackupStock
                     }).
                     build(),
-            LibraryType.NONE_ASSIGNED, "_P", Metadata.Key.TUMOR_NORMAL, "Tumor", MaterialType.PLASMA_PLASMA,
+            LibraryType.NONE_ASSIGNED, "P", Metadata.Key.TUMOR_NORMAL, "Tumor", MaterialType.PLASMA_PLASMA,
             SourceHandling.DEPLETE),
     CSF_TRANSFER("CsfTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
@@ -2825,7 +2825,7 @@ public enum LabEventType {
 
     private final LibraryType libraryType;
 
-    private String collabSampleSuffix;
+    private String aggregationParticle;
 
     private Metadata.Key metadataKey;
 
@@ -3471,12 +3471,12 @@ public enum LabEventType {
                  SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
                  PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
                  VolumeConcUpdate volumeConcUpdate, ManualTransferDetails manualTransferDetails, LibraryType libraryType,
-                 String collabSampleSuffix, Metadata.Key metadataKey, String metadataValue, MaterialType resultingMaterialType,
+                 String aggregationParticle, Metadata.Key metadataKey, String metadataValue, MaterialType resultingMaterialType,
                  SourceHandling sourceHandling) {
         this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
                 pipelineTransformation, forwardMessage, volumeConcUpdate, manualTransferDetails, resultingMaterialType,
                 libraryType);
-        this.collabSampleSuffix = collabSampleSuffix;
+        this.aggregationParticle = aggregationParticle;
         this.metadataKey = metadataKey;
         this.metadataValue = metadataValue;
         this.sourceHandling = sourceHandling;
@@ -3599,8 +3599,8 @@ public enum LabEventType {
         return libraryType;
     }
 
-    public String getCollabSampleSuffix() {
-        return collabSampleSuffix;
+    public String getAggregationParticle() {
+        return aggregationParticle;
     }
 
     public Metadata.Key getMetadataKey() {

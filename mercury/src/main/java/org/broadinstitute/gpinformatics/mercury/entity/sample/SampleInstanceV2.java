@@ -130,7 +130,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private FlowcellDesignation.IndexType indexType;
     private Integer indexLength1;
     private Integer indexLength2;
-
+// todo jmt tumor /  normal from LabEventType, here or in SampleData
     /**
      * For a reagent-only sample instance.
      */
@@ -142,6 +142,18 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
      */
     public SampleInstanceV2(LabVessel labVessel) {
         rootMercurySamples.addAll(labVessel.getMercurySamples());
+        // Need to know the aggregation particle for the event that created this vessel
+        if (labVessel.isRoot()) {
+            Set<String> aggParticles = labVessel.getTransfersToWithReArrays().stream().
+                    map(labEvent -> labEvent.getLabEventType().getAggregationParticle()).
+                    collect(Collectors.toSet());
+            if (aggParticles.size() > 1) {
+                throw new RuntimeException("Multiple aggregation particle events for " + labVessel.getLabel());
+            }
+            if (aggParticles.size() == 1) {
+                aggregationParticle = aggParticles.iterator().next();
+            }
+        }
         initiateSampleInstanceV2(labVessel);
         applyVesselChanges(labVessel, null);
     }
@@ -641,6 +653,9 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             if (firstPcrVessel == null && labVessel != null) {
                 firstPcrVessel = labVessel;
             }
+        }
+        if (labEventType.getAggregationParticle() != null) {
+            aggregationParticle = labEventType.getAggregationParticle();
         }
         MaterialType resultingMaterialType = labEventType.getResultingMaterialType();
         if (resultingMaterialType != null) {

@@ -64,10 +64,10 @@ public class EventHandlerSelector {
         case FLOWCELL_LOADED:
             flowcellLoadedHandler.handleEvent(targetEvent, stationEvent);
             break;
-        case BLOOD_PLASMA_SECOND_TRANSFER:
-        case BLOOD_BUFFY_COAT_TRANSFER:
-            bspNewRootHandler.handleEvent(targetEvent, stationEvent);
-            break;
+//        case BLOOD_PLASMA_SECOND_TRANSFER:
+//        case BLOOD_BUFFY_COAT_TRANSFER:
+//            bspNewRootHandler.handleEvent(targetEvent, stationEvent);
+//            break;
         case ARRAY_PLATING_DILUTION:
             createLabBatchHandler.handleEvent(targetEvent, stationEvent);
             break;

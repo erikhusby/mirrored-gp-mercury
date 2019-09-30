@@ -51,6 +51,7 @@ import static org.broadinstitute.gpinformatics.mercury.control.labevent.eventhan
  * Creates a new root sample in BSP, e.g. for Blood Biopsy plasma and buffy coat samples, so they can have
  * different collaborator sample ID suffixes.
  */
+// todo jmt delete
 @Dependent
 public class BspNewRootHandler extends AbstractEventHandler {
 
@@ -259,7 +260,7 @@ public class BspNewRootHandler extends AbstractEventHandler {
         }
 
         createBspKit(new ArrayList<>(labVessels), receptacleType,
-                labEventType.getResultingMaterialType().getDisplayName(), labEventType.getCollabSampleSuffix(),
+                labEventType.getResultingMaterialType().getDisplayName(), labEventType.getAggregationParticle(),
                 labEventType.getMetadataValue(), mapBarcodeToStockType);
     }
 

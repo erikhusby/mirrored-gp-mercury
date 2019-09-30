@@ -1767,7 +1767,7 @@ public abstract class LabVessel implements Serializable {
         return sampleInstances;
     }
 
-    private boolean isRoot() {
+    public boolean isRoot() {
         for (MercurySample mercurySample : getMercurySamples()) {
             Boolean isRoot = mercurySample.isRoot();
             if (isRoot != null && isRoot) {
