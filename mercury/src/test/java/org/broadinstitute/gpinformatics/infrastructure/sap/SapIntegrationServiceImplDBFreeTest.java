@@ -94,7 +94,6 @@ public class SapIntegrationServiceImplDBFreeTest {
         integrationService.setProductPriceCache(productPriceCache);
         final SAPAccessControlEjb mockAccessController = Mockito.mock(SAPAccessControlEjb.class);
         Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenThrow(new RuntimeException());
-        productPriceCache.setAccessControlEjb(mockAccessController);
     }
 
 

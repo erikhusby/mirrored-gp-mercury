@@ -32,7 +32,6 @@ import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -383,10 +382,9 @@ public class ProductEjb {
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void disableProductsFromDate(Date startDate) {
         List<Product> discontinuedProducts = productDao.findDiscontinuedProducts();
-        List<Product> productsDiscontinuedToday = discontinuedProducts.stream().filter(product -> {
-            Date todayTruncated = DateUtils.truncate(startDate, Calendar.DATE);
-            return todayTruncated.compareTo(product.getDiscontinuedDate()) == 0;
-        }).collect(Collectors.toList());
+        List<Product> productsDiscontinuedToday = discontinuedProducts.stream()
+                .filter(product -> DateUtils.isSameDay(startDate, product.getDiscontinuedDate()))
+                .collect(Collectors.toList());
 
         for (Product product : productsDiscontinuedToday) {
             try {

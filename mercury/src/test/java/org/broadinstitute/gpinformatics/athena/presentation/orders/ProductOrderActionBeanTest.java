@@ -209,7 +209,6 @@ public class ProductOrderActionBeanTest {
         mockSAPService.setWrappedClient(mockSapClient);
 
         Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenThrow(new RuntimeException());
-        stubProductPriceCache.setAccessControlEjb(mockAccessController);
         actionBean.setProductPriceCache(stubProductPriceCache);
 
         mockProductOrderDao = Mockito.mock(ProductOrderDao.class);
@@ -2024,7 +2023,6 @@ public class ProductOrderActionBeanTest {
         final SAPAccessControl enabledControl = new SAPAccessControl();
 
         Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenThrow(new RuntimeException());
-        stubProductPriceCache.setAccessControlEjb(mockAccessController);
 
         // to derive price, each sample for this product is worth 1
         Product primaryProduct = new Product();
