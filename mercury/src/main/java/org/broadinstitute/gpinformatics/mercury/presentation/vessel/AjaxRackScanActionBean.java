@@ -90,6 +90,7 @@ public class AjaxRackScanActionBean extends RackScanActionBean {
             public void stream(HttpServletResponse response) throws Exception {
                 ServletOutputStream out = response.getOutputStream();
                 if(errors.length() > 0 ) {
+                    // TODO JMS This should be a JSON object to be consistent
                     out.write("Failure: ".getBytes());
                     out.write(errors.toString().getBytes());
                 } else {

@@ -582,6 +582,21 @@ public class LabMetricSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
+        searchTerm.setName("Rework Disposition");
+        searchTerm.setDbSortPath("labMetricDecision.reworkDisposition");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                LabMetric labMetric = (LabMetric) entity;
+                if (labMetric.getLabMetricDecision() != null && labMetric.getLabMetricDecision().getReworkDisposition() != null) {
+                    return labMetric.getLabMetricDecision().getReworkDisposition().getDisplayName();
+                }
+                return "";
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
         searchTerm.setName("User");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
@@ -602,7 +617,6 @@ public class LabMetricSearchDefinition {
             }
         });
         searchTerms.add(searchTerm);
-
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Reason");
@@ -630,7 +644,6 @@ public class LabMetricSearchDefinition {
                 for (SampleInstanceV2 sampleInstanceV2 : labMetric.getLabVessel().getSampleInstancesV2()) {
                     rootSampleIds.add(sampleInstanceV2.getMercuryRootSampleName());
                 }
-
                 return rootSampleIds;
             }
         });

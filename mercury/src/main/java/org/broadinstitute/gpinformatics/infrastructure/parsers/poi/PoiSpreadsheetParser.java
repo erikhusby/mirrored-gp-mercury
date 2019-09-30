@@ -79,7 +79,7 @@ public final class PoiSpreadsheetParser {
      * Process the data portion of the spreadsheet, i.e. after the header row(s) have been processed.
      *
      * @param processor The processor being used. Missing data error messages are put in processor messages.
-     * @param rows      The iterator on the excel rows, positioned at the first row after the header row.
+     * @param rows      The iterator on the excel rows, positioned at the header row.
      */
     private void processData(TableProcessor processor, Iterator<Row> rows) {
         // Buffer of blank lines used only for TableProcessors where #shouldIgnoreTrailingBlankLines is true.

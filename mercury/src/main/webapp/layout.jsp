@@ -48,6 +48,7 @@
                 <script src="${ctxpath}/resources/scripts/DataTables-1.10.12/js/jquery.dataTables.min.js"></script>
                 <link rel="stylesheet"
                       href="${ctxpath}/resources/scripts/DataTables-1.10.12/css/jquery.dataTables.min.css"/>
+                <%-- TODO JMS Do we use bootstrap, or above jquery styling? --%>
                 <link rel="stylesheet"
                       href="${ctxpath}/resources/scripts/DataTables-1.10.12/css/dataTables.bootstrap.min.css"/>
                 <script type="text/javascript"

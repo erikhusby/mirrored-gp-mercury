@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import org.broadinstitute.gpinformatics.mercury.control.vessel.MetricReworkDisposition;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nullable;
@@ -30,11 +31,15 @@ public class LabMetricDecision {
         PASS(false),
         RUN_FAILED(false),
         REPEAT(true),
-        BAD_TRIP(true),
-        OVER_THE_CURVE(true),
-        TEN_PERCENT_DIFF_REPEAT(true),
+        @Deprecated   // Prefer REPEAT with rework disposition and note
+                BAD_TRIP(true),
+        @Deprecated   // Prefer REPEAT with rework disposition and note
+                OVER_THE_CURVE(true),
+        @Deprecated   // Prefer REPEAT with rework disposition and note
+                TEN_PERCENT_DIFF_REPEAT(true),
         FAIL(true),
-        RISK(true);
+        RISK(true),
+        FAIL_ACCEPTANCE_CRITERIA(true);
 
         private boolean editable;
 
@@ -58,6 +63,7 @@ public class LabMetricDecision {
         public static List<Decision> getEditableDecisions() {
             return editableDecisions;
         }
+
     }
 
     public enum NeedsReview {
@@ -92,9 +98,15 @@ public class LabMetricDecision {
 
     private Long deciderUserId;
 
+    @Enumerated(EnumType.STRING)
+    private MetricReworkDisposition reworkDisposition;
+
     private String note;
 
-    /** This is actually OneToOne, but using OneToMany to avoid N+1 selects */
+    /**
+     * This is actually OneToOne, but using OneToMany to avoid N+1 selects
+     * TODO JMS What use-case requires this to be bi-directional?  Always comes from LabMetric?
+     */
     @OneToMany(mappedBy = "labMetricDecision")
     private Set<LabMetric> labMetrics = new HashSet<>();
 
@@ -109,7 +121,7 @@ public class LabMetricDecision {
 
     public LabMetricDecision(Decision decision, Date decidedDate, Long deciderUserId,
             LabMetric labMetric, @Nullable String note) {
-        this(decision, decidedDate, deciderUserId, labMetric, null, NeedsReview.FALSE);
+        this(decision, decidedDate, deciderUserId, labMetric, note, NeedsReview.FALSE);
     }
 
     public LabMetricDecision(Decision decision, Date decidedDate, Long deciderUserId,
@@ -164,6 +176,14 @@ public class LabMetricDecision {
 
     public boolean isNeedsReview() {
         return needsReview == NeedsReview.TRUE.TRUE;
+    }
+
+    public MetricReworkDisposition getReworkDisposition() {
+        return reworkDisposition;
+    }
+
+    public void setReworkDisposition(MetricReworkDisposition reworkDisposition) {
+        this.reworkDisposition = reworkDisposition;
     }
 
     public void setNeedsReview(

@@ -2,24 +2,12 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.PicoTripleReworkEval;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nullable;
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -28,6 +16,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -78,119 +67,205 @@ public class LabMetric implements Comparable<LabMetric> {
         }
     }
 
-    public interface Decider {
-        LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser);
+    public abstract static class Decider {
+        public abstract LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser);
+
+        /**
+         * Enhanced Decider logic: <br/>
+         * Using multiple reads, builds a LabMetric, associates it with a sample vessel (tube) and attaches a Decision and ReworkDisposition
+         *
+         * @param tube           The sample tube associated with the multiple reads to attach the LabMetric->Decision->ReworkDisposition to.
+         * @param tubePosition   To attach to LabMetric (simple String)
+         * @param runStarted     Date of LabMetric
+         * @param concList       List of measurements from the multiple wells transferred from a tube
+         * @param metricType     For LabMetric (or other logic)
+         * @param decidingUser   For LabMetric
+         * @param maxPercentDiff Max allowable difference between the multiple reads - triggers reworks (optional, can be hardcoded)
+         */
+        public Optional<LabMetric> makeCurveFit2Decision(LabVessel tube, String tubePosition, Date runStarted, List<BigDecimal> concList,
+                                                         LabMetric.MetricType metricType, Long decidingUser, float maxPercentDiff) {
+            return Optional.empty();
+        }
     }
 
     public enum MetricType {
         INITIAL_PICO("Initial Pico", true, Category.CONCENTRATION, LabUnit.NG_PER_UL, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
-                LabMetricDecision.Decision decision = LabMetricDecision.Decision.FAIL;
+                // There may already be a metricDecision and we've got to overwrite it and keep disposition and note if so
+                LabMetricDecision metricDecision = labMetric.getLabMetricDecision();
+                LabMetricDecision.Decision decision = null;
+                String note = null;
+
                 if (labVessel.getVolume() != null) {
-                    if (labMetric.getValue().multiply(labVessel.getVolume()).compareTo(new BigDecimal("250")) == 1) {
+                    BigDecimal totalNg = labMetric.getValue().multiply(labVessel.getVolume());
+                    if (totalNg.compareTo(new BigDecimal("250")) == 1) {
                         decision = LabMetricDecision.Decision.PASS;
+                    } else {
+                        note = "Total Ng " + MathUtils.scaleTwoDecimalPlaces(totalNg) + " less than 250";
+                        decision = LabMetricDecision.Decision.FAIL_ACCEPTANCE_CRITERIA;
+                    }
+                } else {
+                    note = "No volume recorded for vessel " + labVessel.getLabel();
+                    decision = LabMetricDecision.Decision.FAIL_ACCEPTANCE_CRITERIA;
+                    metricDecision.setNote(note);
+                }
+
+                if (metricDecision == null) {
+                    metricDecision = new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
+                    metricDecision.setNote(note);
+                } else {
+                    // Don't overwrite rework disposition or note
+                    if (decision == LabMetricDecision.Decision.FAIL_ACCEPTANCE_CRITERIA) {
+                        metricDecision.setDecision(decision);
+                        String existingNote = metricDecision.getNote();
+                        metricDecision.setNote(existingNote == null ? note : note + "  " + existingNote);
                     }
                 }
-                return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
+                return metricDecision;
+            }
+
+            @Override
+            public Optional<LabMetric> makeCurveFit2Decision(LabVessel tube, String tubePosition, Date runStarted, List<BigDecimal> concList,
+                                                             LabMetric.MetricType metricType, Long decidingUser, float maxPercentDiff) {
+                return PicoTripleReworkEval.evalBadTriplicate(tube, tubePosition, runStarted, concList,
+                        metricType, decidingUser, maxPercentDiff);
             }
         }),
         INITIAL_RIBO("Initial Ribo", true, Category.CONCENTRATION,LabUnit.NG_PER_UL, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
-                LabMetricDecision.Decision decision = LabMetricDecision.Decision.FAIL;
+                LabMetricDecision decision = null;
                 if (labVessel.getVolume() != null) {
-                    if (labMetric.getValue().multiply(labVessel.getVolume()).compareTo(new BigDecimal("250")) == 1) {
-                        decision = LabMetricDecision.Decision.PASS;
+                    BigDecimal totalNg = labMetric.getValue().multiply(labVessel.getVolume());
+                    if (totalNg.compareTo(new BigDecimal("250")) == 1) {
+                        decision = new LabMetricDecision(LabMetricDecision.Decision.PASS, new Date(), decidingUser, labMetric);
+                    } else {
+                        decision = new LabMetricDecision(LabMetricDecision.Decision.FAIL, new Date(), decidingUser, labMetric);
+                        decision.setNote("Total Ng " + MathUtils.scaleTwoDecimalPlaces(totalNg) + " is less than 250");
                     }
+                } else {
+                    decision = new LabMetricDecision(LabMetricDecision.Decision.FAIL, new Date(), decidingUser, labMetric);
+                    decision.setNote("No volume recorded for vessel " + labVessel.getLabel());
                 }
-                return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
+                return decision;
             }
         }),
         FINGERPRINT_PICO("Fingerprint Pico", true, Category.CONCENTRATION, LabUnit.NG_PER_UL, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
-                LabMetricDecision.Decision decision;
+                LabMetricDecision decision = null;
                 if (labMetric.getValue().compareTo(new BigDecimal("9.99")) == 1 &&
                         labMetric.getValue().compareTo(new BigDecimal("60.01")) == -1) {
-                    decision = LabMetricDecision.Decision.PASS;
+                    decision = new LabMetricDecision(LabMetricDecision.Decision.PASS, new Date(), decidingUser, labMetric);
                 } else {
-                    decision = LabMetricDecision.Decision.FAIL;
+                    decision = new LabMetricDecision(LabMetricDecision.Decision.FAIL, new Date(), decidingUser, labMetric);
+                    decision.setNote("Concentration " + MathUtils.scaleTwoDecimalPlaces(labMetric.getValue()) + " is not between 9.99 and 60.01.");
                 }
-                return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
+                return decision;
             }
         }),
         PLATING_PICO("Plating Pico", true, Category.CONCENTRATION, LabUnit.NG_PER_UL, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
-                LabMetricDecision.Decision decision;
+                // There may already be a metricDecision and we've got to overwrite it and keep disposition and note if so
+                LabMetricDecision metricDecision = labMetric.getLabMetricDecision();
+                LabMetricDecision.Decision decision = null;
+                String note = null;
+
                 if (labMetric.getValue().compareTo(new BigDecimal("5.5")) == 1) {
                     decision = LabMetricDecision.Decision.PASS;
                 } else {
                     decision = LabMetricDecision.Decision.FAIL;
+                    note = "Concentration " + MathUtils.scaleTwoDecimalPlaces(labMetric.getValue()) + " is less than 5.5 " + LabUnit.NG_PER_UL.getDisplayName();
                 }
-                return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
+
+                if (metricDecision == null) {
+                    metricDecision = new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
+                    metricDecision.setNote(note);
+                } else {
+                    // Don't overwrite rework disposition or note
+                    if (decision == LabMetricDecision.Decision.FAIL) {
+                        metricDecision.setDecision(decision);
+                        String existingNote = metricDecision.getNote();
+                        metricDecision.setNote(existingNote == null ? note : note + "  " + existingNote);
+                    }
+                }
+
+                return metricDecision;
+            }
+
+            @Override
+            public Optional<LabMetric> makeCurveFit2Decision(LabVessel tube, String tubePosition, Date runStarted, List<BigDecimal> concList,
+                                                             LabMetric.MetricType metricType, Long decidingUser, float maxPercentDiff) {
+                return PicoTripleReworkEval.evalBadTriplicate(tube, tubePosition, runStarted, concList,
+                        metricType, decidingUser, maxPercentDiff);
             }
         }),
         SHEARING_PICO("Shearing Pico", true, Category.CONCENTRATION, LabUnit.NG_PER_UL, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
-                LabMetricDecision.Decision decision;
+                LabMetricDecision decision;
                 if (labMetric.getValue().compareTo(new BigDecimal("1.49")) == 1 &&
                         labMetric.getValue().compareTo(new BigDecimal("5.01")) == -1) {
-                    decision = LabMetricDecision.Decision.PASS;
+                    decision = new LabMetricDecision(LabMetricDecision.Decision.PASS, new Date(), decidingUser, labMetric);
                 } else {
-                    decision = LabMetricDecision.Decision.FAIL;
+                    decision = new LabMetricDecision(LabMetricDecision.Decision.FAIL, new Date(), decidingUser, labMetric);
+                    decision.setNote("Concentration " + MathUtils.scaleTwoDecimalPlaces(labMetric.getValue()) + " is not between 1.49 and 5.01 " + LabUnit.NG_PER_UL.getDisplayName());
                 }
-                return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
+                return decision;
             }
         }),
         PLATING_RIBO("Plating Ribo", true, Category.CONCENTRATION, LabUnit.NG_PER_UL, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
-                LabMetricDecision.Decision decision;
+                LabMetricDecision decision;
                 if (labMetric.getValue().compareTo(new BigDecimal("3")) == 1) {
-                    decision = LabMetricDecision.Decision.PASS;
+                    decision = new LabMetricDecision(LabMetricDecision.Decision.PASS, new Date(), decidingUser, labMetric);
                 } else {
-                    decision = LabMetricDecision.Decision.FAIL;
+                    decision = new LabMetricDecision(LabMetricDecision.Decision.FAIL, new Date(), decidingUser, labMetric);
+                    decision.setNote("Concentration " + MathUtils.scaleTwoDecimalPlaces(labMetric.getValue()) + " is less than 3 " + LabUnit.NG_PER_UL.getDisplayName());
                 }
-                return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
+                return decision;
             }
         }),
         POND_PICO("Pond Pico", true, Category.CONCENTRATION, LabUnit.NG_PER_UL, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
-                LabMetricDecision.Decision decision;
+                LabMetricDecision decision;
                 if (labMetric.getValue().compareTo(new BigDecimal("25")) == 1) {
-                    decision = LabMetricDecision.Decision.PASS;
+                    decision = new LabMetricDecision(LabMetricDecision.Decision.PASS, new Date(), decidingUser, labMetric);
                 } else {
-                    decision = LabMetricDecision.Decision.FAIL;
+                    decision = new LabMetricDecision(LabMetricDecision.Decision.FAIL, new Date(), decidingUser, labMetric);
+                    decision.setNote("Concentration " + MathUtils.scaleTwoDecimalPlaces(labMetric.getValue()) + " is less than 25 " + LabUnit.NG_PER_UL.getDisplayName());
                 }
-                return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
+                return decision;
             }
         }),
         CDNA_ENRICHED_PICO("cDNA Enriched Pico", true, Category.CONCENTRATION, LabUnit.NG_PER_UL, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
-                LabMetricDecision.Decision decision;
+                LabMetricDecision decision;
                 if (labMetric.getValue().compareTo(new BigDecimal("5")) == 1) {
-                    decision = LabMetricDecision.Decision.PASS;
+                    decision = new LabMetricDecision(LabMetricDecision.Decision.PASS, new Date(), decidingUser, labMetric);
                 } else {
-                    decision = LabMetricDecision.Decision.FAIL;
+                    decision = new LabMetricDecision(LabMetricDecision.Decision.FAIL, new Date(), decidingUser, labMetric);
+                    decision.setNote("Concentration " + MathUtils.scaleTwoDecimalPlaces(labMetric.getValue()) + " is less than 5 " + LabUnit.NG_PER_UL.getDisplayName());
                 }
-                return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
+                return decision;
             }
         }),
         CATCH_PICO("Catch Pico", true, Category.CONCENTRATION, LabUnit.NG_PER_UL, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
-                LabMetricDecision.Decision decision;
+                LabMetricDecision decision;
                 if (labMetric.getValue().compareTo(new BigDecimal("2")) == 1) {
-                    decision = LabMetricDecision.Decision.PASS;
-                }else {
-                    decision = LabMetricDecision.Decision.FAIL;
+                    decision = new LabMetricDecision(LabMetricDecision.Decision.PASS, new Date(), decidingUser, labMetric);
+                } else {
+                    decision = new LabMetricDecision(LabMetricDecision.Decision.FAIL, new Date(), decidingUser, labMetric);
+                    decision.setNote("Concentration " + MathUtils.scaleTwoDecimalPlaces(labMetric.getValue()) + " is less than 2 " + LabUnit.NG_PER_UL.getDisplayName());
                 }
-                return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
+                return decision;
             }
         }),
         FINAL_LIBRARY_SIZE("Final Library Size", false, Category.DNA_LENGTH, LabUnit.Bp, null),

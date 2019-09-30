@@ -130,9 +130,9 @@
                                           event="view">Upload Quant</stripes:link>
                         </li>
                         <li>
-                            <stripes:link id="nextStepsAfterInitialPico"
+                            <stripes:link id="initialPicoReview"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.PicoDispositionActionBean"
-                                          event="view">Pico Next Steps</stripes:link>
+                                          event="view">Review Initial Pico</stripes:link>
                         </li>
                         <li>
                             <stripes:link id="fingerprintSpreadsheet"

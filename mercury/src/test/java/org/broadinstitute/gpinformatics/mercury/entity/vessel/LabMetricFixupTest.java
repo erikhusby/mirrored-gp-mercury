@@ -45,7 +45,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 /**
  * Fixup production Lab Metric entities
@@ -71,7 +71,7 @@ public class LabMetricFixupTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+        return DeploymentBuilder.buildMercuryWar(PROD, "prod");
     }
 
     @Test(enabled = false)
@@ -581,7 +581,7 @@ public class LabMetricFixupTest extends Arquillian {
      * 10x NCI inters low input\tPlating Pico\tTrue
      * 12128 inters\tPlating Pico\tTrue
      */
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void fixupSupport3483() throws IOException {
         userBean.loginOSUser();
         List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ChangeMetricRunType.txt"));

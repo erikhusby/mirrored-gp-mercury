@@ -2320,4 +2320,13 @@
 	    tableName="sample_instance_entity" columnNames="lab_vessel, library_name"/>
     </changeSet>
 
+    <changeSet id="GPLIM-6250" author="jsacco">
+        <addColumn schemaName="MERCURY" tableName="LAB_METRIC_DECISION">
+            <column name="REWORK_DISPOSITION" type="VARCHAR2(64)"/>
+        </addColumn>
+        <addColumn schemaName="MERCURY" tableName="LAB_METRIC_DECISION_AUD">
+            <column name="REWORK_DISPOSITION" type="VARCHAR2(64)"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
