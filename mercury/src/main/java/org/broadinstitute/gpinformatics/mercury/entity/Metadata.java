@@ -323,7 +323,7 @@ public class Metadata {
         RECEIPT_DATE(Category.SAMPLE, DataType.STRING, "Receipt Date", Visibility.USER),
         WELL_POSITION(Category.SAMPLE, DataType.STRING, "Well Location", Visibility.NONE),
         COLLAB_SAMPLE_ID2(Category.SAMPLE, DataType.STRING, "Collaborator Sample ID 2", Visibility.USER),
-        COLLAB_PARTICIPANT_ID2(Category.SAMPLE, DataType.STRING, "Collaborator Participant ID 2", Visibility.USER),
+        COLLAB_SAMPLE_ID3(Category.SAMPLE, DataType.STRING, "Collaborator Sample ID 3", Visibility.USER),
         NY_STATE(Category.SAMPLE, DataType.STRING, "NY State", Visibility.USER),
         VOLUME(Category.SAMPLE, DataType.STRING, "Volume", Visibility.NONE),
         CONCENTRATION(Category.SAMPLE, DataType.STRING, "Concentration", Visibility.NONE),
