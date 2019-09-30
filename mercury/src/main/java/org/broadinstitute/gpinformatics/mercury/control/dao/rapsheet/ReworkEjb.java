@@ -184,7 +184,7 @@ public class ReworkEjb {
          * The above scenarios need to be taken into account when doing this to avoid querying BSP for samples whose
          * sample data is in Mercury, especially those that are BSP tubes that have been exported to CRSP!
          */
-        if (bucketCandidates.isEmpty()) {
+        if (bucketCandidates.size() < query.size()) {
             Collection<ProductOrderSample> sampleCollection = new ArrayList<>();
             for (ProductOrderSample productOrderSample : productOrderSampleDao.findBySamples(query)) {
                 if (productOrderSample.getProductOrder().getOrderStatus().readyForLab() &&
