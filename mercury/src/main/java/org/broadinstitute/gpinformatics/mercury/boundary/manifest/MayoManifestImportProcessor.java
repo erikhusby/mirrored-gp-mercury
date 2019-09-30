@@ -71,7 +71,7 @@ public class MayoManifestImportProcessor {
         RACK_BARCODE("box storageunit id", Metadata.Key.RACK_LABEL, Attribute.FOR_SAMPLE),
         WELL_POSITION("well position", Metadata.Key.WELL_POSITION, Attribute.FOR_SAMPLE),
         SAMPLE_ID("sample id", Metadata.Key.COLLAB_SAMPLE_ID2, Attribute.FOR_SAMPLE, Attribute.IS_SAMPLE),
-        PARENT_SAMPLE_ID("parent sample id", Metadata.Key.COLLAB_PARTICIPANT_ID2, Attribute.IS_SAMPLE),
+        PARENT_SAMPLE_ID("parent sample id", Metadata.Key.COLLAB_SAMPLE_ID3, Attribute.IS_SAMPLE),
         // The tube barcode is also used as the Broad sample name (equivalent to the SM-id).
         MATRIX_ID("matrix id", Metadata.Key.BROAD_2D_BARCODE, Attribute.FOR_SAMPLE),
         COLLECTION_DATE("collection date", null, Attribute.IGNORE),
