@@ -73,6 +73,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * Builds ConfigurableSearchDefinition for lab vessel user defined search logic
@@ -91,6 +92,7 @@ public class LabVesselSearchDefinition {
 
     static final List<LabEventType> FLOWCELL_LAB_EVENT_TYPES = new ArrayList<>();
     static final String PDO_SEARCH_TERM = "PDO";
+    private static final String CONTAINER_BARCODE = "Container Barcode";
 
     static {
         FLOWCELL_LAB_EVENT_TYPES.add(LabEventType.FLOWCELL_TRANSFER);
@@ -243,6 +245,9 @@ public class LabVesselSearchDefinition {
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection( "sequencingRun", "labVesselId",
                 "runCartridge", SequencingRun.class));
 
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection( "container", "labVesselId",
+                "containers", LabVessel.class));
+
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
                 ColumnEntity.LAB_VESSEL, criteriaProjections, mapGroupSearchTerms);
 
@@ -294,6 +299,32 @@ public class LabVesselSearchDefinition {
             public String evaluate(Object entity, SearchContext context) {
                 LabVessel labVessel = (LabVessel) entity;
                 return labVessel.getLabel();
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName(CONTAINER_BARCODE);
+        searchTerm.setDbSortPath("label");
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("container", "containers"));
+        criteriaPath.setPropertyName("label");
+        criteriaPaths.add(criteriaPath);
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("container", "containers", "racksOfTubes"));
+        criteriaPath.setPropertyName("label");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> results = new HashSet<>();
+                for (LabVessel container : ((LabVessel) entity).getContainers()) {
+                    // todo jmt rack barcode
+                    results.add(container.getLabel());
+                }
+                return results;
             }
         });
         searchTerms.add(searchTerm);
@@ -1400,10 +1431,28 @@ public class LabVesselSearchDefinition {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
                 LabVessel labVessel = (LabVessel) entity;
-                Set<String> results = new HashSet<>();
 
+                // If the user searched on a specific container, display only positions in that container
+                List<String> containerBarcodes = null;
+                for (SearchInstance.SearchValue searchValue : context.getSearchInstance().getSearchValues()) {
+                    if (searchValue.getSearchTerm().getName().equals(CONTAINER_BARCODE)) {
+                        containerBarcodes = searchValue.getValues();
+                        break;
+                    }
+                }
+
+                Set<String> rackBarcodes = null;
+                Set<String> results = new HashSet<>();
                 for (LabVessel container : labVessel.getContainers()) {
-                    results.add(container.getContainerRole().getPositionOfVessel(labVessel).toString());
+                    if (OrmUtil.proxySafeIsInstance(container, TubeFormation.class)) {
+                        TubeFormation tubeFormation = OrmUtil.proxySafeCast(container, TubeFormation.class);
+                        rackBarcodes = tubeFormation.getRacksOfTubes().stream().map(LabVessel::getLabel).
+                                collect(Collectors.toSet());
+                    }
+                    if (containerBarcodes == null || containerBarcodes.contains(container.getLabel()) ||
+                            (rackBarcodes != null && !Collections.disjoint(rackBarcodes, containerBarcodes))) {
+                        results.add(container.getContainerRole().getPositionOfVessel(labVessel).toString());
+                    }
                 }
                 return results;
             }

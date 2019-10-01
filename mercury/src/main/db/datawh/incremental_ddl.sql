@@ -14,5 +14,3 @@ alter table im_ledger_entry add product_id numeric(19);
 -- GPLIM-6508 add column for order type
 alter table product_order add order_type varchar2(255);
 alter table im_product_order add order_type varchar2(255);
-
-
