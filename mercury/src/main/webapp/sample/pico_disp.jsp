@@ -8,6 +8,7 @@
                        showCreate="false" dataTablesVersion="1.10">
 
     <stripes:layout-component name="extraHead">
+        <script src="${ctxpath}/resources/scripts/DataTables-1.10.12/js/processing.js"></script>
 
         <script type="text/javascript">
 
@@ -34,12 +35,14 @@
                 formData.append("buildTableData", "");
                 formData.append("rackScanJson", barcodes);
                 formData.append("_sourcePage", $j("#ajaxScanForm input[name='_sourcePage']").val());
+                dtTable.processing(true);
                 $j.ajax({
                     url: "${ctxpath}/sample/PicoDisposition.action",
                     type: 'POST',
                     data: formData,
                     async: true,
                     success: function (results) {
+                        dtTable.processing(false);
                         if ((results).errors != undefined) {
                             showAlertDialog("Error", (results).errors.join(" <br/>"));
                         } else {
@@ -47,6 +50,7 @@
                         }
                     },
                     error: function (results) {
+                        dtTable.processing(false);
                         $j("#doScanBtn").removeAttr("disabled");
                         showAlertDialog("Error", "A server error occurred");
                     },
@@ -94,6 +98,14 @@
                         }
                     }
                 });
+                $j("wait-overlay").dialog({
+                    modal: true,
+                    autoOpen: false,
+                    buttons: {},
+                    closeOnEscape: false,
+                    classes: {"ui-dialog": "no-close"},
+                    title: ""
+                });
 
                 /*
                  * Initially hide the destination rack barcode inputs and CSV download UI elements
@@ -105,6 +117,7 @@
                     "scrollY": 580,
                     "searching": true,
                     "info": true,
+                    "processing": true,
                     "data": [],
                     "rowId": function (row) {
                         return row.metricId;
@@ -221,11 +234,11 @@
         </form>
         <hr/>
         <table class="display compact" id="dispositions"></table>
+        <div id="dialog-message" title="Error"><p><span class="alert-error"
+                                                        style="float:left; margin:0 7px 50px 0;"></span></p></div>
         <div id="rack_scan_overlay">
             <%@include file="/vessel/ajax_div_rack_scanner.jsp" %>
         </div>
-        <div id="dialog-message" title="Error"><p><span class="alert-error"
-                                                        style="float:left; margin:0 7px 50px 0;"></span></p></div>
 
     </stripes:layout-component>
 </stripes:layout-render>
