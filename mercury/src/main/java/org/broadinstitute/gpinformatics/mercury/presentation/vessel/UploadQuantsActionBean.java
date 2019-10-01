@@ -73,11 +73,13 @@ public class UploadQuantsActionBean extends CoreActionBean {
     public static final String ENTITY_NAME = "LabMetric";
 
     public enum QuantFormat {
-        VARIOSKAN("Varioskan"),
-        GEMINI("Gemini"),
-        WALLAC("Wallac"),
         CALIPER("Caliper"),
-        GENERIC("Generic");
+        GEMINI("Gemini"),
+        GENERIC("Generic"),
+        LUNATIC("Lunatic"),
+        VARIOSKAN("Varioskan"),
+        WALLAC("Wallac"),
+        ;
 
         private String displayName;
 
@@ -148,20 +150,10 @@ public class UploadQuantsActionBean extends CoreActionBean {
 
     @HandlesEvent(UPLOAD_QUANT)
     public Resolution uploadQuant() {
-        switch (quantFormat) {
-        case VARIOSKAN:
-            break;
-        case WALLAC:
-            break;
-        case CALIPER:
-            break;
-        case GEMINI:
-            break;
-        case GENERIC:
+        if (quantFormat == QuantFormat.GENERIC) {
             MessageCollection messageCollection = new MessageCollection();
             quantEJB.storeQuants(labMetrics, quantType, messageCollection);
             addMessages(messageCollection);
-            break;
         }
         if (getValidationErrors().isEmpty()) {
             addMessage("Successfully uploaded quant.");
@@ -229,6 +221,21 @@ public class UploadQuantsActionBean extends CoreActionBean {
                     }
                 }
 
+                addMessages(messageCollection);
+                break;
+            }
+            case LUNATIC: {
+                MessageCollection messageCollection = new MessageCollection();
+                Triple<LabMetricRun, List<Result>, Map<String, String>> triple = vesselEjb.createLunaticRun(
+                        quantStream, quantSpreadsheet.getFileName(), getQuantType(),
+                        userBean.getBspUser().getUserId(), messageCollection, acceptRePico);
+                if (triple != null) {
+                    labMetricRun = triple.getLeft();
+                    if (triple.getMiddle() != null) {
+                        tubeFormationLabels = triple.getMiddle().stream()
+                                .map(r -> r.getTubeFormation().getLabel()).collect(Collectors.toList());
+                    }
+                }
                 addMessages(messageCollection);
                 break;
             }
