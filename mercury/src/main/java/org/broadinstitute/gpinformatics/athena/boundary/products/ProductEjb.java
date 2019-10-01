@@ -368,6 +368,7 @@ public class ProductEjb {
         for (Product productToPublish : productsToPublish) {
             try {
                 publishProductToSAP(productToPublish, extendProductsToOtherPlatforms, publishType);
+                log.debug("Published the product "+productToPublish.getDisplayName() + " to SAP");
             } catch (SAPIntegrationException e) {
                 errorMessages.add(productToPublish.getPartNumber() + ": " + e.getMessage());
                 log.error(e.getMessage());

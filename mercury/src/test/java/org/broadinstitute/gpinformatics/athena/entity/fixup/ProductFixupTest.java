@@ -4,6 +4,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -12,6 +13,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
@@ -66,6 +68,9 @@ public class ProductFixupTest extends Arquillian {
 
     @Inject
     private SAPProductPriceCache productPriceCache;
+
+    @Inject
+    private ProductEjb productEjb;
 
     @Inject
     private PriceListCache priceListCache;
@@ -502,6 +507,20 @@ public class ProductFixupTest extends Arquillian {
         });
 
         productDao.persist(new FixupCommentary("GPLIM-6362: pre-setting the Offered as Commercial flag on all relevant products upon SAP 2.0 rollout"));
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void disableDiscontinuedProductsInSAP() throws Exception {
+        userBean.loginOSUser();
+
+        List<Product> discontinuedProducts = productDao.findDiscontinuedProducts();
+
+        productEjb.publishProductsToSAP(discontinuedProducts,true,
+                SapIntegrationService.PublishType.UPDATE_ONLY);
+
+        utx.begin();
+        productDao.persist(new FixupCommentary("GPLIM-6369: Disabled all previously discontinued products in SAP"));
         utx.commit();
     }
 }
