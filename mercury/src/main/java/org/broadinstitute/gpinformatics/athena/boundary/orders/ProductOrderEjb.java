@@ -65,6 +65,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.broadinstitute.sap.services.SAPServiceFailure;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -268,22 +269,26 @@ public class ProductOrderEjb {
                 }
             }
         } else {
-            updateJiraIssue(editedProductOrder);
-            for (ProductOrder childProductOrder : editedProductOrder.getChildOrders()) {
-                if(!childProductOrder.getOrderStatus().canPlace()) {
-                    updateJiraIssue(childProductOrder);
+            try {
+                updateJiraIssue(editedProductOrder);
+                for (ProductOrder childProductOrder : editedProductOrder.getChildOrders()) {
+                    if (!childProductOrder.getOrderStatus().canPlace()) {
+                        updateJiraIssue(childProductOrder);
+                    }
                 }
-            }
-            if (editedProductOrder.hasSapQuote()) {
-                publishProductOrderToSAP(editedProductOrder, messageCollection, false);
-            }
-        }
-        attachMercurySamples(editedProductOrder.getSamples());
-        for (ProductOrder childProductOrder : editedProductOrder.getChildOrders()) {
-            attachMercurySamples(childProductOrder.getSamples());
-        }
+                if (editedProductOrder.hasSapQuote()) {
+                    publishProductOrderToSAP(editedProductOrder, messageCollection, false);
+                }
+                attachMercurySamples(editedProductOrder.getSamples());
+                for (ProductOrder childProductOrder : editedProductOrder.getChildOrders()) {
+                    attachMercurySamples(childProductOrder.getSamples());
+                }
 
-        productOrderDao.persist(editedProductOrder);
+                productOrderDao.persist(editedProductOrder);
+            } catch (SAPServiceFailure sapServiceFailure) {
+                messageCollection.addError(sapServiceFailure);
+            }
+        }
     }
 
 
@@ -306,21 +311,22 @@ public class ProductOrderEjb {
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void persistClonedProductOrder(ProductOrder.SaveType saveType, ProductOrder editedProductOrder,
                                     MessageCollection messageCollection)
-            throws IOException, QuoteNotFoundException, SAPInterfaceException {
-
+        throws IOException, QuoteNotFoundException, SAPInterfaceException {
 
         editedProductOrder.prepareToSave(userBean.getBspUser(), saveType);
-
-        if (!editedProductOrder.isDraft()) {
+        try {
             updateJiraIssue(editedProductOrder);
 
-            if (editedProductOrder.hasSapQuote()) {
-                publishProductOrderToSAP(editedProductOrder, messageCollection, false);
+            if (!editedProductOrder.isDraft()) {
+                if (editedProductOrder.hasSapQuote()) {
+                    publishProductOrderToSAP(editedProductOrder, messageCollection, false);
+                }
             }
+            attachMercurySamples(editedProductOrder.getSamples());
+            productOrderDao.persist(editedProductOrder.getParentOrder());
+        } catch (SAPServiceFailure sapServiceFailure) {
+            messageCollection.addError(sapServiceFailure);
         }
-        attachMercurySamples(editedProductOrder.getSamples());
-
-        productOrderDao.persist(editedProductOrder.getParentOrder());
     }
 
     /**
@@ -378,6 +384,8 @@ public class ProductOrderEjb {
             if (editedProductOrder.isSavedInSAP()) {
                 throw new SAPInterfaceException(errorMessage.toString(), e);
             }
+        } catch (SAPServiceFailure sapServiceFailure) {
+            messageCollection.addError(sapServiceFailure);
         }
     }
 
@@ -395,14 +403,19 @@ public class ProductOrderEjb {
             throws SAPIntegrationException {
         SapIntegrationService.Option serviceOptions =
             SapIntegrationService.Option.create(SapIntegrationService.Option.isClosing(closingOrder));
-        sapService.updateOrder(orderToUpdate, closingOrder);
-        BigDecimal sampleCount = BigDecimal.ZERO ;
-        if(orderToUpdate.isPriorToSAP1_5()) {
-            sampleCount =
-                SapIntegrationServiceImpl.getSampleCount(orderToUpdate, orderToUpdate.getProduct(), 0, serviceOptions);
+        try {
+            sapService.updateOrder(orderToUpdate, closingOrder);
+            BigDecimal sampleCount = BigDecimal.ZERO;
+            if (orderToUpdate.isPriorToSAP1_5()) {
+                sampleCount = SapIntegrationServiceImpl.getSampleCount(orderToUpdate, orderToUpdate.getProduct(), 0, serviceOptions);
+            }
+            orderToUpdate
+                .updateSapDetails(sampleCount.intValue(), MercuryStringUtils.makeDigest(allProductsOrdered), "");
+            messageCollection
+                .addInfo("Order " + orderToUpdate.getJiraTicketKey() + " has been successfully updated in SAP");
+        } catch (SAPServiceFailure sapServiceFailure) {
+            messageCollection.addError(sapServiceFailure);
         }
-        orderToUpdate.updateSapDetails(sampleCount.intValue(), MercuryStringUtils.makeDigest(allProductsOrdered),"");
-        messageCollection.addInfo("Order "+orderToUpdate.getJiraTicketKey() + " has been successfully updated in SAP");
     }
 
     /**
@@ -422,27 +435,32 @@ public class ProductOrderEjb {
             updateOrderInSap(orderToPublish, allProductsOrdered, messageCollection, closingOrder);
         }
 
-        String sapOrderIdentifier = sapService.createOrder(orderToPublish);
-
+        String sapOrderIdentifier = null;
         String oldNumber = null;
-        if(StringUtils.isNotBlank(orderToPublish.getSapOrderNumber())) {
-            oldNumber = orderToPublish.getSapOrderNumber();
-        }
-        SapQuote quote = orderToPublish.getSapQuote(sapService);
-        orderToPublish.addSapOrderDetail(new SapOrderDetail(sapOrderIdentifier,0,
+        SapQuote quote = null;
+        try {
+            sapOrderIdentifier = sapService.createOrder(orderToPublish);
+            oldNumber = null;
+            if (StringUtils.isNotBlank(orderToPublish.getSapOrderNumber())) {
+                oldNumber = orderToPublish.getSapOrderNumber();
+            }
+            quote = orderToPublish.getSapQuote(sapService);
+            orderToPublish.addSapOrderDetail(new SapOrderDetail(sapOrderIdentifier, 0,
                 orderToPublish.getQuoteId(),
                 orderToPublish.getSapCompanyConfigurationForProductOrder(quote).getCompanyCode()));
 
-        if(quoteIdChange ) {
-            String body = "The SAP order " + oldNumber + " for PDO "+ orderToPublish.getBusinessKey()+
-                          " is being associated with a new quote by "+
-                          userBean.getBspUser().getFullName() +" and needs" + " to be short closed.";
-            sendSapOrderShortCloseRequest(body);
+            if (quoteIdChange) {
+                String body = "The SAP order " + oldNumber + " for PDO " + orderToPublish.getBusinessKey() +
+                              " is being associated with a new quote by " +
+                              userBean.getBspUser().getFullName() + " and needs" + " to be short closed.";
+                sendSapOrderShortCloseRequest(body);
+            }
+            orderToPublish.setPriorToSAP1_5(false);
+            messageCollection.addInfo("Order " + orderToPublish.getJiraTicketKey() +
+                                      " has been successfully created in SAP");
+        } catch (SAPServiceFailure sapServiceFailure) {
+            messageCollection.addError(sapServiceFailure);
         }
-        orderToPublish.setPriorToSAP1_5(false);
-        messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +
-                                  " has been successfully created in SAP");
-
         return sapOrderIdentifier;
     }
 
@@ -532,7 +550,7 @@ public class ProductOrderEjb {
      * Looks up the quote for the pdo (if the pdo has one) in the
      * quote server.
      */
-    void validateQuote(ProductOrder productOrder) throws QuoteNotFoundException {
+    void validateQuote(ProductOrder productOrder) throws QuoteNotFoundException, SAPServiceFailure {
         if (!StringUtils.isEmpty(productOrder.getQuoteId())) {
             try {
                 if(productOrder.hasSapQuote()) {
@@ -704,7 +722,7 @@ public class ProductOrderEjb {
      * @throws IOException
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public void updateJiraIssue(ProductOrder productOrder) throws IOException, QuoteNotFoundException {
+    public void updateJiraIssue(ProductOrder productOrder) throws IOException, QuoteNotFoundException, SAPServiceFailure {
         validateQuote(productOrder);
 
         Transition transition = jiraService.findAvailableTransitionByName(productOrder.getJiraTicketKey(),
@@ -797,7 +815,7 @@ public class ProductOrderEjb {
      * @param addOnPartNumbers add-on part numbers
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public void update(ProductOrder productOrder, List<String> addOnPartNumbers) throws QuoteNotFoundException {
+    public void update(ProductOrder productOrder, List<String> addOnPartNumbers) throws QuoteNotFoundException, SAPServiceFailure {
         // update JIRA ticket with new quote
         // GPLIM-488
         try {

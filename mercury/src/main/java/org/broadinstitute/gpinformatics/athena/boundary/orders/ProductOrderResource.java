@@ -47,6 +47,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.sap.services.SAPServiceFailure;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -173,8 +174,8 @@ public class ProductOrderResource {
     @Produces(MediaType.APPLICATION_XML)
     @Consumes(MediaType.APPLICATION_XML)
     public ProductOrderData createWithKitRequest(@Nonnull ProductOrderData productOrderData)
-            throws DuplicateTitleException, ApplicationValidationException, NoSamplesException,
-            WorkRequestCreationException, InvalidProductException {
+        throws DuplicateTitleException, ApplicationValidationException, NoSamplesException,
+        WorkRequestCreationException, InvalidProductException, SAPServiceFailure {
 
         ProductOrder productOrder = createProductOrder(productOrderData);
 
@@ -287,8 +288,8 @@ public class ProductOrderResource {
     @Produces(MediaType.APPLICATION_XML)
     @Consumes(MediaType.APPLICATION_XML)
     public ProductOrderData create(@Nonnull ProductOrderData productOrderData)
-            throws DuplicateTitleException, NoSamplesException, ApplicationValidationException,
-            InvalidProductException {
+        throws DuplicateTitleException, NoSamplesException, ApplicationValidationException,
+        InvalidProductException, SAPServiceFailure {
         return new ProductOrderData(createProductOrder(productOrderData), true);
     }
 
@@ -296,8 +297,8 @@ public class ProductOrderResource {
      * Create a product order in Pending state, and create its corresponding JIRA ticket.
      */
     private ProductOrder createProductOrder(ProductOrderData productOrderData)
-            throws DuplicateTitleException, NoSamplesException, ApplicationValidationException,
-            InvalidProductException {
+        throws DuplicateTitleException, NoSamplesException, ApplicationValidationException,
+        InvalidProductException, SAPServiceFailure {
 
         validateAndLoginUser(productOrderData);
 

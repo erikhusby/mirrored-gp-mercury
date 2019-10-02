@@ -48,7 +48,9 @@ import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.sap.entity.DeliveryCondition;
+import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.broadinstitute.sap.services.SAPServiceFailure;
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -443,9 +445,11 @@ public class BillingLedgerActionBean extends CoreActionBean {
 
                     ProductOrderSample.LedgerUpdate ledgerUpdate;
                     if(data.sapOrder) {
-                        if(productPriceCache.findByProduct(product,
-                                productOrder.getSapCompanyConfigurationForProductOrder(productOrder.getSapQuote(sapService)).getSalesOrganization()).getPossibleDeliveryConditions().containsKey(
-                                DeliveryCondition.LATE_DELIVERY_DISCOUNT)) {
+                        SapQuote sapQuote = getSapQuote(productOrder);
+                        if (productPriceCache.findByProduct(product,
+                            productOrder.getSapCompanyConfigurationForProductOrder(sapQuote).getSalesOrganization())
+                            .getPossibleDeliveryConditions().containsKey(DeliveryCondition.LATE_DELIVERY_DISCOUNT)) {
+
                             data.setDeliveryConditionAvailable(true);
                         }
                         ledgerUpdate = new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), product,

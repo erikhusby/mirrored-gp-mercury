@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.bioproject;
 
 
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
-import org.broadinstitute.gpinformatics.infrastructure.ConnectionException;
+import org.broadinstitute.gpinformatics.infrastructure.ExternalServiceRuntimeException;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRequestBean;
@@ -35,7 +35,8 @@ public class BioProjectServiceDownTest {
 
         public SubmissionsServiceThatRefusesConnections(){}
 
-        private static final ConnectionException CONNECTION_REFUSED_EXCEPTION =  new ConnectionException("Connection refused, dude.");
+        private static final ExternalServiceRuntimeException
+            CONNECTION_REFUSED_EXCEPTION =  new ExternalServiceRuntimeException("Connection refused, dude.");
 
         @Override
         public Collection<SubmissionStatusDetailBean> getSubmissionStatus(String... uuids) {

@@ -8,6 +8,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
+import org.broadinstitute.gpinformatics.infrastructure.ExternalServiceRuntimeException;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
@@ -57,6 +58,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -1207,6 +1210,10 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         }
 
         return display;
+    }
+
+    public boolean isInPriceCache() {
+        return sapMaterials.isEmpty();
     }
 
     public enum AggregationParticle implements Displayable {

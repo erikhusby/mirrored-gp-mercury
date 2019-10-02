@@ -10,6 +10,7 @@ import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.broadinstitute.sap.services.SAPServiceFailure;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -35,7 +36,7 @@ public interface SapIntegrationService {
      * @return Unique order identifier of the sales/release order created in SAP
      * @throws SAPIntegrationException
      */
-    String createOrder(ProductOrder placedOrder) throws SAPIntegrationException;
+    String createOrder(ProductOrder placedOrder) throws SAPIntegrationException, SAPServiceFailure;
 
     /**
      * For a given ProductOrder that is already represented in SAP, this method will communicate to SAP any changes to
@@ -44,8 +45,9 @@ public interface SapIntegrationService {
      * @param closingOrder
      * @return Unique order identifier of the sales/release order currently in SAP
      * @throws SAPIntegrationException
+     * @throws SAPServiceFailure in the event SAP returns a null status
      */
-    void updateOrder(ProductOrder placedOrder, boolean closingOrder) throws SAPIntegrationException;
+    void updateOrder(ProductOrder placedOrder, boolean closingOrder) throws SAPIntegrationException, SAPServiceFailure;
 
     /**
      * This method will allow mercury to record completed work in SAP in order to complete the Billing process
@@ -55,8 +57,10 @@ public interface SapIntegrationService {
      * @param workCompleteDate
      * @return A unique identifier associated with the recorded record of work in SAP
      * @throws SAPIntegrationException
+     * @throws SAPServiceFailure in the event SAP returns a null status
      */
-    String billOrder(QuoteImportItem item, BigDecimal quantityOverride, Date workCompleteDate) throws SAPIntegrationException;
+    String billOrder(QuoteImportItem item, BigDecimal quantityOverride, Date workCompleteDate)
+        throws SAPIntegrationException, SAPServiceFailure;
 
     /**
      * With the introduction of a direct communication to SAP from Mercury, we will do away with Price Items for a
@@ -68,24 +72,28 @@ public interface SapIntegrationService {
      * Mercury
      * @param product                           The Product information to be reflected in SAP
      * @throws SAPIntegrationException
+     * @throws SAPServiceFailure in the event SAP returns a null status
      */
-    void publishProductInSAP(Product product) throws SAPIntegrationException;
+    void publishProductInSAP(Product product) throws SAPIntegrationException, SAPServiceFailure;
 
-    void publishProductInSAP(Product product, boolean extendProductsToOtherPlatforms,
-                             PublishType publishType) throws SAPIntegrationException;
+    void publishProductInSAP(Product product, boolean extendProductsToOtherPlatforms, PublishType publishType)
+        throws SAPIntegrationException, SAPServiceFailure;
 
-    Set<SAPMaterial> findProductsInSap() throws SAPIntegrationException;
+    Set<SAPMaterial> findProductsInSap() throws SAPIntegrationException, SAPServiceFailure;
 
-    OrderCalculatedValues calculateOpenOrderValues(int addedSampleCount, SapQuote sapQuote, ProductOrder productOrder) throws SAPIntegrationException;
+    OrderCalculatedValues calculateOpenOrderValues(int addedSampleCount, SapQuote sapQuote, ProductOrder productOrder)
+        throws SAPIntegrationException, SAPServiceFailure;
 
+    boolean isSapServiceAvailable();
     /**
      * Placeholder method for now.  Future inplementation will return a quote object geared toward the information
      * returned from SAP.
      * @param sapQuoteId  Singular quote identifier for the desired SAP quote information
      * @return
      * @throws SAPIntegrationException
+     * @throws SAPServiceFailure in the event SAP returns a null status
      */
-    SapQuote findSapQuote(String sapQuoteId) throws SAPIntegrationException;
+    SapQuote findSapQuote(String sapQuoteId) throws SAPIntegrationException, SAPServiceFailure;
 
     /**
      * This method assists in the need to occasionally "Unbill" samples on an order.  It will create and send the
@@ -94,9 +102,11 @@ public interface SapIntegrationService {
      *                              was originally billed
      * @param quoteItemForBilling   contains all the information for the work that will be reverted
      * @return identifier that is associated with the SAP return order created to process this credit request
+     * @throws SAPServiceFailure in the event SAP returns a null status
      */
     String creditDelivery(String deliveryDocumentId, QuoteImportItem quoteItemForBilling)
-            throws SAPIntegrationException;
+        throws SAPIntegrationException, SAPServiceFailure;
+
     class Option {
         public static final Option NONE = Option.create();
 

@@ -13,6 +13,7 @@ import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.ErrorResolution;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.RedirectResolution;
@@ -30,8 +31,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.entity.ContentType;
 import org.apache.http.message.BasicNameValuePair;
 import org.broadinstitute.bsp.client.collection.SampleCollection;
 import org.broadinstitute.bsp.client.site.Site;
@@ -137,6 +140,7 @@ import org.broadinstitute.sap.entity.quote.QuoteHeader;
 import org.broadinstitute.sap.entity.quote.QuoteStatus;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.broadinstitute.sap.services.SAPServiceFailure;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hibernate.Hibernate;
 import org.jetbrains.annotations.NotNull;
@@ -148,6 +152,7 @@ import org.owasp.encoder.Encode;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -617,12 +622,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         // Whether we are draft or not, we should populate the proper edit fields for validation.
         updateTokenInputFields();
 
-        // adding customizations in order to allow it to be validated against the quote.
-        if (StringUtils.isNotBlank(customizationJsonString)) {
-            buildJsonObjectFromEditOrderProductCustomizations();
-            editOrder.updateCustomSettings(productCustomizations);
-        }
-
         if(editOrder.getProduct() != null) {
 
             String salesOrganization=null;
@@ -647,6 +646,11 @@ public class ProductOrderActionBean extends CoreActionBean {
                                              " because the product is not available for sales organization " +
                                              salesOrganization +
                                              ".  Please check either the selected product or the quote you are using.");
+                }
+                // adding customizations in order to allow it to be validated against the quote.
+                if (StringUtils.isNotBlank(customizationJsonString)) {
+                    buildJsonObjectFromEditOrderProductCustomizations(sapQuote);
+                    editOrder.updateCustomSettings(productCustomizations);
                 }
             }
             try {
@@ -1008,7 +1012,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                         quote.getQuoteHeader().getQuoteNumber()+" -- " + quote.getQuoteHeader().getProjectName();
                 addGlobalValidationError(insufficientFundsMessage);
             }
-        } catch (SAPInterfaceException e) {
+        } catch (SAPInterfaceException|SAPServiceFailure e) {
             logger.error(e);
             addGlobalValidationError(e.getMessage());
         }
@@ -2903,19 +2907,31 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     @HandlesEvent(OPEN_CUSTOM_VIEW_ACTION)
-    public Resolution openCustomView() throws Exception {
-        buildJsonObjectFromEditOrderProductCustomizations();
-
-        return new ForwardResolution(CUSTOMIZE_PRODUCT_ASSOCIATIONS);
-    }
-
-    private void buildJsonObjectFromEditOrderProductCustomizations() throws JSONException, SAPIntegrationException {
+    public Resolution openCustomView() throws JSONException, SAPIntegrationException, SAPServiceFailure {
         SapQuote sapQuote = null;
-        if(StringUtils.isNotBlank(quoteIdentifier)) {
+        ForwardResolution forwardResolution = new ForwardResolution(CUSTOMIZE_PRODUCT_ASSOCIATIONS);
+        if (StringUtils.isNotBlank(quoteIdentifier)) {
             if (StringUtils.isNumeric(quoteIdentifier)) {
-                sapQuote = sapService.findSapQuote(quoteIdentifier);
+                if (sapService.isSapServiceAvailable()) {
+                    sapQuote = sapService.findSapQuote(quoteIdentifier);
+                } else {
+                    return new ErrorResolution(HttpStatus.SC_BAD_REQUEST, "SAP Service is Unavailable at this time.");
+                }
+                buildJsonObjectFromEditOrderProductCustomizations(sapQuote);
             }
         }
+
+
+        return forwardResolution;
+    }
+
+    private void buildJsonObjectFromEditOrderProductCustomizations(SapQuote sapQuote) throws JSONException, SAPIntegrationException {
+//        SapQuote sapQuote = null;
+//        if(StringUtils.isNotBlank(quoteIdentifier)) {
+//            if (StringUtils.isNumeric(quoteIdentifier)) {
+//                sapQuote = sapService.findSapQuote(quoteIdentifier);
+//            }
+//        }
         JSONObject customizationJson = new JSONObject(customizationJsonString);
 
         final Iterator keys = customizationJson.keys();
@@ -3453,7 +3469,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (StringUtils.isNotBlank(editOrder.getQuoteId())) {
             if (StringUtils.isNumeric(editOrder.getQuoteId())) {
                 try {
-                    Optional<SapQuote> sapQuote = Optional.ofNullable(sapService.findSapQuote(editOrder.getQuoteId()));
+                    Optional<SapQuote> sapQuote = Optional.ofNullable(getSapQuote(editOrder));
 
                     if(sapQuote.isPresent()) {
                         SapQuote quote = sapQuote.get();

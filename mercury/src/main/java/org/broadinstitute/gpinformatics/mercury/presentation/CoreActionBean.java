@@ -50,6 +50,7 @@ import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.broadinstitute.sap.services.SAPServiceFailure;
 import org.owasp.encoder.Encode;
 
 import javax.annotation.Nonnull;
@@ -87,6 +88,7 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
     public static final String LIST_ACTION = "list";
     public static final String SAVE_ACTION = "save";
     public static final String VIEW_ACTION = "view";
+    public static final String SAP_SERVICE_FAILURE = "Unable to communicate with SAP.";
 
     public boolean hasFlashError;
 
@@ -652,12 +654,25 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
         return quoteDetails;
     }
 
+    public SapQuote getSapQuote(ProductOrder productOrder) throws SAPIntegrationException {
+        SapQuote sapQuote=null;
+        try {
+            sapQuote = productOrder.getSapQuote(sapService);
+        } catch (SAPServiceFailure e) {
+            addGlobalValidationError(SAP_SERVICE_FAILURE);
+            log.error(SAP_SERVICE_FAILURE, e);
+        }
+        return sapQuote;
+    }
+
     protected SapQuote validateSapQuote(ProductOrder productOrder) {
         SapQuote quoteDetails = null;
         try {
             quoteDetails = productOrder.getSapQuote(sapService);
         } catch (SAPIntegrationException e) {
             addGlobalValidationError("The quote ''{2}'' was not found ", productOrder.getQuoteId());
+        } catch (SAPServiceFailure e) {
+            addGlobalValidationError(SAP_SERVICE_FAILURE);
         }
         return quoteDetails;
     }
@@ -705,6 +720,7 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
         }
 
         DisplayableItem displayableItem = new DisplayableItem(object.getBusinessKey(), object.getName());
+
 
         return displayableItem;
     }

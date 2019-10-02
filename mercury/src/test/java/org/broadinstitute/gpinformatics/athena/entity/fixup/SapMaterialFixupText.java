@@ -29,6 +29,7 @@ import org.broadinstitute.sap.entity.material.SAPChangeMaterial;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.entity.quote.QuoteItem;
 import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.broadinstitute.sap.services.SAPServiceFailure;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -170,7 +171,7 @@ public class SapMaterialFixupText extends Arquillian {
                                     material.getMaterialIdentifier(), material.getSalesOrg(), material.getSalesOrgStatus()));
                             log.debug("Material to disable\n"+material);
                             ((SapIntegrationServiceImpl) sapIntegrationService).getClient().changeMaterialDetails(SAPChangeMaterial.fromSAPMaterial(material));
-                        } catch (SAPIntegrationException e) {
+                        } catch (SAPIntegrationException|SAPServiceFailure e) {
                             log.debug(String.format("Failed to UPDATe SAP for material %s in sales org %s:  %s",
                                     material.getMaterialIdentifier(), material.getSalesOrg(), e.getMessage()));
                         }

@@ -1247,6 +1247,12 @@
                     'quoteIdentifier': $j("#quote").val()
                 },
                 datatype: 'html',
+                error:function(data){
+                    if (data !== undefined && data.responseText !== undefined) {
+                        var modalError = modalMessages("warning",{onClose: function(){modalMessages("warning").clear();}});
+                        modalError.add(data.responseText);
+                    }
+                },
                 success: function (html) {
                     $j("#customizedProductSettings").html(html).dialog("open").dialog("option", "width", 1100).dialog("option", "height", 600);
                 }

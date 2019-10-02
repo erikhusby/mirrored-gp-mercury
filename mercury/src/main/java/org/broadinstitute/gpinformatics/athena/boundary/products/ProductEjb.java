@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.broadinstitute.sap.services.SAPServiceFailure;
 
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
@@ -317,7 +318,7 @@ public class ProductEjb {
      * @throws SAPIntegrationException
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public void publishProductToSAP(Product productToPublish) throws SAPIntegrationException {
+    public void publishProductToSAP(Product productToPublish) throws SAPIntegrationException, SAPServiceFailure {
         publishProductToSAP(productToPublish, true, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
     }
 
@@ -327,17 +328,14 @@ public class ProductEjb {
      * @param extendProductsToOtherPlatforms
      * @param publishType
      * @throws SAPIntegrationException
+     * @throws SAPServiceFailure in the event of a fatal SAP error
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     private void publishProductToSAP(Product productToPublish, boolean extendProductsToOtherPlatforms,
-                                    SapIntegrationService.PublishType publishType) throws SAPIntegrationException {
-        try {
-            sapService.publishProductInSAP(productToPublish, extendProductsToOtherPlatforms, publishType);
-            productToPublish.setSavedInSAP(true);
-
-        } catch (SAPIntegrationException e) {
-            throw new SAPIntegrationException(e.getMessage());
-        }
+                                    SapIntegrationService.PublishType publishType)
+        throws SAPIntegrationException, SAPServiceFailure {
+        sapService.publishProductInSAP(productToPublish, extendProductsToOtherPlatforms, publishType);
+        productToPublish.setSavedInSAP(true);
     }
 
     /**
@@ -347,7 +345,7 @@ public class ProductEjb {
      * @throws SAPIntegrationException
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public void publishProductsToSAP(Collection<Product> productsToPublish) throws ValidationException {
+    public void publishProductsToSAP(Collection<Product> productsToPublish) throws ValidationException, SAPServiceFailure {
         publishProductsToSAP(productsToPublish, true, SapIntegrationService.PublishType.CREATE_AND_UPDATE);
     }
 
@@ -358,10 +356,11 @@ public class ProductEjb {
      * @param extendProductsToOtherPlatforms
      * @param publishType
      * @throws SAPIntegrationException
+     * @throws SAPServiceFailure in the event of a fatal SAP error
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void publishProductsToSAP(Collection<Product> productsToPublish, boolean extendProductsToOtherPlatforms,
-                                      SapIntegrationService.PublishType publishType) throws ValidationException {
+                                      SapIntegrationService.PublishType publishType) throws ValidationException, SAPServiceFailure {
         List<String> errorMessages = new ArrayList<>();
         for (Product productToPublish : productsToPublish) {
             try {

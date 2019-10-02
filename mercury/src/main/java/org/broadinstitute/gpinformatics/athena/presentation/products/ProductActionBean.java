@@ -36,6 +36,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.PriceItemTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.ExternalServiceRuntimeException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -48,7 +49,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.broadinstitute.sap.services.SAPServiceFailure;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
 import javax.inject.Inject;
@@ -92,6 +95,7 @@ public class ProductActionBean extends CoreActionBean {
     private static final String DOWNLOAD_PRODUCT_LIST = "downloadProductDescriptions";
     private static final String PUBLISH_PRODUCTS_TO_SAP = "publishProductsToSap";
     private static final String RISK_CRITERIA_SUGGESTED_VALUES = "risk_criteria_suggested_values.jsp";
+    public static final String SAP_IS_UNAVALABLE = "SAP is Unavalable at this time.";
 
     @Inject
     private ProductFamilyDao productFamilyDao;
@@ -207,7 +211,7 @@ public class ProductActionBean extends CoreActionBean {
     private String criteriaLabel;
     private String criteriaOp;
     private String currentCriteriaChoices;
-
+    private boolean sapServiceAvailable=true;
     /**
      * Initialize the product with the passed in key for display in the form.
      */
@@ -243,8 +247,47 @@ public class ProductActionBean extends CoreActionBean {
             // This must be a create, so construct a new top level product that has nothing else set
             editProduct = new Product(Product.TOP_LEVEL_PRODUCT);
         }
-        productPriceCache.refreshCache();
+        refreshSapPriceCache();
         availableChipTechnologyAndChipNames = productEjb.findChipFamiliesAndNames();
+    }
+
+    @Before(stages = LifecycleStage.BindingAndValidation)
+    public void refreshSapPriceCache() {
+        if (!sapServiceAvailable) {
+            return;
+        }
+        try {
+            productPriceCache.refreshCache();
+            sapServiceAvailable = true;
+        } catch (ExternalServiceRuntimeException e) {
+            sapServiceAvailable = false;
+            String message = e.getMessage();
+            log.error(message, e);
+//            addGlobalValidationError(message);
+        }
+    }
+
+//    @ValidationMethod(on = LIST_ACTION)
+//    public void validateSapAvailable() {
+//        if (!sapServiceAvailable) {
+//            addGlobalValidationError("SAP Service is unavailable at this time");
+//        }
+//    }
+
+    @After(stages = LifecycleStage.HandlerResolution)
+    public boolean isSapServiceAvailable() {
+        if (sapServiceAvailable == true) {
+            try {
+                sapService.findSapQuote("9999999");
+                sapServiceAvailable = true;
+            } catch (ExternalServiceRuntimeException|SAPServiceFailure e) {
+                sapServiceAvailable = false;
+//                addGlobalValidationError("SAP Service is unavailable at this time.");
+            } catch (SAPIntegrationException e) {
+                // i don't care
+            }
+        }
+        return sapServiceAvailable;
     }
 
     private void initGenotypingInfo() {
@@ -328,7 +371,9 @@ public class ProductActionBean extends CoreActionBean {
 
                 }
             });
-            Product.setMaterialOnProduct(product, productPriceCache);
+            if (sapServiceAvailable) {
+                Product.setMaterialOnProduct(product, productPriceCache);
+            }
         }
     }
 
@@ -500,7 +545,7 @@ public class ProductActionBean extends CoreActionBean {
         addMessage("Product \"" + editProduct.getProductName() + "\" has been saved");
             try {
                 productEjb.publishProductToSAP(editProduct);
-            } catch (SAPIntegrationException e) {
+            } catch (SAPIntegrationException | SAPServiceFailure e) {
                 addGlobalValidationError("Unable to update the product in SAP. " + e.getMessage());
             }
 
@@ -519,6 +564,9 @@ public class ProductActionBean extends CoreActionBean {
                 productEjb.publishProductsToSAP(selectedProducts);
             } catch (ValidationException e) {
                 addGlobalValidationError("Unable to publish some of the products to SAP. " + e.getMessage("<br/>"));
+            } catch (SAPServiceFailure sapServiceFailure) {
+                log.error(sapServiceFailure);
+                addGlobalValidationError(SAP_IS_UNAVALABLE);
             }
         }
         return new RedirectResolution(ProductActionBean.class,LIST_ACTION);
@@ -531,6 +579,9 @@ public class ProductActionBean extends CoreActionBean {
             addMessage("Product \"" + editProduct.getProductName() + "\" Successfully published to SAP");
         } catch (SAPIntegrationException e) {
             addGlobalValidationError("Unable to publish the product to SAP. " + e.getMessage());
+        } catch (SAPServiceFailure e) {
+            log.error(e);
+            addGlobalValidationError(SAP_IS_UNAVALABLE);
         }
 
         return new RedirectResolution(ProductActionBean.class, VIEW_ACTION).addParameter(PRODUCT_PARAMETER,
@@ -809,11 +860,6 @@ public class ProductActionBean extends CoreActionBean {
             workflows.add(productWorkflowDef.getName());
         }
         return workflows;
-    }
-
-    public boolean productInSAP(String partNumber, SapIntegrationClientImpl.SAPCompanyConfiguration companyCode) {
-
-        return productPriceCache.findByPartNumber(partNumber, companyCode.getSalesOrganization()) != null;
     }
 
     public ProductDao.Availability getAvailability() {

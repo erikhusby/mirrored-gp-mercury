@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.LongDateTimeAdapter;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.broadinstitute.sap.services.SAPServiceFailure;
 
 import javax.annotation.Nonnull;
 import javax.xml.bind.annotation.XmlElementWrapper;
@@ -290,8 +291,8 @@ public class ProductOrderData {
      */
     public ProductOrder toProductOrder(ProductOrderDao productOrderDao, ResearchProjectDao researchProjectDao,
                                        ProductDao productDao, SapIntegrationService sapIntegrationService)
-            throws DuplicateTitleException, NoSamplesException, ApplicationValidationException,
-            InvalidProductException {
+        throws DuplicateTitleException, NoSamplesException, ApplicationValidationException,
+        InvalidProductException, SAPServiceFailure {
 
         // Make sure the title/name is supplied and unique
         if (StringUtils.isBlank(title)) {

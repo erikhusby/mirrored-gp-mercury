@@ -9,11 +9,13 @@ import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductE
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.ExternalServiceRuntimeException;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.broadinstitute.sap.services.SAPServiceFailure;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -32,6 +34,7 @@ import static com.google.common.collect.MoreCollectors.toOptional;
 @ApplicationScoped
 public class SAPProductPriceCache extends AbstractCache implements Serializable {
 
+    public static final String UNKNOWN_EXCEPTION = "Unknown error while refreshing the SAP Product Price Cache";
     private Set<SAPMaterial> sapMaterials = new HashSet<>();
 
     private SapIntegrationService sapService;
@@ -58,11 +61,18 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
         try {
             Set<SAPMaterial> tempSet = sapService.findProductsInSap();
 
-            if(!CollectionUtils.isEmpty(tempSet)) {
+            if (!CollectionUtils.isEmpty(tempSet)) {
                 setMaterials(tempSet);
             }
-        } catch (SAPIntegrationException e) {
-            logger.error("Could not refresh the SAP Product Price Cache", e);
+        } catch (SAPServiceFailure e) {
+            String message = "Could not refresh the SAP Product Price Cache";
+            logger.error(message, e);
+            throw new ExternalServiceRuntimeException(message, e);
+        } catch (Exception e) {
+            String message = UNKNOWN_EXCEPTION;
+
+            logger.error(message, e);
+            throw new ExternalServiceRuntimeException(message, e);
         }
     }
 

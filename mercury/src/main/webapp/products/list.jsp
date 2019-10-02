@@ -9,6 +9,7 @@
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Products" sectionTitle="List Products" showCreate="true">
     <stripes:layout-component name="extraHead">
+        <script src="${ctxpath}/resources/scripts/modalMessages.js" type="text/javascript"></script>
         <script type="text/javascript">
             $j(document).ready(function() {
                 $j('#productList').dataTable( {
@@ -37,7 +38,12 @@
                         {"bSortable": true, "sType" : "title-string"},  // Clinical Indicator
                         {"bSortable": true, "sType" : "title-string"},  // PDM Orderable Indicator
                         {"bSortable": true, "sType" : "title-string"}]  // Availibility Indicaory
-                })
+                });
+                <c:set var="sapServiceAvailable" value="${actionBean.sapServiceAvailable}"/>
+
+                if ("${actionBean.sapServiceAvailable}" !== true) {
+                    modalMessages("error").add("SAP Servcie is unavailable.", "sapServiceAvailable");
+                }
             });
 
             function changeAvailability() {
@@ -50,6 +56,7 @@
     <stripes:layout-component name="content">
         <div class="clearfix"></div>
         <stripes:form id="list" beanclass="${actionBean.class.name}">
+            <input type="hidden" name="_sourcePage" value="<%request.getServletPath();%>"/>
         <div class="actionButtons">
             <img src="${ctxpath}/images/pdficon_small.png" alt=""/>
             <stripes:link beanclass="${actionBean.class.name}" event="downloadProductDescriptions">
@@ -97,7 +104,7 @@
             <tbody>
             <c:forEach items="${actionBean.allProducts}" var="product">
                 <c:set var="priceClass" value="" />
-                <c:set var="inSAP" value="${actionBean.productInSAP(product.partNumber, product.determineCompanyConfiguration())}" />
+                <c:set var="inSAP" value="${actionBean.product.inPriceCache}" />
                 <security:authorizeBlock roles="<%= roles(Developer, PDM, FinanceViewer)%>">
                     <c:if test="${inSAP && !product.quotePriceDifferent}">
                         <c:set var="priceClass" value="bad-prices"/>

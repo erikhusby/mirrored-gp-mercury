@@ -14,7 +14,9 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderPriceAd
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapQuoteItemReference;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.ExternalServiceRuntimeException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -30,11 +32,11 @@ import org.broadinstitute.sap.entity.order.SAPOrder;
 import org.broadinstitute.sap.entity.order.SAPOrderItem;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.broadinstitute.sap.services.SAPServiceFailure;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jetbrains.annotations.NotNull;
 
-import javax.enterprise.context.Dependent;
-import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -56,13 +58,14 @@ import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegration
 import static org.broadinstitute.sap.services.SapIntegrationClientImpl.SAPCompanyConfiguration;
 import static org.broadinstitute.sap.services.SapIntegrationClientImpl.SAPEnvironment;
 
-@Dependent
-@Default
+@Stub
+@Alternative
 public class SapIntegrationServiceImpl implements SapIntegrationService {
 
     public static final Set<SAPCompanyConfiguration> EXTENDED_PLATFORMS =
             EnumSet.of(SAPCompanyConfiguration.PRISM,SAPCompanyConfiguration.GPP,
                     SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES);
+    private static final String SERVICE_TEST_QUOTE = "9999999";
     private SapConfig sapConfig;
 
     private QuoteService quoteService;
@@ -78,6 +81,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     private SapIntegrationClientImpl wrappedClient;
 
     private final static Log log = LogFactory.getLog(SapIntegrationServiceImpl.class);
+    private boolean sapServiceAvailable = true;
 
     public SapIntegrationServiceImpl() {
     }
@@ -241,14 +245,14 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @Override
-    public String createOrder(ProductOrder placedOrder) throws SAPIntegrationException {
+    public String createOrder(ProductOrder placedOrder) throws SAPIntegrationException, SAPServiceFailure {
         SAPOrder newOrder =
             initializeSAPOrder(placedOrder.getSapQuote(this), placedOrder, create(Type.CREATING));
         return getClient().createSAPOrder(newOrder);
     }
 
     @Override
-    public void updateOrder(ProductOrder placedOrder, boolean closeOrder) throws SAPIntegrationException {
+    public void updateOrder(ProductOrder placedOrder, boolean closeOrder) throws SAPIntegrationException, SAPServiceFailure {
         SAPOrder order =
             initializeSAPOrder(placedOrder.getSapQuote(this), placedOrder, Option.create(isClosing(closeOrder)));
 
@@ -265,7 +269,6 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * updated
      * @param placedOrder The ProductOrder from which a JAXB representation of an SAP order will be created
      * @return JAXB representation of a Product Order
-     * @throws SAPIntegrationException
      */
     protected SAPOrder initializeSAPOrder(SapQuote sapQuote, ProductOrder placedOrder, Option serviceOptions) {
         ProductOrder orderToUpdate = placedOrder;
@@ -311,7 +314,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             try {
                 SapQuote oldQuote = findSapQuote(placedOrder.latestSapOrderDetail().getQuoteId());
                 quoteReferences = ProductOrder.createSapQuoteItemReferences(placedOrder, oldQuote);
-            } catch (SAPInterfaceException | SAPIntegrationException e) {
+            } catch (SAPInterfaceException | SAPIntegrationException | SAPServiceFailure e) {
                 return null;
             }
         } else {
@@ -392,7 +395,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
     @Override
     public String billOrder(QuoteImportItem quoteItemForBilling, BigDecimal quantityOverride, Date workCompleteDate)
-            throws SAPIntegrationException {
+        throws SAPIntegrationException, SAPServiceFailure {
 
         SAPDeliveryDocument deliveryDocument =
                 new SAPDeliveryDocument(quoteItemForBilling.getProductOrder().getSapOrderNumber(), workCompleteDate);
@@ -428,7 +431,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @Override
-    public void publishProductInSAP(Product product) throws SAPIntegrationException {
+    public void publishProductInSAP(Product product) throws SAPIntegrationException, SAPServiceFailure {
 
         publishProductInSAP(product, true, PublishType.CREATE_AND_UPDATE);
     }
@@ -447,10 +450,11 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * @param publishType                Flag to help determine if Mercury should should attempt to create a new Material
      *                                          if the Product it is not found in SAP.  When true, do not create material
      * @throws SAPIntegrationException
+     * @throws SAPServiceFailure in the event SAP returns a null status
      */
     @Override
-    public void publishProductInSAP(Product product, boolean extendProductsToOtherPlatforms,
-                                    PublishType publishType) throws SAPIntegrationException {
+    public void publishProductInSAP(Product product, boolean extendProductsToOtherPlatforms, PublishType publishType)
+        throws SAPIntegrationException, SAPServiceFailure {
         SAPMaterial sapMaterial = initializeSapMaterialObject(product);
 
         applyMaterialUpdate(product, publishType, sapMaterial);
@@ -499,9 +503,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * @param extendedProduct       Flag to help determine if Mercury should extend the resulting Material to platforms
      *                              other than GP SSF or GP LLC product list.  True means we wish to extend the product
      * @throws SAPIntegrationException
+     * @throws SAPServiceFailure in the event SAP returns a null status
      */
     public void applyMaterialUpdate(Product product, PublishType publishType, SAPMaterial extendedProduct)
-            throws SAPIntegrationException {
+        throws SAPIntegrationException, SAPServiceFailure {
         if (productPriceCache.findByProduct(product,
                 SAPCompanyConfiguration.fromSalesOrgForMaterial(extendedProduct.getSalesOrg()).getSalesOrganization()) == null) {
             if (publishType != PublishType.UPDATE_ONLY) {
@@ -540,7 +545,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @Override
-    public Set<SAPMaterial> findProductsInSap() throws SAPIntegrationException {
+    public Set<SAPMaterial> findProductsInSap() throws SAPIntegrationException, SAPServiceFailure {
         Set<SAPMaterial> materials = new HashSet<>();
         final List<SAPCompanyConfiguration> extendedPlatformsPlusBroad = new ArrayList<>(EXTENDED_PLATFORMS);
         extendedPlatformsPlusBroad.add(SAPCompanyConfiguration.BROAD);
@@ -553,14 +558,15 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     private Set<SAPMaterial> findMaterials(SAPCompanyConfiguration sapCompanyConfiguration)
-        throws SAPIntegrationException {
+        throws SAPIntegrationException, SAPServiceFailure {
         return getClient()
             .findMaterials(sapCompanyConfiguration.getPlant(), sapCompanyConfiguration.getSalesOrganization());
     }
 
     @Override
     public OrderCalculatedValues calculateOpenOrderValues(int addedSampleCount, SapQuote sapQuote,
-                                                          ProductOrder productOrder) throws SAPIntegrationException {
+                                                          ProductOrder productOrder)
+        throws SAPIntegrationException, SAPServiceFailure {
         OrderCalculatedValues orderCalculatedValues = null;
         OrderCriteria potentialOrderCriteria = null;
             potentialOrderCriteria = generateOrderCriteria(sapQuote, productOrder, addedSampleCount,
@@ -572,7 +578,22 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @Override
-    public SapQuote findSapQuote(String sapQuoteId) throws SAPIntegrationException {
+    public boolean isSapServiceAvailable() {
+        if (sapServiceAvailable == true) {
+            try {
+                SapQuote sapQuote = findSapQuote(SERVICE_TEST_QUOTE);
+                sapServiceAvailable = true;
+            } catch (ExternalServiceRuntimeException |SAPServiceFailure e) {
+                sapServiceAvailable = false;
+            } catch (SAPIntegrationException e) {
+                // i don't care
+            }
+        }
+        return sapServiceAvailable;
+    }
+
+    @Override
+    public SapQuote findSapQuote(String sapQuoteId) throws SAPIntegrationException, SAPServiceFailure {
         final SapIntegrationClientImpl sapClient = getClient();
 
         return getClient().findQuoteDetails(sapQuoteId);
@@ -581,7 +602,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
     @Override
     public String creditDelivery(String deliveryDocumentId, QuoteImportItem quoteItemForBilling)
-            throws SAPIntegrationException {
+        throws SAPIntegrationException, SAPServiceFailure {
 
         SAPOrderItem returnLine = new SAPOrderItem(quoteItemForBilling.getProduct().getPartNumber(), BigDecimal.valueOf(quoteItemForBilling.getQuantity()));
         SAPReturnOrder returnOrder = new SAPReturnOrder(deliveryDocumentId, Collections.singleton(returnLine));
@@ -603,7 +624,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         return result;
     }
 
-    protected OrderCriteria generateOrderCriteria(ProductOrder productOrder) throws SAPIntegrationException {
+    protected OrderCriteria generateOrderCriteria(ProductOrder productOrder)
+        throws SAPIntegrationException, SAPServiceFailure {
         Option notForValueQuery = create(isForValueQuery(false));
         return generateOrderCriteria(productOrder.getSapQuote(this), productOrder, 0, notForValueQuery);
     }

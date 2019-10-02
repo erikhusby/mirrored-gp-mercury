@@ -48,6 +48,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.sap.entity.quote.QuoteItem;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.broadinstitute.sap.services.SAPServiceFailure;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
@@ -148,7 +149,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return cachedQuote;
     }
 
-    public SapQuote getSapQuote(SapIntegrationService sapService) throws SAPIntegrationException {
+    public SapQuote getSapQuote(SapIntegrationService sapService) throws SAPIntegrationException, SAPServiceFailure {
         if (cachedSapQuote == null ||
             !StringUtils.equals(cachedSapQuote.getQuoteHeader().getQuoteNumber(), quoteId)) {
             cachedSapQuote = sapService.findSapQuote(quoteId);

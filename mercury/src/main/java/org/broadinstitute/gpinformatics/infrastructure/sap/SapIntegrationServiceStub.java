@@ -301,6 +301,11 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     }
 
     @Override
+    public boolean isSapServiceAvailable() {
+        return true;
+    }
+
+    @Override
     public SapQuote findSapQuote(String sapQuoteId) throws SAPIntegrationException {
         return null;
     }
