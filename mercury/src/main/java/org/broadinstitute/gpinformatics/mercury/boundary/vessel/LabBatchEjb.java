@@ -1269,7 +1269,7 @@ public class LabBatchEjb {
             errorString += (isValid ? "" : "and ") + "number of lanes (" + designationDto.getNumberLanes() + ") ";
             isValid = false;
         }
-        if (designationDto.getReadLength() == null || designationDto.getReadLength() <= 0) {
+        if (designationDto.getReadLength() == null || designationDto.getReadLength() < 0) {
             errorString += (isValid ? "" : "and ") + "read length (" + designationDto.getReadLength() + ") ";
             isValid = false;
         }
