@@ -39,7 +39,7 @@ public class BSPSampleDataFetcherStub extends BSPSampleDataFetcher {
     @Override
     public Map<String, BspSampleData> fetchSampleData(@Nonnull Collection<String> sampleNames,
                                                       BSPSampleSearchColumn... bspSampleSearchColumns) {
-        return super.fetchSampleData(sampleNames, bspSampleSearchColumns);
+        return fetchSampleData(sampleNames);
     }
 
     @Override
