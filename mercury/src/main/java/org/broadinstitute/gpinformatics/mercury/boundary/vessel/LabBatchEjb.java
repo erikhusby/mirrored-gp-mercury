@@ -1311,19 +1311,15 @@ public class LabBatchEjb {
         return isValid;
     }
 
+    /**
+     * Flowcells with mixed clinical and non-clinical samples are permitted for genome aggregation.
+     * @return true if any of the dto's products has a WGS aggregation type.
+     */
     public boolean isMixedFlowcellOk(FctDto designationDto) {
-        // Mixed flowcells are permitted for genomes
-        boolean mixedFlowcellOk = false;
-        for (String productName : designationDto.getProductNames()) {
-            if (!productName.equals(CONTROLS)) {
-                Product product = productDao.findByName(productName);
-                if (Objects.equals(product.getAggregationDataType(), Aggregation.DATA_TYPE_WGS)) {
-                    mixedFlowcellOk = true;
-                    break;
-                }
-            }
-        }
-        return mixedFlowcellOk;
+        return designationDto.getProductNames().stream().
+                filter(productName -> !productName.equals(CONTROLS)).
+                flatMap(productName -> productDao.findAvailableByName(productName).stream()).
+                anyMatch(product -> Objects.equals(product.getAggregationDataType(), Aggregation.DATA_TYPE_WGS));
     }
 
     /** Returns the number of lanes that would not fit onto an even number of flowcell lanes. */
