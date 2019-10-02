@@ -31,6 +31,7 @@ public class Workflow {
     public static final String DNA_RNA_EXTRACTION_STOOL = "DNA and RNA from Stool";
     public static final String SINGLE_CELL_SMART_SEQ = "Single Cell SmartSeq";
     public static final String SINGLE_CELL_10X = "Single Cell 10X";
+    public static final String SINGLE_CELL_HASHING_10X = "Single Cell 10X Hashing";
     /** Use this to indicate that no workflow is associated. */
     public static final String NONE = null;
 }
