@@ -115,7 +115,8 @@ public class InfiniumRunResource {
             throw new ResourceException("No chip events found", Response.Status.INTERNAL_SERVER_ERROR);
         }
         for (LabEvent event : chip.getEvents()) {
-            if (event.getLabEventType() == LabEventType.INFINIUM_XSTAIN) {
+            if (event.getLabEventType() == LabEventType.INFINIUM_XSTAIN ||
+                    event.getLabEventType() == LabEventType.INFINIUM_XSTAIN_HD) {
                 return event.getEventDate();
             }
         }
