@@ -4062,4 +4062,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void setQuoteSource(ProductOrder.QuoteSourceType quoteSource) {
         this.quoteSource = quoteSource;
     }
+
+    public boolean canOverrideAgp() {
+        return userBean.isDeveloperUser() || userBean.isPDMUser();
+    }
 }

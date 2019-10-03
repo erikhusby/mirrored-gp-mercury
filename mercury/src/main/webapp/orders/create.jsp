@@ -4,6 +4,8 @@
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 <%@ page import="static org.broadinstitute.sap.services.SapIntegrationClientImpl.FundingType.*" %>
+<%@ page import="org.broadinstitute.gpinformatics.infrastructure.security.Role" %>
+<%@ page import="java.util.EnumSet" %>
 
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
@@ -973,27 +975,6 @@
                 priceListText += "Clinical list price: " + data.clinicalPrice;
             }
 
-            var $aggregationParticle = $j("#customAggregationParticle");
-            var agpFieldChanged = data.productAgp !== undefined && $aggregationParticle.val() !== data.productAgp;
-            if (agpFieldChanged && $j("#orderId").length === 0) {
-                if ($aggregationParticle.text() !== data.productAgp) {
-                    var agpModalMessage = modalMessages("info", {
-                        onClose: function(){
-                            $j($aggregationParticle).removeClass("changed")
-                        }
-                    });
-
-                    $aggregationParticle.val(data.productAgp);
-                    $j($aggregationParticle).addClass("changed");
-
-                    agpModalMessage
-                        .add("The selected product defines a default aggregation particle. This order will now aggregate on '"
-                            + $aggregationParticle.find(":selected").text() + "' unless you override this manually.", "AGP_CHANGED");
-                }
-            } else {
-                modalMessages("info","AGP_CHANGED").clear();
-            }
-
             $j("#primaryProductListPrice").text(priceListText);
             if(priceListText.length > 0) {
                 $j("#primaryProductListPrice").show();
@@ -1013,7 +994,39 @@
                 }
 
             }
+            updateAggregationParticleField(data);
             updateSkipQuoteVisibility(data);
+        }
+
+        function updateAggregationParticleField(data) {
+            var $aggregationParticle = $j("#customAggregationParticle");
+            var canOverrideAgp = ${actionBean.canOverrideAgp()};
+            if (canOverrideAgp === undefined || canOverrideAgp === null) {
+                canOverrideAgp=false;
+            }
+            var agpFieldChanged = data.productAgp !== undefined && $aggregationParticle.val() !== data.productAgp;
+            if (agpFieldChanged && $j("#orderId").length === 0) {
+                if ($aggregationParticle.text() !== data.productAgp) {
+                    $aggregationParticle.val(data.productAgp);
+
+                    if (canOverrideAgp) {
+                        var agpModalMessage = modalMessages("info", {
+                            onClose: function () {
+                                $j($aggregationParticle).removeClass("changed")
+                            }
+                        });
+
+                        $j($aggregationParticle).addClass("changed");
+
+                        agpModalMessage
+                            .add("The selected product defines a default aggregation particle. This order will now aggregate on '"
+                                + $aggregationParticle.find(":selected").text() + "' unless you override this manually.", "AGP_CHANGED");
+                    }
+                }
+
+            } else if (canOverrideAgp) {
+                modalMessages("info","AGP_CHANGED").clear();
+            }
         }
 
         function setupAddonCheckboxes(data, productTitle) {
@@ -1669,21 +1682,24 @@
                     </div>
                 </c:if>
 
-
-            <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                <c:set var="agpDisabled" value="disabled"/>
+                <c:set var="selectTitleText" value="The aggregation particle can only be customized by a product manager."/>
+                <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                    <c:set var="agpDisabled" value=""/>
+                    <c:set var="selectTitleText"
+                           value="Select the custom aggregation particle which the pipleine will appended to their default aggregation. By default the pipeline aggregates on the research project."/>
+                </security:authorizeBlock>
                 <div class="control-group">
                     <stripes:label for="customAggregationParticle" class="control-label"/>
                     <div class="controls">
-                        <stripes:select style="width: auto;" id="customAggregationParticle"
-                                        name="editOrder.defaultAggregationParticle"
-                                        title="Select the custom aggregation particle which the pipleine will appended to their default aggregation. By default the pipeline aggregates on the research project.">
+                        <stripes:select style="width: auto;" id="customAggregationParticle" disabled="${agpDisabled}"
+                                        name="editOrder.defaultAggregationParticle" title="${selectTitleText}">
                             <stripes:option value=""><%=Product.AggregationParticle.DEFAULT_LABEL%></stripes:option>
                             <stripes:options-enumeration label="displayName"
                                                          enum="org.broadinstitute.gpinformatics.athena.entity.products.Product.AggregationParticle"/>
                         </stripes:select>
                     </div>
                 </div>
-            </security:authorizeBlock>
             <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
                 <c:if test="${!actionBean.editOrder.priorToSAP1_5}">
                     <div class="control-group">
