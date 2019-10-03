@@ -2270,7 +2270,7 @@ public class LabEventFixupTest extends Arquillian {
             }
             System.out.print("LabEvent " + labEventId + " type " + labEvent.getLabEventType());
             labEvent.setLabEventType(LabEventType.getByName(fields[2]));
-            System.out.println("   updated to " + labEvent.getLabEventType());
+            System.out.println(" updated to " + labEvent.getLabEventType());
         }
 
         labEventDao.persist(new FixupCommentary(reason));
