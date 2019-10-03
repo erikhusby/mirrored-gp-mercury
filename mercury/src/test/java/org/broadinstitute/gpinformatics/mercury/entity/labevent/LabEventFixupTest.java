@@ -2242,4 +2242,39 @@ public class LabEventFixupTest extends Arquillian {
         utx.commit();
     }
 
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/ChangeLabEventType.txt, so it can
+     * be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-5820 change InfiniumXStainHD
+     * 4050686	InfiniumXStainHD	InfiniumXStain
+     * 4050687	InfiniumXStainHD	InfiniumXStain
+     * 4050688	InfiniumXStainHD	InfiniumXStain
+     */
+    @Test(enabled = false)
+    public void fixupSupport5820ChangeEventType() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ChangeLabEventType.txt"));
+        String reason = lines.get(0);
+
+        for (String line : lines.subList(1, lines.size())) {
+            String[] fields = line.split("\\s");
+            if (fields.length != 3) {
+                throw new RuntimeException("Expected three white space separated fields in " + line);
+            }
+            String labEventId = fields[0];
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, Long.parseLong(labEventId));
+            if (labEvent == null || !labEvent.getLabEventType().getName().equals(fields[1])) {
+                throw new RuntimeException("Cannot find event " + labEventId + " or is not " + fields[1]);
+            }
+            System.out.print("LabEvent " + labEventId + " type " + labEvent.getLabEventType());
+            labEvent.setLabEventType(LabEventType.getByName(fields[2]));
+            System.out.println("   updated to " + labEvent.getLabEventType());
+        }
+
+        labEventDao.persist(new FixupCommentary(reason));
+        labEventDao.flush();
+        utx.commit();
+    }
 }
