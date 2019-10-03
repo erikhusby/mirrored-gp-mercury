@@ -49,7 +49,6 @@ public class ProductOrderSearchDefinition {
     public static final String SAP_ORDER_ID_COLUMN_HEADER = "SAP Order Id";
 
     public ConfigurableSearchDefinition buildSearchDefinition() {
-        ProductOrderSearchDefinition searchDefinition = new ProductOrderSearchDefinition();
         Map<String, List<SearchTerm>>
                 mapGroupSearchTerms = new LinkedHashMap<>();
         

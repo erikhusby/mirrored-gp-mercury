@@ -30,7 +30,7 @@ public class LabMetricSampleDataAddRowsListener implements ConfigurableList.AddR
     private boolean shouldFetchFromBsp(Map<Integer,ColumnTabulation> columnTabulations ) {
         for (ColumnTabulation columnTabulation : columnTabulations.values()) {
             String name = columnTabulation.getName();
-            if (name.equals(LabMetricSearchDefinition.MultiRefTerm.BSP_MATERIAL.getTermRefName()) ||
+            if (name.equals(DisplayExpression.ORIGINAL_MATERIAL_TYPE.getColumnName()) ||
                     name.equals(LabMetricSearchDefinition.MultiRefTerm.BSP_PARTICIPANT.getTermRefName())) {
                 return true;
             }

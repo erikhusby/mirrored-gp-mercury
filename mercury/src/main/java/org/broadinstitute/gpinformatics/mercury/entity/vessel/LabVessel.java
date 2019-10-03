@@ -25,6 +25,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTr
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -72,7 +73,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -287,6 +287,9 @@ public abstract class LabVessel implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="STORAGE_LOCATION")
     private StorageLocation storageLocation;
+
+    @OneToMany(mappedBy = "labVessel")
+    private Set<QueueEntity> queueEntities = new HashSet<>();
 
     @Transient
     private Map<LabMetric.MetricType, Set<LabMetric>> ancestorMetricMap;
@@ -529,6 +532,10 @@ public abstract class LabVessel implements Serializable {
 
     public void setStorageLocation(StorageLocation storageLocation) {
         this.storageLocation = storageLocation;
+    }
+
+    public Set<QueueEntity> getQueueEntities() {
+        return queueEntities;
     }
 
     /**
