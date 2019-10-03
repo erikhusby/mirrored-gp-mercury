@@ -57,7 +57,7 @@ public class SampleDataFetcherAddRowsListener implements ConfigurableList.AddRow
                 List<SampleInstanceV2> sampleInstances = DisplayExpression.rowObjectToExpressionObject(entity,
                         SampleInstanceV2.class, context);
                 for (SampleInstanceV2 sampleInstanceV2 : sampleInstances) {
-                    MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
+                    MercurySample mercurySample = sampleInstanceV2.getNearestMercurySample();
                     if (mercurySample != null) {
                         samples.add(mercurySample);
                     }
