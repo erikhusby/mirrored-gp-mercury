@@ -73,13 +73,12 @@ public class UploadQuantsActionBean extends CoreActionBean {
     public static final String ENTITY_NAME = "LabMetric";
 
     public enum QuantFormat {
-        CALIPER("Caliper"),
-        GEMINI("Gemini"),
-        GENERIC("Generic"),
-        LUNATIC("Lunatic"),
         VARIOSKAN("Varioskan"),
+        GEMINI("Gemini"),
         WALLAC("Wallac"),
-        ;
+        CALIPER("Caliper"),
+        GENERIC("Generic"),
+        LUNATIC("Lunatic");
 
         private String displayName;
 
