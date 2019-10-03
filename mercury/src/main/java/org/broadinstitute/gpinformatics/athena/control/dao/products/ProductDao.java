@@ -135,7 +135,7 @@ public class ProductDao extends GenericDao implements Serializable {
             break;
 
         case PAST:
-            predicateList.add(cb.greaterThanOrEqualTo(product.get(Product_.discontinuedDate),
+            predicateList.add(cb.lessThanOrEqualTo(product.get(Product_.discontinuedDate),
                     Calendar.getInstance().getTime()));
             break;
 
@@ -223,7 +223,7 @@ public class ProductDao extends GenericDao implements Serializable {
     }
 
     public List<Product> findDiscontinuedProducts() {
-        return findProducts(Availability.CURRENT, TopLevelOnly.YES, IncludePDMOnly.YES, Collections.emptyList());
+        return findProducts(Availability.PAST, TopLevelOnly.YES, IncludePDMOnly.YES, Collections.emptyList());
     }
 
 

@@ -381,13 +381,23 @@ public class ProductEjb {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public void disableProductsFromDate(Date startDate) {
+    public void adjustMaterialStatusForToday() {
         List<Product> discontinuedProducts = productDao.findDiscontinuedProducts();
-        List<Product> productsDiscontinuedToday = discontinuedProducts.stream()
-                .filter(product -> DateUtils.isSameDay(startDate, product.getDiscontinuedDate()))
+        List<Product> currentProducts = productDao.findProducts(ProductDao.Availability.CURRENT,
+                ProductDao.TopLevelOnly.YES, ProductDao.IncludePDMOnly.YES);
+
+        Date today = new Date();
+        List<Product> productsToProcessToday = discontinuedProducts.stream()
+                .filter(product -> {
+                    return product.getDiscontinuedDate() != null && DateUtils.isSameDay(today, product.getDiscontinuedDate());
+                })
                 .collect(Collectors.toList());
 
-        for (Product product : productsDiscontinuedToday) {
+        productsToProcessToday.addAll(currentProducts.stream()
+                .filter(product -> product.getAvailabilityDate() != null && DateUtils.isSameDay(today, product.getAvailabilityDate()))
+                .collect(Collectors.toList()));
+
+        for (Product product : productsToProcessToday) {
             try {
                 sapService.publishProductInSAP(product);
                 log.debug(String.format("Updated the product %s in SAP to be Disabled", product.getDisplayName()));

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
@@ -38,6 +39,7 @@ import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
@@ -421,11 +423,14 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         BigDecimal minimumOrderQuantity =
             product.getMinimumOrderSize() != null ? new BigDecimal(product.getMinimumOrderSize()) : BigDecimal.ONE;
 
+        boolean discontinued = product.isDiscontinued() ||
+                               DateUtils.truncate(product.getAvailabilityDate(),Calendar.DATE)
+                                       .compareTo(DateUtils.truncate(new Date(), Calendar.DATE))>0;
         return new SAPMaterial(product.getPartNumber(), companyCode, companyCode.getDefaultWbs(),
             product.getProductName(), null, SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, minimumOrderQuantity,
             new Date(), new Date(),
             Collections.emptyMap(), Collections.emptyMap(),
-                (product.isDiscontinued())?SAPMaterial.MaterialStatus.DISABLED:SAPMaterial.MaterialStatus.ENABLED,
+                discontinued ?SAPMaterial.MaterialStatus.DISABLED:SAPMaterial.MaterialStatus.ENABLED,
                 productHeirarchy);
     }
 

@@ -20,16 +20,17 @@ import org.broadinstitute.sap.entity.material.SAPChangeMaterial;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.mockito.Mockito;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -463,9 +464,34 @@ public class ProductEjbDBFreeTest {
         Mockito.verify(mockWrappedClient, Mockito.times(4)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(4)).changeMaterialDetails(Mockito.any(SAPChangeMaterial.class));
     }
+    @DataProvider(name="disableProductScenario")
+    public Iterator<Object[]> disableProductScenario() {
+        List<Object[]> testScenarios = new ArrayList<>();
 
-    public void testDisableProductsTest() throws Exception {
+        testScenarios.add(new Object[]{null, null, 0});
+        testScenarios.add(new Object[]{null, new Date(), 1});
+        testScenarios.add(new Object[]{null, DateUtils.truncate(new Date(), Calendar.DATE), 1});
+        testScenarios.add(new Object[]{null, DateUtils.addHours(DateUtils.truncate(new Date(), Calendar.DATE),-1), 0});
+        testScenarios.add(new Object[]{null, DateUtils.addHours(DateUtils.truncate(new Date(), Calendar.DATE),1), 1});
+        testScenarios.add(new Object[]{null, DateUtils.addDays(new Date(), 5), 0});
+        testScenarios.add(new Object[]{null, DateUtils.addDays(new Date(),1), 0});
+        testScenarios.add(new Object[]{null, DateUtils.addDays(new Date(),-1), 0});
 
+        testScenarios.add(new Object[]{new Date(), null,1});
+        testScenarios.add(new Object[]{new Date(), DateUtils.addDays(new Date(),1), 1});
+        testScenarios.add(new Object[]{new Date(), DateUtils.truncate(new Date(), Calendar.DATE), 1});
+        testScenarios.add(new Object[]{new Date(), DateUtils.addHours(DateUtils.truncate(new Date(), Calendar.DATE), -1), 0});
+        testScenarios.add(new Object[]{new Date(), DateUtils.addHours(DateUtils.truncate(new Date(), Calendar.DATE), 1), 1});
+
+        testScenarios.add(new Object[]{DateUtils.addDays(new Date(),-1), new Date(), 1});
+        testScenarios.add(new Object[]{DateUtils.addHours(DateUtils.truncate(new Date(),Calendar.DATE),-1), new Date(), 1});
+        testScenarios.add(new Object[]{DateUtils.addHours(DateUtils.truncate(new Date(),Calendar.DATE),1), new Date(), 1});
+        testScenarios.add(new Object[]{DateUtils.addDays(new Date(), -30), new Date(), 1});
+        return testScenarios.iterator();
+    }
+
+    @Test(dataProvider = "disableProductScenario")
+    public void testDisableProductsTest(Date availabilityDate, Date discontinuedDate, int expectedToBeProcessed) throws Exception {
         ProductDao productDaoMock = Mockito.mock(ProductDao.class);
         final SAPAccessControlEjb mockSapAccessControl = Mockito.mock(SAPAccessControlEjb.class);
 
@@ -475,75 +501,27 @@ public class ProductEjbDBFreeTest {
         SAPProductPriceCache sapPriceCacheMock = Mockito.mock(SAPProductPriceCache.class);
 
         Product product1 = ProductTestFactory.createDummyProduct("", "TST-PDT-UNO");
-        product1.setAvailabilityDate(DateUtils.addDays(product1.getAvailabilityDate(),-3));
-        product1.setDiscontinuedDate(DateUtils.addDays(new Date(),-1));
+        product1.setAvailabilityDate(availabilityDate);
+        product1.setDiscontinuedDate(discontinuedDate);
 
-        Product product2 = ProductTestFactory.createDummyProduct("", "TST-PDT-DOS");
-        product2.setAvailabilityDate(DateUtils.addDays(product2.getAvailabilityDate(),-4));
-        product2.setDiscontinuedDate(new Date());
-
-        Product product3 = ProductTestFactory.createDummyProduct("", "TST-PDT-TRES");
-        product3.setAvailabilityDate(DateUtils.addDays(product3.getAvailabilityDate(),-5));
-        product3.setDiscontinuedDate(new Date());
-
-        Product product4 = ProductTestFactory.createDummyProduct("", "TST-PDT-QUATRO");
-        product4.setAvailabilityDate(DateUtils.addDays(product4.getAvailabilityDate(),-3));
-        product4.setDiscontinuedDate(DateUtils.addDays(new Date(),-1));
-
-        Product product5 = ProductTestFactory.createDummyProduct("", "TST-PDT-CINQO");
-        product5.setAvailabilityDate(DateUtils.addDays(product5.getAvailabilityDate(),-3));
-        product5.setDiscontinuedDate(DateUtils.addDays(new Date(),-1));
-
-        Product product6 = ProductTestFactory.createDummyProduct("", "TST-PDT-SIXO");
-        product6.setAvailabilityDate(DateUtils.addDays(product6.getAvailabilityDate(),-3));
-        product6.setDiscontinuedDate(DateUtils.addDays(new Date(),-1));
-
-        List<Product> discontinuedProducts =
-                Stream.of(product1, product2, product3, product4, product5, product6).collect(Collectors.toList());
-
+        List<Product> discontinuedProducts = new ArrayList<>();
+        List<Product> currentProducts = new ArrayList<>();
+        if(product1.isDiscontinued()) {
+            discontinuedProducts = Collections.singletonList(product1);
+        }
+        if(product1.isAvailable()) {
+            currentProducts = Collections.singletonList(product1);
+        }
         Mockito.when(productDaoMock.findDiscontinuedProducts()).thenReturn(discontinuedProducts);
+        Mockito.when(productDaoMock.findProducts(Mockito.eq(ProductDao.Availability.CURRENT), Mockito.eq(
+                ProductDao.TopLevelOnly.YES), Mockito.eq(ProductDao.IncludePDMOnly.YES))).thenReturn(currentProducts);
 
         ProductEjb mockedProductEjb = new ProductEjb(productDaoMock, sapIntegrationServiceMock, auditReaderDaoMock,
                 attributeArchetypeDaoMock,mockSapAccessControl, sapPriceCacheMock);
 
+        mockedProductEjb.adjustMaterialStatusForToday();
 
-        mockedProductEjb.disableProductsFromDate(new Date());
-
-        Mockito.verify(sapIntegrationServiceMock, Mockito.times(1))
-                .publishProductInSAP(Mockito.eq(product2));
-        Mockito.verify(sapIntegrationServiceMock, Mockito.times(1))
-                .publishProductInSAP(Mockito.eq(product3));
-
-        Mockito.verify(sapIntegrationServiceMock, Mockito.times(0))
-                .publishProductInSAP(Mockito.eq(product1));
-        Mockito.verify(sapIntegrationServiceMock, Mockito.times(0))
-                .publishProductInSAP(Mockito.eq(product4));
-
-        Mockito.verify(sapIntegrationServiceMock, Mockito.times(0))
-                .publishProductInSAP(Mockito.eq(product5));
-        Mockito.verify(sapIntegrationServiceMock, Mockito.times(0))
-                .publishProductInSAP(Mockito.eq(product6));
-
-
-        mockedProductEjb.disableProductsFromDate(DateUtils.addDays(new Date(),-1));
-
-
-        Mockito.verify(sapIntegrationServiceMock, Mockito.times(1))
-                .publishProductInSAP(Mockito.eq(product2));
-        Mockito.verify(sapIntegrationServiceMock, Mockito.times(1))
-                .publishProductInSAP(Mockito.eq(product3));
-
-        Mockito.verify(sapIntegrationServiceMock, Mockito.times(1))
-                .publishProductInSAP(Mockito.eq(product1));
-        Mockito.verify(sapIntegrationServiceMock, Mockito.times(1))
-                .publishProductInSAP(Mockito.eq(product4));
-
-        Mockito.verify(sapIntegrationServiceMock, Mockito.times(1))
-                .publishProductInSAP(Mockito.eq(product5));
-        Mockito.verify(sapIntegrationServiceMock, Mockito.times(1))
-                .publishProductInSAP(Mockito.eq(product6));
-
-
+        Mockito.verify(sapIntegrationServiceMock, Mockito.times(expectedToBeProcessed)).publishProductInSAP(Mockito.any(Product.class));
     }
 }
 

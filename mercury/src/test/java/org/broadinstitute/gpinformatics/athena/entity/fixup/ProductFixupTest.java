@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.fixup;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -42,7 +43,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
@@ -83,7 +84,7 @@ public class ProductFixupTest extends Arquillian {
      */
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+        return DeploymentBuilder.buildMercuryWar(PROD, "prod");
     }
 
     // Required for Arquillian tests so it should remain enabled for sprint4.
@@ -515,7 +516,11 @@ public class ProductFixupTest extends Arquillian {
         userBean.loginOSUser();
 
         List<Product> discontinuedProducts = productDao.findDiscontinuedProducts();
-
+        System.out.println("About to discontinue this many products: " + discontinuedProducts.size());
+        discontinuedProducts.forEach(product -> {
+            System.out.println(String.format("The product %s is selected to be pushed to SAP to disable the associated Material: %s", product.getDisplayName(),
+                    FastDateFormat.getInstance("MM/dd/yyyy").format(product.getDiscontinuedDate())));
+        });
         productEjb.publishProductsToSAP(discontinuedProducts,true,
                 SapIntegrationService.PublishType.UPDATE_ONLY);
 

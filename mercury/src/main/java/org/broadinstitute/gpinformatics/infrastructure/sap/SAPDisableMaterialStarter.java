@@ -18,7 +18,6 @@ import javax.ejb.Timer;
 import javax.ejb.TimerConfig;
 import javax.ejb.TimerService;
 import javax.inject.Inject;
-import java.util.Date;
 
 import static javax.ejb.ConcurrencyManagementType.BEAN;
 
@@ -54,7 +53,7 @@ public class SAPDisableMaterialStarter {
      */
     @Timeout
     public void disableProducts(Timer timer) {
-        productEjb.disableProductsFromDate(new Date());
+        productEjb.adjustMaterialStatusForToday();
     }
 
     /**
