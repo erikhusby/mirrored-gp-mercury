@@ -491,7 +491,7 @@ public class ProductOrderActionBeanTest {
             Mockito.when(mockQuoteService.getQuoteByAlphaId(Mockito.anyString()))
                     .thenThrow(new QuoteServerException("Quote Server should not be called for SAP Source"));
 
-            sapMockQuote = TestUtils.buildTestSapQuote(quoteId, 30000d, 37387d,
+            sapMockQuote = TestUtils.buildTestSapQuote(quoteId, BigDecimal.valueOf(30000), BigDecimal.valueOf(37387),
                     pdo,quoteItemsMatchOrderProducts, "GP01");
 
             Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapMockQuote);
@@ -1286,7 +1286,7 @@ public class ProductOrderActionBeanTest {
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
 
         Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote),
-                (double) (1573 * testOrder.getSamples().size() + 2000 * testOrder.getSamples().size()));
+                BigDecimal.valueOf(1573 * testOrder.getSamples().size() + 2000 * testOrder.getSamples().size()));
         testQuote.setQuoteItems(quoteItems);
 
         Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote),
@@ -1413,21 +1413,21 @@ public class ProductOrderActionBeanTest {
         actionBean.setEditOrder(testOrder);
 
         Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote,0, null),
-                getCalculatedOrderValue(priceList, testOrder, ProductOrder.QuoteSourceType.QUOTE_SERVER, testQuote).doubleValue());
+                getCalculatedOrderValue(priceList, testOrder, ProductOrder.QuoteSourceType.QUOTE_SERVER, testQuote));
         testQuote.setQuoteItems(quoteItems);
 
         Assert.assertEquals(actionBean.estimateOutstandingOrders( testQuote,0, null),
-                getCalculatedOrderValue(priceList, testOrder, ProductOrder.QuoteSourceType.QUOTE_SERVER, testQuote).doubleValue());
+                getCalculatedOrderValue(priceList, testOrder, ProductOrder.QuoteSourceType.QUOTE_SERVER, testQuote));
 
         testOrder.updateAddOnProducts(Arrays.asList(addonNonSeqProduct, seqProduct));
 
         Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote,0, null),
-                getCalculatedOrderValue(priceList, testOrder, ProductOrder.QuoteSourceType.QUOTE_SERVER, testQuote).doubleValue());
+                getCalculatedOrderValue(priceList, testOrder, ProductOrder.QuoteSourceType.QUOTE_SERVER, testQuote));
 
         testOrder.setProduct(seqProduct);
 
         Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote,0, null),
-                getCalculatedOrderValue(priceList, testOrder, ProductOrder.QuoteSourceType.QUOTE_SERVER, testQuote).doubleValue());
+                getCalculatedOrderValue(priceList, testOrder, ProductOrder.QuoteSourceType.QUOTE_SERVER, testQuote));
 
         Assert.assertEquals(testOrder.getUnbilledSampleCount(), 75);
         ProductOrderSample abandonedSample = testOrder.getSamples().get(0);
@@ -1435,16 +1435,16 @@ public class ProductOrderActionBeanTest {
 
         Assert.assertEquals(testOrder.getUnbilledSampleCount(), 74);
         Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, null),
-                getCalculatedOrderValue(priceList, testOrder, ProductOrder.QuoteSourceType.QUOTE_SERVER, testQuote).doubleValue());
+                getCalculatedOrderValue(priceList, testOrder, ProductOrder.QuoteSourceType.QUOTE_SERVER, testQuote));
 
 
         Assert.assertEquals(testOrder.getUnbilledSampleCount(), 74);
 
         Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, null),
-                getCalculatedOrderValue(priceList, testOrder, ProductOrder.QuoteSourceType.QUOTE_SERVER, testQuote).doubleValue());
+                getCalculatedOrderValue(priceList, testOrder, ProductOrder.QuoteSourceType.QUOTE_SERVER, testQuote));
 
         Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, null),
-                getCalculatedOrderValue(priceList, testOrder, ProductOrder.QuoteSourceType.QUOTE_SERVER, testQuote).doubleValue());
+                getCalculatedOrderValue(priceList, testOrder, ProductOrder.QuoteSourceType.QUOTE_SERVER, testQuote));
     }
 
     @Test(dataProvider = "quoteSourceProvider")
@@ -1625,7 +1625,8 @@ public class ProductOrderActionBeanTest {
                 @Override
                 public SapQuote answer(InvocationOnMock invocationOnMock) throws Throwable {
                     return TestUtils.buildTestSapQuote(testQuoteIdentifier,
-                            extraOrderValues.add(getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote)).doubleValue(), 800000d,
+                            extraOrderValues.add(getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote)),
+                            BigDecimal.valueOf(800000),
                             testOrder, quoteItemsMatchOrderProducts, "GP01");
                 }
             });
@@ -1658,7 +1659,7 @@ public class ProductOrderActionBeanTest {
         }
         if (quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
             Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, null),
-                    calculatedOrderValue.add(extraOrderValues).doubleValue());
+                    calculatedOrderValue.add(extraOrderValues));
         } else {
             actionBean.clearValidationErrors();
             actionBean.validateSapQuoteDetails(mockSAPService.findSapQuote(testOrder.getQuoteId()),0);
@@ -1676,7 +1677,7 @@ public class ProductOrderActionBeanTest {
         }
         if (quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
             Assert.assertEquals(actionBean.estimateOutstandingOrders( testQuote, 0, null),
-                    calculatedOrderValue.add(extraOrderValues).doubleValue());
+                    calculatedOrderValue.add(extraOrderValues));
         } else {
             actionBean.clearValidationErrors();
             actionBean.validateSapQuoteDetails(mockSAPService.findSapQuote(testOrder.getQuoteId()),0);
@@ -1695,7 +1696,7 @@ public class ProductOrderActionBeanTest {
         }
         if (quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
             Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, null),
-                    calculatedOrderValue.add(extraOrderValues).doubleValue());
+                    calculatedOrderValue.add(extraOrderValues));
         } else {
             final SapQuote sapQuote = mockSAPService.findSapQuote(testOrder.getQuoteId());
             allValues = new HashSet<>(sapOrderValues);
@@ -1723,7 +1724,7 @@ public class ProductOrderActionBeanTest {
         }
         if (quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
             Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, null),
-                    calculatedOrderValue .add(extraOrderValues).doubleValue());
+                    calculatedOrderValue .add(extraOrderValues));
         } else {
             final SapQuote sapQuote = mockSAPService.findSapQuote(testOrder.getQuoteId());
             allValues = new HashSet<>(sapOrderValues);
@@ -1754,7 +1755,7 @@ public class ProductOrderActionBeanTest {
         }
         if (quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
             Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, null),
-                    calculatedOrderValue .add(extraOrderValues).doubleValue());
+                    calculatedOrderValue .add(extraOrderValues));
         } else {
             final SapQuote sapQuote = mockSAPService.findSapQuote(testOrder.getQuoteId());
             allValues = new HashSet<>(sapOrderValues);
@@ -1782,7 +1783,7 @@ public class ProductOrderActionBeanTest {
         }
         if (quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
             Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, null),
-                    calculatedOrderValue.add(extraOrderValues).doubleValue());
+                    calculatedOrderValue.add(extraOrderValues));
         } else {
             final SapQuote sapQuote = mockSAPService.findSapQuote(testOrder.getQuoteId());
             allValues = new HashSet<>(sapOrderValues);
@@ -1809,7 +1810,7 @@ public class ProductOrderActionBeanTest {
         }
         if (quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
             Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, null),
-                    calculatedOrderValue.add(extraOrderValues).doubleValue());
+                    calculatedOrderValue.add(extraOrderValues));
         } else {
             allValues = new HashSet<>(sapOrderValues);
             allValues.add(new OrderValue("test001", getCalculatedOrderValue(priceList, testOrder,
@@ -1874,9 +1875,9 @@ public class ProductOrderActionBeanTest {
         Set<QuoteItem> quoteItems = new HashSet<>();
         Set<SAPMaterial> materials = new HashSet<>();
 
-        final double priceItemPrice = (new BigDecimal(testQuote.getQuoteFunding().getFundsRemaining())
+        final BigDecimal priceItemPrice = (new BigDecimal(testQuote.getQuoteFunding().getFundsRemaining())
                 .divide(BigDecimal.valueOf(testOrder.getSamples().size()),2, RoundingMode.FLOOR))
-                .doubleValue();
+                ;
         final String stringPrice = String.valueOf(priceItemPrice);
         addPriceItemForProduct(testQuote.getAlphanumericId(), priceList, quoteItems, testOrder.getProduct(),
                 stringPrice, "1000", stringPrice);
@@ -1915,8 +1916,8 @@ public class ProductOrderActionBeanTest {
                     final BigDecimal totalOpenOrderValue =
                             getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote);
                     final SapQuote sapQuote = TestUtils.buildTestSapQuote(testOrder.getQuoteId(),
-                            totalOpenOrderValue.doubleValue(),
-                            totalOpenOrderValue.add(new BigDecimal(testQuote.getQuoteFunding().getFundsRemaining())).doubleValue(),
+                            totalOpenOrderValue,
+                            totalOpenOrderValue.add(new BigDecimal(testQuote.getQuoteFunding().getFundsRemaining())),
                             testOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
                     return sapQuote;
                 }
@@ -1938,7 +1939,7 @@ public class ProductOrderActionBeanTest {
 
         if(quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
             Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
-                    getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote).doubleValue());
+                    getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote));
         }
 
         testOrder.setJiraTicketKey("PDO-1294");
@@ -1953,7 +1954,7 @@ public class ProductOrderActionBeanTest {
 
         if(quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER ) {
             Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
-                    getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote).doubleValue());
+                    getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote));
         }
 
         if (quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
@@ -2516,8 +2517,8 @@ public class ProductOrderActionBeanTest {
 
                             final String quoteId = (String)invocationOnMock.getArguments()[0];
                             final SapQuote quoteObject =
-                                    TestUtils.buildTestSapQuote(quoteId , extraOrderValues.doubleValue(),
-                                            800000d, testOrder, quoteItemsMatchOrderProducts, "GP01");
+                                    TestUtils.buildTestSapQuote(quoteId , extraOrderValues,
+                                            BigDecimal.valueOf(800000), testOrder, quoteItemsMatchOrderProducts, "GP01");
                             System.out.println(String.format("Quote id of %s has: sales org of %s, Total quote amount "
                                                              + "of %s and open quote total of %s",
                                     quoteId, quoteObject.getQuoteHeader().getSalesOrganization(),
@@ -2564,7 +2565,7 @@ public class ProductOrderActionBeanTest {
         OrderCalculatedValues calculatedOrderReturnValue;
         if (quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
             Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
-                    overrideCalculatedOrderValue.add(extraOrderValues).doubleValue());
+                    overrideCalculatedOrderValue.add(extraOrderValues));
             testQuote.setQuoteItems(quoteItems);
         } else {
             final SapQuote sapQuote = mockSAPService.findSapQuote(testOrder.getQuoteId());
@@ -2593,7 +2594,7 @@ public class ProductOrderActionBeanTest {
 
         if (quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
             Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0,null),
-                    extraOrderValues.doubleValue());
+                    extraOrderValues);
         } else {
             final SapQuote sapQuote = mockSAPService.findSapQuote(testOrder.getQuoteId());
 
@@ -2629,7 +2630,7 @@ public class ProductOrderActionBeanTest {
 
         if (quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
             Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
-                    getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote).add(extraOrderValues).doubleValue());
+                    getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote).add(extraOrderValues));
         } else {
             final SapQuote sapQuote = mockSAPService.findSapQuote(testOrder.getQuoteId());
 
@@ -2663,7 +2664,7 @@ public class ProductOrderActionBeanTest {
 
         if(quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
             Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
-                    getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote).add(extraOrderValues).doubleValue());
+                    getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote).add(extraOrderValues));
         } else {
             final SapQuote sapQuote = mockSAPService.findSapQuote(testOrder.getQuoteId());
 
@@ -2697,7 +2698,7 @@ public class ProductOrderActionBeanTest {
 
         if(quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
             Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
-                    getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote).add(extraOrderValues).doubleValue());
+                    getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote).add(extraOrderValues));
         } else {
             final SapQuote sapQuote = mockSAPService.findSapQuote(testOrder.getQuoteId());
 
@@ -2733,7 +2734,7 @@ public class ProductOrderActionBeanTest {
         Assert.assertEquals(testOrder.getUnbilledSampleCount(), 74);
         if(quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
             Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
-                    getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote).add(extraOrderValues).doubleValue());
+                    getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote).add(extraOrderValues));
         } else {
             final SapQuote sapQuote = mockSAPService.findSapQuote(testOrder.getQuoteId());
             Set<OrderValue> allValues = new HashSet<>(sapOrderValues);
@@ -2766,7 +2767,7 @@ public class ProductOrderActionBeanTest {
 
         if(quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
             Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
-                    getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote).add(extraOrderValues).doubleValue());
+                    getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote).add(extraOrderValues));
         } else {
             final SapQuote sapQuote = mockSAPService.findSapQuote(testOrder.getQuoteId());
 
@@ -2798,7 +2799,7 @@ public class ProductOrderActionBeanTest {
 
         if(quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
             Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
-                    getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote).add(extraOrderValues).doubleValue());
+                    getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote).add(extraOrderValues));
         } else {
             final SapQuote sapQuote = mockSAPService.findSapQuote(testOrder.getQuoteId());
 
@@ -2834,7 +2835,7 @@ public class ProductOrderActionBeanTest {
             actionBean.validateQuoteDetails(testQuote, 0);
         } else {
             final SapQuote sapQuote =
-                    TestUtils.buildTestSapQuote(testQuoteIdentifier, extraOrderValues.doubleValue(), 800000d,
+                    TestUtils.buildTestSapQuote(testQuoteIdentifier, extraOrderValues, BigDecimal.valueOf(800000),
                             testOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
             Set<OrderValue> allValues = new HashSet<>(sapOrderValues);
             allValues.add(new OrderValue("test001", getCalculatedOrderValue(priceList, testOrder,
@@ -2972,8 +2973,8 @@ public class ProductOrderActionBeanTest {
             Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenAnswer(new Answer<SapQuote>() {
                 @Override
                 public SapQuote answer(InvocationOnMock invocationOnMock) throws Throwable {
-                    return TestUtils.buildTestSapQuote(testOrder.getQuoteId(), 100000d,
-                            1000000d, testOrder,quoteItemsMatchOrderProducts, "GP01");
+                    return TestUtils.buildTestSapQuote(testOrder.getQuoteId(), BigDecimal.valueOf(100000),
+                            BigDecimal.valueOf(1000000), testOrder,quoteItemsMatchOrderProducts, "GP01");
                 }
             });
         } else {
@@ -4496,7 +4497,7 @@ public class ProductOrderActionBeanTest {
                             salesOrg = "GP03";
                         }
                         return TestUtils.buildTestSapQuote("27000001",
-                                30000d, 37387d, pdo,
+                                BigDecimal.valueOf(30000), BigDecimal.valueOf(37387), pdo,
                                 TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, salesOrg);
                     }
                 });

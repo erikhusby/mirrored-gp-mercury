@@ -71,8 +71,8 @@ public class TestUtils {
     }
 
     @NotNull
-    public static SapQuote buildTestSapQuote(String testQuoteIdentifier, double totalOpenOrderValue,
-                                             double quoteTotal, ProductOrder billingOrder,
+    public static SapQuote buildTestSapQuote(String testQuoteIdentifier, BigDecimal totalOpenOrderValue,
+                                             BigDecimal quoteTotal, ProductOrder billingOrder,
                                              SapQuoteTestScenario quoteTestScenario, String salesorg)
             throws SAPIntegrationException {
 
@@ -90,9 +90,9 @@ public class TestUtils {
         sapQHeader.setDISTCHANNEL("GE");
         sapQHeader.setFUNDTYPE(SapIntegrationClientImpl.FundingType.PURCHASE_ORDER.name());
         sapQHeader.setQUOTESTATUSTXT("");
-        sapQHeader.setQUOTETOTAL(BigDecimal.valueOf(quoteTotal));
-        sapQHeader.setSOTOTAL(BigDecimal.valueOf(totalOpenOrderValue));
-        sapQHeader.setQUOTEOPENVAL(BigDecimal.valueOf(quoteTotal).subtract(BigDecimal.valueOf(totalOpenOrderValue)));
+        sapQHeader.setQUOTETOTAL(quoteTotal);
+        sapQHeader.setSOTOTAL(totalOpenOrderValue);
+        sapQHeader.setQUOTEOPENVAL(quoteTotal.subtract(totalOpenOrderValue));
 
         QuoteHeader header = new QuoteHeader(sapQHeader);
 

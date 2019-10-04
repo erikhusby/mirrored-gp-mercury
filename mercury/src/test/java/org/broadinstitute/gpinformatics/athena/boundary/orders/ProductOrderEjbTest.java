@@ -434,7 +434,7 @@ public class ProductOrderEjbTest {
 
         Mockito.when(mockSapService.findSapQuote(Mockito.anyString()))
                 .thenReturn(TestUtils.buildTestSapQuote(conversionPdo.getQuoteId(),
-                        10000,1000000,conversionPdo,
+                        BigDecimal.valueOf(10000), BigDecimal.valueOf(1000000),conversionPdo,
                         TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,companyCode.getSalesOrganization()));
 
         productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, true);
@@ -548,7 +548,7 @@ public class ProductOrderEjbTest {
         Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
         Mockito.when(mockSapService.findSapQuote(Mockito.anyString()))
                 .thenReturn(TestUtils.buildTestSapQuote(conversionPdo.getQuoteId(),
-                        10000,1000000,conversionPdo,
+                        BigDecimal.valueOf(10000), BigDecimal.valueOf(1000000),conversionPdo,
                         TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,companyCode.getSalesOrganization()));
 
 
@@ -632,7 +632,7 @@ public class ProductOrderEjbTest {
         Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
         Mockito.when(mockSapService.findSapQuote(Mockito.anyString()))
                 .thenReturn(TestUtils.buildTestSapQuote(conversionPdo.getQuoteId(),
-                        10000,1000000,conversionPdo,
+                        BigDecimal.valueOf(10000), BigDecimal.valueOf(1000000),conversionPdo,
                         TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,companyCode.getSalesOrganization()));
 
         productOrderEjb.publishProductOrderToSAP(conversionPdo, new MessageCollection(), true);
@@ -712,7 +712,7 @@ public class ProductOrderEjbTest {
         productPriceCache.refreshCache();
         Mockito.when(mockSapService.findSapQuote(Mockito.anyString()))
                 .thenReturn(TestUtils.buildTestSapQuote(conversionPdo.getQuoteId(),
-                        10000,1000000,conversionPdo,
+                        BigDecimal.valueOf(10000), BigDecimal.valueOf(1000000),conversionPdo,
                         TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,companyCode.getSalesOrganization()));
 
 
@@ -801,7 +801,7 @@ public class ProductOrderEjbTest {
 
         Mockito.when(mockSapService.findSapQuote(Mockito.anyString()))
                 .thenReturn(TestUtils.buildTestSapQuote(conversionPdo.getQuoteId(),
-                        10000,1000000,conversionPdo,
+                        BigDecimal.valueOf(10000), BigDecimal.valueOf(1000000),conversionPdo,
                         TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,companyCode.getSalesOrganization()));
 
 
@@ -947,7 +947,7 @@ public class ProductOrderEjbTest {
 
         Mockito.when(mockSapService.findSapQuote(Mockito.anyString()))
                 .thenReturn(TestUtils.buildTestSapQuote(conversionPdo.getQuoteId(),
-                        10000,1000000,conversionPdo,
+                        BigDecimal.valueOf(10000), BigDecimal.valueOf(1000000),conversionPdo,
                         TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,companyCode.getSalesOrganization()));
 
         productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, true);
@@ -1050,7 +1050,7 @@ public class ProductOrderEjbTest {
 
             Mockito.when(mockSapService.findSapQuote(Mockito.anyString()))
                     .thenReturn(TestUtils.buildTestSapQuote(conversionPdo.getQuoteId(),
-                            10000,1000000,conversionPdo,
+                            BigDecimal.valueOf(10000), BigDecimal.valueOf(1000000),conversionPdo,
                             TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,companyCode.getSalesOrganization()));
 
             priceList.add(new QuotePriceItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory(),

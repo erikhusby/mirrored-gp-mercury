@@ -1009,19 +1009,19 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         /**
          * The total quantity that the user was viewing when deciding what the new quantity should be.
          */
-        private BigDecimal oldQuantity;
+        private BigDecimal oldQuantity = BigDecimal.ZERO;
 
         /**
          * The current quantity loaded from the database at the time the update request was received. This may be
          * different than oldQuantity if it was changed by another user/process while this user was making billing
          * decisions.
          */
-        private BigDecimal currentQuantity;
+        private BigDecimal currentQuantity = BigDecimal.ZERO;
 
         /**
          * The new total quantity being requested.
          */
-        private BigDecimal newQuantity;
+        private BigDecimal newQuantity = BigDecimal.ZERO;
 
         /**
          * The work complete date for any new or updated ledger entries. Used as a bill date when billing to

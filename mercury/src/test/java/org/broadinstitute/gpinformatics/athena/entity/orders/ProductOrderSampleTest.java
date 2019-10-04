@@ -665,7 +665,7 @@ public class ProductOrderSampleTest {
          * This assertion is here both to document that point and as a guard against nonsensical test cases.
          */
         assertThat(expectedQuantityReadyToBill, equalTo(quantityRequested.subtract(quantityBilled)));
-        assertThat(quantityBilled, anyOf(equalTo(0), equalTo(1)));
+        assertThat(quantityBilled, anyOf(equalTo(BigDecimal.valueOf(0)), equalTo(BigDecimal.valueOf(1))));
 
         ProductOrderSample productOrderSample;
         if (quantityBilled.compareTo(BigDecimal.ZERO) == 0) {
@@ -679,8 +679,6 @@ public class ProductOrderSampleTest {
             addUnbilledLedgerEntry(productOrderSample, priceItem, quantityReadyToBill);
         }
 
-//        ProductLedgerIndex quantityIndex = new ProductLedgerIndex(productOrderSample.getProductOrder().getProduct(), priceItem);
-//        ProductOrderSample.LedgerQuantities ledgerQuantities = productOrderSample.getLedgerQuantities().get(quantityIndex );
         ProductOrderSample.LedgerQuantities ledgerQuantities = productOrderSample.getLedgerQuantities().get(
                 ProductLedgerIndex.create(null, priceItem, productOrderSample.getProductOrder().hasSapQuote()));
         BigDecimal quantityBefore = ledgerQuantities != null ? ledgerQuantities.getTotal() : BigDecimal.ZERO;

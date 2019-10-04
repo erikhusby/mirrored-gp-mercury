@@ -37,6 +37,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -389,11 +390,15 @@ public class ProductOrderTest {
         testParentOrder.addSapOrderDetail(new SapOrderDetail("testParentNumber", testParentOrder.getNonAbandonedCount().intValue(),
                 testParentOrder.getQuoteId(), SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode()));
 
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL),6);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),6);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER),6);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY),6);
-        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 0);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL),
+                BigDecimal.valueOf(6));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),
+                BigDecimal.valueOf(6));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER),
+                BigDecimal.valueOf(6));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY),
+                BigDecimal.valueOf(6));
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), BigDecimal.valueOf(0));
 
         int numberOfAbandoned = 4;
         for(ProductOrderSample sampleToAbandon:testParentOrder.getSamples()) {
@@ -404,44 +409,64 @@ public class ProductOrderTest {
             sampleToAbandon.setDeliveryStatus(ProductOrderSample.DeliveryStatus.ABANDONED);
             numberOfAbandoned--;
         }
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 2);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 2);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 2);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 2);
-        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 4);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL),
+                BigDecimal.valueOf(2));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),
+                BigDecimal.valueOf(2));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER),
+                BigDecimal.valueOf(2));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY),
+                BigDecimal.valueOf(2));
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), BigDecimal.valueOf(4));
 
         ProductOrder cloneOrder = ProductOrder.cloneProductOrder(testParentOrder, true);
         cloneOrder.setOrderStatus(OrderStatus.Draft);
 
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 2);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 2);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 2);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 2);
-        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 4);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL),
+                BigDecimal.valueOf(2));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER),
+                BigDecimal.valueOf(2));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),
+                BigDecimal.valueOf(2));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY),
+                BigDecimal.valueOf(2));
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), BigDecimal.valueOf(4));
         cloneOrder.addSamples(fourBspSamplesWithNoDupes);
 
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 6);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 6);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 2);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 2);
-        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 0);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL),
+                BigDecimal.valueOf(6));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER),
+                BigDecimal.valueOf(6));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),
+                BigDecimal.valueOf(2));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY),
+                BigDecimal.valueOf(2));
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), BigDecimal.valueOf(0));
 
         cloneOrder.setOrderStatus(OrderStatus.Pending);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 6);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 6);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 2);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 2);
-        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 0);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL),
+                BigDecimal.valueOf(6));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER),
+                BigDecimal.valueOf(6));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),
+                BigDecimal.valueOf(2));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY),
+                BigDecimal.valueOf(2));
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), BigDecimal.valueOf(0));
 
 
 
         cloneOrder.setJiraTicketKey("PDO-CLONE1");
         cloneOrder.setOrderStatus(OrderStatus.Submitted);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 6);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 6);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 6);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 6);
-        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 0);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL),
+                BigDecimal.valueOf(6));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER),
+                BigDecimal.valueOf(6));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),
+                BigDecimal.valueOf(6));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY),
+                BigDecimal.valueOf(6));
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), BigDecimal.valueOf(0));
 
         int numberNextAbandoned = 1;
         for (ProductOrderSample productOrderSample : testParentOrder.getSamples()) {
@@ -457,35 +482,51 @@ public class ProductOrderTest {
 
         ProductOrder cloneOrder2 = ProductOrder.cloneProductOrder(testParentOrder, false);
         cloneOrder2.setOrderStatus(OrderStatus.Draft);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 5);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 5);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 5);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 5);
-        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 1);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL),
+                BigDecimal.valueOf(5));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER),
+                BigDecimal.valueOf(5));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),
+                BigDecimal.valueOf(5));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY),
+                BigDecimal.valueOf(5));
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), BigDecimal.valueOf(1));
 
         cloneOrder2.addSamples(ProductOrderSampleTestFactory.createSampleListWithMercurySamples("SM-test9"));
 
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 6);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 5);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 5);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 5);
-        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 0);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL),
+                BigDecimal.valueOf(6));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER),
+                BigDecimal.valueOf(5));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),
+                BigDecimal.valueOf(5));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY),
+                BigDecimal.valueOf(5));
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), BigDecimal.valueOf(0));
 
         cloneOrder2.setOrderStatus(OrderStatus.Pending);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 6);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 5);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 5);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 5);
-        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 0);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL),
+                BigDecimal.valueOf(6));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER),
+                BigDecimal.valueOf(5));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),
+                BigDecimal.valueOf(5));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY),
+                BigDecimal.valueOf(5));
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), BigDecimal.valueOf(0));
 
         cloneOrder2.setJiraTicketKey("PDO-CLONE2");
         cloneOrder2.setOrderStatus(OrderStatus.Submitted);
 
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 6);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 5);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 5);
-        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 6);
-        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 0);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL),
+                BigDecimal.valueOf(6));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER),
+                BigDecimal.valueOf(5));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),
+                BigDecimal.valueOf(5));
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY),
+                BigDecimal.valueOf(6));
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), BigDecimal.valueOf(0));
 
     }
 
@@ -663,7 +704,7 @@ public class ProductOrderTest {
     public void testDeterminingQuoteItemsForOrder() throws Exception {
         ProductOrder quoteTestOrder = ProductOrderTestFactory.createDummyProductOrder();
         SapQuote sapQuote =
-                TestUtils.buildTestSapQuote("00332883", 20000d, 100000d,
+                TestUtils.buildTestSapQuote("00332883", BigDecimal.valueOf(20000), BigDecimal.valueOf(100000),
                         quoteTestOrder, TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
 
@@ -691,7 +732,7 @@ public class ProductOrderTest {
         }
 
         SapQuote mixedQuote =
-                TestUtils.buildTestSapQuote("00332883", 20000d, 100000d,
+                TestUtils.buildTestSapQuote("00332883", BigDecimal.valueOf(20000), BigDecimal.valueOf(100000),
                         quoteTestOrder, TestUtils.SapQuoteTestScenario.MATCH_QUOTE_ITEMS_AND_DOLLAR_LIMITED,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
         quoteTestOrder.setQuoteId(mixedQuote.getQuoteHeader().getQuoteNumber());
@@ -721,7 +762,7 @@ public class ProductOrderTest {
         }
 
         SapQuote dollarLimitQuote =
-                TestUtils.buildTestSapQuote("00332883", 20000d, 100000d,
+                TestUtils.buildTestSapQuote("00332883", BigDecimal.valueOf(20000), BigDecimal.valueOf(100000),
                         quoteTestOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
         quoteTestOrder.setQuoteId(dollarLimitQuote.getQuoteHeader().getQuoteNumber());
@@ -749,7 +790,7 @@ public class ProductOrderTest {
 
 
         SapQuote differingQuote =
-                TestUtils.buildTestSapQuote("00332883", 20000d, 100000d,
+                TestUtils.buildTestSapQuote("00332883", BigDecimal.valueOf(20000), BigDecimal.valueOf(100000),
                         quoteTestOrder, TestUtils.SapQuoteTestScenario.PRODUCTS_DIFFER,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
         quoteTestOrder.setQuoteId(differingQuote.getQuoteHeader().getQuoteNumber());
@@ -760,7 +801,7 @@ public class ProductOrderTest {
         }
 
         SapQuote multDollarLimited =
-            TestUtils.buildTestSapQuote("00332883", 20000d, 100000d,
+            TestUtils.buildTestSapQuote("00332883", BigDecimal.valueOf(20000), BigDecimal.valueOf(100000),
                 quoteTestOrder, TestUtils.SapQuoteTestScenario.MULTIPLE_DOLLAR_LIMITED,
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
         quoteTestOrder.setQuoteId(multDollarLimited.getQuoteHeader().getQuoteNumber());

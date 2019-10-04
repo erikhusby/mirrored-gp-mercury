@@ -137,13 +137,13 @@ public class BillingSessionActionBeanTest {
             new QuoteImportItem(sapQuoteId, new PriceItem(sapQuoteId, null, null, null), "",
                 Collections.singletonList(ledgerEntry), new Date(), sapProductOrder.getProduct(), sapProductOrder);
         sapQuoteImportItem.setSapQuote(TestUtils
-            .buildTestSapQuote(sapQuoteId, 0d, 0d, sapProductOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED,
+            .buildTestSapQuote(sapQuoteId, BigDecimal.valueOf(0), BigDecimal.valueOf(0), sapProductOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED,
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization()));
         QuoteImportItem sapQuoteImportItem2 =
             new QuoteImportItem(sapQuoteId2, new PriceItem(sapQuoteId2, null, null, null), "",
                 Collections.singletonList(ledgerEntry), new Date(), sapProductOrder.getProduct(), sapProductOrder);
         sapQuoteImportItem2.setSapQuote(TestUtils
-            .buildTestSapQuote(sapQuoteId2, 0d, 0d, sapProductOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED,
+            .buildTestSapQuote(sapQuoteId2, BigDecimal.valueOf(0), BigDecimal.valueOf(0), sapProductOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED,
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization()));
 
         List<Object[]> testCases = new ArrayList<>();

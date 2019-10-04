@@ -34,7 +34,6 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -135,7 +134,7 @@ public class SapIntegrationServiceImplDBFreeTest {
                     SAP_QUOTE_ID);
         }
 
-        sapQuote = TestUtils.buildTestSapQuote(SAP_QUOTE_ID, 10d, 10d, conversionPdo,
+        sapQuote = TestUtils.buildTestSapQuote(SAP_QUOTE_ID, BigDecimal.valueOf(10), BigDecimal.valueOf(10), conversionPdo,
                 TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS, "GP02");
         conversionPdo.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
 
@@ -204,7 +203,7 @@ public class SapIntegrationServiceImplDBFreeTest {
 
 
 
-        sapQuote = TestUtils.buildTestSapQuote(SAP_QUOTE_ID, 10d, 10d, conversionPdo,
+        sapQuote = TestUtils.buildTestSapQuote(SAP_QUOTE_ID, BigDecimal.valueOf(10), BigDecimal.valueOf(10), conversionPdo,
                 TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS, "GP01");
         conversionPdo.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
         conversionPdo.clearCustomPriceAdjustment();
@@ -471,7 +470,7 @@ public class SapIntegrationServiceImplDBFreeTest {
                     SAP_QUOTE_ID);
         }
 
-        this.sapQuote = TestUtils.buildTestSapQuote(SAP_QUOTE_ID, 100000d, 200000d, productOrder,
+        this.sapQuote = TestUtils.buildTestSapQuote(SAP_QUOTE_ID, BigDecimal.valueOf(100000), BigDecimal.valueOf(200000), productOrder,
                 TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
 
@@ -962,30 +961,5 @@ public class SapIntegrationServiceImplDBFreeTest {
         testScenarios.add(new Object[]{ProductOrder.OrderStatus.Pending, 0});
 
         return testScenarios.iterator();
-    }
-
-    @DataProvider(name="bigDecimalScalingTests")
-    public Iterator<Object[]> bigDecimalValueTests() {
-        List<Object[]> testScenarios = new ArrayList<>();
-
-        testScenarios.add(new Object[]{"0.1134", 4});
-        testScenarios.add(new Object[]{"1", 0});
-        testScenarios.add(new Object[]{"5", 0});
-        testScenarios.add(new Object[]{"2.25", 2});
-        testScenarios.add(new Object[]{"3.125", 3});
-        testScenarios.add(new Object[]{"5.03125", 5});
-
-        return testScenarios.iterator();
-    }
-
-    @Test(dataProvider = "bigDecimalScalingTests")
-    public void testScaleBigDecimal(String originalNumber, int scale) {
-        Double convertedOriginal = Double.valueOf(originalNumber);
-        double unboxedOriginal = convertedOriginal.doubleValue();
-
-        BigDecimal sapQuantity = (new BigDecimal(unboxedOriginal)).setScale(scale, RoundingMode.HALF_UP);
-
-        assertThat(SapIntegrationServiceImpl.generateScaledBigDecimal(unboxedOriginal).toString(),
-                is(equalTo(sapQuantity.toString())));
     }
 }
