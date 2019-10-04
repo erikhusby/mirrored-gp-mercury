@@ -319,6 +319,8 @@ public class UserBean implements Serializable {
         return roles.contains(Role.Developer);
     }
 
+    public boolean isNotPDMOrDev() {return !roles.contains(Role.Developer)&&!roles.contains(Role.PDM);}
+
     public boolean isGPPMUser() {
         return roles.contains(Role.GPProjectManager);
     }

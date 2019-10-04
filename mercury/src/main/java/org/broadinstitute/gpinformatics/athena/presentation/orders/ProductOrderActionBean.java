@@ -451,6 +451,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private LabVesselDao labVesselDao;
 
+    private UserBean userBean;
+
     private RegulatoryInfoDao regulatoryInfoDao;
 
     private Map<String, Date> productOrderSampleReceiptDates;
@@ -4062,4 +4064,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void setQuoteSource(ProductOrder.QuoteSourceType quoteSource) {
         this.quoteSource = quoteSource;
     }
+
+    public boolean canEditProduct() {return userBean.isNotPDMOrDev();}
 }
