@@ -100,6 +100,12 @@
         <dropUniqueConstraint tableName="BILLING_LEDGER" schemaName="ATHENA" constraintName="UK_BILLING_LEDGER"/>
     </changeSet>
 
+    <changeSet id="GPLIM-6660-001" author="epolk">
+        <createIndex indexName="IX_SAMPLE_RCPT_VAL_AUD" tableName="SAMPLE_RECEIPT_VALIDATION_AUD" schemaName="athena">
+            <column name="VALIDATION_ID"/>
+            <column name="REV"/>
+        </createIndex>
+    </changeSet>
     <changeSet id="GPLIM-6607-change-addon-adjustment-quantity-type" author="scottmat">
         <modifyDataType tableName="PDO_ADDON_PRICE_ADJUSTMENT" columnName="ADJUSTMENT_QUANTITY"
                         newDataType="number(23,4)" schemaName="ATHENA" />
@@ -109,7 +115,7 @@
         <modifyDataType tableName="PDO_ADDON_PRICE_ADJUSTMENT_AUD" columnName="ADJUSTMENT_QUANTITY"
                         newDataType="number(23,4)" schemaName="ATHENA" />
     </changeSet>
-    
+
     <changeSet id="GPLIM-6607-change-adjustment-quantity-type" author="scottmat">
         <modifyDataType tableName="PDO_PRICE_ADJUSTMENT" columnName="ADJUSTMENT_QUANTITY"
                         newDataType="number(23,4)" schemaName="ATHENA" />

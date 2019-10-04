@@ -23,6 +23,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Stateful
 @RequestScoped
@@ -181,6 +182,16 @@ public class ProductDao extends GenericDao implements Serializable {
      */
     public Product findByName(String productName) {
         return findSingle(Product.class, Product_.productName, productName);
+    }
+
+    /** Returns products by name, excluding products that are not available yet or that are discontinued. */
+    public List<Product> findAvailableByName(String productName) {
+        return findList(Product.class, Product_.productName, productName).stream().
+                filter(product -> product.getAvailabilityDate() != null &&
+                        product.getAvailabilityDate().before(Calendar.getInstance().getTime())).
+                filter(product -> product.getDiscontinuedDate() == null ||
+                        product.getDiscontinuedDate().after(Calendar.getInstance().getTime())).
+                collect(Collectors.toList());
     }
 
     public Product findByBusinessKey(String key) {

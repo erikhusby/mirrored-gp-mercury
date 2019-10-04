@@ -32,21 +32,6 @@ public class BSPSampleDataFetcherContainerTest {
         Assert.assertFalse(notFFPE.getFfpeStatus());
     }
 
-    public void testSamplePlastic() {
-        BspSampleData rootSample = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-12LY");
-        BspSampleData aliquotSample = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-3HM8");
-
-        Assert.assertNotNull(rootSample);
-        Assert.assertNotNull(aliquotSample);
-        List<BspSampleData> sampleDataList = Arrays.asList(rootSample, aliquotSample);
-
-        bspSampleDataFetcher.fetchSamplePlastic(sampleDataList);
-
-        Assert.assertNotNull(rootSample.getPlasticBarcodes());
-        Assert.assertNotNull(aliquotSample.getPlasticBarcodes());
-    }
-
-
     public void testGetSampleDetails() {
         String barcode = "0163031423";
         List<String> barcodes =

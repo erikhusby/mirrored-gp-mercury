@@ -97,7 +97,7 @@ public class LabVesselMetricPlugin implements ListPlugin {
         if( metric.getUnits() != LabMetric.LabUnit.UG_PER_ML && metric.getUnits() != LabMetric.LabUnit.NG_PER_UL ) {
             value += " " + metric.getUnits().getDisplayName();
         }
-        valueCell = new ConfigurableList.Cell(QUANT_VALUE_HEADERS.get(metric.getName()), value, value);
+        valueCell = new ConfigurableList.Cell(QUANT_VALUE_HEADERS.get(metric.getName()), metric.getValue(), value);
         LabMetricDecision decision = metric.getLabMetricDecision();
         if (decision != null) {
             decisionCell =

@@ -4,7 +4,10 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import javax.annotation.Nonnull;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CustomField {
 
@@ -173,6 +176,16 @@ public class CustomField {
         this(submissionFields.get(field.getName()), new ValueContainer(value));
     }
 
+    /** Constructor for a single-select Jira dropdown field. */
+    public CustomField(String value, @Nonnull CustomFieldDefinition customFieldDefinition) {
+        this(customFieldDefinition, new ValueContainer(value));
+    }
+
+    /** Constructor for a multi-select Jira dropdown field. */
+    public CustomField(String[] values, @Nonnull CustomFieldDefinition customFieldDefinition) {
+        this(customFieldDefinition,
+                Stream.of(values).map(value -> new ValueContainer(value)).collect(Collectors.toList()).toArray());
+    }
 
     /**
      * Field Constructor associated with a cascading select field.  The structure of a cascading select is different

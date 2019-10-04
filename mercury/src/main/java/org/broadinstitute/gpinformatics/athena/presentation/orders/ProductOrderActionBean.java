@@ -2307,7 +2307,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                     logger.error(e);
                 } finally {
                     if (jsonGenerator!=null && !jsonGenerator.isClosed()) {
-                        jsonGenerator.close();
+                        try { jsonGenerator.close(); } catch (IOException e2) {}
                     }
                 }
             }
