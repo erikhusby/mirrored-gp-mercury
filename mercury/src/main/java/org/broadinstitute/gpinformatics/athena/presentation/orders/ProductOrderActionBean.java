@@ -799,7 +799,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         requireField(editOrder.getProduct(), "a product", action);
 
         if (editOrder.getProduct() != null && editOrder.getProduct().getSupportsNumberOfLanes()) {
-            requireField(editOrder.getLaneCount() > 0, "a specified number of lanes", action);
+            requireField(editOrder.getLaneCount().compareTo(BigDecimal.ZERO) > 0, "a specified number of lanes", action);
         }
 
         if(action.equals(PLACE_ORDER_ACTION) && editOrder.getProduct() != null && editOrder.getProduct().isClinicalProduct()) {
@@ -951,12 +951,12 @@ public class ProductOrderActionBean extends CoreActionBean {
             addGlobalValidationError(unFundedMessage);
         }
 
-        double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
-        double outstandingEstimate = estimateOutstandingOrders(quote, additionalSampleCount, editOrder);
-        double valueOfCurrentOrder = 0;
+        BigDecimal fundsRemaining = new BigDecimal(quote.getQuoteFunding().getFundsRemaining());
+        BigDecimal outstandingEstimate = estimateOutstandingOrders(quote, additionalSampleCount, editOrder);
+        BigDecimal valueOfCurrentOrder = BigDecimal.ZERO;
 
-        if (fundsRemaining <= 0d ||
-            (fundsRemaining < (outstandingEstimate+valueOfCurrentOrder))) {
+        if (fundsRemaining.compareTo(BigDecimal.ZERO) <= 0 ||
+            (fundsRemaining.compareTo(outstandingEstimate.add(valueOfCurrentOrder))) <0) {
             String inssuficientFundsMessage = "Insufficient funds are available on " + quote.getName();
             addGlobalValidationError( inssuficientFundsMessage);
         }
@@ -1018,7 +1018,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      * Retrieves and determines the monitary value of a subset of Open Orders within Mercury
      * @return total dollar amount of the monitary value of orders associated with the given quote
      */
-    double estimateOutstandingOrders(Quote foundQuote, int addedSampleCount, ProductOrder productOrder)
+    BigDecimal estimateOutstandingOrders(Quote foundQuote, int addedSampleCount, ProductOrder productOrder)
             throws InvalidProductException {
 
         //Creating a new array list to be able to remove items from it if need be
@@ -1027,7 +1027,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             ordersWithCommonQuote.addAll(productOrderDao.findOrdersWithCommonQuote(foundQuote.getAlphanumericId()));
         }
 
-        double value = 0d;
+        BigDecimal value = BigDecimal.ZERO;
 
         if (productOrder != null && !ordersWithCommonQuote.contains(productOrder)) {
 
@@ -1035,7 +1035,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             ordersWithCommonQuote.add(productOrder);
         }
 
-        return value + getValueOfOpenOrders(ordersWithCommonQuote, foundQuote);
+        return value.add(getValueOfOpenOrders(ordersWithCommonQuote, foundQuote));
     }
 
     /**
@@ -1045,15 +1045,15 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param quote
      * @return Total dollar amount which equates to the monitary value of all orders given
      */
-    double getValueOfOpenOrders(List<ProductOrder> ordersWithCommonQuote, Quote quote)
+    BigDecimal getValueOfOpenOrders(List<ProductOrder> ordersWithCommonQuote, Quote quote)
             throws InvalidProductException {
-        double value = 0d;
+        BigDecimal value = BigDecimal.ZERO;
 
         Set<ProductOrder> justParents = new HashSet<>();
         justParents.addAll(ordersWithCommonQuote);
 
         for (ProductOrder testOrder : justParents) {
-            value += getOrderValue(testOrder, testOrder.getUnbilledSampleCount(), quote);
+            value = value.add(getOrderValue(testOrder, new BigDecimal(testOrder.getUnbilledSampleCount()), quote));
         }
         return value;
     }
@@ -1068,21 +1068,21 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param quote         Quote used in the order for which this price is being derived
      * @return Total monitary value of the order
      */
-    double getOrderValue(ProductOrder testOrder, int sampleCount, Quote quote) throws InvalidProductException {
-        double value = 0d;
+    BigDecimal getOrderValue(ProductOrder testOrder, BigDecimal sampleCount, Quote quote) throws InvalidProductException {
+        BigDecimal value = BigDecimal.ZERO;
         if(testOrder.getProduct() != null) {
             try {
                 final Product product = testOrder.getProduct();
-                double productValue =
+                BigDecimal productValue =
                         getProductValue(getUnbilledCountForProduct(testOrder, sampleCount, product), product,
                                 quote, testOrder);
-                value += productValue;
+                value = value.add(productValue);
                 for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
                     final Product addOn = testOrderAddon.getAddOn();
-                    double addOnValue =
+                    BigDecimal addOnValue =
                             getProductValue(getUnbilledCountForProduct(testOrder, sampleCount, addOn), addOn,
                                     quote, testOrder);
-                    value += addOnValue;
+                    value = value.add(addOnValue);
                 }
             } catch (InvalidProductException e) {
                 throw new InvalidProductException("For " + testOrder.getBusinessKey() + ": " + testOrder.getName() +
@@ -1092,20 +1092,20 @@ public class ProductOrderActionBean extends CoreActionBean {
         return value;
     }
 
-    protected int getUnbilledCountForProduct(ProductOrder productOrder, int sampleCount, Product product)
+    protected BigDecimal getUnbilledCountForProduct(ProductOrder productOrder, BigDecimal sampleCount, Product product)
             throws InvalidProductException {
-        int unbilledCount = sampleCount;
+        BigDecimal unbilledCount = sampleCount;
 
         final PriceAdjustment adjustmentForProduct = productOrder.getAdjustmentForProduct(product);
-        int totalAdjustmentCount = 0;
+        BigDecimal totalAdjustmentCount = BigDecimal.ZERO;
         if(adjustmentForProduct != null && adjustmentForProduct.getAdjustmentQuantity() != null) {
             totalAdjustmentCount = adjustmentForProduct.getAdjustmentQuantity();
-            unbilledCount = (int) ProductOrder.getUnbilledNonSampleCount(productOrder, product, totalAdjustmentCount);
+            unbilledCount = ProductOrder.getUnbilledNonSampleCount(productOrder, product, totalAdjustmentCount);
         }
 
         if (product.getSupportsNumberOfLanes()) {
-            int totalCount = productOrder.getLaneCount();
-            unbilledCount = (int) ProductOrder.getUnbilledNonSampleCount(productOrder, product, totalCount);
+            BigDecimal totalCount = productOrder.getLaneCount();
+            unbilledCount = ProductOrder.getUnbilledNonSampleCount(productOrder, product, totalCount);
         }
         return unbilledCount;
     }
@@ -1120,9 +1120,9 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param productOrder
      * @return Derived value of the Product price multiplied by the number of unbilled samples
      */
-    double getProductValue(int unbilledCount, Product product, Quote quote,
+    BigDecimal getProductValue(BigDecimal unbilledCount, Product product, Quote quote,
                            ProductOrder productOrder) throws InvalidProductException {
-        double productValue = 0d;
+        BigDecimal productValue = BigDecimal.ZERO;
         String foundPrice;
         try {
             foundPrice = productOrderEjb.validateQuoteAndGetPrice(quote, product, productOrder);
@@ -1131,17 +1131,17 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         if (StringUtils.isNotBlank(foundPrice)) {
-            Double productPrice = Double.valueOf(foundPrice);
+            BigDecimal productPrice = new BigDecimal(foundPrice);
 
             final PriceAdjustment adjustmentForProduct = productOrder.getAdjustmentForProduct(product);
-            int adjustedCount = unbilledCount;
+            BigDecimal adjustedCount = unbilledCount;
             if(adjustmentForProduct != null) {
                 if(adjustmentForProduct.getAdjustmentValue() != null) {
-                    productPrice = adjustmentForProduct.getAdjustmentValue().doubleValue();
+                    productPrice = adjustmentForProduct.getAdjustmentValue();
                 }
             }
 
-            productValue = productPrice * (unbilledCount);
+            productValue = productPrice.multiply(unbilledCount);
         } else {
             throw new InvalidProductException("Price for " + product.getPriceItemDisplayName() +
                                               " for product " + product.getDisplayName() + " was not found.");
@@ -1855,9 +1855,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         final List<ProductOrderSample> replacementSamples = stringToSampleList(replacementSampleList);
 
-        if(editOrder.getNumberForReplacement() <= 0 ) {
+        if(editOrder.getNumberForReplacement().compareTo(BigDecimal.ZERO) <= 0 ) {
             addGlobalValidationError("There are no samples to replace.  If you must process samples, please open a new Product Order");
-        } else if (replacementSamples.size() > editOrder.getNumberForReplacement()) {
+        } else if (editOrder.getNumberForReplacement().compareTo(BigDecimal.valueOf(replacementSamples.size()))<0 ) {
             addGlobalValidationError("You are attempting to replace more samples than you are able to.  Please reduce the number samples entered");
         }
     }
@@ -1875,7 +1875,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         final List<ProductOrderSample> replacementSamples = stringToSampleList(replacementSampleList);
 
         if(editOrder.isPriorToSAP1_5() && editOrder.isSavedInSAP() && editOrder.hasAtLeastOneBilledLedgerEntry() &&
-           (editOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL) < editOrder.latestSapOrderDetail().getPrimaryQuantity()) ) {
+           (editOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL)
+                    .compareTo(BigDecimal.valueOf(editOrder.latestSapOrderDetail().getPrimaryQuantity()))<0) ) {
             shareSapOrder = true;
         }
         ProductOrder.SaveType saveType = ProductOrder.SaveType.CREATING;

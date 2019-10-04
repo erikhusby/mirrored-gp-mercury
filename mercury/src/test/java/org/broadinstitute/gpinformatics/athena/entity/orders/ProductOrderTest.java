@@ -386,7 +386,7 @@ public class ProductOrderTest {
     public void testNonAbandonedCount() throws Exception {
         ProductOrder testParentOrder = new ProductOrder(TEST_CREATOR, "Test order with Abandoned Count",
                 sixMercurySamplesNoDupes, QUOTE, null, null);
-        testParentOrder.addSapOrderDetail(new SapOrderDetail("testParentNumber", testParentOrder.getNonAbandonedCount(),
+        testParentOrder.addSapOrderDetail(new SapOrderDetail("testParentNumber", testParentOrder.getNonAbandonedCount().intValue(),
                 testParentOrder.getQuoteId(), SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode()));
 
         Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL),6);

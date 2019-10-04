@@ -230,20 +230,20 @@ public class TestUtils {
             LedgerEntry primaryItemSampleEntry;
             LedgerEntry addonItemSampleEntry;
             if(productOrder.hasSapQuote()) {
-                primaryItemSampleEntry = new LedgerEntry(sample, productOrder.getProduct(), new Date(),1);
+                primaryItemSampleEntry = new LedgerEntry(sample, productOrder.getProduct(), new Date(),BigDecimal.ONE);
                 primaryItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
 
                 addonItemSampleEntry = new LedgerEntry(sample,
                         productOrder.getAddOns().iterator().next().getAddOn(),
-                        new Date(),1);
+                        new Date(), BigDecimal.ONE);
             } else {
                 primaryItemSampleEntry = new LedgerEntry(sample, productOrder.getProduct().getPrimaryPriceItem(),
-                        new Date(), 1);
+                        new Date(), BigDecimal.ONE);
                 primaryItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
 
                 addonItemSampleEntry = new LedgerEntry(sample,
                         productOrder.getAddOns().iterator().next().getAddOn().getPrimaryPriceItem(),
-                        new Date(),1);
+                        new Date(), BigDecimal.ONE);
 
             }
             addonItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM);

@@ -30,6 +30,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -152,8 +153,8 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
         this.ledgerEntries.add(ledgerEntry);
     }
 
-    public Map<Product, Double> getNumberOfBilledEntriesByProduct() {
-        Map<Product, Double> billedCount = new HashMap<>();
+    public Map<Product, BigDecimal> getNumberOfBilledEntriesByProduct() {
+        Map<Product, BigDecimal> billedCount = new HashMap<>();
         for (LedgerEntry ledgerEntry : this.ledgerEntries) {
             final ProductOrder productOrder = ledgerEntry.getProductOrderSample().getProductOrder();
             Product aggregatingProduct = null;
@@ -172,8 +173,8 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
             }
 
             if (ledgerEntry.isBilled()) {
-                double oldCount = billedCount.getOrDefault(aggregatingProduct, 0d);
-                billedCount.put(aggregatingProduct, oldCount + ledgerEntry.getQuantity());
+                BigDecimal oldCount = billedCount.getOrDefault(aggregatingProduct, BigDecimal.ZERO);
+                billedCount.put(aggregatingProduct, oldCount.add(ledgerEntry.getQuantity()));
             }
         }
 
@@ -211,7 +212,7 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
         return updateData;
     }
 
-    public double getBilledSampleQuantity(final Product targetProduct) {
+    public BigDecimal getBilledSampleQuantity(final Product targetProduct) {
         final Iterable<LedgerEntry> billedSamplesByPriceItemFilter = Iterables
                 .filter(getLedgerEntries(), new Predicate<LedgerEntry>() {
 
@@ -222,9 +223,9 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
                     }
                 });
 
-        double billedSampleResult = 0d;
+        BigDecimal billedSampleResult = BigDecimal.ZERO;
         for (LedgerEntry ledgerEntry : billedSamplesByPriceItemFilter) {
-            billedSampleResult += ledgerEntry.getQuantity();
+            billedSampleResult = billedSampleResult.add( ledgerEntry.getQuantity());
         }
 
         return billedSampleResult;

@@ -50,6 +50,7 @@ import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -350,7 +351,7 @@ public class LedgerEntryFixupTest extends Arquillian {
 
         final String correction = quoteService.registerNewSAPWork(quoteByAlphaId,
                 QuotePriceItem.convertMercuryPriceItem(entryToCorrect.getPriceItem()), null,
-                entryToCorrect.getWorkCompleteDate(), -entryToCorrect.getQuantity(),
+                entryToCorrect.getWorkCompleteDate(), entryToCorrect.getQuantity().negate(),
                 "https://gpinfojira.broadinstitute.org/jira/browse/SUPPORT-4164",
                 "correction", "SUPPORT-4164", null);
 
@@ -383,7 +384,7 @@ public class LedgerEntryFixupTest extends Arquillian {
 
         final String correction = quoteService.registerNewSAPWork(quoteByAlphaId,
                 QuotePriceItem.convertMercuryPriceItem(entryToCorrect.getPriceItem()), null,
-                entryToCorrect.getWorkCompleteDate(), -4,
+                entryToCorrect.getWorkCompleteDate(), BigDecimal.valueOf(4).negate(),
                 "https://gpinfojira.broadinstitute.org/jira/browse/SUPPORT-4714",
                 "correction", "SUPPORT-4714", null);
 
@@ -468,7 +469,7 @@ public class LedgerEntryFixupTest extends Arquillian {
 
         final String correction = quoteService.registerNewSAPWork(quoteByAlphaId,
                 QuotePriceItem.convertMercuryPriceItem(collectedPriceItem.iterator().next()), null,
-                collectedWorkCompleteDate.iterator().next(), -1.75,
+                collectedWorkCompleteDate.iterator().next(), BigDecimal.valueOf(1.75).negate(),
                 "https://gpinfojira.broadinstitute.org/jira/browse/SUPPORT-5409",
                 "correction", "SUPPORT-5409", null);
 
@@ -505,7 +506,7 @@ public class LedgerEntryFixupTest extends Arquillian {
             final String[] lineSplit = line.split("\\s");
             final String workItem = lineSplit[0];
             final String quote = lineSplit[2];
-            final double reversalAmount = Double.parseDouble(lineSplit[1]);
+            final BigDecimal reversalAmount = new BigDecimal(lineSplit[1]);
             final String supportTicket = lineSplit[3];
 
             List<LedgerEntry> entryToCorrect =
@@ -529,7 +530,7 @@ public class LedgerEntryFixupTest extends Arquillian {
 
             final String correction = quoteService.registerNewSAPWork(quoteByAlphaId,
                     QuotePriceItem.convertMercuryPriceItem(collectedPriceItem.iterator().next()), null,
-                    collectedWorkCompleteDate.iterator().next(), -reversalAmount,
+                    collectedWorkCompleteDate.iterator().next(), reversalAmount.negate(),
                     "https://gpinfojira.broadinstitute.org/jira/browse/" + supportTicket,
                     "correction", supportTicket, null);
 

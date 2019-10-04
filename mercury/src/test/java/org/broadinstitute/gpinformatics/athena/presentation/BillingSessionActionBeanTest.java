@@ -29,6 +29,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -300,10 +301,10 @@ public class BillingSessionActionBeanTest {
         List<LedgerEntry> ledgerItems = new ArrayList<>();
         LedgerEntry ledgerEntry = null;
         if (!pdo.hasSapQuote()){
-            ledgerEntry = new LedgerEntry(null, new PriceItem(), new Date(), 2);
+            ledgerEntry = new LedgerEntry(null, new PriceItem(), new Date(), BigDecimal.valueOf(2));
             ledgerEntry.setWorkItem(TEST_WORKID);
         } else {
-            ledgerEntry = new LedgerEntry(null, pdo.getProduct(), new Date(), 2);
+            ledgerEntry = new LedgerEntry(null, pdo.getProduct(), new Date(), BigDecimal.valueOf(2));
             ledgerEntry.setWorkItem(TEST_WORKID);
         }
         ledgerItems.add(ledgerEntry);

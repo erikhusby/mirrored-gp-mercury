@@ -243,7 +243,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * Counts the number of lanes, the default value is one lane.
      */
     @Column(name = "count")
-    private int laneCount = 1;
+    private BigDecimal laneCount = BigDecimal.ONE;
 
     @Column(name = "REQUISITION_NAME", length = 256)
     private String requisitionName;
@@ -664,11 +664,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return StringUtils.join(addOnArray, delimiter);
     }
 
-    public int getLaneCount() {
+    public BigDecimal getLaneCount() {
         return laneCount;
     }
 
-    public void setLaneCount(int laneCount) {
+    public void setLaneCount(BigDecimal laneCount) {
         this.laneCount = laneCount;
     }
 
@@ -1215,8 +1215,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * @param sameSapOrderOnly tells what kind of aggregation the count should do
      * @return
      */
-    public int getTotalNonAbandonedCount(CountAggregation sameSapOrderOnly) {
-        int count = 0;
+    public BigDecimal getTotalNonAbandonedCount(CountAggregation sameSapOrderOnly) {
+        BigDecimal count = BigDecimal.ZERO;
         count = getNonAbandonedCount();
 
         for (ProductOrder childOrder : getChildOrders()) {
@@ -1238,7 +1238,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 }
                 break;
             }
-            count += childOrder.getNonAbandonedCount();
+            count = count.add(childOrder.getNonAbandonedCount());
         }
 
         return count;
@@ -1249,12 +1249,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * samples in the current order which are not abandoned
      * @return count of samples in the order that matches the criteria in the code
      */
-    protected int getNonAbandonedCount() {
-        int count = 0;
+    protected BigDecimal getNonAbandonedCount() {
+        BigDecimal count = BigDecimal.ZERO;
 
         for (ProductOrderSample sample : getSamples()) {
             if (sample.getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED) {
-                count++;
+                count.add(BigDecimal.ONE);
             }
         }
         return count;
@@ -2162,15 +2162,15 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return (filteredResults != null) ? Iterators.size(filteredResults.iterator()) : 0;
     }
 
-    public static double getUnbilledNonSampleCount(ProductOrder order, Product targetProduct, double totalCount)
+    public static BigDecimal getUnbilledNonSampleCount(ProductOrder order, Product targetProduct, BigDecimal totalCount)
             throws InvalidProductException {
-        double existingCount = getBilledSampleCount(order, targetProduct);
-        return totalCount - existingCount;
+        BigDecimal existingCount = getBilledSampleCount(order, targetProduct);
+        return totalCount.subtract(existingCount);
     }
 
-    public static double getBilledSampleCount(ProductOrder order, Product targetProduct)
+    public static BigDecimal getBilledSampleCount(ProductOrder order, Product targetProduct)
             throws InvalidProductException {
-        double existingCount = 0;
+        BigDecimal existingCount = BigDecimal.ZERO;
 
         for (ProductOrderSample targetSample : order.getSamples()) {
             for (LedgerEntry ledgerItem: targetSample.getLedgerItems()) {
@@ -2181,7 +2181,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                            .equals(priceItem.orElseThrow(() -> new InvalidProductException(
                            String.format("Unable to get sample count because the product %s does not have a valid "
                                          + "price item associated with it", targetProduct.getDisplayName())))))) {
-                        existingCount += ledgerItem.getQuantity();
+                    existingCount = existingCount.add(ledgerItem.getQuantity());
                 }
             }
 
@@ -2223,8 +2223,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         childOrders.add(childOrder);
     }
 
-    public int getNumberForReplacement() {
-        return getSamples().size() - getTotalNonAbandonedCount(CountAggregation.ALL);
+    public BigDecimal getNumberForReplacement() {
+        return BigDecimal.valueOf(getSamples().size()).subtract(getTotalNonAbandonedCount(CountAggregation.ALL));
     }
 
     public boolean isChildOrder() {
@@ -2498,14 +2498,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                     }
                 } else {
                     BigDecimal adjustmentPriceValue = null;
-                    Integer adjustmentQuantityValue = null;
+                    BigDecimal adjustmentQuantityValue = null;
 
                     if(StringUtils.isNotBlank(mappedValues.get(primaryPartNumber).getPrice())){
 
                         adjustmentPriceValue = new BigDecimal(mappedValues.get(primaryPartNumber).getPrice());
                     }
                     if (StringUtils.isNotBlank(mappedValues.get(primaryPartNumber).getQuantity())) {
-                        adjustmentQuantityValue = Integer.valueOf(mappedValues.get(primaryPartNumber).getQuantity());
+                        adjustmentQuantityValue = new BigDecimal(mappedValues.get(primaryPartNumber).getQuantity());
                     }
 
                     final ProductOrderPriceAdjustment primaryAdjustment =
@@ -2525,7 +2525,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                     }
                 } else {
                     BigDecimal addOnAdjustmentPriceValue = null;
-                    Integer addOnAdjustmentQuantityValue = null;
+                    BigDecimal addOnAdjustmentQuantityValue = null;
 
                     if (StringUtils
                             .isNoneBlank(mappedValues.get(addOnProduct.getPartNumber()).getPrice())) {
@@ -2535,7 +2535,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                     if (StringUtils
                             .isNotBlank(mappedValues.get(addOnProduct.getPartNumber()).getQuantity())) {
                         addOnAdjustmentQuantityValue =
-                                Integer.valueOf(mappedValues.get(addOnProduct.getPartNumber()).getQuantity());
+                                new BigDecimal(mappedValues.get(addOnProduct.getPartNumber()).getQuantity());
                     }
                     
                     final ProductOrderAddOnPriceAdjustment productOrderAddOnPriceAdjustment =

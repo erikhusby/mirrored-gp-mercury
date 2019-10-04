@@ -177,7 +177,7 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
             final ProductOrderAddOnPriceAdjustment customAdjustment =
-                    new ProductOrderAddOnPriceAdjustment(null,1, customExternalAddonProductName);
+                    new ProductOrderAddOnPriceAdjustment(null,BigDecimal.ONE, customExternalAddonProductName);
             productOrderAddOn.setCustomPriceAdjustment(customAdjustment);
         }
 
@@ -210,7 +210,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         conversionPdo.clearCustomPriceAdjustment();
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
             final ProductOrderAddOnPriceAdjustment customAdjustment =
-                    new ProductOrderAddOnPriceAdjustment(null,1, customExternalAddonProductName);
+                    new ProductOrderAddOnPriceAdjustment(null,BigDecimal.ONE, customExternalAddonProductName);
             productOrderAddOn.clearCustomPriceAdjustment();
         }
 
@@ -249,7 +249,7 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
             final ProductOrderAddOnPriceAdjustment customAdjustment =
-                    new ProductOrderAddOnPriceAdjustment(new BigDecimal("39.50"),1, customAddonProductName);
+                    new ProductOrderAddOnPriceAdjustment(new BigDecimal("39.50"),BigDecimal.ONE, customAddonProductName);
             productOrderAddOn.setCustomPriceAdjustment(customAdjustment);
         }
         convertedOrder = integrationService.initializeSAPOrder(sapQuote, conversionPdo,
@@ -282,8 +282,9 @@ public class SapIntegrationServiceImplDBFreeTest {
             }
         }
 
-        conversionPdo.addSapOrderDetail(new SapOrderDetail("testsap001", conversionPdo.getTotalNonAbandonedCount(
-                ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),
+        conversionPdo.addSapOrderDetail(new SapOrderDetail("testsap001",
+                conversionPdo.getTotalNonAbandonedCount(
+                ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY).intValue(),
                 conversionPdo.getQuoteId(),
                 conversionPdo.getSapCompanyConfigurationForProductOrder(sapQuote).getCompanyCode()));
 
@@ -347,7 +348,7 @@ public class SapIntegrationServiceImplDBFreeTest {
             assertThat(sapOrderItem.getProductAlias(), is(emptyOrNullString()));
         }
 
-        ProductOrderPriceAdjustment customAdjustment3 = new ProductOrderPriceAdjustment(null, 99, null);
+        ProductOrderPriceAdjustment customAdjustment3 = new ProductOrderPriceAdjustment(null, BigDecimal.valueOf(99), null);
         conversionPdo.setCustomPriceAdjustment(customAdjustment3);
 
 
@@ -364,11 +365,11 @@ public class SapIntegrationServiceImplDBFreeTest {
         if(conversionPdo.hasSapQuote()) {
             ledgerEntry =
                     new LedgerEntry(conversionPdo.getSamples().get(0), conversionPdo.getProduct(),
-                            new Date(), 3d);
+                            new Date(), BigDecimal.valueOf(3));
         } else {
             ledgerEntry =
                     new LedgerEntry(conversionPdo.getSamples().get(0), conversionPdo.getProduct().getPrimaryPriceItem(),
-                            new Date(), 3d);
+                            new Date(), BigDecimal.valueOf(3));
         }
         sapOrderDetail.addLedgerEntry(ledgerEntry);
 
@@ -409,10 +410,10 @@ public class SapIntegrationServiceImplDBFreeTest {
             assertThat(sapOrderItem.getProductAlias(), is(emptyOrNullString()));
         }
 
-        double initialQuantity = 4d;
-        Map<String, Double> productToQuantityMapping = new HashMap<>();
+        BigDecimal initialQuantity = BigDecimal.valueOf(4);
+        Map<String, BigDecimal> productToQuantityMapping = new HashMap<>();
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
-            productToQuantityMapping.put(productOrderAddOn.getAddOn().getPartNumber(), initialQuantity++);
+            productToQuantityMapping.put(productOrderAddOn.getAddOn().getPartNumber(), initialQuantity.add(BigDecimal.ONE));
             LedgerEntry addonLedgerEntry;
 
             if(conversionPdo.hasSapQuote()) {
@@ -435,7 +436,7 @@ public class SapIntegrationServiceImplDBFreeTest {
                 assertThat(sapOrderItem.getItemQuantity().doubleValue(), is(equalTo((new BigDecimal(3)).doubleValue())));
             } else {
                 assertThat(sapOrderItem.getItemQuantity().doubleValue(), is(equalTo(
-                        (new BigDecimal(productToQuantityMapping.get(sapOrderItem.getProductIdentifier()))).doubleValue())));
+                        (productToQuantityMapping.get(sapOrderItem.getProductIdentifier())))));
             }
             assertThat(sapOrderItem.getConditions(), is(Collections.<ConditionValue>emptyList()));
             assertThat(sapOrderItem.getProductAlias(), is(emptyOrNullString()));
@@ -518,7 +519,7 @@ public class SapIntegrationServiceImplDBFreeTest {
             assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.ZERO), is(equalTo(0)));
         }
 
-        productOrder.addCustomPriceAdjustment(new ProductOrderPriceAdjustment(BigDecimal.valueOf(80), 8, null));
+        productOrder.addCustomPriceAdjustment(new ProductOrderPriceAdjustment(BigDecimal.valueOf(80), BigDecimal.valueOf(8), null));
 
 
         sapOrderNew = integrationService.initializeSAPOrder(sapQuote, productOrder, Option.create(Option.Type.CREATING));
@@ -574,7 +575,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         int ledgerCount = 4;
 
         IntStream.range(0,ledgerCount).forEach(value -> {
-            addLedgerItems(productOrder, 1);
+            addLedgerItems(productOrder, BigDecimal.valueOf(1));
 
             SAPOrder newOrder = integrationService.initializeSAPOrder(sapQuote, productOrder, Option.create(Option.Type.CREATING));
 
@@ -691,7 +692,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         int newLedgerCount = 4;
 
         IntStream.range(0,newLedgerCount).forEach(value -> {
-            addLedgerItems(productOrder, 1);
+            addLedgerItems(productOrder, BigDecimal.valueOf(1));
 
             SAPOrder newOrder = integrationService.initializeSAPOrder(sapQuote, productOrder, Option.create(Option.Type.CREATING));
 
@@ -797,7 +798,7 @@ public class SapIntegrationServiceImplDBFreeTest {
                 assertThat(addonClosingCount, is(equalTo(closingCount)));
                 assertThat(addOnOrderValueQueryCount, is(equalTo((double) countTestPDO.getSamples().size()+extraSamples )));
             }
-            addLedgerItems(countTestPDO, 1);
+            addLedgerItems(countTestPDO, BigDecimal.valueOf(1));
 
             closingCount++;
         }
@@ -900,21 +901,21 @@ public class SapIntegrationServiceImplDBFreeTest {
                 is(equalTo(primaryGPPMaterial)));
     }
 
-    private void addLedgerItems(ProductOrder order, int ledgerCount) {
+    private void addLedgerItems(ProductOrder order, BigDecimal ledgerCount) {
         for (ProductOrderSample productOrderSample : order.getSamples()) {
             if(!productOrderSample.isCompletelyBilled()) {
                 if(order.hasSapQuote()) {
-                    productOrderSample.addLedgerItem(new Date(), order.getProduct(), ledgerCount * 1d, false);
+                    productOrderSample.addLedgerItem(new Date(), order.getProduct(), ledgerCount, false);
                     for (ProductOrderAddOn productOrderAddOn : order.getAddOns()) {
                         productOrderSample.addLedgerItem(new Date(), productOrderAddOn.getAddOn(),
-                                ledgerCount * 1d, false);
+                                ledgerCount, false);
                     }
                 } else {
                     productOrderSample
-                            .addLedgerItem(new Date(), order.getProduct().getPrimaryPriceItem(), ledgerCount * 1d);
+                            .addLedgerItem(new Date(), order.getProduct().getPrimaryPriceItem(), ledgerCount);
                     for (ProductOrderAddOn productOrderAddOn : order.getAddOns()) {
                         productOrderSample.addLedgerItem(new Date(), productOrderAddOn.getAddOn().getPrimaryPriceItem(),
-                                ledgerCount * 1d);
+                                ledgerCount);
                     }
                 }
 

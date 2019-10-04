@@ -167,15 +167,15 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      */
     public static BigDecimal getSampleCount(ProductOrder placedOrder, Product product, int additionalSampleCount,
                                             SapIntegrationService.Option serviceOptions) {
-        double sampleCount = 0d;
+        BigDecimal sampleCount = BigDecimal.ZERO;
 
         final PriceAdjustment adjustmentForProduct = placedOrder.getAdjustmentForProduct(product);
-        Integer adjustmentQuantity = null;
+        BigDecimal adjustmentQuantity = null;
         if (adjustmentForProduct != null) {
             adjustmentQuantity = adjustmentForProduct.getAdjustmentQuantity();
         }
 
-        double previousBilledCount = 0;
+        BigDecimal previousBilledCount = BigDecimal.ZERO;
 
         boolean creatingNewOrder = serviceOptions.hasOption(Type.CREATING);
         boolean closingOrder = serviceOptions.hasOption(Type.CLOSING);
@@ -192,10 +192,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
             if (!sapOrderDetail.equals(placedOrder.latestSapOrderDetail()) || creatingNewOrder) {
 
-                final Map<Product, Double> numberOfBilledEntriesByProduct =
+                final Map<Product, BigDecimal> numberOfBilledEntriesByProduct =
                         sapOrderDetail.getNumberOfBilledEntriesByProduct();
                 if (numberOfBilledEntriesByProduct.containsKey(product)) {
-                    previousBilledCount += numberOfBilledEntriesByProduct.get(product);
+                    previousBilledCount = previousBilledCount.add( numberOfBilledEntriesByProduct.get(product));
                 }
             }
         }
@@ -208,18 +208,18 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 throw new InformaticsServiceException(
                     "To close out the order in SAP, an SAP order should have been created");
             }
-            sampleCount += placedOrder.latestSapOrderDetail().getBilledSampleQuantity(product);
-        } else if (product.getSupportsNumberOfLanes() && placedOrder.getLaneCount() > 0) {
-            sampleCount += (adjustmentQuantity != null) ? adjustmentQuantity : placedOrder.getLaneCount();
+            sampleCount = sampleCount.add(placedOrder.latestSapOrderDetail().getBilledSampleQuantity(product));
+        } else if (product.getSupportsNumberOfLanes() && placedOrder.getLaneCount().compareTo(BigDecimal.ZERO) > 0) {
+            sampleCount = sampleCount.add((adjustmentQuantity != null) ? adjustmentQuantity : placedOrder.getLaneCount());
         } else {
-            sampleCount += (adjustmentQuantity != null) ? adjustmentQuantity :
-                placedOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY)
-                + additionalSampleCount;
+            sampleCount = sampleCount.add((adjustmentQuantity != null) ? adjustmentQuantity :
+                    placedOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY))
+                    .add(BigDecimal.valueOf(additionalSampleCount));
         }
 
-        BigDecimal countResults = BigDecimal.valueOf(sampleCount);
+        BigDecimal countResults = sampleCount;
         if(!closingOrder) {
-            countResults = countResults.subtract(BigDecimal.valueOf(previousBilledCount));
+            countResults = countResults.subtract(previousBilledCount);
             if (countResults.compareTo(BigDecimal.ZERO) < 0) {
                 countResults = BigDecimal.ZERO;
             }
@@ -400,7 +400,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         SAPDeliveryItem lineItem =
                 new SAPDeliveryItem(quoteItemForBilling.getProduct().getPartNumber(),
-                        (quantityOverride == null)?generateScaledBigDecimal(quoteItemForBilling.getQuantityForSAP()):quantityOverride);
+                        (quantityOverride == null)?quoteItemForBilling.getQuantity():quantityOverride);
 
         if(StringUtils.equals(quoteItemForBilling.getQuotePriceType(), LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType())) {
             lineItem.addCondition(DeliveryCondition.LATE_DELIVERY_DISCOUNT);
@@ -604,7 +604,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     public String creditDelivery(String deliveryDocumentId, QuoteImportItem quoteItemForBilling)
             throws SAPIntegrationException {
 
-        SAPOrderItem returnLine = new SAPOrderItem(quoteItemForBilling.getProduct().getPartNumber(), BigDecimal.valueOf(quoteItemForBilling.getQuantity()));
+        SAPOrderItem returnLine = new SAPOrderItem(quoteItemForBilling.getProduct().getPartNumber(), quoteItemForBilling.getQuantity());
         SAPReturnOrder returnOrder = new SAPReturnOrder(deliveryDocumentId, Collections.singleton(returnLine));
         return getClient().createReturnOrder(returnOrder);
     }

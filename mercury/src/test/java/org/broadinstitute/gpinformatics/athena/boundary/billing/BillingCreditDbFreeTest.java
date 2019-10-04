@@ -103,8 +103,8 @@ public class BillingCreditDbFreeTest {
     private SAPAccessControlEjb accessControlEjb = Mockito.mock(SAPAccessControlEjb.class);
     private BillingEjb billingEjb;
 
-    private final Double qtyPositiveTwo = 2D;
-    private final Double qtyNegativeTwo = (double) Math.negateExact(qtyPositiveTwo.longValue());
+    private final BigDecimal qtyPositiveTwo = BigDecimal.valueOf(2);
+    private final BigDecimal qtyNegativeTwo = BigDecimal.valueOf(qtyPositiveTwo.longValue()).negate();
 
     @BeforeMethod
     public void setUp()
@@ -160,7 +160,7 @@ public class BillingCreditDbFreeTest {
         Mockito.when(quoteService.getQuoteByAlphaId(Mockito.anyString())).thenReturn(quoteImportItem.getQuote());
         Mockito.when(quoteService.getQuoteWithPriceItems(Mockito.anyString())).thenReturn(quote);
         Mockito.when(quoteService.registerNewWork(Mockito.any(Quote.class), Mockito.any(QuotePriceItem.class),
-            Mockito.any(QuotePriceItem.class), Mockito.any(Date.class), Mockito.anyDouble(), Mockito.anyString(),
+            Mockito.any(QuotePriceItem.class), Mockito.any(Date.class), Mockito.any(BigDecimal.class), Mockito.anyString(),
             Mockito.anyString(), Mockito.anyString(), Mockito.any(BigDecimal.class))).thenReturn("workId-" + quoteId);
         SapIntegrationClientImpl.SAPCompanyConfiguration broad = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
         Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.anyString()))
@@ -211,7 +211,7 @@ public class BillingCreditDbFreeTest {
             Mockito.when(quoteService.getQuoteWithPriceItems(Mockito.anyString()))
                     .thenThrow(new RuntimeException("Quote server should not be called in this case"));
             Mockito.when(quoteService.registerNewWork(Mockito.any(Quote.class), Mockito.any(QuotePriceItem.class),
-                    Mockito.any(QuotePriceItem.class), Mockito.any(Date.class), Mockito.anyDouble(), Mockito.anyString(),
+                    Mockito.any(QuotePriceItem.class), Mockito.any(Date.class), Mockito.any(BigDecimal.class), Mockito.anyString(),
                     Mockito.anyString(), Mockito.anyString(), Mockito.any(BigDecimal.class)))
                     .thenThrow(new RuntimeException("Quote server should not be called in this case"));
 
@@ -224,7 +224,7 @@ public class BillingCreditDbFreeTest {
                     .thenThrow(new RuntimeException("SAP Should not be called in this case"));
         }
 
-        HashMap<ProductOrderSample, Pair<ProductLedgerIndex, Double>> billingMap = new HashMap<>();
+        HashMap<ProductOrderSample, Pair<ProductLedgerIndex, BigDecimal>> billingMap = new HashMap<>();
         billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem, pdo.hasSapQuote()), qtyPositiveTwo));
 
         List<BillingEjb.BillingResult> billingResults = bill(billingMap);
@@ -234,7 +234,7 @@ public class BillingCreditDbFreeTest {
         billingMap.put(pdoSample,
                 Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem, pdo.hasSapQuote()), qtyNegativeTwo));
         billingResults = bill(billingMap);
-        validateBillingResults(pdoSample, billingResults, 0);
+        validateBillingResults(pdoSample, billingResults, BigDecimal.ZERO);
 
         Mockito.verify(mockEmailSender, Mockito.times((quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE)?1:0))
             .sendHtmlEmail(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString(),
@@ -265,7 +265,7 @@ public class BillingCreditDbFreeTest {
             Mockito.when(quoteService.getQuoteWithPriceItems(Mockito.anyString()))
                     .thenThrow(new RuntimeException("Quote server should not be called in this case"));
             Mockito.when(quoteService.registerNewWork(Mockito.any(Quote.class), Mockito.any(QuotePriceItem.class),
-                    Mockito.any(QuotePriceItem.class), Mockito.any(Date.class), Mockito.anyDouble(), Mockito.anyString(),
+                    Mockito.any(QuotePriceItem.class), Mockito.any(Date.class), Mockito.any(BigDecimal.class), Mockito.anyString(),
                     Mockito.anyString(), Mockito.anyString(), Mockito.any(BigDecimal.class)))
                     .thenThrow(new RuntimeException("Quote server should not be called in this case"));
 
@@ -280,8 +280,8 @@ public class BillingCreditDbFreeTest {
                     .thenThrow(new RuntimeException("SAP Should not be called in this case"));
         }
 
-        HashMap<ProductOrderSample, Pair<ProductLedgerIndex, Double>> billingMap = new HashMap<>();
-        billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem,pdo.hasSapQuote()), qtyPositiveTwo));
+        HashMap<ProductOrderSample, Pair<ProductLedgerIndex, BigDecimal>> billingMap = new HashMap<>();
+        billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem, pdo.hasSapQuote()), qtyPositiveTwo));
 
         List<BillingEjb.BillingResult> billingResults = bill(billingMap);
         validateBillingResults(pdoSample, billingResults, qtyPositiveTwo);
@@ -301,7 +301,7 @@ public class BillingCreditDbFreeTest {
         billingMap.clear();
         billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem,pdo.hasSapQuote()), qtyNegativeTwo));
         billingResults = bill(billingMap);
-        validateBillingResults(pdoSample, billingResults, 0);
+        validateBillingResults(pdoSample, billingResults, BigDecimal.ZERO);
 
         Mockito.verify(mockEmailSender, Mockito.times(pdo.hasSapQuote()?1:0))
             .sendHtmlEmail(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString(),
@@ -333,7 +333,7 @@ public class BillingCreditDbFreeTest {
             Mockito.when(quoteService.getQuoteWithPriceItems(Mockito.anyString()))
                     .thenThrow(new RuntimeException("Quote server should not be called in this case"));
             Mockito.when(quoteService.registerNewWork(Mockito.any(Quote.class), Mockito.any(QuotePriceItem.class),
-                    Mockito.any(QuotePriceItem.class), Mockito.any(Date.class), Mockito.anyDouble(), Mockito.anyString(),
+                    Mockito.any(QuotePriceItem.class), Mockito.any(Date.class), Mockito.any(BigDecimal.class), Mockito.anyString(),
                     Mockito.anyString(), Mockito.anyString(), Mockito.any(BigDecimal.class)))
                     .thenThrow(new RuntimeException("Quote server should not be called in this case"));
 
@@ -347,7 +347,7 @@ public class BillingCreditDbFreeTest {
 
         }
 
-        HashMap<ProductOrderSample, Pair<ProductLedgerIndex, Double>> billingMap = new HashMap<>();
+        HashMap<ProductOrderSample, Pair<ProductLedgerIndex, BigDecimal>> billingMap = new HashMap<>();
         billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem,pdo.hasSapQuote()), qtyNegativeTwo));
         List<BillingEjb.BillingResult> billingResults = bill(billingMap);
 
@@ -386,7 +386,7 @@ public class BillingCreditDbFreeTest {
             Mockito.when(quoteService.getQuoteWithPriceItems(Mockito.anyString()))
                     .thenThrow(new RuntimeException("Quote server should not be called in this case"));
             Mockito.when(quoteService.registerNewWork(Mockito.any(Quote.class), Mockito.any(QuotePriceItem.class),
-                    Mockito.any(QuotePriceItem.class), Mockito.any(Date.class), Mockito.anyDouble(), Mockito.anyString(),
+                    Mockito.any(QuotePriceItem.class), Mockito.any(Date.class), Mockito.any(BigDecimal.class), Mockito.anyString(),
                     Mockito.anyString(), Mockito.anyString(), Mockito.any(BigDecimal.class)))
                     .thenThrow(new RuntimeException("Quote server should not be called in this case"));
 
@@ -403,7 +403,7 @@ public class BillingCreditDbFreeTest {
 
         }
 
-        HashMap<ProductOrderSample, Pair<ProductLedgerIndex, Double>> billingMap = new HashMap<>();
+        HashMap<ProductOrderSample, Pair<ProductLedgerIndex, BigDecimal>> billingMap = new HashMap<>();
         billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem, pdo.hasSapQuote()), qtyPositiveTwo));
         List<BillingEjb.BillingResult> billingResults = bill(billingMap);
         billingResults.forEach(
@@ -443,7 +443,7 @@ public class BillingCreditDbFreeTest {
             Mockito.when(quoteService.getQuoteWithPriceItems(Mockito.anyString()))
                     .thenThrow(new RuntimeException("Quote server should not be called in this case"));
             Mockito.when(quoteService.registerNewWork(Mockito.any(Quote.class), Mockito.any(QuotePriceItem.class),
-                    Mockito.any(QuotePriceItem.class), Mockito.any(Date.class), Mockito.anyDouble(), Mockito.anyString(),
+                    Mockito.any(QuotePriceItem.class), Mockito.any(Date.class), Mockito.any(BigDecimal.class), Mockito.anyString(),
                     Mockito.anyString(), Mockito.anyString(), Mockito.any(BigDecimal.class)))
                     .thenThrow(new RuntimeException("Quote server should not be called in this case"));
 
@@ -459,11 +459,12 @@ public class BillingCreditDbFreeTest {
 
         }
 
-        HashMap<ProductOrderSample, Pair<ProductLedgerIndex, Double>> billingMap = new HashMap<>();
-        billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem,pdo.hasSapQuote()), 1d));
+        HashMap<ProductOrderSample, Pair<ProductLedgerIndex, BigDecimal>> billingMap = new HashMap<>();
+        billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem,pdo.hasSapQuote()),
+                BigDecimal.valueOf(1)));
 
         List<BillingEjb.BillingResult> billingResults = bill(billingMap);
-        validateBillingResults(pdoSample, billingResults, 1);
+        validateBillingResults(pdoSample, billingResults, BigDecimal.ONE);
 
         billingMap.clear();
         billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem,pdo.hasSapQuote()), qtyNegativeTwo));
@@ -480,20 +481,20 @@ public class BillingCreditDbFreeTest {
     }
 
     private void validateBillingResults(ProductOrderSample sample, List<BillingEjb.BillingResult> results,
-                                        double quantity) {
+                                        BigDecimal quantity) {
         results.stream().filter(result -> !result.isError())
             .forEach(billingResult -> {
                 assertThat(billingResult.isError(), is(false));
                 assertThat(billingResult.getSapBillingId(),
                         sample.getProductOrder().hasSapQuote()?notNullValue():nullValue());
             });
-        Double totalBilled =
+        BigDecimal totalBilled =
             sample.getLedgerItems().stream().filter(LedgerEntry::isSuccessfullyBilled)
-                .map(LedgerEntry::getQuantity).mapToDouble(Double::longValue).sum();
+                .map(LedgerEntry::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
         assertThat(totalBilled, equalTo(quantity));
     }
 
-    private List<BillingEjb.BillingResult> bill(Map<ProductOrderSample, Pair<ProductLedgerIndex, Double>> samplePairMap) {
+    private List<BillingEjb.BillingResult> bill(Map<ProductOrderSample, Pair<ProductLedgerIndex, BigDecimal>> samplePairMap) {
         final Date date = new Date();
         samplePairMap.forEach((productOrderSample, pricItemQtyPair) ->  {
             if(productOrderSample.getProductOrder().hasSapQuote()) {
