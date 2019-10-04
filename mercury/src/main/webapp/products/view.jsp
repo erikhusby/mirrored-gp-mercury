@@ -49,8 +49,6 @@
                 </div>
             </div>
 
-
-            Saving this implementation for the final 2.0 SAP/GP release of Mercury
             <c:if test="${actionBean.editProduct.alternateExternalName != null}">
                 <div class="view-control-group control-group">
                     <label class="control-label label-form">Alternate (External) Product Name</label>

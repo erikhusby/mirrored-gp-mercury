@@ -269,7 +269,7 @@ public class QuoteImportItem {
      * @return null if this is not a replacement item or the primary price item if it is one.
      */
     public QuotePriceItem getPrimaryForReplacement(PriceList priceListCache) {
-        PriceItem derivedPriceItem = getProductOrder().determinePriceItemByCompanyCode(getPrimaryProduct());
+        PriceItem derivedPriceItem = getPrimaryProduct().getPrimaryPriceItem();
 
         // If this is optional, then return the primary as the 'is replacing.' This is comparing the quote price item
         // to the values on the product's price item, so do the item by item compare.
@@ -291,7 +291,7 @@ public class QuoteImportItem {
         if (itemIsReplacing != null) {
             type = LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM;
         } else {
-            PriceItem priceItem = getProductOrder().determinePriceItemByCompanyCode(getPrimaryProduct());
+            PriceItem priceItem = getPrimaryProduct().getPrimaryPriceItem();
             if (priceItem.getName().equals(getPriceItem().getName())
                 || replacementPriceItemNames.contains(getPriceItem().getName())) {
                 type = LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM;
@@ -392,4 +392,8 @@ public class QuoteImportItem {
     }
 
     public boolean isSapOrder() { return productOrder.hasSapQuote();}
+
+    public boolean isQuoteServerOrder() {
+        return productOrder.hasQuoteServerQuote();
+    }
 }

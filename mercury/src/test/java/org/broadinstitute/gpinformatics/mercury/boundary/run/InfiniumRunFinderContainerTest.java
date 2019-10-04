@@ -177,7 +177,7 @@ public class InfiniumRunFinderContainerTest extends Arquillian {
             }
         }
         Assert.assertNotNull(someStartedEvent);
-        Assert.assertEquals(someStartedEvent.getEventLocation(), "Big Bad Wolf");
+        Assert.assertEquals(someStartedEvent.getEventLocation(), "BAA");
     }
 
     @Test

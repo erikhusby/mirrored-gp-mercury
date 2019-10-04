@@ -488,7 +488,12 @@ public class ProductFixupTest extends Arquillian {
                         "P-EX-0042", "P-EX-0048", "P-EX-0049", "P-EX-0051", "P-MCV-0012", "P-MCV-0013", "P-MCV-0014",
                         "P-MCV-0015", "P-MCV-0016", "P-RNA-0016", "P-RNA-0019", "P-RNA-0022", "P-WG-0058", "P-WG-0072",
                         "P-WG-0073", "P-WG-0083", "P-WG-0086", "P-WG-0087", "P-WG-0088", "P-WG-0090", "P-WG-0101",
-                        "P-WG-0102", "P-WG-0104", "P-WG-0105", "P-WG-0106", "P-WG-0107").collect(Collectors.toList());
+                        "P-WG-0102", "P-WG-0104", "P-WG-0105", "P-WG-0106", "P-WG-0107","P-SEQ-0001", "P-SEQ-0003",
+                        "P-SEQ-0004", "P-SEQ-0005", "P-SEQ-0006", "P-SEQ-0007", "P-SEQ-0010", "P-SEQ-0011",
+                        "P-SEQ-0014", "P-SEQ-0018", "P-SEQ-0020", "P-SEQ-0021", "P-SEQ-0022", "P-SEQ-0027",
+                        "P-SEQ-0029", "P-SEQ-0030", "P-SEQ-0031", "P-SEQ-0032", "P-SEQ-0032", "P-SEQ-0032",
+                        "P-SEQ-0034", "P-SEQ-0035", "P-SEQ-0036", "P-SEQ-0037", "P-SEQ-0038",
+                        "P-SEQ-0039").collect(Collectors.toList());
 
         List<Product> productsToUpdate = productDao.findByPartNumbers(offeredAsCommercialPartNumbers);
         productsToUpdate.forEach(product -> {

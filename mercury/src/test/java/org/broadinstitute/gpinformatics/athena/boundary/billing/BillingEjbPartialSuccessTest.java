@@ -64,6 +64,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.matchers.NullOrEmp
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.SuccessfullyBilled.successfullyBilled;
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.UnsuccessfullyBilled.unsuccessfullyBilled;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -343,11 +344,24 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                     FAILING_PRICE_ITEM_NAME = replacementPriceItem.getName();
                     billingSessionDao.persist(replacementPriceItem);
 
-                    billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), 5));
+                    if(productOrder.hasSapQuote()) {
+                        billingSessionEntries.add(new LedgerEntry(ledgerSample, productOrder.getProduct(), new Date(), 5));
+                    } else {
+//                        billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), productOrder.getProduct(), 5));
+                        billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), 5));
+                    }
                 } else {
-                    billingSessionEntries.add(new LedgerEntry(ledgerSample,
-                                                              productOrder.getProduct().getPrimaryPriceItem(),
-                                                              new Date(), 3));
+                    if(productOrder.hasSapQuote()) {
+
+                        billingSessionEntries.add(new LedgerEntry(ledgerSample, productOrder.getProduct(),
+                                new Date(), 3));
+                    } else {
+//                        billingSessionEntries.add(new LedgerEntry(ledgerSample,
+//                                productOrder.getProduct().getPrimaryPriceItem(), new Date(), productOrder.getProduct(),
+//                                3));
+                        billingSessionEntries.add(new LedgerEntry(ledgerSample,
+                                productOrder.getProduct().getPrimaryPriceItem(), new Date(),3));
+                    }
                 }
             }
         }
@@ -397,11 +411,25 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                     FAILING_PRICE_ITEM_NAME = replacementPriceItem.getName();
                     billingSessionDao.persist(replacementPriceItem);
 
-                    billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), 5));
+                    if(ledgerSample.getProductOrder().hasSapQuote()) {
+
+                        billingSessionEntries.add(new LedgerEntry(ledgerSample, productOrder.getProduct(), new Date(), 5));
+                    } else {
+//                        billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), productOrder.getProduct(), 5));
+                        billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), 5));
+                    }
                 } else {
-                    billingSessionEntries.add(new LedgerEntry(ledgerSample,
-                                                              productOrder.getProduct().getPrimaryPriceItem(),
-                                                              new Date(), 3));
+                    if(ledgerSample.getProductOrder().hasSapQuote()) {
+                        billingSessionEntries.add(new LedgerEntry(ledgerSample, productOrder.getProduct(), new Date(),
+                                3));
+
+                    } else {
+//                        billingSessionEntries.add(new LedgerEntry(ledgerSample,
+//                                productOrder.getProduct().getPrimaryPriceItem(), new Date(), productOrder.getProduct(),
+//                                3));
+                        billingSessionEntries.add(new LedgerEntry(ledgerSample,
+                                productOrder.getProduct().getPrimaryPriceItem(), new Date(), 3));
+                    }
                 }
             }
         }
@@ -465,13 +493,10 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         String successMessagePattern = String.format(BillingAdaptor.BILLING_LOG_TEXT_FORMAT, GOOD_WORK_ID,
             BillingAdaptor.NOT_ELIGIBLE_FOR_SAP_INDICATOR, "", "", 0f, "", "", "").substring(0, 50) + ".*";
         assertThat(failMessage, notNullValue());
-        for (LogRecord testLogHandlerLog : testLogHandler.getLogs()) {
-            System.out.println(testLogHandlerLog.getMessage());
-        }
 
         assertThat(testLogHandler.messageMatches(failMessage), is(true));
         Collection<LogRecord> successLogs = testLogHandler.findLogs(successMessagePattern);
-        assertThat(successLogs.isEmpty(), is(false));
+        assertThat(successLogs, not(empty()));
         for (LogRecord successLog : successLogs) {
             assertThat(successLog.getLevel(), is(Level.INFO));
         }
@@ -556,10 +581,13 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         BillingAdaptor adaptor = new BillingAdaptor();
         PriceItem priceItem = new PriceItem("quoteServerId", "myPlatform", "myCategory", "importItemName");
         Product product = new Product();
-        LedgerEntry ledgerEntry1 = new LedgerEntry(new ProductOrderSample("SM-1234"), priceItem, new Date(), 5);
-        LedgerEntry ledgerEntry2 = new LedgerEntry(new ProductOrderSample("SM-5678"), priceItem, new Date(), 5);
-        List<LedgerEntry> ledgerItems = Arrays.asList(ledgerEntry1, ledgerEntry2);
+        LedgerEntry ledgerEntry1;
+        LedgerEntry ledgerEntry2;
         ProductOrder productOrder = new ProductOrder();
+
+        ledgerEntry1 = new LedgerEntry(new ProductOrderSample("SM-1234"), priceItem, new Date(), 5);
+        ledgerEntry2 = new LedgerEntry(new ProductOrderSample("SM-5678"), priceItem, new Date(), 5);
+        List<LedgerEntry> ledgerItems = Arrays.asList(ledgerEntry1, ledgerEntry2);
         QuoteImportItem quoteImportItem =
                 new QuoteImportItem("QUOTE-1", priceItem, "priceType", ledgerItems, new Date(), product, productOrder);
         QuotePriceItem quotePriceItem = new QuotePriceItem();

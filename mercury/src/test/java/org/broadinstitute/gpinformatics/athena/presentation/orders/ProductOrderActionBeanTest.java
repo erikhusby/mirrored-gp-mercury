@@ -824,9 +824,9 @@ public class ProductOrderActionBeanTest {
                 {"GP87U",ProductOrder.QuoteSourceType.QUOTE_SERVER, TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS}, //Second Parameter does not apply to quote Server case
                 {"GP87U",ProductOrder.QuoteSourceType.QUOTE_SERVER, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED}, //Second Parameter does not apply to quote Server case
                 {"GP87U",ProductOrder.QuoteSourceType.QUOTE_SERVER, TestUtils.SapQuoteTestScenario.PRODUCTS_DIFFER}, //Second Parameter does not apply to quote Server case
-                {"CRSPEVER",ProductOrder.QuoteSourceType.QUOTE_SERVER, TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS}, //Second Parameter does not apply to quote Server case
-                {"CRSPEVER",ProductOrder.QuoteSourceType.QUOTE_SERVER, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED}, //Second Parameter does not apply to quote Server case
-                {"CRSPEVER",ProductOrder.QuoteSourceType.QUOTE_SERVER, TestUtils.SapQuoteTestScenario.PRODUCTS_DIFFER}, //Second Parameter does not apply to quote Server case
+                {"CRSPEVR",ProductOrder.QuoteSourceType.QUOTE_SERVER, TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS}, //Second Parameter does not apply to quote Server case
+                {"CRSPEVR",ProductOrder.QuoteSourceType.QUOTE_SERVER, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED}, //Second Parameter does not apply to quote Server case
+                {"CRSPEVR",ProductOrder.QuoteSourceType.QUOTE_SERVER, TestUtils.SapQuoteTestScenario.PRODUCTS_DIFFER}, //Second Parameter does not apply to quote Server case
                 {"GPSPGR7",ProductOrder.QuoteSourceType.QUOTE_SERVER, TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS}, //Second Parameter does not apply to quote Server case
                 {"GPSPGR7",ProductOrder.QuoteSourceType.QUOTE_SERVER, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED}, //Second Parameter does not apply to quote Server case
                 {"GPSPGR7",ProductOrder.QuoteSourceType.QUOTE_SERVER, TestUtils.SapQuoteTestScenario.PRODUCTS_DIFFER}, //Second Parameter does not apply to quote Server case
@@ -3320,6 +3320,7 @@ public class ProductOrderActionBeanTest {
                 sapQHeader.setQUOTESTATUS(QuoteStatus.Z4.getStatusText());
                 sapQHeader.setSALESORG("GP01");
                 sapQHeader.setFUNDHEADERSTATUS(FundingStatus.SUBMITTED.name());
+                sapQHeader.setQUOTESTATUS(QuoteStatus.Z4.name());
                 sapQHeader.setCUSTOMER("");
                 sapQHeader.setDISTCHANNEL("GE");
                 sapQHeader.setFUNDTYPE(SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION.name());
@@ -3460,6 +3461,7 @@ public class ProductOrderActionBeanTest {
                 sapQHeader.setQUOTESTATUS(QuoteStatus.Z4.getStatusText());
                 sapQHeader.setSALESORG("GP01");
                 sapQHeader.setFUNDHEADERSTATUS(FundingStatus.APPROVED.name());
+                sapQHeader.setQUOTESTATUS(QuoteStatus.Z4.name());
                 sapQHeader.setCUSTOMER("");
                 sapQHeader.setDISTCHANNEL("GE");
                 sapQHeader.setFUNDTYPE(SapIntegrationClientImpl.FundingType.PURCHASE_ORDER.name());
@@ -4419,6 +4421,10 @@ public class ProductOrderActionBeanTest {
                 EnumSet.copyOf(SapIntegrationServiceImpl.EXTENDED_PLATFORMS);
         sapCompanyConfigurations.add(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
 
+        ProductOrder.OrderAccessType testOrderAccessType =
+            ProductOrder.determineOrderType(pdo, quoteSalesOrgMatch);
+        assertThat(testOrderAccessType.getSalesOrg(), equalTo(quoteSalesOrgMatch));
+
         for (SapIntegrationClientImpl.SAPCompanyConfiguration companyCode : sapCompanyConfigurations) {
 
             final Set<SapIntegrationClientImpl.SAPCompanyConfiguration> llcCompanyCodes =
@@ -4541,5 +4547,127 @@ public class ProductOrderActionBeanTest {
                            primaryMultiplier.toString());
         potentialOrderValue = potentialOrderValue.add(BigDecimal.valueOf(pdo.getSamples().size()).multiply(primaryMultiplier));
         return potentialOrderValue;
+    }
+
+    @DataProvider(name = "changeQuoteDataProvider")
+    public Iterator<Object[]> changeQuoteDataProvider() {
+        final String sapQuote = "1234";
+        final String sapQuote2 = "1234567";
+        final String qsQuote = "GPP1";
+        final String qsQuote2 = "GPP1234";
+        List<Object[]> testCases = new ArrayList<>();
+
+        // All of these statuses should not allow changing of quotes
+        EnumSet<ProductOrder.OrderStatus> statusesForChangeAllowed = EnumSet
+            .of(ProductOrder.OrderStatus.Draft, ProductOrder.OrderStatus.Pending);
+        EnumSet<ProductOrder.OrderStatus> statusesForChangeNotAllowed = EnumSet.complementOf(statusesForChangeAllowed);
+        boolean quoteRequired = true;
+        boolean noQuoteRequired = false;
+        statusesForChangeNotAllowed.forEach(orderStatus -> {
+            assertThat(orderStatus.canPlace(), is(false));
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, qsQuote, false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, sapQuote, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, qsQuote, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, sapQuote, false});
+            // not chaning quote type is OK
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, sapQuote, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, qsQuote, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, sapQuote2, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, qsQuote2, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, sapQuote, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, qsQuote, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, sapQuote2, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, qsQuote2, true});
+
+            testCases.add(new Object[]{orderStatus, quoteRequired, null, qsQuote, false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, null, false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, null, sapQuote, false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, null, false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, null, null, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, qsQuote, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, null, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, sapQuote, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, null, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, null, true});
+
+            testCases.add(new Object[]{orderStatus, quoteRequired, "", qsQuote, false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, "", false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, "", sapQuote, false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, "", false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, "", "", true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", qsQuote, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, "", false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", sapQuote, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, "", false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", "", true});
+        });
+
+        // These should always allow changing status
+        statusesForChangeAllowed.forEach(orderStatus -> {
+            assertThat(orderStatus.canPlace(), is(true));
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, qsQuote, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, sapQuote, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, sapQuote, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, qsQuote, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, sapQuote2, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, qsQuote2, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, qsQuote, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, sapQuote, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, sapQuote, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, qsQuote, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, sapQuote2, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, qsQuote2, true});
+
+            testCases.add(new Object[]{orderStatus, quoteRequired, null, qsQuote, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, null, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, null, sapQuote, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, null, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, null, null, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, qsQuote, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, null, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, sapQuote, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, null, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, null, true});
+
+            testCases.add(new Object[]{orderStatus, quoteRequired, "", qsQuote, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, "", true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, "", sapQuote, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, "", true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, "", "", true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", qsQuote, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, "", true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", sapQuote, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, "", true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", "", true});
+        });
+        return testCases.iterator();
+    }
+
+    @Test(dataProvider = "changeQuoteDataProvider")
+    public void testChangeQuote(ProductOrder.OrderStatus orderStatus, boolean quoteRequired, String oldQuote,
+                                String newQuote, boolean canChange) throws InvalidProductException {
+        pdo.setOrderStatus(orderStatus);
+        Product product = Mockito.mock(Product.class);
+        Mockito.when(product.getSupportsSkippingQuote()).thenReturn(true);
+        pdo.setProduct(product);
+        if (!quoteRequired) {
+            pdo.setSkipQuoteReason("quote not required");
+        }
+        assertThat(ProductOrderActionBean.canChangeQuote(pdo, oldQuote, newQuote), is(canChange));
+    }
+
+    @Test
+    public void testDetermineOrderType() throws InvalidProductException {
+        Product product = createSimpleProduct("1234",ProductFamily.WHOLE_GENOME_GENOTYPING);
+        product.setExternalOnlyProduct(true);
+        product.setClinicalProduct(true);
+        pdo.setQuoteId("12345");
+        pdo.setProduct(product);
+        try {
+                ProductOrder.determineOrderType(pdo, ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK.getSalesOrg());
+                Assert.fail("An exception should have been thrown");
+        } catch (Exception e) {
+            assertThat(e.getMessage(), is(ProductOrder.QUOTES_CANNOT_BE_USED_FOR_COMMERCIAL_OR_CLINICAL_PRODUCTS));
+        }
     }
 }

@@ -70,6 +70,7 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefinitionValue;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
@@ -132,6 +133,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchAction
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.entity.quote.FundingStatus;
+import org.broadinstitute.sap.entity.quote.QuoteHeader;
 import org.broadinstitute.sap.entity.quote.QuoteStatus;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
@@ -179,6 +181,8 @@ import static org.broadinstitute.gpinformatics.mercury.presentation.datatables.D
 @UrlBinding(ProductOrderActionBean.ACTIONBEAN_URL_BINDING)
 public class ProductOrderActionBean extends CoreActionBean {
 
+    public static final String SWITCHING_QUOTES_NOT_PERMITTED =
+        "Switching between Quote Server and SAP quotes is not permitted once an order has been placed.";
     private static final Log logger = LogFactory.getLog(ProductOrderActionBean.class);
 
     public static final String ACTIONBEAN_URL_BINDING = "/orders/order.action";
@@ -221,7 +225,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public static final String GET_SAMPLE_SUMMARY = "getSampleSummary";
     public static final String OPEN_CUSTOM_VIEW_ACTION = "openCustomView";
 
-    public static final List<String> EXCLUDED_QUOTES_FROM_VALUE = Stream.of("GP87U", "CRSPEVER", "GPSPGR7").collect(Collectors.toList());
+    public static final List<String> EXCLUDED_QUOTES_FROM_VALUE = Stream.of("GP87U", "CRSPEVR", "GPSPGR7").collect(Collectors.toList());
 
     private String sampleSummary;
     private State state;
@@ -371,6 +375,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     // used only as part of ajax call to get funds remaining.  Quote field is bound to editOrder.
     private String quoteIdentifier;
+    private String originalQuote;
 
     private String product;
     private String selectedAddOns;
@@ -620,18 +625,22 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         if(editOrder.getProduct() != null) {
 
-            if(editOrder.hasSapQuote()) {
-                final SapQuote sapQuote = editOrder.getSapQuote(sapService);
-                final String salesOrganization =
-                        sapQuote.getQuoteHeader().getSalesOrganization();
-
-                SapIntegrationClientImpl.SAPCompanyConfiguration companyCode =
-                        SapIntegrationClientImpl.SAPCompanyConfiguration
-                                .fromSalesOrgForMaterial(salesOrganization);
+            String salesOrganization=null;
+            if (editOrder.hasSapQuote()) {
+                SapQuote sapQuote;
+                try {
+                    sapQuote = editOrder.getSapQuote(sapService);
+                    salesOrganization =
+                        Optional.ofNullable(sapQuote.getQuoteHeader()).map(QuoteHeader::getSalesOrganization)
+                            .orElseThrow(() -> new SAPIntegrationException("Error Obtaining Quote Information."));
+                } catch (SAPIntegrationException e) {
+                    addGlobalValidationError(e.getMessage());
+                    return;
+                }
                 Optional<SAPMaterial> cachedProduct =
-                        Optional.ofNullable(productPriceCache.findByPartNumber(editOrder.getProduct().getPartNumber(),
-                                salesOrganization));
-                if(!cachedProduct.isPresent()) {
+                    Optional.ofNullable(productPriceCache.findByPartNumber(editOrder.getProduct().getPartNumber(),
+                        salesOrganization));
+                if (!cachedProduct.isPresent()) {
                     addGlobalValidationError("The product you selected " +
                                              editOrder.getProduct().getDisplayName() + " is invalid for your quote " +
                                              sapQuote.getQuoteHeader().getQuoteNumber() +
@@ -639,29 +648,11 @@ public class ProductOrderActionBean extends CoreActionBean {
                                              salesOrganization +
                                              ".  Please check either the selected product or the quote you are using.");
                 }
-
-                if (editOrder.hasSapQuote()) {
-                    final ProductOrder.OrderAccessType orderType =
-                            ProductOrder.OrderAccessType.fromSalesOrg(salesOrganization);
-
-                    if((editOrder.getProduct().isExternalProduct() || editOrder.getProduct().isClinicalProduct()) &&
-                       orderType != ProductOrder.OrderAccessType.COMMERCIAL) {
-                        addGlobalValidationError("Broad PI Engaged quotes cannot be used for Commercial or Clinical Products");
-                    } else {
-
-                        editOrder.setOrderType(orderType);
-                    }
-                } else if(editOrder.hasQuoteServerQuote()) {
-                    Optional<Product> typeDeterminant = Optional.ofNullable(editOrder.getProduct());
-                    typeDeterminant.ifPresent(product -> {
-                        if(product.isLLCProduct()) {
-                            editOrder.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
-                        } else {
-                            editOrder.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
-                        }
-                    });
-                }
-
+            }
+            try {
+                editOrder.setOrderType(ProductOrder.determineOrderType(editOrder, salesOrganization));
+            } catch (Exception e) {
+                addGlobalValidationError(e.getMessage());
             }
         }
         /*
@@ -952,6 +943,9 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     protected void validateQuoteDetails(Quote quote, int additionalSampleCount) throws InvalidProductException,
             SAPIntegrationException {
+        if (!canChangeQuote(editOrder, originalQuote, quote.getAlphanumericId())) {
+            addGlobalValidationError(SWITCHING_QUOTES_NOT_PERMITTED);
+        }
         if (!quote.getApprovalStatus().equals(ApprovalStatus.FUNDED)) {
             String unFundedMessage = "A quote should be funded in order to be used for a product order.";
             addGlobalValidationError(unFundedMessage);
@@ -963,7 +957,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         if (fundsRemaining <= 0d ||
             (fundsRemaining < (outstandingEstimate+valueOfCurrentOrder))) {
-            String inssuficientFundsMessage = "Insufficient funds are available on " + quote.getName() + " to place a new Product order";
+            String inssuficientFundsMessage = "Insufficient funds are available on " + quote.getName();
             addGlobalValidationError( inssuficientFundsMessage);
         }
     }
@@ -978,6 +972,9 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     protected void validateSapQuoteDetails(SapQuote quote, int additionalSampleCount) throws InvalidProductException,
             SAPIntegrationException {
+        if (!canChangeQuote(editOrder, originalQuote, quote.getQuoteHeader().getQuoteNumber())) {
+            addGlobalValidationError(SWITCHING_QUOTES_NOT_PERMITTED);
+        }
         if (!quote.getQuoteHeader().getQuoteStatus().equals(QuoteStatus.Z4) ||
             !quote.getQuoteHeader().getFundingHeaderStatus().equals(FundingStatus.APPROVED)) {
             String unFundedMessage = "A quote should be approved in order to be used for a product order.";
@@ -1006,11 +1003,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             if ((fundsRemaining.compareTo(BigDecimal.ZERO) <= 0)
                 || (fundsRemaining.compareTo(BigDecimal.valueOf(outstandingEstimate + valueOfCurrentOrder))<0)) {
-                String insufficientFundsMessage =
-                        "Insufficient funds are available on " +
+                String insufficientFundsMessage = "Insufficient funds are available on " +
                         //todo replace the following with a helper method for quote display
-                        quote.getQuoteHeader().getQuoteNumber()+" -- " + quote.getQuoteHeader().getProjectName() +
-                        " to place a new Product order";
+                        quote.getQuoteHeader().getQuoteNumber()+" -- " + quote.getQuoteHeader().getProjectName();
                 addGlobalValidationError(insufficientFundsMessage);
             }
         } catch (SAPInterfaceException e) {
@@ -1097,7 +1092,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         return value;
     }
 
-    protected int getUnbilledCountForProduct(ProductOrder productOrder, int sampleCount, Product product) {
+    protected int getUnbilledCountForProduct(ProductOrder productOrder, int sampleCount, Product product)
+            throws InvalidProductException {
         int unbilledCount = sampleCount;
 
         final PriceAdjustment adjustmentForProduct = productOrder.getAdjustmentForProduct(product);
@@ -1525,7 +1521,11 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("getQuoteFunding")
     public Resolution getQuoteFunding() throws Exception {
-        JSONObject item = quoteDetailsHelper.getQuoteDetailsJson(this, quoteIdentifier);
+        productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
+        if (!StringUtils.isBlank(productOrder)) {
+            editOrder = productOrderDao.findByBusinessKey(productOrder);
+        }
+        JSONObject item = quoteDetailsHelper.getQuoteDetailsJson(this, quoteIdentifier, originalQuote);
         return new StreamingResolution("text/json", item.toString());
     }
 
@@ -1787,19 +1787,19 @@ public class ProductOrderActionBean extends CoreActionBean {
             saveType = ProductOrder.SaveType.CREATING;
         }
 
-//        if (editOrder.getProduct() != null && editOrder.hasSapQuote()) {
-//            final SapQuote sapQuote = editOrder.getSapQuote(sapService);
-//            final ProductOrder.OrderAccessType orderType =
-//                    ProductOrder.OrderAccessType.fromSalesOrg(sapQuote.getQuoteHeader().getSalesOrganization());
-//
-//            editOrder.setOrderType(orderType);
-//        }
-
         if (editOrder.isRegulatoryInfoEditAllowed()) {
             updateRegulatoryInformation();
         }
 
         Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
+        try {
+            /*
+            Validate Quote order values and send a warning if there is an issue
+            */
+            validateQuoteDetails(editOrder, !editOrder.hasJiraTicketKey());
+        } catch (InvalidProductException | SAPIntegrationException ipe) {
+            addGlobalValidationError("Unable to determine the existing value of open orders for " + editOrder.getQuoteId() +": " +ipe.getMessage());
+        }
         try {
             productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails, saveOrderMessageCollection);
             originalBusinessKey = null;
@@ -1819,15 +1819,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             addGlobalValidationError(e.getMessage());
             getSourcePageResolution();
-        }
-        try {
-            /*
-            if this order is not destined to go to SAP, validate Quote order values and only send a warning if
-            there is an issue
-            */
-            validateQuoteDetails(editOrder, !editOrder.hasJiraTicketKey());
-        } catch (InvalidProductException | SAPIntegrationException ipe) {
-            addGlobalValidationError("Unable to determine the existing value of open orders for " + editOrder.getQuoteId() +": " +ipe.getMessage());
         }
         if (chipDefaults != null && attributes != null) {
             if (!chipDefaults.equals(attributes)) {
@@ -2314,8 +2305,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                 } catch (Exception e){
                     logger.error(e);
                 } finally {
-                    if (jsonGenerator!=null) {
-                        jsonGenerator.close();
+                    if (jsonGenerator!=null && !jsonGenerator.isClosed()) {
+                        try { jsonGenerator.close(); } catch (IOException e2) {}
                     }
                 }
             }
@@ -2501,10 +2492,17 @@ public class ProductOrderActionBean extends CoreActionBean {
             priceForFormat = new BigDecimal(productPriceCache.findByPartNumber(productEntity.getPartNumber(),
                     companyCode.getSalesOrganization()).getBasePrice());
         } else {
-            priceForFormat =
-                    new BigDecimal(priceListCache.findByKeyFields(productEntity.getPrimaryPriceItem()).getPrice());
+            Optional<PriceItem> primaryPriceItem = Optional.ofNullable(productEntity.getPrimaryPriceItem());
+            if(primaryPriceItem.isPresent()) {
+                priceForFormat =
+                        new BigDecimal(priceListCache.findByKeyFields(primaryPriceItem.get()).getPrice());
+            }
         }
-        productInfo.put(priceTitle, NumberFormat.getCurrencyInstance().format(priceForFormat));
+        String formattedPrice = "";
+        if (priceForFormat != null) {
+            formattedPrice = NumberFormat.getCurrencyInstance().format(priceForFormat);
+        }
+        productInfo.put(priceTitle, formattedPrice);
     }
 
     @HandlesEvent("getSupportsNumberOfLanes")
@@ -3054,6 +3052,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.quoteIdentifier = quoteIdentifier;
     }
 
+    public String getOriginalQuote() {
+        return originalQuote;
+    }
+
+    public void setOriginalQuote(String originalQuote) {
+        this.originalQuote = originalQuote;
+    }
+
     public UserTokenInput getOwner() {
         return owner;
     }
@@ -3516,8 +3522,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                 requireField(editOrder.canSkipRegulatoryRequirements(),
                         "a reason for bypassing the regulatory requirements", action);
             }
-            if (editOrder.isRegulatoryInfoEditAllowed()) {
+            if (editOrder.isRegulatoryInfoEditAllowed() && editOrder.getResearchProject() != null) {
                 if (CollectionUtils.isNotEmpty(selectedRegulatoryIds)) {
+
                     List<RegulatoryInfo> selectedRegulatoryInfos = regulatoryInfoDao
                             .findListByList(RegulatoryInfo.class, RegulatoryInfo_.regulatoryInfoId,
                                     selectedRegulatoryIds);
@@ -3531,9 +3538,10 @@ public class ProductOrderActionBean extends CoreActionBean {
                     }
 
                     if (!missingRegulatoryRequirements.isEmpty()) {
+                        Optional<ResearchProject> safeResearchProject = Optional.ofNullable(editOrder.getResearchProject());
                         addGlobalValidationError("Regulatory info {2} is not associated with research project {3}",
                                 StringUtils.join(missingRegulatoryRequirements, ", "),
-                                editOrder.getResearchProject().getName());
+                                safeResearchProject.map(ResearchProject::getName).orElse(""));
                     }
                 }
             }
@@ -3969,6 +3977,21 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public Boolean canEditPrice(String units) {
         return StringUtils.equalsIgnoreCase(units, "Sample") && (userBean.isPDMUser() || userBean.isDeveloperUser()) || !StringUtils.equalsIgnoreCase(units, "Sample") ;
+    }
+
+    public static boolean canChangeQuote(ProductOrder productOrder, String oldQuote, String newQuote) {
+        boolean sameQuote = StringUtils.equals(oldQuote, newQuote);
+        if (sameQuote){
+            return true;
+        }
+        if (productOrder!=null) {
+            if (!productOrder.getOrderStatus().canPlace()) {
+                boolean sameQuoteType = StringUtils.isNumeric(oldQuote) == StringUtils.isNumeric(newQuote);
+                boolean bothNotBlank = StringUtils.isNotBlank(oldQuote) && StringUtils.isNotBlank(newQuote);
+                return sameQuoteType && bothNotBlank;
+            }
+        }
+        return true;
     }
 
     /**

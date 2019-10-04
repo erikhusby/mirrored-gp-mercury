@@ -23,10 +23,12 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
@@ -35,10 +37,13 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderT
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
+import org.json.JSONObject;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -151,6 +156,55 @@ public class QuoteDetailsHelperTest {
         assertThat(fundingInfo.getFundingInfoString(), containsString("Funds Reservation [<b>FR -- 1383, CO -- 5210500</b>]"));
         assertThat(fundingInfo.getFundingInfoString(), containsString("Active"));
         assertThat(fundingInfo.getFundingInfoString(), containsString("-- Expired"));
+    }
+
+    public void testQuoteServerNoSuchQuote() throws Exception {
+        String quoteId = "MMM2OU";
+
+        String quoteNotFoundMessage = "No Quote!";
+        stubbedQuoteService = Mockito.mock(QuoteService.class);
+
+        Mockito.when(stubbedQuoteService.getQuoteByAlphaId(Mockito.anyString()))
+            .thenThrow(new QuoteNotFoundException(quoteNotFoundMessage));
+
+        quoteDetailsHelper = new QuoteDetailsHelper(stubbedQuoteService, null, templateEngine);
+        JSONObject quoteDetails = null;
+        try {
+            quoteDetails = quoteDetailsHelper.getQuoteDetailsJson(actionBean, quoteId, quoteId);
+            String error = quoteDetails.getString("error");
+            assertThat(error, containsString(quoteNotFoundMessage));
+
+            boolean isWarning = quoteDetails.getBoolean("warning");
+            assertThat(isWarning, is(false));
+
+            String quoteInfo = quoteDetails.getString("quoteInfo");
+            assertThat(quoteInfo, containsString("alert-error"));
+            assertThat(quoteInfo, containsString(error));
+        } catch (Exception e) {
+            Assert.fail("An exception was thrown but should not have been", e);
+        }
+    }
+
+    public void testSapNoSuchQuote() throws Exception {
+        String quoteId = "123455676";
+
+        SapIntegrationService sapIntegrationService = Mockito.mock(SapIntegrationService.class);
+        Mockito.when(sapIntegrationService.findSapQuote(Mockito.anyString()))
+            .thenThrow(new SAPIntegrationException("service error"));
+        quoteDetailsHelper = new QuoteDetailsHelper(null, sapIntegrationService, templateEngine);
+        JSONObject quoteDetails = null;
+        try {
+            quoteDetails = quoteDetailsHelper.getQuoteDetailsJson(actionBean, quoteId, quoteId);
+            String error = quoteDetails.getString("error");
+            assertThat(error, containsString(String.format("Quote '%s' not found", quoteId)));
+            assertThat(quoteDetails.getBoolean("warning"), is(false));
+
+            String quoteInfo = quoteDetails.getString("quoteInfo");
+            assertThat(quoteInfo, containsString("alert-error"));
+            assertThat(quoteInfo, containsString(error));
+        } catch (Exception e) {
+            Assert.fail("An exception was thrown but should not have been", e);
+        }
     }
 
     public void testQuoteServerExpiringSoon() throws Exception {
