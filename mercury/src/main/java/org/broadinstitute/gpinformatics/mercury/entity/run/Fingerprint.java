@@ -19,6 +19,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -192,20 +193,20 @@ public class Fingerprint implements Comparable <Fingerprint> {
     @Override
     public int compareTo(@NotNull Fingerprint o) {
 
-        String patientId = getMercurySample().getSampleData().getPatientId();
+        String patientId1 = getMercurySample().getSampleData().getPatientId();
         String patientId2 = o.getMercurySample().getSampleData().getPatientId();
         String root1 = getMercurySample().getSampleData().getRootSample();
         String root2 = o.getMercurySample().getSampleData().getRootSample();
         String aliquot1 = getMercurySample().getSampleKey();
         String aliquot2 = o.getMercurySample().getSampleKey();
 
-        if (patientId.compareTo(patientId2) == 0) {
+        if (patientId1.compareTo(patientId2) == 0) {
             if (root1.compareTo(root2) == 0) {
                 return aliquot1.compareTo(aliquot2);
             }
             return root1.compareTo(root2);
         }
-        return patientId.compareTo(patientId2);
+        return patientId1.compareTo(patientId2);
     }
 
 
@@ -267,4 +268,6 @@ public class Fingerprint implements Comparable <Fingerprint> {
     public Boolean getMatch() {
         return match;
     }
+
+
 }

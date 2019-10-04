@@ -220,6 +220,11 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.FingerprintReportActionBean"
                                           event="view">Fingerprint Report</stripes:link>
                         </li>
+                        <li>
+                            <stripes:link id="fingerprintMatrix"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.FingerprintMatrixActionBean"
+                                          event="view">Fingerprint Matrix</stripes:link>
+                        </li>
                     </ul>
                 </li>
             </security:authorizeBlock>

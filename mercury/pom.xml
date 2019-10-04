@@ -1887,8 +1887,8 @@ nodePrinter.print(webapp)
         -->
         <dependency>
             <groupId>org.broadinstitute</groupId>
-            <artifactId>picard-private-all</artifactId>
-            <version>1.1408</version>
+            <artifactId>picard-private-mercury</artifactId>
+            <version>1.1423</version>
         </dependency>
 
         <dependency>

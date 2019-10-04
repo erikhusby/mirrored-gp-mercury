@@ -7,6 +7,8 @@ import htsjdk.samtools.reference.ReferenceSequenceFile;
 import htsjdk.samtools.reference.ReferenceSequenceFileFactory;
 import htsjdk.samtools.util.SequenceUtil;
 import htsjdk.variant.variantcontext.VariantContext;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FpGenotype;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
@@ -16,6 +18,8 @@ import picard.fingerprint.FingerprintChecker;
 import picard.fingerprint.HaplotypeMap;
 import picard.fingerprint.MatchResults;
 
+import javax.enterprise.context.Dependent;
+import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,13 +32,22 @@ import java.util.SortedSet;
 /**
  * Calculates a LOD score for concordance between fingerprints.
  */
+@Dependent
 public class ConcordanceCalculator {
     // todo jmt OS-specific configuration, or require mount on Windows / MacOs?
-    private HaplotypeMap haplotypes = new HaplotypeMap(new File(
-            "\\\\iodine\\seq_references\\Homo_sapiens_assembly19\\v1\\Homo_sapiens_assembly19.haplotype_database.txt"));
-    private File reference = new File(
-            "\\\\iodine\\seq_references\\Homo_sapiens_assembly19\\v1\\Homo_sapiens_assembly19.fasta");
-    private ReferenceSequenceFile ref = ReferenceSequenceFileFactory.getReferenceSequenceFile(reference);
+    private HaplotypeMap haplotypes;
+    private File reference;
+    private ReferenceSequenceFile ref;
+
+    public ConcordanceCalculator() {
+        initReference();
+    }
+
+    public void initReference() {
+        haplotypes = fetchHaplotypesFile("/seq/references/Homo_sapiens_assembly19/v1/Homo_sapiens_assembly19.haplotype_database.txt");
+        reference = fetchReferenceFile("/seq/references/Homo_sapiens_assembly19/v1/Homo_sapiens_assembly19.fasta");
+        ref = ReferenceSequenceFileFactory.getReferenceSequenceFile(reference);
+    }
 
     public double calculateLodScore(Fingerprint observedFingerprint, Fingerprint expectedFingerprint) {
         picard.fingerprint.Fingerprint observedFp = getFingerprint(observedFingerprint,
@@ -81,11 +94,15 @@ public class ConcordanceCalculator {
                 Fingerprints.GenomeBuild.valueOf(fingerprint.getGenomeBuild().name()),
                 fingerprint.getSnpList().getName(),
                 fingerprint.getDateGenerated().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime(),
+                //TODO gender returns null
                 Gender.valueOf(fingerprint.getGender().name()), calls));
         for (FpGenotype fpGenotype : fingerprint.getFpGenotypesOrdered()) {
-            calls.add(new Fingerprints.Call(fpGenotype.getSnp().getRsId(),
-                    fpGenotype.getGenotype().equals("--") ? Fingerprints.Genotype.NO_CALL : Fingerprints.Genotype.valueOf(fpGenotype.getGenotype()),
-                    fpGenotype.getCallConfidence().toString(), null,null));
+            if (fpGenotype != null) {
+                calls.add(new Fingerprints.Call(fpGenotype.getSnp().getRsId(),
+                        fpGenotype.getGenotype().equals("--") ? Fingerprints.Genotype.NO_CALL :
+                                Fingerprints.Genotype.valueOf(fpGenotype.getGenotype()),
+                        fpGenotype.getCallConfidence().toString(), null, null));
+            }
         }
 
         try {
@@ -94,7 +111,7 @@ public class ConcordanceCalculator {
             downloadGenotypes.OUTPUT = fpFile;
             downloadGenotypes.SAMPLE_ALIAS = sampleKey;
 
-            List<DownloadGenotypes.SnpGenotype> snpGenotypes = DownloadGenotypes.mercuryResultsToGenotypes( 
+            List<DownloadGenotypes.SnpGenotype> snpGenotypes = DownloadGenotypes.mercuryResultsToGenotypes(
                     fingerprints, haplotypes, null, null, 0.0);
             List<DownloadGenotypes.SnpGenotype> consistentGenotypes = DownloadGenotypes.cleanupGenotypes(snpGenotypes,
                     haplotypes);
@@ -117,5 +134,27 @@ public class ConcordanceCalculator {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public HaplotypeMap fetchHaplotypesFile(String haplotypePath) {
+        String haplotypeDatabase = convertFilePaths(haplotypePath);
+        return new HaplotypeMap(new File(haplotypeDatabase));
+    }
+
+    public File fetchReferenceFile(String fasta) {
+        return new File(convertFilePaths(fasta));
+    }
+
+    /**
+     * OS Specific way to grab the necessary files. Mac OS will need to mount the specific server (currently helium)
+     */
+    private String convertFilePaths(String path) {
+        if (SystemUtils.IS_OS_WINDOWS) {
+            path = FilenameUtils.separatorsToWindows(path);
+            path = path.replace("/seq/references", "\\\\helium\\seq_references");
+        } else if (SystemUtils.IS_OS_MAC) {
+            path = path.replace("/seq/references", "/volumes/seq_references");
+        }
+        return path;
     }
 }

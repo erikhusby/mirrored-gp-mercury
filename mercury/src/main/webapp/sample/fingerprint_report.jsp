@@ -90,10 +90,10 @@
                                value="${fingerprint.mercurySample.sampleKey}"/>
                         </c:if>
                         <li>Fingerprints:
-                                ${actionBean.FormatDate(fingerprint.dateGenerated)},
+                                ${actionBean.formatDate(fingerprint.dateGenerated)},
                                 ${fingerprint.platform},
-                                ${fingerprint.disposition}
-
+                                ${fingerprint.disposition},
+                                ${actionBean.findLodScore(fingerprint)}
                             <br/>
                             <c:forEach items="${fingerprint.fpGenotypesOrdered}" var="geno">${geno.genotype}</c:forEach>
                         </li>
@@ -103,7 +103,8 @@
                 <div class="control-group">
                     <div class="control-label">&nbsp;</div>
                     <div class="controls actionButtons">
-                        <stripes:submit name="download" value="Download"/>
+                        <stripes:submit name="downloadReport" value="Download Report"/>
+<%--                        <stripes:submit name="downloadMatrix" value="Download Matrix"/>--%>
                     </div>
                 </div>
                 </stripes:form>
