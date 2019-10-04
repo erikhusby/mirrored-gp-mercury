@@ -1079,7 +1079,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          * @return true if the user requested a change; false otherwise
          */
         public boolean isQuantityChangeIntended() {
-            return newQuantity != oldQuantity;
+            return !newQuantity.equals(oldQuantity);
         }
 
         /**
@@ -1089,7 +1089,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          * @return true if the quantity submitted is different than the current quantity; false otherwise
          */
         public boolean isQuantityChangeNeeded() {
-            return newQuantity != currentQuantity;
+            return !newQuantity.equals(currentQuantity);
         }
 
         /**
@@ -1099,7 +1099,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          * @return true if the change request is based on current data; false otherwise
          */
         public boolean isChangeRequestCurrent() {
-            return oldQuantity == currentQuantity;
+            return oldQuantity.equals(currentQuantity);
         }
 
         /**
