@@ -24,6 +24,7 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -66,7 +67,7 @@ public class LedgerEntry implements Serializable {
     private PriceItem priceItem;
 
     @Column(name = "QUANTITY")
-    private double quantity;
+    private BigDecimal quantity = BigDecimal.ZERO;
 
     @Index(name = "ix_ledger_billing_session")
     @ManyToOne
@@ -113,7 +114,7 @@ public class LedgerEntry implements Serializable {
     public LedgerEntry(@Nonnull ProductOrderSample productOrderSample,
                        PriceItem priceItem,
                        @Nonnull Date workCompleteDate,
-                       double quantity) {
+                       BigDecimal quantity) {
         this.productOrderSample = productOrderSample;
         this.priceItem = priceItem;
         this.quantity = quantity;
@@ -123,7 +124,7 @@ public class LedgerEntry implements Serializable {
     public LedgerEntry(@Nonnull ProductOrderSample productOrderSample,
                        Product product,
                        @Nonnull Date workCompleteDate,
-                       double quantity) {
+                       BigDecimal quantity) {
         this.productOrderSample = productOrderSample;
         this.product = product;
         this.quantity = quantity;
@@ -153,11 +154,11 @@ public class LedgerEntry implements Serializable {
         return priceItem;
     }
 
-    public double getQuantity() {
+    public BigDecimal getQuantity() {
         return quantity;
     }
 
-    public void setQuantity(double quantity) {
+    public void setQuantity(BigDecimal quantity) {
         this.quantity = quantity;
     }
 

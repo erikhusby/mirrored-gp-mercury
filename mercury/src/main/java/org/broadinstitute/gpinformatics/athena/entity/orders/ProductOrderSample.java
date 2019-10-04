@@ -42,6 +42,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -807,17 +808,17 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         /**
          * The quantity uploaded to Mercury that is pending billing (not yet in a billing session).
          */
-        private double uploaded;
+        private BigDecimal uploaded = BigDecimal.ZERO;
 
         /**
          * The quantity currently in active billing sessions but not yet billed externally.
          */
-        private double inProgress;
+        private BigDecimal inProgress = BigDecimal.ZERO;
 
         /**
          * The total quantity that has been billed externally (Broad Quotes, SAP, etc.).
          */
-        private double billed;
+        private BigDecimal billed = BigDecimal.ZERO;
 
         public LedgerQuantities(String sampleName, String priceItemName, String partNumber) {
             this.sampleName = sampleName;
@@ -832,15 +833,15 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          *
          * @param quantity    the quantity that has been uploaded for billing
          */
-        public void addToUploaded(double quantity) {
-            if (uploaded != 0) {
+        public void addToUploaded(BigDecimal quantity) {
+            if (BigDecimal.ZERO.compareTo(uploaded) != 0) {
                 throw new RuntimeException(String.format(
                         "There should only be one unbilled LedgerEntry for sample %s, price item %s, and product %s. "
                         + "This needs to be corrected in the database to avoid data inconsistencies and possible "
                         + "double-billing.",
                         sampleName, priceItemName, productPartNumber));
             }
-            uploaded += quantity;
+            uploaded = uploaded.add(quantity);
         }
 
         /**
@@ -852,15 +853,15 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          * @param quantity    the quantity currently being billed
          * @throws RuntimeException
          */
-        public void addToInProgress(double quantity) {
-            if (inProgress != 0) {
+        public void addToInProgress(BigDecimal quantity) {
+            if (inProgress.compareTo(BigDecimal.ZERO) != 0) {
                 throw new RuntimeException(String.format(
                         "There should only be one in-progress LedgerEntry for sample %s, price item %s, "
                         + "and product %s. This needs to be corrected in the database to avoid data inconsistencies "
                         + "and possible double-billing.",
                         sampleName, priceItemName, productPartNumber));
             }
-            inProgress += quantity;
+            inProgress = inProgress.add(quantity);
         }
 
         /**
@@ -869,8 +870,8 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          *
          * @param quantity    the quantity that was billed
          */
-        public void addToBilled(double quantity) {
-            billed += quantity;
+        public void addToBilled(BigDecimal quantity) {
+            billed = billed.add(quantity);
         }
 
         /**
@@ -878,7 +879,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          *
          * @return the quantity successfully billed
          */
-        public double getBilled() {
+        public BigDecimal getBilled() {
             return billed;
         }
 
@@ -888,12 +889,12 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          *
          * @return the total quantity for billing
          */
-        public double getTotal() {
-            return billed + inProgress + uploaded;
+        public BigDecimal getTotal() {
+            return billed.add(inProgress).add(uploaded);
         }
 
         public boolean isBeingBilled() {
-            return inProgress != 0.0;
+            return inProgress.compareTo(BigDecimal.ZERO) != 0;
         }
     }
 
