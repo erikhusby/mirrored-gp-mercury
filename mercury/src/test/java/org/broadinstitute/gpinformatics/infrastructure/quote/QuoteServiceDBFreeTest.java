@@ -63,7 +63,7 @@ public class QuoteServiceDBFreeTest {
         EasyMock.expect(mockResponse.getStatusInfo()).andReturn(Response.Status.BAD_REQUEST).atLeastOnce();
         EasyMock.replay(mockResponse);
         try {
-            service.registerNewWork(mockResponse,quote, quotePriceItem, BigDecimal.valueOf(0.0001));
+            service.registerNewWork(mockResponse,quote, quotePriceItem, new BigDecimal("0.0001"));
             Assert.fail("Should have thrown an exception when bad http response returned");
         }
         catch(Exception e) {}
@@ -90,7 +90,7 @@ public class QuoteServiceDBFreeTest {
 
         EasyMock.replay(mockResponse);
         try {
-            service.registerNewWork(mockResponse,quote, quotePriceItem, BigDecimal.valueOf(0.0001));
+            service.registerNewWork(mockResponse,quote, quotePriceItem, new BigDecimal("0.0001"));
             Assert.fail("Should have thrown an exception when string returned was null");
         }
         catch(Exception e) {}

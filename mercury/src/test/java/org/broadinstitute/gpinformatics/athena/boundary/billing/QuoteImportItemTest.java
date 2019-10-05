@@ -32,19 +32,19 @@ public class QuoteImportItemTest {
 
     private static final String WORK_ITEM1 = "workItem1";
 
-    private static final BigDecimal PDO1_AMOUNT_PER_LEDGER_ITEM = BigDecimal.valueOf(7.6);
+    private static final BigDecimal PDO1_AMOUNT_PER_LEDGER_ITEM = new BigDecimal("7.6");
 
     private static final String PDO2 = "PDO-2";
 
     private static final String WORK_ITEM2 = "workItem2";
 
-    private static final BigDecimal PDO2_AMOUNT_PER_LEDGER_ITEM = BigDecimal.valueOf(9.30000001299);
+    private static final BigDecimal PDO2_AMOUNT_PER_LEDGER_ITEM = new BigDecimal("9.30000001299");
 
     private static final BigDecimal PDO2_ROUNDED_AMOUNT_PER_LEDGER_ITEM = BigDecimal.valueOf(9.3);
 
     private static final String PDO3 = "PDO-3";
 
-    private static final BigDecimal PDO3_AMOUNT_PER_LEDGER_ITEM = BigDecimal.valueOf(19.000020000001);
+    private static final BigDecimal PDO3_AMOUNT_PER_LEDGER_ITEM = new BigDecimal("19.000020000001");
 
     private static final String WORK_ITEM3 = "workItem3";
 

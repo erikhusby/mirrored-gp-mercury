@@ -104,7 +104,7 @@ public class BillingCreditDbFreeTest {
     private BillingEjb billingEjb;
 
     private final BigDecimal qtyPositiveTwo = BigDecimal.valueOf(2);
-    private final BigDecimal qtyNegativeTwo = BigDecimal.valueOf(qtyPositiveTwo.longValue()).negate();
+    private final BigDecimal qtyNegativeTwo = qtyPositiveTwo.negate();
 
     @BeforeMethod
     public void setUp()
