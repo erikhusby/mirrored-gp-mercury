@@ -57,10 +57,10 @@ public class CreateBillingDataTest extends Arquillian {
                     if(productOrder.hasSapQuote()) {
                         ledgerEntries.add(new LedgerEntry(productOrderSample,
                                 productOrder.getProduct(),
-                                new Date(), BigDecimal.valueOf(0.5)));
+                                new Date(), new BigDecimal("0.5")));
                     } else {
                         ledgerEntries.add(new LedgerEntry(productOrderSample,
-                                productOrder.getProduct().getPrimaryPriceItem(), new Date(), BigDecimal.valueOf(0.5)));
+                                productOrder.getProduct().getPrimaryPriceItem(), new Date(), new BigDecimal("0.5")));
                     }
                 }
             }

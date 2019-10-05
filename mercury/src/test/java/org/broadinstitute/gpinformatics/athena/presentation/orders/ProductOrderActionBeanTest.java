@@ -2994,7 +2994,7 @@ public class ProductOrderActionBeanTest {
                     .thenThrow(new RuntimeException("Find orders with common quote should not be called at this point"));
         }
 
-        testOrder.addCustomPriceAdjustment(new ProductOrderPriceAdjustment(new BigDecimal(160.00),null, null));
+        testOrder.addCustomPriceAdjustment(new ProductOrderPriceAdjustment(new BigDecimal("160.00"),null, null));
 
         if (quoteSource == ProductOrder.QuoteSourceType.SAP_SOURCE) {
             actionBean.validateSapQuoteDetails(mockSAPService.findSapQuote(testOrder.getQuoteId()), 0);

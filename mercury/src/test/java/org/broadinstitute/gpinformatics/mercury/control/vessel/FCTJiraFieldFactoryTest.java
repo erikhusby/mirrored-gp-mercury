@@ -20,7 +20,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
-import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationDto;
 import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
@@ -109,11 +108,11 @@ public class FCTJiraFieldFactoryTest extends BaseEventTest {
         List<LabBatch.VesselToLanesInfo> vesselToLanesInfos = new ArrayList<>();
 
         LabBatch.VesselToLanesInfo vesselToLanesInfo = new LabBatch.VesselToLanesInfo(
-                vesselPositions1, BigDecimal.valueOf(16.22f), denatureTube, workflowBatch.getBatchName(),
+                vesselPositions1, new BigDecimal("16.22"), denatureTube, workflowBatch.getBatchName(),
                 productOrder.getProduct().getProductName(), Collections.<FlowcellDesignation>emptyList());
 
         LabBatch.VesselToLanesInfo vesselToLanesInfo2 = new LabBatch.VesselToLanesInfo(
-                vesselPositions2, BigDecimal.valueOf(12.22f), denatureTube, workflowBatch.getBatchName(),
+                vesselPositions2, new BigDecimal("12.22"), denatureTube, workflowBatch.getBatchName(),
                 productOrder.getProduct().getProductName(), Collections.<FlowcellDesignation>emptyList());
 
         vesselToLanesInfos.add(vesselToLanesInfo);
