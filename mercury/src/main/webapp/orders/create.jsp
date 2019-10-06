@@ -1635,7 +1635,7 @@
                 <div class="control-group">
 
                     <c:choose>
-                        <c:when test="${actionBean.editOrder.orderStatus.canPlace()}">
+                        <c:when test="${actionBean.canEditProduct()}">
                             <stripes:label for="product" class="control-label">
                                 Product <c:if test="${not actionBean.editOrder.draft}">*</c:if>
                             </stripes:label>
@@ -1646,35 +1646,21 @@
                             </div>
                         </c:when>
                         <c:otherwise>
-
-                            <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                                <stripes:label for="product" class="control-label">
-                                    Product <c:if test="${not actionBean.editOrder.draft}">*</c:if>
-                                </stripes:label>
+                            <label class="control-label">Product</label>
+                            <c:if test="${actionBean.editOrder.product != null}">
+                                <input type="hidden" name="productTokenInput.listOfKeys" value="${actionBean.editOrder.product.partNumber}"/>
                                 <div class="controls">
-                                    <stripes:text id="product" name="productTokenInput.listOfKeys" class="defaultText"
-                                                  title="Enter the product name for this order"/>
-                                    <div id="primaryProductListPrice" ></div>
+                                <stripes:link title="Product" href="${ctxpath}/products/product.action?view">
+                                    <stripes:param name="product" value="${actionBean.editOrder.product.partNumber}"/>
+                                    <c:if test="${actionBean.editOrder.orderType != null}">
+                                        ${actionBean.editOrder.orderTypeDisplay} --
+                                    </c:if>
+                                    ${actionBean.editOrder.product.productName}
+                                </stripes:link>
                                 </div>
-                            </security:authorizeBlock>
-                            <c:if test="${actionBean.canEditProduct()}">
-                                <label class="control-label">Product</label>
-                                <c:if test="${actionBean.editOrder.product != null}">
-                                    <input type="hidden" name="productTokenInput.listOfKeys" value="${actionBean.editOrder.product.partNumber}"/>
-                                    <div class="controls">
-                                    <stripes:link title="Product" href="${ctxpath}/products/product.action?view">
-                                        <stripes:param name="product" value="${actionBean.editOrder.product.partNumber}"/>
-                                        <c:if test="${actionBean.editOrder.orderType != null}">
-                                            ${actionBean.editOrder.orderTypeDisplay} --
-                                        </c:if>
-                                        ${actionBean.editOrder.product.productName}
-                                    </stripes:link>
-                                    </div>
-                                </c:if>
                             </c:if>
                         </c:otherwise>
                     </c:choose>
-
                 </div>
 
                 <div class="control-group" id="reagentDesignGroup">
