@@ -1001,7 +1001,7 @@
         function updateAggregationParticleField(data) {
             var $aggregationParticle = $j("#customAggregationParticle");
             var canOverrideAgp = ${actionBean.canOverrideAgp()};
-            if (canOverrideAgp === undefined || canOverrideAgp === null) {
+            if (canOverrideAgp) {
                 canOverrideAgp=false;
             }
             var agpFieldChanged = data.productAgp !== undefined && $aggregationParticle.val() !== data.productAgp;
