@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -81,7 +82,13 @@ public enum ColumnEntity {
                 }
             },PreferenceType.GLOBAL_PRODUCT_ORDER_COLUMN_SETS, PreferenceType.USER_PRODUCT_ORDER_COLUMN_SETS,
             new PreferenceType[]{PreferenceType.GLOBAL_PRODUCT_ORDER_SEARCH_INSTANCES,
-                    PreferenceType.USER_PRODUCT_ORDER_SEARCH_INSTANCES});
+                    PreferenceType.USER_PRODUCT_ORDER_SEARCH_INSTANCES}),
+    EXTERNAL_LIBRARY("SampleInstanceEntity", "External Library", "sampleInstanceEntityId", SampleInstanceEntity.class,
+            entity -> ((SampleInstanceEntity) entity).getSampleInstanceEntityId().toString(),
+            PreferenceType.GLOBAL_EXT_LIBRARY_COLUMN_SETS, PreferenceType.USER_EXT_LIBRARY_COLUMN_SETS,
+            new PreferenceType[]{PreferenceType.GLOBAL_EXT_LIBRARY_SEARCH_INSTANCES,
+                    PreferenceType.USER_EXT_LIBRARY_SEARCH_INSTANCES}),
+    ;
 
     private IdGetter idGetter;
     private String entityName;
