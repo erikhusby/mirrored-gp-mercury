@@ -14,8 +14,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.hibernate.exception.ConstraintViolationException;
+import org.jetbrains.annotations.NotNull;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -101,7 +105,6 @@ public class SampleImportResource {
      *
      * @return "Samples imported: " + batchName
      */
-    @SuppressWarnings("FeatureEnvy")
     @POST
     public String importSamples(SampleImportBean sampleImportBean) {
         // todo jmt store the text of the message
@@ -109,11 +112,38 @@ public class SampleImportResource {
 
         userBean.login(sampleImportBean.getUserName());
 
-        if(userBean.getBspUser() ==  UserBean.UNKNOWN) {
+        if(userBean.getBspUser().equals(UserBean.UNKNOWN)) {
             throw new ResourceException("A valid Username is required to complete this request",
                     Response.Status.UNAUTHORIZED);
         }
 
+        String batchName;
+        try {
+            batchName = persist(sampleImportBean, parentVesselBeans);
+        } catch (Exception e) {
+            // The violation is likely due to a TubeFormation hash being persisted by SampleImportResource on
+            // another thread.  Try again.
+            Throwable cause = e.getCause();
+            boolean retry = false;
+            while (cause != null) {
+                if (cause instanceof ConstraintViolationException) {
+                    retry = true;
+                    break;
+                }
+                cause = cause.getCause();
+            }
+            if (retry) {
+                batchName = persist(sampleImportBean, parentVesselBeans);
+            } else {
+                throw e;
+            }
+        }
+        return "Samples imported: " + batchName;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @NotNull
+    private String persist(SampleImportBean sampleImportBean, List<ParentVesselBean> parentVesselBeans) {
         Pair<List<LabVessel>,List<LabVessel>> labVessels = labVesselFactory.buildLabVessels(parentVesselBeans, sampleImportBean.getUserName(),
                 sampleImportBean.getExportDate(), LabEventType.SAMPLE_IMPORT, MercurySample.MetadataSource.BSP);
 
@@ -128,7 +158,7 @@ public class SampleImportResource {
         String batchName = sampleImportBean.getSourceSystemExportId();
         labBatchDao.persist(new LabBatch(batchName, new HashSet<>(labVessels.getLeft()),
                 LabBatch.LabBatchType.SAMPLES_IMPORT, sampleImportBean.getExportDate()));
-        return "Samples imported: " + batchName;
+        return batchName;
     }
 
 }
