@@ -1001,26 +1001,26 @@
         function updateAggregationParticleField(data) {
             var $aggregationParticle = $j("#customAggregationParticle");
             var canOverrideAgp = ${actionBean.canOverrideAgp()};
-            var productAgpIsDefault = (!data.productAgp);
-            var agpFieldChanged = productAgpIsDefault && $aggregationParticle.val() !== data.productAgp;
-            if (canOverrideAgp && agpFieldChanged && $j("#orderId").length === 0) {
-                if ($aggregationParticle.text() !== data.productAgp) {
-                    $aggregationParticle.val(data.productAgp);
-                    var agpModalMessage = modalMessages("info", {
-                        onClose: function () {
-                            $j($aggregationParticle).removeClass("changed")
-                        }
-                    });
-                    $j($aggregationParticle).addClass("changed");
-                    agpModalMessage
-                        .add("The selected product defines a default aggregation particle. This order will now aggregate on '"
-                            + $aggregationParticle.find(":selected").text() + "' unless you override this manually.", "AGP_CHANGED");
+            var productAgpIsDefault = (!$aggregationParticle.val());
+            var agpsDiffer = $aggregationParticle.text() !== data.productAgp;
+            if (agpsDiffer) {
+                if (canOverrideAgp && productAgpIsDefault && $j("#orderId").length === 0) {
+                        $aggregationParticle.val(data.productAgp);
+                        var agpModalMessage = modalMessages("info", {
+                            onClose: function () {
+                                $j($aggregationParticle).removeClass("changed")
+                            }
+                        });
+                        $j($aggregationParticle).addClass("changed");
+                        agpModalMessage
+                            .add("The selected product defines a default aggregation particle. This order will now aggregate on '"
+                                + $aggregationParticle.find(":selected").text() + "' unless you override this manually.", "AGP_CHANGED");
+                } else {
+                    modalMessages("info", "AGP_CHANGED").clear();
                 }
-            } else {
-                modalMessages("info", "AGP_CHANGED").clear();
-            }
-            if (!canOverrideAgp && $aggregationParticle.val() !== data.productAgp) {
-                $aggregationParticle.val(data.productAgp);
+                if (!canOverrideAgp) {
+                    $aggregationParticle.val(data.productAgp);
+                }
             }
         }
 
