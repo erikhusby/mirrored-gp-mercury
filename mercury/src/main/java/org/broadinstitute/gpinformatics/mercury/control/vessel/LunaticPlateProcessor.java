@@ -116,21 +116,17 @@ public class LunaticPlateProcessor {
             if (vesselPosition == null) {
                 throw new ValidationException("Invalid well position on row " + (row.getRowNum() + 1));
             }
-            BigDecimal concentration = BigDecimal.ZERO;
-            try {
+            Cell concCell = row.getCell(CONC_COLUMN);
+            // "N/A" causes there to be no quant saved for this position.
+            if (concCell.getCellTypeEnum() != CellType.STRING || !concCell.getStringCellValue().equals("N/A")) {
                 double conc = (row.getCell(CONC_COLUMN).getCellTypeEnum() == CellType.NUMERIC) ?
                         row.getCell(CONC_COLUMN).getNumericCellValue() :
-                        // "N/A" or any other non-numeric string becomes 0.0
                         NumberUtils.toDouble(row.getCell(CONC_COLUMN).getStringCellValue());
-                if (conc > 0) {
-                    concentration = MathUtils.scaleTwoDecimalPlaces(new BigDecimal(conc));
-                }
-            } catch (Exception e) {
-                throw new ValidationException("Invalid concentration on row " + (row.getRowNum() + 1) + " : " +
-                        e.toString());
+                BigDecimal concentration = (conc > 0) ?
+                        MathUtils.scaleTwoDecimalPlaces(new BigDecimal(conc)) : BigDecimal.ZERO;
+                plateWellResults.add(new VarioskanPlateProcessor.PlateWellResult(plateId, vesselPosition,
+                        concentration));
             }
-            plateWellResults.add(new VarioskanPlateProcessor.PlateWellResult(plateId, vesselPosition,
-                    concentration));
         }
     }
 }
