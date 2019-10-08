@@ -1,10 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -116,13 +118,13 @@ public class LunaticPlateProcessor {
             }
             BigDecimal concentration = BigDecimal.ZERO;
             try {
-                double conc = row.getCell(CONC_COLUMN).getNumericCellValue();
+                double conc = (row.getCell(CONC_COLUMN).getCellTypeEnum() == CellType.NUMERIC) ?
+                        row.getCell(CONC_COLUMN).getNumericCellValue() :
+                        // "N/A" or any other non-numeric string becomes 0.0
+                        NumberUtils.toDouble(row.getCell(CONC_COLUMN).getStringCellValue());
                 if (conc > 0) {
                     concentration = MathUtils.scaleTwoDecimalPlaces(new BigDecimal(conc));
                 }
-            } catch (NumberFormatException e) {
-                throw new ValidationException("Invalid concentration (must be decimal number) on row " +
-                        (row.getRowNum() + 1));
             } catch (Exception e) {
                 throw new ValidationException("Invalid concentration on row " + (row.getRowNum() + 1) + " : " +
                         e.toString());
