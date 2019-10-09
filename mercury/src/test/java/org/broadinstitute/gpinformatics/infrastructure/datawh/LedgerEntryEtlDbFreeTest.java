@@ -5,9 +5,10 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
-import org.easymock.EasyMock;
+import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -36,15 +37,19 @@ public class LedgerEntryEtlDbFreeTest {
     private static final String FORMATTED_BILLING_SESSION_MESSAGE = BILLING_SESSION_MESSAGE.replace('\n', ' ');
     private static final Date WORK_COMPLETE_DATE = new Date();
     private static final String WORK_ITEM_ID = "2201";
+    private static final String SAP_DELIVERY_DOCUMENT_ID = "0200003194";
+    private static final Long productId = 3383l;
     private String datafileDir;
     private LedgerEntryEtl ledgerEntryEtl;
 
-    private final AuditReaderDao auditReader = EasyMock.createMock(AuditReaderDao.class);
-    private final LedgerEntry ledgerEntry = EasyMock.createMock(LedgerEntry.class);
-    private final LedgerEntryDao ledgerEntryDao = EasyMock.createMock(LedgerEntryDao.class);
-    private final ProductOrderSample productOrderSample = EasyMock.createMock(ProductOrderSample.class);
-    private final PriceItem priceItem = EasyMock.createMock(PriceItem.class);
-    private final BillingSession billingSession = EasyMock.createMock(BillingSession.class);
+    private final AuditReaderDao auditReader = Mockito.mock(AuditReaderDao.class);
+    private final LedgerEntry ledgerEntry = Mockito.mock(LedgerEntry.class);
+
+    private final LedgerEntryDao ledgerEntryDao = Mockito.mock(LedgerEntryDao.class);
+    private final ProductOrderSample productOrderSample = Mockito.mock(ProductOrderSample.class);
+
+    private final PriceItem priceItem = Mockito.mock(PriceItem.class);
+    private final BillingSession billingSession = Mockito.mock(BillingSession.class);
     private final Object[] mocks = new Object[]{auditReader, ledgerEntry, ledgerEntryDao, productOrderSample,
             priceItem, billingSession};
 
@@ -57,7 +62,7 @@ public class LedgerEntryEtlDbFreeTest {
         ledgerEntryEtl = new LedgerEntryEtl(ledgerEntryDao);
         ledgerEntryEtl.setAuditReaderDao(auditReader);
 
-        EasyMock.reset(mocks);
+        Mockito.reset(mocks);
     }
 
     @AfterMethod(groups = TestGroups.DATABASE_FREE)
@@ -66,49 +71,62 @@ public class LedgerEntryEtlDbFreeTest {
     }
 
     public void testEtlFlags() throws Exception {
-        EasyMock.expect(ledgerEntry.getLedgerId()).andReturn(LEDGER_ID);
-        EasyMock.replay(mocks);
+        Mockito.when(ledgerEntry.getLedgerId()).thenReturn(LEDGER_ID);
 
         Assert.assertEquals(ledgerEntryEtl.entityClass, LedgerEntry.class);
         Assert.assertEquals(ledgerEntryEtl.baseFilename, "ledger_entry");
         Assert.assertEquals(ledgerEntryEtl.entityId(ledgerEntry), (Long) LEDGER_ID);
-
-        EasyMock.verify(mocks);
     }
 
     public void testCantMakeEtlRecord() throws Exception {
-        EasyMock.expect(ledgerEntryDao.findById(LedgerEntry.class, -1L)).andReturn(null);
-
-        EasyMock.replay(mocks);
+        Mockito.when(ledgerEntryDao.findById(Mockito.any(), Mockito.eq(-1L))).thenReturn(null);
 
         Assert.assertEquals(ledgerEntryEtl.dataRecords(etlDateStr, false, -1L).size(), 0);
 
-        EasyMock.verify(mocks);
     }
 
     public void testMakeRecord() throws Exception {
-        EasyMock.expect(ledgerEntryDao.findById(LedgerEntry.class, LEDGER_ID)).andReturn(ledgerEntry);
-        EasyMock.expect(ledgerEntry.getLedgerId()).andReturn(LEDGER_ID);
-        EasyMock.expect(ledgerEntry.getProductOrderSample()).andReturn(productOrderSample);
-        EasyMock.expect(productOrderSample.getProductOrderSampleId()).andReturn(PRODUCT_ORDER_SAMPLE_ID);
-        EasyMock.expect(ledgerEntry.getQuoteId()).andReturn(QUOTE_ID);
-        EasyMock.expect(ledgerEntry.getPriceItem()).andReturn(priceItem);
-        EasyMock.expect(priceItem.getPriceItemId()).andReturn(PRICE_ITEM_ID);
-        EasyMock.expect(ledgerEntry.getPriceItemType()).andReturn(PRICE_ITEM_TYPE);
-        EasyMock.expect(ledgerEntry.getQuantity()).andReturn(LEDGER_QUANTITY);
-        EasyMock.expect(ledgerEntry.getBillingSession()).andReturn(billingSession);
-        EasyMock.expect(billingSession.getBillingSessionId()).andReturn(BILLING_SESSION_ID);
-        EasyMock.expect(ledgerEntry.getBillingMessage()).andReturn(BILLING_SESSION_MESSAGE);
-        EasyMock.expect(ledgerEntry.getWorkCompleteDate()).andReturn(WORK_COMPLETE_DATE);
-        EasyMock.expect(ledgerEntry.getWorkItem()).andReturn(WORK_ITEM_ID);
-        EasyMock.replay(mocks);
+        Mockito.when(productOrderSample.getProductOrderSampleId()).thenReturn(PRODUCT_ORDER_SAMPLE_ID);
+        Mockito.when(priceItem.getPriceItemId()).thenReturn(PRICE_ITEM_ID);
+        Mockito.when(ledgerEntryDao.findById(Mockito.anyObject(), Mockito.eq(LEDGER_ID))).thenReturn(ledgerEntry);
+        Mockito.when(billingSession.getBillingSessionId()).thenReturn(BILLING_SESSION_ID);
+        Mockito.when(ledgerEntry.getLedgerId()).thenReturn(LEDGER_ID);
+        Mockito.when(ledgerEntry.getProductOrderSample()).thenReturn(productOrderSample);
+        Mockito.when(ledgerEntry.getQuoteId()).thenReturn(QUOTE_ID);
+        Mockito.when(ledgerEntry.getPriceItem()).thenReturn(priceItem);
+        Mockito.when(ledgerEntry.getPriceItemType()).thenReturn(PRICE_ITEM_TYPE);
+        Mockito.when(ledgerEntry.getQuantity()).thenReturn(LEDGER_QUANTITY);
+        Mockito.when(ledgerEntry.getBillingSession()).thenReturn(billingSession);
+        Mockito.when(ledgerEntry.getBillingMessage()).thenReturn(BILLING_SESSION_MESSAGE);
+        Mockito.when(ledgerEntry.getWorkCompleteDate()).thenReturn(WORK_COMPLETE_DATE);
+        Mockito.when(ledgerEntry.getWorkItem()).thenReturn(WORK_ITEM_ID);
+        Mockito.when(ledgerEntry.getSapDeliveryDocumentId()).thenReturn(SAP_DELIVERY_DOCUMENT_ID);
+        Product testProduct = Mockito.mock(Product.class);
+        Mockito.when(testProduct.getProductId()).thenReturn(productId);
+        Mockito.when(ledgerEntry.getProduct()).thenReturn(testProduct);
 
         Collection<String> records = ledgerEntryEtl.dataRecords(etlDateStr, false, LEDGER_ID);
         Assert.assertEquals(records.size(), 1);
 
         verifyRecord(records.iterator().next());
 
-        EasyMock.verify(mocks);
+        Mockito.verify(productOrderSample).getProductOrderSampleId();
+        Mockito.verify(priceItem).getPriceItemId();
+        Mockito.verify(ledgerEntryDao).findById(Mockito.anyObject(), Mockito.anyLong());
+        Mockito.verify(billingSession).getBillingSessionId();
+        Mockito.verify(ledgerEntry).getLedgerId();
+        Mockito.verify(ledgerEntry).getProductOrderSample();
+        Mockito.verify(ledgerEntry).getQuoteId();
+        Mockito.verify(ledgerEntry).getPriceItem();
+        Mockito.verify(ledgerEntry).getPriceItemType();
+        Mockito.verify(ledgerEntry).getQuantity();
+        Mockito.verify(ledgerEntry).getBillingSession();
+        Mockito.verify(ledgerEntry).getBillingMessage();
+        Mockito.verify(ledgerEntry).getWorkCompleteDate();
+        Mockito.verify(ledgerEntry).getWorkItem();
+        Mockito.verify(ledgerEntry).getSapDeliveryDocumentId();
+        Mockito.verify(ledgerEntry).getProduct();
+        Mockito.verify(testProduct).getProductId();
     }
 
     private void verifyRecord(String record) {
@@ -126,6 +144,8 @@ public class LedgerEntryEtlDbFreeTest {
         Assert.assertEquals(parts[i++], FORMATTED_BILLING_SESSION_MESSAGE);
         Assert.assertEquals(parts[i++], EtlTestUtilities.format(WORK_COMPLETE_DATE));
         Assert.assertEquals(parts[i++], WORK_ITEM_ID);
+        Assert.assertEquals(parts[i++], SAP_DELIVERY_DOCUMENT_ID);
+        Assert.assertEquals(parts[i++], String.valueOf(productId));
         Assert.assertEquals(parts.length, i);
     }
 }

@@ -4143,6 +4143,62 @@
         </workflowProcessDefVersions>
     </workflowProcessDefs>
     <workflowProcessDefs>
+        <name>Single Cell 10X Hashing</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2018-04-02T12:15:24.085-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Single Cell Hashing</name>
+                <labEventTypes>SINGLE_CELL_HASHING_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <materialTypes>RNA</materialTypes>
+                    <materialTypes>RNA_TOTAL_RNA</materialTypes>
+                    <materialTypes>DNA_CDNA_LIBRARY</materialTypes>
+                    <materialTypes>DNA_CDNA</materialTypes>
+                    <materialTypes>HASH_LIBRARY</materialTypes>
+                </bucketEntryEvaluator>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellHashingSPRI1</name>
+                <labEventTypes>SINGLE_CELL_HASHING_SPRI_ADDITION1</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellHashingSPRI2</name>
+                <labEventTypes>SINGLE_CELL_HASHING_SPRI_ADDITION2</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellHashingIndexAddition</name>
+                <labEventTypes>SINGLE_CELL_HASHING_INDEX_ADDITION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellHashingPCR</name>
+                <labEventTypes>SINGLE_CELL_HASHING_PCR</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellHashingPCRCleanup</name>
+                <labEventTypes>SINGLE_CELL_HASHING_PCR_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
         <name>10X Extraction</name>
         <workflowProcessDefVersions>
             <version>01</version>
@@ -4518,6 +4574,7 @@
             <workflowStepDefs>
                 <name>Germline Exome PCR Cleanup</name>
                 <labEventTypes>GERMLINE_EXOME_PCR_CLEANUP</labEventTypes>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
                 <optional>false</optional>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -5144,6 +5201,20 @@
             <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
             <routingRule>MERCURY</routingRule>
             <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Single Cell 10X Hashing</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>TENX_3PRIME_HASHING</batchJiraIssueType>
+            <effectiveDate>2019-06-19T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>Single Cell 10X Hashing</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+            <routingRule>MERCURY</routingRule>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>

@@ -181,6 +181,7 @@ public class CreateFields extends UpdateFields {
         HUMAN_PCR_PLUS("Human PCR-Plus"),
         INFINIUM_8("Infinium-8"), // todo jmt -12, -24
         EXTERNAL_QUANT_AND_SEQ("External Library (Quant & Seq Only)"),
+        TENX_3PRIME_HASHING("10x 3' Hashing")
         ;
 
         private final String jiraName;

@@ -33,8 +33,10 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -49,14 +51,18 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation_;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -84,6 +90,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Writer;
 import java.math.BigDecimal;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -110,6 +117,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 public class LabBatchFixUpTest extends Arquillian {
 
     private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s");
+    private static final Pattern COMMA_PATTERN = Pattern.compile(",");
 
     @Inject
     private LabBatchDao labBatchDao;
@@ -149,6 +157,9 @@ public class LabBatchFixUpTest extends Arquillian {
 
     @Inject
     private JiraService jiraService;
+
+    @Inject
+    private BucketEjb bucketEjb;
 
     @Inject
     private UserTransaction utx;
@@ -1579,9 +1590,11 @@ public class LabBatchFixUpTest extends Arquillian {
     /*
      * This test is used to delete LCSETs that are canceled in JIRA.  It reads its parameters from a file,
      * testdata/DeleteLabBatch.txt, so it can be used for other similar fixups, without writing a new test.
+     * A flowcell designation lcset cannot be deleted (database FK violation) so use the optional
+     *  "replace with LCSET-nnnn" suffix to give a replacement LCSET in the file.
      * Example contents of the file are:
      * PO-9128
-     * LCSET-11312
+     * LCSET-11312 replace with LCSET-10023
      * LCSET-11553
      * ...
      */
@@ -1594,7 +1607,10 @@ public class LabBatchFixUpTest extends Arquillian {
         // If the LCSET has batch_starting_vessels but no bucket entries, these batch_starting_vessels
         // orphans will be removed by cascade when the labBatch is removed.
         for (int i = 1; i < lines.size(); ++i) {
-            LabBatch labBatch = labBatchDao.findByName(lines.get(i));
+            String lcsetName = lines.get(i).split("replace with")[0].trim();
+            String replacementLcset = StringUtils.substringAfter(lines.get(i), "replace with").trim();
+
+            LabBatch labBatch = labBatchDao.findByName(lcsetName);
             labBatch.getBucketEntries().forEach(bucketEntry -> {
                 LabVessel labVessel = bucketEntry.getLabVessel();
                 System.out.println("Removing bucket entry " + bucketEntry);
@@ -1630,7 +1646,21 @@ public class LabBatchFixUpTest extends Arquillian {
                         " leaving " + (remainingLcsets.isEmpty() ? "none" : remainingLcsets));
                 labEvent.getComputedLcSets().remove(labBatch);
             }
-
+            // Fixes up flowcell designation lcset.
+            List<FlowcellDesignation> designations =
+                    labBatchDao.findList(FlowcellDesignation.class, FlowcellDesignation_.chosenLcset, labBatch);
+            if (!designations.isEmpty()) {
+                String designationIds = designations.stream().
+                        map(designation -> String.valueOf(designation.getDesignationId())).
+                        sorted().collect(Collectors.joining(" "));
+                Assert.assertFalse(StringUtils.isBlank(replacementLcset), "Please supply a replacement lcset for " +
+                        lcsetName + " used in flowcell designation " + designationIds);
+                LabBatch replacementLabBatch = labBatchDao.findByName(replacementLcset);
+                Assert.assertNotNull(replacementLabBatch, "Cannot find LCSET for '" + replacementLcset + "'.");
+                System.out.println("Updating flowcell designation lcset choice to " + replacementLcset +
+                        " for designationIds " + designationIds);
+                designations.forEach(flowcellDesignation -> flowcellDesignation.setChosenLcset(replacementLabBatch));
+            }
             System.out.println("Deleting " + labBatch.getBatchName());
             labBatchDao.remove(labBatch.getJiraTicket());
             labBatch.getReworks().clear();
@@ -2109,5 +2139,68 @@ public class LabBatchFixUpTest extends Arquillian {
                 labEvent.computeLabBatches();
             }
         }
+    }
+
+    /**
+     * For a given container, creates bucket entries for the given PDO and given batch name.  Intended for plates
+     * backfilled from GAP.
+     * The test reads its input from file mercury/src/test/resources/testdata/CreateLabBatchesForContainers.txt.
+     * The format is: first line is ticket ID; second and subsequent lines are comma separated container barcode,
+     * PDO-ID, LabBatch name, date, user ID
+     * SUPPORT-5677
+     * WG0069502-MSA3,PDO-1403,ARRAY-WG0069502-MSA3,2013-07-23 12:55:07,mdasilva
+     * WG0069503-MSA3,PDO-1403,ARRAY-WG0069503-MSA3,2013-07-23 12:55:09,mdasilva
+     */
+    @Test(enabled = false)
+    public void fixupSupport5677LabBatchForContainer()
+            throws SystemException, NotSupportedException, IOException, ParseException, HeuristicRollbackException,
+            HeuristicMixedException, RollbackException {
+        userBean.loginOSUser();
+
+        userTransaction.begin();
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("CreateLabBatchesForContainers.txt"));
+        for (int i = 1; i < lines.size(); i++) {
+            String[] fields = COMMA_PATTERN.split(lines.get(i));
+            Assert.assertEquals(fields.length, 5);
+            // Allow commenting out of lines
+            if (fields[0].startsWith("#")) {
+                continue;
+            }
+            LabVessel labVessel = labVesselDao.findByIdentifier(fields[0]);
+            Assert.assertNotNull(labVessel);
+            VesselContainer<?> containerRole = labVessel.getContainerRole();
+            Assert.assertNotNull(containerRole);
+
+            // If plate has no wells, create them
+            if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class) &&
+                    containerRole.getContainedVessels().isEmpty()) {
+                StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
+                for (VesselPosition vesselPosition : labVessel.getVesselGeometry().getVesselPositions()) {
+                    PlateWell plateWell = new PlateWell(staticPlate, vesselPosition);
+                    staticPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
+                }
+            }
+
+            // Filter out wells with no samples
+            Set<LabVessel> vessels = containerRole.getContainedVessels().stream().
+                    filter(lv -> lv.getSampleInstancesV2().stream().
+                            anyMatch(sampleInstanceV2 -> sampleInstanceV2.getMercuryRootSampleName() != null)).
+                    collect(Collectors.toSet());
+
+            LabBatch labBatch = labBatchDao.findByName(fields[2]);
+            if (labBatch == null) {
+                labBatch = new LabBatch(fields[2], vessels, LabBatch.LabBatchType.WORKFLOW);
+            }
+            System.out.println("Adding " + labVessel.getLabel() + " to " + labBatch.getBatchName());
+            LabBatchResource.addToBatch(vessels, labBatch, fields[1],
+                    fields[4], ArchetypeAttribute.dateFormat.parse(fields[3]), bucketEjb);
+            TransferTraverserCriteria transferTraverserCriteria = new LabBatchFixUpTest.ComputeLabBatchTtc(true);
+            for (VesselPosition vesselPosition : labVessel.getVesselGeometry().getVesselPositions()) {
+                containerRole.evaluateCriteria(vesselPosition, transferTraverserCriteria,
+                        TransferTraverserCriteria.TraversalDirection.Descendants, 0);
+            }
+        }
+        labVesselDao.persist(new FixupCommentary(lines.get(0)));
+        userTransaction.commit();
     }
 }

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import com.google.common.collect.ImmutableSet;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataTestFactory;
@@ -538,7 +539,8 @@ public class WorkflowTest {
 
         for (ProductWorkflowDef workflowDef : productWorkflowDefs) {
             String workflowName = workflowDef.getName();
-            Product addOn = ProductTestFactory.createDummyProduct(workflowName, "P-" + workflowName + "-1");
+            String partNumber = ProductTestFactory.generateProductPartNumber();
+            Product addOn = ProductTestFactory.createDummyProduct(workflowName, partNumber);
             productOrder.getProduct().getAddOns().clear();
             productOrder.getProduct().addAddOn(addOn);
             productOrder.updateAddOnProducts(Collections.singletonList(addOn));
