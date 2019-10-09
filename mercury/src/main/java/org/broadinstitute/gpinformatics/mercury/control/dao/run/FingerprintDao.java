@@ -10,7 +10,6 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import java.util.Date;
-import java.util.List;
 
 /**
  * Data Access Object for Fingerprint entities.
@@ -29,7 +28,4 @@ public class FingerprintDao extends GenericDao {
         );
     }
 
-    public List<Fingerprint> findBySample(MercurySample mercurySample) {
-        return findList(Fingerprint.class, Fingerprint_.mercurySample, mercurySample);
-    }
 }

@@ -408,7 +408,7 @@ public enum DisplayExpression {
             LabVessel labVessel = (LabVessel) rowObject;
             List<MercurySample> mercurySamples = new ArrayList<>();
             for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
+                MercurySample mercurySample = sampleInstanceV2.getNearestMercurySample();
                 if (mercurySample != null) {
                     mercurySamples.add(mercurySample);
                 }
@@ -429,7 +429,7 @@ public enum DisplayExpression {
 
             List<MercurySample> mercurySamples = new ArrayList<>();
             for (SampleInstanceV2 sampleInstance : sampleInstances) {
-                MercurySample mercurySample = sampleInstance.getRootOrEarliestMercurySample();
+                MercurySample mercurySample = sampleInstance.getNearestMercurySample();
                 if (mercurySample != null) {
                     mercurySamples.add(mercurySample);
                 }
