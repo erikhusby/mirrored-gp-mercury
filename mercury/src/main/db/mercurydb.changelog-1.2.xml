@@ -2468,4 +2468,145 @@
         </sql>
     </changeSet>
 
+    <changeSet id="GPLIM-6138-001" author="epolk">
+        <createTable tableName="index_plate_definition" schemaName="mercury">
+            <column name="definition_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="definition_name" type="varchar2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reagent_type" type="varchar2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="vessel_geometry" type="varchar2(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="GPLIM-6138-002" author="epolk">
+        <addPrimaryKey constraintName="pk_index_plate_def" tableName="index_plate_definition"
+                       schemaName="mercury" columnNames="definition_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-6138-003" author="epolk">
+        <addUniqueConstraint constraintName="u_index_plate_def_name" tableName="index_plate_definition"
+                             columnNames="definition_name" schemaName="mercury"/>
+    </changeSet>
+    <changeSet id="GPLIM-6138-004" author="epolk">
+        <createSequence schemaName="mercury" sequenceName="seq_index_plate_def" incrementBy="50"/>
+    </changeSet>
+    <changeSet id="GPLIM-6138-011" author="epolk">
+        <createTable tableName="index_plate_definition_aud" schemaName="mercury">
+            <column name="definition_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="definition_name" type="varchar2(255)"/>
+            <column name="reagent_type" type="varchar2(255)"/>
+            <column name="vessel_geometry" type="varchar2(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="GPLIM-6138-012" author="epolk">
+        <addPrimaryKey constraintName="pk_index_plate_def_aud" tableName="index_plate_definition_aud"
+                       schemaName="mercury" columnNames="rev, definition_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-6138-013" author="epolk">
+        <createIndex indexName="ix_index_plate_def_aud" tableName="index_plate_definition_aud" schemaName="mercury">
+            <column name="definition_id"/>
+            <column name="rev"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-6138-021" author="epolk">
+        <createTable tableName="index_plate_def_well" schemaName="mercury">
+            <column name="definition_well_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="index_plate_definition" type="number(19, 0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="molecular_indexing_scheme" type="number(19, 0)"/>
+            <column name="vessel_position" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="GPLIM-6138-022" author="epolk">
+        <addPrimaryKey constraintName="pk_index_plate_well_def" tableName="index_plate_def_well"
+                       schemaName="mercury" columnNames="definition_well_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-6138-024" author="epolk">
+        <createSequence schemaName="mercury" sequenceName="seq_index_plate_def_well" incrementBy="50"/>
+    </changeSet>
+    <changeSet id="GPLIM-6138-025" author="epolk">
+        <addForeignKeyConstraint constraintName="fk_index_plate_well_defid"
+                                 baseTableSchemaName="mercury" baseTableName="index_plate_def_well" baseColumnNames="index_plate_definition"
+                                 referencedTableSchemaName="mercury" referencedTableName="index_plate_definition" referencedColumnNames="definition_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-6138-026" author="epolk">
+        <addForeignKeyConstraint constraintName="fk_index_plate_well_mis"
+                                 baseTableSchemaName="mercury" baseTableName="index_plate_def_well" baseColumnNames="molecular_indexing_scheme"
+                                 referencedTableSchemaName="mercury" referencedTableName="molecular_indexing_scheme" referencedColumnNames="molecular_indexing_scheme_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6138-031" author="epolk">
+        <createTable tableName="index_plate_def_well_aud" schemaName="mercury">
+            <column name="definition_well_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="index_plate_definition" type="number(19, 0)"/>
+            <column name="molecular_indexing_scheme" type="number(19, 0)"/>
+            <column name="vessel_position" type="varchar(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="GPLIM-6138-032" author="epolk">
+        <addPrimaryKey constraintName="pk_index_plate_def_well_aud" tableName="index_plate_def_well_aud"
+                       schemaName="mercury" columnNames="rev, definition_well_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-6138-033" author="epolk">
+        <createIndex indexName="ix_index_plate_def_well_aud" tableName="index_plate_def_well_aud" schemaName="mercury">
+            <column name="definition_well_id"/>
+            <column name="rev"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-6138-041" author="epolk">
+        <addColumn tableName="lab_vessel" schemaName="mercury">
+            <column name="index_plate_definition" type="number(19, 0)"/>
+            <column name="sales_order_number" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6138-042" author="epolk">
+        <addColumn tableName="lab_vessel_aud" schemaName="mercury">
+            <column name="index_plate_definition" type="number(19, 0)"/>
+            <column name="sales_order_number" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6138-043" author="epolk">
+        <createIndex indexName="ix_lab_vessel_plate_def" tableName="lab_vessel" schemaName="mercury">
+            <column name="index_plate_definition"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-6138-044" author="epolk">
+        <addForeignKeyConstraint constraintName="fk_lab_vessel_plate_def"
+            baseTableSchemaName="mercury" baseTableName="lab_vessel" baseColumnNames="index_plate_definition"
+            referencedTableSchemaName="mercury" referencedTableName="index_plate_definition" referencedColumnNames="definition_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-6138-045" author="epolk">
+        <createIndex indexName="ix_reagent_mis" tableName="reagent" schemaName="mercury">
+            <column name="molecular_indexing_scheme"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

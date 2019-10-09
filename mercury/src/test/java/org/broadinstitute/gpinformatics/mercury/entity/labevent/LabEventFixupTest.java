@@ -1721,7 +1721,8 @@ public class LabEventFixupTest extends Arquillian {
     public void fixupGplim4302() throws Exception {
         userBean.loginOSUser();
         utx.begin();
-        List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(LabEventType.INFINIUM_XSTAIN,
+        List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(
+                Collections.singletonList(LabEventType.INFINIUM_XSTAIN),
                 LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
         BspUser bspUser = userBean.getBspUser();
         long disambiguator = 1L;
@@ -1874,7 +1875,8 @@ public class LabEventFixupTest extends Arquillian {
 
     @Test(enabled = false)
     public void gplim4796BackfillOnPremPdosToHaveAllStartedEvent() throws Exception {
-        List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(LabEventType.INFINIUM_XSTAIN,
+        List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(
+                Collections.singletonList(LabEventType.INFINIUM_XSTAIN),
                 LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
         InfiniumRunFinder runFinder = new InfiniumRunFinder();
         BspUser bspUser = bspUserList.getByUsername("seqsystem");

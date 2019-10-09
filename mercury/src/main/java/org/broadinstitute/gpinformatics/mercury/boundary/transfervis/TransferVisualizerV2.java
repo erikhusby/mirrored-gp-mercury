@@ -199,21 +199,23 @@ public class TransferVisualizerV2 {
                 for (CherryPickTransfer cherryPickTransfer : event.getCherryPickTransfers()) {
                     LabVessel sourceVessel = cherryPickTransfer.getSourceVesselContainer().getVesselAtPosition(
                             cherryPickTransfer.getSourcePosition());
-                    String sourceVesselLabel = sourceVessel == null ? cherryPickTransfer.getSourcePosition().name() :
-                            sourceVessel.getLabel();
+                    String sourceChildLabel = sourceVessel != null && sourceVessel.getType() == LabVessel.ContainerType.TUBE ?
+                            sourceVessel.getLabel() :
+                            cherryPickTransfer.getSourcePosition().name();
                     LabVessel targetVessel = cherryPickTransfer.getTargetVesselContainer().getVesselAtPosition(
                             cherryPickTransfer.getTargetPosition());
-                    String targetVesselLabel = targetVessel == null ? cherryPickTransfer.getTargetPosition().name() :
-                            targetVessel.getLabel();
+                    String targetChildLabel = targetVessel != null && targetVessel.getType() == LabVessel.ContainerType.TUBE ?
+                            targetVessel.getLabel() :
+                            cherryPickTransfer.getTargetPosition().name();
 
                     renderContainer(cherryPickTransfer.getSourceVesselContainer(),
                             cherryPickTransfer.getAncillarySourceVessel(), labVessel, false);
                     renderContainer(cherryPickTransfer.getTargetVesselContainer(),
                             cherryPickTransfer.getAncillaryTargetVessel(), labVessel, false);
                     renderEdge(cherryPickTransfer.getSourceVesselContainer().getEmbedder().getLabel(),
-                            sourceVesselLabel,
+                            sourceChildLabel,
                             cherryPickTransfer.getTargetVesselContainer().getEmbedder().getLabel(),
-                            targetVesselLabel, label);
+                            targetChildLabel, label);
                 }
                 for (VesselToSectionTransfer vesselToSectionTransfer : event.getVesselToSectionTransfers()) {
                     String sourceLabel = vesselToSectionTransfer.getSourceVessel().getLabel();

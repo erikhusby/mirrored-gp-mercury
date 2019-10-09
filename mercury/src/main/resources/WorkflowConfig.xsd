@@ -52,6 +52,15 @@
         <xs:sequence>
             <xs:element type="xs:string" name="name"/>
             <xs:element type="xs:string" name="labEventTypes" maxOccurs="unbounded" minOccurs="0"/>
+            <xs:element name="eventClass" minOccurs="0">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="IN_PLACE"/>
+                        <xs:enumeration value="TRANSFER"/>
+                        <xs:enumeration value="SIDE_BRANCH_TRANSFER"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
             <xs:element name="optional" minOccurs="0">
                 <xs:simpleType>
                     <xs:restriction base="xs:string">
