@@ -105,7 +105,8 @@ public class InfiniumRunFinderContainerTest extends Arquillian {
 
         //Test to see if can find as a 'Pending' Chip
         List<LabVessel> pendingXStainChips = labVesselDao.findAllWithEventButMissingAnother(
-                LabEventType.INFINIUM_XSTAIN, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
+                InfiniumRunFinder.PIPELINE_TRIGGER_EVENT_TYPES,
+                LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
         LabVessel infiniumChip = null;
         boolean foundPendingChip = false;
         for (LabVessel labVessel: pendingXStainChips) {
@@ -145,7 +146,8 @@ public class InfiniumRunFinderContainerTest extends Arquillian {
         //Mock LabVesselDao so run finder doesn't grab every old run for this test.
         LabVesselDao mockLabVesselDao = mock(LabVesselDao.class);
         when(mockLabVesselDao.findAllWithEventButMissingAnother(
-                LabEventType.INFINIUM_XSTAIN, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED))
+                InfiniumRunFinder.PIPELINE_TRIGGER_EVENT_TYPES,
+                LabEventType.INFINIUM_AUTOCALL_ALL_STARTED))
                 .thenReturn(Arrays.asList(infiniumChip));
         when(mockLabVesselDao.findByIdentifier(chipBarcode))
                 .thenReturn(infiniumChip);
@@ -193,7 +195,8 @@ public class InfiniumRunFinderContainerTest extends Arquillian {
 
         //Test to see if can find as a 'Pending' Chip
         List<LabVessel> pendingXStainChips = labVesselDao.findAllWithEventButMissingAnother(
-                LabEventType.INFINIUM_XSTAIN, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
+                InfiniumRunFinder.PIPELINE_TRIGGER_EVENT_TYPES,
+                LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
         LabVessel infiniumChip = null;
         boolean foundPendingChip = false;
         for (LabVessel labVessel: pendingXStainChips) {
@@ -209,7 +212,7 @@ public class InfiniumRunFinderContainerTest extends Arquillian {
         //Mock LabVesselDao so run finder doesn't grab every old run for this test.
         LabVesselDao mockLabVesselDao = mock(LabVesselDao.class);
         when(mockLabVesselDao.findAllWithEventButMissingAnother(
-                LabEventType.INFINIUM_XSTAIN, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED))
+                InfiniumRunFinder.PIPELINE_TRIGGER_EVENT_TYPES, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED))
                 .thenReturn(Arrays.asList(infiniumChip));
         infiniumRunFinder.setLabVesselDao(mockLabVesselDao);
 
