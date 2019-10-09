@@ -768,10 +768,13 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
      *
      * @return collection of research projects
      */
+
     private static Collection<ResearchProject> collectChildResearchProjects(Collection<ResearchProject> collectedProjects) {
+        Collection<ResearchProject> childProjects = new HashSet<>();
         for (ResearchProject childResearchProject : collectedProjects) {
-            collectedProjects.addAll(collectChildResearchProjects(childResearchProject.getChildProjects()));
+            childProjects.addAll(collectChildResearchProjects(childResearchProject.getChildProjects()));
         }
+        collectedProjects.addAll(childProjects);
         return collectedProjects;
     }
 
