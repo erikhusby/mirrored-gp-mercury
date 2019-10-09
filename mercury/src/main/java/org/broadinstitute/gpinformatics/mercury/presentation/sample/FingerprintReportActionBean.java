@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.sample;
 
 import clover.org.apache.commons.lang3.ArrayUtils;
-import com.google.common.collect.Multimap;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
@@ -9,36 +8,25 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.ComparisonOperator;
-import org.apache.poi.ss.usermodel.ConditionalFormattingRule;
-import org.apache.poi.ss.usermodel.IndexedColors;
-import org.apache.poi.ss.usermodel.PatternFormatting;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.SheetConditionalFormatting;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.util.CellRangeAddress;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGetExportedSamplesFromAliquots;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.StreamCreatedSpreadsheetUtil;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
-import org.broadinstitute.gpinformatics.mercury.boundary.run.FingerprintResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.run.ConcordanceCalculator;
 import org.broadinstitute.gpinformatics.mercury.control.run.FingerprintEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FpGenotype;
-import org.broadinstitute.gpinformatics.mercury.entity.run.Snp;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
+import org.h2.value.Value;
+import org.jetbrains.annotations.NotNull;
+import org.xmlsoap.schemas.soap.encoding.Int;
 
 
 import javax.inject.Inject;
@@ -49,15 +37,19 @@ import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+
+import static java.util.Map.Entry.comparingByValue;
+import static java.util.stream.Collectors.toMap;
 
 
 @UrlBinding(value = FingerprintReportActionBean.ACTIONBEAN_URL_BININDING)
@@ -128,11 +120,11 @@ public class FingerprintReportActionBean extends CoreActionBean {
 
         String filename = "";
         if (sampleId != null) {
-            filename = sampleId.substring(0, 8) + "_" + formatDate(new Date()) + "_FP_REPORT" + ".xls";
+            filename = sampleId.substring(0, 8) + "_" + formatDate(new Date()) + "_FP_REPORT" + ".xlsx";
         } else if (pdoId != null) {
-            filename = pdoId + "_" + formatDate(new Date()) + "_FP_REPORT" + ".xls";
+            filename = pdoId + "_" + formatDate(new Date()) + "_FP_REPORT" + ".xlsx";
         } else if (participantId != null) {
-            filename = participantId + "_" + formatDate(new Date()) + "_FP_REPORT" + ".xls";
+            filename = participantId + "_" + formatDate(new Date()) + "_FP_REPORT" + ".xlsx";
         }
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         workbook.write(out);
@@ -223,48 +215,55 @@ public class FingerprintReportActionBean extends CoreActionBean {
 
     public Workbook makeSpreadsheet(List<Fingerprint> fingerprints) {
         Map<String, Object[][]> sheets = new HashMap<>();
-
+        Map<Integer, String> mapRsidToColumn = new HashMap<>();
+        Map<String, String> mapSnpToColumn = new HashMap<>();
 
         int numFingerprintCells = fingerprints.size() + 1;
         int rowIndex = 0;
-        int colIndex = 0;
+        int rsIdIndex = 0;
 
         String[][] fingerprintCells = new String[numFingerprintCells][];
 
+        for (Fingerprint fingerprint : fingerprints) {
+
+            for (FpGenotype geno : fingerprint.getFpGenotypesOrdered()) {
+                if (geno != null) {
+                    String rsId = geno.getSnp().getRsId();
+                    mapRsidToColumn.put(rsIdIndex, rsId);
+                    ++rsIdIndex;
+                }
+            }
+        }
+
+        Map<Integer, String> sortLabelsByRsId = mapRsidToColumn.entrySet().stream()
+                .sorted(Map.Entry.<Integer, String>comparingByValue())
+                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2, LinkedHashMap::new));
 
         fingerprintCells[rowIndex] =
                 new String[]{"Participant Id", "Root Sample", "Fingerprint Aliquot", "Date", "Platform", "Pass/Fail",
-                        "LOD Score", "SNPs...."};
-        ++rowIndex;
+                        "LOD Score"};
+        Set<String> sortedRsidSet = new LinkedHashSet<>(sortLabelsByRsId.values());
+        Object[] array1 = sortedRsidSet.toArray();
+        String[] sortedRsidArray = (String[]) sortedRsidSet.toArray(new String[0]);
 
+        fingerprintCells[rowIndex] = ArrayUtils.addAll(fingerprintCells[rowIndex], sortedRsidArray);
+
+        rowIndex++;
 
         for (Fingerprint fingerprint : fingerprints) {
-            String[] genoArray = new String[1000];
-            //Build genotype string
-
             String lodScoreStr = findLodScore(fingerprint);
-
-
-            ArrayList<String> myList = new ArrayList<String>(Collections.singletonList(genoArray[rowIndex]));
-
-
             for (FpGenotype geno : fingerprint.getFpGenotypesOrdered()) {
-                for (FpGenotype geno1 : fingerprint.getFpGenotypesOrdered()) {
-                    if (geno != null) {
-                        String genotype = geno.getGenotype();
-                    }
-                }
                 if (geno != null) {
                     String snp = geno.getGenotype();
-                    myList.add(snp);
-                    genoArray = myList.toArray(genoArray);
-                    colIndex++;
+                    String rsId = geno.getSnp().getRsId();
+                    mapSnpToColumn.put(rsId, snp);
+                    ++rsIdIndex;
                 }
             }
 
-            genoArray = Arrays.stream(genoArray)
-                    .filter(s -> (s != null && s.length() > 0))
-                    .toArray(String[]::new);
+            Map<String, String> sortedByRsId = mapSnpToColumn.entrySet().stream()
+                    .sorted(Map.Entry.<String, String>comparingByKey())
+                    .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2, LinkedHashMap::new));
 
             fingerprintCells[rowIndex] =
                     new String[]{fingerprint.getMercurySample().getSampleData().getPatientId(),
@@ -273,14 +272,15 @@ public class FingerprintReportActionBean extends CoreActionBean {
                             formatDate(fingerprint.getDateGenerated()), fingerprint.getPlatform().name(),
                             fingerprint.getDisposition().name(), lodScoreStr};
 
-            fingerprintCells[rowIndex] = ArrayUtils.addAll(fingerprintCells[rowIndex], genoArray);
+            List<String> sortedSnpList = new ArrayList<>(sortedByRsId.values());
+            Object[] array3 = sortedSnpList.toArray();
+            String[] sortedSnpArray = (String[]) sortedSnpList.toArray(new String[0]);
 
+            fingerprintCells[rowIndex] = ArrayUtils.addAll(fingerprintCells[rowIndex], sortedSnpArray);
             ++rowIndex;
-
         }
 
         String[] sheetNames = {"Fingerprints"};
-
         sheets.put(sheetNames[0], fingerprintCells);
 
         return SpreadsheetCreator.createSpreadsheet(sheets);
