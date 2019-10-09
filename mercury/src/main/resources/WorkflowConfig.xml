@@ -5208,7 +5208,7 @@
         <productWorkflowDefVersions>
             <version>1.0</version>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
-            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
+            <batchJiraIssueType>TENX_3PRIME_HASHING</batchJiraIssueType>
             <effectiveDate>2019-06-19T00:00:00.000-04:00</effectiveDate>
             <workflowProcessDefs>Single Cell 10X Hashing</workflowProcessDefs>
             <workflowProcessDefs>QTP</workflowProcessDefs>
