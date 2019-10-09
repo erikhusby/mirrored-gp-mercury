@@ -12,7 +12,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventTy
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.GapHandler;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -28,7 +27,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -47,7 +45,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -73,8 +70,6 @@ public class InfiniumRunFinderContainerTest extends Arquillian {
     @Inject
     private LabEventFactory labEventFactory;
 
-    private GapHandler mockGapHandler;
-
     public static final String POST_PCR_PLATE = "000016960009";
 
     private File tmpDir;
@@ -94,9 +89,6 @@ public class InfiniumRunFinderContainerTest extends Arquillian {
 
     @Test
     public void testNewChipCreation() throws Exception {
-        mockGapHandler = mock(GapHandler.class);
-        doNothing().when(mockGapHandler).postToGap(any(BettaLIMSMessage.class));
-        labEventFactory.setGapHandler(mockGapHandler);
         bettaLimsMessageResource.setLabEventFactory(labEventFactory);
 
         String chipSuffix = new SimpleDateFormat("MMddHHmmss").format(new Date());
@@ -182,9 +174,6 @@ public class InfiniumRunFinderContainerTest extends Arquillian {
 
     @Test
     public void testStainedChipPendingLoadShouldntComplete() throws Exception {
-        mockGapHandler = mock(GapHandler.class);
-        doNothing().when(mockGapHandler).postToGap(any(BettaLIMSMessage.class));
-        labEventFactory.setGapHandler(mockGapHandler);
         bettaLimsMessageResource.setLabEventFactory(labEventFactory);
 
         String chipSuffix = new SimpleDateFormat("MMddHHmmss").format(new Date());
