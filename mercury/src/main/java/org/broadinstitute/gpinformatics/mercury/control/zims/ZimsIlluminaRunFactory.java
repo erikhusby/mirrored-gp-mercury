@@ -443,6 +443,7 @@ public class ZimsIlluminaRunFactory {
             }
 
             SampleData sampleData = mapSampleIdToDto.get(sampleInstanceDto.getSampleId());
+            sampleData.overrideWithSampleInstance(sampleInstance);
             Boolean isPooledTube = sampleInstance.getIsPooledTube();
             if (sampleData instanceof MercurySampleData) {
                 MercurySampleData mercurySampleData = (MercurySampleData) sampleData;

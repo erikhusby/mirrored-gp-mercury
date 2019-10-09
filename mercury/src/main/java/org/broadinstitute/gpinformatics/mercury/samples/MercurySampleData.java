@@ -1,13 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.samples;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -463,6 +462,7 @@ public class MercurySampleData implements SampleData {
         return visit;
     }
 
+    @Override
     public void overrideWithQuants(Collection<LabMetric> labMetrics) {
         if (quantData == null) {
             quantData = new QuantData();
@@ -472,6 +472,11 @@ public class MercurySampleData implements SampleData {
                 quantData.updateFromLabMetric(labMetric);
             }
         }
+    }
+
+    @Override
+    public void overrideWithSampleInstance(SampleInstanceV2 sampleInstance) {
+        tumorNormal = sampleInstance.getSampleType();
     }
 
     @Override

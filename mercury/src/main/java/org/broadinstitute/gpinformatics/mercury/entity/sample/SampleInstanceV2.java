@@ -130,7 +130,8 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private FlowcellDesignation.IndexType indexType;
     private Integer indexLength1;
     private Integer indexLength2;
-// todo jmt tumor /  normal from LabEventType, here or in SampleData
+    private String sampleType;
+
     /**
      * For a reagent-only sample instance.
      */
@@ -242,6 +243,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         indexType = other.getIndexType();
         indexLength1 = other.getIndexLength1();
         indexLength2 = other.getIndexLength2();
+        sampleType = other.getSampleType();
     }
 
     /**
@@ -661,6 +663,14 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         if (resultingMaterialType != null) {
             materialType = resultingMaterialType;
         }
+        Metadata.Key metadataKey = labEventType.getMetadataKey();
+        if (metadataKey != null) {
+            if (metadataKey == Metadata.Key.TUMOR_NORMAL) {
+                sampleType = labEventType.getMetadataValue();
+            } else {
+                throw new RuntimeException("Unexpected metadata key " + metadataKey);
+            }
+        }
 
         if (vesselEvent.getLabEvent().getManualOverrideLcSet() != null) {
             singleWorkflowBatch = vesselEvent.getLabEvent().getManualOverrideLcSet();
@@ -932,6 +942,10 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
 
     public String getCatName() {
         return catName;
+    }
+
+    public String getSampleType() {
+        return sampleType;
     }
 
     @Override

@@ -414,8 +414,13 @@ public class LabEventFactory implements Serializable {
         }
 
         if (!labEvents.isEmpty()) {
-            LabEvent labEvent = labEvents.get(0);
-            LabEventType.ForwardMessage forwardMessage = labEvent.getLabEventType().getForwardMessage();
+            Set<LabEventType.ForwardMessage> forwardMessages = labEvents.stream().
+                    map(labEvent -> labEvent.getLabEventType().getForwardMessage()).
+                    collect(Collectors.toSet());
+            if (forwardMessages.size() > 1) {
+                throw new RuntimeException("More than one ForwardMessage");
+            }
+            LabEventType.ForwardMessage forwardMessage = forwardMessages.iterator().next();
             switch (forwardMessage) {
                 case BSP:
                 case BSP_APPLY_SM_IDS:
@@ -450,6 +455,7 @@ public class LabEventFactory implements Serializable {
 
                     break;
                 case GAP:
+                    LabEvent labEvent = labEvents.get(0);
                     String forwardToGap = null;
                     Set<LabVessel> labVessels = labEvent.getSourceLabVessels();
                     if (labVessels.isEmpty()) {
@@ -475,6 +481,7 @@ public class LabEventFactory implements Serializable {
         return labEvents;
     }
 
+    // todo jmt delete
     @Nullable
     public static String determineForwardToGap(LabEvent labEvent, LabVessel labVessel,
             ProductEjb productEjb, AttributeArchetypeDao attributeArchetypeDao) {

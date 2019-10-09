@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 
@@ -524,6 +525,11 @@ public class BspSampleData implements SampleData {
                 }
             }
         }
+    }
+
+    @Override
+    public void overrideWithSampleInstance(SampleInstanceV2 sampleInstance) {
+        columnToValue.put(BSPSampleSearchColumn.SAMPLE_TYPE, sampleInstance.getSampleType());
     }
 
     // todo jmt may need framework for unit conversion

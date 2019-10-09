@@ -487,6 +487,7 @@ public class TransferVisualizerV2 {
             for (AlternativeIds alternativeId : alternativeIds) {
                 switch (alternativeId) {
                     case SAMPLE_ID:
+                        // todo jmt may have multiple ancestor sample instances, but only one direct MercurySample
                         Set<SampleInstanceV2> sampleInstances = child.getSampleInstancesV2();
                         if (sampleInstances.size() == 1) {
                             SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();

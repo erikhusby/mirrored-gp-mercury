@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure;
 
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 
 import java.util.Collection;
@@ -119,4 +120,6 @@ public interface SampleData {
     String getSampleStatus();
 
     String getReceptacleType();
+
+    void overrideWithSampleInstance(SampleInstanceV2 sampleInstance);
 }
