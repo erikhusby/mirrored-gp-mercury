@@ -342,14 +342,14 @@ public class InfiniumRunResource {
 
     static final Map<String, String> mapSerialNumberToMachineName = new HashMap<>();
     static {
-        mapSerialNumberToMachineName.put("N296", "Practical Pig");
-        mapSerialNumberToMachineName.put("N0296", "Practical Pig");
-        mapSerialNumberToMachineName.put("N370", "Big Bad Wolf");
-        mapSerialNumberToMachineName.put("N0370", "Big Bad Wolf");
-        mapSerialNumberToMachineName.put("N700", "Fiddler Pig");
-        mapSerialNumberToMachineName.put("N0700", "Fiddler Pig");
-        mapSerialNumberToMachineName.put("N588", "Fiffer Pig");
-        mapSerialNumberToMachineName.put("N0588", "Fiffer Pig");
+        mapSerialNumberToMachineName.put("N296", "BAB");
+        mapSerialNumberToMachineName.put("N0296", "BAB");
+        mapSerialNumberToMachineName.put("N370", "BAA");
+        mapSerialNumberToMachineName.put("N0370", "BAA");
+        mapSerialNumberToMachineName.put("N700", "BAC");
+        mapSerialNumberToMachineName.put("N0700", "BAC");
+        mapSerialNumberToMachineName.put("N588", "BAD");
+        mapSerialNumberToMachineName.put("N0588", "BAD");
         mapSerialNumberToMachineName.put("N1052", "BAF");
         mapSerialNumberToMachineName.put("N01052", "BAF");
         mapSerialNumberToMachineName.put("N1042", "BAE");
