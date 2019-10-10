@@ -23,11 +23,11 @@
                                                         label="prettyName"/>
                         </stripes:select>
                     </div>
-                    <stripes:label for="platesFile" class="control-label">
+                    <stripes:label for="spreadsheet" class="control-label">
                         Molecular Index Plates File
                     </stripes:label>
                     <div class="controls">
-                        <stripes:file name="platesFile" id="platesFile"/>
+                        <stripes:file name="spreadsheet" id="spreadsheet"/>
                     </div>
                 </div>
                 <div class="control-group">
