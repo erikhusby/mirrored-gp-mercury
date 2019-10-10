@@ -16,6 +16,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Fetches available lab metric detail data for each page of a lab vessel search. </br>
@@ -119,6 +121,16 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
         isDataInitialized = true;
     }
 
+    // We want the source of the metric transfer. Most transfers are from tube to plate well, so we want the tube.
+    // However, for those that are plate well to plate well, we want the well on which the decision was made.
+    static Predicate<LabMetric> sourceMetricPredicate = labMetric -> {
+        if (labMetric.getName().getDecider() == null) {
+            return labMetric.getLabVessel().getType() != LabVessel.ContainerType.PLATE_WELL;
+        }
+        return labMetric.getLabMetricDecision() != null;
+    };
+
+
     /**
      * Looks up all metrics of type specified from the cached data for a lab vessel and builds the plugin row.
      * Framework quietly ignores empty cells.
@@ -147,14 +159,7 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
            return row;
         }
 
-        List<LabMetric> metricList = new ArrayList<>();
-
-        // Interested in tubes only
-        for( LabMetric labMetric : metrics ) {
-            if( labMetric.getLabVessel().getType() != LabVessel.ContainerType.PLATE_WELL ) {
-                metricList.add(labMetric);
-            }
-        }
+        List<LabMetric> metricList = metrics.stream().filter(sourceMetricPredicate).collect(Collectors.toList());
 
         // Bail out if there are no metrics (unlikely - tubes accompany plate wells)
         if (CollectionUtils.isEmpty(metricList)) {

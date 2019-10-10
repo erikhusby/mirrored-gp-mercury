@@ -292,6 +292,10 @@ public class SampleInstanceEntity {
         this.umisPresent = umisPresent;
     }
 
+    public Long getSampleInstanceEntityId() {
+        return sampleInstanceEntityId;
+    }
+
     public String getAggregationDataType() {
         return aggregationDataType;
     }
