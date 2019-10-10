@@ -340,7 +340,7 @@ public class ResearchProjectFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
-    public void fixupSupport5835_Change_Title() {
+    public void fixupSupport5835_Change_Title() throws IOException {
         userBean.loginOSUser();
 
         final String RP2107 = "RP-2107";
@@ -353,6 +353,8 @@ public class ResearchProjectFixupTest extends Arquillian {
         }
         assertThat(researchProject.getTitle(), equalTo(OLD_TITLE));
         researchProject.setTitle(NEW_TITLE);
+
+        researchProjectEjb.submitToJira(researchProject);
 
         rpDao.persist(new FixupCommentary("see https://gpinfojira.broadinstitute.org/jira/browse/SUPPORT-5835"));
     }
