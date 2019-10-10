@@ -9,12 +9,12 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
@@ -30,8 +30,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.PositionLabBatches;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -148,14 +146,16 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         rootMercurySamples.addAll(labVessel.getMercurySamples());
         // Need to know the aggregation particle for the event that created this vessel
         if (labVessel.isRoot()) {
-            Set<String> aggParticles = labVessel.getTransfersToWithReArrays().stream().
-                    map(labEvent -> labEvent.getLabEventType().getAggregationParticle()).
-                    collect(Collectors.toSet());
-            if (aggParticles.size() > 1) {
+            List<LabEvent> labEvents = labVessel.getTransfersToWithReArrays().stream().
+                    filter(labEvent -> labEvent.getLabEventType().getAggregationParticle() != null).
+                    collect(Collectors.toList());
+            if (labEvents.size() > 1) {
                 throw new RuntimeException("Multiple aggregation particle events for " + labVessel.getLabel());
             }
-            if (aggParticles.size() == 1) {
-                aggregationParticle = aggParticles.iterator().next();
+            if (labEvents.size() == 1) {
+                LabEventType labEventType = labEvents.get(0).getLabEventType();
+                aggregationParticle = labEventType.getAggregationParticle();
+                assignSampleType(labEventType);
             }
         }
         initiateSampleInstanceV2(labVessel);
@@ -666,14 +666,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         if (resultingMaterialType != null) {
             materialType = resultingMaterialType;
         }
-        Metadata.Key metadataKey = labEventType.getMetadataKey();
-        if (metadataKey != null) {
-            if (metadataKey == Metadata.Key.TUMOR_NORMAL) {
-                sampleType = labEventType.getMetadataValue();
-            } else {
-                throw new RuntimeException("Unexpected metadata key " + metadataKey);
-            }
-        }
+        assignSampleType(labEventType);
 
         if (vesselEvent.getLabEvent().getManualOverrideLcSet() != null) {
             singleWorkflowBatch = vesselEvent.getLabEvent().getManualOverrideLcSet();
@@ -696,6 +689,17 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
                 LabBatch workflowBatch = computedLcsets.iterator().next();
                 singleWorkflowBatch = workflowBatch;
                 setSingleBucketEntry(labEventType, workflowBatch);
+            }
+        }
+    }
+
+    private void assignSampleType(LabEventType labEventType) {
+        Metadata.Key metadataKey = labEventType.getMetadataKey();
+        if (metadataKey != null) {
+            if (metadataKey == Metadata.Key.TUMOR_NORMAL) {
+                sampleType = labEventType.getMetadataValue();
+            } else {
+                throw new RuntimeException("Unexpected metadata key " + metadataKey);
             }
         }
     }
