@@ -338,4 +338,22 @@ public class ResearchProjectFixupTest extends Arquillian {
         rpDao.persist(new FixupCommentary(fixupReason));
         utx.commit();
     }
+
+    @Test(enabled = false)
+    public void fixupSupport5835_Change_Title() {
+        userBean.loginOSUser();
+
+        final String RP2107 = "RP-2107";
+        final String OLD_TITLE = "VanAllen/Tolaney Breast Cancer 17-342";
+        final String NEW_TITLE = "VanAllen/Tolaney Breast Cancer 17-324";
+
+        ResearchProject researchProject = rpDao.findByJiraTicketKey(RP2107);
+        if (researchProject == null) {
+            Assert.fail(String.format("Research Project %s doesn't exist.", RP2107));
+        }
+        assertThat(researchProject.getTitle(), equalTo(OLD_TITLE));
+        researchProject.setTitle(NEW_TITLE);
+
+        rpDao.persist(new FixupCommentary("see https://gpinfojira.broadinstitute.org/jira/browse/SUPPORT-5835"));
+    }
 }
