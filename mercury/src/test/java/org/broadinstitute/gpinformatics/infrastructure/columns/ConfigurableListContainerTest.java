@@ -324,7 +324,7 @@ public class ConfigurableListContainerTest extends Arquillian {
             put("SM-744ME", "PT-1PZXA");
             put("SM-744MT", "PT-1PZXP");
             put("SM-HM7QC", "CP-15203");
-            put("SM-IBD5H", "PT-2L2PS"); // Has ARRAY fingerprints too
+            put("SM-IBD5H", "PT-2OMAX"); // Has ARRAY fingerprints too
         }};
         mercurySampleId.setValues(new ArrayList<>(mapSampleIdToPtId.keySet()));
 

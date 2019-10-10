@@ -813,21 +813,25 @@ public class VesselContainer<T extends LabVessel> {
             }
             ProductWorkflowDefVersion workflowDefVersion = workflowConfig.getWorkflowByName(
                     labBatch.getWorkflowName()).getEffectiveVersion(labEvent.getEventDate());
-            ProductWorkflowDefVersion.LabEventNode labEventNode = workflowDefVersion.findStepByEventType(
+            Collection<ProductWorkflowDefVersion.LabEventNode> stepsByEventType = workflowDefVersion.findStepsByEventType(
                     labEvent.getLabEventType().getName());
-            if (labEventNode != null) {
-                if (!labEventNode.getPredecessorTransfers().isEmpty() && !labEvent.getAncestorEvents().isEmpty()) {
-                    Set<LabEventType> workflowTypes = labEventNode.getPredecessorTransfers().stream().
-                            map(ProductWorkflowDefVersion.LabEventNode::getLabEventType).collect(Collectors.toSet());
-                    Set<LabEventType> ancestorTypes = labEvent.getAncestorEvents().stream().
-                            map(LabEvent::getLabEventType).collect(Collectors.toSet());
-                    Set<LabEventType> intersection = workflowTypes.stream()
-                            .filter(ancestorTypes::contains)
-                            .collect(Collectors.toSet());
-                    if (!intersection.isEmpty()) {
-                        computedLcsets.clear();
-                        computedLcsets.add(labBatch);
-                        break;
+            // PICO_TRANSFER occurs multiple times, so it's not useful
+            if (stepsByEventType.size() == 1) {
+                ProductWorkflowDefVersion.LabEventNode labEventNode = stepsByEventType.iterator().next();
+                if (labEventNode != null) {
+                    if (!labEventNode.getPredecessorTransfers().isEmpty() && !labEvent.getAncestorEvents().isEmpty()) {
+                        Set<LabEventType> workflowTypes = labEventNode.getPredecessorTransfers().stream().
+                                map(ProductWorkflowDefVersion.LabEventNode::getLabEventType).collect(Collectors.toSet());
+                        Set<LabEventType> ancestorTypes = labEvent.getAncestorEvents().stream().
+                                map(LabEvent::getLabEventType).collect(Collectors.toSet());
+                        Set<LabEventType> intersection = workflowTypes.stream()
+                                .filter(ancestorTypes::contains)
+                                .collect(Collectors.toSet());
+                        if (!intersection.isEmpty()) {
+                            computedLcsets.clear();
+                            computedLcsets.add(labBatch);
+                            break;
+                        }
                     }
                 }
             }
