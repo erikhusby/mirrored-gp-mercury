@@ -418,7 +418,7 @@ public class LabEventFactory implements Serializable {
                     map(labEvent -> labEvent.getLabEventType().getForwardMessage()).
                     collect(Collectors.toSet());
             if (forwardMessages.size() > 1) {
-                throw new RuntimeException("More than one ForwardMessage");
+                throw new RuntimeException("Mixture of ForwardMessage values");
             }
             LabEventType.ForwardMessage forwardMessage = forwardMessages.iterator().next();
             switch (forwardMessage) {
@@ -442,7 +442,13 @@ public class LabEventFactory implements Serializable {
                                             if (smId != null) {
                                                 MercurySample mercurySample = mapIdToMercurySample.get(smId);
                                                 if (mercurySample == null) {
-                                                    mercurySample = new MercurySample(smId,MercurySample.MetadataSource.BSP);
+                                                    // todo jmt add newRoot indicator to LabEventType?
+                                                    Boolean isNewRoot = null;
+                                                    if (event.getLabEventType().getAggregationParticle() != null) {
+                                                        isNewRoot = true;
+                                                    }
+                                                    mercurySample = new MercurySample(smId,
+                                                            MercurySample.MetadataSource.BSP, isNewRoot);
                                                 }
                                                 vessel.addSample(mercurySample);
                                             }

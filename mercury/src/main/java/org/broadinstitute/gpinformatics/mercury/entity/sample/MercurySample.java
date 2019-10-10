@@ -176,6 +176,9 @@ public class MercurySample extends AbstractSample {
     @BatchSize(size = 100)
     protected Set<LabVessel> labVessel = new HashSet<>();
 
+    /**
+     * Set true to indicate e.g. result of combining multiple samples in extraction.
+     */
     private Boolean isRoot;
 
     @OneToMany(mappedBy = "mercurySample", cascade = CascadeType.PERSIST, orphanRemoval = true)
@@ -203,11 +206,11 @@ public class MercurySample extends AbstractSample {
      *
      * @param sampleKey         the name of the sample
      * @param metadataSource    the source of the sample data
-     * @param isRoot            true if this is a new root
+     * @param isNewRoot         true if this is a new root, e.g. combining multiple samples in extraction
      */
-    public MercurySample(String sampleKey, MetadataSource metadataSource, Boolean isRoot) {
+    public MercurySample(String sampleKey, MetadataSource metadataSource, Boolean isNewRoot) {
         this(sampleKey, metadataSource);
-        this.isRoot = isRoot;
+        this.isRoot = isNewRoot;
     }
 
     /**
