@@ -50,6 +50,7 @@ public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             LabEventType.INFINIUM_POST_HYBRIDIZATION_HYB_OVEN_LOADED,
             LabEventType.INFINIUM_HYB_CHAMBER_LOADED,
             LabEventType.INFINIUM_XSTAIN,
+            LabEventType.INFINIUM_XSTAIN_HD,
             LabEventType.INFINIUM_AUTOCALL_SOME_STARTED,
             LabEventType.INFINIUM_AUTOCALL_ALL_STARTED));
 

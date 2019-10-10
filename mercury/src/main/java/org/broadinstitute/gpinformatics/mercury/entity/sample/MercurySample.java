@@ -38,6 +38,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -328,6 +329,17 @@ public class MercurySample extends AbstractSample {
     public Set<Metadata> getMetadata() {
         return metadata;
     }
+
+    @Transient
+    public String getMetadataValueForKey(Metadata.Key key) {
+        for (Metadata metadatum : metadata) {
+            if (metadatum.getKey() == key) {
+                return metadatum.getValue();
+            }
+        }
+        return null;
+    }
+
 
     public Long getMercurySampleId() {
         return mercurySampleId;

@@ -520,6 +520,11 @@ public class LabVesselSearchDefinition {
         searchTerm.setHelpText("Creates a column with a link to an existing search which functions as a drill-down.  <br/>Note: Selected search MUST have a single term which expects a barcode value.");
         searchTerms.add(searchTerm);
 
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Sales Order Number");
+        searchTerm.setDisplayExpression(DisplayExpression.SALES_ORDER_NUMBER);
+        searchTerms.add(searchTerm);
+
         return searchTerms;
     }
 
@@ -2539,8 +2544,8 @@ public class LabVesselSearchDefinition {
 
                 LabVessel vessel = (LabVessel)entity;
                 TransferTraverserCriteria.VesselForEventTypeCriteria traverserCriteria =
-                        new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(
-                                LabEventType.INFINIUM_XSTAIN), true);
+                        new TransferTraverserCriteria.VesselForEventTypeCriteria(Arrays.asList(
+                                LabEventType.INFINIUM_XSTAIN, LabEventType.INFINIUM_XSTAIN_HD), true);
 
                 if( vessel.getType() == LabVessel.ContainerType.PLATE_WELL ) {
                     vessel.evaluateCriteria(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
@@ -2596,8 +2601,8 @@ public class LabVesselSearchDefinition {
 
                 LabVessel vessel = (LabVessel)entity;
                 TransferTraverserCriteria.VesselForEventTypeCriteria traverserCriteria =
-                        new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(
-                                LabEventType.INFINIUM_XSTAIN), true);
+                        new TransferTraverserCriteria.VesselForEventTypeCriteria(Arrays.asList(
+                                LabEventType.INFINIUM_XSTAIN, LabEventType.INFINIUM_XSTAIN_HD), true);
 
                 if( vessel.getType() == LabVessel.ContainerType.PLATE_WELL ) {
                     vessel.evaluateCriteria(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
@@ -3136,7 +3141,7 @@ public class LabVesselSearchDefinition {
             LabVessel.VesselEvent vesselEvent = context.getVesselEvent();
             // Starting vessel has no event
             if (vesselEvent != null) {
-                MaterialType resultingMaterialType = 
+                MaterialType resultingMaterialType =
                         vesselEvent.getLabEvent().getLabEventType().getResultingMaterialType();
                 if (resultingMaterialType != null && resultingMaterialType == materialType) {
                     labVessels.add(vesselEvent.getTargetLabVessel());
