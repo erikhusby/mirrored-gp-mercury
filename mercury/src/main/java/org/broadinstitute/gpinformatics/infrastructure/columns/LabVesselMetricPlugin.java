@@ -125,7 +125,9 @@ public class LabVesselMetricPlugin implements ListPlugin {
                         // Puts recent metric before older metric.
                         int dateCompare = o2.getCreatedDate().compareTo(o1.getCreatedDate());
                         return dateCompare == 0 ? o2.getLabMetricId().compareTo(o1.getLabMetricId()) : dateCompare;
-                    }).orElse(null);
+                    }).
+                    // If everything was filtered out, return something
+                    orElse(labMetrics.get(0));
         } else {
             return null;
         }
