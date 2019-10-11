@@ -487,7 +487,6 @@ public class LabEventFactory implements Serializable {
         return labEvents;
     }
 
-    // todo jmt delete
     @Nullable
     public static String determineForwardToGap(LabEvent labEvent, LabVessel labVessel,
             ProductEjb productEjb, AttributeArchetypeDao attributeArchetypeDao) {

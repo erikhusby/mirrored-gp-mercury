@@ -20,19 +20,16 @@ public class EventHandlerSelector {
     private DenatureToDilutionTubeHandler denatureToDilutionTubeHandler;
     private FlowcellMessageHandler flowcellMessageHandler;
     private FlowcellLoadedHandler flowcellLoadedHandler;
-    private BspNewRootHandler bspNewRootHandler;
     private CreateLabBatchHandler createLabBatchHandler;
 
     @Inject
     public EventHandlerSelector(DenatureToDilutionTubeHandler denatureToDilutionTubeHandler,
             FlowcellMessageHandler flowcellMessageHandler,
             FlowcellLoadedHandler flowcellLoadedHandler,
-            BspNewRootHandler bspNewRootHandler,
             CreateLabBatchHandler createLabBatchHandler) {
         this.denatureToDilutionTubeHandler = denatureToDilutionTubeHandler;
         this.flowcellMessageHandler = flowcellMessageHandler;
         this.flowcellLoadedHandler = flowcellLoadedHandler;
-        this.bspNewRootHandler = bspNewRootHandler;
         this.createLabBatchHandler = createLabBatchHandler;
     }
 
@@ -64,10 +61,6 @@ public class EventHandlerSelector {
         case FLOWCELL_LOADED:
             flowcellLoadedHandler.handleEvent(targetEvent, stationEvent);
             break;
-//        case BLOOD_PLASMA_SECOND_TRANSFER:
-//        case BLOOD_BUFFY_COAT_TRANSFER:
-//            bspNewRootHandler.handleEvent(targetEvent, stationEvent);
-//            break;
         case ARRAY_PLATING_DILUTION:
             createLabBatchHandler.handleEvent(targetEvent, stationEvent);
             break;

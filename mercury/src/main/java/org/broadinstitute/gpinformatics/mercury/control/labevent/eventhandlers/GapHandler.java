@@ -13,7 +13,6 @@ import javax.ws.rs.core.Response;
 /**
  * Forwards Arrays messages to GAP.
  */
-// todo jmt delete
 @Dependent
 public class GapHandler {
 
