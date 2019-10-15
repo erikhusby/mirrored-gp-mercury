@@ -430,8 +430,20 @@ public class IndexedPlateFactory {
         } else {
             messageCollection.addError(IN_USE, DEFINITION_SUFFIX, plateName);
         }
+        boolean hasHeaderRow = VesselPosition.getByName(spreadsheet.get(0).get(0)) == null;
         if (!messageCollection.hasErrors()) {
-            boolean hasHeaderRow = VesselPosition.getByName(spreadsheet.get(0).get(0)) == null;
+            if ((hasHeaderRow ? 2 : 1) > spreadsheet.size()) {
+                messageCollection.addError("No data rows found");
+            } else {
+                for (int i = hasHeaderRow ? 1 : 0; i < spreadsheet.size(); ++i) {
+                    if (spreadsheet.get(i).size() < 2 || StringUtils.isBlank(spreadsheet.get(i).get(0)) ||
+                            StringUtils.isBlank(spreadsheet.get(i).get(1))) {
+                        messageCollection.addError("Missing position or index name at row " + (i + 1));
+                    }
+                }
+            }
+        }
+        if (!messageCollection.hasErrors()) {
             // Makes a map of the first two columns of the spreadsheet.
             Map<String, String> positionToMisName = spreadsheet.subList(hasHeaderRow ? 1 : 0, spreadsheet.size()).
                     stream().collect(Collectors.toMap(row -> row.get(0), row -> row.get(1)));
