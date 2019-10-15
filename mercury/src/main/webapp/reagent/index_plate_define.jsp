@@ -294,7 +294,7 @@ instances. If it does, you can remove unused ones using the
                         <div class="control-group controls">
                             <stripes:submit id="renameDefinition" name="renameDefinition" value="Rename" class="btn btn-primary"/>
                             <span style="padding-left: 10px;">
-                                <stripes:text id="newDefinitionName" name="newDefinitionName" value="[new plate definition name]"/>
+                                <input type="text" id="newDefinitionName" name="newDefinitionName" placeholder="[new plate definition name]"/>
                             </span>
                         </div>
                     </div>
