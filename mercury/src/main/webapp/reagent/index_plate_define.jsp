@@ -20,6 +20,14 @@
                     $j(".creationLayout").hide();
                     $j(".managementLayout").show();
                     $j("#selectManage").attr('checked', 'checked');
+                    if (${not empty actionBean.unusedAndInUse.right}) {
+                        $j("#inUseBarcodesDiv").css('display', 'block');
+                        $j("#inUsePlateBarcodes").val("${actionBean.unusedAndInUse.right}");
+                    }
+                    if (${not empty actionBean.unusedAndInUse.left}) {
+                        $j("#unusedBarcodesDiv").css('display', 'block');
+                        $j("#unusedPlateBarcodes").val("${actionBean.unusedAndInUse.left}");
+                    }
                 } else {
                     $j(".creationLayout").show();
                     $j(".managementLayout").hide();
@@ -41,8 +49,8 @@
 
             function plateNameChange() {
                 $j("#plateContents").hide();
-                $j("#inUseBarcodes").hide();
-                $j("#unusedBarcodes").hide();
+                $j("#inUseBarcodesDiv").css('display', 'none');
+                $j("#unusedBarcodesDiv").css('display', 'none');
             }
 
         </script>
@@ -312,37 +320,23 @@ instances. If it does, you can remove unused ones using the
                     </div>
                 </div>
 
-                <!-- Text area to display the barcodes of the plates in use. -->
-                <c:if test="${not empty actionBean.unusedAndInUse.right}">
-                    <div class="inputGroup" id="inUseBarcodes">
-                        <div class="inputRow">
-                            <div class="firstCol"></div>
-                            <div class="controls">
-                                    <span>
-                                        <p>In Use Plate Barcodes </p>
-                                        <stripes:textarea id="inUsePlateBarcodes" readonly="true" cols="104" rows="4" style="width: 100%;"
-                                                          name="readonly1" value="${actionBean.unusedAndInUse.right}"/>
-                                    </span>
-                            </div>
+                <!-- Text area to display the barcodes of the plates. -->
+                <div class="inputGroup">
+                    <div class="inputRow">
+                        <div class="firstCol"></div>
+                        <div class="controls">
+                            <span id="inUseBarcodesDiv" style="display: none">
+                                <p>In Use Plate Barcodes </p>
+                                <textarea id="inUsePlateBarcodes" readonly="true" cols="104" rows="4" style="width: 100%;"></textarea>
+                            </span>
+                            <br/>
+                            <span id="unusedBarcodesDiv" style="display: none">
+                                <p>Unused Plate Barcodes </p>
+                                <textarea id="unusedPlateBarcodes" readonly="true" cols="104" rows="4" style="width: 100%;"></textarea>
+                            </span>
                         </div>
                     </div>
-                </c:if>
-
-                <!-- Text area to display the barcodes of the unused plates. -->
-                <c:if test="${not empty actionBean.unusedAndInUse.left}">
-                    <div class="inputGroup" id="unusedBarcodes">
-                        <div class="inputRow">
-                            <div class="firstCol"></div>
-                            <div class="controls">
-                                    <span>
-                                        <p>Unused Plate Barcodes </p>
-                                        <stripes:textarea id="unusedPlateBarcodes" readonly="true" cols="104" rows="4" style="width: 100%;"
-                                                          name="readonly2" value="${actionBean.unusedAndInUse.left}"/>
-                                    </span>
-                            </div>
-                        </div>
-                    </div>
-                </c:if>
+                </div>
 
             </div>
         </stripes:form>
