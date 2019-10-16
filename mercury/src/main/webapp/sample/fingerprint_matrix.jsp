@@ -30,15 +30,16 @@
                                       title="Enter SM-ID(s)"/>
                 </div>
             </div>
+            <label for="platforms" class="control-label">Platform(s)</label>
             <div class="controls">
                <s:select name="platforms" multiple="true" size="4">
                    <s:options-enumeration enum="org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint.Platform"/>
-
                </s:select>
             </div>
             <div class="control-group">
                 <div class="control-label">&nbsp;</div>
                 <div class="controls actionButtons">
+                   <br>
                     <stripes:submit name="downloadMatrix" value="Download Matrix"/>
                 </div>
             </div>

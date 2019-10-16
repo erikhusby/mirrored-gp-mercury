@@ -12,8 +12,6 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGetExportedSamplesFromAliquots;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.StreamCreatedSpreadsheetUtil;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -24,9 +22,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.FpGenotype;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
-import org.h2.value.Value;
-import org.jetbrains.annotations.NotNull;
-import org.xmlsoap.schemas.soap.encoding.Int;
 
 
 import javax.inject.Inject;
@@ -41,15 +36,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
-import static java.util.Map.Entry.comparingByValue;
-import static java.util.stream.Collectors.toMap;
 
 
 @UrlBinding(value = FingerprintReportActionBean.ACTIONBEAN_URL_BININDING)
@@ -60,12 +51,6 @@ public class FingerprintReportActionBean extends CoreActionBean {
 
     @Inject
     private MercurySampleDao mercurySampleDao;
-
-    @Inject
-    private BSPGetExportedSamplesFromAliquots bspGetExportedSamplesFromAliquots;
-
-    @Inject
-    private SampleDataFetcher sampleDataFetcher;
 
     @Inject
     private ProductOrderDao productOrderDao;
@@ -80,6 +65,7 @@ public class FingerprintReportActionBean extends CoreActionBean {
     private boolean showLayout = false;
     private List<Fingerprint> fingerprints = new ArrayList<>();
     private Map<String, String> mapLodScoreToFingerprint = new HashMap<>();
+    private Map<String, MercurySample> mapIdToMercurySample = new HashMap<>();
 
 
     @DefaultHandler
@@ -93,22 +79,19 @@ public class FingerprintReportActionBean extends CoreActionBean {
 
         if (sampleId == null && pdoId == null && participantId == null) {
             addGlobalValidationError("You must input a valid search term.");
-            return new ForwardResolution(VIEW_PAGE);
         } else if (StringUtils.isNotBlank(sampleId)
-                   && mercurySampleDao.findBySampleKeys(Arrays.asList(sampleId.toUpperCase().split("\\s+"))) == null) {
+                   && mercurySampleDao.findBySampleKeys(Arrays.asList(sampleId.split("\\s+"))).size() == 0) {
             addGlobalValidationError("There were no matching Sample Ids for " + "'" + sampleId + "'.");
-        } else if (StringUtils.isNotBlank(pdoId) && productOrderDao.findByBusinessKey(pdoId.toUpperCase()) == null) {
+        } else if (StringUtils.isNotBlank(pdoId) && productOrderDao.findByBusinessKey(pdoId) == null) {
             addGlobalValidationError("There were no matching items for " + "'" + pdoId + "'.");
-//              TODO validate PT-ID
-//            }else if(StringUtils.isNotBlank(participantId) && ){
-//                addGlobalValidationError("There were no matching items for " + "'" + participantId + "'.");
+        } else if (StringUtils.isNotBlank(participantId) && fingerprintEjb.getPtIdMercurySamples(mapIdToMercurySample,
+                participantId, mercurySampleDao).size() == 0) {
+            addGlobalValidationError("There were no matching items for " + "'" + participantId + "'.");
         } else {
             showLayout = true;
             displayFingerprints();
         }
-
         return new ForwardResolution(VIEW_PAGE);
-
     }
 
     @HandlesEvent("downloadReport")
@@ -124,7 +107,7 @@ public class FingerprintReportActionBean extends CoreActionBean {
         } else if (pdoId != null) {
             filename = pdoId + "_" + formatDate(new Date()) + "_FP_REPORT" + ".xlsx";
         } else if (participantId != null) {
-            filename = participantId + "_" + formatDate(new Date()) + "_FP_REPORT" + ".xlsx";
+            filename = participantId.substring(0, 8) + "_" + formatDate(new Date()) + "_FP_REPORT" + ".xlsx";
         }
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         workbook.write(out);
@@ -136,20 +119,20 @@ public class FingerprintReportActionBean extends CoreActionBean {
     }
 
 
-    public void displayFingerprints() {
-        Map<String, MercurySample> mapIdToMercurySample = new HashMap<>();
+    private void displayFingerprints() {
         if (StringUtils.isNotBlank(sampleId)) {
             mapIdToMercurySample =
                     mercurySampleDao.findMapIdToMercurySample(Arrays.asList(sampleId.toUpperCase().split("\\s+")));
         } else if (StringUtils.isNotBlank(pdoId)) {
-            ProductOrder productOrder = null;
+            ProductOrder productOrder;
             productOrder = productOrderDao.findByBusinessKey(pdoId.toUpperCase());
             for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
                 mapIdToMercurySample.put(productOrderSample.getSampleKey(), productOrderSample.getMercurySample());
             }
-//            TODO search by PT-ID
-        } else if (StringUtils.isNotBlank(participantId)) {
-
+        } else {
+            mapIdToMercurySample =
+                    fingerprintEjb
+                            .getPtIdMercurySamples(mapIdToMercurySample, participantId.toUpperCase(), mercurySampleDao);
         }
 
         fingerprints = fingerprintEjb.findFingerints(mapIdToMercurySample);
@@ -158,112 +141,47 @@ public class FingerprintReportActionBean extends CoreActionBean {
     }
 
 
-//    public Workbook makeSpreadsheet(List<Fingerprint> fingerprints) {
-//        Map<String, Object[][]> sheets = new HashMap<>();
-//
-//
-//        int numFingerprintCells = fingerprints.size() +1;
-//
-//
-//        String[][] fingerprintCells = new String[numFingerprintCells][];
-//        String[][] genoArray = new String[numFingerprintCells][1000];
-//
-//        int rowIndex = 0;
-//        int colIndex = 0;
-//
-//        fingerprintCells[rowIndex] =
-//                new String[]{"Participant Id", "Root Sample", "Fingerprint Aliquot", "Date", "Platform", "Pass/Fail",
-//                        "LOD Score", "Genotypes"};
-//        ++rowIndex;
-//
-//
-//        for (Fingerprint fingerprint : fingerprints) {
-//            //Build genotype string
-//            String genotype = "";
-//                for (FpGenotype geno : fingerprint.getFpGenotypesOrdered()) {
-//                    if (geno != null) {
-//                        genotype = genotype + geno.getGenotype();
-//                        genoArray[rowIndex][colIndex] = geno.getGenotype();
-//                        colIndex++;
-//                    }
-//                }
-//
-//
-//            String lodScoreStr = findLodScore(fingerprint);
-//            genoArray=Arrays.stream(genoArray)
-//                    .filter(Objects::nonNull)
-//                    .toArray(String[][]::new);
-//
-//
-//            fingerprintCells[rowIndex] =
-//                    new String[]{fingerprint.getMercurySample().getSampleData().getPatientId(),
-//                            fingerprint.getMercurySample().getSampleData().getRootSample(),
-//                            fingerprint.getMercurySample().getSampleKey(),
-//                            formatDate(fingerprint.getDateGenerated()), fingerprint.getPlatform().name(),
-//                            fingerprint.getDisposition().name(), lodScoreStr, /*genotype,*/ Arrays.toString(genoArray[rowIndex])};
-//            ++rowIndex;
-//
-//        }
-//
-//        String[] sheetNames = {"Fingerprints"};
-//
-//        sheets.put(sheetNames[0], fingerprintCells);
-//
-//        return SpreadsheetCreator.createSpreadsheet(sheets);
-//    }
-
-
-    public Workbook makeSpreadsheet(List<Fingerprint> fingerprints) {
+    private Workbook makeSpreadsheet(List<Fingerprint> fingerprints) {
         Map<String, Object[][]> sheets = new HashMap<>();
-        Map<Integer, String> mapRsidToColumn = new HashMap<>();
-        Map<String, String> mapSnpToColumn = new HashMap<>();
+        Set<String> rsIds = new LinkedHashSet<>();
 
         int numFingerprintCells = fingerprints.size() + 1;
         int rowIndex = 0;
-        int rsIdIndex = 0;
 
         String[][] fingerprintCells = new String[numFingerprintCells][];
 
         for (Fingerprint fingerprint : fingerprints) {
-
             for (FpGenotype geno : fingerprint.getFpGenotypesOrdered()) {
-                if (geno != null) {
+                if (geno != null && fingerprint.getPlatform() == Fingerprint.Platform.FLUIDIGM) {
                     String rsId = geno.getSnp().getRsId();
-                    mapRsidToColumn.put(rsIdIndex, rsId);
-                    ++rsIdIndex;
+                    rsIds.add(rsId);
                 }
             }
         }
 
-        Map<Integer, String> sortLabelsByRsId = mapRsidToColumn.entrySet().stream()
-                .sorted(Map.Entry.<Integer, String>comparingByValue())
-                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2, LinkedHashMap::new));
-
         fingerprintCells[rowIndex] =
                 new String[]{"Participant Id", "Root Sample", "Fingerprint Aliquot", "Date", "Platform", "Pass/Fail",
                         "LOD Score"};
-        Set<String> sortedRsidSet = new LinkedHashSet<>(sortLabelsByRsId.values());
-        Object[] array1 = sortedRsidSet.toArray();
-        String[] sortedRsidArray = (String[]) sortedRsidSet.toArray(new String[0]);
+        String[] rsIdArray = rsIds.toArray(new String[0]);
 
-        fingerprintCells[rowIndex] = ArrayUtils.addAll(fingerprintCells[rowIndex], sortedRsidArray);
+        fingerprintCells[rowIndex] = ArrayUtils.addAll(fingerprintCells[rowIndex], rsIdArray);
 
         rowIndex++;
 
+        List<String> rsIdsList = new ArrayList<>(rsIds);
         for (Fingerprint fingerprint : fingerprints) {
+            String[] snps = new String[rsIdsList.size()];
             String lodScoreStr = findLodScore(fingerprint);
             for (FpGenotype geno : fingerprint.getFpGenotypesOrdered()) {
                 if (geno != null) {
                     String snp = geno.getGenotype();
                     String rsId = geno.getSnp().getRsId();
-                    mapSnpToColumn.put(rsId, snp);
-                    ++rsIdIndex;
+                    if (rsIds.contains(rsId)) {
+                        int indexOf = rsIdsList.indexOf(rsId);
+                        snps[indexOf] = snp;
+                    }
                 }
             }
-
-            Map<String, String> sortedByRsId = mapSnpToColumn.entrySet().stream()
-                    .sorted(Map.Entry.<String, String>comparingByKey())
-                    .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2, LinkedHashMap::new));
 
             fingerprintCells[rowIndex] =
                     new String[]{fingerprint.getMercurySample().getSampleData().getPatientId(),
@@ -272,11 +190,7 @@ public class FingerprintReportActionBean extends CoreActionBean {
                             formatDate(fingerprint.getDateGenerated()), fingerprint.getPlatform().name(),
                             fingerprint.getDisposition().name(), lodScoreStr};
 
-            List<String> sortedSnpList = new ArrayList<>(sortedByRsId.values());
-            Object[] array3 = sortedSnpList.toArray();
-            String[] sortedSnpArray = (String[]) sortedSnpList.toArray(new String[0]);
-
-            fingerprintCells[rowIndex] = ArrayUtils.addAll(fingerprintCells[rowIndex], sortedSnpArray);
+            fingerprintCells[rowIndex] = ArrayUtils.addAll(fingerprintCells[rowIndex], snps);
             ++rowIndex;
         }
 
@@ -333,7 +247,7 @@ public class FingerprintReportActionBean extends CoreActionBean {
     }
 
     public void setSampleId(String sampleId) {
-        this.sampleId = sampleId;
+        this.sampleId = sampleId.toUpperCase();
     }
 
     public String getParticipantId() {
@@ -341,7 +255,7 @@ public class FingerprintReportActionBean extends CoreActionBean {
     }
 
     public void setParticipantId(String participantId) {
-        this.participantId = participantId;
+        this.participantId = participantId.toUpperCase();
     }
 
     public String getPdoId() {
@@ -349,7 +263,7 @@ public class FingerprintReportActionBean extends CoreActionBean {
     }
 
     public void setPdoId(String pdoId) {
-        this.pdoId = pdoId;
+        this.pdoId = pdoId.toUpperCase();
     }
 
     public boolean isShowLayout() {

@@ -5,8 +5,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.presentation.sample.FingerprintMatrixActionBean;
-import org.broadinstitute.gpinformatics.mercury.presentation.sample.FingerprintReportActionBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -14,8 +12,8 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -43,8 +41,8 @@ public class FingerprintEjbTest extends Arquillian {
         Map<String, MercurySample> mapIdToMercurySample = new HashMap<>();
         List<Fingerprint> fingerprints;
         List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(Arrays.asList("SM-J6SSU", "SM-HB8GT"));
-        Set<String> platforms =new HashSet<>();
-        platforms.add("FLUIDIGM");
+        Set<Fingerprint.Platform> platforms =new HashSet<>();
+        platforms = Collections.singleton(Fingerprint.Platform.FLUIDIGM);
         fingerprints = fingerprintEjb.findFingerints(mapIdToMercurySample);
         Workbook workbook = fingerprintEjb.makeMatrix(fingerprints,
                 platforms);

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.run;
 
 import com.google.common.collect.Multimap;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.ComparisonOperator;
 import org.apache.poi.ss.usermodel.ConditionalFormattingRule;
@@ -11,16 +12,17 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.SheetConditionalFormatting;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.broadinstitute.bsp.client.search.SearchItem;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGetExportedSamplesFromAliquots;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.search.LabMetricSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FingerprintResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
-import org.broadinstitute.gpinformatics.mercury.entity.run.FpGenotype;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import javax.ejb.Stateful;
@@ -34,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Stateful
 @RequestScoped
@@ -49,13 +52,12 @@ public class FingerprintEjb {
     private SampleDataFetcher sampleDataFetcher;
 
 
-
-    public Workbook makeMatrix(List<Fingerprint> fingerprints, Set<String> platforms) {
+    public Workbook makeMatrix(List<Fingerprint> fingerprints, Set<Fingerprint.Platform> platforms) {
         Map<String, Object[][]> sheets = new HashMap<>();
         Map<Fingerprint, Boolean> mapFpTest = new HashMap<>();
 
         for (Fingerprint fingerprint : fingerprints) {
-            boolean include = fingerprint.getGender() != null && (platforms.contains(fingerprint.getPlatform().name()))
+            boolean include = fingerprint.getGender() != null && (platforms.contains(fingerprint.getPlatform()))
                               && fingerprint.getDisposition() == Fingerprint.Disposition.PASS;
             mapFpTest.put(fingerprint, include);
         }
@@ -110,7 +112,7 @@ public class FingerprintEjb {
                     if (j == 0) {
                         cell.setCellValue(fluiLodCells[i][j]);
                     } else {
-                        cell.setCellValue(Double.valueOf(fluiLodCells[i][j]));
+                        cell.setCellValue(Double.parseDouble(fluiLodCells[i][j]));
                     }
                 }
             }
@@ -170,7 +172,25 @@ public class FingerprintEjb {
             mercurySample.setSampleData(mapIdToData.get(mercurySample.getSampleKey()));
         }
 
-        return fingerprints;
+        return fingerprints.stream()
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    public Map<String, MercurySample> getPtIdMercurySamples(Map<String, MercurySample> mapIdToMercurySample,
+                                                            String participantId,
+                                                            MercurySampleDao mercurySampleDao) {
+        if (StringUtils.isNotBlank(participantId)) {
+            SearchItem searchItem =
+                    new SearchItem("Participant ID", "IN", Arrays.asList((participantId.toUpperCase().split("\\s+"))));
+            List<Object> ptMercurySamples = LabMetricSearchDefinition.runBspSearch(searchItem);
+            List<String> mercurySamples = ptMercurySamples.stream()
+                    .map(object -> Objects.toString(object, null))
+                    .collect(Collectors.toList());
+            mapIdToMercurySample =
+                    mercurySampleDao.findMapIdToMercurySample(mercurySamples);
+        }
+        return mapIdToMercurySample;
     }
 
 

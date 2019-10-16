@@ -8,8 +8,6 @@ import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGetExportedSamplesFromAliquots;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.StreamCreatedSpreadsheetUtil;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -43,14 +41,7 @@ public class FingerprintMatrixActionBean extends CoreActionBean {
     private MercurySampleDao mercurySampleDao;
 
     @Inject
-    private BSPGetExportedSamplesFromAliquots bspGetExportedSamplesFromAliquots;
-
-    @Inject
-    private SampleDataFetcher sampleDataFetcher;
-
-    @Inject
     private FingerprintEjb fingerprintEjb;
-
 
 
     private String sampleId;
@@ -58,7 +49,8 @@ public class FingerprintMatrixActionBean extends CoreActionBean {
     private boolean showLayout = false;
     private List<Fingerprint> fingerprints = new ArrayList<>();
     private Map<String, String> mapLodScoreToFingerprint = new HashMap<>();
-    private Set<String> platforms;
+    private Set<Fingerprint.Platform> platforms;
+    private Map<String, MercurySample> mapIdToMercurySample = new HashMap<>();
 
 
     @DefaultHandler
@@ -67,41 +59,39 @@ public class FingerprintMatrixActionBean extends CoreActionBean {
         return new ForwardResolution(VIEW_PAGE);
     }
 
-    @HandlesEvent("search")
-    public Resolution search() {
-
-//        if (sampleId == null && participantId == null) {
-//            addGlobalValidationError("You must input a valid search term.");
-//            return new ForwardResolution(VIEW_PAGE);
-//        } else
-        if (StringUtils.isNotBlank(sampleId)
-            && mercurySampleDao.findBySampleKeys(Arrays.asList(sampleId.split("\\s+"))) == null) {
-            addGlobalValidationError("There were no matching Sample Ids for " + "'" + sampleId + "'.");
-//              TODO validate PT-ID
-//            }else if(StringUtils.isNotBlank(participantId) && ){
-//                addGlobalValidationError("There were no matching items for " + "'" + participantId + "'.");
-        } else {
-            showLayout = true;
-            displayFingerprints();
-        }
-
-        return new ForwardResolution(VIEW_PAGE);
-
-    }
-
     @HandlesEvent("downloadMatrix")
     public Resolution downloadMatrix() throws IOException {
 
-        displayFingerprints();
+        if (sampleId == null && participantId == null) {
+            addGlobalValidationError("You must input a valid search term.");
+            return new ForwardResolution(VIEW_PAGE);
+        } else
+        if (StringUtils.isNotBlank(sampleId)
+            && mercurySampleDao.findBySampleKeys(Arrays.asList(sampleId.split("\\s+"))).size() == 0) {
+            addGlobalValidationError("There were no matching Sample Ids for " + "'" + sampleId + "'.");
+            return new ForwardResolution(VIEW_PAGE);
+        } else if (StringUtils.isNotBlank(participantId) && fingerprintEjb.getPtIdMercurySamples(mapIdToMercurySample,
+                participantId, mercurySampleDao).size() == 0) {
+            addGlobalValidationError("There were no matching items for " + "'" + participantId + "'.");
+            return new ForwardResolution(VIEW_PAGE);
+        } else if (platforms == null){
+            addGlobalValidationError("No fingerprint platform(s) selected. Hold control to select multiple platforms.");
+            return new ForwardResolution(VIEW_PAGE);
+        } else
+            {
+                showLayout = true;
+                displayFingerprints();
 
-//TODO update with enum
+            }
+
+
         Workbook workbook = fingerprintEjb.makeMatrix(fingerprints, platforms);
 
         String filename = "";
         if (sampleId != null) {
-            filename = sampleId.substring(0, 8) + "_" + formatDate(new Date()) + "_FP_MATRIX" + ".xls";
+            filename = sampleId.substring(0, 8) + "_" + formatDate(new Date()) + "_FP_MATRIX" + ".xlsx";
         } else if (participantId != null) {
-            filename = participantId + "_" + formatDate(new Date()) + "_FP_MATRIX" + ".xls";
+            filename = participantId + "_" + formatDate(new Date()) + "_FP_MATRIX" + ".xlsx";
         }
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         workbook.write(out);
@@ -113,21 +103,19 @@ public class FingerprintMatrixActionBean extends CoreActionBean {
     }
 
 
-    public void displayFingerprints() {
-        Map<String, MercurySample> mapIdToMercurySample = new HashMap<>();
+    private void displayFingerprints() {
         if (StringUtils.isNotBlank(sampleId)) {
             mapIdToMercurySample =
                     mercurySampleDao.findMapIdToMercurySample(Arrays.asList(sampleId.split("\\s+")));
-//            TODO search by PT-ID
-        } else if (StringUtils.isNotBlank(participantId)) {
-
+        } else {
+            mapIdToMercurySample =
+                    fingerprintEjb.getPtIdMercurySamples(mapIdToMercurySample, participantId, mercurySampleDao);
         }
 
-       fingerprints = fingerprintEjb.findFingerints(mapIdToMercurySample);
+        fingerprints = fingerprintEjb.findFingerints(mapIdToMercurySample);
 
         Collections.sort(fingerprints);
     }
-
 
 
     public String formatDate(Date date) {
@@ -139,7 +127,7 @@ public class FingerprintMatrixActionBean extends CoreActionBean {
     }
 
     public void setSampleId(String sampleId) {
-        this.sampleId = sampleId;
+        this.sampleId = sampleId.toUpperCase();
     }
 
     public String getParticipantId() {
@@ -147,7 +135,7 @@ public class FingerprintMatrixActionBean extends CoreActionBean {
     }
 
     public void setParticipantId(String participantId) {
-        this.participantId = participantId;
+        this.participantId = participantId.toUpperCase();
     }
 
     public boolean isShowLayout() {
@@ -166,11 +154,11 @@ public class FingerprintMatrixActionBean extends CoreActionBean {
         return mapLodScoreToFingerprint;
     }
 
-    public Set<String> getPlatforms() {
+    public Set<Fingerprint.Platform> getPlatforms() {
         return platforms;
     }
 
-    public void setPlatforms(Set<String> platforms) {
+    public void setPlatforms(Set<Fingerprint.Platform> platforms) {
         this.platforms = platforms;
     }
 }
