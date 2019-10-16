@@ -210,7 +210,7 @@ public class BillingEjb {
         // with the quote for the QuoteImportItem, add the priceItemType, and the success message.
         Collection<String> replacementPriceItemNames = new ArrayList<>();
         PriceItem priceItem = item.getPrimaryProduct().getPrimaryPriceItem();
-        if(!item.isSapOrder()) {
+        if(item.isQuoteServerOrder()) {
             Collection<QuotePriceItem> replacementPriceItems =
                     priceListCache.getReplacementPriceItems(priceItem);
             for (QuotePriceItem replacementPriceItem : replacementPriceItems) {

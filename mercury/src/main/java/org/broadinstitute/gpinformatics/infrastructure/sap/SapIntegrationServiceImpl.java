@@ -306,9 +306,21 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     protected SAPOrderItem getOrderItem(SapQuote sapQuote, ProductOrder placedOrder, Product product,
                                         int additionalSampleCount, SapIntegrationService.Option serviceOptions) {
         BigDecimal sampleCount = getSampleCount(placedOrder, product, additionalSampleCount, serviceOptions);
-        if (sapQuote != null) {
+        Set<SapQuoteItemReference> quoteReferences;
+        if(serviceOptions.hasOption(Type.CLOSING)) {
+            try {
+                SapQuote oldQuote = findSapQuote(placedOrder.latestSapOrderDetail().getQuoteId());
+                quoteReferences = ProductOrder.createSapQuoteItemReferences(placedOrder, oldQuote);
+            } catch (SAPInterfaceException | SAPIntegrationException e) {
+                return null;
+            }
+        } else {
+            quoteReferences = placedOrder.getQuoteReferences();
+        }
 
-            final Optional<SapQuoteItemReference> quoteItemReference = placedOrder.getQuoteReferences().stream()
+        if (!quoteReferences.isEmpty()) {
+
+            final Optional<SapQuoteItemReference> quoteItemReference = quoteReferences.stream()
                     .filter(sapQuoteItemReference -> sapQuoteItemReference.getMaterialReference().equals(product))
                     .collect(toOptional());
             if(quoteItemReference.isPresent()) {
@@ -500,7 +512,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                     return;
                 }
                 log.debug("Creating product " + extendedProduct.getMaterialIdentifier());
-                log.debug(String.format("    ---  Sales org %s, hierarchy is %s, extending status is %s, disable status %s\n", extendedProduct.getSalesOrg(), extendedProduct.getProductHierarchy(), product.getOfferedAsCommercialProduct().toString(), extendedProduct.getStatus()));
+                log.debug(String.format("    ---  Sales org %s, hierarchy is %s, extending status is %s, disable status %s\n", extendedProduct.getSalesOrg(), extendedProduct.getProductHierarchy(), product.getOfferedAsCommercialProduct().toString(), extendedProduct.getSalesOrgStatus()));
 
                 getClient().createMaterial(extendedProduct);
             }
@@ -512,9 +524,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                         SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization())
                     && !product.getOfferedAsCommercialProduct()) {
 
-                    extendedProduct.setStatus(SAPMaterial.MaterialStatus.DISABLED);
+                    extendedProduct.setSalesOrgStatus(SAPMaterial.MaterialStatus.DISABLED);
                 }
-                log.debug(String.format("    ---  Sales org %s, hierarchy is %s, extending status is %s, disable status %s\n", extendedProduct.getSalesOrg(), extendedProduct.getProductHierarchy(), product.getOfferedAsCommercialProduct().toString(), extendedProduct.getStatus()));
+                log.debug(String.format("    ---  Sales org %s, hierarchy is %s, extending status is %s, disable status %s\n", extendedProduct.getSalesOrg(), extendedProduct.getProductHierarchy(), product.getOfferedAsCommercialProduct().toString(), extendedProduct.getSalesOrgStatus()));
                 getClient().changeMaterialDetails(SAPChangeMaterial.fromSAPMaterial(extendedProduct));
             }
         }

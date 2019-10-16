@@ -878,10 +878,11 @@ function renderPico(data, type, row, meta) {
 function updateFundsRemaining() {
     var quoteIdentifier = '${actionBean.editOrder.quoteId}';
     var productOrderKey = $j("input[name='productOrder']").val();
+    var originalQuote = "${actionBean.editOrder.quoteId}"
 
     if ($j.trim(quoteIdentifier)) {
         $j.ajax({
-            url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier="+quoteIdentifier+"&productOrder=" + productOrderKey,
+            url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier="+quoteIdentifier+"&productOrder=" + productOrderKey+"&originalQuote=" + originalQuote,
             dataType: 'json',
             success: updateFunds
         });
@@ -1220,8 +1221,10 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
 <stripes:hidden id="unAbandonComment" name="unAbandonComment" value=""/>
 <stripes:hidden id="attestationConfirmed" name="editOrder.attestationConfirmed" value=""/>
 <stripes:hidden name="customizationJsonString" id="customizationJsonString" />
+    <stripes:hidden name="originalQuote" value="${actionBean.editOrder.quoteId}"/>
 
-<div class="actionButtons">
+
+    <div class="actionButtons">
     <c:choose>
         <c:when test="${actionBean.editOrder.draft}">
             <%-- PDOs can be placed by PM or PDMs, so the security tag accepts either of those roles for 'Place Order'. --%>
@@ -1282,7 +1285,10 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
                 <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
 
                     &nbsp;&nbsp;&nbsp;&nbsp;
-                    <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.BillingLedgerActionBean"><stripes:param name="orderId" value="${actionBean.editOrder.jiraTicketKey}"/>Online Billing Ledger</stripes:link>
+                    <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.BillingLedgerActionBean">
+                        <stripes:param name="orderId" value="${actionBean.editOrder.jiraTicketKey}"/>
+                        Online Billing Ledger
+                    </stripes:link>
                 </security:authorizeBlock>
 
             </c:if>

@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.owasp.encoder.Encode;
 
 import javax.annotation.Nonnull;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,6 +16,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Fetches available lab metric detail data for each page of a lab vessel search. </br>
@@ -118,6 +121,16 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
         isDataInitialized = true;
     }
 
+    // We want the source of the metric transfer. Most transfers are from tube to plate well, so we want the tube.
+    // However, for those that are plate well to plate well, we want the well on which the decision was made.
+    static Predicate<LabMetric> sourceMetricPredicate = labMetric -> {
+        if (labMetric.getName().getDecider() == null) {
+            return labMetric.getLabVessel().getType() != LabVessel.ContainerType.PLATE_WELL;
+        }
+        return labMetric.getLabMetricDecision() != null;
+    };
+
+
     /**
      * Looks up all metrics of type specified from the cached data for a lab vessel and builds the plugin row.
      * Framework quietly ignores empty cells.
@@ -135,7 +148,8 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
         String fullHeaderName;
         String barcode;
         String position;
-        String metricValue;
+        String metricValueString;
+        BigDecimal metricValueNumber = null;
         String metricDate;
 
         Map<LabMetric.MetricType, Set<LabMetric>> metricGroups = cachedMetricData.get(labVessel.getLabel());
@@ -145,14 +159,7 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
            return row;
         }
 
-        List<LabMetric> metricList = new ArrayList<>();
-
-        // Interested in tubes only
-        for( LabMetric labMetric : metrics ) {
-            if( labMetric.getLabVessel().getType() != LabVessel.ContainerType.PLATE_WELL ) {
-                metricList.add(labMetric);
-            }
-        }
+        List<LabMetric> metricList = metrics.stream().filter(sourceMetricPredicate).collect(Collectors.toList());
 
         // Bail out if there are no metrics (unlikely - tubes accompany plate wells)
         if (CollectionUtils.isEmpty(metricList)) {
@@ -208,7 +215,8 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
                 LabMetric labMetric = metricEntry.getValue().get(0);
                 barcode = Encode.forHtml(labMetric.getLabVessel().getLabel());
                 position = labMetric.getVesselPosition();
-                metricValue = ColumnValueType.TWO_PLACE_DECIMAL.format( labMetric.getValue(), "" )
+                metricValueNumber = labMetric.getValue();
+                metricValueString = ColumnValueType.TWO_PLACE_DECIMAL.format( labMetric.getValue(), "" )
                         + " " + labMetric.getUnits().getDisplayName();
                 metricDate = ColumnValueType.DATE_TIME.format( labMetric.getCreatedDate(), "" );
             } else {
@@ -230,7 +238,7 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
                             , ColumnEntity.LAB_METRIC
                             , "GLOBAL|GLOBAL_LAB_METRIC_SEARCH_INSTANCES|Metrics by Barcode and Run"
                             , terms, context );
-                    position = metricValue = metricDate = "---";
+                    position = metricValueString = metricDate = "---";
                 } else {
                     // Text for Excel export
                     StringBuilder barcodeAppend = new StringBuilder();
@@ -253,7 +261,7 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
 
                     barcode = Encode.forHtml(barcodeAppend.toString().trim());
                     position = positionAppend.toString().trim();
-                    metricValue = valueAppend.toString().trim();
+                    metricValueString = valueAppend.toString().trim();
                 }
 
             }
@@ -267,7 +275,8 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
             row.addCell(resultCell);
 
             fullHeaderName = metricEntry.getKey() + " " + MetricColumn.VALUE.getDisplayName();
-            resultCell = new ConfigurableList.Cell(quantHeaders.get(fullHeaderName), metricValue, metricValue);
+            resultCell = new ConfigurableList.Cell(quantHeaders.get(fullHeaderName),
+                    metricValueNumber == null ? metricValueString : metricValueNumber, metricValueString);
             row.addCell(resultCell);
 
             fullHeaderName = metricEntry.getKey() + " " + MetricColumn.DATE.getDisplayName();

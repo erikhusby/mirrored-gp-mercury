@@ -231,9 +231,8 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
         StringBuffer workLink = new StringBuffer();
         final boolean webDisplay = StringUtils.isNotBlank(workItemId) &&
                           context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB;
-        boolean eligibleForLink = StringUtils.isNotBlank(workItemId) && !workItemId
-                .contains(BillingAdaptor.NOT_ELLIGIBLE_FOR_QUOTE_SERVER_INDICATOR)
-                    && !workItemId.contains(BillingAdaptor.NOT_ELIGIBLE_FOR_SAP_INDICATOR);
+        boolean eligibleForLink =
+            StringUtils.isNotBlank(workItemId) && !workItemId.contains(BillingAdaptor.NOT_ELIGIBLE_FOR_SAP_INDICATOR);
         if(webDisplay && eligibleForLink) {
 
                 workLink.append("<a class=\"external\" target=\"QUOTE\" href=\"");

@@ -12,6 +12,7 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -21,6 +22,8 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
@@ -29,6 +32,7 @@ import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.quote.FundingStatus;
 import org.broadinstitute.sap.entity.quote.QuoteStatus;
 import org.broadinstitute.sap.entity.quote.SapQuote;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.json.JSONObject;
 
@@ -66,10 +70,11 @@ public class QuoteDetailsHelper {
         this.sapService = sapService;
     }
 
-    protected JSONObject getQuoteDetailsJson(ProductOrderActionBean actionBean, String quoteIdentifier)
+    protected JSONObject getQuoteDetailsJson(ProductOrderActionBean actionBean, String quoteIdentifier, String originalQuote)
         throws Exception {
         Map<String, Object> rootMap = new HashMap<>();
         QuoteDetail quoteDetails = getQuoteDetails(quoteIdentifier, actionBean);
+
         rootMap.put("quoteDetail", quoteDetails);
         StringWriter stringWriter = new StringWriter();
         templateEngine.processTemplate("QuoteDetails.ftl", rootMap, stringWriter);
@@ -130,7 +135,13 @@ public class QuoteDetailsHelper {
                         });
                     }
                 } else if (quoteSource.isSapType()) {
-                    SapQuote quote = sapService.findSapQuote(quoteIdentifier);
+                    final SapQuote quote;
+                    try {
+                        quote = sapService.findSapQuote(quoteIdentifier);
+                    } catch (SAPIntegrationException e) {
+                        throw new SAPIntegrationException(String.format("Quote '%s' not found", quoteIdentifier), e);
+                    }
+
                     Optional<FundingStatus> fundingHeaderStatus =
                         Optional.ofNullable(quote.getQuoteHeader().getFundingHeaderStatus());
 
@@ -197,6 +208,10 @@ public class QuoteDetailsHelper {
                 }
             }
 
+        } catch (QuoteServerException | QuoteNotFoundException e) {
+            String quoteServerError = String.format("Error Obtaining Quote Information: %s.", e.getMessage());
+            logger.error(quoteServerError);
+            quoteDetail.setError(StringEscapeUtils.escapeHtml4(quoteServerError));
         } catch (Exception ex) {
             logger.error("Error occured calculating quote funding", ex);
             try {
@@ -311,17 +326,20 @@ public class QuoteDetailsHelper {
 
         public String getFundsRemaining() {
             String fundsRemainingString = "";
-            String formattedFundsRemaining =
-                NumberFormat.getCurrencyInstance().format(Optional.ofNullable(fundsRemaining).orElse(0D));
-            String outstandingEstimateString =
-                NumberFormat.getCurrencyInstance().format(Optional.ofNullable(outstandingEstimate).orElse(0D));
-            if (!quoteType.isSapType()) {
-                fundsRemainingString =
-                    String.format(FUNDS_REMAINING_FORMAT, status, formattedFundsRemaining, outstandingEstimateString);
-            } else {
-                fundsRemainingString = String.format(FUNDS_REMAINING_FORMAT,
-                    String.format("%s, Funding Status: %s ", status, overallFundingStatus), formattedFundsRemaining,
-                    outstandingEstimateString);
+            if (quoteType != null) {
+                String formattedFundsRemaining =
+                    NumberFormat.getCurrencyInstance().format(Optional.ofNullable(fundsRemaining).orElse(0D));
+                String outstandingEstimateString =
+                    NumberFormat.getCurrencyInstance().format(Optional.ofNullable(outstandingEstimate).orElse(0D));
+                if (!quoteType.isSapType()) {
+                    fundsRemainingString =
+                        String
+                            .format(FUNDS_REMAINING_FORMAT, status, formattedFundsRemaining, outstandingEstimateString);
+                } else {
+                    fundsRemainingString = String.format(FUNDS_REMAINING_FORMAT,
+                        String.format("%s, Funding Status: %s ", status, overallFundingStatus), formattedFundsRemaining,
+                        outstandingEstimateString);
+                }
             }
             return fundsRemainingString;
         }
