@@ -335,20 +335,21 @@ public class IndexedPlateFactory {
         IndexPlateDefinition definition = indexPlateDefinitionDao.findByName(plateName);
         if (definition == null) {
             messageCollection.addWarning(NOT_FOUND, DEFINITION_SUFFIX, plateName);
-            return Pair.of("", "");
+        } else {
+            Map<Boolean, List<StaticPlate>> mapUsageToPlate = definition.getPlateInstances().stream().
+                    collect(Collectors.groupingBy(staticPlate -> CollectionUtils.isEmpty(staticPlate.getEvents())));
+            String unused = mapUsageToPlate.get(Boolean.TRUE) == null ? "" :
+                    mapUsageToPlate.get(Boolean.TRUE).stream().
+                            map(StaticPlate::getLabel).sorted().collect(Collectors.joining(" "));
+            String inUse = mapUsageToPlate.get(Boolean.FALSE) == null ? "" :
+                    mapUsageToPlate.get(Boolean.FALSE).stream().
+                            map(StaticPlate::getLabel).sorted().collect(Collectors.joining(" "));
+            if (unused.isEmpty() && inUse.isEmpty()) {
+                messageCollection.addInfo(NOT_FOUND, INSTANCE_SUFFIX, plateName);
+            }
+            return Pair.of(unused, inUse);
         }
-        Map<Boolean, List<StaticPlate>> mapUsageToPlate = definition.getPlateInstances().stream().
-                collect(Collectors.groupingBy(staticPlate -> CollectionUtils.isEmpty(staticPlate.getEvents())));
-        String unused = mapUsageToPlate.get(Boolean.TRUE) == null ? "" :
-                mapUsageToPlate.get(Boolean.TRUE).stream().
-                        map(StaticPlate::getLabel).sorted().collect(Collectors.joining(" "));
-        String inUse = mapUsageToPlate.get(Boolean.FALSE) == null ? "" :
-                mapUsageToPlate.get(Boolean.FALSE).stream().
-                        map(StaticPlate::getLabel).sorted().collect(Collectors.joining(" "));
-        if (unused.isEmpty() && inUse.isEmpty()) {
-            messageCollection.addInfo(NOT_FOUND, INSTANCE_SUFFIX, plateName);
-        }
-        return Pair.of(unused, inUse);
+        return Pair.of("", "");
     }
 
     /**
@@ -399,18 +400,16 @@ public class IndexedPlateFactory {
     }
 
     private void removePlates(List<StaticPlate> plates) {
-        Set<Long> plateIds = plates.stream().map(LabVessel::getLabVesselId).collect(Collectors.toSet());
-        int count = 0;
-        for (Long plateId : plateIds) {
-            StaticPlate plate = staticPlateDao.findById(StaticPlate.class, plateId);
-            plate.getContainerRole().getMapPositionToVessel().values().stream().
-                    forEach(well -> staticPlateDao.remove(well));
-            staticPlateDao.remove(plate);
-            if (++count % 100 == 0) {
-                staticPlateDao.flush();
-                staticPlateDao.clear();
+        plates.forEach(staticPlate -> {
+            IndexPlateDefinition indexPlateDefinition = staticPlate.getIndexPlateDefinition();
+            if (indexPlateDefinition != null) {
+                indexPlateDefinition.getPlateInstances().remove(staticPlate);
             }
-        }
+            staticPlate.getContainerRole().getMapPositionToVessel().
+                    forEach((position, well) -> staticPlateDao.remove(well));
+            staticPlateDao.remove(staticPlate);
+        });
+        // Flush needed here to avoid unique index violation on plate label when the plate is being reused.
         staticPlateDao.flush();
     }
 
@@ -529,34 +528,10 @@ public class IndexedPlateFactory {
         // mapUsageToPlate.get(TRUE) gives the unused plates, FALSE gives the in-use plates.
         if (CollectionUtils.isNotEmpty(mapUsageToPlate.get(Boolean.TRUE)) && !replaceExisting) {
             messageCollection.addError(NEEDS_OVERWRITE, "");
-            return;
         }
         if (CollectionUtils.isNotEmpty(mapUsageToPlate.get(Boolean.FALSE))) {
             messageCollection.addError(IN_USE, "", mapUsageToPlate.get(Boolean.FALSE).stream().
                     map(StaticPlate::getLabel).sorted().collect(Collectors.joining(" ")));
-            return;
-        }
-        if (mapUsageToPlate.get(Boolean.TRUE) != null) {
-            // Deletes any existing plates that are to be reused.
-            String notIndexPlateInstances = mapUsageToPlate.get(Boolean.TRUE).stream().
-                    filter(staticPlate -> staticPlate.getIndexPlateDefinition() == null).
-                    map(LabVessel::getLabel).
-                    sorted().distinct().collect(Collectors.joining(" "));
-            if (StringUtils.isNotBlank(notIndexPlateInstances)) {
-                // Existing plates must be index plate instances, only because it's unclear
-                // what the use case is if non-index plate instances are given.
-                messageCollection.addError(NOT_FOUND, INSTANCE_SUFFIX, notIndexPlateInstances);
-                return;
-            } else {
-                overwriteCount = mapUsageToPlate.get(Boolean.TRUE).size();
-                removePlates(mapUsageToPlate.get(Boolean.TRUE));
-                // Must re-fetch because the dao was cleared of entities.
-                mapUsageToPlate = staticPlateDao.findByBarcodes(plateBarcodes).stream().
-                        collect(Collectors.groupingBy(staticPlate -> CollectionUtils.isEmpty(staticPlate.getEvents())));
-                if (CollectionUtils.isNotEmpty(mapUsageToPlate.get(Boolean.TRUE))) {
-                    throw new RuntimeException("Failed to delete the existing plates.");
-                }
-            }
         }
         // Index plate definition must exist.
         String plateName = selectionNameToPlateName(selectedPlateName);
@@ -564,7 +539,6 @@ public class IndexedPlateFactory {
         IndexPlateDefinition definition = indexPlateDefinitionDao.findByName(plateName);
         if (definition == null) {
             messageCollection.addError(NOT_FOUND, DEFINITION_SUFFIX, plateName);
-            return;
         } else {
             plateType = (definition.getVesselGeometry() == VesselGeometry.G12x8) ?
                     StaticPlate.PlateType.IndexedAdapterPlate96 :
@@ -572,60 +546,78 @@ public class IndexedPlateFactory {
                             StaticPlate.PlateType.IndexedAdapterPlate384 : null;
             if (plateType == null) {
                 messageCollection.addError(UNKNOWN_STATIC_PLATE_TYPE, definition.getVesselGeometry().name());
-                return;
             }
         }
-        // Makes a map of position and reagent from the index plate definition.
-        Map<VesselPosition, MolecularIndexReagent> reagentMap = definition.getDefinitionWells().stream().
-                collect(Collectors.toMap(well -> well.getVesselPosition(),
-                        well -> {
-                            MolecularIndexingScheme mis = well.getMolecularIndexingScheme();
-                            MolecularIndexReagent reagent = molecularIndexingSchemeDao.reagentFor(mis);
-                            return (reagent == null) ? new MolecularIndexReagent(mis) : reagent;
-                        }));
-        molecularIndexingSchemeDao.persistAll(reagentMap.values());
-
-        List<StaticPlate> plateBatch = new ArrayList<>();
-        for (String barcode : plateBarcodes) {
-            // Persists batches periodically and also at the end to avoid out of memory errors.
-            if (plateBatch.size() >= 100) {
-                staticPlateDao.persistAll(plateBatch);
-                staticPlateDao.persist(definition);
-                staticPlateDao.flush();
-                staticPlateDao.clear();
-                plateBatch.clear();
-                // These will continue to be needed.
-                definition = indexPlateDefinitionDao.findByName(plateName);
-                reagentMap = definition.getDefinitionWells().stream().
-                        collect(Collectors.toMap(well -> well.getVesselPosition(),
-                                well -> molecularIndexingSchemeDao.reagentFor(well.getMolecularIndexingScheme())));
+        if (!messageCollection.hasErrors()) {
+            // Removes any existing plates known to be unused so their labels can be reused.
+            if (mapUsageToPlate.get(Boolean.TRUE) != null) {
+                String notIndexPlateInstances = mapUsageToPlate.get(Boolean.TRUE).stream().
+                        filter(staticPlate -> staticPlate.getIndexPlateDefinition() == null).
+                        map(LabVessel::getLabel).
+                        sorted().distinct().collect(Collectors.joining(" "));
+                if (StringUtils.isNotBlank(notIndexPlateInstances)) {
+                    // Existing plates must be index plate instances, only because it's unclear
+                    // what the use case is if non-index plate instances are given.
+                    messageCollection.addError(NOT_FOUND, INSTANCE_SUFFIX, notIndexPlateInstances);
+                } else {
+                    overwriteCount = mapUsageToPlate.get(Boolean.TRUE).size();
+                    removePlates(mapUsageToPlate.get(Boolean.TRUE));
+                }
             }
-            // Creates the new index plate instance.
-            StaticPlate staticPlate = new StaticPlate(barcode, plateType);
-            staticPlate.setCreatedOn(new Date());
-            staticPlate.setIndexPlateDefinition(definition);
-            staticPlate.setSalesOrderNumber(salesOrderNumber);
-            plateBatch.add(staticPlate);
-            definition.getPlateInstances().add(staticPlate);
-            reagentMap.forEach((vesselPosition, molecularIndexReagent) -> {
-                PlateWell plateWell = new PlateWell(staticPlate, vesselPosition);
-                plateWell.addReagent(molecularIndexReagent);
-                staticPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
-            });
         }
-        staticPlateDao.persistAll(plateBatch);
+        if (!messageCollection.hasErrors()) {
+            // Makes a map of position and reagent from the index plate definition.
+            Map<VesselPosition, MolecularIndexReagent> reagentMap = definition.getDefinitionWells().stream().
+                    collect(Collectors.toMap(well -> well.getVesselPosition(),
+                            well -> {
+                                MolecularIndexingScheme mis = well.getMolecularIndexingScheme();
+                                MolecularIndexReagent reagent = molecularIndexingSchemeDao.reagentFor(mis);
+                                return (reagent == null) ? new MolecularIndexReagent(mis) : reagent;
+                            }));
+            molecularIndexingSchemeDao.persistAll(reagentMap.values());
 
-        // Shows username, plate count, definition name.
-        int newCount = plateBarcodes.size() - overwriteCount;
-        if (overwriteCount == 0) {
-            messageCollection.addInfo(String.format("%s created %d index plates from %s",
-                    userBean.getBspUser().getUsername(), newCount, plateName));
-        } else if (newCount == 0) {
-            messageCollection.addInfo(String.format("%s updated %d index plates from %s",
-                    userBean.getBspUser().getUsername(), overwriteCount, plateName));
-        } else {
-            messageCollection.addInfo(String.format("%s created %d and updated %d index plates from %s",
-                    userBean.getBspUser().getUsername(), newCount, overwriteCount, plateName));
+            List<StaticPlate> plateBatch = new ArrayList<>();
+            for (String barcode : plateBarcodes) {
+                // Persists batches periodically and also at the end to avoid out of memory errors.
+                if (plateBatch.size() >= 100) {
+                    staticPlateDao.persistAll(plateBatch);
+                    staticPlateDao.persist(definition);
+                    staticPlateDao.flush();
+                    staticPlateDao.clear();
+                    plateBatch.clear();
+                    // These will continue to be needed.
+                    definition = indexPlateDefinitionDao.findByName(plateName);
+                    reagentMap = definition.getDefinitionWells().stream().
+                            collect(Collectors.toMap(well -> well.getVesselPosition(),
+                                    well -> molecularIndexingSchemeDao.reagentFor(well.getMolecularIndexingScheme())));
+                }
+                // Creates the new index plate instance.
+                StaticPlate staticPlate = new StaticPlate(barcode, plateType);
+                staticPlate.setCreatedOn(new Date());
+                staticPlate.setIndexPlateDefinition(definition);
+                staticPlate.setSalesOrderNumber(salesOrderNumber);
+                plateBatch.add(staticPlate);
+                definition.getPlateInstances().add(staticPlate);
+                reagentMap.forEach((vesselPosition, molecularIndexReagent) -> {
+                    PlateWell plateWell = new PlateWell(staticPlate, vesselPosition);
+                    plateWell.addReagent(molecularIndexReagent);
+                    staticPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
+                });
+            }
+            staticPlateDao.persistAll(plateBatch);
+
+            // Shows username, plate count, definition name.
+            int newCount = plateBarcodes.size() - overwriteCount;
+            if (overwriteCount == 0) {
+                messageCollection.addInfo(String.format("%s created %d index plates from %s",
+                        userBean.getBspUser().getUsername(), newCount, plateName));
+            } else if (newCount == 0) {
+                messageCollection.addInfo(String.format("%s updated %d index plates from %s",
+                        userBean.getBspUser().getUsername(), overwriteCount, plateName));
+            } else {
+                messageCollection.addInfo(String.format("%s created %d and updated %d index plates from %s",
+                        userBean.getBspUser().getUsername(), newCount, overwriteCount, plateName));
+            }
         }
     }
 
