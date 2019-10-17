@@ -90,9 +90,9 @@ jira:
     TEST:
       login:    squid
       password: squid
-      host:     labopsjiratest.broadinstitute.org
+      host:     labopsjiradev.broadinstitute.org
       port:     8443
-      urlBase:      https://labopsjiratest.broadinstitute.org:8443
+      urlBase:      https://labopsjiradev.broadinstitute.org:8443
 
     PROD:
       login:    squid
