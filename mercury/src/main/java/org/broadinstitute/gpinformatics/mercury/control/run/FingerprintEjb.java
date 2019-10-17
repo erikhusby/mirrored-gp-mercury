@@ -31,6 +31,7 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,10 +52,20 @@ public class FingerprintEjb {
     @Inject
     private SampleDataFetcher sampleDataFetcher;
 
-
+    /**
+     * Builds a pairwise matrix to display calculated lod scores for each combination of samples
+     *
+     * @param fingerprints list of fingerprints to compare in matrix
+     * @param platforms    fingerprinting platforms used to compare
+     * @return formatted workbook containing pairwise matrix of samples and lod scores
+     */
     public Workbook makeMatrix(List<Fingerprint> fingerprints, Set<Fingerprint.Platform> platforms) {
         Map<String, Object[][]> sheets = new HashMap<>();
         Map<Fingerprint, Boolean> mapFpTest = new HashMap<>();
+
+        if (platforms == null) {
+            platforms = EnumSet.allOf(Fingerprint.Platform.class);
+        }
 
         for (Fingerprint fingerprint : fingerprints) {
             boolean include = fingerprint.getGender() != null && (platforms.contains(fingerprint.getPlatform()))
@@ -62,13 +73,11 @@ public class FingerprintEjb {
             mapFpTest.put(fingerprint, include);
         }
 
-
         int numFingerprintCells = fingerprints.size() + 1;
-
-        String[][] fluiLodCells = new String[numFingerprintCells][numFingerprintCells];
-
         int rowIndex = 0;
         int colIndex = 1;
+
+        String[][] fluiLodCells = new String[numFingerprintCells][numFingerprintCells];
 
         for (Fingerprint fingerprint : fingerprints) {
             if (mapFpTest.get(fingerprint)) {
@@ -78,13 +87,14 @@ public class FingerprintEjb {
         }
         ++rowIndex;
 
+        ConcordanceCalculator concordanceCalculator = new ConcordanceCalculator();
+
         for (Fingerprint fingerprint : fingerprints) {
             colIndex = 0;
             if (mapFpTest.get(fingerprint)) {
                 fluiLodCells[rowIndex][colIndex] = fingerprint.getMercurySample().getSampleKey();
                 ++colIndex;
                 for (Fingerprint fingerprint1 : fingerprints) {
-                    ConcordanceCalculator concordanceCalculator = new ConcordanceCalculator();
                     if (mapFpTest.get(fingerprint1)) {
                         double lodScore = concordanceCalculator.calculateLodScore(fingerprint, fingerprint1);
                         fluiLodCells[rowIndex][colIndex] = Double.toString(lodScore);
@@ -94,12 +104,12 @@ public class FingerprintEjb {
                 ++rowIndex;
             }
         }
+        concordanceCalculator.done();
 
         String[] sheetNames = {"Fluidigm Matrix"};
         sheets.put(sheetNames[0], fluiLodCells);
         Workbook workbook = SpreadsheetCreator.createSpreadsheet(sheets);
         Sheet sheet = workbook.getSheet("Fluidigm Matrix");
-
 
         Row row;
         Cell cell;
@@ -117,7 +127,6 @@ public class FingerprintEjb {
                 }
             }
         }
-
 
         SheetConditionalFormatting sheetCF = sheet.getSheetConditionalFormatting();
 
@@ -137,12 +146,17 @@ public class FingerprintEjb {
         return workbook;
     }
 
-
-    public List<Fingerprint> findFingerints(Map<String, MercurySample> mapIdToMercurySample) {
+    /**
+     * Build list of fingerprints from mercury samples
+     *
+     * @param mapSmidToMercurySample map linking sm-ids with mercury sample
+     * @return unique list of fingerprints
+     */
+    public List<Fingerprint> findFingerprints(Map<String, MercurySample> mapSmidToMercurySample) {
         List<Fingerprint> fingerprints = new ArrayList<>();
         Map<String, String> mapSmidToQueriedLsid = new HashMap<>();
         List<String> lsids = new ArrayList<>();
-        for (String id : mapIdToMercurySample.keySet()) {
+        for (String id : mapSmidToMercurySample.keySet()) {
             String lsid = BSPSampleSearchServiceStub.LSID_PREFIX + id.substring(3);
             lsids.add(lsid);
             mapSmidToQueriedLsid.put(id, lsid);
@@ -151,20 +165,18 @@ public class FingerprintEjb {
         // Make list of samples for which to query BSP
         List<String> bspLsids = new ArrayList<>();
         Map<String, String> mapSmidToFpLsid =
-                FingerprintResource.getSmidToFpLsidMap(mapSmidToQueriedLsid, mapIdToMercurySample, bspLsids);
+                FingerprintResource.getSmidToFpLsidMap(mapSmidToQueriedLsid, mapSmidToMercurySample, bspLsids);
 
         //Query BSP for FP aliquots for given (sequencing) aliquots and map queried LSIDs to MercurySamples that may have fingerprints
         Multimap<String, MercurySample> mapLsidToFpSamples =
-                FingerprintResource.getMercurySampleMultimap(lsids, mapIdToMercurySample, bspLsids, mapSmidToFpLsid,
+                FingerprintResource.getMercurySampleMultimap(lsids, mapSmidToMercurySample, bspLsids, mapSmidToFpLsid,
                         bspGetExportedSamplesFromAliquots, mercurySampleDao);
 
-        //
         Collection<MercurySample> mercurySamples = mapLsidToFpSamples.values();
         for (MercurySample mercurySample : mercurySamples) {
             fingerprints.addAll(mercurySample.getFingerprints());
         }
 
-        //
         Map<String, SampleData> mapIdToData =
                 sampleDataFetcher.fetchSampleDataForSamples(mercurySamples,
                         BSPSampleSearchColumn.PARTICIPANT_ID, BSPSampleSearchColumn.ROOT_SAMPLE);
@@ -177,7 +189,15 @@ public class FingerprintEjb {
                 .collect(Collectors.toList());
     }
 
-    public Map<String, MercurySample> getPtIdMercurySamples(Map<String, MercurySample> mapIdToMercurySample,
+    /**
+     * Get mercury samples for PT-ID search
+     *
+     * @param mapSmidToMercurySample map sm-ids to mercury sample
+     * @param participantId          PT-ID user search term
+     * @param mercurySampleDao       access mercury sample using sm-id
+     * @return sm-ids mapped with mercury samples
+     */
+    public Map<String, MercurySample> getPtIdMercurySamples(Map<String, MercurySample> mapSmidToMercurySample,
                                                             String participantId,
                                                             MercurySampleDao mercurySampleDao) {
         if (StringUtils.isNotBlank(participantId)) {
@@ -187,11 +207,10 @@ public class FingerprintEjb {
             List<String> mercurySamples = ptMercurySamples.stream()
                     .map(object -> Objects.toString(object, null))
                     .collect(Collectors.toList());
-            mapIdToMercurySample =
+            mapSmidToMercurySample =
                     mercurySampleDao.findMapIdToMercurySample(mercurySamples);
         }
-        return mapIdToMercurySample;
+        return mapSmidToMercurySample;
     }
-
 
 }

@@ -32,7 +32,6 @@ import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -58,6 +57,9 @@ public class FingerprintReportActionBean extends CoreActionBean {
     @Inject
     private FingerprintEjb fingerprintEjb;
 
+    @Inject
+    private ConcordanceCalculator concordanceCalculator;
+
 
     private String sampleId;
     private String participantId;
@@ -65,7 +67,8 @@ public class FingerprintReportActionBean extends CoreActionBean {
     private boolean showLayout = false;
     private List<Fingerprint> fingerprints = new ArrayList<>();
     private Map<String, String> mapLodScoreToFingerprint = new HashMap<>();
-    private Map<String, MercurySample> mapIdToMercurySample = new HashMap<>();
+    private Map<String, MercurySample> mapSmidToMercurySample = new HashMap<>();
+
 
 
     @DefaultHandler
@@ -74,6 +77,7 @@ public class FingerprintReportActionBean extends CoreActionBean {
         return new ForwardResolution(VIEW_PAGE);
     }
 
+    /** Validate search input and returns page with sample details and genotype */
     @HandlesEvent("search")
     public Resolution search() {
 
@@ -84,21 +88,21 @@ public class FingerprintReportActionBean extends CoreActionBean {
             addGlobalValidationError("There were no matching Sample Ids for " + "'" + sampleId + "'.");
         } else if (StringUtils.isNotBlank(pdoId) && productOrderDao.findByBusinessKey(pdoId) == null) {
             addGlobalValidationError("There were no matching items for " + "'" + pdoId + "'.");
-        } else if (StringUtils.isNotBlank(participantId) && fingerprintEjb.getPtIdMercurySamples(mapIdToMercurySample,
+        } else if (StringUtils.isNotBlank(participantId) && fingerprintEjb.getPtIdMercurySamples(mapSmidToMercurySample,
                 participantId, mercurySampleDao).size() == 0) {
             addGlobalValidationError("There were no matching items for " + "'" + participantId + "'.");
         } else {
             showLayout = true;
-            displayFingerprints();
+            searchFingerprints();
         }
         return new ForwardResolution(VIEW_PAGE);
     }
 
+    /** Download .xlsx file containing sample details with genotype broken down into snps by rsid */
     @HandlesEvent("downloadReport")
-    public Resolution downloadRepor() throws IOException {
+    public Resolution downloadReport() throws IOException {
 
-        displayFingerprints();
-
+        searchFingerprints();
         Workbook workbook = makeSpreadsheet(fingerprints);
 
         String filename = "";
@@ -118,29 +122,31 @@ public class FingerprintReportActionBean extends CoreActionBean {
         return stream;
     }
 
-
-    private void displayFingerprints() {
+    /** Use search input to retrieve fingerprints for sm-ids */
+    private void searchFingerprints() {
         if (StringUtils.isNotBlank(sampleId)) {
-            mapIdToMercurySample =
-                    mercurySampleDao.findMapIdToMercurySample(Arrays.asList(sampleId.toUpperCase().split("\\s+")));
+            mapSmidToMercurySample =
+                    mercurySampleDao.findMapIdToMercurySample(Arrays.asList(sampleId.split("\\s+")));
         } else if (StringUtils.isNotBlank(pdoId)) {
             ProductOrder productOrder;
-            productOrder = productOrderDao.findByBusinessKey(pdoId.toUpperCase());
+            productOrder = productOrderDao.findByBusinessKey(pdoId);
             for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
-                mapIdToMercurySample.put(productOrderSample.getSampleKey(), productOrderSample.getMercurySample());
+                mapSmidToMercurySample.put(productOrderSample.getSampleKey(), productOrderSample.getMercurySample());
             }
         } else {
-            mapIdToMercurySample =
+            mapSmidToMercurySample =
                     fingerprintEjb
-                            .getPtIdMercurySamples(mapIdToMercurySample, participantId.toUpperCase(), mercurySampleDao);
+                            .getPtIdMercurySamples(mapSmidToMercurySample, participantId, mercurySampleDao);
         }
 
-        fingerprints = fingerprintEjb.findFingerints(mapIdToMercurySample);
-
-        Collections.sort(fingerprints);
+        fingerprints = fingerprintEjb.findFingerprints(mapSmidToMercurySample);
+        fingerprints.sort(new Fingerprint.OrderFpPtidRootSamp());
     }
 
-
+    /** Create spreadsheet using list of fingerprints
+     * @param fingerprints list of sorted fingerprints
+     * @return spreadsheet with fingerprint sample details and genotype broken down into snps by rsid
+     */
     private Workbook makeSpreadsheet(List<Fingerprint> fingerprints) {
         Map<String, Object[][]> sheets = new HashMap<>();
         Set<String> rsIds = new LinkedHashSet<>();
@@ -168,6 +174,7 @@ public class FingerprintReportActionBean extends CoreActionBean {
 
         rowIndex++;
 
+        startConcCalc();
         List<String> rsIdsList = new ArrayList<>(rsIds);
         for (Fingerprint fingerprint : fingerprints) {
             String[] snps = new String[rsIdsList.size()];
@@ -193,6 +200,7 @@ public class FingerprintReportActionBean extends CoreActionBean {
             fingerprintCells[rowIndex] = ArrayUtils.addAll(fingerprintCells[rowIndex], snps);
             ++rowIndex;
         }
+        endConcCalc();
 
         String[] sheetNames = {"Fingerprints"};
         sheets.put(sheetNames[0], fingerprintCells);
@@ -200,7 +208,11 @@ public class FingerprintReportActionBean extends CoreActionBean {
         return SpreadsheetCreator.createSpreadsheet(sheets);
     }
 
-
+    /** Calculate lod score using oldest fluidigm fingerprint if available
+     * @param fingerprint used to determine anchor fp and compare against to find lod score
+     * @return "N/A" if fail, "Anchor FP" if oldest fluidigm fingerprint(general array if no fluidigm),
+     *         calculated lod score compared to Anchor FP
+     */
     public String findLodScore(Fingerprint fingerprint) {
         Optional<Fingerprint> oldFluidigmFp = fingerprints.stream()
                 .filter(fp -> fp.getMercurySample().getSampleData().getPatientId()
@@ -218,10 +230,10 @@ public class FingerprintReportActionBean extends CoreActionBean {
                     .min(Comparator.comparing(Fingerprint::getDateGenerated));
         }
 
-        ConcordanceCalculator concordanceCalculator = new ConcordanceCalculator();
         DecimalFormat df = new DecimalFormat("##.####");
         df.setRoundingMode(RoundingMode.HALF_UP);
         String lodScoreStr = "N/A";
+
         if (oldFluidigmFp.isPresent() && oldFluidigmFp.get().getMercurySample().getSampleKey()
                 .equals(fingerprint.getMercurySample().getSampleKey())
             && fingerprint.getDisposition() == Fingerprint.Disposition.PASS) {
@@ -236,6 +248,13 @@ public class FingerprintReportActionBean extends CoreActionBean {
         return lodScoreStr;
     }
 
+    public void startConcCalc(){
+        ConcordanceCalculator concordanceCalculator = new ConcordanceCalculator();
+    }
+
+    public void endConcCalc(){
+        concordanceCalculator.done();
+    }
 
     public String formatDate(Date date) {
         return DateUtils.getDate(date);

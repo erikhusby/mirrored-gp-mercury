@@ -44,17 +44,18 @@
                 </div>
             </div>
         </stripes:form>
-            <c:if test="${actionBean.showLayout}">
-                <stripes:form beanclass="${actionBean.class.name}" id="showScanForm" class="form-horizontal">
-                    <stripes:hidden name="participantId" value="${actionBean.participantId}"></stripes:hidden>
-                    <stripes:hidden name="sampleId" value="${actionBean.sampleId}"></stripes:hidden>
-                    <stripes:hidden name="pdoId" value="${actionBean.pdoId}"></stripes:hidden>
+        <c:if test="${actionBean.showLayout}">
+            <stripes:form beanclass="${actionBean.class.name}" id="showScanForm" class="form-horizontal">
+                <stripes:hidden name="participantId" value="${actionBean.participantId}"></stripes:hidden>
+                <stripes:hidden name="sampleId" value="${actionBean.sampleId}"></stripes:hidden>
+                <stripes:hidden name="pdoId" value="${actionBean.pdoId}"></stripes:hidden>
 
                 <div class="row-fluid" style="white-space: nowrap;">
                     <c:set var="prevPtId" value=""></c:set>
                     <c:set var="prevRootId" value=""></c:set>
                     <c:set var="prevAliquotId" value=""></c:set>
                     <ul>
+                            ${actionBean.startConcCalc()}
                         <c:forEach items="${actionBean.fingerprints}" var="fingerprint">
                         <c:if test="${prevPtId != fingerprint.mercurySample.sampleData.patientId}">
                         <c:if test="${not empty prevPtId }">
@@ -98,17 +99,17 @@
                             <c:forEach items="${fingerprint.fpGenotypesOrdered}" var="geno">${geno.genotype}</c:forEach>
                         </li>
                         </c:forEach>
+                            ${actionBean.endConcCalc()}
                     </ul>
                 </div>
                 <div class="control-group">
                     <div class="control-label">&nbsp;</div>
                     <div class="controls actionButtons">
                         <stripes:submit name="downloadReport" value="Download Report"/>
-<%--                        <stripes:submit name="downloadMatrix" value="Download Matrix"/>--%>
                     </div>
                 </div>
-                </stripes:form>
-            </c:if>
+            </stripes:form>
+        </c:if>
     </stripes:layout-component>
 </stripes:layout-render>
 

@@ -22,7 +22,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -59,31 +58,25 @@ public class FingerprintMatrixActionBean extends CoreActionBean {
         return new ForwardResolution(VIEW_PAGE);
     }
 
+    /** Download .xlsx file containing pairwise sample matrix with lod scores */
     @HandlesEvent("downloadMatrix")
     public Resolution downloadMatrix() throws IOException {
 
         if (sampleId == null && participantId == null) {
             addGlobalValidationError("You must input a valid search term.");
             return new ForwardResolution(VIEW_PAGE);
-        } else
-        if (StringUtils.isNotBlank(sampleId)
-            && mercurySampleDao.findBySampleKeys(Arrays.asList(sampleId.split("\\s+"))).size() == 0) {
+        } else if (StringUtils.isNotBlank(sampleId)
+                   && mercurySampleDao.findBySampleKeys(Arrays.asList(sampleId.split("\\s+"))).size() == 0) {
             addGlobalValidationError("There were no matching Sample Ids for " + "'" + sampleId + "'.");
             return new ForwardResolution(VIEW_PAGE);
         } else if (StringUtils.isNotBlank(participantId) && fingerprintEjb.getPtIdMercurySamples(mapIdToMercurySample,
                 participantId, mercurySampleDao).size() == 0) {
             addGlobalValidationError("There were no matching items for " + "'" + participantId + "'.");
             return new ForwardResolution(VIEW_PAGE);
-        } else if (platforms == null){
-            addGlobalValidationError("No fingerprint platform(s) selected. Hold control to select multiple platforms.");
-            return new ForwardResolution(VIEW_PAGE);
-        } else
-            {
-                showLayout = true;
-                displayFingerprints();
-
-            }
-
+        } else {
+            showLayout = true;
+            searchFingerprints();
+        }
 
         Workbook workbook = fingerprintEjb.makeMatrix(fingerprints, platforms);
 
@@ -102,8 +95,8 @@ public class FingerprintMatrixActionBean extends CoreActionBean {
         return stream;
     }
 
-
-    private void displayFingerprints() {
+    /** Use search input to retrieve fingerprints for sm-ids */
+    private void searchFingerprints() {
         if (StringUtils.isNotBlank(sampleId)) {
             mapIdToMercurySample =
                     mercurySampleDao.findMapIdToMercurySample(Arrays.asList(sampleId.split("\\s+")));
@@ -112,9 +105,8 @@ public class FingerprintMatrixActionBean extends CoreActionBean {
                     fingerprintEjb.getPtIdMercurySamples(mapIdToMercurySample, participantId, mercurySampleDao);
         }
 
-        fingerprints = fingerprintEjb.findFingerints(mapIdToMercurySample);
-
-        Collections.sort(fingerprints);
+        fingerprints = fingerprintEjb.findFingerprints(mapIdToMercurySample);
+        fingerprints.sort(new Fingerprint.OrderFpPtidRootSamp());
     }
 
 
