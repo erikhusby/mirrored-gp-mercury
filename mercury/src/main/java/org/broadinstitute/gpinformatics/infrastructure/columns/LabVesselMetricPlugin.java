@@ -8,10 +8,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * Fetches available lab metric and decision data for each page of a lab vessel search.
@@ -119,15 +121,8 @@ public class LabVesselMetricPlugin implements ListPlugin {
      */
     public static LabMetric latestTubeMetric(List<LabMetric> labMetrics) {
         if (CollectionUtils.isNotEmpty(labMetrics)) {
-            return labMetrics.stream().
-                    filter(VesselMetricDetailsPlugin.sourceMetricPredicate).
-                    min((o1, o2) -> {
-                        // Puts recent metric before older metric.
-                        int dateCompare = o2.getCreatedDate().compareTo(o1.getCreatedDate());
-                        return dateCompare == 0 ? o2.getLabMetricId().compareTo(o1.getLabMetricId()) : dateCompare;
-                    }).
-                    // If everything was filtered out, return something
-                    orElse(labMetrics.get(0));
+            TreeMap<Date, LabMetric> sortedMapRunDateToMetric = VesselMetricDetailsPlugin.buildMapRunDateToMetric(labMetrics);
+            return sortedMapRunDateToMetric.lastEntry().getValue();
         } else {
             return null;
         }
