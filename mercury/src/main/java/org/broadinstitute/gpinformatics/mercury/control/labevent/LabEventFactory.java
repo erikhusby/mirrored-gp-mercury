@@ -829,9 +829,9 @@ public class LabEventFactory implements Serializable {
 
                     // Build wells only if receptacles explicitly provided in message
                     for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
-                        String wellBarcode = plateBarcode + receptacleType.getPosition();
+                        VesselPosition position = VesselPosition.getByName(receptacleType.getPosition());
+                        String wellBarcode = plateBarcode + position;
                         if (mapBarcodeToWell.get(wellBarcode) == null) {
-                            VesselPosition position = VesselPosition.getByName(receptacleType.getPosition());
                             if (position == null) {
                                 throw new RuntimeException("Failed to find position " + receptacleType.getPosition());
                             }
@@ -1419,7 +1419,7 @@ public class LabEventFactory implements Serializable {
     @DaoFree
     private void setWellQuantities(Map<String, PlateWell> mapBarcodeToWell, PositionMapType positionMap) {
         for (ReceptacleType receptacleType : positionMap.getReceptacle()) {
-            PlateWell plateWell = mapBarcodeToWell.get(positionMap.getBarcode() + receptacleType.getPosition());
+            PlateWell plateWell = mapBarcodeToWell.get(positionMap.getBarcode() + VesselPosition.getByName(receptacleType.getPosition()));
             if (plateWell != null) {
                 if (receptacleType.getVolume() != null) {
                     plateWell.setVolume(receptacleType.getVolume());
@@ -1450,12 +1450,12 @@ public class LabEventFactory implements Serializable {
         PositionMapType positionMapType = plateEvent.getPositionMap();
         if (positionMapType != null && positionMapType.getReceptacle() != null) {
             for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
-                String wellBarcode = staticPlate.getLabel() + receptacleType.getPosition();
+                VesselPosition position = VesselPosition.getByName(receptacleType.getPosition());
+                if (position == null) {
+                    throw new RuntimeException("Failed to find position " + receptacleType.getPosition());
+                }
+                String wellBarcode = staticPlate.getLabel() + position;
                 if (mapBarcodeToWell.get(wellBarcode) == null) {
-                    VesselPosition position = VesselPosition.getByName(receptacleType.getPosition());
-                    if (position == null) {
-                        throw new RuntimeException("Failed to find position " + receptacleType.getPosition());
-                    }
                     PlateWell well = new PlateWell(staticPlate, position);
                     staticPlate.getContainerRole().addContainedVessel(well, position);
                     mapBarcodeToWell.put(wellBarcode, well);
