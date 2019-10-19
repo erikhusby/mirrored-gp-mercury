@@ -87,6 +87,8 @@ public class ManifestSessionEjb {
 
     private JiraService jiraService;
 
+    private DnaQuantEnqueueOverride dnaQuantEnqueueOverride;
+
     private static Log logger = LogFactory.getLog(ManifestSessionEjb.class);
 
     /**
@@ -99,7 +101,8 @@ public class ManifestSessionEjb {
     @Inject
     public ManifestSessionEjb(ManifestSessionDao manifestSessionDao, ResearchProjectDao researchProjectDao,
                               MercurySampleDao mercurySampleDao, LabVesselDao labVesselDao, UserBean userBean,
-                              BSPUserList bspUserList, JiraService jiraService, QueueEjb queueEjb) {
+                              BSPUserList bspUserList, JiraService jiraService, QueueEjb queueEjb,
+                              DnaQuantEnqueueOverride dnaQuantEnqueueOverride) {
         this.manifestSessionDao = manifestSessionDao;
         this.researchProjectDao = researchProjectDao;
         this.mercurySampleDao = mercurySampleDao;
@@ -108,6 +111,7 @@ public class ManifestSessionEjb {
         this.bspUserList = bspUserList;
         this.jiraService = jiraService;
         this.queueEjb = queueEjb;
+        this.dnaQuantEnqueueOverride = dnaQuantEnqueueOverride;
     }
 
     /**
@@ -268,7 +272,7 @@ public class ManifestSessionEjb {
 
         MessageCollection messageCollection = new MessageCollection();
 
-        QueueSpecialization queueSpecialization = DnaQuantEnqueueOverride.determineDnaQuantQueueSpecialization(accessionedVessels);
+        QueueSpecialization queueSpecialization = dnaQuantEnqueueOverride.determineDnaQuantQueueSpecialization(accessionedVessels);
         queueEjb.enqueueLabVessels(accessionedVessels, QueueType.DNA_QUANT,
                 "Accessioned on " + DateUtils.convertDateTimeToString(new Date()), messageCollection,
                 QueueOrigin.RECEIVING, queueSpecialization);

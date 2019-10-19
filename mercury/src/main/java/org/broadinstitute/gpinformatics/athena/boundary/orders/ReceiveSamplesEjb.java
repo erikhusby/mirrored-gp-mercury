@@ -66,6 +66,7 @@ public class ReceiveSamplesEjb {
     private BSPRestService bspRestService;
     private LabVesselDao labVesselDao;
     private QueueEjb queueEjb;
+    private DnaQuantEnqueueOverride dnaQuantEnqueueOverride;
 
     public ReceiveSamplesEjb() {
     }
@@ -78,7 +79,8 @@ public class ReceiveSamplesEjb {
                              BSPRestService bspRestService,
                              SampleReceiptResource sampleReceiptResource,
                              LabVesselDao labVesselDao,
-                             QueueEjb queueEjb) {
+                             QueueEjb queueEjb,
+                             DnaQuantEnqueueOverride dnaQuantEnqueueOverride) {
         this.receiptService = receiptService;
         this.managerFactory = managerFactory;
         this.productOrderSampleDao = productOrderSampleDao;
@@ -87,6 +89,7 @@ public class ReceiveSamplesEjb {
         this.bspRestService = bspRestService;
         this.labVesselDao = labVesselDao;
         this.queueEjb = queueEjb;
+        this.dnaQuantEnqueueOverride = dnaQuantEnqueueOverride;
     }
 
     /**
@@ -229,7 +232,7 @@ public class ReceiveSamplesEjb {
             }
         }
         QueueSpecialization queueSpecialization =
-                DnaQuantEnqueueOverride.determineDnaQuantQueueSpecialization(vesselsForQuanting);
+                dnaQuantEnqueueOverride.determineDnaQuantQueueSpecialization(vesselsForQuanting);
         queueEjb.enqueueLabVessels(vesselsForQuanting, QueueType.DNA_QUANT,
                 "Received on " + DateUtils.convertDateTimeToString(new Date()), messageCollection,
                 QueueOrigin.RECEIVING, queueSpecialization);

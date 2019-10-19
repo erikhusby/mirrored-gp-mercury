@@ -36,13 +36,16 @@ public class EventHandlerSelector {
     private BspNewRootHandler bspNewRootHandler;
     private CreateLabBatchHandler createLabBatchHandler;
     private QueueEjb queueEjb;
+    private DnaQuantEnqueueOverride dnaQuantEnqueueOverride;
 
     @Inject
     public EventHandlerSelector(DenatureToDilutionTubeHandler denatureToDilutionTubeHandler,
                                 FlowcellMessageHandler flowcellMessageHandler,
                                 FlowcellLoadedHandler flowcellLoadedHandler,
                                 BspNewRootHandler bspNewRootHandler,
-                                CreateLabBatchHandler createLabBatchHandler, QueueEjb queueEjb) {
+                                CreateLabBatchHandler createLabBatchHandler,
+                                QueueEjb queueEjb,
+                                DnaQuantEnqueueOverride dnaQuantEnqueueOverride) {
         this.denatureToDilutionTubeHandler = denatureToDilutionTubeHandler;
         this.flowcellMessageHandler = flowcellMessageHandler;
         this.flowcellLoadedHandler = flowcellLoadedHandler;
@@ -94,7 +97,7 @@ public class EventHandlerSelector {
             MessageCollection messageCollection = new MessageCollection();
             Set<LabVessel> targetLabVessels = targetEvent.getTargetVesselTubes();
 
-            QueueSpecialization queueSpecialization = DnaQuantEnqueueOverride.determineDnaQuantQueueSpecialization(targetLabVessels);
+            QueueSpecialization queueSpecialization = dnaQuantEnqueueOverride.determineDnaQuantQueueSpecialization(targetLabVessels);
 
             Set<String> xtrBatches = new HashSet<>();
             for (LabVessel targetLabVessel : targetLabVessels) {

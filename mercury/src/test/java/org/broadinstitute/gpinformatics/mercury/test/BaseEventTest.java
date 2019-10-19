@@ -32,6 +32,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.DnaQuantEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizerV2;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
@@ -230,7 +231,7 @@ public class BaseEventTest {
 
         EventHandlerSelector eventHandlerSelector = new EventHandlerSelector(
                 new DenatureToDilutionTubeHandler(), flowcellMessageHandler, flowcellLoadedHandler,
-                new BspNewRootHandler(), new CreateLabBatchHandler(), new QueueEjb());
+                new BspNewRootHandler(), new CreateLabBatchHandler(), new QueueEjb(), new DnaQuantEnqueueOverride());
         // TODO: Review usages of this to make sure the new QueueEjb doesn't break things
         labEventFactory.setEventHandlerSelector(eventHandlerSelector);
 

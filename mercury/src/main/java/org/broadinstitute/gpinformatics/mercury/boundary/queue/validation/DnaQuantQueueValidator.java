@@ -4,13 +4,13 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,6 +21,9 @@ import java.util.Map;
 @Stateful
 @RequestScoped
 public class DnaQuantQueueValidator implements AbstractQueueValidator {
+
+    @Inject
+    private BSPSampleDataFetcher sampleDataFetcher;
 
     /**
      * Verify is DNA
@@ -57,8 +60,6 @@ public class DnaQuantQueueValidator implements AbstractQueueValidator {
 
         // We determined that there are some BSP Samples, therefore we can use BSP to verify whether it is DNA or not.
         if (!bspSampleIdsByVesselId.isEmpty()) {
-            BSPSampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class); // todo jmt why not inject?
-
             Map<String, BspSampleData> sampleIdToData =
                     sampleDataFetcher.fetchSampleData(bspSampleIdsByVesselId.values(), BSPSampleSearchColumn.SAMPLE_ID,
                                                       BSPSampleSearchColumn.MATERIAL_TYPE);
