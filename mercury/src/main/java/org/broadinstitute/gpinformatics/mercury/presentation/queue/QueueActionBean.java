@@ -156,7 +156,7 @@ public class QueueActionBean extends CoreActionBean {
     @HandlesEvent("viewGrouping")
     public Resolution viewGrouping() {
         if (queueGroupingId == null) {
-            addGlobalValidationError("queueGroupingId not specified");
+            addGlobalValidationError("Queue Grouping not specified");
             return getSourcePageResolution();
         }
 
@@ -202,7 +202,7 @@ public class QueueActionBean extends CoreActionBean {
     public Resolution downloadGroupingData() {
         try {
             if (queueGroupingId == null) {
-                addGlobalValidationError("queueGroupingId not specified");
+                addGlobalValidationError("Queue Grouping not specified");
                 return getSourcePageResolution();
             }
 

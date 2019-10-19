@@ -227,7 +227,7 @@ public class QueueGrouping {
     public long getRemainingEntities() {
         int remainingEntities = 0;
         for (QueueEntity queueEntity : getQueuedEntities()) {
-            if (queueEntity.getQueueStatus() != QueueStatus.Completed) { // todo jmt Excluded?
+            if (!queueEntity.getQueueStatus().isStillInQueue()) {
                 remainingEntities++;
             }
         }
