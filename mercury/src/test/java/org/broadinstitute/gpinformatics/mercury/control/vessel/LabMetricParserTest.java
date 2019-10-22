@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeD
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -119,7 +120,7 @@ public class LabMetricParserTest extends StubbyContainerTest {
             int i = ArrayUtils.indexOf(barcodes, testMetric.getLabVessel().getLabel());
             Assert.assertTrue(i >= 0);
             Assert.assertEquals(MathUtils.scaleTwoDecimalPlaces(testMetric.getValue()), BigDecimal.valueOf(quants[i]));
-            Assert.assertEquals(testMetric.getVesselPosition(), positions[i]);
+            Assert.assertEquals(testMetric.getVesselPosition(), VesselPosition.getByName(positions[i]));
             Assert.assertFalse(testMetric.getCreatedDate().before(startDate));
             Assert.assertFalse(testMetric.getCreatedDate().after(endDate));
             Assert.assertEquals(testMetric.getLabVessel().getLabel(), barcodes[i]);

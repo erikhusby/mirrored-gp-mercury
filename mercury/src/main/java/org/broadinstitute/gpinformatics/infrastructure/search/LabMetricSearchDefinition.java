@@ -506,7 +506,7 @@ public class LabMetricSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 LabMetric labMetric = (LabMetric) entity;
-                return labMetric.getVesselPosition();
+                return labMetric.getVesselPosition().name();
             }
         });
         searchTerms.add(searchTerm);
