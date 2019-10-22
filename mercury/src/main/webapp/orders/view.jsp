@@ -1285,7 +1285,10 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
                 <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
 
                     &nbsp;&nbsp;&nbsp;&nbsp;
-                    <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.BillingLedgerActionBean"><stripes:param name="orderId" value="${actionBean.editOrder.jiraTicketKey}"/>Online Billing Ledger</stripes:link>
+                    <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.BillingLedgerActionBean">
+                        <stripes:param name="orderId" value="${actionBean.editOrder.jiraTicketKey}"/>
+                        Online Billing Ledger
+                    </stripes:link>
                 </security:authorizeBlock>
 
             </c:if>
