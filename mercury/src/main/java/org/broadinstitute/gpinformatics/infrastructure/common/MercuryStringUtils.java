@@ -81,4 +81,15 @@ public class MercuryStringUtils {
     public static String makeDigest(List<? extends Object> stringList) {
         return TubeFormation.makeDigest(StringUtils.join(stringList, ","));
     }
+
+    /**
+     * Returns the string stripped of control characters, line breaks, and >7-bit ascii
+     * (which become upside-down ? characters in the database).
+     */
+    public static String cleanupValue(String value) {
+        return org.apache.commons.codec.binary.StringUtils.newStringUsAscii(
+                org.apache.commons.codec.binary.StringUtils.getBytesUsAscii(StringUtils.trimToEmpty(value))).
+                replaceAll("[\\p{C}\\p{Zl}\\p{Zp}]", "").
+                trim();
+    }
 }

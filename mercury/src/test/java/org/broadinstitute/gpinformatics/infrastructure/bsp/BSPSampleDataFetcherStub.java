@@ -39,7 +39,7 @@ public class BSPSampleDataFetcherStub extends BSPSampleDataFetcher {
     @Override
     public Map<String, BspSampleData> fetchSampleData(@Nonnull Collection<String> sampleNames,
                                                       BSPSampleSearchColumn... bspSampleSearchColumns) {
-        return super.fetchSampleData(sampleNames, bspSampleSearchColumns);
+        return fetchSampleData(sampleNames);
     }
 
     @Override
@@ -57,13 +57,6 @@ public class BSPSampleDataFetcherStub extends BSPSampleDataFetcher {
     @Override
     public void fetchFFPEDerived(@Nonnull Collection<BspSampleData> bspSampleDatas) {
         super.fetchFFPEDerived(bspSampleDatas);
-    }
-
-    @Override
-    public void fetchSamplePlastic(@Nonnull Collection<BspSampleData> bspSampleDatas) {
-        for (BspSampleData bspSampleData : bspSampleDatas) {
-            bspSampleData.addPlastic(samplePlasticBySampleId.get(bspSampleData.getSampleId()));
-        }
     }
 
     @Override
