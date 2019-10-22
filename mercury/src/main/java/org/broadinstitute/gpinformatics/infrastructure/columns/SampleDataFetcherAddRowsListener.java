@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtili
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 
@@ -54,12 +55,16 @@ public class SampleDataFetcherAddRowsListener implements ConfigurableList.AddRow
         List<MercurySample> samples = new ArrayList<>();
         if (!bspSampleSearchColumns.isEmpty()) {
             for (Object entity : entityList) {
-                List<SampleInstanceV2> sampleInstances = DisplayExpression.rowObjectToExpressionObject(entity,
-                        SampleInstanceV2.class, context);
-                for (SampleInstanceV2 sampleInstanceV2 : sampleInstances) {
-                    MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
-                    if (mercurySample != null) {
-                        samples.add(mercurySample);
+                if (OrmUtil.proxySafeIsInstance(entity, MercurySample.class)) {
+                    samples.add(OrmUtil.proxySafeCast(entity, MercurySample.class));
+                } else {
+                    List<SampleInstanceV2> sampleInstances = DisplayExpression.rowObjectToExpressionObject(entity,
+                            SampleInstanceV2.class, context);
+                    for (SampleInstanceV2 sampleInstanceV2 : sampleInstances) {
+                        MercurySample mercurySample = sampleInstanceV2.getNearestMercurySample();
+                        if (mercurySample != null) {
+                            samples.add(mercurySample);
+                        }
                     }
                 }
             }

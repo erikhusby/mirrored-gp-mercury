@@ -37,7 +37,6 @@ public abstract class BSPSampleDataFetcher extends BSPJaxRsClient implements Ser
     BSPSampleSearchService service;
 
     static final String WS_FFPE_DERIVED = "sample/ffpeDerived";
-    static final String WS_DETAILS = "sample/getdetails";
     // Used for mapping Matrix barcodes to Sample short barcodes, forces xml output format.
     static final String WS_SAMPLE_DETAILS = "sample/getsampledetails?format=xml";
 
@@ -173,34 +172,6 @@ public abstract class BSPSampleDataFetcher extends BSPJaxRsClient implements Ser
                 }
             });
         }
-    }
-
-    public void fetchSamplePlastic(@Nonnull Collection<BspSampleData> bspSampleDatas) {
-        if (bspSampleDatas.isEmpty()) {
-            return;
-        }
-
-        final Map<String, BspSampleData> lsidToSampleDataMap = new HashMap<>();
-        for (BspSampleData bspSampleData : bspSampleDatas) {
-            lsidToSampleDataMap.put(bspSampleData.getSampleLsid(), bspSampleData);
-        }
-
-        String urlString = getUrl(WS_DETAILS);
-        MultivaluedMap<String, String> params = new MultivaluedHashMap<>();
-        params.addAll("sample_lsid", new ArrayList<>(lsidToSampleDataMap.keySet()));
-        final int LSID = 1;
-        final int PLASTIC_BARCODE = 16;
-        post(urlString, params, ExtraTab.FALSE, new AbstractJaxRsClientService.PostCallback() {
-            @Override
-            public void callback(String[] bspOutput) {
-                BspSampleData bspSampleData = lsidToSampleDataMap.get(bspOutput[LSID]);
-                if (bspSampleData == null) {
-                    throw new RuntimeException("Unrecognized return lsid: " + bspOutput[LSID]);
-                }
-                bspSampleData.addPlastic(bspOutput[PLASTIC_BARCODE]);
-            }
-        });
-
     }
 
     /**

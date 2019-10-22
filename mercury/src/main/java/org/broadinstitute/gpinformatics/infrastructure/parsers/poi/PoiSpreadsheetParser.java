@@ -90,11 +90,18 @@ public final class PoiSpreadsheetParser {
             Row row = rows.next();
             // Creates a mapping of the header name to data cell value.
             Map<String, String> dataByHeader = new HashMap<>();
-            for (int i = 0; i < processor.getHeaderNames().size(); i++) {
-                String headerName = processor.getHeaderNames().get(i);
-                ColumnHeader columnHeader = processor.findColumnHeaderByName(headerName);
-                // Columns not found in the Headers enum are still mapped, and are treated as string values.
-                dataByHeader.put(headerName, extractCellContent(row, i, columnHeader));
+            if (processor.getHeaderNames().isEmpty()) {
+                for (int i = 0; i < row.getLastCellNum(); ++i) {
+                    // Preserves the column order when there are no pre-defined header names.
+                    dataByHeader.put(String.format("%02d", i), extractCellContent(row, i, null));
+                }
+            } else {
+                for (int i = 0; i < processor.getHeaderNames().size(); i++) {
+                    String headerName = processor.getHeaderNames().get(i);
+                    ColumnHeader columnHeader = processor.findColumnHeaderByName(headerName);
+                    // Columns not found in the Headers enum are still mapped, and are treated as string values.
+                    dataByHeader.put(headerName, extractCellContent(row, i, columnHeader));
+                }
             }
 
             if (processor.quitOnMatch(dataByHeader.values())) {
@@ -286,8 +293,7 @@ public final class PoiSpreadsheetParser {
         Workbook workbook = WorkbookFactory.create(inputStream);
         int numberOfSheets = workbook.getNumberOfSheets();
         for (int i = 0; i < numberOfSheets; i++) {
-            Sheet sheet = workbook.getSheetAt(i);
-            sheetNames.add(sheet.getSheetName());
+            sheetNames.add(workbook.getSheetName(i));
         }
 
         return sheetNames;

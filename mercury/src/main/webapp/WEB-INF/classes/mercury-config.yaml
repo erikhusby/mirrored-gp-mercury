@@ -11,7 +11,7 @@ app:
       gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
 
     AUTO_BUILD:
-      host:     vmercurydev.broadinstitute.org
+      host:     mercurydev.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
@@ -340,6 +340,35 @@ sap:
       sapSupportEmail: BUSSYS@broadinstitute.org
       sapSupportEmailSubjectPrefix: "SAP Order"
       url:  https://quote.broadinstitute.org
+
+MayoManifestGoogleStorage:
+    DEV:
+        credentialFilename: serviceAccountKeys/dev_reader.json
+        writerCredentialFilename: serviceAccountKeys/dev_writer.json
+        bucketName: dev_113959925643235198999
+        dailyCredentialRenewal: false
+    TEST:
+        credentialFilename: serviceAccountKeys/dev_reader.json
+        writerCredentialFilename: serviceAccountKeys/dev_writer.json
+        bucketName: dev_113959925643235198999
+        dailyCredentialRenewal: false
+    QA:
+        credentialFilename: serviceAccountKeys/rc_reader.json
+        writerCredentialFilename: serviceAccountKeys/rc_writer.json
+        bucketName: rc_113959925643235198999
+        dailyCredentialRenewal: false
+    RC:
+        credentialFilename: serviceAccountKeys/rc_reader.json
+        writerCredentialFilename: serviceAccountKeys/rc_writer.json
+        bucketName: rc_113959925643235198999
+        dailyCredentialRenewal: false
+    PROD:
+        # FYI the production storage bucket uses IP whitelisting which can only be configured by VUMC admins.
+        credentialFilename: serviceAccountKeys/prod_reader.json
+        writerCredentialFilename: DISABLED
+        bucketName: genomics-broad-dryrun
+        dailyCredentialRenewal: true
+
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 mercury:
 
@@ -362,7 +391,7 @@ mercury:
       infiniumStarter: DEV
       sap:  RC
       decoder: DEV
-
+      MayoManifestGoogleStorage: DEV
 
     AUTO_BUILD:
 
@@ -383,6 +412,7 @@ mercury:
       infiniumStarter: DEV
       sap:  RC
       decoder: DEV
+      MayoManifestGoogleStorage: DEV
 
     TEST:
 
@@ -403,6 +433,7 @@ mercury:
       infiniumStarter: DEV
       sap:  RC
       decoder: DEV
+      MayoManifestGoogleStorage: TEST
 
     QA:
       app:      QA
@@ -422,6 +453,7 @@ mercury:
       infiniumStarter: QA
       sap:  RC
       decoder: QA
+      MayoManifestGoogleStorage: QA
 
     RC:
 
@@ -442,7 +474,7 @@ mercury:
       infiniumStarter: QA
       sap:  RC
       decoder: QA
-
+      MayoManifestGoogleStorage: RC
 
     PROD:
 
@@ -463,4 +495,4 @@ mercury:
       infiniumStarter: PROD
       sap:  PROD
       decoder: PROD
-
+      MayoManifestGoogleStorage: PROD
