@@ -280,7 +280,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
                 filter(tube -> tubeBarcodeToQuantValue.containsKey(tube.getLabel())).
                 forEach(tube -> {
                     // Clinical sample tubes should not go to BSP.
-                    if (tube.getMercurySamples().stream().anyMatch(sample -> sample.canSampleBeUsedForClinical())) {
+                    if (tube.getMercurySamples().stream().anyMatch(MercurySample::isClinicalSample)) {
                         tubesNotSent.add(tube.getLabel());
                     } else {
                         tubes.add(tube);
