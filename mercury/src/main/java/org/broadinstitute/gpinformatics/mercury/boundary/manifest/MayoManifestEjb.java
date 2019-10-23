@@ -20,6 +20,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.DnaQuantEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.control.dao.infrastructure.QuarantinedDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -30,6 +32,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.infrastructure.Quarantined;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket_;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueSpecialization;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -126,6 +131,8 @@ public class MayoManifestEjb {
     private TubeFormationDao tubeFormationDao;
     private JiraService jiraService;
     private QuarantinedDao quarantinedDao;
+    private QueueEjb queueEjb;
+    private DnaQuantEnqueueOverride dnaQuantEnqueueOverride;
 
     /**
      * CDI constructor.
@@ -137,7 +144,8 @@ public class MayoManifestEjb {
     @Inject
     public MayoManifestEjb(ManifestSessionDao manifestSessionDao, GoogleBucketDao googleBucketDao, UserBean userBean,
             LabVesselDao labVesselDao, MercurySampleDao mercurySampleDao, TubeFormationDao tubeFormationDao,
-            QuarantinedDao quarantinedDao, JiraService jiraService, Deployment deployment) {
+            QuarantinedDao quarantinedDao, JiraService jiraService, Deployment deployment, QueueEjb queueEjb,
+            DnaQuantEnqueueOverride dnaQuantEnqueueOverride) {
         this.manifestSessionDao = manifestSessionDao;
         this.googleBucketDao = googleBucketDao;
         this.userBean = userBean;
@@ -146,6 +154,9 @@ public class MayoManifestEjb {
         this.tubeFormationDao = tubeFormationDao;
         this.quarantinedDao = quarantinedDao;
         this.jiraService = jiraService;
+        this.queueEjb = queueEjb;
+        this.dnaQuantEnqueueOverride = dnaQuantEnqueueOverride;
+
         // This config is from the yaml file.
         MayoManifestConfig mayoManifestConfig = (MayoManifestConfig) MercuryConfiguration.getInstance().
                 getConfig(MayoManifestConfig.class, deployment);
@@ -862,6 +873,13 @@ public class MayoManifestEjb {
             }
 
             labVesselDao.persistAll(newEntities);
+
+            Collection<LabVessel> labVessels = new ArrayList<>(vesselPositionToTube.values());
+            QueueSpecialization queueSpecialization =
+                    dnaQuantEnqueueOverride.determineDnaQuantQueueSpecialization(labVessels);
+            queueEjb.enqueueLabVessels(labVessels, QueueType.DNA_QUANT,
+                    "Accessioned on " + DateUtils.convertDateTimeToString(new Date()), messages,
+                    QueueOrigin.RECEIVING, queueSpecialization);
         }
         // Adds comment to the existing RCT.
         addRctComment(manifestSession.getReceiptTicket(), messages, rctMessages);

@@ -60,7 +60,7 @@ public class DnaQuantEnqueueOverride extends AbstractEnqueueOverride {
 
         // Check for FFPE
         for (SampleData sampleData : sampleDataMap.values()) {
-            if (sampleData.getFfpeStatus()) {
+            if (Boolean.TRUE.equals(sampleData.getFfpeStatus())) {
                 queueSpecialization = QueueSpecialization.FFPE;
             }
         }
