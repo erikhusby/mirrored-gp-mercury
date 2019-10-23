@@ -565,7 +565,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         sapOrdder = getContext().getRequest().getParameter(SAP_ORDER_PARAMETER);
         // If there's no product order parameter, send an error.
-        if (StringUtils.isBlank(productOrder) || StringUtils.isBlank(sapOrdder)) {
+        if (StringUtils.isBlank(productOrder) && StringUtils.isBlank(sapOrdder)) {
             addGlobalValidationError("No product order was specified.");
         } else {
             if(StringUtils.isNotBlank(productOrder)) {
