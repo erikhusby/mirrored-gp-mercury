@@ -763,7 +763,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                 mapSampleIdToData = sampleDataFetcher.fetchSampleData(rootSampleIds);
                                 for (SampleData sampleData : mapSampleIdToData.values()) {
                                     if (StringUtils.isEmpty(sampleData.getCollaboratorParticipantId())) {
-                                        messageCollection.addError("No collaborator participant ID for " +
+                                        messageCollection.addWarning("No collaborator participant ID for " +
                                                 sampleData.getSampleId());
                                     }
                                 }
@@ -791,7 +791,13 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                         Collection<String> sampleIds = mapPositionToSampleIds.get(source);
                                         for (String sampleId : sampleIds) {
                                             SampleData sampleData = mapSampleIdToData.get(sampleId);
-                                            ptIds.add(sampleData.getCollaboratorParticipantId());
+                                            String collabPtId = sampleData.getCollaboratorParticipantId();
+                                            if (StringUtils.isEmpty(collabPtId)) {
+                                                messageCollection.addError("Cannot combine " + sampleId +
+                                                        ", it has no metadata");
+                                            } else {
+                                                ptIds.add(collabPtId);
+                                            }
                                         }
                                     }
                                 }
