@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.DecisionType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryBeansType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryQuantBeanType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryQuantRunBean;
@@ -1516,7 +1517,7 @@ public class VesselEjb {
     }
 
     public LabMetricRun createLibraryQuantsFromRunBean(LibraryQuantRunBean libraryQuantRun,
-                                                       MessageCollection messageCollection) {
+                                                       MessageCollection messageCollection, Long userId) {
         LabMetricRun labMetricRun = labMetricRunDao.findByName(libraryQuantRun.getRunName());
         if (labMetricRun != null) {
             messageCollection.addError("This run has been uploaded previously.");
@@ -1536,7 +1537,7 @@ public class VesselEjb {
                 LabMetric.MetricType metricType = LabMetric.MetricType.getByDisplayName(libraryQuantRun.getQuantType());
                 labMetricRun =
                         createLibraryQuantsFromRunBeanDaoFree(mapBarcodeToVessel, mapBarcodeToLibraryBean, metricType,
-                                messageCollection, libraryQuantRun);
+                                messageCollection, libraryQuantRun, userId);
                 if (messageCollection.hasErrors()) {
                     ejbContext.setRollbackOnly();
                 } else {
@@ -1553,7 +1554,8 @@ public class VesselEjb {
                                                                Map<String, LibraryQuantBeanType> mapBarcodeToLibraryBean,
                                                                LabMetric.MetricType metricType,
                                                                MessageCollection messageCollection,
-                                                               LibraryQuantRunBean libraryQuantRun) {
+                                                               LibraryQuantRunBean libraryQuantRun,
+                                                               Long userId) {
         LabMetricRun labMetricRun =
                 new LabMetricRun(libraryQuantRun.getRunName(), libraryQuantRun.getRunDate(), metricType);
         for (Map.Entry<String, LibraryQuantBeanType> barcodeAndQuant : mapBarcodeToLibraryBean.entrySet()) {
@@ -1565,6 +1567,7 @@ public class VesselEjb {
                 messageCollection.addError("Failed to find position " + libraryBeans.getRackPositionName());
                 continue;
             }
+
 
             LabMetric labMetric = new LabMetric(libraryBeans.getValue(), metricType,
                     metricType.getLabUnit(), libraryBeans.getRackPositionName(), libraryQuantRun.getRunDate());
@@ -1578,6 +1581,22 @@ public class VesselEjb {
                     throw new RuntimeException("Failed to find metadata " + metricMetadataType.getName());
                 }
             }
+
+            DecisionType decisionType = libraryBeans.getDecision();
+            if (decisionType != null) {
+                if (decisionType.getName() == null) {
+                    throw new RuntimeException("Decision name not specified");
+                }
+                LabMetricDecision.Decision decision = LabMetricDecision.Decision.getDecisionByName(decisionType.getName());
+                if (decision == null) {
+                    throw new RuntimeException("Failed to find decision with name " + decisionType.getName());
+                }
+
+                LabMetricDecision labMetricDecision = new LabMetricDecision(decision, libraryQuantRun.getRunDate(),
+                        userId, labMetric, decisionType.getNote());
+                labMetric.setLabMetricDecision(labMetricDecision);
+            }
+
             labVessel.addMetric(labMetric);
         }
         return labMetricRun;
