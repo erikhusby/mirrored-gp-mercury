@@ -16,7 +16,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPSample
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -42,10 +41,8 @@ import org.easymock.IAnswer;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -192,8 +189,8 @@ public class BucketEjbDbFreeTest {
                 expectedSamples.add(pdoSample);
                 break;
             }
+            bspData.put(BSPSampleSearchColumn.MANUFACTURER_BARCODE, makeTubeBarcode(rackPosition));
             BspSampleData bspSampleData = new BspSampleData(bspData);
-            bspSampleData.addPlastic(makeTubeBarcode(rackPosition));
             bspSampleDataMap.put(pdoSample.getName(), bspSampleData);
 
             LabVessel labVessel = new BarcodedTube(makeTubeBarcode(rackPosition));
@@ -219,7 +216,8 @@ public class BucketEjbDbFreeTest {
                             EasyMock.<LabEventType>anyObject(), EasyMock.<Date>anyObject(), eq(0)))
                     .andReturn(Collections.<LabEvent>emptyList()).anyTimes();
 
-            expect(bspSampleDataFetcher.fetchSampleData(EasyMock.<Collection<String>>anyObject()))
+            expect(bspSampleDataFetcher.fetchSampleData(EasyMock.<Collection<String>>anyObject(), EasyMock.anyObject(),
+                    EasyMock.anyObject(), EasyMock.anyObject(), EasyMock.anyObject(), EasyMock.anyObject()))
                     .andReturn(bspSampleDataMap);
 
             replay(mocks);
@@ -236,41 +234,6 @@ public class BucketEjbDbFreeTest {
 
             verify(mocks);
         }
-    }
-
-    @Test(enabled = true, groups = TestGroups.DATABASE_FREE, dataProvider = "badLabelProvider")
-    public void testBadLabelSamplesToPicoBucket(String badLabelResult) throws Exception {
-        for (String workflow : (new String[]{AGILENT_EXOME_EXPRESS, ICE})) {
-            setupCoreMocks(workflow, false);
-
-            for (BspSampleData sampleDTO : bspSampleDataMap.values()) {
-                sampleDTO.getPlasticBarcodes().clear();
-                sampleDTO.addPlastic(badLabelResult);
-            }
-
-            expect(bspSampleDataFetcher.fetchSampleData(EasyMock.<List<String>>anyObject())).andReturn( bspSampleDataMap);
-
-            replay(mocks);
-
-            try {
-                bucketEjb.addSamplesToBucket(pdo);
-                Assert.fail("Blank barcodes for bsp samples should throw Bucket exception");
-            } catch (BucketException expected) {
-
-            }
-
-            verify(mocks);
-        }
-    }
-
-    @DataProvider(name = "badLabelProvider")
-    public Object[][] badLabelProvider(Method method) {
-        List<Object[]> badLabelInfo = new ArrayList<>();
-
-        badLabelInfo.add(new Object[]{""});
-        badLabelInfo.add(new Object[]{null});
-
-        return badLabelInfo.toArray(new Object[badLabelInfo.size()][]);
     }
 
     public void testApplyBucketCriteriaNoWorkflow(){

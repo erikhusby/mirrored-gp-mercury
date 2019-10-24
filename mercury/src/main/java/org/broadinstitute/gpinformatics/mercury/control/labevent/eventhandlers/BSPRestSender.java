@@ -16,6 +16,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleInfo;
 import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
@@ -74,6 +75,7 @@ public class BSPRestSender implements Serializable {
     public static final String BSP_CREATE_DISSASSOC_PLATE_URL = "plate/createDisassociatedPlate";
     public static final String BSP_CONTAINER_URL = "container/getSampleInfo";
     public static final String BSP_UPLOAD_QUANT_URL = "quant/upload";
+    public static final String BSP_UPDATE_TUBE_QUANTS_URL = "quant/updateByTubeBarcode";
     public static final String BSP_KIT_REST_URL = "kit";
     public static final String BSP_CONTAINER_UPDATE_LAYOUT = "container/updateLayout";
 
@@ -102,6 +104,24 @@ public class BSPRestSender implements Serializable {
         TransferReturn transferReturn = response.readEntity(TransferReturn.class);
         response.close();
         return transferReturn;
+    }
+
+    /**
+     * Posts tube quants to BSP REST service at the specified url.
+     * Expects to be called from a UI gesture, which handles errors via MessageCollection.
+     */
+    public void postToBsp(TubeQuants tubeQuants, String bspRestUrl, MessageCollection messageCollection) {
+        String urlString = bspRestClient.getUrl(bspRestUrl);
+        WebTarget webTarget = bspRestClient.getWebResource(urlString);
+
+        Response response = webTarget.request().post(Entity.json(tubeQuants));
+        String responseString = response.readEntity(String.class);
+        if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
+            messageCollection.addError("Failed to post to Bsp: " + responseString);
+        } else {
+            messageCollection.addInfo(responseString);
+        }
+        response.close();
     }
 
     /**
@@ -580,6 +600,36 @@ public class BSPRestSender implements Serializable {
             GetSampleInfo.SampleInfos sampleInfos = response.readEntity(GetSampleInfo.SampleInfos.class);
             response.close();
             return sampleInfos;
+        }
+    }
+
+    public static class TubeQuants {
+        private String username;
+        private List<String> tubeBarcodes;
+        private List<String> quants;
+        private List<String> volumes;
+
+        public TubeQuants(String username, List<String> tubeBarcodes, List<String> quants, List<String> volumes) {
+            this.username = username;
+            this.tubeBarcodes = tubeBarcodes;
+            this.quants = quants;
+            this.volumes = volumes;
+        }
+
+        public String getUsername() {
+            return username;
+        }
+
+        public List<String> getTubeBarcodes() {
+            return tubeBarcodes;
+        }
+
+        public List<String> getQuants() {
+            return quants;
+        }
+
+        public List<String> getVolumes() {
+            return volumes;
         }
     }
 

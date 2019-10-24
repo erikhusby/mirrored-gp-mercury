@@ -5,12 +5,16 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.IndexPlateDefinition;
 import org.hibernate.envers.Audited;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static javax.swing.UIManager.put;
 import static org.broadinstitute.gpinformatics.mercury.entity.OrmUtil.proxySafeCast;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.ContainerType.STATIC_PLATE;
 
@@ -209,6 +212,12 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
 
     @Enumerated(EnumType.STRING)
     private PlateType plateType;
+
+    @ManyToOne(cascade = {CascadeType.PERSIST})
+    @JoinColumn(name="index_plate_definition", referencedColumnName = "definition_id")
+    private IndexPlateDefinition indexPlateDefinition;
+
+    private String salesOrderNumber;
 
     public StaticPlate(String label, PlateType plateType) {
         super(label);
@@ -472,5 +481,21 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
 
     public void setVesselContainer(VesselContainer<PlateWell> vesselContainer) {
         this.vesselContainer = vesselContainer;
+    }
+
+    public void setIndexPlateDefinition(IndexPlateDefinition indexPlateDefinition) {
+        this.indexPlateDefinition = indexPlateDefinition;
+    }
+
+    public IndexPlateDefinition getIndexPlateDefinition() {
+        return indexPlateDefinition;
+    }
+
+    public String getSalesOrderNumber() {
+        return salesOrderNumber;
+    }
+
+    public void setSalesOrderNumber(String salesOrderNumber) {
+        this.salesOrderNumber = salesOrderNumber;
     }
 }

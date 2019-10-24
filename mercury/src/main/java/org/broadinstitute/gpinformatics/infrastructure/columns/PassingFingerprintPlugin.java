@@ -77,6 +77,7 @@ public class PassingFingerprintPlugin implements ListPlugin {
                 sampleList.stream().map(MercurySample::getSampleKey).collect(Collectors.toList()),
                 BSPSampleSearchColumn.LSID);
 
+        // Sort by increasing precedence value, then decreasing date, so most desirable is first
         Comparator<Fingerprint> comparator = (o1, o2) -> new CompareToBuilder().
                 append(o1.getPlatform().getPrecedenceForInitial(), o2.getPlatform().getPrecedenceForInitial()).
                 append(o2.getDateGenerated(), o1.getDateGenerated()).
@@ -107,16 +108,16 @@ public class PassingFingerprintPlugin implements ListPlugin {
                         mercurySample.getFingerprints().stream().
                                 filter(fingerprint -> fingerprint.getDisposition() == Fingerprint.Disposition.PASS &&
                                         initialPlatforms.contains(fingerprint.getPlatform())).
-                                max(comparator).
+                                min(comparator).
                                 ifPresent(fingerprints::add);
                     }
                 }
-                optionalFingerprint = fingerprints.stream().max(comparator);
+                optionalFingerprint = fingerprints.stream().min(comparator);
             } else {
                 optionalFingerprint = rowFingerprints.stream().
                         filter(fingerprint -> fingerprint.getDisposition() == Fingerprint.Disposition.PASS &&
                                 initialPlatforms.contains(fingerprint.getPlatform())).
-                        max(comparator);
+                        min(comparator);
             }
 
             // Add row to table
