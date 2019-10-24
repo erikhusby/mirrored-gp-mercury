@@ -15,6 +15,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -348,6 +349,16 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.MISEQ_FLOWCELL),
+
+    VARIOUS_TUBE_TRANSFER("VariousTubeTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP_APPLY_SM_IDS,
+            VolumeConcUpdate.BSP_AND_MERCURY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT, RackOfTubes.RackType.values(),
+                    RackOfTubes.RackType.values()).sourceVolume(true).targetVolume(true).requireSingleParticipant(true).
+                    destinationMarkStockOptions(new MarkStock[]{MarkStock.ActiveStock, MarkStock.BackupStock,
+                            MarkStock.ReservedStock, MarkStock.None}).build(),
+            LibraryType.NONE_ASSIGNED, SourceHandling.TERMINATE_DEPLETED, true),
 
     // Dev Samples
     DEV("DevCherryPick",
@@ -2753,6 +2764,7 @@ public enum LabEventType {
     public enum SourceHandling {
         DEPLETE("Deplete Well"),                    // Expect to deplete the source(s) of the transfer.
         TERMINATE_DEPLETED("Terminate Depleted"),   // Expected to terminate source(s) if the vol/mass reaches zero due to the transfer.
+        SUBTRACT_DESTINATION_AMOUNT("Subtract Destination Amount"), // Expected to subtract destination vol/mass from source.
         NONE("None");                               // No special changes to the source(s) of the transfer.
 
         String displayName;
@@ -2863,6 +2875,8 @@ public enum LabEventType {
 
     private SourceHandling sourceHandling;
 
+    private boolean removeDestVolFromSource;
+
     /**
      * Determines what metadata is added to messages forwarded to BSP.
      */
@@ -2888,7 +2902,8 @@ public enum LabEventType {
     public enum MarkStock {
         ActiveStock("Active"),
         BackupStock("Backup"),
-        ReservedStock("Reserved");
+        ReservedStock("Reserved"),
+        None("Not Stock");
 
 
         private final String displayName;
@@ -3050,8 +3065,8 @@ public enum LabEventType {
 
         public static class Builder {
             private final MessageType messageType;
-            private final VesselTypeGeometry sourceVesselTypeGeometry;
-            private final VesselTypeGeometry targetVesselTypeGeometry;
+            private VesselTypeGeometry sourceVesselTypeGeometry;
+            private VesselTypeGeometry targetVesselTypeGeometry;
             private VesselTypeGeometry targetWellTypeGeometry;
 
             private SBSSection sourceSection;
@@ -3091,6 +3106,14 @@ public enum LabEventType {
                 this.messageType = messageType;
                 this.sourceVesselTypeGeometry = sourceVesselTypeGeometry;
                 this.targetVesselTypeGeometry = targetVesselTypeGeometry;
+            }
+
+            // Need to allow the ability to make multiple source geometries to be available for choosing.
+            public Builder(MessageType messageType, VesselTypeGeometry[] sourceVesselTypeGeometries,
+                           VesselTypeGeometry[] targetVesselTypeGeometries) {
+                this.messageType = messageType;
+                this.sourceVesselTypeGeometries = sourceVesselTypeGeometries;
+                this.targetVesselTypeGeometries = targetVesselTypeGeometries;
             }
 
             public Builder sourceSection(SBSSection sourceSection) {
@@ -3483,8 +3506,19 @@ public enum LabEventType {
                  VolumeConcUpdate volumeConcUpdate, ManualTransferDetails manualTransferDetails, LibraryType libraryType,
                  SourceHandling sourceHandling) {
         this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
-                pipelineTransformation, forwardMessage, volumeConcUpdate, manualTransferDetails, null, libraryType,
-                sourceHandling);
+                pipelineTransformation, forwardMessage, volumeConcUpdate, manualTransferDetails, null,
+                libraryType, sourceHandling);
+    }
+
+    LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
+                 SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
+                 PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
+                 VolumeConcUpdate volumeConcUpdate, ManualTransferDetails manualTransferDetails, LibraryType libraryType,
+                 SourceHandling sourceHandling, boolean removeDestVolFromSource) {
+        this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
+                pipelineTransformation, forwardMessage, volumeConcUpdate, manualTransferDetails, null, libraryType, sourceHandling);
+
+        this.removeDestVolFromSource = removeDestVolFromSource;
     }
 
     LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
@@ -3652,6 +3686,11 @@ public enum LabEventType {
     public SourceHandling getSourceHandling() {
         return sourceHandling;
     }
+
+    /**
+     * @return true if we expect the transfers to remove the destination volume from the source.
+     */
+    public boolean removeDestVolFromSource() { return removeDestVolFromSource; }
 
     /**
      * Check whether this event type expects to deplete all sources (if there are any transfers).
