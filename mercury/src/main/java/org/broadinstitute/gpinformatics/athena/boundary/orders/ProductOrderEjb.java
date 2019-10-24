@@ -418,27 +418,30 @@ public class ProductOrderEjb {
                                     MessageCollection messageCollection, boolean closingOrder)
             throws SAPIntegrationException {
 
-        if(closingOrder && orderToPublish.isSavedInSAP()) {
-            updateOrderInSap(orderToPublish, allProductsOrdered, messageCollection, closingOrder);
+        try {
+            if(closingOrder && orderToPublish.isSavedInSAP()) {
+                updateOrderInSap(orderToPublish, allProductsOrdered, messageCollection, closingOrder);
+            }
+        } catch (SAPIntegrationException e) {
+            if(quoteIdChange ) {
+                String oldNumber = null;
+                if(StringUtils.isNotBlank(orderToPublish.getSapOrderNumber())) {
+                    oldNumber = orderToPublish.getSapOrderNumber();
+                }
+                String body = "The SAP order " + oldNumber + " for PDO "+ orderToPublish.getBusinessKey()+
+                              " is being associated with a new quote by "+
+                              userBean.getBspUser().getFullName() +" and needs" + " to be short closed.";
+                sendSapOrderShortCloseRequest(body);
+            }
         }
 
         String sapOrderIdentifier = sapService.createOrder(orderToPublish);
 
-        String oldNumber = null;
-        if(StringUtils.isNotBlank(orderToPublish.getSapOrderNumber())) {
-            oldNumber = orderToPublish.getSapOrderNumber();
-        }
         SapQuote quote = orderToPublish.getSapQuote(sapService);
         orderToPublish.addSapOrderDetail(new SapOrderDetail(sapOrderIdentifier,0,
                 orderToPublish.getQuoteId(),
                 orderToPublish.getSapCompanyConfigurationForProductOrder(quote).getCompanyCode()));
 
-        if(quoteIdChange ) {
-            String body = "The SAP order " + oldNumber + " for PDO "+ orderToPublish.getBusinessKey()+
-                          " is being associated with a new quote by "+
-                          userBean.getBspUser().getFullName() +" and needs" + " to be short closed.";
-            sendSapOrderShortCloseRequest(body);
-        }
         orderToPublish.setPriorToSAP1_5(false);
         messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +
                                   " has been successfully created in SAP");
