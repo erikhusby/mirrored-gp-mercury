@@ -608,12 +608,15 @@ public class BSPRestSender implements Serializable {
         private List<String> tubeBarcodes;
         private List<String> quants;
         private List<String> volumes;
+        private String runDate;
 
-        public TubeQuants(String username, List<String> tubeBarcodes, List<String> quants, List<String> volumes) {
+        public TubeQuants(String username, List<String> tubeBarcodes, List<String> quants, List<String> volumes,
+                String runDate) {
             this.username = username;
             this.tubeBarcodes = tubeBarcodes;
             this.quants = quants;
             this.volumes = volumes;
+            this.runDate = runDate;
         }
 
         public String getUsername() {
@@ -630,6 +633,10 @@ public class BSPRestSender implements Serializable {
 
         public List<String> getVolumes() {
             return volumes;
+        }
+
+        public String getRunDate() {
+            return runDate;
         }
     }
 
