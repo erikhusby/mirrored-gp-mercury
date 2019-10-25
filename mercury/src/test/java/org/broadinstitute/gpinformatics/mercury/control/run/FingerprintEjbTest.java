@@ -43,7 +43,7 @@ public class FingerprintEjbTest extends Arquillian {
     }
 
     @Test
-    public void testGetPtIdMercurySamples(){
+    public void testGetPtIdMercurySamples() {
         mapIdToMercurySample = fingerprintEjb.getPtIdMercurySamples(mapIdToMercurySample, "PT-22SS1", mercurySampleDao);
         smid = mapIdToMercurySample.values().stream()
                 .map(MercurySample::getSampleKey)
@@ -54,12 +54,11 @@ public class FingerprintEjbTest extends Arquillian {
     }
 
     @Test
-    public void testFindFingerprints(){
+    public void testFindFingerprints() {
         mapIdToMercurySample = fingerprintEjb.getPtIdMercurySamples(mapIdToMercurySample, "PT-22SS1", mercurySampleDao);
         smid = mapIdToMercurySample.values().stream()
                 .map(MercurySample::getSampleKey)
                 .collect(Collectors.toList());
-
 
         platforms = EnumSet.allOf(Fingerprint.Platform.class);
         fingerprints = fingerprintEjb.findFingerprints(mapIdToMercurySample);
@@ -75,10 +74,8 @@ public class FingerprintEjbTest extends Arquillian {
                 .map(MercurySample::getSampleKey)
                 .collect(Collectors.toList());
 
-
         platforms = EnumSet.allOf(Fingerprint.Platform.class);
         fingerprints = fingerprintEjb.findFingerprints(mapIdToMercurySample);
-
         Workbook workbook = fingerprintEjb.makeMatrix(fingerprints,
                 platforms);
 
@@ -86,21 +83,19 @@ public class FingerprintEjbTest extends Arquillian {
 
         Sheet sheet = workbook.getSheet("Fluidigm Matrix");
         Assert.assertNotNull(sheet);
-        for ( Row row : sheet) {
-            for (Cell cell: row) {
+        for (Row row : sheet) {
+            for (Cell cell : row) {
                 short lastCellNum = row.getLastCellNum();
                 System.out.println(lastCellNum);
                 // Skip first, assert rest
-                if (row.getRowNum() == 0){
-                    if (cell.getColumnIndex() != 0){
+                if (row.getRowNum() == 0) {
+                    if (cell.getColumnIndex() != 0) {
                         Assert.assertEquals(true, smid.contains(cell.getStringCellValue()));
                     }
-                } else if (cell.getColumnIndex() != 0){
+                } else if (cell.getColumnIndex() != 0) {
                     Assert.assertNotNull(cell.getNumericCellValue());
                 }
-
             }
         }
     }
-
 }

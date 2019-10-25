@@ -43,7 +43,9 @@ public class Fingerprint {
         PASS("P"),
         FAIL("F"),
         NONE("N"),
-        /** Set by fixups, to indicate that the fingerprint should not be included in the pipeline's consensus fingerprint */
+        /**
+         * Set by fixups, to indicate that the fingerprint should not be included in the pipeline's consensus fingerprint
+         */
         IGNORE("I");
 
         private final String abbreviation;
@@ -72,7 +74,9 @@ public class Fingerprint {
         GENERAL_ARRAY(2),
         FAT_PANDA(1);
 
-        /** Lower number indicates higher preference as "initial" fingerprint. */
+        /**
+         * Lower number indicates higher preference as "initial" fingerprint.
+         */
         private int precedenceForInitial;
 
         Platform(int precedenceForInitial) {
@@ -152,12 +156,14 @@ public class Fingerprint {
     // fatPandaGq
     // fatPandaPl
 
-    /** For JPA. */
+    /**
+     * For JPA.
+     */
     protected Fingerprint() {
     }
 
     public Fingerprint(MercurySample mercurySample, Disposition disposition, Platform platform, GenomeBuild genomeBuild,
-            Date dateGenerated, SnpList snpList, Gender gender, Boolean match) {
+                       Date dateGenerated, SnpList snpList, Gender gender, Boolean match) {
         this.mercurySample = mercurySample;
         this.snpList = snpList;
         mercurySample.getFingerprints().add(this);

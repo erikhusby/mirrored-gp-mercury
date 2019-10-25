@@ -28,6 +28,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -73,31 +75,33 @@ public class FingerprintEjb {
             mapFpTest.put(fingerprint, include);
         }
 
-        int numFingerprintCells = fingerprints.size() + 1;
-        int rowIndex = 0;
-        int colIndex = 1;
+        int numFingerprintCells = fingerprints.size() + 2;
+        int rowIndex = 2;
+        int colIndex = 2;
 
         String[][] fluiLodCells = new String[numFingerprintCells][numFingerprintCells];
 
         for (Fingerprint fingerprint : fingerprints) {
             if (mapFpTest.get(fingerprint)) {
-                fluiLodCells[rowIndex][colIndex] = fingerprint.getMercurySample().getSampleKey();
+                fluiLodCells[0][colIndex] = fingerprint.getMercurySample().getSampleData().getPatientId();
+                fluiLodCells[1][colIndex] = fingerprint.getMercurySample().getSampleKey();
                 ++colIndex;
             }
         }
-        ++rowIndex;
 
         ConcordanceCalculator concordanceCalculator = new ConcordanceCalculator();
+        DecimalFormat df = new DecimalFormat("##.####");
+        df.setRoundingMode(RoundingMode.HALF_UP);
 
         for (Fingerprint fingerprint : fingerprints) {
-            colIndex = 0;
+            colIndex = 2;
             if (mapFpTest.get(fingerprint)) {
-                fluiLodCells[rowIndex][colIndex] = fingerprint.getMercurySample().getSampleKey();
-                ++colIndex;
+                fluiLodCells[rowIndex][0] = fingerprint.getMercurySample().getSampleData().getPatientId();
+                fluiLodCells[rowIndex][1] = fingerprint.getMercurySample().getSampleKey();
                 for (Fingerprint fingerprint1 : fingerprints) {
                     if (mapFpTest.get(fingerprint1)) {
                         double lodScore = concordanceCalculator.calculateLodScore(fingerprint, fingerprint1);
-                        fluiLodCells[rowIndex][colIndex] = Double.toString(lodScore);
+                        fluiLodCells[rowIndex][colIndex] = String.valueOf(df.format(lodScore));
                         ++colIndex;
                     }
                 }
@@ -114,12 +118,12 @@ public class FingerprintEjb {
         Row row;
         Cell cell;
 
-        for (int i = 1; i < numFingerprintCells; i++) {
+        for (int i = 2; i < numFingerprintCells; i++) {
             row = sheet.createRow(i);
             for (int j = 0; j < numFingerprintCells; j++) {
                 cell = row.createCell(j);
                 if (fluiLodCells[i][j] != null) {
-                    if (j == 0) {
+                    if (j == 0 || j == 1) {
                         cell.setCellValue(fluiLodCells[i][j]);
                     } else {
                         cell.setCellValue(Double.parseDouble(fluiLodCells[i][j]));
@@ -130,16 +134,20 @@ public class FingerprintEjb {
 
         SheetConditionalFormatting sheetCF = sheet.getSheetConditionalFormatting();
 
-        //TODO Determine what cutoff(s) for highlighted cells
-        ConditionalFormattingRule rule = sheetCF.createConditionalFormattingRule(ComparisonOperator.GT, "30");
-        PatternFormatting fill = rule.createPatternFormatting();
-        fill.setFillBackgroundColor(IndexedColors.LIGHT_GREEN.index);
-        fill.setFillPattern(PatternFormatting.SOLID_FOREGROUND);
+        ConditionalFormattingRule positiveRule = sheetCF.createConditionalFormattingRule(ComparisonOperator.GT, "3");
+        PatternFormatting positiveFill = positiveRule.createPatternFormatting();
+        positiveFill.setFillBackgroundColor(IndexedColors.LIGHT_GREEN.index);
+        positiveFill.setFillPattern(PatternFormatting.SOLID_FOREGROUND);
 
-        ConditionalFormattingRule[] cfRules = new ConditionalFormattingRule[]{rule};
+        ConditionalFormattingRule negativeRule = sheetCF.createConditionalFormattingRule(ComparisonOperator.LT, "-3");
+        PatternFormatting negativeFill = negativeRule.createPatternFormatting();
+        negativeFill.setFillBackgroundColor(IndexedColors.CORAL.index);
+        negativeFill.setFillPattern(PatternFormatting.SOLID_FOREGROUND);
+
+        ConditionalFormattingRule[] cfRules = new ConditionalFormattingRule[]{positiveRule, negativeRule};
 
         CellRangeAddress[] regions = new CellRangeAddress[]{
-                new CellRangeAddress(1, numFingerprintCells, 1, numFingerprintCells)};
+                new CellRangeAddress(2, numFingerprintCells, 2, numFingerprintCells)};
 
         sheetCF.addConditionalFormatting(regions, cfRules);
 
