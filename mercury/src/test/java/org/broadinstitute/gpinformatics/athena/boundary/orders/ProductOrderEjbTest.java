@@ -68,15 +68,18 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -389,7 +392,18 @@ public class ProductOrderEjbTest {
         Mockito.verify(mockQuoteService, Mockito.times(0)).getQuoteByAlphaId(Mockito.anyString());
     }
 
-    public void testCreateOrderInSap() throws Exception {
+    @DataProvider(name = "willQuoteSwapBad")
+    public Iterator<Object[]> willQuoteSwapBad() {
+        List<Object[]> testScenarios = new ArrayList<>();
+
+        testScenarios.add(new Object[]{true});  //later in the process, swap the quote for a bad quote.
+        testScenarios.add(new Object[]{false});
+
+        return testScenarios.iterator();
+    }
+
+    @Test(dataProvider = "willQuoteSwapBad")
+    public void testCreateOrderInSap(Boolean quoteSwapsForBadQuote) throws Exception {
 
         PriceList priceList = new PriceList();
         Collection<QuoteItem> quoteItems = new HashSet<>();
@@ -481,15 +495,17 @@ public class ProductOrderEjbTest {
                 Mockito.anyBoolean());
         Assert.assertEquals(conversionPdo.getSapReferenceOrders().size(), 3);
 
-        Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString()))
-                .thenReturn(TestUtils.buildTestSapQuote(conversionPdo.getQuoteId(),
-                        10000,1000000,conversionPdo,
-                        TestUtils.SapQuoteTestScenario.PRODUCTS_DIFFER,companyCode.getSalesOrganization()));
+        if(quoteSwapsForBadQuote) {
+            Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString()))
+                    .thenReturn(TestUtils.buildTestSapQuote(conversionPdo.getQuoteId(),
+                            10000, 1000000, conversionPdo,
+                            TestUtils.SapQuoteTestScenario.PRODUCTS_DIFFER, companyCode.getSalesOrganization()));
+        }
 
         conversionPdo.setQuoteId(SapIntegrationServiceImplDBFreeTest.SAP_QUOTE_ID+"4");
 
         productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, false);
-        Mockito.verify(mockEmailSender, Mockito.times(1)).sendHtmlEmail(Mockito.eq(mockAppConfig),
+        Mockito.verify(mockEmailSender, Mockito.times(((quoteSwapsForBadQuote)?1:0))).sendHtmlEmail(Mockito.eq(mockAppConfig),
                 Mockito.anyString(),
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
@@ -506,7 +522,7 @@ public class ProductOrderEjbTest {
         TestUtils.billSampleOut(conversionPdo, conversionPdo.getSamples().iterator().next(), conversionPdo.getSamples().size());
 
         productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, false);
-        Mockito.verify(mockEmailSender, Mockito.times(1)).sendHtmlEmail(Mockito.eq(mockAppConfig),
+        Mockito.verify(mockEmailSender, Mockito.times(((quoteSwapsForBadQuote)?1:0))).sendHtmlEmail(Mockito.eq(mockAppConfig),
                 Mockito.anyString(),
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
@@ -518,7 +534,7 @@ public class ProductOrderEjbTest {
 
         productOrderEjb.abandon(jiraTicketKey, "testing");
 
-        Mockito.verify(mockEmailSender, Mockito.times(2)).sendHtmlEmail(Mockito.eq(mockAppConfig),
+        Mockito.verify(mockEmailSender, Mockito.times((quoteSwapsForBadQuote)?2:0)).sendHtmlEmail(Mockito.eq(mockAppConfig),
                 Mockito.anyString(),
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
