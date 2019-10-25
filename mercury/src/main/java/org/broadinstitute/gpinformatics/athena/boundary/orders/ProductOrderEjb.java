@@ -1266,14 +1266,20 @@ public class ProductOrderEjb {
              targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY) < targetSapPdo.latestSapOrderDetail().getPrimaryQuantity()
            ) || CollectionUtils.containsAny(Arrays.asList(OrderStatus.Abandoned, OrderStatus.Completed),Collections.singleton(targetSapPdo.getOrderStatus())))) {
 
-            if(targetSapPdo.hasSapQuote()) {
-                publishProductOrderToSAP(productOrder, new MessageCollection(), false);
+            try {
+                if(targetSapPdo.hasSapQuote()) {
+                    publishProductOrderToSAP(productOrder, new MessageCollection(), false);
 
-            }   else {
+                }   else {
+                    sendSapOrderShortCloseRequest(
+                            "The SAP order " + productOrder.getSapOrderNumber() + " for PDO "+productOrder.getBusinessKey() +
+                            " has been marked as completed in Mercury by " +
+                            userBean.getBspUser().getFullName() + " and may need to be short closed.");
+                }
+            } catch (SAPInterfaceException e) {
                 sendSapOrderShortCloseRequest(
-                        "The SAP order " + productOrder.getSapOrderNumber() + " for PDO "+productOrder.getBusinessKey() +
-                        " has been marked as completed in Mercury by " +
-                        userBean.getBspUser().getFullName() + " and may need to be short closed.");
+                        "Mercury is unable to close The SAP order " + productOrder.getSapOrderNumber() + " for PDO "+productOrder.getBusinessKey() +
+                        " so it needs to be short closed.");
             }
         }
     }
