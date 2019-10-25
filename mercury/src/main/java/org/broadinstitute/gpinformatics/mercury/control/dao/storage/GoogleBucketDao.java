@@ -276,7 +276,7 @@ public class GoogleBucketDao {
         }
         try {
             messageCollection.addInfo("Credential file has AuthenticationType: " + credentials.getAuthenticationType());
-//            messageCollection.addInfo("Token server: " + credentials.getTokenServerUri().toString());
+            messageCollection.addInfo("Token server: " + credentials.getTokenServerUri().toString());
             messageCollection.addInfo("Account: " + credentials.getAccount());
             messageCollection.addInfo("Project: " + credentials.getProjectId());
         } catch (Exception e) {
