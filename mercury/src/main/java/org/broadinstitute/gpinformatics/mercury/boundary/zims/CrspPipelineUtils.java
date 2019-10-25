@@ -72,7 +72,7 @@ public class CrspPipelineUtils {
         throwExceptionIfInProductionAndSampleIsNotABSPSample(sampleData.getSampleId());
         if (sampleData.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
             setBuickVisitAndCollectionDate(libraryBean, sampleData);
-            libraryBean.setLsid(getCrspLSIDForBSPSampleId(sampleData.getSampleId()));
+            libraryBean.setLsid(getCrspLSIDForBSPSampleId(sampleData.getSampleId())); // todo jmt
             libraryBean.setRootSample(libraryBean.getSampleId());
             libraryBean.setTestType(LibraryBean.CRSP_SOMATIC_TEST_TYPE);
         }
