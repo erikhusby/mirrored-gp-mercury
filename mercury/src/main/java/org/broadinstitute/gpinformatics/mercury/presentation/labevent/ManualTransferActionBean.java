@@ -1327,7 +1327,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                 manualTransferDetails.getSourceVesselTypeGeometry());
                     }
 
-                    if (labEventType.removeDestVolFromSource()) {
+                    if (labEventType.removeDestVolFromSource() != null && labEventType.removeDestVolFromSource()) {
                         boolean depleteAll = getDepleteAll() != null && getDepleteAll().containsKey(eventIndex) &&
                                              getDepleteAll().get(eventIndex);
                         addDepleteMetadata(plateCherryPickEvent.getSourcePositionMap().get(0), depleteAll);
