@@ -305,7 +305,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * is expected of it.
      */
     protected SAPOrderItem getOrderItem(SapQuote sapQuote, ProductOrder placedOrder, Product product,
-                                        int additionalSampleCount, SapIntegrationService.Option serviceOptions) {
+                                        int additionalSampleCount, SapIntegrationService.Option serviceOptions)
+            throws SAPIntegrationException {
         BigDecimal sampleCount = getSampleCount(placedOrder, product, additionalSampleCount, serviceOptions);
         Set<SapQuoteItemReference> quoteReferences;
         if(serviceOptions.hasOption(Type.CLOSING)) {
@@ -313,7 +314,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 SapQuote oldQuote = findSapQuote(placedOrder.latestSapOrderDetail().getQuoteId());
                 quoteReferences = ProductOrder.createSapQuoteItemReferences(placedOrder, oldQuote);
             } catch (SAPInterfaceException | SAPIntegrationException e) {
-                return null;
+                throw new SAPIntegrationException("Unable to determine the quote line items to which the products are associated");
             }
         } else {
             quoteReferences = placedOrder.getQuoteReferences();
