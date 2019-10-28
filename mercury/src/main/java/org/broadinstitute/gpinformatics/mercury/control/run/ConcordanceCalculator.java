@@ -150,8 +150,8 @@ public class ConcordanceCalculator {
      */
     private String convertFilePaths(String path) {
         if (SystemUtils.IS_OS_WINDOWS) {
-            path = FilenameUtils.separatorsToWindows(path);
             path = path.replace("/seq/references", "\\\\helium\\seq_references");
+            path = FilenameUtils.separatorsToWindows(path);
         } else if (SystemUtils.IS_OS_MAC) {
             path = path.replace("/seq/references", "/volumes/seq_references");
         }

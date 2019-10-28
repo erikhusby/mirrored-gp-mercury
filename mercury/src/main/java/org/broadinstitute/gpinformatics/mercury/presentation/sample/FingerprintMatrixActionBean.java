@@ -64,7 +64,7 @@ public class FingerprintMatrixActionBean extends CoreActionBean {
      */
     @HandlesEvent("downloadMatrix")
     public Resolution downloadMatrix() throws IOException {
-        int smidLimit = 50;
+        int smidLimit = 100;
 
         if (sampleId == null && participantId == null) {
             addGlobalValidationError("You must input a valid search term.");
