@@ -15,6 +15,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -349,12 +350,22 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.MISEQ_FLOWCELL),
 
+    VARIOUS_TUBE_TRANSFER("VariousTubeTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP_APPLY_SM_IDS,
+            VolumeConcUpdate.BSP_AND_MERCURY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT, RackOfTubes.RackType.values(),
+                    RackOfTubes.RackType.values()).sourceVolume(true).targetVolume(true).requireSingleParticipant(true).
+                    destinationMarkStockOptions(new MarkStock[]{MarkStock.ActiveStock, MarkStock.BackupStock,
+                            MarkStock.ReservedStock, MarkStock.None}).build(),
+            LibraryType.NONE_ASSIGNED, SourceHandling.TERMINATE_DEPLETED, true),
+
     // Dev Samples
     DEV("DevCherryPick",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT, RackOfTubes.RackType.Matrix96Anonymous,
-                    RackOfTubes.RackType.Matrix96Anonymous).build(),
+                    RackOfTubes.RackType.Matrix96Anonymous).sourceContainerPrefix("DevSrc").targetContainerPrefix("DevDest").build(),
             LibraryType.NONE_ASSIGNED),
 
     // Sage
@@ -724,6 +735,9 @@ public enum LabEventType {
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.FluidX_6mL).
                     targetVolume(true).
                     requireSingleParticipant(true).
+                    destinationMarkStockOptions(new MarkStock[] {
+                            MarkStock.ActiveStock, MarkStock.BackupStock
+                    }).
                     build(),
             LibraryType.NONE_ASSIGNED, "_P", Metadata.Key.TUMOR_NORMAL, "Tumor", MaterialType.PLASMA_PLASMA,
             SourceHandling.DEPLETE),
@@ -946,7 +960,7 @@ public enum LabEventType {
             LibraryType.NONE_ASSIGNED, SourceHandling.DEPLETE),
     STOOL_RNA_FINAL_ELUTION("StoolRNAFinalElution",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP_APPLY_SM_IDS, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
                     StaticPlate.PlateType.Plate96Well200PCR,
                     RackOfTubes.RackType.Matrix96SlotRack075).
@@ -956,7 +970,7 @@ public enum LabEventType {
             MaterialType.RNA_TOTAL_RNA, LibraryType.NONE_ASSIGNED, SourceHandling.DEPLETE),
     STOOL_DNA_ELUTION("StoolDNAElution",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP_APPLY_SM_IDS, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
                     StaticPlate.PlateType.Plate96RNEasyWell1000,
                     RackOfTubes.RackType.Matrix96SlotRack075).
@@ -964,6 +978,40 @@ public enum LabEventType {
                     sourceSection(SBSSection.ALL96).
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.MatrixTube075).build(),
             MaterialType.DNA_DNA_GENOMIC, LibraryType.NONE_ASSIGNED, SourceHandling.DEPLETE),
+
+    TENX_EXTRACTION_CHIP_LOADING("10XExtractionChipLoading",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
+                    RackOfTubes.RackType.Matrix96SlotRack075,
+                    StaticPlate.PlateType.Plate96Well200PCR).
+                    targetSection(SBSSection.P96_COL1).
+                    sourceSection(SBSSection.P96_COL1)
+                    .sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.MatrixTube075)
+                    .build(),
+            LibraryType.NONE_ASSIGNED),
+    TENX_EXTRACTION_CHIP_UNLOADING("10XExtractionChipUnloading",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
+                    StaticPlate.PlateType.Plate96Well200PCR,
+                    StaticPlate.PlateType.Plate96Well200PCR).
+                    targetSection(SBSSection.P96_COL1).
+                    sourceSection(SBSSection.P96_COL1)
+                    .build(),
+            LibraryType.NONE_ASSIGNED),
+    TENX_EXTRACTION_CONSOLIDATION("10XExtractionConsolidation",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED, TranslateBspMessage.SECTION_TO_CHERRY),
+    TENX_EXTRACTION_SILANE_CLEANUP("10XExtractionSilaneCleanup",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    TENX_EXTRACTION_CDNA_CLEANUP("10XExtractionCDNACleanup",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            MaterialType.DNA_CDNA, LibraryType.NONE_ASSIGNED),
 
     //ALL Prep Forward BSP
     ALL_PREP_TRANSFER_CRYOVIAL("AllPrepTransferCryovial",
@@ -1462,6 +1510,10 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.BOTH, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED, TranslateBspMessage.SECTION_TO_CHERRY),
+    AUTOMATED_DAUGHTER_TO_REGISTERED_SAMPLES("AutomatedDaughterToRegisteredSamples",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.BOTH, PipelineTransformation.NONE, ForwardMessage.BSP_APPLY_SM_IDS, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
     SONIC_DAUGHTER_PLATE_CREATION("SonicDaughterPlateCreation",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -1913,12 +1965,12 @@ public enum LabEventType {
             LibraryType.NONE_ASSIGNED),
     GERMLINE_EXOME_PCR_CLEANUP("GermlineExomePCRCleanup",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED),
+            PlasticToValidate.SOURCE, PipelineTransformation.PCR, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.GERMLINE_POND),
     GERMLINE_EXOME_NORM_TRANSFER("GermlineExomeNormTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.PCR, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.GERMLINE_POND),
+            LibraryType.GERMLINE_NORMALIZED_POND),
 
     // Custom Selection (e.g. twist)
     CUSTOM_SELECTION_BUCKET("CustomSelectionBucket",
@@ -2025,6 +2077,10 @@ public enum LabEventType {
             PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
     DNA_EXTRACTION_BUCKET("ExtractToDnaBucket", ExpectSourcesEmpty.TRUE,
+            ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE, PlasticToValidate.SOURCE,
+            PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    TENX_EXTRACTION_BUCKET("10XExtractionBucket", ExpectSourcesEmpty.TRUE,
             ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE, PlasticToValidate.SOURCE,
             PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
@@ -2247,55 +2303,55 @@ public enum LabEventType {
             LibraryType.NONE_ASSIGNED),
     INFINIUM_AMPLIFICATION("InfiniumAmplification",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
     INFINIUM_AMPLIFICATION_REAGENT_ADDITION("InfiniumAmplificationReagentAddition",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
     INFINIUM_FRAGMENTATION("InfiniumFragmentation",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
     INFINIUM_POST_FRAGMENTATION_HYB_OVEN_LOADED("InfiniumPostFragmentationHybOvenLoaded",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
     INFINIUM_PRECIPITATION("InfiniumPrecipitation",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
     INFINIUM_POST_PRECIPITATION_HEAT_BLOCK_LOADED("InfiniumPostPrecipitationHeatBlockLoaded",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
     INFINIUM_PRECIPITATION_ISOPROPANOL_ADDITION("InfiniumPrecipitationIsopropanolAddition",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
     INFINIUM_RESUSPENSION("InfiniumResuspension",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
     INFINIUM_POST_RESUSPENSION_HYB_OVEN("InfiniumPostResuspensionHybOven",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
     INFINIUM_HYBRIDIZATION("InfiniumHybridization",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
     INFINIUM_POST_HYBRIDIZATION_HYB_OVEN_LOADED("InfiniumPostHybridizationHybOvenLoaded",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
     INFINIUM_HYB_CHAMBER_LOADED("InfiniumHybChamberLoaded",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
     INFINIUM_XSTAIN("InfiniumXStain",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_EVENT, null, StaticPlate.PlateType.InfiniumChip24,
                     new ReagentRequirements[]{new ReagentRequirements("LX1", Pattern.compile("wg.*\\d+.*(-lx1|-LX1)\\b"), 6, false),
                             new ReagentRequirements("LX2", Pattern.compile("wg.*\\d+.*(-lx2|-LX2)\\b"), 6, false),
@@ -2312,7 +2368,7 @@ public enum LabEventType {
             numEvents(24).machineNames(new String[]{"None", "Rose", "Lily", "Scrappy"}).build(), LibraryType.NONE_ASSIGNED),
     INFINIUM_XSTAIN_HD("InfiniumXStainHD",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_EVENT, null, StaticPlate.PlateType.InfiniumChip24,
                     new ReagentRequirements[]{new ReagentRequirements("XC1", Pattern.compile("wg.*\\d+.*(-xc1|-XC1)\\b"), 6, false),
                             new ReagentRequirements("XC2", Pattern.compile("wg.*\\d+.*(-xc2|-XC2)\\b"), 6, false),
@@ -2412,6 +2468,32 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
     SINGLE_CELL_BULK_SPRI_CLEANUP("SingleCellBulkSPRICleanup",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+
+    // Single Cell Hashing
+    SINGLE_CELL_HASHING_BUCKET("SingleCellHashingBucket",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    SINGLE_CELL_HASHING_SPRI_ADDITION1("SingleCellHashingSPRI1",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    SINGLE_CELL_HASHING_SPRI_ADDITION2("SingleCellHashingSPRI2",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    SINGLE_CELL_HASHING_INDEX_ADDITION("SingleCellHashingIndexAddition",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    SINGLE_CELL_HASHING_PCR("SingleCellHashingPCR",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    SINGLE_CELL_HASHING_PCR_CLEANUP("SingleCellHashingPCRCleanup",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
@@ -2640,7 +2722,6 @@ public enum LabEventType {
     public enum ForwardMessage {
         BSP,
         BSP_APPLY_SM_IDS,
-        GAP,
         NONE
     }
 
@@ -2669,6 +2750,7 @@ public enum LabEventType {
         PCR_FREE_POND("PCR-Free Pond", "Pond"),
         PCR_PLUS_POND("PCR-Plus Pond", "Pond"),
         GERMLINE_POND("Germline Pond", "Pond"),
+        GERMLINE_NORMALIZED_POND("Germline Norm Pond", "Pond"),
         CF_POND("CF Pond", "Pond"),
         PCR_PLUS_NORMALIZED_POND("PCR-Plus Norm Pond", "Norm Pond"),
         HYBRID_SELECTION_AGILENT_CATCH("Enriched Catch", "Catch"),
@@ -2716,6 +2798,7 @@ public enum LabEventType {
     public enum SourceHandling {
         DEPLETE("Deplete Well"),                    // Expect to deplete the source(s) of the transfer.
         TERMINATE_DEPLETED("Terminate Depleted"),   // Expected to terminate source(s) if the vol/mass reaches zero due to the transfer.
+        SUBTRACT_DESTINATION_AMOUNT("Subtract Destination Amount"), // Expected to subtract destination vol/mass from source.
         NONE("None");                               // No special changes to the source(s) of the transfer.
 
         String displayName;
@@ -2826,6 +2909,8 @@ public enum LabEventType {
 
     private SourceHandling sourceHandling;
 
+    private boolean removeDestVolFromSource;
+
     /**
      * Determines what metadata is added to messages forwarded to BSP.
      */
@@ -2846,6 +2931,24 @@ public enum LabEventType {
         SECTION_TO_CHERRY,
         /** Leave event as is. */
         NONE
+    }
+
+    public enum MarkStock {
+        ActiveStock("Active"),
+        BackupStock("Backup"),
+        ReservedStock("Reserved"),
+        None("Not Stock");
+
+
+        private final String displayName;
+
+        MarkStock(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 
     private TranslateBspMessage translateBspMessage = TranslateBspMessage.NONE;
@@ -2881,11 +2984,16 @@ public enum LabEventType {
         /** The set of positions in the target geometry from which to transfer. */
         private SBSSection targetSection;
 
+        private SBSSection[] targetSections;
+
         /** Whether to allow entry of target volumes. */
         private boolean targetVolume;
 
         /** Whether to allow entry of target mass. */
         private boolean sourceMassRemoved;
+
+        /** Options to mark destination receptacles as Backup, Active, or Reserved Stock*/
+        private MarkStock[] destinationMarkStock = {};
 
         /** For containers that don't have barcodes (e.g. flipper racks), the prefix to the synthetic barcode. */
         private String targetContainerPrefix;
@@ -2907,14 +3015,18 @@ public enum LabEventType {
         private VesselTypeGeometry[] sourceVesselTypeGeometries = {};
 
         /** For source rack geometries, specifies the type of tube in the rack */
-        private BarcodedTube.BarcodedTubeType sourceBarcodedTubeType = BarcodedTube.BarcodedTubeType.MatrixTube;
+        private BarcodedTube.BarcodedTubeType sourceBarcodedTubeType;
+
+        private String sourceBarcodedTubeTypeString;
 
         /** Prompts user with a list of target vessel geometry types. */
         @XmlTransient
         private VesselTypeGeometry[] targetVesselTypeGeometries = {};
 
         /** For target rack geometries, specifies the type of tube in the rack */
-        private BarcodedTube.BarcodedTubeType targetBarcodedTubeType = BarcodedTube.BarcodedTubeType.MatrixTube;
+        private BarcodedTube.BarcodedTubeType targetBarcodedTubeType;
+
+        private String targetBarcodedTubeTypeString;
 
         @XmlTransient
         private VesselTypeGeometry targetWellTypeGeometry;
@@ -2966,6 +3078,7 @@ public enum LabEventType {
             targetSection = builder.targetSection;
             targetVolume = builder.targetVolume;
             sourceMassRemoved = builder.sourceMassRemoved;
+            destinationMarkStock = builder.destinationMarkStock;
             targetContainerPrefix = builder.targetContainerPrefix;
             numEvents = builder.numEvents;
             machineNames = builder.machineNames;
@@ -2986,8 +3099,8 @@ public enum LabEventType {
 
         public static class Builder {
             private final MessageType messageType;
-            private final VesselTypeGeometry sourceVesselTypeGeometry;
-            private final VesselTypeGeometry targetVesselTypeGeometry;
+            private VesselTypeGeometry sourceVesselTypeGeometry;
+            private VesselTypeGeometry targetVesselTypeGeometry;
             private VesselTypeGeometry targetWellTypeGeometry;
 
             private SBSSection sourceSection;
@@ -3002,6 +3115,7 @@ public enum LabEventType {
             private BarcodedTube.BarcodedTubeType targetBarcodedTubeType;
             private boolean targetVolume;
             private boolean sourceMassRemoved;
+            private MarkStock[] destinationMarkStock = {};
             private String targetContainerPrefix;
             private LabEventType secondaryEvent;
             private LabEventType repeatedEvent;
@@ -3026,6 +3140,14 @@ public enum LabEventType {
                 this.messageType = messageType;
                 this.sourceVesselTypeGeometry = sourceVesselTypeGeometry;
                 this.targetVesselTypeGeometry = targetVesselTypeGeometry;
+            }
+
+            // Need to allow the ability to make multiple source geometries to be available for choosing.
+            public Builder(MessageType messageType, VesselTypeGeometry[] sourceVesselTypeGeometries,
+                           VesselTypeGeometry[] targetVesselTypeGeometries) {
+                this.messageType = messageType;
+                this.sourceVesselTypeGeometries = sourceVesselTypeGeometries;
+                this.targetVesselTypeGeometries = targetVesselTypeGeometries;
             }
 
             public Builder sourceSection(SBSSection sourceSection) {
@@ -3085,6 +3207,11 @@ public enum LabEventType {
 
             public Builder sourceMassRemoved(boolean sourceMassRemoved) {
                 this.sourceMassRemoved = sourceMassRemoved;
+                return this;
+            }
+
+            public Builder destinationMarkStockOptions(MarkStock[] markStock) {
+                this.destinationMarkStock = markStock;
                 return this;
             }
 
@@ -3209,12 +3336,20 @@ public enum LabEventType {
             return targetSection;
         }
 
+        public SBSSection[] getTargetSections() {
+            return targetSections;
+        }
+
         public boolean targetVolume() {
             return targetVolume;
         }
 
         public boolean sourceMassRemoved() {
             return sourceMassRemoved;
+        }
+
+        public MarkStock[] getDestinationMarkStock() {
+            return destinationMarkStock;
         }
 
         public String getTargetContainerPrefix() {
@@ -3250,6 +3385,10 @@ public enum LabEventType {
         }
 
         public BarcodedTube.BarcodedTubeType getSourceBarcodedTubeType() {
+            if (sourceBarcodedTubeTypeString != null) {
+                String[] split = sourceBarcodedTubeTypeString.split("\\.");
+                return BarcodedTube.BarcodedTubeType.getByAutomationName(split[1]);
+            }
             return sourceBarcodedTubeType;
         }
 
@@ -3266,6 +3405,10 @@ public enum LabEventType {
         }
 
         public BarcodedTube.BarcodedTubeType getTargetBarcodedTubeType() {
+            if (targetBarcodedTubeTypeString != null) {
+                String[] split = targetBarcodedTubeTypeString.split("\\.");
+                return BarcodedTube.BarcodedTubeType.getByAutomationName(split[1]);
+            }
             return targetBarcodedTubeType;
         }
 
@@ -3356,6 +3499,14 @@ public enum LabEventType {
     }
 
     LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
+                 SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
+                 PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
+                 VolumeConcUpdate volumeConcUpdate, MaterialType materialType, LibraryType libraryType) {
+        this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
+                pipelineTransformation, forwardMessage, volumeConcUpdate, null, materialType, libraryType);
+    }
+
+    LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
             SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
             PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
             VolumeConcUpdate volumeConcUpdate, LibraryType libraryType, TranslateBspMessage translateBspMessage) {
@@ -3389,8 +3540,19 @@ public enum LabEventType {
                  VolumeConcUpdate volumeConcUpdate, ManualTransferDetails manualTransferDetails, LibraryType libraryType,
                  SourceHandling sourceHandling) {
         this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
-                pipelineTransformation, forwardMessage, volumeConcUpdate, manualTransferDetails, null, libraryType,
-                sourceHandling);
+                pipelineTransformation, forwardMessage, volumeConcUpdate, manualTransferDetails, null,
+                libraryType, sourceHandling);
+    }
+
+    LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
+                 SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
+                 PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
+                 VolumeConcUpdate volumeConcUpdate, ManualTransferDetails manualTransferDetails, LibraryType libraryType,
+                 SourceHandling sourceHandling, boolean removeDestVolFromSource) {
+        this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
+                pipelineTransformation, forwardMessage, volumeConcUpdate, manualTransferDetails, null, libraryType, sourceHandling);
+
+        this.removeDestVolFromSource = removeDestVolFromSource;
     }
 
     LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
@@ -3558,6 +3720,11 @@ public enum LabEventType {
     public SourceHandling getSourceHandling() {
         return sourceHandling;
     }
+
+    /**
+     * @return true if we expect the transfers to remove the destination volume from the source.
+     */
+    public boolean removeDestVolFromSource() { return removeDestVolFromSource; }
 
     /**
      * Check whether this event type expects to deplete all sources (if there are any transfers).

@@ -372,7 +372,9 @@ public abstract class LabVessel implements Serializable {
         Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleData(samplesBySampleKey.keySet(),
                 BSPSampleSearchColumn.BUCKET_PAGE_COLUMNS);
         for (Map.Entry<String, SampleData> sampleDataEntry : sampleDataMap.entrySet()) {
-            samplesBySampleKey.get(sampleDataEntry.getKey()).setSampleData(sampleDataEntry.getValue());
+            if (sampleDataEntry.getValue() != null) {
+                samplesBySampleKey.get(sampleDataEntry.getKey()).setSampleData(sampleDataEntry.getValue());
+            }
         }
     }
 
@@ -670,6 +672,21 @@ public abstract class LabVessel implements Serializable {
             }
         } else {
             transfersTo.addAll(getContainerRole().getTransfersTo());
+        }
+        return transfersTo;
+    }
+
+    public Set<LabEvent> getTransfersToWithRearrays() {
+        Set<LabEvent> transfersTo = new HashSet<>();
+        for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsTarget) {
+            transfersTo.add(vesselToVesselTransfer.getLabEvent());
+        }
+        if (getContainerRole() == null) {
+            for (VesselContainer<?> vesselContainer : getVesselContainers()) {
+                transfersTo.addAll(vesselContainer.getTransfersToWithRearrays());
+            }
+        } else {
+            transfersTo.addAll(getContainerRole().getTransfersToWithRearrays());
         }
         return transfersTo;
     }
@@ -1075,6 +1092,7 @@ public abstract class LabVessel implements Serializable {
      *  Get the AbandonVessel entry for a specific well <br/>
      *  Return null if well has not been abandoned.
      */
+    @Nullable
     public AbandonVessel getAbandonPositionForWell( VesselPosition well ) {
         for (AbandonVessel abandonVessel : getAbandonVessels() ) {
             if( abandonVessel.getVesselPosition() == well ){

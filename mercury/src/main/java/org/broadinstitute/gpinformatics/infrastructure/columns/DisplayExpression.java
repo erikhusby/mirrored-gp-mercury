@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
@@ -17,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.annotation.Nonnull;
@@ -286,7 +288,7 @@ public enum DisplayExpression {
     COLLABORATOR_SAMPLE_ID(SampleData.class, new SearchTerm.Evaluator<String>() {
         @Override
         public String evaluate(Object entity, SearchContext context) {
-            
+
             SampleData sampleData = (SampleData) entity;
             String collaboratorsSampleName = "";
             if (!context.getUserBean().isViewer()) {
@@ -328,6 +330,13 @@ public enum DisplayExpression {
             return sampleData.getOriginalMaterialType();
         }
     }),
+    MATERIAL_TYPE(SampleData.class, new SearchTerm.Evaluator<String>() {
+        @Override
+        public String evaluate(Object entity, SearchContext context) {
+            SampleData sampleData = (SampleData) entity;
+            return sampleData.getMaterialType();
+        }
+    }),
     SPECIES(SampleData.class, new SearchTerm.Evaluator<String>() {
         @Override
         public String evaluate(Object entity, SearchContext context) {
@@ -348,7 +357,19 @@ public enum DisplayExpression {
             SampleData sampleData = (SampleData) entity;
             return sampleData.getGender();
         }
-    });
+    }),
+    SALES_ORDER_NUMBER(SampleInstanceV2.class, new SearchTerm.Evaluator<String>() {
+        @Override
+        public String evaluate(Object entity, SearchContext context) {
+            LabVessel labVessel = ((SampleInstanceV2)entity).getInitialLabVessel();
+            StaticPlate staticPlate = (labVessel == null ||
+                    CollectionUtils.isEmpty(labVessel.getContainers()) ||
+                    !OrmUtil.proxySafeIsInstance(labVessel.getContainers().iterator().next(), StaticPlate.class)) ?
+                    null : OrmUtil.proxySafeCast(labVessel.getContainers().iterator().next(), StaticPlate.class);
+            return (staticPlate == null) ? null : staticPlate.getSalesOrderNumber();
+        }
+    })
+    ;
 
     private final Class<?> expressionClass;
     private final SearchTerm.Evaluator<?> evaluator;
@@ -387,7 +408,7 @@ public enum DisplayExpression {
             LabVessel labVessel = (LabVessel) rowObject;
             List<MercurySample> mercurySamples = new ArrayList<>();
             for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
+                MercurySample mercurySample = sampleInstanceV2.getNearestMercurySample();
                 if (mercurySample != null) {
                     mercurySamples.add(mercurySample);
                 }
@@ -408,7 +429,7 @@ public enum DisplayExpression {
 
             List<MercurySample> mercurySamples = new ArrayList<>();
             for (SampleInstanceV2 sampleInstance : sampleInstances) {
-                MercurySample mercurySample = sampleInstance.getRootOrEarliestMercurySample();
+                MercurySample mercurySample = sampleInstance.getNearestMercurySample();
                 if (mercurySample != null) {
                     mercurySamples.add(mercurySample);
                 }

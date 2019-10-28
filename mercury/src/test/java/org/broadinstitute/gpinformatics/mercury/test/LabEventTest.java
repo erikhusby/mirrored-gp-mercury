@@ -103,6 +103,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SingleCell10XEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.SingleCellHashingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SingleCellSmartSeqEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.StoolTNAEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
@@ -1689,35 +1690,58 @@ public class LabEventTest extends BaseEventTest {
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testSingleCell10X() {
         expectedRouting = SystemRouter.System.MERCURY;
-        int numSamples = NUM_POSITIONS_IN_RACK;
-        ProductOrder productOrder = ProductOrderTestFactory.buildSingleCellProductOrder(numSamples);
-        List<StaticPlate> sourcePlates = buildSamplePlates(productOrder, "SC_cDNAPlate");
-        int numSampleInstances = 0;
-        Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
-        List<LabVessel> labVesselList = new ArrayList<>();
-        Map<String, PlateWell> mapWellToPlateWell = new HashMap<>();
-        for (StaticPlate sourceplate: sourcePlates) {
-            int sampleInstances = sourceplate.getSampleInstancesV2().size();
-            numSampleInstances += sampleInstances;
-            mapBarcodeToPlate.put(sourceplate.getLabel(), sourceplate);
-            for (PlateWell plateWell: sourceplate.getContainerRole().getContainedVessels()) {
-                labVesselList.add(plateWell);
-                mapWellToPlateWell.put(plateWell.getLabel(), plateWell);
-            }
-        }
+        int numSamples = NUM_POSITIONS_IN_RACK - 2;
+        ProductOrder productOrder = ProductOrderTestFactory.buildSingleCellHashingProductOrder(numSamples);
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
 
-        StaticPlate sourcePlate = sourcePlates.get(0);
-
-        LabBatch workflowBatch = new LabBatch("Single Cell 10X Batch",
-                new HashSet<>(labVesselList),
+        LabBatch workflowBatch = new LabBatch("SC Hashing Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()),
                 LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setWorkflow(Workflow.SINGLE_CELL_10X);
-        bucketPlateBatchAndDrain(mapWellToPlateWell, productOrder, workflowBatch, "1");
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
 
-        SingleCell10XEntityBuilder entityBuilder = runSingleCell10XProcess(sourcePlate, numSamples, "SC");
-        StaticPlate finalPlate = entityBuilder.getDoubleSidedSpriPlate();
-        Set<SampleInstanceV2> sampleInstancesV2 = finalPlate.getSampleInstancesV2();
-        Assert.assertEquals(sampleInstancesV2.size(), numSamples, "Wrong number of sample instances");
+        TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube, workflowBatch);
+
+        Map<String, BarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
+        for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(barcodedTube.getLabel(), barcodedTube);
+        }
+
+        SingleCell10XEntityBuilder entityBuilder = runSingleCell10XProcess(
+                mapBarcodeToDaughterTube, daughterTubeFormation, "SC10xRckBc", "SC");
+        TubeFormation finalRack = entityBuilder.getDoubleSidedSpriTubeFormation();
+        Set<SampleInstanceV2> sampleInstancesV2 = finalRack.getSampleInstancesV2();
+        Assert.assertEquals(sampleInstancesV2.size(), NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
+    }
+
+    /**
+     * Build object graph for Single Cell Hashing messages
+     */
+    @Test(groups = {TestGroups.DATABASE_FREE})
+    public void testSingleCellhashing10X() {
+        expectedRouting = SystemRouter.System.MERCURY;
+        int numSamples = NUM_POSITIONS_IN_RACK - 2;
+        ProductOrder productOrder = ProductOrderTestFactory.buildSingleCellHashingProductOrder(numSamples);
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+
+        LabBatch workflowBatch = new LabBatch("SC Hashing Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflow(Workflow.SINGLE_CELL_HASHING_10X);
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
+
+        TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube, workflowBatch);
+
+        Map<String, BarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
+        for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(barcodedTube.getLabel(), barcodedTube);
+        }
+
+        SingleCellHashingEntityBuilder entityBuilder = runSingleCellHashingProcess(
+                mapBarcodeToDaughterTube, daughterTubeFormation,"SCHashRckBc","SCHash");
+        TubeFormation tubeFormation = entityBuilder.getCleanupRack();
+        Set<SampleInstanceV2> sampleInstancesV2 = tubeFormation.getSampleInstancesV2();
+        Assert.assertEquals(sampleInstancesV2.size(), NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
     }
 
 

@@ -27,26 +27,26 @@
                     </div>
                 </div>
 
-                <fieldset>
-                    <legend><h4>Price Items to "Blacklist"</h4></legend>
-                <div id="priceItems" class="control-group">
+                <%--<fieldset>--%>
+                    <%--<legend><h4>Price Items to "Blacklist"</h4></legend>--%>
+                <%--<div id="priceItems" class="control-group">--%>
 
-                    <c:forEach items="${actionBean.priceListOptions}" var="priceItem">
+                    <%--<c:forEach items="${actionBean.priceListOptions}" var="priceItem">--%>
 
-                        <div class="controls">
-                            <div class="form-value">
+                        <%--<div class="controls">--%>
+                            <%--<div class="form-value">--%>
 
-                                <stripes:checkbox name="selectedPriceItems" class="shiftCheckbox"
-                                                  title="${priceItem.name}"
-                                                  value="${priceItem.name}" id="${priceItem.name}-id"/>
-                                <stripes:label for="${priceItem}-id">
-                                    ${priceItem.name} -- ${priceItem.platformName}
-                                </stripes:label>
-                            </div>
-                        </div>
-                    </c:forEach>
-                </div>
-                </fieldset>
+                                <%--<stripes:checkbox name="selectedPriceItems" class="shiftCheckbox"--%>
+                                                  <%--title="${priceItem.name}"--%>
+                                                  <%--value="${priceItem.name}" id="${priceItem.name}-id"/>--%>
+                                <%--<stripes:label for="${priceItem}-id">--%>
+                                    <%--${priceItem.name} -- ${priceItem.platformName}--%>
+                                <%--</stripes:label>--%>
+                            <%--</div>--%>
+                        <%--</div>--%>
+                    <%--</c:forEach>--%>
+                <%--</div>--%>
+                <%--</fieldset>--%>
 
                 <div class="controls actionButtons">
                     <stripes:submit name="setAccess" value="Set Selected Access options" class="btn"/>

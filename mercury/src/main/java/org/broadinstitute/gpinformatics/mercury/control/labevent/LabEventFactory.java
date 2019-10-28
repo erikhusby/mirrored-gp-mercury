@@ -41,7 +41,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormation
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BSPRestSender;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.GapHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -186,15 +185,6 @@ public class LabEventFactory implements Serializable {
 
     @Inject
     private BSPRestSender bspRestSender;
-
-    @Inject
-    private GapHandler gapHandler;
-
-    @Inject
-    private ProductEjb productEjb;
-
-    @Inject
-    private AttributeArchetypeDao attributeArchetypeDao;
 
     @Inject
     private BSPSetVolumeConcentration bspSetVolumeConcentration;
@@ -449,23 +439,6 @@ public class LabEventFactory implements Serializable {
                     }
 
                     break;
-                case GAP:
-                    String forwardToGap = null;
-                    Set<LabVessel> labVessels = labEvent.getSourceLabVessels();
-                    if (labVessels.isEmpty()) {
-                        LabVessel inPlaceLabVessel = labEvent.getInPlaceLabVessel();
-                        if (inPlaceLabVessel != null) {
-                            labVessels.add(inPlaceLabVessel);
-                        }
-                    }
-                    for (LabVessel labVessel : labVessels) {
-                        forwardToGap = determineForwardToGap(labEvent, labVessel, productEjb,
-                                attributeArchetypeDao);
-                    }
-                    if (forwardToGap == null || forwardToGap.equalsIgnoreCase("Y")) {
-                        gapHandler.postToGap(bettaLIMSMessage);
-                    }
-                    break;
                 case NONE:
                     break;
                 default:
@@ -475,6 +448,7 @@ public class LabEventFactory implements Serializable {
         return labEvents;
     }
 
+    // todo jmt decide whether to delete from archiving
     @Nullable
     public static String determineForwardToGap(LabEvent labEvent, LabVessel labVessel,
             ProductEjb productEjb, AttributeArchetypeDao attributeArchetypeDao) {
@@ -1703,10 +1677,6 @@ public class LabEventFactory implements Serializable {
 
     public void setBarcodedTubeDao(BarcodedTubeDao barcodedTubeDao) {
         this.barcodedTubeDao = barcodedTubeDao;
-    }
-
-    public void setGapHandler(GapHandler gapHandler) {
-        this.gapHandler = gapHandler;
     }
 
     public void setBspRestSender(BSPRestSender bspRestSender) {

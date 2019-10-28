@@ -25,6 +25,9 @@ public class ArraysQcBlacklisting implements Serializable {
     private String chipWellBarcode;
 
     @Id
+    private Long analysisVersion;
+
+    @Id
     private String blacklistReason;
 
     @Temporal(TemporalType.TIMESTAMP)
@@ -44,6 +47,10 @@ public class ArraysQcBlacklisting implements Serializable {
 
     public String getChipWellBarcode() {
         return chipWellBarcode;
+    }
+
+    public Long getAnalysisVersion() {
+        return analysisVersion;
     }
 
     public String getBlacklistReason() {
@@ -80,6 +87,8 @@ public class ArraysQcBlacklisting implements Serializable {
         @Column(insertable = false, updatable = false)
         private String chipWellBarcode;
         @Column(insertable = false, updatable = false)
+        private Long analysisVersion;
+        @Column(insertable = false, updatable = false)
         private String blacklistReason;
 
         public String getChipWellBarcode() {
@@ -88,6 +97,14 @@ public class ArraysQcBlacklisting implements Serializable {
 
         public void setChipWellBarcode(String chipWellBarcode) {
             this.chipWellBarcode = chipWellBarcode;
+        }
+
+        public Long getAnalysisVersion() {
+            return analysisVersion;
+        }
+
+        public void setAnalysisVersion(Long analysisVersion) {
+            this.analysisVersion = analysisVersion;
         }
 
         public String getBlacklistReason() {
@@ -100,7 +117,7 @@ public class ArraysQcBlacklisting implements Serializable {
 
         @Override
         public int hashCode() {
-            return chipWellBarcode.hashCode() + (blacklistReason.hashCode() << 1);
+            return chipWellBarcode.hashCode() + (analysisVersion.hashCode() << 2) + (blacklistReason.hashCode() << 1);
         }
 
         @Override
@@ -108,6 +125,7 @@ public class ArraysQcBlacklisting implements Serializable {
             return (this == that)
                    || ((that instanceof ArrayBlacklistingPK)
                        && this.chipWellBarcode.equals(((ArrayBlacklistingPK) that).getChipWellBarcode())
+                       && this.analysisVersion.equals(((ArrayBlacklistingPK) that).getAnalysisVersion())
                        && this.blacklistReason.equals(((ArrayBlacklistingPK) that).getBlacklistReason()));
         }
     }

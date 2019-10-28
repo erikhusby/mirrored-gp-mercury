@@ -35,6 +35,9 @@
             <xs:element type="xs:string" name="sourceSection" minOccurs="0"/>
             <xs:element type="xs:string" name="targetVesselTypeGeometryString"/>
             <xs:element type="xs:string" name="targetSection"/>
+            <xs:element type="xs:string" name="targetSections" minOccurs="0"/>
+            <xs:element type="xs:string" name="targetBarcodedTubeTypeString"/>
+            <xs:element type="xs:string" name="sourceBarcodedTubeTypeString"/>
             <xs:element type="xs:string" name="targetWellTypeString"/>
             <xs:element type="xs:boolean" name="sourceMassRemoved"/>
             <xs:element type="xs:string" name="buttonValue" minOccurs="0"/>
@@ -49,6 +52,15 @@
         <xs:sequence>
             <xs:element type="xs:string" name="name"/>
             <xs:element type="xs:string" name="labEventTypes" maxOccurs="unbounded" minOccurs="0"/>
+            <xs:element name="eventClass" minOccurs="0">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="IN_PLACE"/>
+                        <xs:enumeration value="TRANSFER"/>
+                        <xs:enumeration value="SIDE_BRANCH_TRANSFER"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
             <xs:element name="optional" minOccurs="0">
                 <xs:simpleType>
                     <xs:restriction base="xs:string">
