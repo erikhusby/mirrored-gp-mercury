@@ -395,7 +395,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Validate(required = true, on = SET_RISK)
     private boolean riskStatus = true;
 
-    @Validate(required = true, on = SET_RISK)
+    @Validate(required = true, on = SET_RISK, maxlength = 255)
     private String riskComment;
 
     @Validate(required = true, on = SET_PROCEED_OOS)
