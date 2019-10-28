@@ -3689,7 +3689,7 @@ public enum LabEventType {
     /**
      * @return true if we expect the transfers to remove the destination volume from the source.
      */
-    public Boolean removeDestVolFromSource() { return removeDestVolFromSource; }
+    public Boolean removeDestVolFromSource() { return removeDestVolFromSource != null && removeDestVolFromSource; }
 
     /**
      * Check whether this event type expects to deplete all sources (if there are any transfers).
