@@ -416,13 +416,17 @@ public class LibraryBean {
             this.sampleType = sampleType;
             rootSample = StringUtils.trimToNull(sampleData.getRootSample());
             stockSample = StringUtils.trimToNull(sampleData.getStockSample());
-            sampleLSID = StringUtils.trimToNull(sampleData.getSampleLsid());
             sampleId = StringUtils.trimToNull(sampleData.getSampleId());
             gender = StringUtils.trimToNull(sampleData.getGender());
             // todo arz pop/ethnicity,
             collection = StringUtils.trimToNull(sampleData.getCollection());
             String trimCollabSampleName = StringUtils.trimToNull(sampleData.getCollaboratorsSampleName());
             collaboratorSampleId = trimCollabSampleName == null ? sampleId : trimCollabSampleName;
+            String localSampleLSID = StringUtils.trimToNull(sampleData.getSampleLsid());
+            if (localSampleLSID == null && trimCollabSampleName != null) {
+                localSampleLSID = "broadinstitute.org:mercury.prod.sample:" + sampleId;
+            }
+            sampleLSID = localSampleLSID;
             materialType = StringUtils.trimToNull(sampleData.getMaterialType());
             participantId = StringUtils.trimToNull(sampleData.getPatientId());
             population = StringUtils.trimToNull(sampleData.getEthnicity());
