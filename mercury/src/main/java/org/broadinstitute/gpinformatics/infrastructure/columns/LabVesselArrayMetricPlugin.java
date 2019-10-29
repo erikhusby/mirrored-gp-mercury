@@ -261,10 +261,12 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
                         value, value));
             } else {
                 for( ArraysQcBlacklisting blacklisting : chipWellBlacklist ){
-                    if( value == null ) {
-                        value = ColumnValueType.DATE.format(blacklisting.getBlacklistedOn(), "");
-                    } else {
-                        value = (value==null?"":value+" ") + ColumnValueType.DATE.format(blacklisting.getBlacklistedOn(), "");
+                    if (blacklisting.getAnalysisVersion().equals(arraysQc.getAnalysisVersion())) {
+                        if( value == null ) {
+                            value = ColumnValueType.DATE.format(blacklisting.getBlacklistedOn(), "");
+                        } else {
+                            value = (value==null?"":value+" ") + ColumnValueType.DATE.format(blacklisting.getBlacklistedOn(), "");
+                        }
                     }
                 }
                 row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.BLACKLISTED_ON.getResultHeader(),
@@ -272,10 +274,12 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
 
                 value = null;
                 for( ArraysQcBlacklisting blacklisting : chipWellBlacklist ){
-                    if( value == null ) {
-                        value = blacklisting.getBlacklistReason();
-                    } else {
-                        value = (value==null?"":value+" ") + blacklisting.getBlacklistReason();
+                    if (blacklisting.getAnalysisVersion().equals(arraysQc.getAnalysisVersion())) {
+                        if (value == null) {
+                            value = blacklisting.getBlacklistReason();
+                        } else {
+                            value = (value == null ? "" : value + " ") + blacklisting.getBlacklistReason();
+                        }
                     }
                 }
                 row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.BLACKLIST_REASON.getResultHeader(),
@@ -283,10 +287,12 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
 
                 value = null;
                 for( ArraysQcBlacklisting blacklisting : chipWellBlacklist ){
-                    if( value == null ) {
-                        value = ColumnValueType.DATE.format(blacklisting.getWhitelistedOn(), "");
-                    } else {
-                        value = (value==null?"":value+" ") + ColumnValueType.DATE.format(blacklisting.getWhitelistedOn(), "");
+                    if (blacklisting.getAnalysisVersion().equals(arraysQc.getAnalysisVersion())) {
+                        if (value == null) {
+                            value = ColumnValueType.DATE.format(blacklisting.getWhitelistedOn(), "");
+                        } else {
+                            value = (value == null ? "" : value + " ") + ColumnValueType.DATE.format(blacklisting.getWhitelistedOn(), "");
+                        }
                     }
                 }
                 row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.WHITELISTED_ON.getResultHeader(),

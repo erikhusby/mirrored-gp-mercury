@@ -88,7 +88,7 @@ public class LabVesselDao extends GenericDao {
     /**
      * This is used to create a map containing a list of LabVessel objects keyed off the associated sample key.
      *
-     * @param sampleKeys The list of sample keys to search for associated LabVessel objects.
+     * @param samples The list of product order sample to search for associated LabVessel objects.
      *
      * @return A map containing a list of LabVessel objects keyed off the associated sample key.
      */
@@ -187,7 +187,7 @@ public class LabVesselDao extends GenericDao {
         return mapBarcodeToTube;
     }
 
-    public List<LabVessel> findAllWithEventButMissingAnother(final LabEventType searchEventType,
+    public List<LabVessel> findAllWithEventButMissingAnother(final List<LabEventType> searchEventTypes,
                                                              final LabEventType missingEventType) {
         List<LabVessel> resultList = new ArrayList<>();
 
@@ -204,7 +204,7 @@ public class LabVesselDao extends GenericDao {
                 where(builder.equal(missingVesselJoin.get(LabEvent_.labEventType), missingEventType));
 
         // Put them together
-        existsQuery.select(existsRoot).where(builder.equal(labVessels.get(LabEvent_.labEventType), searchEventType),
+        existsQuery.select(existsRoot).where(labVessels.get(LabEvent_.labEventType).in(searchEventTypes),
                         builder.in(existsRoot.get(LabVessel_.labVesselId)).value(missingQuery).not());
 
         try {

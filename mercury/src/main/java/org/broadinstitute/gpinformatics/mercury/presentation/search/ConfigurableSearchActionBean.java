@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.preference.SearchInst
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
+import org.broadinstitute.gpinformatics.athena.presentation.links.SapQuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
@@ -227,6 +228,9 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
 
     @Inject
     private QuoteLink quoteLink;
+
+    @Inject
+    private SapQuoteLink sapQuoteLink;
 
     /**
      * Called from the search menu selection link.
@@ -531,6 +535,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         searchInstance.getEvalContext().setJiraConfig(jiraConfig);
         searchInstance.getEvalContext().setPriceListCache(priceListCache);
         searchInstance.getEvalContext().setQuoteLink(quoteLink);
+        searchInstance.getEvalContext().setSapQuoteLink(sapQuoteLink);
     }
 
     /**

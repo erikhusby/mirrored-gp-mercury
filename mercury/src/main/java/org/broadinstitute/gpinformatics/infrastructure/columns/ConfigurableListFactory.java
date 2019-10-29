@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPrefe
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
+import org.broadinstitute.gpinformatics.athena.presentation.links.SapQuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.ThreadEntityManager;
@@ -62,6 +63,9 @@ public class ConfigurableListFactory {
 
     @Inject
     private QuoteLink quoteLink;
+
+    @Inject
+    private SapQuoteLink sapQuoteLink;
 
     @Inject
     private ConstrainedValueDao constrainedValueDao;
@@ -490,6 +494,7 @@ public class ConfigurableListFactory {
         evalContext.setJiraConfig(jiraConfig);
         evalContext.setPriceListCache(priceListCache);
         evalContext.setQuoteLink(quoteLink);
+        evalContext.setSapQuoteLink(sapQuoteLink);
         evalContext.setOptionValueDao(constrainedValueDao);
         return evalContext;
     }

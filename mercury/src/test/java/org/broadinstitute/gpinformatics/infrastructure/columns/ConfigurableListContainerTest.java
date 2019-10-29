@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
+import org.broadinstitute.gpinformatics.athena.presentation.links.SapQuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -65,6 +66,9 @@ public class ConfigurableListContainerTest extends Arquillian {
 
     @Inject
     private QuoteLink quoteLink;
+
+    @Inject
+    private SapQuoteLink sapQuoteLink;
 
     @Inject
     private ConfigurableListFactory configurableListFactory;
@@ -320,6 +324,7 @@ public class ConfigurableListContainerTest extends Arquillian {
             put("SM-744ME", "PT-1PZXA");
             put("SM-744MT", "PT-1PZXP");
             put("SM-HM7QC", "CP-15203");
+            put("SM-IBD5H", "PT-2OMAX"); // Has ARRAY fingerprints too
         }};
         mercurySampleId.setValues(new ArrayList<>(mapSampleIdToPtId.keySet()));
 
@@ -333,13 +338,14 @@ public class ConfigurableListContainerTest extends Arquillian {
                 searchInstance,configurableSearchDef, null, 0, null, "ASC", entityName);
 
         ConfigurableList.ResultList resultList = firstPageResults.getResultList();
-        Assert.assertEquals(resultList.getResultRows().size(), 3);
+        Assert.assertEquals(resultList.getResultRows().size(), 4);
         for (ConfigurableList.ResultRow resultRow : resultList.getResultRows()) {
             Assert.assertEquals(resultRow.getRenderableCells().size(), 6);
             String sampleId = resultRow.getRenderableCells().get(0);
             String ptId = mapSampleIdToPtId.get(sampleId);
             Assert.assertEquals(resultRow.getRenderableCells().get(1), ptId);
             Assert.assertEquals(resultRow.getRenderableCells().get(2), "Y");
+            Assert.assertEquals(resultRow.getRenderableCells().get(4), "FLUIDIGM");
         }
     }
 
@@ -356,6 +362,7 @@ public class ConfigurableListContainerTest extends Arquillian {
         evalContext.setJiraConfig(jiraConfig);
         evalContext.setPriceListCache(priceListCache);
         evalContext.setQuoteLink(quoteLink);
+        evalContext.setSapQuoteLink(sapQuoteLink);
         return evalContext;
     }
 

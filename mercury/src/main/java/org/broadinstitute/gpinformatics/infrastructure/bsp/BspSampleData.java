@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 
 import javax.annotation.Nonnull;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -464,54 +463,25 @@ public class BspSampleData implements SampleData {
         this.ffpeStatus = FFPEStatus.fromBoolean(ffpeStatus);
     }
 
-    public List<String> getPlasticBarcodes() {
-        if (plasticBarcodes == null) {
-            BSPSampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
-            sampleDataFetcher.fetchSamplePlastic(Collections.singletonList(this));
-        }
-        return plasticBarcodes;
-    }
-
-    public void addPlastic(String barcode) {
-        if (plasticBarcodes == null) {
-            plasticBarcodes = new ArrayList<>();
-        }
-        plasticBarcodes.add(barcode);
+    public String getPlasticBarcode() {
+        return getValue(BSPSampleSearchColumn.MANUFACTURER_BARCODE);
     }
 
     /**
-     * Finds the most appropriate label/barcode for a Mercury LabVessel. BspSampleData has a notion of potentially having
-     * more than one "plastic barcode". Not all receptacles in BSP have a manufacturer barcode, in which case the
-     * barcode on the label (which resolves to the sample ID) is the best we can do. This utility looks through all of
-     * the candidate barcodes and chooses the "best" fit for a Mercury LabVessel, preferring something that does not
-     * look like a BSP sample ID.
+     * Requires a manufacturer barcode for Matrix tubes; for other tube types, uses the manufacturer barcode if
+     * available, otherwise falls back to the SM-ID
      *
      * @return the appropriate barcode for a Mercury LabVessel
      */
     public String getBarcodeForLabVessel() {
-        String manufacturerBarcode = null;
-        String bspLabelBarcode = null;
-
-        List<String> barcodes = getPlasticBarcodes();
-        if (barcodes != null) {
-            for (String barcode : barcodes) {
-
-                // plasticBarcodes shouldn't contain nulls, but the code for that seems to be in flux at the moment -BPR
-                if (barcode != null) {
-                    if (BSPUtil.isInBspFormat(barcode)) {
-                        bspLabelBarcode = barcode;
-                    } else {
-                        manufacturerBarcode = barcode;
-                    }
-                }
-            }
-        }
-
-        // Prefers the manufacturer's barcode i.e. not the SM-id.
-        if (manufacturerBarcode != null) {
-            return manufacturerBarcode;
+        String barcode = getPlasticBarcode();
+        if (StringUtils.containsIgnoreCase(getReceptacleType(), "matrix")) {
+            // Matrix tubes are expected to have a manufacturer barcode
+            return barcode;
         } else {
-            return bspLabelBarcode;
+            // For cryovials etc., the barcode is effectively the SM-ID; for FluidX, the manufacturer barcode is
+            // often registered in BSP, but not always.
+            return StringUtils.isEmpty(barcode) ? getSampleId() : barcode;
         }
     }
 

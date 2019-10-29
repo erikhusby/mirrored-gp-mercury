@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -21,6 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.jetbrains.annotations.NotNull;
 
@@ -360,7 +362,19 @@ public enum DisplayExpression {
             SampleData sampleData = (SampleData) entity;
             return sampleData.getGender();
         }
-    }, BSPSampleSearchColumn.GENDER);
+    }, BSPSampleSearchColumn.GENDER),
+    SALES_ORDER_NUMBER(SampleInstanceV2.class, new SearchTerm.Evaluator<String>() {
+        @Override
+        public String evaluate(Object entity, SearchContext context) {
+            LabVessel labVessel = ((SampleInstanceV2)entity).getInitialLabVessel();
+            StaticPlate staticPlate = (labVessel == null ||
+                    CollectionUtils.isEmpty(labVessel.getContainers()) ||
+                    !OrmUtil.proxySafeIsInstance(labVessel.getContainers().iterator().next(), StaticPlate.class)) ?
+                    null : OrmUtil.proxySafeCast(labVessel.getContainers().iterator().next(), StaticPlate.class);
+            return (staticPlate == null) ? null : staticPlate.getSalesOrderNumber();
+        }
+    })
+    ;
 
     private final String columnName;
     private final Class<?> expressionClass;
@@ -507,7 +521,7 @@ public enum DisplayExpression {
     private static List<MercurySample> sampleInstancesToMercurySamples(Set<SampleInstanceV2> sampleInstances) {
         List<MercurySample> mercurySamples = new ArrayList<>();
         for (SampleInstanceV2 sampleInstance : sampleInstances) {
-            MercurySample mercurySample = sampleInstance.getRootOrEarliestMercurySample();
+            MercurySample mercurySample = sampleInstance.getNearestMercurySample();
             if (mercurySample != null) {
                 mercurySamples.add(mercurySample);
             }

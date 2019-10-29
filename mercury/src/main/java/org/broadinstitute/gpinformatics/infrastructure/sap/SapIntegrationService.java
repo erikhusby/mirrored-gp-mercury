@@ -1,16 +1,20 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
-import org.broadinstitute.sap.entity.SAPMaterial;
+import org.broadinstitute.sap.entity.material.SAPMaterial;
+import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
-import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -44,17 +48,6 @@ public interface SapIntegrationService {
     void updateOrder(ProductOrder placedOrder, boolean closingOrder) throws SAPIntegrationException;
 
     /**
-     * For Phase 1 of the SAP/GP integration, Orders placed in SAP need to have reference to the customer number found
-     * in SAP of the contact person on a purchase order.  This method will give Mercury the ability to search for that
-     * number
-     * @param companyCode The code associated with the SAP company structure in which this customer should be found
-     * @param fundingLevel
-     * @return If this quote is eligible and backed by a purchase order, the customer number found in SAP is returned
-     * @throws SAPIntegrationException
-     */
-    String findCustomer(SapIntegrationClientImpl.SAPCompanyConfiguration companyCode, FundingLevel fundingLevel) throws SAPIntegrationException;
-
-    /**
      * This method will allow mercury to record completed work in SAP in order to complete the Billing process
      * @param item A structure previously utilized by logging information to the quote server which aggregates work
      *             by Quote, Product order, PDO and finally amount done.
@@ -73,12 +66,113 @@ public interface SapIntegrationService {
      * 
      * For an existing product, this method will also allow Mercury to update that product with any changes made within
      * Mercury
-     * @param product The Product information to be reflected in SAP
+     * @param product                           The Product information to be reflected in SAP
      * @throws SAPIntegrationException
      */
     void publishProductInSAP(Product product) throws SAPIntegrationException;
-    
+
+    void publishProductInSAP(Product product, boolean extendProductsToOtherPlatforms,
+                             PublishType publishType) throws SAPIntegrationException;
+
     Set<SAPMaterial> findProductsInSap() throws SAPIntegrationException;
 
-    OrderCalculatedValues calculateOpenOrderValues(int addedSampleCount, String quoteId, ProductOrder productOrder) throws SAPIntegrationException;
+    OrderCalculatedValues calculateOpenOrderValues(int addedSampleCount, SapQuote sapQuote, ProductOrder productOrder) throws SAPIntegrationException;
+
+    /**
+     * Placeholder method for now.  Future inplementation will return a quote object geared toward the information
+     * returned from SAP.
+     * @param sapQuoteId  Singular quote identifier for the desired SAP quote information
+     * @return
+     * @throws SAPIntegrationException
+     */
+    SapQuote findSapQuote(String sapQuoteId) throws SAPIntegrationException;
+
+    /**
+     * This method assists in the need to occasionally "Unbill" samples on an order.  It will create and send the
+     * conceptual return order to SAP to credit the work that was previously billed on the given delivery document.
+     * @param deliveryDocumentId    Identifier of the delivery document created when the work intended to be reversed
+     *                              was originally billed
+     * @param quoteItemForBilling   contains all the information for the work that will be reverted
+     * @return identifier that is associated with the SAP return order created to process this credit request
+     */
+    String creditDelivery(String deliveryDocumentId, QuoteImportItem quoteItemForBilling)
+            throws SAPIntegrationException;
+    class Option {
+        public static final Option NONE = Option.create();
+
+        private Set<Type> options = new HashSet<>();
+
+        private Option(Type... options) {
+            this.options = new HashSet<>(Arrays.asList(options));
+        }
+
+        public static Option create(Type... orderOptions) {
+            return new Option(orderOptions);
+
+        }
+
+        public static Type isClosing(boolean booleanFlag) {
+            if (booleanFlag) {
+                return Type.CLOSING;
+            }
+            return null;
+        }
+
+        public static Type isCreating(boolean booleanFlag) {
+            if (booleanFlag) {
+                return Type.CREATING;
+            }
+            return null;
+        }
+
+        public static Type isForValueQuery(boolean booleanFlag) {
+            if (booleanFlag) {
+                return Type.ORDER_VALUE_QUERY;
+            }
+            return null;
+        }
+
+        public boolean hasOption(Type sapOrderOption) {
+            return options.stream().anyMatch(option -> option == sapOrderOption);
+        }
+
+        public enum Type {
+            CREATING,
+            CLOSING,
+            ORDER_VALUE_QUERY
+        }
+
+        @Override
+        @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+
+            if (o == null || (!OrmUtil.proxySafeIsInstance(o, Option.class))) {
+                return false;
+            }
+
+            if (!(o instanceof Option)) {
+                return false;
+            }
+
+            Option option = OrmUtil.proxySafeCast(o, Option.class);
+
+            return new EqualsBuilder()
+                .append(options, option.options)
+                .isEquals();
+        }
+
+        @Override
+        public int hashCode() {
+            return new HashCodeBuilder(17, 37)
+                .append(options)
+                .toHashCode();
+        }
+    }
+
+    public enum PublishType {
+        CREATE_ONLY, UPDATE_ONLY, CREATE_AND_UPDATE
+    }
 }

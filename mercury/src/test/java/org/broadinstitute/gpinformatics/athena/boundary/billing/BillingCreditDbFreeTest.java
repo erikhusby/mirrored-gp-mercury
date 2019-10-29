@@ -18,13 +18,14 @@ import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductE
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
-import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
+import org.broadinstitute.gpinformatics.athena.entity.billing.ProductLedgerIndex;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
@@ -41,16 +42,20 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapConfig;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
-import org.broadinstitute.sap.entity.SAPMaterial;
+import org.broadinstitute.sap.entity.SAPDeliveryDocument;
+import org.broadinstitute.sap.entity.SAPReturnOrder;
+import org.broadinstitute.sap.entity.material.SAPMaterial;
+import org.broadinstitute.sap.entity.quote.SapQuote;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.mockito.Mockito;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
@@ -72,9 +77,13 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class BillingCreditDbFreeTest {
+
+    private SapIntegrationClientImpl mockSapClient;
+
     public BillingCreditDbFreeTest() {
     }
 
@@ -82,12 +91,12 @@ public class BillingCreditDbFreeTest {
     private QuotePriceItem quotePriceItem;
     private BillingAdaptor billingAdaptor;
     private ProductOrder pdo;
-    private SapIntegrationService sapService = new SapIntegrationServiceStub();
 
     private EmailSender mockEmailSender = Mockito.mock(EmailSender.class);
     private BillingSessionDao billingSessionDao = Mockito.mock(BillingSessionDao.class);
     private PriceListCache priceListCache = Mockito.mock(PriceListCache.class);
     private QuoteService quoteService = Mockito.mock(QuoteService.class);
+    private SapIntegrationServiceImpl sapService;
     private BillingSessionAccessEjb billingSessionAccessEjb = Mockito.mock(BillingSessionAccessEjb.class);
     private ProductOrderEjb productOrderEjb = Mockito.mock(ProductOrderEjb.class);
     private SAPProductPriceCache productPriceCache = Mockito.mock(SAPProductPriceCache.class);
@@ -98,16 +107,29 @@ public class BillingCreditDbFreeTest {
     private final Double qtyNegativeTwo = (double) Math.negateExact(qtyPositiveTwo.longValue());
 
     @BeforeMethod
-    public void setUp() throws QuoteNotFoundException, QuoteServerException, InvalidProductException, SAPInterfaceException {
+    public void setUp()
+
+        throws QuoteNotFoundException, QuoteServerException, InvalidProductException, SAPInterfaceException,
+        SAPIntegrationException {
         resetMocks();
+
+        final BSPUserList bspUserList = Mockito.mock(BSPUserList.class);
+        final SAPProductPriceCache mockProductPriceCache = Mockito.mock(SAPProductPriceCache.class);
+
         pdo = ProductOrderTestFactory.createDummyProductOrder(2, "PDO-1234");
         pdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         pdo.setProductOrderAddOns(Collections.emptyList());
+
         String quoteId = pdo.getQuoteId();
         String sapOrderNumber = "sap1234";
 
         SapOrderDetail sapOrderDetail = new SapOrderDetail(sapOrderNumber, 1, quoteId,
-            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", "");
+            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode());
+        sapService =
+                new SapIntegrationServiceImpl(SapConfig.produce(Deployment.DEV), quoteService, bspUserList,
+                        priceListCache, productPriceCache,accessControlEjb);
+        mockSapClient = Mockito.mock(SapIntegrationClientImpl.class);
+        sapService.setWrappedClient(mockSapClient);
         pdo.setSapReferenceOrders(Collections.singletonList(sapOrderDetail));
 
         priceItem = pdo.getProduct().getPrimaryPriceItem();
@@ -140,102 +162,254 @@ public class BillingCreditDbFreeTest {
         Mockito.when(quoteService.registerNewWork(Mockito.any(Quote.class), Mockito.any(QuotePriceItem.class),
             Mockito.any(QuotePriceItem.class), Mockito.any(Date.class), Mockito.anyDouble(), Mockito.anyString(),
             Mockito.anyString(), Mockito.anyString(), Mockito.any(BigDecimal.class))).thenReturn("workId-" + quoteId);
-        Mockito.when(productOrderEjb.areProductsBlocked(Mockito.anySetOf(AccessItem.class))).thenReturn(false);
-        Mockito.when(productOrderEjb.isOrderEligibleForSAP(Mockito.any(ProductOrder.class)))
-            .thenReturn(true);
-        Mockito.when(productOrderEjb.isOrderFunded(Mockito.any(ProductOrder.class), Mockito.any(Date.class)))
-            .thenReturn(true);
-
-        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.any(
-            SapIntegrationClientImpl.SAPCompanyConfiguration.class)))
-            .thenReturn(new SAPMaterial("material", "100", Collections.emptyMap(), Collections.emptyMap()));
+        SapIntegrationClientImpl.SAPCompanyConfiguration broad = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.anyString()))
+            .thenReturn(new SAPMaterial("test", broad, broad.getDefaultWbs(), "test description", "100",
+                SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, new Date(),
+                new Date(), Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
+                broad.getSalesOrganization()));
         TemplateEngine templateEngine = new TemplateEngine();
 
         templateEngine.postConstruct();
         billingEjb =
             new BillingEjb(priceListCache, billingSessionDao, null, null, null, AppConfig.produce(Deployment.DEV),
-                SapConfig.produce(Deployment.DEV), mockEmailSender, templateEngine, Mockito.mock(BSPUserList.class),
-                    Mockito.mock(SAPProductPriceCache.class));
+                SapConfig.produce(Deployment.DEV), mockEmailSender, templateEngine, bspUserList,
+                    mockProductPriceCache);
         billingAdaptor = new BillingAdaptor(billingEjb, priceListCache, quoteService, billingSessionAccessEjb,
             sapService, productPriceCache, accessControlEjb);
         billingAdaptor.setProductOrderEjb(productOrderEjb);
     }
 
-    public void testCreateBillingCreditRequest() {
+    @DataProvider
+    public Object [][] sapOrQuoteProvider() {
+        return new Object[][] {
+                new Object[]{ProductOrder.QuoteSourceType.SAP_SOURCE},
+                new Object[]{ProductOrder.QuoteSourceType.QUOTE_SERVER}
+        };
+    }
+
+    @Test(dataProvider = "sapOrQuoteProvider")
+    public void testCreateBillingCreditRequest(ProductOrder.QuoteSourceType quoteSourceType)
+            throws Exception {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
 
-        HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
-        billingMap.put(pdoSample, Pair.of(priceItem, qtyPositiveTwo));
+        if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
+            pdo.setQuoteId("00029338");
+            SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), 10000d, 100000d,
+                    pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
+            Mockito.when(mockSapClient.createDeliveryDocument(Mockito.any(SAPDeliveryDocument.class))).thenReturn("0211403");
+            Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapQuote);
+
+            Mockito.when(priceListCache.getQuotePriceItems())
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+            Mockito.when(priceListCache.findByKeyFields(priceItem))
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+            Mockito.when(quoteService.getPriceItemsForDate(Mockito.anyListOf(QuoteImportItem.class)))
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+            Mockito.when(quoteService.getQuoteByAlphaId(Mockito.anyString()))
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+            Mockito.when(quoteService.getQuoteWithPriceItems(Mockito.anyString()))
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+            Mockito.when(quoteService.registerNewWork(Mockito.any(Quote.class), Mockito.any(QuotePriceItem.class),
+                    Mockito.any(QuotePriceItem.class), Mockito.any(Date.class), Mockito.anyDouble(), Mockito.anyString(),
+                    Mockito.anyString(), Mockito.anyString(), Mockito.any(BigDecimal.class)))
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+
+        } else {
+            Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.anyString()))
+                    .thenThrow(new RuntimeException("SAP Should not be called in this case"));
+            Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString()))
+                    .thenThrow(new RuntimeException("SAP Should not be called in this case"));
+            Mockito.when(mockSapClient.createDeliveryDocument(Mockito.any(SAPDeliveryDocument.class)))
+                    .thenThrow(new RuntimeException("SAP Should not be called in this case"));
+        }
+
+        HashMap<ProductOrderSample, Pair<ProductLedgerIndex, Double>> billingMap = new HashMap<>();
+        billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem, pdo.hasSapQuote()), qtyPositiveTwo));
 
         List<BillingEjb.BillingResult> billingResults = bill(billingMap);
         validateBillingResults(pdoSample, billingResults, qtyPositiveTwo);
 
         billingMap.clear();
-        billingMap.put(pdoSample, Pair.of(priceItem, qtyNegativeTwo));
+        billingMap.put(pdoSample,
+                Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem, pdo.hasSapQuote()), qtyNegativeTwo));
         billingResults = bill(billingMap);
         validateBillingResults(pdoSample, billingResults, 0);
 
-        Mockito.verify(mockEmailSender, Mockito.times(1))
+        Mockito.verify(mockEmailSender, Mockito.times((quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE)?1:0))
             .sendHtmlEmail(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString(),
                 Mockito.anyBoolean(), Mockito.anyBoolean());
-
     }
 
-    public void testCreateBillingCreditRequestNoFunding() throws QuoteNotFoundException, QuoteServerException {
+    @Test(dataProvider = "sapOrQuoteProvider")
+    public void testCreateBillingCreditRequestNoFunding(ProductOrder.QuoteSourceType quoteSourceType)
+            throws Exception {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
+        if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
+            pdo.setQuoteId("99339288");
+        }
 
-        HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
-        billingMap.put(pdoSample, Pair.of(priceItem, qtyPositiveTwo));
+        if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
+            SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), 10000d, 100000d,
+                    pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
+            Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapQuote);
+            Mockito.when(mockSapClient.createDeliveryDocument(Mockito.any(SAPDeliveryDocument.class))).thenReturn("0211403");
+            Mockito.when(priceListCache.getQuotePriceItems())
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+            Mockito.when(priceListCache.findByKeyFields(priceItem))
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+            Mockito.when(quoteService.getPriceItemsForDate(Mockito.anyListOf(QuoteImportItem.class)))
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+            Mockito.when(quoteService.getQuoteByAlphaId(Mockito.anyString()))
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+            Mockito.when(quoteService.getQuoteWithPriceItems(Mockito.anyString()))
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+            Mockito.when(quoteService.registerNewWork(Mockito.any(Quote.class), Mockito.any(QuotePriceItem.class),
+                    Mockito.any(QuotePriceItem.class), Mockito.any(Date.class), Mockito.anyDouble(), Mockito.anyString(),
+                    Mockito.anyString(), Mockito.anyString(), Mockito.any(BigDecimal.class)))
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+
+        } else {
+            Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.anyString()))
+                    .thenThrow(new RuntimeException("SAP Should not be called in this case"));
+            Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString()))
+                    .thenThrow(new RuntimeException("SAP Should not be called in this case"));
+            Mockito.when(mockSapClient.createDeliveryDocument(Mockito.any(SAPDeliveryDocument.class)))
+                    .thenThrow(new RuntimeException("SAP Should not be called in this case"));
+            Mockito.when(mockSapClient.createReturnOrder(Mockito.any(SAPReturnOrder.class)))
+                    .thenThrow(new RuntimeException("SAP Should not be called in this case"));
+        }
+
+        HashMap<ProductOrderSample, Pair<ProductLedgerIndex, Double>> billingMap = new HashMap<>();
+        billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem,pdo.hasSapQuote()), qtyPositiveTwo));
 
         List<BillingEjb.BillingResult> billingResults = bill(billingMap);
         validateBillingResults(pdoSample, billingResults, qtyPositiveTwo);
 
-        Quote quote = pdo.getQuote(quoteService);
-        java.sql.Date expirationDate = java.sql.Date.valueOf(LocalDate.now().minus(1, ChronoUnit.MONTHS));
-        quote.getFunding().forEach(funding -> {
-            funding.setFundingType(Funding.FUNDS_RESERVATION);
-            funding.setGrantEndDate(expirationDate);
-        });
+        Quote quote = null;
+        if (quoteSourceType == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
+            quote = pdo.getQuote(quoteService);
+            java.sql.Date expirationDate = java.sql.Date.valueOf(LocalDate.now().minus(1, ChronoUnit.MONTHS));
+            quote.getFunding().forEach(funding -> {
+                funding.setFundingType(Funding.FUNDS_RESERVATION);
+                funding.setGrantEndDate(expirationDate);
+            });
+            assertThat(quote.isFunded(), is(false));
+        }
 
-        assertThat(quote.isFunded(), is(false));
 
         billingMap.clear();
-        billingMap.put(pdoSample, Pair.of(priceItem, qtyNegativeTwo));
+        billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem,pdo.hasSapQuote()), qtyNegativeTwo));
         billingResults = bill(billingMap);
         validateBillingResults(pdoSample, billingResults, 0);
 
-        Mockito.verify(mockEmailSender, Mockito.times(1))
+        Mockito.verify(mockEmailSender, Mockito.times(pdo.hasSapQuote()?1:0))
             .sendHtmlEmail(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString(),
                 Mockito.anyBoolean(), Mockito.anyBoolean());
 
     }
 
-    public void testNegativeBilling() {
+    @Test(dataProvider = "sapOrQuoteProvider")
+    public void testNegativeBilling(ProductOrder.QuoteSourceType quoteSourceType) throws Exception {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
+        if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
+            pdo.setQuoteId("99339288");
+        }
 
-        HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
-        billingMap.put(pdoSample, Pair.of(priceItem, qtyNegativeTwo));
+        SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), 10000d, 100000d,
+                pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
+
+        if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
+            Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapQuote);
+
+            Mockito.when(priceListCache.getQuotePriceItems())
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+            Mockito.when(priceListCache.findByKeyFields(priceItem))
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+            Mockito.when(quoteService.getPriceItemsForDate(Mockito.anyListOf(QuoteImportItem.class)))
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+            Mockito.when(quoteService.getQuoteByAlphaId(Mockito.anyString()))
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+            Mockito.when(quoteService.getQuoteWithPriceItems(Mockito.anyString()))
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+            Mockito.when(quoteService.registerNewWork(Mockito.any(Quote.class), Mockito.any(QuotePriceItem.class),
+                    Mockito.any(QuotePriceItem.class), Mockito.any(Date.class), Mockito.anyDouble(), Mockito.anyString(),
+                    Mockito.anyString(), Mockito.anyString(), Mockito.any(BigDecimal.class)))
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+
+        } else {
+            Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.anyString()))
+                    .thenThrow(new RuntimeException("SAP Should not be called in this case"));
+            Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString()))
+                    .thenThrow(new RuntimeException("SAP Should not be called in this case"));
+            Mockito.when(mockSapClient.createReturnOrder(Mockito.any(SAPReturnOrder.class)))
+                    .thenThrow(new RuntimeException("SAP Should not be called in this case"));
+
+        }
+
+        HashMap<ProductOrderSample, Pair<ProductLedgerIndex, Double>> billingMap = new HashMap<>();
+        billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem,pdo.hasSapQuote()), qtyNegativeTwo));
         List<BillingEjb.BillingResult> billingResults = bill(billingMap);
 
-        billingResults.forEach(
-            billingResult -> assertThat(billingResult.getErrorMessage(), endsWith(BillingAdaptor.NEGATIVE_BILL_ERROR)));
+        if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
+            billingResults.forEach(
+                billingResult -> assertThat(billingResult.getErrorMessage(), endsWith(BillingAdaptor.NEGATIVE_BILL_ERROR)));
+        }
 
         Mockito.verify(mockEmailSender, Mockito.never())
             .sendHtmlEmail(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString(),
                 Mockito.anyBoolean(), Mockito.anyBoolean());
-
     }
 
-    public void testPositiveBilling() {
+    @Test(dataProvider = "sapOrQuoteProvider")
+    public void testPositiveBilling(ProductOrder.QuoteSourceType quoteSourceType) throws Exception {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
+        if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
+            pdo.setQuoteId("99339288");
+        }
 
-        HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
-        billingMap.put(pdoSample, Pair.of(priceItem, qtyPositiveTwo));
+        if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
+            SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), 10000d, 100000d,
+                    pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
+
+            Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapQuote);
+            Mockito.when(mockSapClient.createDeliveryDocument(Mockito.any(SAPDeliveryDocument.class))).thenReturn("0211403");
+
+            Mockito.when(priceListCache.getQuotePriceItems())
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+            Mockito.when(priceListCache.findByKeyFields(priceItem))
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+            Mockito.when(quoteService.getPriceItemsForDate(Mockito.anyListOf(QuoteImportItem.class)))
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+            Mockito.when(quoteService.getQuoteByAlphaId(Mockito.anyString()))
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+            Mockito.when(quoteService.getQuoteWithPriceItems(Mockito.anyString()))
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+            Mockito.when(quoteService.registerNewWork(Mockito.any(Quote.class), Mockito.any(QuotePriceItem.class),
+                    Mockito.any(QuotePriceItem.class), Mockito.any(Date.class), Mockito.anyDouble(), Mockito.anyString(),
+                    Mockito.anyString(), Mockito.anyString(), Mockito.any(BigDecimal.class)))
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+
+        } else {
+            Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.anyString()))
+                    .thenThrow(new RuntimeException("SAP Should not be called in this case"));
+            Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString()))
+                    .thenThrow(new RuntimeException("SAP Should not be called in this case"));
+            Mockito.when(mockSapClient.createDeliveryDocument(Mockito.any(SAPDeliveryDocument.class)))
+                    .thenThrow(new RuntimeException("SAP Should not be called in this case"));
+            Mockito.when(mockSapClient.createReturnOrder(Mockito.any(SAPReturnOrder.class)))
+                    .thenThrow(new RuntimeException("SAP should not be called in this case"));
+
+
+        }
+
+        HashMap<ProductOrderSample, Pair<ProductLedgerIndex, Double>> billingMap = new HashMap<>();
+        billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem, pdo.hasSapQuote()), qtyPositiveTwo));
         List<BillingEjb.BillingResult> billingResults = bill(billingMap);
         billingResults.forEach(
             billingResult -> {
                 assertThat(billingResult.getErrorMessage(), blankOrNullString());
-                assertThat(billingResult.getSAPBillingId(), not(blankOrNullString()));
+                assertThat(billingResult.getSapBillingId(), pdo.hasSapQuote()?not(blankOrNullString()):is(blankOrNullString()));
             });
 
         Mockito.verify(mockEmailSender, Mockito.never())
@@ -243,20 +417,62 @@ public class BillingCreditDbFreeTest {
                 Mockito.anyBoolean(), Mockito.anyBoolean());
     }
 
-    public void testMoreNegativeThanPositiveBillingPositiveFirst() {
+    @Test(dataProvider = "sapOrQuoteProvider")
+    public void testMoreNegativeThanPositiveBillingPositiveFirst(ProductOrder.QuoteSourceType quoteSourceType)
+            throws Exception {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
-        HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
-        billingMap.put(pdoSample, Pair.of(priceItem, 1d));
+        if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
+            pdo.setQuoteId("99339288");
+        }
+
+        if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
+            SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), 10000d, 100000d,
+                    pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
+
+            Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapQuote);
+            Mockito.when(mockSapClient.createDeliveryDocument(Mockito.any(SAPDeliveryDocument.class))).thenReturn("0211403");
+
+            Mockito.when(priceListCache.getQuotePriceItems())
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+            Mockito.when(priceListCache.findByKeyFields(priceItem))
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+            Mockito.when(quoteService.getPriceItemsForDate(Mockito.anyListOf(QuoteImportItem.class)))
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+            Mockito.when(quoteService.getQuoteByAlphaId(Mockito.anyString()))
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+            Mockito.when(quoteService.getQuoteWithPriceItems(Mockito.anyString()))
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+            Mockito.when(quoteService.registerNewWork(Mockito.any(Quote.class), Mockito.any(QuotePriceItem.class),
+                    Mockito.any(QuotePriceItem.class), Mockito.any(Date.class), Mockito.anyDouble(), Mockito.anyString(),
+                    Mockito.anyString(), Mockito.anyString(), Mockito.any(BigDecimal.class)))
+                    .thenThrow(new RuntimeException("Quote server should not be called in this case"));
+
+        } else {
+            Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.anyString()))
+                    .thenThrow(new RuntimeException("SAP Should not be called in this case"));
+            Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString()))
+                    .thenThrow(new RuntimeException("SAP Should not be called in this case"));
+            Mockito.when(mockSapClient.createDeliveryDocument(Mockito.any(SAPDeliveryDocument.class)))
+                    .thenThrow(new RuntimeException("SAP Should not be called in this case"));
+            Mockito.when(mockSapClient.createReturnOrder(Mockito.any(SAPReturnOrder.class)))
+                    .thenThrow(new RuntimeException("SAP Should not be called in this case"));
+
+        }
+
+        HashMap<ProductOrderSample, Pair<ProductLedgerIndex, Double>> billingMap = new HashMap<>();
+        billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem,pdo.hasSapQuote()), 1d));
 
         List<BillingEjb.BillingResult> billingResults = bill(billingMap);
         validateBillingResults(pdoSample, billingResults, 1);
 
         billingMap.clear();
-        billingMap.put(pdoSample, Pair.of(priceItem, qtyNegativeTwo));
+        billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem,pdo.hasSapQuote()), qtyNegativeTwo));
         billingResults = bill(billingMap);
 
-        billingResults.forEach(
-            billingResult -> assertThat(billingResult.getErrorMessage(), endsWith(BillingAdaptor.NEGATIVE_BILL_ERROR)));
+        if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
+            billingResults.forEach(
+                billingResult -> assertThat(billingResult.getErrorMessage(), endsWith(BillingAdaptor.NEGATIVE_BILL_ERROR)));
+        }
 
         Mockito.verify(mockEmailSender, Mockito.never())
             .sendHtmlEmail(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString(),
@@ -268,7 +484,8 @@ public class BillingCreditDbFreeTest {
         results.stream().filter(result -> !result.isError())
             .forEach(billingResult -> {
                 assertThat(billingResult.isError(), is(false));
-                assertThat(billingResult.getSAPBillingId(), notNullValue());
+                assertThat(billingResult.getSapBillingId(),
+                        sample.getProductOrder().hasSapQuote()?notNullValue():nullValue());
             });
         Double totalBilled =
             sample.getLedgerItems().stream().filter(LedgerEntry::isSuccessfullyBilled)
@@ -276,10 +493,15 @@ public class BillingCreditDbFreeTest {
         assertThat(totalBilled, equalTo(quantity));
     }
 
-    private List<BillingEjb.BillingResult> bill(Map<ProductOrderSample, Pair<PriceItem, Double>> samplePairMap) {
+    private List<BillingEjb.BillingResult> bill(Map<ProductOrderSample, Pair<ProductLedgerIndex, Double>> samplePairMap) {
         final Date date = new Date();
         samplePairMap.forEach((productOrderSample, pricItemQtyPair) ->  {
-            productOrderSample.addLedgerItem(date, pricItemQtyPair.getKey(), pricItemQtyPair.getValue());
+            if(productOrderSample.getProductOrder().hasSapQuote()) {
+                productOrderSample.addLedgerItem(date, productOrderSample.getProductOrder().getProduct(),
+                        pricItemQtyPair.getValue(), false);
+            } else {
+                productOrderSample.addLedgerItem(date, pricItemQtyPair.getKey().getPriceItem(), pricItemQtyPair.getValue());
+            }
         });
         Set<LedgerEntry> ledgerItems = new HashSet<>();
         samplePairMap.keySet().stream().map(ProductOrderSample::getLedgerItems).forEach(ledgerItems::addAll);

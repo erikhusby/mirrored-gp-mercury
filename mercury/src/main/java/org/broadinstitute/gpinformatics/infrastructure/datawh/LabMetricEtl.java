@@ -72,12 +72,6 @@ public class LabMetricEtl extends GenericEntityEtl<LabMetric, LabMetric> {
                 return records;
             }
 
-            // Tube test
-            if (entity.getLabVessel().getType() != LabVessel.ContainerType.TUBE ) {
-                loggerMessages.get(vesselNotTubeKey).add(entity.getLabMetricId());
-                return records;
-            }
-
             LabVessel labVessel = entity.getLabVessel();
             LabMetricRun run = entity.getLabMetricRun();
 
