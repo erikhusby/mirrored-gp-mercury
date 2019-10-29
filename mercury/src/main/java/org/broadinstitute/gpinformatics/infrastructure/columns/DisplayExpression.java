@@ -281,6 +281,17 @@ public enum DisplayExpression {
             return null;
         }
     }),
+    SALES_ORDER_NUMBER("Sales Order Number", SampleInstanceV2.class, new SearchTerm.Evaluator<String>() {
+        @Override
+        public String evaluate(Object entity, SearchContext context) {
+            LabVessel labVessel = ((SampleInstanceV2)entity).getInitialLabVessel();
+            StaticPlate staticPlate = (labVessel == null ||
+                    CollectionUtils.isEmpty(labVessel.getContainers()) ||
+                    !OrmUtil.proxySafeIsInstance(labVessel.getContainers().iterator().next(), StaticPlate.class)) ?
+                    null : OrmUtil.proxySafeCast(labVessel.getContainers().iterator().next(), StaticPlate.class);
+            return (staticPlate == null) ? null : staticPlate.getSalesOrderNumber();
+        }
+    }),
 
     // SampleData
     STOCK_SAMPLE("Stock Sample ID", SampleData.class, new SearchTerm.Evaluator<String>() {
@@ -363,17 +374,6 @@ public enum DisplayExpression {
             return sampleData.getGender();
         }
     }, BSPSampleSearchColumn.GENDER),
-    SALES_ORDER_NUMBER(SampleInstanceV2.class, new SearchTerm.Evaluator<String>() {
-        @Override
-        public String evaluate(Object entity, SearchContext context) {
-            LabVessel labVessel = ((SampleInstanceV2)entity).getInitialLabVessel();
-            StaticPlate staticPlate = (labVessel == null ||
-                    CollectionUtils.isEmpty(labVessel.getContainers()) ||
-                    !OrmUtil.proxySafeIsInstance(labVessel.getContainers().iterator().next(), StaticPlate.class)) ?
-                    null : OrmUtil.proxySafeCast(labVessel.getContainers().iterator().next(), StaticPlate.class);
-            return (staticPlate == null) ? null : staticPlate.getSalesOrderNumber();
-        }
-    })
     ;
 
     private final String columnName;

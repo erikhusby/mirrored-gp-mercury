@@ -461,6 +461,11 @@ public class LabVesselSearchDefinition {
         configureDrillDown(searchTerm, ColumnEntity.LAB_VESSEL, "barcode");
         searchTerms.add(searchTerm);
 
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Sales Order Number");
+        searchTerm.setDisplayExpression(DisplayExpression.SALES_ORDER_NUMBER);
+        searchTerms.add(searchTerm);
+
         return searchTerms;
     }
 
@@ -520,14 +525,6 @@ public class LabVesselSearchDefinition {
         );
         searchTerm.setHelpText("Creates a column with a link to an existing search which functions as a drill-down.  " +
                 "<br/>Note: Selected search MUST have a single term which expects a " + field + " value.");
-        searchTerms.add(searchTerm);
-
-        searchTerm = new SearchTerm();
-        searchTerm.setName("Sales Order Number");
-        searchTerm.setDisplayExpression(DisplayExpression.SALES_ORDER_NUMBER);
-        searchTerms.add(searchTerm);
-
-        return searchTerms;
     }
 
     private List<SearchTerm> buildLabVesselBatchTypes() {
