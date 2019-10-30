@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.PicoTripleReworkEval;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nullable;
@@ -90,38 +92,63 @@ public class LabMetric implements Comparable<LabMetric> {
 
     public enum MetricType {
         INITIAL_PICO("Initial Pico", true, Category.CONCENTRATION, LabUnit.NG_PER_UL, new Decider() {
+            /**
+             * Fine grained logic is performed in makeCurveFit2Decision(), this only validates a CRSP requirement
+             * of 250ng minimum DNA
+             */
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
                 // There may already be a metricDecision and we've got to overwrite it and keep disposition and note if so
                 LabMetricDecision metricDecision = labMetric.getLabMetricDecision();
-                LabMetricDecision.Decision decision = null;
+
+                boolean wasFailure = false;
+                boolean isClinical = false;
                 String note = null;
 
                 if (labVessel.getVolume() != null) {
                     BigDecimal totalNg = labMetric.getValue().multiply(labVessel.getVolume());
-                    if (totalNg.compareTo(new BigDecimal("250")) == 1) {
-                        decision = LabMetricDecision.Decision.PASS;
-                    } else {
+                    if (totalNg.compareTo(new BigDecimal("250")) < 0 ) {
                         note = "Total Ng " + MathUtils.scaleTwoDecimalPlaces(totalNg) + " less than 250";
-                        decision = LabMetricDecision.Decision.FAIL_ACCEPTANCE_CRITERIA;
+                        wasFailure = true;
                     }
                 } else {
                     note = "No volume recorded for vessel " + labVessel.getLabel();
-                    decision = LabMetricDecision.Decision.FAIL_ACCEPTANCE_CRITERIA;
-                    metricDecision.setNote(note);
+                    wasFailure = true;
+                }
+
+                if (!wasFailure) {
+                    // No failure - simply return whatever was already attached to metric
+                    return metricDecision;
+                }
+
+                // check if clinical
+                for (SampleInstanceV2 si : labVessel.getSampleInstancesV2()) {
+                    if (si.getSingleProductOrderSample() != null) {
+                        ResearchProject project = si.getSingleProductOrderSample().getProductOrder().getResearchProject();
+                        if (project != null && (
+                                ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS.equals(project.getRegulatoryDesignation())
+                                        || ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP.equals(project.getRegulatoryDesignation()))) {
+                            isClinical = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!isClinical) {
+                    // Non-clinical - Ignore criteria and simply return whatever was already attached to metric
+                    return metricDecision;
                 }
 
                 if (metricDecision == null) {
-                    metricDecision = new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
+                    metricDecision = new LabMetricDecision(LabMetricDecision.Decision.FAIL_ACCEPTANCE_CRITERIA, new Date(), decidingUser, labMetric);
                     metricDecision.setNote(note);
                 } else {
                     // Don't overwrite rework disposition or note
-                    if (decision == LabMetricDecision.Decision.FAIL_ACCEPTANCE_CRITERIA) {
-                        metricDecision.setDecision(decision);
-                        String existingNote = metricDecision.getNote();
-                        metricDecision.setNote(existingNote == null ? note : note + "  " + existingNote);
-                    }
+                    metricDecision.setDecision(LabMetricDecision.Decision.FAIL_ACCEPTANCE_CRITERIA);
+                    String existingNote = metricDecision.getNote();
+                    metricDecision.setNote(existingNote == null ? note : note + "  " + existingNote);
                 }
+
                 return metricDecision;
             }
 

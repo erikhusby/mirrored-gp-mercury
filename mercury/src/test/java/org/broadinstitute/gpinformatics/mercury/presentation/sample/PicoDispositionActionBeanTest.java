@@ -6,7 +6,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.RackScannerEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
@@ -26,9 +25,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 /**
  * Tests the PicoDispositionActionBean
  */
@@ -43,7 +39,6 @@ public class PicoDispositionActionBeanTest {
     private final String FIRST_CELLNAME = "A01";
     private final BigDecimal BD_70 = new BigDecimal("70.0");
     private final BigDecimal BD_1_1 = new BigDecimal("1.1");
-    private TubeFormationDao mockTubeFormationDao;
 
     // Makes a rack of tubes with initial pico quant metrics.
     private void setUpQuants(int numberTubes) {
@@ -95,12 +90,8 @@ public class PicoDispositionActionBeanTest {
         RackOfTubes rackOfTubes = new RackOfTubes("rackBarcode", RackOfTubes.RackType.Matrix96);
         TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
         tubeFormation.getContainerRole().setEmbedder(rackOfTubes);
-        mockTubeFormationDao = mock(TubeFormationDao.class);
-        when(mockTubeFormationDao.findByDigest(tubeFormation.getLabel())).thenReturn(tubeFormation);
         picoDispositionActionBean = new PicoDispositionActionBean();
-        picoDispositionActionBean.setTubeFormationDao(mockTubeFormationDao);
         picoDispositionActionBean.setTubeFormation(Collections.singletonList(tubeFormation));
-        picoDispositionActionBean.setTubeLabels(Collections.singletonList(tubeFormation.getLabel()));
     }
 
     @Test

@@ -63,6 +63,7 @@ public class GeminiPlateProcessor extends TableProcessor {
         String runName = filename;
         Date runStart = null;
 
+        // Find the run started date from deep down in column A
         for (Row row: sheet) {
             Cell cell = row.getCell(0);
             if (cell != null && cell.getCellType() == Cell.CELL_TYPE_STRING) {
@@ -72,6 +73,7 @@ public class GeminiPlateProcessor extends TableProcessor {
                             new SimpleDateFormat(VarioskanRowParser.NameValue.RUN_STARTED.getDateFormat());
                     try {
                         runStart = simpleDateFormat.parse(runStartMatcher.group(1));
+                        break;
                     } catch (ParseException e) {
                         throw new RuntimeException("Failed to parse run date");
                     }
@@ -104,7 +106,7 @@ public class GeminiPlateProcessor extends TableProcessor {
                     results.add(plateProcessor);
                 } else if (UNKNOWNS_GROUP.matches(cell.getStringCellValue())) {
                     // Initial Pico Protocol is being run which has plate barcode column
-                    row = rowIterator.next();
+                    row = rowIterator.next(); // On column header row
                     GeminiPlateProcessor geminiPlateProcessor = new GeminiPlateProcessor(sheet, null, row.getRowNum());
                     PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.emptyMap());
                     parser.processRows(sheet, geminiPlateProcessor);
@@ -167,6 +169,11 @@ public class GeminiPlateProcessor extends TableProcessor {
             String barcode = fetchBarcode(dataRow);
             if (barcode == null) {
                 addDataMessage("Failed to parse barcode.", dataRowIndex);
+                return;
+            }
+
+            // Ignore the extra rows the stacker puts in the file - barcode names 'Plate01 - Plate20'
+            if (barcode.matches("Plate[0-9]{2}")) {
                 return;
             }
 
@@ -235,7 +242,6 @@ public class GeminiPlateProcessor extends TableProcessor {
 
     @Override
     public void close() {
-
     }
 
     private enum Headers implements ColumnHeader {

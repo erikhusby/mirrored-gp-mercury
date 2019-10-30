@@ -830,14 +830,6 @@ public class VesselEjb {
             Result result = mapBarcodeToTraverser.get(entry.getKey());
             Map<VesselPosition, VesselPosition> wellToTubePosition = result.getWellToTubePosition();
 
-            for (Map.Entry e : wellToTubePosition.entrySet()) {
-                System.out.println(e.getKey() + "" + e.getValue());
-            }
-            System.out.println("---------------");
-            for (VarioskanPlateProcessor.PlateWellResult r : entry.getValue()) {
-                System.out.println(r.getVesselPosition());
-            }
-
             // Group Plate Well Results by source tube position to check if triplicate is a bad read.
             Map<VesselPosition, List<VarioskanPlateProcessor.PlateWellResult>> mapPosToPlateWells = valueList.stream()
                     .collect(Collectors.groupingBy(p -> wellToTubePosition.get(p.getVesselPosition())));

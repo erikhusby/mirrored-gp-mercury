@@ -50,6 +50,8 @@ public enum MetricReworkDisposition {
     }
 
     private String displayName;
+    // TODO JMS Delete? Initial thought was that users would be able to manually assign dispositions
+    //  from a list related to a specific metric type
     private LabMetric.MetricType[] metricGroups;
     private String description;
     private String action;

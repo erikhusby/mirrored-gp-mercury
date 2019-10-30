@@ -121,9 +121,12 @@ public class UploadQuantsActionBean extends CoreActionBean {
 
     @Validate(required = true, on = UPLOAD_QUANT)
     private FileBean quantSpreadsheet;
+    @Validate(required = true, on = UPLOAD_QUANT)
     private LabMetric.MetricType quantType;
-    private Set<LabMetric> labMetrics;
+    @Validate(required = true, on = UPLOAD_QUANT)
     private QuantFormat quantFormat;
+
+    private Set<LabMetric> labMetrics;
     private LabMetricRun labMetricRun;
     private Long labMetricRunId;
     private List<Long> selectedConditionalIds = new ArrayList<>();
@@ -146,28 +149,31 @@ public class UploadQuantsActionBean extends CoreActionBean {
         return new ForwardResolution(VIEW_PAGE);
     }
 
+    /**
+     * The real legwork for all but GENERIC is done in validateNoExistingQuants()
+     */
     @HandlesEvent(UPLOAD_QUANT)
     public Resolution uploadQuant() {
-        switch (quantFormat) {
-        case VARIOSKAN:
-            break;
-        case WALLAC:
-            break;
-        case CALIPER:
-            break;
-        case GEMINI:
-            break;
-        case GENERIC:
+        if (QuantFormat.GENERIC.equals(quantFormat)) {
             MessageCollection messageCollection = new MessageCollection();
             quantEJB.storeQuants(labMetrics, quantType, messageCollection);
             addMessages(messageCollection);
-            break;
         }
         if (getValidationErrors().isEmpty()) {
             addMessage("Successfully uploaded quant.");
         }
-        buildColumns();
-        return new ForwardResolution(VIEW_PAGE);
+
+        // Bounce initial pico to rework disposition view, existence of labMetricRun means success for all but GENERIC
+        if (labMetricRun != null && LabMetric.MetricType.INITIAL_PICO.equals(quantType)) {
+            getContext().getRequest().setAttribute("labMetricRun", labMetricRun);
+            ForwardResolution forwardResolution = new ForwardResolution(PicoDispositionActionBean.class, PicoDispositionActionBean.EVT_FWD_VESSEL_LIST);
+            // Doesn't work:
+            // forwardResolution.addParameter("labMetricRun", labMetricRun );
+            return forwardResolution;
+        } else {
+            buildColumns();
+            return new ForwardResolution(VIEW_PAGE);
+        }
     }
 
     @ValidationMethod(on = UPLOAD_QUANT)
@@ -413,6 +419,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
         List<LabMetric> labMetricList = new ArrayList<>();
         Map<String, LabMetric> mapIdToMetric = new HashMap<>();
         for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
+            // Captures only metrics associated with source vessels (tubes) vs. (e.g.) pico plates
             if (labMetric.getLabMetricDecision() != null) {
                 // todo jmt linked set?
                 labMetricList.add(labMetric);

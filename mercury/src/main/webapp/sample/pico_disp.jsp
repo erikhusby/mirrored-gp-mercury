@@ -24,34 +24,65 @@
                 theDialog.dialog("open");
             };
 
+            /**
+             * Displays only the destination inputs required by the data after a rack scan ajax call
+             */
+            var setUpDestBarcodeInputs = function () {
+                var normCell = $j("#NORMCell");
+                var undilCell = $j("#UNDILUTEDCell");
+                var repeatCell = $j("#REPEATCell");
+                normCell.hide();
+                undilCell.hide();
+                repeatCell.hide();
+                var tData = theDataTableApi.data();
+                if (tData.length > 0) {
+                    $j.each(tData, function (index, value) {
+                        if (value.userDestRackBarcode === "NORM") {
+                            normCell.show();
+                        } else if (value.userDestRackBarcode === "UNDILUTED") {
+                            undilCell.show();
+                        } else if (value.userDestRackBarcode === "REPEAT") {
+                            repeatCell.show();
+                        }
+                    });
+                }
+            };
+
             function rackScanComplete() {
                 var barcodes = $j("#rack_scan_overlay").data("results");
                 if (barcodes == null) {
                     return;
                 }
-                var dtTable = $j('#dispositions').DataTable();
-                dtTable.clear().draw();
+                theDataTableApi.clear().draw();
+                // Hide the destination rack barcode inputs and CSV download UI elements
+                $j('#targetRacks').hide();
                 var formData = new FormData();
-                formData.append("buildTableData", "");
+                formData.append("buildScanTableData", "");
                 formData.append("rackScanJson", barcodes);
+                formData.append("<csrf:tokenname/>", "<csrf:tokenvalue/>");
                 formData.append("_sourcePage", $j("#ajaxScanForm input[name='_sourcePage']").val());
-                dtTable.processing(true);
+                theDataTableApi.processing(true);
                 $j.ajax({
                     url: "${ctxpath}/sample/PicoDisposition.action",
                     type: 'POST',
                     data: formData,
                     async: true,
                     success: function (results) {
-                        dtTable.processing(false);
+                        theDataTableApi.processing(false);
                         if ((results).errors != undefined) {
                             showAlertDialog("Error", (results).errors.join(" <br/>"));
+                        } else if ((results).length == 0) {
+                            showAlertDialog("info", "No initial pico quants available for vessels");
                         } else {
-                            dtTable.rows.add(results).draw();
+                            theDataTableApi.rows.add(results).draw();
+                            $j('#targetRacks').show();
+                            setUpDestBarcodeInputs();
                         }
                     },
                     error: function (results) {
-                        dtTable.processing(false);
+                        theDataTableApi.processing(false);
                         $j("#doScanBtn").removeAttr("disabled");
+                        setUpDestBarcodeInputs();  // hides destination inputs
                         showAlertDialog("Error", "A server error occurred");
                     },
                     cache: false,
@@ -66,8 +97,9 @@
             var theDataTableApi;
 
             /**
-             * Shades exclude checkbox cell
-             * When initializing color, metricId arg is 0, don't try to change datatable values
+             * Shades checkbox cell when selected for pick
+             * At table initialization metricId arg is 0, don't try to change datatable values
+             * At user check/uncheck modify JSON object data accordingly by metric ID
              */
             var shadeCell = function (domCb, metricId) {
                 if (domCb == undefined) {
@@ -84,6 +116,35 @@
                 }
                 if (metricId != 0) {  // Change data on user check/uncheck
                     theDataTableApi.row("#" + metricId).data().toBePicked = isChecked;
+                }
+            };
+
+            var setSrcBarcode = function (theInput) {
+                var srcBarcode = theInput.val();
+                var tData = theDataTableApi.data();
+                if (tData.length > 0) {
+                    $j.each(tData, function (index, value) {
+                        value.srcRackBarcode = srcBarcode;
+                        // Ugh! Force the row to update
+                        theDataTableApi.row("#" + value.metricId).data(value);
+                    });
+                    theDataTableApi.draw();
+                }
+            };
+
+            var setDestBarcode = function (theInput) {
+                var sysBarcode = theInput.attr("placeholder");
+                var userBarcode = theInput.val();
+                var tData = theDataTableApi.data();
+                if (tData.length > 0) {
+                    $j.each(tData, function (index, value) {
+                        if (value.sysDestRackBarcode === sysBarcode) {
+                            value.userDestRackBarcode = userBarcode;
+                            // Force the row to update
+                            theDataTableApi.row("#" + value.metricId).data(value);
+                        }
+                    });
+                    theDataTableApi.draw();
                 }
             };
 
@@ -107,18 +168,13 @@
                     title: ""
                 });
 
-                /*
-                 * Initially hide the destination rack barcode inputs and CSV download UI elements
-                 */
-                $j('#targetRacks').hide();
-
                 theDataTableApi = $j('#dispositions').DataTable({
                     "paging": false,
                     "scrollY": 580,
                     "searching": true,
                     "info": true,
                     "processing": true,
-                    "data": [],
+                    "data": <enhance:out escapeXml="false">${actionBean.listItemsJson}</enhance:out>,
                     "rowId": function (row) {
                         return row.metricId;
                     },
@@ -126,24 +182,16 @@
                     buttons: ['excel', 'csv'],
                     "columns": [
                         {"data": "metricId", "visible": false},
+                        {"title": "Rack", "data": "srcRackBarcode"},
                         {"title": "Position", "data": "position"},
                         {"title": "Barcode", "data": "barcode"},
                         {"title": "Sample ID", "data": "sampleId"},
-                        {
-                            "title": "Collab Patient ID", "data": "collaboratorPatientIds",
-                            "render": function (data, type, row, meta) {
-                                return (type === 'display' && data.length > 0) ? data.join(" ") : "";
-                            }
-                        },
+                        {"title": "Volume", "data": "volume", "type": "num", "className": "dt-center"},
                         {"title": "Concentration", "data": "concentration", "type": "num", "className": "dt-center"},
                         {"title": "Decision", "data": "decision"},
                         {"title": "Rework Disposition", "data": "reworkDisposition"},
-                        {
-                            "title": "Pick Destination", "data": "destinationRackType", "className": "dt-center",
-                            "render": function (data, type, row, meta) {
-                                return (type === 'display' && data !== "NONE") ? data : "";
-                            }
-                        },
+                        {"title": "Pick Destination", "data": "userDestRackBarcode", "className": "dt-center"},
+                        // sysDestRackBarcode stores value set by server ( NORM_1..NORM_n, REWORK_1..REWORK_n, UNDILUTED_1..UNDILUTED_n )
                         {
                             "title": "Pick From Rack", "data": "toBePicked", "className": "dt-center",
                             "render": function (data, type, row, meta) {
@@ -160,15 +208,15 @@
                         }
                     ],
                     "columnDefs": [
-                        {"targets": [1, 2, 3, 4, 6, 7], "className": "dt-head-left"},
-                        {"orderData": [6, 7], "targets": [6]}
+                        {"targets": [1, 2, 3, 4, 7, 8], "className": "dt-head-left"},
+                        {"orderData": [7, 8], "targets": [7]}
                     ]
                 });
 
                 /*
                  * Conditionally show the destination rack barcode inputs and CSV download UI elements
                  */
-                $j('#dispositions').on('draw.dt', function (e) {
+                theDataTableApi.on('draw', function (e) {
                     var jqTable = $j(e.delegateTarget);
                     var tData = theDataTableApi.data();
                     if (tData.length > 0) {
@@ -182,10 +230,23 @@
                     }
                 });
 
-                $j("#pickerForm").submit(function (event) {
+                $j("#rackScanPickerForm").submit(function (event) {
+                    var messages = [];
+                    // Some inputs may not be visible if rack scan
+                    $j.each($j("#targetRacks input").filter(":visible"), function (index, txtInput) {
+                        txtInput = $j(txtInput);
+                        if (txtInput.val().length == 0) {
+                            messages.push(txtInput.attr("Placeholder") + " destination rack barcode required");
+                        }
+                    });
+                    if (messages.length > 0) {
+                        showAlertDialog("error", messages.join("<br/>"));
+                        return false;
+                    }
                     var tData = theDataTableApi.data();
                     if (tData.length > 0) {
                         var pickJson = [];
+                        // Ship the checked rows back to server
                         $j.each(tData, function (index, value) {
                             if (value.toBePicked) {
                                 pickJson.push(value);
@@ -197,41 +258,47 @@
                         return false;
                     }
                 });
-            });
+
+                <c:if test="${actionBean.isRackScanEnabled()}">$j('#targetRacks').hide();
+                </c:if> <%-- Hide destination inputs prior to a rack scan --%>
+                <c:if test="${not actionBean.isRackScanEnabled()}">theDataTableApi.draw();
+                </c:if> <%-- Trigger a draw to shade pick cells --%>
+
+            });  // End doc ready logic
         </script>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
-        <form method="POST" action="/Mercury/sample/PicoDisposition.action" id="pickerForm">
-            <div class="row-fluid">
+        <div class="row-fluid">
+            <form method="POST" action="/Mercury/sample/PicoDisposition.action" id="rackScanPickerForm">
+                <c:if test="${actionBean.isRackScanEnabled()}"><%-- This button is only valid for a page supporting a rack scan, NOT for redirect from the upload page --%>
                 <div class="span2"><input type="button" id="rackScanBtn" name="rackScanBtn" class="btn btn-primary"
                                           value="Scan and Review Rack" onclick="startRackScan(this)"/></div>
+                </c:if>
                 <fieldset class="span10" id="targetRacks">
                     <legend><h4 style="margin-top:0px">Picker Racks</h4></legend>
                     <table>
                         <tr>
-                            <td style="padding-left:30px">Source: <input class="input-small" type="text"
-                                                                         name="srcRackBarcode" id="srcRackBarcode"
-                                                                         value="SOURCE"/></td>
-                            <td style="padding-left:30px">Norm Rack: <input class="input-small" type="text"
-                                                                            name="destRacks['NORM']"
-                                                                            id="normRackBarcode" value="NORM"/></td>
-                            <td style="padding-left:30px">Undiluted Rack: <input class="input-small" type="text"
-                                                                                 name="destRacks['UNDILUTED']"
-                                                                                 id="undilRackBarcode"
-                                                                                 value="UNDILUTED"/></td>
-                            <td style="padding-left:30px">Repeat Rack: <input class="input-small" type="text"
-                                                                              name="destRacks['REPEAT']"
-                                                                              id="repeatRackBarcode" value="REPEAT"/>
-                            </td>
+                            <c:if test="${actionBean.isRackScanEnabled()}">
+                                <td style="padding-left:30px">Source: <input class="input-small" type="text"
+                                                                             name="srcRackBarcode"
+                                                                             id="srcRackBarcode" placeholder="SOURCE"
+                                                                             onchange="setSrcBarcode($j(this));"/></td>
+                            </c:if>
+                            <c:forEach var="destRack" items="${actionBean.destRacks}" varStatus="row">
+                                <td style="padding-left:20px" id="${destRack}Cell">${destRack} Rack: <input
+                                        class="input-small" type="text"
+                                        placeholder="${destRack}" id="${destRack}Barcode"
+                                        onchange="setDestBarcode($j(this));"/></td>
+                            </c:forEach>
                             <td style="padding-left:30px"><input type="hidden" id="listItemsJson" name="listItemsJson"/>
                                 <input id="btnPickerCsv" name="buildPickFile" type="submit" class="btn"
                                        value="Download Picker CSV"/></td>
                         </tr>
                     </table>
                 </fieldset>
-            </div>
-        </form>
+            </form>
+        </div>
         <hr/>
         <table class="display compact" id="dispositions"></table>
         <div id="dialog-message" title="Error"><p><span class="alert-error"

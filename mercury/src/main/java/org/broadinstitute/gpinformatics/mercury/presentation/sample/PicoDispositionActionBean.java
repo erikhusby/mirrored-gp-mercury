@@ -19,13 +19,16 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.MetricReworkDisposition;
-import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -37,12 +40,16 @@ import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
 import java.text.Format;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Action bean that shows per-sample disposition after initial pico.
@@ -55,22 +62,23 @@ public class PicoDispositionActionBean extends CoreActionBean {
      * Format a timestamp for file name.
      */
     public static final Format TIMESTAMP_FORMATTER = FastDateFormat.getInstance("yyyy_MM_dd_HH_mm_ss");
+    public static final int MAX_TUBES_PER_DESTINATION = 96;
 
     public static final String ACTION_BEAN_URL = "/sample/PicoDisposition.action";
 
-    public static final String EVT_AJAX_VESSEL_LIST = "buildTableData";
+    // From rack scan
+    public static final String EVT_AJAX_VESSEL_LIST = "buildScanTableData";
+    // Fwd from initial pico upload
+    public static final String EVT_FWD_VESSEL_LIST = "buildFwdTableData";
     public static final String EVT_DOWNLOAD_PICKER_CSV = "buildPickFile";
     public static final String DEFAULT_PAGE = "/sample/pico_disp.jsp";
 
     @Inject
-    private TubeFormationDao tubeFormationDao;
-
-    @Inject
     private BarcodedTubeDao barcodedTubeDao;
 
-    // Spreadsheet upload page invokes this action bean and passes in the tubeLabels parameter.
-    private List<String> tubeLabels;
-    private String srcRackBarcode;
+    private boolean isRackScanEnabled = true;
+    // Internal forward from quant upload page
+    private LabMetricRun labMetricRun;
 
     /**
      * Have to hold these because ajax calls blow up in stripes if there's global validation errors
@@ -85,21 +93,9 @@ public class PicoDispositionActionBean extends CoreActionBean {
     /**
      * Picker destination racks
      */
-    private Map<String, String> destRacks;
+    private Set<String> destRacks;
 
     private static final Map<VesselPosition, BarcodedTube> positionToTubeMap = new HashMap<>();
-
-    public void setTubeLabels(List<String> tubeLabels) {
-        this.tubeLabels = tubeLabels;
-    }
-
-    public String getSrcRackBarcode() {
-        return srcRackBarcode;
-    }
-
-    public void setSrcRackBarcode(String srcRackBarcode) {
-        this.srcRackBarcode = srcRackBarcode;
-    }
 
     /**
      * Consumes scanner JSON and builds positionToTubeMap out of it
@@ -121,6 +117,10 @@ public class PicoDispositionActionBean extends CoreActionBean {
 
     public List<ListItem> getListItems() {
         return listItems;
+    }
+
+    public boolean isRackScanEnabled() {
+        return isRackScanEnabled;
     }
 
     /**
@@ -165,14 +165,18 @@ public class PicoDispositionActionBean extends CoreActionBean {
         }
     }
 
-    public void setDestRacks(Map<String, String> destRacks) {
-        this.destRacks = destRacks;
+    /**
+     * Internal forward from quant upload page
+     */
+    public void setLabMetricRun(LabMetricRun labMetricRun) {
+        this.labMetricRun = labMetricRun;
     }
 
-    /**
-     * Stripes won't call setter without this useless getter
-     */
-    public Map<String, String> getDestRacks() {
+    public Set<String> getDestRacks() {
+        if (destRacks == null) {
+            // Page from menu pick is for a rack scan, max of 1 of each destination type is required
+            destRacks = new HashSet<String>(Arrays.asList("NORM", "UNDILUTED", "REPEAT"));
+        }
         return destRacks;
     }
 
@@ -227,9 +231,6 @@ public class PicoDispositionActionBean extends CoreActionBean {
     void setBarcodedTubeDao(BarcodedTubeDao dao) {
         barcodedTubeDao = dao;
     }
-    void setTubeFormationDao(TubeFormationDao tubeFormationDao) {
-        this.tubeFormationDao = tubeFormationDao;
-    }
     // ***************
     // End TubeFormation for test purposes.
     // ***************
@@ -261,14 +262,17 @@ public class PicoDispositionActionBean extends CoreActionBean {
         private Long metricId;
         private String position;
         private String barcode;
-        private String[] collaboratorPatientIds;
         private String sampleId;
         private BigDecimal concentration;
+        private BigDecimal volume;
         // TODO riskOverride wasn't/isn't used here anymore to my knowledge
         private boolean riskOverride = false;
         private LabMetricDecision.Decision decision;
         private MetricReworkDisposition reworkDisposition;
         private DestinationRackType destinationRackType;
+        private String srcRackBarcode;
+        private String sysDestRackBarcode;
+        private String userDestRackBarcode;
         private boolean toBePicked = false;
 
         /**
@@ -280,12 +284,12 @@ public class PicoDispositionActionBean extends CoreActionBean {
         /**
          * Constructor for outgoing data
          */
-        public ListItem(Long metricId, String position, String barcode, String[] collaboratorPatientIds,
-                        String sampleId, BigDecimal concentration, LabMetricDecision decision) {
+        public ListItem(Long metricId, String position, String barcode, BigDecimal volume,
+                        String sampleId, BigDecimal concentration, LabMetricDecision decision, String srcRackBarcode) {
             this.metricId = metricId;
             this.position = position;
             this.barcode = barcode;
-            this.collaboratorPatientIds = collaboratorPatientIds;
+            this.volume = volume;
             this.sampleId = sampleId;
             // Sets the number of decimal digits to display.
             this.concentration = (concentration != null) ? MathUtils.scaleTwoDecimalPlaces(concentration) : null;
@@ -294,6 +298,7 @@ public class PicoDispositionActionBean extends CoreActionBean {
                 this.reworkDisposition = decision.getReworkDisposition();
                 this.riskOverride = decision.equals(LabMetricDecision.Decision.RISK);
             }
+            this.srcRackBarcode = srcRackBarcode;
             determineDestinationRackType();
             toBePicked = destinationRackType != DestinationRackType.NONE;
         }
@@ -320,11 +325,12 @@ public class PicoDispositionActionBean extends CoreActionBean {
             return barcode;
         }
 
-        public void setCollaboratorPatientIds(String[] collaboratorPatientIds) {
-            this.collaboratorPatientIds = collaboratorPatientIds;
+        public BigDecimal getVolume() {
+            return volume;
         }
-        public String[] getCollaboratorPatientIds() {
-            return collaboratorPatientIds;
+
+        public void setVolume(BigDecimal volume) {
+            this.volume = volume;
         }
 
         public void setSampleId(String sampleId) {
@@ -383,9 +389,34 @@ public class PicoDispositionActionBean extends CoreActionBean {
             this.toBePicked = toBePicked;
         }
 
+        public String getSrcRackBarcode() {
+            return srcRackBarcode;
+        }
+
+        public void setSrcRackBarcode(String srcRackBarcode) {
+            this.srcRackBarcode = srcRackBarcode;
+        }
+
+        public String getSysDestRackBarcode() {
+            return sysDestRackBarcode;
+        }
+
+        public void setSysDestRackBarcode(String sysDestRackBarcode) {
+            this.sysDestRackBarcode = sysDestRackBarcode;
+        }
+
+        public String getUserDestRackBarcode() {
+            return userDestRackBarcode;
+        }
+
+        public void setUserDestRackBarcode(String userDestRackBarcode) {
+            this.userDestRackBarcode = userDestRackBarcode;
+        }
+
         private void determineDestinationRackType() {
             if (decision == null || decision.equals(LabMetricDecision.Decision.PASS)) {
                 destinationRackType = DestinationRackType.NONE;
+                sysDestRackBarcode = "";
             } else {
                 switch (reworkDisposition) {
                     case NORM_IN_TUBE:
@@ -394,41 +425,152 @@ public class PicoDispositionActionBean extends CoreActionBean {
                     case TUBE_SPLIT_ADJUSTED_DOWN:
                     case BAD_TRIP_OVERFLOW:
                         destinationRackType = DestinationRackType.NORM;
+                        sysDestRackBarcode = "NORM";
                         break;
                     case UNDILUTED:
                         destinationRackType = DestinationRackType.UNDILUTED;
+                        sysDestRackBarcode = "UNDILUTED";
                         break;
                     case BAD_TRIP_LOW:
                     case BAD_TRIP_READS:
                     case BAD_TRIP_HIGH:
                         destinationRackType = DestinationRackType.REPEAT;
+                        sysDestRackBarcode = "REPEAT";
                         break;
                     default:
                         destinationRackType = DestinationRackType.NONE;
+                        sysDestRackBarcode = "";
                         break;
                 }
             }
+            // Gets overwritten on forward from quant upload page
+            userDestRackBarcode = sysDestRackBarcode;
         }
     }
 
     /**
-     * Displays initial page with no vessels or allows link from quant upload with tubeLabels parameter
+     * Displays initial page with no vessels
      */
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
     public Resolution displayList() {
-        // Clears some data, otherwise does basically nothing
-        makeListItems(tubeLabels);
+        isRackScanEnabled = true;
         buildStripesValidationErrors();
         return new ForwardResolution(DEFAULT_PAGE);
     }
 
     /**
-     * Builds JSON for vessel list
+     * Builds JSON for vessel list from rack scan
      */
     @HandlesEvent(EVT_AJAX_VESSEL_LIST)
-    public Resolution buildPicoVesselListJson() {
+    public Resolution buildScanVesselListJson() {
         return new StreamingResolution("text/json", getListItemsJson());
+    }
+
+    /**
+     * Use forward from quant upload page to build JSON for vessel list
+     */
+    @HandlesEvent(EVT_FWD_VESSEL_LIST)
+    public Resolution buildFwdVesselListJson() {
+        setLabMetricRun((LabMetricRun) getContext().getRequest().getAttribute("labMetricRun"));
+        if (labMetricRun == null) { // Something went wrong - this is required for an internal forward
+            addGlobalValidationError("Lab metric run was unavailable with internal redirect");
+            isRackScanEnabled = true;
+            return new ForwardResolution(DEFAULT_PAGE);
+        }
+
+        // Need the source container, either a tube formation or a static plate (germline process) and it's corresponding barcode (rack of tubes or static plate)
+        Map<VesselContainer, String> containerLabelMap = buildSourceContainerMap(labMetricRun);
+
+        isRackScanEnabled = false;
+        for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
+            // Capture only metrics associated with source tubes or wells vs. (e.g.) pico plates
+            if (labMetric.getLabMetricDecision() != null) {
+                LabVessel metricVessel = labMetric.getLabVessel();
+                LabMetricDecision labMetricDecision = labMetric.getLabMetricDecision();
+                String sampleId = metricVessel.getMercurySamples().size() == 0 ? ""
+                        : metricVessel.getMercurySamples().iterator().next().getSampleKey();
+                String srcRackBarcode = "";
+                for (Map.Entry<VesselContainer, String> mapEntry : containerLabelMap.entrySet()) {
+                    if (mapEntry.getKey().getContainedVessels().contains(metricVessel)) {
+                        srcRackBarcode = mapEntry.getValue();
+                        break;
+                    }
+                }
+                ListItem listItem = new ListItem(labMetric.getLabMetricId(), labMetric.getVesselPosition(),
+                        metricVessel.getLabel(), metricVessel.getVolume(),
+                        sampleId, labMetric.getValue(), labMetricDecision, srcRackBarcode);
+                listItems.add(listItem);
+            }
+        }
+
+        int normDestCount = 0;
+        int undilutedDestCount = 0;
+        int repeatDestCount = 0;
+        destRacks = new TreeSet<>();
+        String destBarcode;
+
+        for (ListItem listItem : listItems) {
+            switch (listItem.getDestinationRackType()) {
+                case NORM:
+                    destBarcode = "NORM" + (Math.floorDiv(normDestCount, MAX_TUBES_PER_DESTINATION) + 1);
+                    listItem.setSysDestRackBarcode(destBarcode);
+                    destRacks.add(destBarcode);
+                    normDestCount++;
+                    break;
+                case UNDILUTED:
+                    destBarcode = "UNDILUTED" + (Math.floorDiv(undilutedDestCount, MAX_TUBES_PER_DESTINATION) + 1);
+                    listItem.setSysDestRackBarcode(destBarcode);
+                    destRacks.add(destBarcode);
+                    undilutedDestCount++;
+                    break;
+                case REPEAT:
+                    destBarcode = "REPEAT" + (Math.floorDiv(repeatDestCount, MAX_TUBES_PER_DESTINATION) + 1);
+                    listItem.setSysDestRackBarcode(destBarcode);
+                    destRacks.add(destBarcode);
+                    repeatDestCount++;
+                    break;
+                default:
+                    listItem.setSysDestRackBarcode("");
+                    break;
+            }
+            listItem.setUserDestRackBarcode(listItem.getSysDestRackBarcode());
+        }
+
+        return new ForwardResolution(DEFAULT_PAGE);
+    }
+
+    /**
+     * For a forward from quant upload page, rack (or plate) barcodes need to be presented in the data table <br/>
+     * There is no way a source vessel can be in more than one container going into a single quant run <br/>
+     * Builds out all the pico transfer source containers (tube formations or static plates) and their barcodes
+     */
+    private Map<VesselContainer, String> buildSourceContainerMap(LabMetricRun labMetricRun) {
+        Map<VesselContainer, String> containerLabelMap = new HashMap<>();
+        for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
+            // Capture only metrics associated with pico plate wells
+            if (labMetric.getLabMetricDecision() == null) {
+                LabVessel metricVessel = labMetric.getLabVessel();
+                // Always going to be a PlateWell --> StaticPlate relationship
+                VesselContainer<?> picoPlate = metricVessel.getContainers().iterator().next().getContainerRole();
+                VesselContainer<?> srcContainer;
+                LabVessel ancillaryVessel;
+                for (SectionTransfer sectionTransfer : picoPlate.getSectionTransfersTo()) {
+                    srcContainer = sectionTransfer.getSourceVesselContainer();
+                    ancillaryVessel = sectionTransfer.getAncillarySourceVessel();
+                    containerLabelMap.put(srcContainer,
+                            ancillaryVessel == null ? srcContainer.getEmbedder().getLabel() : ancillaryVessel.getLabel());
+                }
+                for (CherryPickTransfer cherryPickTransfer : picoPlate.getCherryPickTransfersTo()) {
+                    srcContainer = cherryPickTransfer.getSourceVesselContainer();
+                    ancillaryVessel = cherryPickTransfer.getAncillarySourceVessel();
+                    containerLabelMap.put(srcContainer,
+                            ancillaryVessel == null ? srcContainer.getEmbedder().getLabel() : ancillaryVessel.getLabel());
+                }
+                // Ignore VesselToSectionTransfer, no rack barcode available
+            }
+        }
+        return containerLabelMap;
     }
 
     /**
@@ -437,55 +579,41 @@ public class PicoDispositionActionBean extends CoreActionBean {
     @HandlesEvent(EVT_DOWNLOAD_PICKER_CSV)
     public Resolution downloadPickerCsv() {
         StringBuilder csv = new StringBuilder();
+        // 3 counters for NORM, UNDILUTED, REPEAT
+        int normcount = 0;
+        int undilCount = 0;
+        int repeatCount = 0;
 
-        // Build out targetType to barcode map
-        MultiValuedMap<DestinationRackType, String> targetTypeBarcodeMap = new ArrayListValuedHashMap<>();
+        VesselPosition[] positions = VesselGeometry.G12x8.getVesselPositions();
+
+        // Destination racks
+        MultiValuedMap<String, String> destSrcMultiMap = new ArrayListValuedHashMap<>();
         for (ListItem item : listItems) {
-            targetTypeBarcodeMap.put(item.getDestinationRackType(), item.getBarcode());
+            destSrcMultiMap.put(item.getUserDestRackBarcode(), item.getBarcode());
         }
 
-        // Barcode to destination position map
-        Map<String, VesselPosition> barcodePositionMap = new HashMap<>();
-        VesselPosition[] positions = VesselGeometry.G12x8.getVesselPositions();
-        for (DestinationRackType targetType : targetTypeBarcodeMap.keySet()) {
-            int counter = 0;
-            for (String barcode : targetTypeBarcodeMap.get(targetType)) {
-                barcodePositionMap.put(barcode, positions[counter++]);
+        // Src to destination positions  TODO:  JMS Validate user did not duplicate destination barcodes !!
+        Map<String, String> srcToDestPosMap = new HashMap<>();
+        for (String destBarcode : destSrcMultiMap.keySet()) {
+            int count = 0;
+            for (String srcBarcode : destSrcMultiMap.get(destBarcode)) {
+                srcToDestPosMap.put(srcBarcode, positions[count++].name());
             }
         }
 
         for (ListItem item : listItems) {
-            csv.append(srcRackBarcode).append(",")
+            csv.append(item.getSrcRackBarcode()).append(",")
                     .append(item.getPosition()).append(",")
                     .append(item.getBarcode()).append(",")
-                    .append(destRacks.get(item.getDestinationRackType().name())).append(",")
-                    .append(barcodePositionMap.get(item.getBarcode())).append("\r\n");
+                    .append(item.getUserDestRackBarcode()).append(",")
+                    .append(srcToDestPosMap.get(item.getBarcode())).append("\r\n");
         }
+
         String fileName = getUserBean().getLoginUserName() + "_" + TIMESTAMP_FORMATTER.format(new Date()) + "_pico_pick.csv";
         setFileDownloadHeaders("application/octet-stream", fileName);
         StreamingResolution stream = new StreamingResolution("application/octet-stream",
                 new ByteArrayInputStream(csv.toString().getBytes()));
         return stream;
-    }
-
-    /** Makes listItems from either a tube formation or its label. */
-    private void makeListItems(List<String> labels) {
-        listItems.clear();
-        if (labels == null) {
-            return;
-        }
-        for (String label: labels) {
-            TubeFormation container = null;
-            if (StringUtils.isNotBlank(label)) {
-                container = tubeFormationDao.findByDigest(label);
-                if (container == null || container.getContainerRole() == null) {
-                    queueValidationError("Cannot find tube formation having label '" + label + "'");
-                }
-            }
-            if (container != null) {
-                makeListItems(container.getContainerRole().getMapPositionToVessel());
-            }
-        }
     }
 
     /** Makes listItems from a position->barcode map. */
@@ -508,11 +636,13 @@ public class PicoDispositionActionBean extends CoreActionBean {
                 }
             }
         }
-        makeListItems(positionToTubeMap);
+        makeScanListItems(positionToTubeMap);
     }
 
-    /** Makes listItems from a position->tube map. */
-    private void makeListItems(Map<VesselPosition, BarcodedTube> map) {
+    /**
+     * Makes listItems from ajax position->tube map.
+     */
+    private void makeScanListItems(Map<VesselPosition, BarcodedTube> map) {
         for (VesselPosition vesselPosition : map.keySet()) {
             BarcodedTube tube = map.get(vesselPosition);
             LabMetric labMetric = tube.findMostRecentLabMetric(LabMetric.MetricType.INITIAL_PICO);
@@ -523,13 +653,10 @@ public class PicoDispositionActionBean extends CoreActionBean {
                 LabMetricDecision decision = labMetric.getLabMetricDecision();
                 int rangeCompare = labMetric.initialPicoDispositionRange();
                 listItems.add(new ListItem(labMetric.getLabMetricId(), vesselPosition.name(), tube.getLabel(),
-                        tube.getMetadataValues(Metadata.Key.PATIENT_ID), sampleId,
-                        concentration, decision));
-
+                        tube.getVolume(), sampleId, concentration, decision, "SOURCE"));
             } else {
                 listItems.add(new ListItem(null, vesselPosition.name(), tube.getLabel(),
-                        tube.getMetadataValues(Metadata.Key.PATIENT_ID),
-                        sampleId, null, null));
+                        tube.getVolume(), sampleId, null, null, "SOURCE"));
             }
         }
         Collections.sort(listItems, BY_POSITION);
