@@ -166,7 +166,7 @@ public class BSPRestSender implements Serializable {
         // Loop through all of the sources in the sourcePositionMap. Remove all sources that aren't BSP metadata source
         //  and the associated CherryPickSourceType if there is one.
         for (ReceptacleType sourceReceptacleType : plateCherryPickEvent.getSourcePositionMap().get(0).getReceptacle()) {
-            VesselPosition sourceVesselPosition = VesselPosition.valueOf(sourceReceptacleType.getPosition());
+            VesselPosition sourceVesselPosition = VesselPosition.getByName(sourceReceptacleType.getPosition());
 
             Set<SampleInstanceV2> sampleInstances = sourceLabVessel.getContainerRole().getSampleInstancesAtPositionV2(
                     sourceVesselPosition);
@@ -197,7 +197,7 @@ public class BSPRestSender implements Serializable {
 
         // Loop through the cherry picks to add in any sources and note the destinations that need to be removed from the positionMap afterwards.
         for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
-            VesselPosition sourceVesselPosition = VesselPosition.valueOf(cherryPickSourceType.getWell());
+            VesselPosition sourceVesselPosition = VesselPosition.getByName(cherryPickSourceType.getWell());
             // If the source position is in the list of adding, then add the cherry pick.
             if (cherryPickSourcesToAdd.contains(sourceVesselPosition)) {
                 atLeastOneTransfer = true;
