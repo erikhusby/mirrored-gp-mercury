@@ -97,8 +97,10 @@ public class InfiniumVesselTraversalEvaluator extends CustomTraversalEvaluator {
                                     }
                                 }
                             } else {
-                                // todo jmt sections
-                                infiniumVessels.add(dnaPlate.getVesselAtPosition(rack.getContainerRole().getPositionOfVessel(startingVessel)));
+                                VesselPosition sourcePos = rack.getContainerRole().getPositionOfVessel(startingVessel);
+                                VesselPosition targetPos = sectionTransfer.getTargetSection().getWells().get(
+                                        sectionTransfer.getSourceSection().getWells().indexOf(sourcePos));
+                                infiniumVessels.add(dnaPlate.getVesselAtPosition(targetPos));
                             }
                             found = true;
                         }
