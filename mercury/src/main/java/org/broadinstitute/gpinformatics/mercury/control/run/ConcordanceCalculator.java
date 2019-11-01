@@ -19,7 +19,6 @@ import picard.fingerprint.HaplotypeMap;
 import picard.fingerprint.MatchResults;
 
 import javax.enterprise.context.Dependent;
-import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -49,12 +48,40 @@ public class ConcordanceCalculator {
         ref = ReferenceSequenceFileFactory.getReferenceSequenceFile(reference);
     }
 
+    public double calculateMatrixLodScore(Map<Fingerprint, picard.fingerprint.Fingerprint> vcfsMap,
+                                          Fingerprint observed, Fingerprint expected) {
+
+        if (!vcfsMap.containsKey(observed)) {
+            picard.fingerprint.Fingerprint observedFp = getFingerprint(observed,
+                    observed.getMercurySample().getSampleKey());
+            vcfsMap.put(observed, observedFp);
+        }
+        if (!vcfsMap.containsKey(expected)) {
+            picard.fingerprint.Fingerprint expectedFp = getFingerprint(expected,
+                    expected.getMercurySample().getSampleKey());
+            vcfsMap.put(expected, expectedFp);
+        }
+
+        return mercuryToPicardFp(vcfsMap.get(observed), vcfsMap.get(expected));
+    }
+
     public double calculateLodScore(Fingerprint observedFingerprint, Fingerprint expectedFingerprint) {
         picard.fingerprint.Fingerprint observedFp = getFingerprint(observedFingerprint,
                 observedFingerprint.getMercurySample().getSampleKey());
         picard.fingerprint.Fingerprint expectedFp = getFingerprint(expectedFingerprint,
                 expectedFingerprint.getMercurySample().getSampleKey());
 
+        try {
+            Files.delete(observedFp.getSource());
+            Files.delete(expectedFp.getSource());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return mercuryToPicardFp(observedFp, expectedFp);
+    }
+
+    public double mercuryToPicardFp(picard.fingerprint.Fingerprint observedFp, picard.fingerprint.Fingerprint expectedFp) {
         FingerprintChecker fingerprintChecker = new FingerprintChecker(haplotypes);
         Map<String, picard.fingerprint.Fingerprint> mapSampleToObservedFp =
                 fingerprintChecker.loadFingerprints(observedFp.getSource(), observedFp.getSample());
@@ -63,20 +90,15 @@ public class ConcordanceCalculator {
 
         picard.fingerprint.Fingerprint observedFp1 = mapSampleToObservedFp.get(observedFp.getSample());
         picard.fingerprint.Fingerprint expectedFp1 = mapSampleToExpectedFp.get(expectedFp.getSample());
-        MatchResults matchResults = FingerprintChecker.calculateMatchResults( observedFp1, expectedFp1);
-        try {
-            Files.delete(observedFp1.getSource());
-            Files.delete(expectedFp1.getSource());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        MatchResults matchResults = FingerprintChecker.calculateMatchResults(observedFp1, expectedFp1);
         return matchResults.getLOD();
     }
 
     public double calculateHapMapConcordance(Fingerprint fingerprint, Control control) {
         MercurySample concordanceMercurySample = control.getConcordanceMercurySample();
         if (concordanceMercurySample == null) {
-            throw new RuntimeException("No concordance sample configured for " + control.getCollaboratorParticipantId());
+            throw new RuntimeException(
+                    "No concordance sample configured for " + control.getCollaboratorParticipantId());
         }
         // todo jmt most recent passed
         Fingerprint controlFp = concordanceMercurySample.getFingerprints().iterator().next();

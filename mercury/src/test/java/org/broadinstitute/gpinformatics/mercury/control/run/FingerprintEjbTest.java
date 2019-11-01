@@ -87,13 +87,18 @@ public class FingerprintEjbTest extends Arquillian {
             for (Cell cell : row) {
                 short lastCellNum = row.getLastCellNum();
                 System.out.println(lastCellNum);
-                // Skip first, assert rest
-                if (row.getRowNum() == 0) {
-                    if (cell.getColumnIndex() != 0) {
+                if (row.getRowNum() == 1) {
+                    if (cell.getColumnIndex() > 1) {
                         Assert.assertEquals(true, smid.contains(cell.getStringCellValue()));
                     }
-                } else if (cell.getColumnIndex() != 0) {
+                } else if (row.getRowNum() > 1 && cell.getColumnIndex() > 1) {
                     Assert.assertNotNull(cell.getNumericCellValue());
+                    if (cell.getColumnIndex() == 2 && row.getRowNum() == 2) {
+                        Assert.assertEquals(78.63, cell.getNumericCellValue());
+                    }
+                    if (cell.getColumnIndex() == 3 && row.getRowNum() == 3) {
+                        Assert.assertEquals(38.51, cell.getNumericCellValue());
+                    }
                 }
             }
         }

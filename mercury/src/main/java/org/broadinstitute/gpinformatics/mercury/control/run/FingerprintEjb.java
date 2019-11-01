@@ -2,7 +2,10 @@ package org.broadinstitute.gpinformatics.mercury.control.run;
 
 import com.google.common.collect.Multimap;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Color;
 import org.apache.poi.ss.usermodel.ComparisonOperator;
 import org.apache.poi.ss.usermodel.ConditionalFormattingRule;
 import org.apache.poi.ss.usermodel.IndexedColors;
@@ -12,6 +15,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.SheetConditionalFormatting;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.broadinstitute.bsp.client.search.SearchItem;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
@@ -28,7 +32,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import java.io.IOException;
 import java.math.RoundingMode;
+import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,6 +50,7 @@ import java.util.stream.Collectors;
 @Stateful
 @RequestScoped
 public class FingerprintEjb {
+    private static final Log log = LogFactory.getLog(FingerprintEjb.class);
 
     @Inject
     private MercurySampleDao mercurySampleDao;
@@ -90,7 +97,8 @@ public class FingerprintEjb {
         }
 
         ConcordanceCalculator concordanceCalculator = new ConcordanceCalculator();
-        DecimalFormat df = new DecimalFormat("##.####");
+        Map<Fingerprint, picard.fingerprint.Fingerprint> vcfsMap = new HashMap<>();
+        DecimalFormat df = new DecimalFormat("##.##");
         df.setRoundingMode(RoundingMode.HALF_UP);
 
         for (Fingerprint fingerprint : fingerprints) {
@@ -100,7 +108,8 @@ public class FingerprintEjb {
                 fluiLodCells[rowIndex][1] = fingerprint.getMercurySample().getSampleKey();
                 for (Fingerprint fingerprint1 : fingerprints) {
                     if (mapFpTest.get(fingerprint1)) {
-                        double lodScore = concordanceCalculator.calculateLodScore(fingerprint, fingerprint1);
+                        double lodScore =
+                                concordanceCalculator.calculateMatrixLodScore(vcfsMap, fingerprint, fingerprint1);
                         fluiLodCells[rowIndex][colIndex] = String.valueOf(df.format(lodScore));
                         ++colIndex;
                     }
@@ -108,6 +117,15 @@ public class FingerprintEjb {
                 ++rowIndex;
             }
         }
+
+        for (picard.fingerprint.Fingerprint picardFp : vcfsMap.values()) {
+            try {
+                Files.delete(picardFp.getSource());
+            } catch (IOException e) {
+                log.error("Failed to delete file: " + picardFp.getSource(), e);
+            }
+        }
+
         concordanceCalculator.done();
 
         String[] sheetNames = {"Fluidigm Matrix"};
@@ -141,7 +159,8 @@ public class FingerprintEjb {
 
         ConditionalFormattingRule negativeRule = sheetCF.createConditionalFormattingRule(ComparisonOperator.LT, "-3");
         PatternFormatting negativeFill = negativeRule.createPatternFormatting();
-        negativeFill.setFillBackgroundColor(IndexedColors.CORAL.index);
+        Color roseQuartz = new XSSFColor(java.awt.Color.decode("#FABEC0"));
+        negativeFill.setFillBackgroundColor(roseQuartz);
         negativeFill.setFillPattern(PatternFormatting.SOLID_FOREGROUND);
 
         ConditionalFormattingRule[] cfRules = new ConditionalFormattingRule[]{positiveRule, negativeRule};
