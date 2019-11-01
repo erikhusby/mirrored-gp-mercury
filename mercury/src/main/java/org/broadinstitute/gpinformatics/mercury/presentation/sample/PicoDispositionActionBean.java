@@ -124,7 +124,9 @@ public class PicoDispositionActionBean extends CoreActionBean {
     }
 
     /**
-     * Build simple JSON text to display in a DataTable
+     * Build simple JSON text: <br/>
+     * If no errors, an array of ListItem elements to display in a DataTable <br/>
+     * If validation errors, a single 'errors' property with an array of error messages
      */
     public String getListItemsJson() {
         if (listItems == null) {
