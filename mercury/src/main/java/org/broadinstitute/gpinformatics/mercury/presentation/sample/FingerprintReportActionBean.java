@@ -38,11 +38,9 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 
 @UrlBinding(value = FingerprintReportActionBean.ACTIONBEAN_URL_BININDING)
@@ -74,7 +72,6 @@ public class FingerprintReportActionBean extends CoreActionBean {
     private List<Fingerprint> fingerprints = new ArrayList<>();
     private Map<String, String> mapLodScoreToFingerprint = new HashMap<>();
     private Map<String, MercurySample> mapSmidToMercurySample = new HashMap<>();
-    private List<String> snpList = new ArrayList<>();
 
 
     @DefaultHandler
@@ -278,7 +275,6 @@ public class FingerprintReportActionBean extends CoreActionBean {
     public String formatDate(Date date) {
         return DateUtils.getDate(date);
     }
-
 
     public String getSampleId() {
         return sampleId;

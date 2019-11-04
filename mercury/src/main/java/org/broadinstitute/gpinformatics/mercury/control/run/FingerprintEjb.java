@@ -109,7 +109,7 @@ public class FingerprintEjb {
                 for (Fingerprint fingerprint1 : fingerprints) {
                     if (mapFpTest.get(fingerprint1)) {
                         double lodScore =
-                                concordanceCalculator.calculateMatrixLodScore(vcfsMap, fingerprint, fingerprint1);
+                                concordanceCalculator.calculateLodScoreMap(vcfsMap, fingerprint, fingerprint1);
                         fluiLodCells[rowIndex][colIndex] = String.valueOf(df.format(lodScore));
                         ++colIndex;
                     }

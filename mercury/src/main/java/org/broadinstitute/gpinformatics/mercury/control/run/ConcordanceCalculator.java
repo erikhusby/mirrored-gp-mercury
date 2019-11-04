@@ -48,8 +48,8 @@ public class ConcordanceCalculator {
         ref = ReferenceSequenceFileFactory.getReferenceSequenceFile(reference);
     }
 
-    public double calculateMatrixLodScore(Map<Fingerprint, picard.fingerprint.Fingerprint> vcfsMap,
-                                          Fingerprint observed, Fingerprint expected) {
+    public double calculateLodScoreMap(Map<Fingerprint, picard.fingerprint.Fingerprint> vcfsMap,
+                                       Fingerprint observed, Fingerprint expected) {
 
         if (!vcfsMap.containsKey(observed)) {
             picard.fingerprint.Fingerprint observedFp = getFingerprint(observed,
@@ -71,6 +71,8 @@ public class ConcordanceCalculator {
         picard.fingerprint.Fingerprint expectedFp = getFingerprint(expectedFingerprint,
                 expectedFingerprint.getMercurySample().getSampleKey());
 
+        double lod = mercuryToPicardFp(observedFp, expectedFp);
+
         try {
             Files.delete(observedFp.getSource());
             Files.delete(expectedFp.getSource());
@@ -78,10 +80,11 @@ public class ConcordanceCalculator {
             throw new RuntimeException(e);
         }
 
-        return mercuryToPicardFp(observedFp, expectedFp);
+        return lod;
     }
 
-    public double mercuryToPicardFp(picard.fingerprint.Fingerprint observedFp, picard.fingerprint.Fingerprint expectedFp) {
+    public double mercuryToPicardFp(picard.fingerprint.Fingerprint observedFp,
+                                    picard.fingerprint.Fingerprint expectedFp) {
         FingerprintChecker fingerprintChecker = new FingerprintChecker(haplotypes);
         Map<String, picard.fingerprint.Fingerprint> mapSampleToObservedFp =
                 fingerprintChecker.loadFingerprints(observedFp.getSource(), observedFp.getSample());
