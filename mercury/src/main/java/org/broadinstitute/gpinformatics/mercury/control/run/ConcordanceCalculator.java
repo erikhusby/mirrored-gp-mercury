@@ -31,8 +31,23 @@ public class ConcordanceCalculator {
 
     private static final String REPO = "C:\\java\\m2-repo\\";
 
+    public enum Comparison {
+        ONE_TO_ONE("OneToOne"),
+        MATRIX("Matrix");
+
+        private final String displayName;
+
+        Comparison(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
+
     public List<Triple<String, String, Double>> calculateLodScores(List<Fingerprint> observedFps,
-            List<Fingerprint> expectedFps) {
+            List<Fingerprint> expectedFps, Comparison comparison) {
         List<String> commands = new ArrayList<>();
         commands.add(System.getProperty("java.home") + File.separator + "bin" + File.separator + "java");
 //        commands.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5070");
@@ -44,7 +59,7 @@ public class ConcordanceCalculator {
         try {
             ProcessBuilder processBuilder = new ProcessBuilder(commands);
             Process process = processBuilder.start();
-            writeJson(new OutputStreamWriter(process.getOutputStream()), observedFps, expectedFps);
+            writeJson(new OutputStreamWriter(process.getOutputStream()), observedFps, expectedFps, comparison);
             // todo jmt find a way to monitor stderr without deadlocking on stdin
 /*
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
@@ -75,12 +90,13 @@ public class ConcordanceCalculator {
         return lodScores;
     }
 
-    private void writeJson(Writer writer, List<Fingerprint> observedFps, List<Fingerprint> expectedFps) {
+    private void writeJson(Writer writer, List<Fingerprint> observedFps, List<Fingerprint> expectedFps,
+            Comparison comparison) {
         try {
             JSONWriter jsonWriter = new JSONWriter(writer);
 
             jsonWriter.object();
-            jsonWriter.key("comparison").value("Matrix");
+            jsonWriter.key("comparison").value(comparison.getDisplayName());
 
             jsonWriter.key("observedFingerprints");
             jsonWriter.array();
@@ -135,7 +151,7 @@ public class ConcordanceCalculator {
 
     public double calculateLodScore(Fingerprint observedFingerprint, Fingerprint expectedFingerprint) {
         return calculateLodScores(Collections.singletonList(observedFingerprint),
-                Collections.singletonList(expectedFingerprint)).get(0).getRight();
+                Collections.singletonList(expectedFingerprint), Comparison.ONE_TO_ONE).get(0).getRight();
     }
 
     public double calculateHapMapConcordance(Fingerprint fingerprint, Control control) {
