@@ -665,6 +665,59 @@ public class LabEventFactory implements Serializable {
                     ancillaryTargetVessel,
                     labEvent));
         }
+
+        // If the event is set to remove the destination volume for a cherry pick from it's source, do the following.
+        if (labEvent.getLabEventType().removeDestVolFromSource()) {
+
+            // Map of container barcode to map of (source position) to destination volume to remove.
+            Map<String, Map<String, BigDecimal>> mapOfSourceContainerToSourceWellAndDestinationVolRemoval = new HashMap<>();
+            // Map of destination containers to well position and volume being removed.
+            Map<String, Map<String, BigDecimal>> mapOfDestContainerBarcodeToPositionMap = new HashMap<>();
+
+            // For each destination we need to be able to get the volume we're removing.
+            for (PositionMapType positionMapType : plateCherryPickEvent.getPositionMap()) {
+                Map<String, BigDecimal> mapOfDestPosToVol = new HashMap<>();
+                for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
+                    mapOfDestPosToVol.put(receptacleType.getPosition(), receptacleType.getVolume());
+                }
+                mapOfDestContainerBarcodeToPositionMap.put(positionMapType.getBarcode(), mapOfDestPosToVol);
+            }
+
+            for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
+                String sourceContainerBarcode = cherryPickSourceType.getBarcode();
+                String sourceWell = cherryPickSourceType.getWell();
+
+                String destContainerBarcode = cherryPickSourceType.getDestinationBarcode();
+                String destinationWell = cherryPickSourceType.getDestinationWell();
+
+                Map<String, BigDecimal> sourcePosToDestVolRemoving =
+                        mapOfSourceContainerToSourceWellAndDestinationVolRemoval.get(sourceContainerBarcode);
+
+                BigDecimal destVolToRemove = mapOfDestContainerBarcodeToPositionMap.get(destContainerBarcode).get(destinationWell);
+
+                if (sourcePosToDestVolRemoving == null) {
+                    sourcePosToDestVolRemoving = new HashMap<>();
+                    sourcePosToDestVolRemoving.put(sourceWell, destVolToRemove);
+                } else {
+                    sourcePosToDestVolRemoving.put(sourceWell, sourcePosToDestVolRemoving.get(sourceWell).add(destVolToRemove));
+                }
+
+                mapOfSourceContainerToSourceWellAndDestinationVolRemoval.put(sourceContainerBarcode, sourcePosToDestVolRemoving);
+                // next find source container and vessel, then subtract volume
+                //use process to find source vessels to do math on accordingly.
+
+                // attempting to simply update the source right away.
+                TubeFormation sourceTubeFormation = mapBarcodeToTubeFormation.get(sourceContainerBarcode);
+                Map<String, BigDecimal> mapOfSourceWellsToDestVolRemoved =
+                        mapOfSourceContainerToSourceWellAndDestinationVolRemoval.get(sourceContainerBarcode);
+                BarcodedTube sourceVessel =
+                        sourceTubeFormation.getContainerRole().getVesselAtPosition(VesselPosition.valueOf(sourceWell));
+                BigDecimal destVolToRemoveFromSource = mapOfSourceWellsToDestVolRemoved.get(sourceWell);
+                BigDecimal sourceVolume = sourceVessel.getVolume() == null ? BigDecimal.ZERO : sourceVessel.getVolume();
+                BigDecimal finalSourceVolume = sourceVolume.subtract(destVolToRemoveFromSource);
+                sourceVessel.setVolume((finalSourceVolume.doubleValue() < 0.0) ? BigDecimal.ZERO : finalSourceVolume);
+            }
+        }
         return labEvent;
     }
 
@@ -1268,30 +1321,32 @@ public class LabEventFactory implements Serializable {
         if (labEvent.getLabEventType().getVolumeConcUpdate() == LabEventType.VolumeConcUpdate.BSP_AND_MERCURY) {
             MercurySample mercurySample = extractSample(barcodedTube.getSampleInstancesV2());
             if (mercurySample == null || mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
-                Boolean terminateDepleted = labEvent.getLabEventType().depleteSources();
-                // At least one of the values must be set or the tube(s) must sources that are set to be depleted in
+                // Check to see if the event has a metadata flag to apply to all daughters.
+                // At least one of the values must be set or the tube(s) must be sources that are set to be depleted in
                 // order to incur the cost of calling BSP.
+
+                // Check the source receptacle type and event metadata to see if it has source specific manipulation set.
+                Boolean terminateDepleted = labEvent.getLabEventType().depleteSources() ||
+                                            getSourceMetadataManipulationType(receptacleType, LabEventType.SourceHandling.TERMINATE_DEPLETED);
+                Boolean depleteSource = labEvent.getLabEventType().depleteSources() ||
+                                        getSourceMetadataManipulationType(receptacleType, LabEventType.SourceHandling.DEPLETE);
+
                 if ((receptacleType.getVolume() != null || receptacleType.getConcentration() != null ||
-                        receptacleType.getReceptacleWeight() != null) || (areSourceTubes && terminateDepleted)){
+                        receptacleType.getReceptacleWeight() != null) || (areSourceTubes && (terminateDepleted || depleteSource))){
                     // If this is setting quantities for sources, check to see if we need to deplete the
                     // sources or possibly flag for termination on depletion.
                     if (areSourceTubes) {
                         // If the flag is set to deplete sources, then we need to set the volume to zero.
-                        if (labEvent.getLabEventType().depleteSources()) {
+                        if (depleteSource) {
                             receptacleType.setVolume(BigDecimal.ZERO);
+                            // If we're depleting the source, update Mercury source volume as well.
+                            barcodedTube.setVolume(BigDecimal.ZERO);
                         }
 
                         // If the lab event type has a flag set for 'TERMINATE_DEPLETED' then check to see if the
                         // individual source sample is set for terminating on depleted.
                         if (labEvent.getLabEventType().terminateDepletedSources()) {
                             terminateDepleted = true;   // Default to true, then check for the individual metadata flag
-                            for (MetadataType metadataType : receptacleType.getMetadata()) {
-                                // If the individual tube has the metadata flag set, then use the value set.
-                                if (metadataType.getName().compareToIgnoreCase(
-                                        LabEventType.SourceHandling.TERMINATE_DEPLETED.getDisplayName()) == 0) {
-                                    terminateDepleted = Boolean.valueOf(metadataType.getValue());
-                                }
-                            }
                         }
                     }
 
@@ -1308,6 +1363,26 @@ public class LabEventFactory implements Serializable {
                 }
             }
         }
+    }
+
+    /**
+     * Given a {@link ReceptacleType} look through it's {@link MetadataType} to see if it has the
+     * {@link org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.SourceHandling} passed into the method.
+     *
+     * @param receptacleType ReceptacleType object representing a tube/well position in a transfer.
+     * @param sourceHandling SourceHandling object that determines what type of action we're looking for.
+     * @return Returns false if the passed SourceHandling isn't found in the ReceptacleType metadata or the boolean value of the
+     * metadatatype returned.
+     */
+    private Boolean getSourceMetadataManipulationType(ReceptacleType receptacleType,
+                                                      LabEventType.SourceHandling sourceHandling) {
+        for (MetadataType metadataType : receptacleType.getMetadata()) {
+            // If the individual tube has the metadata flag set, then use the value set.
+            if (metadataType.getName().compareToIgnoreCase(sourceHandling.getDisplayName()) == 0) {
+                return Boolean.valueOf(metadataType.getValue());
+            }
+        }
+        return false;
     }
 
     @DaoFree

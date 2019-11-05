@@ -12,6 +12,7 @@ plate / rack.
 <%--@elvariable id="positionMap" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType"--%>
 <%--@elvariable id="actionBean" type="org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTransferActionBean"--%>
 <%--@elvariable id="vesselTypeGeometry" type="org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry"--%>
+<%--@elvariable id="selectedTargetChildReceptacleType" type="java.lang.String"--%>
 <%--@elvariable id="section" type="org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection"--%>
 <%--@elvariable id="stationEventIndex" type="java.lang.Integer"--%>
 <%--@elvariable id="source" type="java.lang.Boolean"--%>
@@ -76,7 +77,6 @@ plate / rack.
             <label for="updateAllDestinationVolumes">Update All Destination Volumes:</label><input type="text" id="updateAllDestinationVolumes"/>
         </p>
     </c:if>
-    <p class="control-group">
         <label>Container Type </label>${plate[0].physType}
         <input type="hidden" name="stationEvents[${stationEventIndex}].${source ? 'sourcePlate[0]' : 'plate[0]'}.physType"
            value="${plate[0].physType}"/>
@@ -87,9 +87,8 @@ plate / rack.
                value="${plate[0].barcode}" class="container-barcode ${vesselTypeGeometry.barcoded ? "clearable" : ""} barcode unique" ${stationEventIndex == 0 ? "required" : ""}/>
 
         <c:if test="${!source}">
-            <label>Tube Type</label>${actionBean.selectedTargetChildReceptacleType}
+            <label>Tube Type</label>${selectedTargetChildReceptacleType}
         </c:if>
-    </p>
     <c:if test="${stationEvent.class.simpleName == 'PlateCherryPickEvent'}">
         <div style="display: none;">
         <stripes:label for="${source ? 'src' : 'dst'}Section">Section</stripes:label>
@@ -174,7 +173,7 @@ plate / rack.
                                    name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap[0]' : 'positionMap[0]'}.receptacle[${receptacleIndex}].position"
                                    value="${geometry.vesselPositions[receptacleIndex]}"/>
 
-                            <c:set var="targetTubeReceptacleType" value="${source ? actionBean.labEventTypeByIndex(stationEventIndex).manualTransferDetails.sourceBarcodedTubeType : actionBean.selectedTargetChildReceptacleType != null ? actionBean.selectedTargetChildReceptacleType : actionBean.labEventTypeByIndex(stationEventIndex).manualTransferDetails.targetBarcodedTubeType}"/>
+                            <c:set var="targetTubeReceptacleType" value="${source ? actionBean.labEventTypeByIndex(stationEventIndex).manualTransferDetails.sourceBarcodedTubeType : selectedTargetChildReceptacleType != null ? selectedTargetChildReceptacleType : actionBean.labEventTypeByIndex(stationEventIndex).manualTransferDetails.targetBarcodedTubeType}"/>
 
                             <input type="hidden"
                                     name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}[0].receptacle[${receptacleIndex}].receptacleType"
