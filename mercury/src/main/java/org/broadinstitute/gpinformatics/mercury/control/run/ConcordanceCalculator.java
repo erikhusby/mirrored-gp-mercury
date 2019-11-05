@@ -14,7 +14,6 @@ import org.json.JSONTokener;
 import org.json.JSONWriter;
 
 import javax.enterprise.context.Dependent;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -46,11 +45,14 @@ public class ConcordanceCalculator {
             ProcessBuilder processBuilder = new ProcessBuilder(commands);
             Process process = processBuilder.start();
             writeJson(new OutputStreamWriter(process.getOutputStream()), observedFps, expectedFps);
+            // todo jmt find a way to monitor stderr without deadlocking on stdin
+/*
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
             String line = bufferedReader.readLine ();
             if (line!= null) {
                 throw new RuntimeException(line);
             }
+*/
             return readJson(new JSONTokener(new InputStreamReader(process.getInputStream())));
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -114,11 +116,13 @@ public class ConcordanceCalculator {
 
         jsonWriter.key("calls").array();
         for (FpGenotype fpGenotype : fingerprint.getFpGenotypesOrdered()) {
-            jsonWriter.object();
-            jsonWriter.key("rsid").value(fpGenotype.getSnp().getRsId());
-            jsonWriter.key("genotype").value(fpGenotype.getGenotype());
-            jsonWriter.key("callConfidence").value(fpGenotype.getCallConfidence());
-            jsonWriter.endObject();
+            if (fpGenotype != null) {
+                jsonWriter.object();
+                jsonWriter.key("rsid").value(fpGenotype.getSnp().getRsId());
+                jsonWriter.key("genotype").value(fpGenotype.getGenotype());
+                jsonWriter.key("callConfidence").value(fpGenotype.getCallConfidence());
+                jsonWriter.endObject();
+            }
         }
 
         jsonWriter.endArray();
