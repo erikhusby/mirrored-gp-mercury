@@ -1,16 +1,28 @@
--- GPLIM-6212 requires indexes on array_process_flow table
-DROP INDEX IDX_ARRAY_PROCESS_FLOW_PDO_ETL;
+-- GPLIM-6069 Add event operator
+ALTER TABLE MERCURYDW.IM_EVENT_FACT
+    ADD OPERATOR VARCHAR2(32);
+ALTER TABLE MERCURYDW.EVENT_FACT
+    ADD OPERATOR VARCHAR2(32);
 
-CREATE INDEX IDX_ARRAY_PROCESS_FLOW_ETL
-ON ARRAY_PROCESS_FLOW( BATCH_NAME, LCSET_SAMPLE_NAME );
+CREATE TABLE MERCURYDW.IM_EVENT_METADATA
+(
+    LINE_NUMBER   NUMBER(9, 0),
+    ETL_DATE      DATE,
+    IS_DELETE     CHAR,
+    METADATA_ID   NUMBER(19, 0),
+    LAB_EVENT_ID  NUMBER(19, 0),
+    METADATA_TYPE VARCHAR2(32),
+    VALUE         VARCHAR2(255)
+);
 
--- GPLIM-4108 add column for sap delivery document
-alter table ledger_entry add sap_delivery_document varchar2(255);
-alter table im_ledger_entry add sap_delivery_document varchar2(255);
+CREATE TABLE MERCURYDW.EVENT_METADATA
+(
+    METADATA_ID   NUMBER(19, 0) NOT NULL,
+    LAB_EVENT_ID  NUMBER(19, 0) NOT NULL,
+    METADATA_TYPE VARCHAR2(32)  NOT NULL,
+    VALUE         VARCHAR2(255),
+    ETL_DATE      DATE          NOT NULL
+);
 
-alter table ledger_entry add product_id numeric(19);
-alter table im_ledger_entry add product_id numeric(19);
-
--- GPLIM-6508 add column for order type
-alter table product_order add order_type varchar2(255);
-alter table im_product_order add order_type varchar2(255);
+CREATE INDEX IDX_EVENT_METADATA
+    ON MERCURYDW.EVENT_METADATA (METADATA_ID);
