@@ -2279,4 +2279,40 @@ public class LabEventFixupTest extends Arquillian {
         labEventDao.flush();
         utx.commit();
     }
+
+    /**
+     * Overrides the LCSET for an event.
+     * For better reusability parameters come from the file src/test/resources/testdata/ManualOverrideLcset.txt
+     * An example of the file contents:
+     * SUPPORT-1234 Fixup LCSET inference.
+     * 1234567 LCSET-1234
+     * ...
+     */
+    @Test(enabled = false)
+    public void manualOverrideLcset() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ManualOverrideLcset.txt"));
+        Assert.assertTrue(lines.size() > 1);
+
+        String reason = lines.get(0);
+        Assert.assertTrue(StringUtils.isNotBlank(reason));
+
+        for (String line : lines.subList(1, lines.size())) {
+            String[] fields = line.split("\\s");
+            Assert.assertEquals(fields.length, 2, "Cannot parse '" + line + "'.");
+            Long labEventId = Long.parseLong(fields[0]);
+            String lcset = fields[1];
+
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, labEventId);
+            Assert.assertNotNull(labEvent);
+            LabBatch labBatch = labBatchDao.findByName(lcset);
+            Assert.assertNotNull(labBatch);
+            System.out.println("Setting lab event " + labEventId + " to " + lcset);
+            labEvent.setManualOverrideLcSet(labBatch);
+        }
+        labEventDao.persist(new FixupCommentary(reason));
+        labEventDao.flush();
+        utx.commit();
+    }
 }
