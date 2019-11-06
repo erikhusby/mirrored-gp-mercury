@@ -15,6 +15,7 @@ public class TransitionFields {
     private List<String> operations;
     private List<AllowedValues> allowedValues;
     private String autoCompleteUrl;
+    private String fieldId;
 
     public TransitionFields() {
     }
@@ -66,4 +67,8 @@ public class TransitionFields {
     public void setAutoCompleteUrl(String autoCompleteUrl) {
         this.autoCompleteUrl = autoCompleteUrl;
     }
+
+    public String getFieldId() { return fieldId; }
+
+    public void setFieldId(String fieldId) { this.fieldId = fieldId; }
 }
