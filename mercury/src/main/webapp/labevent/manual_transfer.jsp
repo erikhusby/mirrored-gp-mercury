@@ -533,6 +533,11 @@
                                                         <c:set var="vesselTypeGeometry" value="${actionBean.manualTransferDetails.targetVesselTypeGeometry}" scope="request"/>
                                                     </c:otherwise>
                                                 </c:choose>
+                                                <c:choose>
+                                                    <c:when test="${not empty actionBean.selectedTargetChildReceptacleType}">
+                                                        <c:set var="selectedTargetChildReceptacleType" value="${actionBean.selectedTargetChildReceptacleType}" scope="request"/>
+                                                    </c:when>
+                                                </c:choose>
 
                                                 <c:choose>
                                                     <c:when test = "${eventType.equals('StripTubeBTransfer')}">
