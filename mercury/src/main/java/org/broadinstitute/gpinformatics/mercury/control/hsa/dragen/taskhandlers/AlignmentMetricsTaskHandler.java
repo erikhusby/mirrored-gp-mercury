@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.metrics.DemultiplexS
 import org.broadinstitute.gpinformatics.mercury.control.hsa.metrics.DragenReplayInfo;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerContext;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.ShellUtils;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AggregationState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AlignmentState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
@@ -31,9 +32,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -46,7 +50,7 @@ public class AlignmentMetricsTaskHandler extends AbstractMetricsTaskHandler {
 
     // TODO update if base file location changes
     private static final Pattern RUN_NAME_PATTERN =
-            Pattern.compile("/seq/illumina/proc/SL-[A-Z]{3}/(.*)/dragen/(.*)/fastq/.*");
+            Pattern.compile("/seq/illumina/proc/SL-[A-Z]{3}/(.*)/dragen/(.*)/fastq.*");
 
     @Override
     public void handleTask(Task task, SchedulerContext schedulerContext) {
@@ -54,120 +58,122 @@ public class AlignmentMetricsTaskHandler extends AbstractMetricsTaskHandler {
 
         State state = alignmentMetricsTask.getState();
         if (!OrmUtil.proxySafeIsInstance(state, AlignmentState.class)) {
-            throw new RuntimeException("Expect only a alignment state for an alignment metrics task.");
+            throw new RuntimeException("Expect only an alignment state for an alignment metrics task.");
         }
-        AlignmentState alignmentState = OrmUtil.proxySafeCast(state, AlignmentState.class);
 
-        List<AlignmentTask> alignmentTasks = alignmentState.getTasks().stream()
+        List<AlignmentTask> alignmentTasks = state.getTasks().stream()
                 .filter(t -> t.getStatus() == Status.COMPLETE && OrmUtil.proxySafeIsInstance(t, AlignmentTask.class))
                 .map(t -> OrmUtil.proxySafeCast(t, AlignmentTask.class))
                 .collect(Collectors.toList());
 
         MessageCollection messageCollection = new MessageCollection();
+        boolean failed = false;
         for (AlignmentTask alignmentTask: alignmentTasks) {
             try {
-                // TODO needs to be 4 separate tasks to handle retries
                 String commandLineArgument = alignmentTask.getCommandLineArgument();
                 String outputDirectoryPath = alignmentTask.getOutputDir().getPath();
-                if (outputDirectoryPath == null) {
-                    task.setErrorMessage("Failed to parse output directory from task " + alignmentTask);
-                    task.setStatus(Status.FAILED);
-                    continue;
+                parse(alignmentTask, alignmentMetricsTask, outputDirectoryPath, commandLineArgument, messageCollection);
+                if (alignmentMetricsTask.getStatus() != Status.COMPLETE) {
+                    failed = true;
                 }
-
-                File outputDirectory = new File(outputDirectoryPath);
-                if (!outputDirectory.exists()) {
-                    task.setErrorMessage(
-                            "Output directory for task " + alignmentTask + " doesn't exist" + outputDirectory);
-                    task.setStatus(Status.FAILED);
-                    continue;
-                }
-
-                Pair<String, String> runNameDatePair = parseRunNameAndAnalysisDateFromOutputDir(outputDirectory);
-                if (runNameDatePair == null) {
-                    task.setErrorMessage("Failed to parse run name and date from output " + outputDirectory.getPath());
-                    task.setStatus(Status.FAILED);
-                    continue;
-                }
-
-                String outputFilePrefix =  DragenTaskBuilder.parseCommandFromArgument(
-                        DragenTaskBuilder.OUTPUT_FILE_PREFIX, commandLineArgument);
-                if (outputFilePrefix == null) {
-                    task.setErrorMessage("Failed to parse output file prefix from task " + alignmentTask);
-                    task.setStatus(Status.FAILED);
-                    continue;
-                }
-
-                String fastQFilePath = DragenTaskBuilder.parseCommandFromArgument(
-                        DragenTaskBuilder.FASTQ_LIST, commandLineArgument);
-                if (fastQFilePath == null) {
-                    task.setErrorMessage("Failed to parse fastq list file from task " + alignmentTask);
-                    task.setStatus(Status.FAILED);
-                    continue;
-                }
-                File fastQFile = new File(fastQFilePath);
-                if (!fastQFile.exists()) {
-                    task.setErrorMessage("Fastq list file for task " + alignmentTask + " doesn't exist" + outputDirectory);
-                    task.setStatus(Status.FAILED);
-                    continue;
-                }
-
-                File replayJsonFile = new File(outputDirectory, outputFilePrefix + "-replay.json");
-                DragenReplayInfo dragenReplayInfo = null;
-                try (InputStream inputStream = new FileInputStream(replayJsonFile)) {
-                    dragenReplayInfo = new DemultiplexStatsParser().parseReplayInfo(inputStream, messageCollection);
-                } catch (IOException e) {
-                    String errMsg = "Failed to read replay file " + replayJsonFile.getPath();
-                    log.error(errMsg, e);
-                    task.setErrorMessage(errMsg);
-                    task.setStatus(Status.FAILED);
-                    continue;
-                }
-
-                Map<String, String> mapReadGroupToSample = buildMapOfReadGroupToSampleAlias(fastQFile);
-
-                AlignmentStatsParser alignmentStatsParser = new AlignmentStatsParser();
-                AlignmentStatsParser.AlignmentDataFiles alignmentDataFiles = alignmentStatsParser
-                        .parseStats(outputDirectory, outputFilePrefix, dragenReplayInfo, messageCollection,
-                                mapReadGroupToSample, runNameDatePair);
-
-                List<ProcessResult> processResults = new ArrayList<>();
-
-                if (!messageCollection.hasErrors()) {
-                    processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/mapping_run_metrics.ctl",
-                            alignmentDataFiles.getMappingSummaryOutputFile(), alignmentDataFiles.getAlignSummaryLoad()));
-                    processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/mapping_rg_metrics.ctl",
-                            alignmentDataFiles.getMappingMetricsOutputFile(),  alignmentDataFiles.getAlignMetricLoad()));
-                    processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/variant_call_run_metrics.ctl",
-                            alignmentDataFiles.getVcSummaryOutputFile(),  alignmentDataFiles.getVcSummaryMetricLoad()));
-                    processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/variant_call_metrics.ctl",
-                            alignmentDataFiles.getVcMetricsOutputFile(),  alignmentDataFiles.getVcRGMetricLoad()));
-                    boolean failed = false;
-                    for (ProcessResult processResult : processResults) {
-                        if (processResult.getExitValue() != 0) {
-                            failed = true;
-                            if (processResult.hasOutput()) {
-                                log.info(processResult.getOutput().getString());
-                            }
-                        }
-                    }
-
-                    task.setStatus(failed ? Status.FAILED : Status.COMPLETE);
-                } else {
-                    task.setStatus(Status.FAILED);
-                }
-
-                if (task.getStatus() == Status.COMPLETE) {
-                    doCleanup(outputDirectory);
-                }
-
             } catch (Exception e) {
                 String message = "Error processing alignment task metric " + alignmentMetricsTask;
                 log.error(message, e);
-                task.setErrorMessage(message);
-                task.setStatus(Status.FAILED);
+                alignmentMetricsTask.setErrorMessage(message);
+                alignmentMetricsTask.setStatus(Status.FAILED);
             }
         }
+
+        if (failed) {
+            task.setStatus(Status.FAILED);
+        }
+    }
+
+    public void parse(Task task, AlignmentMetricsTask alignmentMetricsTask, String outputDirectoryPath,
+                      String commandLineArgument, MessageCollection messageCollection)
+            throws IOException, TimeoutException, InterruptedException {
+        if (outputDirectoryPath == null) {
+            alignmentMetricsTask.setErrorMessage("Failed to parse output directory from task " + task);
+            alignmentMetricsTask.setStatus(Status.SUSPENDED);
+            return;
+        }
+
+        File outputDirectory = new File(outputDirectoryPath);
+        if (!outputDirectory.exists()) {
+            alignmentMetricsTask.setErrorMessage(
+                    "Output directory for task " + task + " doesn't exist" + outputDirectory);
+            alignmentMetricsTask.setStatus(Status.SUSPENDED);
+            return;
+        }
+
+        Pair<String, String> runNameDatePair = parseRunNameAndAnalysisDateFromOutputDir(outputDirectory);
+        if (runNameDatePair == null) {
+            alignmentMetricsTask.setErrorMessage("Failed to parse run name and date from output " + outputDirectory.getPath());
+            alignmentMetricsTask.setStatus(Status.SUSPENDED);
+            return;
+        }
+
+        String outputFilePrefix =  DragenTaskBuilder.parseCommandFromArgument(
+                DragenTaskBuilder.OUTPUT_FILE_PREFIX, commandLineArgument);
+        if (outputFilePrefix == null) {
+            alignmentMetricsTask.setErrorMessage("Failed to parse output file prefix from task " + task);
+            alignmentMetricsTask.setStatus(Status.SUSPENDED);
+            return;
+        }
+
+        String fastQFilePath = DragenTaskBuilder.parseCommandFromArgument(
+                DragenTaskBuilder.FASTQ_LIST, commandLineArgument);
+        if (fastQFilePath == null) {
+            alignmentMetricsTask.setErrorMessage("Failed to parse fastq list file from task " + task);
+            alignmentMetricsTask.setStatus(Status.SUSPENDED);
+            return;
+        }
+        File fastQFile = new File(fastQFilePath);
+        if (!fastQFile.exists()) {
+            alignmentMetricsTask.setErrorMessage("Fastq list file for task " + task + " doesn't exist" + outputDirectory);
+            alignmentMetricsTask.setStatus(Status.SUSPENDED);
+            return;
+        }
+
+
+        File replayJsonFile = new File(outputDirectory, outputFilePrefix + "-replay.json");
+        DragenReplayInfo dragenReplayInfo = parseReplay(replayJsonFile, messageCollection);
+        if (dragenReplayInfo == null) {
+            String errMsg = "Failed to read replay file " + replayJsonFile.getPath();
+            alignmentMetricsTask.setErrorMessage(errMsg);
+            alignmentMetricsTask.setStatus(Status.SUSPENDED);
+            return;
+        }
+
+        String runName = runNameDatePair.getLeft();
+        String analysisname = runNameDatePair.getRight();
+        AlignmentStatsParser alignmentStatsParser = new AlignmentStatsParser();
+        AlignmentStatsParser.AlignmentDataFiles alignmentDataFiles = alignmentStatsParser
+                .parseFolder(runName, new Date(), analysisname, dragenReplayInfo, outputDirectory,
+                        outputFilePrefix, outputFilePrefix);
+
+        if (messageCollection.hasErrors()) {
+            alignmentMetricsTask.setStatus(Status.SUSPENDED);
+            return;
+        }
+
+        List<ProcessResult> processResults = new ArrayList<>();
+        processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/mapping_run_metrics.ctl",
+                alignmentDataFiles.getMappingSummaryOutputFile(), alignmentDataFiles.getAlignSummaryLoad()));
+
+        processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/variant_call_run_metrics.ctl",
+                alignmentDataFiles.getVcSummaryOutputFile(),  alignmentDataFiles.getVcSummaryMetricLoad()));
+        boolean failed = false;
+        for (ProcessResult processResult : processResults) {
+            if (processResult.getExitValue() != 0) {
+                failed = true;
+                if (processResult.hasOutput()) {
+                    log.info(processResult.getOutput().getString());
+                }
+            }
+        }
+
+        alignmentMetricsTask.setStatus(failed ? Status.FAILED : Status.COMPLETE);
     }
 
     private void doCleanup(File outputDirectory) {

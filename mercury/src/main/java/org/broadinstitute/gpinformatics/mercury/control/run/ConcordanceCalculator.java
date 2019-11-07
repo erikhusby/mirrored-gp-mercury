@@ -12,9 +12,7 @@ import org.apache.commons.lang3.SystemUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.DragenConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FpGenotype;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.presentation.hsa.AlignmentActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.hsa.AggregationActionBean;
 import org.jetbrains.annotations.NotNull;
 import picard.fingerprint.FingerprintChecker;
 import picard.fingerprint.HaplotypeMap;
@@ -46,10 +44,10 @@ public class ConcordanceCalculator {
     private ReferenceSequenceFile ref;
 
     public ConcordanceCalculator() {
-        initReference(AlignmentActionBean.ReferenceGenome.HG19);
+        initReference(AggregationActionBean.ReferenceGenome.HG19);
     }
 
-    public void initReference(AlignmentActionBean.ReferenceGenome referenceGenome) {
+    public void initReference(AggregationActionBean.ReferenceGenome referenceGenome) {
         haplotypes = fetchHaplotypesFile(referenceGenome);
         reference = fetchReferenceFile(referenceGenome);
         ref = ReferenceSequenceFileFactory.getReferenceSequenceFile(reference);
@@ -92,9 +90,14 @@ public class ConcordanceCalculator {
                 fingerprint.getDateGenerated().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime(),
                 Gender.valueOf(fingerprint.getGender().name()), calls));
         for (FpGenotype fpGenotype : fingerprint.getFpGenotypesOrdered()) {
-            calls.add(new Fingerprints.Call(fpGenotype.getSnp().getRsId(),
-                    fpGenotype.getGenotype().equals("--") ? Fingerprints.Genotype.NO_CALL : Fingerprints.Genotype.valueOf(fpGenotype.getGenotype()),
-                    fpGenotype.getCallConfidence().toString(), null,null));
+            if (fpGenotype != null) {
+                String callConfidence =
+                        fpGenotype.getCallConfidence() == null ? null : fpGenotype.getCallConfidence().toString();
+                calls.add(new Fingerprints.Call(fpGenotype.getSnp().getRsId(),
+                        fpGenotype.getGenotype().equals("--") ? Fingerprints.Genotype.NO_CALL :
+                                Fingerprints.Genotype.valueOf(fpGenotype.getGenotype()),
+                        callConfidence, null, null));
+            }
         }
 
         try {
@@ -128,12 +131,12 @@ public class ConcordanceCalculator {
         }
     }
 
-    public HaplotypeMap fetchHaplotypesFile(AlignmentActionBean.ReferenceGenome referenceGenome) {
+    public HaplotypeMap fetchHaplotypesFile(AggregationActionBean.ReferenceGenome referenceGenome) {
         String haplotypeDatabase = convertFilePaths(referenceGenome.getHaplotypeDatabase());
         return new HaplotypeMap(new File(haplotypeDatabase));
     }
 
-    public File fetchReferenceFile(AlignmentActionBean.ReferenceGenome referenceGenome) {
+    public File fetchReferenceFile(AggregationActionBean.ReferenceGenome referenceGenome) {
         return new File(convertFilePaths(referenceGenome.getFasta()));
     }
 

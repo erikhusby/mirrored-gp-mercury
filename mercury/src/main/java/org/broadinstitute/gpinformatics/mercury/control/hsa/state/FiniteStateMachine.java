@@ -85,7 +85,8 @@ public class FiniteStateMachine {
             ctr += state.getTasksWithStatus(Status.SUSPENDED).size();
             ctr += state.getTasksWithStatus(Status.FAILED).size();
             if (state.getExitTask().isPresent()) {
-                if (state.getExitTask().get().getStatus() == Status.SUSPENDED) {
+                if (state.getExitTask().get().getStatus() == Status.SUSPENDED ||
+                    state.getExitTask().get().getStatus() == Status.FAILED) {
                     ctr++;
                 }
             }

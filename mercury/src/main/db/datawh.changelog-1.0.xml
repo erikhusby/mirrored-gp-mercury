@@ -52,9 +52,35 @@
                 <constraints nullable="false" />
             </column>
             <column name="DRAGEN_VERSION" type="VARCHAR2(55)" />
+            <column name="sample_alias" type="VARCHAR2(200)">
+                <constraints nullable="false" />
+            </column>
             <column name="NUM_SAMPLES" type="number(19,0)" />
+            <column name="metric_type" type="VARCHAR2(55)">
+                <constraints nullable="false" />
+            </column>
             <column name="READS_PROCESSED" type="number(19,0)" />
             <column name="CHILD_SAMPLE" type="VARCHAR2(55)" />
+            <column name="total" type="VARCHAR2(55)" />
+            <column name="biallelic" type="number(19,0)" />
+            <column name="multiallelic" type="number(19,0)" />
+            <column name="snps" type="number(19,0)" />
+            <column name="insertions_hom" type="number(19,0)" />
+            <column name="insertions_het" type="number(19,0)" />
+            <column name="deletions_hom" type="number(19,0)" />
+            <column name="deletions_het" type="number(19,0)" />
+            <column name="indels" type="number(19,0)" />
+            <column name="chr_x_number_of_snps" type="number(19,0)" />
+            <column name="chr_y_number_of_snps" type="number(19,0)" />
+            <column name="CHR_X_Y_RATIO" type="number(19,3)" />
+            <column name="snp_transitions" type="number(19,0)" />
+            <column name="snp_tranversions" type="number(19,0)" />
+            <column name="ti_tv_ratio" type="number(19,0)" />
+            <column name="heterozygous" type="number(19,0)" />
+            <column name="homozygous" type="number(19,0)" />
+            <column name="het_hom_ratio" type="number(19,0)" />
+            <column name="in_dbsnp" type="number(19,0)" />
+            <column name="not_in_dbsnp" type="number(19,0)" />
             <column name="VC_RUN_METRIC_ID" type="VARCHAR2(255)">
                 <constraints nullable="false" />
             </column>
@@ -62,42 +88,6 @@
         <addPrimaryKey constraintName="pk_vc_run_metric" tableName="vc_run_metrics"
                        columnNames="VC_RUN_METRIC_ID"/>
         <createSequence schemaName="mercurydw" sequenceName="SEQ_VC_RUN_METRIC" incrementBy="50"/>
-    </changeSet>
-
-    <changeSet id="GPLIM-6242-38" author="jowalsh">
-        <createTable tableName="variant_call_metrics" schemaName="mercurydw">
-            <column name="run_name" type="VARCHAR2(255)">
-                <constraints nullable="false" />
-            </column>
-            <column name="metric_type" type="VARCHAR2(55)">
-                <constraints nullable="false" />
-            </column>
-            <column name="analysis_name" type="VARCHAR2(200)"/>
-            <column name="sample_alias" type="VARCHAR2(200)">
-                <constraints nullable="false" />
-            </column>
-            <column name="run_date" type="timestamp" />
-            <column name="total" type="VARCHAR2(55)" />
-            <column name="biallelic" type="number(19,0)" />
-            <column name="multiallelic" type="number(19,0)" />
-            <column name="snps" type="number(19,0)" />
-            <column name="indels" type="number(19,0)" />
-            <column name="mnps" type="number(19,0)" />
-            <column name="chr_x_number_of_snps" type="number(19,0)" />
-            <column name="chr_y_number_of_snps" type="number(19,0)" />
-            <column name="snp_transitions" type="number(19,0)" />
-            <column name="snp_tranversions" type="number(19,0)" />
-            <column name="heterozygous" type="number(19,0)" />
-            <column name="homozygous" type="number(19,0)" />
-            <column name="in_dbsnp" type="number(19,0)" />
-            <column name="not_in_dbsnp" type="number(19,0)" />
-            <column name="vc_call_metrics_id" type="number(19,0)">
-                <constraints nullable="false" />
-            </column>
-        </createTable>
-        <addPrimaryKey constraintName="pk_variant_call_metrics" tableName="variant_call_metrics"
-                       columnNames="vc_call_metrics_id"/>
-        <createSequence schemaName="mercurydw" sequenceName="SEQ_VC_METRIC" incrementBy="50"/>
     </changeSet>
 
     <changeSet id="GPLIM-6242-39" author="jowalsh">
@@ -109,7 +99,10 @@
                 <constraints nullable="false" />
             </column>
             <column name="analysis_node" type="VARCHAR2(55)" />
+            <column name="analysis_name" type="VARCHAR2(55)" />
             <column name="dragen_version" type="VARCHAR2(55)" />
+            <column name="sample_alias" type="VARCHAR2(55)" />
+            <column name="read_group" type="VARCHAR2(55)" />
             <column name="total_input_reads" type="number(19,0)" />
             <column name="num_dup_marked_reads" type="number(19,0)" />
             <column name="num_dup_marked_removed" type="VARCHAR2(55)" />
@@ -118,50 +111,83 @@
             <column name="num_reads_wo_mate_sequenced" type="VARCHAR2(55)" />
             <column name="num_qc_failed_reads" type="number(19,0)" />
             <column name="num_mapped_reads" type="number(19,0)" />
+            <column name="num_mapped_reads_r1" type="number(19,0)" />
+            <column name="num_mapped_reads_r2" type="number(19,0)" />
             <column name="num_unq_mapped_reads" type="number(19,0)" />
             <column name="num_unmapped_reads" type="number(19,0)" />
             <column name="num_singleton_reads" type="number(19,0)" />
             <column name="num_paired_reads" type="number(19,0)" />
             <column name="num_properly_paired_reads" type="number(19,0)" />
             <column name="num_not_properly_paired_reads" type="number(19,0)" />
-            <column name="mapq_40_inf" type="number(19,0)" />
-            <column name="mapq_30_40" type="number(19,0)" />
-            <column name="mapq_20_30" type="number(19,0)" />
-            <column name="mapq_10_20" type="number(19,0)" />
-            <column name="mapq_0_10" type="number(19,0)" />
-            <column name="mapq_na" type="number(19,0)" />
+            <column name="paired_reads_map_diff_chrom" type="number(19,0)" />
+            <column name="paired_reads_map_diff_chr_q10" type="number(19,0)" />
+            <column name="mapq_40_inf" type="number(19,3)" />
+            <column name="mapq_30_40" type="number(19,3)" />
+            <column name="mapq_20_30" type="number(19,3)" />
+            <column name="mapq_10_20" type="number(19,3)" />
+            <column name="mapq_0_10" type="number(19,3)" />
+            <column name="mapq_na" type="number(19,3)" />
             <column name="reads_indel_r1" type="number(19,0)" />
             <column name="reads_indel_r2" type="number(19,0)" />
+            <column name="total_bases" type="number(19,0)" />
+            <column name="total_bases_r1" type="number(19,0)" />
+            <column name="total_bases_r2" type="number(19,0)" />
+            <column name="mapped_bases_r1" type="number(19,0)" />
+            <column name="mapped_bases_r2" type="number(19,0)" />
             <column name="soft_clipped_bases_r1" type="number(19,0)" />
             <column name="soft_clipped_bases_r2" type="number(19,0)" />
+            <column name="mismatched_bases_r1" type="number(19,0)" />
+            <column name="mismatched_bases_r2" type="number(19,0)" />
+            <column name="mismatched_bases_excl_r1" type="number(19,0)" />
+            <column name="mismatched_bases_excl_r2" type="number(19,0)" />
+            <column name="q30_bases" type="number(19,0)" />
+            <column name="q30_bases_r1" type="number(19,0)" />
+            <column name="q30_bases_r2" type="number(19,0)" />
+            <column name="q30_bases_excl_dupes" type="number(19,0)" />
             <column name="total_alignments" type="number(19,0)" />
             <column name="secondary_alignments" type="number(19,0)" />
             <column name="supplementary_alignments" type="number(19,0)" />
             <column name="est_read_length" type="number(19,0)" />
-            <column name="bases_in_ref_genome" type="number(19,0)" />
+            <column name="avg_cov_genome" type="number(19,2)" />
+            <column name="bases_in_ref_genome" type="varchar2(55)" />
             <column name="bases_in_target_bed" type="varchar2(55)" />
-            <column name="avg_seq_coverage" type="number(19,0)" />
-            <column name="avg_alignment_coverage" type="number(19,0)" />
-            <column name="pct_coverage_100x_inf" type="number(19,0)" />
-            <column name="pct_coverage_50x_100x" type="number(19,0)" />
-            <column name="pct_coverage_20x_50x" type="number(19,0)" />
-            <column name="pct_coverage_10x_20x" type="number(19,0)" />
-            <column name="pct_coverage_3x_10x" type="number(19,0)" />
-            <column name="pct_coverage_0x_3x" type="number(19,0)" />
-            <column name="avg_x_chr_coverage" type="number(19,0)" />
-            <column name="avg_y_chr_coverage" type="number(19,0)" />
-            <column name="avg_mito_coverage" type="number(19,0)" />
-            <column name="avg_autosomal_coverage" type="number(19,0)" />
-            <column name="median_autosomal_coverage" type="number(19,0)" />
-            <column name="mean_median_autosomal_coverage" type="number(19,0)" />
-            <column name="x_y_avg_coverage_ratio" type="number(19,0)" />
-            <column name="x_autosomal_avg_coverage_ratio" type="number(19,0)" />
-            <column name="y_autosomal_avg_coverage_ratio" type="number(19,0)" />
+            <column name="insert_length_mean" type="number(19,0)" />
+            <column name="insert_length_median" type="number(19,0)" />
+            <column name="insert_length_stddev" type="number(19,3)" />
             <column name="provided_sex_chr_ploidy" type="VARCHAR2(55)" />
-            <column name="predicted_sex_chr_ploidy" type="VARCHAR2(55)" />
-            <column name="capture_spec_target_region" type="VARCHAR2(55)" />
-            <column name="dragen_mapping_rate" type="number(5,0)" />
             <column name="est_sample_contamination" type="number(15,3)"/>
+            <column name="dragen_mapping_rate" type="number(6,2)" />
+            <column name="aligned_bases" type="number(19,0)" />
+            <column name="aligned_bases_in_region" type="number(19,0)" />
+            <column name="avg_alignment_coverage" type="number(19,2)" />
+            <column name="uniformity_cov" type="number(19,0)" />
+            <column name="pct_coverage_100x_inf" type="number(19,3)" />
+            <column name="pct_coverage_50x_inf" type="number(19,3)" />
+            <column name="pct_coverage_20x_inf" type="number(19,3)" />
+            <column name="pct_coverage_15x_inf" type="number(19,3)" />
+            <column name="pct_coverage_10x_inf" type="number(19,3)" />
+            <column name="pct_coverage_3x_inf" type="number(19,3)" />
+            <column name="pct_coverage_1x_inf" type="number(19,3)" />
+            <column name="pct_coverage_0x_inf" type="number(19,3)" />
+            <column name="pct_coverage_50x_100x" type="number(19,3)" />
+            <column name="pct_coverage_20x_50x" type="number(19,3)" />
+            <column name="pct_coverage_15x_20x" type="number(19,3)" />
+            <column name="pct_coverage_10x_15x" type="number(19,3)" />
+            <column name="pct_coverage_3x_10x" type="number(19,3)" />
+            <column name="pct_coverage_1x_3x" type="number(19,3)" />
+            <column name="pct_coverage_0x_1x" type="number(19,3)" />
+            <column name="avg_x_chr_coverage" type="number(19,3)" />
+            <column name="avg_y_chr_coverage" type="number(19,3)" />
+            <column name="avg_mito_coverage" type="number(19,3)" />
+            <column name="avg_autosomal_coverage" type="number(19,3)" />
+            <column name="median_autosomal_coverage" type="number(19,3)" />
+            <column name="mean_median_autosomal_coverage" type="number(19,3)" />
+            <column name="x_y_avg_coverage_ratio" type="varchar2(55)" />
+            <column name="x_autosomal_avg_coverage_ratio" type="varchar2(55)" />
+            <column name="y_autosomal_avg_coverage_ratio" type="varchar2(55)" />
+            <column name="predicted_sex_chr_ploidy" type="VARCHAR2(55)" />
+            <column name="aligned_reads" type="number(19,0)" />
+            <column name="aligned_reads_in_genome" type="number(19,0)" />
             <column name="mapping_run_metric_id" type="number(19,0)">
                 <constraints nullable="false" />
             </column>
@@ -169,54 +195,6 @@
         <addPrimaryKey constraintName="pk_mapping_run_metric_id" tableName="mapping_run_metrics"
                        columnNames="mapping_run_metric_id"/>
         <createSequence schemaName="mercurydw" sequenceName="SEQ_MAP_RUN_METRIC" incrementBy="50"/>
-    </changeSet>
-
-    <changeSet id="GPLIM-6242-40" author="jowalsh">
-        <createTable tableName="mapping_rg_metrics" schemaName="mercurydw">
-            <column name="run_name" type="VARCHAR2(255)">
-                <constraints nullable="false" />
-            </column>
-            <column name="run_date" type="timestamp" />
-            <column name="read_group" type="VARCHAR2(55)" />
-            <column name="sample_alias" type="VARCHAR2(200)" />
-            <column name="total_reads" type="number(19,0)" />
-            <column name="num_dup_marked_reads" type="number(19,0)" />
-            <column name="num_dup_marked_removed" type="VARCHAR2(55)" />
-            <column name="num_unique_reads" type="number(19,0)" />
-            <column name="num_reads_mate_sequenced" type="VARCHAR2(55)" />
-            <column name="num_reads_wo_mate_sequenced" type="VARCHAR2(55)" />
-            <column name="num_qc_failed_reads" type="number(19,0)" />
-            <column name="num_mapped_reads" type="number(19,0)" />
-            <column name="num_unq_mapped_reads" type="number(19,0)" />
-            <column name="num_unmapped_reads" type="number(19,0)" />
-            <column name="num_singleton_reads" type="number(19,0)" />
-            <column name="num_paired_reads" type="number(19,0)" />
-            <column name="num_properly_paired_reads" type="number(19,0)" />
-            <column name="num_not_properly_paired_reads" type="number(19,0)" />
-            <column name="mapq_40_inf" type="number(19,0)" />
-            <column name="mapq_30_40" type="number(19,0)" />
-            <column name="mapq_20_30" type="number(19,0)" />
-            <column name="mapq_10_20" type="number(19,0)" />
-            <column name="mapq_0_10" type="number(19,0)" />
-            <column name="mapq_na" type="number(19,0)" />
-            <column name="reads_indel_r1" type="number(19,0)" />
-            <column name="reads_indel_r2" type="number(19,0)" />
-            <column name="soft_clipped_bases_r1" type="number(19,0)" />
-            <column name="soft_clipped_bases_r2" type="number(19,0)" />
-            <column name="total_alignments" type="number(19,0)" />
-            <column name="secondary_alignments" type="number(19,0)" />
-            <column name="supplementary_alignments" type="number(19,0)" />
-            <column name="est_read_length" type="number(19,0)" />
-            <column name="avg_seq_coverage" type="number(19,0)" />
-            <column name="insert_length_mean" type="number(19,0)" />
-            <column name="insert_length_std" type="number(19,0)" />
-            <column name="mapping_rg_metric_id" type="number(19,0)">
-                <constraints nullable="false" />
-            </column>
-        </createTable>
-        <addPrimaryKey constraintName="pk_mapping_rg_metric_id" tableName="mapping_rg_metrics"
-                       columnNames="mapping_rg_metric_id"/>
-        <createSequence schemaName="mercurydw" sequenceName="SEQ_MAP_RG_METRIC" incrementBy="50"/>
     </changeSet>
 
     <changeSet id="GPLIM-6242-41" author="jowalsh">
@@ -246,15 +224,30 @@
     </changeSet>
 
     <changeSet id="GPLIM-6242-42" author="jowalsh">
-        <addColumn tableName="mapping_rg_metrics" schemaName="mercury">
-            <column name="pct_coverage_100x_inf" type="number(15,5)" />
-            <column name="pct_coverage_50x_100x" type="number(15,5)" />
-            <column name="pct_coverage_20x_50x" type="number(15,5)" />
-            <column name="pct_coverage_10x_20x" type="number(15,5)" />
-            <column name="pct_coverage_3x_10x" type="number(15,5)" />
-            <column name="pct_coverage_0x_3x" type="number(15,5)" />
-            <column name="PREDICTED_SEX_CHR_PLOIDY" type="VARCHAR2(55)" />
-            <column name="est_sample_contamination" type="number(15,3)" />
-        </addColumn>
+        <createTable tableName="FINGERPRINT_SCORE" schemaName="mercurydw">
+            <column name="FINGERPRINT_SCORE_ID" type="number(19,0)"/>
+            <column name="RUN_NAME" type="VARCHAR2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="FLOWCELL" type="VARCHAR2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="LANE" type="number(2,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="RUN_DATE" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="SAMPLE_ALIAS" type="VARCHAR2(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ANALYSIS_NAME" type="VARCHAR2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="LOD_SCORE" type="number(6,2)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createSequence schemaName="mercurydw" sequenceName="SEQ_FP_SCORE" incrementBy="50"/>
     </changeSet>
 </databaseChangeLog>

@@ -1,18 +1,19 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
-import org.broadinstitute.gpinformatics.mercury.control.hsa.state.DemultiplexState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -32,6 +33,11 @@ public class IlluminaSequencingRunChamber extends SequencingRunChamber {
     private int laneNumber;
 
     private String actualReadStructure;
+
+    public IlluminaSequencingRunChamber(
+            IlluminaSequencingRun illuminaSequencingRun, VesselPosition vesselPosition) {
+        this(illuminaSequencingRun, Integer.parseInt(vesselPosition.name().replace("LANE", "")));
+    }
 
     public IlluminaSequencingRunChamber(
             IlluminaSequencingRun illuminaSequencingRun, int laneNumber) {
@@ -73,4 +79,19 @@ public class IlluminaSequencingRunChamber extends SequencingRunChamber {
         states.add(state);
         state.addSequencingRunChamber(this);
     }
+
+    public <T extends State> Optional<T> getMostRecentCompleteStateOfType(Class<T> clazz) {
+        return getStates().stream()
+                .filter(state -> OrmUtil.proxySafeIsInstance(state, clazz) && state.isComplete())
+                .map(state -> OrmUtil.proxySafeCast(state, clazz))
+                .max(Comparator.comparing(State::getEndTime));
+    }
+
+    public <T extends State> Optional<T> getRecentStateWithSample(Class<T> clazz, MercurySample mercurySample) {
+        return getStates().stream()
+                .filter(state -> OrmUtil.proxySafeIsInstance(state, clazz) && state.isComplete() && state.getMercurySamples().contains(mercurySample))
+                .map(state -> OrmUtil.proxySafeCast(state, clazz))
+                .max(Comparator.comparing(State::getEndTime));
+    }
+
 }

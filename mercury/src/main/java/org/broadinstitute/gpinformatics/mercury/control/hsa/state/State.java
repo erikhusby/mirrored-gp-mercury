@@ -126,6 +126,10 @@ public abstract class State {
         task.setState(this);
     }
 
+    public void addTasks(Set<Task> tasks) {
+        tasks.forEach(this::addTask);
+    }
+
     public Set<Task> getTasks() {
         return tasks.stream()
                 .filter(t -> t.getTaskActionTime() == Task.TaskActionTime.DEFAULT)
@@ -191,6 +195,10 @@ public abstract class State {
         this.finiteStateMachine = finiteStateMachine;
     }
 
+    public Long getStateId() {
+        return stateId;
+    }
+
     public Optional<Task> getExitTask() {
         return tasks.stream().filter(t -> t.getTaskActionTime() == Task.TaskActionTime.EXIT).findFirst();
     }
@@ -200,13 +208,22 @@ public abstract class State {
                getExitTask().get().getStatus() == Status.RETRY;
     }
 
+    public List<Task> getRunningTasks() {
+        return getTasks().stream()
+                .filter(t -> t.getStatus() == Status.RUNNING || t.getStatus() == Status.UNKNOWN)
+                .collect(Collectors.toList());
+    }
+
     public List<Task> getActiveTasks() {
         return getTasks().stream()
-                .filter(t -> t.getStatus() == Status.RUNNING || t.getStatus() == Status.QUEUED)
+                .filter(t -> t.getStatus() == Status.RUNNING || t.getStatus() == Status.QUEUED || t.getStatus() == Status.UNKNOWN)
                 .collect(Collectors.toList());
     }
 
     public boolean isStateOnEnter() {
+        if (getStartTime() == null) {
+            return true;
+        }
         Optional<Task> first = getTasks().stream()
                 .filter(t -> t.getStatus() != Status.QUEUED ||
                              !OrmUtil.proxySafeIsInstance(t, ProcessTask.class) ||

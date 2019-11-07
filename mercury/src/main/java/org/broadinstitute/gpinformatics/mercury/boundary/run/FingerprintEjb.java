@@ -15,6 +15,7 @@ import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Stateful
@@ -27,8 +28,7 @@ public class FingerprintEjb {
     @Inject
     private FingerprintDao fingerprintDao;
 
-    // TODO refactor into resource
-    public Fingerprint handleNewFingerprint(FingerprintBean fingerprintBean, MercurySample mercurySample) {
+    public Double handleNewFingerprint(FingerprintBean fingerprintBean, MercurySample mercurySample, Fingerprint fluidigmFingerprint) {
         if (fingerprintBean.getSnpListName() == null) {
             throw new RuntimeException("snpListName is required");
         }
@@ -36,12 +36,6 @@ public class FingerprintEjb {
         if (snpList == null) {
             throw new RuntimeException("snpListName not found");
         }
-
-        List<Fingerprint> fluidigmFingerprints = mercurySample.getFingerprints().stream()
-                .filter(fp -> fp.getPlatform() == Fingerprint.Platform.FLUIDIGM &&
-                              fp.getDisposition() == Fingerprint.Disposition.PASS)
-                .sorted(Comparator.comparing(Fingerprint::getDateGenerated))
-                .collect(Collectors.toList());
 
         Fingerprint fingerprint = fingerprintDao.findBySampleAndDateGenerated(mercurySample,
                 fingerprintBean.getDateGenerated());
@@ -77,16 +71,18 @@ public class FingerprintEjb {
             }
         }
 
-        // TODO get any prior fluidigm fingerprints
-        if (!fluidigmFingerprints.isEmpty()) {
-            Fingerprint fluidigmFp = fluidigmFingerprints.iterator().next();
+        Double lodScore = null;
+        if (fluidigmFingerprint != null) {
             ConcordanceCalculator concordanceCalculator = new ConcordanceCalculator();
-            double lodScore = concordanceCalculator.calculateLodScore(fingerprint, fluidigmFp);
-            // TODO Whats the threshold for fingerprints
-
+            lodScore = concordanceCalculator.calculateLodScore(fingerprint, fluidigmFingerprint);
             concordanceCalculator.done();
         }
 
-        return fingerprint;
+        // TODO Don't store for now. Also, don't store on the stock?
+        if (!mercurySample.getFingerprints().remove(fingerprint)) {
+            throw new RuntimeException("Failed to delete fingerprint from mercury sample " + mercurySample.getSampleKey());
+        }
+
+        return lodScore;
     }
 }

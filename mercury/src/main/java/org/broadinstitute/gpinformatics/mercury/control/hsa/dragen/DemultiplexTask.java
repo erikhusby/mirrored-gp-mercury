@@ -52,6 +52,10 @@ public class DemultiplexTask extends ProcessTask {
     }
 
     public File getBclInputDirectory() {
+        if (bclInputDirectory == null) {
+            bclInputDirectory = new File(DragenTaskBuilder.parseCommandFromArgument(
+                    DragenTaskBuilder.BCL_INPUT_DIRECTORY, getCommandLineArgument()));
+        }
         return bclInputDirectory;
     }
 

@@ -4,6 +4,7 @@ import javax.persistence.Column;
 import java.io.File;
 
 public class FastQList {
+
     @Column(name = "RGID")
     private String rgId;
 
@@ -23,6 +24,15 @@ public class FastQList {
     private String read2File;
 
     public FastQList() {
+    }
+
+    public FastQList(String rgId, String rgSm, String rgLb, int lane, String read1File, String read2File) {
+        this.rgId = rgId;
+        this.rgSm = rgSm;
+        this.rgLb = rgLb;
+        this.lane = lane;
+        this.read1File = read1File;
+        this.read2File = read2File;
     }
 
     public String getRgId() {

@@ -51,17 +51,21 @@ public class SlurmController implements SchedulerController {
 
         String dragenCmd = "";
         if (!OrmUtil.proxySafeIsInstance(processTask, PicardTask.class)) {
+            /*String prolog = "srun --prolog=/seq/dragen/scripts/slurm_dragen_prolog.sh";
+            dragenCmd = String.format("--wrap=\"%s %s%s\"", prolog, dragenConfig.getDragenPath(),
+                    processTask.getCommandLineArgument());*/
             dragenCmd = String.format("--wrap=\"%s%s\"", dragenConfig.getDragenPath(),
                     processTask.getCommandLineArgument());
         } else {
-            // Picard outputs to working folder even if supplied a path. cd to the root dir as base.
             dragenCmd = String.format("--wrap=\"%s\"",
                     processTask.getCommandLineArgument());
         }
+
+        // TODO JW Remove exclusions in prod or write some exclusion page
         if (partition == null) {
-            cmd = Arrays.asList( "ssh", dragenConfig.getSlurmHost(), "sbatch", "--exclusive",  "-J", processTask.getTaskName(), dragenCmd);
+            cmd = Arrays.asList( "ssh", dragenConfig.getSlurmHost(), "sbatch", "--exclusive", "--exclude=dragen01", "-J", processTask.getTaskName(), dragenCmd);
         } else {
-            cmd = Arrays.asList( "ssh", dragenConfig.getSlurmHost(), "sbatch", "--exclusive", "-J", processTask.getTaskName(), "-p", partition, dragenCmd);
+            cmd = Arrays.asList( "ssh", dragenConfig.getSlurmHost(), "sbatch", "--exclusive", "--exclude=dragen01", "-J", processTask.getTaskName(), "-p", partition, dragenCmd);
         }
         ProcessResult processResult = runProcess(cmd);
         if (processResult.getExitValue() != 0) {

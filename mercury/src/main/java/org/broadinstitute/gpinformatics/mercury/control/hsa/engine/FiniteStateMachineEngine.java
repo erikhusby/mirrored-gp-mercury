@@ -18,15 +18,18 @@ import javax.ejb.Stateful;
 import javax.ejb.TransactionManagement;
 import javax.ejb.TransactionManagementType;
 import javax.enterprise.context.Dependent;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.transaction.SystemException;
+import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
-@Stateful
-@Dependent
-@TransactionManagement(value= TransactionManagementType.CONTAINER)
-public class FiniteStateMachineEngine {
+import static javax.ejb.TransactionManagementType.BEAN;
+
+@RequestScoped
+@TransactionManagement(BEAN)
+public class FiniteStateMachineEngine implements Serializable {
     private static final Log log = LogFactory.getLog(FiniteStateMachineEngine.class);
 
     @Inject
@@ -70,6 +73,7 @@ public class FiniteStateMachineEngine {
             if (state.isStartState() && stateMachine.getDateStarted() == null) {
                 stateMachine.setDateStarted(new Date());
                 if (stateManager.handleOnEnter(state)) {
+                    state.setStartTime(new Date());
                     for (Task task : state.getTasks()) {
                         try {
                             taskManager.fireEvent(task, context);
@@ -83,6 +87,7 @@ public class FiniteStateMachineEngine {
 
             if (state.isStateOnEnter()) {
                 if (stateManager.handleOnEnter(state)) {
+                    state.setStartTime(new Date());
                     for (Task task : state.getTasks()) {
                         try {
                             taskManager.fireEvent(task, context);
@@ -128,8 +133,8 @@ public class FiniteStateMachineEngine {
                     for (Transition transition : transitionsFromState) {
                         State toState = transition.getToState();
                         toState.setAlive(true);
-                        toState.setStartTime(new Date());
                         if (stateManager.handleOnEnter(toState)) {
+                            toState.setStartTime(new Date());
                             for (Task task : toState.getTasks()) {
                                 try {
                                     taskManager.fireEvent(task, context);

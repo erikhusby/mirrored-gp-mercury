@@ -25,7 +25,6 @@ import javax.inject.Inject;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -102,8 +101,8 @@ public class FingerprintWorkflowActionBean extends CoreActionBean {
                     File outputDir = alignmentTask.getOutputDir();
                     String vcSampleName = alignmentTask.getVcSampleName();
                     File referenceSeq = alignmentTask.getReference();
-                    AlignmentActionBean.ReferenceGenome referenceGenome =
-                            AlignmentActionBean.ReferenceGenome.getByDragenPath(referenceSeq.getPath());
+                    AggregationActionBean.ReferenceGenome referenceGenome =
+                            AggregationActionBean.ReferenceGenome.getByDragenPath(referenceSeq.getPath());
                     if (referenceGenome == null) {
                         log.error("Failed to find reference genome for " + referenceSeq.getPath());
                         continue;

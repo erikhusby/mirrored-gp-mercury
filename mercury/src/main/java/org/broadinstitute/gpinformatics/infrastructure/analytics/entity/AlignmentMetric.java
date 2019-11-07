@@ -8,11 +8,10 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 @Entity
-@Table(schema = "MERCURYDW", name = "MAPPING_RG_METRICS")
+@Table(schema = "MERCURYDW", name = "MAPPING_RUN_METRICS")
 public class AlignmentMetric {
-
     @Id
-    private Long mappingRgMetricId;
+    private Long mapping_run_metric_id;
 
     @Column(name = "run_name")
     private String runName;
@@ -20,50 +19,74 @@ public class AlignmentMetric {
     @Column(name = "run_date")
     private Date runDate;
 
+    @Column(name = "analysis_node")
+    private String analysisNode;
+
+    @Column(name = "analysis_name")
+    private String analysisName;
+
+    @Column(name = "dragen_version")
+    private String dragenVersion;
+
     @Column(name = "sample_alias")
     private String sampleAlias;
 
-    @Column(name = "total_reads")
-    private BigDecimal totalReads;
+    @Column(name = "read_group")
+    private String readGroup;
+
+    @Column(name = "total_input_reads")
+    private BigDecimal totalInputReads;
 
     @Column(name = "num_dup_marked_reads")
-    private BigDecimal numberOfDuplicateMarkedReads;
+    private BigDecimal numDupMarkedReads;
 
     @Column(name = "num_dup_marked_removed")
-    private String numberOfDuplicateMarkedRemoved;
+    private String numDupMarkedReadsRemoved;
 
     @Column(name = "num_unique_reads")
-    private BigDecimal numberOfUniqueReads;
+    private BigDecimal numUniqueReads;
 
     @Column(name = "num_reads_mate_sequenced")
-    private BigDecimal numberOfReadsMateSequenced;
+    private BigDecimal numReadsWithMateSequenced;
 
     @Column(name = "num_reads_wo_mate_sequenced")
-    private BigDecimal numberOfReadsWithoutMateSequenced;
+    private BigDecimal numReadsWithoutMateSequenced;
 
     @Column(name = "num_qc_failed_reads")
-    private BigDecimal numberOfQcFailedReads;
+    private BigDecimal numQcFailedReads;
 
     @Column(name = "num_mapped_reads")
-    private BigDecimal numberOfMappedReads;
+    private BigDecimal numMappedReads;
+
+    @Column(name = "num_mapped_reads_r1")
+    private BigDecimal numMappedReadsR1;
+
+    @Column(name = "num_mapped_reads_r2")
+    private BigDecimal numMappedReadsR2;
 
     @Column(name = "num_unq_mapped_reads")
-    private BigDecimal numberOfUniqueMappedReads;
+    private BigDecimal numUniqueMappedReads;
 
     @Column(name = "num_unmapped_reads")
-    private BigDecimal numberOfUnmappedReads;
+    private BigDecimal numUmappedReads;
 
     @Column(name = "num_singleton_reads")
-    private BigDecimal numberOfSingletonReads;
+    private BigDecimal numSingletonReads;
 
     @Column(name = "num_paired_reads")
-    private BigDecimal numberOfPairedReads;
+    private BigDecimal numPairedReads;
 
     @Column(name = "num_properly_paired_reads")
-    private BigDecimal numberOfProperlyPairedReads;
+    private BigDecimal numProperlyPairedReads;
 
     @Column(name = "num_not_properly_paired_reads")
-    private BigDecimal numberOfNotProperlyPairedReads;
+    private BigDecimal numNotProperlyPairedReads;
+
+    @Column(name = "paired_reads_map_diff_chrom")
+    private BigDecimal pairedReadsMapDifferentChromosome;
+
+    @Column(name = "paired_reads_map_diff_chr_q10")
+    private BigDecimal pairedReadsMapDifferentChromosomeQ10;
 
     @Column(name = "mapq_40_inf")
     private BigDecimal mapq40Inf;
@@ -78,7 +101,7 @@ public class AlignmentMetric {
     private BigDecimal mapq1020;
 
     @Column(name = "mapq_0_10")
-    private BigDecimal mapq010;
+    private BigDecimal mapq020;
 
     @Column(name = "mapq_na")
     private BigDecimal mapqNa;
@@ -89,32 +112,56 @@ public class AlignmentMetric {
     @Column(name = "reads_indel_r2")
     private BigDecimal readsIndelR2;
 
+    @Column(name = "total_bases")
+    private BigDecimal totalBases;
+
+    @Column(name = "total_bases_r1")
+    private BigDecimal totalBasesR1;
+
+    @Column(name = "total_bases_r2")
+    private BigDecimal totalBasesR2;
+
+    @Column(name = "mapped_bases_r1")
+    private BigDecimal mappedBasesR1;
+
+    @Column(name = "mapped_bases_r2")
+    private BigDecimal mappedBasesR2;
+
     @Column(name = "soft_clipped_bases_r1")
     private BigDecimal softClippedBasesR1;
 
     @Column(name = "soft_clipped_bases_r2")
     private BigDecimal softClippedBasesR2;
 
-    @Column(name = "total_alignments")
-    private BigDecimal totalAlignments;
+    @Column(name = "mismatched_bases_r1")
+    private BigDecimal mismatchedBasesR1;
 
-    @Column(name = "secondary_alignments")
-    private BigDecimal secondaryAlignments;
+    @Column(name = "mismatched_bases_r2")
+    private BigDecimal mismatchedBasesR2;
 
-    @Column(name = "supplementary_alignments")
-    private BigDecimal supplementaryAlignments;
+    @Column(name = "mismatched_bases_excl_r1")
+    private BigDecimal mismatchedBasesExclR1;
 
-    @Column(name = "est_read_length")
-    private BigDecimal estimatedReadLength;
+    @Column(name = "mismatched_bases_excl_r2")
+    private BigDecimal mismatchedBasesExclR2;
 
-    @Column(name = "avg_seq_coverage")
-    private BigDecimal averageSequencingCoverage;
+    @Column(name = "q30_bases")
+    private BigDecimal q30Bases;
 
-    @Column(name = "insert_length_mean")
-    private BigDecimal insertLengthMean;
+    @Column(name = "q30_bases_r1")
+    private BigDecimal q30BasesR1;
 
-    @Column(name = "insert_length_std")
-    private BigDecimal insertLengthStd;
+    @Column(name = "q30_bases_r2")
+    private BigDecimal q30BasesR2;
+
+    @Column(name = "pct_coverage_20x_inf")
+    private BigDecimal pctCov20x;
+
+    @Column(name = "est_sample_contamination")
+    private BigDecimal estimatedSampleContamination;
+
+    @Column(name = "avg_alignment_coverage")
+    private BigDecimal averageAlignmentCoverage;
 
     public AlignmentMetric() {
     }
@@ -135,6 +182,30 @@ public class AlignmentMetric {
         this.runDate = runDate;
     }
 
+    public String getAnalysisNode() {
+        return analysisNode;
+    }
+
+    public void setAnalysisNode(String analysisNode) {
+        this.analysisNode = analysisNode;
+    }
+
+    public String getAnalysisName() {
+        return analysisName;
+    }
+
+    public void setAnalysisName(String analysisName) {
+        this.analysisName = analysisName;
+    }
+
+    public String getDragenVersion() {
+        return dragenVersion;
+    }
+
+    public void setDragenVersion(String dragenVersion) {
+        this.dragenVersion = dragenVersion;
+    }
+
     public String getSampleAlias() {
         return sampleAlias;
     }
@@ -143,116 +214,156 @@ public class AlignmentMetric {
         this.sampleAlias = sampleAlias;
     }
 
-    public BigDecimal getTotalReads() {
-        return totalReads;
+    public String getReadGroup() {
+        return readGroup;
     }
 
-    public void setTotalReads(BigDecimal totalReads) {
-        this.totalReads = totalReads;
+    public void setReadGroup(String readGroup) {
+        this.readGroup = readGroup;
     }
 
-    public BigDecimal getNumberOfDuplicateMarkedReads() {
-        return numberOfDuplicateMarkedReads;
+    public BigDecimal getTotalInputReads() {
+        return totalInputReads;
     }
 
-    public void setNumberOfDuplicateMarkedReads(BigDecimal numberOfDuplicateMarkedReads) {
-        this.numberOfDuplicateMarkedReads = numberOfDuplicateMarkedReads;
+    public void setTotalInputReads(BigDecimal totalInputReads) {
+        this.totalInputReads = totalInputReads;
     }
 
-    public String getNumberOfDuplicateMarkedRemoved() {
-        return numberOfDuplicateMarkedRemoved;
+    public BigDecimal getNumDupMarkedReads() {
+        return numDupMarkedReads;
     }
 
-    public void setNumberOfDuplicateMarkedRemoved(String numberOfDuplicateMarkedRemoved) {
-        this.numberOfDuplicateMarkedRemoved = numberOfDuplicateMarkedRemoved;
+    public void setNumDupMarkedReads(BigDecimal numDupMarkedReads) {
+        this.numDupMarkedReads = numDupMarkedReads;
     }
 
-    public BigDecimal getNumberOfUniqueReads() {
-        return numberOfUniqueReads;
+    public String getNumDupMarkedReadsRemoved() {
+        return numDupMarkedReadsRemoved;
     }
 
-    public void setNumberOfUniqueReads(BigDecimal numberOfUniqueReads) {
-        this.numberOfUniqueReads = numberOfUniqueReads;
+    public void setNumDupMarkedReadsRemoved(String numDupMarkedReadsRemoved) {
+        this.numDupMarkedReadsRemoved = numDupMarkedReadsRemoved;
     }
 
-    public BigDecimal getNumberOfReadsMateSequenced() {
-        return numberOfReadsMateSequenced;
+    public BigDecimal getNumUniqueReads() {
+        return numUniqueReads;
     }
 
-    public void setNumberOfReadsMateSequenced(BigDecimal numberOfReadsMateSequenced) {
-        this.numberOfReadsMateSequenced = numberOfReadsMateSequenced;
+    public void setNumUniqueReads(BigDecimal numUniqueReads) {
+        this.numUniqueReads = numUniqueReads;
     }
 
-    public BigDecimal getNumberOfReadsWithoutMateSequenced() {
-        return numberOfReadsWithoutMateSequenced;
+    public BigDecimal getNumReadsWithMateSequenced() {
+        return numReadsWithMateSequenced;
     }
 
-    public void setNumberOfReadsWithoutMateSequenced(BigDecimal numberOfReadsWithoutMateSequenced) {
-        this.numberOfReadsWithoutMateSequenced = numberOfReadsWithoutMateSequenced;
+    public void setNumReadsWithMateSequenced(BigDecimal numReadsWithMateSequenced) {
+        this.numReadsWithMateSequenced = numReadsWithMateSequenced;
     }
 
-    public BigDecimal getNumberOfQcFailedReads() {
-        return numberOfQcFailedReads;
+    public BigDecimal getNumReadsWithoutMateSequenced() {
+        return numReadsWithoutMateSequenced;
     }
 
-    public void setNumberOfQcFailedReads(BigDecimal numberOfQcFailedReads) {
-        this.numberOfQcFailedReads = numberOfQcFailedReads;
+    public void setNumReadsWithoutMateSequenced(BigDecimal numReadsWithoutMateSequenced) {
+        this.numReadsWithoutMateSequenced = numReadsWithoutMateSequenced;
     }
 
-    public BigDecimal getNumberOfMappedReads() {
-        return numberOfMappedReads;
+    public BigDecimal getNumQcFailedReads() {
+        return numQcFailedReads;
     }
 
-    public void setNumberOfMappedReads(BigDecimal numberOfMappedReads) {
-        this.numberOfMappedReads = numberOfMappedReads;
+    public void setNumQcFailedReads(BigDecimal numQcFailedReads) {
+        this.numQcFailedReads = numQcFailedReads;
     }
 
-    public BigDecimal getNumberOfUniqueMappedReads() {
-        return numberOfUniqueMappedReads;
+    public BigDecimal getNumMappedReads() {
+        return numMappedReads;
     }
 
-    public void setNumberOfUniqueMappedReads(BigDecimal numberOfUniqueMappedReads) {
-        this.numberOfUniqueMappedReads = numberOfUniqueMappedReads;
+    public void setNumMappedReads(BigDecimal numMappedReads) {
+        this.numMappedReads = numMappedReads;
     }
 
-    public BigDecimal getNumberOfUnmappedReads() {
-        return numberOfUnmappedReads;
+    public BigDecimal getNumMappedReadsR1() {
+        return numMappedReadsR1;
     }
 
-    public void setNumberOfUnmappedReads(BigDecimal numberOfUnmappedReads) {
-        this.numberOfUnmappedReads = numberOfUnmappedReads;
+    public void setNumMappedReadsR1(BigDecimal numMappedReadsR1) {
+        this.numMappedReadsR1 = numMappedReadsR1;
     }
 
-    public BigDecimal getNumberOfSingletonReads() {
-        return numberOfSingletonReads;
+    public BigDecimal getNumMappedReadsR2() {
+        return numMappedReadsR2;
     }
 
-    public void setNumberOfSingletonReads(BigDecimal numberOfSingletonReads) {
-        this.numberOfSingletonReads = numberOfSingletonReads;
+    public void setNumMappedReadsR2(BigDecimal numMappedReadsR2) {
+        this.numMappedReadsR2 = numMappedReadsR2;
     }
 
-    public BigDecimal getNumberOfPairedReads() {
-        return numberOfPairedReads;
+    public BigDecimal getNumUniqueMappedReads() {
+        return numUniqueMappedReads;
     }
 
-    public void setNumberOfPairedReads(BigDecimal numberOfPairedReads) {
-        this.numberOfPairedReads = numberOfPairedReads;
+    public void setNumUniqueMappedReads(BigDecimal numUniqueMappedReads) {
+        this.numUniqueMappedReads = numUniqueMappedReads;
     }
 
-    public BigDecimal getNumberOfProperlyPairedReads() {
-        return numberOfProperlyPairedReads;
+    public BigDecimal getNumUmappedReads() {
+        return numUmappedReads;
     }
 
-    public void setNumberOfProperlyPairedReads(BigDecimal numberOfProperlyPairedReads) {
-        this.numberOfProperlyPairedReads = numberOfProperlyPairedReads;
+    public void setNumUmappedReads(BigDecimal numUmappedReads) {
+        this.numUmappedReads = numUmappedReads;
     }
 
-    public BigDecimal getNumberOfNotProperlyPairedReads() {
-        return numberOfNotProperlyPairedReads;
+    public BigDecimal getNumSingletonReads() {
+        return numSingletonReads;
     }
 
-    public void setNumberOfNotProperlyPairedReads(BigDecimal numberOfNotProperlyPairedReads) {
-        this.numberOfNotProperlyPairedReads = numberOfNotProperlyPairedReads;
+    public void setNumSingletonReads(BigDecimal numSingletonReads) {
+        this.numSingletonReads = numSingletonReads;
+    }
+
+    public BigDecimal getNumPairedReads() {
+        return numPairedReads;
+    }
+
+    public void setNumPairedReads(BigDecimal numPairedReads) {
+        this.numPairedReads = numPairedReads;
+    }
+
+    public BigDecimal getNumProperlyPairedReads() {
+        return numProperlyPairedReads;
+    }
+
+    public void setNumProperlyPairedReads(BigDecimal numProperlyPairedReads) {
+        this.numProperlyPairedReads = numProperlyPairedReads;
+    }
+
+    public BigDecimal getNumNotProperlyPairedReads() {
+        return numNotProperlyPairedReads;
+    }
+
+    public void setNumNotProperlyPairedReads(BigDecimal numNotProperlyPairedReads) {
+        this.numNotProperlyPairedReads = numNotProperlyPairedReads;
+    }
+
+    public BigDecimal getPairedReadsMapDifferentChromosome() {
+        return pairedReadsMapDifferentChromosome;
+    }
+
+    public void setPairedReadsMapDifferentChromosome(BigDecimal pairedReadsMapDifferentChromosome) {
+        this.pairedReadsMapDifferentChromosome = pairedReadsMapDifferentChromosome;
+    }
+
+    public BigDecimal getPairedReadsMapDifferentChromosomeQ10() {
+        return pairedReadsMapDifferentChromosomeQ10;
+    }
+
+    public void setPairedReadsMapDifferentChromosomeQ10(BigDecimal pairedReadsMapDifferentChromosomeQ10) {
+        this.pairedReadsMapDifferentChromosomeQ10 = pairedReadsMapDifferentChromosomeQ10;
     }
 
     public BigDecimal getMapq40Inf() {
@@ -287,12 +398,12 @@ public class AlignmentMetric {
         this.mapq1020 = mapq1020;
     }
 
-    public BigDecimal getMapq010() {
-        return mapq010;
+    public BigDecimal getMapq020() {
+        return mapq020;
     }
 
-    public void setMapq010(BigDecimal mapq010) {
-        this.mapq010 = mapq010;
+    public void setMapq020(BigDecimal mapq020) {
+        this.mapq020 = mapq020;
     }
 
     public BigDecimal getMapqNa() {
@@ -319,6 +430,46 @@ public class AlignmentMetric {
         this.readsIndelR2 = readsIndelR2;
     }
 
+    public BigDecimal getTotalBases() {
+        return totalBases;
+    }
+
+    public void setTotalBases(BigDecimal totalBases) {
+        this.totalBases = totalBases;
+    }
+
+    public BigDecimal getTotalBasesR1() {
+        return totalBasesR1;
+    }
+
+    public void setTotalBasesR1(BigDecimal totalBasesR1) {
+        this.totalBasesR1 = totalBasesR1;
+    }
+
+    public BigDecimal getTotalBasesR2() {
+        return totalBasesR2;
+    }
+
+    public void setTotalBasesR2(BigDecimal totalBasesR2) {
+        this.totalBasesR2 = totalBasesR2;
+    }
+
+    public BigDecimal getMappedBasesR1() {
+        return mappedBasesR1;
+    }
+
+    public void setMappedBasesR1(BigDecimal mappedBasesR1) {
+        this.mappedBasesR1 = mappedBasesR1;
+    }
+
+    public BigDecimal getMappedBasesR2() {
+        return mappedBasesR2;
+    }
+
+    public void setMappedBasesR2(BigDecimal mappedBasesR2) {
+        this.mappedBasesR2 = mappedBasesR2;
+    }
+
     public BigDecimal getSoftClippedBasesR1() {
         return softClippedBasesR1;
     }
@@ -335,59 +486,83 @@ public class AlignmentMetric {
         this.softClippedBasesR2 = softClippedBasesR2;
     }
 
-    public BigDecimal getTotalAlignments() {
-        return totalAlignments;
+    public BigDecimal getMismatchedBasesR1() {
+        return mismatchedBasesR1;
     }
 
-    public void setTotalAlignments(BigDecimal totalAlignments) {
-        this.totalAlignments = totalAlignments;
+    public void setMismatchedBasesR1(BigDecimal mismatchedBasesR1) {
+        this.mismatchedBasesR1 = mismatchedBasesR1;
     }
 
-    public BigDecimal getSecondaryAlignments() {
-        return secondaryAlignments;
+    public BigDecimal getMismatchedBasesR2() {
+        return mismatchedBasesR2;
     }
 
-    public void setSecondaryAlignments(BigDecimal secondaryAlignments) {
-        this.secondaryAlignments = secondaryAlignments;
+    public void setMismatchedBasesR2(BigDecimal mismatchedBasesR2) {
+        this.mismatchedBasesR2 = mismatchedBasesR2;
     }
 
-    public BigDecimal getSupplementaryAlignments() {
-        return supplementaryAlignments;
+    public BigDecimal getMismatchedBasesExclR1() {
+        return mismatchedBasesExclR1;
     }
 
-    public void setSupplementaryAlignments(BigDecimal supplementaryAlignments) {
-        this.supplementaryAlignments = supplementaryAlignments;
+    public void setMismatchedBasesExclR1(BigDecimal mismatchedBasesExclR1) {
+        this.mismatchedBasesExclR1 = mismatchedBasesExclR1;
     }
 
-    public BigDecimal getEstimatedReadLength() {
-        return estimatedReadLength;
+    public BigDecimal getMismatchedBasesExclR2() {
+        return mismatchedBasesExclR2;
     }
 
-    public void setEstimatedReadLength(BigDecimal estimatedReadLength) {
-        this.estimatedReadLength = estimatedReadLength;
+    public void setMismatchedBasesExclR2(BigDecimal mismatchedBasesExclR2) {
+        this.mismatchedBasesExclR2 = mismatchedBasesExclR2;
     }
 
-    public BigDecimal getAverageSequencingCoverage() {
-        return averageSequencingCoverage;
+    public BigDecimal getQ30Bases() {
+        return q30Bases;
     }
 
-    public void setAverageSequencingCoverage(BigDecimal averageSequencingCoverage) {
-        this.averageSequencingCoverage = averageSequencingCoverage;
+    public void setQ30Bases(BigDecimal q30Bases) {
+        this.q30Bases = q30Bases;
     }
 
-    public BigDecimal getInsertLengthMean() {
-        return insertLengthMean;
+    public BigDecimal getQ30BasesR1() {
+        return q30BasesR1;
     }
 
-    public void setInsertLengthMean(BigDecimal insertLengthMean) {
-        this.insertLengthMean = insertLengthMean;
+    public void setQ30BasesR1(BigDecimal q30BasesR1) {
+        this.q30BasesR1 = q30BasesR1;
     }
 
-    public BigDecimal getInsertLengthStd() {
-        return insertLengthStd;
+    public BigDecimal getQ30BasesR2() {
+        return q30BasesR2;
     }
 
-    public void setInsertLengthStd(BigDecimal insertLengthStd) {
-        this.insertLengthStd = insertLengthStd;
+    public void setQ30BasesR2(BigDecimal q30BasesR2) {
+        this.q30BasesR2 = q30BasesR2;
+    }
+
+    public BigDecimal getPctCov20x() {
+        return pctCov20x;
+    }
+
+    public void setPctCov20x(BigDecimal pctCov20x) {
+        this.pctCov20x = pctCov20x;
+    }
+
+    public BigDecimal getEstimatedSampleContamination() {
+        return estimatedSampleContamination;
+    }
+
+    public void setEstimatedSampleContamination(BigDecimal estimatedSampleContamination) {
+        this.estimatedSampleContamination = estimatedSampleContamination;
+    }
+
+    public BigDecimal getAverageAlignmentCoverage() {
+        return averageAlignmentCoverage;
+    }
+
+    public void setAverageAlignmentCoverage(BigDecimal averageAlignmentCoverage) {
+        this.averageAlignmentCoverage = averageAlignmentCoverage;
     }
 }

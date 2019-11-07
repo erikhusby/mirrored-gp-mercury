@@ -30,9 +30,10 @@ public class AggregationState extends State {
         super(stateName, finiteStateMachine, mercurySamples, sequencingRunChambers);
     }
 
-    public Optional<Task> getAggregationTask() {
+    public Optional<AggregationTask> getAggregationTask() {
         return getTasks().stream()
                 .filter(t -> OrmUtil.proxySafeIsInstance(t, AggregationTask.class))
+                .map(t -> OrmUtil.proxySafeCast(t, AggregationTask.class))
                 .findFirst();
     }
 
@@ -45,9 +46,12 @@ public class AggregationState extends State {
 
     @Override
     public List<Task> getActiveTasks() {
-        Optional<Task> aggregationTask = getAggregationTask();
-        if (aggregationTask.isPresent()) {
-            return Collections.singletonList(aggregationTask.get());
+        Optional<AggregationTask> optionalTask = getAggregationTask();
+        if (optionalTask.isPresent()) {
+            AggregationTask aggregationTask = optionalTask.get();
+            if (aggregationTask.getStatus() == Status.QUEUED || aggregationTask.getStatus() == Status.RUNNING) {
+                return Collections.singletonList(aggregationTask);
+            }
         }
 
         return Collections.emptyList();

@@ -1,35 +1,33 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa;
 
+import com.opencsv.CSVWriter;
+import com.opencsv.bean.ColumnPositionMappingStrategy;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
+import com.opencsv.bean.HeaderColumnNameMappingStrategy;
+import com.opencsv.bean.StatefulBeanToCsv;
+import com.opencsv.bean.StatefulBeanToCsvBuilder;
+import com.opencsv.exceptions.CsvDataTypeMismatchException;
+import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import org.apache.commons.io.FileUtils;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.DragenConfig;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenFolderUtil;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.metrics.DemultiplexStats;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FastQList;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
-import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
-import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
-import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.enterprise.context.Dependent;
-import javax.inject.Inject;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.Writer;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
-import java.util.stream.Collector;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Dependent
@@ -39,42 +37,48 @@ public class FastQListBuilder {
     private static final String LINE_FORMAT = "%s,%s,%s,%d,%s,%s";
 
     // Create Based on Flowcell Lane Index
-    public boolean buildSingle(IlluminaSequencingRunChamber runChamber, SampleInstanceV2 sampleInstanceV2, MercurySample mercurySample,
-                               String library, File outputFile) throws IOException {
-        RunCartridge sampleCartridge = runChamber.getIlluminaSequencingRun().getSampleCartridge();
+    public void buildSingle(int lane, String rgId, MercurySample mercurySample, MercurySample expectedSample,
+                               String library, File outputFile, File fastQListFile) throws IOException {
         StringBuilder sb = new StringBuilder(HEADER);
-        File reports = new File(outputFile.getParentFile(), "Reports");
-        File fastQListFile = new File(reports, "fastq_list.csv");
-        Map<Integer, Map<String, FastQList>> mapLaneToSample = parseFastQFile(fastQListFile);
 
-        MolecularIndexingScheme molecularIndexingScheme = sampleInstanceV2.getMolecularIndexingScheme();
-        SortedMap<MolecularIndexingScheme.IndexPosition, MolecularIndex> indexes =
-                molecularIndexingScheme.getIndexes();
-        MolecularIndex p7 = indexes.get(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7);
-        String indexScheme = p7.getSequence();
-        if (indexes.containsKey(MolecularIndexingScheme.IndexPosition.ILLUMINA_P5)) {
-            MolecularIndex p5 = indexes.get(MolecularIndexingScheme.IndexPosition.ILLUMINA_P5);
-            indexScheme = indexScheme + "." + p5.getSequence();
+        File reports = outputFile.getParentFile();
+
+        Map<Integer, Map<String, List<FastQList>>> mapLaneToSample = parseFastQFile(fastQListFile);
+
+        Map<String, List<FastQList>> sampleToFastqs = mapLaneToSample.get(lane);
+        List<FastQList> fastQLists = sampleToFastqs.get(expectedSample.getSampleKey());
+        if (fastQLists == null) { // Try pdo sample
+            fastQLists = sampleToFastqs.get(mercurySample.getSampleKey());
         }
-        String rgId = String.format("%s.%d.%s", sampleCartridge.getLabel(), runChamber.getLaneNumber(),
-                indexScheme);
+        for (FastQList fastQLine: fastQLists) { // TODO JW This is null
+            File r1Fastq = new File(fastQLine.getRead1File());
+            File r2Fastq = new File(fastQLine.getRead2File());
 
-        File r1Fastq = new File(mapLaneToSample.get(
-                runChamber.getLaneNumber()).get(mercurySample.getSampleKey()).getRead1File());
-        File r2Fastq = new File(
-                mapLaneToSample.get(runChamber.getLaneNumber()).get(mercurySample.getSampleKey()).getRead2File());
+            String rgLine = String.format(LINE_FORMAT, rgId, mercurySample.getSampleKey(), library,
+                    lane, r1Fastq.getPath(), r2Fastq.getPath());
+            sb.append(rgLine);
+        }
 
-        String rgLine = String.format(LINE_FORMAT, rgId, mercurySample.getSampleKey(), library,
-                runChamber.getLaneNumber(), r1Fastq.getPath(), r2Fastq.getPath());
-        sb.append(rgLine);
+        if (!reports.exists()) {
+            reports.mkdir();
+        }
 
         FileUtils.writeStringToFile(outputFile, sb.toString());
-
-        return true;
     }
 
-    public Map<Integer, Map<String, FastQList>> parseFastQFile(File fastQListFile) throws FileNotFoundException {
-        Map<Integer, Map<String, FastQList>> mapLaneToSample = new HashMap<>();
+    public void buildAggregation(Set<FastQList> fastQLists, MercurySample mercurySample, File outputFile) throws IOException {
+        FileWriter writer = new FileWriter(outputFile);
+        writer.write(HEADER);
+        for (FastQList fastQList: fastQLists) {
+            writer.write(String.format(LINE_FORMAT, fastQList.getRgId(), mercurySample.getSampleKey(), fastQList.getRgLb(),
+                    fastQList.getLane(), fastQList.getRead1File(), fastQList.getRead2File()));
+            writer.write("\n");
+        }
+        writer.close();
+    }
+
+    public Map<Integer, Map<String, List<FastQList>>> parseFastQFile(File fastQListFile) throws FileNotFoundException {
+        Map<Integer, Map<String, List<FastQList>>> mapLaneToSample = new HashMap<>();
         CsvToBean<FastQList> builder = new CsvToBeanBuilder<FastQList>(
                 new BufferedReader(new FileReader(fastQListFile))).
                 withSeparator(',').
@@ -85,10 +89,35 @@ public class FastQListBuilder {
             if (!mapLaneToSample.containsKey(fastQList.getLane())) {
                 mapLaneToSample.put(fastQList.getLane(), new HashMap<>());
             }
-            String sampleId = fastQList.getRgSm().split("_")[0];
-            mapLaneToSample.get(fastQList.getLane()).put(sampleId, fastQList);
+            String sampleId = fastQList.getRgSm().split("_")[2];
+            if (!mapLaneToSample.get(fastQList.getLane()).containsKey(sampleId)) {
+                mapLaneToSample.get(fastQList.getLane()).put(sampleId, new ArrayList<>());
+            }
+            mapLaneToSample.get(fastQList.getLane()).get(sampleId).add(fastQList);
         }
 
         return mapLaneToSample;
+    }
+
+    public List<FastQList> parseFastQFileList(File fastQListFile) throws FileNotFoundException {
+        CsvToBean<FastQList> builder = new CsvToBeanBuilder<FastQList>(
+                new BufferedReader(new FileReader(fastQListFile))).
+                withSeparator(',').
+                withType(FastQList.class).
+                build();
+        return builder.parse();
+    }
+
+    public Set<FastQList> findFastQ(File fastQListFile, int lane, String sampleKey) throws FileNotFoundException {
+        CsvToBean<FastQList> builder = new CsvToBeanBuilder<FastQList>(
+                new BufferedReader(new FileReader(fastQListFile))).
+                withSeparator(',').
+                withType(FastQList.class).
+                build();
+        List<FastQList> fastQLists = builder.parse();
+
+        return fastQLists.stream()
+                .filter(fastQList -> fastQList.getLane() == lane && fastQList.getRgSm().contains(sampleKey))
+                .collect(Collectors.toSet());
     }
 }

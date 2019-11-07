@@ -1,4 +1,4 @@
-<%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.reagent.ReagentDesignActionBean" %>
+<%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.hsa.FiniteStateMachineActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <%--

@@ -1,7 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.csv.CsvParser;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenFolderUtil;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FastQList;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.ReadGroupUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
@@ -11,6 +16,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
 import javax.enterprise.context.Dependent;
 import java.io.BufferedReader;
@@ -18,7 +25,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -30,6 +39,8 @@ import java.util.SortedMap;
 
 @Dependent
 public class SampleSheetBuilder {
+
+    public static final String FASTQ_NAME_FORMAT = "%s_S%d_%s_R%d_001.fastq.gz";
 
     public static List<SampleData> grabDataFromFile(File sampleSheet) throws IOException {
         BufferedReader br = new BufferedReader(new FileReader(sampleSheet));
@@ -53,6 +64,25 @@ public class SampleSheetBuilder {
 
         return CsvParser.parseCsvStreamToBeanByMapping(
                 br, ',', SampleData.class, colToFieldMap, null, 0);
+    }
+
+    // Dragens use Casava 1.8 naming scheme to make fastq filenames: <SampleID>_S<#>_<Lane>_<Read>_<segment#>.fastq.gz
+    public static List<FastQList> buildFastQsFromSampleSheet(File sampleSheet) throws IOException {
+        List<FastQList> ret = new ArrayList<>();
+        int sampleCounter = 1;
+        for (SampleData sampleData: grabDataFromFile(sampleSheet)) {
+            String rgId = sampleData.getSampleId();
+            String rgSm = ReadGroupUtil.parseSmFromRgId(rgId);
+            String library = "UnknownLibrary";
+            int lane = sampleData.getLane();
+            String laneFmt = StringUtils.leftPad(Integer.toString(lane), 3, "0");
+            String r1File = String.format(FASTQ_NAME_FORMAT, rgId, sampleCounter, laneFmt, 1);
+            String r2File = String.format(FASTQ_NAME_FORMAT, rgId, sampleCounter, laneFmt, 1);
+            FastQList fastQList = new FastQList(rgId, rgSm, library, lane, r1File, r2File);
+            ret.add(fastQList);
+        }
+
+        return ret;
     }
 
     public SampleSheet makeSampleSheet(IlluminaSequencingRun illuminaRun) {
@@ -79,13 +109,7 @@ public class SampleSheetBuilder {
                     vesselPosition)) {
 
                 ProductOrderSample productOrderSample = laneSampleInstance.getSingleProductOrderSample();
-                MercurySample mercurySample;
-                if (productOrderSample != null) {
-                    mercurySample = productOrderSample.getMercurySample();
-                } else {
-                    // Controls won't have a ProductOrderSample, so use root sample ID.
-                    mercurySample = laneSampleInstance.getRootOrEarliestMercurySample();
-                }
+                MercurySample mercurySample = findLaneMercurySample(laneSampleInstance);
 
                 if (!filterSampleIds.isEmpty() && !filterSampleIds.contains(mercurySample.getSampleKey())) {
                     continue;
@@ -99,6 +123,63 @@ public class SampleSheetBuilder {
         }
 
         return new SampleSheet(header, data);
+    }
+
+    public static Pair<MercurySample, SampleInstanceV2> findSampleInFlowcellLane(RunCartridge flowcell, VesselPosition lane, MercurySample sample ) {
+        for (SampleInstanceV2 sampleInstance : flowcell.getContainerRole().getSampleInstancesAtPositionV2(lane)) {
+            Pair<MercurySample, SampleInstanceV2> exportedSample = findExportedSample(sample, sampleInstance);
+            if (exportedSample != null) {
+                return exportedSample;
+            } else {
+                ProductOrderSample productOrderSample = sampleInstance.getSingleProductOrderSample();
+                if (productOrderSample != null) {
+                    if (productOrderSample.getMercurySample().equals(sample)) {
+                        return Pair.of(productOrderSample.getMercurySample(), sampleInstance);
+                    }
+                } else if (sampleInstance.getRootOrEarliestMercurySample().equals(sample)) {
+                    return Pair.of(sampleInstance.getRootOrEarliestMercurySample(), sampleInstance);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public static Pair<MercurySample, SampleInstanceV2> findExportedSample(MercurySample sample, SampleInstanceV2 sampleInstance) {
+        ProductOrderSample productOrderSample = sampleInstance.getSingleProductOrderSample();
+        if (sampleInstance.getRootOrEarliestMercurySample().equals(sample) || productOrderSample.getMercurySample().equals(sample)) {
+            LabBatchStartingVessel importLbsv =
+                    sampleInstance.getSingleBatchVessel(LabBatch.LabBatchType.SAMPLES_IMPORT);
+            if (importLbsv != null) {
+                Collection<MercurySample> mercurySamples = importLbsv.getLabVessel().getMercurySamples();
+                if (!mercurySamples.isEmpty()) {
+                    MercurySample mercurySample = mercurySamples.iterator().next();
+                    return Pair.of(mercurySample, sampleInstance);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public static MercurySample findLaneMercurySample(SampleInstanceV2 laneSampleInstance) {
+        ProductOrderSample productOrderSample = laneSampleInstance.getSingleProductOrderSample();
+        MercurySample mercurySample;
+        if (productOrderSample != null) {
+            mercurySample = productOrderSample.getMercurySample();
+        } else {
+            // Controls won't have a ProductOrderSample, so use root sample ID.
+            mercurySample = laneSampleInstance.getRootOrEarliestMercurySample();
+        }
+
+        LabBatchStartingVessel importLbsv = laneSampleInstance.getSingleBatchVessel(LabBatch.LabBatchType.SAMPLES_IMPORT);
+        if (importLbsv != null) {
+            Collection<MercurySample> mercurySamples = importLbsv.getLabVessel().getMercurySamples();
+            if (!mercurySamples.isEmpty()) {
+                mercurySample = mercurySamples.iterator().next();
+            }
+        }
+        return mercurySample;
     }
 
     public SampleSheet makeSampleSheet(IlluminaSequencingRun illuminaRun, VesselPosition vesselPosition, int laneNum) {
@@ -192,6 +273,7 @@ public class SampleSheetBuilder {
         private Boolean dualIndex;
         private Map<String, SampleData> mapSampleNameToData = new HashMap<>();
         private Map<String, MercurySample> mapSampleToMercurySample = new HashMap<>();
+        private Map<String, SampleInstanceV2> mapSampleToInstance = new HashMap<>();
         private Set<MercurySample> mercurySamples = new HashSet<>();
 
         public Data() {
@@ -209,16 +291,8 @@ public class SampleSheetBuilder {
 
         public void addSample(SampleInstanceV2 sampleInstanceV2, MercurySample mercurySample, int lane,
                               boolean isReverseComplement, String flowcell) {
-            String pdoSampleName;
-            ProductOrderSample productOrderSample = sampleInstanceV2.getSingleProductOrderSample();
-            if (productOrderSample != null) {
-                mercurySample = productOrderSample.getMercurySample();
-            } else {
-                // Controls won't have a ProductOrderSample, so use root sample ID.
-                mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
-            }
             mercurySamples.add(mercurySample);
-            pdoSampleName = mercurySample.getSampleKey();
+            String pdoSampleName = mercurySample.getSampleKey();
             MolecularIndexingScheme molecularIndexingScheme = sampleInstanceV2.getMolecularIndexingScheme();
             SortedMap<MolecularIndexingScheme.IndexPosition, MolecularIndex> indexes =
                     molecularIndexingScheme.getIndexes();
@@ -230,7 +304,7 @@ public class SampleSheetBuilder {
 
             SampleData data = null;
 
-            String rgSmId = pdoSampleName + "_" + flowcell + "_" + lane;
+            String rgSmId = ReadGroupUtil.createRgId(flowcell, lane, pdoSampleName);
             MolecularIndex p7 = indexes.get(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7);
             if (dualIndex) {
                 MolecularIndex p5 = indexes.get(MolecularIndexingScheme.IndexPosition.ILLUMINA_P5);
@@ -246,6 +320,7 @@ public class SampleSheetBuilder {
             }
             mapSampleNameToData.put(pdoSampleName, data);
             mapSampleToMercurySample.put(pdoSampleName, mercurySample);
+            mapSampleToInstance.put(pdoSampleName, sampleInstanceV2);
         }
 
         public Map<String, SampleData> getMapSampleNameToData() {
@@ -258,6 +333,10 @@ public class SampleSheetBuilder {
 
         public Map<String, MercurySample> getMapSampleToMercurySample() {
             return mapSampleToMercurySample;
+        }
+
+        public Map<String, SampleInstanceV2> getMapSampleToInstance() {
+            return mapSampleToInstance;
         }
     }
 
@@ -272,7 +351,8 @@ public class SampleSheetBuilder {
         public SampleData() {
         }
 
-        public SampleData(String sampleId, String sampleName, int lane, String index, String index2) {
+        public SampleData(String sampleId, String sampleName, int lane,
+                          String index, String index2) {
             this.sampleId = sampleId;
             this.sampleName = sampleName;
             this.lane = lane;

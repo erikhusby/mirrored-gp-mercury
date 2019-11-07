@@ -11,6 +11,7 @@ import javax.enterprise.context.Dependent;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -29,17 +30,178 @@ public class AlignmentStatsParser {
 
     private static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
 
+    public static final String SEQ_COVERAGE_FIELD = "Average sequenced coverage over genome";
+
+    public static final String SUMMARY_TYPE = "MAPPING/ALIGNING SUMMARY";
+
+    public AlignmentDataFiles parseFolder(String runName, Date runDate, String analysisName,
+                                                DragenReplayInfo dragenReplayInfo, File directory, String readGroup,
+                                                String filePrefix) throws IOException {
+        File mappingMetricsFile = new File(directory, filePrefix + ".mapping_metrics.csv");
+        File covMetrics = new File(directory, filePrefix + ".qc-coverage-region-1_coverage_metrics.csv");
+        File vcMetrics = new File(directory, filePrefix + ".vc_metrics.csv");
+
+        Map<RecordType, String> mapSummaryToValue = new HashMap<>();
+        Map<RecordType, String> mapCovToValue = new HashMap<>();
+        Map<RecordType, String> mapVcToPrefilterValue = new HashMap<>();
+        Map<RecordType, String> mapVcToPostfilterValue = new HashMap<>();
+
+        CSVReader csvReader = new CSVReader(new BufferedReader(new FileReader(mappingMetricsFile)));
+        String recordType = null;
+        String recordField = null;
+        String recordValue = null;
+        String[] nextRecord = null;
+        while ((nextRecord = csvReader.readNext()) != null) {
+            recordType = nextRecord[0];
+            recordField = nextRecord[2];
+            recordValue = nextRecord[3];
+
+            if (recordType.equals(SUMMARY_TYPE) && SummaryFields.getRecordFromField(recordField) != null) {
+                mapSummaryToValue.put(SummaryFields.getRecordFromField(recordField), recordValue);
+            }
+        }
+
+        csvReader = new CSVReader(new BufferedReader(new FileReader(covMetrics)));
+
+        // Coverage Metrics
+        while ((nextRecord = csvReader.readNext()) != null) {
+            recordField = nextRecord[2];
+            recordValue = nextRecord[3];
+
+            if (CoverageFields.getRecordFromField(recordField) != null) {
+                mapCovToValue.put(CoverageFields.getRecordFromField(recordField), recordValue);
+            }
+        }
+
+        // Vc Metrics
+        csvReader = new CSVReader(new BufferedReader(new FileReader(vcMetrics)));
+
+        String numSamples = csvReader.readNext()[3];
+        String readsProcessed = csvReader.readNext()[3];
+        String childSample = csvReader.readNext()[3];
+        while ((nextRecord = csvReader.readNext()) != null) {
+            recordType = nextRecord[0];
+            recordField = nextRecord[2];
+            recordValue = nextRecord[3];
+
+            if (recordType.equals("VARIANT CALLER PREFILTER") && VcFields.getRecordFromField(recordField) != null) {
+                mapVcToPrefilterValue.put(VcFields.getRecordFromField(recordField), recordValue);
+            }
+            if (recordType.equals("VARIANT CALLER POSTFILTER") && VcFields.getRecordFromField(recordField) != null) {
+                mapVcToPostfilterValue.put(VcFields.getRecordFromField(recordField), recordValue);
+            }
+        }
+
+        // Write outputs for Mapping Metrics
+        File mappingSummaryOutputFile = new File(directory, filePrefix + ".mapping_summary_mercury.dat");
+
+        Writer writer = new BufferedWriter(new FileWriter(mappingSummaryOutputFile));
+        CSVWriter csvWriterSummary = new CSVWriter(writer,
+        CSVWriter.DEFAULT_SEPARATOR,
+        CSVWriter.NO_QUOTE_CHARACTER,
+        CSVWriter.DEFAULT_ESCAPE_CHARACTER,
+        CSVWriter.DEFAULT_LINE_END);
+
+        List<String> summaryResults = new ArrayList<>();
+        summaryResults.add(runName);
+        summaryResults.add(simpleDateFormat.format(runDate));
+        summaryResults.add(readGroup);
+        summaryResults.add(filePrefix); // Sample alias
+        summaryResults.add(analysisName);
+        summaryResults.add(dragenReplayInfo.getSystem().getNodename());
+        summaryResults.add(dragenReplayInfo.getSystem().getDragenVersion());
+        for (SummaryFields summaryFields: SummaryFields.values()) {
+            if (mapSummaryToValue.containsKey(summaryFields)) {
+                summaryResults.add(mapSummaryToValue.get(summaryFields));
+                System.out.println(summaryFields.getRecordType() + "-" + mapSummaryToValue.get(summaryFields));
+            }
+        }
+
+        for (CoverageFields coverageFields: CoverageFields.values()) {
+            if (mapCovToValue.containsKey(coverageFields)) {
+                summaryResults.add(mapCovToValue.get(coverageFields));
+                System.out.println(coverageFields.getRecordType() + "-" + mapCovToValue.get(coverageFields));
+            }
+        }
+
+        csvWriterSummary.writeNext(summaryResults.toArray(new String[0]));
+        csvWriterSummary.close();
+
+        // Write Outputs for VC Metrics
+        File vcMetricsDat = new File(directory, filePrefix + ".vc_summary_mercury.dat");
+
+        writer = new BufferedWriter(new FileWriter(vcMetricsDat));
+        csvWriterSummary = new CSVWriter(writer,
+                CSVWriter.DEFAULT_SEPARATOR,
+                CSVWriter.NO_QUOTE_CHARACTER,
+                CSVWriter.DEFAULT_ESCAPE_CHARACTER,
+                CSVWriter.DEFAULT_LINE_END);
+
+        List<String> vcPreMetricsList = new ArrayList<>();
+        vcPreMetricsList.add(runName);
+        vcPreMetricsList.add(simpleDateFormat.format(runDate));
+        vcPreMetricsList.add(analysisName);
+        vcPreMetricsList.add(dragenReplayInfo.getSystem().getNodename());
+        vcPreMetricsList.add(dragenReplayInfo.getSystem().getDragenVersion());
+        vcPreMetricsList.add(filePrefix);
+        vcPreMetricsList.add("PREFILTER");
+        vcPreMetricsList.add(numSamples);
+        vcPreMetricsList.add(readsProcessed);
+        vcPreMetricsList.add(childSample);
+
+        List<String> vcPostMetricsList = new ArrayList<>();
+        vcPostMetricsList.add(runName);
+        vcPostMetricsList.add(simpleDateFormat.format(runDate));
+        vcPostMetricsList.add(analysisName);
+        vcPostMetricsList.add(dragenReplayInfo.getSystem().getNodename());
+        vcPostMetricsList.add(dragenReplayInfo.getSystem().getDragenVersion());
+        vcPostMetricsList.add(filePrefix);
+        vcPostMetricsList.add("POSTFILTER");
+        vcPostMetricsList.add(numSamples);
+        vcPostMetricsList.add(readsProcessed);
+        vcPostMetricsList.add(childSample);
+
+        for (VcFields field: VcFields.values()) {
+            if (mapVcToPrefilterValue.containsKey(field)) {
+                vcPreMetricsList.add(mapVcToPrefilterValue.get(field));
+                vcPostMetricsList.add(mapVcToPostfilterValue.get(field));
+            }
+        }
+
+        csvWriterSummary.writeNext(vcPreMetricsList.toArray(new String[0]));
+        csvWriterSummary.writeNext(vcPostMetricsList.toArray(new String[0]));
+        csvWriterSummary.close();
+
+        String alignSummaryLoad = String.format("%s_AlignRun_load.log", filePrefix);
+        String vcSummaryMetricLoad = String.format("%s_VCRunload.log", filePrefix);
+
+        AlignmentDataFiles dataFiles = new AlignmentDataFiles(mappingSummaryOutputFile, null,
+                vcMetricsDat, null, alignSummaryLoad, null, vcSummaryMetricLoad, null);
+
+        return dataFiles;
+    }
+
     public AlignmentDataFiles parseStats(File outputDirectory, String filePrefix, DragenReplayInfo dragenReplayInfo,
                                          MessageCollection messageCollection,
                                          Map<String, String> mapReadGroupToSampleAlias,
                                          Pair<String, String> runNameDatePair) {
         try {
+            File averageCoverageMetrics = new File(outputDirectory, filePrefix + ".qc-coverage-region-1_overall_mean_cov.csv");
+            Float meanCoverage = MeanCoverageParser
+                    .parseMeanCoverage(new FileInputStream(averageCoverageMetrics), messageCollection);
+            if (meanCoverage == null) {
+                String err = "Failed to parse mean coverage " + averageCoverageMetrics.getPath();
+                log.error(err);
+                messageCollection.addError(err);
+            }
+
             File mappingMetricsFile = new File(outputDirectory, filePrefix + ".mapping_metrics.csv");
             File mappingMetricsOutputFile = new File(outputDirectory, filePrefix + ".mapping_metrics_mercury.dat");
             File mappingSummaryOutputFile = new File(outputDirectory, filePrefix + ".mapping_summary_mercury.dat");
             if (mappingMetricsFile.exists()) {
                 parseMappingMetrics(mappingMetricsFile, mappingSummaryOutputFile, mappingMetricsOutputFile,
-                        runNameDatePair.getLeft(), new Date(), dragenReplayInfo, mapReadGroupToSampleAlias, runNameDatePair.getRight());
+                        runNameDatePair.getLeft(), new Date(), dragenReplayInfo, mapReadGroupToSampleAlias,
+                        runNameDatePair.getRight(), meanCoverage, false);
             } else {
                 messageCollection.addError("Failed to find mapping metrics file " + mappingMetricsFile.getPath());
             }
@@ -49,7 +211,7 @@ public class AlignmentStatsParser {
             File vcSummaryOutputFile = new File(outputDirectory, filePrefix + ".vc_summary_mercury.dat");
             if (vcMetricsFile.exists()) {
                 parseVcMetrics(vcMetricsFile, vcSummaryOutputFile, vcMetricsOutputFile, runNameDatePair.getLeft(),
-                        new Date(), dragenReplayInfo,  runNameDatePair.getRight());
+                        new Date(), dragenReplayInfo,  runNameDatePair.getRight(), false);
             } else {
                 messageCollection.addError("Failed to find vc metrics file " + vcMetricsFile.getPath());
             }
@@ -70,7 +232,7 @@ public class AlignmentStatsParser {
 
     private void parseVcMetrics(File vcMetricsFile, File vcSummaryOutputFile, File vcMetricsOutputFile,
                                 String runName, Date runDate,
-                                DragenReplayInfo dragenReplayInfo, String analysisName) throws IOException {
+                                DragenReplayInfo dragenReplayInfo, String analysisName, boolean summaryOnly) throws IOException {
         Writer writer = new BufferedWriter(new FileWriter(vcSummaryOutputFile));
         CSVWriter csvWriterSummary = new CSVWriter(writer,
                 CSVWriter.DEFAULT_SEPARATOR,
@@ -102,6 +264,10 @@ public class AlignmentStatsParser {
 
         csvWriterSummary.writeNext(vcSummary.toArray(new String[0]));
         csvWriterSummary.close();
+
+        if (summaryOnly) {
+            return;
+        }
 
         // Metrics
         List<String> vcMetricsPreFilter = new ArrayList<>();
@@ -144,7 +310,8 @@ public class AlignmentStatsParser {
 
     private void parseMappingMetrics(File vcMetricsFile, File mappingSummaryOutputFile, File mappingMetricsOutputFile,
                                      String runName, Date runDate, DragenReplayInfo dragenReplayInfo,
-                                     Map<String, String> mapReadGroupToSampleAlias, String analysisName) throws IOException {
+                                     Map<String, String> mapReadGroupToSampleAlias, String analysisName,
+                                     Float seqCoverage, boolean summaryOnly) throws IOException {
         Writer summaryWriter = new BufferedWriter(new FileWriter(mappingSummaryOutputFile));
         CSVWriter csvWriterSummary = new CSVWriter(summaryWriter,
                 CSVWriter.DEFAULT_SEPARATOR,
@@ -176,6 +343,9 @@ public class AlignmentStatsParser {
             if (!recordType.equals("MAPPING/ALIGNING SUMMARY")) {
                 break;
             } else {
+                if (recordField.equals(SEQ_COVERAGE_FIELD)) {
+                    recordValue = String.valueOf(seqCoverage);
+                }
                 alignmentSummary.add(recordValue);
                 mapFieldToVal.put(recordField, recordValue);
             }
@@ -183,6 +353,10 @@ public class AlignmentStatsParser {
 
         csvWriterSummary.writeNext(alignmentSummary.toArray(new String[0]));
         csvWriterSummary.close();
+
+        if (summaryOnly) {
+            return;
+        }
 
         Writer metricsWriter = new BufferedWriter(new FileWriter(mappingMetricsOutputFile));
         CSVWriter csvWriterMetrics = new CSVWriter(metricsWriter,
@@ -202,12 +376,15 @@ public class AlignmentStatsParser {
 
         while ((nextRecord = csvReader.readNext()) != null) {
             recordValue = nextRecord[3];
+            recordField = nextRecord[2];
+
+            // TODO Do I still want individuals on aggregation?
+            if (recordField.equals(SEQ_COVERAGE_FIELD)) {
+                recordValue = String.valueOf(seqCoverage);
+            }
             alignmentPerReadGroup.add(recordValue);
         }
 
-        for (SharedMetrics sharedMetrics: SharedMetrics.values()) {
-            alignmentPerReadGroup.add(mapFieldToVal.get(sharedMetrics.getRecordType()));
-        }
 
         csvWriterMetrics.writeNext(alignmentPerReadGroup.toArray(new String[0]));
         csvWriterMetrics.close();
@@ -273,38 +450,269 @@ public class AlignmentStatsParser {
         }
     }
 
-    public enum SharedMetrics {
-        CONTAMINATION("Estimated sample contamination"),
-        PREDICTED_SEX_CHROMOSOME("Predicted sex chromosome ploidy"),
-        PCT_COV_100_INF("PCT of genome with coverage [100x:inf)"),
-        PCT_COV_50_100("PCT of genome with coverage [50x:100x)"),
-        PCT_COV_20_50("PCT of genome with coverage [20x:50x)"),
-        PCT_COV_10_20("PCT of genome with coverage [10x:20x)"),
-        PCT_COV_3_10("PCT of genome with coverage [ 3x:10x)"),
-        PCT_COV_0_3("PCT of genome with coverage [ 0x: 3x)"),
+    public interface RecordType {
+        String getRecordType();
+    }
+
+    public enum SummaryFields implements RecordType {
+        TOTAL_READS("Total input reads"),
+        NUM_DUPE_MARKED_READS("Number of duplicate marked reads"),
+        NUM_DUPE_MARKED_READS_REMOVED("Number of duplicate marked and mate reads removed"),
+        NUM_UNIQUE_READS_EXCL("Number of unique reads (excl. duplicate marked reads)"),
+        READS_WITH_MATE_SEQ("Reads with mate sequenced"),
+        READS_WITHOUT_MATE_SEQ("Reads without mate sequenced"),
+        QC_FAILED_READS("QC-failed reads"),
+        MAPPED_READS("Mapped reads"),
+        MAPPED_READS_R1("Mapped reads R1"),
+        MAPPED_READS_R2("Mapped reads R2"),
+        NUM_UNQ_MAPPED_READS("Number of unique & mapped reads (excl. duplicate marked reads)"),
+        UNMAPPED_READS("Unmapped reads"),
+        SINGLETON_READS("Singleton reads (itself mapped; mate unmapped)"),
+        PAIRED_READS("Paired reads (itself & mate mapped)"),
+        PROPERLY_PAIRED_READS("Properly paired reads"),
+        NOT_PROPERLY_PAIRED_READS("Not properly paired reads (discordant)"),
+        PAIRED_READS_DIFF_CHROM("Paired reads mapped to different chromosomes"),
+        PAIRED_READS_DIFF_CHROM_Q10("Paired reads mapped to different chromosomes (MAPQ>=10)"),
+        READS_MAPQ_40_INF("Reads with MAPQ [40:inf)"),
+        READS_MAPQ_30_40("Reads with MAPQ [30:40)"),
+        READS_MAPQ_20_30("Reads with MAPQ [20:30)"),
+        READS_MAPQ_10_20("Reads with MAPQ [10:20)"),
+        READS_MAPQ_0_10("Reads with MAPQ [ 0:10)"),
+        READS_MAPQ_NA("Reads with MAPQ NA (Unmapped reads)"),
+        READS_INDEL_R1("Reads with indel R1"),
+        READS_INDEL_R2("Reads with indel R2"),
+        TOTAL_BASES("Total bases"),
+        TOTAL_BASES_R1("Total bases R1"),
+        TOTAL_BASES_R2("Total bases R2"),
+        MAPPED_BASES_R1("Mapped bases R1"),
+        MAPPED_BASES_R2("Mapped bases R2"),
+        SOFT_CLIPPED_R1("Soft-clipped bases R1"),
+        SOFT_CLIPPED_R2("Soft-clipped bases R2"),
+        MISMATCHED_BASES_R1("Mismatched bases R1"),
+        MISMATCHED_BASES_R2("Mismatched bases R2"),
+        MISMATCHED_BASES_R1_EXCL("Mismatched bases R1 (excl. indels)"),
+        MISMATCHED_BASES_R2_EXCL("Mismatched bases R2 (excl. indels)"),
+        Q30_BASES("Q30 bases"),
+        Q30_BASES_R1("Q30 bases R1"),
+        Q30_BASES_R2("Q30 bases R2"),
+        Q30_BASES_EXCL("Q30 bases (excl. dups & clipped bases)"),
+        TOTAL_ALIGNMENTS("Total alignments"),
+        SECONDARY_ALIGNMENTS("Secondary alignments"),
+        SUPPLEMENTARY_ALIGNMENTS("Supplementary (chimeric) alignments"),
+        EST_READ_LENGTH("Estimated read length"),
+        AVG_SEQ_COV_OVER_GENOME("Average sequenced coverage over genome"),
+        BASES_IN_REF_GENOME("Bases in reference genome"),
+        BASES_IN_TARGET_BED("Bases in target bed [% of genome]"),
+        INSERT_LENGTH_MEAN("Insert length: mean"),
+        INSERT_LENGTH_MED("Insert length: median"),
+        INSERT_LENGTH_STD("Insert length: standard deviation"),
+        PROVIDED_SEX_CHROM_PLOIDY("Provided sex chromosome ploidy"),
+        EST_SAMPLE_CONTAM("Estimated sample contamination"),
+        MAPPING_RATE("DRAGEN mapping rate [mil. reads/second]"),
         ;
 
         private final String recordType;
-
-        private static Map<String, SharedMetrics> mapKeyToMetric = new HashMap<>();
-
-        SharedMetrics(String recordType) {
-
-            this.recordType = recordType;
-        }
+        private static final Map<String, SummaryFields> mapFieldToSummary = new HashMap<>();
 
         static {
-            for (SharedMetrics sharedMetrics: SharedMetrics.values()) {
-                mapKeyToMetric.put(sharedMetrics.getRecordType(), sharedMetrics);
+            for (SummaryFields summaryFields: SummaryFields.values()) {
+                mapFieldToSummary.put(summaryFields.getRecordType(), summaryFields);
             }
         }
 
+        SummaryFields(String recordType) {
+            this.recordType = recordType;
+        }
+
+        @Override
         public String getRecordType() {
             return recordType;
         }
 
-        public static boolean containsKey(String key) {
-            return mapKeyToMetric.containsKey(key);
+        public static SummaryFields getRecordFromField(String field) {
+            return mapFieldToSummary.get(field);
+        }
+    }
+
+    public enum RgFields implements RecordType {
+        TOTAL_READS("Total reads in RG"),
+        NUM_DUPE_MARKED_READS("Number of duplicate marked reads"),
+        NUM_DUPE_MARKED_READS_REMOVED("Number of duplicate marked and mate reads removed"),
+        NUM_UNIQUE_READS_EXCL("Number of unique reads (excl. duplicate marked reads)"),
+        READS_WITH_MATE_SEQ("Reads with mate sequenced"),
+        READS_WITHOUT_MATE_SEQ("Reads without mate sequenced"),
+        QC_FAILED_READS("QC-failed reads"),
+        MAPPED_READS("Mapped reads"),
+        MAPPED_READS_R1("Mapped reads R1"),
+        MAPPED_READS_R2("Mapped reads R2"),
+        NUM_UNQ_MAPPED_READS("Number of unique & mapped reads (excl. duplicate marked reads)"),
+        UNMAPPED_READS("Unmapped reads"),
+        SINGLETON_READS("Singleton reads (itself mapped; mate unmapped)"),
+        PAIRED_READS("Paired reads (itself & mate mapped)"),
+        PROPERLY_PAIRED_READS("Properly paired reads"),
+        NOT_PROPERLY_PAIRED_READS("Not properly paired reads (discordant)"),
+        PAIRED_READS_DIFF_CHROM("Paired reads mapped to different chromosomes"),
+        PAIRED_READS_DIFF_CHROM_Q10("Paired reads mapped to different chromosomes (MAPQ>=10)"),
+        READS_MAPQ_40_INF("Reads with MAPQ [40:inf)"),
+        READS_MAPQ_30_40("Reads with MAPQ [30:40)"),
+        READS_MAPQ_20_30("Reads with MAPQ [20:30)"),
+        READS_MAPQ_10_20("Reads with MAPQ [10:20)"),
+        READS_MAPQ_0_10("Reads with MAPQ [ 0:10)"),
+        READS_MAPQ_NA("Reads with MAPQ NA (Unmapped reads)"),
+        READS_INDEL_R1("Reads with indel R1"),
+        READS_INDEL_R2("Reads with indel R2"),
+        TOTAL_BASES("Total bases"),
+        TOTAL_BASES_R1("Total bases R1"),
+        TOTAL_BASES_R2("Total bases R2"),
+        MAPPED_BASES_R1("Mapped bases R1"),
+        MAPPED_BASES_R2("Mapped bases R2"),
+        SOFT_CLIPPED_R1("Soft-clipped bases R1"),
+        SOFT_CLIPPED_R2("Soft-clipped bases R2"),
+        MISMATCHED_BASES_R1("Mismatched bases R1"),
+        MISMATCHED_BASES_R2("Mismatched bases R2"),
+        MISMATCHED_BASES_R1_EXCL("Mismatched bases R1 (excl. indels)"),
+        MISMATCHED_BASES_R2_EXCL("Mismatched bases R2 (excl. indels)"),
+        Q30_BASES("Q30 bases"),
+        Q30_BASES_R1("Q30 bases R1"),
+        Q30_BASES_R2("Q30 bases R2"),
+        Q30_BASES_EXCL("Q30 bases (excl. dups & clipped bases)"),
+        TOTAL_ALIGNMENTS("TOTAL_ALIGNMENTS"),
+        SECONDARY_ALIGNMENTS("Secondary alignments"),
+        SUPPLEMENTARY_ALIGNMENTS("Supplementary (chimeric) alignments"),
+        EST_READ_LENGTH("Estimated read length"),
+        AVG_SEQ_COV_OVER_GENOME("Average sequenced coverage over genome"),
+        INSERT_LENGTH_MEAN("Insert length: mean"),
+        INSERT_LENGTH_MED("Insert length: median"),
+        INSERT_LENGTH_STD("Insert length: standard deviation"),
+        ;
+
+        private final String recordType;
+
+        private static final Map<String, RgFields> mapFieldToCoverage = new HashMap<>();
+
+        static {
+            for (RgFields summaryFields: RgFields.values()) {
+                mapFieldToCoverage.put(summaryFields.getRecordType(), summaryFields);
+            }
+        }
+
+        RgFields(String recordType) {
+            this.recordType = recordType;
+        }
+
+        @Override
+        public String getRecordType() {
+            return recordType;
+        }
+
+        public static RgFields getRecordFromField(String field) {
+            return mapFieldToCoverage.get(field);
+        }
+    }
+
+    public enum CoverageFields implements RecordType {
+        ALIGNED_BASES("Aligned bases"),
+        ALIGNED_BASES_IN_REGION("Aligned bases in QC coverage region"),
+        AVG_ALIGNMENT_COVERAGE("Average alignment coverage over QC coverage region"),
+        UNIFORMITY_OF_COV("Uniformity of coverage (PCT > 0.2*mean) over QC coverage region"),
+        PCT_COV_100X_INF("PCT of QC coverage region with coverage [100x: inf)"),
+        PCT_COV_50X_INF("PCT of QC coverage region with coverage [ 50x: inf)"),
+        PCT_COV_20X_INF("PCT of QC coverage region with coverage [ 20x: inf)"),
+        PCT_COV_15X_INF("PCT of QC coverage region with coverage [ 15x: inf)"),
+        PCT_COV_10X_INF("PCT of QC coverage region with coverage [ 10x: inf)"),
+        PCT_COV_3X_INF("PCT of QC coverage region with coverage [  3x: inf)"),
+        PCT_COV_1X_INF("PCT of QC coverage region with coverage [  1x: inf)"),
+        PCT_COV_0X_INF("PCT of QC coverage region with coverage [  0x: inf)"),
+        PCT_COV_50X_100X("PCT of QC coverage region with coverage [ 50x:100x)"),
+        PCT_COV_20X_50X("PCT of QC coverage region with coverage [ 20x: 50x)"),
+        PCT_COV_15X_20X("PCT of QC coverage region with coverage [ 15x: 20x)"),
+        PCT_COV_10X_15X("PCT of QC coverage region with coverage [ 10x: 15x)"),
+        PCT_COV_3X_10X("PCT of QC coverage region with coverage [  3x: 10x)"),
+        PCT_COV_1X_3X("PCT of QC coverage region with coverage [  1x:  3x)"),
+        PCT_COV_0X_1X("PCT of QC coverage region with coverage [  0x:  1x)"),
+        AVG_CHR_X_COV("Average chr X coverage over QC coverage region"),
+        AVG_CHR_Y_COV("Average chr Y coverage over QC coverage region"),
+        AVG_MITO_COV("Average mitochondrial coverage over QC coverage region"),
+        AVG_AUTOSOMAL_COV("Average autosomal coverage over QC coverage region"),
+        MED_AUTOSOMAL_COV("Median autosomal coverage over QC coverage region"),
+        MEAN_MED_AUTO_COV("Mean/Median autosomal coverage ratio over QC coverage region"),
+        XAVG_YAVG_COV("XAvgCov/YAvgCov ratio over QC coverage region"),
+        XAVG_AUTOSOMAL_COV("XAvgCov/AutosomalAvgCov ratio over QC coverage region"),
+        YAVG_AUTOSOMAL_COV("YAvgCov/AutosomalAvgCov ratio over QC coverage region"),
+        PRED_SEX_CHROM_PLOIDY("Predicted sex chromosome ploidy"),
+        ALIGNED_READS("Aligned reads"),
+        ALIGNED_READS_QC("Aligned reads in QC coverage region"),
+        ;
+
+        private final String recordType;
+
+        private static final Map<String, CoverageFields> mapFieldToCoverage = new HashMap<>();
+
+        static {
+            for (CoverageFields field: CoverageFields.values()) {
+                mapFieldToCoverage.put(field.getRecordType(), field);
+            }
+        }
+
+        CoverageFields(String recordType) {
+            this.recordType = recordType;
+        }
+
+        @Override
+        public String getRecordType() {
+            return recordType;
+        }
+
+        public static CoverageFields getRecordFromField(String field) {
+            return mapFieldToCoverage.get(field);
+        }
+    }
+
+    public enum VcFields implements RecordType {
+        NUM_SAMPLES("Number of samples"),
+        READS_PROCESSED("Reads Processed"),
+        CHILD_SAMPLE("Child Sample"),
+        TOTAL("Total"),
+        BIALLELIC("Biallelic"),
+        MULTIALLELIC("Multiallelic"),
+        SNPS("SNPs"),
+        INSERTIONS_HOM("Insertions (Hom)"),
+        INSERTIONS_HET("Insertions (Het)"),
+        DELETIONS_HOM("Deletions (Hom)"),
+        DELETIONS_HET("Deletions (Het)"),
+        INDELS_HET("Indels (Het)"),
+        CHR_X("Chr X number of SNPs over genome"),
+        CHR_Y("Chr Y number of SNPs over genome"),
+        CHR_XY_RATIO("(Chr X SNPs)/(chr Y SNPs) ratio over genome"),
+        SNP_TRANSITIONS("SNP Transitions"),
+        SNP_TRANSVERSIONS("SNP Transversions"),
+        TI_TV_RATIO("Ti/Tv ratio"),
+        HET("Heterozygous"),
+        HOM("Homozygous"),
+        IN_DBSNP("In dbSNP"),
+        NOT_IN_DBSNP("Not in dbSNP"),
+        ;
+
+        private final String recordType;
+        private static final Map<String, AlignmentStatsParser.VcFields> mapFieldToSummary = new HashMap<>();
+
+        static {
+            for (AlignmentStatsParser.VcFields fields: AlignmentStatsParser.VcFields.values()) {
+                mapFieldToSummary.put(fields.getRecordType(), fields);
+            }
+        }
+
+        VcFields(String recordType) {
+            this.recordType = recordType;
+        }
+
+        @Override
+        public String getRecordType() {
+            return recordType;
+        }
+
+        public static AlignmentStatsParser.VcFields getRecordFromField(String field) {
+            return mapFieldToSummary.get(field);
         }
     }
 }

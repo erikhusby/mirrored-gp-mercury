@@ -289,20 +289,26 @@ dragen:
     DEV:
       demultiplexOutputPath:  /seq/illumina/proc/
       dragenPath: /opt/edico/bin/
-      slurmHost: login00
+      slurmHost: login04
       referenceFileServer: helium
+      aggregationFilepath: /seq/dragen/aggregation/
+      intermediateResults: /local/scratch
 
     QA:
       demultiplexOutputPath:  /seq/illumina/proc/
       dragenPath: /opt/edico/bin/
-      slurmHost: login00
+      slurmHost: login04
       referenceFileServer: helium
+      aggregationFilepath: /seq/dragen/aggregation/
+      intermediateResults: /local/scratch
 
     PROD:
       demultiplexOutputPath:  /seq/illumina/proc/
       dragenPath: /opt/edico/bin/
-      slurmHost: login00
+      slurmHost: login04
       referenceFileServer: helium
+      aggregationFilepath: /seq/dragen/aggregation/
+      intermediateResults: /local/scratch
 
 hipchat:
     DEV:

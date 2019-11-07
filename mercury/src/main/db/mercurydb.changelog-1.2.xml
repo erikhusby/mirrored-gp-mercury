@@ -2726,14 +2726,14 @@
         <dropSequence sequenceName="SEQ_STATE" schemaName="mercury"/>
     </changeSet>
     <changeSet id="GPLIM-6242-Merc-38" author="jowalsh">
-        <createSequence sequenceName="SEQ_STATE" schemaName="mercury" startValue="1" incrementBy="50"/>
+        <createSequence sequenceName="SEQ_STATE" schemaName="mercury" startValue="5000" incrementBy="50"/>
     </changeSet>
 
     <changeSet id="GPLIM-6242-Merc-39" author="jowalsh">
         <dropSequence sequenceName="SEQ_TRANSITION" schemaName="mercury"/>
     </changeSet>
     <changeSet id="GPLIM-6242-Merc-40" author="jowalsh">
-        <createSequence sequenceName="SEQ_TRANSITION" schemaName="mercury" startValue="1" incrementBy="50"/>
+        <createSequence sequenceName="SEQ_TRANSITION" schemaName="mercury" startValue="10000" incrementBy="50"/>
     </changeSet>
 
 </databaseChangeLog>

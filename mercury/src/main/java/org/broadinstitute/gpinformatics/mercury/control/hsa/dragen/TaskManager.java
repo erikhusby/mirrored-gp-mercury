@@ -1,11 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.dragen;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.AggregationMetricsTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.AlignmentMetricsTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.DemultiplexMetricsTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.FingerprintTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.JobInfo;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerContext;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AggregationState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -27,16 +29,23 @@ public class TaskManager {
     @Inject
     private FingerprintTaskHandler fingerprintTaskHandler;
 
+    @Inject
+    private AggregationMetricsTaskHandler aggregationMetricsTaskHandler;
+
     public void fireEvent(Task task, SchedulerContext schedulerContext) throws InterruptedException {
-        task.setStatus(Status.RUNNING);
-        task.setStartTime(new Date());
+        task.setStatus(Status.QUEUED);
+        task.setQueuedTime(new Date());
         if (OrmUtil.proxySafeIsInstance(task, ProcessTask.class)) {
             handleStartProcess(task, schedulerContext);
             Thread.sleep(1000L); // Slurm Docs recommend a slight delay between job creation
         } else if (OrmUtil.proxySafeIsInstance(task, DemultiplexMetricsTask.class)) {
             demultiplexMetricsTaskHandler.handleTask(task, schedulerContext);
         } else if (OrmUtil.proxySafeIsInstance(task, AlignmentMetricsTask.class)) {
-            alignmentMetricsTaskHandler.handleTask(task, schedulerContext);
+            if (OrmUtil.proxySafeIsInstance(task.getState(), AggregationState.class)) {
+                aggregationMetricsTaskHandler.handleTask(task, schedulerContext);
+            } else {
+                alignmentMetricsTaskHandler.handleTask(task, schedulerContext);
+            }
         } else if (OrmUtil.proxySafeIsInstance(task, FingerprintUploadTask.class)) {
             fingerprintTaskHandler.handleTask(task, schedulerContext);
         }

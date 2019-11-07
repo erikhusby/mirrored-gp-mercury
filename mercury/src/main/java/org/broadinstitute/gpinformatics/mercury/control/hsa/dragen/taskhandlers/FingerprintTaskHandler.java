@@ -4,15 +4,23 @@ import htsjdk.samtools.metrics.MetricBase;
 import htsjdk.samtools.metrics.MetricsFile;
 import htsjdk.samtools.util.CloserUtil;
 import htsjdk.samtools.util.IOUtil;
+import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.FingerprintScoreDao;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.FingerprintScore;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGetExportedSamplesFromAliquots;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FingerprintBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FingerprintCallsBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FingerprintEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FingerprintResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.SnpListDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.SampleSheetBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.FingerprintTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.FingerprintUploadTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerContext;
@@ -22,19 +30,29 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
+import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Snp;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SnpList;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import picard.analysis.FingerprintingDetailMetrics;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Dependent
 public class FingerprintTaskHandler extends AbstractTaskHandler {
@@ -45,10 +63,16 @@ public class FingerprintTaskHandler extends AbstractTaskHandler {
     private static final String FINGERPRINTING_DETAIL_METRICS = "%s.fingerprinting_detail_metrics";
 
     @Inject
-    private FingerprintResource fingerprintResource;
+    private FingerprintEjb fingerprintEjb;
 
     @Inject
-    private FingerprintEjb fingerprintEjb;
+    private FingerprintScoreDao fingerprintScoreDao;
+
+    @Inject
+    private BSPGetExportedSamplesFromAliquots samplesFromAliquots;
+
+    @Inject
+    private MercurySampleDao mercurySampleDao;
 
     @Override
     public void handleTask(Task task, SchedulerContext schedulerContext) {
@@ -59,7 +83,7 @@ public class FingerprintTaskHandler extends AbstractTaskHandler {
             task.setStatus(Status.FAILED);
             return;
         }
-
+        // TODO Handle multiple fingerprint tasks in a state
         FingerprintState fingerprintState = OrmUtil.proxySafeCast(state, FingerprintState.class);
         Task picardTask = fingerprintState.getTasks().iterator().next();
         if (!OrmUtil.proxySafeIsInstance(picardTask, FingerprintTask.class)) {
@@ -69,22 +93,90 @@ public class FingerprintTaskHandler extends AbstractTaskHandler {
         }
 
         FingerprintTask fpTask = OrmUtil.proxySafeCast(picardTask, FingerprintTask.class);
+        File laneFolder = fpTask.getBamFile().getParentFile();
+        File fastq = laneFolder.getParentFile();
+        File analysisFile = fastq.getParentFile();
+        String analysisName = analysisFile.getName();
 
-        FingerprintBean fingerprintBean = handleTaskDaoFree(fpTask, fingerprintState.getMercurySample());
+        MercurySample mercurySample = fingerprintState.getMercurySample();
+        IlluminaSequencingRunChamber runChamber = fingerprintState.getSequencingRunChambers().iterator().next();
+        RunCartridge flowcell = runChamber.getIlluminaSequencingRun().getSampleCartridge();
+
+        FingerprintBean fingerprintBean = handleTaskDaoFree(fpTask, mercurySample);
+
+        Pair<MercurySample, SampleInstanceV2> instancePair = SampleSheetBuilder.
+                findSampleInFlowcellLane(flowcell, runChamber.getLanePosition(), mercurySample);
+        MercurySample exportedSample = instancePair.getLeft();
+
+        List<Fingerprint> fluidigmFingerprints = exportedSample.getFingerprints().stream()
+                .filter(fp -> fp.getPlatform() == Fingerprint.Platform.FLUIDIGM &&
+                              fp.getDisposition() == Fingerprint.Disposition.PASS)
+                .sorted(Comparator.comparing(Fingerprint::getDateGenerated))
+                .collect(Collectors.toList());
+
+        Comparator<Fingerprint> comparator = (o1, o2) -> new CompareToBuilder().
+                append(o1.getPlatform().getPrecedenceForInitial(), o2.getPlatform().getPrecedenceForInitial()).
+                append(o2.getDateGenerated(), o1.getDateGenerated()).
+                build();
+
+        // Check BSP Export
+        if (fluidigmFingerprints.isEmpty()) {
+
+            List<BSPGetExportedSamplesFromAliquots.ExportedSample> exportedSamples =
+                    samplesFromAliquots.getExportedSamplesFromAliquots(Collections.singleton(exportedSample.getSampleData().getSampleLsid()),
+                            IsExported.ExternalSystem.GAP);
+            List<String> sampleKeys = new ArrayList<>();
+            for (BSPGetExportedSamplesFromAliquots.ExportedSample gapExportedSample : exportedSamples) {
+                sampleKeys.add(FingerprintResource.getSmIdFromLsid(gapExportedSample.getExportedLsid()));
+            }
+
+            EnumSet<Fingerprint.Platform> initialPlatforms = EnumSet.of(
+                    Fingerprint.Platform.FLUIDIGM, Fingerprint.Platform.GENERAL_ARRAY, Fingerprint.Platform.FAT_PANDA);
+
+            Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(sampleKeys);
+            for (Map.Entry<String, MercurySample> idMercurySampleEntry : mapIdToMercurySample.entrySet()) {
+                MercurySample sample = idMercurySampleEntry.getValue();
+                if (sample != null) {
+                    sample.getFingerprints().stream().
+                            filter(fingerprint -> fingerprint.getDisposition() == Fingerprint.Disposition.PASS &&
+                                                  initialPlatforms.contains(fingerprint.getPlatform())).
+                            max(comparator).
+                            ifPresent(fluidigmFingerprints::add);
+                }
+            }
+        }
+
+        Optional<Fingerprint> optionalFingerprint = fluidigmFingerprints.stream().max(comparator);
+        if (!optionalFingerprint.isPresent()) {
+            fpUploadTask.setStatus(Status.SUSPENDED);
+            fpUploadTask.setErrorMessage("No Fluidigm Fingerprints.");
+
+            return;
+        }
+
+        Fingerprint fluidigmFingerprint = optionalFingerprint.get();
+
         if (fingerprintBean != null) {
-            // TODO I don't know what this will do
-            Fingerprint fingerprint = null;// fingerprintEjb.handleNewFingerprint(fingerprintBean, fingerprintState.getMercurySample());
+            Double lodScore = fingerprintEjb.handleNewFingerprint(fingerprintBean, mercurySample, fluidigmFingerprint);
 
-            if (fingerprint == null) {
-                fpTask.setErrorMessage("Failed to create fingerprint for " + fingerprintState.getMercurySample().getSampleKey());
-                fpTask.setStatus(Status.FAILED);
+            if (lodScore == null) {
+                fpUploadTask.setErrorMessage("Failed to create lod score for " + mercurySample.getSampleKey());
+                fpUploadTask.setStatus(Status.FAILED);
             } else {
-                // TODO Handle success and suspended
-                fpTask.setStatus(Status.COMPLETE);
+                FingerprintScore fpScore = new FingerprintScore();
+                fpScore.setLodScore(BigDecimal.valueOf(lodScore));
+                fpScore.setSampleAlias(mercurySample.getSampleKey());
+                fpScore.setRunName(fingerprintState.getRun().getRunName());
+                fpScore.setLane(runChamber.getLaneNumber());
+                fpScore.setFlowcell(flowcell.getLabel());
+                fpScore.setRunDate(new Date());
+                fpScore.setAnalysisName(analysisName);
+                fingerprintScoreDao.persist(fpScore);
+                fpUploadTask.setStatus(Status.COMPLETE);
             }
         } else {
-            fpTask.setStatus(Status.FAILED);
-            fpTask.setErrorMessage("Failed to build fingerprint bean");
+            fpUploadTask.setStatus(Status.FAILED);
+            fpUploadTask.setErrorMessage("Failed to build fingerprint bean");
         }
     }
 

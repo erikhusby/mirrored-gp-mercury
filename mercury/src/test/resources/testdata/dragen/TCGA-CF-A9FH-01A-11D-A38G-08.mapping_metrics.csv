@@ -4,7 +4,7 @@ MAPPING/ALIGNING SUMMARY,,Number of duplicate marked and mate reads removed,NA
 MAPPING/ALIGNING SUMMARY,,Number of unique reads (excl. duplicate marked reads),196128146,89.66
 MAPPING/ALIGNING SUMMARY,,Reads with mate sequenced,218742556,100.00
 MAPPING/ALIGNING SUMMARY,,Reads without mate sequenced,0,0.00
-MAPPING/ALIGNING SUMMARY,,QC-failed reads,0,0.00
+MAPPING/ALIGNING SUMMARY,,QC-failed reads,0,0580068819.00
 MAPPING/ALIGNING SUMMARY,,Mapped reads,214282512,97.96
 MAPPING/ALIGNING SUMMARY,,Number of unique & mapped reads (excl. duplicate marked reads),191668102,87.62
 MAPPING/ALIGNING SUMMARY,,Unmapped reads,4460044,2.04

@@ -54,8 +54,7 @@ public abstract class Task {
 
     private Date endTime;
 
-    // TODO
-    //private Date queuedTime;
+    private Date queuedTime;
 
     private String errorMessage;
 
@@ -97,6 +96,14 @@ public abstract class Task {
         this.taskName = taskName;
     }
 
+    public Date getQueuedTime() {
+        return queuedTime;
+    }
+
+    public void setQueuedTime(Date queuedTime) {
+        this.queuedTime = queuedTime;
+    }
+
     public Date getStartTime() {
         return startTime;
     }
@@ -127,5 +134,9 @@ public abstract class Task {
 
     public void setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;
+    }
+
+    public boolean isComplete() {
+        return getStatus() == Status.COMPLETE;
     }
 }

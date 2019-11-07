@@ -1,9 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.dragen;
 
-import htsjdk.samtools.metrics.MetricBase;
-import htsjdk.samtools.metrics.MetricsFile;
-import htsjdk.samtools.util.CloserUtil;
-import htsjdk.samtools.util.IOUtil;
 import org.apache.commons.io.FileUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.datawh.EtlConfig;
@@ -48,7 +44,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
-import org.broadinstitute.gpinformatics.mercury.presentation.hsa.AlignmentActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.hsa.AggregationActionBean;
 import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
@@ -63,12 +59,9 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.zeroturnaround.exec.ProcessOutput;
 import org.zeroturnaround.exec.ProcessResult;
-import picard.analysis.FingerprintingDetailMetrics;
-import picard.analysis.FingerprintingSummaryMetrics;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -350,7 +343,6 @@ public class DragenSimulatorTest extends BaseEventTest {
             }
             System.out.println(sampleSheetFile.getPath());
 
-            IlluminaSequencingRunChamber sequencingRunChamber = run.getSequencingRunChamber(laneNum);
             demultiplex.addTask(new DemultiplexTask(runDir, fastQ, sampleSheetFile));
 
             Transition seqToDemux = new Transition("Sequencing Complete To Demultiplexing", finiteStateMachine);
@@ -374,7 +366,8 @@ public class DragenSimulatorTest extends BaseEventTest {
                 if (!mapSmToAlignment.containsKey(fastQSampleId)) {
                     alignment.addTask(new AlignmentTask(referenceFile, fastQList, fastQSampleId, alignmentOutputDir,
                             intermediateResults, fastQSampleId, fastQSampleId,
-                            new File(AlignmentActionBean.ReferenceGenome.HG38.getContamFile())));
+                            new File(AggregationActionBean.ReferenceGenome.HG38.getContamFile()),
+                            new File(AggregationActionBean.ReferenceGenome.HG38.getCoverageBedFile())));
                     mapSmToAlignment.put(mercurySample.getSampleKey(), mercurySample);
                 }
             }

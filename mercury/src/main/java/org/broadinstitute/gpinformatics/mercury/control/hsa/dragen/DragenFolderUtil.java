@@ -3,16 +3,21 @@ package org.broadinstitute.gpinformatics.mercury.control.hsa.dragen;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.DragenConfig;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import java.io.File;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import static org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine.DEMUX_FOLDER_FORMAT;
 
 public class DragenFolderUtil {
 
     public static final String FAST_Q_FILE_NAME = "%s_S1_R%d_00%d.fastq.gz";
+    public static final String FASTQ_LIST_CSV = "fastq_list.csv";
     private final DragenConfig dragenConfig;
     private final IlluminaSequencingRun illuminaSequencingRun;
     private File replayJsonFile;
@@ -25,6 +30,7 @@ public class DragenFolderUtil {
     private File fastQFolder;
     private File reportsFolder;
     private File demultiplexStatsFile;
+    private List<File> laneFolders = new ArrayList<>();
 
     /**
      * Initializes as the most recent analysis folder found in root run folder
@@ -57,6 +63,7 @@ public class DragenFolderUtil {
             try {
                 Date currDate = DEMUX_FOLDER_FORMAT.parse(file.getName());
                 if (currDate.compareTo(date) > 0) {
+                    date = currDate;
                     analysisKey = file.getName();
                 }
             } catch (ParseException e) {
@@ -68,11 +75,17 @@ public class DragenFolderUtil {
             throw new RuntimeException("Failed to find any demultiplex runs in " + runFolder.getPath());
         }
 
+        analysisFolder = new File(dragenFolder, analysisKey);
         fastQFolder = new File(analysisFolder, "fastq");
         replayJsonFile = new File(fastQFolder, "replay.json");
         reportsFolder = new File(fastQFolder, "Reports");
         demultiplexStatsFile = new File(reportsFolder, "Demultiplex_Stats.csv");
-        fastQListFile = new File(reportsFolder, "fastq_list.csv");
+        fastQListFile = new File(reportsFolder, FASTQ_LIST_CSV);
+
+        for (IlluminaSequencingRunChamber runChamber: illuminaSequencingRun.getSequencingRunChambers()) {
+            File laneFolder = new File(fastQFolder, String.valueOf(runChamber.getLaneNumber()));
+            laneFolders.add(laneFolder);
+        }
     }
 
     public DragenFolderUtil(DragenConfig dragenConfig, IlluminaSequencingRun illuminaSequencingRun, String analysisKey) {
@@ -107,6 +120,16 @@ public class DragenFolderUtil {
         reportsFolder = new File(fastQFolder, "Reports");
         demultiplexStatsFile = new File(reportsFolder, "Demultiplex_Stats.csv");
         fastQListFile = new File(reportsFolder, "fastq_list.csv");
+    }
+
+    public static File newSampleAggregation(DragenConfig dragenConfig, String sampleKey) {
+        File aggregationFolder = new File(dragenConfig.getAggregationFilepath());
+        File sampleFolder = new File(aggregationFolder, sampleKey);
+        if (!sampleFolder.exists()) {
+            sampleFolder.mkdir();
+        }
+        File aggregationVersion = new File(sampleFolder, DateUtils.getFileDateTime(new Date()));
+        return aggregationVersion;
     }
 
     public DragenConfig getDragenConfig() {
@@ -163,5 +186,27 @@ public class DragenFolderUtil {
 
     public File getReadTwoFastQ(String sampleKey, int lane) {
         return new File(String.format(FAST_Q_FILE_NAME, sampleKey, 2, lane));
+    }
+
+    public File getBamFile(String readGroup, int laneNumber) {
+        File laneFolder = newlaneFolder(fastQFolder, laneNumber);
+        return new File(laneFolder, readGroup + ".bam");
+    }
+
+    public File getVcfFile(String readGroup, int laneNumber) {
+        File laneFolder = newlaneFolder(fastQFolder, laneNumber);
+        return new File(laneFolder, readGroup + ".vcf.gz");
+    }
+
+    public static File fastQFileSampleLane(MercurySample mercurySample, int lane, File reportsFolder) {
+        return new File(reportsFolder, mercurySample.getSampleKey() + "_" + lane + "_fastq_list.csv");
+    }
+
+    public File newlaneFolder(File fastQFolder, int laneNumber) {
+        File laneFolder = new File(fastQFolder, String.valueOf(laneNumber));
+        if (!laneFolder.exists()) {
+            laneFolder.mkdir();
+        }
+        return laneFolder;
     }
 }

@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.state;
 
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
+import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.hibernate.envers.Audited;
 
@@ -14,8 +16,8 @@ import java.util.Collections;
 public class FingerprintState extends State {
 
     public FingerprintState(String name, MercurySample mercurySample,
-                            FiniteStateMachine finiteStateMachine) {
-        super(name, finiteStateMachine, Collections.singleton(mercurySample), Collections.emptySet());
+                            FiniteStateMachine finiteStateMachine, IlluminaSequencingRunChamber runChamber) {
+        super(name, finiteStateMachine, Collections.singleton(mercurySample), Collections.singleton(runChamber));
     }
 
     public FingerprintState() {

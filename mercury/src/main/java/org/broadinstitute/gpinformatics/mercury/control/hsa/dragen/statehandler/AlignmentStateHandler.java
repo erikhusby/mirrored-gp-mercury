@@ -1,10 +1,15 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.statehandler;
 
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.AggregationStateDao;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.FastQListBuilder;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.SampleSheetBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AggregationTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AlignmentTask;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenFolderUtil;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AggregationState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AlignmentState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine;
@@ -12,24 +17,27 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
+import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 @Dependent
 public class AlignmentStateHandler extends StateHandler {
+
+    private static final Log log = LogFactory.getLog(AlignmentStateHandler.class);
 
     @Inject
     private FastQListBuilder fastQListBuilder;
@@ -53,34 +61,37 @@ public class AlignmentStateHandler extends StateHandler {
                     alignmentTask.getOutputDir().mkdir();
                 }
 
-                if (!alignmentTask.getFastQList().exists()) {
-                    MercurySample mercurySample = alignmentState.getMercurySamples().iterator().next();
-                    IlluminaSequencingRunChamber runChamber = alignmentState.getSequencingRunChambers().iterator().next();
+                File dragenFastQFile = new File(alignmentTask.getFastQList().getParentFile(), DragenFolderUtil.FASTQ_LIST_CSV);
+                if (dragenFastQFile.exists()) {
+                    Pair<MercurySample, IlluminaSequencingRunChamber> pair = findRunPair(alignmentTask, alignmentState.getSequencingRunChambers(),
+                            alignmentState.getMercurySamples());
+                    MercurySample mercurySample = pair.getLeft();
+                    IlluminaSequencingRunChamber runChamber = pair.getRight();
+                    RunCartridge flowcell = runChamber.getIlluminaSequencingRun().getSampleCartridge();
 
-                    Set<SampleInstanceV2> sampleInstancesAtPositionV2 =
-                            runChamber.getIlluminaSequencingRun().getSampleCartridge().getContainerRole()
-                                    .getSampleInstancesAtPositionV2(runChamber.getLanePosition());
-                    Optional<SampleInstanceV2> optionalSampleInstanceV2 = sampleInstancesAtPositionV2.stream()
-                            .filter(si -> si.getRootOrEarliestMercurySampleName().equals(mercurySample.getSampleKey()))
-                            .findFirst();
-                    if (!optionalSampleInstanceV2.isPresent()) {
-                        throw new RuntimeException("Failed to find sample " + mercurySample.getSampleKey() + " in lane "
-                                                   + runChamber.getIlluminaSequencingRun().getSampleCartridge().getLabel()
-                                                   + " " + runChamber.getLaneNumber());
-                    }
-                    SampleInstanceV2 sampleInstance = optionalSampleInstanceV2.get();
-                    String library = sampleInstance.getFirstPcrVessel().getLabel();
+                    Pair<MercurySample, SampleInstanceV2> instancePair = SampleSheetBuilder.
+                            findSampleInFlowcellLane(flowcell, runChamber.getLanePosition(), mercurySample);
 
-                    library = String.format("%s_%s", library, sampleInstance.getMolecularIndexingScheme().getName());
-                    boolean foundSample = fastQListBuilder.buildSingle(runChamber, sampleInstance,
-                            mercurySample, library, alignmentTask.getFastQList());
-                    if (!foundSample) {
+                    if (instancePair != null) {
+                        SampleInstanceV2 sampleInstance = instancePair.getRight();
+                        MercurySample sampleSheetSample = instancePair.getLeft();
+                        String library = sampleInstance.getSequencingLibraryName();
+                        String rgId = String.format("%s.%d.%s", flowcell.getLabel(), runChamber.getLaneNumber(),
+                                sampleInstance.getIndexingSchemeString());
+                        fastQListBuilder.buildSingle(runChamber.getLaneNumber(), rgId, mercurySample, sampleSheetSample,
+                                library, alignmentTask.getFastQList(), dragenFastQFile);
+                    } else {
                         throw new RuntimeException(
-                                "Failed to find sample " + mercurySample.getSampleKey() + " in alignment task " + alignmentTask.getTaskId() );
+                                "Failed to find sample " + mercurySample.getSampleKey() + " in alignment task "
+                                + alignmentTask.getTaskId());
                     }
+                } else {
+                    log.error("No fastq file exists: " + alignmentTask.getFastQList().getPath());
+                    return false;
                 }
             }
         }
+
         return true;
     }
 
@@ -105,6 +116,13 @@ public class AlignmentStateHandler extends StateHandler {
             AggregationState aggregationState = null;
             if (!aggregations.isEmpty()) {
                 aggregationState = aggregations.get(aggregations.size() - 1);
+                boolean disjoint = Collections.disjoint(aggregationState.getSequencingRunChambers(),
+                        alignmentState.getSequencingRunChambers());
+                if (disjoint) {
+                    for (IlluminaSequencingRunChamber runChamber: alignmentState.getSequencingRunChambers()) {
+                        runChamber.addState(aggregationState);
+                    }
+                }
             } else {
                 String machineName = "AlignAggregation" + mercurySample.getSampleKey() + "_" +
                                      DateUtils.getFileDateTime(new Date());
@@ -137,5 +155,40 @@ public class AlignmentStateHandler extends StateHandler {
             aggregationStateDao.flush();
         }
         return true;
+    }
+
+    private Pair<MercurySample, IlluminaSequencingRunChamber> findRunPair(AlignmentTask alignmentTask,
+                                                                          Set<IlluminaSequencingRunChamber> runChambers,
+                                                                          Set<MercurySample> mercurySamples) {
+        File outputDir = alignmentTask.getOutputDir();
+        File laneDir = outputDir.getParentFile();
+        File dragenAnalysisDir = laneDir.getParentFile();
+        File dragenDir = dragenAnalysisDir.getParentFile();
+        File runFolder = dragenDir.getParentFile();
+        File fastQList = alignmentTask.getFastQList();
+
+        String[] fastqSplit = fastQList.getName().split("_");
+        String expectedSample = fastqSplit[0];
+        int lane = Integer.parseInt(fastqSplit[1]);
+
+        IlluminaSequencingRunChamber runChamber = null;
+        for (IlluminaSequencingRunChamber currChamber: runChambers) {
+            if (currChamber.getIlluminaSequencingRun().getRunDirectory().equals(runFolder.getPath())) {
+                if (currChamber.getLaneNumber() == lane) {
+                    runChamber = currChamber;
+                    break;
+                }
+            }
+        }
+
+        MercurySample mercurySample = null;
+        for (MercurySample currSample: mercurySamples) {
+            if (expectedSample.equals(currSample.getSampleKey())) {
+                mercurySample = currSample;
+                break;
+            }
+        }
+
+        return Pair.of(mercurySample, runChamber);
     }
 }

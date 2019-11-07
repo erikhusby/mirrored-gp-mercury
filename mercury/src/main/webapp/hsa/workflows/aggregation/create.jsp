@@ -12,11 +12,11 @@
   --%>
 
 <stripes:useActionBean var="actionBean"
-                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.AlignmentActionBean"/>
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.AggregationActionBean"/>
 
 <stripes:layout-render name="/layout.jsp"
-                       pageTitle="Create Alignment State"
-                       sectionTitle="Create Alignment State ">
+                       pageTitle="Create Aggregation State"
+                       sectionTitle="Create Aggregation State ">
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
@@ -49,9 +49,9 @@
             <stripes:hidden name="submitString" value="${actionBean.submitString}"/>
 
             <div class="control-group">
-                <stripes:label for="sampleIds" name="Sample Ids" class="control-label"/>
+                <stripes:label for="sampleId" name="Sample Id" class="control-label"/>
                 <div class="controls">
-                    <stripes:textarea id="sampleIds" name="sampleIds"/>
+                    <stripes:text id="sampleId" name="sampleId"/>
                 </div>
             </div>
 
@@ -108,31 +108,10 @@
                 </table>
 
                 <div class="control-group">
-                    <stripes:label for="alignmentStateName" class="control-label"/>
+                    <stripes:label for="createFingerprint" class="control-label"/>
                     <div class="controls">
-                        <stripes:text id="alignmentStateName" readonly="${!actionBean.creating}"
-                                      name="editAlignmentState.stateName"
-                                      class="defaultText"
-                                      title="Enter the name of the alignment state"/>
-
-                    </div>
-                </div>
-                <div class="control-group">
-                    <stripes:label for="referenceGenome" class="control-label"/>
-                    <div class="controls">
-                        <stripes:select name="referenceGenome" id="eventType">
-                            <stripes:options-enumeration enum="org.broadinstitute.gpinformatics.mercury.presentation.hsa.AlignmentActionBean.ReferenceGenome" label="name"/>
-                        </stripes:select>
-                    </div>
-                </div>
-                <div class="control-group">
-                    <stripes:label for="fastQList" class="control-label"/>
-                    <div class="controls">
-                        <stripes:text id="fastQList"
-                                      name="fastQList"
-                                      class="defaultText"
-                                      title="FASTQ List"/>
-
+                        <stripes:checkbox name="createFingerprint" id="createFingerprint"
+                                          checked="${actionBean.createFingerprint}"/>
                     </div>
                 </div>
                 <div class="control-group">

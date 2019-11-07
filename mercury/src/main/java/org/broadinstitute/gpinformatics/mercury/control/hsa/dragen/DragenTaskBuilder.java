@@ -11,6 +11,9 @@ public class DragenTaskBuilder {
     public static final String VC_SAMPLE_NAME = "vc-sample-name";
     public static final String ENABLE_VARIANT_CALLER = "enable-variant-caller";
     public static final String REFERENCE = "-r";
+    public static final String RGLB = "RGLB";
+    public static final String RGID = "RGID";
+    public static final String BCL_INPUT_DIRECTORY = "bcl-input-directory";
 
     private final StringBuilder commandBuilder;
 
@@ -25,7 +28,7 @@ public class DragenTaskBuilder {
     }
 
     public DragenTaskBuilder bclInputDirectory(File runFolder) {
-        appendCommand(String.format("--bcl-input-directory %s", runFolder.getPath()));
+        appendCommand(String.format("--" + BCL_INPUT_DIRECTORY + " %s", runFolder.getPath()));
         return this;
     }
 
@@ -89,6 +92,16 @@ public class DragenTaskBuilder {
         return this;
     }
 
+    public DragenTaskBuilder qcCoverageRegion(File bedFile) {
+        appendCommand(String.format("--qc-coverage-region-1 %s", bedFile.getPath()));
+        return this;
+    }
+
+    public DragenTaskBuilder qcCoverageReports(String reports) {
+        appendCommand(String.format("--qc-coverage-reports-1 %s", reports));
+        return this;
+    }
+
     /**
      * To process all samples together in the same run, regardless of the RGSM value
      */
@@ -110,6 +123,32 @@ public class DragenTaskBuilder {
         appendCommand(String.format("--output-format=%s", format));
         return this;
     }
+
+    public DragenTaskBuilder rgId(String rgId) {
+        appendCommand(String.format("--%s %s", RGID, rgId));
+        return this;
+    }
+
+    public DragenTaskBuilder rgPl(String rgPl) {
+        appendCommand(String.format("--RGPL %s", rgPl));
+        return this;
+    }
+
+    public DragenTaskBuilder rgCn(String rgCn) {
+        appendCommand(String.format("--RGCN %s", rgCn));
+        return this;
+    }
+
+    public DragenTaskBuilder rgLb(String rgLb) {
+        appendCommand(String.format("--%s %s", RGLB, rgLb));
+        return this;
+    }
+
+    public DragenTaskBuilder rgSm(String rgSm) {
+        appendCommand(String.format("--RGSM %s", rgSm));
+        return this;
+    }
+
 
     public String build() {
         return this.commandBuilder.toString();

@@ -359,14 +359,29 @@
                                       event="createDemultiplex">Create Demultiplex Task</stripes:link>
                     </li>
                     <li>
-                        <stripes:link id="createAlignmentWorkflow"
-                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.AlignmentActionBean"
-                                      event="view">Create Alignment Task</stripes:link>
+                        <stripes:link id="createAggregationWorkflow"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.AggregationActionBean"
+                                      event="view">Create Aggregation Task</stripes:link>
                     </li>
                     <li>
                         <stripes:link id="createFingerprintWorkflow"
                                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.FingerprintWorkflowActionBean"
                                       event="view">Create Fingerprint Task</stripes:link>
+                    </li>
+                    <li>
+                        <stripes:link id="viewDragenNodes"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.SlurmActionBean"
+                                      event="list">List Dragen Nodes</stripes:link>
+                    </li>
+                    <li>
+                        <stripes:link id="viewTriage"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.AggregationTriageActionBean"
+                                      event="list">Aggregation Triage</stripes:link>
+                    </li>
+                    <li>
+                        <stripes:link id="viewTopoffs"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.TopOffActionBean"
+                                      event="list">Top Offs</stripes:link>
                     </li>
                 </ul>
             </li>

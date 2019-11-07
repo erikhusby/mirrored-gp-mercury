@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.state;
 
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AlignmentTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DemultiplexTask;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
@@ -17,6 +18,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Audited
@@ -36,7 +38,19 @@ public class DemultiplexState extends State {
         return super.getExitTask();
     }
 
-    public String getAnalysisKey() {
+    public Set<DemultiplexTask> getDemultiplexTasks() {
+        return getTasks().stream()
+                .filter(t -> OrmUtil.proxySafeIsInstance(t, DemultiplexTask.class))
+                .map(t -> OrmUtil.proxySafeCast(t, DemultiplexTask.class))
+                .collect(Collectors.toSet());
+    }
+
+    public IlluminaSequencingRun getRunForChamber(IlluminaSequencingRunChamber sequencingRunChamber) {
+        for (IlluminaSequencingRunChamber runChamber: getSequencingRunChambers()) {
+            if (runChamber.equals(sequencingRunChamber)) {
+                return runChamber.getIlluminaSequencingRun();
+            }
+        }
         return null;
     }
 }

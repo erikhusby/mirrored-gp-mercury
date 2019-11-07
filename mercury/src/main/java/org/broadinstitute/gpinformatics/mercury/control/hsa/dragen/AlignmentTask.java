@@ -42,6 +42,9 @@ public class AlignmentTask extends ProcessTask {
     @Transient
     private File qcContaminationFile;
 
+    @Transient
+    private File qcCoverageBedFile;
+
     /**
      * Syntax
      * dragen -f -r /staging/reference/<reference> \
@@ -57,7 +60,7 @@ public class AlignmentTask extends ProcessTask {
      */
     public AlignmentTask(File reference, File fastQList, String fastQSampleId, File outputDirectory,
                          File intermediateResultsDir, String outputFilePrefix, String vcSampleName,
-                         File qcContaminationFile) {
+                         File qcContaminationFile, File qcCoverageBedFile) {
         super("dragen");
         this.reference = reference;
         this.fastQList = fastQList;
@@ -67,6 +70,7 @@ public class AlignmentTask extends ProcessTask {
         this.outputFilePrefix = outputFilePrefix;
         this.vcSampleName = vcSampleName;
         this.qcContaminationFile = qcContaminationFile;
+        this.qcCoverageBedFile = qcCoverageBedFile;
 
         Objects.requireNonNull(reference, "reference directory must not be null.");
         Objects.requireNonNull(fastQList, "fastQList must not be null.");
@@ -75,7 +79,8 @@ public class AlignmentTask extends ProcessTask {
         Objects.requireNonNull(intermediateResultsDir, "intermediateResultsDir must not be null.");
         Objects.requireNonNull(outputFilePrefix, "outputFilePrefix must not be null.");
         Objects.requireNonNull(vcSampleName, "vcSampleName must not be null.");
-        Objects.requireNonNull(vcSampleName, "qcContaminationFile must not be null.");
+        Objects.requireNonNull(qcContaminationFile, "qcContaminationFile must not be null.");
+        Objects.requireNonNull(qcCoverageBedFile, "qcCoverageBedFile must not be null.");
 
         String dragenTaskBuilder = new DragenTaskBuilder().
                 reference(reference).
@@ -87,8 +92,10 @@ public class AlignmentTask extends ProcessTask {
                 vcSampleName(vcSampleName).
                 enableVariantCaller(true).
                 enableDuplicateMarking(true).
-                enableMapAlignOutput(false). // TODO Test to see if this creates the bam or not
+                enableMapAlignOutput(true).
                 qcCrossContaminationVcf(qcContaminationFile).
+                qcCoverageRegion(qcCoverageBedFile).
+                qcCoverageReports("cov_report").
                 build();
 
         setCommandLineArgument(dragenTaskBuilder);

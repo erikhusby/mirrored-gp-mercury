@@ -22,6 +22,8 @@ import javax.ejb.Timeout;
 import javax.ejb.Timer;
 import javax.ejb.TimerConfig;
 import javax.ejb.TimerService;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
 import javax.transaction.SystemException;
 import java.util.Arrays;
@@ -32,6 +34,8 @@ import static javax.ejb.ConcurrencyManagementType.BEAN;
 
 @Startup
 @Singleton
+@ConcurrencyManagement(BEAN)
+@TransactionManagement(TransactionManagementType.BEAN)
 public class FiniteStateMachineStarter {
 
     private static final Log log = LogFactory.getLog(FiniteStateMachineStarter.class);
@@ -39,7 +43,7 @@ public class FiniteStateMachineStarter {
     /**
      * Interval in minutes for the timer to fire off.
      */
-    private int timerPeriod = 2;
+    private int timerPeriod = 15;
 
     private static Date previousNextTimeout = new Date(0);
 

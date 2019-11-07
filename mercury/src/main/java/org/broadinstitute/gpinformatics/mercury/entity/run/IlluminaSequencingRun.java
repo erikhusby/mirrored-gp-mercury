@@ -87,6 +87,16 @@ public class IlluminaSequencingRun extends SequencingRun {
     }
 
     @Nullable
+    public IlluminaSequencingRunChamber getSequencingRunChamber(VesselPosition vesselPosition) {
+        for (IlluminaSequencingRunChamber sequencingRunChamber : sequencingRunChambers) {
+            if (sequencingRunChamber.getLanePosition() == vesselPosition) {
+                return sequencingRunChamber;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
     public IlluminaSequencingRunChamber getSequencingRunChamber(int laneNumber) {
         for (IlluminaSequencingRunChamber sequencingRunChamber : sequencingRunChambers) {
             if (sequencingRunChamber.getLaneNumber() == laneNumber) {

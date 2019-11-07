@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.DemultiplexState;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -35,5 +36,4 @@ public abstract class SequencingRunChamber {
     /** For JPA. */
     protected SequencingRunChamber() {
     }
-
 }

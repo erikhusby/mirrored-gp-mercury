@@ -66,46 +66,47 @@ public class LabVesselAlignmentMetricPlugin implements ListPlugin {
             value = metric.getSampleAlias();
             cells.add(value);
 
-            value = String.valueOf(metric.getTotalReads());
-            cells.add(value);
-
-            value = String.valueOf(metric.getNumberOfDuplicateMarkedReads());
-            cells.add(value);
-
-            value = String.valueOf(metric.getNumberOfDuplicateMarkedRemoved());
-            cells.add(value);
-
-            value = String.valueOf(metric.getNumberOfUniqueReads());
-            cells.add(value);
-
-            value = String.valueOf(metric.getNumberOfReadsMateSequenced());
-            cells.add(value);
-
-            value = String.valueOf(metric.getNumberOfReadsWithoutMateSequenced());
-            cells.add(value);
-
-            value = String.valueOf(metric.getNumberOfQcFailedReads());
-            cells.add(value);
-
-            value = String.valueOf(metric.getNumberOfMappedReads());
-            cells.add(value);
-
-            value = String.valueOf(metric.getNumberOfUniqueMappedReads());
-            cells.add(value);
-
-            value = String.valueOf(metric.getNumberOfUnmappedReads());
-            cells.add(value);
-
-            value = String.valueOf(metric.getNumberOfSingletonReads());
-            cells.add(value);
-
-            value = String.valueOf(metric.getNumberOfPairedReads());
-            cells.add(value);
-
-            value = String.valueOf(metric.getNumberOfProperlyPairedReads());
-            cells.add(value);
-
-            value = String.valueOf(metric.getNumberOfNotProperlyPairedReads());
+            // TODO JW Fix whenever the columns settle down
+//            value = String.valueOf(metric.getTotalReads());
+//            cells.add(value);
+//
+//            value = String.valueOf(metric.getNumberOfDuplicateMarkedReads());
+//            cells.add(value);
+//
+//            value = String.valueOf(metric.getNumberOfDuplicateMarkedRemoved());
+//            cells.add(value);
+//
+//            value = String.valueOf(metric.getNumberOfUniqueReads());
+//            cells.add(value);
+//
+//            value = String.valueOf(metric.getNumberOfReadsMateSequenced());
+//            cells.add(value);
+//
+//            value = String.valueOf(metric.getNumberOfReadsWithoutMateSequenced());
+//            cells.add(value);
+//
+//            value = String.valueOf(metric.getNumberOfQcFailedReads());
+//            cells.add(value);
+//
+//            value = String.valueOf(metric.getNumberOfMappedReads());
+//            cells.add(value);
+//
+//            value = String.valueOf(metric.getNumberOfUniqueMappedReads());
+//            cells.add(value);
+//
+//            value = String.valueOf(metric.getNumberOfUnmappedReads());
+//            cells.add(value);
+//
+//            value = String.valueOf(metric.getNumberOfSingletonReads());
+//            cells.add(value);
+//
+//            value = String.valueOf(metric.getNumberOfPairedReads());
+//            cells.add(value);
+//
+//            value = String.valueOf(metric.getNumberOfProperlyPairedReads());
+//            cells.add(value);
+//
+//            value = String.valueOf(metric.getNumberOfNotProperlyPairedReads());
             cells.add(value);
 
             value = String.valueOf(metric.getMapq40Inf());
@@ -120,8 +121,8 @@ public class LabVesselAlignmentMetricPlugin implements ListPlugin {
             value = String.valueOf(metric.getMapq1020());
             cells.add(value);
 
-            value = String.valueOf(metric.getMapq010());
-            cells.add(value);
+//            value = String.valueOf(metric.getMapq010());
+//            cells.add(value);
 
             value = String.valueOf(metric.getMapqNa());
             cells.add(value);
@@ -138,26 +139,26 @@ public class LabVesselAlignmentMetricPlugin implements ListPlugin {
             value = String.valueOf(metric.getSoftClippedBasesR2());
             cells.add(value);
 
-            value = String.valueOf(metric.getTotalAlignments());
-            cells.add(value);
-
-            value = String.valueOf(metric.getSecondaryAlignments());
-            cells.add(value);
-
-            value = String.valueOf(metric.getSupplementaryAlignments());
-            cells.add(value);
-
-            value = String.valueOf(metric.getEstimatedReadLength());
-            cells.add(value);
-
-            value = String.valueOf(metric.getAverageSequencingCoverage());
-            cells.add(value);
-
-            value = String.valueOf(metric.getInsertLengthMean());
-            cells.add(value);
-
-            value = String.valueOf(metric.getInsertLengthStd());
-            cells.add(value);
+//            value = String.valueOf(metric.getTotalAlignments());
+//            cells.add(value);
+//
+//            value = String.valueOf(metric.getSecondaryAlignments());
+//            cells.add(value);
+//
+//            value = String.valueOf(metric.getSupplementaryAlignments());
+//            cells.add(value);
+//
+//            value = String.valueOf(metric.getEstimatedReadLength());
+//            cells.add(value);
+//
+//            value = String.valueOf(metric.getAverageSequencingCoverage());
+//            cells.add(value);
+//
+//            value = String.valueOf(metric.getInsertLengthMean());
+//            cells.add(value);
+//
+//            value = String.valueOf(metric.getInsertLengthStd());
+//            cells.add(value);
 
             ConfigurableList.ResultRow resultRow = new ConfigurableList.ResultRow(null, cells, metric.getSampleAlias());
             resultRow.setCellNestedTables(nestedTables);

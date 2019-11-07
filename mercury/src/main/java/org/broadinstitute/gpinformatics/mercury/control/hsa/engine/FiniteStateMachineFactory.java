@@ -8,8 +8,10 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.DragenConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.StateMachineDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.SampleSheetBuilder;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AggregationTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AlignmentMetricsTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AlignmentTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DemultiplexMetricsTask;
@@ -18,6 +20,7 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenFolderU
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.FingerprintTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.FingerprintUploadTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.WaitForFileTask;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AggregationState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AlignmentState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.DemultiplexState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FingerprintState;
@@ -25,14 +28,16 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMac
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.GenericState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Transition;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
-import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.broadinstitute.gpinformatics.mercury.presentation.hsa.AlignmentActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.hsa.AggregationActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.hsa.FingerprintWorkflowActionBean;
 
 import javax.enterprise.context.Dependent;
@@ -45,10 +50,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -72,6 +78,9 @@ public class FiniteStateMachineFactory {
 
     @Inject
     private MercurySampleDao mercurySampleDao;
+
+    @Inject
+    private IlluminaSequencingRunDao illuminaSequencingRunDao;
 
     public FiniteStateMachine createFiniteStateMachineForRun(IlluminaSequencingRun run, String runName,
                                                              MessageCollection messageCollection) {
@@ -182,13 +191,15 @@ public class FiniteStateMachineFactory {
                     Collections.singleton(mercurySample), Collections.singleton(runChamber));
             states.add(alignmentState);
 
-            File referenceFile = new File("/staging/reference/hg38/v1");
+            File referenceFile = new File(AggregationActionBean.ReferenceGenome.HG38.getPath());
             File fastQList = dragenFolderUtil.getFastQReadGroupFile(sampleData.getSampleId());
             File outputDir = new File(dragenFolderUtil.getFastQFolder(), sampleData.getSampleName());
-            File intermediateResults = new File("/staging/out");
+            File intermediateResults = new File(dragenConfig.getIntermediateResults());
+
             AlignmentTask alignmentTask = new AlignmentTask(referenceFile, fastQList, sampleData.getSampleName(),
                     outputDir, intermediateResults, sampleData.getSampleName(), sampleData.getSampleName(),
-                    new File(AlignmentActionBean.ReferenceGenome.HG38.getContamFile()));
+                    new File(AggregationActionBean.ReferenceGenome.HG38.getContamFile()),
+                    new File(AggregationActionBean.ReferenceGenome.HG38.getCoverageBedFile()));
             alignmentTask.setTaskName("Alignment_" + sampleData.getSampleName() + "_" + runName);
             alignmentState.addTask(alignmentTask);
 
@@ -200,6 +211,242 @@ public class FiniteStateMachineFactory {
             demuxToAlignment.setFromState(demultiplex);
             demuxToAlignment.setToState(alignmentState);
             transitions.add(demuxToAlignment);
+        }
+
+        finiteStateMachine.setStatus(Status.RUNNING);
+        finiteStateMachine.setStates(states);
+        finiteStateMachine.setTransitions(transitions);
+        return finiteStateMachine;
+    }
+
+    public FiniteStateMachine createAggegation(List<AggregationActionBean.SampleRunData> sampleRunData, MercurySample mercurySample,
+                                               boolean createFingerprint, MessageCollection messageCollection) {
+        List<State> states = new ArrayList<>();
+        List<Transition> transitions = new ArrayList<>();
+
+        FiniteStateMachine finiteStateMachine = new FiniteStateMachine();
+        String sampleKey = mercurySample.getSampleKey();
+        finiteStateMachine.setStateMachineName("Agg_" + sampleKey);
+
+        Set<IlluminaSequencingRunChamber> missingChambers = new HashSet<>();
+        Set<IlluminaSequencingRunChamber> aggChambers = new HashSet<>();
+        Set<IlluminaSequencingRunChamber> alignmentChambers = new HashSet<>();
+        Set<IlluminaSequencingRunChamber> fingerprintChambers = new HashSet<>();
+        Set<Task> aggDemultiplex = new HashSet<>();
+
+        Map<String, Set<VesselPosition>> lanesToDemux = new HashMap<>();
+        Map<String, IlluminaSequencingRun> mapNameToRun = new HashMap<>();
+
+        for (AggregationActionBean.SampleRunData sampleRunDatum: sampleRunData) {
+            IlluminaSequencingRun run = illuminaSequencingRunDao.findByRunName(sampleRunDatum.getRunName());
+            IlluminaFlowcell flowcell = OrmUtil.proxySafeCast(run.getSampleCartridge(), IlluminaFlowcell.class);
+            VesselPosition[] expectedLanes = flowcell.getFlowcellType().getVesselGeometry().getVesselPositions();
+            List<VesselPosition> lanes = run.getSequencingRunChambers().stream()
+                    .map(IlluminaSequencingRunChamber::getLanePosition)
+                    .collect(Collectors.toList());
+
+            if (!mapNameToRun.containsKey(run.getRunName())) {
+                mapNameToRun.put(run.getRunName(), run);
+            }
+
+            // Lanes aren't automatically added at registration, check for existence
+            if (lanes.isEmpty() || lanes.size() < expectedLanes.length) {
+                for (VesselPosition vesselPosition: expectedLanes) {
+                    if (!lanes.contains(vesselPosition)) {
+                        IlluminaSequencingRunChamber sequencingRunChamber =
+                                new IlluminaSequencingRunChamber(run, vesselPosition);
+                        run.addSequencingRunChamber(sequencingRunChamber);
+                    }
+                }
+            }
+
+            // TODO the export is the sample not the root
+            for (VesselPosition vesselPosition: sampleRunDatum.getLanes()) {
+                boolean foundFastqs = false;
+                for (IlluminaSequencingRunChamber runChamber: run.getSequencingRunChambers()) {
+                    if (runChamber.getLanePosition() == vesselPosition) {
+                        Optional<DemultiplexState> recentDemultiplex =
+                                runChamber.getRecentStateWithSample(DemultiplexState.class, mercurySample);
+                        if (recentDemultiplex.isPresent()) {
+                            foundFastqs = true;
+                            aggChambers.add(runChamber);
+                            aggDemultiplex.addAll(recentDemultiplex.get().getTasks());
+                        }
+
+                        if (createFingerprint) {
+                            Optional<FingerprintState> fingerprintStateOptional =
+                                    runChamber.getRecentStateWithSample(FingerprintState.class, mercurySample);
+                            if (!fingerprintStateOptional.isPresent()) {
+                                fingerprintChambers.add(runChamber);
+                                Optional<AlignmentState> alignmentOptional =
+                                        runChamber.getRecentStateWithSample(AlignmentState.class, mercurySample);
+                                if (!alignmentOptional.isPresent()) {
+                                    alignmentChambers.add(runChamber);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (!foundFastqs) {
+                    if (!lanesToDemux.containsKey(run.getRunName())) {
+                        lanesToDemux.put(run.getRunName(), new HashSet<>());
+                    }
+                    lanesToDemux.get(run.getRunName()).add(vesselPosition);
+                    IlluminaSequencingRunChamber sequencingRunChamber = run.getSequencingRunChamber(vesselPosition);
+                    missingChambers.add(sequencingRunChamber);
+                    aggChambers.add(sequencingRunChamber);
+                }
+            }
+        }
+
+        // Single Demux State made up of many demux tasks depending on how many flowcells
+        String stateName = finiteStateMachine.getDateQueuedString();
+        Set<MercurySample> allSampleSet = new HashSet<>();
+
+        Set<Task> demultiplexTasks = new HashSet<>();
+        for (Map.Entry<String, Set<VesselPosition>> entry: lanesToDemux.entrySet()) {
+            IlluminaSequencingRun run = mapNameToRun.get(entry.getKey());
+            Set<VesselPosition> lanes = entry.getValue();
+            DragenFolderUtil dragenFolderUtil = new DragenFolderUtil(dragenConfig, run,
+                    finiteStateMachine.getDateQueuedString());
+            File runDir = new File(run.getRunDirectory());
+
+            File ssFile = new File(dragenFolderUtil.getAnalysisFolder(), "SampleSheet_hsa.csv");
+            SampleSheetBuilder.SampleSheet sampleSheet = sampleSheetBuilder.makeSampleSheet(
+                    run, lanes, Collections.emptySet());
+            FiniteStateMachineFactory.writeFile(ssFile, sampleSheet.toCsv(), messageCollection);
+            allSampleSet.addAll(sampleSheet.getData().getMapSampleToMercurySample().values());
+
+            DemultiplexTask task = new DemultiplexTask(runDir, dragenFolderUtil.getFastQFolder(), ssFile);
+            task.setTaskName("Demux_" + run.getRunName() + "_" + sampleKey);
+            demultiplexTasks.add(task);
+
+            aggDemultiplex.add(task);
+        }
+
+        DemultiplexState demultiplexState =
+                new DemultiplexState(stateName, finiteStateMachine, allSampleSet, missingChambers);
+        demultiplexState.addTasks(demultiplexTasks);
+
+        Set<MercurySample> aggSampleSet = Collections.singleton(mercurySample);
+        String aggStateName = "Agg" + sampleKey;
+        AggregationState aggregationState = new AggregationState(
+                aggStateName, finiteStateMachine, aggSampleSet, aggChambers);
+
+        File referenceFile = new File(AggregationActionBean.ReferenceGenome.HG38.getPath());
+        File outputDir = DragenFolderUtil.newSampleAggregation(dragenConfig, sampleKey);
+        File fastQList = new File(outputDir, DragenFolderUtil.FASTQ_LIST_CSV);
+        File intermediateResults = new File(dragenConfig.getIntermediateResults());
+        File contaminationFile = new File(AggregationActionBean.ReferenceGenome.HG38.getContamFile());
+        File bedFile = new File(AggregationActionBean.ReferenceGenome.HG38.getCoverageBedFile());
+
+        AggregationTask aggregationTask = new AggregationTask(referenceFile, fastQList, sampleKey,
+                outputDir, intermediateResults, sampleKey, sampleKey, contaminationFile, bedFile);
+        aggregationTask.setTaskName("Agg_" + sampleKey );
+
+        aggregationState.addTask(aggregationTask);
+
+        AlignmentMetricsTask aggregationMetricsTask = new AlignmentMetricsTask();
+        aggregationMetricsTask.setTaskName("AggMetric_" + sampleKey);
+        aggregationState.addExitTask(aggregationMetricsTask);
+
+        boolean demuxRequired = !demultiplexState.getTasks().isEmpty();
+        if (demuxRequired) {
+            DemultiplexMetricsTask demultiplexMetricsTask = new DemultiplexMetricsTask();
+            demultiplexMetricsTask.setTaskName("DemuxMetricsAgg");
+            demultiplexState.addExitTask(demultiplexMetricsTask);
+
+            demultiplexState.setStartState(true);
+            demultiplexState.setAlive(true);
+            states.add(demultiplexState);
+        }
+
+        AlignmentState alignmentState = new AlignmentState("Align_" + mercurySample.getSampleKey(), finiteStateMachine, aggSampleSet, alignmentChambers);
+        boolean alignmentsRequired = !alignmentChambers.isEmpty();
+        if (alignmentsRequired) {
+            states.add(alignmentState);
+            for (IlluminaSequencingRunChamber runChamber: alignmentChambers) {
+                DragenFolderUtil dragenFolderUtil = new DragenFolderUtil(dragenConfig, runChamber.getIlluminaSequencingRun());
+                File fastQFolder = dragenFolderUtil.getFastQFolder();
+                int lane = runChamber.getLaneNumber();
+                File laneOutputFolder = dragenFolderUtil.newlaneFolder(fastQFolder, lane);
+                File fastQListFile = DragenFolderUtil.fastQFileSampleLane(mercurySample, lane, dragenFolderUtil.getReportsFolder());
+                AlignmentTask alignmentTask = new AlignmentTask(referenceFile, fastQListFile, mercurySample.getSampleKey(),
+                        laneOutputFolder, intermediateResults, mercurySample.getSampleKey(), mercurySample.getSampleKey(),
+                        new File(AggregationActionBean.ReferenceGenome.HG38.getContamFile()),
+                        new File(AggregationActionBean.ReferenceGenome.HG38.getCoverageBedFile()));
+                String fc = runChamber.getIlluminaSequencingRun().getSampleCartridge().getLabel();
+                String taskSuffix = "_" + fc + "_" + lane + "_" + DateUtils.getFileDateTime(new Date());
+                alignmentTask.setTaskName("Alignment_" + taskSuffix);
+                alignmentState.addTask(alignmentTask);
+
+                String name = "FP_" + taskSuffix;
+
+                FingerprintState fingerprintState = new FingerprintState(stateName, mercurySample, finiteStateMachine, runChamber);
+
+                File outputFilePrefix = new File(laneOutputFolder, "Fingerprint");
+                File bamFile = dragenFolderUtil.getBamFile(mercurySample.getSampleKey(), lane);
+                File vcfFile = dragenFolderUtil.getVcfFile(mercurySample.getSampleKey(), lane);
+                File haplotypeDatabse =
+                        new File(AggregationActionBean.ReferenceGenome.HG38.getHaplotypeDatabase());
+                File referenceSequence =
+                        new File(AggregationActionBean.ReferenceGenome.HG38.getFasta());
+                FingerprintTask fpTask = new FingerprintTask(
+                        bamFile, vcfFile,
+                        haplotypeDatabse, outputFilePrefix.getPath(),
+                        referenceSequence);
+                fpTask.setTaskName(name);
+                fingerprintState.addTask(fpTask);
+
+                name = "FPUp" + taskSuffix;
+                FingerprintUploadTask fingerprintUploadTask = new FingerprintUploadTask();
+                fingerprintUploadTask.setTaskName(name);
+                fingerprintState.addExitTask(fingerprintUploadTask);
+
+                Transition transition = new Transition("AlignToFp", finiteStateMachine);
+                transition.setFromState(alignmentState);
+                transition.setToState(fingerprintState);
+                transitions.add(transition);
+
+                states.add(fingerprintState);
+            }
+
+            AlignmentMetricsTask alignmentMetricsTask = new AlignmentMetricsTask();
+            alignmentMetricsTask.setTaskName("AlignmentMetrics");
+            alignmentState.addExitTask(alignmentMetricsTask);
+
+            if (demuxRequired) {
+                Transition transition = new Transition("DemuxToAlignment", finiteStateMachine);
+                transition.setFromState(demultiplexState);
+                transition.setToState(alignmentState);
+                transitions.add(transition);
+            } else {
+                alignmentState.setAlive(true);
+                alignmentState.setStartState(true);
+                Transition transition = new Transition("AlignmentToAgg", finiteStateMachine);
+                transition.setFromState(alignmentState);
+                transition.setToState(aggregationState);
+                transitions.add(transition);
+            }
+        }
+
+        // TODO This does the aggregation without waiting for the fingerprint
+        states.add(aggregationState);
+        if (demuxRequired) {
+            Transition transition = new Transition("AggregationTransition", finiteStateMachine);
+            if (alignmentsRequired) {
+                transition.setFromState(alignmentState);
+            } else {
+                transition.setFromState(demultiplexState);
+            }
+            transition.setToState(aggregationState);
+            transitions.add(transition);
+        }
+
+        if (!alignmentsRequired && !demuxRequired) {
+            aggregationState.setAlive(true);
+            aggregationState.setStartState(true);
         }
 
         finiteStateMachine.setStatus(Status.RUNNING);
@@ -233,7 +480,8 @@ public class FiniteStateMachineFactory {
             finiteStateMachine.setStateMachineName(name);
 
             MercurySample mercurySample = mapIdToMercurySample.get(dto.getSampleKey());
-            FingerprintState fingerprintState = new FingerprintState(stateName, mercurySample, finiteStateMachine);
+            // TODO Fix this
+            FingerprintState fingerprintState = new FingerprintState(stateName, mercurySample, finiteStateMachine, null);
             fingerprintState.setStartState(true);
             fingerprintState.setAlive(true);
             states.add(fingerprintState);
@@ -242,7 +490,7 @@ public class FiniteStateMachineFactory {
             File outputFilePrefix = new File(outputDir, "Fingerprint");
             FingerprintTask fpTask = new FingerprintTask(new File(dto.getBamFile()), new File(dto.getVcfFile()),
                     new File(dto.getHaplotypeDatabase()), outputFilePrefix.getPath(),
-                    new File(AlignmentActionBean.ReferenceGenome.HG38.getFasta()));
+                    new File(AggregationActionBean.ReferenceGenome.HG38.getFasta()));
             fpTask.setTaskName(name);
             fingerprintState.addTask(fpTask);
 
@@ -259,7 +507,7 @@ public class FiniteStateMachineFactory {
         return finiteStateMachines;
     }
 
-    private boolean writeFile(File f, String content, MessageCollection messageCollection) {
+    public static boolean writeFile(File f, String content, MessageCollection messageCollection) {
         Writer fw = null;
         try {
             fw = new FileWriter(f, false);

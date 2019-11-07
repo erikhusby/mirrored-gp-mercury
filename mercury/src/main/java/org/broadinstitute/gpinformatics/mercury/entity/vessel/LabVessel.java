@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.infrastructure.search.LabVesselSearchDefinition;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -26,6 +27,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -71,6 +73,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -521,6 +524,54 @@ public abstract class LabVessel implements Serializable {
         return metricList.get(0);
     }
 
+    public String getStorageLocationStringify() {
+        if (getStorageLocation() != null) {
+            // If Barcoded Tube, attempt to find its container by grabbing most recent Storage Check-in event.
+            if (OrmUtil.proxySafeIsInstance(this, BarcodedTube.class)) {
+                SortedMap<Date, TubeFormation> sortedMap = new TreeMap<>();
+                for (LabVessel container : this.getContainers()) {
+                    if (OrmUtil.proxySafeIsInstance(container, TubeFormation.class)) {
+                        TubeFormation tubeFormation = OrmUtil.proxySafeCast(
+                                container, TubeFormation.class);
+                        for (LabEvent labEvent : tubeFormation.getInPlaceLabEvents()) {
+                            if (labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_IN) {
+                                sortedMap.put(labEvent.getEventDate(), tubeFormation);
+                            }
+                        }
+                    }
+                }
+                if (!sortedMap.isEmpty()) {
+                    TubeFormation tubeFormation = sortedMap.get(sortedMap.lastKey());
+                    for (RackOfTubes rackOfTubes : tubeFormation.getRacksOfTubes()) {
+                        if (rackOfTubes.getStorageLocation() != null) {
+                            if (rackOfTubes.getStorageLocation().equals(this.getStorageLocation())) {
+                                VesselContainer<BarcodedTube> containerRole = tubeFormation.getContainerRole();
+                                for (Map.Entry<VesselPosition, BarcodedTube> entry:
+                                        containerRole.getMapPositionToVessel().entrySet()) {
+                                    BarcodedTube value = entry.getValue();
+                                    if (value != null && value.getLabel().equals(this.getLabel())) {
+                                        String locationTrail = rackOfTubes.getStorageLocation().buildLocationTrail();
+                                        locationTrail = locationTrail + ": [" +
+                                                        rackOfTubes.getLabel() + "] : " +
+                                                        entry.getKey().name();
+                                        return locationTrail;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                // On Failure at least return storage location w/o container
+                return this.getStorageLocation().buildLocationTrail();
+            } else {
+                String location = this.getStorageLocation().buildLocationTrail();
+                location += " [" + this.getLabel() + "]";
+                return location;
+            }
+        }
+        return null;
+    }
+
     public StorageLocation getStorageLocation() {
         return storageLocation;
     }
@@ -843,6 +894,22 @@ public abstract class LabVessel implements Serializable {
                 new LabEvent(LabEventType.SAMPLE_RECEIPT, receivedDate, eventLocation,
                         disambiguator, user.getUserId(), LabEvent.UI_PROGRAM_NAME);
         addInPlaceEvent(receiptEvent);
+    }
+
+    public Map<IlluminaFlowcell, Collection<VesselPosition>> getFlowcellLanesFrom() {
+        Map<IlluminaFlowcell, Collection<VesselPosition>> illuminaFlowcells = new HashMap<>();
+        LabVesselSearchDefinition.VesselsForEventTraverserCriteria eval
+                = new LabVesselSearchDefinition.VesselsForEventTraverserCriteria(LabVesselSearchDefinition.FLOWCELL_LAB_EVENT_TYPES);
+        evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+
+        Map<LabVessel, Collection<VesselPosition>> labVesselCollectionMap = eval.getPositions().asMap();
+
+        for(Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions: labVesselCollectionMap.entrySet()) {
+            IlluminaFlowcell flowcell =
+                    OrmUtil.proxySafeCast(labVesselAndPositions.getKey(), IlluminaFlowcell.class);
+            illuminaFlowcells.put(flowcell, labVesselAndPositions.getValue());
+        }
+        return illuminaFlowcells;
     }
 
     public enum ContainerType {

@@ -18,6 +18,10 @@ public class DragenConfig extends AbstractConfig implements Serializable {
 
     private String referenceFileServer;
 
+    private String aggregationFilepath;
+
+    private String intermediateResults;
+
     public DragenConfig() {
     }
 
@@ -56,5 +60,21 @@ public class DragenConfig extends AbstractConfig implements Serializable {
 
     public void setReferenceFileServer(String referenceFileServer) {
         this.referenceFileServer = referenceFileServer;
+    }
+
+    public String getAggregationFilepath() {
+        return aggregationFilepath;
+    }
+
+    public void setAggregationFilepath(String aggregationFilepath) {
+        this.aggregationFilepath = aggregationFilepath;
+    }
+
+    public String getIntermediateResults() {
+        return intermediateResults;
+    }
+
+    public void setIntermediateResults(String intermediateResults) {
+        this.intermediateResults = intermediateResults;
     }
 }

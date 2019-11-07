@@ -102,47 +102,47 @@ public class SampleMetadataAlignmentMetricsPlugin implements ListPlugin {
             value = metric.getSampleAlias();
             row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.SAMPLE_ALIAS.getResultHeader(), value, value));
 
-            value = String.valueOf(metric.getTotalReads());
-            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.TOTAL_READS.getResultHeader(), value, value));
-
-            value = String.valueOf(metric.getNumberOfDuplicateMarkedReads());
-            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.NUM_DUP_MARKED_READS.getResultHeader(), value, value));
-
-            value = String.valueOf(metric.getNumberOfDuplicateMarkedRemoved());
-            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.NUM_DUP_MARKED_REMOVED.getResultHeader(), value, value));
-
-            value = String.valueOf(metric.getNumberOfUniqueReads());
-            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.NUM_UNIQUE_READS.getResultHeader(), value, value));
-
-            value = String.valueOf(metric.getNumberOfReadsMateSequenced());
-            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.NUM_READS_MATE_SEQ.getResultHeader(), value, value));
-
-            value = String.valueOf(metric.getNumberOfReadsWithoutMateSequenced());
-            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.NUM_READS_WO_MATE_SEQ.getResultHeader(), value, value));
-
-            value = String.valueOf(metric.getNumberOfQcFailedReads());
-            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.NUM_QC_FAILED_READS.getResultHeader(), value, value));
-
-            value = String.valueOf(metric.getNumberOfMappedReads());
-            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.NUM_MAPPED_READS.getResultHeader(), value, value));
-
-            value = String.valueOf(metric.getNumberOfUniqueMappedReads());
-            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.NUM_UNIQUE_MAPPED_READS.getResultHeader(), value, value));
-
-            value = String.valueOf(metric.getNumberOfUnmappedReads());
-            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.NUM_UNMAPPED_READS.getResultHeader(), value, value));
-
-            value = String.valueOf(metric.getNumberOfSingletonReads());
-            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.NUM_SINGLETON_READS.getResultHeader(), value, value));
-
-            value = String.valueOf(metric.getNumberOfPairedReads());
-            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.NUM_PAIRED_READS.getResultHeader(), value, value));
-
-            value = String.valueOf(metric.getNumberOfProperlyPairedReads());
-            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.NUM_PROPERLY_PAIRED_READS.getResultHeader(), value, value));
-
-            value = String.valueOf(metric.getNumberOfNotProperlyPairedReads());
-            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.NUM_NOT_PROPERLY_PAIRED_READS.getResultHeader(), value, value));
+//            value = String.valueOf(metric.getTotalReads());
+//            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.TOTAL_READS.getResultHeader(), value, value));
+//
+//            value = String.valueOf(metric.getNumberOfDuplicateMarkedReads());
+//            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.NUM_DUP_MARKED_READS.getResultHeader(), value, value));
+//
+//            value = String.valueOf(metric.getNumberOfDuplicateMarkedRemoved());
+//            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.NUM_DUP_MARKED_REMOVED.getResultHeader(), value, value));
+//
+//            value = String.valueOf(metric.getNumberOfUniqueReads());
+//            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.NUM_UNIQUE_READS.getResultHeader(), value, value));
+//
+//            value = String.valueOf(metric.getNumberOfReadsMateSequenced());
+//            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.NUM_READS_MATE_SEQ.getResultHeader(), value, value));
+//
+//            value = String.valueOf(metric.getNumberOfReadsWithoutMateSequenced());
+//            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.NUM_READS_WO_MATE_SEQ.getResultHeader(), value, value));
+//
+//            value = String.valueOf(metric.getNumberOfQcFailedReads());
+//            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.NUM_QC_FAILED_READS.getResultHeader(), value, value));
+//
+//            value = String.valueOf(metric.getNumberOfMappedReads());
+//            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.NUM_MAPPED_READS.getResultHeader(), value, value));
+//
+//            value = String.valueOf(metric.getNumberOfUniqueMappedReads());
+//            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.NUM_UNIQUE_MAPPED_READS.getResultHeader(), value, value));
+//
+//            value = String.valueOf(metric.getNumberOfUnmappedReads());
+//            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.NUM_UNMAPPED_READS.getResultHeader(), value, value));
+//
+//            value = String.valueOf(metric.getNumberOfSingletonReads());
+//            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.NUM_SINGLETON_READS.getResultHeader(), value, value));
+//
+//            value = String.valueOf(metric.getNumberOfPairedReads());
+//            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.NUM_PAIRED_READS.getResultHeader(), value, value));
+//
+//            value = String.valueOf(metric.getNumberOfProperlyPairedReads());
+//            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.NUM_PROPERLY_PAIRED_READS.getResultHeader(), value, value));
+//
+//            value = String.valueOf(metric.getNumberOfNotProperlyPairedReads());
+//            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.NUM_NOT_PROPERLY_PAIRED_READS.getResultHeader(), value, value));
 
             value = String.valueOf(metric.getMapq40Inf());
             row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.MAPQ_40_INF.getResultHeader(), value, value));
@@ -156,8 +156,8 @@ public class SampleMetadataAlignmentMetricsPlugin implements ListPlugin {
             value = String.valueOf(metric.getMapq1020());
             row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.MAPQ_10_20.getResultHeader(), value, value));
 
-            value = String.valueOf(metric.getMapq010());
-            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.MAPQ0_10.getResultHeader(), value, value));
+//            value = String.valueOf(metric.getMapq010());
+//            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.MAPQ0_10.getResultHeader(), value, value));
 
             value = String.valueOf(metric.getMapqNa());
             row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.MAPQ_NA.getResultHeader(), value, value));
@@ -174,26 +174,26 @@ public class SampleMetadataAlignmentMetricsPlugin implements ListPlugin {
             value = String.valueOf(metric.getSoftClippedBasesR2());
             row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.SOFT_CLIPPED_BASES_R2.getResultHeader(), value, value));
 
-            value = String.valueOf(metric.getTotalAlignments());
-            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.TOTAL_ALIGNMENTS.getResultHeader(), value, value));
-
-            value = String.valueOf(metric.getSecondaryAlignments());
-            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.SECONDARY_ALIGNMENTS.getResultHeader(), value, value));
-
-            value = String.valueOf(metric.getSupplementaryAlignments());
-            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.SUPPLEMENTARY_ALIGNMENTS.getResultHeader(), value, value));
-
-            value = String.valueOf(metric.getEstimatedReadLength());
-            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.EST_READ_LENGTH.getResultHeader(), value, value));
-
-            value = String.valueOf(metric.getAverageSequencingCoverage());
-            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.AVG_SEQ_COVERAGE.getResultHeader(), value, value));
-
-            value = String.valueOf(metric.getInsertLengthMean());
-            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.INSERT_LENGTH_MEAN.getResultHeader(), value, value));
-
-            value = String.valueOf(metric.getInsertLengthStd());
-            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.INSERT_LENGTH_STD.getResultHeader(), value, value));
+//            value = String.valueOf(metric.getTotalAlignments());
+//            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.TOTAL_ALIGNMENTS.getResultHeader(), value, value));
+//
+//            value = String.valueOf(metric.getSecondaryAlignments());
+//            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.SECONDARY_ALIGNMENTS.getResultHeader(), value, value));
+//
+//            value = String.valueOf(metric.getSupplementaryAlignments());
+//            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.SUPPLEMENTARY_ALIGNMENTS.getResultHeader(), value, value));
+//
+//            value = String.valueOf(metric.getEstimatedReadLength());
+//            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.EST_READ_LENGTH.getResultHeader(), value, value));
+//
+//            value = String.valueOf(metric.getAverageSequencingCoverage());
+//            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.AVG_SEQ_COVERAGE.getResultHeader(), value, value));
+//
+//            value = String.valueOf(metric.getInsertLengthMean());
+//            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.INSERT_LENGTH_MEAN.getResultHeader(), value, value));
+//
+//            value = String.valueOf(metric.getInsertLengthStd());
+//            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.INSERT_LENGTH_STD.getResultHeader(), value, value));
         }
 
         return metricRows;

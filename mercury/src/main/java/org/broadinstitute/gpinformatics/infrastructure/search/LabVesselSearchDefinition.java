@@ -82,7 +82,7 @@ import java.util.TreeSet;
 @SuppressWarnings("ReuseOfLocalVariable")
 public class LabVesselSearchDefinition {
 
-    private static final List<LabEventType> POND_LAB_EVENT_TYPES =
+    public static final List<LabEventType> POND_LAB_EVENT_TYPES =
             LabEventType.getLabEventsWithLibraryEtlDisplayName("Pond");
 
     private static final List<LabEventType> CATCH_LAB_EVENT_TYPES =

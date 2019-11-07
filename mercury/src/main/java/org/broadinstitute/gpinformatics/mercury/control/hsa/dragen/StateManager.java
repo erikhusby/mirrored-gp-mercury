@@ -36,17 +36,12 @@ public class StateManager {
             }
 
             if (OrmUtil.proxySafeIsInstance(state, AggregationState.class)) {
-                try {
-                    return aggregationStateHandler.onEnter(state);
-                } catch (IOException e) {
-                    log.error("I/O Error handling aggregation on enter", e);
-                    return false;
-                }
+                return aggregationStateHandler.onEnter(state);
             }
 
             return true;
         } catch (Exception e) {
-            log.error("Failed to enter state " + state.getStateName());
+            log.error("Failed to enter state " + state.getStateName(), e);
             return false;
         }
 

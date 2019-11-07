@@ -41,6 +41,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.stream.Collectors;
 
 /**
@@ -917,6 +918,26 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
 
     public String getCatName() {
         return catName;
+    }
+
+    public String getSequencingLibraryName() {
+        String library = getFirstPcrVessel().getLabel();
+        library = String.format("%s_%s", library, getMolecularIndexingScheme().getName());
+        return library;
+    }
+
+    public String getIndexingSchemeString() {
+        MolecularIndexingScheme molecularIndexingScheme = getMolecularIndexingScheme();
+        SortedMap<MolecularIndexingScheme.IndexPosition, MolecularIndex> indexes =
+                molecularIndexingScheme.getIndexes();
+        MolecularIndex p7 = indexes.get(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7);
+        String indexScheme = p7.getSequence();
+        if (indexes.containsKey(MolecularIndexingScheme.IndexPosition.ILLUMINA_P5)) {
+            MolecularIndex p5 = indexes.get(MolecularIndexingScheme.IndexPosition.ILLUMINA_P5);
+            indexScheme = indexScheme + "." + p5.getSequence();
+        }
+
+        return indexScheme;
     }
 
     @Override
