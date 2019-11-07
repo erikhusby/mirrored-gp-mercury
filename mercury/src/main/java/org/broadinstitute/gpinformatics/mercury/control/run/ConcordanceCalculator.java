@@ -1,173 +1,174 @@
 package org.broadinstitute.gpinformatics.mercury.control.run;
 
-import edu.mit.broad.picard.genotype.fingerprint.DownloadGenotypes;
-import edu.mit.broad.picard.genotype.fingerprint.Fingerprints;
-import edu.mit.broad.picard.util.Gender;
-import htsjdk.samtools.reference.ReferenceSequenceFile;
-import htsjdk.samtools.reference.ReferenceSequenceFileFactory;
-import htsjdk.samtools.util.SequenceUtil;
-import htsjdk.variant.variantcontext.VariantContext;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
+import org.apache.commons.lang3.tuple.ImmutableTriple;
+import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FpGenotype;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.jetbrains.annotations.NotNull;
-import picard.fingerprint.FingerprintChecker;
-import picard.fingerprint.HaplotypeMap;
-import picard.fingerprint.MatchResults;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONTokener;
+import org.json.JSONWriter;
 
 import javax.enterprise.context.Dependent;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.time.ZoneId;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.SortedSet;
 
 /**
  * Calculates a LOD score for concordance between fingerprints.
  */
 @Dependent
 public class ConcordanceCalculator {
-    // todo jmt OS-specific configuration, or require mount on Windows / MacOs?
-    private HaplotypeMap haplotypes;
-    private File reference;
-    private ReferenceSequenceFile ref;
 
-    public ConcordanceCalculator() {
-        initReference();
-    }
+    // todo jmt rc and prod
+    private static final String JAR_FILE = "/prodinfo/prodapps/PicardWrapper/dev/PicardWrapper-1.0-SNAPSHOT-jar-with-dependencies.jar";
 
-    public void initReference() {
-        haplotypes = fetchHaplotypesFile("/seq/references/Homo_sapiens_assembly19/v1/Homo_sapiens_assembly19.haplotype_database.txt");
-        reference = fetchReferenceFile("/seq/references/Homo_sapiens_assembly19/v1/Homo_sapiens_assembly19.fasta");
-        ref = ReferenceSequenceFileFactory.getReferenceSequenceFile(reference);
-    }
+    public enum Comparison {
+        ONE_TO_ONE("OneToOne"),
+        MATRIX("Matrix");
 
-    public double calculateLodScoreMap(Map<Fingerprint, picard.fingerprint.Fingerprint> vcfsMap,
-                                       Fingerprint observed, Fingerprint expected) {
+        private final String displayName;
 
-        if (!vcfsMap.containsKey(observed)) {
-            picard.fingerprint.Fingerprint observedFp = getFingerprint(observed,
-                    observed.getMercurySample().getSampleKey());
-            vcfsMap.put(observed, observedFp);
-        }
-        if (!vcfsMap.containsKey(expected)) {
-            picard.fingerprint.Fingerprint expectedFp = getFingerprint(expected,
-                    expected.getMercurySample().getSampleKey());
-            vcfsMap.put(expected, expectedFp);
+        Comparison(String displayName) {
+            this.displayName = displayName;
         }
 
-        return mercuryToPicardFp(vcfsMap.get(observed), vcfsMap.get(expected));
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 
-    public double calculateLodScore(Fingerprint observedFingerprint, Fingerprint expectedFingerprint) {
-        picard.fingerprint.Fingerprint observedFp = getFingerprint(observedFingerprint,
-                observedFingerprint.getMercurySample().getSampleKey());
-        picard.fingerprint.Fingerprint expectedFp = getFingerprint(expectedFingerprint,
-                expectedFingerprint.getMercurySample().getSampleKey());
-
-        double lod = mercuryToPicardFp(observedFp, expectedFp);
+    public List<Triple<String, String, Double>> calculateLodScores(List<Fingerprint> observedFps,
+            List<Fingerprint> expectedFps, Comparison comparison) {
+        List<String> commands = new ArrayList<>();
+        commands.add(System.getProperty("java.home") + File.separator + "bin" + File.separator + "java");
+//        commands.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5070");
+        commands.add("-cp");
+        // todo jmt decide a permanent location for this. \\neon\prodinfo_prodapps /prodinfo/prodapps ?
+        commands.add(convertFilePaths(JAR_FILE));
+        commands.add("org.broadinstitute.gpinformatics.infrastructure.picard.LodScoreCalculator");
 
         try {
-            Files.delete(observedFp.getSource());
-            Files.delete(expectedFp.getSource());
+            ProcessBuilder processBuilder = new ProcessBuilder(commands);
+            Process process = processBuilder.start();
+            writeJson(new OutputStreamWriter(process.getOutputStream()), observedFps, expectedFps, comparison);
+            // todo jmt find a way to monitor stderr without deadlocking on stdin
+/*
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            String line = bufferedReader.readLine ();
+            if (line!= null) {
+                throw new RuntimeException(line);
+            }
+*/
+            return readJson(new JSONTokener(new InputStreamReader(process.getInputStream())));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        return lod;
     }
 
-    public double mercuryToPicardFp(picard.fingerprint.Fingerprint observedFp,
-                                    picard.fingerprint.Fingerprint expectedFp) {
-        FingerprintChecker fingerprintChecker = new FingerprintChecker(haplotypes);
-        Map<String, picard.fingerprint.Fingerprint> mapSampleToObservedFp =
-                fingerprintChecker.loadFingerprints(observedFp.getSource(), observedFp.getSample());
-        Map<String, picard.fingerprint.Fingerprint> mapSampleToExpectedFp =
-                fingerprintChecker.loadFingerprints(expectedFp.getSource(), expectedFp.getSample());
+    private List<Triple<String, String, Double>> readJson(JSONTokener jsonTokener) {
+        List<Triple<String, String, Double>> lodScores = new ArrayList<>();
+        try {
+            JSONObject jsonObject = new JSONObject(jsonTokener);
+            JSONArray jsonLodScores = jsonObject.getJSONArray("lodScores");
+            for (int i = 0; i < jsonLodScores.length(); i++) {
+                JSONObject lodScore = (JSONObject) jsonLodScores.get(i);
+                lodScores.add(new ImmutableTriple<>((String)lodScore.get("observedSample"),
+                        (String)lodScore.get("expectedSample"), lodScore.getDouble("lodScore")));
+            }
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+        return lodScores;
+    }
 
-        picard.fingerprint.Fingerprint observedFp1 = mapSampleToObservedFp.get(observedFp.getSample());
-        picard.fingerprint.Fingerprint expectedFp1 = mapSampleToExpectedFp.get(expectedFp.getSample());
-        MatchResults matchResults = FingerprintChecker.calculateMatchResults(observedFp1, expectedFp1);
-        return matchResults.getLOD();
+    private void writeJson(Writer writer, List<Fingerprint> observedFps, List<Fingerprint> expectedFps,
+            Comparison comparison) {
+        try {
+            JSONWriter jsonWriter = new JSONWriter(writer);
+
+            jsonWriter.object();
+            jsonWriter.key("comparison").value(comparison.getDisplayName());
+
+            jsonWriter.key("observedFingerprints");
+            jsonWriter.array();
+            for (Fingerprint fingerprint : observedFps) {
+                writeFingerprint(jsonWriter, fingerprint);
+            }
+            jsonWriter.endArray();
+
+            jsonWriter.key("expectedFingerprints");
+            jsonWriter.array();
+            for (Fingerprint fingerprint : expectedFps) {
+                writeFingerprint(jsonWriter, fingerprint);
+            }
+            jsonWriter.endArray();
+
+            jsonWriter.endObject();
+            writer.flush();
+        } catch (JSONException | IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void writeFingerprint(JSONWriter jsonWriter, Fingerprint fingerprint) throws JSONException {
+        jsonWriter.object();
+        jsonWriter.key("sampleId").value(fingerprint.getMercurySample().getSampleKey());
+        jsonWriter.key("disposition").value(fingerprint.getDisposition().getAbbreviation());
+        jsonWriter.key("platform").value(fingerprint.getPlatform());
+        jsonWriter.key("genomeBuild").value(fingerprint.getGenomeBuild());
+        jsonWriter.key("snpListName").value(fingerprint.getSnpList().getName());
+        jsonWriter.key("gender").value(fingerprint.getGender().getAbbreviation());
+        jsonWriter.key("dateGenerated").value(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss").
+                format(fingerprint.getDateGenerated()));
+
+        jsonWriter.key("calls").array();
+        for (FpGenotype fpGenotype : fingerprint.getFpGenotypesOrdered()) {
+            if (fpGenotype != null) {
+                jsonWriter.object();
+                jsonWriter.key("rsid").value(fpGenotype.getSnp().getRsId());
+                jsonWriter.key("genotype").value(fpGenotype.getGenotype());
+                jsonWriter.key("callConfidence").value(fpGenotype.getCallConfidence());
+                jsonWriter.endObject();
+            }
+        }
+
+        jsonWriter.endArray();
+
+        jsonWriter.endObject();
+    }
+
+    public ConcordanceCalculator() {
+    }
+
+    public double calculateLodScore(Fingerprint observedFingerprint, Fingerprint expectedFingerprint) {
+        return calculateLodScores(Collections.singletonList(observedFingerprint),
+                Collections.singletonList(expectedFingerprint), Comparison.ONE_TO_ONE).get(0).getRight();
     }
 
     public double calculateHapMapConcordance(Fingerprint fingerprint, Control control) {
         MercurySample concordanceMercurySample = control.getConcordanceMercurySample();
         if (concordanceMercurySample == null) {
-            throw new RuntimeException(
-                    "No concordance sample configured for " + control.getCollaboratorParticipantId());
+            throw new RuntimeException("No concordance sample configured for " + control.getCollaboratorParticipantId());
         }
         // todo jmt most recent passed
         Fingerprint controlFp = concordanceMercurySample.getFingerprints().iterator().next();
         return calculateLodScore(fingerprint, controlFp);
     }
 
-    @NotNull
-    private picard.fingerprint.Fingerprint getFingerprint(Fingerprint fingerprint, String sampleKey) {
-        List<Fingerprints.Fingerprint> fingerprints = new ArrayList<>();
-        List<Fingerprints.Call> calls = new ArrayList<>();
-        fingerprints.add(new Fingerprints.Fingerprint(fingerprint.getMercurySample().getSampleKey(),
-                Fingerprints.Disposition.valueOf(fingerprint.getDisposition().getAbbreviation()),
-                fingerprint.getMercurySample().getSampleKey(),
-                Fingerprints.Platform.valueOf(fingerprint.getPlatform().name()),
-                Fingerprints.GenomeBuild.valueOf(fingerprint.getGenomeBuild().name()),
-                fingerprint.getSnpList().getName(),
-                fingerprint.getDateGenerated().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime(),
-                //TODO gender returns null
-                Gender.valueOf(fingerprint.getGender().name()), calls));
-        for (FpGenotype fpGenotype : fingerprint.getFpGenotypesOrdered()) {
-            if (fpGenotype != null) {
-                calls.add(new Fingerprints.Call(fpGenotype.getSnp().getRsId(),
-                        fpGenotype.getGenotype().equals("--") ? Fingerprints.Genotype.NO_CALL :
-                                Fingerprints.Genotype.valueOf(fpGenotype.getGenotype()),
-                        fpGenotype.getCallConfidence().toString(), null, null));
-            }
-        }
-
-        try {
-            DownloadGenotypes downloadGenotypes = new DownloadGenotypes();
-            File fpFile = File.createTempFile("Fingerprint", ".vcf");
-            downloadGenotypes.OUTPUT = fpFile;
-            downloadGenotypes.SAMPLE_ALIAS = sampleKey;
-
-            List<DownloadGenotypes.SnpGenotype> snpGenotypes = DownloadGenotypes.mercuryResultsToGenotypes(
-                    fingerprints, haplotypes, null, null, 0.0);
-            List<DownloadGenotypes.SnpGenotype> consistentGenotypes = DownloadGenotypes.cleanupGenotypes(snpGenotypes,
-                    haplotypes);
-            SequenceUtil.assertSequenceDictionariesEqual(ref.getSequenceDictionary(),
-                    haplotypes.getHeader().getSequenceDictionary());
-            SortedSet<VariantContext> variantContexts = downloadGenotypes.makeVariantContexts(consistentGenotypes,
-                    haplotypes, ref);
-            downloadGenotypes.writeVcf(variantContexts, Gender.valueOf(fingerprint.getGender().name()),
-                    reference, ref.getSequenceDictionary());
-            return new picard.fingerprint.Fingerprint(sampleKey, fpFile.toPath(), "");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-    }
-
+    // todo jmt remove
     public void done() {
-        try {
-            ref.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public HaplotypeMap fetchHaplotypesFile(String haplotypePath) {
-        String haplotypeDatabase = convertFilePaths(haplotypePath);
-        return new HaplotypeMap(new File(haplotypeDatabase));
-    }
-
-    public File fetchReferenceFile(String fasta) {
-        return new File(convertFilePaths(fasta));
     }
 
     /**
@@ -176,9 +177,11 @@ public class ConcordanceCalculator {
     private String convertFilePaths(String path) {
         if (SystemUtils.IS_OS_WINDOWS) {
             path = path.replace("/seq/references", "\\\\helium\\seq_references");
+            path = path.replace("/prodinfo/prodapps", "\\\\neon\\prodinfo_prodapps");
             path = FilenameUtils.separatorsToWindows(path);
         } else if (SystemUtils.IS_OS_MAC) {
             path = path.replace("/seq/references", "/volumes/seq_references");
+            path = path.replace("/prodinfo/prodapps", "/volumes/prodinfo_prodapps");
         }
         return path;
     }
