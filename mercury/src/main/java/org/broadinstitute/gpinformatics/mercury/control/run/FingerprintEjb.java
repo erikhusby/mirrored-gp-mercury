@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.control.run;
 
 import com.google.common.collect.Multimap;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.poi.ss.usermodel.Cell;
@@ -32,9 +33,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import java.io.IOException;
 import java.math.RoundingMode;
-import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -70,16 +69,17 @@ public class FingerprintEjb {
      */
     public Workbook makeMatrix(List<Fingerprint> fingerprints, Set<Fingerprint.Platform> platforms) {
         Map<String, Object[][]> sheets = new HashMap<>();
-        Map<Fingerprint, Boolean> mapFpTest = new HashMap<>();
 
         if (platforms == null) {
             platforms = EnumSet.allOf(Fingerprint.Platform.class);
         }
 
+        List<Fingerprint> filteredFingerprints = new ArrayList<>();
         for (Fingerprint fingerprint : fingerprints) {
-            boolean include = fingerprint.getGender() != null && (platforms.contains(fingerprint.getPlatform()))
-                              && fingerprint.getDisposition() == Fingerprint.Disposition.PASS;
-            mapFpTest.put(fingerprint, include);
+            if (fingerprint.getGender() != null && (platforms.contains(fingerprint.getPlatform()))
+                              && fingerprint.getDisposition() == Fingerprint.Disposition.PASS) {
+                filteredFingerprints.add(fingerprint);
+            }
         }
 
         int numFingerprintCells = fingerprints.size() + 2;
@@ -88,45 +88,32 @@ public class FingerprintEjb {
 
         String[][] fluiLodCells = new String[numFingerprintCells][numFingerprintCells];
 
-        for (Fingerprint fingerprint : fingerprints) {
-            if (mapFpTest.get(fingerprint)) {
-                fluiLodCells[0][colIndex] = fingerprint.getMercurySample().getSampleData().getPatientId();
-                fluiLodCells[1][colIndex] = fingerprint.getMercurySample().getSampleKey();
-                ++colIndex;
-            }
+        for (Fingerprint fingerprint : filteredFingerprints) {
+            fluiLodCells[0][colIndex] = fingerprint.getMercurySample().getSampleData().getPatientId();
+            fluiLodCells[1][colIndex] = fingerprint.getMercurySample().getSampleKey();
+            ++colIndex;
         }
 
         ConcordanceCalculator concordanceCalculator = new ConcordanceCalculator();
-        Map<Fingerprint, picard.fingerprint.Fingerprint> vcfsMap = new HashMap<>();
+        List<Triple<String, String, Double>> triples = concordanceCalculator.calculateLodScores(filteredFingerprints,
+                filteredFingerprints, ConcordanceCalculator.Comparison.MATRIX);
         DecimalFormat df = new DecimalFormat("##.##");
         df.setRoundingMode(RoundingMode.HALF_UP);
 
-        for (Fingerprint fingerprint : fingerprints) {
+        int lodScoreIndex = 0;
+        for (Fingerprint fingerprint : filteredFingerprints) {
             colIndex = 2;
-            if (mapFpTest.get(fingerprint)) {
-                fluiLodCells[rowIndex][0] = fingerprint.getMercurySample().getSampleData().getPatientId();
-                fluiLodCells[rowIndex][1] = fingerprint.getMercurySample().getSampleKey();
-                for (Fingerprint fingerprint1 : fingerprints) {
-                    if (mapFpTest.get(fingerprint1)) {
-                        double lodScore =
-                                concordanceCalculator.calculateLodScoreMap(vcfsMap, fingerprint, fingerprint1);
-                        fluiLodCells[rowIndex][colIndex] = String.valueOf(df.format(lodScore));
-                        ++colIndex;
-                    }
-                }
-                ++rowIndex;
+            fluiLodCells[rowIndex][0] = fingerprint.getMercurySample().getSampleData().getPatientId();
+            fluiLodCells[rowIndex][1] = fingerprint.getMercurySample().getSampleKey();
+            for (Fingerprint fingerprint1 : filteredFingerprints) {
+                // todo check the two SM-IDs in the triple.
+                double lodScore = triples.get(lodScoreIndex).getRight();
+                fluiLodCells[rowIndex][colIndex] = String.valueOf(df.format(lodScore));
+                ++colIndex;
+                ++lodScoreIndex;
             }
+            ++rowIndex;
         }
-
-        for (picard.fingerprint.Fingerprint picardFp : vcfsMap.values()) {
-            try {
-                Files.delete(picardFp.getSource());
-            } catch (IOException e) {
-                log.error("Failed to delete file: " + picardFp.getSource(), e);
-            }
-        }
-
-        concordanceCalculator.done();
 
         String[] sheetNames = {"Fluidigm Matrix"};
         sheets.put(sheetNames[0], fluiLodCells);
