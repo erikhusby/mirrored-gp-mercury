@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.run;
 
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.apache.commons.lang3.tuple.Triple;
@@ -29,7 +31,8 @@ import java.util.List;
 @Dependent
 public class ConcordanceCalculator {
 
-    private static final String REPO = "C:\\java\\m2-repo\\";
+    // todo jmt rc and prod
+    private static final String JAR_FILE = "/prodinfo/prodapps/PicardWrapper/dev/PicardWrapper-1.0-SNAPSHOT-jar-with-dependencies.jar";
 
     public enum Comparison {
         ONE_TO_ONE("OneToOne"),
@@ -53,7 +56,7 @@ public class ConcordanceCalculator {
 //        commands.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5070");
         commands.add("-cp");
         // todo jmt decide a permanent location for this. \\neon\prodinfo_prodapps /prodinfo/prodapps ?
-        commands.add(REPO + "Mercury\\PicardWrapper\\1.0-SNAPSHOT\\PicardWrapper-1.0-SNAPSHOT-jar-with-dependencies.jar");
+        commands.add(convertFilePaths(JAR_FILE));
         commands.add("org.broadinstitute.gpinformatics.infrastructure.picard.LodScoreCalculator");
 
         try {
@@ -166,5 +169,20 @@ public class ConcordanceCalculator {
 
     // todo jmt remove
     public void done() {
+    }
+
+    /**
+     * OS Specific way to grab the necessary files. Mac OS will need to mount the specific server (currently helium)
+     */
+    private String convertFilePaths(String path) {
+        if (SystemUtils.IS_OS_WINDOWS) {
+            path = path.replace("/seq/references", "\\\\helium\\seq_references");
+            path = path.replace("/prodinfo/prodapps", "\\\\neon\\prodinfo_prodapps");
+            path = FilenameUtils.separatorsToWindows(path);
+        } else if (SystemUtils.IS_OS_MAC) {
+            path = path.replace("/seq/references", "/volumes/seq_references");
+            path = path.replace("/prodinfo/prodapps", "/volumes/prodinfo_prodapps");
+        }
+        return path;
     }
 }
