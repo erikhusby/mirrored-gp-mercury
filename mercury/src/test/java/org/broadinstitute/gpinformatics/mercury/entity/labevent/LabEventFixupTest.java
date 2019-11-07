@@ -45,6 +45,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -55,8 +56,10 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
@@ -2278,5 +2281,39 @@ public class LabEventFixupTest extends Arquillian {
         labEventDao.persist(new FixupCommentary(reason));
         labEventDao.flush();
         utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void extractEventOperatorList() throws Exception {
+
+        String outFileName = System.getProperty("user.dir") + File.separator + "event_operator.dat";
+        System.out.println(". ***************** .");
+        System.out.println("Output file:  " + outFileName);
+        System.out.println(". ***************** .");
+
+        BufferedWriter out = new BufferedWriter(new FileWriter(new File(outFileName), false));
+
+        EntityManager em = labEventDao.getEntityManager();
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<Object[]> qry = cb.createQuery(Object[].class);
+        Root<LabEvent> root = qry.from(LabEvent.class);
+        qry.multiselect(root.get(LabEvent_.labEventId), root.get(LabEvent_.eventOperator)).orderBy(cb.asc(root.get(LabEvent_.labEventId)));
+        em.createQuery(qry).getResultList().stream().forEach(evtOper ->
+        {
+            try {
+                BspUser user = bspUserList.getById((Long) evtOper[1]);
+                out.write(evtOper[0].toString() + "," + (user == null ? "Unknown-" + evtOper[1].toString() : user.getUsername()) + "\n");
+            } catch (Exception ioe) {
+                System.out.println("IOException in lambda");
+            }
+        });
+        out.close();
+
+        userBean.loginOSUser();
+        utx.begin();
+        labEventDao.persist(new FixupCommentary("GPLIM-6069 Exported event operator map"));
+        labEventDao.flush();
+        utx.commit();
+
     }
 }
