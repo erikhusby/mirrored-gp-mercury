@@ -2281,13 +2281,10 @@ public class LabEventFixupTest extends Arquillian {
     }
 
     /**
-     * Overrides the LCSET for an event.
-     * For better reusability parameters come from the file src/test/resources/testdata/ManualOverrideLcset.txt
-     * An example of the file contents:
-     * SUPPORT-1234 Fixup LCSET inference.
-     * 1234567 LCSET-1234
-     * ...
+     * fixupGplim4798() should be used instead of this method.
+     * This method was added in error and used for SUPPORT-5914.
      */
+    @Deprecated
     @Test(enabled = false)
     public void manualOverrideLcset() throws Exception {
         userBean.loginOSUser();
