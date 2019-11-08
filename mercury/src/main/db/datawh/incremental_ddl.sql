@@ -26,6 +26,8 @@ CREATE TABLE MERCURYDW.EVENT_METADATA
 
 CREATE INDEX IDX_EVENT_METADATA
     ON MERCURYDW.EVENT_METADATA (METADATA_ID);
+CREATE INDEX IDX_EVENT_METADATA_EVENT
+    ON MERCURYDW.EVENT_METADATA (LAB_EVENT_ID);
 
 -- Generate event_fact.operator backfill file event_operator.dat
 -- by executing org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventFixupTest.extractEventOperatorList
