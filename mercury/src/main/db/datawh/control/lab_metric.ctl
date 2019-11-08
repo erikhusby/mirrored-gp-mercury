@@ -19,6 +19,8 @@ TRAILING NULLCOLS
   decision,
   decision_date DATE "YYYYMMDDHH24MISS",
   decider,
-  override_reason
+  override_reason,
+  rework_disposition,
+  decision_note
 )
 

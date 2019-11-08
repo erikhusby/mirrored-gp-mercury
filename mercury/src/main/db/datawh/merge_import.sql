@@ -699,37 +699,40 @@ AS
           -- Do an update only if this ETL date greater than what's in DB already (unlikely fix-up test)
           IF new.etl_date > V_LATEST_ETL_DATE THEN
             UPDATE lab_metric
-            SET quant_type      = new.quant_type,
-              quant_units     = new.quant_units,
-              quant_value     = new.quant_value,
-              run_name        = new.run_name,
-              run_date        = new.run_date,
-              lab_vessel_id   = new.lab_vessel_id,
-              vessel_barcode  = new.vessel_barcode,
-              rack_position   = new.rack_position,
-              decision        = new.decision,
-              decision_date   = new.decision_date,
-              decider         = new.decider,
-              override_reason = new.override_reason,
-              etl_date        = new.etl_date
+            SET quant_type         = new.quant_type,
+                quant_units        = new.quant_units,
+                quant_value        = new.quant_value,
+                run_name           = new.run_name,
+                run_date           = new.run_date,
+                lab_vessel_id      = new.lab_vessel_id,
+                vessel_barcode     = new.vessel_barcode,
+                rack_position      = new.rack_position,
+                decision           = new.decision,
+                decision_date      = new.decision_date,
+                decider            = new.decider,
+                override_reason    = new.override_reason,
+                rework_disposition = new.rework_disposition,
+                decision_note      = new.decision_note,
+                etl_date           = new.etl_date
             WHERE lab_metric_id   = new.lab_metric_id;
 
             V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
 
           ELSIF V_LATEST_ETL_DATE IS NULL THEN
-            INSERT INTO lab_metric (
-              lab_metric_id,
-              quant_type, quant_units, quant_value,
-              run_name, run_date,
-              lab_vessel_id, vessel_barcode, rack_position,
-              decision, decision_date, decider,
-              override_reason, etl_date )
-              VALUES( new.lab_metric_id,
-                new.quant_type, new.quant_units, new.quant_value,
-                new.run_name, new.run_date,
-                new.lab_vessel_id, new.vessel_barcode, new.rack_position,
-                new.decision, new.decision_date, new.decider,
-                new.override_reason, new.etl_date );
+            INSERT INTO lab_metric (lab_metric_id,
+                                    quant_type, quant_units, quant_value,
+                                    run_name, run_date,
+                                    lab_vessel_id, vessel_barcode, rack_position,
+                                    decision, decision_date, decider,
+                                    override_reason, rework_disposition,
+                                    decision_note, etl_date)
+            VALUES (new.lab_metric_id,
+                    new.quant_type, new.quant_units, new.quant_value,
+                    new.run_name, new.run_date,
+                    new.lab_vessel_id, new.vessel_barcode, new.rack_position,
+                    new.decision, new.decision_date, new.decider,
+                    new.override_reason, new.rework_disposition,
+                    new.decision_note, new.etl_date);
 
             V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
 

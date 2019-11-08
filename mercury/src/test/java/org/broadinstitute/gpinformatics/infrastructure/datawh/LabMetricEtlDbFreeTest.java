@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.MetricReworkDisposition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
@@ -41,6 +42,8 @@ public class LabMetricEtlDbFreeTest {
     private final String deciderName = "Maxwell Smart";
     private final Date decisionDate = new Date(1373988504L + ( 1000 * 60 * 60 * 24 ) ) ;
     private final String overrideReason = "Missed it by that much.";
+    private final MetricReworkDisposition reworkDisposition = MetricReworkDisposition.TUBE_SPLIT_ADJUSTED_DOWN;
+    private final String decisionNote = reworkDisposition.getDescription();
 
     private LabMetricEtl tst;
 
@@ -177,6 +180,8 @@ public class LabMetricEtlDbFreeTest {
         EasyMock.expect(labMetricDecision.getDecision()).andReturn(decision);
         EasyMock.expect(labMetricDecision.getOverrideReason()).andReturn(overrideReason);
         EasyMock.expect(userList.getUserFullName(userID)).andReturn(deciderName);
+        EasyMock.expect(labMetricDecision.getReworkDisposition()).andReturn(reworkDisposition).times(2);
+        EasyMock.expect(labMetricDecision.getNote()).andReturn(decisionNote);
 
         EasyMock.expect(run.getRunName()).andReturn(runName);
         EasyMock.expect(run.getRunDate()).andReturn(runDate);
@@ -192,7 +197,7 @@ public class LabMetricEtlDbFreeTest {
 
     private void verifyRecord(String record, String metricRunName, Date metricRunDate, boolean withDecision) {
         int i = 0;
-        String[] parts = record.split(",",15);
+        String[] parts = record.split(",", 17);
         Assert.assertEquals(parts[i++], etlDateStr);
         Assert.assertEquals(parts[i++], "F");
         Assert.assertEquals(parts[i++], String.valueOf(entityId));
@@ -208,6 +213,8 @@ public class LabMetricEtlDbFreeTest {
         Assert.assertEquals(parts[i++], withDecision?GenericEntityEtl.format(decisionDate):"");
         Assert.assertEquals(parts[i++], withDecision?deciderName:"");
         Assert.assertEquals(parts[i++], withDecision?overrideReason:"");
+        Assert.assertEquals(parts[i++], withDecision ? reworkDisposition.name() : "");
+        Assert.assertEquals(parts[i++], withDecision ? decisionNote : "");
         Assert.assertEquals(parts.length, i);
     }
 
