@@ -2296,9 +2296,9 @@ public class LabEventFixupTest extends Arquillian {
 
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MM/dd/yy");
         for (String line : lines.subList(1, lines.size())) {
-            String[] fields = line.split(",");
+            String[] fields = line.split("\\|");
             if (fields.length != 5) {
-                throw new RuntimeException("Expected five comma separated fields in " + line);
+                throw new RuntimeException("Expected five | separated fields in " + line);
             }
             String labEventId = fields[0];
             LabEvent labEvent = labEventDao.findById(LabEvent.class, Long.parseLong(labEventId));
