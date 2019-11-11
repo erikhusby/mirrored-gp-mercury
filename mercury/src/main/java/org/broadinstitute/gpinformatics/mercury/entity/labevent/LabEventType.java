@@ -2909,7 +2909,7 @@ public enum LabEventType {
 
     private SourceHandling sourceHandling;
 
-    private boolean removeDestVolFromSource;
+    private Boolean removeDestVolFromSource;
 
     /**
      * Determines what metadata is added to messages forwarded to BSP.
@@ -3548,7 +3548,7 @@ public enum LabEventType {
                  SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
                  PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
                  VolumeConcUpdate volumeConcUpdate, ManualTransferDetails manualTransferDetails, LibraryType libraryType,
-                 SourceHandling sourceHandling, boolean removeDestVolFromSource) {
+                 SourceHandling sourceHandling, Boolean removeDestVolFromSource) {
         this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
                 pipelineTransformation, forwardMessage, volumeConcUpdate, manualTransferDetails, null, libraryType, sourceHandling);
 
@@ -3724,7 +3724,7 @@ public enum LabEventType {
     /**
      * @return true if we expect the transfers to remove the destination volume from the source.
      */
-    public boolean removeDestVolFromSource() { return removeDestVolFromSource; }
+    public Boolean removeDestVolFromSource() { return removeDestVolFromSource != null && removeDestVolFromSource; }
 
     /**
      * Check whether this event type expects to deplete all sources (if there are any transfers).

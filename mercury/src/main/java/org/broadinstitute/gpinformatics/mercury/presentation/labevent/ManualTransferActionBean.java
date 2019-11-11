@@ -274,6 +274,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
         String targetVesselTypeGeometryString = getContext().getRequest().getParameter("stationEvents[0].plate[0].physType");
         if (targetVesselTypeGeometryString != null) {
             selectedTargetGeometry = RackOfTubes.RackType.getByName(targetVesselTypeGeometryString);
+            selectedTargetChildReceptacleType = getContext().getRequest().getParameter("stationEvents[0].positionMap[0].receptacle[0].receptacleType");
         } else {
             String targetTubeTypeGeometryString = getContext().getRequest().getParameter("targetVesselTypeGeometryString");
             if (targetTubeTypeGeometryString != null) {

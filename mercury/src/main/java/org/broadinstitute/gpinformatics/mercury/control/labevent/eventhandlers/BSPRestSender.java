@@ -166,7 +166,7 @@ public class BSPRestSender implements Serializable {
         // Loop through all of the sources in the sourcePositionMap. Remove all sources that aren't BSP metadata source
         //  and the associated CherryPickSourceType if there is one.
         for (ReceptacleType sourceReceptacleType : plateCherryPickEvent.getSourcePositionMap().get(0).getReceptacle()) {
-            VesselPosition sourceVesselPosition = VesselPosition.valueOf(sourceReceptacleType.getPosition());
+            VesselPosition sourceVesselPosition = VesselPosition.getByName(sourceReceptacleType.getPosition());
 
             Set<SampleInstanceV2> sampleInstances = sourceLabVessel.getContainerRole().getSampleInstancesAtPositionV2(
                     sourceVesselPosition);
@@ -197,7 +197,7 @@ public class BSPRestSender implements Serializable {
 
         // Loop through the cherry picks to add in any sources and note the destinations that need to be removed from the positionMap afterwards.
         for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
-            VesselPosition sourceVesselPosition = VesselPosition.valueOf(cherryPickSourceType.getWell());
+            VesselPosition sourceVesselPosition = VesselPosition.getByName(cherryPickSourceType.getWell());
             // If the source position is in the list of adding, then add the cherry pick.
             if (cherryPickSourcesToAdd.contains(sourceVesselPosition)) {
                 atLeastOneTransfer = true;
@@ -416,7 +416,7 @@ public class BSPRestSender implements Serializable {
         }
 
         // If the lab event is flagged to remove volume from the source then set it here.
-        if(targetEventType.getManualTransferDetails() != null && targetEventType.removeDestVolFromSource()) {
+        if(targetEventType.removeDestVolFromSource()) {
             MetadataType metadataType = new MetadataType();
             // Always add the 'Terminate Depleted' enum display name as BSP will handle termination if the volume is zero.
             metadataType.setName(LabEventType.SourceHandling.SUBTRACT_DESTINATION_AMOUNT.getDisplayName());
