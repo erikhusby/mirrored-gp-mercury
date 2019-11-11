@@ -29,6 +29,7 @@ import java.util.List;
 public class LibraryBean {
     public static final String NO_PDO_SAMPLE = null;
     public static final String CRSP_SOMATIC_TEST_TYPE = "Somatic";
+    public static final String MERCURY_LSID_PREFIX = "broadinstitute.org:mercury.prod.sample:";
 
     @JsonProperty("metadataSource")
     private String metadataSource;
@@ -424,7 +425,7 @@ public class LibraryBean {
             collaboratorSampleId = trimCollabSampleName == null ? sampleId : trimCollabSampleName;
             String localSampleLSID = StringUtils.trimToNull(sampleData.getSampleLsid());
             if (localSampleLSID == null && trimCollabSampleName != null) {
-                localSampleLSID = "broadinstitute.org:mercury.prod.sample:" + sampleId;
+                localSampleLSID = MERCURY_LSID_PREFIX + sampleId;
             }
             sampleLSID = localSampleLSID;
             materialType = StringUtils.trimToNull(sampleData.getMaterialType());
