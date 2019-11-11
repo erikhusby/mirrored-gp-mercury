@@ -3,8 +3,9 @@
 usage() {
     cat <<EOF
 
-Usage: $0 wildflydirectory
-Where wildflydirectory is where wildfly 10 should be installed.
+Usage: $0 parentDirectory
+Wildfly is installed in a directory under the parentDirectory.
+Mercury will be temporarily cloned under the parentDirectory.
 EOF
 }
 
@@ -15,8 +16,7 @@ then
    exit 1
 fi
 
-WILDFLY_VERSION='10.1.0.Final'
-WELD_CDI_PATCH_VERSION='2.4.1.Final'
+WILDFLY_VERSION='17.0.1.Final'
 #
 echo "*** Checking that Java 1.8 is available."
 if [ -e "/broad/software/scripts" ]
@@ -44,8 +44,7 @@ else
     CMD="curl --remote-name"
 fi
 
-$CMD http://download.jboss.org/wildfly/$WILDFLY_VERSION/wildfly-$WILDFLY_VERSION.zip 
-
+$CMD https://download.jboss.org/wildfly/$WILDFLY_VERSION/wildfly-$WILDFLY_VERSION.zip 
 unzip wildfly-$WILDFLY_VERSION.zip
 
 pushd wildfly-$WILDFLY_VERSION
@@ -53,13 +52,8 @@ export JBOSS_HOME=`pwd`
 
 popd
 
-echo "*** Getting WELD CDI Patch"
-$CMD http://download.jboss.org/weld/$WELD_CDI_PATCH_VERSION/wildfly-$WILDFLY_VERSION-weld-$WELD_CDI_PATCH_VERSION-patch.zip
-
-$JBOSS_HOME/bin/jboss-cli.sh --command="patch apply wildfly-$WILDFLY_VERSION-weld-$WELD_CDI_PATCH_VERSION-patch.zip"
-
 echo "*** Getting Mercury WildFly configuration..."
-if [ ! -d "wildflyconfig" ]
+if [ ! -d "mercury/JBossConfig" ]
 then
     git clone ssh://git@stash.broadinstitute.org:7999/gpin/mercury.git
 fi
@@ -67,17 +61,17 @@ fi
 pushd mercury/JBossConfig
 echo "*** Building and deploying WildFly configuration..."
 echo "*********************************"
-echo "********** git checkout develop instead of GPLIM-3937_Java8 after go-live **********"
+echo "********** git checkout develop after go-live **********"
 echo "*********************************"
-git checkout GPLIM-3937_Java8
+git checkout GPLIM-6742_wildfly17
 mvn install
 popd
 
-echo "*** Done setting up environment for Mercury Wildfly $WILDFLY_VERSION!"
+echo "*** Done setting up environment for Mercury Wildfly $WILDFLY_VERSION"
 echo "*** JBOSS_HOME = $JBOSS_HOME"
 
 echo "*** Cleaning up"
 rm -v wildfly-$WILDFLY_VERSION.zip
-rm -v wildfly-$WILDFLY_VERSION-weld-$WELD_CDI_PATCH_VERSION-patch.zip
+rm -rf mercury
 
 popd

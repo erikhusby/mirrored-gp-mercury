@@ -60,6 +60,11 @@
             <type>zip</type>
             <classifier>deploy</classifier>
         </dependency>
+	<dependency>
+	    <groupId>org.jdom</groupId>
+	    <artifactId>jdom2</artifactId>
+	    <version>2.0.5</version>
+	</dependency>
     </dependencies>
 
     <profiles>
@@ -147,6 +152,12 @@
 
                                 </artifactItem>
                                 <artifactItem>
+                                    <groupId>org.jdom</groupId>
+                                    <artifactId>jdom2</artifactId>
+                                    <outputDirectory>${project.build.directory}/modules/com/atlassian/crowd/main
+                                    </outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
                                     <groupId>com.oracle.jdbc</groupId>
                                     <artifactId>ojdbc7</artifactId>
                                     <version>${oracle.version}</version>
@@ -158,9 +169,7 @@
                     </execution>
                 </executions>
             </plugin>
-
             <plugin>
-
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <version>1.8</version>
@@ -194,12 +203,15 @@
                                 </copy>
 
                                 <unzip src="${project.build.directory}/CrowdJaasLoginModule.zip" dest="${env.JBOSS_HOME}/modules"/>
+                                <copy todir="${env.JBOSS_HOME}/modules/com/atlassian/crowd/main" overwrite="true" verbose="true">
+                                    <fileset dir="src/main/resources/modules/com/atlassian/crowd/main"/>
+                                </copy>
 
                                 <chmod perm="ugo+rx" dir="${env.JBOSS_HOME}" includes="*.sh"/>
 
                                 <echo>
 
-                                    Your Wildfly 10 has been updated with the Mercury configurations.
+                                    ${env.JBOSS_HOME} has been updated for Mercury use.
 
                                     It is recommended that you increase the memory settings. For example:
                                     JAVA_OPTS="-Xms64m -Xmx4096M -XXMetaspace=4G"
