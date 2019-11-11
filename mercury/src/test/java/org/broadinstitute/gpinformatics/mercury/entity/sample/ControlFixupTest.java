@@ -29,7 +29,7 @@ public class ControlFixupTest extends Arquillian {
                 org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV, "dev");
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim6080ControlFingerprintFixup() {
         // Plate CO-28400592_04101019
         // http://gapdev.broadinstitute.org:8080/esp/ViewFluidigmPlate.action?packetId=1200050
