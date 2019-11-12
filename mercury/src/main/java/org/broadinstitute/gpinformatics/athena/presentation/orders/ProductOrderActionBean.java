@@ -25,7 +25,6 @@ import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
@@ -153,6 +152,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.StringReader;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -234,6 +234,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
     }
+
+    @Inject
+    private AppConfig appConfig;
 
     @Inject
     private ProductFamilyDao productFamilyDao;
@@ -507,7 +510,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         parameters.add(new BasicNameValuePair(CoreActionBean.VIEW_ACTION, ""));
         parameters.add(new BasicNameValuePair(PRODUCT_ORDER_PARAMETER, productOrder.getBusinessKey()));
         return appConfig.getUrl() + ACTIONBEAN_URL_BINDING + "?" + URLEncodedUtils
-                .format(parameters, CharEncoding.UTF_8);
+                .format(parameters, StandardCharsets.UTF_8);
     }
 
     private List<Long> selectedRegulatoryIds = new ArrayList<>();
@@ -1268,13 +1271,15 @@ public class ProductOrderActionBean extends CoreActionBean {
             if (!lockedOutOrders.isEmpty()) {
                 Set<String> lockedOutOrderStrings = new HashSet<>(lockedOutOrders.size());
                 for (LedgerEntry ledger : lockedOutOrders) {
-                    lockedOutOrderStrings.add(ledger.getProductOrderSample().getProductOrder().getTitle());
+                    String billingSessionKey = ledger.getBillingSession().getBusinessKey();
+                    String billingSessionLink =
+                        BillingSessionActionBean.getBillingSessionLink(ledger.getBillingSession(), appConfig);
+                    lockedOutOrderStrings.add(String.format("<a href='%s' class='external' target='%s'>%s</a>",
+                        billingSessionLink, billingSessionKey, billingSessionKey));
                 }
-
-                String lockedOutString = StringUtils.join(lockedOutOrderStrings, ", ");
-
+                String lockedOutString = String.join(", ", lockedOutOrderStrings);
                 addGlobalValidationError(
-                        "The following orders are locked out by active billing sessions: " + lockedOutString);
+                    "The selected orders are locked out by active billing sessions: " + lockedOutString);
             }
         }
 

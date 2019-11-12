@@ -106,4 +106,26 @@
             <column name="REV"/>
         </createIndex>
     </changeSet>
+
+    <changeSet id="GPLIM-6436-1" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="BILLING_LEDGER" columnName="SAP_RETURN_ORDER_ID" schemaName="ATHENA" />
+            </not>
+        </preConditions>
+        <addColumn tableName="BILLING_LEDGER">
+            <column name="SAP_RETURN_ORDER_ID" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6436-1-aud" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="BILLING_LEDGER_AUD" columnName="SAP_RETURN_ORDER_ID" schemaName="ATHENA" />
+            </not>
+        </preConditions>
+        <addColumn tableName="BILLING_LEDGER_AUD">
+            <column name="SAP_RETURN_ORDER_ID" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

@@ -66,6 +66,7 @@ public class LedgerEntryEtl extends GenericEntityEtl<LedgerEntry, LedgerEntry> {
             format(entity.getWorkCompleteDate()),
             format(entity.getWorkItem()),
             format(entity.getSapDeliveryDocumentId()),
+            format(entity.getSapReturnOrderId()),
             optionalProduct.map(product -> format(product.getProductId())).orElse("")
         );
     }

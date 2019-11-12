@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.sap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingCredit;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
@@ -31,8 +32,8 @@ import org.broadinstitute.sap.entity.order.SAPOrderItem;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
-import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nonnull;
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
@@ -410,7 +411,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         return getClient().createDeliveryDocument(deliveryDocument);
     }
 
-    @NotNull
+    @Nonnull
     public SAPMaterial initializeSapMaterialObject(Product product) throws SAPIntegrationException {
         SAPCompanyConfiguration companyCode = SAPCompanyConfiguration.BROAD;
         String productHeirarchy = SAPCompanyConfiguration.BROAD.getSalesOrganization();
@@ -579,14 +580,19 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
     }
 
-    @Override
-    public String creditDelivery(String deliveryDocumentId, QuoteImportItem quoteItemForBilling)
-            throws SAPIntegrationException {
 
-        SAPOrderItem returnLine = new SAPOrderItem(quoteItemForBilling.getProduct().getPartNumber(), BigDecimal.valueOf(quoteItemForBilling.getQuantity()));
-        SAPReturnOrder returnOrder = new SAPReturnOrder(deliveryDocumentId, Collections.singleton(returnLine));
-        return getClient().createReturnOrder(returnOrder);
+    @Override
+    public BillingCredit creditDelivery(BillingCredit billingReturn) throws SAPIntegrationException {
+        Set<SAPOrderItem> orderItems = billingReturn.getReturnLines().stream()
+                   .map(BillingCredit.LineItem::getSapOrderItem).collect(Collectors.toSet());
+
+        SAPReturnOrder returnOrder =
+            new SAPReturnOrder(billingReturn.getSapDeliveryDocumentId(), orderItems);
+
+        billingReturn.setReturnOrderId(getClient().createReturnOrder(returnOrder));
+        return billingReturn;
     }
+
     private boolean productsFoundInSap(ProductOrder productOrder) {
         boolean result = true;
 

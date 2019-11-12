@@ -8,6 +8,11 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="View Billing Session: ${actionBean.editSession.businessKey}"
                        sectionTitle="View Billing Session: ${actionBean.editSession.businessKey}">
     <stripes:layout-component name="extraHead">
+        <style type="text/css">
+        .return-order {color: #96210d;}
+        .return-order:before {content: '(';}
+        .return-order:after {content: ')';}
+        </style>
         <script type="text/javascript">
             $j(document).ready(function() {
                 $j('#quoteReporting').dataTable( {
@@ -149,9 +154,10 @@
                     </td>
                     <td>
                         <span class="sapDocumentIds">
-                            <c:forEach items="${item.sapItems}" var="sapWorkItem">
-                                ${sapWorkItem}<br>
-                            </c:forEach>
+                            ${item.sapItems}
+                            <c:if test="${not empty item.sapReturnOrders}">
+                            <br/><div class="return-order">${item.sapReturnOrders}</div>
+                            </c:if>
                         </span>
                     </td>
                     <td>${item.product.displayName}</td>

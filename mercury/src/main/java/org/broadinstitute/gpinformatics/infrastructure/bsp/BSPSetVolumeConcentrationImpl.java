@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.CharEncoding;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
@@ -19,6 +18,7 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -81,7 +81,7 @@ public class BSPSetVolumeConcentrationImpl extends BSPJaxRsClient implements BSP
         }
 
         parameters.add(new BasicNameValuePair("barcode", barcode));
-        return VOLUME_CONCENTRATION_URL + "?" + URLEncodedUtils.format(parameters, CharEncoding.UTF_8);
+        return VOLUME_CONCENTRATION_URL + "?" + URLEncodedUtils.format(parameters, StandardCharsets.UTF_8);
     }
 
 

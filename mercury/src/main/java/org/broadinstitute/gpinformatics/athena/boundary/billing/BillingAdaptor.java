@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerExceptio
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -37,12 +38,12 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * The Billing Adaptor was derived to provide the ability to provide singular interface calls related to billingEJB
@@ -56,10 +57,18 @@ public class BillingAdaptor implements Serializable {
     private static final long serialVersionUID = 8829737083883106155L;
 
     private static final Log log = LogFactory.getLog(BillingAdaptor.class);
+
     public static final String NOT_ELIGIBLE_FOR_SAP_INDICATOR = "NotEligible";
-    public static final String BILLING_CREDIT_REQUESTED_INDICATOR = "Credit Requested";
     public static final String BILLING_LOG_TEXT_FORMAT =
         "Work item '%s' and SAP Document '%s' with completion date of '%s' posted at '%s' for '%2.2f' units of '%s' on behalf of %s in '%s'";
+    public static final String BILLING_CREDIT_EMAIL_SENT =
+        "Error applying billing credit in SAP. An email has been sent to business systems to resolve this.";
+    public static final String CREDIT_QUANTITY_INVALID = "Credit value must be less than zero.";
+    public static final String NEGATIVE_BILL_ERROR =
+        "Attempt to create a billing credit for a quantity exceeding the previously billed quantity.";
+    public static final String INVOICE_NOT_FOUND = "Invoice not found against the entered delivery";
+    private static final FastDateFormat BILLING_DATE_FORMAT =
+        FastDateFormat.getDateTimeInstance(FastDateFormat.SHORT, FastDateFormat.SHORT);
 
     private BillingEjb billingEjb;
 
@@ -73,15 +82,9 @@ public class BillingAdaptor implements Serializable {
 
     private SapIntegrationService sapService;
 
-    private static final FastDateFormat BILLING_DATE_FORMAT =
-            FastDateFormat.getDateTimeInstance(FastDateFormat.SHORT, FastDateFormat.SHORT);
-
     private SAPProductPriceCache productPriceCache;
 
     private SAPAccessControlEjb sapAccessControlEjb;
-
-    public static final String NEGATIVE_BILL_ERROR =
-        "Attempt to create billing credit when sample has not been billed.";
 
     @Inject
     public BillingAdaptor(BillingEjb billingEjb, PriceListCache priceListCache,
@@ -117,8 +120,8 @@ public class BillingAdaptor implements Serializable {
 
         List<BillingEjb.BillingResult> billingResults;
 
-            billingResults = bill(pageUrl, sessionKey);
-            updateBilledPdos(billingResults);
+        billingResults = bill(pageUrl, sessionKey);
+        updateBilledPdos(billingResults);
 
         return billingResults;
     }
@@ -163,6 +166,9 @@ public class BillingAdaptor implements Serializable {
             }
 
             HashMultimap<String, String> quoteItemsByQuote = HashMultimap.create();
+
+            // Keep track of failed returns so emails can be sent at the end of the billing session.
+            List<QuoteImportItem> returnQuoteImportItemsForEmail = new ArrayList<>();
             for (QuoteImportItem item : unBilledQuoteImportItems) {
 
                 BillingEjb.BillingResult result = new BillingEjb.BillingResult(item);
@@ -175,7 +181,7 @@ public class BillingAdaptor implements Serializable {
                     QuotePriceItem priceItemBeingBilled = null;
                     QuotePriceItem primaryPriceItemIfReplacement = null;
 
-                    if(item.isSapOrder()) {
+                    if (item.isSapOrder()) {
                         item.setSapQuote(item.getProductOrder().getSapQuote(sapService));
                         //TODO replace the line below with a helper method on SAP Quote to determine if it is funded.
                         isQuoteFunded = item.getSapQuote().isQuoteAvailableForBilling();
@@ -184,7 +190,8 @@ public class BillingAdaptor implements Serializable {
                         priceItemsForDate = quoteService.getPriceItemsForDate(Collections.singletonList(item));
                         item.setPriceOnWorkDate(priceItemsForDate);
                         item.setQuote(item.getProductOrder().getQuote(quoteService));
-                        isQuoteFunded = item.getQuote().isFunded(item.getWorkCompleteDate());// && quote.isFunded(item.getWorkCompleteDate());
+                        isQuoteFunded = item.getQuote()
+                            .isFunded(item.getWorkCompleteDate());// && quote.isFunded(item.getWorkCompleteDate());
 
                         // The price item that we are billing.
                         // need to set the price on the Price Item before this step
@@ -212,11 +219,13 @@ public class BillingAdaptor implements Serializable {
                     // TODO SGM -- Need an isfunded for SAP /\
                     if (!item.isBillingCredit()) {
                         if (item.getProductOrder().hasSapQuote()) {
-                            ProductOrder.checkSapQuoteValidity(item.getSapQuote(), DateUtils.truncate(item.getWorkCompleteDate(),
+                            ProductOrder.checkSapQuoteValidity(item.getSapQuote(),
+                                DateUtils.truncate(item.getWorkCompleteDate(),
                                     Calendar.DATE));
 
                         } else {
-                            ProductOrder.checkQuoteValidity(item.getQuote(), DateUtils.truncate(item.getWorkCompleteDate(),
+                            ProductOrder
+                                .checkQuoteValidity(item.getQuote(), DateUtils.truncate(item.getWorkCompleteDate(),
                                     Calendar.DATE));
                         }
                     }
@@ -225,7 +234,8 @@ public class BillingAdaptor implements Serializable {
                         workId = null;
                         sapBillingId = item.getSapItems();
                     } else {
-                        workId = CollectionUtils.isEmpty(item.getWorkItems())?null:item.getWorkItems().toArray(new String[item.getWorkItems().size()])[0];
+                        workId = CollectionUtils.isEmpty(item.getWorkItems()) ? null :
+                            item.getWorkItems().toArray(new String[item.getWorkItems().size()])[0];
                         sapBillingId = NOT_ELIGIBLE_FOR_SAP_INDICATOR;
                     }
 
@@ -233,31 +243,33 @@ public class BillingAdaptor implements Serializable {
 
                     if (item.getProductOrder().getQuoteSource() != null) {
                         if (item.getProductOrder().hasQuoteServerQuote()) {
-                            if(StringUtils.isBlank(workId)) {
+                            if (StringUtils.isBlank(workId)) {
                                 PriceAdjustment singlePriceAdjustment =
-                                        item.getProductOrder().getAdjustmentForProduct(item.getProduct());
+                                    item.getProductOrder().getAdjustmentForProduct(item.getProduct());
 
                                 if (singlePriceAdjustment == null) {
                                     workId = quoteService
-                                            .registerNewWork(item.getQuote(), priceItemBeingBilled, primaryPriceItemIfReplacement,
-                                                    item.getWorkCompleteDate(), item.getQuantity(),
-                                                    pageUrl, "billingSession", sessionKey, null);
+                                        .registerNewWork(item.getQuote(), priceItemBeingBilled,
+                                            primaryPriceItemIfReplacement,
+                                            item.getWorkCompleteDate(), item.getQuantity(),
+                                            pageUrl, "billingSession", sessionKey, null);
                                 } else {
                                     workId = quoteService
-                                            .registerNewWork(item.getQuote(), priceItemBeingBilled, primaryPriceItemIfReplacement,
-                                                    item.getWorkCompleteDate(), item.getQuantity(),
-                                                    pageUrl, "billingSession", sessionKey,
-                                                    singlePriceAdjustment.getAdjustmentValue());
+                                        .registerNewWork(item.getQuote(), priceItemBeingBilled,
+                                            primaryPriceItemIfReplacement,
+                                            item.getWorkCompleteDate(), item.getQuantity(),
+                                            pageUrl, "billingSession", sessionKey,
+                                            singlePriceAdjustment.getAdjustmentValue());
                                 }
 
                                 billingEjb
-                                        .updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId,
-                                                BillingSession.SUCCESS);
+                                    .updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId,
+                                        BillingSession.SUCCESS);
                             }
                             result.setWorkId(workId);
                         }
 
-                        if(item.getProductOrder().hasSapQuote()) {
+                        if (item.getProductOrder().hasSapQuote()) {
                             if (StringUtils.isBlank(sapBillingId)) {
 
                                 if (!item.getProductOrder().getOrderStatus().canPlace()) {
@@ -266,50 +278,15 @@ public class BillingAdaptor implements Serializable {
                                         if (quantityForSAP > 0) {
                                             //todo, validate if the quantity override parameter is still necessary
                                             sapBillingId = sapService.billOrder(item, null,
-                                                    item.getWorkCompleteDate());
+                                                item.getWorkCompleteDate());
                                             result.setSapBillingId(sapBillingId);
-                                            billingEjb.updateSapLedgerEntries(item, workId, sapBillingId,
-                                                    BillingSession.SUCCESS);
-                                        } else {
-                                            Set<LedgerEntry> priorSapBillings = new HashSet<>();
-                                            item.getBillingCredits().stream()
-                                                    .filter(ledgerEntry -> ledgerEntry.getProductOrderSample()
-                                                            .getProductOrder()
-                                                            .getProduct().equals(item.getProduct()))
-                                                    .forEach(ledgerEntry -> {
-                                                        ledgerEntry.getPreviouslyBilled().stream()
-                                                                .filter(previousBilled ->
-                                                                        previousBilled.getSapDeliveryDocumentId()
-                                                                        != null)
-                                                                .sorted(Comparator
-                                                                        .comparing(
-                                                                                LedgerEntry::getSapDeliveryDocumentId)
-                                                                        .reversed())
-                                                                .collect(Collectors
-                                                                        .toCollection(() -> priorSapBillings));
-                                                    });
-
-                                            // Negative billing is allowed if the same positive number has been previously billed.
-                                            // When this is not the case throw an exception.
-                                            double previouslyBilledQty =
-                                                    priorSapBillings.stream().map(LedgerEntry::getQuantity)
-                                                            .mapToDouble(Double::doubleValue)
-                                                            .sum();
-                                            if (quantityForSAP + previouslyBilledQty < 0) {
-                                                result.setErrorMessage(NEGATIVE_BILL_ERROR);
-                                                throw new BillingException(NEGATIVE_BILL_ERROR);
-                                            } else if (quantityForSAP < 0) {
-                                                billingEjb.sendBillingCreditRequestEmail(item, priorSapBillings,
-                                                        billingSession.getCreatedBy());
-                                                item.setBillingMessages(BillingSession.BILLING_CREDIT);
-                                                sapBillingId = BILLING_CREDIT_REQUESTED_INDICATOR;
-                                                result.setSapBillingId(sapBillingId);
-                                                billingEjb.updateSapLedgerEntries(item, workId, sapBillingId,
-                                                        BillingSession.SUCCESS);
-                                            }
+                                            billingEjb.updateSapLedgerEntries(item, workId, sapBillingId, null,
+                                                BillingSession.SUCCESS);
+                                        } else if (item.isBillingCredit()) {
+                                            handleBillingCredit(result);
                                         }
                                         item.getProductOrder().latestSapOrderDetail()
-                                                .addLedgerEntries(item.getLedgerItems());
+                                            .addLedgerEntries(item.getLedgerItems());
                                     } else {
                                         throw new BillingException("This order"
                                                                    + " is not associated with an SAP Order.  Please "
@@ -334,18 +311,15 @@ public class BillingAdaptor implements Serializable {
 
                     StringBuilder errorMessageBuilder = new StringBuilder();
                     if (!result.isBilledInQuoteServer() && StringUtils.isBlank(workId) && item.isQuoteServerOrder()) {
-
-
                         errorMessageBuilder.append("A problem occurred attempting to post to the quote server for ")
-                                .append(billingSession.getBusinessKey()).append(".");
+                            .append(billingSession.getBusinessKey()).append(".");
 
                     } else if (!result.isBilledInSap() && isQuoteFunded && item.isSapOrder()) {
 
                         errorMessageBuilder.append("A problem occured attempting to post to SAP for ")
-                                .append(billingSession.getBusinessKey()).append(".");
+                            .append(billingSession.getBusinessKey()).append(".");
 
-                    }
-                    else {
+                    } else {
                         errorMessageBuilder.append("A problem occurred saving the ledger entries for ")
                             .append(billingSession.getBusinessKey()).append(" with an SAP ID of ")
                             .append(result.isBilledInSap() ? result.getSapBillingId() : sapBillingId).append(",")
@@ -363,6 +337,22 @@ public class BillingAdaptor implements Serializable {
                     result.setErrorMessage(errorMessage);
                     errorsInBilling = true;
                 }
+                QuoteImportItem quoteImportForEmail = result.getReturnQuoteImportItemsForEmail();
+                if (quoteImportForEmail != null) {
+                    returnQuoteImportItemsForEmail.add(quoteImportForEmail);
+                }
+            }
+            if (CollectionUtils.isNotEmpty(returnQuoteImportItemsForEmail)) {
+                Map<String, List<LedgerEntry>> emailMap = new HashMap<>();
+                returnQuoteImportItemsForEmail.forEach(quoteImportItem ->
+                    quoteImportItem.getBillingCredits().forEach(le ->
+                        emailMap.computeIfAbsent(le.getSapDeliveryDocumentId(), k -> new ArrayList<>()).add(le))
+                );
+
+                emailMap.forEach((deliveryDocumentId, ledgerEntries) -> {
+                    billingEjb
+                        .sendBillingCreditRequestEmail(ledgerEntries, billingSession.getCreatedBy());
+                });
             }
 
         } finally {
@@ -377,16 +367,57 @@ public class BillingAdaptor implements Serializable {
         return results;
     }
 
+    private void handleBillingCredit(BillingEjb.BillingResult billingResult) {
+        QuoteImportItem item = billingResult.getQuoteImportItem();
+//        Collection<BillingCredit> billingCredits = new ArrayList<>();
+        try {
+            for (BillingCredit billingCredit : BillingCredit.setupSapCredit(item)) {
+                try {
+                    sapService.creditDelivery(billingCredit);
+                } catch (SAPIntegrationException e) {
+                    String billingMessage = e.getLocalizedMessage();
+                    if (billingMessage.contains(INVOICE_NOT_FOUND)) {
+                        billingResult.addBillingCreditRequestEmail(billingResult.getQuoteImportItem());
+                        billingCredit.setReturnOrderInvoiceNotFound();
+//                        billingCredit.setSapDeliveryDocumentId(null);
+                        billingMessage = BillingAdaptor.BILLING_CREDIT_EMAIL_SENT;
+                    }
+                    billingResult.setErrorMessage(billingMessage);
+                }
+                String sapBillingId = billingCredit.getSapDeliveryDocumentId();
+                String sapReturnId = billingCredit.getReturnOrderId();
+                billingEjb.updateSapLedgerEntries(item, null, sapBillingId, sapReturnId, BillingSession.SUCCESS);
+                billingResult.setSapBillingId(sapBillingId);
+
+
+//                billingCredits.add(billingCredit);
+            }
+//            billingCredits.forEach(billingCredit -> {
+//                    billingCredit.getReturnLines().stream().map(BillingCredit.LineItem::getBillingMessage)
+//                        .filter(BillingMessage::hasValidationError).findAny().orElse(new BillingMessage());
+//                String sapBillingId = billingCredit.getSapDeliveryDocumentId();
+//                String sapReturnId = billingCredit.getReturnOrderId();
+//
+//                billingEjb.updateSapLedgerEntries(item, null, sapBillingId, sapReturnId, BillingSession.SUCCESS);
+//                billingResult.setSapBillingId(sapBillingId);
+//            });
+        } catch (BillingException billingException) {
+            billingResult.setErrorMessage(billingException.getMessage());
+            billingEjb.updateSapLedgerEntries(item, null, null, null, billingException.getMessage());
+        }
+    }
+
     /**
      * This grabs the quote items for a quoteId from the quote server. It maintains a cache that keeps it from going
      * to the quote server multiple times for the same quote id.
      *
      * @param quoteItemsByQuote The cache of quote Ids to the quote items.
-     * @param quoteId The quote to look up
+     * @param quoteId           The quote to look up
      *
      * @return The list of quote items (price item names that belong to the quote).
      */
-    private Collection<String> getQuoteItems(HashMultimap<String, String> quoteItemsByQuote, String quoteId) throws Exception {
+    private Collection<String> getQuoteItems(HashMultimap<String, String> quoteItemsByQuote, String quoteId)
+        throws Exception {
         if (!quoteItemsByQuote.containsKey(quoteId)) {
             Quote quote = quoteService.getQuoteWithPriceItems(quoteId);
             for (QuoteItem quoteItem : quote.getQuoteItems()) {
@@ -400,18 +431,18 @@ public class BillingAdaptor implements Serializable {
     void logBilling(String workId, QuoteImportItem quoteImportItem, QuotePriceItem quotePriceItem,
                     Set<String> billedPdoKeys, Object sapDocumentID) {
         String priceItemName = "";
-        if(quotePriceItem != null) {
+        if (quotePriceItem != null) {
             priceItemName = quoteImportItem.getProduct().getProductName();
         }
         String billingLogText = String.format(BILLING_LOG_TEXT_FORMAT,
-                workId,
-                sapDocumentID,
-                BILLING_DATE_FORMAT.format(quoteImportItem.getWorkCompleteDate()),
-                BILLING_DATE_FORMAT.format(new Date()),
-                quoteImportItem.getQuantity(),
-                priceItemName,
-                quoteImportItem.getNumSamples(),
-                billedPdoKeys);
+            workId,
+            sapDocumentID,
+            BILLING_DATE_FORMAT.format(quoteImportItem.getWorkCompleteDate()),
+            BILLING_DATE_FORMAT.format(new Date()),
+            quoteImportItem.getQuantity(),
+            priceItemName,
+            quoteImportItem.getNumSamples(),
+            billedPdoKeys);
         log.info(billingLogText);
     }
 
@@ -468,14 +499,16 @@ public class BillingAdaptor implements Serializable {
      * @param orderQuote       Quote associated with the product order from which the product that defined the
      *                         price item is associated
      * @return Lowest price between the pricelist item and the quote item (if one exists)
-     * @throws InvalidProductException   Thrown if the price item from the product orders product is not found on the
-     * price list
+     * @throws InvalidProductException Thrown if the price item from the product orders product is not found on the
+     *                                 price list
      */
-    public String getEffectivePrice(PriceItem primaryPriceItem, Quote orderQuote, PriceList sourceOfPrices) throws InvalidProductException {
+    public String getEffectivePrice(PriceItem primaryPriceItem, Quote orderQuote, PriceList sourceOfPrices)
+        throws InvalidProductException {
 
         final QuotePriceItem cachedPriceItem = sourceOfPrices.findByKeyFields(primaryPriceItem);
-        if(cachedPriceItem == null) {
-            throw new InvalidProductException("The price item "+primaryPriceItem.getDisplayName()+" does not exist");
+        if (cachedPriceItem == null) {
+            throw new InvalidProductException(
+                "The price item " + primaryPriceItem.getDisplayName() + " does not exist");
         }
         return getEffectivePrice(cachedPriceItem, orderQuote);
     }
@@ -483,10 +516,11 @@ public class BillingAdaptor implements Serializable {
     public String getEffectivePrice(QuotePriceItem cachedPriceItem, Quote orderQuote) {
         String price = cachedPriceItem.getPrice();
         QuoteItem foundMatchingQuoteItem = orderQuote.findCachedQuoteItem(cachedPriceItem.getPlatformName(),
-                cachedPriceItem.getCategoryName(), cachedPriceItem.getName());
-        if (foundMatchingQuoteItem  != null && !orderQuote.getExpired()) {
-            if (new BigDecimal(foundMatchingQuoteItem .getPrice()).compareTo(new BigDecimal(cachedPriceItem.getPrice())) < 0) {
-                price = foundMatchingQuoteItem .getPrice();
+            cachedPriceItem.getCategoryName(), cachedPriceItem.getName());
+        if (foundMatchingQuoteItem != null && !orderQuote.getExpired()) {
+            if (new BigDecimal(foundMatchingQuoteItem.getPrice()).compareTo(new BigDecimal(cachedPriceItem.getPrice()))
+                < 0) {
+                price = foundMatchingQuoteItem.getPrice();
             }
         }
         return price;

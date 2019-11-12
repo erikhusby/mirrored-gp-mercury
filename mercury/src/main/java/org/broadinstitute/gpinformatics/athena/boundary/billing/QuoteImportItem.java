@@ -15,8 +15,10 @@ import org.broadinstitute.sap.entity.quote.SapQuote;
 import javax.annotation.Nonnull;
 import java.text.DecimalFormat;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -38,6 +40,7 @@ public class QuoteImportItem {
     private Date endRange;
     private final Set<String> workItems = new HashSet<>();
     private String sapItems;
+    private String sapReturnOrders;
     private Product product;
     private ProductOrder productOrder;
 
@@ -68,6 +71,7 @@ public class QuoteImportItem {
                 }
                 if (StringUtils.isNotBlank(ledger.getSapDeliveryDocumentId())) {
                     sapItems = ledger.getSapDeliveryDocumentId();
+                    sapReturnOrders = ledger.getSapReturnOrderId();
                     tabularIdentifier = sapItems;
                 } else {
                     if (!StringUtils.equals(ledger.getSapDeliveryDocumentId(), sapItems)) {
@@ -83,13 +87,16 @@ public class QuoteImportItem {
     }
 
     public Collection<LedgerEntry> getBillingCredits(){
-        return ledgerItems.stream().filter(ledgerEntry -> ledgerEntry.getQuantity() < 0).collect(Collectors.toSet());
+        return ledgerItems.stream().filter(LedgerEntry::isCredit).collect(Collectors.toSet());
     }
 
     public String getSapItems() {
         return sapItems;
     }
 
+    public String getSapReturnOrders() {
+        return sapReturnOrders;
+    }
 
     public String getChargedAmountForPdo(@Nonnull String pdoBusinessKey) {
         double quantity = 0;
@@ -215,11 +222,13 @@ public class QuoteImportItem {
      * This method should be invoked upon successful billing to update ledger entries with the quote to which they were
      * billed and the work item.
      *
-     * @param billingMessage            The message to be assigned to all entries.
-     * @param quoteServerWorkItem       the id of the transaction in the quote server
-     * @param sapDeliveryId
+     *  @param billingMessage       The message to be assigned to all entries.
+     * @param quoteServerWorkItem   The ID of the transaction in the quote server.
+     * @param sapDeliveryId         The SAP delivery document returned from SAP.
+     * @param sapReturnOrderId      The SAP return order ID returned from SAP, if applicable.
      */
-    public void updateSapLedgerEntries(String billingMessage, String quoteServerWorkItem, String sapDeliveryId) {
+    public void updateSapLedgerEntries(String billingMessage, String quoteServerWorkItem, String sapDeliveryId,
+                                       String sapReturnOrderId) {
 
         for (LedgerEntry ledgerEntry : ledgerItems) {
             ledgerEntry.setQuoteId(quoteId);
@@ -228,6 +237,9 @@ public class QuoteImportItem {
             ledgerEntry.setWorkItem(quoteServerWorkItem);
             if (StringUtils.isNotBlank(sapDeliveryId)) {
                 ledgerEntry.setSapDeliveryDocumentId(sapDeliveryId);
+            }
+            if (StringUtils.isNotBlank(sapReturnOrderId)) {
+                ledgerEntry.setSapReturnOrderId(sapReturnOrderId);
             }
         }
     }
@@ -396,4 +408,20 @@ public class QuoteImportItem {
     public boolean isQuoteServerOrder() {
         return productOrder.hasQuoteServerQuote();
     }
+
+    /**
+     * @return A List of LedgerEntries which have been previously been billed in this QuoteImportItem.
+     */
+    public List<LedgerEntry> getPriorBillings() {
+        List<LedgerEntry> priorSapBillings = new ArrayList<>();
+        getBillingCredits().stream()
+            .filter(ledgerEntry -> ledgerEntry.getProductOrderSample()
+                .getProductOrder().getProduct().equals(getProduct()))
+            .forEach(productLedgerEntries -> productLedgerEntries.getPreviouslyBilled().stream()
+                .filter(previousBilled -> StringUtils.isNotBlank(previousBilled.getSapDeliveryDocumentId()))
+                .sorted(Comparator.comparing(LedgerEntry::getSapDeliveryDocumentId).reversed())
+                .collect(Collectors.toCollection(() -> priorSapBillings)));
+        return priorSapBillings;
+    }
+
 }

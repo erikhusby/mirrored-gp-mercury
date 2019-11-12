@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.sap;
 
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingCredit;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -304,8 +305,9 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     public SapQuote findSapQuote(String sapQuoteId) throws SAPIntegrationException {
         return null;
     }
+
     @Override
-    public String creditDelivery(String deliveryDocumentId, QuoteImportItem quoteItemForBilling) {
+    public BillingCredit creditDelivery(BillingCredit billingReturn) throws SAPIntegrationException {
         return null;
     }
 }

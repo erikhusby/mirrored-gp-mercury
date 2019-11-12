@@ -21,7 +21,9 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -48,7 +50,6 @@ public class BillingEjbEmailTest {
                           + "        <th>Material</th>\n"
                           + "        <th>SAP Sales Order</th>\n"
                           + "        <th>Delivery Documents<br/>Related to this Item</th>\n"
-                          + "        <th>Was there Delivery Discounts?</th>\n"
                           + "        <th>Quantity</th>\n"
                           + "    </tr>\n"
                           + "    </thead>\n"
@@ -58,31 +59,48 @@ public class BillingEjbEmailTest {
                           + "        <td>material</td>\n"
                           + "        <td>sap-on</td>\n"
                           + "        <td>sap-dd</td>\n"
-                          + "        <td>true</td>\n"
-                          + "        <td>0</td>\n"
+                          + "        <td>1</td>\n"
+                          + "    </tr>\n"
+                          + "    <tr>\n"
+                          + "        <td>pdo-2</td>\n"
+                          + "        <td>material2</td>\n"
+                          + "        <td>sap-on2</td>\n"
+                          + "        <td>sap-dd2</td>\n"
+                          + "        <td>2</td>\n"
                           + "    </tr>\n"
                           + "    </tbody>\n"
                           + "</table>";
 
         Map<String, Object> map = new HashMap<>();
+        Map<String, Set<Map<String, Object>>> returnMap = new HashMap<>();
+
         map.put("mercuryOrder", "pdo-1");
         map.put("material", "material");
         map.put("sapOrderNumber", "sap-on");
         map.put("sapDeliveryDocuments", "sap-dd");
-        map.put("deliveryDiscount", Boolean.TRUE.toString());
-        map.put("quantity", "0");
+        map.put("quantity", "1");
+        returnMap.computeIfAbsent("returnList", k -> new HashSet<>()).add(map);
+        map = new HashMap<>();
 
-        String result =
-            billingEjb.processTemplate(SapConfig.BILLING_CREDIT_TEMPLATE, map).trim();
+        map.put("mercuryOrder", "pdo-2");
+        map.put("material", "material2");
+        map.put("sapOrderNumber", "sap-on2");
+        map.put("sapDeliveryDocuments", "sap-dd2");
+        map.put("quantity", "2");
+        returnMap.get("returnList").add(map);
+
+        String result = billingEjb.processTemplate(SapConfig.BILLING_CREDIT_TEMPLATE, returnMap).trim();
 
         assertThat(result, containsString(expected));
     }
 
     public void testProcessTemplateNullKey() {
         Map<String, Object> map = new HashMap<>();
-        map.put(null, null);
+        Map<String, Set<Map<String, Object>>> returnMap = new HashMap<>();
+        returnMap.put(null, null);
+        returnMap.computeIfAbsent("returnList", k -> new HashSet<>()).add(map);
         try {
-            billingEjb.processTemplate(SapConfig.BILLING_CREDIT_TEMPLATE, map);
+            billingEjb.processTemplate(SapConfig.BILLING_CREDIT_TEMPLATE, returnMap);
         } catch (RuntimeException e) {
             assertThat(e.getCause(), instanceOf(InvalidReferenceException.class));
         }
@@ -91,8 +109,12 @@ public class BillingEjbEmailTest {
     public void testProcessTemplateNullValue() {
         Map<String, Object> map = new HashMap<>();
         map.put(null, null);
+        Map<String, Set<Map<String, Object>>> returnMap = new HashMap<>();
+        map.put(null, null);
+        returnMap.computeIfAbsent("returnList", k -> new HashSet<>()).add(map);
+
         try {
-            billingEjb.processTemplate(SapConfig.BILLING_CREDIT_TEMPLATE, map);
+            billingEjb.processTemplate(SapConfig.BILLING_CREDIT_TEMPLATE, returnMap);
         } catch (Exception e) {
             assertThat(e.getCause(), instanceOf(InvalidReferenceException.class));
         }
@@ -100,9 +122,11 @@ public class BillingEjbEmailTest {
 
     public void testProcessTemplateNullMap() {
         Map<String, Object> map = null;
+        Map<String, Set<Map<String, Object>>> returnMap = new HashMap<>();
+        returnMap.computeIfAbsent("returnList", k -> new HashSet<>()).add(map);
 
         try {
-            billingEjb.processTemplate(SapConfig.BILLING_CREDIT_TEMPLATE, map);
+            billingEjb.processTemplate(SapConfig.BILLING_CREDIT_TEMPLATE, returnMap);
         } catch (RuntimeException e) {
             assertThat(e.getCause(), instanceOf(InvalidReferenceException.class));
         }

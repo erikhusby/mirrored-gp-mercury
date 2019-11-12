@@ -1,11 +1,13 @@
 package org.broadinstitute.gpinformatics.athena.entity.billing;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.common.StreamUtils;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
@@ -24,8 +26,11 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.Date;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -93,6 +98,9 @@ public class LedgerEntry implements Serializable {
     @Column(name = "SAP_DELIVERY_DOCUMENT_ID")
     private String sapDeliveryDocumentId;
 
+    @Column(name = "SAP_RETURN_ORDER_ID")
+    private String sapReturnOrderId;
+
     @ManyToOne
     @JoinColumn(name = "SAP_ORDER_DETAIL_ID")
     private SapOrderDetail sapOrderDetail;
@@ -103,6 +111,8 @@ public class LedgerEntry implements Serializable {
 
     @Column(name = "SAP_REPLACEMENT_PRICING")
     private Boolean sapReplacementPricing = Boolean.FALSE;
+
+    public static final Predicate<LedgerEntry> IS_SUCCESSFULLY_BILLED = LedgerEntry::isSuccessfullyBilled;
 
     /**
      * Package private constructor for JPA use.
@@ -239,6 +249,32 @@ public class LedgerEntry implements Serializable {
         return BillingSession.SUCCESS.equals(billingMessage) || BillingSession.BILLING_CREDIT.equals(billingMessage);
     }
 
+    public boolean isCredit() {
+        return quantity < 0;
+    }
+
+    public boolean isCredited() {
+        return StringUtils.isNotBlank(sapReturnOrderId);
+    }
+
+    public Map<LedgerEntry, Double> findCreditSource(){
+        Predicate<LedgerEntry> hasDeliveryDocument =
+            ledgerEntry -> StringUtils.isNotBlank(ledgerEntry.getSapDeliveryDocumentId());
+
+        double ledgerQuantities =
+            getProductOrderSample().getLedgerItems().stream()
+                .filter(hasDeliveryDocument).mapToDouble(LedgerEntry::getQuantity).sum();
+
+        if (!isCredit() || isCredited() || ledgerQuantities < 0) {
+            return Collections.emptyMap();
+        }
+        Predicate<LedgerEntry> isNotCredited = StreamUtils.not(LedgerEntry::isCredited);
+        Map<LedgerEntry, Double> collect = getProductOrderSample().getLedgerItems().stream()
+            .filter(IS_SUCCESSFULLY_BILLED.and(isNotCredited))
+            .collect(Collectors.groupingBy(ledger->ledger,Collectors.summingDouble(LedgerEntry::getQuantity)));
+        return collect;
+
+    }
     /**
      * This ledger has a billing message but it is not the success message, which means it is an error message.
      */
@@ -284,6 +320,14 @@ public class LedgerEntry implements Serializable {
 
     public void setSapDeliveryDocumentId(String sapDeliveryDocumentId) {
         this.sapDeliveryDocumentId = sapDeliveryDocumentId;
+    }
+
+    public String getSapReturnOrderId() {
+        return sapReturnOrderId;
+    }
+
+    public void setSapReturnOrderId(String sapReturnOrderId) {
+        this.sapReturnOrderId = sapReturnOrderId;
     }
 
     @Override
@@ -336,7 +380,7 @@ public class LedgerEntry implements Serializable {
     }
 
     public Set<LedgerEntry> getPreviouslyBilled() {
-        return productOrderSample.getLedgerItems().stream().filter(LedgerEntry::isSuccessfullyBilled)
+        return productOrderSample.getLedgerItems().stream().filter(IS_SUCCESSFULLY_BILLED)
             .collect(Collectors.toSet());
     }
 

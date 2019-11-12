@@ -28,25 +28,21 @@ import org.broadinstitute.gpinformatics.infrastructure.sap.SapConfig;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
-import org.broadinstitute.sap.entity.DeliveryCondition;
-import org.broadinstitute.sap.entity.material.SAPMaterial;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.StringWriter;
-import java.math.BigDecimal;
 import java.text.MessageFormat;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Stateful
 @RequestScoped
@@ -70,6 +66,7 @@ public class BillingEjb {
 
         private String errorMessage;
         private String sapBillingId;
+        private QuoteImportItem returnQuoteImportItemsForEmail;
 
         public BillingResult(@Nonnull QuoteImportItem quoteImportItem) {
             this.quoteImportItem = quoteImportItem;
@@ -77,6 +74,14 @@ public class BillingEjb {
 
         public QuoteImportItem getQuoteImportItem() {
             return quoteImportItem;
+        }
+
+        public QuoteImportItem getReturnQuoteImportItemsForEmail() {
+            return returnQuoteImportItemsForEmail;
+        }
+
+        public void addBillingCreditRequestEmail(QuoteImportItem quoteImportItem) {
+            this.returnQuoteImportItemsForEmail = quoteImportItem;
         }
 
         public String getWorkId() {
@@ -114,6 +119,7 @@ public class BillingEjb {
         public boolean isBilledInQuoteServer() {
             return StringUtils.isNumeric(workId);
         }
+
     }
 
     private PriceListCache priceListCache;
@@ -227,15 +233,16 @@ public class BillingEjb {
      * separate the steps of billing a session into smaller finite transactions so we can record more to the database
      * sooner
      *
-     * @param item                Representation of the quote and its ledger entries that are to be billed
-     * @param quoteServerWorkItem the pointer back to the quote server transaction
-     * @param sapDeliveryId
-     * @param billingMessage
+     * @param item                  Representation of the quote and its ledger entries that are to be billed
+     * @param quoteServerWorkItem   the pointer back to the quote server transaction
+     * @param sapDeliveryDocumentId deliveryDocument recorded in SAP for this LedgerEntry
+     * @param sapReturnOrderId      the returnOrderId if this ledger entry was a billing credit.
+     * @param billingMessage        message returned from SAP and/or returned to the user.
      */
     public void updateSapLedgerEntries(QuoteImportItem item, String quoteServerWorkItem,
-                                    String sapDeliveryId, String billingMessage) {
+                                       String sapDeliveryDocumentId, String sapReturnOrderId, String billingMessage) {
 
-        item.updateSapLedgerEntries(billingMessage, quoteServerWorkItem,sapDeliveryId);
+        item.updateSapLedgerEntries(billingMessage, quoteServerWorkItem,sapDeliveryDocumentId, sapReturnOrderId);
         billingSessionDao.flush();
     }
 
@@ -368,49 +375,39 @@ public class BillingEjb {
         );
     }
 
-    public void sendBillingCreditRequestEmail(QuoteImportItem quoteImportItem, Set<LedgerEntry> priorBillings,
-                                              Long billedById) throws InformaticsServiceException {
+    public void sendBillingCreditRequestEmail(List<LedgerEntry> billingLedgers, Long billedById)
+        throws InformaticsServiceException {
         Collection<String> ccUsers = new HashSet<>(appConfig.getGpBillingManagers());
+        ccUsers.clear();
+        Map<String, Set<Map<String, Object>>> returnMap = new HashMap<>();
+        final double creditQuantity = Math.abs(billingLedgers.stream().mapToDouble(LedgerEntry::getQuantity).sum());
         BspUser billedBy = bspUserList.getById(billedById);
-        if (billedBy!=null) {
-            ccUsers.add(billedBy.getEmail());
-        }
-        BspUser orderPlacedBy = bspUserList.getById(quoteImportItem.getProductOrder().getCreatedBy());
-        if (orderPlacedBy != null) {
-            ccUsers.add(orderPlacedBy.getEmail());
-        }
+        billingLedgers.forEach(billingLedger->{
+            if (billedBy != null) {
+                ccUsers.add(billedBy.getEmail());
+            }
 
-        Map<String, Object> rootMap = new HashMap<>();
+            ProductOrder productOrder = billingLedger.getProductOrderSample().getProductOrder();
+            BspUser orderPlacedBy = bspUserList.getById(productOrder.getCreatedBy());
+            if (orderPlacedBy != null) {
+                ccUsers.add(orderPlacedBy.getEmail());
+            }
+            Map<String, Object> rootMap = new HashMap<>();
 
-        String sapDocuments = priorBillings.stream()
-            .map(LedgerEntry::getSapDeliveryDocumentId)
-            .filter(StringUtils::isNotBlank).distinct()
-            .collect(Collectors.joining("<br/>"));
-
-        StringBuilder discountText = new StringBuilder();
-        if (StringUtils.equals(quoteImportItem.getQuotePriceType(), LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType())) {
-            discountText.append(Boolean.TRUE.toString()).append(" -- ");
-            final SAPMaterial discountedMaterial = productPriceCache.findByProduct(quoteImportItem.getProduct(),
-                    quoteImportItem.getProductOrder().getSapCompanyConfigurationForProductOrder().getSalesOrganization());
-            final BigDecimal discount = discountedMaterial.getPossibleDeliveryConditions().get(
-                    DeliveryCondition.LATE_DELIVERY_DISCOUNT);
-
-            discountText.append(NumberFormat.getCurrencyInstance().format(discount.doubleValue()));
-
-        } else {
-            discountText.append(Boolean.FALSE.toString());
-        }
-
-        rootMap.put("mercuryOrder", quoteImportItem.getProductOrder().getJiraTicketKey());
-        rootMap.put("material", quoteImportItem.getProduct().getDisplayName());
-        rootMap.put("sapOrderNumber", quoteImportItem.getProductOrder().getSapOrderNumber());
-        rootMap.put("sapDeliveryDocuments", sapDocuments);
-        rootMap.put("deliveryDiscount", discountText.toString());
-        rootMap.put("quantity", quoteImportItem.getQuantity());
+            Product product = productOrder.getProduct();
+            rootMap.put("mercuryOrder", productOrder.getJiraTicketKey());
+            rootMap.put("material", product.getPartNumber() + "<br>" + product.getProductName());
+            rootMap.put("sapOrderNumber", productOrder.getSapOrderNumber());
+            rootMap.put("sapDeliveryDocuments", billingLedger.getSapDeliveryDocumentId());
+            rootMap.put("quantity", creditQuantity);
+            Set<Map<String, Object>> returnList = returnMap.getOrDefault("returnList", new HashSet<>());
+            returnList.add(rootMap);
+            returnMap.put("returnList", returnList);
+        });
 
         String body;
         try {
-            body = processTemplate(SapConfig.BILLING_CREDIT_TEMPLATE, rootMap);
+            body = processTemplate(SapConfig.BILLING_CREDIT_TEMPLATE, returnMap);
         } catch (RuntimeException e) {
             throw new InformaticsServiceException("Error creating message body from template", e);
         }
@@ -421,7 +418,7 @@ public class BillingEjb {
             sapConfig.getSapReverseBillingSubject(), body, !isProduction, false);
     }
 
-    protected String processTemplate(String template, Map<String, Object> objectMap) {
+    String processTemplate(String template, Map<String, Set<Map<String, Object>>> objectMap) {
         StringWriter stringWriter = new StringWriter();
         templateEngine.processTemplate(template, objectMap, stringWriter);
         return stringWriter.toString();

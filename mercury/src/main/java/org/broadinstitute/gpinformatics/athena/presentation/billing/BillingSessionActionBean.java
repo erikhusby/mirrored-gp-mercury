@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.billing;
 
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import net.sourceforge.stripes.action.ActionBeanContext;
 import net.sourceforge.stripes.action.After;
@@ -18,6 +17,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.message.BasicNameValuePair;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingAdaptor;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingSessionAccessEjb;
@@ -30,6 +32,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.athena.presentation.links.SapQuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
@@ -45,6 +48,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -56,7 +61,7 @@ import java.util.stream.Collectors;
 /**
  * This handles all the needed interface processing elements.
  */
-@UrlBinding("/billing/session.action")
+@UrlBinding(BillingSessionActionBean.ACTIONBEAN_URL_BINDING)
 public class BillingSessionActionBean extends CoreActionBean {
 
     private static final String SESSION_LIST_PAGE = "/billing/sessions.jsp";
@@ -64,6 +69,7 @@ public class BillingSessionActionBean extends CoreActionBean {
     private static final Log log = LogFactory.getLog(BillingSessionActionBean.class);
     public static final String SENT_TO_SAP = "Sent to SAP";
     public static final String SENT_TO_QUOTE_SERVER = "Sent to Quote Server";
+    public static final String ACTIONBEAN_URL_BINDING = "/billing/session.action";
 
     @Inject
     private BillingSessionDao billingSessionDao;
@@ -195,6 +201,12 @@ public class BillingSessionActionBean extends CoreActionBean {
 
     public List<QuoteImportItem> getQuoteImportItems() throws QuoteServerException {
         return editSession.getQuoteImportItems(priceListCache);
+    }
+
+    public static String getBillingSessionLink(BillingSession billingSession, AppConfig appConfig) {
+        List<NameValuePair> parameters = new ArrayList<>();
+        parameters.add(new BasicNameValuePair(BILLING_SESSION_FROM_URL_PARAMETER, billingSession.getBusinessKey()));
+        return appConfig.getUrl() + ACTIONBEAN_URL_BINDING + "?" + URLEncodedUtils.format(parameters, StandardCharsets.UTF_8);
     }
 
     @HandlesEvent("bill")

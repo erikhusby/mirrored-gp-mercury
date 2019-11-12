@@ -1,3 +1,5 @@
+<#-- @ftlvariable name="returnList" type="java.util.List" -->
+<#-- @ftlvariable name="returnListSummary" type="java.util.List" -->
 <html xmlns="http://www.w3.org/1999/html">
 <head>
     <style type="text/css">
@@ -6,7 +8,7 @@
 </head>
 <body>
 <p>
-    This is a request to reverse a charge against a previously billed item.
+    This is a request to reverse a charge against previously billed item(s).
 </p>
 <table>
     <thead>
@@ -15,19 +17,19 @@
         <th>Material</th>
         <th>SAP Sales Order</th>
         <th>Delivery Documents<br/>Related to this Item</th>
-        <th>Was there Delivery Discounts?</th>
         <th>Quantity</th>
     </tr>
     </thead>
     <tbody>
+    <#list returnList as returnItem>
     <tr>
-        <td>${mercuryOrder}</td>
-        <td>${material}</td>
-        <td>${sapOrderNumber}</td>
-        <td>${sapDeliveryDocuments}</td>
-        <td>${deliveryDiscount}</td>
-        <td>${quantity}</td>
+        <td>${returnItem.mercuryOrder}</td>
+        <td>${returnItem.material}</td>
+        <td>${returnItem.sapOrderNumber}</td>
+        <td>${returnItem.sapDeliveryDocuments}</td>
+        <td>${returnItem.quantity}</td>
     </tr>
+    </#list>
     </tbody>
 </table>
 

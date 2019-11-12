@@ -156,7 +156,7 @@ public class BillingSessionActionBeanTest {
         return testCases.iterator();
     }
 
-    public void initBillingSessionActionBean() {
+    private void initBillingSessionActionBean() {
         billingSessionActionBean = new BillingSessionActionBean();
         quoteServerConfig = QuoteConfig.produce(Deployment.DEV);
         QuoteLink quoteLink = new QuoteLink(quoteServerConfig);

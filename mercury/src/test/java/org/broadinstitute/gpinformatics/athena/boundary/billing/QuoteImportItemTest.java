@@ -138,7 +138,8 @@ public class QuoteImportItemTest {
     }
 
     public void testGetRoundedQuantity() {
-        double totalQuantity = quoteImportItem.getQuantity();
+        double totalQuantity =
+            quoteImportItem.getQuantity();
         assertThat("Total precision is not high enough for this test.",Double.toString(totalQuantity).length(),greaterThan(7));
         assertThat("Rounding/formatting of quantity seems to have changed.",quoteImportItem.getRoundedQuantity().length(), lessThan(
                 5));

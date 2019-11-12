@@ -38,6 +38,7 @@ public class LedgerEntryEtlDbFreeTest {
     private static final Date WORK_COMPLETE_DATE = new Date();
     private static final String WORK_ITEM_ID = "2201";
     private static final String SAP_DELIVERY_DOCUMENT_ID = "0200003194";
+    private static final String SAP_RETURN_ORDER_ID = "003300333";
     private static final Long productId = 3383l;
     private String datafileDir;
     private LedgerEntryEtl ledgerEntryEtl;
@@ -101,6 +102,7 @@ public class LedgerEntryEtlDbFreeTest {
         Mockito.when(ledgerEntry.getWorkCompleteDate()).thenReturn(WORK_COMPLETE_DATE);
         Mockito.when(ledgerEntry.getWorkItem()).thenReturn(WORK_ITEM_ID);
         Mockito.when(ledgerEntry.getSapDeliveryDocumentId()).thenReturn(SAP_DELIVERY_DOCUMENT_ID);
+        Mockito.when(ledgerEntry.getSapReturnOrderId()).thenReturn(SAP_RETURN_ORDER_ID);
         Product testProduct = Mockito.mock(Product.class);
         Mockito.when(testProduct.getProductId()).thenReturn(productId);
         Mockito.when(ledgerEntry.getProduct()).thenReturn(testProduct);
@@ -125,6 +127,7 @@ public class LedgerEntryEtlDbFreeTest {
         Mockito.verify(ledgerEntry).getWorkCompleteDate();
         Mockito.verify(ledgerEntry).getWorkItem();
         Mockito.verify(ledgerEntry).getSapDeliveryDocumentId();
+        Mockito.verify(ledgerEntry).getSapReturnOrderId();
         Mockito.verify(ledgerEntry).getProduct();
         Mockito.verify(testProduct).getProductId();
     }
@@ -145,6 +148,7 @@ public class LedgerEntryEtlDbFreeTest {
         Assert.assertEquals(parts[i++], EtlTestUtilities.format(WORK_COMPLETE_DATE));
         Assert.assertEquals(parts[i++], WORK_ITEM_ID);
         Assert.assertEquals(parts[i++], SAP_DELIVERY_DOCUMENT_ID);
+        Assert.assertEquals(parts[i++], SAP_RETURN_ORDER_ID);
         Assert.assertEquals(parts[i++], String.valueOf(productId));
         Assert.assertEquals(parts.length, i);
     }

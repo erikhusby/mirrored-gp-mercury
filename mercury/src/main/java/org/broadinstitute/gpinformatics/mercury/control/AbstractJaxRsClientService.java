@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.NameValuePair;
@@ -27,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -110,7 +110,7 @@ public abstract class AbstractJaxRsClientService implements Serializable {
             pairs.add(new BasicNameValuePair(parameterKey, parameter));
         }
 
-        return URLEncodedUtils.format(pairs, CharEncoding.UTF_8);
+        return URLEncodedUtils.format(pairs, StandardCharsets.UTF_8);
     }
 
     /**

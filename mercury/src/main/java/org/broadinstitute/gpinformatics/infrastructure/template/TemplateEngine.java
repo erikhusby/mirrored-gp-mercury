@@ -8,7 +8,6 @@ import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Map;
 
 /**
  * Encapsulates a template engine, e.g. for generating customized emails.
@@ -30,7 +29,7 @@ public class TemplateEngine {
      * @param mapNameToObject names referenced in expressions in the template, and the object each name refers to
      * @param writer results of populating template with objects
      */
-    public void processTemplate(String templateName, Map<String, Object> mapNameToObject, Writer writer) {
+    public <T> void processTemplate(String templateName, T mapNameToObject, Writer writer) {
         try {
             Template template = configuration.getTemplate(templateName);
             template.process(mapNameToObject, writer);

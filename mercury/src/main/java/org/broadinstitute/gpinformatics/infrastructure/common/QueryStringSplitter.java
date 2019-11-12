@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
-import org.apache.commons.lang3.CharEncoding;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -50,7 +50,7 @@ public class QueryStringSplitter implements Iterator<List<String>>, Iterable<Lis
         for (String value : values) {
             nameValuePairs.add(new BasicNameValuePair(name, value));
         }
-        return URLEncodedUtils.format(nameValuePairs, CharEncoding.UTF_8).length();
+        return URLEncodedUtils.format(nameValuePairs, StandardCharsets.UTF_8).length();
     }
 
     private int getParamSize(HashMap<String, List<String>> parameters) {
