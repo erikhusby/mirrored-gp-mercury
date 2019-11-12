@@ -4,8 +4,7 @@ usage() {
     cat <<EOF
 
 Usage: $0 parentDirectory
-Wildfly is installed in a directory under the parentDirectory.
-Mercury will be temporarily cloned under the parentDirectory.
+Wildfly will be installed in a directory under parentDirectory.
 EOF
 }
 
@@ -17,8 +16,14 @@ then
 fi
 
 WILDFLY_VERSION='17.0.1.Final'
-#
-echo "*** Checking that Java 1.8 is available."
+
+# Uses the pom, crowd properties, and src files found in the current directory.
+JBOSSCONFIG=`pwd`
+if [ ! -e pom.xml ]; then
+    echo Cannot find pom.xml
+    exit 1;
+fi
+
 if [ -e "/broad/software/scripts" ]
 then
     source /broad/software/scripts/useuse
@@ -49,21 +54,11 @@ unzip wildfly-$WILDFLY_VERSION.zip
 
 pushd wildfly-$WILDFLY_VERSION
 export JBOSS_HOME=`pwd`
-
 popd
 
-echo "*** Getting Mercury WildFly configuration..."
-if [ ! -d "mercury/JBossConfig" ]
-then
-    git clone ssh://git@stash.broadinstitute.org:7999/gpin/mercury.git
-fi
-
-pushd mercury/JBossConfig
-echo "*** Building and deploying WildFly configuration..."
-echo "*********************************"
-echo "********** git checkout develop after go-live **********"
-echo "*********************************"
-git checkout GPLIM-6742_wildfly17
+echo "*** Updating WildFly modules using JBossConfig install"
+cp -r ${JBOSSCONFIG} JBossConfig
+pushd JBossConfig
 mvn install
 popd
 
@@ -72,6 +67,6 @@ echo "*** JBOSS_HOME = $JBOSS_HOME"
 
 echo "*** Cleaning up"
 rm -v wildfly-$WILDFLY_VERSION.zip
-rm -rf mercury
+rm -rf JBossConfig
 
 popd

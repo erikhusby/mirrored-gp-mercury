@@ -23,7 +23,7 @@
         <ssl.keystore.password>changeit</ssl.keystore.password>
         <ssl.truststore.password>changeit</ssl.truststore.password>
         <crsp.enable>false</crsp.enable>
-	<ssl.keystore.alias>vmercurydev</ssl.keystore.alias>
+	<ssl.keystore.alias>mercurydev</ssl.keystore.alias>
     </properties>
 
     <repositories>
