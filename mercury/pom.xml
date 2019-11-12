@@ -1531,11 +1531,10 @@ nodePrinter.print(webapp)
             <scope>test</scope>
         </dependency>
 
-        <!-- Match what's in WildFly 10 CDI patch -->
         <dependency>
             <groupId>org.jboss.weld</groupId>
             <artifactId>weld-core-impl</artifactId>
-            <version>2.4.1.Final</version>
+            <version>3.1.2.Final</version>
             <scope>provided</scope>
         </dependency>
 
