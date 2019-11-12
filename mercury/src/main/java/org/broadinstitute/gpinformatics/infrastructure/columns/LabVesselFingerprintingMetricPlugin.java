@@ -24,7 +24,6 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -47,6 +46,7 @@ public class LabVesselFingerprintingMetricPlugin implements ListPlugin {
         Q20_CALL_RATE_RATIO("Q20 Call Rate Ratio"),
         Q20_CALL_RATE_QC("Q20 Call Rate QC Result"),
         GENDER("Fluidigm Gender"),
+        HAPMAP_CONCOORDANCE("HapMap LOD Score"),
         SAMPLE_ALIQUOT_ID("Sample Aliquot ID"),
         ROOT_SAMPLE_ID("Root Sample ID"),
         STOCK_SAMPLE_ID("Stock Sample ID"),
@@ -200,6 +200,7 @@ public class LabVesselFingerprintingMetricPlugin implements ListPlugin {
                             dnaPlateWell.name(), dnaPlateWell.name()));
                 }
 
+                // todo jmt revisit sortableValues
                 switch (labMetric.getName()) {
                 case CALL_RATE_Q17:
                     parseCallRate(labMetric, row, VALUE_COLUMN_TYPE.Q17_CALL_RATE.getResultHeader(),
@@ -234,6 +235,11 @@ public class LabVesselFingerprintingMetricPlugin implements ListPlugin {
                             FluidigmRunFactory.Gender.getByNumberOfXChromosomes(labMetric.getValue().intValue());
                     row.addCell(new ConfigurableList.Cell(
                             VALUE_COLUMN_TYPE.GENDER.getResultHeader(), gender.getSymbol(), gender.getSymbol()));
+                    break;
+                case HAPMAP_CONCORDANCE_LOD:
+                    String lodScore = ColumnValueType.TWO_PLACE_DECIMAL.format(labMetric.getValue(), "");
+                    row.addCell(new ConfigurableList.Cell(
+                            VALUE_COLUMN_TYPE.HAPMAP_CONCOORDANCE.getResultHeader(), labMetric.getValue(), lodScore));
                 default:
                 }
             }

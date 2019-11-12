@@ -281,8 +281,10 @@ public class FluidigmRunFactory {
             if (optionalControl.isPresent()) {
                 double lodScore = concordanceCalculator.calculateHapMapConcordance(fingerprint, optionalControl.get());
                 // todo jmt common date for all metrics?
-                plateWell.addMetric(new LabMetric(new BigDecimal(lodScore), LabMetric.MetricType.HAPMAP_CONCORDANCE_LOD,
-                        LabMetric.LabUnit.NUMBER, plateWell.getVesselPosition().name(), new Date()));
+                LabMetric lodScoreMetric = new LabMetric(new BigDecimal(lodScore), LabMetric.MetricType.HAPMAP_CONCORDANCE_LOD,
+                        LabMetric.LabUnit.NUMBER, plateWell.getVesselPosition().name(), new Date());
+                labMetricRun.addMetric(lodScoreMetric);
+                plateWell.addMetric(lodScoreMetric);
             }
         }
 
