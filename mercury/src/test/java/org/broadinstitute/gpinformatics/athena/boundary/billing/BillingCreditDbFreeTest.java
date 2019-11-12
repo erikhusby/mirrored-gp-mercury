@@ -278,9 +278,7 @@ public class BillingCreditDbFreeTest {
             validateBillingResults(pdoSample, billingResults, 0);
         }
 
-        boolean emailExpected=false;
         if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
-            emailExpected = !deliveryInvoice.invoiceFound();
             Mockito.verify(mockSapClient, Mockito.times(1)).createReturnOrder(Mockito.any(SAPReturnOrder.class));
         } else {
             Mockito.verify(mockSapClient, Mockito.never()).createReturnOrder(Mockito.any(SAPReturnOrder.class));
