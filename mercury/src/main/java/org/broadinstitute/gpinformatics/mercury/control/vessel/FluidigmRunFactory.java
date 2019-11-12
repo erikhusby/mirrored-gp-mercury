@@ -73,6 +73,9 @@ public class FluidigmRunFactory {
         FluidigmChipProcessor.FluidigmRun fluidigmRun = fluidigmChipProcessor.parse(inputStream);
         messageCollection.addAll(fluidigmChipProcessor.getMessageCollection());
 
+        if (messageCollection.hasErrors()) {
+            return null;
+        }
         // Fetch Chip
         String chipBarcode = fluidigmRun.getChipBarcode();
         String formattedBarcode = StringUtils.leftPad(chipBarcode, 12, '0');
@@ -282,7 +285,6 @@ public class FluidigmRunFactory {
                         LabMetric.LabUnit.NUMBER, plateWell.getVesselPosition().name(), new Date()));
             }
         }
-        concordanceCalculator.done();
 
         return labMetricRun;
     }

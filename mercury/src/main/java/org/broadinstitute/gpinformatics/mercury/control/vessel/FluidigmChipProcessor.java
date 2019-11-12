@@ -96,7 +96,7 @@ public class FluidigmChipProcessor {
 
         while (true) {
             rowData = csvReader.readNext();
-            if (rowData[0].equals("Dose Meter Reading Data")) {
+            if (rowData == null || rowData[0].equals("Dose Meter Reading Data")) {
                 break;
             }
             LinkedBlockingQueue<OrderedObject<FluidigmDataRow>> orderedObjects = new LinkedBlockingQueue<>();
@@ -119,7 +119,7 @@ public class FluidigmChipProcessor {
     private void processDoseMeterRows(BufferedReader reader, FluidigmRun fluidigmRun) throws IOException {
         String line = reader.readLine();
         if (line == null) {
-            throw new RuntimeException("Data file ended unexpectedly");
+            return;
         }
         if (!line.startsWith("Cycle Number")) {
             throw new RuntimeException("Unrecognized line: " + line + " In 'Does Meter Reading Data' section");
@@ -154,7 +154,10 @@ public class FluidigmChipProcessor {
         // Skip Headers
         while (true) {
             String line = reader.readLine();
-            if (line != null && line.startsWith(sectionName)) {
+            if (line == null) {
+                return;
+            }
+            if (line.startsWith(sectionName)) {
                 break;
             }
         }
