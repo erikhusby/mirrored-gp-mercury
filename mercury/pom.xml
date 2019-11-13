@@ -58,7 +58,6 @@
             <name>Broad Prodinfo</name>
             <url>file:///seq/prodinfo/m2-repository</url>
         </repository>
-
     </distributionManagement>
 
     <developers>
@@ -1293,18 +1292,6 @@ nodePrinter.print(webapp)
 
     <dependencies>
 
-        <!-- Hibernate classes include this but at deploy causes versioning error :
-           - java.lang.ClassCastException: org.dom4j.DocumentFactory cannot be cast to org.dom4j.DocumentFactory
-           - Exclude by declaring scope private and explicitly exclude jar in Arquillian shrinkwrap DeploymentBuilder!
-           - TODO:  Failed 10.0.0, retry for 10.1.0+
-           -->
-        <dependency>
-            <groupId>dom4j</groupId>
-            <artifactId>dom4j</artifactId>
-            <version>1.6.1</version>
-            <scope>provided</scope>
-        </dependency>
-
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
@@ -1337,20 +1324,19 @@ nodePrinter.print(webapp)
              * For WildFly, use org.jboss.spec:jboss-javaee-7.0 in lieu of javax:javaee-api.
              * See: https://community.jboss.org/wiki/WhatsTheCauseOfThisExceptionJavalangClassFormatErrorAbsentCode
              *** -->
-        <dependency> <!-- WildFly 10.1 patched to CDI 1.2 API -->
+        <dependency>
             <groupId>javax.enterprise</groupId>
             <artifactId>cdi-api</artifactId>
-            <version>1.2</version>
+            <version>2.0.SP1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.spec</groupId>
             <artifactId>jboss-javaee-7.0</artifactId>
-            <version>1.0.0.Final</version>
+            <version>1.1.1.Final</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
-
 
         <!-- https://mvnrepository.com/artifact/org.hamcrest/java-hamcrest   -->
         <dependency>
@@ -1534,7 +1520,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.jboss.weld</groupId>
             <artifactId>weld-core-impl</artifactId>
-            <version>3.1.2.Final</version>
+            <version>3.1.1.Final</version>
             <scope>provided</scope>
         </dependency>
 
@@ -1560,13 +1546,13 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-core</artifactId>
-            <version>5.0.10.Final</version>
+            <version>5.3.10.Final</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-entitymanager</artifactId>
-            <version>5.0.10.Final</version>
+            <version>5.3.10.Final</version>
             <scope>provided</scope>
             <exclusions>
                 <!-- using cglib-nodep instead -->
@@ -1579,13 +1565,13 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-jpamodelgen</artifactId>
-            <version>5.0.10.Final</version>
+            <version>5.3.10.Final</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-envers</artifactId>
-            <version>5.0.10.Final</version>
+            <version>5.3.10.Final</version>
             <scope>provided</scope>
         </dependency>
         <!-- End of Hibernate API dependencies -->
@@ -1633,19 +1619,19 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>3.0.19.Final</version>
+            <version>3.7.0.Final</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-multipart-provider</artifactId>
-            <version>3.0.19.Final</version>
+            <version>3.7.0.Final</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-jackson2-provider</artifactId>
-            <version>3.0.19.Final</version>
+            <version>3.7.0.Final</version>
             <scope>provided</scope>
         </dependency>
 
@@ -1684,7 +1670,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-jaxrs</artifactId>
-            <version>3.0.19.Final</version>
+            <version>3.7.0.Final</version>
             <scope>provided</scope>
         </dependency>
 
@@ -1910,6 +1896,12 @@ nodePrinter.print(webapp)
             <groupId>com.google.apis</groupId>
             <artifactId>google-api-services-iam</artifactId>
             <version>v1-rev285-1.25.0</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet.jsp</groupId>
+            <artifactId>javax.servlet.jsp-api</artifactId>
+            <version>2.3.3</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 
