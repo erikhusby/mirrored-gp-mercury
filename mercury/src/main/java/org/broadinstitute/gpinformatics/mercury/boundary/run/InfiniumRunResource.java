@@ -215,7 +215,6 @@ public class InfiniumRunResource {
             String sampleLsid = sampleData.getSampleLsid();
             if (sampleLsid == null && regulatoryDesignation != null && regulatoryDesignation.isClinical()) {
                 sampleLsid = CrspPipelineUtils.getCrspLSIDForBSPSampleId(sampleInstanceV2.getNearestMercurySampleName());
-                // todo jmt broadinstitute.org:mercury.prod.sample: for AoU
             }
             infiniumRunBean = new InfiniumRunBean(
                     idatPrefix + "_Red.idat",
