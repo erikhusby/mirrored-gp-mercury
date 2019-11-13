@@ -55,7 +55,6 @@
                     <c:set var="prevRootId" value=""></c:set>
                     <c:set var="prevAliquotId" value=""></c:set>
                     <ul>
-                            ${actionBean.startConcCalc()}
                         <c:forEach items="${actionBean.fingerprints}" var="fingerprint">
                         <c:if test="${prevPtId != fingerprint.mercurySample.sampleData.patientId}">
                         <c:if test="${not empty prevPtId }">
@@ -94,12 +93,11 @@
                                 ${actionBean.formatDate(fingerprint.dateGenerated)},
                                 ${fingerprint.platform},
                                 ${fingerprint.disposition},
-                                ${actionBean.findLodScore(fingerprint)}
+                                ${actionBean.lodScoreMap.get(fingerprint)}
                             <br/>
                             <c:forEach items="${fingerprint.fpGenotypesOrdered}" var="geno">${geno.genotype}</c:forEach>
                         </li>
                         </c:forEach>
-                            ${actionBean.endConcCalc()}
                     </ul>
                 </div>
                 <div class="control-group">

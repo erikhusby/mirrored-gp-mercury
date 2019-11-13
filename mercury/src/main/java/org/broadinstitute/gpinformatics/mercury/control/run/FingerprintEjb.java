@@ -77,7 +77,7 @@ public class FingerprintEjb {
         List<Fingerprint> filteredFingerprints = new ArrayList<>();
         for (Fingerprint fingerprint : fingerprints) {
             if (fingerprint.getGender() != null && (platforms.contains(fingerprint.getPlatform()))
-                              && fingerprint.getDisposition() == Fingerprint.Disposition.PASS) {
+                && fingerprint.getDisposition() == Fingerprint.Disposition.PASS) {
                 filteredFingerprints.add(fingerprint);
             }
         }
@@ -95,7 +95,7 @@ public class FingerprintEjb {
         }
 
         ConcordanceCalculator concordanceCalculator = new ConcordanceCalculator();
-        List<Triple<String, String, Double>> triples = concordanceCalculator.calculateLodScores(filteredFingerprints,
+        List<Triple<String, String, Double>> scores = concordanceCalculator.calculateLodScores(filteredFingerprints,
                 filteredFingerprints, ConcordanceCalculator.Comparison.MATRIX);
         DecimalFormat df = new DecimalFormat("##.##");
         df.setRoundingMode(RoundingMode.HALF_UP);
@@ -106,11 +106,16 @@ public class FingerprintEjb {
             fluiLodCells[rowIndex][0] = fingerprint.getMercurySample().getSampleData().getPatientId();
             fluiLodCells[rowIndex][1] = fingerprint.getMercurySample().getSampleKey();
             for (Fingerprint fingerprint1 : filteredFingerprints) {
-                // todo check the two SM-IDs in the triple.
-                double lodScore = triples.get(lodScoreIndex).getRight();
-                fluiLodCells[rowIndex][colIndex] = String.valueOf(df.format(lodScore));
-                ++colIndex;
-                ++lodScoreIndex;
+                String colSmId = fluiLodCells[1][colIndex];
+                String rowSmID = fluiLodCells[rowIndex][1];
+                boolean isColSample = scores.get(lodScoreIndex).getLeft().equals(colSmId);
+                boolean isRowSample = scores.get(lodScoreIndex).getMiddle().equals(rowSmID);
+                if (isColSample && isRowSample) {
+                    double lodScore = scores.get(lodScoreIndex).getRight();
+                    fluiLodCells[rowIndex][colIndex] = String.valueOf(df.format(lodScore));
+                    ++colIndex;
+                    ++lodScoreIndex;
+                }
             }
             ++rowIndex;
         }

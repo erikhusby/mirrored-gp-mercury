@@ -49,8 +49,6 @@ public class FingerprintMatrixActionBean extends CoreActionBean {
     private Map<String, String> mapLodScoreToFingerprint = new HashMap<>();
     private Set<Fingerprint.Platform> platforms;
     private Map<String, MercurySample> mapSmidToMercurySample = new HashMap<>();
-    private List<String> sampleSmidList = new ArrayList<>();
-    private Map<String, MercurySample> participantSmidList = new HashMap<>();
 
 
     @DefaultHandler
@@ -64,7 +62,7 @@ public class FingerprintMatrixActionBean extends CoreActionBean {
      */
     @HandlesEvent("downloadMatrix")
     public Resolution downloadMatrix() throws IOException {
-        int smidLimit = 100;
+        int smidLimit = 200;
 
         if (sampleId == null && participantId == null) {
             addGlobalValidationError("You must input a valid search term.");
