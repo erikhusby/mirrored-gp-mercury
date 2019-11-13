@@ -64,7 +64,7 @@ public class CrspPipelineUtils {
             String bait) {
         if (sampleData.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
             setBuickVisitAndCollectionDate(libraryBean, sampleData);
-            libraryBean.setLsid(getCrspLSIDForBSPSampleId(sampleData.getSampleId())); // todo jmt
+            libraryBean.setLsid(getCrspLSIDForBSPSampleId(sampleData.getSampleId()));
             libraryBean.setRootSample(libraryBean.getSampleId());
             libraryBean.setTestType(LibraryBean.CRSP_SOMATIC_TEST_TYPE);
         }
@@ -103,6 +103,7 @@ public class CrspPipelineUtils {
         if (bspSampleId.startsWith("SM-") || bspSampleId.startsWith("SP-")) {
             return bspSampleId.replaceFirst("S[MP]-", "org.broadinstitute:crsp:");
         } else {
+            // other options are "GS-" and All of Us 10 digit barcodes
             return MERCURY_LSID_PREFIX + bspSampleId;
         }
     }
