@@ -97,6 +97,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -1946,8 +1947,10 @@ public class LabBatchFixUpTest extends Arquillian {
                 }
             }
         }
-        Assert.assertEquals(sampleNamesFound, sampleNames, labBatch.getBatchName() + " does not contain " +
-                StringUtils.join(CollectionUtils.subtract(sampleNames, sampleNamesFound), ", "));
+        sampleNames.sort(Comparator.naturalOrder());
+        sampleNamesFound.sort(Comparator.naturalOrder());
+        String diffs = StringUtils.join(CollectionUtils.subtract(sampleNames, sampleNamesFound), ", ");
+        Assert.assertTrue(diffs.isEmpty(), labBatch.getBatchName() + " does not contain " + diffs);
 
         System.out.println("Removing starting vessels and bucket entries for samples " +
                 StringUtils.join(sampleNames, ", ") + " from " + labBatch.getBatchName());
