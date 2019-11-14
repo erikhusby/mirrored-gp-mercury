@@ -3278,6 +3278,40 @@ public enum LabEventType {
             return vesselTypeGeometry;
         }
 
+        /**
+         * Utility method used to get the VesselTypeGeometry based off the String receptacle type enum name, but only
+         * used when you don't know which enum the type is from.
+         *
+         * @param sourceVesselTypeGeometryString String representing the container/tube type (e.g. "CovarisRack" or "Matrix48SlotRack2mL")
+         * @return {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry} object representing the
+         * receptacle type requested or it will throw an exception.
+         */
+        public static VesselTypeGeometry convertGeometryFromReceptacleTypeString(
+                String sourceVesselTypeGeometryString) {
+            VesselTypeGeometry vesselTypeGeometry = null;
+            if (sourceVesselTypeGeometryString != null) {
+                vesselTypeGeometry = RackOfTubes.RackType.getByName(sourceVesselTypeGeometryString);
+
+                if (vesselTypeGeometry == null) {
+                    vesselTypeGeometry = StaticPlate.PlateType.getByAutomationName(sourceVesselTypeGeometryString);
+
+                    if (vesselTypeGeometry == null) {
+                        vesselTypeGeometry =
+                                BarcodedTube.BarcodedTubeType.getByAutomationName(sourceVesselTypeGeometryString);
+
+                        if (vesselTypeGeometry == null) {
+                            vesselTypeGeometry = PlateWell.WellType.getByAutomationName(sourceVesselTypeGeometryString);
+
+                            if (vesselTypeGeometry == null) {
+                                throw new RuntimeException("Unknown type " + sourceVesselTypeGeometryString);
+                            }
+                        }
+                    }
+                }
+            }
+            return vesselTypeGeometry;
+        }
+
         public SBSSection getSourceSection() {
             return sourceSection;
         }
