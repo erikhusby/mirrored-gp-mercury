@@ -269,16 +269,16 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
         String sourceVesselTypeGeometryString = getContext().getRequest().getParameter("stationEvents[0].sourcePlate[0].physType");
         if (sourceVesselTypeGeometryString != null) {
-            selectedSourceGeometry = RackOfTubes.RackType.getByName(sourceVesselTypeGeometryString);
+            selectedSourceGeometry = LabEventType.ManualTransferDetails.convertGeometryFromReceptacleTypeString(sourceVesselTypeGeometryString);
         }
+
         String targetVesselTypeGeometryString = getContext().getRequest().getParameter("stationEvents[0].plate[0].physType");
         if (targetVesselTypeGeometryString != null) {
-            selectedTargetGeometry = RackOfTubes.RackType.getByName(targetVesselTypeGeometryString);
-            selectedTargetChildReceptacleType = getContext().getRequest().getParameter("stationEvents[0].positionMap[0].receptacle[0].receptacleType");
+            selectedTargetGeometry = LabEventType.ManualTransferDetails.convertGeometryFromReceptacleTypeString(targetVesselTypeGeometryString);
         } else {
-            String targetTubeTypeGeometryString = getContext().getRequest().getParameter("targetVesselTypeGeometryString");
-            if (targetTubeTypeGeometryString != null) {
-                selectedTargetGeometry = RackOfTubes.RackType.getByName(targetTubeTypeGeometryString);
+            String targetContainerTypeGeometryString = getContext().getRequest().getParameter("targetVesselTypeGeometryString");
+            if (targetContainerTypeGeometryString != null) {
+                selectedTargetGeometry = LabEventType.ManualTransferDetails.convertGeometryFromReceptacleTypeString(targetContainerTypeGeometryString);
             }
         }
     }
@@ -402,6 +402,17 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     //Target
                     PlateType destinationPlateTypeCp = new PlateType();
                     VesselTypeGeometry targetVesselTypeGeometryCp;
+
+                    String targetVesselTypeGeometryString = getContext().getRequest().getParameter("stationEvents[0].plate[0].physType");
+                    if (targetVesselTypeGeometryString != null) {
+                        selectedTargetGeometry = LabEventType.ManualTransferDetails.convertGeometryFromReceptacleTypeString(targetVesselTypeGeometryString);
+                    } else {
+                        String targetContainerTypeGeometryString = getContext().getRequest().getParameter("targetVesselTypeGeometryString");
+                        if (targetContainerTypeGeometryString != null) {
+                            selectedTargetGeometry = LabEventType.ManualTransferDetails.convertGeometryFromReceptacleTypeString(targetContainerTypeGeometryString);
+                        }
+                    }
+
                     if (selectedTargetGeometry != null) {
                         targetVesselTypeGeometryCp = selectedTargetGeometry;
                     } else {
@@ -966,12 +977,16 @@ public class ManualTransferActionBean extends RackScanActionBean {
     }
 
     /**
-     * Based off the selected 'selectedTargetGeometry', return list of allowed BarcodedTubeType objects.
+     * Based off the selected 'targetVesselTypeGeometryString', return list of allowed BarcodedTubeType objects.
      * @return
      */
     @HandlesEvent(SELECTABLE_BARCODED_TUBE_TYPE_ACTION)
     public Resolution selectableTargetBarcodedTubeTypes() throws JsonProcessingException {
         List<BarcodedTube.BarcodedTubeType> found = new ArrayList<>();
+        String targetTubeTypeGeometryString = getContext().getRequest().getParameter("targetVesselTypeGeometryString");
+        if (targetTubeTypeGeometryString != null) {
+            selectedTargetGeometry = RackOfTubes.RackType.getByName(targetTubeTypeGeometryString);
+        }
         if (selectedTargetGeometry != null) {
             EnumSet<org.broadinstitute.bsp.client.workrequest.kit.ReceptacleType> childReceptacleTypes =
                     org.broadinstitute.bsp.client.workrequest.kit.ReceptacleType
