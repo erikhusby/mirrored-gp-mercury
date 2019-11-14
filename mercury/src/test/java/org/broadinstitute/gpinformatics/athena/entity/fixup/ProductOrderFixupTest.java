@@ -564,6 +564,7 @@ public class ProductOrderFixupTest extends Arquillian {
 
         for (ProductOrder productOrder : ordersToUpdate) {
             productOrder.setQuoteId("GP87U");
+            productOrderEjb.updateJiraIssue(productOrder);
         }
         productOrderDao.persistAll(ordersToUpdate);
         productOrderDao.flush();
@@ -1864,6 +1865,39 @@ public class ProductOrderFixupTest extends Arquillian {
             addOrspToPdo(pdoOrspInfo[0], pdoOrspInfo[1]);
         }
         beginTransaction();
+
+        productOrderDao.persist(new FixupCommentary(commentary));
+        commitTransaction();
+    }
+
+    /**
+     *
+     * File for input
+     * File name: UpdatePdoQuote.txt
+     *
+     * Content example
+     *
+     * <ol><li>SUPPORT-5945 updating PDO's without quote set on them to be GP87U</li>
+     * <li>PDO-19935, GP87U</li>
+     * <li>PDO-19934, GP87U</li></ol>
+     *
+     * @throws Exception
+     */
+    @Test(enabled = true)
+    public void updateQuoteOnPdos() throws Exception {
+
+        userBean.loginOSUser();
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("UpdatePdoQuote.txt"));
+        String commentary = fixupLines.get(0);
+
+        beginTransaction();
+        for (String line : fixupLines.subList(1, fixupLines.size())) {
+            final String[] pdoAndQuote = line.split(",");
+            ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoAndQuote[0].trim());
+            productOrder.setQuoteId(pdoAndQuote[1].trim());
+            productOrder.setSkipQuoteReason("");
+            productOrderEjb.updateJiraIssue(productOrder);
+        }
 
         productOrderDao.persist(new FixupCommentary(commentary));
         commitTransaction();
