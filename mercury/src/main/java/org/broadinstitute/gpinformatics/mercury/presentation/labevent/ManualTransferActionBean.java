@@ -1071,7 +1071,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     } else if (!allowKnownDestinations){
                         messageCollection.addError(message);
                     } else {
-                        if (labEventType != LabEventType.DEV) {
+                        // If we are allowing known destinations in the plate (e.g. cherry pick transfer event expects cherry picks to be unknown, but regular position map can have known)
+                        if (labEventType != LabEventType.DEV && !allowKnownDestinations) {
                             messageCollection.addError(message);
                         } else {
                             messageCollection.addWarning(message);
