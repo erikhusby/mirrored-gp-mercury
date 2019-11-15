@@ -339,7 +339,7 @@ public class Metadata {
         // Fingerprinting Metadata
         TOTAL_POSSIBLE_CALLS(Category.LAB_METRIC, DataType.NUMBER, "Total Calls", Visibility.USER),
         CALLS(Category.LAB_METRIC, DataType.NUMBER, "Calls", Visibility.USER),
-        FLUIDIGM_GENDER(Category.LAB_METRIC, DataType.STRING, "Fluidigm Gender", Visibility.USER);
+        FLUIDIGM_GENDER(Category.LAB_METRIC, DataType.STRING, "Fluidigm Gender", Visibility.USER),
         ;
 
         private final Category category;
