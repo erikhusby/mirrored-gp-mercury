@@ -200,7 +200,6 @@ public class LabVesselFingerprintingMetricPlugin implements ListPlugin {
                             dnaPlateWell.name(), dnaPlateWell.name()));
                 }
 
-                // todo jmt revisit sortableValues
                 switch (labMetric.getName()) {
                 case CALL_RATE_Q17:
                     parseCallRate(labMetric, row, VALUE_COLUMN_TYPE.Q17_CALL_RATE.getResultHeader(),
@@ -216,19 +215,19 @@ public class LabVesselFingerprintingMetricPlugin implements ListPlugin {
                     String meanVal = ColumnValueType.TWO_PLACE_DECIMAL.format(labMetric.getValue(), "");
                     row.addCell(new ConfigurableList.Cell(
                             VALUE_COLUMN_TYPE.ROX_RAW_INTENSITY_MEAN.getResultHeader(),
-                            meanVal, meanVal));
+                            labMetric.getValue(), meanVal));
                     break;
                 case ROX_SAMPLE_RAW_DATA_MEDIAN:
                     String medianVal = ColumnValueType.UNSIGNED.format(labMetric.getValue(), "");
                     row.addCell(new ConfigurableList.Cell(
                             VALUE_COLUMN_TYPE.ROX_RAW_INTENSITY_MEDIAN.getResultHeader(),
-                            medianVal, medianVal));
+                            labMetric.getValue(), medianVal));
                     break;
                 case ROX_SAMPLE_RAW_DATA_STD_DEV:
                     String stdDevVal = ColumnValueType.UNSIGNED.format(labMetric.getValue(), "");
                     row.addCell(new ConfigurableList.Cell(
                             VALUE_COLUMN_TYPE.ROX_RAW_INTENSITY_STD_DEV.getResultHeader(),
-                            stdDevVal, stdDevVal));
+                            labMetric.getValue(), stdDevVal));
                     break;
                 case FLUIDIGM_GENDER:
                     FluidigmRunFactory.Gender gender =
