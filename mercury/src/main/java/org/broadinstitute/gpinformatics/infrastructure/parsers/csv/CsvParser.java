@@ -7,13 +7,13 @@ import com.opencsv.bean.CsvToBeanFilter;
 import com.opencsv.bean.HeaderColumnNameTranslateMappingStrategy;
 import com.opencsv.bean.MappingStrategy;
 
+import javax.annotation.Nullable;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Util class to parse CSV data to objects
@@ -83,5 +83,13 @@ public class CsvParser {
                 }
             }
         }
+    }
+
+    /**
+     * Returns the csv file contents, including header and any blank lines.
+     */
+    public static List<String[]> parseToCellGrid(InputStream inputStream) throws IOException {
+        CSVReader reader = new CSVReader(new BufferedReader(new InputStreamReader(inputStream)));
+        return reader.readAll();
     }
 }

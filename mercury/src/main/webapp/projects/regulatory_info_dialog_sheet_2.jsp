@@ -22,14 +22,21 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <c:forEach items="${actionBean.searchResults}" var="regulatoryInfo">
-                        <tr>
-                            <td>${regulatoryInfo.identifier}</td>
-                            <td>${regulatoryInfo.name}</td>
-                            <td>${regulatoryInfo.type.name}</td>
-                            <td><d-stripes:submit name="<%= RegulatoryInfoActionBean.ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION %>" regulatoryInfoId="${regulatoryInfo.regulatoryInfoId}" disabled="${actionBean.isRegulatoryInfoInResearchProject(regulatoryInfo)}" class="btn">Add</d-stripes:submit></td>
-                        </tr>
-                    </c:forEach>
+                <c:forEach items="${actionBean.searchResults}" var="regulatoryInfo">
+                    <tr>
+                        <c:if test="${regulatoryInfo.userEdit}"><strike></c:if>
+                        <td>${regulatoryInfo.identifier}</td>
+                        <td>${regulatoryInfo.name}</td>
+                        <td>${regulatoryInfo.type.name}</td>
+                        <td><d-stripes:submit
+                                name="<%= RegulatoryInfoActionBean.ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION %>"
+                                id="<%= RegulatoryInfoActionBean.ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION %>"
+                                regulatoryInfoId="${regulatoryInfo.regulatoryInfoId}"
+                                disabled="${actionBean.isRegulatoryInfoInResearchProject(regulatoryInfo) || regulatoryInfo.userEdit}"
+                                class="btn">Add</d-stripes:submit></td>
+                        <c:if test="${regulatoryInfo.userEdit}"></strike></c:if>
+                    </tr>
+                </c:forEach>
                 </tbody>
             </table>
         </stripes:form>
@@ -87,19 +94,19 @@
                     </c:if>
                 </tbody>
             </table>
-            <stripes:submit name="<%= RegulatoryInfoActionBean.ADD_NEW_REGULATORY_INFO_ACTION %>" value="Add to Mercury" class="btn btn-primary"/>
+            <stripes:submit name="<%= RegulatoryInfoActionBean.ADD_NEW_REGULATORY_INFO_ACTION %>"
+                            id="<%= RegulatoryInfoActionBean.ADD_NEW_REGULATORY_INFO_ACTION %>" value="Add to Mercury"
+                            class="btn btn-primary"/>
             <%-- Hidden action is needed because the form is being submitted via AJAX and form serialization doesn't include submit buttons. --%>
             <input type="hidden" name="<%= RegulatoryInfoActionBean.ADD_NEW_REGULATORY_INFO_ACTION %>">
         </stripes:form>
     </c:when>
     <c:otherwise>
-        <p class="alert alert-block" style="font-weight: bold">No results found in Mercury or the ORSP Portal.</p>
+        <script type="application/javascript">
+            resetRegulatoryInfoDialog("No results found in the ORSP Portal.");
+        </script>
     </c:otherwise>
 </c:choose>
-
-<c:if test="${actionBean.addRegulatoryInfoAllowed}">
-    <jsp:include page="regulatory_info_form.jsp"/>
-</c:if>
 
 <script type="text/javascript">
     (function() {

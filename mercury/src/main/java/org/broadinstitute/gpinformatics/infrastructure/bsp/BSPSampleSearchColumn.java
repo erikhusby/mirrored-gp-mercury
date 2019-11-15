@@ -1,6 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 
+import java.util.HashMap;
+import java.util.Map;
+
 public enum BSPSampleSearchColumn {
     SAMPLE_ID("Sample ID"),
     SAMPLE_KIT("Sample Kit"),
@@ -38,8 +41,11 @@ public enum BSPSampleSearchColumn {
     RECEIPT_DATE("Receipt Date"),
     ORIGINAL_MATERIAL_TYPE("Original Material Type"),
     DV200("DV200"),
-    RECEPTACLE_TYPE("Receptacle Type");
+    RECEPTACLE_TYPE("Receptacle Type"),
+    MANUFACTURER_BARCODE("Manufacturer Tube Barcode");
 
+    private static final Map<String, BSPSampleSearchColumn> MAP_NAME_TO_COLUMN =
+            new HashMap<>(BSPSampleSearchColumn.values().length);
     private final String columnName;
     public String columnName() { return columnName; }
 
@@ -95,6 +101,13 @@ public enum BSPSampleSearchColumn {
             COLLABORATOR_SAMPLE_ID, MATERIAL_TYPE, RECEIPT_DATE, ROOT_SAMPLE
     };
 
+    public static final BSPSampleSearchColumn[] EXTERNAL_LIBRARY_COLUMNS = {
+        BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID,
+        BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID,
+        BSPSampleSearchColumn.GENDER,
+        BSPSampleSearchColumn.SPECIES,
+    };
+
     public static boolean isQuantColumn(BSPSampleSearchColumn bspSampleSearchColumn) {
         for (BSPSampleSearchColumn quantDataColumn : QUANT_DATA_COLUMNS) {
             if (quantDataColumn.equals(bspSampleSearchColumn)) {
@@ -102,5 +115,15 @@ public enum BSPSampleSearchColumn {
             }
         }
         return false;
+    }
+
+    static {
+        for (BSPSampleSearchColumn column : BSPSampleSearchColumn.values()) {
+            MAP_NAME_TO_COLUMN.put(column.columnName(), column);
+        }
+    }
+
+    public static BSPSampleSearchColumn getByName(String displayName) {
+        return MAP_NAME_TO_COLUMN.get(displayName);
     }
 }

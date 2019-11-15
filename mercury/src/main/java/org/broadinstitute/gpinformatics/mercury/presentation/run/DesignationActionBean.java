@@ -10,6 +10,8 @@ import net.sourceforge.stripes.action.UrlBinding;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
@@ -42,11 +44,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 @UrlBinding("/run/FlowcellDesignation.action")
 public class DesignationActionBean extends CoreActionBean implements DesignationUtils.Caller {
+    private static final Log log = LogFactory.getLog(DesignationActionBean.class);
     private static final String VIEW_PAGE = "/run/designation_create.jsp";
     private static final String TUBE_LCSET_PAGE = "/run/designation_lcset_select.jsp";
 
@@ -261,21 +265,17 @@ public class DesignationActionBean extends CoreActionBean implements Designation
         Multimap<LabVessel, BucketEntry> loadingTubeToBucketEntry = HashMultimap.create();
         Multimap<LabVessel, LabVessel> loadingTubeToControl = HashMultimap.create();
         boolean foundOutOfDateEvents = false;
+        Map<LabVessel, SampleInstanceV2> loadingTubeToSampleInstance = new HashMap<>();
 
         // Iterates on the loading tubes specified by barcode by the user.
         for (LabVessel loadingTube : loadingTubeToLcset.keySet()) {
             Set<LabVessel> startingVessels = new HashSet<>();
             loadingTubeToLabEvent.putAll(loadingTube, loadingTube.getEvents());
-
             // The tube's single LCSET has already been determined by traversal or been chosen by the user.
             LabBatch lcset = loadingTubeToLcset.get(loadingTube);
 
             for (SampleInstanceV2 sampleInstance : loadingTube.getSampleInstancesV2()) {
-                if (sampleInstance.getSingleBatch() != null &&
-                        sampleInstance.getSingleBatch().equals(lcset) ||
-                        sampleInstance.getSingleBatch() == null &&
-                                sampleInstance.getAllWorkflowBatches().contains(lcset)) {
-
+                if (sampleInstance.getAllWorkflowBatches().contains(lcset)) {
                     // Finds starting vessels for the loading tube in this lcset.
                     for (LabBatchStartingVessel startingVessel :
                             sampleInstance.getAllBatchVessels(lcset.getLabBatchType())) {
@@ -290,6 +290,8 @@ public class DesignationActionBean extends CoreActionBean implements Designation
                             loadingTubeToBucketEntry.put(loadingTube, bucketEntry);
                         }
                     }
+
+                    loadingTubeToSampleInstance.put(loadingTube, sampleInstance);
                 }
             }
 
@@ -317,6 +319,19 @@ public class DesignationActionBean extends CoreActionBean implements Designation
                     loadingTubeToLcset.get(loadingTube), loadingTubeToBucketEntry.get(loadingTube),
                     loadingTubeToControl.get(loadingTube), null);
             newDto.setTypeAndDate(loadingTube);
+            // External upload will already have values for some designation parameters.
+            SampleInstanceV2 sampleInstance = loadingTubeToSampleInstance.get(loadingTube);
+            if (sampleInstance != null) {
+                if (sampleInstance.getReadLength1() != null) {
+                    newDto.setReadLength(sampleInstance.getReadLength1());
+                }
+                if (sampleInstance.getPairedEndRead() != null) {
+                    newDto.setPairedEndRead(sampleInstance.getPairedEndRead());
+                }
+                if (sampleInstance.getIndexType() != null) {
+                    newDto.setIndexType(sampleInstance.getIndexType());
+                }
+            }
             // Persists the lcset choice made by the user.
             for (DesignationUtils.LcsetAssignmentDto assignmentDto : tubeLcsetAssignments) {
                 if (assignmentDto.getBarcode().equals(loadingTube.getLabel()) &&
@@ -332,11 +347,9 @@ public class DesignationActionBean extends CoreActionBean implements Designation
     }
 
     /**
-     * Populates the collections passed in with information about the loading tube and bucket entries
-     * for each of the lcset's starting batch vessels. When a starting tube is reworked it may have
-     * multiple loading tubes. Each of these loading tube will need to be checked for the best lcset(s),
-     * and only be used if the target lcset is among them. Typically there is only one best lcset but
-     * a pooled tube may be in two equivalently good lcsets so that case must be handled correctly.
+     * Finds loading tubes that apply to the given lcsets, and populates the collections passed in with
+     * information about the loading tube and the starting tube bucket entries. When a starting tube is
+     * reworked it probably will then have multiple loading tubes, which are filtered by the target lcset.
      *
      * @return the names of the lcsets having no loading tubes.
      */
@@ -362,11 +375,10 @@ public class DesignationActionBean extends CoreActionBean implements Designation
                     for (LabVessel loadingTube : loadingEventsAndVessels.get(targetEvent)) {
                         // Only processes a loading tube for this lcset once.
                         if (!targetLcset.equals(loadingTubeToLcset.get(loadingTube))) {
-                            Pair<Set<LabBatch>, Set<SampleInstanceV2>> loadingTubeTraversal =
-                                    DesignationUtils.findBestLcsets(loadingTube);
-                            Set<LabBatch> loadingTubeLcsets = loadingTubeTraversal.getLeft();
-                            Set<SampleInstanceV2> loadingTubeSampleInstances = loadingTubeTraversal.getRight();
-
+                            Set<SampleInstanceV2> loadingTubeSampleInstances = loadingTube.getSampleInstancesV2();
+                            Set<LabBatch> loadingTubeLcsets = loadingTubeSampleInstances.stream().
+                                    flatMap(sampleInstance -> sampleInstance.getAllWorkflowBatches().stream()).
+                                    collect(Collectors.toSet());
                             loadingTubeToLcsets.putAll(loadingTube, loadingTubeLcsets);
                             if (loadingTubeLcsets.contains(targetLcset)) {
                                 foundLoadingTube = true;
@@ -374,10 +386,7 @@ public class DesignationActionBean extends CoreActionBean implements Designation
                                 loadingTubeToLabEvent.put(loadingTube, targetEvent);
 
                                 for (SampleInstanceV2 sampleInstance : loadingTubeSampleInstances) {
-                                    if (sampleInstance.getSingleBatch() != null &&
-                                            sampleInstance.getSingleBatch().equals(targetLcset) ||
-                                            sampleInstance.getSingleBatch() == null &&
-                                                    sampleInstance.getAllWorkflowBatches().contains(targetLcset)) {
+                                    if (sampleInstance.getAllWorkflowBatches().contains(targetLcset)) {
 
                                         for (BucketEntry bucketEntry : sampleInstance.getAllBucketEntries()) {
                                             if (targetLcset.equals(bucketEntry.getLabBatch())) {
@@ -418,7 +427,9 @@ public class DesignationActionBean extends CoreActionBean implements Designation
         for (LabVessel targetTube : loadTubes) {
             // Attempts to find the single lcset for the tube. Multiple lcsets will need to be
             // resolved by the user.
-            Set<LabBatch> lcsets = DesignationUtils.findBestLcsets(targetTube).getLeft();
+            Set<LabBatch> lcsets = targetTube.getSampleInstancesV2().stream().
+                    flatMap(sampleInstance -> sampleInstance.getAllWorkflowBatches().stream()).
+                    collect(Collectors.toSet());
             if (CollectionUtils.isNotEmpty(lcsets)) {
                 if (lcsets.size() == 1) {
                     loadingTubeLcset.put(targetTube, lcsets.iterator().next());

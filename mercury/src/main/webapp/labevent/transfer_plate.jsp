@@ -14,6 +14,7 @@ plate / rack.
 <%--@elvariable id="section" type="org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection"--%>
 <%--@elvariable id="stationEventIndex" type="java.lang.Integer"--%>
 <%--@elvariable id="source" type="java.lang.Boolean"--%>
+<%--@elvariable id="displaySection" type="java.lang.Boolean"--%>
 <c:set var="sourceMassRemove" value="${source and actionBean.labEventType.manualTransferDetails.sourceMassRemoved()}"/>
 <div class="control-group" id="container0">
     <label>Type </label>${plate.physType}
@@ -26,22 +27,24 @@ plate / rack.
             name="stationEvents[${stationEventIndex}].${source ? 'sourcePlate' : 'plate'}.barcode"
             value="${plate.barcode}" class="clearable barcode unique" ${stationEventIndex == 0 ? "required" : ""}/>
     <c:if test="${stationEvent.class.simpleName == 'PlateTransferEventType'}">
-        <stripes:label for="${source ? 'src' : 'dst'}Section">Section</stripes:label>
-        <c:choose>
-            <c:when test="${not empty section}">
-                ${section.sectionName}
-                <stripes:hidden name="stationEvents[${stationEventIndex}].${source ? 'sourcePlate' : 'plate'}.section"
-                        value="${section.sectionName}"/>
-            </c:when>
-            <c:otherwise>
-                <stripes:select name="stationEvents[${stationEventIndex}].${source ? 'sourcePlate' : 'plate'}.section"
-                        id="${source ? 'src' : 'dst'}Section${stationEventIndex}">
-                    <stripes:options-enumeration
-                            enum="org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection"
-                            label="sectionName"/>
-                </stripes:select>
-            </c:otherwise>
-        </c:choose>
+        <c:if test="${empty displaySection or displaySection}">
+            <stripes:label for="${source ? 'src' : 'dst'}Section">Section</stripes:label>
+            <c:choose>
+                <c:when test="${not empty section}">
+                    ${section.sectionName}
+                    <stripes:hidden name="stationEvents[${stationEventIndex}].${source ? 'sourcePlate' : 'plate'}.section"
+                            value="${section.sectionName}"/>
+                </c:when>
+                <c:otherwise>
+                    <stripes:select name="stationEvents[${stationEventIndex}].${source ? 'sourcePlate' : 'plate'}.section"
+                            id="${source ? 'src' : 'dst'}Section${stationEventIndex}">
+                        <stripes:options-enumeration
+                                enum="org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection"
+                                label="sectionName"/>
+                    </stripes:select>
+                </c:otherwise>
+            </c:choose>
+        </c:if>
         <c:if test="${sourceMassRemove eq 'true'}">
             <stripes:label for="srcDepleteAll">Deplete All</stripes:label>
             <input type="checkbox" id="srcDepleteAll${stationEventIndex}"
@@ -90,8 +93,8 @@ plate / rack.
                                     value="${geometry.vesselPositions[receptacleIndex]}"/>
                             <input type="hidden"
                                     name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}.receptacle[${receptacleIndex}].receptacleType"
-                                    value="${source ? actionBean.labEventType.manualTransferDetails.sourceBarcodedTubeType : actionBean.labEventType.manualTransferDetails.targetBarcodedTubeType}"/>
-                            <input type="${(source && actionBean.labEventType.manualTransferDetails.sourceVolume()) || (!source && actionBean.labEventType.manualTransferDetails.targetVolume()) ? 'text' : 'hidden'}"
+                                    value="${source ? actionBean.manualTransferDetails.sourceBarcodedTubeType : actionBean.manualTransferDetails.targetBarcodedTubeType}"/>
+                            <input type="${(source && actionBean.manualTransferDetails.sourceVolume()) || (!source && actionBean.manualTransferDetails.targetVolume()) ? 'text' : 'hidden'}"
                                     name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}.receptacle[${receptacleIndex}].volume"
                                     id="${source ? 'src' : 'dest'}RcpVol${stationEventIndex}_${receptacleIndex}"
                                     value="${actionBean.findReceptacleAtPosition(positionMap, geometry.vesselPositions[receptacleIndex]).volume}"

@@ -1,10 +1,15 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.broadinstitute.bsp.client.search.SearchItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.DisplayExpression;
+import org.broadinstitute.gpinformatics.infrastructure.columns.PassingFingerprintPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.columns.SampleDataFetcherAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.columns.SampleMetadataPlugin;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
@@ -18,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,6 +43,21 @@ public class MercurySampleSearchDefinition {
 
         List<SearchTerm> searchTerms = buildSampleBatch();
         mapGroupSearchTerms.put("Batches", searchTerms);
+
+        searchTerms = LabVesselSearchDefinition.buildBsp();
+        SearchTerm ptIdTerm = searchTerms.stream().
+                filter(searchTerm -> searchTerm.getName().equals(BSPSampleSearchColumn.PARTICIPANT_ID.columnName())).
+                findFirst().
+                orElseThrow(() -> new RuntimeException("Failed to find term"));
+        ptIdTerm.setExternalDataExpression(values -> {
+            SearchItem searchItem = new SearchItem("Participant ID", "IN", values);
+            return LabMetricSearchDefinition.runBspSearch(searchItem);
+        });
+        SearchTerm.CriteriaPath sampleKeyCriteriaPath = new SearchTerm.CriteriaPath();
+        sampleKeyCriteriaPath.setCriteria(Collections.singletonList("SampleID"));
+        sampleKeyCriteriaPath.setPropertyName("sampleKey");
+        ptIdTerm.setCriteriaPaths(Collections.singletonList(sampleKeyCriteriaPath));
+        mapGroupSearchTerms.put("BSP", searchTerms);
 
         searchTerms = buildSampleSearch();
         mapGroupSearchTerms.put("Mercury Samples", searchTerms);
@@ -61,6 +82,15 @@ public class MercurySampleSearchDefinition {
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
                 ColumnEntity.MERCURY_SAMPLE, criteriaProjections, mapGroupSearchTerms);
 
+        configurableSearchDefinition.setAddRowsListenerFactory(
+                new ConfigurableSearchDefinition.AddRowsListenerFactory() {
+                    @Override
+                    public Map<String, ConfigurableList.AddRowsListener> getAddRowsListeners() {
+                        Map<String, ConfigurableList.AddRowsListener> listeners = new HashMap<>();
+                        listeners.put(SampleDataFetcherAddRowsListener.class.getSimpleName(), new SampleDataFetcherAddRowsListener());
+                        return listeners;
+                    }
+                });
         return configurableSearchDefinition;
     }
 
@@ -85,8 +115,7 @@ public class MercurySampleSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("LCSET");
-        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getBatchNameInputConverter());
+        searchTerm.setName("Lab Batch");
         criteriaPaths = new ArrayList<>();
 
         // Mercury only cares about workflow batches
@@ -337,7 +366,8 @@ public class MercurySampleSearchDefinition {
 
         // ******** Allow individual selectable result columns for each sample metadata value *******
         for (Metadata.Key meta : Metadata.Key.values()) {
-            if (meta.getCategory() == Metadata.Category.SAMPLE) {
+            if (meta.getCategory() == Metadata.Category.SAMPLE &&
+                    BSPSampleSearchColumn.getByName(meta.getDisplayName()) == null) {
                 searchTerm = new SearchTerm();
                 searchTerm.setName(meta.getDisplayName());
                 searchTerm.setDisplayExpression(DisplayExpression.METADATA);
@@ -376,6 +406,17 @@ public class MercurySampleSearchDefinition {
             public Object evaluate(Object entity, SearchContext context) {
                 Fingerprint fingerprint = (Fingerprint) entity;
                 return fingerprint.getDateGenerated();
+            }
+        });
+        parentSearchTerm.addNestedEntityColumn(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Platform");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, SearchContext context) {
+                Fingerprint fingerprint = (Fingerprint) entity;
+                return fingerprint.getPlatform();
             }
         });
         parentSearchTerm.addNestedEntityColumn(searchTerm);
@@ -420,6 +461,11 @@ public class MercurySampleSearchDefinition {
         });
         parentSearchTerm.addNestedEntityColumn(searchTerm);
 
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Passing Initial Fingerprint");
+        searchTerm.setPluginClass(PassingFingerprintPlugin.class);
+        searchTerms.add(searchTerm);
+
         return searchTerms;
     }
 
@@ -443,16 +489,14 @@ public class MercurySampleSearchDefinition {
             Set<ProductOrderSample> productOrderSamples = findPdoSamples(sample);
 
             Set<String> results = new TreeSet<>();
-            String jiraTicketKey;
-            String sampleDeliveryStatus;
 
             for( ProductOrderSample productOrderSample : productOrderSamples ) {
-                jiraTicketKey = productOrderSample.getProductOrder().getJiraTicketKey();
-                sampleDeliveryStatus = productOrderSample.getDeliveryStatus().getDisplayName();
+                String businessKey = productOrderSample.getProductOrder().getBusinessKey();
+                String sampleDeliveryStatus = productOrderSample.getDeliveryStatus().getDisplayName();
                 if( includeSampleStatus && !sampleDeliveryStatus.isEmpty()) {
-                    results.add(jiraTicketKey + "->(" + sampleDeliveryStatus + ")");
+                    results.add(businessKey + "->(" + sampleDeliveryStatus + ")");
                 } else {
-                    results.add( jiraTicketKey );
+                    results.add( businessKey );
                 }
             }
 

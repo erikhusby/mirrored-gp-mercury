@@ -11,7 +11,7 @@ app:
       gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
 
     AUTO_BUILD:
-      host:     vmercurydev.broadinstitute.org
+      host:     mercurydev.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
@@ -65,26 +65,6 @@ bsp:
       host:     bsp.broadinstitute.org
       port:     80
 
-gap:
-
-    DEV:
-      login:    seqsystem
-      password: bspbsp
-      host:     gapdev.broadinstitute.org
-      port:     8080
-
-    RC:
-      login:    seqsystem
-      password: bspbsp
-      host:     gaprc.broadinstitute.org
-      port:     8080
-
-    PROD:
-      login:    seqsystem
-      password: bspbsp
-      host:     gap.broadinstitute.org
-      port:     80
-
 jira:
 
     TEST:
@@ -129,25 +109,15 @@ portal:
 
 quote:
 
-    DEV:
-      login:    mercuryquote
-      password: ml1m5qu0t3
-      url:      http://quotedev:8080
-
-    QA:
-      login:    mercuryquote
-      password: ml1m5qu0t3
-      url:      http://quoteqa:8080
-
     TEST:
       login:    mercuryquote
       password: ml1m5qu0t3
-      url:      http://quotetest:8080
+      url:      https://quotes-test.broadinstitute.org
 
     PROD:
       login:    mercuryquote
       password: ml1m5qu0t3
-      url:      http://quoteprod:8080
+      url:      https://apps.broadinstitute.org
 
 
 squid:
@@ -159,7 +129,7 @@ squid:
       url: http://prodinfobuild.broadinstitute.org:8020/squid
 
     QA:
-      url: http://vsquidrc1.broadinstitute.org:8000/squid
+      url: http://prodinfobuild.broadinstitute.org:8020/squid
 
     PROD:
       url: http://squid-ui.broadinstitute.org:8000/squid
@@ -316,30 +286,69 @@ submission:
 
 sap:
     DEV:
+      #Maps to the SAP DEV 300 environment.  Defunct and no-longer used
       login:      GPCOMU
       password:   SAPERD300!
       sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
       sapSupportEmailSubjectPrefix: "TEST SAP Order"
+      url:  https://quote-qa.broadinstitute.org
     TEST:
+      #Maps to the SAP DEV 400 environment.  Primarily used by SAP Developers
       login:      GPCOMU
       password:   temp1!
       sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
       sapSupportEmailSubjectPrefix: "TEST SAP Order"
+      url:  https://quote-qa.broadinstitute.org
     QA:
+      #Maps to the Old SAP QA environment.  Previously used as a parallel SAP environment.  Defunct and Not used by us anymore.
       login:      GPCOMU
       password:   SAPERQ300!
       sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
       sapSupportEmailSubjectPrefix: "TEST SAP Order"
+      url:  https://quote-qa.broadinstitute.org
     RC:
+      #Maps to the primary SAP QA 400 environment.  Used for testing with Mercury DEV and Mercury QA environments
       login:      GPCOMU
       password:   temp1!
       sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
       sapSupportEmailSubjectPrefix: "TEST SAP Order"
+      url:  https://quote-qa.broadinstitute.org
     PROD:
+      #Maps to the SAP Production environment.  Used in conjunction with our Production environment
       login:      GPCOMU
       password:   SAPERP300!
       sapSupportEmail: BUSSYS@broadinstitute.org
       sapSupportEmailSubjectPrefix: "SAP Order"
+      url:  https://quote.broadinstitute.org
+
+MayoManifestGoogleStorage:
+    DEV:
+        credentialFilename: serviceAccountKeys/dev_reader.json
+        writerCredentialFilename: serviceAccountKeys/dev_writer.json
+        bucketName: dev_113959925643235198999
+        dailyCredentialRenewal: false
+    TEST:
+        credentialFilename: serviceAccountKeys/dev_reader.json
+        writerCredentialFilename: serviceAccountKeys/dev_writer.json
+        bucketName: dev_113959925643235198999
+        dailyCredentialRenewal: false
+    QA:
+        credentialFilename: serviceAccountKeys/rc_reader.json
+        writerCredentialFilename: serviceAccountKeys/rc_writer.json
+        bucketName: rc_113959925643235198999
+        dailyCredentialRenewal: false
+    RC:
+        credentialFilename: serviceAccountKeys/rc_reader.json
+        writerCredentialFilename: serviceAccountKeys/rc_writer.json
+        bucketName: rc_113959925643235198999
+        dailyCredentialRenewal: false
+    PROD:
+        # FYI the production storage bucket uses IP whitelisting which can only be configured by VUMC admins.
+        credentialFilename: serviceAccountKeys/prod_reader.json
+        writerCredentialFilename: DISABLED
+        bucketName: genomics-broad-dryrun
+        dailyCredentialRenewal: true
+
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 mercury:
 
@@ -347,7 +356,6 @@ mercury:
 
       app:      DEV
       bsp:      DEV
-      gap:      DEV
       jira:     TEST
       quote:    TEST
       squid:    TEST
@@ -362,15 +370,14 @@ mercury:
       infiniumStarter: DEV
       sap:  RC
       decoder: DEV
-
+      MayoManifestGoogleStorage: DEV
 
     AUTO_BUILD:
 
       app:      AUTO_BUILD
       bsp:      DEV
-      gap:      DEV
       jira:     TEST
-      quote:    QA
+      quote:    TEST
       squid:    TEST
       tableau:  PROD
       thrift:   TEST
@@ -383,12 +390,12 @@ mercury:
       infiniumStarter: DEV
       sap:  RC
       decoder: DEV
+      MayoManifestGoogleStorage: DEV
 
     TEST:
 
       app:      TEST
       bsp:      DEV
-      gap:      DEV
       jira:     TEST
       quote:    TEST
       squid:    TEST
@@ -403,11 +410,11 @@ mercury:
       infiniumStarter: DEV
       sap:  RC
       decoder: DEV
+      MayoManifestGoogleStorage: TEST
 
     QA:
       app:      QA
       bsp:      RC
-      gap:      RC
       jira:     TEST
       quote:    TEST
       squid:    QA
@@ -422,12 +429,12 @@ mercury:
       infiniumStarter: QA
       sap:  RC
       decoder: QA
+      MayoManifestGoogleStorage: QA
 
     RC:
 
       app:      RC
       bsp:      RC
-      gap:      RC
       jira:     TEST
       quote:    TEST
       squid:    QA
@@ -442,13 +449,12 @@ mercury:
       infiniumStarter: QA
       sap:  RC
       decoder: QA
-
+      MayoManifestGoogleStorage: RC
 
     PROD:
 
       app:      PROD
       bsp:      PROD
-      gap:      PROD
       jira:     PROD
       quote:    PROD
       squid:    PROD
@@ -463,4 +469,4 @@ mercury:
       infiniumStarter: PROD
       sap:  PROD
       decoder: PROD
-
+      MayoManifestGoogleStorage: PROD

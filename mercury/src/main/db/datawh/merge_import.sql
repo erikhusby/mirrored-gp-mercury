@@ -577,6 +577,7 @@ AS
               lab_vessel_type = new.lab_vessel_type,
               name = new.name,
               created_on = new.created_on,
+              volume = new.volume,
               etl_date = new.etl_date
             WHERE lab_vessel_id = new.lab_vessel_id;
 
@@ -589,6 +590,7 @@ AS
               lab_vessel_type,
               name,
               created_on,
+              volume,
               etl_date
             ) VALUES (
               new.lab_vessel_id,
@@ -596,6 +598,7 @@ AS
               new.lab_vessel_type,
               new.name,
               new.created_on,
+              new.volume,
               new.etl_date );
 
             V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
@@ -1010,6 +1013,7 @@ AS
               placed_date = new.placed_date,
               skip_regulatory_reason = new.skip_regulatory_reason,
               sap_order_number = new.sap_order_number,
+              order_type = new.order_type,
               array_chip_type = new.array_chip_type,
               call_rate_threshold = new.call_rate_threshold,
               etl_date = new.etl_date
@@ -1032,6 +1036,7 @@ AS
               placed_date,
               skip_regulatory_reason,
               sap_order_number,
+              order_type,
               array_chip_type,
               call_rate_threshold,
               etl_date
@@ -1049,6 +1054,7 @@ AS
               new.placed_date,
               new.skip_regulatory_reason,
               new.sap_order_number,
+              new.order_type,
               new.array_chip_type,
               new.call_rate_threshold,
               new.etl_date );
@@ -1698,47 +1704,16 @@ AS
         product_order_id, batch_name, lcset_sample_name, sample_name,
         lab_event_id, lab_event_type, station_name, event_date,
         lab_vessel_id, position,
-        'N' as split_on_rehyb
+        CASE WHEN lab_event_type IN (
+                                'InfiniumHybridization',
+                                'InfiniumPostHybridizationHybOvenLoaded',
+                                'InfiniumHybChamberLoaded',
+                                'InfiniumXStain',
+                                'InfiniumAutocallSomeStarted',
+                                'InfiniumAutoCallAllStarted' ) THEN 'Y'
+            ELSE 'N' END as split_on_rehyb
       FROM im_array_process
-      WHERE is_delete = 'F'
-      UNION ALL
-      SELECT LINE_NUMBER, ETL_DATE,
-        product_order_id, batch_name, lcset_sample_name, sample_name,
-        lab_event_id, lab_event_type, station_name, event_date,
-        lab_vessel_id, position,
-        'N' as split_on_rehyb
-      FROM im_event_fact
-      WHERE is_delete = 'F'
-            AND product_order_id  IS NOT NULL
-            AND lcset_sample_name IS NOT NULL
-            AND NVL(batch_name, 'NONE') <> 'NONE'
-            AND lab_event_type IN (
-        'InfiniumAmplification',
-        'InfiniumPostFragmentationHybOvenLoaded',
-        'InfiniumFragmentation',
-        'InfiniumPrecipitation',
-        'InfiniumPostPrecipitationHeatBlockLoaded',
-        'InfiniumPrecipitationIsopropanolAddition',
-        'InfiniumResuspension',
-        'InfiniumPostResuspensionHybOven' )
-      UNION ALL
-      SELECT LINE_NUMBER, ETL_DATE,
-        product_order_id, batch_name, lcset_sample_name, sample_name,
-        lab_event_id, lab_event_type, station_name, event_date,
-        lab_vessel_id, position,
-        'Y' as split_on_rehyb
-      FROM im_event_fact
-      WHERE is_delete = 'F'
-            AND product_order_id  IS NOT NULL
-            AND lcset_sample_name IS NOT NULL
-            AND NVL(batch_name, 'NONE') <> 'NONE'
-            AND lab_event_type IN (
-        'InfiniumHybridization',
-        'InfiniumPostHybridizationHybOvenLoaded',
-        'InfiniumHybChamberLoaded',
-        'InfiniumXStain',
-        'InfiniumAutocallSomeStarted',
-        'InfiniumAutoCallAllStarted' ) )
+      WHERE is_delete = 'F' )
       LOOP
         -- Find initial base row (multiple if chip rehyb)
         BEGIN
@@ -1746,8 +1721,7 @@ AS
           SELECT ROWID
           BULK COLLECT INTO V_ROWID_ARR
           FROM array_process_flow
-          WHERE product_order_id  = new.product_order_id
-                AND lcset_sample_name = new.lcset_sample_name
+          WHERE lcset_sample_name = new.lcset_sample_name
                 AND batch_name = new.batch_name;
 
           IF V_ROWID_ARR.COUNT = 0 THEN
@@ -1768,8 +1742,7 @@ AS
             BEGIN
               SELECT ROWID INTO V_THE_ROWID
               FROM array_process_flow
-              WHERE product_order_id  = new.product_order_id
-                    AND lcset_sample_name = new.lcset_sample_name
+              WHERE lcset_sample_name = new.lcset_sample_name
                     AND batch_name = new.batch_name
                     AND NVL(chip, V_CHIP_BARCODE)  = V_CHIP_BARCODE
                     AND ROWNUM = 1;
@@ -2384,7 +2357,9 @@ AS
               billing_message = new.billing_message,
               work_complete_date = new.work_complete_date,
               etl_date = new.etl_date,
-              quote_server_work_item = new.quote_server_work_item
+              quote_server_work_item = new.quote_server_work_item,
+              sap_delivery_document = new.sap_delivery_document,
+              product_id = new.product_id
             WHERE ledger_id = new.ledger_id;
 
             V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
@@ -2400,7 +2375,9 @@ AS
               billing_message,
               work_complete_date,
               etl_date,
-              quote_server_work_item
+              quote_server_work_item,
+              sap_delivery_document,
+              product_id
             ) VALUES (
               new.ledger_id,
               new.product_order_sample_id,
@@ -2412,7 +2389,9 @@ AS
               new.billing_message,
               new.work_complete_date,
               new.etl_date,
-              new.quote_server_work_item );
+              new.quote_server_work_item,
+              new.sap_delivery_document,
+              new.product_id);
 
             V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
             -- ELSE ignore older ETL extract

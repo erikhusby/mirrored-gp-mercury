@@ -35,6 +35,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+
 @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
 @Dependent
 public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
@@ -92,7 +94,7 @@ public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(AcceptsAllWorkRegistrationsQuoteServiceStub.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(DEV, AcceptsAllWorkRegistrationsQuoteServiceStub.class);
     }
 
     /**
@@ -120,7 +122,13 @@ public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
         PriceItem priceItem = priceItemDao.findById(PriceItem.class, 46L);
         primaryPriceItems.add(priceItem);
         for (ProductOrderSample pdoSample : pdo.getSamples()) {
-            LedgerEntry ledgerEntry = new LedgerEntry(pdoSample, priceItem, new Date(), 3);
+            LedgerEntry ledgerEntry;
+            if(pdo.hasSapQuote()) {
+
+                ledgerEntry = new LedgerEntry(pdoSample, pdo.getProduct(), new Date(), 3);
+            } else {
+                ledgerEntry = new LedgerEntry(pdoSample, priceItem, new Date(), 3);
+            }
             pdoSample.getLedgerItems().add(ledgerEntry);
             ledgerEntries.add(ledgerEntry);
             ledgerEntryDao.persist(ledgerEntry);

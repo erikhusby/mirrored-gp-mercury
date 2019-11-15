@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -499,15 +500,18 @@ public class BucketEjb {
      * @return the created LabVessels
      */
     public Collection<LabVessel> createInitialVessels(Collection<String> samplesWithoutVessel, String username) {
-        Map<String, BspSampleData> bspSampleDataMap = bspSampleDataFetcher.fetchSampleData(samplesWithoutVessel);
+        Map<String, BspSampleData> bspSampleDataMap = bspSampleDataFetcher.fetchSampleData(samplesWithoutVessel,
+                BSPSampleSearchColumn.MATERIAL_TYPE, BSPSampleSearchColumn.RECEPTACLE_TYPE,
+                BSPSampleSearchColumn.MANUFACTURER_BARCODE, BSPSampleSearchColumn.ROOT_SAMPLE,
+                BSPSampleSearchColumn.RECEIPT_DATE);
         Collection<LabVessel> vessels = new ArrayList<>();
         List<String> cannotAddToBucket = new ArrayList<>();
-
+        List<String> missingSampleData = new ArrayList<>();
         for (String sampleName : samplesWithoutVessel) {
             BspSampleData bspSampleData = bspSampleDataMap.get(sampleName);
-
-            if (bspSampleData != null &&
-                StringUtils.isNotBlank(bspSampleData.getBarcodeForLabVessel())) {
+            if (bspSampleData == null || bspSampleData.getMaterialType() == null) {
+                missingSampleData.add(sampleName);
+            } else if (bspSampleData != null && StringUtils.isNotBlank(bspSampleData.getBarcodeForLabVessel())) {
                 if (bspSampleData.isSampleReceived()) {
                     // Process is only interested in the primary vessels
                     List<LabVessel> sampleVessels = labVesselFactory.buildInitialLabVessels(sampleName, bspSampleData.getBarcodeForLabVessel(),
@@ -518,12 +522,13 @@ public class BucketEjb {
                 cannotAddToBucket.add(sampleName);
             }
         }
-
+        if (!missingSampleData.isEmpty()) {
+            throw new BucketException("Samples were not added to the bucket. Could not find BSP or Mercury " +
+                    "sample data for: " + StringUtils.join(missingSampleData, ", "));
+        }
         if (!cannotAddToBucket.isEmpty()) {
-            throw new BucketException(
-                    String.format("Some of the samples for the order could not be added to the bucket.  " +
-                                  "Could not find the manufacturer label for: %s",
-                                  StringUtils.join(cannotAddToBucket, ", ")));
+            throw new BucketException("Samples were not added to the bucket. Neither BSP nor Mercury have a " +
+                    "labeled vessel for: " + StringUtils.join(cannotAddToBucket, ", "));
         }
         if (!vessels.isEmpty()) {
             labVesselDao.persistAll(vessels);

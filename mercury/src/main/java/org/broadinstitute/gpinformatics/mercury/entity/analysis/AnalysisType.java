@@ -20,6 +20,9 @@ import javax.persistence.Table;
 @Audited
 @Table(name = "ANALYSIS_TYPE", schema = "mercury")
 public class AnalysisType implements BusinessObject {
+    // NO_ANALYSIS puts a null value in the pipeline query.
+    public static final String NO_ANALYSIS = "No_Analysis";
+
     @Id
     @SequenceGenerator(name = "SEQ_ANALYSIS_TYPE", schema = "mercury", sequenceName = "SEQ_ANALYSIS_TYPE", allocationSize = 10)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_ANALYSIS_TYPE")

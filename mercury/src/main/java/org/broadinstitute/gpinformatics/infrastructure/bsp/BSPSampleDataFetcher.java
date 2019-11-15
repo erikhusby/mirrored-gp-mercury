@@ -1,19 +1,22 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import com.sun.jersey.api.client.GenericType;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
-import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
-import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
+import org.broadinstitute.gpinformatics.mercury.BSPJaxRsClient;
+import org.broadinstitute.gpinformatics.mercury.control.AbstractJaxRsClientService;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,14 +30,13 @@ import java.util.Set;
  * Wrapper around {@link BSPSampleSearchService} that
  * does a bit more object-ifying and type-safety.
  */
-public abstract class BSPSampleDataFetcher extends BSPJerseyClient implements Serializable {
+public abstract class BSPSampleDataFetcher extends BSPJaxRsClient implements Serializable {
     static final long serialVersionUID = -1432207534876411738L;
 
     @Inject
     BSPSampleSearchService service;
 
     static final String WS_FFPE_DERIVED = "sample/ffpeDerived";
-    static final String WS_DETAILS = "sample/getdetails";
     // Used for mapping Matrix barcodes to Sample short barcodes, forces xml output format.
     static final String WS_SAMPLE_DETAILS = "sample/getsampledetails?format=xml";
 
@@ -153,11 +155,12 @@ public abstract class BSPSampleDataFetcher extends BSPJerseyClient implements Se
         // Check to see if BSP is supported before trying to get data.
         if (!barcodeToSampleDataMap.isEmpty() && AbstractConfig.isSupported(getBspConfig())) {
             String urlString = getUrl(WS_FFPE_DERIVED);
-            String queryString = makeQueryString("barcodes", barcodeToSampleDataMap.keySet());
+            MultivaluedMap<String, String> params = new MultivaluedHashMap<>();
+            params.addAll("barcodes", new ArrayList<>(barcodeToSampleDataMap.keySet()));
             final int SAMPLE_BARCODE = 0;
             final int FFPE = 1;
 
-            post(urlString, queryString, ExtraTab.FALSE, new AbstractJerseyClientService.PostCallback() {
+            post(urlString, params, ExtraTab.FALSE, new AbstractJaxRsClientService.PostCallback() {
                 @Override
                 public void callback(String[] bspOutput) {
                     BspSampleData bspSampleData = barcodeToSampleDataMap.get(bspOutput[SAMPLE_BARCODE]);
@@ -169,33 +172,6 @@ public abstract class BSPSampleDataFetcher extends BSPJerseyClient implements Se
                 }
             });
         }
-    }
-
-    public void fetchSamplePlastic(@Nonnull Collection<BspSampleData> bspSampleDatas) {
-        if (bspSampleDatas.isEmpty()) {
-            return;
-        }
-
-        final Map<String, BspSampleData> lsidToSampleDataMap = new HashMap<>();
-        for (BspSampleData bspSampleData : bspSampleDatas) {
-            lsidToSampleDataMap.put(bspSampleData.getSampleLsid(), bspSampleData);
-        }
-
-        String urlString = getUrl(WS_DETAILS);
-        String queryString = makeQueryString("sample_lsid", lsidToSampleDataMap.keySet());
-        final int LSID = 1;
-        final int PLASTIC_BARCODE = 16;
-        post(urlString, queryString, ExtraTab.FALSE, new AbstractJerseyClientService.PostCallback() {
-            @Override
-            public void callback(String[] bspOutput) {
-                BspSampleData bspSampleData = lsidToSampleDataMap.get(bspOutput[LSID]);
-                if (bspSampleData == null) {
-                    throw new RuntimeException("Unrecognized return lsid: " + bspOutput[LSID]);
-                }
-                bspSampleData.addPlastic(bspOutput[PLASTIC_BARCODE]);
-            }
-        });
-
     }
 
     /**
@@ -233,13 +209,13 @@ public abstract class BSPSampleDataFetcher extends BSPJerseyClient implements Se
         String urlString = getUrl(WS_SAMPLE_DETAILS);
 
         Map<String, GetSampleDetails.SampleInfo> map = new HashMap<>();
-        WebResource resource = getJerseyClient().resource(urlString);
+        WebTarget webTarget = getJaxRsClient().target(urlString);
         // Use POST, rather than GET, to allow large number of barcodes without hitting 8K limit on URL.
-        MultivaluedMap<String, String> formData = new MultivaluedMapImpl();
+        MultivaluedMap<String, String> formData = new MultivaluedHashMap<>();
         formData.add("barcodes", StringUtils.join(barcodes, ","));
-        GetSampleDetails.Details details = resource.accept(MediaType.TEXT_XML).post(
-                new GenericType<GetSampleDetails.Details>() {
-                }, formData);
+        GetSampleDetails.Details details = JaxRsUtils.postAndCheck(webTarget.request(MediaType.TEXT_XML),
+                Entity.form(formData),
+                new GenericType<GetSampleDetails.Details>() {});
 
         // Fills in the map values using SampleDetails that were found in BSP.
         if (details.getSampleDetails().getSampleInfo() != null) {

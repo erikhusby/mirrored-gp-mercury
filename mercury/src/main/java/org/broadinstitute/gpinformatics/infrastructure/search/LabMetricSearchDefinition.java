@@ -1,16 +1,20 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.broadinstitute.bsp.client.search.Search;
+import org.broadinstitute.bsp.client.search.SearchItem;
+import org.broadinstitute.bsp.client.search.SearchManager;
+import org.broadinstitute.bsp.client.search.SearchResponse;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.AncestorLabMetricPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabMetricSampleDataAddRowsListener;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
@@ -19,6 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -32,6 +37,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Builds ConfigurableSearchDefinition for lab metric user defined search logic  <br />
@@ -183,7 +189,7 @@ public class LabMetricSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("LCSET");
+        searchTerm.setName("Lab Batch");
         criteriaPaths = new ArrayList<>();
 
         // Mercury only cares about workflow batches
@@ -224,7 +230,6 @@ public class LabMetricSearchDefinition {
                 return results;
             }
         });
-        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getBatchNameInputConverter());
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -245,7 +250,7 @@ public class LabMetricSearchDefinition {
                 LabMetric labMetric = (LabMetric) entity;
                 for (SampleInstanceV2 sampleInstanceV2 : labMetric.getLabVessel().getSampleInstancesV2()) {
                     for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples() ) {
-                        results.add(productOrderSample.getProductOrder().getJiraTicketKey());
+                        results.add(productOrderSample.getProductOrder().getBusinessKey());
                     }
                 }
                 return results;
@@ -764,4 +769,21 @@ public class LabMetricSearchDefinition {
         return searchTerms;
     }
 
+    @NotNull
+    static List<Object> runBspSearch(SearchItem searchItem) {
+        BSPConfig bspConfig = ServiceAccessUtility.getBean(BSPConfig.class);
+        SearchManager searchManager = new SearchManager(bspConfig.getHost(), bspConfig.getPort(),
+                bspConfig.getLogin(), bspConfig.getPassword());
+        Search search = new Search();
+        search.setEntityName("Sample");
+        search.setSearchItems(Collections.singletonList(searchItem));
+        search.setViewColumns(Collections.singletonList("Sample ID"));
+        search.setMaxResults(1000000);
+        SearchResponse searchResponse = searchManager.runSearch(search);
+        if (!searchResponse.isSuccess()) {
+            throw new RuntimeException("Failed to fetch from BSP " + searchResponse.getMessages().get(0));
+        }
+        return searchResponse.getResult().getRows().stream().map(
+                strings -> strings.get(0)).collect(Collectors.toList());
+    }
 }

@@ -2,8 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Factory;
 import org.apache.commons.collections4.map.LazyMap;
@@ -22,6 +20,8 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -29,6 +29,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
@@ -37,11 +39,13 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapT
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.AbstractBatchJiraFieldFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -55,6 +59,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
@@ -74,6 +79,8 @@ import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
@@ -139,6 +146,12 @@ public class LabBatchEjb {
     private BSPRestClient bspRestClient;
 
     private BSPExportsService bspExportsService;
+
+    private SequencingTemplateFactory sequencingTemplateFactory;
+
+    private TubeFormationDao tubeFormationDao;
+
+    private AppConfig appConfig;
 
     private static final VesselPosition[] VESSEL_POSITIONS = {VesselPosition.LANE1, VesselPosition.LANE2,
             VesselPosition.LANE3, VesselPosition.LANE4, VesselPosition.LANE5, VesselPosition.LANE6,
@@ -406,7 +419,7 @@ public class LabBatchEjb {
             }
 
             AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
-                    .getInstance(projectType, newBatch, productOrderDao, workflowConfig);
+                    .getInstance(projectType, newBatch, sequencingTemplateFactory, productOrderDao, workflowConfig);
             if (projectType == null) {
                 projectType = fieldBuilder.getProjectType();
             }
@@ -576,7 +589,7 @@ public class LabBatchEjb {
         }
 
         AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
-                .getInstance(projectType, batch, productOrderDao, workflowConfig);
+                .getInstance(projectType, batch, sequencingTemplateFactory, productOrderDao, workflowConfig);
         if (projectType == null) {
             projectType = fieldBuilder.getProjectType();
         }
@@ -813,7 +826,12 @@ public class LabBatchEjb {
                         // limit this logic to WGS.
                         if (Objects.equals(bucketEntry.getProductOrder().getProduct().getAggregationDataType(),
                                 Aggregation.DATA_TYPE_WGS)) {
-                            addAndRemoveSamples = true;
+                            // Microbial is also WGS but LCSETs are made up of multiple racks
+                            // Limit to just lab batches with total size less than 96
+                            int labBatchSize = bucketEntry.getLabBatch().getLabBatchStartingVessels().size();
+                            if (labBatchSize <= 96) {
+                                addAndRemoveSamples = true;
+                            }
                         }
                         found = true;
                         break;
@@ -872,8 +890,6 @@ public class LabBatchEjb {
      * <li>add control tubes</li>
      * <li>add sample tubes (e.g. clinical samples that displaced research samples)</li>
      * <li>remove sample tubes (e.g. research samples displaced by clinical samples)</li>
-     * <li>update rack layout in BSP (controls are not added through automation)</li>
-     * <li>auto-export from BSP to Mercury</li>
      * </ul>
      * @param lcsetName name of batch to update
      * @param controlBarcodes positive and negative control tubes
@@ -978,7 +994,7 @@ public class LabBatchEjb {
                 throw new RuntimeException("Rack barcode is required to auto-export");
             }
             // Update rack in BSP, to add control
-            WebResource webResource = bspRestClient.getWebResource(bspRestClient.getUrl(BSP_CONTAINER_UPDATE_LAYOUT));
+            WebTarget webTarget = bspRestClient.getWebResource(bspRestClient.getUrl(BSP_CONTAINER_UPDATE_LAYOUT));
             PlateTransferEventType plateTransferEventType = new PlateTransferEventType();
             PositionMapType positionMap = new PositionMapType();
             positionMap.setBarcode(rackBarcode);
@@ -1007,13 +1023,62 @@ public class LabBatchEjb {
             plateTransferEventType.setPlate(plateType);
             BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
             bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
-            ClientResponse response = webResource.type(MediaType.APPLICATION_XML).post(ClientResponse.class, bettaLIMSMessage);
+            Response response = webTarget.request(MediaType.TEXT_PLAIN).post(Entity.xml(bettaLIMSMessage));
             if (response.getStatus() == Response.Status.OK.getStatusCode()) {
                 bspExportsService.export(rackBarcode, userBean.getLoginUserName());
+                response.close();
             } else {
-                messageReporter.addMessage(response.getEntity(String.class));
+                messageReporter.addMessage(response.readEntity(String.class));
+                response.close();
                 throw new RuntimeException("Failed to update layout in BSP.");
             }
+        }
+    }
+
+    /**
+     * In the LCSET ticket, set a field that links back to a User Defined Search that shows a plate map.
+     * @param lcsetName which LCSET to update
+     * @param rackScan  the positions of the tubes after the positive control is added
+     */
+    public void linkLcsetToUds(String lcsetName, Map<String, String> rackScan) {
+        try {
+            SearchContext context = new SearchContext();
+            StringBuffer baseSearchURL = new StringBuffer();
+            baseSearchURL.append(appConfig.getUrl());
+            context.setBaseSearchURL(baseSearchURL);
+            Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
+
+            Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(rackScan.values());
+            HashMap<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
+            for (Map.Entry<String, String> positionBarcodeEntry : rackScan.entrySet()) {
+                mapPositionToTube.put(VesselPosition.getByName(positionBarcodeEntry.getKey()),
+                        mapBarcodeToTube.get(positionBarcodeEntry.getValue()));
+            }
+
+            String digest = TubeFormation.makeDigest(mapPositionToTube);
+            TubeFormation byDigest = tubeFormationDao.findByDigest(digest);
+            if (byDigest == null) {
+                TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
+                barcodedTubeDao.persist(tubeFormation);
+            }
+            // todo jmt create in-plate event?
+
+            LabBatch labBatch = labBatchDao.findByName(lcsetName);
+            Map<String, String[]> terms = new HashMap<>();
+            terms.put("Container Barcode", new String[]{digest});
+            StringBuilder linkBuilder = new StringBuilder();
+            SearchDefinitionFactory.buildDrillDownHref(
+                    ColumnEntity.LAB_VESSEL,
+                    "GLOBAL|GLOBAL_LAB_VESSEL_SEARCH_INSTANCES|Plate Map Drill Down",
+                    terms, linkBuilder, appConfig.getUrl());
+            String link = linkBuilder.toString();
+            link = StringUtils.replaceEachRepeatedly(link, new String[]{"[", "]", "{", "}", " ", "\"", "|"},
+                    new String[]{"%5B", "%5D", "%7B", "%7D", "%20", "%22", "%7C"});
+            CustomField mercuryUrlField = new CustomField( submissionFields, LabBatch.TicketFields.PLATE_MAP_UDS, link);
+            JiraIssue jiraIssue = jiraService.getIssue(labBatch.getJiraTicket().getTicketName());
+            jiraIssue.updateIssue(Collections.singleton(mercuryUrlField));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -1047,7 +1112,7 @@ public class LabBatchEjb {
             messageReporter.addMessage("No lanes were selected.");
         } else {
             Pair<List<LabBatch>, List<CreateFctDto>> fctReturn = makeFctDaoFree(createFctDtos, loadingVessels,
-                    Collections.<String, FlowcellDesignation>emptyMap(), selectedFlowcellType);
+                    Collections.<String, FlowcellDesignation>emptyMap(), selectedFlowcellType, false);
 
             List<LabBatch> fctBatches = fctReturn.getLeft();
             if (fctBatches.isEmpty()) {
@@ -1097,10 +1162,12 @@ public class LabBatchEjb {
      *               will be added to this list. Dto status is updated for those put in an FCT.
      * @param userName
      * @param messageReporter for action bean message display.
+     * @param diversifySamples controls whether samples are bunched together on a flowcell or spread
+     *                         across multiple flowcells.
      * @return Pair of FCT batch name and JIRA url.
      */
     public List<MutablePair<String, String>> makeFcts(final List<DesignationDto> uiDtos, String userName,
-            MessageReporter messageReporter) {
+            MessageReporter messageReporter, boolean diversifySamples) {
         // Only uses the selected dtos.
         final List<DesignationDto> designationDtos = new ArrayList<>();
         for (DesignationDto designationDto : uiDtos) {
@@ -1133,7 +1200,7 @@ public class LabBatchEjb {
         // Processes the dtos onto flowcell lanes, combining compatible designations where possible.
         // Each complete flowcell has its FCT pushed to JIRA, with parent-child JIRA links to LCSET(s).
         Pair<List<LabBatch>, List<DesignationDto>> fctReturn = makeFctDaoFree(designationDtos, loadingVessels,
-                flowcellDesignations, null);
+                flowcellDesignations, null, diversifySamples);
         List<MutablePair<String, String>> fctUrls = new ArrayList<>();
         for (LabBatch fctBatch : fctReturn.getLeft()) {
             Set<String> lcsetNames = new HashSet<>(laneToLinkedLcsets(fctBatch).values());
@@ -1151,7 +1218,7 @@ public class LabBatchEjb {
         Map<String, Integer> groupCount = new HashMap<>();
         Map<String, IlluminaFlowcell.FlowcellType> groupFlowcellType = new HashMap<>();
         for (DesignationDto dto : designationDtos) {
-            if (dto.isAllocated()) {
+            if (dto.getAllocatedLanes() == dto.getNumberLanes().intValue()) {
                 dto.setStatus(FlowcellDesignation.Status.IN_FCT);
             } else {
                 String groupDescription = dtoGroupDescription(dto);
@@ -1202,7 +1269,7 @@ public class LabBatchEjb {
             errorString += (isValid ? "" : "and ") + "number of lanes (" + designationDto.getNumberLanes() + ") ";
             isValid = false;
         }
-        if (designationDto.getReadLength() == null || designationDto.getReadLength() <= 0) {
+        if (designationDto.getReadLength() == null || designationDto.getReadLength() < 0) {
             errorString += (isValid ? "" : "and ") + "read length (" + designationDto.getReadLength() + ") ";
             isValid = false;
         }
@@ -1244,19 +1311,15 @@ public class LabBatchEjb {
         return isValid;
     }
 
+    /**
+     * Flowcells with mixed clinical and non-clinical samples are permitted for genome aggregation.
+     * @return true if any of the dto's products has a WGS aggregation type.
+     */
     public boolean isMixedFlowcellOk(FctDto designationDto) {
-        // Mixed flowcells are permitted for genomes
-        boolean mixedFlowcellOk = false;
-        for (String productName : designationDto.getProductNames()) {
-            if (!productName.equals(CONTROLS)) {
-                Product product = productDao.findByName(productName);
-                if (Objects.equals(product.getAggregationDataType(), Aggregation.DATA_TYPE_WGS)) {
-                    mixedFlowcellOk = true;
-                    break;
-                }
-            }
-        }
-        return mixedFlowcellOk;
+        return designationDto.getProductNames().stream().
+                filter(productName -> !productName.equals(CONTROLS)).
+                flatMap(productName -> productDao.findAvailableByName(productName).stream()).
+                anyMatch(product -> Objects.equals(product.getAggregationDataType(), Aggregation.DATA_TYPE_WGS));
     }
 
     /** Returns the number of lanes that would not fit onto an even number of flowcell lanes. */
@@ -1278,11 +1341,14 @@ public class LabBatchEjb {
      * A given lane only contains material from one designation (one loading tube). But a designation may
      * span multiple lanes and multiple flowcells, depending on the designation lane count.
      *
-     * @param dtos the selected FctDtos, one per loading tube, already sorted in order of priority and size.
+     * @param dtos the selected FctDtos, one per loading tube.
      * @param loadingTubes maps loading tube barcode to loading tube.
      * @param designations maps  loading tube barcode to FlowcellDesignation.
      * @param createFctFlowcellType  the type of flowcells to create. Expect this to be null for
      *                               DesignationDtos which have the flowcell type in the dto.
+     * @param diversifySamples When false, allocates a sample's lanes contiguously on flowcell(s). When true,
+     *                         attempts to allocate only one lane of a sample per flowcell, but allows a
+     *                         second lane if necessary to make a complete flowcell.
      * @return  The list of the fct batches to be persisted and a list of split dtos.
      *   Fct batches will be in order of creation, which should put loading tubes on contiguous flowcell
      *   lanes across sequential fcts, provided the fcts get persisted in the order returned.
@@ -1290,98 +1356,132 @@ public class LabBatchEjb {
      */
     public <DTO_TYPE extends FctDto> Pair<List<LabBatch>, List<DTO_TYPE>> makeFctDaoFree(List<DTO_TYPE> dtos,
             Map<String, LabVessel> loadingTubes, Map<String, FlowcellDesignation> designations,
-            @Nullable IlluminaFlowcell.FlowcellType createFctFlowcellType) {
+            @Nullable IlluminaFlowcell.FlowcellType createFctFlowcellType, boolean diversifySamples) {
+
+        // Makes compatible groups of dtos that can go together on the same flowcell. The dtos in each
+        // group are ordered by priority, number of lanes, and barcode.
+        List<List<DTO_TYPE>> dtoGroups = new ArrayList<>();
+        dtos.stream().
+                sorted(DesignationDto.BY_ALLOCATION_ORDER).
+                forEach(dto -> {
+                    // Finds the compatible group.
+                    List<DTO_TYPE> group = dtoGroups.stream().filter(testGroup -> dto.isCompatible(testGroup)).
+                            findFirst().orElse(null);
+                    if (group == null) {
+                        group = new ArrayList<>();
+                        dtoGroups.add(group);
+                    }
+                    group.add(dto);
+                });
+
+        // For each group, makes an expanded list with each dto repeated times its lane count, in the
+        // correct allocation order. The list size is only allowed to be a multiple of the flowcell size.
+        // If the last few dto lanes don't fit on a complete flowcell are not put on the list.
+        List<List<DTO_TYPE>> dtoLaneGroups = new ArrayList<>();
+        for (List<DTO_TYPE> group : dtoGroups) {
+            final IlluminaFlowcell.FlowcellType flowcellType =
+                    OrmUtil.proxySafeIsInstance(group.get(0), DesignationDto.class) ?
+                            OrmUtil.proxySafeCast(group.get(0), DesignationDto.class).getSequencerModel() :
+                            createFctFlowcellType;
+            final int flowcellLaneSize = flowcellType.getVesselGeometry().getRowCount();
+
+            List<DTO_TYPE> dtoLanes = new ArrayList<>();
+            if (!diversifySamples) {
+                // Dtos are on contiguous lanes.
+                // Calculates where the last last complete flowcell ends.
+                int totalLaneCount = group.stream().mapToInt(DTO_TYPE::getNumberLanes).sum();
+                totalLaneCount -= (totalLaneCount % flowcellLaneSize);
+                for (DTO_TYPE dto : group) {
+                    int i;
+                    for (i = 0; i < Math.min(dto.getNumberLanes(), totalLaneCount); ++i) {
+                        dtoLanes.add(dto);
+                    }
+                    totalLaneCount -= i;
+                }
+            } else {
+                // Dto lanes are interspersed with the other dtos' lanes.
+                final int MAX_DIVERSIFIED_SAMPLE_LANES = 2;
+                List<DTO_TYPE> flowcellLanes = new ArrayList<>();
+                boolean flowcellComplete;
+                do {
+                    flowcellComplete = false;
+                    // Does two passes on the dto list to fill a flowcell, taking one lane of a dto on each pass.
+                    for (int i = 0; !flowcellComplete && (i < MAX_DIVERSIFIED_SAMPLE_LANES); ++i) {
+                        for (DTO_TYPE dto : group) {
+                            // Skips the dto once it becomes fully allocated.
+                            if (dto.getAllocatedLanes() < dto.getNumberLanes()) {
+                                dto.setAllocatedLanes(dto.getAllocatedLanes() + 1);
+                                flowcellLanes.add(dto);
+                                // Only saves the dtos when they make a full flowcells.
+                                if (flowcellLanes.size() == flowcellLaneSize) {
+                                    dtoLanes.addAll(flowcellLanes);
+                                    flowcellLanes.clear();
+                                    flowcellComplete = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                } while (flowcellComplete);
+            }
+
+            if (!dtoLanes.isEmpty()) {
+                dtoLaneGroups.add(dtoLanes);
+            }
+        }
+
+        // Reverts the dto allocation counts back to zero.
+        dtos.stream().forEach(dto -> dto.setAllocatedLanes(0));
 
         List<LabBatch> createdFcts = new ArrayList<>();
-        List<DTO_TYPE> splitDtos = new ArrayList<>();
-        Set<DTO_TYPE> allocatedDtos = new HashSet<>();
-
-        // Orders the dtos by decreasing allocation priority, and for each priority by
-        // decreasing number of lanes, which is intended to reduce the chance of a split.
-        List<DTO_TYPE> eligibleDtos = new ArrayList<>(dtos);
-        Collections.sort(eligibleDtos, DesignationDto.BY_ALLOCATION_ORDER);
-
-        // Iterates on dtos and keeps allocating lanes until the designation lane count is fulfilled,
-        // possibly across multiple flowcells.
-        //
-        // At the end of iteration, if a partial flowcell exists it is abandoned and its designations are
-        // reverted to being unallocated. If a reverted designation was already partly put on a flowcell,
-        // it gets split into a completely allocated dto which remains on the flowcell, and a completely
-        // unallocated dto which gets returned to the caller.
-        //
-        while (!eligibleDtos.isEmpty()) {
-            List<LabBatch.VesselToLanesInfo> fctVesselLaneInfo = new ArrayList<>();
-            Map<DTO_TYPE, Integer> dtosOnFlowcellLanes = new HashMap<>();
+        // Iterates on each dto group and allocates flowcells.
+        for (List<DTO_TYPE> group : dtoLaneGroups) {
+            final IlluminaFlowcell.FlowcellType flowcellType =
+                    OrmUtil.proxySafeIsInstance(group.get(0), DesignationDto.class) ?
+                            OrmUtil.proxySafeCast(group.get(0), DesignationDto.class).getSequencerModel() :
+                            createFctFlowcellType;
+            final int flowcellLaneSize = flowcellType.getVesselGeometry().getRowCount();
             int laneIndex = 0;
-            boolean fctAdded = false;
+            Map<String, LabBatch.VesselToLanesInfo> laneInfos = new HashMap<>();
 
-            for (DTO_TYPE fctDto : eligibleDtos) {
-                if (fctDto.isAllocated() || !fctDto.isCompatible(dtosOnFlowcellLanes.keySet())) {
-                    continue;
+            for (DTO_TYPE dto : group) {
+                LabBatch.VesselToLanesInfo laneInfo = laneInfos.get(dto.getBarcode());
+                if (laneInfo == null) {
+                    laneInfo = new LabBatch.VesselToLanesInfo(new ArrayList<>(), dto.getLoadingConc(),
+                            loadingTubes.get(dto.getBarcode()), dto.getLcset(), dto.getProduct(), new ArrayList<>());
+                    laneInfos.put(dto.getBarcode(), laneInfo);
                 }
-                LabVessel loadingTube = loadingTubes.get(fctDto.getBarcode());
-                FlowcellDesignation flowcellDesignation = designations.get(fctDto.getBarcode());
-                IlluminaFlowcell.FlowcellType flowcellType =
-                        OrmUtil.proxySafeIsInstance(fctDto, DesignationDto.class) ?
-                                OrmUtil.proxySafeCast(fctDto, DesignationDto.class).getSequencerModel() :
-                                createFctFlowcellType;
-                LabBatch.VesselToLanesInfo laneInfo = null;
+                laneInfo.getLanes().add(VESSEL_POSITIONS[laneIndex++]);
+                if (designations.containsKey(dto.getBarcode())) {
+                    laneInfo.getDesignations().add(designations.get(dto.getBarcode()));
+                }
+                dto.setAllocatedLanes(dto.getAllocatedLanes() + 1);
 
-                for (int dtoLaneCount = 0; dtoLaneCount < fctDto.getNumberLanes(); ++dtoLaneCount) {
-                    if (laneInfo == null) {
-                        laneInfo = new LabBatch.VesselToLanesInfo(new ArrayList<VesselPosition>(),
-                                fctDto.getLoadingConc(), loadingTube, fctDto.getLcset(), fctDto.getProduct(),
-                                new ArrayList<FlowcellDesignation>());
-                        fctVesselLaneInfo.add(laneInfo);
-                    }
-                    laneInfo.getLanes().add(VESSEL_POSITIONS[laneIndex++]);
-                    laneInfo.getDesignations().add(flowcellDesignation);
-                    Integer previousCount = dtosOnFlowcellLanes.get(fctDto);
-                    dtosOnFlowcellLanes.put(fctDto, previousCount == null ? 1 : (previousCount + 1));
-
-                    // When enough lanes exist for a complete flowcell, an FCT batch is made and lane info is reset.
-                    if (laneIndex == flowcellType.getVesselGeometry().getRowCount()) {
-                        // The batch name will be overwritten by the FCT-ID from JIRA, but if it's not made unique at
-                        // this point then there is a unique constraint violation.  Perhaps Hibernate does an insert
-                        // then an update, it's not clear why.
-                        LabBatch fctBatch = new LabBatch(fctDto.getBarcode() + " FCT ticket " + dtoLaneCount, fctVesselLaneInfo,
-                                flowcellType.getBatchType(), flowcellType);
-                        fctBatch.setBatchDescription(fctDto.getBarcode() + " FCT ticket ");
-                        createdFcts.add(fctBatch);
-                        fctAdded = true;
-                        // Marks the dto as having been allocated, and continues allocating remaining lanes
-                        // on the next flowcell.
-                        for (DTO_TYPE flowcellDto : dtosOnFlowcellLanes.keySet()) {
-                            flowcellDto.setAllocated(true);
-                            allocatedDtos.add(flowcellDto);
-                        }
-                        // Resets the accumulations.
-                        laneIndex = 0;
-                        fctVesselLaneInfo = new ArrayList<>();
-                        laneInfo = null;
-                        dtosOnFlowcellLanes.clear();
-                    }
+                // When enough lanes exist for a complete flowcell, an FCT batch is made and lane info is reset.
+                if (laneIndex == flowcellLaneSize) {
+                    // The batch name will be overwritten by the FCT-ID from JIRA, but if it's not made unique at
+                    // this point then there is a unique constraint violation.  Perhaps Hibernate does an insert
+                    // then an update, it's not clear why.
+                    LabBatch fctBatch = new LabBatch(dto.getBarcode() + " " + createdFcts.size(),
+                            laneInfos.values().stream().collect(Collectors.toList()),
+                            flowcellType.getBatchType(), flowcellType);
+                    fctBatch.setBatchDescription(dto.getBarcode() + " FCT ticket ");
+                    createdFcts.add(fctBatch);
+                    laneInfos.clear();
+                    laneIndex = 0;
                 }
             }
-
-            // Splitting a dto somehow changes its reference in allocatedDtos, so remove allocated
-            // from eligible dtos before doing any split.
-            eligibleDtos.removeAll(allocatedDtos);
-
-            // Checks for a partial flowcell and reverts its designations. A dto that was already put
-            // on a complete previous flowcell needs to be split to leave the completed flowcell as-is.
-            for (DTO_TYPE dto : dtosOnFlowcellLanes.keySet()) {
-                if (allocatedDtos.contains(dto)) {
-                    int allocatedLaneCount = dto.getNumberLanes() - dtosOnFlowcellLanes.get(dto);
-                    splitDtos.add((DTO_TYPE) dto.split(allocatedLaneCount));
-                }
+            if (!laneInfos.isEmpty()) {
+                throw new RuntimeException("Unexpected allocations for loading tubes " +
+                        StringUtils.join(laneInfos.keySet(), ", "));
             }
+        }
 
-            // If the first eligible dto always gets put on a flowcell and the flowcell doesn't completely
-            // fill up, there may be livelock due to the fct grouping incompatiblity. Avoid this by making
-            // the first dto ineligible in the next iteration.
-            if (!fctAdded && !eligibleDtos.isEmpty()) {
-                eligibleDtos.remove(0);
+        // Splits a dto if it is partially allocated.
+        List<DTO_TYPE> splitDtos = new ArrayList<>();
+        for (DTO_TYPE dto : dtos) {
+            if (dto.getAllocatedLanes() > 0 && dto.getAllocatedLanes() < dto.getNumberLanes()) {
+                splitDtos.add((DTO_TYPE)dto.split());
             }
         }
         return Pair.of(createdFcts, splitDtos);
@@ -1469,5 +1569,20 @@ public class LabBatchEjb {
     @Inject
     public void setBspExportsService(BSPExportsService bspExportsService) {
         this.bspExportsService = bspExportsService;
+    }
+
+    @Inject
+    public void setSequencingTemplateFactory(SequencingTemplateFactory sequencingTemplateFactory) {
+        this.sequencingTemplateFactory = sequencingTemplateFactory;
+    }
+
+    @Inject
+    public void setTubeFormationDao(TubeFormationDao tubeFormationDao) {
+        this.tubeFormationDao = tubeFormationDao;
+    }
+
+    @Inject
+    public void setAppConfig(AppConfig appConfig) {
+        this.appConfig = appConfig;
     }
 }

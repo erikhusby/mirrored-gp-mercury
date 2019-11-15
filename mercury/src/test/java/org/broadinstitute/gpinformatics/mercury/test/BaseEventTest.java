@@ -95,6 +95,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SingleCell10XEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.SingleCellHashingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SingleCellSmartSeqEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.StoolTNAEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TenXEntityBuilder;
@@ -804,9 +805,17 @@ public class BaseEventTest {
                 sourcePlates, numSamples, barcodeSuffix).invoke();
     }
 
-    public SingleCell10XEntityBuilder runSingleCell10XProcess(StaticPlate sourcePlate, int numSamples, String barcodeSuffix) {
-        return new SingleCell10XEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
-                sourcePlate, numSamples, barcodeSuffix).invoke();
+    public SingleCell10XEntityBuilder runSingleCell10XProcess(Map<String, BarcodedTube> mapBarcodeToTube,
+                                                              TubeFormation rack, String rackBarcode, String barcodeSuffix) {
+        return new SingleCell10XEntityBuilder(mapBarcodeToTube, rack, bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                rackBarcode, barcodeSuffix).invoke();
+    }
+
+    public SingleCellHashingEntityBuilder runSingleCellHashingProcess(Map<String, BarcodedTube> mapBarcodeToTube,
+                                                                    TubeFormation rack, String rackBarcode,
+                                                                    String barcodeSuffix) {
+        return new SingleCellHashingEntityBuilder(mapBarcodeToTube, rack, bettaLimsMessageTestFactory, labEventFactory,
+                getLabEventHandler(), rackBarcode, barcodeSuffix).invoke();
     }
 
     public InfiniumEntityBuilder runInfiniumProcess(StaticPlate sourcePlate, String barcodeSuffix) {
@@ -1088,7 +1097,7 @@ public class BaseEventTest {
                             TransferTraverserCriteria.TraversalDirection.Descendants),
                     fileWriter,
                     Arrays.asList(TransferVisualizerV2.AlternativeIds.SAMPLE_ID,
-                            TransferVisualizerV2.AlternativeIds.LCSET));
+                            TransferVisualizerV2.AlternativeIds.INFERRED_LCSET));
             fileWriter.flush();
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -1140,8 +1149,6 @@ public class BaseEventTest {
         FlowcellDesignationEjb flowcellDesignationEjb = Mockito.mock(FlowcellDesignationEjb.class);
         Mockito.when(productOrderDao.findByBusinessKey(Mockito.anyString())).thenReturn(productOrder);
         Mockito.when(flowcellDesignationEjb.getFlowcellDesignations(Mockito.any(LabBatch.class))).
-                thenReturn(flowcellDesignations);
-        Mockito.when(flowcellDesignationEjb.getFlowcellDesignations(Mockito.any(Collection.class))).
                 thenReturn(flowcellDesignations);
         AttributeArchetypeDao attributeArchetypeDao = Mockito.mock(AttributeArchetypeDao.class);
         Mockito.when(attributeArchetypeDao.findWorkflowMetadata(Mockito.anyString())).then(new Answer<Object>() {

@@ -28,10 +28,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchFixUpTest;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.hibernate.SQLQuery;
@@ -1421,7 +1423,10 @@ public class LabEventFixupTest extends Arquillian {
      * 1278705
      * 1278706
      * 1278707
+     *
+     * @deprecated As of Mercury 1.110 in favor of fixupGplim6295()
      */
+    @Deprecated
     @Test(enabled = false)
     public void fixupGplim4104() throws Exception {
         userBean.loginOSUser();
@@ -1716,7 +1721,8 @@ public class LabEventFixupTest extends Arquillian {
     public void fixupGplim4302() throws Exception {
         userBean.loginOSUser();
         utx.begin();
-        List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(LabEventType.INFINIUM_XSTAIN,
+        List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(
+                Collections.singletonList(LabEventType.INFINIUM_XSTAIN),
                 LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
         BspUser bspUser = userBean.getBspUser();
         long disambiguator = 1L;
@@ -1869,7 +1875,8 @@ public class LabEventFixupTest extends Arquillian {
 
     @Test(enabled = false)
     public void gplim4796BackfillOnPremPdosToHaveAllStartedEvent() throws Exception {
-        List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(LabEventType.INFINIUM_XSTAIN,
+        List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(
+                Collections.singletonList(LabEventType.INFINIUM_XSTAIN),
                 LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
         InfiniumRunFinder runFinder = new InfiniumRunFinder();
         BspUser bspUser = bspUserList.getByUsername("seqsystem");
@@ -1950,6 +1957,19 @@ public class LabEventFixupTest extends Arquillian {
             LabEvent labEvent = labEventDao.findById(LabEvent.class, Long.parseLong(id));
             labEvent.setManualOverrideLcSet(labBatch);
             System.out.println("Lab event " + labEvent.getLabEventId() + " manual override to " + batchId);
+            TransferTraverserCriteria transferTraverserCriteria = new LabBatchFixUpTest.ComputeLabBatchTtc(true);
+            for (LabVessel targetLabVessel : labEvent.getTargetLabVessels()) {
+                VesselContainer<?> containerRole = targetLabVessel.getContainerRole();
+                if (containerRole == null) {
+                    targetLabVessel.evaluateCriteria(transferTraverserCriteria,
+                            TransferTraverserCriteria.TraversalDirection.Descendants);
+                } else {
+                    for (VesselPosition vesselPosition : targetLabVessel.getVesselGeometry().getVesselPositions()) {
+                        containerRole.evaluateCriteria(vesselPosition, transferTraverserCriteria,
+                                TransferTraverserCriteria.TraversalDirection.Descendants, 0);
+                    }
+                }
+            }
         }
 
         labEventDao.persist(new FixupCommentary(jiraTicket + " manual override to " + batchId));
@@ -2192,4 +2212,71 @@ public class LabEventFixupTest extends Arquillian {
         utx.commit();
     }
 
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/DeleteLabEvents.txt, so it can
+     * be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * GPLIM-4104
+     * InfiniumHybridization
+     * 1278705
+     * 1278706
+     * 1278707
+     */
+    @Test(enabled = false)
+    public void fixupGplim6295() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("DeleteLabEvents.txt"));
+        String jiraTicket = lines.get(0);
+        String eventType = lines.get(1);
+
+        for (String id : lines.subList(2, lines.size())) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, Long.parseLong(id));
+            Assert.assertEquals(labEvent.getLabEventType().getName(), eventType);
+            labEvent.getMapPositionToLcSets().clear();
+            labEvent.getComputedLcSets().clear();
+            System.out.println("Deleting lab event " + labEvent.getLabEventId());
+            labEventDao.remove(labEvent);
+        }
+
+        labEventDao.persist(new FixupCommentary(jiraTicket + " delete " + eventType));
+        labEventDao.flush();
+        utx.commit();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/ChangeLabEventType.txt, so it can
+     * be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-5820 change InfiniumXStainHD
+     * 4050686	InfiniumXStainHD	InfiniumXStain
+     * 4050687	InfiniumXStainHD	InfiniumXStain
+     * 4050688	InfiniumXStainHD	InfiniumXStain
+     */
+    @Test(enabled = false)
+    public void fixupSupport5820ChangeEventType() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ChangeLabEventType.txt"));
+        String reason = lines.get(0);
+
+        for (String line : lines.subList(1, lines.size())) {
+            String[] fields = line.split("\\s");
+            if (fields.length != 3) {
+                throw new RuntimeException("Expected three white space separated fields in " + line);
+            }
+            String labEventId = fields[0];
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, Long.parseLong(labEventId));
+            if (labEvent == null || !labEvent.getLabEventType().getName().equals(fields[1])) {
+                throw new RuntimeException("Cannot find event " + labEventId + " or is not " + fields[1]);
+            }
+            System.out.print("LabEvent " + labEventId + " type " + labEvent.getLabEventType());
+            labEvent.setLabEventType(LabEventType.getByName(fields[2]));
+            System.out.println(" updated to " + labEvent.getLabEventType());
+        }
+
+        labEventDao.persist(new FixupCommentary(reason));
+        labEventDao.flush();
+        utx.commit();
+    }
 }

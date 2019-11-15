@@ -6,8 +6,8 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.BulkQueryParameter;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -27,6 +27,7 @@ public class AuditReaderDbFreeTest {
     // show data audits that changed or deleted the entity.
     private final Collection<Class> unauditableClasses = new ArrayList<Class>() {{
         add(JiraTicket.class);   // todo make a Long primary key and remove this special case.
+        add(BulkQueryParameter.class);
     }};
 
     @Test

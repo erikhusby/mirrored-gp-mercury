@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -37,10 +38,10 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -177,7 +178,7 @@ public class MercurySample extends AbstractSample {
 
     private Boolean isRoot;
 
-    @OneToMany(mappedBy = "mercurySample", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "mercurySample", cascade = CascadeType.PERSIST, orphanRemoval = true)
     private Set<Fingerprint> fingerprints = new HashSet<>();
 
     /**
@@ -248,7 +249,7 @@ public class MercurySample extends AbstractSample {
         return sampleKey;
     }
 
-    void setSampleKey(String sampleKey) {
+    public void setSampleKey(String sampleKey) {
         this.sampleKey = sampleKey;
     }
 
@@ -300,7 +301,10 @@ public class MercurySample extends AbstractSample {
         }
     }
 
-    /** Adds new metadata entries or updates existing ones, but does not remove existing entries. */
+    /**
+     * Adds new metadata entries or updates existing ones, but does not remove existing entries
+     * that aren't in the updates.
+     */
     public void updateMetadata(Set<Metadata> updates) {
         if (metadataSource == MetadataSource.MERCURY) {
             for (Metadata update : updates) {
@@ -311,7 +315,9 @@ public class MercurySample extends AbstractSample {
                         iterator.remove();
                     }
                 }
-                metadata.add(update);
+                if (StringUtils.isNotBlank(update.getValue())) {
+                    metadata.add(update);
+                }
             }
             setSampleData(new MercurySampleData(sampleKey, this.metadata, getReceivedDate()));
         } else {
@@ -323,6 +329,17 @@ public class MercurySample extends AbstractSample {
     public Set<Metadata> getMetadata() {
         return metadata;
     }
+
+    @Transient
+    public String getMetadataValueForKey(Metadata.Key key) {
+        for (Metadata metadatum : metadata) {
+            if (metadatum.getKey() == key) {
+                return metadatum.getValue();
+            }
+        }
+        return null;
+    }
+
 
     public Long getMercurySampleId() {
         return mercurySampleId;
@@ -363,7 +380,10 @@ public class MercurySample extends AbstractSample {
         if (receiptEvent != null) {
             return receiptEvent.getEventDate();
         }
-        return null;
+        return metadata.stream().
+                filter(item -> item.getKey() == Metadata.Key.RECEIPT_DATE && item.getDateValue() != null).
+                map(item -> item.getDateValue()).
+                findFirst().orElse(null);
     }
 
     public LabEvent getReceiptEvent() {
@@ -446,7 +466,7 @@ public class MercurySample extends AbstractSample {
 
     public void removeSampleFromVessels(Collection<LabVessel> vesselsForRemoval) {
         for (LabVessel labVesselForRemoval : vesselsForRemoval) {
-            labVesselForRemoval.getMercurySamples().remove(this);
+            labVesselForRemoval.removeSample(this);
             labVessel.remove(labVesselForRemoval);
         }
     }

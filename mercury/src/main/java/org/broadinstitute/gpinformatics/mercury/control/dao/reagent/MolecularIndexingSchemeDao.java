@@ -1,12 +1,22 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.reagent;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent_;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme_;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -102,10 +112,26 @@ public class MolecularIndexingSchemeDao extends GenericDao {
         return molecularIndexingScheme;
     }
 
+    public List<MolecularIndexingScheme> findByNames(Collection<String> names) {
+        return findListByList(MolecularIndexingScheme.class, MolecularIndexingScheme_.name, new HashSet<>(names));
+    }
+
     public List<MolecularIndexingScheme> findAllIlluminaSchemes() {
         Query query = getEntityManager().createNamedQuery(
                 "MolecularIndexingScheme.findAllIlluminaSchemes");
         return query.getResultList();
     }
 
+    public MolecularIndexReagent reagentFor(MolecularIndexingScheme molecularIndexingScheme) {
+        CriteriaBuilder builder = getCriteriaBuilder();
+        CriteriaQuery<MolecularIndexReagent> criteriaQuery = builder.createQuery(MolecularIndexReagent.class);
+        Root<MolecularIndexReagent> root = criteriaQuery.from(MolecularIndexReagent.class);
+        criteriaQuery.where(builder.equal(
+                root.get(MolecularIndexReagent_.molecularIndexingScheme),
+                molecularIndexingScheme));
+        TypedQuery<MolecularIndexReagent> query = getEntityManager().createQuery(criteriaQuery);
+        // Some molecular indexing schemes have multiple identical reagents for them. Any one of them is fine to use.
+        List<MolecularIndexReagent> reagents = query.setMaxResults(1).getResultList();
+        return CollectionUtils.isEmpty(reagents) ? null : reagents.get(0);
+    }
 }

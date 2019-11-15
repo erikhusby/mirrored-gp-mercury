@@ -115,7 +115,8 @@ public class InfiniumRunResource {
             throw new ResourceException("No chip events found", Response.Status.INTERNAL_SERVER_ERROR);
         }
         for (LabEvent event : chip.getEvents()) {
-            if (event.getLabEventType() == LabEventType.INFINIUM_XSTAIN) {
+            if (event.getLabEventType() == LabEventType.INFINIUM_XSTAIN ||
+                    event.getLabEventType() == LabEventType.INFINIUM_XSTAIN_HD) {
                 return event.getEventDate();
             }
         }
@@ -140,53 +141,9 @@ public class InfiniumRunResource {
             SampleData sampleData = sampleDataFetcher.fetchSampleData(
                     sampleInstanceV2.getNearestMercurySampleName());
 
-            // When the ARRAY batch is auto-created, all samples on the plate get BucketEntries, even controls (this
-            // is arguably a bug in BucketEjb), so the BucketEntry can be used to determine an unambiguous PDO, unless
-            // the sample pre-dates auto-creation of ARRAY batches.
-            // To determine whether the sample is a process control (as opposed to a HapMap sample added to a PDO for
-            // scientific purposes), we have to look for the absence of a ProductOrderSample.
             ProductOrder productOrder;
-            BucketEntry singleBucketEntry = sampleInstanceV2.getSingleBucketEntry();
             ProductOrderSample productOrderSample = sampleInstanceV2.getProductOrderSampleForSingleBucket();
-            if (singleBucketEntry == null) {
-                if (productOrderSample == null) {
-                    // Likely a control, look at all samples on imported plate to try to find common ProductOrder
-                    TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
-                            new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(
-                                    LabEventType.ARRAY_PLATING_DILUTION), true);
-                    chip.getContainerRole().applyCriteriaToAllPositions(vesselForEventTypeCriteria,
-                            TransferTraverserCriteria.TraversalDirection.Ancestors);
-
-                    Set<ProductOrder> productOrders = new HashSet<>();
-                    for (Map.Entry<LabEvent, Set<LabVessel>> labEventSetEntry :
-                            vesselForEventTypeCriteria.getVesselsForLabEventType().entrySet()) {
-                        for (LabVessel labVessel : labEventSetEntry.getValue()) {
-                            Set<SampleInstanceV2> sampleInstances = OrmUtil.proxySafeIsInstance(labVessel, PlateWell.class) ?
-                                    labVessel.getContainers().iterator().next().getContainerRole().getSampleInstancesV2() :
-                                    labVessel.getSampleInstancesV2();
-                            for (SampleInstanceV2 sampleInstance : sampleInstances) {
-                                ProductOrderSample platedPdoSample = sampleInstance.getProductOrderSampleForSingleBucket();
-                                if (platedPdoSample != null) {
-                                    productOrders.add(platedPdoSample.getProductOrder());
-                                }
-                            }
-                            if (OrmUtil.proxySafeIsInstance(labVessel, PlateWell.class)) {
-                                break;
-                            }
-                        }
-                    }
-
-                    if (productOrders.size() >= 1) {
-                        productOrder = productOrders.iterator().next();
-                    } else {
-                        throw new ResourceException("Found no product orders ", Response.Status.INTERNAL_SERVER_ERROR);
-                    }
-                } else {
-                    productOrder = productOrderSample.getProductOrder();
-                }
-            } else {
-                productOrder = singleBucketEntry.getProductOrder();
-            }
+            productOrder = fetchProductOrder(chip, sampleInstanceV2);
 
             boolean positiveControl = false;
             boolean negativeControl = false;
@@ -322,6 +279,58 @@ public class InfiniumRunResource {
         return chip;
     }
 
+    // When the ARRAY batch is auto-created, all samples on the plate get BucketEntries, even controls (this
+    // is arguably a bug in BucketEjb), so the BucketEntry can be used to determine an unambiguous PDO, unless
+    // the sample pre-dates auto-creation of ARRAY batches.
+    // To determine whether the sample is a process control (as opposed to a HapMap sample added to a PDO for
+    // scientific purposes), we have to look for the absence of a ProductOrderSample.
+    public static ProductOrder fetchProductOrder(LabVessel chip, SampleInstanceV2 sampleInstanceV2) {
+        ProductOrder productOrder;
+        BucketEntry singleBucketEntry = sampleInstanceV2.getSingleBucketEntry();
+        ProductOrderSample productOrderSample = sampleInstanceV2.getProductOrderSampleForSingleBucket();
+        if (singleBucketEntry == null) {
+            if (productOrderSample == null) {
+                // Likely a control, look at all samples on imported plate to try to find common ProductOrder
+                TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
+                        new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(
+                                LabEventType.ARRAY_PLATING_DILUTION), true);
+                chip.getContainerRole().applyCriteriaToAllPositions(vesselForEventTypeCriteria,
+                        TransferTraverserCriteria.TraversalDirection.Ancestors);
+
+                Set<ProductOrder> productOrders = new HashSet<>();
+                for (Map.Entry<LabEvent, Set<LabVessel>> labEventSetEntry :
+                        vesselForEventTypeCriteria.getVesselsForLabEventType().entrySet()) {
+                    for (LabVessel labVessel : labEventSetEntry.getValue()) {
+                        Set<SampleInstanceV2> sampleInstances = OrmUtil.proxySafeIsInstance(labVessel, PlateWell.class) ?
+                                labVessel.getContainers().iterator().next().getContainerRole().getSampleInstancesV2() :
+                                labVessel.getSampleInstancesV2();
+                        for (SampleInstanceV2 sampleInstance : sampleInstances) {
+                            ProductOrderSample platedPdoSample = sampleInstance.getProductOrderSampleForSingleBucket();
+                            if (platedPdoSample != null) {
+                                productOrders.add(platedPdoSample.getProductOrder());
+                            }
+                        }
+                        if (OrmUtil.proxySafeIsInstance(labVessel, PlateWell.class)) {
+                            break;
+                        }
+                    }
+                }
+
+                if (productOrders.size() >= 1) {
+                    productOrder = productOrders.iterator().next();
+                } else {
+                    throw new ResourceException("Found no product orders ", Response.Status.INTERNAL_SERVER_ERROR);
+                }
+            } else {
+                productOrder = productOrderSample.getProductOrder();
+            }
+        } else {
+            productOrder = singleBucketEntry.getProductOrder();
+        }
+
+        return productOrder;
+    }
+
     // Must be public, to allow calling from test
     @SuppressWarnings("WeakerAccess")
     public void setInfiniumStarterConfig(InfiniumStarterConfig infiniumStarterConfig) {
@@ -334,13 +343,17 @@ public class InfiniumRunResource {
 
     static final Map<String, String> mapSerialNumberToMachineName = new HashMap<>();
     static {
-        mapSerialNumberToMachineName.put("N296", "Practical Pig");
-        mapSerialNumberToMachineName.put("N0296", "Practical Pig");
-        mapSerialNumberToMachineName.put("N370", "Big Bad Wolf");
-        mapSerialNumberToMachineName.put("N0370", "Big Bad Wolf");
-        mapSerialNumberToMachineName.put("N700", "Fiddler Pig");
-        mapSerialNumberToMachineName.put("N0700", "Fiddler Pig");
-        mapSerialNumberToMachineName.put("N588", "Fiffer Pig");
-        mapSerialNumberToMachineName.put("N0588", "Fiffer Pig");
+        mapSerialNumberToMachineName.put("N296", "BAB");
+        mapSerialNumberToMachineName.put("N0296", "BAB");
+        mapSerialNumberToMachineName.put("N370", "BAA");
+        mapSerialNumberToMachineName.put("N0370", "BAA");
+        mapSerialNumberToMachineName.put("N700", "BAC");
+        mapSerialNumberToMachineName.put("N0700", "BAC");
+        mapSerialNumberToMachineName.put("N588", "BAD");
+        mapSerialNumberToMachineName.put("N0588", "BAD");
+        mapSerialNumberToMachineName.put("N1052", "BAF");
+        mapSerialNumberToMachineName.put("N01052", "BAF");
+        mapSerialNumberToMachineName.put("N1042", "BAE");
+        mapSerialNumberToMachineName.put("N01042", "BAE");
     }
 }

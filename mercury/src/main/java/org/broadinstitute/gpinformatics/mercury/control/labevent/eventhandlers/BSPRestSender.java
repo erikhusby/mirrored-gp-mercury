@@ -12,12 +12,11 @@
 package org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers;
 
 import com.rits.cloning.Cloner;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleInfo;
 import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
@@ -42,10 +41,17 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.text.Format;
@@ -69,6 +75,7 @@ public class BSPRestSender implements Serializable {
     public static final String BSP_CREATE_DISSASSOC_PLATE_URL = "plate/createDisassociatedPlate";
     public static final String BSP_CONTAINER_URL = "container/getSampleInfo";
     public static final String BSP_UPLOAD_QUANT_URL = "quant/upload";
+    public static final String BSP_UPDATE_TUBE_QUANTS_URL = "quant/updateByTubeBarcode";
     public static final String BSP_KIT_REST_URL = "kit";
     public static final String BSP_CONTAINER_UPDATE_LAYOUT = "container/updateLayout";
 
@@ -83,16 +90,136 @@ public class BSPRestSender implements Serializable {
     public TransferReturn postToBsp(BettaLIMSMessage message, String bspRestUrl) {
 
         String urlString = bspRestClient.getUrl(bspRestUrl);
-        WebResource webResource = bspRestClient.getWebResource(urlString);
+        WebTarget webTarget = bspRestClient.getWebResource(urlString);
 
         // Posts message to BSP using the specified REST url.
-        ClientResponse response = webResource.type(MediaType.APPLICATION_XML).post(ClientResponse.class, message);
+        Response response = webTarget.request().post(Entity.xml(message));
 
         // This is called in context of bettalims message handling which handles errors via RuntimeException.
-        if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
-            throw new RuntimeException("POST to " + urlString + " returned: " + response.getEntity(String.class));
+        if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
+            String entity = response.readEntity(String.class);
+            response.close();
+            throw new RuntimeException("POST to " + urlString + " returned: " + entity);
         }
-        return response.getEntity(TransferReturn.class);
+        TransferReturn transferReturn = response.readEntity(TransferReturn.class);
+        response.close();
+        return transferReturn;
+    }
+
+    /**
+     * Posts tube quants to BSP REST service at the specified url.
+     * Expects to be called from a UI gesture, which handles errors via MessageCollection.
+     */
+    public void postToBsp(TubeQuants tubeQuants, String bspRestUrl, MessageCollection messageCollection) {
+        String urlString = bspRestClient.getUrl(bspRestUrl);
+        WebTarget webTarget = bspRestClient.getWebResource(urlString);
+
+        Response response = webTarget.request().post(Entity.json(tubeQuants));
+        String responseString = response.readEntity(String.class);
+        if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
+            messageCollection.addError("Failed to post to Bsp: " + responseString);
+        } else {
+            messageCollection.addInfo(responseString);
+        }
+        response.close();
+    }
+
+    /**
+     * Creates a copy of the passed PlateCherryPickEvent without any Mercury only samples. This copies the PlateCherryPickEvent,
+     * clears the CherryPickSourceType, adds the valid BSP sources from the passed PlateCherryPickEvent and then removes
+     * any sources and destinations from the corresponding PositionMapType for non-BSP samples.
+     *
+     * @param plateCherryPickEvent Cherry pick event to copy over with BSP samples only.
+     * @param labEvents            List of LabEvents within the message.
+     *
+     * @return A copy of the PlateCherryPickEvent with only BSP samples.
+     */
+    private PlateCherryPickEvent filterMercuryOnlySamples(PlateCherryPickEvent plateCherryPickEvent,
+                                                          List<LabEvent> labEvents) {
+        Cloner cloner = new Cloner();
+        PlateCherryPickEvent plateCherryPickEventCopy = cloner.deepClone(plateCherryPickEvent);
+
+        // Clearing cherry picks to add back in only the transfers of valid BSP sources.
+        plateCherryPickEventCopy.getSource().clear();
+
+        // Find the corresponding event entity
+        LabEvent targetEvent = null;
+        for (LabEvent labEvent : labEvents) {
+            if (Objects.equals(labEvent.getStationEventType(), plateCherryPickEvent)) {
+                targetEvent = labEvent;
+                break;
+            }
+        }
+        assert targetEvent != null;
+
+        // Remove tubes that don't have a BSP chain of custody
+        LabVessel sourceLabVessel = targetEvent.getSourceLabVessels().iterator().next();
+
+        Map<VesselPosition, ReceptacleType> mapSourcePosToReceptacle = buildMapPosToReceptacle(plateCherryPickEventCopy.getSourcePositionMap());
+        Map<VesselPosition, ReceptacleType> mapDestPosToReceptacle = buildMapPosToReceptacle(plateCherryPickEventCopy.getPositionMap());
+        List<ReceptacleType> removeSources = new ArrayList<>();
+        List<ReceptacleType> removeDests = new ArrayList<>();
+        boolean atLeastOneTransfer = false;
+
+        List<VesselPosition> cherryPickSourcesToAdd = new ArrayList<>();
+
+        // Loop through all of the sources in the sourcePositionMap. Remove all sources that aren't BSP metadata source
+        //  and the associated CherryPickSourceType if there is one.
+        for (ReceptacleType sourceReceptacleType : plateCherryPickEvent.getSourcePositionMap().get(0).getReceptacle()) {
+            VesselPosition sourceVesselPosition = VesselPosition.getByName(sourceReceptacleType.getPosition());
+
+            Set<SampleInstanceV2> sampleInstances = sourceLabVessel.getContainerRole().getSampleInstancesAtPositionV2(
+                    sourceVesselPosition);
+            Set<MercurySample.MetadataSource> metadataSources = new HashSet<>();
+
+            for (SampleInstanceV2 sampleInstance : sampleInstances) {
+                // NA12878 samples, that fill up partial fingerprint plates to 48 wells, are reagents
+                if (!sampleInstance.isReagentOnly()) {
+                    MercurySample rootMercurySample = sampleInstance.getRootOrEarliestMercurySample();
+                    // if root is null, assume it's an old BSP sample that was received before Mercury existed
+                    metadataSources.add(rootMercurySample == null ? MercurySample.MetadataSource.BSP :
+                            rootMercurySample.getMetadataSource());
+                }
+            }
+
+            if (metadataSources.size() > 1) {
+                throw new RuntimeException("Expected 1 metadata source, found " + metadataSources.size());
+            } else if (metadataSources.size() == 1) {
+
+                MercurySample.MetadataSource metadataSource = metadataSources.iterator().next();
+                if (metadataSource == MercurySample.MetadataSource.BSP) {
+                    cherryPickSourcesToAdd.add(sourceVesselPosition);
+                } else {
+                    removeSources.add(mapSourcePosToReceptacle.get(sourceVesselPosition));
+                }
+            }
+        }
+
+        // Loop through the cherry picks to add in any sources and note the destinations that need to be removed from the positionMap afterwards.
+        for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
+            VesselPosition sourceVesselPosition = VesselPosition.getByName(cherryPickSourceType.getWell());
+            // If the source position is in the list of adding, then add the cherry pick.
+            if (cherryPickSourcesToAdd.contains(sourceVesselPosition)) {
+                atLeastOneTransfer = true;
+                plateCherryPickEventCopy.getSource().add(cloner.deepClone(cherryPickSourceType));
+            } else {
+                // If reached then the source position was NOT in the list of being added and we need to add the destination
+                //  position of the cherry pick for removal from destination positionType.
+                ReceptacleType destReceptacleType = mapDestPosToReceptacle.get(VesselPosition.getByName(cherryPickSourceType.getDestinationWell()));
+                if (destReceptacleType != null) {
+                    removeDests.add(destReceptacleType);
+                }
+            }
+        }
+
+        if (plateCherryPickEventCopy.getSourcePositionMap() != null && !plateCherryPickEventCopy.getSourcePositionMap().isEmpty()) {
+            plateCherryPickEventCopy.getSourcePositionMap().get(0).getReceptacle().removeAll(removeSources);
+        }
+        if (plateCherryPickEventCopy.getPositionMap() != null && !plateCherryPickEventCopy.getPositionMap().isEmpty()) {
+            plateCherryPickEventCopy.getPositionMap().get(0).getReceptacle().removeAll(removeDests);
+        }
+
+        return atLeastOneTransfer ? plateCherryPickEventCopy : null;
     }
 
     private PlateCherryPickEvent plateTransferToCherryPick(PlateTransferEventType plateTransferEventType,
@@ -287,6 +414,15 @@ public class BSPRestSender implements Serializable {
                 sourceReceptacleType.setVolume(BigDecimal.ZERO);
             }
         }
+
+        // If the lab event is flagged to remove volume from the source then set it here.
+        if(targetEventType.removeDestVolFromSource()) {
+            MetadataType metadataType = new MetadataType();
+            // Always add the 'Terminate Depleted' enum display name as BSP will handle termination if the volume is zero.
+            metadataType.setName(LabEventType.SourceHandling.SUBTRACT_DESTINATION_AMOUNT.getDisplayName());
+            metadataType.setValue(Boolean.TRUE.toString());
+            sourceReceptacleType.getMetadata().add(metadataType);
+        }
     }
 
     private Map<VesselPosition, ReceptacleType> buildMapPosToReceptacle(List<PositionMapType> positionMaps) {
@@ -312,9 +448,18 @@ public class BSPRestSender implements Serializable {
                     labEventType.getForwardMessage() == LabEventType.ForwardMessage.BSP_APPLY_SM_IDS) {
 
                 addSourceHandlingException(labEventType, plateCherryPickEvent.getSourcePlate(), plateCherryPickEvent.getSourcePositionMap());
-                // todo jmt method to filter out clinical samples
-                copy.getPlateCherryPickEvent().add(plateCherryPickEvent);
-                atLeastOneEvent = true;
+
+                PlateCherryPickEvent plateCherryPickEventCopy = filterMercuryOnlySamples(plateCherryPickEvent,
+                        labEvents);
+                // Note that filterMercuryOnlySamples() will remove any non-bsp samples, so if it contained only crsp samples, this will be null.
+                if (plateCherryPickEventCopy != null) {
+                    List<LabEvent> labEventList = labEvents.stream().
+                            filter(le -> Objects.equals(le.getStationEventType(), plateCherryPickEventCopy)).
+                            collect(Collectors.toList());
+
+                    copy.getPlateCherryPickEvent().add(plateCherryPickEventCopy);
+                    atLeastOneEvent = true;
+                }
             }
         }
         for (PlateTransferEventType plateTransferEventType : message.getPlateTransferEvent()) {
@@ -340,20 +485,7 @@ public class BSPRestSender implements Serializable {
                     List<LabEvent> labEventList = labEvents.stream().
                             filter(le -> Objects.equals(le.getStationEventType(), plateTransferEventType)).
                             collect(Collectors.toList());
-                    boolean mercury = false;
-                    for (LabEvent labEvent : labEventList) {
-                        for (LabVessel labVessel : labEvent.getSourceLabVessels()) {
-                            for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                                if (sampleInstanceV2.getRootOrEarliestMercurySample().getMetadataSource() ==
-                                        MercurySample.MetadataSource.MERCURY) {
-                                    // Don't support mixed MERCURY and BSP (engineer must change to
-                                    // TranslateBspMessage.SECTION_TO_CHERRY if necessary).
-                                    mercury = true;
-                                    break;
-                                }
-                            }
-                        }
-                    }
+                    boolean mercury = areAnySourcveLabVesselsNotBSPSourced(labEventList);
 
                     if (!mercury) {
                         copy.getPlateTransferEvent().add(plateTransferEventType);
@@ -376,6 +508,31 @@ public class BSPRestSender implements Serializable {
     }
 
     /**
+     * From a LabEvent, return whether any of the source lab vessels had a MetadataSource of not BSP.
+     *
+     * @param labEventList List of LabEvent objects to check
+     *
+     * @return Whether any of the lab events had source vessels that were not from BSP.
+     */
+    private boolean areAnySourcveLabVesselsNotBSPSourced(List<LabEvent> labEventList) {
+        boolean mercury = false;
+        for (LabEvent labEvent : labEventList) {
+            for (LabVessel labVessel : labEvent.getSourceLabVessels()) {
+                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                    MercurySample earliestMercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
+                    if (earliestMercurySample.getMetadataSource() != MercurySample.MetadataSource.BSP) {
+                        // Don't support mixed MERCURY and BSP (engineer must change to
+                        // TranslateBspMessage.SECTION_TO_CHERRY if necessary).
+                        mercury = true;
+                        break;
+                    }
+                }
+            }
+        }
+        return mercury;
+    }
+
+    /**
      * Posts to BSP REST url.
      * @param bspUsername bsp username
      * @param filename filename of the input stream
@@ -384,18 +541,25 @@ public class BSPRestSender implements Serializable {
      */
     public void postToBsp(String bspUsername, String filename, InputStream inputStream, String bspRestUrl) {
         String urlString = bspRestClient.getUrl(bspRestUrl);
-        WebResource webResource = bspRestClient.getWebResource(urlString).
+        WebTarget webTarget = bspRestClient.getWebResource(urlString).
                 queryParam("username", bspUsername).
                 queryParam("filename", filename);
 
-        ClientResponse response = webResource.post(ClientResponse.class, inputStream);
+        Response response = webTarget.request().post(Entity.entity(new StreamingOutput() {
+            @Override
+            public void write(OutputStream outputStream) throws IOException, WebApplicationException {
+                IOUtils.copy(inputStream, outputStream);
+            }
+        }, MediaType.APPLICATION_OCTET_STREAM_TYPE));
 
         // Handles errors by throwing RuntimeException.
-        if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
-            String msg = "POST to " + urlString + " returned: " + response.getEntity(String.class);
+        if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
+            String msg = "POST to " + urlString + " returned: " + response.readEntity(String.class);
             logger.error(msg);
+            response.close();
             throw new RuntimeException(msg);
         }
+        response.close();
     }
 
     /**
@@ -406,32 +570,73 @@ public class BSPRestSender implements Serializable {
      */
     public String createDisassociatedPlate(String receptacleType, String wellType) {
         String urlString = bspRestClient.getUrl(BSP_CREATE_DISSASSOC_PLATE_URL);
-        WebResource webResource = bspRestClient.getWebResource(urlString);
+        WebTarget webTarget = bspRestClient.getWebResource(urlString);
 
-        MultivaluedMap formData = new MultivaluedMapImpl();
+        MultivaluedMap<String, String> formData = new MultivaluedHashMap<>();
         formData.add("receptacleType", receptacleType);
         formData.add("wellType", wellType);
 
         // Posts message to BSP using the specified REST url.
-        ClientResponse response = webResource.type(MediaType.APPLICATION_FORM_URLENCODED).post(ClientResponse.class, formData);
+        Response response = webTarget.request().post(Entity.form(formData));
 
         // This is called in context of bettalims message handling which handles errors via RuntimeException.
-        if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
-            throw new RuntimeException("POST to " + urlString + " returned: " + response.getEntity(String.class));
+        String entity = response.readEntity(String.class);
+        response.close();
+        if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
+            throw new RuntimeException("POST to " + urlString + " returned: " + entity);
         } else {
-            return response.getEntity(String.class);
+            return entity;
         }
     }
 
     public GetSampleInfo.SampleInfos  getSampleInfo(String containerBarcode) {
         String urlString = bspRestClient.getUrl(BSP_CONTAINER_URL);
-        WebResource webResource = bspRestClient.getWebResource(urlString).queryParam("containerBarcode", containerBarcode);
-        ClientResponse response = webResource.get(ClientResponse.class);
-        if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
+        WebTarget webTarget = bspRestClient.getWebResource(urlString).queryParam("containerBarcode", containerBarcode);
+        Response response = webTarget.request().get();
+        if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
             logger.warn("Failed to find container info for " + containerBarcode);
             return null;
         } else {
-            return response.getEntity(GetSampleInfo.SampleInfos.class);
+            GetSampleInfo.SampleInfos sampleInfos = response.readEntity(GetSampleInfo.SampleInfos.class);
+            response.close();
+            return sampleInfos;
+        }
+    }
+
+    public static class TubeQuants {
+        private String username;
+        private List<String> tubeBarcodes;
+        private List<String> quants;
+        private List<String> volumes;
+        private String runDate;
+
+        public TubeQuants(String username, List<String> tubeBarcodes, List<String> quants, List<String> volumes,
+                String runDate) {
+            this.username = username;
+            this.tubeBarcodes = tubeBarcodes;
+            this.quants = quants;
+            this.volumes = volumes;
+            this.runDate = runDate;
+        }
+
+        public String getUsername() {
+            return username;
+        }
+
+        public List<String> getTubeBarcodes() {
+            return tubeBarcodes;
+        }
+
+        public List<String> getQuants() {
+            return quants;
+        }
+
+        public List<String> getVolumes() {
+            return volumes;
+        }
+
+        public String getRunDate() {
+            return runDate;
         }
     }
 

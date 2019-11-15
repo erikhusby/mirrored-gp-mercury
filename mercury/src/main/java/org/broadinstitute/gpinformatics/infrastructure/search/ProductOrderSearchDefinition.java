@@ -43,7 +43,7 @@ public class ProductOrderSearchDefinition {
     public static final String SUBMITTER_NAME_COLUMN_HEADER = "Product Order Submitter Name";
     public static final String ORDER_STATUS_COLUMN_HEADER = "Order Status";
     public static final String RESEARCH_PROJECT_COLUMN_HEADER = "Research Project";
-    public static final String LCSETS_COLUMN_HEADER = "LCSET";
+    public static final String LCSETS_COLUMN_HEADER = "Lab Batch";
     public static final String PDO_TICKET_COLUMN_HEADER = "PDO Ticket";
     public static final String PRODUCT_ORDER_SAMPLES_COLUMN_HEADER = "Product Order Sample(s)";
     public static final String SAP_ORDER_ID_COLUMN_HEADER = "SAP Order Id";
@@ -274,6 +274,8 @@ public class ProductOrderSearchDefinition {
             public Object evaluate(Object entity, SearchContext context) {
                 ProductOrder orderData = (ProductOrder) entity;
 
+                context.setQuoteSourceType(orderData.getQuoteSource());
+
                 return Encode.forHtml(orderData.getQuoteId());
             }
         });
@@ -287,7 +289,12 @@ public class ProductOrderSearchDefinition {
                 StringBuffer quoteLink = new StringBuffer();
                 if(StringUtils.isNotBlank(quoteId)) {
                     quoteLink .append("<a class=\"external\" target=\"QUOTE\" href=\"");
-                    quoteLink.append(context.getQuoteLink().quoteUrl(quoteId));
+                    //todo this needs to be sap quote link when it is an SAP Order.  HOw do we get that context in here.
+                    if (context.getQuoteSourceType() == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
+                        quoteLink.append(context.getQuoteLink().quoteUrl(quoteId));
+                    } else {
+                        quoteLink.append(context.getSapQuoteLink().sapUrl(quoteId));
+                    }
                     quoteLink.append("\">").append(Encode.forHtml(quoteId)).append("</a>");
                 }
                 return quoteLink.toString();
@@ -418,7 +425,6 @@ public class ProductOrderSearchDefinition {
         // of which the product order is created
         SearchTerm lcsetTerm = new SearchTerm();
         lcsetTerm.setName(LCSETS_COLUMN_HEADER);
-        lcsetTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getBatchNameInputConverter());
 
         SearchTerm.CriteriaPath lcsetVesselPath = new SearchTerm.CriteriaPath();
         SearchTerm.CriteriaPath lcsetReworkPath = new SearchTerm.CriteriaPath();

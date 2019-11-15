@@ -94,13 +94,6 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"
                                           event="view">Buckets</stripes:link>
                         </li>
-                        <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, GPProjectManager, PM, Developer) %>">
-                            <li>
-                                <stripes:link id="controls"
-                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.CollaboratorControlsActionBean"
-                                              event="list">Controls</stripes:link>
-                            </li>
-                        </security:authorizeBlock>
                         <li>
                             <stripes:link id="flowcellDesignations"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationActionBean"
@@ -120,9 +113,6 @@
                             <stripes:link id="linkDenatureToRB"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LinkDenatureTubeToReagentBlockActionBean"
                                           event="view">Link Denature Tube to Reagent Block</stripes:link>
-                        </li>
-                        <li>
-                            <a tabindex="-1" href="${ctxpath}/reagent/design.action?list">Reagent Designs</a>
                         </li>
                         <li>
                             <stripes:link id="uploadQuants"
@@ -164,11 +154,6 @@
                             </stripes:link>
                         </li>
                         <li>
-                            <stripes:link id="uploadReagents"
-                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.ReagentActionBean"
-                                          event="view">Upload Reagents</stripes:link>
-                        </li>
-                        <li>
                             <stripes:link id="manualTransfers"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTransferActionBean"
                                           event="view">Manual Transfers</stripes:link>
@@ -183,13 +168,6 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BatchWorkflowActionBean"
                                           event="view">Batch Workflow</stripes:link>
                         </li>
-                        <security:authorizeBlock roles="<%= roles(LabManager, PDM, GPProjectManager, PM, Developer) %>">
-                            <li>
-                                <stripes:link id="molecularIndexUpload"
-                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexPlateActionBean"
-                                              event="view">Upload Molecular Index Plate(s) from Manifest</stripes:link>
-                            </li>
-                        </security:authorizeBlock>
                         <li>
                             <stripes:link id="abandonVessels"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AbandonVesselActionBean"
@@ -203,7 +181,7 @@
                         <li>
                             <stripes:link id="externalLibraryUpload"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ExternalLibraryUploadActionBean"
-                                          event="view">Pooled Tube and External Library Upload</stripes:link>
+                                          event="view">Upload External Library Spreadsheet</stripes:link>
                         </li>
                         <li>
                             <stripes:link id="singleCellMetadataUpload"
@@ -211,15 +189,55 @@
                                           event="view">Single Cell Metadata Upload</stripes:link>
                         </li>
                         <li>
+                            <stripes:link id="uploadFingerprintingRun"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.UploadFingerprintingRunActionBean"
+                                          event="view">Upload Fingerprinting Run</stripes:link>
+                        </li>
+                    </ul>
+                </li>
+            </security:authorizeBlock>
+
+            <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, GPProjectManager, PM, Developer)%>">
+                <li class="dropdown">
+                    <a id="reagentNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
+                            class="icon-tasks"></span> Reagents <b class="caret"></b></a>
+                    <ul class="dropdown-menu" role="menu">
+                        <li>
+                            <stripes:link id="controls"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.CollaboratorControlsActionBean"
+                                          event="list">Controls</stripes:link>
+                        </li>
+                        <li>
+                            <a tabindex="-1" href="${ctxpath}/reagent/design.action?list">Reagent Designs</a>
+                        </li>
+                        <li>
+                            <stripes:link id="uploadReagents"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.ReagentActionBean"
+                                          event="view">Upload Reagents</stripes:link>
+                        </li>
+                        <li>
                             <stripes:link id="molecularIndexNaming"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexNamingActionBean"
                                           event="view">Make Molecular Index Names</stripes:link>
                         </li>
                         <li>
-                            <stripes:link id="uploadFingerprintingRun"
-                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.UploadFingerprintingRunActionBean"
-                                          event="view">Upload Fingerprinting Run</stripes:link>
+                            <stripes:link id="indexPlateDefinition"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexPlateActionBean"
+                                          event="indexDefinition">Index Plate Definition</stripes:link>
                         </li>
+                        <li>
+                            <stripes:link id="indexPlateInstance"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexPlateActionBean"
+                                          event="indexInstance">Index Plate Instance</stripes:link>
+                        </li>
+                        <security:authorizeBlock roles="<%= roles(LabManager, PDM, GPProjectManager, PM, Developer) %>">
+                            <li>
+                                <stripes:link id="molecularIndexUpload"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexPlateActionBean"
+                                              event="upload">Upload Molecular Index Plate(s) from Manifest</stripes:link>
+                            </li>
+                        </security:authorizeBlock>
+
                     </ul>
                 </li>
             </security:authorizeBlock>
@@ -244,6 +262,9 @@
                         <li><stripes:link
                                 beanclass="org.broadinstitute.gpinformatics.mercury.presentation.run.GenotypingChipTypeActionBean"
                                 event="list">Manage Genotyping Chip Types</stripes:link></li>
+                        <li><stripes:link
+                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoAdminActionBean"
+                                event="view">Mayo Manifest Admin</stripes:link></li>
                         <security:authorizeBlock roles="<%= roles(Developer) %>">
                             <li><stripes:link
                                     beanclass="org.broadinstitute.gpinformatics.mercury.presentation.admin.BillingSessionAccessActionBean"
@@ -342,6 +363,16 @@
                                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.ReceivingActionBean"
                                       event="bySkId">Receive By SK-ID</stripes:link>
                     </li>
+                    <li>
+                        <stripes:link id="mayoPackageReceipt"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoPackageReceiptActionBean"
+                                      event="view">Mayo Package Receipt</stripes:link>
+                    </li>
+                    <li>
+                        <stripes:link id="mayoSampleReceipt"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoSampleReceiptActionBean"
+                                      event="view">Mayo Sample Receipt</stripes:link>
+                    </li>
                 </ul>
             </li>
         </ul>
@@ -390,6 +421,11 @@
                         <stripes:link id="plateMapView"
                                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.MetricsViewActionBean"
                                       event="view">Plate Map Metrics</stripes:link>
+                    </li>
+                    <li>
+                        <stripes:link id="mayoQuarantines"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoPackageReceiptActionBean"
+                                      event="viewQuarantines">Mayo Quarantines</stripes:link>
                     </li>
                 </ul>
             </li>

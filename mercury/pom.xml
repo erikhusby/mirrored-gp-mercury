@@ -8,7 +8,7 @@
     file as well until such a time that we reconfigure the mercury structure to have a dependant project or something
      that can inherit this version setting. -->
 
-    <version>1.105-SNAPSHOT</version>
+    <version>1.120-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -176,7 +176,6 @@
         <site.path>/prodinfo/releng/m2-projects</site.path>
 
         <seam.version>3.1.0.Final</seam.version>
-        <jersey.version>1.11</jersey.version>
 
         <oracle.version>12.1.0.2</oracle.version>
 
@@ -1276,17 +1275,6 @@ nodePrinter.print(webapp)
 
         <dependencies>
             <dependency>
-                <groupId>com.sun.jersey</groupId>
-                <artifactId>jersey-bundle</artifactId>
-                <version>${jersey.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.sun.jersey.contribs</groupId>
-                <artifactId>jersey-multipart</artifactId>
-                <version>${jersey.version}</version>
-            </dependency>
-
-            <dependency>
                 <groupId>org.jboss.arquillian</groupId>
                 <artifactId>arquillian-bom</artifactId>
                 <version>1.4.0.Final</version>
@@ -1343,7 +1331,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>24.0-jre</version>
+            <version>27.0.1-jre</version>
         </dependency>
 
         <!-- ***
@@ -1534,7 +1522,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>commons-fileupload</groupId>
             <artifactId>commons-fileupload</artifactId>
-            <version>1.2.2</version>
+            <version>1.3.3</version>
         </dependency>
 
         <dependency>
@@ -1555,7 +1543,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.2</version>
+            <version>3.9</version>
         </dependency>
 
         <dependency>
@@ -1651,20 +1639,22 @@ nodePrinter.print(webapp)
         </dependency>
 
         <dependency>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-client</artifactId>
-            <version>${jersey.version}</version>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>3.0.19.Final</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.sun.jersey.contribs</groupId>
-            <artifactId>jersey-multipart</artifactId>
-            <version>${jersey.version}</version>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-multipart-provider</artifactId>
+            <version>3.0.19.Final</version>
+            <scope>provided</scope>
         </dependency>
-
         <dependency>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-json</artifactId>
-            <version>${jersey.version}</version>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-jackson2-provider</artifactId>
+            <version>3.0.19.Final</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -1675,17 +1665,17 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi</artifactId>
-            <version>3.9</version>
+            <version>3.17</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
-            <version>3.9</version>
+            <version>3.17</version>
         </dependency>
         <dependency>
             <groupId>com.opencsv</groupId>
             <artifactId>opencsv</artifactId>
-            <version>3.4</version>
+            <version>4.4</version>
         </dependency>
 
         <!-- exists only to be included in ShrinkWrap deployments. would be better to include explicitly in DeploymentBuilder -->
@@ -1875,7 +1865,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.broadinstitute.sapservices</groupId>
             <artifactId>SAPServices</artifactId>
-            <version>1.10</version>
+            <version>1.15</version>
             <exclusions>
                 <exclusion>
                     <groupId>javax.servlet</groupId>
@@ -1918,6 +1908,16 @@ nodePrinter.print(webapp)
             <groupId>org.owasp</groupId>
             <artifactId>csrfguard</artifactId>
             <version>3.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-storage</artifactId>
+            <version>1.64.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.apis</groupId>
+            <artifactId>google-api-services-iam</artifactId>
+            <version>v1-rev285-1.25.0</version>
         </dependency>
     </dependencies>
 
@@ -2030,6 +2030,12 @@ nodePrinter.print(webapp)
                     <version>1.0-m5.1</version>
                 </plugin>
 
+                <plugin>
+                    <groupId>com.amashchenko.maven.plugin</groupId>
+                    <artifactId>gitflow-maven-plugin</artifactId>
+                    <version>1.11.0</version>
+                </plugin>
+
             </plugins>
 
 
@@ -2076,38 +2082,6 @@ nodePrinter.print(webapp)
                             <packageName>org.broadinstitute.gpinformatics.mercury.limsquery.generated</packageName>
                             <!-- each execution must have a unique staleFile -->
                             <staleFile>${project.build.directory}/jaxb2/.limsqueryXjcStaleFlag</staleFile>
-                            <!-- all executions, except the first, need clearOutputDir set to false -->
-                            <clearOutputDir>false</clearOutputDir>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>SolexaRunSynopsis</id>
-                        <goals>
-                            <goal>xjc</goal>
-                        </goals>
-                        <configuration>
-                            <!-- each execution needs to specify the schemaFile(s) to use -->
-                            <schemaFiles>SolexaRun.xsd</schemaFiles>
-                            <schemaDirectory>${project.basedir}/target/xsd-includes/XSD</schemaDirectory>
-                            <packageName>org.broadinstitute.gpinformatics.mercury.squid.generated</packageName>
-                            <!-- each execution must have a unique staleFile -->
-                            <staleFile>${project.build.directory}/jaxb2/.SolexaRunSynopsisXjcStaleFlag</staleFile>
-                            <!-- all executions, except the first, need clearOutputDir set to false -->
-                            <clearOutputDir>false</clearOutputDir>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>ProjectResourceBeans</id>
-                        <goals>
-                            <goal>xjc</goal>
-                        </goals>
-                        <configuration>
-                            <!-- each execution needs to specify the schemaFile(s) to use -->
-                            <schemaFiles>WorkRequest.xsd</schemaFiles>
-                            <schemaDirectory>${project.basedir}/target/xsd-includes/XSD</schemaDirectory>
-                            <packageName>edu.mit.broad.prodinfo.bean.generated</packageName>
-                            <!-- each execution must have a unique staleFile -->
-                            <staleFile>${project.build.directory}/jaxb2/.ProjectResourceXjcStaleFlag</staleFile>
                             <!-- all executions, except the first, need clearOutputDir set to false -->
                             <clearOutputDir>false</clearOutputDir>
                         </configuration>
@@ -2259,25 +2233,6 @@ nodePrinter.print(webapp)
                                     <artifactId>jaxws-api</artifactId>
                                     <version>2.2.8</version>
                                     <type>jar</type>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>unpack</id>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>SquidWS</groupId>
-                                    <artifactId>squidWS</artifactId>
-                                    <version>1.0-SNAPSHOT</version>
-                                    <classifier>XSD</classifier>
-                                    <type>tar</type>
-                                    <outputDirectory>${project.basedir}/target/xsd-includes</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -2484,6 +2439,33 @@ nodePrinter.print(webapp)
                     <!-- Do push the hotfix branches to the remote upstream -->
                     <pushHotfixes>true</pushHotfixes>
                     <noHotfixBuild>true</noHotfixBuild>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>com.amashchenko.maven.plugin</groupId>
+                <artifactId>gitflow-maven-plugin</artifactId>
+                <version>1.12.0</version>
+                <configuration>
+                    <verbose>true</verbose>
+                    <!-- Do not run the unit tests during the finish goals -->
+                    <skipTestProject>true</skipTestProject>
+                    <!-- When starting the release, update the development version at the start -->
+                    <commitDevelopmentVersionAtStart>true</commitDevelopmentVersionAtStart>
+                    <!-- The names of the branches being used -->
+                    <gitFlowConfig>
+                        <productionBranch>master</productionBranch>
+                        <developmentBranch>develop</developmentBranch>
+                    </gitFlowConfig>
+                    <!-- Allow snapshots at the start of the release -->
+                    <allowSnapshots>true</allowSnapshots>
+                    <!-- Keep the SNAPSHOT prefix in the version until the release is finished -->
+                    <useSnapshotInRelease>true</useSnapshotInRelease>
+                    <!-- Keep the SNAPSHOT prefix in the version until the hot fix is finished -->
+                    <useSnapshotInHotfix>true</useSnapshotInHotfix>
+                    <!-- Push the new created branches to the remote upon start of the release and
+                     the modified development and production branches at the end of the release. -->
+                    <pushRemote>true</pushRemote>
                 </configuration>
             </plugin>
 

@@ -42,7 +42,7 @@ public class LabEventTraversalTest extends Arquillian {
         SearchInstance searchInstance = new SearchInstance();
         // Select descendants
         searchInstance.getTraversalEvaluatorValues().put("descendantOptionEnabled", Boolean.TRUE );
-        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("LCSET", configurableSearchDefinition);
+        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("Lab Batch", configurableSearchDefinition);
         searchValue.setOperator(SearchInstance.Operator.EQUALS);
         searchValue.setValues(Collections.singletonList("LCSET-5102"));
 
@@ -132,7 +132,7 @@ public class LabEventTraversalTest extends Arquillian {
         SearchInstance searchInstance = new SearchInstance();
         // Select descendants
         searchInstance.getTraversalEvaluatorValues().put("descendantOptionEnabled", Boolean.TRUE );
-        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("LCSET", configurableSearchDefinition);
+        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("Lab Batch", configurableSearchDefinition);
         searchValue.setOperator(SearchInstance.Operator.EQUALS);
         searchValue.setValues(val6875);
 

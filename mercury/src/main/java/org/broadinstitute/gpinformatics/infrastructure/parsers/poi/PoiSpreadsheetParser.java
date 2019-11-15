@@ -3,10 +3,6 @@ package org.broadinstitute.gpinformatics.infrastructure.parsers.poi;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.poi.hssf.usermodel.HSSFCellStyle;
-import org.apache.poi.hssf.usermodel.HSSFPalette;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -94,11 +90,18 @@ public final class PoiSpreadsheetParser {
             Row row = rows.next();
             // Creates a mapping of the header name to data cell value.
             Map<String, String> dataByHeader = new HashMap<>();
-            for (int i = 0; i < processor.getHeaderNames().size(); i++) {
-                String headerName = processor.getHeaderNames().get(i);
-                ColumnHeader columnHeader = processor.findColumnHeaderByName(headerName);
-                // Columns not found in the Headers enum are still mapped, and are treated as string values.
-                dataByHeader.put(headerName, extractCellContent(row, i, columnHeader));
+            if (processor.getHeaderNames().isEmpty()) {
+                for (int i = 0; i < row.getLastCellNum(); ++i) {
+                    // Preserves the column order when there are no pre-defined header names.
+                    dataByHeader.put(String.format("%02d", i), extractCellContent(row, i, null));
+                }
+            } else {
+                for (int i = 0; i < processor.getHeaderNames().size(); i++) {
+                    String headerName = processor.getHeaderNames().get(i);
+                    ColumnHeader columnHeader = processor.findColumnHeaderByName(headerName);
+                    // Columns not found in the Headers enum are still mapped, and are treated as string values.
+                    dataByHeader.put(headerName, extractCellContent(row, i, columnHeader));
+                }
             }
 
             if (processor.quitOnMatch(dataByHeader.values())) {
@@ -191,10 +194,6 @@ public final class PoiSpreadsheetParser {
         processWorkSheets(WorkbookFactory.create(fileStream));
     }
 
-    public void processUploadFile(File file) throws IOException, InvalidFormatException, ValidationException {
-        processWorkSheets(WorkbookFactory.create(file));
-    }
-
     /**
      * Processes the rows on each sheet.
      */
@@ -221,12 +220,12 @@ public final class PoiSpreadsheetParser {
      *
      * @return A string representation of the data in the cell indicated by the given row/column (header) combination
      */
-    protected
+    private
     @NotNull
     String extractCellContent(Row row, int columnIndex, @Nullable ColumnHeader header) {
         Cell cell = row.getCell(columnIndex);
-        return getCellValues(cell, (header != null ? header.isDateColumn() : false),
-                (header != null ? header.isStringColumn() : true));
+        return getCellValues(cell, (header != null && header.isDateColumn()),
+                (header == null || header.isStringColumn()));
     }
 
     /**
@@ -280,7 +279,7 @@ public final class PoiSpreadsheetParser {
         }
     }
 
-    public static List<String> getWorksheetNames(InputStream inputStream) throws IOException, InvalidFormatException {
+    private static List<String> getWorksheetNames(InputStream inputStream) throws IOException, InvalidFormatException {
 
         List<String> sheetNames = new ArrayList<>();
 
@@ -294,8 +293,7 @@ public final class PoiSpreadsheetParser {
         Workbook workbook = WorkbookFactory.create(inputStream);
         int numberOfSheets = workbook.getNumberOfSheets();
         for (int i = 0; i < numberOfSheets; i++) {
-            Sheet sheet = workbook.getSheetAt(i);
-            sheetNames.add(sheet.getSheetName());
+            sheetNames.add(workbook.getSheetName(i));
         }
 
         return sheetNames;
@@ -324,7 +322,7 @@ public final class PoiSpreadsheetParser {
      */
     public static List<String> processSingleWorksheet(InputStream spreadsheet, TableProcessor processor)
             throws InvalidFormatException, IOException, ValidationException {
-        PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
+        PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.emptyMap());
         try {
             Workbook workbook = WorkbookFactory.create(spreadsheet);
             processor.validateNumberOfWorksheets(workbook.getNumberOfSheets());
@@ -333,19 +331,5 @@ public final class PoiSpreadsheetParser {
         } finally {
             processor.close();
         }
-    }
-
-    /**
-     * Sets the cell's background color.
-     *
-     * @param workbook the workbook.
-     * @param cell the cell to set.
-     * @param colorIndex index of the predefined color from the pallet.
-     */
-    public static void setBackgroundColor(HSSFWorkbook workbook, Cell cell, short colorIndex) {
-        HSSFCellStyle style = workbook.createCellStyle();
-        style.setFillForegroundColor(colorIndex);
-        style.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
-        cell.setCellStyle(style);
     }
 }

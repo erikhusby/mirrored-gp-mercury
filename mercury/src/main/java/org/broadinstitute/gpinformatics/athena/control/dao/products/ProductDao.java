@@ -23,6 +23,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Stateful
 @RequestScoped
@@ -183,6 +184,16 @@ public class ProductDao extends GenericDao implements Serializable {
         return findSingle(Product.class, Product_.productName, productName);
     }
 
+    /** Returns products by name, excluding products that are not available yet or that are discontinued. */
+    public List<Product> findAvailableByName(String productName) {
+        return findList(Product.class, Product_.productName, productName).stream().
+                filter(product -> product.getAvailabilityDate() != null &&
+                        product.getAvailabilityDate().before(Calendar.getInstance().getTime())).
+                filter(product -> product.getDiscontinuedDate() == null ||
+                        product.getDiscontinuedDate().after(Calendar.getInstance().getTime())).
+                collect(Collectors.toList());
+    }
+
     public Product findByBusinessKey(String key) {
         return findByPartNumber(key);
     }
@@ -251,5 +262,17 @@ public class ProductDao extends GenericDao implements Serializable {
                 criteriaQuery.where(getCriteriaBuilder().isNotNull(root.get(Product_.analysisTypeKey)));
             }
         });
+    }
+
+    // todo emp this should be replaced with a call to PipelineDataTypeDao when GPLIM-5521 is deployed.
+    public List<String> findAggregationDataTypes() {
+        CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
+        CriteriaQuery<String> criteriaQuery = criteriaBuilder.createQuery(String.class);
+        Root<Product> root = criteriaQuery.from(Product.class);
+        criteriaQuery.select(root.get(Product_.aggregationDataType)).
+                where(criteriaBuilder.isNotNull(root.get(Product_.aggregationDataType))).
+                distinct(true).
+                orderBy(criteriaBuilder.asc(root.get(Product_.aggregationDataType)));
+        return getEntityManager().createQuery(criteriaQuery).getResultList();
     }
 }

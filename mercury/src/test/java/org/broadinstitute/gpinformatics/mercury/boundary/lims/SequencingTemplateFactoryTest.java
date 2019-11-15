@@ -48,7 +48,6 @@ import org.testng.annotations.Test;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -59,11 +58,11 @@ import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.hamcrest.core.IsNot.not;
 
@@ -82,7 +81,6 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
     private SequencingTemplateFactory factory = null;
     private StaticPlate shearingCleanupPlate = null;
     private BarcodedTube denatureTube2500 = null;
-    private BarcodedTube normTube2500 = null;
     private BarcodedTube denatureTube2000 = null;
     private BarcodedTube denatureTube4000 = null;
     private IlluminaFlowcell flowcellHiSeq2500 = null;
@@ -121,10 +119,6 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         factory.setFlowcellDesignationEjb(new FlowcellDesignationEjb(){
             @Override
             public List<FlowcellDesignation> getFlowcellDesignations(LabBatch fct) {
-                return flowcellDesignations;
-            }
-            @Override
-            public List<FlowcellDesignation> getFlowcellDesignations(Collection<LabVessel> loadingTubes) {
                 return flowcellDesignations;
             }
         });
@@ -533,7 +527,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
             IlluminaFlowcell.FlowcellType flowcellType = poolTest ?
                     IlluminaFlowcell.FlowcellType.MiSeqFlowcell : IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell;
 
-            FlowcellDesignation designation = new FlowcellDesignation(dilutionTube2500, workflowBatch,
+            FlowcellDesignation designation = new FlowcellDesignation(denatureTube2500, workflowBatch,
                     FlowcellDesignation.IndexType.DUAL, poolTest,
                     flowcellType, 4, 99, BIG_DECIMAL_7_77, true,
                     FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
@@ -576,7 +570,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
 
         for (boolean poolTest : new boolean[]{false, true}) {
 
-            FlowcellDesignation designation = new FlowcellDesignation(dilutionTube2500, workflowBatch,
+            FlowcellDesignation designation = new FlowcellDesignation(denatureTube2000, workflowBatch,
                     FlowcellDesignation.IndexType.DUAL, poolTest,
                     IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, 4, 99, BIG_DECIMAL_7_77, true,
                     FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
@@ -749,6 +743,22 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
 
         template = factory.getSequencingTemplate(fctBatchHiSeq4000, false);
         Assert.assertEquals(template.getReadStructure(), "99T8B8B99T");
+    }
+
+    public void testZeroReadLenthDesignation() {
+        FlowcellDesignation designation = new FlowcellDesignation(denatureTube2000, workflowBatch,
+                FlowcellDesignation.IndexType.DUAL, false,
+                IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, 4, 0, BIG_DECIMAL_7_77, true,
+                FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
+        flowcellDesignations.clear();
+        flowcellDesignations.add(designation);
+
+        Set<VesselAndPosition> vesselsAndPositions = flowcellHiSeq2500.getLoadingVessels();
+        MatcherAssert.assertThat(vesselsAndPositions, not(Matchers.empty()));
+        template = factory.getSequencingTemplate(flowcellHiSeq2500, vesselsAndPositions, false);
+        assertThat(template.getOnRigChemistry(), is(nullValue()));
+        assertThat(template.getOnRigWorkflow(), is(nullValue()));
+        assertThat(template.getReadStructure(), is("0T8B8B0T"));
     }
 
     private void testUniqueMolecularIdentifierMultiDesignations(LabVessel umiPlate, String UMIReadStructure,

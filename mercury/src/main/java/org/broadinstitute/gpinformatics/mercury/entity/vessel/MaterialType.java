@@ -136,6 +136,8 @@ public enum MaterialType implements Displayable {
     WHOLE_ORGANISM_RNALATER_PRESERVED("Whole Organism:RNAlater Preserved"),
     WHOLE_ORGANISM_SINGLE_ETOH("Whole Organism:Single, ETOH"),
     WHOLE_ORGANISM_SINGLE_FROZEN("Whole Organism:Single, Frozen"),
+    NUCLEI_SUSPENSION("Nuclei Suspension"),
+    HASH_LIBRARY("Hash Library"),
     NONE("");
 
     private final String displayName;
