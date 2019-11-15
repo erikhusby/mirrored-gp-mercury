@@ -397,7 +397,7 @@ public class ReworkEjb {
      * @throws ValidationException Thrown in the case that some checked state of the Lab Vessel will not allow the
      *                             method to continue
      */
-    private void addAndValidateBucketCandidate(
+    public void addAndValidateBucketCandidate(
             @Nonnull BucketCandidate bucketCandidate,
             @Nonnull ReworkReason reworkReason,
             @Nonnull Bucket bucket,

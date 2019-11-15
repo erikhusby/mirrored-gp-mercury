@@ -119,7 +119,7 @@ public class DragenTaskBuilder {
         return this;
     }
 
-    public DragenTaskBuilder outputForm(String format) {
+    public DragenTaskBuilder outputFormat(String format) {
         appendCommand(String.format("--output-format=%s", format));
         return this;
     }

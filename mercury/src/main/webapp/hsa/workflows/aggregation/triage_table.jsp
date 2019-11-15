@@ -15,15 +15,17 @@
             <input type="checkbox" class="${tableId}-checkAll" title="Check All"/>
             <span id="count" class="${tableId}-checkedCount"></span>
         </th>
+        <th></th>
         <th>PDO Sample</th>
-        <th>Library</th>
+        <th>Sample Vessel</th>
+        <th>Pond</th>
         <th>PDO</th>
         <th>Cov >= 95%@20X</th>
         <th>% Contamination</th>
         <th>Aligned Q20 Bases</th>
         <th>Sex@Birth</th>
-        <th>Finished Read Groups/Pending</th>
-        <th>Processing Status</th>
+        <th>Aggregated/Pending Lanes</th>
+        <th>Aggregated/Pending Designations</th>
         <th>LOD</th>
     </tr>
     </thead>
@@ -34,9 +36,14 @@
                 <stripes:checkbox name="selectedSamples" class="${tableId}-checkbox"
                                   value="${dto.pdoSample}"/>
             </td>
+            <td></td>
             <td>
                     ${dto.pdoSample}
                     <stripes:hidden name="${dtoName}[${status.index}].pdoSample" value="${dto.pdoSample}"/>
+            </td>
+            <td>
+                    ${dto.sampleVessel}
+                    <stripes:hidden name="${dtoName}[${status.index}].sampleVessel" value="${dto.sampleVessel}"/>
             </td>
             <td>
                     ${dto.library}
@@ -63,8 +70,14 @@
                     <stripes:hidden name="${dtoName}[${status.index}].gender" value="${dto.gender}"/>
             </td>
             <td>
-                    ${dto.processingStatus}
-                    <stripes:hidden name="${dtoName}[${status.index}].processingStatus" value="${dto.processingStatus}"/>
+                    ${dto.numberOfReadGroupsAggregated}/${dto.numberOfReadGroupsOnFlowcell}
+                    <stripes:hidden name="${dtoName}[${status.index}].numberOfReadGroupsAggregated" value="${dto.numberOfReadGroupsAggregated}"/>
+                    <stripes:hidden name="${dtoName}[${status.index}].numberOfReadGroupsOnFlowcell" value="${dto.numberOfReadGroupsOnFlowcell}"/>
+            </td>
+            <td>
+                    ${dto.numberOfReadGroupsAggregated}/${dto.numberOfReadGroupsOnFlowcell}
+                    <stripes:hidden name="${dtoName}[${status.index}].numberOfReadGroupsAggregated" value="${dto.numberOfLanesDesignated}"/>
+                    <stripes:hidden name="${dtoName}[${status.index}].numberOfReadGroupsOnFlowcell" value="${dto.numberOfReadGroupsOnFlowcell}"/>
             </td>
             <td>
                     ${dto.lod}
@@ -74,3 +87,56 @@
     </c:forEach>
     </tbody>
 </table>
+
+<%--Build detail and hide--%>
+<c:forEach items="${dtoList}" var="dto" varStatus="status">
+    <table class="table borderless flowcellStatusTable" id="flowcellStatusTable-${dto.pdoSample}">
+        <c:if test="${not empty dto.missingFlowcellStatuses}">
+        <tr>
+            <td><strong>Pending Lanes</strong></td>
+        </tr>
+            <c:forEach items="${dto.missingFlowcellStatuses}" var="flowcellStatus">
+                <tr>
+                    <td colspan="2" class="text-right">${flowcellStatus.flowcell}</td>
+                    <td>${flowcellStatus.pendingLanes}</td>
+                </tr>
+                <tr>
+                    <td colspan="2"></td>
+                    <td>Dashboard</td>
+                    <td><a href="${flowcellStatus.dashboardLink}">${flowcellStatus.dashboardLink}</a></td>
+                </tr>
+                <c:forEach items="${flowcellStatus.jiraTickets}" var="entry">
+                    <tr>
+                        <td colspan="2"></td>
+                        <td>${entry.key}</td>
+                        <td><a href="${entry.value}">${entry.value}</a></td>
+                    </tr>
+                </c:forEach>
+            </c:forEach>
+        </c:if>
+        <c:if test="${not empty dto.completedFlowcellStatuses}">
+            <tr>
+                <td><strong>Aggregated Lanes</strong></td>
+            </tr>
+            <c:forEach items="${dto.completedFlowcellStatuses}" var="flowcellStatus">
+                <tr>
+                    <td colspan="2" class="text-right">${flowcellStatus.flowcell}</td>
+                    <td>${flowcellStatus.pendingLanes}</td>
+                </tr>
+                <tr>
+                    <td colspan="2"></td>
+                    <td>Dashboard</td>
+                    <td><a href="${flowcellStatus.dashboardLink}">${flowcellStatus.dashboardLink}</a></td>
+                </tr>
+                <c:forEach items="${flowcellStatus.jiraTickets}" var="entry">
+                    <tr>
+                        <td colspan="2"></td>
+                        <td>${entry.key}</td>
+                        <td><a href="${entry.value}">${entry.value}</a></td>
+                    </tr>
+                </c:forEach>
+            </c:forEach>
+        </c:if>
+    </table>
+
+</c:forEach>

@@ -11,8 +11,10 @@ import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -88,10 +90,12 @@ public class IlluminaSequencingRunChamber extends SequencingRunChamber {
     }
 
     public <T extends State> Optional<T> getRecentStateWithSample(Class<T> clazz, MercurySample mercurySample) {
-        return getStates().stream()
-                .filter(state -> OrmUtil.proxySafeIsInstance(state, clazz) && state.isComplete() && state.getMercurySamples().contains(mercurySample))
+        Optional<T> ret = getStates().stream()
+                .filter(state -> OrmUtil.proxySafeIsInstance(state, clazz) && state.isComplete() &&
+                                 state.doesContainSample(mercurySample))
                 .map(state -> OrmUtil.proxySafeCast(state, clazz))
                 .max(Comparator.comparing(State::getEndTime));
+        return ret;
     }
 
 }

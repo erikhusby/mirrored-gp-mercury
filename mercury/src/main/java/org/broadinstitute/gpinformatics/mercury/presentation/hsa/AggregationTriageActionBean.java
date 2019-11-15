@@ -5,19 +5,25 @@ import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
+import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.AlignmentMetricsDao;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.FingerprintScoreDao;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.AlignmentMetric;
+import org.broadinstitute.gpinformatics.infrastructure.presentation.DashboardLink;
 import org.broadinstitute.gpinformatics.infrastructure.search.LabVesselSearchDefinition;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.ReworkReasonDao;
@@ -27,23 +33,30 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AggregationTask;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AggregationState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkReason;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -66,7 +79,10 @@ public class AggregationTriageActionBean extends CoreActionBean {
 
     private String reworkReason;
 
+    @Validate(required = true, on = UPDATE_OOS_ACTION)
     private String commentText;
+
+    private OutOfSpecCommands oosDecision;
 
     private List<String> selectedSamples;
 
@@ -77,6 +93,10 @@ public class AggregationTriageActionBean extends CoreActionBean {
     private Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<>();
 
     private Map<String, LabVessel> mapKeyToPond = new HashMap<>();
+
+    private List<FlowcellStatus> flowcellStatuses;
+
+    private String pdoSample;
 
     @Inject
     private AggregationStateDao aggregationStateDao;
@@ -111,6 +131,9 @@ public class AggregationTriageActionBean extends CoreActionBean {
     @Inject
     private ReworkReasonDao reworkReasonDao;
 
+    @Inject
+    private DashboardLink dashboardLink;
+
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
@@ -118,6 +141,9 @@ public class AggregationTriageActionBean extends CoreActionBean {
         Set<String> sampleIds = inTriage.stream()
                 .map(AggregationTask::getFastQSampleId)
                 .collect(Collectors.toSet());
+
+        // TODO For testing limit to a few sample Ids
+        sampleIds = new HashSet<>(Arrays.asList("SM-IYY5P", "SM-GSLTC", "SM-IEU3I"));
 
         Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(sampleIds);
 
@@ -133,7 +159,7 @@ public class AggregationTriageActionBean extends CoreActionBean {
                         LabVesselSearchDefinition.POND_LAB_EVENT_TYPES);
                 labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
                 Set<LabVessel> ponds = eval.getPositions().keySet();
-                LabVessel pond = ponds.iterator().next(); // TODO JW grab latest?
+                LabVessel pond = ponds.iterator().next();
                 mapKeyToPond.put(mercurySample.getSampleKey(), pond);
             }
         }
@@ -171,10 +197,12 @@ public class AggregationTriageActionBean extends CoreActionBean {
         }
 
         Set<String> pdos = new HashSet<>();
+        Set<String> labVesselBarcodes = new HashSet<>();
         for (TriageDto dto: oosTriageDtos) {
             if (selectedSamples.contains(dto.getPdoSample())) {
                 selectedDtos.add(dto);
                 pdos.add(dto.getPdo());
+                labVesselBarcodes.add(dto.getLibrary());
             }
         }
 
@@ -185,21 +213,52 @@ public class AggregationTriageActionBean extends CoreActionBean {
         for (ProductOrder productOrder: productOrders) {
             for (TriageDto dto: selectedDtos) {
                 if (dto.getPdo().equalsIgnoreCase(productOrder.getBusinessKey())) {
-                    mapKeyToProductOrder.put(dto.getLibrary(), productOrder);
+                    mapKeyToProductOrder.put(dto.getPdoSample(), productOrder);
                 }
             }
         }
+
+        Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(new ArrayList<>(labVesselBarcodes));
+        for (LabVessel labVessel: mapBarcodeToVessel.values()) {
+            for (TriageDto dto: selectedDtos) {
+                if (dto.getLibrary().equalsIgnoreCase(labVessel.getLabel())) {
+                    mapKeyToPond.put(dto.getPdoSample(), labVessel);
+                }
+            }
+        }
+
     }
 
     @HandlesEvent(UPDATE_OOS_ACTION)
     public Resolution updateOos() {
-        Bucket bucket = bucketEjb.findOrCreateBucket("Top Off");
-        ReworkReason reason = reworkReasonDao.findByReason("Top off");
-        if (reason == null) {
-            reason = new ReworkReason(reworkReason);
+        String reworkReason = "Other..."; // TODO JW
+        List<ReworkEjb.BucketCandidate> bucketCandidates = new ArrayList<>();
+        for (String sample: mapNameToSample.keySet()) {
+            ProductOrder productOrder = mapKeyToProductOrder.get(sample);
+            LabVessel library = mapKeyToPond.get(sample);
+            String lastEventName = library.getLastEventName();
+            String tubeBarcode = library.getLabel();
+            ReworkEjb.BucketCandidate bucketCandidate = new ReworkEjb.BucketCandidate(
+                    sample, tubeBarcode, productOrder, library, lastEventName
+            );
+            bucketCandidates.add(bucketCandidate);
         }
 
-        // TODO Add to bucket or queue or whatever
+        try {
+            Collection<String> validationMessages = reworkEjb.addAndValidateCandidates(bucketCandidates,
+                    reworkReason, commentText, getUserBean().getLoginUserName(), oosDecision.getBucketDefName());
+
+            if (CollectionUtils.isNotEmpty(validationMessages)) {
+                for (String validationMessage : validationMessages) {
+                    addGlobalValidationError(validationMessage);
+                }
+            } else {
+                addMessage("{0} vessel(s) have been added to the {1} bucket.", bucketCandidates.size(), oosDecision.getBucketDefName());
+            }
+
+        } catch (ValidationException e) {
+            addGlobalValidationError(e.getMessage());
+        }
 
         return view();
     }
@@ -224,7 +283,106 @@ public class AggregationTriageActionBean extends CoreActionBean {
         dto.setPdo(pdo);
         dto.setPdoSample(sampleKey);
         dto.setLibrary(mapKeyToPond.get(sampleKey).getLabel());
+
+        // Grab all the aggregated lanes for this sample
+        Optional<AggregationState> optAggregationState = mercurySample.getMostRecentStateOfType(AggregationState.class);
+        AggregationState aggregationState = optAggregationState.get();
+        Set<IlluminaSequencingRunChamber> aggregatedLanes = aggregationState.getSequencingRunChambers();
+
+        Map<String, List<VesselPosition>> mapFlowcellBarcodeToLanes = aggregatedLanes.stream()
+                .collect(Collectors.groupingBy(l -> l.getIlluminaSequencingRun().getSampleCartridge().getLabel(),
+                        Collectors.mapping(IlluminaSequencingRunChamber::getLanePosition, Collectors.toList())));
+
+        // Fetch all flowcells/lanes for this sample and find lanes that we are waiting on.
+        Set<LabVessel> labVessels = mercurySample.getLabVessel();
+        LabVessel labVessel = labVessels.iterator().next();
+        dto.setSampleVessel(labVessel.getLabel());
+        LabVesselSearchDefinition.VesselsForEventTraverserCriteria eval
+                = new LabVesselSearchDefinition.VesselsForEventTraverserCriteria(LabVesselSearchDefinition.FLOWCELL_LAB_EVENT_TYPES);
+        labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+        int numLanesOnFlowcells = eval.getPositions().size();
+        Map<LabVessel, Collection<VesselPosition>> labVesselCollectionMap = eval.getPositions().asMap();
+
+        Map<LabVessel, List<VesselPosition>> mapFcToMissingLanes = new HashMap<>();
+        Map<LabVessel, List<VesselPosition>> mapFcToCompletedLanes = new HashMap<>();
+        for (Map.Entry<LabVessel, Collection<VesselPosition>> entry: labVesselCollectionMap.entrySet()) {
+            LabVessel flowcellVessel = entry.getKey();
+            String fcBarcode = flowcellVessel.getLabel();
+            List<VesselPosition> missingLanes = new ArrayList<>();
+            List<VesselPosition> completedLanes = new ArrayList<>();
+            if (!mapFlowcellBarcodeToLanes.containsKey(fcBarcode)) {
+                missingLanes.addAll(entry.getValue());
+            } else {
+                List<VesselPosition> lanes = mapFlowcellBarcodeToLanes.get(fcBarcode);
+                for (VesselPosition lane: entry.getValue()) {
+                    if (!lanes.contains(lane)) {
+                        missingLanes.add(lane);
+                    } else {
+                        completedLanes.add(lane);
+                    }
+                }
+            }
+
+            if (!missingLanes.isEmpty()) {
+                mapFcToMissingLanes.put(flowcellVessel, missingLanes);
+            }
+            if (!completedLanes.isEmpty()) {
+                mapFcToCompletedLanes.put(flowcellVessel, completedLanes);
+            }
+        }
+
+        LabVesselSearchDefinition.VesselBatchTraverserCriteria downstreamBatchFinder =
+                new LabVesselSearchDefinition.VesselBatchTraverserCriteria();
+        labVessel.evaluateCriteria(downstreamBatchFinder, TransferTraverserCriteria.TraversalDirection.Descendants);
+
+        Set<LabBatch> fctSet = downstreamBatchFinder.getLabBatches().stream()
+                .filter(lb -> lb.getLabBatchType() == LabBatch.LabBatchType.FCT)
+                .collect(Collectors.toSet());
+
+        dto.setNumberOfReadGroupsAggregated(aggregatedLanes.size());
+        dto.setNumberOfLanesDesignated(fctSet.size());
+        dto.setNumberOfReadGroupsOnFlowcell(numLanesOnFlowcells);
+
+        List<FlowcellStatus> missingFlowcellStatus = new ArrayList<>();
+        for (Map.Entry<LabVessel, List<VesselPosition>> entry: mapFcToMissingLanes.entrySet()) {
+            buildFlowcellStatusInfo(downstreamBatchFinder, missingFlowcellStatus, entry);
+        }
+
+        List<FlowcellStatus> completedFlowcellStatus = new ArrayList<>();
+        for (Map.Entry<LabVessel, List<VesselPosition>> entry: mapFcToCompletedLanes.entrySet()) {
+            buildFlowcellStatusInfo(downstreamBatchFinder, completedFlowcellStatus, entry);
+        }
+
+        dto.setCompletedFlowcellStatuses(completedFlowcellStatus);
+
         return dto;
+    }
+
+    private void buildFlowcellStatusInfo(LabVesselSearchDefinition.VesselBatchTraverserCriteria downstreamBatchFinder,
+                                         List<FlowcellStatus> flowcellStatuses,
+                                         Map.Entry<LabVessel, List<VesselPosition>> entry) {
+        FlowcellStatus flowcellStatus = new FlowcellStatus();
+        LabVessel flowcell = entry.getKey();
+        String flowcellBarcode = flowcell.getLabel();
+        flowcellStatus.setFlowcell(flowcellBarcode);
+        String pendingLanes = entry.getValue().stream()
+                .map(VesselPosition::name)
+                .sorted()
+                .collect(Collectors.joining(","));
+        flowcellStatus.setPendingLanes(pendingLanes);
+
+        LabVesselSearchDefinition.VesselBatchTraverserCriteria upstreamBatchFinder =
+                new LabVesselSearchDefinition.VesselBatchTraverserCriteria();
+        flowcell.getContainerRole().applyCriteriaToAllPositions(
+                upstreamBatchFinder, TransferTraverserCriteria.TraversalDirection.Ancestors);
+
+        Map<String, String> mapFctToLink = downstreamBatchFinder.getLabBatches().stream()
+                .filter(lb -> lb.getLabBatchType() == LabBatch.LabBatchType.FCT)
+                .collect(Collectors.toMap(LabBatch::getBatchName, lb -> jiraUrl(lb.getBusinessKey())));
+
+        flowcellStatus.setJiraTickets(mapFctToLink);
+        flowcellStatus.setDashboardLink(dashboardLink.runStatusPage(flowcellBarcode));
+        flowcellStatuses.add(flowcellStatus);
     }
 
     public static ProductOrderSample findProductOrderSample(MercurySample mercurySample) {
@@ -303,16 +461,43 @@ public class AggregationTriageActionBean extends CoreActionBean {
         this.selectedSamples = selectedSamples;
     }
 
+    public List<FlowcellStatus> getFlowcellStatuses() {
+        return flowcellStatuses;
+    }
+
+    public String getPdoSample() {
+        return pdoSample;
+    }
+
+    public void setPdoSample(String pdoSample) {
+        this.pdoSample = pdoSample;
+    }
+
+    public OutOfSpecCommands getOosDecision() {
+        return oosDecision;
+    }
+
+    public void setOosDecision(
+            OutOfSpecCommands oosDecision) {
+        this.oosDecision = oosDecision;
+    }
+
     public static class TriageDto {
         private String library;
         private String pdoSample;
+        private String sampleVessel;
         private String pdo;
         private String coverage20x;
         private String contaminination;
         private String alignedQ20Bases;
         private String gender;
-        private String processingStatus;
+        private int numberOfReadGroupsAggregated;
+        private int numberOfReadGroupsOnFlowcell;
+        private int numberOfLanesDesignated;
         private String lod;
+        private List<FlowcellStatus> missingFlowcellStatuses;
+        private List<FlowcellStatus> completedFlowcellStatuses;
+
 
         public String getLibrary() {
             return library;
@@ -370,12 +555,28 @@ public class AggregationTriageActionBean extends CoreActionBean {
             this.gender = gender;
         }
 
-        public String getProcessingStatus() {
-            return processingStatus;
+        public int getNumberOfReadGroupsAggregated() {
+            return numberOfReadGroupsAggregated;
         }
 
-        public void setProcessingStatus(String processingStatus) {
-            this.processingStatus = processingStatus;
+        public void setNumberOfReadGroupsAggregated(int numberOfReadGroupsAggregated) {
+            this.numberOfReadGroupsAggregated = numberOfReadGroupsAggregated;
+        }
+
+        public int getNumberOfReadGroupsOnFlowcell() {
+            return numberOfReadGroupsOnFlowcell;
+        }
+
+        public void setNumberOfReadGroupsOnFlowcell(int numberOfReadGroupsOnFlowcell) {
+            this.numberOfReadGroupsOnFlowcell = numberOfReadGroupsOnFlowcell;
+        }
+
+        public int getNumberOfLanesDesignated() {
+            return numberOfLanesDesignated;
+        }
+
+        public void setNumberOfLanesDesignated(int numberOfLanesDesignated) {
+            this.numberOfLanesDesignated = numberOfLanesDesignated;
         }
 
         public String getLod() {
@@ -385,23 +586,133 @@ public class AggregationTriageActionBean extends CoreActionBean {
         public void setLod(String lod) {
             this.lod = lod;
         }
+
+        public List<FlowcellStatus> getMissingFlowcellStatuses() {
+            return missingFlowcellStatuses;
+        }
+
+        public void setMissingFlowcellStatus(
+                List<FlowcellStatus> flowcellStatuses) {
+            this.missingFlowcellStatuses = flowcellStatuses;
+        }
+
+        public List<FlowcellStatus> getCompletedFlowcellStatuses() {
+            return completedFlowcellStatuses;
+        }
+
+        public void setCompletedFlowcellStatuses(
+                List<FlowcellStatus> completedFlowcellStatuses) {
+            this.completedFlowcellStatuses = completedFlowcellStatuses;
+        }
+
+        public String getSampleVessel() {
+            return sampleVessel;
+        }
+
+        public void setSampleVessel(String sampleVessel) {
+            this.sampleVessel = sampleVessel;
+        }
     }
 
     public enum OutOfSpecCommands implements Displayable {
-        SEND_TO_TOP_OFFS("Send To Topoffs"),
-        REWORK_FROM_STOCK("Rework From Stock"),
+        SEND_TO_TOP_OFFS("Send To Topoffs", "Pooling Bucket"),
+        REWORK_FROM_STOCK("Rework From Stock", "Pico/Plating Bucket", IsRework.TRUE),
         OVERRIDE_IN_SPEC("Override As In Spec");
 
-        private final String displayname;
+        private final String displayName;
+        private final String bucketDefName;
+        private final IsRework isRework;
 
-        OutOfSpecCommands(String displayname) {
+        OutOfSpecCommands(String displayName) {
+            this(displayName, null, IsRework.FALSE);
+        }
 
-            this.displayname = displayname;
+        OutOfSpecCommands(String displayName, String bucketDefName) {
+            this(displayName, bucketDefName, IsRework.FALSE);
+        }
+
+        OutOfSpecCommands(String displayName, String bucketDefName, IsRework isRework) {
+            this.displayName = displayName;
+            this.bucketDefName = bucketDefName;
+            this.isRework = isRework;
         }
 
         @Override
         public String getDisplayName() {
-            return this.displayname;
+            return this.displayName;
+        }
+
+        public String getBucketDefName() {
+            return bucketDefName;
+        }
+
+        public boolean getIsRework() {
+            return isRework == IsRework.TRUE;
+        }
+    }
+
+    public enum IsRework {
+        TRUE(true),
+        FALSE(false);
+        private final boolean value;
+
+        IsRework(boolean value) {
+            this.value = value;
+        }
+
+        public boolean booleanValue() {
+            return value;
+        }
+    }
+
+    public static class FlowcellStatus {
+        private String flowcell;
+        private String pendingLanes;
+        private Map<String, String> jiraTickets;
+        private List<String> hsaStatus;
+        private String dashboardLink;
+
+        public FlowcellStatus() {
+        }
+
+        public String getFlowcell() {
+            return flowcell;
+        }
+
+        public void setFlowcell(String flowcell) {
+            this.flowcell = flowcell;
+        }
+
+        public String getPendingLanes() {
+            return pendingLanes;
+        }
+
+        public void setPendingLanes(String pendingLanes) {
+            this.pendingLanes = pendingLanes;
+        }
+
+        public Map<String, String> getJiraTickets() {
+            return jiraTickets;
+        }
+
+        public void setJiraTickets(Map<String, String> jiraTickets) {
+            this.jiraTickets = jiraTickets;
+        }
+
+        public List<String> getHsaStatus() {
+            return hsaStatus;
+        }
+
+        public void setHsaStatus(List<String> hsaStatus) {
+            this.hsaStatus = hsaStatus;
+        }
+
+        public void setDashboardLink(String dashboardLink) {
+            this.dashboardLink = dashboardLink;
+        }
+
+        public String getDashboardLink() {
+            return dashboardLink;
         }
     }
 }

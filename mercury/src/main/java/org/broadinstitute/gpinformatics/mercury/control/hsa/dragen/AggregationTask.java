@@ -75,7 +75,8 @@ public class AggregationTask extends ProcessTask {
                 vcSampleName(vcSampleName).
                 enableVariantCaller(true).
                 enableDuplicateMarking(true).
-                enableMapAlignOutput(false).
+                enableMapAlignOutput(true).
+                outputFormat("CRAM").
                 qcCrossContaminationVcf(qcContaminationFile).
                 qcCoverageRegion(qcCoverageBedFile).
                 qcCoverageReports("cov_report").

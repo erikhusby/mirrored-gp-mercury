@@ -7,6 +7,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -276,5 +278,20 @@ public abstract class State {
 
     public void addSample(MercurySample mercurySample) {
         this.mercurySamples.add(mercurySample);
+    }
+
+    public boolean doesContainSample(MercurySample mercurySample) {
+        if (getMercurySamples().contains(mercurySample)) {
+            return true;
+        } else {
+            for (LabVessel labVessel: mercurySample.getLabVessel()) {
+                for (SampleInstanceV2 sampleInstanceV2: labVessel.getSampleInstancesV2()) {
+                    if (sampleInstanceV2.getRootOrEarliestMercurySample().equals(mercurySample)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 }

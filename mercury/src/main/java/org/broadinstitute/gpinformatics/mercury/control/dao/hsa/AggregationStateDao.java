@@ -29,14 +29,14 @@ import java.util.stream.Collectors;
 @TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class AggregationStateDao extends GenericDao {
 
-    public List<AggregationState> findBySample(MercurySample mercurySample) {
-        if (mercurySample == null) {
+    public List<AggregationState> findBySampleKey(String sampleKey) {
+        if (sampleKey == null) {
             return Collections.emptyList();
         }
 
         List<AggregationState> resultList = new ArrayList<>();
 
-        Set<String> sampleAlias = Collections.singleton(mercurySample.getSampleKey());
+        Set<String> sampleAlias = Collections.singleton(sampleKey);
 
         CriteriaBuilder cb = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<AggregationState> query = cb.createQuery(AggregationState.class);
@@ -57,5 +57,9 @@ public class AggregationStateDao extends GenericDao {
         return resultList.stream()
                 .sorted(Comparator.comparing(AggregationState::getStartTime))
                 .collect(Collectors.toList());
+    }
+
+    public List<AggregationState> findBySample(MercurySample mercurySample) {
+        return findBySampleKey(mercurySample.getSampleKey());
     }
 }

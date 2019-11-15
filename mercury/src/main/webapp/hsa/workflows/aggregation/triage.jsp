@@ -20,17 +20,40 @@
     <stripes:layout-component name="extraHead">
         <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap.min.js"></script>
 
+        <style>
+            td.details-control {
+                background: url('${ctxpath}/images/plus.png') no-repeat center center;
+                cursor: pointer;
+            }
+            tr.shown td.details-control {
+                background: url('${ctxpath}/images/shown.gif') no-repeat center center;
+            }
+
+            .table .text-right {text-align: right}
+
+            .borderless td, .borderless th {
+                border: none;
+            }
+        </style>
         <script type="text/javascript">
             $j(document).ready(function() {
-                $j('#inSpecTable').DataTable({
+               var inSpecTable = $j('#inSpecTable').DataTable({
                     renderer: "bootstrap",
                     columns: [
                         {sortable: false},
+                        {
+                            "className":      'details-control',
+                            "orderable":      false,
+                            "data":           null,
+                            "defaultContent": ''
+                        },
                         {sortable: true, "sClass": "nowrap"},
                         {sortable: true, "sClass": "nowrap"},
                         {sortable: true, "sClass": "nowrap"},
                         {sortable: true, "sClass": "nowrap"},
                         {sortable: true, "sClass": "nowrap"},
+                        {sortable: true, "sClass": "nowrap"},
+                        {sortable: true},
                         {sortable: true},
                         {sortable: true},
                         {sortable: true},
@@ -38,15 +61,23 @@
                     ],
                 });
 
-                $j('#oosSpecTable').DataTable({
+                var oosTable = $j('#oosSpecTable').DataTable({
                     renderer: "bootstrap",
                     columns: [
                         {sortable: false},
+                        {
+                            "className":      'details-control',
+                            "orderable":      false,
+                            "data":           null,
+                            "defaultContent": ''
+                        },
                         {sortable: true, "sClass": "nowrap"},
                         {sortable: true, "sClass": "nowrap"},
                         {sortable: true, "sClass": "nowrap"},
                         {sortable: true, "sClass": "nowrap"},
                         {sortable: true, "sClass": "nowrap"},
+                        {sortable: true, "sClass": "nowrap"},
+                        {sortable: true},
                         {sortable: true},
                         {sortable: true},
                         {sortable: true},
@@ -73,6 +104,27 @@
                     e.preventDefault();
                     $(this).tab('show');
                 });
+
+                $('#oosSpecTable tbody').on('click', 'td.details-control', function () {
+                    var tr = $(this).closest('tr');
+                    var row = oosTable.row( tr );
+                    var rowData = row.data();
+                    var pdoSample = rowData[2].split(/\s+/)[0]; // Include SM then the table data for some reason?
+
+                    if ( row.child.isShown() ) {
+                        // This row is already open - close it
+                        row.child.hide();
+                        tr.removeClass('shown');
+                    }
+                    else {
+                        var jqueryObj = $j('#flowcellStatusTable-' + pdoSample);
+                        row.child(jqueryObj.html()).show();
+                        tr.addClass('shown');
+                    }
+                });
+
+                $j('.flowcellStatusTable').hide();
+
             });
         </script>
     </stripes:layout-component>
@@ -102,9 +154,9 @@
                     <c:set var="dtoName" value="oosTriageDtos" scope="request"/>
                     <jsp:include page="triage_table.jsp"/>
                     <div class="control-group">
-                        <stripes:label for="decision" name="decision" class="control-label"/>
+                        <stripes:label for="oosDecision" name="decision" class="control-label"/>
                         <div class="controls">
-                            <stripes:select name="decision" id="oosDecision">
+                            <stripes:select name="oosDecision" id="oosDecision">
                                 <stripes:options-enumeration label="displayName"
                                                              enum="org.broadinstitute.gpinformatics.mercury.presentation.hsa.AggregationTriageActionBean.OutOfSpecCommands"/>
                             </stripes:select>

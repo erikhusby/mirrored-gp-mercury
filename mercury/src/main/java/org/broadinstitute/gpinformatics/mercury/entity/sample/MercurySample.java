@@ -43,10 +43,12 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -474,5 +476,12 @@ public class MercurySample extends AbstractSample {
     public void addState(State state) {
         getStates().add(state);
         state.addSample(this);
+    }
+
+    public <T extends State> Optional<T> getMostRecentStateOfType(Class<T> clazz) {
+        return getStates().stream()
+                .filter(state -> OrmUtil.proxySafeIsInstance(state, clazz) && state.isComplete() && state.getMercurySamples().contains(this))
+                .map(state -> OrmUtil.proxySafeCast(state, clazz))
+                .max(Comparator.comparing(State::getEndTime));
     }
 }

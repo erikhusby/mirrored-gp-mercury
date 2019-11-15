@@ -118,7 +118,7 @@ public class PickerVesselPlugin implements ListPlugin {
         return null;
     }
 
-    private Triple<RackOfTubes, VesselPosition, String> findStorageContainer(LabVessel labVessel) {
+    public static Triple<RackOfTubes, VesselPosition, String> findStorageContainer(LabVessel labVessel) {
         if (labVessel.getStorageLocation() != null) {
             // If Barcoded Tube, attempt to find its container by grabbing most recent Storage Check-in event.
             if (OrmUtil.proxySafeIsInstance(labVessel, BarcodedTube.class)) {
