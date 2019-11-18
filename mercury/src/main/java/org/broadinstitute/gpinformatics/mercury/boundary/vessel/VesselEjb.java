@@ -844,8 +844,12 @@ public class VesselEjb {
                 }
 
                 if (tube.getVolume() != null) {
-                    tube.setVolume(tube.getVolume().subtract(volumeRemoved));
-                } else {
+                    BigDecimal newVolume = tube.getVolume().subtract(volumeRemoved);
+                    if (newVolume.compareTo(BigDecimal.ZERO) < 0) {
+                        tube.setVolume(BigDecimal.ZERO);
+                    } else {
+                        tube.setVolume(newVolume);
+                    }
                     messageCollection.addError(
                             "Tube " + tube.getLabel() + " has no volume value.");
                 }
