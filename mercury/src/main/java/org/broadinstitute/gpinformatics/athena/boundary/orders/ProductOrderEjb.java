@@ -1531,9 +1531,12 @@ public class ProductOrderEjb {
         ProductOrder editOrder =
                 productOrderDao.findByIdSafely(productOrderID, LockModeType.PESSIMISTIC_WRITE);
 
+        String jiraKey = "";
         if (editOrder == null) {
             throw new InformaticsServiceException(
                     "The product order was not found: " + ((businessKey == null) ? "" : businessKey));
+        } else {
+            jiraKey = editOrder.getJiraTicketKey();
         }
         if (editOrder.isSubmitted()) {
             throw new InformaticsServiceException("This product order " + editOrder.getBusinessKey() +
@@ -1541,8 +1544,8 @@ public class ProductOrderEjb {
         }
         editOrder.prepareToSave(userBean.getBspUser());
         try {
-            if (editOrder.isDraft()) {
-                // Only Draft orders are not already created in JIRA.
+            if (editOrder.isDraft() && StringUtils.isBlank(jiraKey)) {
+                // Draft orders and Walkup Orders are not already created in JIRA.
                 productOrderJiraUtil.createIssueForOrder(editOrder);
             }
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);

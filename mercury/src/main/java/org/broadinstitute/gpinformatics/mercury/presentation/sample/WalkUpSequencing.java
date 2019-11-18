@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.presentation.sample;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 
 import java.io.Serializable;
@@ -35,6 +34,8 @@ public class WalkUpSequencing implements Serializable {
     private String comments;
     private String analysisType;
     private String baitSetName;
+
+    private WalkUpSequencingPooledSample pooledSampleInfo;
 
     public String getTubeBarcode() {
         return tubeBarcode;

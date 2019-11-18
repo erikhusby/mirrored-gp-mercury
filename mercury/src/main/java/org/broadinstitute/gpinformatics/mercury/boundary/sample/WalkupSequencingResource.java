@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
-import clover.org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.presentation.sample.WalkUpSequencing;
 

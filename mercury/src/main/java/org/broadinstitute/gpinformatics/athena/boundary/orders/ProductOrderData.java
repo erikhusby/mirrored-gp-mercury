@@ -283,6 +283,10 @@ public class ProductOrderData {
         this.productOrderKey = productOrderKey;
     }
 
+    public boolean hasSapQuote() {
+        return StringUtils.isNotBlank(quoteId) && StringUtils.isNumeric(quoteId);
+    }
+
     /**
      * Create a ProductOrder from this ProductOrderData
      *

@@ -36,6 +36,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
@@ -292,6 +293,44 @@ public class ProductOrderResource {
         return new ProductOrderData(createProductOrder(productOrderData), true);
     }
 
+    @POST
+    @Path("create")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public String createAndPlace(@Nonnull ProductOrderData productOrderData) {
+
+        MessageCollection messageCollection = new MessageCollection();
+        String resultsOutput = "";
+        ProductOrder createdOrder = null;
+        StringBuffer resultsBuilder = new StringBuffer();
+        try {
+            createdOrder = createProductOrder(productOrderData);
+            resultsBuilder.append("\"orderStatus\":\"success\"");
+
+            productOrderEjb.placeProductOrder(createdOrder.getProductOrderId(), createdOrder.getBusinessKey(),
+                    messageCollection);
+            if (createdOrder.hasSapQuote()) {
+                productOrderEjb.publishProductOrderToSAP(createdOrder, messageCollection, true);
+            }
+        } catch (DuplicateTitleException | NoSamplesException | ApplicationValidationException |
+                InvalidProductException | SAPInterfaceException e) {
+            List<String> errors = new ArrayList<>();
+            errors.add(e.getMessage());
+            errors.addAll(messageCollection.getErrors());
+            if(resultsBuilder.capacity()>0) {
+                resultsBuilder.append(",");
+            }
+            resultsBuilder.append("\"error\":\"").append(StringUtils.join(errors, ",")).append("\"");
+            log.error(e);
+        }
+        resultsBuilder.insert(0,"{");
+        resultsBuilder.append("}");
+
+        return resultsBuilder.toString() ;
+    }
+
+
+
     /**
      * Create a product order in Pending state, and create its corresponding JIRA ticket.
      */
@@ -314,7 +353,11 @@ public class ProductOrderResource {
         try {
             productOrder.setCreatedBy(user.getUserId());
             productOrder.prepareToSave(user, ProductOrder.SaveType.CREATING);
-            productOrder.setOrderStatus(ProductOrder.OrderStatus.Pending);
+            if(StringUtils.isBlank(productOrderData.getStatus())) {
+                productOrder.setOrderStatus(ProductOrder.OrderStatus.Pending);
+            } else {
+                productOrder.setOrderStatus(ProductOrder.OrderStatus.fromDisplayName(productOrderData.getStatus()));
+            }
             if(productOrder.getProduct().isClinicalProduct()) {
                 productOrder.setClinicalAttestationConfirmed(true);
             }
@@ -323,7 +366,11 @@ public class ProductOrderResource {
             // is only one IRB on the RP.
             productOrder.setRegulatoryInfos(productOrder.getResearchProject().getRegulatoryInfos());
 
-            productOrderJiraUtil.createIssueForOrder(productOrder);
+            if(StringUtils.isBlank(productOrderData.getProductOrderKey())) {
+                productOrderJiraUtil.createIssueForOrder(productOrder);
+            } else {
+                productOrder.setJiraTicketKey(productOrderData.getProductOrderKey());
+            }
 
             // Not supplying add-ons at this point, just saving what we defined above and then flushing to make sure
             // any DB constraints have been enforced.

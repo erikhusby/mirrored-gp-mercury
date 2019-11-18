@@ -1617,6 +1617,20 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             return statuses;
         }
 
+        public static OrderStatus fromDisplayName(String displayName) {
+
+            OrderStatus foundType = null;
+
+            for (OrderStatus orderStatus : values()) {
+                if(orderStatus.getDisplayName().equals(displayName)) {
+                    foundType = orderStatus;
+                    break;
+                }
+            }
+            return foundType;
+        }
+
+
         @Override
         public String getDisplayName() {
             return name();
