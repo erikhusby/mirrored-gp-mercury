@@ -581,7 +581,7 @@ public class LabMetricFixupTest extends Arquillian {
      * 10x NCI inters low input\tPlating Pico\tTrue
      * 12128 inters\tPlating Pico\tTrue
      */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void fixupSupport3483() throws IOException {
         userBean.loginOSUser();
         List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ChangeMetricRunType.txt"));
