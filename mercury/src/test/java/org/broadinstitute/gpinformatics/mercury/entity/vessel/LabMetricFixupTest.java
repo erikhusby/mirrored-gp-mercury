@@ -45,7 +45,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 /**
  * Fixup production Lab Metric entities
@@ -71,7 +71,7 @@ public class LabMetricFixupTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(PROD, "prod");
+        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
     @Test(enabled = false)
