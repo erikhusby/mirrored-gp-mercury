@@ -8,12 +8,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * Fetches available lab metric and decision data for each page of a lab vessel search.
@@ -121,23 +121,8 @@ public class LabVesselMetricPlugin implements ListPlugin {
      */
     public static LabMetric latestTubeMetric(List<LabMetric> labMetrics) {
         if (CollectionUtils.isNotEmpty(labMetrics)) {
-            Collections.sort(labMetrics, new Comparator<LabMetric>() {
-                @Override
-                public int compare(LabMetric o1, LabMetric o2) {
-                    // Puts tubes before plates.
-                    LabVessel.ContainerType containerType1 = o1.getLabVessel().getType();
-                    LabVessel.ContainerType containerType2 = o2.getLabVessel().getType();
-                    int o1plate = (o1.getLabVessel().getType() == LabVessel.ContainerType.PLATE_WELL) ? 1 : 0;
-                    int o2plate = (o2.getLabVessel().getType() == LabVessel.ContainerType.PLATE_WELL) ? 1 : 0;
-                    if (o1plate != o2plate) {
-                        return o1plate - o2plate;
-                    }
-                    // Puts recent metric before older metric.
-                    int dateCompare = o2.getCreatedDate().compareTo(o1.getCreatedDate());
-                    return (dateCompare != 0) ? dateCompare : o2.getLabMetricId().compareTo(o1.getLabMetricId());
-                }
-            });
-            return labMetrics.get(0);
+            TreeMap<Date, LabMetric> sortedMapRunDateToMetric = VesselMetricDetailsPlugin.buildMapRunDateToMetric(labMetrics);
+            return sortedMapRunDateToMetric.lastEntry().getValue();
         } else {
             return null;
         }

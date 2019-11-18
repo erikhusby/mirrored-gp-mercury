@@ -265,7 +265,8 @@ public class BillingAdaptor implements Serializable {
 
                                         if (quantityForSAP > 0) {
                                             //todo, validate if the quantity override parameter is still necessary
-                                            sapBillingId = sapService.billOrder(item, null, new Date());
+                                            sapBillingId = sapService.billOrder(item, null,
+                                                    item.getWorkCompleteDate());
                                             result.setSapBillingId(sapBillingId);
                                             billingEjb.updateSapLedgerEntries(item, workId, sapBillingId,
                                                     BillingSession.SUCCESS);

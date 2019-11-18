@@ -347,6 +347,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private boolean notFromHumans;
     private boolean fromClinicalLine;
+    private boolean sampleManipulationOnly;
 
     private GenotypingChip genotypingChip;
 
@@ -1427,10 +1428,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             Optional<String> skipRegulatoryReason = Optional.ofNullable(editOrder.getSkipRegulatoryReason());
             skipRegulatoryReason.ifPresent(reason -> {
-                if(reason.equals(ResearchProject.FROM_CLINICAL_CELL_LINE)) {
+                if (ResearchProject.FROM_CLINICAL_CELL_LINE.equals(reason)) {
                     fromClinicalLine = true;
-                } else {
+                } else if (ResearchProject.NOT_FROM_HUMANS_REASON_FILL.equals(reason)) {
                     notFromHumans = true;
+                } else if (ResearchProject.SAMPLE_MANIPULATION_ONLY.equals(reason)) {
+                    sampleManipulationOnly = true;
                 }
             });
 
@@ -3651,6 +3654,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setFromClinicalLine(boolean fromClinicalLine) {
         this.fromClinicalLine = fromClinicalLine;
+    }
+
+    public boolean isSampleManipulationOnly() {
+        return sampleManipulationOnly;
+    }
+
+    public void setSampleManipulationOnly(boolean sampleManipulationOnly) {
+        this.sampleManipulationOnly = sampleManipulationOnly;
     }
 
     @Inject

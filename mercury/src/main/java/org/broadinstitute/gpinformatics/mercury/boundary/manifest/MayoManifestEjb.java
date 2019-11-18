@@ -19,7 +19,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.infrastructure.QuarantinedDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -52,7 +51,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -86,6 +84,8 @@ public class MayoManifestEjb {
     public static final String NOT_RECEIVED = "Package %s has not been received.";
     public static final String ONLY_METADATA_CHANGES =
             "Manifest update cannot remove or change tubes or positions in accessioned rack %s.";
+    public static final String NO_VOL_CONC_MASS_CHANGES =
+            "Manifest update cannot change tube volume, concentration, or mass: %s.";
     public static final String PACKAGE_UPDATED = "Manifest updated from %s with these changes: %s.";
     public static final String QUARANTINED = "%s %s is quarantined because %s.";
     public static final String RACK_NOT_RECEIVED = "Package containing %s has not been received.";
@@ -386,18 +386,45 @@ public class MayoManifestEjb {
             return;
         }
 
+        // Finds the accessioned racks and tubes.
+        List<String> oldAndNewRacks = Stream.concat(newRecords.stream(), manifestSession.getRecords().stream()).
+                map(manifestRecord -> manifestRecord.getMetadataByKey(Metadata.Key.RACK_LABEL).getValue()).
+                distinct().
+                collect(Collectors.toList());
+        List<String> accessionedRacks = labVesselDao.findByListIdentifiers(oldAndNewRacks).stream().
+                map(LabVessel::getLabel).
+                sorted().
+                collect(Collectors.toList());
+        List<String> accessionedTubes = newRecords.stream().
+                filter(record -> accessionedRacks.contains(record.getValueByKey(Metadata.Key.RACK_LABEL))).
+                map(record -> record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE)).
+                sorted().
+                collect(Collectors.toList());
+
         // Extracts the changes found in the manifest records.
-        Pair<Map<MercurySample, Set<Metadata>>, Map<String, String>> diffPair = manifestDiffs(manifestSession,
-                newRecords);
-        Map<MercurySample, Set<Metadata>> metadataDiffs = diffPair.getLeft();
-        Map<String, String> rackDiffs = diffPair.getRight();
+        Map<MercurySample, Set<Metadata>> metadataDiffs = metadataDiffs(newRecords);
+        Map<String, String> rackDiffs = rackDiffs(manifestSession, newRecords);
 
         // Errors if any accessioned racks are removed or have position or tube changes.
-        String accessionedRacks = labVesselDao.findByListIdentifiers(new ArrayList<>(rackDiffs.keySet())).stream().
-                map(LabVessel::getLabel).
-                sorted().collect(Collectors.joining(" "));
-        if (StringUtils.isNotBlank(accessionedRacks)) {
-            messages.addError(ONLY_METADATA_CHANGES, accessionedRacks);
+        String accessionedAndChanged = CollectionUtils.intersection(accessionedRacks, rackDiffs.keySet()).
+                stream().sorted().collect(Collectors.joining(" "));
+        if (StringUtils.isNotBlank(accessionedAndChanged)) {
+            messages.addError(ONLY_METADATA_CHANGES, accessionedAndChanged);
+            return;
+        }
+
+        // Errors if any accessioned sample's volume, concentration, or mass is changed.
+        String accessionedAndChangedTubes = metadataDiffs.entrySet().stream().
+                filter(mapEntry -> mapEntry.getValue().stream().
+                        anyMatch(metadata1 -> metadata1.getKey() == Metadata.Key.VOLUME ||
+                                metadata1.getKey() == Metadata.Key.CONCENTRATION ||
+                                metadata1.getKey() == Metadata.Key.MASS)).
+                map(mapEntry -> mapEntry.getKey().getSampleKey()).
+                filter(sampleKey -> accessionedTubes.contains(sampleKey)).
+                sorted().
+                collect(Collectors.joining(" "));
+        if (StringUtils.isNotBlank(accessionedAndChangedTubes)) {
+            messages.addError(NO_VOL_CONC_MASS_CHANGES, accessionedAndChangedTubes);
             return;
         }
 
@@ -544,12 +571,9 @@ public class MayoManifestEjb {
     }
 
     /**
-     * Extracts the differences found in the new manifest records.
-     * @return the updates to existing MercurySample metadata, and a map of rack barcode to description of changes.
+     * Extracts the sample metadata differences found in the new manifest records.
      */
-    private Pair<Map<MercurySample, Set<Metadata>>, Map<String, String>> manifestDiffs(
-            ManifestSession manifestSession, List<ManifestRecord> updateRecords) {
-
+    private Map<MercurySample, Set<Metadata>> metadataDiffs(List<ManifestRecord> updateRecords) {
         // Maps the update record's sample name to update sample metadata.
         Multimap<String, Metadata> newMetadataRecords = HashMultimap.create();
         for (ManifestRecord manifestRecord : updateRecords) {
@@ -571,8 +595,12 @@ public class MayoManifestEjb {
                 metadataDiffs.put(mercurySample, diffs);
             }
         }
+        return metadataDiffs;
+    }
 
-        // Lists the update record's rack barcode, position, and tube barcode.
+    /** Returns a list of racks that have tube or position changes, and an accompanying description. */
+    private Map<String, String> rackDiffs(ManifestSession manifestSession, List<ManifestRecord> updateRecords) {
+        // List of the update record's rack barcode, position, and tube barcode.
         List<Triple<String, String, String>> updateVessels = updateRecords.stream().
                 map(record -> Triple.of(
                         record.getValueByKey(Metadata.Key.RACK_LABEL),
@@ -581,7 +609,7 @@ public class MayoManifestEjb {
                 sorted(Comparator.comparing(triple -> triple.toString("%s %s %s"))).
                 collect(Collectors.toList());
 
-        // Lists the existing manifest record's rack barcode, position, and tube barcode.
+        // List of the existing manifest record's rack barcode, position, and tube barcode.
         List<Triple<String, String, String>> existingVessels = manifestSession.getRecords().stream().
                 map(record -> Triple.of(
                         record.getValueByKey(Metadata.Key.RACK_LABEL),
@@ -631,8 +659,7 @@ public class MayoManifestEjb {
                 rackDiffs.put(rack, StringUtils.join(description, ", "));
             }
         });
-
-        return Pair.of(metadataDiffs, rackDiffs);
+        return rackDiffs;
     }
 
     /**
@@ -751,6 +778,15 @@ public class MayoManifestEjb {
                 rctMessages.add(msg1);
                 messages.addError(msg1);
             });
+
+        } else if (StringUtils.isNotBlank(bean.getRackScan().get(VesselPosition.H12.name())) ||
+                StringUtils.isNotBlank(bean.getRackScan().get(VesselPosition.G12.name()))) {
+            // Quarantines the rack if H12 and G12 are not both empty.
+            quarantinedDao.addOrUpdate(Quarantined.ItemSource.MAYO, Quarantined.ItemType.RACK, bean.getRackBarcode(),
+                    Quarantined.H12_G12);
+            String msg = String.format(QUARANTINED, "Rack", bean.getRackBarcode(), Quarantined.H12_G12);
+            rctMessages.add(msg);
+            messages.addError(msg);
         }
 
         if (!messages.hasErrors()) {
@@ -783,7 +819,7 @@ public class MayoManifestEjb {
                 sampleMetadata.putAll(sampleName, manifestRecord.getMetadata());
             }
 
-            // Sets the tube's volume and concentration from values in the manifest.
+            // Sets the tube's volume, concentration, and mass from values in the manifest.
             for (BarcodedTube tube : vesselPositionToTube.values()) {
                 String sampleName = tube.getLabel();
                 for (Metadata metadata : sampleMetadata.get(sampleName)) {
@@ -791,13 +827,15 @@ public class MayoManifestEjb {
                         tube.setVolume(MathUtils.scaleTwoDecimalPlaces(new BigDecimal(metadata.getValue())));
                     } else if (metadata.getKey() == Metadata.Key.CONCENTRATION) {
                         tube.setConcentration(MathUtils.scaleTwoDecimalPlaces(new BigDecimal(metadata.getValue())));
+                    } else if (metadata.getKey() == Metadata.Key.MASS) {
+                        tube.setMass(MathUtils.scaleTwoDecimalPlaces(new BigDecimal(metadata.getValue())));
                     }
                 }
             }
 
             // Creates mercury samples, all with MetadataSource.MERCURY and metadata from the manifest.
-            Set<Metadata> receiptDate = Collections.singleton(
-                    Metadata.createMetadata(Metadata.Key.RECEIPT_DATE, DateUtils.getDate(new Date())));
+            Set<Metadata> receiptDate = Collections.singleton(Metadata.createMetadata(Metadata.Key.RECEIPT_DATE,
+                    manifestSession.getUpdateData().getCreatedDate()));
             for (BarcodedTube tube : vesselPositionToTube.values()) {
                 String sampleName = tube.getLabel();
                 MercurySample mercurySample = new MercurySample(sampleName, MercurySample.MetadataSource.MERCURY);

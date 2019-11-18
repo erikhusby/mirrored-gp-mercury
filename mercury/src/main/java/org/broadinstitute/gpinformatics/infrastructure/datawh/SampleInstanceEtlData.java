@@ -78,6 +78,7 @@ public class SampleInstanceEtlData {
                     && bucketEntry.getCreatedDate().getTime() > bucketTs
                     && bucketEntry.getCreatedDate().getTime() <= eventTs) {
                     sampleInstanceData.labBatch = bucketEntry.getLabBatch();
+                    sampleInstanceData.pdo = bucketEntry.getProductOrder();
                     bucketTs = bucketEntry.getCreatedDate().getTime();
                 }
             }

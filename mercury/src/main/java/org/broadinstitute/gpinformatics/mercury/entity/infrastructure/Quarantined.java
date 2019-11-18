@@ -19,6 +19,7 @@ import java.util.List;
 public class Quarantined {
     // Non-user selectable quarantine reasons.
     public static final String MISMATCH = "Wrong tube or position";
+    public static final String H12_G12 = "Tube at H12 or G12";
     // The next one is used in gpuitest. If you change it here, change it there too.
     public static final String MISSING_MANIFEST = "Missing manifest";
     public static final String RACK_BARCODE_MISMATCH = "Entered rack barcode(s) don't match manifest";
