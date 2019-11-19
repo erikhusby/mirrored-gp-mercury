@@ -101,6 +101,9 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         NextSeqFlowcell("Flowcell4LaneNextSeq", "NextSeq Flowcell", VesselGeometry.FLOWCELL1x4, "Illumina NextSeq",
                 "^\\w+BG..$", "NovaSeq", CreateFields.IssueType.NEXTSEQ, LabBatch.LabBatchType.FCT, CreateFct.YES,
                 "NextSeq", LoadFromColumn.NO),
+        ISeqFlowcell("Flowcell1LaneISeq", "iSeq Flowcell", VesselGeometry.FLOWCELL1x1, "Illumina iSeq",
+                "^\\w+\\-\\d{4}$", "iSeq", CreateFields.IssueType.ISEQ, LabBatch.LabBatchType.FCT, CreateFct.YES,
+                "iSeq", LoadFromColumn.NO),
         OtherFlowcell("FlowcellUnknown", "Unknown Flowcell", VesselGeometry.FLOWCELL1x2, "Unknown Model", ".*", null,
                 null, null, CreateFct.NO, "Unknown", LoadFromColumn.NO);
 
@@ -289,6 +292,8 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
                 return NovaSeqSPFlowcell;
             } else if (FlowcellType.NextSeqFlowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
                 return NextSeqFlowcell;
+            } else if (FlowcellType.ISeqFlowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
+                return ISeqFlowcell;
             }
             return null;
         }
