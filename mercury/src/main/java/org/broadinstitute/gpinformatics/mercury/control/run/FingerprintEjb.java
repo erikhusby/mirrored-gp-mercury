@@ -115,6 +115,10 @@ public class FingerprintEjb {
                     fluiLodCells[rowIndex][colIndex] = String.valueOf(df.format(lodScore));
                     ++colIndex;
                     ++lodScoreIndex;
+                } else {
+                    throw new RuntimeException(
+                            "Couldn't calculate lod score for " + scores.get(lodScoreIndex).getMiddle()
+                            + " , " + scores.get(lodScoreIndex).getRight());
                 }
             }
             ++rowIndex;

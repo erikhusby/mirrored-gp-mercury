@@ -61,7 +61,7 @@ public class FingerprintMatrixActionBean extends CoreActionBean {
      * Download .xlsx file containing pairwise sample matrix with lod scores
      */
     @HandlesEvent("downloadMatrix")
-    public Resolution downloadMatrix() throws IOException {
+    public Resolution downloadMatrix() throws Exception {
         int smidLimit = 200;
 
         if (sampleId == null && participantId == null) {
@@ -83,21 +83,27 @@ public class FingerprintMatrixActionBean extends CoreActionBean {
             }
         }
 
-        Workbook workbook = fingerprintEjb.makeMatrix(fingerprints, platforms);
+        try{
+            Workbook workbook = fingerprintEjb.makeMatrix(fingerprints, platforms);
 
-        String filename = "";
-        if (sampleId != null) {
-            filename = sampleId.substring(0, 8) + "_" + formatDate(new Date()) + "_FP_MATRIX" + ".xlsx";
-        } else if (participantId != null) {
-            filename = participantId.substring(0, 8) + "_" + formatDate(new Date()) + "_FP_MATRIX" + ".xlsx";
+            String filename = "";
+            if (sampleId != null) {
+                filename = sampleId.substring(0, 8) + "_" + formatDate(new Date()) + "_FP_MATRIX" + ".xlsx";
+            } else if (participantId != null) {
+                filename = participantId.substring(0, 8) + "_" + formatDate(new Date()) + "_FP_MATRIX" + ".xlsx";
+            }
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            workbook.write(out);
+            StreamingResolution stream = new StreamingResolution(StreamCreatedSpreadsheetUtil.XLS_MIME_TYPE,
+                    new ByteArrayInputStream(out.toByteArray()));
+            stream.setFilename(filename);
+
+            return stream;
+
+        } catch (Exception e) {
+            addGlobalValidationError(e.getMessage());
+            return new ForwardResolution(VIEW_PAGE);
         }
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        workbook.write(out);
-        StreamingResolution stream = new StreamingResolution(StreamCreatedSpreadsheetUtil.XLS_MIME_TYPE,
-                new ByteArrayInputStream(out.toByteArray()));
-        stream.setFilename(filename);
-
-        return stream;
     }
 
     /**
