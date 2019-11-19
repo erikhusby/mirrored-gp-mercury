@@ -79,6 +79,7 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     public static final String FROM_CLINICAL_CELL_LINE =
             "Samples will be processed through a clinical workflow and were received with a signed clinical requisition.";
 
+    public static final String SAMPLE_MANIPULATION_ONLY = "Sample manipulation only (no production of genomic data)";
 
 
     public boolean isResearchOnly() {
@@ -767,10 +768,13 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
      *
      * @return collection of research projects
      */
+
     private static Collection<ResearchProject> collectChildResearchProjects(Collection<ResearchProject> collectedProjects) {
+        Collection<ResearchProject> childProjects = new HashSet<>();
         for (ResearchProject childResearchProject : collectedProjects) {
-            collectedProjects.addAll(collectChildResearchProjects(childResearchProject.getChildProjects()));
+            childProjects.addAll(collectChildResearchProjects(childResearchProject.getChildProjects()));
         }
+        collectedProjects.addAll(childProjects);
         return collectedProjects;
     }
 

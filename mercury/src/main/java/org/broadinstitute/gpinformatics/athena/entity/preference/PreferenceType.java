@@ -88,13 +88,13 @@ public enum PreferenceType {
     USER_PRODUCT_ORDER_COLUMN_SETS("User Product Order Column Sets", PreferenceScope.USER, 1,
             new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
 
-    GLOBAL_QUEUE_GROUPING_SEARCH_INSTANCES("Global Queue Grouping Search Instances", PreferenceScope.GLOBAL, 1,
+    GLOBAL_EXT_LIBRARY_SEARCH_INSTANCES("Global External Library Search Instances", PreferenceScope.GLOBAL, 1,
             new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
-    GLOBAL_QUEUE_GROUPING_COLUMN_SETS("Global Queue Grouping Column Sets", PreferenceScope.GLOBAL, 1,
+    GLOBAL_EXT_LIBRARY_COLUMN_SETS("Global External Library Column Sets", PreferenceScope.GLOBAL, 1,
             new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
-    USER_QUEUE_GROUPING_SEARCH_INSTANCES("User Queue Grouping Search Instances", PreferenceScope.USER, 1,
+    USER_EXT_LIBRARY_SEARCH_INSTANCES("User External Library Search Instances", PreferenceScope.USER, 1,
             new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
-    USER_QUEUE_GROUPING_COLUMN_SETS("User Queue Grouping Column Sets", PreferenceScope.USER, 1,
+    USER_EXT_LIBRARY_COLUMN_SETS("User External Library Column Sets", PreferenceScope.USER, 1,
             new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
     ;
 

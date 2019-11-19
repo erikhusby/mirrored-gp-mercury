@@ -1432,6 +1432,11 @@ public class LabVesselFixupTest extends Arquillian {
 
     /**
      * Reads container barcodes and plate names from mercury/src/test/resources/testdata/FixupPlateNames.txt.
+     * It's read as a csv file and rows should have two fields.
+     * The first row should have the fixup commentary reason:
+     * GPLIM-4276,set plate names from file
+     * Subsequent rows should have plateLabel and plateName:
+     * CO-29561374,MultiPDO_0910_GSA14
      */
     @Test(enabled = false)
     public void fixupGplim4276() throws Exception {
@@ -1455,6 +1460,11 @@ public class LabVesselFixupTest extends Arquillian {
         InputStream csvInputStream = VarioskanParserTest.getTestResource("FixupPlateNames.txt");
         CSVReader reader = new CSVReader(new InputStreamReader(csvInputStream));
         String [] nextLine;
+        // Gets the reason from the first line.
+        nextLine = reader.readNext();
+        Assert.assertNotNull(nextLine);
+        String reason = StringUtils.join(nextLine, " ");
+        // Subsequent lines have data.
         while ((nextLine = reader.readNext()) != null) {
             LabVessel labVessel = labVesselDao.findByIdentifier(nextLine[0]);
             if (labVessel == null) {
@@ -1464,7 +1474,7 @@ public class LabVesselFixupTest extends Arquillian {
                 labVessel.setName(nextLine[1]);
             }
         }
-        FixupCommentary fixupCommentary = new FixupCommentary("GPLIM-4276 - set plate names from file");
+        FixupCommentary fixupCommentary = new FixupCommentary(reason);
         barcodedTubeDao.persist(fixupCommentary);
         barcodedTubeDao.flush();
 

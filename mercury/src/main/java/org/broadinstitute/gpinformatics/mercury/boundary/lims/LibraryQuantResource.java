@@ -80,8 +80,8 @@ public class LibraryQuantResource {
         switch (systemRouter.getSystemOfRecordForVesselBarcodes(tubeBarcodes)) {
         case MERCURY:
             MessageCollection messageCollection = new MessageCollection();
-            getBspUser(libraryQuantRunBean.getOperator());
-            vesselEjb.createLibraryQuantsFromRunBean(libraryQuantRunBean, messageCollection);
+            BspUser bspUser = getBspUser(libraryQuantRunBean.getOperator());
+            vesselEjb.createLibraryQuantsFromRunBean(libraryQuantRunBean, messageCollection, bspUser.getUserId());
             if (messageCollection.hasErrors()) {
                 String errors = StringUtils.join(messageCollection.getErrors(), ",");
                 return Response.serverError().entity(errors).build();

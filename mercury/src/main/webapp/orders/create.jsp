@@ -150,9 +150,9 @@
         function validateChangeQuote(originalQuote, currentQuote) {
 
             var productOrderKey = $j("input[name='productOrder']");
-            var originalIsQuoteServer = isNaN(originalQuote);
-            var currentIsQuoteServer = isNaN(currentQuote);
-            var orderCanPlace = ${actionBean.editOrder.orderStatus.canPlace()}
+            var originalIsQuoteServer = isNaN(originalQuote) || originalQuote === "" || originalQuote === null;
+            var currentIsQuoteServer = isNaN(currentQuote) || currentQuote === "" || currentQuote === null;
+            var orderCanPlace = ${actionBean.editOrder.orderStatus.canPlace()};
             var originalNotBlank = originalQuote !== 'undefined' && originalQuote !== "" && originalQuote !== 'null';
             var currentNotBlank = (currentQuote !== 'undefined' && currentQuote !== "" && currentQuote !== 'null' &&
             currentQuote !== "Enter the Quote ID for this order");
@@ -165,10 +165,10 @@
 
             return result;
         }
-
+        var $skipOrspCheckboxes;
         $j(document).ready(
-
                 function () {
+                    $skipOrspCheckboxes = $j("#notFromHumansCheckbox, #clinicalLineCheckbox, #sampleManipulationOnlyCheckbox");
                     jQuery.fn.multiselect = function() {
                         $j(this).each(function() {
                             var checkboxes = $j(this).find("input:checkbox");
@@ -548,8 +548,7 @@
                     initializeQuoteOptions();
 
                     $j("#skipQuote").on("change", toggleSkipQuote);
-                    $j("#notFromHumansCheckbox").on("change", toggleSkipRegulatoryReason);
-                    $j("#clinicalLineCheckbox").on("change", toggleSkipRegulatoryReason);
+                    $skipOrspCheckboxes.on("change", toggleSkipRegulatoryReason);
                     $j("#regulatorySelect").change(function () {
                         $j("#attestationConfirmed").attr("checked", false)
                     });
@@ -596,31 +595,28 @@
         var quoteBeforeSkipping;
 
         function toggleSkipRegulatoryReason() {
-            var checked = $(this).prop("checked");
-            var notFromHumansElement = $j("#notFromHumansCheckbox");
-            var clinicalLineElement = $j("#clinicalLineCheckbox");
+            var thisChecked = this;
+            var checked = $(thisChecked).prop("checked");
+
+
             handleUpdateRegulatory(checked);
             if (checked) {
                 $j("#attestationConfirmed").attr("checked", false);
-                if($(this).is(notFromHumansElement)) {
-                    $j("#skipRegulatoryInfoReason").val("${ResearchProject.NOT_FROM_HUMANS_REASON_FILL}");
-                    $j("#clinicalLineCheckbox").attr("checked", false);
-                } else {
-                    $j("#skipRegulatoryInfoReason").val("${ResearchProject.FROM_CLINICAL_CELL_LINE}");
-                    $j("#notFromHumansCheckbox").attr("checked", false);
-                }
+                $skipOrspCheckboxes.filter(function () {
+                    return !$j(this).is(thisChecked);
+                }).attr("checked", false);
+                $j("#skipRegulatoryInfoReason").val($j(this).closest("label").text());
             }
-
         }
+
         function handleUpdateRegulatory(skipRegulatoryChecked){
             if (skipRegulatoryChecked) {
-                $j("#regulatorySelect :selected").prop("selected", false);
+                $j("#regulatorySelect :checked").attr('checked', false);
                 $j("#regulatorySelect").hide();
                 $j("#skipRegulatoryDiv").show();
             } else {
                 $j("#skipRegulatoryInfoReason").val("");
-                $j("#notFromHumansCheckbox").attr("checked", false);
-                $j("#clinicalLineCheckbox").attr("checked", false);
+                $skipOrspCheckboxes.attr("checked", false);
                 $j("#regulatorySelect").show();
                 populateRegulatorySelect();
             }
@@ -1566,13 +1562,19 @@
                                 </stripes:label>
 
                                 <div id="skipRegulatoryDiv" class="controls controls-text">
-
-                                    <stripes:checkbox name="notFromHumans" id="notFromHumansCheckbox" title="Click if the sample does not involve samples from Humans"/>
-                                    ${ResearchProject.NOT_FROM_HUMANS_REASON_FILL}<br/>
-                                    <stripes:checkbox name="fromClinicalLine" id="clinicalLineCheckbox" title="Click if the sample comes from a Clinical cell line"/>
-                                    ${ResearchProject.FROM_CLINICAL_CELL_LINE}<br/>
-                                    <stripes:hidden id="skipRegulatoryInfoReason"
-                                                    name="editOrder.skipRegulatoryReason"/>
+                                    <label for="notFromHumansCheckbox">
+                                        <stripes:checkbox name="notFromHumans" id="notFromHumansCheckbox" title="Click if the sample does not involve samples from Humans"/>
+                                            ${ResearchProject.NOT_FROM_HUMANS_REASON_FILL}
+                                    </label>
+                                    <label for="clinicalLineCheckbox">
+                                        <stripes:checkbox name="fromClinicalLine" id="clinicalLineCheckbox" title="Click if the sample comes from a Clinical cell line"/>
+                                            ${ResearchProject.FROM_CLINICAL_CELL_LINE}
+                                    </label>
+                                    <label for="sampleManipulationOnlyCheckbox">
+                                        <stripes:checkbox name="sampleManipulationOnly" id="sampleManipulationOnlyCheckbox" title="Click if the sample does not produce genomic data"/>
+                                            ${ResearchProject.SAMPLE_MANIPULATION_ONLY}
+                                    </label>
+                                    <stripes:hidden id="skipRegulatoryInfoReason" name="editOrder.skipRegulatoryReason"/>
                                 </div>
                                 <div id="regulatorySelect" class="controls controls-text"></div>
                                 <div id="attestationDiv" class="controls controls-text">

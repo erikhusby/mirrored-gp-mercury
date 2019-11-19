@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,9 +42,7 @@ public enum BSPSampleSearchColumn {
     ORIGINAL_MATERIAL_TYPE("Original Material Type"),
     DV200("DV200"),
     RECEPTACLE_TYPE("Receptacle Type"),
-    MANUFACTURER_BARCODE("Manufacturer Tube Barcode"),
-    POSITION("Position"),
-    LOCATION("Location");
+    MANUFACTURER_BARCODE("Manufacturer Tube Barcode");
 
     private static final Map<String, BSPSampleSearchColumn> MAP_NAME_TO_COLUMN =
             new HashMap<>(BSPSampleSearchColumn.values().length);
@@ -100,12 +99,6 @@ public enum BSPSampleSearchColumn {
 
     public static final BSPSampleSearchColumn[] BUCKET_PAGE_COLUMNS = {
             COLLABORATOR_SAMPLE_ID, MATERIAL_TYPE, RECEIPT_DATE, ROOT_SAMPLE
-    };
-
-    public static final BSPSampleSearchColumn[] PICO_QUEUE_DATA_DUMP = {
-            SAMPLE_ID, SAMPLE_STATUS, ROOT_SAMPLE, SAMPLE_KIT, PARTICIPANT_ID, COLLECTION, ORIGINAL_MATERIAL_TYPE,
-            MATERIAL_TYPE, VOLUME, CONCENTRATION, MANUFACTURER_BARCODE, CONTAINER_ID, POSITION,
-            LOCATION, CONTAINER_NAME, COLLABORATOR_PARTICIPANT_ID, COLLABORATOR_SAMPLE_ID
     };
 
     public static final BSPSampleSearchColumn[] EXTERNAL_LIBRARY_COLUMNS = {

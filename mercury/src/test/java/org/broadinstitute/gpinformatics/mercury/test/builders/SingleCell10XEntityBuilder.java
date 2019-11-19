@@ -5,8 +5,10 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 
 import java.util.ArrayList;
@@ -19,25 +21,27 @@ import java.util.Map;
  */
 public class SingleCell10XEntityBuilder {
 
+    private final Map<String, BarcodedTube> mapBarcodeToTube;
+    private final TubeFormation rack;
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private final LabEventFactory labEventFactory;
     private final LabEventHandler labEventHandler;
     private final String testPrefix;
-    private final StaticPlate sourceplate;
-    private int numSamples;
+    private final String rackBarcode;
     private StaticPlate aTailPlate;
     private StaticPlate aTailCleanupPlate;
     private StaticPlate ligationCleanupPlate;
-    private StaticPlate doubleSidedSpriPlate;
+    private TubeFormation doubleSidedSpriTubeFormation;
 
-    public SingleCell10XEntityBuilder(
+    public SingleCell10XEntityBuilder(Map<String, BarcodedTube> mapBarcodeToTube, TubeFormation rack,
             BettaLimsMessageTestFactory bettaLimsMessageTestFactory, LabEventFactory labEventFactory,
-            LabEventHandler labEventHandler, StaticPlate sourceplate, int numSamples, String testPrefix) {
+                                      LabEventHandler labEventHandler, String rackBarcode, String testPrefix) {
+        this.mapBarcodeToTube = mapBarcodeToTube;
+        this.rack = rack;
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
         this.labEventHandler = labEventHandler;
-        this.sourceplate = sourceplate;
-        this.numSamples = numSamples;
+        this.rackBarcode = rackBarcode;
         this.testPrefix = testPrefix;
     }
 
@@ -53,13 +57,15 @@ public class SingleCell10XEntityBuilder {
                 }}
         );
 
-        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
-
         SingleCell10XJaxbBuilder jaxbBuilder = new SingleCell10XJaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
-                sourceplate.getLabel(), indexPlateBarcode).invoke();
+                rackBarcode, new ArrayList<>(mapBarcodeToTube.keySet()), indexPlateBarcode).invoke();
 
-        LabEventTest.validateWorkflow("SingleCellEndRepairABase", sourceplate);
-        mapBarcodeToVessel.put(sourceplate.getLabel(), sourceplate);
+        LabEventTest.validateWorkflow("SingleCellEndRepairABase", mapBarcodeToTube.values());
+        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
+        mapBarcodeToVessel.put(rack.getLabel(), rack);
+        for (BarcodedTube barcodedTube : rack.getContainerRole().getContainedVessels()) {
+            mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
+        }
         LabEvent endRepaiAbaseEntity = labEventFactory.buildFromBettaLims(
                 jaxbBuilder.getEndRepairAbaseJaxb(), mapBarcodeToVessel);
         labEventHandler.processEvent(endRepaiAbaseEntity);
@@ -101,12 +107,12 @@ public class SingleCell10XEntityBuilder {
         LabEvent doubleSidedSpriEntity = labEventFactory.buildFromBettaLims(
                 jaxbBuilder.getDoubleSidedSpriJaxb(), mapBarcodeToVessel);
         labEventHandler.processEvent(doubleSidedSpriEntity);
-        doubleSidedSpriPlate = (StaticPlate) doubleSidedSpriEntity.getTargetLabVessels().iterator().next();
+        doubleSidedSpriTubeFormation = (TubeFormation) doubleSidedSpriEntity.getTargetLabVessels().iterator().next();
 
         return this;
     }
 
-    public StaticPlate getDoubleSidedSpriPlate() {
-        return doubleSidedSpriPlate;
+    public TubeFormation getDoubleSidedSpriTubeFormation() {
+        return doubleSidedSpriTubeFormation;
     }
 }

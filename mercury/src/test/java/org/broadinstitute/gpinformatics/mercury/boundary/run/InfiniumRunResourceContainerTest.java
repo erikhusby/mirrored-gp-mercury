@@ -75,7 +75,7 @@ public class InfiniumRunResourceContainerTest extends Arquillian {
         infiniumRunResource.setInfiniumStarterConfig(config);
         String chipBarcode = "3999582166_R01C01";
         InfiniumRunBean run = infiniumRunResource.getRun(chipBarcode);
-        Assert.assertEquals(run.getScannerName(), "Big Bad Wolf");
+        Assert.assertEquals(run.getScannerName(), "BAA");
     }
 
     @Test

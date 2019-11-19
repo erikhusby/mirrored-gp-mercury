@@ -38,6 +38,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -224,7 +225,7 @@ public class MercurySample extends AbstractSample {
 
     private Boolean isRoot;
 
-    @OneToMany(mappedBy = "mercurySample", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "mercurySample", cascade = CascadeType.PERSIST, orphanRemoval = true)
     private Set<Fingerprint> fingerprints = new HashSet<>();
 
     /**
@@ -295,7 +296,7 @@ public class MercurySample extends AbstractSample {
         return sampleKey;
     }
 
-    void setSampleKey(String sampleKey) {
+    public void setSampleKey(String sampleKey) {
         this.sampleKey = sampleKey;
     }
 
@@ -376,6 +377,17 @@ public class MercurySample extends AbstractSample {
         return metadata;
     }
 
+    @Transient
+    public String getMetadataValueForKey(Metadata.Key key) {
+        for (Metadata metadatum : metadata) {
+            if (metadatum.getKey() == key) {
+                return metadatum.getValue();
+            }
+        }
+        return null;
+    }
+
+
     public Long getMercurySampleId() {
         return mercurySampleId;
     }
@@ -415,7 +427,10 @@ public class MercurySample extends AbstractSample {
         if (receiptEvent != null) {
             return receiptEvent.getEventDate();
         }
-        return null;
+        return metadata.stream().
+                filter(item -> item.getKey() == Metadata.Key.RECEIPT_DATE && item.getDateValue() != null).
+                map(item -> item.getDateValue()).
+                findFirst().orElse(null);
     }
 
     public LabEvent getReceiptEvent() {
