@@ -15,12 +15,13 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -3375,8 +3376,8 @@ public enum LabEventType {
             return sourceVesselTypeGeometries;
         }
 
-        public Set<String> getSourceVesselTypeGeometriesString() {
-            Set<String> vesselTypeNames = new HashSet<>();
+        public SortedSet<String> getSourceVesselTypeGeometriesString() {
+            SortedSet<String> vesselTypeNames = new TreeSet<>();
             for (VesselTypeGeometry vesselTypeGeometry: getSourceVesselTypeGeometries()) {
                 vesselTypeNames.add(vesselTypeGeometry.getDisplayName());
             }
@@ -3395,8 +3396,8 @@ public enum LabEventType {
             return targetVesselTypeGeometries;
         }
 
-        public Set<String> getTargetVesselTypeGeometriesString() {
-            Set<String> vesselTypeNames = new HashSet<>();
+        public SortedSet<String> getTargetVesselTypeGeometriesString() {
+            SortedSet<String> vesselTypeNames = new TreeSet<>();
             for (VesselTypeGeometry vesselTypeGeometry: getTargetVesselTypeGeometries()) {
                 vesselTypeNames.add(vesselTypeGeometry.getDisplayName());
             }

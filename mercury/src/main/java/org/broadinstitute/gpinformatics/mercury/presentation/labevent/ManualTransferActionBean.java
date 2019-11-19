@@ -79,6 +79,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -991,6 +992,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
             EnumSet<org.broadinstitute.bsp.client.workrequest.kit.ReceptacleType> childReceptacleTypes =
                     org.broadinstitute.bsp.client.workrequest.kit.ReceptacleType
                             .findByName(selectedTargetGeometry.getDisplayName()).getChildReceptacleTypes();
+
             // For each type returned grab the BarcodedTubeType.
             for (org.broadinstitute.bsp.client.workrequest.kit.ReceptacleType childReceptacleType : childReceptacleTypes) {
                 BarcodedTube.BarcodedTubeType childBarcodedTubeType =
@@ -1000,6 +1002,10 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 } else {
                     log.error("Unable to find a BarcodedTubeType for " + childReceptacleType.name());
                 }
+            }
+
+            if (!found.isEmpty()) {
+                Collections.sort(found);
             }
         }
         ObjectMapper mapper = new ObjectMapper();
