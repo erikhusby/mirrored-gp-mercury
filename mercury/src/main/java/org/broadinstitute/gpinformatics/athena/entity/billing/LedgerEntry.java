@@ -223,7 +223,7 @@ public class LedgerEntry implements Serializable {
      * @return true if item was billed
      */
     public boolean isBilled() {
-        return isBillingSessionBilled() || (billingMessage != null && billingMessage.equals(BillingSession.SUCCESS));
+        return isBillingSessionBilled() || (isSuccessfullyBilled());
     }
 
     /**
@@ -269,10 +269,10 @@ public class LedgerEntry implements Serializable {
             return Collections.emptyMap();
         }
         Predicate<LedgerEntry> isNotCredited = StreamUtils.not(LedgerEntry::isCredited);
-        Map<LedgerEntry, Double> collect = getProductOrderSample().getLedgerItems().stream()
+        Map<LedgerEntry, Double> creditSources = getProductOrderSample().getLedgerItems().stream()
             .filter(IS_SUCCESSFULLY_BILLED.and(isNotCredited))
             .collect(Collectors.groupingBy(ledger->ledger,Collectors.summingDouble(LedgerEntry::getQuantity)));
-        return collect;
+        return creditSources;
 
     }
     /**

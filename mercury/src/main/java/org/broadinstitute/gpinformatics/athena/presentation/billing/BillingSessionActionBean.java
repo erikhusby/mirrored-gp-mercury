@@ -55,6 +55,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -239,8 +240,13 @@ public class BillingSessionActionBean extends CoreActionBean {
                                         MessageReporter messageReporter) {
         boolean errorsInBilling = false;
         HashMultimap<ProductOrder.QuoteSourceType, String> billingDestinationMap = HashMultimap.create();
-        for (BillingEjb.BillingResult billingResult : billingResults) {
 
+        // Call distinct() to prevent duplicate messages from being displayed.
+        billingResults.stream().map(BillingEjb.BillingResult::getInformationMessage)
+            .filter(Objects::nonNull).distinct()
+            .forEach(this::addMessage);
+
+        for (BillingEjb.BillingResult billingResult : billingResults) {
             if (billingResult.isError()) {
                 errorsInBilling = true;
                 addGlobalValidationError(billingResult.getErrorMessage());

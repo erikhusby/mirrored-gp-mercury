@@ -59,6 +59,7 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.NullOrEmptyCollection.nullOrEmptyCollection;
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.SuccessfullyBilled.successfullyBilled;
@@ -594,7 +595,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
         adaptor.logBilling(GOOD_WORK_ID, quoteImportItem, quotePriceItem, new HashSet<>(Arrays.asList("PDO-1", "PDO-2")),
                 SAP_DOCUMENT_ID);
-        Assert.assertEquals(testLogHandler.getLogs().size(), 1);
+        Assert.assertEquals(testLogHandler.getLogs().size(), 1,
+            testLogHandler.getLogs().stream().map(LogRecord::getMessage).collect(Collectors.joining()));
         Assert.assertEquals(TestUtils.getFirst(testLogHandler.getLogs()).getLevel(), Level.INFO);
     }
  }

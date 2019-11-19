@@ -105,13 +105,9 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
             new QuoteImportItem(QUOTE_ID, null, null, ledgerEntries, new Date(), product, productOrder);
 
         Collection<BillingCredit> billingReturns = new ArrayList<>();
-        for (BillingCredit billingReturn : BillingCredit.setupSapCredit(quoteImportItem)) {
-//            try {
-                BillingCredit billingCredit = sapService.creditDelivery(billingReturn);
-                billingReturns.add(billingCredit);
-//            } catch (SAPIntegrationException e) {
-//                billingReturn.getBillingMessage().setThrowable(e);
-//            }
+        for (BillingCredit billingReturn : BillingCredit.setupSapCredits(quoteImportItem)) {
+            billingReturn.setReturnOrderId(sapService.creditDelivery(billingReturn));
+            billingReturns.add(billingReturn);
         }
         assertThat(billingReturns.stream().map(BillingCredit::getReturnOrderId).collect(Collectors.toList()),
             Matchers.everyItem(startsWith("RETURN_OF_00")));
@@ -229,14 +225,15 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
         List<BillingCredit> billingReturns = new ArrayList<>();
         Collection<BillingCredit> billingCredits = new HashSet<>();
         try {
-            billingCredits.addAll(BillingCredit.setupSapCredit(quoteImportItem));
+            billingCredits.addAll(BillingCredit.setupSapCredits(quoteImportItem));
             assertThat(error, anyOf(is(emptyOrNullString()), is(not(BillingAdaptor.CREDIT_QUANTITY_INVALID))));
         } catch (Exception e) {
             assertThat(e.getMessage(), equalTo(error));
         }
 
         for (BillingCredit billingReturn : billingCredits) {
-            billingReturns.add(sapService.creditDelivery(billingReturn));
+            billingReturn.setReturnOrderId(sapService.creditDelivery(billingReturn));
+            billingReturns.add(billingReturn);
         }
 
         assertThat(billingReturns.stream().map(BillingCredit::getReturnOrderId).collect(Collectors.toList()),

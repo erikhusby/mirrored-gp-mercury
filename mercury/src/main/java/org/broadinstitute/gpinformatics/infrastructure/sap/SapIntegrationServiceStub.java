@@ -307,7 +307,7 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     }
 
     @Override
-    public BillingCredit creditDelivery(BillingCredit billingReturn) throws SAPIntegrationException {
+    public String creditDelivery(BillingCredit billingReturn) throws SAPIntegrationException {
         return null;
     }
 }

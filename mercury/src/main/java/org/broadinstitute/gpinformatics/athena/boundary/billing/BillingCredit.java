@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.sap.entity.order.SAPOrderItem;
 
@@ -24,17 +25,24 @@ import java.util.Map;
 import java.util.Set;
 
 public class BillingCredit {
-    public static final String CREDIT_REQUESTED_FOR = "CRF";
-    private final LedgerEntry ledgerEntry;
+    public static final String CREDIT_REQUESTED = "CR-";
+    private String sapDeliveryDocumentId;
     private List<LineItem> returnLines;
+    private String returnOrderId;
+    private BillingMessage billingMessage = new BillingMessage();
+    private BillingEjb.BillingResult billingResult;
 
-    BillingCredit(LedgerEntry ledgerEntry, List<LineItem> returnLines) {
-        this.ledgerEntry = ledgerEntry;
+    BillingCredit(String sapDeliveryDocumentId, List<LineItem> returnLines) {
+        this.sapDeliveryDocumentId = sapDeliveryDocumentId;
         this.returnLines = returnLines;
     }
 
-    private LedgerEntry getLedgerEntry() {
-        return ledgerEntry;
+    public BillingMessage getBillingMessage() {
+        return billingMessage;
+    }
+
+    public void setBillingMessage(BillingMessage billingMessage) {
+        this.billingMessage = billingMessage;
     }
 
     /**
@@ -43,7 +51,7 @@ public class BillingCredit {
      *
      * @return A Collection of BillingCredits. Only one BillingCredit Object will be returned per sapDeliveryDocument.
      */
-    public static Collection<BillingCredit> setupSapCredit(QuoteImportItem quoteItem) {
+    public static Collection<BillingCredit> setupSapCredits(QuoteImportItem quoteItem) {
         Set<BillingCredit> credits = new HashSet<>();
         double totalAvailable = quoteItem.getPriorBillings().stream().mapToDouble(LedgerEntry::getQuantity).sum();
         double quoteItemQuantity = quoteItem.getQuantity();
@@ -52,17 +60,17 @@ public class BillingCredit {
         } if (totalAvailable + quoteItemQuantity < 0 ){
             throw new BillingException(BillingAdaptor.NEGATIVE_BILL_ERROR);
         } else {
-            Map<LedgerEntry, List<LineItem>> orderItemsByDeliveryDocument = new HashMap<>();
+            Map<String, List<LineItem>> orderItemsByDeliveryDocument = new HashMap<>();
             quoteItem.getBillingCredits().forEach(ledgerCreditEntry -> {
                 Map<LedgerEntry, Double> creditSource = ledgerCreditEntry.findCreditSource();
-                creditSource.forEach((ledgerEntry, quantityAvailableInCreditSource) -> {
+                creditSource.forEach((sourceLedger, quantityAvailableInCreditSource) -> {
                     BillingMessage billingMessage=new BillingMessage();
                     if (creditSource.isEmpty() && Math.abs(quoteItemQuantity) > 0) {
                         billingMessage.setValidationError(BillingAdaptor.NEGATIVE_BILL_ERROR);
                     }
 
                     Double totalQuantitiesAvailableInLedger =
-                        ledgerEntry.getPreviouslyBilled().stream().mapToDouble(LedgerEntry::getQuantity).sum();
+                        sourceLedger.getPreviouslyBilled().stream().mapToDouble(LedgerEntry::getQuantity).sum();
 
                     if (ledgerCreditEntry.getQuantity() >= 0) {
                         billingMessage.setValidationError(BillingAdaptor.CREDIT_QUANTITY_INVALID);
@@ -79,8 +87,8 @@ public class BillingCredit {
                     } else {
                         requestedCreditQuantity = requiredCreditQuantity;
                     }
-                    orderItemsByDeliveryDocument.computeIfAbsent(ledgerEntry, k -> new ArrayList<>())
-                        .add(new LineItem(quoteItem.getProduct().getPartNumber(), requestedCreditQuantity, billingMessage));
+                    orderItemsByDeliveryDocument.computeIfAbsent(sourceLedger.getSapDeliveryDocumentId(), k -> new ArrayList<>())
+                        .add(new LineItem(ledgerCreditEntry, requestedCreditQuantity, billingMessage));
                 });
             });
 
@@ -95,35 +103,50 @@ public class BillingCredit {
         return returnLines;
     }
 
-    public String getReturnOrderId() {
-        return getLedgerEntry().getSapReturnOrderId();
-    }
-
     public String getSapDeliveryDocumentId() {
-        return getLedgerEntry().getSapDeliveryDocumentId();
-    }
-
-    public void setSapDeliveryDocumentId(String sapDeliveryDocumentId) {
-        getLedgerEntry().setSapDeliveryDocumentId(sapDeliveryDocumentId);
+        return sapDeliveryDocumentId;
     }
 
     public void setReturnOrderId(String returnOrderId) {
-        getLedgerEntry().setSapReturnOrderId(returnOrderId);
+        this.returnOrderId = returnOrderId;
+    }
+
+    public String getReturnOrderId() {
+        return returnOrderId;
     }
 
     public void setReturnOrderInvoiceNotFound() {
-        setReturnOrderId(String.format("%s%s", CREDIT_REQUESTED_FOR, getLedgerEntry().getSapDeliveryDocumentId()));
+        String sapDeliveryDocumentId = getSapDeliveryDocumentId();
+        if (StringUtils.isNotBlank(sapDeliveryDocumentId)) {
+            setReturnOrderId(String.format("%s%s", CREDIT_REQUESTED, sapDeliveryDocumentId));
+        }
+    }
+
+    public void setBillingResult(BillingEjb.BillingResult billingResult) {
+        this.billingResult = billingResult;
+    }
+
+    public BillingEjb.BillingResult getBillingResult() {
+        return billingResult;
     }
 
     public static class LineItem {
-        private final String partNumber;
+        private final LedgerEntry ledgerEntry;
         private final BigDecimal quantity;
         private BillingMessage billingMessage;
 
-        LineItem(String partNumber, Double quantity, BillingMessage billingMessage) {
-            this.partNumber = partNumber;
+        LineItem(LedgerEntry ledgerEntry, Double quantity, BillingMessage billingMessage) {
+            this.ledgerEntry = ledgerEntry;
             this.quantity = BigDecimal.valueOf(quantity);
             this.billingMessage = billingMessage;
+        }
+
+        public LedgerEntry getLedgerEntry() {
+            return ledgerEntry;
+        }
+
+        public BigDecimal getQuantity() {
+            return quantity;
         }
 
         public BillingMessage getBillingMessage() {
@@ -131,91 +154,8 @@ public class BillingCredit {
         }
 
         public SAPOrderItem getSapOrderItem() {
-            return new SAPOrderItem(partNumber, quantity);
+            return new SAPOrderItem(ledgerEntry.getProduct().getPartNumber(), quantity);
         }
     }
 
-//    public static class BillingCreditMessage {
-//        private final String sapDeliveryDocument;
-//
-//        private final QuoteImportItem quoteImportItem;
-//        private final SAPProductPriceCache productPriceCache;
-//        private final Long orderCreatedBy;
-//        private String mercuryOrder;
-//        private String material;
-//        private String sapOrderNumber;
-//        private String deliveryDiscount;
-//
-//        public BillingCreditMessage(QuoteImportItem quoteImportItem, SAPProductPriceCache productPriceCache) {
-//            this.quoteImportItem = quoteImportItem;
-//            this.productPriceCache = productPriceCache;
-//
-//            this.mercuryOrder = quoteImportItem.getProductOrder().getJiraTicketKey();
-//            this.material = quoteImportItem.getProduct().getDisplayName();
-//            this.sapOrderNumber = quoteImportItem.getProductOrder().getSapOrderNumber();
-//            this.orderCreatedBy = quoteImportItem.getProductOrder().getCreatedBy();
-//            this.sapDeliveryDocument = Stream.concat(
-//                quoteImportItem.getPriorBillings().stream().map(LedgerEntry::getSapDeliveryDocumentId),
-//                quoteImportItem.getPriorBillings().stream().map(LedgerEntry::getSapReturnOrderId)
-//            ).filter(StringUtils::isNotBlank).distinct().collect(Collectors.joining("<br/>"));
-//            this.deliveryDiscount = buildDeliveryDiscount();
-//        }
-//
-//
-//        public Long getOrderCreatedBy() {
-//            return orderCreatedBy;
-//        }
-//
-//        public String getSapDeliveryDocument() {
-//            return sapDeliveryDocument;
-//        }
-//
-//        public String getMercuryOrder() {
-//            return mercuryOrder;
-//        }
-//
-//        public String getMaterial() {
-//            return material;
-//        }
-//
-//        public String getDeliveryDiscount() {
-//            return deliveryDiscount;
-//        }
-//
-//        public String getSapOrderNumber() {
-//            return sapOrderNumber;
-//        }
-//
-//        @Override
-//        public boolean equals(Object o) {
-//            if (this == o) {
-//                return true;
-//            }
-//
-//            if (o == null || getClass() != o.getClass()) {
-//                return false;
-//            }
-//
-//            BillingCreditMessage that = (BillingCreditMessage) o;
-//
-//            return new EqualsBuilder()
-//                .append(getMercuryOrder(), that.getMercuryOrder())
-//                .append(getMaterial(), that.getMaterial())
-//                .append(getSapOrderNumber(), that.getSapOrderNumber())
-//                .append(getSapDeliveryDocument(), that.getSapDeliveryDocument())
-//                .append(getDeliveryDiscount(), that.getDeliveryDiscount())
-//                .isEquals();
-//        }
-//
-//        @Override
-//        public int hashCode() {
-//            return new HashCodeBuilder(17, 37)
-//                .append(getMercuryOrder())
-//                .append(getMaterial())
-//                .append(getSapOrderNumber())
-//                .append(getSapDeliveryDocument())
-//                .append(getDeliveryDiscount())
-//                .toHashCode();
-//        }
-//    }
 }

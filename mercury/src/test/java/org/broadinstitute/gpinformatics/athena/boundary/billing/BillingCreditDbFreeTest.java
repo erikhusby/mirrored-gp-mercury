@@ -479,7 +479,6 @@ public class BillingCreditDbFreeTest {
         });
         Double totalBilled = sample.getLedgerItems().stream()
             .filter(LedgerEntry.IS_SUCCESSFULLY_BILLED).mapToDouble(LedgerEntry::getQuantity).sum();
-//                .mapToDouble(Double::longValue).sum();
         assertThat(totalBilled, equalTo(quantity));
     }
 

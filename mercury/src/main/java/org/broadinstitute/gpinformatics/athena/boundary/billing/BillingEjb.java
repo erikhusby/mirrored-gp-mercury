@@ -65,6 +65,7 @@ public class BillingEjb {
         private String workId;
 
         private String errorMessage;
+        private String informationMessage;
         private String sapBillingId;
         private QuoteImportItem returnQuoteImportItemsForEmail;
 
@@ -90,6 +91,14 @@ public class BillingEjb {
 
         void setWorkId(String workId) {
             this.workId = workId;
+        }
+
+        public String getInformationMessage() {
+            return informationMessage;
+        }
+
+        public void setInformationMessage(String informationMessage) {
+            this.informationMessage = informationMessage;
         }
 
         public String getErrorMessage() {
@@ -120,6 +129,10 @@ public class BillingEjb {
             return StringUtils.isNumeric(workId);
         }
 
+        public boolean isSuccessfullyBilled() {
+            return BillingSession.SUCCESS.equals(getQuoteImportItem().getBillingMessage())
+                   || BillingSession.BILLING_CREDIT.equals(getQuoteImportItem().getBillingMessage());
+        }
     }
 
     private PriceListCache priceListCache;
@@ -241,8 +254,36 @@ public class BillingEjb {
      */
     public void updateSapLedgerEntries(QuoteImportItem item, String quoteServerWorkItem,
                                        String sapDeliveryDocumentId, String sapReturnOrderId, String billingMessage) {
+        updateSapLedgerEntries(item.getLedgerItems(), item.getQuoteId(), billingMessage, quoteServerWorkItem,
+            sapDeliveryDocumentId, sapReturnOrderId);
+    }
 
-        item.updateSapLedgerEntries(billingMessage, quoteServerWorkItem,sapDeliveryDocumentId, sapReturnOrderId);
+    /**
+     * helper method to batch billing ledgers. This method should be invoked upon successful billing to update ledger
+     * entries with the quote to which they were billed and the sap delivery and/or return order id's they are
+     * associated with in SAP.
+     *
+     * @param ledgerItems         LedgerEntries to update.
+     * @param quoteId             quoteId of the ledgers
+     * @param billingMessage      The message to be assigned to all entries.
+     * @param quoteServerWorkItem The ID of the transaction in the quote server.
+     * @param sapDeliveryId       The SAP delivery document returned from SAP.
+     * @param sapReturnOrderId    The SAP return order ID returned from SAP, if applicable.
+     */
+    public void updateSapLedgerEntries(Collection<LedgerEntry> ledgerItems, String quoteId, String billingMessage,
+                                       String quoteServerWorkItem, String sapDeliveryId, String sapReturnOrderId) {
+        for (LedgerEntry ledgerEntry : ledgerItems) {
+            ledgerEntry.setQuoteId(quoteId);
+            ledgerEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+            ledgerEntry.setBillingMessage(billingMessage);
+            ledgerEntry.setWorkItem(quoteServerWorkItem);
+            if (StringUtils.isNotBlank(sapDeliveryId)) {
+                ledgerEntry.setSapDeliveryDocumentId(sapDeliveryId);
+            }
+            if (StringUtils.isNotBlank(sapReturnOrderId)) {
+                ledgerEntry.setSapReturnOrderId(sapReturnOrderId);
+            }
+        }
         billingSessionDao.flush();
     }
 

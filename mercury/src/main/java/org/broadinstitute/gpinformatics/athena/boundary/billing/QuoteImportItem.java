@@ -219,32 +219,6 @@ public class QuoteImportItem {
     }
 
     /**
-     * This method should be invoked upon successful billing to update ledger entries with the quote to which they were
-     * billed and the work item.
-     *
-     *  @param billingMessage       The message to be assigned to all entries.
-     * @param quoteServerWorkItem   The ID of the transaction in the quote server.
-     * @param sapDeliveryId         The SAP delivery document returned from SAP.
-     * @param sapReturnOrderId      The SAP return order ID returned from SAP, if applicable.
-     */
-    public void updateSapLedgerEntries(String billingMessage, String quoteServerWorkItem, String sapDeliveryId,
-                                       String sapReturnOrderId) {
-
-        for (LedgerEntry ledgerEntry : ledgerItems) {
-            ledgerEntry.setQuoteId(quoteId);
-            ledgerEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
-            ledgerEntry.setBillingMessage(billingMessage);
-            ledgerEntry.setWorkItem(quoteServerWorkItem);
-            if (StringUtils.isNotBlank(sapDeliveryId)) {
-                ledgerEntry.setSapDeliveryDocumentId(sapDeliveryId);
-            }
-            if (StringUtils.isNotBlank(sapReturnOrderId)) {
-                ledgerEntry.setSapReturnOrderId(sapReturnOrderId);
-            }
-        }
-    }
-
-    /**
      * @return There should always be ledger entries and if not, it will throw an exception, which should be OK. This
      * just returns the first items sample because all items are grouped at a fine level by price item which means the
      * same product because price items are product based.

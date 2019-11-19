@@ -94,7 +94,7 @@ public interface SapIntegrationService {
      * @param billingReturn  BillingReturn object containing all the information for the work that will be reverted
      * @return identifier that is associated with the SAP return order created to process this credit request
      */
-    BillingCredit creditDelivery(BillingCredit billingReturn) throws SAPIntegrationException;
+    String creditDelivery(BillingCredit billingReturn) throws SAPIntegrationException;
 
     class Option {
         public static final Option NONE = Option.create();
