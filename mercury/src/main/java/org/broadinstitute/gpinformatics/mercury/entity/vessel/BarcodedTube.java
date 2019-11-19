@@ -89,7 +89,8 @@ public class BarcodedTube extends LabVessel {
         VacutainerBloodTubeYellowTop10("VacutainerBloodTubeYellowTop10", "Vacutainer Blood Tube Yellow Top [10mL]"),
         VacutainerCPTTube4("VacutainerCPTTube4", "Vacutainer CPT Tube [4mL]"),
         VacutainerCPTTube8("VacutainerCPTTube8", "Vacutainer CPT Tube [8mL]"),
-        Voucher_Bag("Voucher_Bag", "Voucher Bag");
+        Voucher_Bag("Voucher_Bag", "Voucher Bag"),
+        VWR_Tube_10mL("VWR_Tube_10mL", "VWR Tube [10mL]");
 
         /**
          * The name that will be supplied by automation scripts.
