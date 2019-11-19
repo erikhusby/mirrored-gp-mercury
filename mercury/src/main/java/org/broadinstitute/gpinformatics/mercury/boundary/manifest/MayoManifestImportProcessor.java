@@ -18,6 +18,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.csv.CsvParser;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ContractClient;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -363,6 +364,7 @@ public class MayoManifestImportProcessor {
                             }
                         }
                     }
+                    manifestRecord.addMetadata(Metadata.Key.CLIENT, ContractClient.MAYO.name());
                 }
             }
         }
