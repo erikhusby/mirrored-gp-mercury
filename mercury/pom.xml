@@ -4,10 +4,6 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>Mercury</groupId>
     <artifactId>Mercury</artifactId>
-    <!-- Unfortunately (for now) there is also a rest-pom.xml.  Changes to this version should be reflected in that
-    file as well until such a time that we reconfigure the mercury structure to have a dependant project or something
-     that can inherit this version setting. -->
-
     <version>1.120-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
@@ -1320,10 +1316,6 @@ nodePrinter.print(webapp)
             <version>27.0.1-jre</version>
         </dependency>
 
-        <!-- ***
-             * For WildFly, use org.jboss.spec:jboss-javaee-7.0 in lieu of javax:javaee-api.
-             * See: https://community.jboss.org/wiki/WhatsTheCauseOfThisExceptionJavalangClassFormatErrorAbsentCode
-             *** -->
         <dependency>
             <groupId>javax.enterprise</groupId>
             <artifactId>cdi-api</artifactId>
@@ -1687,7 +1679,6 @@ nodePrinter.print(webapp)
             <version>1.9.2</version>
         </dependency>
 
-        <!-- Before bspclient until it's dependency version is updated from 1.4.4! -->
         <dependency>
             <groupId>com.thoughtworks.xstream</groupId>
             <artifactId>xstream</artifactId>
@@ -1697,17 +1688,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.broadinstitute.bsp</groupId>
             <artifactId>bspclient</artifactId>
-            <!-- Unfortunately (for now) there is also a rest-pom.xml.  Changes to this version should be reflected in that
-            file as well until such a time that we reconfigure the mercury structure to have a dependant project or something.
-             -->
-
-            <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-            <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-            <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
             <version>${bspclient.version}</version>
-            <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-            <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-            <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
         </dependency>
 
         <dependency>
