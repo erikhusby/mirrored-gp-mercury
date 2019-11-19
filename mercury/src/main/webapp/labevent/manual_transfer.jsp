@@ -268,10 +268,18 @@
                                 // Clear old values so we ensure nothing is doubling up.
                                 $j('#selectedTargetChildReceptacleType').empty();
                                 $j('#selectedTargetChildReceptacleType').append($j('<option value="">Select One</option>'));
-                                // Loop through the options returned
-                                $j.each(data, function (i, selectOption) {
-                                    $j('#selectedTargetChildReceptacleType').append($j('<option></option>').attr('value', selectOption).text(selectOption));
-                                });
+
+                                // Check to ensure that the destination container type selected returns allowed tube types.
+                                if ($j.isEmptyObject(data)) {
+                                    // Hide the view transfer button because the rack type picked doesn't have tube types!
+                                    $j("#viewTransfer").hide();
+                                } else {
+                                    $j("#viewTransfer").show();
+                                    // Loop through the options returned
+                                    $j.each(data, function (i, selectOption) {
+                                        $j('#selectedTargetChildReceptacleType').append($j('<option></option>').attr('value', selectOption).text(selectOption));
+                                    });
+                                }
                             }
                         },
                         error: function (req, textstatus, msg) {
