@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryPr
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -42,8 +43,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -379,6 +382,22 @@ public class SampleInstanceEjb {
             sampleInstanceEntity.setInsertSize(walkUpSequencing.getFragmentSize());
             sampleInstanceEntity.setAnalysisType(analysisType);
 
+            if(StringUtils.isNotBlank(walkUpSequencing.getP5Index()) ||
+               StringUtils.isNotBlank(walkUpSequencing.getP7Index())) {
+
+                Map<MolecularIndexingScheme.IndexPosition, MolecularIndex> indexes = new HashMap<>();
+
+                if (StringUtils.isNotBlank(walkUpSequencing.getP5Index())) {
+                    indexes.put(MolecularIndexingScheme.IndexPosition.ILLUMINA_P5,
+                            new MolecularIndex(walkUpSequencing.getP5Index()));
+                }
+                if (StringUtils.isNotBlank(walkUpSequencing.getP7Index())) {
+                    indexes.put(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7,
+                            new MolecularIndex(walkUpSequencing.getP7Index()));
+                }
+                MolecularIndexingScheme scheme = new MolecularIndexingScheme(indexes);
+                sampleInstanceEntity.setMolecularIndexingScheme(scheme);
+            }
             sampleInstanceEntityDao.persistAll(newEntities);
             return sampleInstanceEntity;
         }

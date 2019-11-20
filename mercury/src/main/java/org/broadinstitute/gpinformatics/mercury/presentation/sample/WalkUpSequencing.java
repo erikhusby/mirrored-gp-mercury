@@ -35,7 +35,8 @@ public class WalkUpSequencing implements Serializable {
     private String analysisType;
     private String baitSetName;
 
-    private WalkUpSequencingPooledSample pooledSampleInfo;
+    private String p5Index;
+    private String P7Index;
 
     public String getTubeBarcode() {
         return tubeBarcode;
@@ -228,5 +229,21 @@ public class WalkUpSequencing implements Serializable {
 
     public void setSubmitDate(String submitDate) {
         this.submitDate = submitDate;
+    }
+
+    public String getP5Index() {
+        return p5Index;
+    }
+
+    public void setP5Index(String p5Index) {
+        this.p5Index = p5Index;
+    }
+
+    public String getP7Index() {
+        return P7Index;
+    }
+
+    public void setP7Index(String p7Index) {
+        P7Index = p7Index;
     }
 }

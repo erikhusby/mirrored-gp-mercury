@@ -1527,7 +1527,7 @@ public class ProductOrderEjb {
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public ProductOrder placeProductOrder(@Nonnull Long productOrderID, String businessKey,
-                                          @Nonnull MessageCollection messageCollection) {
+                                          @Nonnull MessageCollection messageCollection) throws SAPInterfaceException {
         ProductOrder editOrder =
                 productOrderDao.findByIdSafely(productOrderID, LockModeType.PESSIMISTIC_WRITE);
 
@@ -1569,6 +1569,9 @@ public class ProductOrderEjb {
                 log.error(errorMessage, e);
                 messageCollection.addError(errorMessage + e.getMessage());
             }
+        }
+        if (editOrder.hasSapQuote()) {
+            publishProductOrderToSAP(editOrder, messageCollection, true);
         }
 
         return editOrder;

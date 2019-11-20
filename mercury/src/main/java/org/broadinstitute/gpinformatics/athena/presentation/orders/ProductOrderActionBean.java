@@ -1690,9 +1690,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
             originalBusinessKey = null;
 
-            if (editOrder.hasSapQuote()) {
-                productOrderEjb.publishProductOrderToSAP(editOrder, placeOrderMessageCollection, true);
-            }
             addMessages(placeOrderMessageCollection);
 
             /*

@@ -299,7 +299,7 @@ public class ProductOrderResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public String createAndPlace(@Nonnull ProductOrderData productOrderData) {
 
-        MessageCollection messageCollection = new MessageCollection();
+        final MessageCollection messageCollection = new MessageCollection();
         String resultsOutput = "";
         ProductOrder createdOrder = null;
         StringBuffer resultsBuilder = new StringBuffer();
@@ -309,9 +309,14 @@ public class ProductOrderResource {
 
             productOrderEjb.placeProductOrder(createdOrder.getProductOrderId(), createdOrder.getBusinessKey(),
                     messageCollection);
-            if (createdOrder.hasSapQuote()) {
-                productOrderEjb.publishProductOrderToSAP(createdOrder, messageCollection, true);
-            }
+            MessageReporter reporter = new MessageReporter() {
+                @Override
+                public String addMessage(String message, Object... arguments) {
+                    messageCollection.addWarning(message);
+                    return message;
+                }
+            };
+            productOrderEjb.handleSamplesAdded(createdOrder.getBusinessKey(), createdOrder.getSamples(), reporter);
         } catch (DuplicateTitleException | NoSamplesException | ApplicationValidationException |
                 InvalidProductException | SAPInterfaceException e) {
             List<String> errors = new ArrayList<>();
