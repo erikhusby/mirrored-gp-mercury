@@ -57,7 +57,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * This entity represents all the stored information for a Mercury Project.
@@ -1113,19 +1112,22 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return price;
     }
 
-    public String getReplacementPrices()  {
+    public List<String> getReplacementPrices()  {
 
-        final String displayValues = sapMaterials.values().stream().filter(sapMaterial -> !sapMaterial
-            .getPossibleDeliveryConditions().isEmpty())
-                .map(sapMaterial -> sapMaterial.getPossibleDeliveryConditions().entrySet())
-                .map(entries -> entries.stream()
-                        .filter(entry -> entry.getValue().compareTo(BigDecimal.ZERO) > 0)
-                        .map(deliveryConditionEntry ->
-                                deliveryConditionEntry.getKey() + " = " +
-                                NumberFormat.getCurrencyInstance().format(deliveryConditionEntry.getValue())
-                        ).collect(Collectors.joining("<br/>"))).collect(Collectors.joining("<br/>"));
+        final List<String> discountCollection = new ArrayList<>();
 
-        return displayValues;
+        sapMaterials.values().stream().filter(sapMaterial -> !sapMaterial
+                .getPossibleDeliveryConditions().isEmpty()).forEach(material -> {
+                    material.getPossibleDeliveryConditions().forEach((deliveryCondition, conditionValue) -> {
+                    if (conditionValue.compareTo(BigDecimal.ZERO) < 0) {
+                        discountCollection.add("("+material.getSalesOrg()+") " +
+                                               deliveryCondition.getConditionName() + " = " +
+                                               NumberFormat.getCurrencyInstance().format(conditionValue));
+                    }
+            });
+        });
+
+        return discountCollection;
     }
 
     public boolean isQuotePriceDifferent() {

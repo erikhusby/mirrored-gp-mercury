@@ -158,7 +158,9 @@
                     </td>
                     <td>
                         <c:if test="${inSAP}">
-                            ${product.replacementPrices}
+                            <c:forEach items="${product.replacementPrices}" var="replacement">
+                                ${replacement}<br>
+                            </c:forEach>
                         </c:if>
                     </td>
                 </security:authorizeBlock>
