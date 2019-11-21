@@ -850,6 +850,7 @@ public class VesselEjb {
                     } else {
                         tube.setVolume(newVolume);
                     }
+                } else {
                     messageCollection.addError(
                             "Tube " + tube.getLabel() + " has no volume value.");
                 }
