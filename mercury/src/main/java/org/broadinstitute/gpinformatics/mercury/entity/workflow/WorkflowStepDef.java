@@ -78,6 +78,12 @@ public class WorkflowStepDef implements Serializable {
         NORMALIZED_GDNA,
     }
 
+    enum EventClass {
+        IN_PLACE,
+        TRANSFER,
+        SIDE_BRANCH_TRANSFER
+    }
+
     /* LibraryQuantTypes:
     GSSR/BSP Pico
     Pre Flight Pre Norm Pico
@@ -90,6 +96,7 @@ public class WorkflowStepDef implements Serializable {
 
     private String name;
     private List<LabEventType> labEventTypes = new ArrayList<>();
+    private EventClass eventClass;
     /** Specific reagent types for the generic ADD_REAGENT event. */
     private List<String> reagentTypes = new ArrayList<>();
     /** Specific vessel type for the generic ADD_REAGENT event.  JAXB doesn't allow use of VesselTypeGeometry here. */
@@ -169,6 +176,10 @@ public class WorkflowStepDef implements Serializable {
 
     public List<LabEventType> getLabEventTypes() {
         return labEventTypes;
+    }
+
+    public EventClass getEventClass() {
+        return eventClass;
     }
 
     public List<String> getReagentTypes() {

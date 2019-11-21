@@ -11,7 +11,8 @@ import java.util.List;
 public class SingleCell10XJaxbBuilder {
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private final String testPrefix;
-    private final String sourcePlate;
+    private final String sourceRackBarcode;
+    private final List<String> tubeBarcodes;
     private final String indexPlateBarcode;
     private final List<BettaLIMSMessage> messageList = new ArrayList<>();
     private PlateTransferEventType endRepairAbaseJaxb;
@@ -20,21 +21,24 @@ public class SingleCell10XJaxbBuilder {
     private PlateTransferEventType ligationCleanupJaxb;
     private PlateTransferEventType indexAdapterPCRJaxb;
     private PlateTransferEventType doubleSidedSpriJaxb;
+    private String doubleSidedSpriPlate;
+    private List<String> spriTubeBarcodes;
 
     public SingleCell10XJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
-                                    String sourcePlate, String indexPlateBarcode) {
+                                    String sourceRackBarcode, List<String> tubeBarcodes, String indexPlateBarcode) {
 
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.testPrefix = testPrefix;
-        this.sourcePlate = sourcePlate;
+        this.sourceRackBarcode = sourceRackBarcode;
+        this.tubeBarcodes = tubeBarcodes;
         this.indexPlateBarcode = indexPlateBarcode;
     }
 
     public SingleCell10XJaxbBuilder invoke() {
         String aTailPlate = "aTailPlate" + testPrefix;
-        endRepairAbaseJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("SingleCellEndRepairABase",
-                sourcePlate,
-                aTailPlate);
+        String spriPlate = "aTailPlate" + testPrefix;
+        endRepairAbaseJaxb = bettaLimsMessageTestFactory.buildRackToPlate("SingleCellEndRepairABase",
+                sourceRackBarcode, tubeBarcodes, spriPlate);
         bettaLimsMessageTestFactory.addMessage(messageList, endRepairAbaseJaxb);
 
         String aTailCleanupPlate = "aTailCleanupPlate" + testPrefix;
@@ -58,10 +62,13 @@ public class SingleCell10XJaxbBuilder {
                 ligationCleanupPlate);
         bettaLimsMessageTestFactory.addMessage(messageList, indexAdapterPCRJaxb);
 
-        String doubleSidedSpriPlate = "doubleSidedSpriPlate" + testPrefix;
-        doubleSidedSpriJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("SingleCellDoubleSidedCleanup",
-                ligationCleanupPlate,
-                doubleSidedSpriPlate);
+        String hashingSpriRack = "dblSidedSprirck" + testPrefix;
+        spriTubeBarcodes = new ArrayList<>();
+        for (int i = 0; i < tubeBarcodes.size(); i++) {
+            spriTubeBarcodes.add("SCSpriTube_" + i);
+        }
+        doubleSidedSpriJaxb = bettaLimsMessageTestFactory.buildPlateToRack("SingleCellDoubleSidedCleanup",
+                ligationCleanupPlate, hashingSpriRack, spriTubeBarcodes);
         bettaLimsMessageTestFactory.addMessage(messageList, doubleSidedSpriJaxb);
 
         return this;
@@ -93,5 +100,13 @@ public class SingleCell10XJaxbBuilder {
 
     public PlateTransferEventType getDoubleSidedSpriJaxb() {
         return doubleSidedSpriJaxb;
+    }
+
+    public String getDoubleSidedSpriPlate() {
+        return doubleSidedSpriPlate;
+    }
+
+    public List<String> getSpriTubeBarcodes() {
+        return spriTubeBarcodes;
     }
 }

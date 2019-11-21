@@ -452,11 +452,13 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
             addGlobalValidationError(ERROR_PREFIX + "''{2}'' is not a valid email address.", specifiedCollaborator);
         }
 
+        //TODO Update Research project page to recognize SAP or Quote Quote
         validateQuoteId(collaborationQuoteId);
     }
 
     private void validateQuoteId(String quoteId) {
         try {
+            //TODO revisit for SAP quote updates
             quoteService.getQuoteByAlphaId(quoteId);
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", quoteId, e.getMessage());

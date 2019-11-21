@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.broadinstitute.bsp.client.search.SearchItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -47,6 +48,18 @@ public class MercurySampleSearchDefinition {
         mapGroupSearchTerms.put("Batches", searchTerms);
 
         searchTerms = LabVesselSearchDefinition.buildBsp();
+        SearchTerm ptIdTerm = searchTerms.stream().
+                filter(searchTerm -> searchTerm.getName().equals(BSPSampleSearchColumn.PARTICIPANT_ID.columnName())).
+                findFirst().
+                orElseThrow(() -> new RuntimeException("Failed to find term"));
+        ptIdTerm.setExternalDataExpression(values -> {
+            SearchItem searchItem = new SearchItem("Participant ID", "IN", values);
+            return LabMetricSearchDefinition.runBspSearch(searchItem);
+        });
+        SearchTerm.CriteriaPath sampleKeyCriteriaPath = new SearchTerm.CriteriaPath();
+        sampleKeyCriteriaPath.setCriteria(Collections.singletonList("SampleID"));
+        sampleKeyCriteriaPath.setPropertyName("sampleKey");
+        ptIdTerm.setCriteriaPaths(Collections.singletonList(sampleKeyCriteriaPath));
         mapGroupSearchTerms.put("BSP", searchTerms);
 
         searchTerms = buildSampleSearch();
@@ -412,6 +425,17 @@ public class MercurySampleSearchDefinition {
             public Object evaluate(Object entity, SearchContext context) {
                 Fingerprint fingerprint = (Fingerprint) entity;
                 return fingerprint.getDateGenerated();
+            }
+        });
+        parentSearchTerm.addNestedEntityColumn(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Platform");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, SearchContext context) {
+                Fingerprint fingerprint = (Fingerprint) entity;
+                return fingerprint.getPlatform();
             }
         });
         parentSearchTerm.addNestedEntityColumn(searchTerm);

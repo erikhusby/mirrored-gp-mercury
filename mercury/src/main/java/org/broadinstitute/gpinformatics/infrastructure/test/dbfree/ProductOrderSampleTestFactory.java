@@ -89,7 +89,12 @@ public class ProductOrderSampleTestFactory {
 
         final PriceItem priceItem = new PriceItem(sampleToBeBilled.getProductOrder().getQuoteId(), "platform", "category", "test");
 
-        sampleToBeBilled.addLedgerItem(new Date(), priceItem, 1d);
+        if(sampleToBeBilled.getProductOrder().hasSapQuote()) {
+            sampleToBeBilled.addLedgerItem(new Date(), sampleToBeBilled.getProductOrder().getProduct(), 1d,
+                    false);
+        } else {
+            sampleToBeBilled.addLedgerItem(new Date(), priceItem, 1d);
+        }
 
         LedgerEntry toclose = sampleToBeBilled.getLedgerItems().iterator().next();
         toclose.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);

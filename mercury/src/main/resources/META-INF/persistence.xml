@@ -17,6 +17,9 @@
             <property name="hibernate.transaction.jta.platform" value="JBossAS" />
             <!-- todo jmt this doesn't seem to work -->
             <property name="org.hibernate.flushMode" value="COMMIT" />
+            <property name="hibernate.jdbc.batch_size" value="50"/>
+            <property name="hibernate.order_updates" value="true"/>
+            <property name="hibernate.order_inserts" value="true"/>
         </properties>
     </persistence-unit>
 

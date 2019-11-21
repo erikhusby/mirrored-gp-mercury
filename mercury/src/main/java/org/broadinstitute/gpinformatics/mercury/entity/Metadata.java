@@ -111,6 +111,10 @@ public class Metadata {
         throw new RuntimeException("Unhandled data type " + key.getDataType());
     }
 
+    public String toString() {
+        return key.displayName + ":" + getValue();
+    }
+
     public String getStringValue() {
         return stringValue;
     }
@@ -241,7 +245,7 @@ public class Metadata {
         ORIGINAL_MATERIAL_TYPE(Category.SAMPLE, DataType.STRING, "Original Material Type", Visibility.USER),
 
         /**
-         * A unique ID for the patient. Should not contain PHI.
+         * A unique ID for the patient. Collaborator Patient Id for Biobank samples. Should not contain PHI.
          */
         PATIENT_ID(Category.SAMPLE, DataType.STRING, "Patient ID", Visibility.USER),
 
@@ -311,8 +315,26 @@ public class Metadata {
         MANUFACTURING_DATE(Category.REAGENT, DataType.DATE, "Manufacturing Date", Visibility.USER),
         STORAGE_CONDITIONS(Category.REAGENT, DataType.STRING, "Storage Conditions", Visibility.USER),
         MANUFACTURER_DESIGN_ID(Category.REAGENT, DataType.STRING, "Manufacturer Design ID", Visibility.USER),
-        MARK_STOCK(Category.SAMPLE, DataType.STRING, "Mark Stock", Visibility.USER);
-
+        MARK_STOCK(Category.SAMPLE, DataType.STRING, "Mark Stock", Visibility.USER),
+        // Mayo sample metadata.
+        PACKAGE_ID(Category.SAMPLE, DataType.STRING, "Package ID", Visibility.USER),
+        RACK_LABEL(Category.SAMPLE, DataType.STRING, "Rack Label", Visibility.NONE),
+        BOX_ID(Category.SAMPLE, DataType.STRING, "Box ID", Visibility.USER),
+        RECEIPT_DATE(Category.SAMPLE, DataType.STRING, "Receipt Date", Visibility.USER),
+        WELL_POSITION(Category.SAMPLE, DataType.STRING, "Well Location", Visibility.NONE),
+        COLLAB_SAMPLE_ID2(Category.SAMPLE, DataType.STRING, "Collaborator Sample ID 2", Visibility.USER),
+        COLLAB_SAMPLE_ID3(Category.SAMPLE, DataType.STRING, "Collaborator Sample ID 3", Visibility.USER),
+        NY_STATE(Category.SAMPLE, DataType.STRING, "NY State", Visibility.USER),
+        VOLUME(Category.SAMPLE, DataType.STRING, "Volume", Visibility.NONE),
+        CONCENTRATION(Category.SAMPLE, DataType.STRING, "Concentration", Visibility.NONE),
+        MASS(Category.SAMPLE, DataType.STRING, "Mass", Visibility.NONE),
+        STUDY(Category.SAMPLE, DataType.STRING, "Study", Visibility.USER),
+        TRACKING_NUMBER(Category.SAMPLE, DataType.STRING, "Tracking Number", Visibility.USER),
+        CONTACT(Category.SAMPLE, DataType.STRING, "Contact", Visibility.USER),
+        CONTACT_EMAIL(Category.SAMPLE, DataType.STRING, "Contact Email", Visibility.USER),
+        REQUESTING_PHYSICIAN(Category.SAMPLE, DataType.STRING, "Requesting Physician", Visibility.USER),
+        PRODUCT_TYPE(Category.SAMPLE, DataType.STRING, "Product Type", Visibility.USER),
+        ;
 
         private final Category category;
         private final DataType dataType;

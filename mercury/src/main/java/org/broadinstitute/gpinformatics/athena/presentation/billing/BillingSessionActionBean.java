@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.presentation.billing;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import net.sourceforge.stripes.action.ActionBeanContext;
 import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.Before;
@@ -13,7 +16,6 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingAdaptor;
@@ -24,13 +26,16 @@ import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteWorkItemsEx
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
+import org.broadinstitute.gpinformatics.athena.presentation.links.SapQuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -46,6 +51,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * This handles all the needed interface processing elements.
@@ -56,6 +62,8 @@ public class BillingSessionActionBean extends CoreActionBean {
     private static final String SESSION_LIST_PAGE = "/billing/sessions.jsp";
     private static final String SESSION_VIEW_PAGE = "/billing/view.jsp";
     private static final Log log = LogFactory.getLog(BillingSessionActionBean.class);
+    public static final String SENT_TO_SAP = "Sent to SAP";
+    public static final String SENT_TO_QUOTE_SERVER = "Sent to Quote Server";
 
     @Inject
     private BillingSessionDao billingSessionDao;
@@ -66,8 +74,9 @@ public class BillingSessionActionBean extends CoreActionBean {
     @Inject
     private BSPUserList bspUserList;
 
-    @Inject
     private QuoteLink quoteLink;
+
+    private SapQuoteLink sapQuoteLink;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -199,27 +208,7 @@ public class BillingSessionActionBean extends CoreActionBean {
         List<BillingEjb.BillingResult> billingResults = null;
         try {
             billingResults = billingAdaptor.billSessionItems(pageUrl, sessionKey);
-
-            for (BillingEjb.BillingResult billingResult : billingResults) {
-
-                if (billingResult.isError()) {
-                    errorsInBilling = true;
-                    addGlobalValidationError(billingResult.getErrorMessage());
-
-                } else {
-                    String workUrl =
-                            quoteLink.workUrl(billingResult.getQuoteImportItem().getQuoteId(),
-                                    billingResult.getWorkId());
-
-                    String link = "<a href=\"" + workUrl + "\" target=\"QUOTE\">click here</a>";
-                    final StringBuilder results = new StringBuilder("Sent to quote server");
-                    if(StringUtils.isNotBlank(billingResult.getSAPBillingId())) {
-                        results.append(" and SAP");
-                    }
-                    results.append(": ").append(link) .append(" to see the quotes server value");
-                    addMessage(results.toString());
-                }
-            }
+            errorsInBilling = createBillingMessage(billingResults, this);
         } catch (Exception e) {
             errorsInBilling = true;
             addGlobalValidationError(e.getMessage());
@@ -234,6 +223,57 @@ public class BillingSessionActionBean extends CoreActionBean {
                 .addParameter(SESSION_KEY_PARAMETER_NAME, editSession.getBusinessKey());
     }
 
+    public boolean createBillingMessage(List<BillingEjb.BillingResult> billingResults,
+                                        MessageReporter messageReporter) {
+        boolean errorsInBilling = false;
+        HashMultimap<ProductOrder.QuoteSourceType, String> billingDestinationMap = HashMultimap.create();
+        for (BillingEjb.BillingResult billingResult : billingResults) {
+
+            if (billingResult.isError()) {
+                errorsInBilling = true;
+                addGlobalValidationError(billingResult.getErrorMessage());
+            } else {
+                billingDestinationMap.putAll(getQuoteLink(billingResult.getQuoteImportItem()));
+            }
+        }
+        billingDestinationMap.asMap().entrySet().stream().collect(
+            Collectors.groupingBy(type -> type.getKey().isSapType())).forEach((isSap, entries) -> {
+            if (isSap) {
+                entries.forEach(quoteDest -> {
+                    StringBuilder message = new StringBuilder(SENT_TO_SAP).append(" ");
+                    quoteDest.getValue().forEach(quoteId -> message.append(quoteId).append(" "));
+                    messageReporter.addMessage(message.toString().trim());
+                });
+            } else {
+                entries.forEach(quoteDest -> {
+                    StringBuilder message = new StringBuilder(SENT_TO_QUOTE_SERVER).append(" ");
+                    quoteDest.getValue().forEach(quoteId -> message.append(quoteId).append(" "));
+                    messageReporter.addMessage(message.toString());
+                });
+            }
+        });
+        if (!billingDestinationMap.isEmpty()) {
+            messageReporter.addMessage("Click links to view quote.");
+        }
+
+        return errorsInBilling;
+    }
+
+    public Multimap<ProductOrder.QuoteSourceType, String> getQuoteLink(QuoteImportItem quoteImportItem) {
+        Multimap<ProductOrder.QuoteSourceType, String> quoteMap = HashMultimap.create();
+        StringBuffer quoteLinkBuffer = new StringBuffer("<a class='external' target='QUOTE' href='");
+        ProductOrder.QuoteSourceType quoteSourceType = quoteImportItem.getProductOrder().getQuoteSource();
+
+        if (quoteImportItem.isSapOrder()) {
+            quoteLinkBuffer.append(sapQuoteLink.sapUrl(quoteImportItem.getQuoteId()));
+        } else {
+            String workItem = Optional.ofNullable(quoteImportItem.getSingleWorkItem()).orElse("");
+            quoteLinkBuffer.append(quoteLink.workUrl(quoteImportItem.getQuoteId(), workItem));
+        }
+        quoteLinkBuffer.append("'>").append(quoteImportItem.getQuoteId()).append("</a>");
+        quoteMap.put(quoteSourceType, quoteLinkBuffer.toString());
+        return quoteMap;
+    }
 
     @HandlesEvent("endSession")
     public Resolution endSession() {
@@ -286,6 +326,10 @@ public class BillingSessionActionBean extends CoreActionBean {
 
     public String getQuoteUrl(String quote) {
         return quoteLink.quoteUrl(quote);
+    }
+
+    public String getSapQuoteUrl(String quote) {
+        return sapQuoteLink.sapUrl(quote);
     }
 
     public String getQuoteWorkItemUrl(String quote,String workItem) {
@@ -365,5 +409,15 @@ public class BillingSessionActionBean extends CoreActionBean {
 
     private boolean isPageBeingLoadedFromQuoteServerSourceLink() {
         return getQuoteServerParametersFromQuoteSourceLink() != null;
+    }
+
+    @Inject
+    public void setQuoteLink(QuoteLink quoteLink) {
+        this.quoteLink = quoteLink;
+    }
+
+    @Inject
+    public void setSapQuoteLink(SapQuoteLink sapQuoteLink) {
+        this.sapQuoteLink = sapQuoteLink;
     }
 }

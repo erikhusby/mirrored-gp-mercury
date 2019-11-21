@@ -1,20 +1,17 @@
 package org.broadinstitute.gpinformatics.infrastructure.parsers.csv;
 
 import com.opencsv.CSVReader;
-import com.opencsv.CSVWriter;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanFilter;
 import com.opencsv.bean.HeaderColumnNameTranslateMappingStrategy;
 
+import javax.annotation.Nullable;
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Util class to parse CSV data to objects
@@ -65,5 +62,13 @@ public class CsvParser {
                 }
             }
         }
+    }
+
+    /**
+     * Returns the csv file contents, including header and any blank lines.
+     */
+    public static List<String[]> parseToCellGrid(InputStream inputStream) throws IOException {
+        CSVReader reader = new CSVReader(new BufferedReader(new InputStreamReader(inputStream)));
+        return reader.readAll();
     }
 }

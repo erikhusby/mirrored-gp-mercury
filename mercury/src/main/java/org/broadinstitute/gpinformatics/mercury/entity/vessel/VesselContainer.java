@@ -3,6 +3,8 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -13,6 +15,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Parent;
 
@@ -42,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * This class represents A role of a vessel that contains other vessels, e.g. a rack of tubes, a plate of wells, or a
@@ -690,14 +695,14 @@ public class VesselContainer<T extends LabVessel> {
      * @return LCSETs, empty if no contained vessels are associated with LCSETs
      */
     @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
-    public Set<LabBatch> getComputedLcSetsForSection(SBSSection section) {
+    public Set<LabBatch> getComputedLcSetsForSection(SBSSection section, LabEvent labEvent) {
         Map<SampleInstanceV2.LabBatchDepth, Integer> mapLabBatchToCount = new HashMap<>();
         int numVesselsWithWorkflow = 0;
         for (VesselPosition vesselPosition : section.getWells()) {
             numVesselsWithWorkflow = collateLcSets(mapLabBatchToCount, numVesselsWithWorkflow,
                     getSampleInstancesAtPositionV2(vesselPosition));
         }
-        return computeLcSets(mapLabBatchToCount, numVesselsWithWorkflow);
+        return computeLcSets(mapLabBatchToCount, numVesselsWithWorkflow, labEvent);
     }
 
     /**
@@ -756,7 +761,7 @@ public class VesselContainer<T extends LabVessel> {
      * @return LCSET that all sample instances have in common
      */
     public static Set<LabBatch> computeLcSets(Map<SampleInstanceV2.LabBatchDepth, Integer> mapLabBatchToCount,
-            int numVesselsWithWorkflow) {
+            int numVesselsWithWorkflow, LabEvent labEvent) {
         if (numVesselsWithWorkflow == -1) {
             // The vessels are pooled
             Set<LabBatch> lcsets = new HashSet<>();
@@ -797,6 +802,38 @@ public class VesselContainer<T extends LabVessel> {
                     break;
                 }
                 previousDepth = labBatchDepth.getDepth();
+            }
+        }
+        // check whether event matches any workflows unambiguously
+        WorkflowConfig workflowConfig = new WorkflowLoader().load();
+        for (SampleInstanceV2.LabBatchDepth labBatchDepth : labBatchDepths) {
+            LabBatch labBatch = labBatchDepth.getLabBatch();
+            if (StringUtils.isEmpty(labBatch.getWorkflowName())) {
+                continue;
+            }
+            ProductWorkflowDefVersion workflowDefVersion = workflowConfig.getWorkflowByName(
+                    labBatch.getWorkflowName()).getEffectiveVersion(labEvent.getEventDate());
+            Collection<ProductWorkflowDefVersion.LabEventNode> stepsByEventType = workflowDefVersion.findStepsByEventType(
+                    labEvent.getLabEventType().getName());
+            // PICO_TRANSFER occurs multiple times, so it's not useful
+            if (stepsByEventType.size() == 1) {
+                ProductWorkflowDefVersion.LabEventNode labEventNode = stepsByEventType.iterator().next();
+                if (labEventNode != null) {
+                    if (!labEventNode.getPredecessorTransfers().isEmpty() && !labEvent.getAncestorEvents().isEmpty()) {
+                        Set<LabEventType> workflowTypes = labEventNode.getPredecessorTransfers().stream().
+                                map(ProductWorkflowDefVersion.LabEventNode::getLabEventType).collect(Collectors.toSet());
+                        Set<LabEventType> ancestorTypes = labEvent.getAncestorEvents().stream().
+                                map(LabEvent::getLabEventType).collect(Collectors.toSet());
+                        Set<LabEventType> intersection = workflowTypes.stream()
+                                .filter(ancestorTypes::contains)
+                                .collect(Collectors.toSet());
+                        if (!intersection.isEmpty()) {
+                            computedLcsets.clear();
+                            computedLcsets.add(labBatch);
+                            break;
+                        }
+                    }
+                }
             }
         }
 
