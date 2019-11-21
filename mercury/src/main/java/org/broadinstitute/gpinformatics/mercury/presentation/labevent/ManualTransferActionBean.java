@@ -15,6 +15,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -45,6 +46,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
+import org.broadinstitute.gpinformatics.mercury.control.run.FluidigmSampleSheetGenerator;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.DBSPuncherFileParser;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LimsFileType;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.QiagenRackFileParser;
@@ -61,6 +63,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -72,6 +75,8 @@ import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActi
 import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -101,6 +106,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
     public static final String TRANSFER_ACTION = "transfer";
     public static final String FETCH_EXISTING_ACTION = "fetchExisting";
     public static final String CLEAR_CONNECTIONS_ACTION = "ClearConnectionsButton";
+    public static final String DOWNLOAD_FILE_ACTION = "downloadFile";
     public static final String ACTION_BEAN_URL = "/labevent/manualtransfer.action";
     public static final String PAGE_TITLE = "Manual Transfers";
     public static final String RACK_SCAN_EVENT = "rackScan";
@@ -628,6 +634,35 @@ public class ManualTransferActionBean extends RackScanActionBean {
         validateBarcodes(labBatch, messageCollection);
         addMessages(messageCollection);
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+    }
+
+    @HandlesEvent(DOWNLOAD_FILE_ACTION)
+    public Resolution downloadFile() {
+        switch (manualTransferDetails.getDownloadFileType()) {
+            case FLUIDGM_SAMPLE_SHEET:
+                String barcode = ((PlateEventType) stationEvents.get(0)).getPlate().getBarcode();
+                if (StringUtils.isEmpty(barcode)) {
+                    addGlobalValidationError("You must enter a barcode.");
+                    return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+                }
+                LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
+                return new Resolution() {
+                    @Override
+                    public void execute(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse)
+                            throws IOException {
+                        httpServletResponse.setContentType("text");
+                        httpServletResponse.setHeader("Expires:", "0"); // eliminates browser caching
+                        httpServletResponse.setHeader("Content-Disposition", "attachment; filename=" +
+                                ObjectUtils.defaultIfNull(labVessel.getName(), labVessel.getLabel()) +
+                                "_SampleSheet.csv");
+                        new FluidigmSampleSheetGenerator().writeSheet((StaticPlate) labVessel,
+                                httpServletResponse.getWriter());
+                    }
+                };
+            default:
+                addGlobalValidationError("Unknown download type " + manualTransferDetails.getDownloadFileType());
+                return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+        }
     }
 
     public String getImageFile() {
