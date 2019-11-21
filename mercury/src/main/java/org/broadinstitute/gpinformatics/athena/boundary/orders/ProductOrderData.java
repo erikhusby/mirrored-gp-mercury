@@ -63,6 +63,10 @@ public class ProductOrderData {
      */
     private List<String> samples = new ArrayList<>();
 
+    private boolean notFromhumamns;
+    private boolean sampleManipulatonOnly;
+    private String orspId;
+
     @SuppressWarnings("UnusedDeclaration")
     /** Required by JAXB. */
     ProductOrderData() {
@@ -410,5 +414,29 @@ public class ProductOrderData {
 
     public void setGenoChipType(String genoChipType) {
         this.genoChipType = genoChipType;
+    }
+
+    public boolean isNotFromhumamns() {
+        return notFromhumamns;
+    }
+
+    public void setNotFromhumamns(boolean notFromhumamns) {
+        this.notFromhumamns = notFromhumamns;
+    }
+
+    public boolean isSampleManipulatonOnly() {
+        return sampleManipulatonOnly;
+    }
+
+    public void setSampleManipulatonOnly(boolean sampleManipulatonOnly) {
+        this.sampleManipulatonOnly = sampleManipulatonOnly;
+    }
+
+    public String getOrspId() {
+        return orspId;
+    }
+
+    public void setOrspId(String orspId) {
+        this.orspId = orspId;
     }
 }

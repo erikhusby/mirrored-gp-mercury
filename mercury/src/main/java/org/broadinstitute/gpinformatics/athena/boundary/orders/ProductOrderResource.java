@@ -295,8 +295,8 @@ public class ProductOrderResource {
 
     @POST
     @Path("create")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
+    @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
     public String createAndPlace(@Nonnull ProductOrderData productOrderData) {
 
         final MessageCollection messageCollection = new MessageCollection();

@@ -58,7 +58,7 @@ public class ProductOrderEjbJiraTransitionTest extends Arquillian {
     }
 
     @BeforeMethod
-    public void setupJiraStatus() throws IOException {
+    public void setupJiraStatus() throws IOException, SAPInterfaceException {
         if (jiraService != null) {
             resetJiraTicketState();
         }
@@ -70,7 +70,7 @@ public class ProductOrderEjbJiraTransitionTest extends Arquillian {
         Assert.assertEquals(jiraService.getIssue(PDO).getResolution().toUpperCase(),ProductOrderEjb.JiraResolution.CANCELLED.toString().toUpperCase());
     }
 
-    private void resetJiraTicketState() throws IOException {
+    private void resetJiraTicketState() throws IOException, SAPInterfaceException {
 
         userBean.login("scottmat");
 
@@ -84,7 +84,7 @@ public class ProductOrderEjbJiraTransitionTest extends Arquillian {
                                                                              "workflow has changed?  Or the pdo ticket was updated out of band?");
     }
 
-    private ProductOrder initializeProductOrder() throws IOException {
+    private ProductOrder initializeProductOrder() throws IOException, SAPInterfaceException {
         ProductOrder oldProductOrder = productOrderDao.findByBusinessKey(OLD_PDO);
 
         List<ProductOrderSample> newOrderSamples = new ArrayList<>();

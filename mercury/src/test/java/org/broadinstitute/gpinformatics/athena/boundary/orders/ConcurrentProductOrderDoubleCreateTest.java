@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionListResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -176,6 +177,10 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
                 logger.info(e.getMessage());
                 error = e;
                 throw e;
+            } catch (SAPInterfaceException e) {
+                logger.info(e.getMessage());
+                error = e;
+                throw new RuntimeException(e);
             } finally {
                 try {
                     ctxCtrl.stopContext(SessionScoped.class);
