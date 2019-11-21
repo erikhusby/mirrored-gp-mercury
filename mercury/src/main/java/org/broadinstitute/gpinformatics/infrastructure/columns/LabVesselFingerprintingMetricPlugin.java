@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
@@ -26,6 +27,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import static java.util.stream.Collectors.groupingBy;
@@ -46,12 +48,20 @@ public class LabVesselFingerprintingMetricPlugin implements ListPlugin {
         Q20_CALL_RATE_RATIO("Q20 Call Rate Ratio"),
         Q20_CALL_RATE_QC("Q20 Call Rate QC Result"),
         GENDER("Fluidigm Gender"),
+        REPORTED_GENDER("Reported Gender"),
+        GENDER_CONCORDANCE("Gender Concordance"),
         HAPMAP_CONCOORDANCE("HapMap LOD Score"),
+        HAPMAP_CONCOORDANCE_QC("HapMap LOD Score QC Result"),
+        TRY_COUNT("Try Count"),
         SAMPLE_ALIQUOT_ID("Sample Aliquot ID"),
         ROOT_SAMPLE_ID("Root Sample ID"),
         STOCK_SAMPLE_ID("Stock Sample ID"),
+        COLLABORATOR_SAMPLE_ID("Collaborator Sample ID"),
+        SAMPLE_TYPE("Sample Type"),
+        PARTICIPANT_ID("Participant ID"),
         COLLABORATOR_PARTICIPANT_ID("Collaborator Participant ID"),
-        TRY_COUNT("Try Count"),
+        PDO("PDO"),
+        // todo jmt BSP Work Request
         ROX_RAW_INTENSITY_MEAN("ROX Raw Intensity Mean"),
         ROX_RAW_INTENSITY_STD_DEV("ROX Raw Intensity Std Dev"),
         ROX_RAW_INTENSITY_MEDIAN("ROX Raw Intensity Median");
@@ -128,21 +138,36 @@ public class LabVesselFingerprintingMetricPlugin implements ListPlugin {
                             staticPlate.nearestFormationAndTubePositionByWell();
                     plateResultMap.put(staticPlate, traverserResult);
                 }
+                String reportedGender = null;
+                // todo jmt the following should use standard result columns, to avoid code repetition
                 String stockSampleId = null;
                 String rootSampleId = null;
                 String aliquotSampleId = null;
+                String collaboratorSampleId = null;
+                String sampleType = null;
+                String patientId = null;
                 String collaboratorParticipantId = null;
+                String pdo = null;
                 Set<SampleInstanceV2> sampleInstancesV2 = plateWell.getSampleInstancesV2();
                 int tryCount = 0;
                 for (SampleInstanceV2 sampleInstanceV2 : sampleInstancesV2) {
                     MercurySample rootSample = sampleInstanceV2.getRootOrEarliestMercurySample();
                     aliquotSampleId = sampleInstanceV2.getNearestMercurySampleName();
+                    ProductOrderSample singleProductOrderSample = sampleInstanceV2.getSingleProductOrderSample();
+                    if (singleProductOrderSample != null) {
+                        pdo = singleProductOrderSample.getProductOrder().getBusinessKey();
+                    }
                     if (rootSample != null) {
+                        // todo jmt fetch in bulk?
                         SampleData sampleData = sampleDataFetcher.fetchSampleData(rootSample.getSampleKey());
                         if (sampleData != null) {
                             stockSampleId = sampleData.getStockSample();
                             rootSampleId = sampleData.getRootSample();
+                            collaboratorSampleId = sampleData.getCollaboratorsSampleName();
+                            sampleType = sampleData.getSampleType();
+                            patientId = sampleData.getPatientId();
                             collaboratorParticipantId = sampleData.getCollaboratorParticipantId();
+                            reportedGender = sampleData.getGender();
                         }
                         Set<LabVessel> rootLabVessels = rootSample.getLabVessel();
                         if (!rootLabVessels.isEmpty()) {
@@ -187,9 +212,20 @@ public class LabVesselFingerprintingMetricPlugin implements ListPlugin {
                 row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.SAMPLE_ALIQUOT_ID.getResultHeader(),
                         aliquotSampleId, aliquotSampleId));
 
-                row.addCell(
-                        new ConfigurableList.Cell(VALUE_COLUMN_TYPE.COLLABORATOR_PARTICIPANT_ID.getResultHeader(),
-                                collaboratorParticipantId, collaboratorParticipantId));
+                row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.COLLABORATOR_SAMPLE_ID.getResultHeader(),
+                        collaboratorSampleId, collaboratorSampleId));
+
+                row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.SAMPLE_TYPE.getResultHeader(),
+                        sampleType, sampleType));
+
+                row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.PARTICIPANT_ID.getResultHeader(),
+                        patientId, patientId));
+
+                row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.COLLABORATOR_PARTICIPANT_ID.getResultHeader(),
+                        collaboratorParticipantId, collaboratorParticipantId));
+
+                row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.PDO.getResultHeader(),
+                        pdo, pdo));
 
                 StaticPlate.TubeFormationByWellCriteria.Result result = plateResultMap.get(staticPlate);
                 if (result != null && result.getTubeFormation() != null) {
@@ -234,11 +270,20 @@ public class LabVesselFingerprintingMetricPlugin implements ListPlugin {
                             FluidigmRunFactory.Gender.getByNumberOfXChromosomes(labMetric.getValue().intValue());
                     row.addCell(new ConfigurableList.Cell(
                             VALUE_COLUMN_TYPE.GENDER.getResultHeader(), gender.getSymbol(), gender.getSymbol()));
+                    row.addCell(new ConfigurableList.Cell(
+                            VALUE_COLUMN_TYPE.REPORTED_GENDER.getResultHeader(), reportedGender, reportedGender));
+                    String genderConcordance = Objects.equals(reportedGender, gender.getSymbol()) ? "Pass" : "Fail";
+                    row.addCell(new ConfigurableList.Cell(
+                            VALUE_COLUMN_TYPE.GENDER_CONCORDANCE.getResultHeader(), genderConcordance, genderConcordance));
                     break;
                 case HAPMAP_CONCORDANCE_LOD:
                     String lodScore = ColumnValueType.TWO_PLACE_DECIMAL.format(labMetric.getValue(), "");
                     row.addCell(new ConfigurableList.Cell(
                             VALUE_COLUMN_TYPE.HAPMAP_CONCOORDANCE.getResultHeader(), labMetric.getValue(), lodScore));
+                    String lodDecision = labMetric.getLabMetricDecision().getDecision() ==
+                            LabMetricDecision.Decision.PASS ? "Pass" : "Fail";
+                    row.addCell(new ConfigurableList.Cell(
+                            VALUE_COLUMN_TYPE.HAPMAP_CONCOORDANCE_QC.getResultHeader(), lodDecision, lodDecision));
                 default:
                 }
             }

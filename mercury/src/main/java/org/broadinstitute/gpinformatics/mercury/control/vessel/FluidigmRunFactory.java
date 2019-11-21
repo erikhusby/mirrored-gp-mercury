@@ -281,8 +281,12 @@ public class FluidigmRunFactory {
                     findFirst();
             if (optionalControl.isPresent()) {
                 double lodScore = concordanceCalculator.calculateHapMapConcordance(fingerprint, optionalControl.get());
-                LabMetric lodScoreMetric = new LabMetric(new BigDecimal(lodScore), LabMetric.MetricType.HAPMAP_CONCORDANCE_LOD,
+                LabMetric.MetricType metricType = LabMetric.MetricType.HAPMAP_CONCORDANCE_LOD;
+                LabMetric lodScoreMetric = new LabMetric(new BigDecimal(lodScore), metricType,
                         LabMetric.LabUnit.NUMBER, plateWell.getVesselPosition().name(), runDate);
+                LabMetricDecision lodDecision = metricType.getDecider().makeDecision(plateWell, lodScoreMetric,
+                        decidingUser);
+                lodScoreMetric.setLabMetricDecision(lodDecision);
                 labMetricRun.addMetric(lodScoreMetric);
                 plateWell.addMetric(lodScoreMetric);
             }
@@ -291,19 +295,13 @@ public class FluidigmRunFactory {
         return labMetricRun;
     }
 
-    private void calculateHapMapConcordance(LabMetricRun labMetricRun, Map<String, Snp> mapAssayToSnp,
-                                            Map<PlateWell, List<FluidigmChipProcessor.FluidigmDataRow>> mapLabVesselToRecords) {
-        
-    }
-
     /**
      * Creates a Call Rate Metric of type Q17 or Q20 depending on their thresholds. Stores the num passing calls
      * and total calls based on this threshold as metadata so ratio can be shown in UDS.
      */
-    private Map<PlateWell, LabMetricDecision> generateCallRateLabMetrics(LabMetricRun run, LabMetric.MetricType metricType, long decidingUser,
-                                                                         Map<String, Snp> mapAssayToSnp,
-                                                                         Map<PlateWell, List<FluidigmChipProcessor.FluidigmDataRow>> mapLabVesselToRecords,
-                                                                         double threshold) {
+    private Map<PlateWell, LabMetricDecision> generateCallRateLabMetrics(LabMetricRun run,
+            LabMetric.MetricType metricType, long decidingUser, Map<String, Snp> mapAssayToSnp,
+            Map<PlateWell, List<FluidigmChipProcessor.FluidigmDataRow>> mapLabVesselToRecords, double threshold) {
         Map<PlateWell, LabMetricDecision> mapPlateWellToDecision = new HashMap<>();
         for (Map.Entry<PlateWell, List<FluidigmChipProcessor.FluidigmDataRow>> entry: mapLabVesselToRecords.entrySet()) {
             PlateWell plateWell = entry.getKey();
@@ -345,7 +343,7 @@ public class FluidigmRunFactory {
     }
 
     private Map<PlateWell, Gender> generateGenderAndConfidenceMetric(LabMetricRun run, Map<String, Snp> mapAssayToSnp,
-                                                                     Map<PlateWell, List<FluidigmChipProcessor.FluidigmDataRow>> mapLabVesselToRecords) {
+            Map<PlateWell, List<FluidigmChipProcessor.FluidigmDataRow>> mapLabVesselToRecords) {
         Map<PlateWell, Gender> mapPlateWellToGender = new HashMap<>();
         for (Map.Entry<PlateWell, List<FluidigmChipProcessor.FluidigmDataRow>> entry: mapLabVesselToRecords.entrySet()) {
             PlateWell plateWell = entry.getKey();
@@ -364,10 +362,11 @@ public class FluidigmRunFactory {
                         // TODO JW handle chromosome? See FingerprintManager.getFluidigmGenotypeGenderCall
                     }
                     if (gender != null) {
-                        LabMetric labMetric = new LabMetric(new BigDecimal(gender.getNumXChromosomes()), LabMetric.MetricType.FLUIDIGM_GENDER, LabMetric.LabUnit.GENDER,
+                        LabMetric labMetric = new LabMetric(new BigDecimal(gender.getNumXChromosomes()),
+                                LabMetric.MetricType.FLUIDIGM_GENDER, LabMetric.LabUnit.GENDER,
                                 plateWell.getVesselPosition().name(), run.getRunDate());
                         plateWell.addMetric(labMetric);
-                        run.getLabMetrics().add(labMetric);
+                        run.addMetric(labMetric);
                         mapPlateWellToGender.put(plateWell, gender);
                     }
                 }
