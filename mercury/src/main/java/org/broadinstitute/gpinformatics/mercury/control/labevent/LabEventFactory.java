@@ -642,6 +642,14 @@ public class LabEventFactory implements Serializable {
                 mapOfDestContainerBarcodeToPositionMap.put(positionMapType.getBarcode(), mapOfDestPosToVol);
             }
         }
+        Set<String> found = new HashSet<>();
+        boolean allowSourceVolRemovalUpdate = true;
+        for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
+            if(!found.add(cherryPickSourceType.getDestinationBarcode()+cherryPickSourceType.getDestinationWell())) {
+                allowSourceVolRemovalUpdate = false;
+                break;
+            }
+        }
 
         for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
             String destinationRackBarcode = cherryPickSourceType.getDestinationBarcode();
@@ -679,9 +687,21 @@ public class LabEventFactory implements Serializable {
                     ancillaryTargetVessel,
                     labEvent));
 
-            // If the event is removing destination volume from the sources, proceed to find the source barcoded tube and remove destination volume.
+            PositionMapType sourceContainerPositionMapType = findContainerPositionMapType(cherryPickSourceType.getBarcode(), plateCherryPickEvent.getSourcePositionMap());
+            ReceptacleType sourceReceptacleType = findReceptacleType(cherryPickSourceType.getWell(), sourceContainerPositionMapType);
+            BarcodedTube sourceVessel = (BarcodedTube) sourceContainer.getContainerRole().getVesselAtPosition(VesselPosition.getByName(cherryPickSourceType.getWell()));
+
+            // If this is an event where we are allowing destination volume to be removed from the source, we may need to
+            // update the source volume in cherry pick before doing the transfer.
             if (labEvent.getLabEventType().removeDestVolFromSource()) {
-                String sourceWell = cherryPickSourceType.getWell();
+                if(sourceReceptacleType != null && sourceReceptacleType.getVolume() != null) {
+                    sourceVessel.setVolume(sourceReceptacleType.getVolume());
+                }
+            }
+
+            // If the event is removing destination volume from the sources and there are no multiple sources to one
+            // destination, proceed to find the source barcoded tube and remove destination volume.
+            if (labEvent.getLabEventType().removeDestVolFromSource() && allowSourceVolRemovalUpdate) {
                 String destinationWell = cherryPickSourceType.getDestinationWell();
 
                 // Get the destination volume amount to remove as noted in the PositionMap of the lab event message.
@@ -690,16 +710,57 @@ public class LabEventFactory implements Serializable {
                 // Check to see if the destination map had a volume to remove.
                 if (destVolToRemove != null && destVolToRemove.doubleValue() > 0.0) {
                     // Get the source BarcodedTube so we can update the source vessel volume directly.
-                    BarcodedTube sourceVessel =
-                            (BarcodedTube) sourceContainer.getContainerRole().getVesselAtPosition(VesselPosition.valueOf(sourceWell));
                     BigDecimal currentSourceVolume = sourceVessel.getVolume() == null ? BigDecimal.ZERO : sourceVessel.getVolume();
                     BigDecimal finalSourceVolume = currentSourceVolume.subtract(destVolToRemove);
                     // Subtract the current source vessel volume from the destination volume amount noted in the message.
                     sourceVessel.setVolume((finalSourceVolume.doubleValue() < 0.0) ? BigDecimal.ZERO : finalSourceVolume);
                 }
             }
+
+            // Check whether there's a flag set for depleting sources.
+            Boolean depleteSource = labEvent.getLabEventType().depleteSources() ||
+                                    getSourceMetadataManipulationType(sourceReceptacleType, LabEventType.SourceHandling.DEPLETE);
+
+            if (depleteSource) {
+                sourceVessel.setVolume(BigDecimal.ZERO);
+            }
         }
         return labEvent;
+    }
+
+    /**
+     * Given a {@link PositionMapType} find the {@link ReceptacleType} for the tube matching the position given.
+     *
+     * @param position         Position to look for
+     * @param positionMapType  PositionMapType that holds the information
+     * @return {@link PositionMapType} of the desired receptacle or null if not found.
+     */
+    private ReceptacleType findReceptacleType(String position, PositionMapType positionMapType) {
+        if (positionMapType != null) {
+            for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
+                VesselPosition mapPosition = VesselPosition.getByName(receptacleType.getPosition());
+                VesselPosition cherryPickPosition = VesselPosition.getByName(position);
+                if (mapPosition == cherryPickPosition) {
+                    return receptacleType;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Given a container barcode and a list of {@link PositionMapType} objects, find the {@link PositionMapType} for the container.
+     * @param containerBarcode Barcode of the container
+     * @param positionMapTypes List of position maps from a message.
+     * @return
+     */
+    private PositionMapType findContainerPositionMapType(String containerBarcode, List<PositionMapType> positionMapTypes) {
+        for (PositionMapType positionMapType : positionMapTypes) {
+            if (positionMapType.getBarcode().equalsIgnoreCase(containerBarcode)) {
+                return positionMapType;
+            }
+        }
+        return null;
     }
 
     /**
@@ -1290,14 +1351,17 @@ public class LabEventFactory implements Serializable {
 
     private void setTubeQuantities(ReceptacleType receptacleType, BarcodedTube barcodedTube, LabEvent labEvent,
                                    Boolean areSourceTubes) {
-        if (receptacleType.getVolume() != null) {
-            barcodedTube.setVolume(receptacleType.getVolume());
-        }
-        if (receptacleType.getConcentration() != null) {
-            barcodedTube.setConcentration(receptacleType.getConcentration());
-        }
-        if (receptacleType.getReceptacleWeight() != null) {
-            barcodedTube.setReceptacleWeight(receptacleType.getReceptacleWeight());
+        // Allow update if the tubes are destination tubes or the lab event is NOT removing destination volume amount from sources.
+        if (!areSourceTubes || (!labEvent.getLabEventType().removeDestVolFromSource())) {
+            if (receptacleType.getVolume() != null) {
+                barcodedTube.setVolume(receptacleType.getVolume());
+            }
+            if (receptacleType.getConcentration() != null) {
+                barcodedTube.setConcentration(receptacleType.getConcentration());
+            }
+            if (receptacleType.getReceptacleWeight() != null) {
+                barcodedTube.setReceptacleWeight(receptacleType.getReceptacleWeight());
+            }
         }
         if (labEvent.getLabEventType().getVolumeConcUpdate() == LabEventType.VolumeConcUpdate.BSP_AND_MERCURY) {
             MercurySample mercurySample = extractSample(barcodedTube.getSampleInstancesV2());
@@ -1357,10 +1421,12 @@ public class LabEventFactory implements Serializable {
      */
     private Boolean getSourceMetadataManipulationType(ReceptacleType receptacleType,
                                                       LabEventType.SourceHandling sourceHandling) {
-        for (MetadataType metadataType : receptacleType.getMetadata()) {
-            // If the individual tube has the metadata flag set, then use the value set.
-            if (metadataType.getName().compareToIgnoreCase(sourceHandling.getDisplayName()) == 0) {
-                return Boolean.valueOf(metadataType.getValue());
+        if (receptacleType != null) {
+            for (MetadataType metadataType : receptacleType.getMetadata()) {
+                // If the individual tube has the metadata flag set, then use the value set.
+                if (metadataType.getName().compareToIgnoreCase(sourceHandling.getDisplayName()) == 0) {
+                    return Boolean.valueOf(metadataType.getValue());
+                }
             }
         }
         return false;
