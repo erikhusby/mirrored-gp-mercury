@@ -354,7 +354,7 @@ public enum LabEventType {
     VARIOUS_TUBE_TRANSFER("VariousTubeTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP_APPLY_SM_IDS,
-            VolumeConcUpdate.BSP_AND_MERCURY,
+            VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT, RackOfTubes.RackType.values(),
                     RackOfTubes.RackType.values()).sourceVolume(true).targetVolume(true).requireSingleParticipant(true).
                     destinationMarkStockOptions(new MarkStock[]{MarkStock.ActiveStock, MarkStock.BackupStock,
