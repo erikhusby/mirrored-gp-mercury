@@ -10,7 +10,7 @@ public class VolumeCheckEnqueueOverride extends AbstractEnqueueOverride {
     @Nonnull
     @Override
     public QueuePriority[] getQueuePriorityOrder() {
-        return new QueuePriority[0];
+        return new QueuePriority[] { QueuePriority.CLIA, QueuePriority.EXOME_EXPRESS };
     }
 
     @Override
