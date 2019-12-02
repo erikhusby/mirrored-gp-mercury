@@ -87,7 +87,7 @@ plate / rack.
                value="${plate[0].barcode}" class="container-barcode ${vesselTypeGeometry.barcoded ? "clearable" : ""} barcode unique" ${stationEventIndex == 0 ? "required" : ""}/>
 
         <c:if test="${!source}">
-            <label>Tube Type</label>${selectedTargetChildReceptacleType}
+            <label>Tube Type </label>${selectedTargetChildReceptacleType != null ? selectedTargetChildReceptacleType : actionBean.labEventTypeByIndex(stationEventIndex).manualTransferDetails.targetBarcodedTubeType}
         </c:if>
     <c:if test="${stationEvent.class.simpleName == 'PlateCherryPickEvent'}">
         <div style="display: none;">

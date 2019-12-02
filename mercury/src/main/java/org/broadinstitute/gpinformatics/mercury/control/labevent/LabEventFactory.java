@@ -629,6 +629,20 @@ public class LabEventFactory implements Serializable {
         mapBarcodeToTubeFormation.putAll(buildPlates(mapBarcodeToVessel, plateCherryPickEvent.getPlate(),
                 plateCherryPickEvent.getPositionMap(), createSourcesForEvent, false, labEvent));
 
+        // Map of destination containers to well position and volume being removed for the lab event.
+        Map<String, Map<String, BigDecimal>> mapOfDestContainerBarcodeToPositionMap = new HashMap<>();
+        // If the event is set to remove destination volume from the source, create a map of destination containers to position and amount removing.
+        if (labEvent.getLabEventType().removeDestVolFromSource()) {
+            // For each destination we need to be able to get the volume we're removing.
+            for (PositionMapType positionMapType : plateCherryPickEvent.getPositionMap()) {
+                Map<String, BigDecimal> mapOfDestPosToVol = new HashMap<>();
+                for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
+                    mapOfDestPosToVol.put(receptacleType.getPosition(), receptacleType.getVolume());
+                }
+                mapOfDestContainerBarcodeToPositionMap.put(positionMapType.getBarcode(), mapOfDestPosToVol);
+            }
+        }
+
         for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
             String destinationRackBarcode = cherryPickSourceType.getDestinationBarcode();
             // If the message doesn't include the destination rack barcode, assume it's the first one
@@ -664,58 +678,25 @@ public class LabEventFactory implements Serializable {
                     VesselPosition.getByName(cherryPickSourceType.getDestinationWell()),
                     ancillaryTargetVessel,
                     labEvent));
-        }
 
-        // If the event is set to remove the destination volume for a cherry pick from it's source, do the following.
-        if (labEvent.getLabEventType().removeDestVolFromSource()) {
-
-            // Map of container barcode to map of (source position) to destination volume to remove.
-            Map<String, Map<String, BigDecimal>> mapOfSourceContainerToSourceWellAndDestinationVolRemoval = new HashMap<>();
-            // Map of destination containers to well position and volume being removed.
-            Map<String, Map<String, BigDecimal>> mapOfDestContainerBarcodeToPositionMap = new HashMap<>();
-
-            // For each destination we need to be able to get the volume we're removing.
-            for (PositionMapType positionMapType : plateCherryPickEvent.getPositionMap()) {
-                Map<String, BigDecimal> mapOfDestPosToVol = new HashMap<>();
-                for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
-                    mapOfDestPosToVol.put(receptacleType.getPosition(), receptacleType.getVolume());
-                }
-                mapOfDestContainerBarcodeToPositionMap.put(positionMapType.getBarcode(), mapOfDestPosToVol);
-            }
-
-            for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
-                String sourceContainerBarcode = cherryPickSourceType.getBarcode();
+            // If the event is removing destination volume from the sources, proceed to find the source barcoded tube and remove destination volume.
+            if (labEvent.getLabEventType().removeDestVolFromSource()) {
                 String sourceWell = cherryPickSourceType.getWell();
-
-                String destContainerBarcode = cherryPickSourceType.getDestinationBarcode();
                 String destinationWell = cherryPickSourceType.getDestinationWell();
 
-                Map<String, BigDecimal> sourcePosToDestVolRemoving =
-                        mapOfSourceContainerToSourceWellAndDestinationVolRemoval.get(sourceContainerBarcode);
+                // Get the destination volume amount to remove as noted in the PositionMap of the lab event message.
+                BigDecimal destVolToRemove = mapOfDestContainerBarcodeToPositionMap.get(destinationRackBarcode).get(destinationWell);
 
-                BigDecimal destVolToRemove = mapOfDestContainerBarcodeToPositionMap.get(destContainerBarcode).get(destinationWell);
-
-                if (sourcePosToDestVolRemoving == null) {
-                    sourcePosToDestVolRemoving = new HashMap<>();
-                    sourcePosToDestVolRemoving.put(sourceWell, destVolToRemove);
-                } else {
-                    sourcePosToDestVolRemoving.put(sourceWell, sourcePosToDestVolRemoving.get(sourceWell).add(destVolToRemove));
+                // Check to see if the destination map had a volume to remove.
+                if (destVolToRemove != null && destVolToRemove.doubleValue() > 0.0) {
+                    // Get the source BarcodedTube so we can update the source vessel volume directly.
+                    BarcodedTube sourceVessel =
+                            (BarcodedTube) sourceContainer.getContainerRole().getVesselAtPosition(VesselPosition.valueOf(sourceWell));
+                    BigDecimal currentSourceVolume = sourceVessel.getVolume() == null ? BigDecimal.ZERO : sourceVessel.getVolume();
+                    BigDecimal finalSourceVolume = currentSourceVolume.subtract(destVolToRemove);
+                    // Subtract the current source vessel volume from the destination volume amount noted in the message.
+                    sourceVessel.setVolume((finalSourceVolume.doubleValue() < 0.0) ? BigDecimal.ZERO : finalSourceVolume);
                 }
-
-                mapOfSourceContainerToSourceWellAndDestinationVolRemoval.put(sourceContainerBarcode, sourcePosToDestVolRemoving);
-                // next find source container and vessel, then subtract volume
-                //use process to find source vessels to do math on accordingly.
-
-                // attempting to simply update the source right away.
-                TubeFormation sourceTubeFormation = mapBarcodeToTubeFormation.get(sourceContainerBarcode);
-                Map<String, BigDecimal> mapOfSourceWellsToDestVolRemoved =
-                        mapOfSourceContainerToSourceWellAndDestinationVolRemoval.get(sourceContainerBarcode);
-                BarcodedTube sourceVessel =
-                        sourceTubeFormation.getContainerRole().getVesselAtPosition(VesselPosition.valueOf(sourceWell));
-                BigDecimal destVolToRemoveFromSource = mapOfSourceWellsToDestVolRemoved.get(sourceWell);
-                BigDecimal sourceVolume = sourceVessel.getVolume() == null ? BigDecimal.ZERO : sourceVessel.getVolume();
-                BigDecimal finalSourceVolume = sourceVolume.subtract(destVolToRemoveFromSource);
-                sourceVessel.setVolume((finalSourceVolume.doubleValue() < 0.0) ? BigDecimal.ZERO : finalSourceVolume);
             }
         }
         return labEvent;
