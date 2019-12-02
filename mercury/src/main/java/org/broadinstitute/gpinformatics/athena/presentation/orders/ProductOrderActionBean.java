@@ -1274,8 +1274,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                     String billingSessionKey = ledger.getBillingSession().getBusinessKey();
                     String billingSessionLink =
                         BillingSessionActionBean.getBillingSessionLink(ledger.getBillingSession(), appConfig);
-                    lockedOutOrderStrings.add(String.format("<a href='%s' class='external' target='%s'>%s</a>",
-                        billingSessionLink, billingSessionKey, billingSessionKey));
+                    lockedOutOrderStrings.add(String.format("<a href='%s'>%s</a>", billingSessionLink, billingSessionKey));
                 }
                 String lockedOutString = String.join(", ", lockedOutOrderStrings);
                 addGlobalValidationError(

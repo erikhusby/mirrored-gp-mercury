@@ -155,9 +155,10 @@
                     <td>
                         <span class="sapDocumentIds">
                             ${item.sapItems}
-                            <c:if test="${not empty item.sapReturnOrders}">
-                            <br/><div class="return-order">${item.sapReturnOrders}</div>
-                            </c:if>
+                            c:forEach items="${item.sapReturnOrders}" var="returnId" varStatus="stat">
+                               <c:if test="${stat.first}"><br/></c:if>
+                               <div class="return-order">${returnId}</div>
+                            /c:forEach>
                         </span>
                     </td>
                     <td>${item.product.displayName}</td>

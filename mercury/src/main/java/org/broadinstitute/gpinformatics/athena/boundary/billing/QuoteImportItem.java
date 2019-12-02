@@ -40,7 +40,7 @@ public class QuoteImportItem {
     private Date endRange;
     private final Set<String> workItems = new HashSet<>();
     private String sapItems;
-    private String sapReturnOrders;
+    private Set<String> sapReturnOrders=new HashSet<>();
     private Product product;
     private ProductOrder productOrder;
 
@@ -71,7 +71,10 @@ public class QuoteImportItem {
                 }
                 if (StringUtils.isNotBlank(ledger.getSapDeliveryDocumentId())) {
                     sapItems = ledger.getSapDeliveryDocumentId();
-                    sapReturnOrders = ledger.getSapReturnOrderId();
+                    String sapReturnOrderId = ledger.getSapReturnOrderId();
+                    if (StringUtils.isNotBlank(sapReturnOrderId)) {
+                        sapReturnOrders.add(sapReturnOrderId);
+                    }
                     tabularIdentifier = sapItems;
                 } else {
                     if (!StringUtils.equals(ledger.getSapDeliveryDocumentId(), sapItems)) {
@@ -94,7 +97,7 @@ public class QuoteImportItem {
         return sapItems;
     }
 
-    public String getSapReturnOrders() {
+    public Set<String> getSapReturnOrders() {
         return sapReturnOrders;
     }
 

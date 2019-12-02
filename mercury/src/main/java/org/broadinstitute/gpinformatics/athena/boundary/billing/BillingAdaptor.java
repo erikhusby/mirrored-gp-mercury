@@ -83,7 +83,7 @@ public class BillingAdaptor implements Serializable {
 
     private SapIntegrationService sapService;
 
-    private SAPProductPriceCache productPriceCache;
+    private SAPProductPriceCache    productPriceCache;
 
     private SAPAccessControlEjb sapAccessControlEjb;
 
@@ -149,7 +149,7 @@ public class BillingAdaptor implements Serializable {
 
         boolean errorsInBilling = false;
 
-        List<BillingEjb.BillingResult> results = new ArrayList<>();
+        List<BillingEjb.BillingResult> allResults = new ArrayList<>();
 
         BillingSession billingSession = billingSessionAccessEjb.findAndLockSession(sessionKey);
 
@@ -172,14 +172,14 @@ public class BillingAdaptor implements Serializable {
             HashMultimap<String, String> quoteItemsByQuote = HashMultimap.create();
 
             for (QuoteImportItem item : unBilledQuoteImportItems) {
-
-                BillingEjb.BillingResult result = new BillingEjb.BillingResult(item);
-                results.add(result);
-
+                Set<BillingEjb.BillingResult> itemResults = new HashSet<>();
+                String billingIdForLog = null;
                 String sapBillingId = null;
                 String workId = null;
                 boolean isQuoteFunded = false;
                 try {
+                    BillingEjb.BillingResult result = new BillingEjb.BillingResult(item);
+                    itemResults.add(result);
                     QuotePriceItem priceItemBeingBilled = null;
                     QuotePriceItem primaryPriceItemIfReplacement = null;
 
@@ -240,7 +240,7 @@ public class BillingAdaptor implements Serializable {
                             item.getWorkItems().toArray(new String[item.getWorkItems().size()])[0];
                         sapBillingId = NOT_ELIGIBLE_FOR_SAP_INDICATOR;
                     }
-
+                    billingIdForLog = sapBillingId;
                     double quantityForSAP = item.getQuantityForSAP();
 
                     if (item.getProductOrder().getQuoteSource() != null) {
@@ -272,28 +272,29 @@ public class BillingAdaptor implements Serializable {
                         }
 
                         if (item.getProductOrder().hasSapQuote()) {
-                            if (StringUtils.isBlank(sapBillingId) && StringUtils.isBlank(item.getSapReturnOrders())) {
+                            if (StringUtils.isBlank(sapBillingId) && CollectionUtils.isEmpty(item.getSapReturnOrders())) {
 
                                 if (!item.getProductOrder().getOrderStatus().canPlace()) {
                                     if (StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
 
                                         if (quantityForSAP > 0) {
                                             //todo, validate if the quantity override parameter is still necessary
-                                            sapBillingId = sapService.billOrder(item, null,
-                                                item.getWorkCompleteDate());
+                                            sapBillingId = sapService.billOrder(item, null, item.getWorkCompleteDate());
+                                            billingIdForLog = sapBillingId;
                                             result.setSapBillingId(sapBillingId);
-                                            billingEjb.updateSapLedgerEntries(item, workId, sapBillingId, null,
-                                                BillingSession.SUCCESS);
+                                            billingEjb.updateSapQuoteImportItem(item, workId, sapBillingId, BillingSession.SUCCESS);
                                         } else if (item.isBillingCredit()) {
-                                            Collection<BillingCredit> billingCredits = handleBillingCredit(result);
-                                            results.addAll(billingCredits.stream().map(BillingCredit::getBillingResult)
-                                                .collect(Collectors.toList()));
-                                            results = results.stream().distinct().collect(Collectors.toList());
+                                            Collection<BillingCredit> billingCredits = handleBillingCredit(item, result);
+                                            itemResults.addAll(billingCredits.stream().map(BillingCredit::getBillingResult)
+                                                .collect(Collectors.toSet()));
 
-                                            billingCreditsForEmail.addAll(billingCredits.stream()
+                                            List<BillingCredit> billingCreditsForItem = billingCredits.stream()
                                                 .filter(billingCredit -> billingCredit.getReturnOrderId()
                                                     .startsWith(BillingCredit.CREDIT_REQUESTED))
-                                                .collect(Collectors.toList()));
+                                                .collect(Collectors.toList());
+                                            billingCreditsForEmail.addAll(billingCreditsForItem);
+                                            billingIdForLog = billingCreditsForItem.stream()
+                                                .map(BillingCredit::getSapDeliveryDocumentId).collect(Collectors.joining(", "));
                                         }
                                         item.getProductOrder().latestSapOrderDetail()
                                             .addLedgerEntries(item.getLedgerItems());
@@ -314,39 +315,41 @@ public class BillingAdaptor implements Serializable {
                     } else {
                         throw new BillingException("Unable to determine the source of the Quote for the order.");
                     }
-
                     Set<String> billedPdoKeys = getBilledPdoKeys(result);
-                    logBilling(workId, item, priceItemBeingBilled, billedPdoKeys, sapBillingId);
+                    logBilling(workId, item, priceItemBeingBilled, billedPdoKeys, billingIdForLog);
                 } catch (Exception ex) {
 
-                    StringBuilder errorMessageBuilder = new StringBuilder();
-                    if (!result.isBilledInQuoteServer() && StringUtils.isBlank(workId) && item.isQuoteServerOrder()) {
-                        errorMessageBuilder.append("A problem occurred attempting to post to the quote server for ")
-                            .append(billingSession.getBusinessKey()).append(".");
+                    for (BillingEjb.BillingResult result : itemResults) {
+                        StringBuilder errorMessageBuilder = new StringBuilder();
 
-                    } else if (!result.isBilledInSap() && isQuoteFunded && item.isSapOrder()) {
+                        if (!result.isBilledInQuoteServer() && StringUtils.isBlank(workId) && item.isQuoteServerOrder()) {
+                            errorMessageBuilder.append("A problem occurred attempting to post to the quote server for ")
+                                .append(billingSession.getBusinessKey()).append(".");
 
-                        errorMessageBuilder.append("A problem occured attempting to post to SAP for ")
-                            .append(billingSession.getBusinessKey()).append(".");
+                        } else if (!result.isBilledInSap() && isQuoteFunded && item.isSapOrder()) {
+                            errorMessageBuilder.append("A problem occurred attempting to post to SAP for ")
+                                .append(billingSession.getBusinessKey()).append(".");
 
-                    } else {
-                        errorMessageBuilder.append("A problem occurred saving the ledger entries for ")
-                            .append(billingSession.getBusinessKey()).append(" with an SAP ID of ")
-                            .append(result.isBilledInSap() ? result.getSapBillingId() : sapBillingId).append(",")
-                            .append(" with work id of ")
-                            .append(result.isBilledInQuoteServer() ? result.getWorkId() : workId)
-                            .append(".  ")
-                            .append("The quote for this item may have been successfully sent to ")
-                            .append(result.isBilledInSap() ? "SAP" : "the quote server");
+                        } else {
+                            errorMessageBuilder.append("A problem occurred saving the ledger entries for ")
+                                .append(billingSession.getBusinessKey()).append(" with an SAP ID of ")
+                                .append(result.isBilledInSap() ? result.getSapBillingId() : billingIdForLog).append(",")
+                                .append(" with work id of ")
+                                .append(result.isBilledInQuoteServer() ? result.getWorkId() : workId)
+                                .append(".  ")
+                                .append("The quote for this item may have been successfully sent to ")
+                                .append(result.isBilledInSap() ? "SAP" : "the quote server");
+                        }
+
+                        log.error(errorMessageBuilder + " " + ex.toString(), ex);
+
+                        String errorMessage = errorMessageBuilder + " " + ex.getMessage();
+                        item.setBillingMessages(errorMessage);
+                        result.setErrorMessage(errorMessage);
+                        errorsInBilling = true;
                     }
-
-                    log.error(errorMessageBuilder + " " + ex.toString(), ex);
-
-                    String errorMessage = errorMessageBuilder + " " + ex.getMessage();
-                    item.setBillingMessages(errorMessage);
-                    result.setErrorMessage(errorMessage);
-                    errorsInBilling = true;
                 }
+                allResults.addAll(itemResults);
             }
         } finally {
             billingSessionAccessEjb.saveAndUnlockSession(billingSession);
@@ -366,7 +369,7 @@ public class BillingAdaptor implements Serializable {
             billingEjb.endSession(billingSession);
         }
 
-        return results;
+        return allResults;
     }
 
     private Collection<BillingCredit> handleBillingCredit(BillingEjb.BillingResult billingResult) {
@@ -378,10 +381,7 @@ public class BillingAdaptor implements Serializable {
                 Set<LedgerEntry> updatedLedgers = billingCredit.getReturnLines().stream()
                     .map(BillingCredit.LineItem::getLedgerEntry).collect(Collectors.toSet());
                 if (StringUtils.isNotBlank(updateResult.getSapBillingId())||StringUtils.isNotBlank(updateResult.getErrorMessage())) {
-                    updateResult = new BillingEjb.BillingResult(
-                        new QuoteImportItem(item.getQuoteId(), item.getPriceItem(), item.getQuotePriceType(),
-                            new ArrayList<>(updatedLedgers), item.getWorkCompleteDate(),
-                            item.getProduct(), item.getProductOrder()));
+                    updateResult = new BillingEjb.BillingResult(item);
                 }
                 billingCredit.setBillingResult(updateResult);
                 String billingMessage;
@@ -400,13 +400,13 @@ public class BillingAdaptor implements Serializable {
                         updateResult.setErrorMessage(e.getLocalizedMessage());
                     }
                 }
-
-                billingEjb.updateSapLedgerEntries(updatedLedgers, item.getQuoteId(), billingMessage, null,
-                    billingCredit.getSapDeliveryDocumentId(), billingCredit.getReturnOrderId());
+                billingEjb.updateSapLedgerEntries(updatedLedgers, item.getQuoteId(), item.getSingleWorkItem(),
+                    billingCredit.getSapDeliveryDocumentId(), billingCredit.getReturnOrderId(), billingMessage
+                );
             }
         } catch (BillingException billingException) {
             billingResult.setErrorMessage(billingException.getMessage());
-            billingEjb.updateSapLedgerEntries(item, null, null, null, billingException.getMessage());
+            billingEjb.updateSapQuoteImportItem(item, null, null, billingException.getMessage());
         }
         return billingCredits;
     }
@@ -433,14 +433,14 @@ public class BillingAdaptor implements Serializable {
     }
 
     void logBilling(String workId, QuoteImportItem quoteImportItem, QuotePriceItem quotePriceItem,
-                    Set<String> billedPdoKeys, Object sapDocumentID) {
+                    Set<String> billedPdoKeys, String sapDocumentID) {
         String priceItemName = "";
         if (quotePriceItem != null) {
             priceItemName = quoteImportItem.getProduct().getProductName();
         }
         String billingLogText = String.format(BILLING_LOG_TEXT_FORMAT,
-            workId,
-            sapDocumentID,
+            StringUtils.defaultIfBlank(workId, "N/A"),
+            StringUtils.defaultIfBlank(sapDocumentID, "N/A"),
             BILLING_DATE_FORMAT.format(quoteImportItem.getWorkCompleteDate()),
             BILLING_DATE_FORMAT.format(new Date()),
             quoteImportItem.getQuantity(),
