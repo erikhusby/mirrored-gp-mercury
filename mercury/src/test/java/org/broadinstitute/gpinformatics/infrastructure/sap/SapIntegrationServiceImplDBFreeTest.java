@@ -903,10 +903,10 @@ public class SapIntegrationServiceImplDBFreeTest {
         for (ProductOrderSample productOrderSample : order.getSamples()) {
             if(!productOrderSample.isCompletelyBilled()) {
                 if(order.hasSapQuote()) {
-                    productOrderSample.addLedgerItem(new Date(), order.getProduct(), ledgerCount * 1d, false);
+                    productOrderSample.addLedgerItem(new Date(), order.getProduct(), ledgerCount * 1d, null);
                     for (ProductOrderAddOn productOrderAddOn : order.getAddOns()) {
                         productOrderSample.addLedgerItem(new Date(), productOrderAddOn.getAddOn(),
-                                ledgerCount * 1d, false);
+                                ledgerCount * 1d, null);
                     }
                 } else {
                     productOrderSample

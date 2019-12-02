@@ -36,7 +36,7 @@ public class QuoteImportInfo {
      * <p/>
      *      Billing Ledger - We keep the whole ledger so we can place any errors on each item AND it has the count
      */
-    private final Map<String, Map<ProductOrder, Map<ProductLedgerIndex, Map<Date, List<LedgerEntry>>>>> quantitiesByQuotePriceItem =
+    private final Map<String, Map<ProductOrder, Map<ProductLedgerIndex, Map<Date, Map<String, List<LedgerEntry>>>>>> quantitiesByQuotePriceItem =
             new HashMap<>();
 
     /**
@@ -61,7 +61,7 @@ public class QuoteImportInfo {
 
         // If we have not seen the quote yet, create the map entry for it.
         if (!quantitiesByQuotePriceItem.containsKey(quoteId)) {
-            quantitiesByQuotePriceItem.put(quoteId, new HashMap<ProductOrder, Map<ProductLedgerIndex, Map<Date, List<LedgerEntry>>>> ());
+            quantitiesByQuotePriceItem.put(quoteId, new HashMap<ProductOrder, Map<ProductLedgerIndex, Map<Date, Map<String, List<LedgerEntry>>>>> ());
         }
 
         ProductLedgerIndex index;
@@ -71,23 +71,29 @@ public class QuoteImportInfo {
         ProductOrder orderIndex = ledger.getProductOrderSample().getProductOrder();
 
         if(!quantitiesByQuotePriceItem.get(quoteId).containsKey(orderIndex)) {
-            quantitiesByQuotePriceItem.get(quoteId).put(orderIndex, new HashMap<ProductLedgerIndex, Map<Date, List<LedgerEntry>>> ());
+            quantitiesByQuotePriceItem.get(quoteId).put(orderIndex, new HashMap<ProductLedgerIndex, Map<Date, Map<String, List<LedgerEntry>>>> ());
         }
 
         // If the price item has not been added yet, add the quantity, otherwise, add the quantity to what was there.
         if (!quantitiesByQuotePriceItem.get(quoteId).get(orderIndex).containsKey(index)) {
-            quantitiesByQuotePriceItem.get(quoteId).get(orderIndex).put(index, new HashMap<Date, List<LedgerEntry>> ());
+            quantitiesByQuotePriceItem.get(quoteId).get(orderIndex).put(index, new HashMap<Date, Map<String, List<LedgerEntry>>> ());
         }
 
         // Get the date bucket for this price item.
         Date bucketDate = ledger.getBucketDate();
 
         if (!quantitiesByQuotePriceItem.get(quoteId).get(orderIndex).get(index).containsKey(bucketDate)) {
-            quantitiesByQuotePriceItem.get(quoteId).get(orderIndex).get(index).put(bucketDate, new ArrayList<LedgerEntry> ());
+            quantitiesByQuotePriceItem.get(quoteId).get(orderIndex).get(index).put(bucketDate, new HashMap< String, List<LedgerEntry>> ());
         }
 
+        String deliveryCondition = Optional.ofNullable(ledger.getSapReplacement()).orElse("None");
+
+        if(!quantitiesByQuotePriceItem.get(quoteId).get(orderIndex).get(index).get(bucketDate).containsKey(deliveryCondition)) {
+            quantitiesByQuotePriceItem.get(quoteId).get(orderIndex).get(index).get(bucketDate).put(deliveryCondition,
+                    new ArrayList<>());
+        }
         // Add this ledger item.
-        quantitiesByQuotePriceItem.get(quoteId).get(orderIndex).get(index).get(bucketDate).add(ledger);
+        quantitiesByQuotePriceItem.get(quoteId).get(orderIndex).get(index).get(bucketDate).get(deliveryCondition).add(ledger);
     }
 
     /**
@@ -109,11 +115,13 @@ public class QuoteImportInfo {
     public List<QuoteImportItem> getQuoteImportItems(PriceListCache priceListCache) throws QuoteServerException {
         List<QuoteImportItem> quoteItems = new ArrayList<>();
 
+
+
         for (String quoteId : quantitiesByQuotePriceItem.keySet()) {
-            Map<ProductOrder, Map<ProductLedgerIndex, Map<Date, List<LedgerEntry>>>> quotePriceItems =
+            Map<ProductOrder, Map<ProductLedgerIndex, Map<Date, Map<String, List<LedgerEntry>>>>> quotePriceItems =
                     quantitiesByQuotePriceItem.get(quoteId);
             for (ProductOrder orderIndex : quotePriceItems.keySet()) {
-                for (Map.Entry<ProductLedgerIndex, Map<Date, List<LedgerEntry>>> ledgerEntrybyLedgerIndex : quotePriceItems
+                for (Map.Entry<ProductLedgerIndex, Map<Date, Map<String,List<LedgerEntry>>>> ledgerEntrybyLedgerIndex : quotePriceItems
                         .get(orderIndex).entrySet()) {
                     ProductLedgerIndex ledgerIndex = ledgerEntrybyLedgerIndex.getKey();
                     if (orderIndex.getQuoteSource() == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
@@ -125,52 +133,57 @@ public class QuoteImportInfo {
                     }
 
                     for (Date bucketDate : ledgerEntrybyLedgerIndex.getValue().keySet()) {
-                        List<LedgerEntry> ledgerItems =
+//                        List<LedgerEntry> ledgerItems =
+                        Map<String, List<LedgerEntry>> stringListMap =
                                 quotePriceItems.get(orderIndex).get(ledgerIndex).get(bucketDate);
 
-                        List<LedgerEntry> creditLedgerItems = new ArrayList<>();
-                        List<LedgerEntry> debitLedgerItems = new ArrayList<>();
-                        List<LedgerEntry> replacementCreditLedgerItems = new ArrayList<>();
-                        List<LedgerEntry> replacementDebitLedgerItems = new ArrayList<>();
+                        for (Map.Entry<String, List<LedgerEntry>> ledgerItemsByReplacement:stringListMap.entrySet()) {
+                            List<LedgerEntry> creditLedgerItems = new ArrayList<>();
+                            List<LedgerEntry> debitLedgerItems = new ArrayList<>();
+                            List<LedgerEntry> replacementCreditLedgerItems = new ArrayList<>();
+                            List<LedgerEntry> replacementDebitLedgerItems = new ArrayList<>();
 
-                        // Separate the items into debits and credits so that the quote server will not cancel out items.
-                        for (LedgerEntry ledger : ledgerItems) {
-                            if (ledger.getQuantity() < 0) {
-                                if (isReplacementPriceItem(priceListCache, ledger)) {
-                                    replacementCreditLedgerItems.add(ledger);
+                            List<LedgerEntry> ledgerItems = ledgerItemsByReplacement.getValue();
+                            // Separate the items into debits and credits so that the quote server will not cancel out items.
+                            for (LedgerEntry ledger : ledgerItems) {
+                                if (ledger.getQuantity() < 0) {
+                                    if (isReplacementPriceItem(priceListCache, ledger)) {
+                                        replacementCreditLedgerItems.add(ledger);
+                                    } else {
+                                        creditLedgerItems.add(ledger);
+                                    }
                                 } else {
-                                    creditLedgerItems.add(ledger);
-                                }
-                            } else {
-                                if (isReplacementPriceItem(priceListCache, ledger)) {
-                                    replacementDebitLedgerItems.add(ledger);
-                                } else {
-                                    debitLedgerItems.add(ledger);
+                                    if (isReplacementPriceItem(priceListCache, ledger)) {
+                                        replacementDebitLedgerItems.add(ledger);
+                                    } else {
+                                        debitLedgerItems.add(ledger);
+                                    }
                                 }
                             }
+
+
+                            addQuoteItemsForLedgerItems(quoteItems, quoteId,
+                                    ledgerIndex.getPriceItem(),
+                                    LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM, debitLedgerItems, bucketDate,
+                                    ledgerIndex.getProduct(), orderIndex);
+
+                            addQuoteItemsForLedgerItems(quoteItems, quoteId,
+                                    ledgerIndex.getPriceItem(),
+                                    LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM, replacementDebitLedgerItems,
+                                    bucketDate,
+                                    ledgerIndex.getProduct(), orderIndex);
+
+                            addQuoteItemsForLedgerItems(quoteItems, quoteId,
+                                    ledgerIndex.getPriceItem(),
+                                    LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM, creditLedgerItems, bucketDate,
+                                    ledgerIndex.getProduct(), orderIndex);
+
+                            addQuoteItemsForLedgerItems(quoteItems, quoteId,
+                                    ledgerIndex.getPriceItem(),
+                                    LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM, replacementCreditLedgerItems,
+                                    bucketDate,
+                                    ledgerIndex.getProduct(), orderIndex);
                         }
-
-                        addQuoteItemsForLedgerItems(quoteItems, quoteId,
-                                ledgerIndex.getPriceItem(),
-                                LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM, debitLedgerItems, bucketDate,
-                                ledgerIndex.getProduct(), orderIndex);
-
-                        addQuoteItemsForLedgerItems(quoteItems, quoteId,
-                                ledgerIndex.getPriceItem(),
-                                LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM, replacementDebitLedgerItems,
-                                bucketDate,
-                                ledgerIndex.getProduct(), orderIndex);
-
-                        addQuoteItemsForLedgerItems(quoteItems, quoteId,
-                                ledgerIndex.getPriceItem(),
-                                LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM, creditLedgerItems, bucketDate,
-                                ledgerIndex.getProduct(), orderIndex);
-
-                        addQuoteItemsForLedgerItems(quoteItems, quoteId,
-                                ledgerIndex.getPriceItem(),
-                                LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM, replacementCreditLedgerItems,
-                                bucketDate,
-                                ledgerIndex.getProduct(), orderIndex);
                     }
                 }
             }

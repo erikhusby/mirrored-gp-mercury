@@ -91,7 +91,7 @@ public class ProductOrderSampleTestFactory {
 
         if(sampleToBeBilled.getProductOrder().hasSapQuote()) {
             sampleToBeBilled.addLedgerItem(new Date(), sampleToBeBilled.getProductOrder().getProduct(), 1d,
-                    false);
+                    null);
         } else {
             sampleToBeBilled.addLedgerItem(new Date(), priceItem, 1d);
         }
