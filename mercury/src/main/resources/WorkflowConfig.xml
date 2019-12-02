@@ -4493,6 +4493,8 @@
                 <bucketEntryEvaluator>
                     <materialTypes>RNA</materialTypes>
                     <materialTypes>RNA_TOTAL_RNA</materialTypes>
+                    <materialTypes>DNA_CDNA_LIBRARY</materialTypes>
+                    <materialTypes>DNA_CDNA</materialTypes>
                 </bucketEntryEvaluator>
             </workflowStepDefs>
             <workflowStepDefs>
