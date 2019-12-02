@@ -877,7 +877,7 @@ public class MayoManifestEjb {
             Collection<LabVessel> labVessels = new ArrayList<>(vesselPositionToTube.values());
             QueueSpecialization queueSpecialization =
                     dnaQuantEnqueueOverride.determineDnaQuantQueueSpecialization(labVessels);
-            queueEjb.enqueueLabVessels(labVessels, QueueType.DNA_QUANT,
+            queueEjb.enqueueLabVessels(labVessels, QueueType.VOLUME_CHECK,
                     "Accessioned on " + DateUtils.convertDateTimeToString(new Date()), messages,
                     QueueOrigin.RECEIVING, queueSpecialization);
         }

@@ -2826,4 +2826,19 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="GPLIM-6677-1" author="thompson">
+        <sql>
+            insert into mercury.queue(queue_id, queue_type, queue_name, queue_description)
+            values (mercury.seq_queue.nextval, 'VOLUME_CHECK', 'Volume Check Queue',
+            'Volume Check Queue for newly received or extracted samples.');
+        </sql>
+    </changeSet>
+    <changeSet id="GPLIM-6677-2" author="thompson">
+        <sql>
+            insert into mercury.queue(queue_id, queue_type, queue_name, queue_description)
+            values (mercury.seq_queue.nextval, 'FINGERPRINTING', 'Fingerprinting Queue',
+            'Fingerprinting Queue for newly received or extracted samples.');
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>

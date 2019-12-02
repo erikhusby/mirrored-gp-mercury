@@ -50,6 +50,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.D
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.FlowcellLoadedHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.FlowcellMessageHandler;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.QueueEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
@@ -232,7 +233,8 @@ public class BaseEventTest {
 
         EventHandlerSelector eventHandlerSelector = new EventHandlerSelector(
                 new DenatureToDilutionTubeHandler(), flowcellMessageHandler, flowcellLoadedHandler,
-                new BspNewRootHandler(), new CreateLabBatchHandler(), new QueueEjb(), new DnaQuantEnqueueOverride());
+                new BspNewRootHandler(), new CreateLabBatchHandler(), new QueueEjb(), new DnaQuantEnqueueOverride(),
+                new QueueEventHandler());
         // TODO: Review usages of this to make sure the new QueueEjb doesn't break things
         labEventFactory.setEventHandlerSelector(eventHandlerSelector);
 

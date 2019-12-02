@@ -37,21 +37,25 @@ public class EventHandlerSelector {
     private CreateLabBatchHandler createLabBatchHandler;
     private QueueEjb queueEjb;
     private DnaQuantEnqueueOverride dnaQuantEnqueueOverride;
+    private QueueEventHandler queueEventHandler;
 
     @Inject
     public EventHandlerSelector(DenatureToDilutionTubeHandler denatureToDilutionTubeHandler,
-                                FlowcellMessageHandler flowcellMessageHandler,
-                                FlowcellLoadedHandler flowcellLoadedHandler,
-                                BspNewRootHandler bspNewRootHandler,
-                                CreateLabBatchHandler createLabBatchHandler,
-                                QueueEjb queueEjb,
-                                DnaQuantEnqueueOverride dnaQuantEnqueueOverride) {
+            FlowcellMessageHandler flowcellMessageHandler,
+            FlowcellLoadedHandler flowcellLoadedHandler,
+            BspNewRootHandler bspNewRootHandler,
+            CreateLabBatchHandler createLabBatchHandler,
+            QueueEjb queueEjb,
+            DnaQuantEnqueueOverride dnaQuantEnqueueOverride,
+            QueueEventHandler queueEventHandler) {
         this.denatureToDilutionTubeHandler = denatureToDilutionTubeHandler;
         this.flowcellMessageHandler = flowcellMessageHandler;
         this.flowcellLoadedHandler = flowcellLoadedHandler;
         this.bspNewRootHandler = bspNewRootHandler;
         this.createLabBatchHandler = createLabBatchHandler;
         this.queueEjb = queueEjb;
+        this.dnaQuantEnqueueOverride = dnaQuantEnqueueOverride;
+        this.queueEventHandler = queueEventHandler;
     }
 
     /**
@@ -88,6 +92,12 @@ public class EventHandlerSelector {
             break;
         case ARRAY_PLATING_DILUTION:
             createLabBatchHandler.handleEvent(targetEvent, stationEvent);
+            break;
+        case VOLUME_MEASUREMENT:
+        case PICO_DILUTION_TRANSFER_FORWARD_BSP:
+        case FINGERPRINTING_ALIQUOT:
+        case FINGERPRINTING_ALIQUOT_FORWARD_BSP:
+            queueEventHandler.handleEvent(targetEvent, stationEvent);
             break;
         }
 

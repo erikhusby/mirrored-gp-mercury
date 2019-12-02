@@ -4,17 +4,32 @@ import org.broadinstitute.gpinformatics.mercury.boundary.queue.datadump.Abstract
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.datadump.DnaQuantDataDumpGenerator;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.dequeueRules.AbstractPostDequeueHandler;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.dequeueRules.DnaQuantPostDequeueHandler;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.dequeueRules.FingerprintingPostDequeueHandler;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.dequeueRules.VolumeCheckPostDequeueHandler;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.AbstractEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.DnaQuantEnqueueOverride;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.FingerprintingEnqueueOverride;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.VolumeCheckEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.validation.AbstractQueueValidator;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.validation.DnaQuantQueueValidator;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.validation.FingerprintingQueueValidator;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.validation.VolumeCheckQueueValidator;
 
 /**
  * Enum which defines a queue and its implementation.
  */
 public enum QueueType {
-    DNA_QUANT("DNA Quant", DnaQuantQueueValidator.class, DnaQuantEnqueueOverride.class, DnaQuantPostDequeueHandler.class,
-            DnaQuantDataDumpGenerator.class, QueueContainerRule.TUBES_ONLY);
+    VOLUME_CHECK("Volume Check", VolumeCheckQueueValidator.class, VolumeCheckEnqueueOverride.class,
+            VolumeCheckPostDequeueHandler.class, DnaQuantDataDumpGenerator.class, QueueContainerRule.TUBES_ONLY),
+    DNA_QUANT("DNA Quant", DnaQuantQueueValidator.class, DnaQuantEnqueueOverride.class,
+            DnaQuantPostDequeueHandler.class, DnaQuantDataDumpGenerator.class, QueueContainerRule.TUBES_ONLY),
+    FINGERPRINTING("Fingerprinting", FingerprintingQueueValidator.class, FingerprintingEnqueueOverride.class,
+            FingerprintingPostDequeueHandler.class, DnaQuantDataDumpGenerator.class, QueueContainerRule.TUBES_ONLY),
+//    ARRAY_PLATING("Array Plating", DnaQuantQueueValidator.class, DnaQuantEnqueueOverride.class, DnaQuantPostDequeueHandler.class,
+//            DnaQuantDataDumpGenerator.class, QueueContainerRule.TUBES_ONLY),
+//    SEQ_PLATING("Seq Plating", DnaQuantQueueValidator.class, DnaQuantEnqueueOverride.class, DnaQuantPostDequeueHandler.class,
+//            DnaQuantDataDumpGenerator.class, QueueContainerRule.TUBES_ONLY),
+    ;
 
     // Name displayed in the queue page
     private final String textName;
