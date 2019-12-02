@@ -260,10 +260,19 @@ public class ManifestSessionEjb {
         List<LabVessel> accessionedVessels = new ArrayList<>();
         for (ManifestRecord record : manifestSession.getNonQuarantinedRecords()) {
             if (record.getStatus() == ManifestRecord.Status.ACCESSIONED) {
-                LabVessel labVessel = findAndValidateTargetSampleAndVessel(record.getSampleId(), record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
+                LabVessel labVessel;
                 if (manifestSession.isFromSampleKit()) {
+                    labVessel = findAndValidateTargetSampleAndVessel(record.getSampleId(),
+                            record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
                     transferSample(manifestSessionId, record.getValueByKey(Metadata.Key.SAMPLE_ID),
                             record.getSampleId(), disambiguator++, labVessel);
+                } else {
+                    List<LabVessel> labVessels = labVesselDao.findBySampleKey(record.getSampleId());
+                    if (labVessels.size() != 1) {
+                        throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET,
+                                MERCURY_SAMPLE_KEY, record.getSampleId(), SAMPLE_NOT_FOUND_MESSAGE);
+                    }
+                    labVessel = labVessels.get(0);
                 }
                 accessionedVessels.add(labVessel);
                 accessionedSamples.add(record.getSampleId());
