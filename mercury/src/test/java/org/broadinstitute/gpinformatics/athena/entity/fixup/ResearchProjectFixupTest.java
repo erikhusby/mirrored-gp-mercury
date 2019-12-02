@@ -350,7 +350,7 @@ public class ResearchProjectFixupTest extends Arquillian {
      * </ul>
      * @throws Exception
      */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void updateRPName() throws Exception {
 
         List<String> fixupLines = IOUtils.readLines((VarioskanParserTest.getTestResource("ResearchProjectRename.txt")));
