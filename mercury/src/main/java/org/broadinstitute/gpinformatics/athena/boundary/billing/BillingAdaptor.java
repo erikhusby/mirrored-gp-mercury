@@ -284,7 +284,7 @@ public class BillingAdaptor implements Serializable {
                                             result.setSapBillingId(sapBillingId);
                                             billingEjb.updateSapQuoteImportItem(item, workId, sapBillingId, BillingSession.SUCCESS);
                                         } else if (item.isBillingCredit()) {
-                                            Collection<BillingCredit> billingCredits = handleBillingCredit(item, result);
+                                            Collection<BillingCredit> billingCredits = handleBillingCredit(result);
                                             itemResults.addAll(billingCredits.stream().map(BillingCredit::getBillingResult)
                                                 .collect(Collectors.toSet()));
 
