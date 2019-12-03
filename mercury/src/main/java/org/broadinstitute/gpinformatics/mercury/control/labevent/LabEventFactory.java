@@ -651,6 +651,9 @@ public class LabEventFactory implements Serializable {
             }
         }
 
+        // Set used to track whether a source has had it's volume updated in a cherry pick event (initial vol set)
+        Set<String> sourceUpdated = new HashSet<>();
+
         for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
             String destinationRackBarcode = cherryPickSourceType.getDestinationBarcode();
             // If the message doesn't include the destination rack barcode, assume it's the first one
@@ -695,7 +698,10 @@ public class LabEventFactory implements Serializable {
             // update the source volume in cherry pick before doing the transfer.
             if (labEvent.getLabEventType().removeDestVolFromSource()) {
                 if(sourceReceptacleType != null && sourceReceptacleType.getVolume() != null) {
-                    sourceVessel.setVolume(sourceReceptacleType.getVolume());
+                    // We only want to update the source vessel volume to the vol from the message one time per entire set of cherry picks.
+                    if(sourceUpdated.add(sourceReceptacleType.getBarcode())) {
+                        sourceVessel.setVolume(sourceReceptacleType.getVolume());
+                    }
                 }
             }
 
