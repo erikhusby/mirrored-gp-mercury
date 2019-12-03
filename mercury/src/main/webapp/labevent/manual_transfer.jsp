@@ -274,7 +274,6 @@
                                     // Hide the view transfer button because the rack type picked doesn't have tube types!
                                     $j("#viewTransfer").hide();
                                 } else {
-                                    $j("#viewTransfer").show();
                                     // Loop through the options returned
                                     $j.each(data, function (i, selectOption) {
                                         $j('#selectedTargetChildReceptacleType').append($j('<option></option>').attr('value', selectOption).text(selectOption));
@@ -288,6 +287,15 @@
                         }
                     });
 
+                });
+
+                $j('#selectedTargetChildReceptacleType').change(function() {
+
+                    if ($j('#selectedTargetChildReceptacleType').text().trim() !== "Select One") {
+                        $j("#viewTransfer").show();
+                    } else {
+                        $j("#viewTransfer").hide();
+                    }
                 });
             });
 
@@ -685,7 +693,7 @@
                         <c:choose>
                             <%--If there are multiple source & target vessel geometries allowed and one hasn't been selected, we need to be able to select the option and re-display the page.--%>
                             <c:when test="${not empty actionBean.manualTransferDetails.sourceVesselTypeGeometries and not empty actionBean.manualTransferDetails.targetVesselTypeGeometries and empty actionBean.selectedSourceGeometry}">
-                                <stripes:submit name="viewTransfer" id="viewTransfer" value="View Transfer" class="btn"/>
+                                <stripes:submit name="viewTransfer" id="viewTransfer" value="View Transfer" class="btn" style="display:none;"/>
                             </c:when>
                             <c:otherwise>
 
