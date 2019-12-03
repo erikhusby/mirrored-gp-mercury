@@ -107,7 +107,10 @@ public class QueueGrouping {
         Set<String> locations = new TreeSet<>();
         for (QueueEntity queuedEntity : queuedEntities) {
             for (MercurySample mercurySample : queuedEntity.getLabVessel().getMercurySamples()) {
-                locations.add(mercurySample.getSampleData().getBspStorageLocation());
+                String bspStorageLocation = mercurySample.getSampleData().getBspStorageLocation();
+                if (bspStorageLocation != null) {
+                    locations.add(bspStorageLocation);
+                }
             }
         }
         return locations;

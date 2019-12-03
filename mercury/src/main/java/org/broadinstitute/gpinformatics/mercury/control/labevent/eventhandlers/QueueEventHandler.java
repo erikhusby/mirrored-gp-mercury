@@ -69,7 +69,11 @@ public class QueueEventHandler extends AbstractEventHandler {
 
     @NotNull
     private Set<LabVessel> allOfUsVessels(LabEvent targetEvent) {
-        return targetEvent.getSourceVesselTubes().stream().filter(
+        Set<LabVessel> vesselTubes = targetEvent.getSourceVesselTubes();
+        if (vesselTubes.isEmpty()) {
+            vesselTubes = (Set<LabVessel>) targetEvent.getInPlaceLabVessel().getContainerRole().getContainedVessels();
+        }
+        return vesselTubes.stream().filter(
                 labVessel -> labVessel.getSampleInstancesV2().iterator().next().getRootOrEarliestMercurySample().
                         getMetadata().stream().anyMatch(metadata -> metadata.getKey() == Metadata.Key.CLIENT &&
                                     metadata.getStringValue().equals(MAYO.name()))).
