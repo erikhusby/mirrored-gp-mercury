@@ -5511,6 +5511,17 @@
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>
+        <name>10X Extraction 5 Prime</name>
+        <productWorkflowDefVersions>
+            <version>01</version>
+            <batchJiraProjectType>XTR</batchJiraProjectType>
+            <batchJiraIssueType>CDNA_5PRIME_EXTRACTION</batchJiraIssueType>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>10X Extraction</workflowProcessDefs>
+            <routingRule>MERCURY</routingRule>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
         <name>DNA and RNA from Stool</name>
         <productWorkflowDefVersions>
             <version>1.0</version>
