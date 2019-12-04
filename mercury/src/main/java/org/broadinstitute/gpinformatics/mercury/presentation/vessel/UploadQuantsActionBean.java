@@ -35,6 +35,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BSPRestSender;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.GeminiPlateProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
@@ -77,7 +78,8 @@ public class UploadQuantsActionBean extends CoreActionBean {
         GEMINI("Gemini"),
         WALLAC("Wallac"),
         CALIPER("Caliper"),
-        GENERIC("Generic");
+        GENERIC("Generic"),
+        LUNATIC("Lunatic");
 
         private String displayName;
 
@@ -148,20 +150,10 @@ public class UploadQuantsActionBean extends CoreActionBean {
 
     @HandlesEvent(UPLOAD_QUANT)
     public Resolution uploadQuant() {
-        switch (quantFormat) {
-        case VARIOSKAN:
-            break;
-        case WALLAC:
-            break;
-        case CALIPER:
-            break;
-        case GEMINI:
-            break;
-        case GENERIC:
+        if (quantFormat == QuantFormat.GENERIC) {
             MessageCollection messageCollection = new MessageCollection();
             quantEJB.storeQuants(labMetrics, quantType, messageCollection);
             addMessages(messageCollection);
-            break;
         }
         if (getValidationErrors().isEmpty()) {
             addMessage("Successfully uploaded quant.");
@@ -225,10 +217,27 @@ public class UploadQuantsActionBean extends CoreActionBean {
                     }
                     if (quantType == LabMetric.MetricType.PLATING_PICO ||
                             quantType == LabMetric.MetricType.INITIAL_PICO) {
-                        sendTubeQuantsToBsp(triple.getRight(), messageCollection);
+                        sendTubeQuantsToBsp(triple.getRight(),
+                                GeminiPlateProcessor.RUN_DATE_FORMAT.format(labMetricRun.getRunDate()),
+                                messageCollection);
                     }
                 }
 
+                addMessages(messageCollection);
+                break;
+            }
+            case LUNATIC: {
+                MessageCollection messageCollection = new MessageCollection();
+                Triple<LabMetricRun, List<Result>, Map<String, String>> triple = vesselEjb.createLunaticRun(
+                        quantStream, quantSpreadsheet.getFileName(), getQuantType(),
+                        userBean.getBspUser().getUserId(), messageCollection, acceptRePico);
+                if (triple != null) {
+                    labMetricRun = triple.getLeft();
+                    if (triple.getMiddle() != null) {
+                        tubeFormationLabels = triple.getMiddle().stream()
+                                .map(r -> r.getTubeFormation().getLabel()).collect(Collectors.toList());
+                    }
+                }
                 addMessages(messageCollection);
                 break;
             }
@@ -263,7 +272,8 @@ public class UploadQuantsActionBean extends CoreActionBean {
         }
     }
 
-    public void sendTubeQuantsToBsp(Map<String, String> tubeBarcodeToQuantValue, MessageCollection messageCollection) {
+    public void sendTubeQuantsToBsp(Map<String, String> tubeBarcodeToQuantValue, String runDate,
+            MessageCollection messageCollection) {
         List<String> tubesNotSent = new ArrayList<>();
         List<BarcodedTube> tubes = new ArrayList<>();
         tubeFormationDao.findByLabels(tubeFormationLabels).stream().
@@ -290,7 +300,8 @@ public class UploadQuantsActionBean extends CoreActionBean {
             List<String> volumes = tubes.stream()
                     .map(tube -> tube.getVolume().toPlainString()).collect(Collectors.toList());
             String user = userBean.getBspUser().getUsername();
-            BSPRestSender.TubeQuants tubeQuants = new BSPRestSender.TubeQuants(user, tubeBarcodes, quants, volumes);
+            BSPRestSender.TubeQuants tubeQuants = new BSPRestSender.TubeQuants(user, tubeBarcodes, quants, volumes,
+                    runDate);
             try {
                 bspRestSender.postToBsp(tubeQuants, BSPRestSender.BSP_UPDATE_TUBE_QUANTS_URL, messageCollection);
             } catch (Exception e) {
