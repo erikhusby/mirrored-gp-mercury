@@ -55,7 +55,7 @@ public class BillingCredit {
         Set<BillingCredit> credits = new HashSet<>();
         double totalAvailable = quoteItem.getPriorBillings().stream().mapToDouble(LedgerEntry::getQuantity).sum();
         double quoteItemQuantity = quoteItem.getQuantity();
-        if (quoteItemQuantity >= 0) {
+        if (quoteItemQuantity > 0) {
             throw new BillingException(BillingAdaptor.CREDIT_QUANTITY_INVALID);
         } if (totalAvailable + quoteItemQuantity < 0 ){
             throw new BillingException(BillingAdaptor.NEGATIVE_BILL_ERROR);

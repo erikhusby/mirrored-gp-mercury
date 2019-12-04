@@ -594,7 +594,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         QuotePriceItem quotePriceItem = new QuotePriceItem();
 
         adaptor.logBilling(GOOD_WORK_ID, quoteImportItem, quotePriceItem, new HashSet<>(Arrays.asList("PDO-1", "PDO-2")),
-                SAP_DOCUMENT_ID);
+                SAP_DOCUMENT_ID, null);
         Assert.assertEquals(testLogHandler.getLogs().size(), 1,
             testLogHandler.getLogs().stream().map(LogRecord::getMessage).collect(Collectors.joining()));
         Assert.assertEquals(TestUtils.getFirst(testLogHandler.getLogs()).getLevel(), Level.INFO);

@@ -85,6 +85,14 @@ public class QuoteImportItem {
         }
     }
 
+    public boolean isQuoteFunded() {
+        if (isSapOrder()) {
+            return getSapQuote().isQuoteAvailableForBilling();
+        } else {
+            return getQuote().isFunded(getWorkCompleteDate());
+        }
+    }
+
     public Collection<String> getWorkItems() {
         return Collections.unmodifiableCollection(workItems);
     }

@@ -155,10 +155,10 @@
                     <td>
                         <span class="sapDocumentIds">
                             ${item.sapItems}
-                            c:forEach items="${item.sapReturnOrders}" var="returnId" varStatus="stat">
+                            <c:forEach items="${item.sapReturnOrders}" var="returnId" varStatus="stat">
                                <c:if test="${stat.first}"><br/></c:if>
                                <div class="return-order">${returnId}</div>
-                            /c:forEach>
+                            </c:forEach>
                         </span>
                     </td>
                     <td>${item.product.displayName}</td>

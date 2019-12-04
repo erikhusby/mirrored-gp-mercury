@@ -31,6 +31,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.athena.presentation.links.SapQuoteLink;
+import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -297,8 +298,7 @@ public class BillingSessionActionBean extends CoreActionBean {
     public Resolution endSession() {
         billingEjb.endSession(sessionKey);
 
-        // The default Resolution is LIST_ACTION.
-        return new RedirectResolution(BillingSessionActionBean.class);
+        return new RedirectResolution(ProductOrderActionBean.class);
     }
 
 
