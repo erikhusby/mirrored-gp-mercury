@@ -19,6 +19,8 @@ import java.util.Set;
  */
 public class FluidigmSampleSheetGenerator {
 
+    public static final String NO_TEMPLATE_CONTROL = "NTC";
+
     /**
      * Writes a Fluidigm Sample Sheet.
      */
@@ -43,28 +45,34 @@ public class FluidigmSampleSheetGenerator {
         for (int i = 0; i < vesselPositions.length; i++) {
             VesselPosition vesselPosition = vesselPositions[i];
             LabVessel vesselAtPosition = fluidigmChip.getContainerRole().getImmutableVesselAtPosition(vesselPosition);
-            if (vesselAtPosition == null) {
-                continue;
-            }
-            Set<SampleInstanceV2> sampleInstances = vesselAtPosition.getSampleInstancesV2();
-            if (sampleInstances.isEmpty()) {
-                continue;
-            }
-            if (sampleInstances.size() != 1) {
-                throw new RuntimeException("Expected one sample in " + fluidigmChip.getLabel() + " " +
-                        vesselPosition.name() + ", found " + sampleInstances.size());
-            }
-            SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
-            printWriter.print(sourceSection.getWells().get(i) + ",");
-            printWriter.print(sampleInstance.getRootOrEarliestMercurySampleName() + ",");
-            List<LabMetric> metrics = vesselAtPosition.getNearestMetricsOfType(LabMetric.MetricType.INITIAL_PICO);
+            // Empty positions are "no template controls"
+            boolean ntc = false;
+            SampleInstanceV2 sampleInstance = null;
             BigDecimal value = null;
-            if (!metrics.isEmpty()) {
-                LabMetric labMetric = metrics.get(metrics.size() - 1);
-                value = labMetric.getValue();
+            if (vesselAtPosition == null) {
+                ntc = true;
+            } else {
+                Set<SampleInstanceV2> sampleInstances = vesselAtPosition.getSampleInstancesV2();
+                if (sampleInstances.isEmpty()) {
+                    ntc = true;
+                } else {
+                    if (sampleInstances.size() != 1) {
+                        throw new RuntimeException("Expected one sample in " + fluidigmChip.getLabel() + " " +
+                                vesselPosition.name() + ", found " + sampleInstances.size());
+                    }
+                    sampleInstance = sampleInstances.iterator().next();
+                    List<LabMetric> metrics = vesselAtPosition.getNearestMetricsOfType(LabMetric.MetricType.INITIAL_PICO);
+                    if (!metrics.isEmpty()) {
+                        LabMetric labMetric = metrics.get(metrics.size() - 1);
+                        value = labMetric.getValue();
+                    }
+                }
             }
+
+            printWriter.print(sourceSection.getWells().get(i) + ",");
+            printWriter.print((ntc ? NO_TEMPLATE_CONTROL : sampleInstance.getRootOrEarliestMercurySampleName()) + ",");
             printWriter.print(ObjectUtils.defaultIfNull(value, "") + ",");
-            printWriter.println("Unknown");
+            printWriter.println(ntc ? NO_TEMPLATE_CONTROL : "Unknown");
         }
     }
 }
