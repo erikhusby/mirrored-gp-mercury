@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Handler;
-import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
 /**
@@ -28,7 +27,7 @@ import java.util.logging.LogRecord;
  * @see java.util.logging.Handler
  */
 public class TestLogHandler extends Handler {
-    private static final List<LogRecord> logs = new ArrayList<>();
+    private List<LogRecord> logs = new ArrayList<>();
     private static TestLogHandler instance;
     public static TestLogHandler newInstance() {
         if (instance == null) {
@@ -37,23 +36,7 @@ public class TestLogHandler extends Handler {
         return instance;
     }
 
-    @Override
-    public synchronized void setLevel(Level newLevel) throws SecurityException {
-        super.setLevel(newLevel);
-    }
-
-    @Override
-    public boolean isLoggable(LogRecord record) {
-        return super.isLoggable(record);
-    }
-
-    @Override
-    protected void reportError(String msg, Exception ex, int code) {
-        super.reportError(msg, ex, code);
-    }
-
     protected TestLogHandler() {
-        getLogs().clear();
     }
 
     /**
@@ -79,9 +62,7 @@ public class TestLogHandler extends Handler {
 
     @Override
     public void publish(LogRecord record) {
-        if (!logs.contains(record)) {
-            logs.add(record);
-        }
+        logs.add(record);
     }
 
     @Override

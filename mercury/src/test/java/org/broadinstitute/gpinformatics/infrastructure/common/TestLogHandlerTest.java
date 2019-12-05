@@ -37,6 +37,7 @@ public class TestLogHandlerTest {
         logger.setLevel(Level.ALL);
     }
 
+
     public void testEmpty() throws Exception {
         Assert.assertTrue(handler.getLogs().isEmpty());
     }
@@ -78,8 +79,8 @@ public class TestLogHandlerTest {
 
     public void testMessageLogLevel() throws Exception {
         String testMessage = "A New Message!";
-//        handler.getLogs().clear();
         logger.warning(testMessage);
+
         LogRecord logRecord = Objects.requireNonNull(TestUtils.getFirst((handler.getLogs())));
         Assert.assertEquals(logRecord.getLevel(), Level.WARNING);
     }
