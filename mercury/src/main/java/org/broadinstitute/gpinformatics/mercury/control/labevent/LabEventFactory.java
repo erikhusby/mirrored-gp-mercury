@@ -692,7 +692,7 @@ public class LabEventFactory implements Serializable {
 
             PositionMapType sourceContainerPositionMapType = findContainerPositionMapType(cherryPickSourceType.getBarcode(), plateCherryPickEvent.getSourcePositionMap());
             ReceptacleType sourceReceptacleType = findReceptacleType(cherryPickSourceType.getWell(), sourceContainerPositionMapType);
-            BarcodedTube sourceVessel = (BarcodedTube) sourceContainer.getContainerRole().getVesselAtPosition(VesselPosition.getByName(cherryPickSourceType.getWell()));
+            LabVessel sourceVessel = sourceContainer.getContainerRole().getVesselAtPosition(VesselPosition.getByName(cherryPickSourceType.getWell()));
 
             // If this is an event where we are allowing destination volume to be removed from the source, we may need to
             // update the source volume in cherry pick before doing the transfer.
