@@ -170,10 +170,9 @@ public class BillingAdaptor implements Serializable {
             }
 
             HashMultimap<String, String> quoteItemsByQuote = HashMultimap.create();
-
-            for (QuoteImportItem item : unBilledQuoteImportItems) {
-                Set<BillingEjb.BillingResult> itemResults = new HashSet<>();
-                try {
+            try {
+                for (QuoteImportItem item : unBilledQuoteImportItems) {
+                    Set<BillingEjb.BillingResult> itemResults = new HashSet<>();
                     if (item.isSapOrder()) {
                         item.setSapQuote(item.getProductOrder().getSapQuote(sapService));
                     }
@@ -238,45 +237,43 @@ public class BillingAdaptor implements Serializable {
                     } else {
                         throw new BillingException("Unable to determine the source of the Quote for the order.");
                     }
-                } catch (Exception ex) {
-
-                    for (BillingEjb.BillingResult result : itemResults) {
-                        StringBuilder errorMessageBuilder = new StringBuilder();
-                        String workId = result.getWorkId();
-                        QuoteImportItem quoteImportItem = result.getQuoteImportItem();
-                        if (!result.isBilledInQuoteServer() && StringUtils.isBlank(workId)
-                            && quoteImportItem.isQuoteServerOrder()) {
-                        errorMessageBuilder.append("A problem occurred attempting to post to the quote server for ")
-                                .append(billingSession.getBusinessKey()).append(".");
-
-                        } else if (!result.isBilledInSap() && quoteImportItem.isQuoteFunded() && quoteImportItem
-                            .isSapOrder()) {
-                            errorMessageBuilder.append("A problem occurred attempting to post to SAP for ")
-                                .append(billingSession.getBusinessKey()).append(".");
-
-                        } else {
-                            errorMessageBuilder.append("A problem occurred saving the ledger entries for ")
-                                .append(billingSession.getBusinessKey()).append(" with an SAP ID of ")
-                                .append(result.isBilledInSap() ? result.getSapBillingId() : "").append(",")
-                                .append(" with work id of ")
-                                .append(result.isBilledInQuoteServer() ? workId : workId)
-                                .append(".  ")
-                                .append("The quote for this item may have been successfully sent to ")
-                                .append(result.isBilledInSap() ? "SAP" : "the quote server");
-                        }
-
-                        log.error(errorMessageBuilder + " " + ex.toString(), ex);
-
-                        String errorMessage = errorMessageBuilder + " " + ex.getMessage();
-                        quoteImportItem.setBillingMessages(errorMessage);
-                        result.setErrorMessage(errorMessage);
-                        errorsInBilling = true;
-                    }
-                }
-                if (!errorsInBilling) {
                     errorsInBilling = itemResults.stream().anyMatch(BillingEjb.BillingResult::isError);
+                    allResults.addAll(itemResults);
                 }
-                allResults.addAll(itemResults);
+            } catch (Exception ex) {
+
+                for (BillingEjb.BillingResult result : allResults) {
+                    StringBuilder errorMessageBuilder = new StringBuilder();
+                    String workId = result.getWorkId();
+                    QuoteImportItem quoteImportItem = result.getQuoteImportItem();
+                    if (!result.isBilledInQuoteServer() && StringUtils.isBlank(workId)
+                        && quoteImportItem.isQuoteServerOrder()) {
+                        errorMessageBuilder.append("A problem occurred attempting to post to the quote server for ")
+                            .append(billingSession.getBusinessKey()).append(".");
+
+                    } else if (!result.isBilledInSap() && quoteImportItem.isQuoteFunded() && quoteImportItem
+                        .isSapOrder()) {
+                        errorMessageBuilder.append("A problem occurred attempting to post to SAP for ")
+                            .append(billingSession.getBusinessKey()).append(".");
+
+                    } else {
+                        errorMessageBuilder.append("A problem occurred saving the ledger entries for ")
+                            .append(billingSession.getBusinessKey()).append(" with an SAP ID of ")
+                            .append(result.isBilledInSap() ? result.getSapBillingId() : "").append(",")
+                            .append(" with work id of ")
+                            .append(result.isBilledInQuoteServer() ? workId : workId)
+                            .append(".  ")
+                            .append("The quote for this item may have been successfully sent to ")
+                            .append(result.isBilledInSap() ? "SAP" : "the quote server");
+                    }
+
+                    log.error(errorMessageBuilder + " " + ex.toString(), ex);
+
+                    String errorMessage = errorMessageBuilder + " " + ex.getMessage();
+                    quoteImportItem.setBillingMessages(errorMessage);
+                    result.setErrorMessage(errorMessage);
+                    errorsInBilling = true;
+                }
             }
         } finally {
             billingSessionAccessEjb.saveAndUnlockSession(billingSession);
