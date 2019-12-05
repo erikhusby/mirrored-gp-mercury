@@ -8,34 +8,34 @@ app:
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
-      gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
+      gpBillingManagers: !!set { dryan@broadinstitute.org }
 
     AUTO_BUILD:
       host:     mercurydev.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
-      gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
+      gpBillingManagers: !!set { dryan@broadinstitute.org }
 
     TEST:
       host:     mercuryfb.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
-      gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
+      gpBillingManagers: !!set { dryan@broadinstitute.org }
     QA:
       host:     mercuryqa.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
-      gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
+      gpBillingManagers: !!set { dryan@broadinstitute.org }
 
     RC:
       host:     mercuryrc.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
-      gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
+      gpBillingManagers: !!set { dryan@broadinstitute.org }
 
     PROD:
       host:     mercury.broadinstitute.org
@@ -289,28 +289,28 @@ sap:
       #Maps to the SAP DEV 300 environment.  Defunct and no-longer used
       login:      GPCOMU
       password:   SAPERD300!
-      sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
+      sapSupportEmail: dryan@broadinstitute.org
       sapSupportEmailSubjectPrefix: "TEST SAP Order"
       url:  https://quote-qa.broadinstitute.org
     TEST:
       #Maps to the SAP DEV 400 environment.  Primarily used by SAP Developers
       login:      GPCOMU
       password:   temp1!
-      sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
+      sapSupportEmail: dryan@broadinstitute.org
       sapSupportEmailSubjectPrefix: "TEST SAP Order"
       url:  https://quote-qa.broadinstitute.org
     QA:
       #Maps to the Old SAP QA environment.  Previously used as a parallel SAP environment.  Defunct and Not used by us anymore.
       login:      GPCOMU
       password:   SAPERQ300!
-      sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
+      sapSupportEmail: dryan@broadinstitute.org
       sapSupportEmailSubjectPrefix: "TEST SAP Order"
       url:  https://quote-qa.broadinstitute.org
     RC:
       #Maps to the primary SAP QA 400 environment.  Used for testing with Mercury DEV and Mercury QA environments
       login:      GPCOMU
       password:   temp1!
-      sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
+      sapSupportEmail: dryan@broadinstitute.org
       sapSupportEmailSubjectPrefix: "TEST SAP Order"
       url:  https://quote-qa.broadinstitute.org
     PROD:
