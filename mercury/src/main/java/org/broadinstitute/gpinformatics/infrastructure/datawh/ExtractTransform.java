@@ -334,7 +334,7 @@ public class ExtractTransform implements Serializable {
                 if (countDateException.getLeft() > 0) {
                     writeIsReadyFile(countDateException.getMiddle());
                     log.debug("Incremental ETL created " + countDateException.getLeft() + " data records in " +
-                            minutesSince(incrementalRunStartTime) + " minutes");
+                            secondsSince(incrementalRunStartTime) + " seconds");
                 }
 
                 return countDateException.getLeft();
@@ -744,7 +744,14 @@ public class ExtractTransform implements Serializable {
      * Returns the whole number of minutes since the given mSec timestamp, rounded up.
      */
     private int minutesSince(long msecTimestamp) {
-        return (int) Math.ceil((System.currentTimeMillis() - msecTimestamp) / MSEC_IN_SEC / SEC_IN_MIN);
+        return (int) Math.ceil(secondsSince(msecTimestamp) / SEC_IN_MIN);
+    }
+
+    /**
+     * Returns the whole number of seconds since the given mSec timestamp, rounded up.
+     */
+    private int secondsSince(long msecTimestamp) {
+        return (int) Math.ceil((System.currentTimeMillis() - msecTimestamp) / MSEC_IN_SEC);
     }
 
     private Response createErrorResponse(String msg) {
