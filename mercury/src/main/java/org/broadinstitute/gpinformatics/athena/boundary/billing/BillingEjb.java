@@ -110,7 +110,7 @@ public class BillingEjb {
         }
 
         public boolean isError() {
-            return errorMessage != null;
+            return StringUtils.isNotBlank(errorMessage);
         }
 
         public void setSapBillingId(String sapBillingId) {

@@ -298,7 +298,15 @@ public class BillingAdaptor implements Serializable {
         return allResults;
     }
 
-    private BillingEjb.BillingResult billSap(QuoteImportItem item) {
+    /**
+     * Handle billing of an SAP item.
+     *
+     * @return BillingResult with the result of billing attempt.
+     */
+    private BillingEjb.BillingResult billSap(QuoteImportItem item) throws Exception {
+        if (!item.isSapOrder()) {
+            throw new Exception("Attempt to bill non-SAP item in SAP");
+        }
         BillingEjb.BillingResult result = new BillingEjb.BillingResult(item);
         try {
             String sapBillingId;
@@ -312,9 +320,17 @@ public class BillingAdaptor implements Serializable {
         return result;
     }
 
+    /**
+     * Handle billing an item in the Quote Server.
+     *
+     * @return BillingResult with results of billing attempt.
+     */
     private BillingEjb.BillingResult billQuoteServer(QuoteImportItem item,
                                                      HashMultimap<String, String> quoteItemsByQuote, String pageUrl,
-                                                     String sessionKey)  {
+                                                     String sessionKey) throws Exception {
+        if (item.isSapOrder()) {
+            throw new Exception("Attempt to bill a non-Quote Server item in the Quote Server");
+        }
         BillingEjb.BillingResult result = new BillingEjb.BillingResult(item);
         try {
             PriceList priceItemsForDate = quoteService.getPriceItemsForDate(Collections.singletonList(item));
@@ -370,46 +386,54 @@ public class BillingAdaptor implements Serializable {
         return result;
     }
 
-    private Collection<BillingCredit> handleBillingCredit(QuoteImportItem quoteImportItem) {
-        BillingEjb.BillingResult billingResult = new BillingEjb.BillingResult(quoteImportItem);
-        QuoteImportItem item = billingResult.getQuoteImportItem();
-        Collection<BillingCredit> billingCredits = BillingCredit.setupSapCredits(quoteImportItem);
-        try {
-            for (BillingCredit billingCredit : billingCredits) {
-                Set<LedgerEntry> updatedLedgers = billingCredit.getReturnLines().
-                    stream().map(BillingCredit.LineItem::getLedgerEntry).collect(Collectors.toSet());
-                if (StringUtils.isNotBlank(billingResult.getSapBillingId()) ||
-                    StringUtils.isNotBlank(billingResult.getErrorMessage())) {
-                    billingResult = new BillingEjb.BillingResult(item);
-                }
-                billingCredit.setBillingResult(billingResult);
-                String billingMessage;
-                try {
-                    billingCredit.setReturnOrderId(sapService.creditDelivery(billingCredit));
-                    billingMessage = BillingSession.SUCCESS;
-                    billingResult.setSapBillingId(billingCredit.getReturnOrderId());
-                } catch (SAPIntegrationException e) {
-                    billingMessage = e.getLocalizedMessage();
-                    if (billingMessage.contains(INVOICE_NOT_FOUND)) {
-                        billingResult.addBillingCreditRequestEmail(billingResult.getQuoteImportItem());
-                        billingCredit.setReturnOrderInvoiceNotFound();
-                        billingMessage = BillingSession.BILLING_CREDIT;
-                        billingResult.setInformationMessage(BILLING_CREDIT_EMAIL_SENT);
-                    } else {
-                        billingResult.setErrorMessage(e.getLocalizedMessage());
-                    }
-                }
-                billingEjb.updateSapLedgerEntries(updatedLedgers, item.getQuoteId(), item.getSingleWorkItem(),
-                    billingCredit.getSapDeliveryDocumentId(), billingCredit.getReturnOrderId(), billingMessage
-                );
-                Set<BillingEjb.BillingResult> billingResults =
-                    billingCredits.stream().map(BillingCredit::getBillingResult).collect(Collectors.toSet());
-                logSapBillingCredit(item, getBilledPdoKeys(billingResults), billingCredit.getSapDeliveryDocumentId(), billingCredit.getReturnOrderId());
-            }
-        } catch (BillingException billingException) {
-            billingResult.setErrorMessage(billingException.getMessage());
-            billingEjb.updateSapQuoteImportItem(item, null, null, billingException.getMessage());
+    /**
+     * Handle billing credits for an SAP item.
+     *
+     * @return BillingResult with results of billing credit attempt.
+     */
+    private Collection<BillingCredit> handleBillingCredit(final QuoteImportItem item) throws Exception {
+        if (!item.isSapOrder()) {
+            throw new Exception("Attempt to bill a non-SAP item in SAP");
         }
+        if (!item.isBillingCredit()) {
+            throw new Exception("Attempt credit an item which has a positive quantity.");
+        }
+
+        Collection<BillingCredit> billingCredits = BillingCredit.setupSapCredits(item);
+            for (BillingCredit billingCredit : billingCredits) {
+                try {
+                    Set<LedgerEntry> updatedLedgers = billingCredit.getReturnLines().stream()
+                        .map(BillingCredit.LineItem::getLedgerEntry).collect(Collectors.toSet());
+                    BillingEjb.BillingResult billingResult = new BillingEjb.BillingResult(item);
+                    billingCredit.setBillingResult(billingResult);
+                    String billingMessage;
+                    try {
+                        billingCredit.setReturnOrderId(sapService.creditDelivery(billingCredit));
+                        billingMessage = BillingSession.SUCCESS;
+                        billingResult.setSapBillingId(billingCredit.getReturnOrderId());
+                    } catch (SAPIntegrationException e) {
+                        billingMessage = e.getLocalizedMessage();
+                        if (billingMessage.contains(INVOICE_NOT_FOUND)) {
+                            billingResult.addBillingCreditRequestEmail(billingResult.getQuoteImportItem());
+                            billingCredit.setReturnOrderInvoiceNotFound();
+                            billingMessage = BillingSession.BILLING_CREDIT;
+                            billingResult.setInformationMessage(BILLING_CREDIT_EMAIL_SENT);
+                        } else {
+                            billingResult.setErrorMessage(e.getLocalizedMessage());
+                        }
+                    }
+                    billingEjb.updateSapLedgerEntries(updatedLedgers, item.getQuoteId(), item.getSingleWorkItem(),
+                        billingCredit.getSapDeliveryDocumentId(), billingCredit.getReturnOrderId(), billingMessage);
+                    Set<BillingEjb.BillingResult> billingResults =
+                        billingCredits.stream().map(BillingCredit::getBillingResult).collect(Collectors.toSet());
+                    logSapBillingCredit(item, getBilledPdoKeys(billingResults),
+                        billingCredit.getSapDeliveryDocumentId(), billingCredit.getReturnOrderId());
+                } catch (BillingException billingException) {
+                    BillingEjb.BillingResult billingResult = billingCredit.getBillingResult();
+                    billingResult.setErrorMessage(billingException.getMessage());
+                    billingEjb.updateSapQuoteImportItem(item, null, null, billingException.getMessage());
+                }
+            }
 
         return billingCredits;
     }
