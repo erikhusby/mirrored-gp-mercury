@@ -42,6 +42,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerExceptio
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -52,6 +53,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -167,6 +169,9 @@ public class ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private SAPAccessControlEjb accessController;
+
+    @Inject
+    private SapIntegrationService sapIntegrationService;
 
     // When you run this on prod, change to PROD and prod.
     @Deployment
@@ -1883,23 +1888,32 @@ public class ProductOrderFixupTest extends Arquillian {
      *
      * @throws Exception
      */
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void updateQuoteOnPdos() throws Exception {
 
         userBean.loginOSUser();
         List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("UpdatePdoQuote.txt"));
         String commentary = fixupLines.get(0);
 
-        beginTransaction();
         for (String line : fixupLines.subList(1, fixupLines.size())) {
             final String[] pdoAndQuote = line.split(",");
-            ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoAndQuote[0].trim());
-            productOrder.setQuoteId(pdoAndQuote[1].trim());
-            productOrder.setSkipQuoteReason("");
-            productOrderEjb.updateJiraIssue(productOrder);
+            try {
+                beginTransaction();
+                ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoAndQuote[0].trim());
+                productOrder.setQuoteId(pdoAndQuote[1].trim());
+                productOrder.setSkipQuoteReason("");
+                MessageCollection collection = new MessageCollection();
+                if(productOrder.hasSapQuote()) {
+                    SapQuote quote = sapIntegrationService.findSapQuote(productOrder.getQuoteId());
+                    productOrder.updateQuoteItems(quote);
+                    productOrderEjb.publishProductOrderToSAP(productOrder, collection,true);
+                }
+                productOrderEjb.updateJiraIssue(productOrder);
+                productOrderDao.persist(new FixupCommentary(commentary));
+                commitTransaction();
+            } catch (SAPInterfaceException e) {
+                System.out.println("Unable to persist the order " + pdoAndQuote[0].trim() + " in SAP due to " + e.getMessage());
+            }
         }
-
-        productOrderDao.persist(new FixupCommentary(commentary));
-        commitTransaction();
     }
 }
