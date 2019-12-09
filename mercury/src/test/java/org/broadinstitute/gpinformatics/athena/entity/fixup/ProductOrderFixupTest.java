@@ -1888,7 +1888,7 @@ public class ProductOrderFixupTest extends Arquillian {
      *
      * @throws Exception
      */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void updateQuoteOnPdos() throws Exception {
 
         userBean.loginOSUser();
