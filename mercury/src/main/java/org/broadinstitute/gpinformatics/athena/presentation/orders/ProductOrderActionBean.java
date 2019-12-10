@@ -4078,4 +4078,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void setQuoteSource(ProductOrder.QuoteSourceType quoteSource) {
         this.quoteSource = quoteSource;
     }
+
+    public boolean canEditProduct() {return editOrder.getOrderStatus().canPlace() || userBean.isPDMOrDev() ;}
 }
