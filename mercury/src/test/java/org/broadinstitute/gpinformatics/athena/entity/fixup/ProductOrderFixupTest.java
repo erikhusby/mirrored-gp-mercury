@@ -1900,7 +1900,19 @@ public class ProductOrderFixupTest extends Arquillian {
             try {
                 beginTransaction();
                 ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoAndQuote[0].trim());
+
+                ProductOrder.QuoteSourceType originalQuoteSource = productOrder.getQuoteSource();
                 productOrder.setQuoteId(pdoAndQuote[1].trim());
+                if(originalQuoteSource != productOrder.getQuoteSource()) {
+
+                    List<LedgerEntry> collectionOfLedgerEnries =
+                            productOrder.getSamples().stream().map(ProductOrderSample::getLedgerItems)
+                                    .flatMap(Collection::stream).collect(Collectors.toList());
+                    if(CollectionUtils.isNotEmpty(collectionOfLedgerEnries)) {
+                        throw new RuntimeException("Unable to swap quotes since there are Ledger Entries on the order "
+                                                   + productOrder.getBusinessKey());
+                    }
+                }
                 productOrder.setSkipQuoteReason("");
                 MessageCollection collection = new MessageCollection();
                 if(productOrder.hasSapQuote()) {
@@ -1911,9 +1923,36 @@ public class ProductOrderFixupTest extends Arquillian {
                 productOrderEjb.updateJiraIssue(productOrder);
                 productOrderDao.persist(new FixupCommentary(commentary));
                 commitTransaction();
+                System.out.println("Changed the quote on " + productOrder.getBusinessKey() + " to "
+                                   + productOrder.getQuoteId());
             } catch (SAPInterfaceException e) {
-                System.out.println("Unable to persist the order " + pdoAndQuote[0].trim() + " in SAP due to " + e.getMessage());
+                System.out.println("Unable to persist the order " + pdoAndQuote[0].trim() + " in SAP due to "
+                                   + e.getMessage());
             }
         }
+    }
+
+    @Test(enabled = false)
+    public void gplim6801RemoveLedgerItems() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        ProductOrder productOrder = productOrderDao.findByBusinessKey("PDO-19721");
+
+        productOrder.getSamples().forEach(productOrderSample -> {
+            Set<LedgerEntry> ledgerItems = productOrderSample.getLedgerItems();
+            ledgerItems.forEach(ledgerEntry -> {
+                productOrderSample.getLedgerItems().remove(ledgerEntry);
+            });
+            if(CollectionUtils.isNotEmpty(productOrderSample.getLedgerItems())) {
+                throw new RuntimeException("Unable to remove all ledger Items");
+            }
+        });
+
+        System.out.println("cleared out all ledger items for order " + productOrder.getBusinessKey());
+
+        productOrderDao.persist(new FixupCommentary("GPLIM-6801: clearing out ledger entries to allow quote to "
+                                                    + "swap from a quote server quote to an SAP quote"));
+        commitTransaction();
     }
 }
