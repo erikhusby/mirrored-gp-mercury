@@ -126,7 +126,7 @@ public class BillingEjbJiraDownTest extends Arquillian {
         SAPAccessControlEjb mockAccessController = Mockito.mock(SAPAccessControlEjb.class);
         sapService = new SapIntegrationServiceImpl(
             SapConfig.produce(org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV),
-            mockQuoteService, Mockito.mock(BSPUserList.class), Mockito.mock(PriceListCache.class),
+                Mockito.mock(BSPUserList.class), Mockito.mock(PriceListCache.class),
             productPriceCache, mockAccessController);
         productPriceCache = new SAPProductPriceCache(sapService);
         sapService.setProductPriceCache(productPriceCache);
