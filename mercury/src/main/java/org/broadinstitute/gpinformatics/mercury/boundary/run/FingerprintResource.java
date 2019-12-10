@@ -147,7 +147,13 @@ public class FingerprintResource {
 
     @NotNull
     public static String getSmIdFromLsid(String lsid) {
-        return "SM-" + lsid.substring(lsid.lastIndexOf(':') + 1);
+        if (lsid.startsWith("broadinstitute.org:bsp")) {
+            return "SM-" + lsid.substring(lsid.lastIndexOf(':') + 1);
+        } else if (lsid.startsWith("broadinstitute.org:mercury")) {
+            return lsid.substring(lsid.lastIndexOf(':') + 1);
+        } else {
+            throw new RuntimeException("Failed to convert lsid " + lsid);
+        }
     }
 
     @GET
