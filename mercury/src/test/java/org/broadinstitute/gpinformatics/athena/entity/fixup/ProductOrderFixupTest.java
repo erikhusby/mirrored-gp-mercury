@@ -1942,6 +1942,7 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrder.getSamples().forEach(productOrderSample -> {
             Set<LedgerEntry> ledgerItems = productOrderSample.getLedgerItems();
             ledgerItems.forEach(ledgerEntry -> {
+                System.out.println("removing ledger entry " + ledgerEntry.getLedgerId() + " with quantity " + ledgerEntry.getQuantity());
                 productOrderSample.getLedgerItems().remove(ledgerEntry);
             });
             if(CollectionUtils.isNotEmpty(productOrderSample.getLedgerItems())) {
