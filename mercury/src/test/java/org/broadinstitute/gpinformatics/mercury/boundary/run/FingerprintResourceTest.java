@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.EntityLoggingFilter;
 import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -52,7 +53,7 @@ public class FingerprintResourceTest extends Arquillian {
             calls.add(new FingerprintCallsBean(rsid, "AA", "99.99"));
         }
 
-        String aliquotLsid = "org.broad:" + System.currentTimeMillis();
+        String aliquotLsid = LibraryBean.MERCURY_LSID_PREFIX + System.currentTimeMillis();
         FingerprintBean fingerprintBean = new FingerprintBean("", "P", aliquotLsid,
                 "FLUIDIGM", "HG19", "FluidigmFPv5", new Date(), "M", calls);
         String response = client.target(postUrl).request(MediaType.APPLICATION_JSON_TYPE).
@@ -76,8 +77,8 @@ public class FingerprintResourceTest extends Arquillian {
                 queryParam("lsids", queryLsid).
                 request(MediaType.APPLICATION_JSON).get(FingerprintsBean.class);
 
-        Assert.assertEquals(fingerprintsBean.getFingerprints().size(), 1);
-        FingerprintBean fingerprintBean = fingerprintsBean.getFingerprints().get(0);
+        Assert.assertEquals(fingerprintsBean.getFingerprints().size(), 2);
+        FingerprintBean fingerprintBean = fingerprintsBean.getFingerprints().get(1);
         Assert.assertEquals(fingerprintBean.getQueriedLsid(), queryLsid);
         Assert.assertEquals(fingerprintBean.getAliquotLsid(), "broadinstitute.org:bsp.prod.sample:GP3T6");
         Assert.assertEquals(fingerprintBean.getCalls().size(), 96);
@@ -103,6 +104,19 @@ public class FingerprintResourceTest extends Arquillian {
             exception = true;
         }
         Assert.assertTrue(exception);
+    }
+
+    @Test(groups = TestGroups.STANDARD, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testCrsp(@ArquillianResource URL baseUrl) throws MalformedURLException {
+        Client client = getClient(true);
+
+        String getUrl = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WS_BASE + "/query";
+        String queryLsid = "org.broadinstitute:crsp:G947T";
+        FingerprintsBean fingerprintsBean = client.target(getUrl).
+                queryParam("lsids", queryLsid).
+                request(MediaType.APPLICATION_JSON).get(FingerprintsBean.class);
+        Assert.assertNotNull(fingerprintsBean);
     }
 
     private Client getClient(boolean basicAuth) {

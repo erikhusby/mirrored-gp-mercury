@@ -15,6 +15,7 @@ import javax.inject.Inject;
 import java.util.Map;
 import java.util.Set;
 
+import static org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean.CRSP_LSID_PREFIX;
 import static org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean.MERCURY_LSID_PREFIX;
 
 @Dependent
@@ -101,7 +102,7 @@ public class CrspPipelineUtils {
      */
     public static String getCrspLSIDForBSPSampleId(@Nonnull String bspSampleId) {
         if (bspSampleId.startsWith("SM-") || bspSampleId.startsWith("SP-")) {
-            return bspSampleId.replaceFirst("S[MP]-", "org.broadinstitute:crsp:");
+            return bspSampleId.replaceFirst("S[MP]-", CRSP_LSID_PREFIX);
         } else {
             // other options are "GS-" and All of Us 10 digit barcodes
             return MERCURY_LSID_PREFIX + bspSampleId;
