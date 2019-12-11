@@ -102,10 +102,7 @@ public class SearchInstanceNameCache implements Serializable {
     @Produces(MediaType.APPLICATION_JSON)
     public List<DrillDownOption> getDrillDowns( @QueryParam("columnEntity") String columnEntityName ) {
 
-        List<DrillDownOption> options = new ArrayList<>();
-
-        options.addAll( globalDrillDowns.get(columnEntityName) );
-
+        List<DrillDownOption> options = new ArrayList<>(globalDrillDowns.get(columnEntityName));
         Long userID = userBean.getBspUser().getUserId();
 
         if( userDrillDowns.containsKey(userID ) && userDrillDowns.get(userID).get(columnEntityName) != null ) {
@@ -125,12 +122,9 @@ public class SearchInstanceNameCache implements Serializable {
      *                                       '-> [Global Type, User Type]
      *                                                             '-> [Saved Search Names]
      */
-    public  Map<ColumnEntity, Map<PreferenceType,List<String>>> fetchInstanceNames() throws Exception {
+    public Map<ColumnEntity, Map<PreferenceType, List<String>>> fetchInstanceNames(Long userID) {
 
         Map<ColumnEntity, Map<PreferenceType,List<String>>> instanceNames = new LinkedHashMap<>();
-
-        // Required for user defined searches
-        Long userID = userBean.getBspUser().getUserId();
 
         // Build initial from globals (Map is fully populated with all entity type keys)
         for ( Map.Entry<ColumnEntity, Pair<PreferenceType,List<String>> > entry : globalSearches.entrySet()) {
@@ -213,32 +207,29 @@ public class SearchInstanceNameCache implements Serializable {
     private void refreshUserCache() {
 
         Map<Long,Map<String,List<DrillDownOption>>> userDrillDownOptions = new HashMap<>();
-        Map<Long,Map<ColumnEntity, Pair<PreferenceType,List<String>>>> userSearchNames = new HashMap<>();
+        Map<Long, Map<ColumnEntity, Pair<PreferenceType, List<String>>>> allUsersSearchTypeNames = new HashMap<>();
 
         for( Map.Entry<ColumnEntity, Pair<PreferenceType,PreferenceType>> prefTypeEntry : preferenceTypes.entrySet()  ) {
             ColumnEntity columnEntity = prefTypeEntry.getKey();
             PreferenceType userPreferenceType = prefTypeEntry.getValue().getRight();
 
             try {
-                // User has only one for each user
                 List<Preference> preferences = preferenceDao.getPreferences(userPreferenceType);
-                if( preferences != null && preferences.size() > 0 ) {
-                    Preference preference = preferences.get(0);
 
-                    List<String> allSearchNames = new ArrayList<>();
+                for (Preference preference : preferences) {
                     Long userId = preference.getAssociatedUser();
 
-                    if( !userSearchNames.containsKey(userId) ) {
-                        // Create a map entry
-                        Map<ColumnEntity, Pair<PreferenceType,List<String>>> searchNamesForUser = new LinkedHashMap<>();
-                        Pair<PreferenceType, List<String>> typeNames = Pair.of(userPreferenceType, allSearchNames);
-                        searchNamesForUser.put(columnEntity, typeNames);
-                        userSearchNames.put(userId,searchNamesForUser);
-                    } else {
-                        // Add to existing user map entry
-                        Pair<PreferenceType, List<String>> typeNames = Pair.of(userPreferenceType, allSearchNames);
-                        userSearchNames.get( userId ).put(columnEntity, typeNames);
+                    // Create a map entry for the user if none yet
+                    Map<ColumnEntity, Pair<PreferenceType, List<String>>> searchTypeNamesForUser = allUsersSearchTypeNames.get(userId);
+                    if (searchTypeNamesForUser == null) {
+                        searchTypeNamesForUser = new LinkedHashMap<>();
+                        allUsersSearchTypeNames.put(userId, searchTypeNamesForUser);
                     }
+
+                    // Add user search preference to user map entry - only one allowed per type per user so overwrite
+                    List<String> allSearchNames = new ArrayList<>();
+                    Pair<PreferenceType, List<String>> searchListPair = Pair.of(userPreferenceType, allSearchNames);
+                    searchTypeNamesForUser.put(columnEntity, searchListPair);
 
                     SearchInstanceList searchInstanceList =
                             (SearchInstanceList) preference.getPreferenceDefinition().getDefinitionValue();
@@ -251,13 +242,15 @@ public class SearchInstanceNameCache implements Serializable {
                         if( searchInstance.getSearchValues().size() == 1 ) {
                             SearchInstance.SearchValue searchValue = searchInstance.getSearchValues().get(0);
 
-                            if( !userDrillDownOptions.containsKey(userId) ) {
-                                Map<String, List<DrillDownOption>> userDrillDowns = new HashMap<>();
+                            // Create a map entry for the user if none yet
+                            Map<String, List<DrillDownOption>> userDrillDowns = userDrillDownOptions.get(userId);
+                            if (userDrillDownOptions == null) {
+                                userDrillDowns = new HashMap<>();
                                 fillEntityDrillDownMap(userDrillDowns);
                                 userDrillDownOptions.put(userId, userDrillDowns);
                             }
 
-                            userDrillDownOptions.get( userId ).get( columnEntity.getEntityName() ).add( new DrillDownOption( userPreferenceType.getPreferenceScope(), userPreferenceType.name(), searchInstance.getName(), searchValue.getTermName(), columnEntity ) );
+                            userDrillDowns.get(columnEntity.getEntityName()).add(new DrillDownOption(userPreferenceType.getPreferenceScope(), userPreferenceType.name(), searchInstance.getName(), searchValue.getTermName(), columnEntity));
                         }
                     }
                 }
@@ -267,7 +260,7 @@ public class SearchInstanceNameCache implements Serializable {
         }
 
         userDrillDowns = userDrillDownOptions;
-        userSearches = userSearchNames;
+        userSearches = allUsersSearchTypeNames;
     }
 
     /**
@@ -278,6 +271,7 @@ public class SearchInstanceNameCache implements Serializable {
         Map<String,List<DrillDownOption>> userDrillDownOptions = new HashMap<>();
         Map<ColumnEntity, Pair<PreferenceType,List<String>>> userSearchNames = new LinkedHashMap<>();
 
+        // Fill with empty lists for each column entity name
         fillEntityDrillDownMap(userDrillDownOptions);
 
         for( Map.Entry<ColumnEntity, Pair<PreferenceType,PreferenceType>> prefTypeEntry : preferenceTypes.entrySet()  ) {
@@ -318,7 +312,7 @@ public class SearchInstanceNameCache implements Serializable {
      */
     private void fillEntityDrillDownMap(Map<String,List<DrillDownOption>> drillDowns){
         for(ColumnEntity columnEntity : ColumnEntity.values()) {
-            drillDowns.put(columnEntity.getEntityName(), new ArrayList<DrillDownOption>());
+            drillDowns.put(columnEntity.getEntityName(), new ArrayList<>());
         }
     }
 
@@ -332,9 +326,9 @@ public class SearchInstanceNameCache implements Serializable {
         private String searchTermName;
         private ColumnEntity targetEntity;
 
-        public DrillDownOption( PreferenceType.PreferenceScope preferenceScope,
-                                String preferenceName, String searchName,
-                                String searchTermName, ColumnEntity targetEntity ) {
+        DrillDownOption(PreferenceType.PreferenceScope preferenceScope,
+                        String preferenceName, String searchName,
+                        String searchTermName, ColumnEntity targetEntity) {
             this.preferenceScope = preferenceScope;
             this.preferenceName = preferenceName;
             this.searchName = searchName;

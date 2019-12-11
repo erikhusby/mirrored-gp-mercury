@@ -257,7 +257,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     public Resolution entitySelectionPage() {
         allSearchInstances = new LinkedHashMap<>();
         try {
-            allSearchInstances = searchInstanceNameCache.fetchInstanceNames();
+            allSearchInstances = searchInstanceNameCache.fetchInstanceNames(userBean.getBspUser().getUserId());
         } catch (Exception e) {
             addGlobalValidationError("Failed to retrieve search definitions");
         }
