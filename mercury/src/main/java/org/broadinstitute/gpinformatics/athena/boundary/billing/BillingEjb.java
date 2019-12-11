@@ -67,7 +67,6 @@ public class BillingEjb {
         private String errorMessage;
         private String informationMessage;
         private String sapBillingId;
-        private QuoteImportItem returnQuoteImportItemsForEmail;
 
         public BillingResult(@Nonnull QuoteImportItem quoteImportItem) {
             this.quoteImportItem = quoteImportItem;
@@ -75,14 +74,6 @@ public class BillingEjb {
 
         public QuoteImportItem getQuoteImportItem() {
             return quoteImportItem;
-        }
-
-        public QuoteImportItem getReturnQuoteImportItemsForEmail() {
-            return returnQuoteImportItemsForEmail;
-        }
-
-        public void addBillingCreditRequestEmail(QuoteImportItem quoteImportItem) {
-            this.returnQuoteImportItemsForEmail = quoteImportItem;
         }
 
         public String getWorkId() {
