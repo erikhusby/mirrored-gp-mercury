@@ -414,7 +414,6 @@ public class BillingAdaptor implements Serializable {
                     } catch (SAPIntegrationException e) {
                         billingMessage = e.getLocalizedMessage();
                         if (billingMessage.contains(INVOICE_NOT_FOUND)) {
-                            billingResult.addBillingCreditRequestEmail(billingResult.getQuoteImportItem());
                             billingCredit.setReturnOrderInvoiceNotFound();
                             billingMessage = BillingSession.BILLING_CREDIT;
                             billingResult.setInformationMessage(BILLING_CREDIT_EMAIL_SENT);
