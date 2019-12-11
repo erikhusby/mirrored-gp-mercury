@@ -257,6 +257,12 @@ public class LedgerEntry implements Serializable {
         return StringUtils.isNotBlank(sapReturnOrderId);
     }
 
+    /**
+     * When 'this' LedgerEntry is for a credit, findCreditSource() finds which LedgerEntry(s) are the 'positive'
+     * ledgers from which to deduct.
+     *
+     * @return a Map<LedgerEntry, Double> which represents the quantities to be deducted for each LedgerEntry.
+     */
     public Map<LedgerEntry, Double> findCreditSource(){
         Predicate<LedgerEntry> hasDeliveryDocument =
             ledgerEntry -> StringUtils.isNotBlank(ledgerEntry.getSapDeliveryDocumentId());
