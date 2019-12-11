@@ -30,6 +30,7 @@ public class LibraryBean {
     public static final String NO_PDO_SAMPLE = null;
     public static final String CRSP_SOMATIC_TEST_TYPE = "Somatic";
     public static final String MERCURY_LSID_PREFIX = "broadinstitute.org:mercury.prod.sample:";
+    public static final String CRSP_LSID_PREFIX = "org.broadinstitute:crsp:";
 
     @JsonProperty("metadataSource")
     private String metadataSource;
