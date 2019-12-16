@@ -99,10 +99,12 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuil
 import org.broadinstitute.gpinformatics.mercury.test.builders.SingleCell10XEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SingleCellHashingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SingleCellSmartSeqEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.SingleCellVdjEnrichmentEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.StoolTNAEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TenXEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
 import org.easymock.EasyMock;
+import org.jetbrains.annotations.NotNull;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -141,7 +143,7 @@ public class BaseEventTest {
      * Referenced in validation of routing.
      */
     public static SystemRouter.System expectedRouting = SystemRouter.System.MERCURY;
-    private final CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils(Deployment.DEV);
+    private final CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils();
 
     private BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
 
@@ -815,6 +817,13 @@ public class BaseEventTest {
                 rackBarcode, barcodeSuffix).invoke();
     }
 
+    public SingleCellVdjEnrichmentEntityBuilder runSingleCellVdjProcess(TubeFormation tcrRack, TubeFormation bcrRack,
+                                                                        Map<String, BarcodedTube> tcrTubeMap, Map<String, BarcodedTube> bcrTubeMap,
+                                                                        String barcodeSuffix) {
+        return new SingleCellVdjEnrichmentEntityBuilder(tcrRack, bcrRack, tcrTubeMap, bcrTubeMap, bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                barcodeSuffix).invoke();
+    }
+
     public SingleCellHashingEntityBuilder runSingleCellHashingProcess(Map<String, BarcodedTube> mapBarcodeToTube,
                                                                     TubeFormation rack, String rackBarcode,
                                                                     String barcodeSuffix) {
@@ -894,6 +903,14 @@ public class BaseEventTest {
     }
 
     /**
+     * Simulate a BSP daughter plate transfer without adding controls
+     */
+    public TubeFormation daughterPlateTransferNoWorkflow(Map<String, BarcodedTube> mapBarcodeToTube, String prefix) {
+        List<String> daughterTubeBarcodes = generateDaughterTubeBarcodes(mapBarcodeToTube);
+        return getDaughterTubeFormation(mapBarcodeToTube, daughterTubeBarcodes);
+    }
+
+    /**
      * Simulates a BSP daughter plate transfer with a mismatched layout prior to export from BSP to Mercury,
      * then does a re-array to add controls.
      *
@@ -919,10 +936,21 @@ public class BaseEventTest {
      * @return list of daughter tube barcodes
      */
     private List<String> generateDaughterTubeBarcodes(Map<String, BarcodedTube> mapBarcodeToTube) {
+        return generateDaughterTubeBarcodes(mapBarcodeToTube, "D");
+    }
+
+    /**
+     * Generates the daughter tube barcodes for the destination tube formation .
+     *
+     * @param mapBarcodeToTube source tubes
+     *
+     * @return list of daughter tube barcodes
+     */
+    private List<String> generateDaughterTubeBarcodes(Map<String, BarcodedTube> mapBarcodeToTube, String prefix) {
         // Daughter plate transfer that doesn't include controls
         List<String> daughterTubeBarcodes = new ArrayList<>();
         for (int i = 0; i < mapBarcodeToTube.size(); i++) {
-            daughterTubeBarcodes.add("D" + i);
+            daughterTubeBarcodes.add(prefix + i);
         }
         return daughterTubeBarcodes;
     }
@@ -975,6 +1003,25 @@ public class BaseEventTest {
         mapBarcodeToDaughterTube.put(VesselPosition.H12, negControlTube);
         workflowBatch.addLabVessel(negControlTube);
 
+        return new TubeFormation(mapBarcodeToDaughterTube, RackOfTubes.RackType.Matrix96);
+    }
+
+    private TubeFormation getDaughterTubeFormation(Map<String, BarcodedTube> mapBarcodeToTube, List<String> daughterTubeBarcodes) {
+        PlateTransferEventType daughterPlateTransferJaxb =
+                bettaLimsMessageTestFactory.buildRackToRack("SamplesDaughterPlateCreation", "MotherRack",
+                                                            new ArrayList<>(mapBarcodeToTube.keySet()), "DaughterRack",
+                                                            daughterTubeBarcodes);
+        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<String, LabVessel>(mapBarcodeToTube);
+        LabEvent daughterPlateTransferEntity =
+                labEventFactory.buildFromBettaLims(daughterPlateTransferJaxb, mapBarcodeToVessel);
+        TubeFormation daughterPlate =
+                (TubeFormation) daughterPlateTransferEntity.getTargetLabVessels().iterator().next();
+
+        Map<VesselPosition, BarcodedTube> mapBarcodeToDaughterTube = new EnumMap<>(VesselPosition.class);
+        for (BarcodedTube barcodedTube : daughterPlate.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(daughterPlate.getContainerRole().getPositionOfVessel(barcodedTube),
+                                         barcodedTube);
+        }
         return new TubeFormation(mapBarcodeToDaughterTube, RackOfTubes.RackType.Matrix96);
     }
 

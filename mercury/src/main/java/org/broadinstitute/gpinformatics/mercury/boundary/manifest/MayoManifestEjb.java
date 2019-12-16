@@ -57,7 +57,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -847,8 +846,8 @@ public class MayoManifestEjb {
             }
 
             // Creates mercury samples, all with MetadataSource.MERCURY and metadata from the manifest.
-            Set<Metadata> receiptDate = Collections.singleton(
-                    Metadata.createMetadata(Metadata.Key.RECEIPT_DATE, DateUtils.getDate(new Date())));
+            Set<Metadata> receiptDate = Collections.singleton(Metadata.createMetadata(Metadata.Key.RECEIPT_DATE,
+                    manifestSession.getUpdateData().getCreatedDate()));
             for (BarcodedTube tube : vesselPositionToTube.values()) {
                 String sampleName = tube.getLabel();
                 MercurySample mercurySample = new MercurySample(sampleName, MercurySample.MetadataSource.MERCURY);

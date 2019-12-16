@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.DecisionType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryBeansType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryQuantBeanType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryQuantRunBean;
@@ -11,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunD
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -76,10 +78,11 @@ public class LibraryQuantResourceTest extends Arquillian {
 
     @Test
     public void testCreateVVPVolumeRun() throws Exception {
-        LibraryQuantRunBean libraryQuantRun = createLibraryQuantRunBean("0177175086", "VVP_Run", "VVP Volume",
+            LibraryQuantRunBean libraryQuantRun = createLibraryQuantRunBean("0177175086", "VVP_Run", "VVP Volume",
                 "85.4");
         LibraryQuantBeanType libraryQuantBeanType = libraryQuantRun.getLibraryQuantBeans().get(0);
         libraryQuantBeanType.getMetadata().add(createMetadata("Flowrate", "98.1"));
+        libraryQuantBeanType.setDecision(createDecision("DIVERTED_TO_XL20", "Low Flowrate"));
         Response response = libraryQuantResource.createLibraryQuants(libraryQuantRun);
         assertThat(response.getStatus(), is(200));
         LabMetricRun labMetricRun = labMetricRunDao.findByName(libraryQuantRun.getRunName());
@@ -89,6 +92,15 @@ public class LibraryQuantResourceTest extends Arquillian {
         assertThat(labMetric.getValue(), equalTo(new BigDecimal("85.4")));
         Metadata metadata = labMetric.getMetadataSet().iterator().next();
         assertThat(metadata.getValue(), is("98.1"));
+        LabMetricDecision labMetricDecision = labMetric.getLabMetricDecision();
+        assertThat(labMetricDecision.getDecision(), is(LabMetricDecision.Decision.DIVERTED_TO_XL20));
+    }
+
+    private DecisionType createDecision(String name, String note) {
+        DecisionType decisionType = new DecisionType();
+        decisionType.setName(name);
+        decisionType.setNote(note);
+        return decisionType;
     }
 
     private static MetricMetadataType createMetadata(String name, String value) {
