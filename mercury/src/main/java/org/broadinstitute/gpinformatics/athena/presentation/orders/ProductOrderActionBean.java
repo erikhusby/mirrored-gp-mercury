@@ -101,6 +101,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryEnumUtils;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
@@ -322,6 +323,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private CoverageTypeDao coverageTypeDao;
+
+    @Inject
+    private Deployment deployment;
 
     private List<ProductOrderListEntry> displayedProductOrderListEntries;
 
@@ -850,8 +854,9 @@ public class ProductOrderActionBean extends CoreActionBean {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
             logger.error(e);
         } catch (InvalidProductException | SAPIntegrationException e) {
-            addGlobalValidationError("Unable to determine the existing value of open orders for " +
-                                     editOrder.getQuoteId() + ": " + e.getMessage());
+            String errorMessage = "Unable to determine the existing value of open orders for " +
+                                  editOrder.getQuoteId() + ": " + e.getMessage();
+            addGlobalValidationError(errorMessage);
             logger.error(e);
         }
 
