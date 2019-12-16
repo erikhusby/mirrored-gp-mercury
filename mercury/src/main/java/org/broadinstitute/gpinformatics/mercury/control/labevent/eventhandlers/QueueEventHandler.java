@@ -2,6 +2,10 @@ package org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers;
 
 import org.broadinstitute.bsp.client.queue.DequeueingOptions;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
+import org.broadinstitute.gpinformatics.athena.entity.preference.NameValueDefinitionValue;
+import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
+import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
@@ -16,6 +20,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -29,6 +35,9 @@ public class QueueEventHandler extends AbstractEventHandler {
 
     @Inject
     private DnaQuantEnqueueOverride dnaQuantEnqueueOverride;
+
+    @Inject
+    private PreferenceDao preferenceDao;
 
     @Override
     public void handleEvent(LabEvent targetEvent, StationEventType stationEvent) {
@@ -44,12 +53,33 @@ public class QueueEventHandler extends AbstractEventHandler {
             case PICO_DILUTION_TRANSFER_FORWARD_BSP: {
                 Set<LabVessel> allOfUsVessels = allOfUsVessels(targetEvent);
                 if (!allOfUsVessels.isEmpty()) {
-                    QueueSpecialization queueSpecialization =
-                            dnaQuantEnqueueOverride.determineDnaQuantQueueSpecialization(allOfUsVessels);
-                    // todo jmt read toggle from preference
-                    queueEjb.enqueueLabVessels(allOfUsVessels, QueueType.DNA_QUANT,
-                            "Volume checked on " + DateUtils.convertDateTimeToString(targetEvent.getEventDate()),
-                            new MessageCollection(), QueueOrigin.RECEIVING, queueSpecialization);
+                    try {
+                        // Check the contract client preference
+                        boolean addToQueue = true;
+                        LabVessel labVessel = allOfUsVessels.iterator().next();
+                        Optional<Metadata> optionalMetadata = labVessel.getSampleInstancesV2().stream().
+                                findFirst().orElseThrow(() -> new RuntimeException("No samples for " + labVessel.getLabel())).
+                                getRootOrEarliestMercurySample().getMetadata().stream().
+                                filter(metadata -> metadata.getKey() == Metadata.Key.CLIENT).findFirst();
+                        if (optionalMetadata.isPresent()) {
+                            Preference preference = preferenceDao.getGlobalPreference(PreferenceType.CONTRACT_CLIENT_QUEUES);
+                            NameValueDefinitionValue nameValueDefinitionValue =
+                                    (NameValueDefinitionValue) preference.getPreferenceDefinition().getDefinitionValue();
+                            List<String> queues = nameValueDefinitionValue.getDataMap().get(optionalMetadata.get().getStringValue());
+                            if (queues.contains(QueueType.DNA_QUANT.name())) {
+                                addToQueue = false;
+                            }
+                        }
+                        if (addToQueue) {
+                            QueueSpecialization queueSpecialization =
+                                    dnaQuantEnqueueOverride.determineDnaQuantQueueSpecialization(allOfUsVessels);
+                            queueEjb.enqueueLabVessels(allOfUsVessels, QueueType.DNA_QUANT,
+                                    "Volume checked on " + DateUtils.convertDateTimeToString(targetEvent.getEventDate()),
+                                    new MessageCollection(), QueueOrigin.RECEIVING, queueSpecialization);
+                        }
+                    } catch (Exception e) {
+                        throw new RuntimeException("Failed to get client preference", e);
+                    }
                 }
                 break;
             }
