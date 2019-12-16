@@ -63,11 +63,13 @@ public class QueueEventHandler extends AbstractEventHandler {
                                 filter(metadata -> metadata.getKey() == Metadata.Key.CLIENT).findFirst();
                         if (optionalMetadata.isPresent()) {
                             Preference preference = preferenceDao.getGlobalPreference(PreferenceType.CONTRACT_CLIENT_QUEUES);
-                            NameValueDefinitionValue nameValueDefinitionValue =
-                                    (NameValueDefinitionValue) preference.getPreferenceDefinition().getDefinitionValue();
-                            List<String> queues = nameValueDefinitionValue.getDataMap().get(optionalMetadata.get().getStringValue());
-                            if (queues.contains(QueueType.DNA_QUANT.name())) {
-                                addToQueue = false;
+                            if (preference != null) {
+                                NameValueDefinitionValue nameValueDefinitionValue =
+                                        (NameValueDefinitionValue) preference.getPreferenceDefinition().getDefinitionValue();
+                                List<String> queues = nameValueDefinitionValue.getDataMap().get(optionalMetadata.get().getStringValue());
+                                if (queues != null && !queues.contains(QueueType.DNA_QUANT.name())) {
+                                    addToQueue = false;
+                                }
                             }
                         }
                         if (addToQueue) {
