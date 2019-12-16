@@ -49,6 +49,8 @@ import java.util.Map;
 import java.util.Set;
 
 import static java.util.Comparator.reverseOrder;
+import static org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean.CRSP_LSID_PREFIX;
+import static org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean.MERCURY_LSID_PREFIX;
 
 /**
  * JAX-RS web service for fingerprints.
@@ -147,9 +149,9 @@ public class FingerprintResource {
 
     @NotNull
     public static String getSmIdFromLsid(String lsid) {
-        if (lsid.startsWith("broadinstitute.org:bsp")) {
+        if (lsid.startsWith("broadinstitute.org:bsp") || lsid.startsWith(CRSP_LSID_PREFIX)) {
             return "SM-" + lsid.substring(lsid.lastIndexOf(':') + 1);
-        } else if (lsid.startsWith("broadinstitute.org:mercury")) {
+        } else if (lsid.startsWith(MERCURY_LSID_PREFIX)) {
             return lsid.substring(lsid.lastIndexOf(':') + 1);
         } else {
             throw new RuntimeException("Failed to convert lsid " + lsid);

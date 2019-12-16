@@ -4,7 +4,11 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>Mercury</groupId>
     <artifactId>Mercury</artifactId>
-    <version>1.120-SNAPSHOT</version>
+    <!-- Unfortunately (for now) there is also a rest-pom.xml.  Changes to this version should be reflected in that
+    file as well until such a time that we reconfigure the mercury structure to have a dependant project or something
+     that can inherit this version setting. -->
+
+    <version>1.121-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
