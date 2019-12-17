@@ -26,10 +26,13 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import javax.transaction.UserTransaction;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -56,6 +59,9 @@ public class SampleMetadataFixupTest extends Arquillian {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private UserTransaction utx;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -362,6 +368,24 @@ public class SampleMetadataFixupTest extends Arquillian {
             }
         }
         return null;
+    }
+
+    @Test(enabled = true)
+    public void mayoReceiptDateDatetype() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MM/dd/yyyy");
+        for (long metadataId : Arrays.asList(1022551L, 1055612L)) {
+            Metadata metadata = mercurySampleDao.findById(Metadata.class, metadataId);
+            Assert.assertTrue(metadata != null && metadata.getDateValue() == null && metadata.getStringValue() != null);
+            String stringValue = metadata.getStringValue();
+            System.out.println("Updating metadata " + metadataId + " value " + stringValue + " from string to date.");
+            metadata.setStringValue(null);
+            metadata.setDateValue(simpleDateFormat.parse(stringValue));
+            mercurySampleDao.persist(metadata);
+        }
+        mercurySampleDao.persist(new FixupCommentary("CRSP-656 Change Mayo receipt date from string to date value."));
+        utx.commit();
     }
 }
 
