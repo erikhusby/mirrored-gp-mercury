@@ -370,7 +370,7 @@ public class SampleMetadataFixupTest extends Arquillian {
         return null;
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void mayoReceiptDateDatetype() throws Exception {
         userBean.loginOSUser();
         utx.begin();
