@@ -4383,6 +4383,7 @@
                     <materialTypes>DNA_CDNA</materialTypes>
                     <materialTypes>HASH_LIBRARY</materialTypes>
                     <workflows>10X Extraction</workflows>
+                    <workflows>10X Extraction 5 Prime</workflows>
                 </bucketEntryEvaluator>
             </workflowStepDefs>
             <workflowStepDefs>
