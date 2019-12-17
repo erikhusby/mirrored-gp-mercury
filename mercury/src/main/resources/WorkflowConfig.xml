@@ -4496,6 +4496,8 @@
                     <materialTypes>RNA_TOTAL_RNA</materialTypes>
                     <materialTypes>DNA_CDNA_LIBRARY</materialTypes>
                     <materialTypes>DNA_CDNA</materialTypes>
+                    <materialTypes>HASH_LIBRARY</materialTypes>
+                    <materialTypes>OTHER_LYSATE</materialTypes>
                 </bucketEntryEvaluator>
             </workflowStepDefs>
             <workflowStepDefs>
