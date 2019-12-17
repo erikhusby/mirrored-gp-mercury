@@ -42,6 +42,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapConfig;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
@@ -63,8 +64,10 @@ import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -72,11 +75,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.blankOrNullString;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
@@ -499,6 +504,169 @@ public class BillingCreditDbFreeTest {
         Mockito.reset(billingSessionAccessEjb);
         Mockito.when(billingSessionAccessEjb.findAndLockSession(Mockito.anyString())).thenReturn(billingSession);
         return billingAdaptor.billSessionItems("url", billingSession.getBusinessKey());
+    }
+
+    public void testManyPositiveLedgersOneNegativeLedgerCreatesTwoBillingCredits() throws Exception {
+        List<LedgerEntry> ledgerEntries = new ArrayList<>();
+        SapQuote sapQuote = TestUtils.buildTestSapQuote("1234", 10000d, 100000d,
+            pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
+        pdo.setQuoteId(sapQuote.getQuoteHeader().getQuoteNumber());
+        SapIntegrationService sapService = Mockito.mock(SapIntegrationService.class);
+        Mockito.when(sapService.creditDelivery(Mockito.any(BillingCredit.class)))
+            .thenThrow(new SAPIntegrationException(BillingAdaptor.INVOICE_NOT_FOUND));
+
+        Date sameDate = new Date();
+        List<ProductOrderSample> samples = pdo.getSamples();
+        for (int i = 0; i < samples.size(); i++) {
+            Date uniqueDate =
+                Date.from(LocalDate.now().minusDays(i + 1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
+
+            ProductOrderSample pdoSample = samples.get(i);
+            long billQuantity = 1L;
+
+            // for all the samples in the pdo, a ledger is created with unique dates. This will create multiple quoteItems
+            LedgerEntry ledgerEntry = new LedgerEntry(pdoSample, pdo.getProduct(), uniqueDate, billQuantity);
+            ledgerEntry.setSapDeliveryDocumentId(String.valueOf(uniqueDate.getTime()));
+            ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
+            pdoSample.getLedgerItems().add(ledgerEntry);
+
+            // for all the samples in the pdo, a ledger for a return is created with the same date. This will create one quoteItem.
+            double creditQty = Math.negateExact(billQuantity);
+            ledgerEntry = new LedgerEntry(pdoSample, pdo.getProduct(), sameDate, creditQty);
+            pdoSample.getLedgerItems().add(ledgerEntry);
+            ledgerEntries.add(ledgerEntry);
+        }
+        BillingEjb billingEjb = Mockito.mock(BillingEjb.class);
+        BillingAdaptor billingAdaptor = new BillingAdaptor(billingEjb, null, null, null, sapService, null, null);
+
+        QuoteImportItem quoteImportItem =
+            new QuoteImportItem(quotePriceItem.getId(), priceItem, "1234", ledgerEntries, new Date(), pdo.getProduct(),
+                pdo);
+        Collection<BillingCredit> billingCredits = BillingCredit.setupSapCredits(quoteImportItem);
+        assertThat(billingCredits, hasSize(2));
+    }
+
+    public void testOnePositiveLedgerManyNegativeLedgersCreateOneBillingCredit() throws Exception {
+        List<LedgerEntry> ledgerEntries = new ArrayList<>();
+        SapQuote sapQuote = TestUtils.buildTestSapQuote("1234", 10000d, 100000d,
+            pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
+        pdo.setQuoteId(sapQuote.getQuoteHeader().getQuoteNumber());
+        SapIntegrationService sapService = Mockito.mock(SapIntegrationService.class);
+        Mockito.when(sapService.creditDelivery(Mockito.any(BillingCredit.class)))
+            .thenThrow(new SAPIntegrationException(BillingAdaptor.INVOICE_NOT_FOUND));
+
+        Date sameDate = new Date();
+        List<ProductOrderSample> samples = pdo.getSamples();
+        for (int i = 0; i < samples.size(); i++) {
+            Date uniqueDate =
+                Date.from(LocalDate.now().minusDays(i + 1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
+
+            ProductOrderSample pdoSample = samples.get(i);
+            long billQuantity = 1L;
+
+            // for each sample in the pdo, a ledger is created with the same date. This will create one quoteItem.
+            LedgerEntry ledgerEntry = new LedgerEntry(pdoSample, pdo.getProduct(), sameDate, billQuantity);
+            ledgerEntry.setSapDeliveryDocumentId(String.valueOf(sameDate.getTime()));
+            ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
+            pdoSample.getLedgerItems().add(ledgerEntry);
+
+            // for each the sample in the pdo, a ledger for a return is created with unique dates.
+            // This will create multiple quoteItems
+            double creditQty = Math.negateExact(billQuantity);
+            ledgerEntry = new LedgerEntry(pdoSample, pdo.getProduct(), uniqueDate, creditQty);
+            pdoSample.getLedgerItems().add(ledgerEntry);
+            ledgerEntries.add(ledgerEntry);
+        }
+        BillingEjb billingEjb = Mockito.mock(BillingEjb.class);
+        BillingAdaptor billingAdaptor = new BillingAdaptor(billingEjb, null, null, null, sapService, null, null);
+
+        QuoteImportItem quoteImportItem =
+            new QuoteImportItem(quotePriceItem.getId(), priceItem, "1234", ledgerEntries, new Date(), pdo.getProduct(),
+                pdo);
+        Collection<BillingCredit> billingCredits = billingAdaptor.handleBillingCredit(quoteImportItem);
+        assertThat(billingCredits, hasSize(1));
+        List<BillingCredit.LineItem> returnLineItems =
+            billingCredits.stream().flatMap((BillingCredit billingCredit) -> billingCredit.getReturnLines().stream())
+                .collect(Collectors.toList());
+
+        assertThat(returnLineItems, hasSize(2));
+        assertThat(Math.abs(quoteImportItem.getQuantity()),
+            equalTo(returnLineItems.stream().mapToDouble(lineItem -> lineItem.getQuantity().doubleValue()).sum()));
+    }
+
+    public void testPositiveQtyCredit() throws Exception {
+        List<LedgerEntry> ledgerEntries = new ArrayList<>();
+        SapQuote sapQuote = TestUtils.buildTestSapQuote("1234", 10000d, 100000d,
+            pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
+        pdo.setQuoteId(sapQuote.getQuoteHeader().getQuoteNumber());
+        SapIntegrationService sapService = Mockito.mock(SapIntegrationService.class);
+        Mockito.when(sapService.creditDelivery(Mockito.any(BillingCredit.class)))
+            .thenThrow(new SAPIntegrationException(BillingAdaptor.INVOICE_NOT_FOUND));
+
+        ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
+        long billQuantity = 1L;
+        Date billDate = new Date();
+
+        // create a ledgerEntry to simulate a billed sample;
+        LedgerEntry ledgerEntry = new LedgerEntry(pdoSample, pdo.getProduct(), billDate, billQuantity);
+        ledgerEntry.setSapDeliveryDocumentId(String.valueOf(billDate.getTime()));
+        ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
+        pdoSample.getLedgerItems().add(ledgerEntry);
+
+        // create a billingCredit with a positive value. the UI doesn't allow this but it should be tested.
+        double creditQty = 1L;
+        ledgerEntry = new LedgerEntry(pdoSample, pdo.getProduct(), new Date(),  creditQty);
+        pdoSample.getLedgerItems().add(ledgerEntry);
+        ledgerEntries.add(ledgerEntry);
+        BillingEjb billingEjb = Mockito.mock(BillingEjb.class);
+        BillingAdaptor billingAdaptor = new BillingAdaptor(billingEjb, null, null, null, sapService, null, null);
+
+        QuoteImportItem quoteImportItem =
+            new QuoteImportItem(quotePriceItem.getId(), priceItem, "1234", ledgerEntries, new Date(), pdo.getProduct(),
+                pdo);
+        try {
+            billingAdaptor.handleBillingCredit(quoteImportItem);
+            Assert.fail("Positive credits aren't a thing. An error should have been thrown.");
+        } catch (Exception e) {
+            assertThat(e.getLocalizedMessage(), equalTo(BillingAdaptor.POSITIVE_QTY_ERROR_MESSAGE));
+        }
+    }
+
+    public void testBillingCreditNotSapOrder() throws Exception {
+        List<LedgerEntry> ledgerEntries = new ArrayList<>();
+        pdo.setQuoteId("ABCDE");
+
+        SapIntegrationService sapService = Mockito.mock(SapIntegrationService.class);
+        Mockito.when(sapService.creditDelivery(Mockito.any(BillingCredit.class)))
+            .thenThrow(new SAPIntegrationException(BillingAdaptor.INVOICE_NOT_FOUND));
+
+        ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
+        long billQuantity = 1L;
+        Date billDate = new Date();
+
+        // create a ledgerEntry to simulate a billed sample;
+        LedgerEntry ledgerEntry = new LedgerEntry(pdoSample, pdo.getProduct(), billDate, billQuantity);
+        ledgerEntry.setSapDeliveryDocumentId(String.valueOf(billDate.getTime()));
+        ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
+        pdoSample.getLedgerItems().add(ledgerEntry);
+
+        // create a billingCredit with a positive value. the UI doesn't allow this but it should be tested.
+        double creditQty = -1L;
+        ledgerEntry = new LedgerEntry(pdoSample, pdo.getProduct(), new Date(),  creditQty);
+        pdoSample.getLedgerItems().add(ledgerEntry);
+        ledgerEntries.add(ledgerEntry);
+        BillingEjb billingEjb = Mockito.mock(BillingEjb.class);
+        BillingAdaptor billingAdaptor = new BillingAdaptor(billingEjb, null, null, null, sapService, null, null);
+
+        QuoteImportItem quoteImportItem =
+            new QuoteImportItem(quotePriceItem.getId(), priceItem, "1234", ledgerEntries, new Date(), pdo.getProduct(),
+                pdo);
+        try {
+            billingAdaptor.handleBillingCredit(quoteImportItem);
+            Assert.fail("Positive credits aren't a thing. An error should have been thrown.");
+        } catch (Exception e) {
+            assertThat(e.getLocalizedMessage(), equalTo(BillingAdaptor.NON_SAP_ITEM_ERROR_MESSAGE));
+        }
     }
 
     private void resetMocks(){

@@ -70,7 +70,8 @@ public class BillingAdaptor implements Serializable {
     public static final String INVOICE_NOT_FOUND = "Invoice not found against the entered delivery";
     private static final FastDateFormat BILLING_DATE_FORMAT =
         FastDateFormat.getDateTimeInstance(FastDateFormat.SHORT, FastDateFormat.SHORT);
-
+    public static final String NON_SAP_ITEM_ERROR_MESSAGE = "Attempt to bill a non-SAP item in SAP";
+    public static final String POSITIVE_QTY_ERROR_MESSAGE = "Attempt credit an item which has a positive quantity.";
     private BillingEjb billingEjb;
 
     private PriceListCache priceListCache;
@@ -212,7 +213,7 @@ public class BillingAdaptor implements Serializable {
                                                 .map(BillingCredit::getBillingResult).collect(Collectors.toSet());
                                             itemResults.addAll(creditResults);
 
-                                            List<BillingCredit> billingCreditsForItem = billingCredits.stream()
+                                            List<BillingCredit> billingCreditsForItem = billingCredits.stream() ///HEREER~~!
                                                 .filter(billingCredit -> billingCredit.getReturnOrderId()
                                                     .startsWith(BillingCredit.CREDIT_REQUESTED))
                                                 .collect(Collectors.toList());
@@ -280,13 +281,29 @@ public class BillingAdaptor implements Serializable {
         } finally {
             billingSessionAccessEjb.saveAndUnlockSession(billingSession);
         }
-        Map<String, List<LedgerEntry>> ledgersByDeliveryDocument = new HashMap<>();
+
+        /*
+         In cases where a credit spans >1 quoteImportItem, we will have n number of BillingCredit objects with the
+         same sapDocumentId. Since we want to send only one email per sapDeliveryDocument we need to re-loop through
+         the results to correlate the credits by sapDeliveryDocumentId.
+         (ex: two credits against the same sapDeliveryDocument for different dates)
+        */
+        Map<String, List<BillingCredit>> creditsByDeliveryDocument = new HashMap<>();
         billingCreditsForEmail.forEach(billingCredit -> billingCredit.getReturnLines().forEach(lineItem -> {
-            ledgersByDeliveryDocument.computeIfAbsent(billingCredit.getSapDeliveryDocumentId(), k -> new ArrayList<>())
-                .add(lineItem.getLedgerEntry());
+            creditsByDeliveryDocument.computeIfAbsent(
+                billingCredit.getSapDeliveryDocumentId(), deliveryDocumentId -> new ArrayList<>()).add(billingCredit);
         }));
-        ledgersByDeliveryDocument.forEach((deliveryDocumentId, ledgerEntries) -> {
+
+        creditsByDeliveryDocument.forEach((deliveryDocumentId, billingCredits) -> {
+            List<LedgerEntry> ledgerEntries =
+                billingCredits.stream().flatMap(billingCredit -> billingCredit.getReturnLines().stream()).map(
+                    BillingCredit.LineItem::getLedgerEntry).collect(Collectors.toList());
+
             billingEjb.sendBillingCreditRequestEmail(ledgerEntries, billingSession.getCreatedBy());
+
+            // Now that the email is sent, we update the billingResult with a message back to the user.
+            billingCredits.stream().map(BillingCredit::getBillingResult)
+                .forEach(billingResult -> billingResult.setInformationMessage(BILLING_CREDIT_EMAIL_SENT));
         });
 
         // If there were no errors in billing, then end the session, which will add the billed date and remove
@@ -391,16 +408,18 @@ public class BillingAdaptor implements Serializable {
      *
      * @return BillingResult with results of billing credit attempt.
      */
-    private Collection<BillingCredit> handleBillingCredit(final QuoteImportItem item) throws Exception {
+    public Collection<BillingCredit> handleBillingCredit(final QuoteImportItem item) throws Exception {
         if (!item.isSapOrder()) {
-            throw new Exception("Attempt to bill a non-SAP item in SAP");
+            throw new Exception(NON_SAP_ITEM_ERROR_MESSAGE);
         }
         if (!item.isBillingCredit()) {
-            throw new Exception("Attempt credit an item which has a positive quantity.");
+            throw new Exception(POSITIVE_QTY_ERROR_MESSAGE);
         }
 
         Collection<BillingCredit> billingCredits = BillingCredit.setupSapCredits(item);
-            for (BillingCredit billingCredit : billingCredits) {
+
+        // There are cases where a single QuoteImportItem will need to be credited to more than one sapDocumentId.
+        for (BillingCredit billingCredit : billingCredits) {
                 try {
                     Set<LedgerEntry> updatedLedgers = billingCredit.getReturnLines().stream()
                         .map(BillingCredit.LineItem::getLedgerEntry).collect(Collectors.toSet());
@@ -416,23 +435,23 @@ public class BillingAdaptor implements Serializable {
                         if (billingMessage.contains(INVOICE_NOT_FOUND)) {
                             billingCredit.setReturnOrderInvoiceNotFound();
                             billingMessage = BillingSession.BILLING_CREDIT;
-                            billingResult.setInformationMessage(BILLING_CREDIT_EMAIL_SENT);
                         } else {
                             billingResult.setErrorMessage(e.getLocalizedMessage());
                         }
                     }
                     billingEjb.updateSapLedgerEntries(updatedLedgers, item.getQuoteId(), item.getSingleWorkItem(),
                         billingCredit.getSapDeliveryDocumentId(), billingCredit.getReturnOrderId(), billingMessage);
-                    Set<BillingEjb.BillingResult> billingResults =
-                        billingCredits.stream().map(BillingCredit::getBillingResult).collect(Collectors.toSet());
-                    logSapBillingCredit(item, getBilledPdoKeys(billingResults),
-                        billingCredit.getSapDeliveryDocumentId(), billingCredit.getReturnOrderId());
+                    Set<String> billedPdos = billingCredit.getBillingResult().getQuoteImportItem().getLedgerItems()
+                        .stream().map(le -> le.getProductOrderSample().getProductOrder().getBusinessKey())
+                        .collect(Collectors.toSet());
+                    logSapBillingCredit(item, billedPdos, billingCredit.getSapDeliveryDocumentId(),
+                        billingCredit.getReturnOrderId());
                 } catch (BillingException billingException) {
                     BillingEjb.BillingResult billingResult = billingCredit.getBillingResult();
                     billingResult.setErrorMessage(billingException.getMessage());
                     billingEjb.updateSapQuoteImportItem(item, null, null, billingException.getMessage());
                 }
-            }
+        }
 
         return billingCredits;
     }
