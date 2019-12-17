@@ -542,8 +542,11 @@ public class BillingCreditDbFreeTest {
         QuoteImportItem quoteImportItem =
             new QuoteImportItem(quotePriceItem.getId(), priceItem, "1234", ledgerEntries, new Date(), pdo.getProduct(),
                 pdo);
-        Collection<BillingCredit> billingCredits = BillingCredit.setupSapCredits(quoteImportItem);
+        Collection<BillingCredit> billingCredits = billingAdaptor.handleBillingCredit(quoteImportItem);
         assertThat(billingCredits, hasSize(2));
+
+        List<BillingCredit> billingCreditsForItem = BillingAdaptor.findCreditsForEmail(billingCredits);
+        assertThat(billingCreditsForItem, hasSize(2));
     }
 
     public void testOnePositiveLedgerManyNegativeLedgersCreateOneBillingCredit() throws Exception {
@@ -585,6 +588,9 @@ public class BillingCreditDbFreeTest {
                 pdo);
         Collection<BillingCredit> billingCredits = billingAdaptor.handleBillingCredit(quoteImportItem);
         assertThat(billingCredits, hasSize(1));
+        List<BillingCredit> billingCreditsForItem = BillingAdaptor.findCreditsForEmail(billingCredits);
+        assertThat(billingCreditsForItem, hasSize(1));
+
         List<BillingCredit.LineItem> returnLineItems =
             billingCredits.stream().flatMap((BillingCredit billingCredit) -> billingCredit.getReturnLines().stream())
                 .collect(Collectors.toList());

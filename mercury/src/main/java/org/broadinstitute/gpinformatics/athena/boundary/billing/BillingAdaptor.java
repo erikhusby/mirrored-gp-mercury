@@ -213,10 +213,7 @@ public class BillingAdaptor implements Serializable {
                                                 .map(BillingCredit::getBillingResult).collect(Collectors.toSet());
                                             itemResults.addAll(creditResults);
 
-                                            List<BillingCredit> billingCreditsForItem = billingCredits.stream() ///HEREER~~!
-                                                .filter(billingCredit -> billingCredit.getReturnOrderId()
-                                                    .startsWith(BillingCredit.CREDIT_REQUESTED))
-                                                .collect(Collectors.toList());
+                                            List<BillingCredit> billingCreditsForItem = findCreditsForEmail(billingCredits);
                                             billingCreditsForEmail.addAll(billingCreditsForItem);
                                         }
                                         item.getProductOrder().latestSapOrderDetail()
@@ -313,6 +310,15 @@ public class BillingAdaptor implements Serializable {
         }
 
         return allResults;
+    }
+
+    /**
+     * Filter billingCredits to find ones for which users should be emailed .
+     */
+    public static List<BillingCredit> findCreditsForEmail(Collection<BillingCredit> billingCredits) {
+        return billingCredits.stream()
+            .filter(billingCredit -> billingCredit.getReturnOrderId().startsWith(BillingCredit.CREDIT_REQUESTED))
+            .collect(Collectors.toList());
     }
 
     /**
