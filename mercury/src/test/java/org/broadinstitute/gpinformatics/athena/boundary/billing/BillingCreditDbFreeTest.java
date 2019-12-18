@@ -547,6 +547,13 @@ public class BillingCreditDbFreeTest {
 
         List<BillingCredit> billingCreditsForItem = BillingAdaptor.findCreditsForEmail(billingCredits);
         assertThat(billingCreditsForItem, hasSize(2));
+
+        List<BillingCredit.LineItem> returnLineItems =
+            billingCredits.stream().flatMap((BillingCredit billingCredit) -> billingCredit.getReturnLines().stream())
+                .collect(Collectors.toList());
+        assertThat(returnLineItems, hasSize(2));
+        assertThat(Math.abs(quoteImportItem.getQuantity()),
+            equalTo(returnLineItems.stream().mapToDouble(lineItem -> lineItem.getQuantity().doubleValue()).sum()));
     }
 
     public void testOnePositiveLedgerManyNegativeLedgersCreateOneBillingCredit() throws Exception {
@@ -594,7 +601,6 @@ public class BillingCreditDbFreeTest {
         List<BillingCredit.LineItem> returnLineItems =
             billingCredits.stream().flatMap((BillingCredit billingCredit) -> billingCredit.getReturnLines().stream())
                 .collect(Collectors.toList());
-
         assertThat(returnLineItems, hasSize(2));
         assertThat(Math.abs(quoteImportItem.getQuantity()),
             equalTo(returnLineItems.stream().mapToDouble(lineItem -> lineItem.getQuantity().doubleValue()).sum()));
