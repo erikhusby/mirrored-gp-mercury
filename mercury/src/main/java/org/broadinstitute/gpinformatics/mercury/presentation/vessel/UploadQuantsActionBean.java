@@ -247,7 +247,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
                                 .map(r -> r.getTubeFormation().getLabel()).collect(Collectors.toList());
                     }
 
-                    queueEjb.dequeueLabVessels(labMetricRun, QueueType.PICO, messageCollection);
+                    queueEjb.dequeueLabVessels(labMetricRun, QueueType.DNA_QUANT, messageCollection);
                 }
                 addMessages(messageCollection);
                 break;

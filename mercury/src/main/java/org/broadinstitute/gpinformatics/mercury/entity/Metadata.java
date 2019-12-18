@@ -337,7 +337,6 @@ public class Metadata {
         CONTACT_EMAIL(Category.SAMPLE, DataType.STRING, "Contact Email", Visibility.USER),
         REQUESTING_PHYSICIAN(Category.SAMPLE, DataType.STRING, "Requesting Physician", Visibility.USER),
         PRODUCT_TYPE(Category.SAMPLE, DataType.STRING, "Product Type", Visibility.USER),
-        CLIENT(Category.SAMPLE, DataType.STRING, "Client", Visibility.SYSTEM)
         ;
 
         private final Category category;
