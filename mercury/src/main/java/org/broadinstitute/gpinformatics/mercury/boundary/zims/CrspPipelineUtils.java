@@ -2,8 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.infrastructure.KeyValueMapping;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -17,18 +15,14 @@ import javax.inject.Inject;
 import java.util.Map;
 import java.util.Set;
 
+import static org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean.CRSP_LSID_PREFIX;
+import static org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean.MERCURY_LSID_PREFIX;
+
 @Dependent
 public class CrspPipelineUtils {
 
-    private Deployment deployment;
-
     @Inject
     private AttributeArchetypeDao attributeArchetypeDao;
-
-    @Inject
-    public CrspPipelineUtils(@Nonnull Deployment deployment) {
-        this.deployment = deployment;
-    }
 
     /**
      * Returns true if all samples are considered
@@ -69,7 +63,6 @@ public class CrspPipelineUtils {
             LibraryBean libraryBean,
             SampleData sampleData,
             String bait) {
-        throwExceptionIfInProductionAndSampleIsNotABSPSample(sampleData.getSampleId());
         if (sampleData.getMetadataSource() != MercurySample.MetadataSource.BSP) {
             setBuickVisitAndCollectionDate(libraryBean, sampleData);
             libraryBean.setLsid(getCrspLSIDForBSPSampleId(sampleData.getSampleId()));
@@ -79,7 +72,7 @@ public class CrspPipelineUtils {
 
         if (Boolean.TRUE.equals(libraryBean.isPositiveControl())) {
             if (bait != null) {
-                /**
+                /*
                  * The clinical pipeline requires a product part number, but controls are
                  * not associated with PDOs, so derive the product from the bait.
                  */
@@ -102,22 +95,18 @@ public class CrspPipelineUtils {
         // don't want to make the pipeline explode for no good reason
     }
 
-    private void throwExceptionIfInProductionAndSampleIsNotABSPSample(@Nonnull String sampleId) {
-        if (deployment == Deployment.PROD) {
-            if (!BSPUtil.isInBspFormat(sampleId)) {
-                throw new RuntimeException("Sample " + sampleId + " does not appear to be a BSP sample.  " +
-                        "The pipeline's fingerprint validation can only handle BSP samples.");
-            }
-        }
-    }
-
     /**
      * Generates a synthetic CRSP lsid because the CRSP pipeline
      * needs the LSID in this format.  No explicit BSP format check
      * is done here to allow for flexibility in test data.
      */
     public static String getCrspLSIDForBSPSampleId(@Nonnull String bspSampleId) {
-        return bspSampleId.replaceFirst("S[MP]-", "org.broadinstitute:crsp:");
+        if (bspSampleId.startsWith("SM-") || bspSampleId.startsWith("SP-")) {
+            return bspSampleId.replaceFirst("S[MP]-", CRSP_LSID_PREFIX);
+        } else {
+            // other options are "GS-" and All of Us 10 digit barcodes
+            return MERCURY_LSID_PREFIX + bspSampleId;
+        }
     }
 
     /** Setter used for dbfree testing. */

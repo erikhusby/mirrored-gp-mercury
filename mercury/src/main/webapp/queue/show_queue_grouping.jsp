@@ -13,8 +13,8 @@
             Queue: ${actionBean.queueType.textName}<br />
             Queue Grouping: ${actionBean.queueGrouping.queueGroupingText}
             <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean">
-                <stripes:param name="queueType" />
-                <stripes:param name="queueGroupingId" />
+                <stripes:param name="queueType" value="${actionBean.queueType}"/>
+                <stripes:param name="queueGroupingId" value="${actionBean.queueGrouping.queueGroupingId}"/>
                 <stripes:param name="downloadGroupingData" />
                 Download Details
             </stripes:link>

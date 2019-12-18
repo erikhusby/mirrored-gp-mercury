@@ -1634,8 +1634,8 @@
     <changeSet id="GPLIM-5743-15" author="pdunlea">
         <sql>
             insert into mercury.queue(queue_id, queue_type, queue_name, queue_description)
-            values (mercury.seq_queue.nextval, 'PICO', 'Pico Queue',
-            'Research Pico queue for newly received or extracted samples.');
+            values (mercury.seq_queue.nextval, 'DNA_QUANT', 'DNA Quant Queue',
+            'DNA Quant Queue for newly received or extracted samples.');
         </sql>
     </changeSet>
 
@@ -2510,6 +2510,17 @@
 	    tableName="sample_instance_entity" columnNames="lab_vessel, library_name"/>
     </changeSet>
 
+    <changeSet id="GPLIM-6372-1" author="thompson">
+        <addColumn tableName="queue_grouping" schemaName="mercury">
+            <column name="queue_status" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6372-2" author="thompson">
+        <addColumn tableName="queue_grouping_aud" schemaName="mercury">
+            <column name="queue_status" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+
     <changeSet id="GPLIM-6005-001" author="epolk">
         <dropNotNullConstraint columnName="research_project_id" schemaName="mercury" tableName="manifest_session"/>
     </changeSet>
@@ -2813,6 +2824,21 @@
         <createIndex indexName="ix_vessl_xfer_anc_target" tableName="vessel_transfer" schemaName="mercury">
             <column name="ancillary_target_vessel"/>
         </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-6677-1" author="thompson">
+        <sql>
+            insert into mercury.queue(queue_id, queue_type, queue_name, queue_description)
+            values (mercury.seq_queue.nextval, 'VOLUME_CHECK', 'Volume Check Queue',
+            'Volume Check Queue for newly received or extracted samples.');
+        </sql>
+    </changeSet>
+    <changeSet id="GPLIM-6677-2" author="thompson">
+        <sql>
+            insert into mercury.queue(queue_id, queue_type, queue_name, queue_description)
+            values (mercury.seq_queue.nextval, 'FINGERPRINTING', 'Fingerprinting Queue',
+            'Fingerprinting Queue for newly received or extracted samples.');
+        </sql>
     </changeSet>
 
 </databaseChangeLog>

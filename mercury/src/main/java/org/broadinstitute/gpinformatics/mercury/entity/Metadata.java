@@ -318,6 +318,7 @@ public class Metadata {
         STORAGE_CONDITIONS(Category.REAGENT, DataType.STRING, "Storage Conditions", Visibility.USER),
         MANUFACTURER_DESIGN_ID(Category.REAGENT, DataType.STRING, "Manufacturer Design ID", Visibility.USER),
         MARK_STOCK(Category.SAMPLE, DataType.STRING, "Mark Stock", Visibility.USER),
+        CLIENT(Category.SAMPLE, DataType.STRING, "Client", Visibility.SYSTEM),
         // Mayo sample metadata.
         PACKAGE_ID(Category.SAMPLE, DataType.STRING, "Package ID", Visibility.USER),
         RACK_LABEL(Category.SAMPLE, DataType.STRING, "Rack Label", Visibility.NONE),

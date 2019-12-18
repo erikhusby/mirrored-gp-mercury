@@ -3,7 +3,8 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="${actionBean.queueType.textName} Queue" sectionTitle="${actionBean.queueType.textName} Queue" showCreate="false">
+<stripes:layout-render name="/layout.jsp" pageTitle="${actionBean.queueType.textName} Queue"
+                       sectionTitle="${actionBean.queueType.textName} Queue" showCreate="false" dataTablesVersion="1.10">
 
     <stripes:layout-component name="extraHead">
 
@@ -41,6 +42,7 @@
                 $j("#upload-opener").click(function() {
                     $j(".uploadSamplesDialog").dialog("open");
                 });
+                $j(document).tooltip();
             });
 
         </script>
@@ -55,15 +57,22 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <c:forEach items="${actionBean.queue.queueGroupings}" var="queueGrouping" varStatus="status">
+                    <c:forEach items="${actionBean.queueGroupings}" var="queueGrouping" varStatus="status">
                         <tr>
                             <td>
-                                <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean" event="viewGrouping">
+                                <c:set var="popupText" value=""/>
+                                <!-- todo jmt add Mercury storage -->
+                                <c:forEach items="${queueGrouping.bspLocations()}" var="location">
+                                    <c:set var="popupText" value="${popupText += location}"/>
+                                </c:forEach>
+                                <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean"
+                                              event="viewGrouping" title="${popupText}">
                                     <stripes:param name="queueGroupingId" value="${queueGrouping.queueGroupingId}" />
                                     <stripes:param name="queueType" value="${actionBean.queueType}" />
 
                                     ${queueGrouping.queueGroupingText}
                                 </stripes:link>
+
                             </td>
                             <td>${queueGrouping.queuePriority.displayName}</td>
                             <td>${queueGrouping.queueOrigin.displayName} <c:if test="${not empty queueGrouping.queueSpecialization}">(${queueGrouping.queueSpecialization.displayName})</c:if> </td>
@@ -137,7 +146,7 @@
         </stripes:form>
 
         <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean">
-            <stripes:param name="queueType" />
+            <stripes:param name="queueType" value="${actionBean.queueType}" />
             <stripes:param name="downloadFullQueueData" />
             Download Data Dump
         </stripes:link>

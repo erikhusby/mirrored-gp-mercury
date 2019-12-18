@@ -16,13 +16,13 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.StreamCreatedSpreadsheetUtil;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.datadump.AbstractDataDumpGenerator;
 import org.broadinstitute.gpinformatics.mercury.control.dao.queue.GenericQueueDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.queue.QueueGroupingDao;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
@@ -51,7 +51,7 @@ import java.util.Map;
  */
 @UrlBinding("/queue/Queue.action")
 public class QueueActionBean extends CoreActionBean {
-    private static final Log log = LogFactory.getLog(CoreActionBean.class);
+    private static final Log log = LogFactory.getLog(QueueActionBean.class);
     private static final String SPREADSHEET_FILENAME = "_queue_data_dump.xls";
 
     private QueueType queueType;
@@ -74,7 +74,14 @@ public class QueueActionBean extends CoreActionBean {
     private GenericQueueDao queueDao;
 
     @Inject
+    private QueueGroupingDao queueGroupingDao;
+
+    @Inject
     private BSPUserList userList;
+
+    @Inject
+    private SampleDataFetcher sampleDataFetcher;
+
     private static final String READABLE_TEXT = "Manually added on ";
     private Map<String, SampleData> sampleIdToSampleData;
     private Map<Long, String> labVesselIdToSampleId;
@@ -84,6 +91,7 @@ public class QueueActionBean extends CoreActionBean {
     private int totalNeedRework;
     private Map<Long, Long> remainingEntities = new HashMap<>();
     private Map<QueuePriority, Long> entitiesInQueueByPriority = new HashMap<>();
+    private List<QueueGrouping> queueGroupings;
 
     /**
      * Shows the main Queue page.
@@ -101,7 +109,9 @@ public class QueueActionBean extends CoreActionBean {
         }
 
         queue = queueEjb.findQueueByType(queueType);
-        for (QueueGrouping grouping : queue.getQueueGroupings()) {
+        queueGroupings = queueGroupingDao.findActiveGroupsByQueueType(queueType);
+        List<MercurySample> mercurySamples = new ArrayList<>();
+        for (QueueGrouping grouping : queueGroupings) {
 
             QueuePriority queuePriority = grouping.getQueuePriority();
 
@@ -125,6 +135,15 @@ public class QueueActionBean extends CoreActionBean {
                         break;
                     default:
                 }
+                mercurySamples.addAll(queueEntity.getLabVessel().getMercurySamples());
+            }
+        }
+
+        Map<String, SampleData> mapIdToData = loadData(mercurySamples);
+        for (MercurySample mercurySample : mercurySamples) {
+            SampleData sampleData = mapIdToData.get(mercurySample.getSampleKey());
+            if (sampleData != null) {
+                mercurySample.setSampleData(sampleData);
             }
         }
 
@@ -137,17 +156,19 @@ public class QueueActionBean extends CoreActionBean {
     @HandlesEvent("viewGrouping")
     public Resolution viewGrouping() {
         if (queueGroupingId == null) {
+            addGlobalValidationError("Queue Grouping not specified");
             return getSourcePageResolution();
         }
 
         queueGrouping = queueDao.findById(QueueGrouping.class, queueGroupingId);
 
-        List<Long> userIds = new ArrayList<>();
+        List<Long> userIds = new ArrayList<>(); // todo jmt queried but never updated
         List<LabVessel> labVessels = new ArrayList<>();
         labVesselIdToSampleId = new HashMap<>();
         labVesselIdToMercurySample = new HashMap<>();
         for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
             labVessels.add(queueEntity.getLabVessel());
+            // todo jmt add to userIds?
         }
 
         List<MercurySample> mercurySamples = new ArrayList<>();
@@ -164,7 +185,6 @@ public class QueueActionBean extends CoreActionBean {
     }
 
     private Map<String, SampleData> loadData(List<MercurySample> mercurySamples) {
-        SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
         return sampleDataFetcher.fetchSampleDataForSamples(mercurySamples, getSearchColumns());
     }
 
@@ -182,6 +202,7 @@ public class QueueActionBean extends CoreActionBean {
     public Resolution downloadGroupingData() {
         try {
             if (queueGroupingId == null) {
+                addGlobalValidationError("Queue Grouping not specified");
                 return getSourcePageResolution();
             }
 
@@ -397,5 +418,9 @@ public class QueueActionBean extends CoreActionBean {
 
     public Map<QueuePriority, Long> getEntitiesInQueueByPriority() {
         return entitiesInQueueByPriority;
+    }
+
+    public List<QueueGrouping> getQueueGroupings() {
+        return queueGroupings;
     }
 }

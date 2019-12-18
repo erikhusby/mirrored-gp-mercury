@@ -4,6 +4,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.queue;
  * The statuses for QueueEntities.
  */
 public enum QueueStatus {
+    // todo jmt upper case?
     // This is the one of two statuses which will allow QueueEntities to show as currently in the queue.  This means not yet run.
     Active,
     // Completed successfully and automatically removed from the queue at the end of its process.

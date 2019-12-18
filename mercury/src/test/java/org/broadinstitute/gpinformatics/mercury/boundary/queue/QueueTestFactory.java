@@ -18,19 +18,19 @@ public class QueueTestFactory {
 
     private static long id = 1;
 
-    private static GenericQueue getEmptyPicoQueue() {
+    private static GenericQueue getEmptyDnaQuantQueue() {
         GenericQueue genericQueue = new GenericQueue();
-        genericQueue.setQueueType(QueueType.PICO);
-        genericQueue.setQueueName("Pico Queue");
-        genericQueue.setQueueDescription("Pico Queue");
+        genericQueue.setQueueType(QueueType.DNA_QUANT);
+        genericQueue.setQueueName("DNA Quant Queue");
+        genericQueue.setQueueDescription("DNA Quant Queue");
         return genericQueue;
     }
 
     static GenericQueueDao getEnqueueTestQueue() {
 
-        GenericQueue emptyPicoQueue = getEmptyPicoQueue();
+        GenericQueue emptyDnaQuantQueue = getEmptyDnaQuantQueue();
         GenericQueueDao genericQueueDao = Mockito.mock(GenericQueueDao.class);
-        Mockito.when(genericQueueDao.findQueueByType(QueueType.PICO)).thenReturn(emptyPicoQueue);
+        Mockito.when(genericQueueDao.findQueueByType(QueueType.DNA_QUANT)).thenReturn(emptyDnaQuantQueue);
 
         addAnswerToPersist(genericQueueDao);
 
@@ -50,7 +50,7 @@ public class QueueTestFactory {
 
     static GenericQueueDao getDequeueTestQueue(Long labVesselId) {
         GenericQueueDao genericQueueDao = Mockito.mock(GenericQueueDao.class);
-        GenericQueue genericQueue = getEmptyPicoQueue();
+        GenericQueue genericQueue = getEmptyDnaQuantQueue();
 
         genericQueue.setQueueGroupings(new TreeSet<>(QueueGrouping.BY_SORT_ORDER));
 
@@ -58,7 +58,7 @@ public class QueueTestFactory {
 
         addAnswerToPersist(genericQueueDao);
 
-        Mockito.when(genericQueueDao.findQueueByType(QueueType.PICO)).thenReturn(genericQueue);
+        Mockito.when(genericQueueDao.findQueueByType(QueueType.DNA_QUANT)).thenReturn(genericQueue);
         return genericQueueDao;
     }
 
@@ -82,7 +82,7 @@ public class QueueTestFactory {
 
     static GenericQueueDao getResortQueue() {
         GenericQueueDao genericQueueDao = Mockito.mock(GenericQueueDao.class);
-        GenericQueue genericQueue = getEmptyPicoQueue();
+        GenericQueue genericQueue = getEmptyDnaQuantQueue();
         genericQueue.setQueueGroupings(new TreeSet<>(QueueGrouping.BY_SORT_ORDER));
 
         addQueueGroupingToQueue(genericQueue, id++);
@@ -92,7 +92,7 @@ public class QueueTestFactory {
 
         addAnswerToPersist(genericQueueDao);
 
-        Mockito.when(genericQueueDao.findQueueByType(QueueType.PICO)).thenReturn(genericQueue);
+        Mockito.when(genericQueueDao.findQueueByType(QueueType.DNA_QUANT)).thenReturn(genericQueue);
         return genericQueueDao;
     }
 
@@ -108,7 +108,7 @@ public class QueueTestFactory {
         QueueValidationHandler validationHandler = Mockito.mock(QueueValidationHandler.class);
 
         Mockito.when(validationHandler.isComplete(Mockito.any(LabVessel.class),
-                     Mockito.eq(QueueType.PICO), Mockito.any(MessageCollection.class)))
+                     Mockito.eq(QueueType.DNA_QUANT), Mockito.any(MessageCollection.class)))
                .thenReturn(false);
 
         return validationHandler;
@@ -118,7 +118,7 @@ public class QueueTestFactory {
         QueueValidationHandler validationHandler = Mockito.mock(QueueValidationHandler.class);
 
         Mockito.when(validationHandler.isComplete(Mockito.any(LabVessel.class),
-                     Mockito.eq(QueueType.PICO), Mockito.any(MessageCollection.class)))
+                     Mockito.eq(QueueType.DNA_QUANT), Mockito.any(MessageCollection.class)))
                .thenReturn(true);
 
         return validationHandler;

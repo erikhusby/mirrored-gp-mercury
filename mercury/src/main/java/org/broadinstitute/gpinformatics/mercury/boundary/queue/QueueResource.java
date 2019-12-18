@@ -21,6 +21,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Web service utilized for automatically queueing items into a mercury queue.
@@ -51,19 +53,24 @@ public class QueueResource {
         MessageCollection messageCollection = new MessageCollection();
 
         QueueType queueType = QueueType.valueOf(QueueType.class, enqueueContents.getQueueType().name());
-        Collection<LabVessel> labVessels = labVesselDao.findByBarcodes(enqueueContents.getTubeBarcodes()).values();
+        Set<LabVessel> labVessels = new HashSet<>(labVesselDao.findByBarcodes(enqueueContents.getTubeBarcodes()).values());
         labVessels.addAll(labVesselDao.findBySampleKeyOrLabVesselLabel(enqueueContents.getTubeBarcodes()));
         labVessels.removeAll(Collections.singletonList(null));
         QueueOrigin queueOrigin = QueueOrigin.RECEIVING;
-        if (enqueueContents.getReadableName().startsWith("Ext")) {
+        if (enqueueContents.getReadableName().startsWith("Ext")) { // todo jmt add type to DTO?
             queueOrigin = QueueOrigin.EXTRACTION;
         }
+        QueueSpecialization queueSpecialization = null;
+        if (enqueueContents.getQueueSpecialization() != null) {
+            queueSpecialization = QueueSpecialization.valueOf(enqueueContents.getQueueSpecialization());
+        }
         queueEjb.enqueueLabVessels(labVessels, queueType, enqueueContents.getReadableName(),
-                messageCollection, queueOrigin, QueueSpecialization.valueOf(enqueueContents.getQueueSpecialization()));
+                messageCollection, queueOrigin, queueSpecialization);
 
         // Decided not to pass back the QueueGroupingId to BSP. So passing null instead.
         EnqueueResponse enqueueResponse = new EnqueueResponse(null, messageCollection);
         return Response.status(Response.Status.OK).entity(enqueueResponse).type(MediaType.APPLICATION_XML).build();
+        // todo jmt enqueueContents.getExistingQueueGroupingId() not used?
     }
 
     /**

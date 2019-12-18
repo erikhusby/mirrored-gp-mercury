@@ -36,9 +36,9 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BSPRestSender;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.GeminiPlateProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.GeminiPlateProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
@@ -183,7 +183,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
                     labMetricRun = pair.getLeft();
                     tubeFormationLabels = pair.getRight();
 
-                    queueEjb.dequeueLabVessels(labMetricRun, QueueType.PICO, messageCollection);
+                    queueEjb.dequeueLabVessels(labMetricRun, QueueType.DNA_QUANT, messageCollection);
                 }
                 addMessages(messageCollection);
                 break;
@@ -228,6 +228,8 @@ public class UploadQuantsActionBean extends CoreActionBean {
                                 GeminiPlateProcessor.RUN_DATE_FORMAT.format(labMetricRun.getRunDate()),
                                 messageCollection);
                     }
+
+                    queueEjb.dequeueLabVessels(labMetricRun, QueueType.DNA_QUANT, messageCollection);
                 }
 
                 addMessages(messageCollection);
@@ -290,7 +292,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
                 filter(tube -> tubeBarcodeToQuantValue.containsKey(tube.getLabel())).
                 forEach(tube -> {
                     // Clinical sample tubes should not go to BSP.
-                    if (tube.getMercurySamples().stream().anyMatch(sample -> sample.isClinicalSample())) {
+                    if (tube.getMercurySamples().stream().anyMatch(MercurySample::isClinicalSample)) {
                         tubesNotSent.add(tube.getLabel());
                     } else {
                         tubes.add(tube);

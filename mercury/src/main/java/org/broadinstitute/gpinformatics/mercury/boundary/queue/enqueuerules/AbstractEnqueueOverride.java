@@ -30,7 +30,7 @@ public abstract class AbstractEnqueueOverride {
      * @param queueGrouping                     Grouping to insert into the queue.
      * @param uniqueVesselIdsAlreadyInQueue     Set of VesselIds which have been in the Queue in the past.
      */
-    public final void setInitialOrder(QueueGrouping queueGrouping, Set<Long> uniqueVesselIdsAlreadyInQueue) {
+    public void setInitialOrder(QueueGrouping queueGrouping, Set<Long> uniqueVesselIdsAlreadyInQueue) {
         queueGrouping.setQueuePriority(determineQueuePriority(queueGrouping, uniqueVesselIdsAlreadyInQueue));
 
         insertQueueGroupingIntoQueue(queueGrouping);
@@ -44,7 +44,7 @@ public abstract class AbstractEnqueueOverride {
      * @param uniqueVesselIdsAlreadyInQueue     Set of VesselIds which have been in the Queue in the past.
      * @return                                  Algorithmically determined Queue Priority
      */
-    final QueuePriority determineQueuePriority(QueueGrouping queueGrouping, Set<Long> uniqueVesselIdsAlreadyInQueue) {
+    QueuePriority determineQueuePriority(QueueGrouping queueGrouping, Set<Long> uniqueVesselIdsAlreadyInQueue) {
         // Check to see if ALL of the items in the grouping have been through pico before.  If so, give it default
         // otherwise utilize the queue specific logic for determining the priority.
         if (checkForPreExistingEntries(queueGrouping, uniqueVesselIdsAlreadyInQueue)) {
@@ -74,7 +74,7 @@ public abstract class AbstractEnqueueOverride {
      * @param queueGrouping     QueueGrouping to determine the Queue Priority type for.
      * @return                  QueuePriorityType for the QueueGrouping passed in.
      */
-    final QueuePriority determineQueuePriority(QueueGrouping queueGrouping) {
+    QueuePriority determineQueuePriority(QueueGrouping queueGrouping) {
         QueuePriority finalPriorityType = getDefaultPriority();
         for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
             QueuePriority priorityType = checkForSpecialPriorityType(queueEntity.getLabVessel().getMercurySamples());
@@ -180,7 +180,7 @@ public abstract class AbstractEnqueueOverride {
      *
      * @param queueGrouping     QueueGrouping being enqueued.
      */
-    final void useDefaultOrdering(QueueGrouping queueGrouping) {
+    void useDefaultOrdering(QueueGrouping queueGrouping) {
         queueGrouping.setSortOrder(queueGrouping.getQueueGroupingId());
     }
 
