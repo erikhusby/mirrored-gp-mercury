@@ -138,7 +138,7 @@ public class BaseEventTest {
      * Referenced in validation of routing.
      */
     public static SystemRouter.System expectedRouting = SystemRouter.System.MERCURY;
-    private final CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils(Deployment.DEV);
+    private final CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils();
 
     private BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
 
