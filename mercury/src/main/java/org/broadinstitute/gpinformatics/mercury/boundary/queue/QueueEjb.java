@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.queue;
 
 import org.broadinstitute.bsp.client.queue.DequeueingOptions;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.datadump.AbstractDataDumpGenerator;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.dequeueRules.AbstractPostDequeueHandler;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.AbstractEnqueueOverride;
@@ -401,28 +402,24 @@ public class QueueEjb {
     }
 
     private void setInitialOrder(QueueGrouping queueGrouping) {
-        try {
-            AbstractEnqueueOverride enqueueOverride = queueGrouping.getAssociatedQueue().getQueueType().getEnqueueOverrideClass().newInstance();
+        AbstractEnqueueOverride enqueueOverride = ServiceAccessUtility.getBean(queueGrouping.getAssociatedQueue().getQueueType().getEnqueueOverrideClass());
 
-            // Find the vessel ids which already have been in the queue.  These would get standard priority.
-            List<Long> vesselIds = new ArrayList<>();
-            // Grab the vessel is from the queue entity
-            for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
-                vesselIds.add(queueEntity.getLabVessel().getLabVesselId());
-            }
-
-            // Find the existing entities
-            List<QueueEntity> entitiesByVesselIds = queueEntityDao.findActiveEntitiesByVesselIds(queueGrouping.getAssociatedQueue().getQueueType(), vesselIds);
-
-            Set<Long> uniqueVesselIdsAlreadyInQueue = new HashSet<>();
-            for (QueueEntity entity : entitiesByVesselIds) {
-                uniqueVesselIdsAlreadyInQueue.add(entity.getLabVessel().getLabVesselId());
-            }
-
-            enqueueOverride.setInitialOrder(queueGrouping, uniqueVesselIdsAlreadyInQueue);
-        } catch (InstantiationException | IllegalAccessException e) {
-            throw new RuntimeException(e);
+        // Find the vessel ids which already have been in the queue.  These would get standard priority.
+        List<Long> vesselIds = new ArrayList<>();
+        // Grab the vessel is from the queue entity
+        for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
+            vesselIds.add(queueEntity.getLabVessel().getLabVesselId());
         }
+
+        // Find the existing entities
+        List<QueueEntity> entitiesByVesselIds = queueEntityDao.findActiveEntitiesByVesselIds(queueGrouping.getAssociatedQueue().getQueueType(), vesselIds);
+
+        Set<Long> uniqueVesselIdsAlreadyInQueue = new HashSet<>();
+        for (QueueEntity entity : entitiesByVesselIds) {
+            uniqueVesselIdsAlreadyInQueue.add(entity.getLabVessel().getLabVesselId());
+        }
+
+        enqueueOverride.setInitialOrder(queueGrouping, uniqueVesselIdsAlreadyInQueue);
     }
 
     /**
