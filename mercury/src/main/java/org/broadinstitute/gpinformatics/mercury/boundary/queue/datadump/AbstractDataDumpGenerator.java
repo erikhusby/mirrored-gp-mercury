@@ -81,9 +81,12 @@ public abstract class AbstractDataDumpGenerator {
         for (LabVessel labVessel : labVessels) {
             for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
                 MercurySample mercurySample = sampleInstanceV2.getNearestMercurySample();
-                mercurySamples.add(mercurySample);
-                labVesselIdToSampleId.put(labVessel.getLabVesselId(), mercurySample.getSampleKey());
-                labVesselIdToMercurySample.put(labVessel.getLabVesselId(), mercurySample);
+                // Safely handle the possibly of no associated single sample
+                if (mercurySample != null) {
+                    mercurySamples.add(mercurySample);
+                    labVesselIdToSampleId.put(labVessel.getLabVesselId(), mercurySample.getSampleKey());
+                    labVesselIdToMercurySample.put(labVessel.getLabVesselId(), mercurySample);
+                }
             }
         }
     }
