@@ -22,6 +22,10 @@ public class DragenConfig extends AbstractConfig implements Serializable {
 
     private String intermediateResults;
 
+    private String gsBucket;
+
+    private String prologScriptFolder;
+
     public DragenConfig() {
     }
 
@@ -76,5 +80,21 @@ public class DragenConfig extends AbstractConfig implements Serializable {
 
     public void setIntermediateResults(String intermediateResults) {
         this.intermediateResults = intermediateResults;
+    }
+
+    public String getGsBucket() {
+        return gsBucket;
+    }
+
+    public void setGsBucket(String gsBucket) {
+        this.gsBucket = gsBucket;
+    }
+
+    public String getPrologScriptFolder() {
+        return prologScriptFolder;
+    }
+
+    public void setPrologScriptFolder(String prologScriptFolder) {
+        this.prologScriptFolder = prologScriptFolder;
     }
 }

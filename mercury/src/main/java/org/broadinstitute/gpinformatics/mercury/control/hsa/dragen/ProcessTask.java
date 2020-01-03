@@ -58,4 +58,16 @@ public abstract class ProcessTask extends Task {
     public void setPartition(String partition) {
         this.partition = partition;
     }
+
+    public boolean hasProlog() {
+        return false;
+    }
+
+    public String getPrologFileName() {
+        return null;
+    }
+
+    public boolean requiresDragenPrefix() {
+        return true;
+    }
 }

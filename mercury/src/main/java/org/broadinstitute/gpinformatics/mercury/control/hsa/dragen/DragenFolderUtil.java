@@ -9,11 +9,17 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import java.io.File;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import static org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine.DEMUX_FOLDER_FORMAT;
 
+/**
+ * General file manipulation and folder creation of Dragen runs
+ */
 public class DragenFolderUtil {
 
     public static final String FAST_Q_FILE_NAME = "%s_S1_R%d_00%d.fastq.gz";
@@ -93,9 +99,7 @@ public class DragenFolderUtil {
         this.illuminaSequencingRun = illuminaSequencingRun;
         this.analysisKey = analysisKey;
 
-        File baseFolder = new File(dragenConfig.getDemultiplexOutputPath());
-        File machineFolder = new File(baseFolder, illuminaSequencingRun.getMachineName());
-        runFolder = new File(machineFolder, illuminaSequencingRun.getRunName());
+        runFolder = new File(illuminaSequencingRun.getRunDirectory());
         if (!runFolder.exists()) {
             throw new RuntimeException("Run folder doesn't exists " + runFolder.getPath());
         }
@@ -130,6 +134,28 @@ public class DragenFolderUtil {
         }
         File aggregationVersion = new File(sampleFolder, DateUtils.getFileDateTime(new Date()));
         return aggregationVersion;
+    }
+
+    public static Optional<File> findMostRecentAggregation(DragenConfig dragenConfig, String sampleKey) {
+        File aggregationFolder = new File(dragenConfig.getAggregationFilepath());
+        if (!aggregationFolder.exists()) {
+            return Optional.empty();
+        }
+        File sampleFolder = new File(aggregationFolder, sampleKey);
+        if (!sampleFolder.exists()) {
+            return Optional.empty();
+        }
+        List<File> analsisDirs = Arrays.asList(sampleFolder.listFiles(File::isDirectory));
+        analsisDirs.remove(sampleFolder);
+        Optional<File> recentAggFolder = analsisDirs.stream().max(Comparator.comparing(DateUtils::parseFileDateTime));
+        if (recentAggFolder.isPresent()) {
+            File sampleAggFolder = recentAggFolder.get();
+            File cram = new File(sampleAggFolder, sampleKey + ".cram");
+            if (cram.exists()) {
+                return Optional.of(cram);
+            }
+        }
+        return Optional.empty();
     }
 
     public DragenConfig getDragenConfig() {

@@ -937,7 +937,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         String indexScheme = p7.getSequence();
         if (indexes.containsKey(MolecularIndexingScheme.IndexPosition.ILLUMINA_P5)) {
             MolecularIndex p5 = indexes.get(MolecularIndexingScheme.IndexPosition.ILLUMINA_P5);
-            indexScheme = indexScheme + "." + p5.getSequence();
+            indexScheme = indexScheme + "_" + p5.getSequence();
         }
 
         return indexScheme;

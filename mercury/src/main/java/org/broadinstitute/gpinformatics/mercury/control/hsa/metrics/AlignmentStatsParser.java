@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.control.hsa.metrics;
 
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -34,32 +35,45 @@ public class AlignmentStatsParser {
 
     public static final String SUMMARY_TYPE = "MAPPING/ALIGNING SUMMARY";
 
+    public static final String RG_TYPE = "MAPPING/ALIGNING PER RG";
+
     public AlignmentDataFiles parseFolder(String runName, Date runDate, String analysisName,
                                                 DragenReplayInfo dragenReplayInfo, File directory, String readGroup,
                                                 String filePrefix) throws IOException {
         File mappingMetricsFile = new File(directory, filePrefix + ".mapping_metrics.csv");
         File covMetrics = new File(directory, filePrefix + ".qc-coverage-region-1_coverage_metrics.csv");
         File vcMetrics = new File(directory, filePrefix + ".vc_metrics.csv");
+        File predictedSexChromosomePloidy = new File(directory, filePrefix + ".wgs_ploidy.csv");
 
         Map<RecordType, String> mapSummaryToValue = new HashMap<>();
+        Map<String, Map<RecordType, String>> mapRgToValue = new HashMap<>();
         Map<RecordType, String> mapCovToValue = new HashMap<>();
         Map<RecordType, String> mapVcToPrefilterValue = new HashMap<>();
         Map<RecordType, String> mapVcToPostfilterValue = new HashMap<>();
 
         CSVReader csvReader = new CSVReader(new BufferedReader(new FileReader(mappingMetricsFile)));
         String recordType = null;
+        String readGroupRecord = null;
         String recordField = null;
         String recordValue = null;
         String[] nextRecord = null;
         while ((nextRecord = csvReader.readNext()) != null) {
             recordType = nextRecord[0];
+            readGroupRecord = nextRecord[1];
             recordField = nextRecord[2];
             recordValue = nextRecord[3];
 
             if (recordType.equals(SUMMARY_TYPE) && SummaryFields.getRecordFromField(recordField) != null) {
                 mapSummaryToValue.put(SummaryFields.getRecordFromField(recordField), recordValue);
+            } else if (recordType.equals(RG_TYPE) && RgFields.getRecordFromField(recordField) != null) {
+                if (!mapRgToValue.containsKey(readGroupRecord)) {
+                    mapRgToValue.put(readGroupRecord, new HashMap<>());
+                }
+                mapRgToValue.get(readGroupRecord).put(RgFields.getRecordFromField(recordField), recordValue);
             }
         }
+
+        String predictedSexChromosome = parsePredictedSexChromosomePloidyFile(predictedSexChromosomePloidy);
 
         csvReader = new CSVReader(new BufferedReader(new FileReader(covMetrics)));
 
@@ -123,9 +137,37 @@ public class AlignmentStatsParser {
                 System.out.println(coverageFields.getRecordType() + "-" + mapCovToValue.get(coverageFields));
             }
         }
-
+        summaryResults.add(predictedSexChromosome);
         csvWriterSummary.writeNext(summaryResults.toArray(new String[0]));
         csvWriterSummary.close();
+
+        // Write outputs for each read group
+        File mappingRgOutputFile = new File(directory, filePrefix + ".mapping_rg_metrics_mercury.dat");
+        writer = new BufferedWriter(new FileWriter(mappingRgOutputFile));
+        CSVWriter csvWriterRg = new CSVWriter(writer,
+        CSVWriter.DEFAULT_SEPARATOR,
+        CSVWriter.NO_QUOTE_CHARACTER,
+        CSVWriter.DEFAULT_ESCAPE_CHARACTER,
+        CSVWriter.DEFAULT_LINE_END);
+        for (Map.Entry<String, Map<RecordType, String>> entry: mapRgToValue.entrySet()) {
+            List<String> rgResults = new ArrayList<>();
+            rgResults.add(entry.getKey());
+            rgResults.add(simpleDateFormat.format(runDate));
+            rgResults.add(filePrefix);
+            rgResults.add(analysisName);
+            rgResults.add(dragenReplayInfo.getSystem().getNodename());
+            rgResults.add(dragenReplayInfo.getSystem().getDragenVersion());
+            Map<RecordType, String> mapRgRecordToVal = entry.getValue();
+            for (RgFields rgField: RgFields.values()) {
+                if (mapRgRecordToVal.containsKey(rgField)) {
+                    rgResults.add(mapRgRecordToVal.get(rgField));
+                    System.out.println(rgField.getRecordType() + " " + entry.getKey() + " " + mapRgRecordToVal.get(rgField));
+                }
+            }
+
+            csvWriterRg.writeNext(rgResults.toArray(new String[0]));
+        }
+        csvWriterRg.close();
 
         // Write Outputs for VC Metrics
         File vcMetricsDat = new File(directory, filePrefix + ".vc_summary_mercury.dat");
@@ -173,12 +215,18 @@ public class AlignmentStatsParser {
         csvWriterSummary.close();
 
         String alignSummaryLoad = String.format("%s_AlignRun_load.log", filePrefix);
+        String alignRgLoad = String.format("%s_AlignRg_load.log", filePrefix);
         String vcSummaryMetricLoad = String.format("%s_VCRunload.log", filePrefix);
 
-        AlignmentDataFiles dataFiles = new AlignmentDataFiles(mappingSummaryOutputFile, null,
-                vcMetricsDat, null, alignSummaryLoad, null, vcSummaryMetricLoad, null);
+        AlignmentDataFiles dataFiles = new AlignmentDataFiles(mappingSummaryOutputFile, mappingRgOutputFile,
+                vcMetricsDat, null, alignSummaryLoad, alignRgLoad, vcSummaryMetricLoad, null);
 
         return dataFiles;
+    }
+
+    private String parsePredictedSexChromosomePloidyFile(File predictedSexChromosomePloidy) throws IOException {
+        String contents = FileUtils.readFileToString(predictedSexChromosomePloidy);
+        return contents.replaceAll("Predicted sex chromosome ploidy", "").trim();
     }
 
     public AlignmentDataFiles parseStats(File outputDirectory, String filePrefix, DragenReplayInfo dragenReplayInfo,
@@ -576,7 +624,7 @@ public class AlignmentStatsParser {
         Q30_BASES_R1("Q30 bases R1"),
         Q30_BASES_R2("Q30 bases R2"),
         Q30_BASES_EXCL("Q30 bases (excl. dups & clipped bases)"),
-        TOTAL_ALIGNMENTS("TOTAL_ALIGNMENTS"),
+        TOTAL_ALIGNMENTS("Total alignments"),
         SECONDARY_ALIGNMENTS("Secondary alignments"),
         SUPPLEMENTARY_ALIGNMENTS("Supplementary (chimeric) alignments"),
         EST_READ_LENGTH("Estimated read length"),
@@ -639,7 +687,6 @@ public class AlignmentStatsParser {
         XAVG_YAVG_COV("XAvgCov/YAvgCov ratio over QC coverage region"),
         XAVG_AUTOSOMAL_COV("XAvgCov/AutosomalAvgCov ratio over QC coverage region"),
         YAVG_AUTOSOMAL_COV("YAvgCov/AutosomalAvgCov ratio over QC coverage region"),
-        PRED_SEX_CHROM_PLOIDY("Predicted sex chromosome ploidy"),
         ALIGNED_READS("Aligned reads"),
         ALIGNED_READS_QC("Aligned reads in QC coverage region"),
         ;

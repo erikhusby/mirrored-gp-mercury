@@ -35,12 +35,13 @@
                         {"bSortable": true},
                         {"bSortable": true},
                         {"bSortable": true},
+                        {"bSortable": true},
                         {"bSortable": true}
                     ],
                     "fnRowCallback": function ( row, data, index ) {
-                        console.log(data[4].trim());
-                        if ( data[4].trim() > 0 ) {
-                            $j('td', row).eq(4).addClass('highlight');
+                        console.log(data[5].trim());
+                        if ( data[5].trim() > 0 ) {
+                            $j('td', row).eq(5).addClass('highlight');
                         }
                     }
                 });
@@ -54,25 +55,6 @@
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
-
-        <stripes:form beanclass="${actionBean.class.name}" id="searchForm">
-            <div class="search-horizontal">
-                <div class="control-group">
-                    <stripes:label for="runName" class="control-label">
-                        Run Name
-                    </stripes:label>
-                    <div class="controls">
-                        <stripes:text id="runName" name="runName" class="defaultText search-input"/>
-                    </div>
-                </div>
-                <div class="control-group">
-                    <div class="control-label">&#160;</div>
-                    <div class="controls actionButtons">
-                        <stripes:submit name="list" value="Search" style="margin-right: 10px;margin-top:10px;" class="btn btn-mini"/>
-                    </div>
-                </div>
-            </div>
-        </stripes:form>
         <stripes:form beanclass="${actionBean.class.name}" id="searchForm">
             <table id="machineList" class="table simple">
                 <thead>
@@ -84,6 +66,7 @@
                     <th>Machine Name</th>
                     <th>Status</th>
                     <th>State</th>
+                    <th>Running Tasks</th>
                     <th>Issues</th>
                     <th>Start Date</th>
                 </tr>
@@ -103,6 +86,7 @@
                         </td>
                         <td>${machine.status}</td>
                         <td>${machine.activeStateNames}</td>
+                        <td>${machine.numberOfTasksRunning}</td>
                         <td>
                             <c:if test="${machine.getNumberOfActiveIssues() > 0}">
                                 ${machine.getNumberOfActiveIssues()}

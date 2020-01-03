@@ -3,12 +3,13 @@ APPEND INTO TABLE mapping_rg_metrics
 FIELDS TERMINATED BY "," OPTIONALLY ENCLOSED BY '"'
 TRAILING NULLCOLS
 (
-  run_name,
-  run_date DATE "YYYYMMDDHH24MISS",
-  analysis_name,
   read_group,
+  run_date DATE "YYYYMMDDHH24MISS",
   sample_alias,
-  total_input_reads_rg,
+  analysis_name,
+  analysis_node,
+  dragen_version,
+  total_reads_rg,
   num_dup_marked_reads,
   num_dup_marked_removed,
   num_unique_reads,
@@ -56,6 +57,5 @@ TRAILING NULLCOLS
   avg_cov_genome,
   insert_length_mean,
   insert_length_median,
-  insert_length_stddev,
-  mapping_rg_metric_id "SEQ_MAP_RG_METRIC.NEXTVAL"
+  insert_length_stddev
 )

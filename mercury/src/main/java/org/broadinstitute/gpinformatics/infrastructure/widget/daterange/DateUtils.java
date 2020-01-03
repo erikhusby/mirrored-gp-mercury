@@ -14,6 +14,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import javax.xml.bind.DatatypeConverter;
+import java.io.File;
 import java.text.DateFormat;
 import java.text.Format;
 import java.text.ParseException;
@@ -205,6 +206,15 @@ public class DateUtils {
         }
 
         return dateTimeFileFormat.format(aDate);
+    }
+
+    public static Date parseFileDateTime(File f) {
+        try {
+            return dateTimeFileFormat.parse(f.getName());
+        } catch (ParseException e) {
+            // Caught and thrown here so operation can be done in a stream
+            throw new RuntimeException(e);
+        }
     }
 
     /**

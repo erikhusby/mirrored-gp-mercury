@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.statehandler;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -7,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.DragenConfig;
 import org.broadinstitute.gpinformatics.infrastructure.search.LabVesselSearchDefinition;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.FastQListBuilder;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.SampleSheetBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AggregationTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenFolderUtil;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AggregationState;
@@ -58,9 +60,23 @@ public class AggregationStateHandler extends StateHandler {
      */
     @Override
     public boolean onEnter(State state) {
-        logger.info("Aggregation start()");
+        logger.debug("Aggregation start()");
         if (!OrmUtil.proxySafeIsInstance(state, AggregationState.class)) {
             throw new RuntimeException("Expect only aggregation states");
+        }
+
+        boolean failedToEnter = false;
+        for (IlluminaSequencingRunChamber runChamber: state.getSequencingRunChambers()) {
+            Optional<DemultiplexState> demultiplexStateOpt =
+                    runChamber.getMostRecentCompleteStateOfType(DemultiplexState.class);
+            if (!demultiplexStateOpt.isPresent()) {
+                logger.info("Aggregation " + state + " is waiting on demultiplex of lane: "
+                             + runChamber.getLaneNumber() + " in " + runChamber.getIlluminaSequencingRun().getRunName());
+                failedToEnter = true;
+            }
+        }
+        if (failedToEnter) {
+            return false;
         }
 
         try {
@@ -104,14 +120,16 @@ public class AggregationStateHandler extends StateHandler {
                     IlluminaSequencingRun illuminaSequencingRun = optionalRun.get();
                     for (VesselPosition vesselPosition: labVesselAndPositions.getValue()) {
                         IlluminaSequencingRunChamber sequencingRunChamber =
-                                illuminaSequencingRun.getSequencingRunChamber(vesselPosition); // TODO Seqrun chamber may be empty, if so not true
-                        // TODO Jw Think about this more
+                                illuminaSequencingRun.getSequencingRunChamber(vesselPosition);
                         MercurySample sampleImport = findSampleImport(flowcell, vesselPosition, mercurySample);
+                        if (sampleImport == null) {
+                            sampleImport = mercurySample;
+                        }
                         String sampleImportKey = sampleImport.getSampleKey();
                         if (sequencingRunChamber != null) {
                             Optional<DemultiplexState> demultiplexStateOpt =
                                     sequencingRunChamber.getMostRecentCompleteStateOfType(DemultiplexState.class);
-                            if (demultiplexStateOpt == null) {
+                            if (!demultiplexStateOpt.isPresent()) {
                                 String msg = String.format("Waiting on lane: %s in %s to aggregate %s",
                                         vesselPosition.name(), flowcellBarcode, sampleKey);
                                 logger.info(msg);
@@ -123,6 +141,10 @@ public class AggregationStateHandler extends StateHandler {
                                 DragenFolderUtil dragenFolderUtil = new DragenFolderUtil(dragenConfig, run,
                                         demultiplexState.getStateName());
 
+                                Pair<MercurySample, SampleInstanceV2> instancePair = SampleSheetBuilder.
+                                        findSampleInFlowcellLane(flowcell, sequencingRunChamber.getLanePosition(), mercurySample);
+                                SampleInstanceV2 sampleInstanceV2 = instancePair.getRight();
+                                String indexingSchemeString = sampleInstanceV2.getIndexingSchemeString();
                                 Map<Integer, Map<String, List<FastQList>>> fastQList = null;
                                 File fastQFile = dragenFolderUtil.getFastQListFile();
                                 if (!fastQFile.exists()) {
@@ -136,14 +158,20 @@ public class AggregationStateHandler extends StateHandler {
                                 Map<String, List<FastQList>> mapKeyToFastq =
                                         fastQList.get(sequencingRunChamber.getLaneNumber());
                                 if (mapKeyToFastq == null) {
-                                    throw new RuntimeException("Failed to find fast map for " + fastQFile.getPath());
+                                    throw new RuntimeException("Failed to find fastq map for " + fastQFile.getPath());
                                 }
                                 List<FastQList> sampleFastQs = mapKeyToFastq.get(sampleKey);
                                 if (sampleFastQs == null) {
                                     sampleFastQs = mapKeyToFastq.get(sampleImportKey);
                                 }
+
                                 for (FastQList fq: sampleFastQs) {
-                                    fq.setRgId(ReadGroupUtil.createRgId(flowcell, sequencingRunChamber.getLaneNumber(), mercurySample));
+                                    fq.setRgLb(sampleInstanceV2.getSequencingLibraryName());
+                                    fq.setRgId(ReadGroupUtil.createRgId(flowcell, sequencingRunChamber.getLaneNumber()));
+                                    fq.setRgPl("ILLUMINA");
+                                    fq.setRgPu(ReadGroupUtil.createRgPu(flowcellBarcode, sequencingRunChamber.getLaneNumber(), indexingSchemeString));
+                                    fq.setRgPm(flowcell.getFlowcellType().getSequencerModelShort());
+                                    fq.setRgCn("BI");
                                 }
                                 finalFastQList.addAll(sampleFastQs);
                             }
@@ -173,7 +201,7 @@ public class AggregationStateHandler extends StateHandler {
         return false;
     }
 
-    public MercurySample findSampleImport(RunCartridge flowcell, VesselPosition lane, MercurySample sample ) {
+    public static MercurySample findSampleImport(RunCartridge flowcell, VesselPosition lane, MercurySample sample ) {
         for (SampleInstanceV2 sampleInstance : flowcell.getContainerRole().getSampleInstancesAtPositionV2(lane)) {
             ProductOrderSample productOrderSample = sampleInstance.getSingleProductOrderSample();
             MercurySample mercurySample;

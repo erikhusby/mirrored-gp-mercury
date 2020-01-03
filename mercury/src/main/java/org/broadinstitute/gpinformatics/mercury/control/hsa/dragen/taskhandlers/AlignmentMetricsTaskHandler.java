@@ -184,8 +184,7 @@ public class AlignmentMetricsTaskHandler extends AbstractMetricsTaskHandler {
         }
     }
 
-    // TODO FAils simulator
-    private Pair<String, String> parseRunNameAndAnalysisDateFromOutputDir(File outputDirectory) {
+    protected Pair<String, String> parseRunNameAndAnalysisDateFromOutputDir(File outputDirectory) {
         Matcher matcher = RUN_NAME_PATTERN.matcher(outputDirectory.getPath());
         if (matcher.matches()) {
             String runName = matcher.group(1);

@@ -1,0 +1,31 @@
+COVERAGE SUMMARY,,Aligned bases,120303048345
+COVERAGE SUMMARY,,Aligned bases in QC coverage region,111738405014,92.88
+COVERAGE SUMMARY,,Average alignment coverage over QC coverage region,38.87
+COVERAGE SUMMARY,,Uniformity of coverage (PCT > 0.2*mean) over QC coverage region,93.11
+COVERAGE SUMMARY,,PCT of QC coverage region with coverage [100x: inf),0.13
+COVERAGE SUMMARY,,PCT of QC coverage region with coverage [ 50x: inf),13.54
+COVERAGE SUMMARY,,PCT of QC coverage region with coverage [ 20x: inf),92.31
+COVERAGE SUMMARY,,PCT of QC coverage region with coverage [ 15x: inf),92.68
+COVERAGE SUMMARY,,PCT of QC coverage region with coverage [ 10x: inf),92.99
+COVERAGE SUMMARY,,PCT of QC coverage region with coverage [  3x: inf),93.55
+COVERAGE SUMMARY,,PCT of QC coverage region with coverage [  1x: inf),93.97
+COVERAGE SUMMARY,,PCT of QC coverage region with coverage [  0x: inf),100.00
+COVERAGE SUMMARY,,PCT of QC coverage region with coverage [ 50x:100x),13.41
+COVERAGE SUMMARY,,PCT of QC coverage region with coverage [ 20x: 50x),78.77
+COVERAGE SUMMARY,,PCT of QC coverage region with coverage [ 15x: 20x),0.38
+COVERAGE SUMMARY,,PCT of QC coverage region with coverage [ 10x: 15x),0.30
+COVERAGE SUMMARY,,PCT of QC coverage region with coverage [  3x: 10x),0.56
+COVERAGE SUMMARY,,PCT of QC coverage region with coverage [  1x:  3x),0.42
+COVERAGE SUMMARY,,PCT of QC coverage region with coverage [  0x:  1x),6.03
+COVERAGE SUMMARY,,Average chr X coverage over QC coverage region,0.00
+COVERAGE SUMMARY,,Average chr Y coverage over QC coverage region,0.00
+COVERAGE SUMMARY,,Average mitochondrial coverage over QC coverage region,0.00
+COVERAGE SUMMARY,,Average autosomal coverage over QC coverage region,38.87
+COVERAGE SUMMARY,,Median autosomal coverage over QC coverage region,40.09
+COVERAGE SUMMARY,,Mean/Median autosomal coverage ratio over QC coverage region,0.97
+COVERAGE SUMMARY,,XAvgCov/YAvgCov ratio over QC coverage region,inf
+COVERAGE SUMMARY,,XAvgCov/AutosomalAvgCov ratio over QC coverage region,0.00
+COVERAGE SUMMARY,,YAvgCov/AutosomalAvgCov ratio over QC coverage region,0.00
+COVERAGE SUMMARY,,Predicted sex chromosome ploidy,NA
+COVERAGE SUMMARY,,Aligned reads,808377586
+COVERAGE SUMMARY,,Aligned reads in QC coverage region,750119506,92.7

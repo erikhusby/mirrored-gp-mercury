@@ -5,17 +5,23 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 public class ReadGroupUtil {
 
-    private static final String RGID_FORMAT = "%s_%d_%s";
+    private static final String RGID_FORMAT = "%s.%d";
+    private static final String RGPU_FORMAT = "%s.%d.%s";
+    private static final String RG_ID_SS_FORMAT = "%s_%d_%s";
 
-    public static String createRgId(IlluminaFlowcell flowcell, int lane, MercurySample mercurySample) {
-        return String.format(RGID_FORMAT, flowcell.getLabel(), lane, mercurySample.getSampleKey());
+    public static String createRgId(IlluminaFlowcell flowcell, int lane) {
+        return String.format(RGID_FORMAT, flowcell.getLabel(), lane);
     }
 
-    public static String createRgId(String flowcell, int lane, String sampleKey) {
-        return String.format(RGID_FORMAT, flowcell, lane, sampleKey);
+    /**
+     * Dragen's don't accept a period in the sample sheet for SMs so must output RGID with '_' and
+     * replace later in fastqs to match the pipeline.
+     */
+    public static String createSampleSheetId(String flowcell, int lane, String sampleKey) {
+        return String.format(RG_ID_SS_FORMAT, flowcell, lane, sampleKey);
     }
 
-    public static String parseSmFromRgId(String rgId) {
-        return rgId.split("_")[2];
+    public static String createRgPu(String flowcell, int lane, String index) {
+        return String.format(RGPU_FORMAT, flowcell, lane, index);
     }
 }

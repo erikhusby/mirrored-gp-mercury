@@ -250,4 +250,69 @@
         </createTable>
         <createSequence schemaName="mercurydw" sequenceName="SEQ_FP_SCORE" incrementBy="50"/>
     </changeSet>
+
+    <changeSet id="GPLIM-6242-43" author="jowalsh">
+        <createTable tableName="mapping_rg_metrics" schemaName="mercurydw">
+            <column name="read_group" type="VARCHAR2(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="run_date" type="timestamp">
+                <constraints nullable="false" />
+            </column>
+            <column name="sample_alias" type="VARCHAR2(55)" />
+            <column name="analysis_name" type="VARCHAR2(55)" />
+            <column name="analysis_node" type="VARCHAR2(55)" />
+            <column name="dragen_version" type="VARCHAR2(55)" />
+            <column name="total_reads_rg" type="number(19,0)" />
+            <column name="num_dup_marked_reads" type="number(19,0)" />
+            <column name="num_dup_marked_removed" type="VARCHAR2(55)" />
+            <column name="num_unique_reads" type="number(19,0)" />
+            <column name="num_reads_mate_sequenced" type="VARCHAR2(55)" />
+            <column name="num_reads_wo_mate_sequenced" type="VARCHAR2(55)" />
+            <column name="num_qc_failed_reads" type="number(19,0)" />
+            <column name="num_mapped_reads" type="number(19,0)" />
+            <column name="num_mapped_reads_r1" type="number(19,0)" />
+            <column name="num_mapped_reads_r2" type="number(19,0)" />
+            <column name="num_unq_mapped_reads" type="number(19,0)" />
+            <column name="num_unmapped_reads" type="number(19,0)" />
+            <column name="num_singleton_reads" type="number(19,0)" />
+            <column name="num_paired_reads" type="number(19,0)" />
+            <column name="num_properly_paired_reads" type="number(19,0)" />
+            <column name="num_not_properly_paired_reads" type="number(19,0)" />
+            <column name="paired_reads_map_diff_chrom" type="number(19,0)" />
+            <column name="paired_reads_map_diff_chr_q10" type="number(19,0)" />
+            <column name="mapq_40_inf" type="number(19,3)" />
+            <column name="mapq_30_40" type="number(19,3)" />
+            <column name="mapq_20_30" type="number(19,3)" />
+            <column name="mapq_10_20" type="number(19,3)" />
+            <column name="mapq_0_10" type="number(19,3)" />
+            <column name="mapq_na" type="number(19,3)" />
+            <column name="reads_indel_r1" type="number(19,0)" />
+            <column name="reads_indel_r2" type="number(19,0)" />
+            <column name="total_bases" type="number(19,0)" />
+            <column name="total_bases_r1" type="number(19,0)" />
+            <column name="total_bases_r2" type="number(19,0)" />
+            <column name="mapped_bases_r1" type="number(19,0)" />
+            <column name="mapped_bases_r2" type="number(19,0)" />
+            <column name="soft_clipped_bases_r1" type="number(19,0)" />
+            <column name="soft_clipped_bases_r2" type="number(19,0)" />
+            <column name="mismatched_bases_r1" type="number(19,0)" />
+            <column name="mismatched_bases_r2" type="number(19,0)" />
+            <column name="mismatched_bases_excl_r1" type="number(19,0)" />
+            <column name="mismatched_bases_excl_r2" type="number(19,0)" />
+            <column name="q30_bases" type="number(19,0)" />
+            <column name="q30_bases_r1" type="number(19,0)" />
+            <column name="q30_bases_r2" type="number(19,0)" />
+            <column name="q30_bases_excl_dupes" type="number(19,0)" />
+            <column name="total_alignments" type="number(19,0)" />
+            <column name="secondary_alignments" type="number(19,0)" />
+            <column name="supplementary_alignments" type="number(19,0)" />
+            <column name="est_read_length" type="number(19,0)" />
+            <column name="avg_cov_genome" type="number(19,2)" />
+            <column name="insert_length_mean" type="number(19,0)" />
+            <column name="insert_length_median" type="number(19,0)" />
+            <column name="insert_length_stddev" type="number(19,3)" />
+        </createTable>
+    </changeSet>
+
 </databaseChangeLog>

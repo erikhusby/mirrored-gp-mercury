@@ -14,6 +14,18 @@ public class FastQList {
     @Column(name = "RGLB")
     private String rgLb;
 
+    @Column(name = "RGPU")
+    private String rgPu;
+
+    @Column(name = "RGPL")
+    private String rgPl;
+
+    @Column(name = "RGPM")
+    private String rgPm;
+
+    @Column(name = "RGCN")
+    private String rgCn;
+
     @Column(name = "Lane")
     private int lane;
 
@@ -81,5 +93,37 @@ public class FastQList {
 
     public void setRead2File(String read2File) {
         this.read2File = read2File;
+    }
+
+    public String getRgPu() {
+        return rgPu;
+    }
+
+    public void setRgPu(String rgPu) {
+        this.rgPu = rgPu;
+    }
+
+    public String getRgPl() {
+        return rgPl;
+    }
+
+    public void setRgPl(String rgPl) {
+        this.rgPl = rgPl;
+    }
+
+    public String getRgPm() {
+        return rgPm;
+    }
+
+    public void setRgPm(String rgPm) {
+        this.rgPm = rgPm;
+    }
+
+    public String getRgCn() {
+        return rgCn;
+    }
+
+    public void setRgCn(String rgCn) {
+        this.rgCn = rgCn;
     }
 }

@@ -14,4 +14,8 @@ public class PicardTask extends ProcessTask {
 
     public PicardTask() {
     }
+
+    public boolean requiresDragenPrefix() {
+        return false;
+    }
 }

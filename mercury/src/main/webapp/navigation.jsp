@@ -375,7 +375,7 @@
                         class="icon-bullhorn"></span> HSA <b class="caret"></b></a>
                 <ul class="dropdown-menu" role="menu">
                     <li>
-                        <stripes:link id="listWorkflows"
+                        <stripes:link id="listDragenWorkflows"
                                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.FiniteStateMachineActionBean"
                                       event="list">List</stripes:link>
                     </li>

@@ -12,11 +12,10 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.SampleSheetBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.metrics.DemultiplexStats;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.metrics.DragenReplayInfo;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.DemultiplexState;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.ReadGroupUtil;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.TaskResult;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserContainerTest;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanPlateProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
@@ -28,17 +27,13 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringWriter;
 import java.math.BigDecimal;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import java.util.SortedMap;
 
 import static org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme.IndexPosition.ILLUMINA_P5;
@@ -92,7 +87,8 @@ public class DragenSimulator implements Dragen {
         sb.append("RGID,RGSM,RGLB,Lane,Read1File,Read2File").append("\n");
         Map<String, File> sampleNameToOutputDir = new HashMap<>();
         for (SampleSheetBuilder.SampleData sampleData: SampleSheetBuilder.grabDataFromFile(sampleSheet)) {
-            String rgId = String.format("%s.%s.%d", sampleData.getIndex(), sampleData.getIndex2(), sampleData.getLane());
+            String rgId = ReadGroupUtil.createSampleSheetId(task.getOutputDirectory().getName(), sampleData.getLane(),
+                    sampleData.getSampleName());
             String r1Fastq = "R1 fastq";
             String r2Fastq = "R2 fastq";
             sb.append(rgId).append(",").append(sampleData.getSampleName()).append(",").
@@ -165,7 +161,9 @@ public class DragenSimulator implements Dragen {
                 stats.setNumberOfOneMismatchIndexreads(100);
                 stats.setNumberOfPerfectIndexReads(900);
                 stats.setNumberOfQ30BasesPassingFilter(new BigDecimal("4000"));
-                stats.setSampleID(sampleInstanceV2.getRootOrEarliestMercurySampleName());
+                String sampleId = ReadGroupUtil.createSampleSheetId(flowcell.getLabel(), laneNum,
+                        sampleInstanceV2.getRootOrEarliestMercurySampleName());
+                stats.setSampleID(sampleId);
                 dtos.add(stats);
             }
         }

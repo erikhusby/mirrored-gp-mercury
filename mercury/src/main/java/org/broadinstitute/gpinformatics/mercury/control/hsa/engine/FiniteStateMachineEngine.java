@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.StateMachineDao;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.StateManager;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.TaskManager;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.statehandler.StateHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerContext;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
@@ -178,5 +179,9 @@ public class FiniteStateMachineEngine implements Serializable {
 
     public SchedulerContext getContext() {
         return context;
+    }
+
+    public void setStateManager(StateManager stateManager) {
+        this.stateManager = stateManager;
     }
 }

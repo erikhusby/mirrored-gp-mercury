@@ -33,11 +33,11 @@ import java.util.stream.Collectors;
 @Dependent
 public class FastQListBuilder {
 
-    private static final String HEADER = "RGID,RGSM,RGLB,Lane,Read1File,Read2File\n";
-    private static final String LINE_FORMAT = "%s,%s,%s,%d,%s,%s";
+    private static final String HEADER = "RGID,RGSM,RGPU,RGPL,RGLB,RGCN,Lane,Read1File,Read2File\n";
+    private static final String LINE_FORMAT = "%s,%s,%s,%s,%s,%s,%d,%s,%s";
 
     // Create Based on Flowcell Lane Index
-    public void buildSingle(int lane, String rgId, MercurySample mercurySample, MercurySample expectedSample,
+    public void buildSingle(int lane, String rgId, String rgPu, MercurySample mercurySample, MercurySample expectedSample,
                                String library, File outputFile, File fastQListFile) throws IOException {
         StringBuilder sb = new StringBuilder(HEADER);
 
@@ -54,8 +54,8 @@ public class FastQListBuilder {
             File r1Fastq = new File(fastQLine.getRead1File());
             File r2Fastq = new File(fastQLine.getRead2File());
 
-            String rgLine = String.format(LINE_FORMAT, rgId, mercurySample.getSampleKey(), library,
-                    lane, r1Fastq.getPath(), r2Fastq.getPath());
+            String rgLine = String.format(LINE_FORMAT, rgId, mercurySample.getSampleKey(), rgPu, "ILLUMINA", library,
+                    "BI", lane, r1Fastq.getPath(), r2Fastq.getPath());
             sb.append(rgLine);
         }
 
@@ -70,8 +70,9 @@ public class FastQListBuilder {
         FileWriter writer = new FileWriter(outputFile);
         writer.write(HEADER);
         for (FastQList fastQList: fastQLists) {
-            writer.write(String.format(LINE_FORMAT, fastQList.getRgId(), mercurySample.getSampleKey(), fastQList.getRgLb(),
-                    fastQList.getLane(), fastQList.getRead1File(), fastQList.getRead2File()));
+            writer.write(String.format(LINE_FORMAT, fastQList.getRgId(), mercurySample.getSampleKey(),
+                    fastQList.getRgPu(), fastQList.getRgPl(), fastQList.getRgLb(), "BI", fastQList.getLane(),
+                    fastQList.getRead1File(), fastQList.getRead2File()));
             writer.write("\n");
         }
         writer.close();

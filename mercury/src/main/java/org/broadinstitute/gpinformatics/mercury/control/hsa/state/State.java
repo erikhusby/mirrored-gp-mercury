@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.state;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.GsUtilTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.ProcessTask;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
@@ -10,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
+import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -25,9 +27,12 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -46,7 +51,7 @@ public abstract class State {
     @OneToMany(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY, mappedBy = "state")
     private Set<Task> tasks = new HashSet<>();
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST})
     @JoinColumn(name = "FINITE_STATE_MACHINE")
     private FiniteStateMachine finiteStateMachine;
 
@@ -262,6 +267,10 @@ public abstract class State {
         task.setState(this);
     }
 
+    public boolean isUpload() {
+        return getTasks().stream().anyMatch(t -> OrmUtil.proxySafeIsInstance(t, GsUtilTask.class));
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)
@@ -293,5 +302,23 @@ public abstract class State {
             }
         }
         return false;
+    }
+
+    public void removeSample(MercurySample mercurySample) {
+        mercurySamples.remove(mercurySample);
+    }
+
+    public static class StateStartComparator implements Comparator<State> {
+
+        @Override
+        public int compare(State a, State b) {
+            if (a.getStartTime() != null && b.getStartTime() != null) {
+                return a.getStartTime().compareTo(b.getStartTime());
+            } else if (a.getEndTime() != null && b.getEndTime() != null) {
+                return a.getEndTime().compareTo(b.getEndTime());
+            } else {
+                return a.getStateId().compareTo(b.getStateId());
+            }
+        }
     }
 }

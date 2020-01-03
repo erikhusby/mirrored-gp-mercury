@@ -88,16 +88,18 @@ public class Fingerprint {
     }
 
     public enum Gender {
-        MALE("M", "Male"),
-        FEMALE("F", "Female"),
-        UNKNOWN("U", "");
+        MALE("M", "Male", "XY"),
+        FEMALE("F", "Female", "XX"),
+        UNKNOWN("U", "", "--");
 
         private final String abbreviation;
         private final String displayName;
+        private final String chromsome;
 
-        Gender(String abbreviation, String displayName) {
+        Gender(String abbreviation, String displayName, String chromsome) {
             this.abbreviation = abbreviation;
             this.displayName = displayName;
+            this.chromsome = chromsome;
         }
 
         public String getAbbreviation() {
@@ -106,6 +108,10 @@ public class Fingerprint {
 
         public String getDisplayName() {
             return displayName;
+        }
+
+        public String getChromsome() {
+            return chromsome;
         }
 
         public static Gender byAbbreviation(String abbreviation) {
@@ -124,6 +130,15 @@ public class Fingerprint {
                 }
             }
             return null;
+        }
+
+        public static Gender byChromosome(String chromosome) {
+            for (Gender gender : Gender.values()) {
+                if (gender.getChromsome().equals(chromosome)) {
+                    return gender;
+                }
+            }
+            return Gender.UNKNOWN;
         }
     }
 

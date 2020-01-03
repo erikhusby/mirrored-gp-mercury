@@ -43,7 +43,7 @@ public class AggregationTask extends ProcessTask {
 
     public AggregationTask(File reference, File fastQList, String fastQSampleId, File outputDirectory,
                            File intermediateResultsDir, String outputFilePrefix, String vcSampleName,
-                           File qcContaminationFile, File qcCoverageBedFile) {
+                           File qcContaminationFile, File qcCoverageBedFile, String sampleSex) {
         super("dragen");
         this.reference = reference;
         this.fastQList = fastQList;
@@ -65,7 +65,7 @@ public class AggregationTask extends ProcessTask {
         Objects.requireNonNull(qcContaminationFile, "qcContaminationFile must not be null.");
         Objects.requireNonNull(qcCoverageBedFile, "qcCoverageBedFile must not be null.");
 
-        String dragenTaskBuilder = new DragenTaskBuilder().
+        DragenTaskBuilder dragenTaskBuilder = new DragenTaskBuilder().
                 reference(reference).
                 fastQList(fastQList).
                 fastQSampleId(fastQSampleId).
@@ -79,10 +79,15 @@ public class AggregationTask extends ProcessTask {
                 outputFormat("CRAM").
                 qcCrossContaminationVcf(qcContaminationFile).
                 qcCoverageRegion(qcCoverageBedFile).
-                qcCoverageReports("cov_report").
-                build();
+                qcCoverageReports("cov_report");
 
-        setCommandLineArgument(dragenTaskBuilder);
+//        if (sampleSex != null) {
+//            dragenTaskBuilder = dragenTaskBuilder.sampleSex(sampleSex);
+//        }
+
+        String cmd = dragenTaskBuilder.build();
+
+        setCommandLineArgument(cmd);
     }
 
     public File getFastQList() {

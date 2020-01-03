@@ -95,7 +95,6 @@ public class DragenRunResource {
         } else {
             return Response.status(Response.Status.CREATED).type(MediaType.TEXT_PLAIN_TYPE).build();
         }
-
     }
 
     /**

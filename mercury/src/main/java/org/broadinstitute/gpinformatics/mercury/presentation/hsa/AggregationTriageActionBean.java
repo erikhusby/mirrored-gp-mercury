@@ -4,9 +4,11 @@ import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
+import net.sourceforge.stripes.validation.ValidationState;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -29,14 +31,20 @@ import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.ReworkReasonDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.AggregationStateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.AggregationTaskDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.StateMachineDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AggregationTask;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.FiniteStateMachineFactory;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.TriageEjb;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AggregationState;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.TopOffStateMachineDecorator;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkReason;
+import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -71,7 +79,14 @@ public class AggregationTriageActionBean extends CoreActionBean {
 
     private static final String ALIGNMENT_TRIAGE_PAGE = "/hsa/workflows/aggregation/triage.jsp";
 
+    private static final String TRIAGE_FLOWCELL_DETAIL = "/hsa/workflows/aggregation/triage_flowcell_detail.jsp";
+
     private static final String UPDATE_OOS_ACTION = "updateOutOfSpec";
+
+    private static final String SEND_TO_CLOUD = "sendToCloud";
+
+    public static final double MAX_CONTAM = 0.01;
+    public static final int MIN_COV_20 = 95;
 
     private List<TriageDto> passingTriageDtos = new ArrayList<>();
 
@@ -134,6 +149,15 @@ public class AggregationTriageActionBean extends CoreActionBean {
     @Inject
     private DashboardLink dashboardLink;
 
+    @Inject
+    private TriageEjb triageEjb;
+
+    @Inject
+    private FiniteStateMachineFactory finiteStateMachineFactory;
+
+    private TriageDto dto;
+
+
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
@@ -143,7 +167,7 @@ public class AggregationTriageActionBean extends CoreActionBean {
                 .collect(Collectors.toSet());
 
         // TODO For testing limit to a few sample Ids
-        sampleIds = new HashSet<>(Arrays.asList("SM-IYY5P", "SM-GSLTC", "SM-IEU3I"));
+//        sampleIds = new HashSet<>(Arrays.asList("SM-IYY5P", "SM-GSLTC", "SM-IEU3I"));
 
         Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(sampleIds);
 
@@ -183,26 +207,34 @@ public class AggregationTriageActionBean extends CoreActionBean {
             dtos.add(dto);
         }
 
-        Map<Boolean, List<TriageDto>> mapPassToDtos = dtos.stream().collect(Collectors.partitioningBy(isAggregationInSpec()));
+        Set<MercurySample> overrideInSpecSamples = triageEjb.fetchSamplesInSpecOverride();
+        Set<String> overrideSampleKeys =
+                overrideInSpecSamples.stream().map(MercurySample::getSampleKey).collect(Collectors.toSet());
+        Map<Boolean, List<TriageDto>> mapPassToDtos = dtos.stream().collect(Collectors.partitioningBy(isAggregationInSpec(overrideSampleKeys)));
         passingTriageDtos = mapPassToDtos.get(Boolean.TRUE);
         oosTriageDtos = mapPassToDtos.get(Boolean.FALSE);
 
         return new ForwardResolution(ALIGNMENT_TRIAGE_PAGE);
     }
 
-    @ValidationMethod(on = UPDATE_OOS_ACTION)
-    public void validateUpdateOos() {
+    @ValidationMethod(on = {SEND_TO_CLOUD, UPDATE_OOS_ACTION})
+    public void validateSamplesSelected() {
         if (selectedSamples.isEmpty()) {
             addValidationError("selectedIds", "Please select a sample.");
         }
+    }
 
+    @ValidationMethod(on = UPDATE_OOS_ACTION, priority = 1, when = ValidationState.NO_ERRORS)
+    public void validateUpdateOos() {
         Set<String> pdos = new HashSet<>();
         Set<String> labVesselBarcodes = new HashSet<>();
         for (TriageDto dto: oosTriageDtos) {
-            if (selectedSamples.contains(dto.getPdoSample())) {
-                selectedDtos.add(dto);
-                pdos.add(dto.getPdo());
-                labVesselBarcodes.add(dto.getLibrary());
+            if (dto != null) {
+                if (selectedSamples.contains(dto.getPdoSample())) {
+                    selectedDtos.add(dto);
+                    pdos.add(dto.getPdo());
+                    labVesselBarcodes.add(dto.getLibrary());
+                }
             }
         }
 
@@ -231,6 +263,10 @@ public class AggregationTriageActionBean extends CoreActionBean {
 
     @HandlesEvent(UPDATE_OOS_ACTION)
     public Resolution updateOos() {
+        if (oosDecision == OutOfSpecCommands.OVERRIDE_IN_SPEC) {
+            triageEjb.addToOverrideState(mapNameToSample.values(), commentText);
+            return view();
+        }
         String reworkReason = "Other..."; // TODO JW
         List<ReworkEjb.BucketCandidate> bucketCandidates = new ArrayList<>();
         for (String sample: mapNameToSample.keySet()) {
@@ -263,26 +299,27 @@ public class AggregationTriageActionBean extends CoreActionBean {
         return view();
     }
 
-    private TriageDto createTriageDto(String sampleKey, MercurySample mercurySample,
-                                      AlignmentMetric alignmentMetric) {
-        SampleData sampleData = mercurySample.getSampleData();
-        String gender = sampleData.getGender();
-        ProductOrderSample productOrderSample = findProductOrderSample(mercurySample);
-        String pdo = productOrderSample.getProductOrder().getBusinessKey();
+    @HandlesEvent(SEND_TO_CLOUD)
+    public Resolution sendToCloud() {
+        MessageCollection messageCollection = new MessageCollection();
+        finiteStateMachineFactory.createUploadTasks(selectedSamples, messageCollection);
+        if (messageCollection.hasErrors()) {
+            addMessages(messageCollection);
+        } else {
+            addMessage("{0} file(s) have been queued for upload.", selectedSamples.size());
+            // TODO Add To uploading state?
+        }
+        return view();
+    }
 
-        BigDecimal value = alignmentMetric.getPctCov20x();
-        String pctCov20 = value == null ? "" : value.toString();
-
-        value = alignmentMetric.getEstimatedSampleContamination();
-        String contamination = value == null ? "" : value.toString();
-
-        TriageDto dto = new TriageDto();
-        dto.setContaminination(contamination);
-        dto.setCoverage20x(pctCov20);
-        dto.setGender(gender);
-        dto.setPdo(pdo);
-        dto.setPdoSample(sampleKey);
-        dto.setLibrary(mapKeyToPond.get(sampleKey).getLabel());
+    @HandlesEvent("expandSample")
+    public Resolution expandSample() {
+        // Fetch all flowcells/lanes for this sample and find lanes that we are waiting on.
+        MercurySample mercurySample = mercurySampleDao.findBySampleKey(pdoSample);
+        dto = new TriageDto();
+        Set<LabVessel> labVessels = mercurySample.getLabVessel();
+        LabVessel labVessel = labVessels.iterator().next();
+        dto.setSampleVessel(labVessel.getLabel());
 
         // Grab all the aggregated lanes for this sample
         Optional<AggregationState> optAggregationState = mercurySample.getMostRecentStateOfType(AggregationState.class);
@@ -293,10 +330,6 @@ public class AggregationTriageActionBean extends CoreActionBean {
                 .collect(Collectors.groupingBy(l -> l.getIlluminaSequencingRun().getSampleCartridge().getLabel(),
                         Collectors.mapping(IlluminaSequencingRunChamber::getLanePosition, Collectors.toList())));
 
-        // Fetch all flowcells/lanes for this sample and find lanes that we are waiting on.
-        Set<LabVessel> labVessels = mercurySample.getLabVessel();
-        LabVessel labVessel = labVessels.iterator().next();
-        dto.setSampleVessel(labVessel.getLabel());
         LabVesselSearchDefinition.VesselsForEventTraverserCriteria eval
                 = new LabVesselSearchDefinition.VesselsForEventTraverserCriteria(LabVesselSearchDefinition.FLOWCELL_LAB_EVENT_TYPES);
         labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
@@ -354,6 +387,57 @@ public class AggregationTriageActionBean extends CoreActionBean {
         }
 
         dto.setCompletedFlowcellStatuses(completedFlowcellStatus);
+        dto.setMissingFlowcellStatus(missingFlowcellStatus);
+        return new ForwardResolution(TRIAGE_FLOWCELL_DETAIL);
+    }
+
+    private TriageDto createTriageDto(String sampleKey, MercurySample mercurySample,
+                                      AlignmentMetric alignmentMetric) {
+        SampleData sampleData = mercurySample.getSampleData();
+        String gender = sampleData.getGender();
+        ProductOrderSample productOrderSample = findProductOrderSample(mercurySample);
+        String pdo = productOrderSample.getProductOrder().getBusinessKey();
+
+        BigDecimal value = alignmentMetric.getPctCov20x();
+        String pctCov20 = value == null ? "" : value.toString();
+
+        value = alignmentMetric.getEstimatedSampleContamination();
+        String contamination = value == null ? "" : value.toString();
+
+        TriageDto dto = new TriageDto();
+        dto.setContaminination(contamination);
+        dto.setCoverage20x(pctCov20);
+        dto.setGender(gender);
+        dto.setPdo(pdo);
+        dto.setPdoSample(sampleKey);
+        dto.setLibrary(mapKeyToPond.get(sampleKey).getLabel());
+
+        // Gender Concordance
+        Fingerprint.Gender dragenGender = Fingerprint.Gender.byChromosome(alignmentMetric.getPredictedSexChromosomePloidy());
+        Optional<Fingerprint> fluidigm = mercurySample.getFingerprints().stream()
+                .filter(fingerprint -> fingerprint.getPlatform() == Fingerprint.Platform.FLUIDIGM)
+                .min(Comparator.comparing(Fingerprint::getDateGenerated));
+        Fingerprint.Gender fpGender = Fingerprint.Gender.UNKNOWN;
+        if (fluidigm.isPresent()) {
+            fpGender = fluidigm.get().getGender();
+        }
+        Optional<Fingerprint> arrays = mercurySample.getFingerprints().stream()
+                .filter(fingerprint -> fingerprint.getPlatform() == Fingerprint.Platform.GENERAL_ARRAY)
+                .min(Comparator.comparing(Fingerprint::getDateGenerated));
+        Fingerprint.Gender arraysGender = Fingerprint.Gender.UNKNOWN;
+        if (arrays.isPresent()) {
+            arraysGender = arrays.get().getGender();
+        }
+
+        String genderConcordance = "";
+        if (dragenGender != Fingerprint.Gender.UNKNOWN && fpGender != Fingerprint.Gender.UNKNOWN &&
+            arraysGender != Fingerprint.Gender.UNKNOWN) {
+            String concordant = Boolean.toString(dragenGender == fpGender && dragenGender == arraysGender);
+            genderConcordance = String.format("%s (%s/%s/%s)", concordant, dragenGender.getChromsome(),
+                    fpGender.getChromsome(), arraysGender.getChromsome());
+        }
+
+        dto.setGenderConcordance(genderConcordance);
 
         return dto;
     }
@@ -410,9 +494,9 @@ public class AggregationTriageActionBean extends CoreActionBean {
                 .orElse(null);
     }
 
-    private static Predicate<TriageDto> isAggregationInSpec() {
-        return p -> compareLess(p.getContaminination(), 0.01) &&
-                    compareGreater(p.getCoverage20x(), 95);
+    private static Predicate<TriageDto> isAggregationInSpec(Set<String> sampleKeys) {
+        return p -> sampleKeys.contains(p.getPdoSample()) || (compareLess(p.getContaminination(), MAX_CONTAM) &&
+                    compareGreater(p.getCoverage20x(), MIN_COV_20));
     }
 
     private static boolean compareGreater(String value, double min) {
@@ -482,6 +566,22 @@ public class AggregationTriageActionBean extends CoreActionBean {
         this.oosDecision = oosDecision;
     }
 
+    public String getCommentText() {
+        return commentText;
+    }
+
+    public void setCommentText(String commentText) {
+        this.commentText = commentText;
+    }
+
+    public TriageDto getDto() {
+        return dto;
+    }
+
+    public void setDto(TriageDto dto) {
+        this.dto = dto;
+    }
+
     public static class TriageDto {
         private String library;
         private String pdoSample;
@@ -495,6 +595,7 @@ public class AggregationTriageActionBean extends CoreActionBean {
         private int numberOfReadGroupsOnFlowcell;
         private int numberOfLanesDesignated;
         private String lod;
+        private String genderConcordance;
         private List<FlowcellStatus> missingFlowcellStatuses;
         private List<FlowcellStatus> completedFlowcellStatuses;
 
@@ -611,6 +712,14 @@ public class AggregationTriageActionBean extends CoreActionBean {
 
         public void setSampleVessel(String sampleVessel) {
             this.sampleVessel = sampleVessel;
+        }
+
+        public String getGenderConcordance() {
+            return genderConcordance;
+        }
+
+        public void setGenderConcordance(String genderConcordance) {
+            this.genderConcordance = genderConcordance;
         }
     }
 

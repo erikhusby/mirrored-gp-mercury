@@ -24,8 +24,9 @@
         <th>% Contamination</th>
         <th>Aligned Q20 Bases</th>
         <th>Sex@Birth</th>
-        <th>Aggregated/Pending Lanes</th>
-        <th>Aggregated/Pending Designations</th>
+<%--        <th>Aggregated/Pending Lanes</th>--%>
+<%--        <th>Aggregated/Pending Designations</th>--%>
+        <th>Sex Concordant</th>
         <th>LOD</th>
     </tr>
     </thead>
@@ -69,15 +70,19 @@
                     ${dto.gender}
                     <stripes:hidden name="${dtoName}[${status.index}].gender" value="${dto.gender}"/>
             </td>
+<%--            <td>--%>
+<%--                    ${dto.numberOfReadGroupsAggregated}/${dto.numberOfReadGroupsOnFlowcell}--%>
+<%--                    <stripes:hidden name="${dtoName}[${status.index}].numberOfReadGroupsAggregated" value="${dto.numberOfReadGroupsAggregated}"/>--%>
+<%--                    <stripes:hidden name="${dtoName}[${status.index}].numberOfReadGroupsOnFlowcell" value="${dto.numberOfReadGroupsOnFlowcell}"/>--%>
+<%--            </td>--%>
+<%--            <td>--%>
+<%--                    ${dto.numberOfReadGroupsAggregated}/${dto.numberOfReadGroupsOnFlowcell}--%>
+<%--                    <stripes:hidden name="${dtoName}[${status.index}].numberOfReadGroupsAggregated" value="${dto.numberOfLanesDesignated}"/>--%>
+<%--                    <stripes:hidden name="${dtoName}[${status.index}].numberOfReadGroupsOnFlowcell" value="${dto.numberOfReadGroupsOnFlowcell}"/>--%>
+<%--            </td>--%>
             <td>
-                    ${dto.numberOfReadGroupsAggregated}/${dto.numberOfReadGroupsOnFlowcell}
-                    <stripes:hidden name="${dtoName}[${status.index}].numberOfReadGroupsAggregated" value="${dto.numberOfReadGroupsAggregated}"/>
-                    <stripes:hidden name="${dtoName}[${status.index}].numberOfReadGroupsOnFlowcell" value="${dto.numberOfReadGroupsOnFlowcell}"/>
-            </td>
-            <td>
-                    ${dto.numberOfReadGroupsAggregated}/${dto.numberOfReadGroupsOnFlowcell}
-                    <stripes:hidden name="${dtoName}[${status.index}].numberOfReadGroupsAggregated" value="${dto.numberOfLanesDesignated}"/>
-                    <stripes:hidden name="${dtoName}[${status.index}].numberOfReadGroupsOnFlowcell" value="${dto.numberOfReadGroupsOnFlowcell}"/>
+                ${dto.genderConcordance}
+                    <stripes:hidden name="${dtoName}[${status.index}].genderConcordance" value="${dto.genderConcordance}"/>
             </td>
             <td>
                     ${dto.lod}
@@ -138,5 +143,4 @@
             </c:forEach>
         </c:if>
     </table>
-
 </c:forEach>

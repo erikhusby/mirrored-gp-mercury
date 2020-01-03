@@ -102,6 +102,9 @@ public class AggregationMetricsTaskHandler extends AbstractMetricsTaskHandler {
             processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/mapping_run_metrics.ctl",
                     alignmentDataFiles.getMappingSummaryOutputFile(), alignmentDataFiles.getAlignSummaryLoad()));
 
+            processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/mapping_rg_metrics.ctl",
+                    alignmentDataFiles.getMappingMetricsOutputFile(), alignmentDataFiles.getAlignMetricLoad()));
+
             processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/variant_call_run_metrics.ctl",
                     alignmentDataFiles.getVcSummaryOutputFile(),  alignmentDataFiles.getVcSummaryMetricLoad()));
 

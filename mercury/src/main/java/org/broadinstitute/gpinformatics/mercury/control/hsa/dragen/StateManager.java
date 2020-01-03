@@ -49,17 +49,5 @@ public class StateManager {
 
     public boolean handleOnExit(State state) {
         return true;
-        /*
-        TODO REvisit when I get back
-        try {
-            if (OrmUtil.proxySafeIsInstance(state, AlignmentState.class)) {
-                return alignmentStateHandler.onExit(state);
-            }
-
-            return true;
-        } catch (Exception e) {
-            log.error("Failed to enter state " + state.getStateName());
-            return false;
-        }*/
     }
 }

@@ -12,6 +12,8 @@ import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.SampleSheetBuilder;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.statehandler.AlignmentStateHandler;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.statehandler.StateHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.AlignmentMetricsTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.DemultiplexMetricsTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.FiniteStateMachineEngine;
@@ -28,6 +30,7 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMac
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.GenericState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Transition;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
@@ -54,6 +57,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityB
 import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.easymock.EasyMock;
+import org.mockito.stubbing.Answer;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -75,7 +79,10 @@ import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyList;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -173,7 +180,7 @@ public class DragenSimulatorTest extends BaseEventTest {
         runBarcode = flowcellBarcode + format.format(runDate);
         baseDirectory = System.getProperty("java.io.tmpdir");
         String runFileDirectory =
-                baseDirectory + File.separator + "SL-NVA" + File.separator
+                baseDirectory + "SL-NVA" + File.separator
                 + runBarcode;
         runFolder = new File(runFileDirectory);
         runFolder.mkdirs();
@@ -218,11 +225,16 @@ public class DragenSimulatorTest extends BaseEventTest {
         dragenConfig.setDemultiplexOutputPath(baseDirectory);
         DemultiplexMetricsTaskHandler demultiplexMetricsTaskHandler = new DemultiplexMetricsTaskHandler();
         demultiplexMetricsTaskHandler.setDragenConfig(dragenConfig);
+        demultiplexMetricsTaskHandler.setShellUtils(new ShellUtils());
         demultiplexMetricsTaskHandler.setDemultiplexStatsParser(new DemultiplexStatsParser());
 
         ShellUtils shellUtils = mock(ShellUtils.class);
-        AlignmentMetricsTaskHandler alignmentMetricsTaskHandler = new AlignmentMetricsTaskHandler();
-        alignmentMetricsTaskHandler.setShellUtils(new ShellUtils());
+        AlignmentMetricsTaskHandler alignmentMetricsTaskHandler = mock(AlignmentMetricsTaskHandler.class);
+        doAnswer(invocation -> {
+            Task task = (Task) invocation.getArguments()[0];
+            task.setStatus(Status.COMPLETE);
+            return null;
+        }).when(alignmentMetricsTaskHandler).handleTask(any(Task.class), any(SchedulerContext.class));
 
         ProcessResult processResult = new ProcessResult(0, new ProcessOutput("".getBytes()));
         when(shellUtils.runSyncProcess(anyList())).thenReturn(processResult);
@@ -233,6 +245,10 @@ public class DragenSimulatorTest extends BaseEventTest {
         taskManager.setDemultiplexMetricsTaskHandler(demultiplexMetricsTaskHandler);
         taskManager.setAlignmentMetricsTaskHandler(alignmentMetricsTaskHandler);
         FiniteStateMachineEngine engine = new FiniteStateMachineEngine(schedulerContext);
+        StateManager stateHandler = mock(StateManager.class);
+        when(stateHandler.handleOnEnter(any(State.class))).thenReturn(true);
+        when(stateHandler.handleOnExit(any(State.class))).thenReturn(true);
+        engine.setStateManager(stateHandler);
         engine.setTaskManager(taskManager);
 
         // File not created, state will still be in WaitForFile
@@ -367,7 +383,7 @@ public class DragenSimulatorTest extends BaseEventTest {
                     alignment.addTask(new AlignmentTask(referenceFile, fastQList, fastQSampleId, alignmentOutputDir,
                             intermediateResults, fastQSampleId, fastQSampleId,
                             new File(AggregationActionBean.ReferenceGenome.HG38.getContamFile()),
-                            new File(AggregationActionBean.ReferenceGenome.HG38.getCoverageBedFile())));
+                            new File(AggregationActionBean.ReferenceGenome.HG38.getCoverageBedFile()), "MALE"));
                     mapSmToAlignment.put(mercurySample.getSampleKey(), mercurySample);
                 }
             }

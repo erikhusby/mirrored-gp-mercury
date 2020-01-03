@@ -92,8 +92,8 @@ TRAILING NULLCOLS
   x_y_avg_coverage_ratio,
   x_autosomal_avg_coverage_ratio,
   y_autosomal_avg_coverage_ratio,
-  predicted_sex_chr_ploidy,
   aligned_reads,
   aligned_reads_in_genome,
+  predicted_sex_chr_ploidy,
   mapping_run_metric_id "SEQ_MAP_RUN_METRIC.NEXTVAL"
 )

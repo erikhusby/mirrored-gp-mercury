@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.control.hsa.dragen;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.AggregationMetricsTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.AlignmentMetricsTaskHandler;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.CrosscheckFingerprintUploadTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.DemultiplexMetricsTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.FingerprintTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.JobInfo;
@@ -32,6 +33,9 @@ public class TaskManager {
     @Inject
     private AggregationMetricsTaskHandler aggregationMetricsTaskHandler;
 
+    @Inject
+    private CrosscheckFingerprintUploadTaskHandler crosscheckFingerprintUploadTaskHandler;
+
     public void fireEvent(Task task, SchedulerContext schedulerContext) throws InterruptedException {
         task.setStatus(Status.QUEUED);
         task.setQueuedTime(new Date());
@@ -48,6 +52,8 @@ public class TaskManager {
             }
         } else if (OrmUtil.proxySafeIsInstance(task, FingerprintUploadTask.class)) {
             fingerprintTaskHandler.handleTask(task, schedulerContext);
+        } else if (OrmUtil.proxySafeIsInstance(task, CrosscheckFingerprintUploadTask.class)) {
+            crosscheckFingerprintUploadTaskHandler.handleTask(task, schedulerContext);
         }
     }
 
@@ -68,6 +74,9 @@ public class TaskManager {
                     return Pair.of(Status.UNKNOWN, null);
                 }
                 Status status = jobInfo.getStatus();
+                if (task.getStartTime() == null && jobInfo.getStart() != null) {
+                    task.setStartTime(jobInfo.getStart());
+                }
                 Date end = jobInfo.getEnd();
                 return Pair.of(status, end);
             }

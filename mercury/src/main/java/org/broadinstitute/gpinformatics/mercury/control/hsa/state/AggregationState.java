@@ -49,7 +49,8 @@ public class AggregationState extends State {
         Optional<AggregationTask> optionalTask = getAggregationTask();
         if (optionalTask.isPresent()) {
             AggregationTask aggregationTask = optionalTask.get();
-            if (aggregationTask.getStatus() == Status.QUEUED || aggregationTask.getStatus() == Status.RUNNING) {
+            if (aggregationTask.getStatus() == Status.QUEUED || aggregationTask.getStatus() == Status.RUNNING ||
+                aggregationTask.getStatus() == Status.UNKNOWN) {
                 return Collections.singletonList(aggregationTask);
             }
         }

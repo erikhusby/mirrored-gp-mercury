@@ -149,6 +149,10 @@ public class DragenTaskBuilder {
         return this;
     }
 
+    public DragenTaskBuilder sampleSex(String sampleSex) {
+        appendCommand(String.format("--sample-sex %s", sampleSex));
+        return this;
+    }
 
     public String build() {
         return this.commandBuilder.toString();

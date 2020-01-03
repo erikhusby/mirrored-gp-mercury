@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hibernate.envers.Audited;
 
@@ -11,12 +10,12 @@ import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Holds lane level information about a run.
@@ -89,13 +88,11 @@ public class IlluminaSequencingRunChamber extends SequencingRunChamber {
                 .max(Comparator.comparing(State::getEndTime));
     }
 
-    public <T extends State> Optional<T> getRecentStateWithSample(Class<T> clazz, MercurySample mercurySample) {
-        Optional<T> ret = getStates().stream()
-                .filter(state -> OrmUtil.proxySafeIsInstance(state, clazz) && state.isComplete() &&
-                                 state.doesContainSample(mercurySample))
+    public <T extends State> List<T> fetchAllStatesOfType(Class<T> clazz) {
+        return getStates().stream()
+                .filter(state -> OrmUtil.proxySafeIsInstance(state, clazz))
                 .map(state -> OrmUtil.proxySafeCast(state, clazz))
-                .max(Comparator.comparing(State::getEndTime));
-        return ret;
+                .collect(Collectors.toList());
     }
 
 }

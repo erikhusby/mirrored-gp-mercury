@@ -6,6 +6,7 @@ public class PicardTaskBuilder {
     public static final String INPUT = "INPUT=";
     public static final String OUTPUT = "OUTPUT=";
     public static final String REFERENCE_SEQUENCE = "REFERENCE_SEQUENCE=";
+    public static final String LOD_THRESHOLD = "LOD_THRESHOLD=";
     public static final String GENOTYPES = "GENOTYPES=";
     public static final String HAPLOTYPE_MAP = "HAPLOTYPE_MAP=";
 
@@ -42,6 +43,11 @@ public class PicardTaskBuilder {
 
     public PicardTaskBuilder referenceSequence(File refSeq) {
         appendCommand(String.format(REFERENCE_SEQUENCE + "%s", refSeq.getPath()));
+        return this;
+    }
+
+    public PicardTaskBuilder lodThreshold(int lodThreshold) {
+        appendCommand(String.format(LOD_THRESHOLD + "%d", lodThreshold));
         return this;
     }
 

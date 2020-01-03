@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenFolderU
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AggregationState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AlignmentState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.ReadGroupUtil;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
@@ -30,6 +31,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -76,10 +78,11 @@ public class AlignmentStateHandler extends StateHandler {
                         SampleInstanceV2 sampleInstance = instancePair.getRight();
                         MercurySample sampleSheetSample = instancePair.getLeft();
                         String library = sampleInstance.getSequencingLibraryName();
+                        String rgPu = ReadGroupUtil.createRgPu(flowcell.getLabel(), runChamber.getLaneNumber(), sampleInstance.getIndexingSchemeString());
                         String rgId = String.format("%s.%d.%s", flowcell.getLabel(), runChamber.getLaneNumber(),
                                 sampleInstance.getIndexingSchemeString());
-                        fastQListBuilder.buildSingle(runChamber.getLaneNumber(), rgId, mercurySample, sampleSheetSample,
-                                library, alignmentTask.getFastQList(), dragenFastQFile);
+                        fastQListBuilder.buildSingle(runChamber.getLaneNumber(), rgId, rgPu, mercurySample,
+                                sampleSheetSample, library, alignmentTask.getFastQList(), dragenFastQFile);
                     } else {
                         throw new RuntimeException(
                                 "Failed to find sample " + mercurySample.getSampleKey() + " in alignment task "

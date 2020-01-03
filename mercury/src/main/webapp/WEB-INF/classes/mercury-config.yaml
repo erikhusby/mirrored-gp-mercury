@@ -293,6 +293,8 @@ dragen:
       referenceFileServer: helium
       aggregationFilepath: /seq/dragen/aggregation/
       intermediateResults: /local/scratch
+      gsBucket: gs://broad-gplims-dev
+      prologScriptFolder: /seq/techdev/software/infrastructure/wildfly
 
     QA:
       demultiplexOutputPath:  /seq/illumina/proc/
@@ -301,6 +303,8 @@ dragen:
       referenceFileServer: helium
       aggregationFilepath: /seq/dragen/aggregation/
       intermediateResults: /local/scratch
+      gsBucket: gs://broad-gplims-dev
+      prologScriptFolder: /seq/techdev/software/infrastructure/wildfly
 
     PROD:
       demultiplexOutputPath:  /seq/illumina/proc/
@@ -309,6 +313,8 @@ dragen:
       referenceFileServer: helium
       aggregationFilepath: /seq/dragen/aggregation/
       intermediateResults: /local/scratch
+      gsBucket: gs://broad-gplims-dev
+      prologScriptFolder: /seq/techdev/software/infrastructure/wildfly
 
 hipchat:
     DEV:

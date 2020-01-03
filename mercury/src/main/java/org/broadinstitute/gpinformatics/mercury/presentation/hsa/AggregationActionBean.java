@@ -65,6 +65,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.groupingBy;
+
 @UrlBinding(AggregationActionBean.ACTION_BEAN_URL)
 public class AggregationActionBean extends CoreActionBean {
     private static final Log logger = LogFactory.getLog(AggregationActionBean.class);
@@ -77,8 +79,8 @@ public class AggregationActionBean extends CoreActionBean {
     private static final String CREATE_ALIGNMENT_ACTION = "createAlignment";
     private static final String SEARCH_ACTION = "search";
 
-    @Validate(field = "sampleId", label = "Sample ID", required = true, on = {SEARCH_ACTION})
-    private String sampleId;
+    @Validate(field = "sampleIds", label = "Sample ID", required = true, on = {SEARCH_ACTION})
+    private String sampleIds;
 
     @Inject
     private AlignmentStateDao alignmentStateDao;
@@ -111,9 +113,15 @@ public class AggregationActionBean extends CoreActionBean {
 
     private List<String> selectedRuns;
 
-    private MercurySample sample;
-
     private boolean createFingerprint;
+
+    private boolean redoDemultiplex;
+
+    private List<String> sampleIdList;
+
+    private Collection<MercurySample> samples;
+
+    private boolean crosscheckFingerprint;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -124,10 +132,18 @@ public class AggregationActionBean extends CoreActionBean {
 
     @ValidationMethod(on = {SEARCH_ACTION})
     public void validateSearch() {
-        sample = mercurySampleDao.findBySampleKey(sampleId);
+        if (StringUtils.isBlank(sampleIds)) {
+            addValidationError("sampleIds", "At least one sample is required.");
+        } else {
+            sampleIdList = Arrays.asList(sampleIds.split("\\s+"));
+            Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(sampleIdList);
+            for (String sampleKey: sampleIdList) {
+                if (mapIdToMercurySample.get(sampleKey) == null) {
+                    addValidationError("sampleIds", "Failed to find Sample: " + sampleKey);
+                }
+            }
 
-        if (sample == null) {
-                addValidationError("sampleId", "Failed to find Sample: " + sampleId);
+            samples = mapIdToMercurySample.values();
         }
     }
 
@@ -137,30 +153,36 @@ public class AggregationActionBean extends CoreActionBean {
         sampleRunData = new ArrayList<>();
 
         Map<String, List<IlluminaSequencingRun>> mapFlowcellToRuns = new HashMap<>();
-        Set<LabVessel> labVessels = sample.getLabVessel();
-        for (LabVessel labVessel: labVessels) {
-            LabVesselSearchDefinition.VesselsForEventTraverserCriteria eval
-                    = new LabVesselSearchDefinition.VesselsForEventTraverserCriteria(LabVesselSearchDefinition.FLOWCELL_LAB_EVENT_TYPES);
-            labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+        for (MercurySample sample: samples) {
+            Set<LabVessel> labVessels = sample.getLabVessel();
+            for (LabVessel labVessel : labVessels) {
+                LabVesselSearchDefinition.VesselsForEventTraverserCriteria eval
+                        = new LabVesselSearchDefinition.VesselsForEventTraverserCriteria(
+                        LabVesselSearchDefinition.FLOWCELL_LAB_EVENT_TYPES);
+                labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
 
-            Map<LabVessel, Collection<VesselPosition>> labVesselCollectionMap = eval.getPositions().asMap();
+                Map<LabVessel, Collection<VesselPosition>> labVesselCollectionMap = eval.getPositions().asMap();
 
-            for(Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions: labVesselCollectionMap.entrySet()) {
-                IlluminaFlowcell flowcell =
-                        OrmUtil.proxySafeCast(labVesselAndPositions.getKey(), IlluminaFlowcell.class);
-                String flowcellBarcode = flowcell.getLabel();
+                for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions : labVesselCollectionMap
+                        .entrySet()) {
+                    IlluminaFlowcell flowcell =
+                            OrmUtil.proxySafeCast(labVesselAndPositions.getKey(), IlluminaFlowcell.class);
+                    String flowcellBarcode = flowcell.getLabel();
 
-                List<IlluminaSequencingRun> runs = null;
-                if (mapFlowcellToRuns.containsKey(flowcellBarcode)) {
-                    runs = mapFlowcellToRuns.get(flowcellBarcode);
-                } else {
-                    runs = illuminaSequencingRunDao.findByFlowcellBarcode(flowcellBarcode);
-                }
+                    List<IlluminaSequencingRun> runs = null;
+                    if (mapFlowcellToRuns.containsKey(flowcellBarcode)) {
+                        runs = mapFlowcellToRuns.get(flowcellBarcode);
+                    } else {
+                        runs = illuminaSequencingRunDao.findByFlowcellBarcode(flowcellBarcode);
+                        mapFlowcellToRuns.put(flowcellBarcode, runs);
+                    }
 
-                for (IlluminaSequencingRun run: runs) {
-                    SampleRunData sampleRunDto = new SampleRunData(sample.getSampleKey(),
-                            new ArrayList<>(labVesselAndPositions.getValue()), run.getRunName(), flowcellBarcode, run.getRunDate());
-                    sampleRunData.add(sampleRunDto);
+                    for (IlluminaSequencingRun run : runs) {
+                        SampleRunData sampleRunDto = new SampleRunData(sample.getSampleKey(),
+                                new ArrayList<>(labVesselAndPositions.getValue()), run.getRunName(), flowcellBarcode,
+                                run.getRunDate());
+                        sampleRunData.add(sampleRunDto);
+                    }
                 }
             }
         }
@@ -184,24 +206,24 @@ public class AggregationActionBean extends CoreActionBean {
     public Resolution create() {
         MessageCollection messageCollection = new MessageCollection();
 
-        FiniteStateMachine finiteStateMachine = null;
+        List<FiniteStateMachine> finiteStateMachines = null;
         try {
-            String sampleKey = sampleRunData.iterator().next().getSampleKey();
-            MercurySample mercurySample = mercurySampleDao.findBySampleKey(sampleKey);
-
-            finiteStateMachine = finiteStateMachineFactory.createAggegation(sampleRunData, mercurySample, createFingerprint, messageCollection);
+            Map<String, List<SampleRunData>> sampleToLanes =
+                    sampleRunData.stream().collect(groupingBy(SampleRunData::getSampleKey));
+            finiteStateMachines = finiteStateMachineFactory.createAggegations(
+                    sampleToLanes, redoDemultiplex, crosscheckFingerprint, messageCollection);
             addMessage("Created aggregation workflow.");
         } catch (Exception e) {
             logger.error("Error creating aggregation workflow", e);
-            messageCollection.addError("Error creating aggregation workflow");
+            messageCollection.addError("Error creating aggregation workflow: " + e.getMessage());
         }
 
         if (messageCollection.hasErrors()) {
             addMessages(messageCollection);
-        } else if (finiteStateMachine == null) {
+        } else if (finiteStateMachines == null) {
             addMessage("Failed to create finite state machine");
         } else {
-            stateMachineDao.persist(finiteStateMachine);
+            stateMachineDao.persistAll(finiteStateMachines);
             stateMachineDao.flush();
         }
         return new ForwardResolution(ALIGNMENT_CREATE_PAGE);
@@ -215,12 +237,12 @@ public class AggregationActionBean extends CoreActionBean {
         this.alignmentStateName = alignmentStateName;
     }
 
-    public String getSampleId() {
-        return sampleId;
+    public String getSampleIds() {
+        return sampleIds;
     }
 
-    public void setSampleId(String sampleId) {
-        this.sampleId = sampleId;
+    public void setSampleIds(String sampleIds) {
+        this.sampleIds = sampleIds;
     }
 
     public List<SampleRunData> getSampleRunData() {
@@ -265,18 +287,34 @@ public class AggregationActionBean extends CoreActionBean {
         this.createFingerprint = createFingerprint;
     }
 
+    public boolean isRedoDemultiplex() {
+        return redoDemultiplex;
+    }
+
+    public void setRedoDemultiplex(boolean redoDemultiplex) {
+        this.redoDemultiplex = redoDemultiplex;
+    }
+
+    public boolean getCrosscheckFingerprint() {
+        return crosscheckFingerprint;
+    }
+
+    public void setCrosscheckFingerprint(boolean crosscheckFingerprint) {
+        this.crosscheckFingerprint = crosscheckFingerprint;
+    }
+
     // TODO JW Move somewhere better
     public enum ReferenceGenome {
-        HG19("hg19", "/seq/dragen/references/hg19/v1/",
+        HG19("hg19", "/seq/dragen/references/hg19/current/",
                 "/seq/references/Homo_sapiens_assembly19/v1/Homo_sapiens_assembly19.haplotype_database.txt",
                 "/seq/references/Homo_sapiens_assembly19/v1/Homo_sapiens_assembly19.fasta",
                 "/opt/edico/config/sample_cross_contamination_resource_hg19.vcf",
                 "/seq/dragen/references/hg19/v1/wgs_coverage_regions.hg19.interval_list.bed"),
-        HG38("hg38", "/seq/dragen/references/hg38/v1/",
+        HG38("hg38", "/seq/dragen/references/hg38/current/",
                 "/seq/references/Homo_sapiens_assembly38/v0/Homo_sapiens_assembly38.haplotype_database.txt",
                 "/seq/references/Homo_sapiens_assembly38/v0/Homo_sapiens_assembly38.fasta",
                 "/opt/edico/config/sample_cross_contamination_resource_hg38.vcf",
-                "/seq/dragen/references/hg38/v1/wgs_coverage_regions.hg38.interval_list.bed");
+                "/seq/dragen/references/hg38/current/wgs_coverage_regions.hg38.interval_list.bed");
 
         private final String name;
         private final String path;

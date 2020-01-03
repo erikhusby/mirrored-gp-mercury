@@ -66,25 +66,6 @@ public class SampleSheetBuilder {
                 br, ',', SampleData.class, colToFieldMap, null, 0);
     }
 
-    // Dragens use Casava 1.8 naming scheme to make fastq filenames: <SampleID>_S<#>_<Lane>_<Read>_<segment#>.fastq.gz
-    public static List<FastQList> buildFastQsFromSampleSheet(File sampleSheet) throws IOException {
-        List<FastQList> ret = new ArrayList<>();
-        int sampleCounter = 1;
-        for (SampleData sampleData: grabDataFromFile(sampleSheet)) {
-            String rgId = sampleData.getSampleId();
-            String rgSm = ReadGroupUtil.parseSmFromRgId(rgId);
-            String library = "UnknownLibrary";
-            int lane = sampleData.getLane();
-            String laneFmt = StringUtils.leftPad(Integer.toString(lane), 3, "0");
-            String r1File = String.format(FASTQ_NAME_FORMAT, rgId, sampleCounter, laneFmt, 1);
-            String r2File = String.format(FASTQ_NAME_FORMAT, rgId, sampleCounter, laneFmt, 1);
-            FastQList fastQList = new FastQList(rgId, rgSm, library, lane, r1File, r2File);
-            ret.add(fastQList);
-        }
-
-        return ret;
-    }
-
     public SampleSheet makeSampleSheet(IlluminaSequencingRun illuminaRun) {
         return makeSampleSheet(illuminaRun, null, Collections.emptySet());
     }
@@ -304,7 +285,7 @@ public class SampleSheetBuilder {
 
             SampleData data = null;
 
-            String rgSmId = ReadGroupUtil.createRgId(flowcell, lane, pdoSampleName);
+            String rgSmId = ReadGroupUtil.createSampleSheetId(flowcell, lane, pdoSampleName);
             MolecularIndex p7 = indexes.get(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7);
             if (dualIndex) {
                 MolecularIndex p5 = indexes.get(MolecularIndexingScheme.IndexPosition.ILLUMINA_P5);

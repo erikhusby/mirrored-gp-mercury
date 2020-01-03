@@ -34,7 +34,7 @@ public class AggregationMetricsTaskHandlerTest {
         File bedFile = new File(AggregationActionBean.ReferenceGenome.HG38.getCoverageBedFile());
 
         AggregationTask aggregationTask = new AggregationTask(referenceFile, fastQList, "SM-JH386",
-                outputDir, intermediateResults, "SM-JH386", "SM-JH386", contaminationFile, bedFile);
+                outputDir, intermediateResults, "SM-JH386", "SM-JH386", contaminationFile, bedFile, "MALE");
         aggregationTask.setStatus(Status.COMPLETE);
 
         AggregationState state = new AggregationState();

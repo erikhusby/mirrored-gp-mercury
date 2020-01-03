@@ -14,6 +14,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,10 +32,10 @@ public class FiniteStateMachine {
     @Column(name = "FINITE_STATE_MACHINE_ID")
     private Long finiteStateMachineId;
 
-    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "finiteStateMachine")
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "finiteStateMachine", orphanRemoval = true)
     private List<State> states;
 
-    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "finiteStateMachine")
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "finiteStateMachine", orphanRemoval = true)
     private List<Transition> transitions;
 
     @Enumerated(EnumType.STRING)
@@ -90,6 +91,14 @@ public class FiniteStateMachine {
                     ctr++;
                 }
             }
+        }
+        return ctr;
+    }
+
+    public int getNumberOfTasksRunning() {
+        int ctr = 0;
+        for (State state: getActiveStates()) {
+            ctr += state.getNumberOfRunningTasks();
         }
         return ctr;
     }
@@ -156,5 +165,10 @@ public class FiniteStateMachine {
 
     public boolean isAlive() {
         return getActiveStates().size() > 0;
+    }
+
+    public void removeState(State state) {
+        states.remove(state);
+        state.setFiniteStateMachine(null);
     }
 }

@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler;
 
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.DragenConfig;
@@ -14,6 +15,7 @@ import org.zeroturnaround.exec.ProcessResult;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.List;
@@ -50,27 +52,34 @@ public class SlurmController implements SchedulerController {
         List<String> cmd;
 
         String dragenCmd = "";
-        if (!OrmUtil.proxySafeIsInstance(processTask, PicardTask.class)) {
+        if (processTask.requiresDragenPrefix()) {
             /*String prolog = "srun --prolog=/seq/dragen/scripts/slurm_dragen_prolog.sh";
             dragenCmd = String.format("--wrap=\"%s %s%s\"", prolog, dragenConfig.getDragenPath(),
                     processTask.getCommandLineArgument());*/
             dragenCmd = String.format("--wrap=\"%s%s\"", dragenConfig.getDragenPath(),
                     processTask.getCommandLineArgument());
         } else {
-            dragenCmd = String.format("--wrap=\"%s\"",
-                    processTask.getCommandLineArgument());
+            if (processTask.hasProlog()) {
+                File prologFolder = new File(dragenConfig.getPrologScriptFolder());
+                File prologScript = new File(prologFolder, processTask.getPrologFileName());
+                String prologCmd = prologScript.getPath();
+                dragenCmd = String.format("--wrap=\"%s && %s\"",
+                        prologCmd, processTask.getCommandLineArgument());
+            } else {
+                dragenCmd = String.format("--wrap=\"%s\"",
+                        processTask.getCommandLineArgument());
+            }
         }
 
-        // TODO JW Remove exclusions in prod or write some exclusion page
         if (partition == null) {
-            cmd = Arrays.asList( "ssh", dragenConfig.getSlurmHost(), "sbatch", "--exclusive", "--exclude=dragen01", "-J", processTask.getTaskName(), dragenCmd);
+            cmd = Arrays.asList( "ssh", dragenConfig.getSlurmHost(), "sbatch", "--exclusive", "-J", processTask.getTaskName(), dragenCmd);
         } else {
-            cmd = Arrays.asList( "ssh", dragenConfig.getSlurmHost(), "sbatch", "--exclusive", "--exclude=dragen01", "-J", processTask.getTaskName(), "-p", partition, dragenCmd);
+            cmd = Arrays.asList( "ssh", dragenConfig.getSlurmHost(), "sbatch", "--exclusive", "-J", processTask.getTaskName(), "-p", partition, dragenCmd);
         }
         ProcessResult processResult = runProcess(cmd);
         if (processResult.getExitValue() != 0) {
             String output = processResult.hasOutput() ? processResult.getOutput().getString() : "";
-            throw new RuntimeException("Failed to batch job with exit code: " + processResult.getExitValue() + " " + output);
+            throw new RuntimeException("Failed to batch job: " + StringUtils.join( cmd) + " exit code: " + processResult.getExitValue() + " " + output);
         }
 
         // Outputs: Submitted batch job {process ID} - just grab the job ID portion
@@ -134,6 +143,11 @@ public class SlurmController implements SchedulerController {
             log.error("Error attempting to run process", e);
             throw new RuntimeException(e);
         }
+    }
+
+    public File getLogFile(long processId) {
+        File homeDir = new File(System.getProperty("user.home"));
+        return new File(homeDir, "slurm-" + processId + ".out");
     }
 
     // For Testing

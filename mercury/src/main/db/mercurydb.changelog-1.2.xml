@@ -2642,7 +2642,7 @@
     </changeSet>
 
     <changeSet id="GPLIM-6242-1" author="jowalsh">
-        <createSequence sequenceName="SEQ_FINITE_STATE_MACHINE" schemaName="mercury" startValue="1" incrementBy="10"/>
+        <createSequence sequenceName="SEQ_FINITE_STATE_MACHINE" schemaName="mercury" startValue="1" incrementBy="50"/>
     </changeSet>
 
     <changeSet id="GPLIM-6242-2" author="jowalsh">
@@ -2700,7 +2700,7 @@
     </changeSet>
 
     <changeSet id="GPLIM-6242-5" author="jowalsh">
-        <createSequence sequenceName="SEQ_STATE" schemaName="mercury" startValue="1" incrementBy="10"/>
+        <createSequence sequenceName="SEQ_STATE" schemaName="mercury" startValue="1" incrementBy="50"/>
     </changeSet>
 
     <changeSet id="GPLIM-6242-6" author="jowalsh">
@@ -2861,7 +2861,7 @@
     </changeSet>
 
     <changeSet id="GPLIM-6242-19" author="jowalsh">
-        <createSequence sequenceName="SEQ_TRANSITION" schemaName="mercury" startValue="1" incrementBy="10"/>
+        <createSequence sequenceName="SEQ_TRANSITION" schemaName="mercury" startValue="1" incrementBy="50"/>
     </changeSet>
 
     <changeSet id="GPLIM-6242-20" author="jowalsh">
@@ -3039,6 +3039,31 @@
     </changeSet>
     <changeSet id="GPLIM-6242-Merc-40" author="jowalsh">
         <createSequence sequenceName="SEQ_TRANSITION" schemaName="mercury" startValue="10000" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-Merc-41" author="jowalsh">
+        <addColumn tableName="COVERAGE_TYPE" schemaName="mercury">
+            <column name="MEAN_COVERAGE" type="number(5,2)"  />
+            <column name="TARGET_COVERAGE" type="number(5,2)" />
+            <column name="PERCENT_OF_TARGET_BASES" type="number(4,2)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-Merc-42" author="jowalsh">
+        <addColumn tableName="COVERAGE_TYPE_AUD" schemaName="mercury">
+            <column name="MEAN_COVERAGE" type="number(5,2)" />
+            <column name="TARGET_COVERAGE" type="number(5,2)" />
+            <column name="PERCENT_OF_TARGET_BASES" type="number(4,2)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-Merc-43" author="jowalsh">
+        <modifyDataType tableName="COVERAGE_TYPE" schemaName="mercury" columnName="PERCENT_OF_TARGET_BASES" newDataType="number(5,2)"/>
+        <modifyDataType tableName="COVERAGE_TYPE_AUD" schemaName="mercury" columnName="PERCENT_OF_TARGET_BASES" newDataType="number(5,2)"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-44" author="jowalsh">
+        <dropNotNullConstraint columnName="REVTYPE" schemaName="mercury" tableName="FINITE_STATE_MACHINE_AUD"/>
     </changeSet>
 
 </databaseChangeLog>

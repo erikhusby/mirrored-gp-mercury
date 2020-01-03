@@ -163,6 +163,9 @@ public class AlignmentMetric {
     @Column(name = "avg_alignment_coverage")
     private BigDecimal averageAlignmentCoverage;
 
+    @Column(name = "predicted_sex_chr_ploidy")
+    private String predictedSexChromosomePloidy;
+
     public AlignmentMetric() {
     }
 
@@ -564,5 +567,13 @@ public class AlignmentMetric {
 
     public void setAverageAlignmentCoverage(BigDecimal averageAlignmentCoverage) {
         this.averageAlignmentCoverage = averageAlignmentCoverage;
+    }
+
+    public String getPredictedSexChromosomePloidy() {
+        return predictedSexChromosomePloidy;
+    }
+
+    public void setPredictedSexChromosomePloidy(String predictedSexChromosomePloidy) {
+        this.predictedSexChromosomePloidy = predictedSexChromosomePloidy;
     }
 }

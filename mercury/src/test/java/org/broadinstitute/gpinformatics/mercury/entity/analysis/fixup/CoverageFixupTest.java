@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.analysis.fixup;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -17,6 +18,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -173,8 +175,8 @@ public class CoverageFixupTest extends Arquillian {
      * This test reads its parameters from a file, mercury/src/test/resources/testdata/AddCoverageTypes.txt, so it can
      * be used for other similar fixups, without writing a new test.  Example contents of the file are:
      * GPLIM-4205 add new coverage types for selection
-     * 10M Aligned In Pairs
-     * 15M Aligned In Pairs
+     * HS 80% Target Bases @ 20X,20,80
+     * WGS 30X Mean Coverage,30
      */
     @Test(enabled = false)
     public void fixupGplim4798() throws Exception {
@@ -194,6 +196,52 @@ public class CoverageFixupTest extends Arquillian {
         }
         coverageTypeDao.persist(new FixupCommentary(fixupCommentary));
         coverageTypeDao.persistAll(coverageTypes);
+        coverageTypeDao.flush();
+        utx.commit();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/UpdateCoverageTypes.txt, so it can
+     * be used for other similar fixups, without writing a new test.
+     * Example contents of the file are:
+     * GPLIM-4205 add new coverage types for selection
+     * HS 80% Target Bases @ 20X,20,80,20
+     * WGS 30X Mean Coverage,30,
+     */
+    @Test(enabled = false)
+    public void fixupGplim6242() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("UpdateCoverageTypes.txt"));
+        String fixupCommentary = lines.get(0);
+        for (String line : lines.subList(1, lines.size())) {
+            String[] split = line.split(",", -1);
+            if (split.length != 4) {
+                throw new RuntimeException("Expected 4 comma space separated fields in " + line);
+            }
+            String deliverable = split[0];
+            CoverageType coverageType = coverageTypeDao.findByBusinessKey(deliverable);
+            if (coverageType == null) {
+                throw new RuntimeException("Coverage type must exist: " + deliverable);
+            }
+
+            BigDecimal xMeanCov = new BigDecimal(split[1]);
+            coverageType.setMeanCoverage(xMeanCov);
+            if (!StringUtils.isEmpty(split[2])) {
+                BigDecimal percentTargetBases = new BigDecimal(split[2]);
+                coverageType.setPercentTargetBases(percentTargetBases);
+            }
+
+            if (!StringUtils.isEmpty(split[3])) {
+                BigDecimal targetCov = new BigDecimal(split[3]);
+                coverageType.setTargetCoverage(targetCov);
+            }
+
+            System.out.println("Updating " + deliverable + " setting xMeanCov to " + xMeanCov +
+                               " and percent target bases to " + split[2] + " target Cov " + split[3]);
+        }
+        coverageTypeDao.persist(new FixupCommentary(fixupCommentary));
         coverageTypeDao.flush();
         utx.commit();
     }

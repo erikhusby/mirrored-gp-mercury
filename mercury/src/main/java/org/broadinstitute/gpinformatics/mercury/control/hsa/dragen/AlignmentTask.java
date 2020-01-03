@@ -57,10 +57,11 @@ public class AlignmentTask extends ProcessTask {
      * --enable-variant-caller true \
      * --enable-duplicate-marking true \
      * --enable-map-align-output false
+     * --sample-sex FEMALE
      */
     public AlignmentTask(File reference, File fastQList, String fastQSampleId, File outputDirectory,
                          File intermediateResultsDir, String outputFilePrefix, String vcSampleName,
-                         File qcContaminationFile, File qcCoverageBedFile) {
+                         File qcContaminationFile, File qcCoverageBedFile, String sampleSex) {
         super("dragen");
         this.reference = reference;
         this.fastQList = fastQList;
@@ -82,7 +83,7 @@ public class AlignmentTask extends ProcessTask {
         Objects.requireNonNull(qcContaminationFile, "qcContaminationFile must not be null.");
         Objects.requireNonNull(qcCoverageBedFile, "qcCoverageBedFile must not be null.");
 
-        String dragenTaskBuilder = new DragenTaskBuilder().
+        DragenTaskBuilder taskBuilder = new DragenTaskBuilder().
                 reference(reference).
                 fastQList(fastQList).
                 fastQSampleId(fastQSampleId).
@@ -95,10 +96,14 @@ public class AlignmentTask extends ProcessTask {
                 enableMapAlignOutput(true).
                 qcCrossContaminationVcf(qcContaminationFile).
                 qcCoverageRegion(qcCoverageBedFile).
-                qcCoverageReports("cov_report").
-                build();
+                qcCoverageReports("cov_report");
+//        if (sampleSex != null) {
+//            taskBuilder = taskBuilder.sampleSex(sampleSex);
+//        }
 
-        setCommandLineArgument(dragenTaskBuilder);
+        String cmd = taskBuilder.build();
+
+        setCommandLineArgument(cmd);
     }
 
     public AlignmentTask() {

@@ -46,7 +46,8 @@
                         {"bSortable": true},
                         {"bSortable": true},
                         {"bSortable": true},
-                        {"bSortable": true}
+                        {"bSortable": true},
+                        {"bSortable": false}
                     ]
                 });
 
@@ -57,20 +58,67 @@
 
                 $j("#accordion").accordion({ collapsible:true, active:false, heightStyle:"content", autoHeight:false });
                 $j("#accordion").show();
-                if(${fn:length(actionBean.editFiniteStateMachine.activeStates) == 1}){
+                if(${fn:length(actionBean.editFiniteStateMachine.activeStates) == 1}) {
                     $j("#accordion").accordion({active: 0})
                 }
 
+                $j("#log_overlay").dialog({
+                    title: "View Logs",
+                    autoOpen: false,
+                    height: 600,
+                    width: 800,
+                    modal: true,
+                    buttons: {
+                        "OK": {
+                            text: "OK",
+                            id: "okbtnid",
+                            click: function () {
+                                $j(this).dialog("close");
+                            }
+                        },
+                    },
+                    open: function(){
+
+                    }
+                });
+
+                $j(".viewLog").click(function (event) {
+                    event.preventDefault();
+                    var processId = $j(this).data("processid");
+                    $j.ajax({
+                        url: "/Mercury/hsa/workflows/dragen.action?viewLog=&processId=" + processId,
+                        type: 'POST',
+                        async: true,
+                        success: function (contents) {
+                            console.log(contents);
+                            $j("#logFileDiv").text(contents);
+                            $j("#log_overlay").dialog("open");
+                        },
+                        error: function(contents){
+                            console.log("Error message");
+                            console.log(contents);
+                        },
+                        cache: false,
+                        datatype: "application/text",
+                        processData: false,
+                        contentType: false
+                    });
+                });
             });
         </script>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
 
+        <div id="log_overlay">
+            <div id="logFileDiv"></div>
+        </div>
+
         <h4>Active States</h4>
         <div id="accordion" style="display:none;" class="accordion">
             <c:forEach items="${actionBean.editFiniteStateMachine.activeStates}" var="state">
                 <c:set var="state" value="${state}" scope="request"/>
+                <c:set var="finiteStateMachine" value="${actionBean.editFiniteStateMachine}" scope="request"/>
                 <div style="padding-left: 30px;padding-bottom: 2px">
                     <div id="headerId" class="fourcolumn">
                         <div>State Name: ${state.stateName}</div>

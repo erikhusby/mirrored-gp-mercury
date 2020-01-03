@@ -49,9 +49,9 @@
             <stripes:hidden name="submitString" value="${actionBean.submitString}"/>
 
             <div class="control-group">
-                <stripes:label for="sampleId" name="Sample Id" class="control-label"/>
+                <stripes:label for="sampleId" name="Sample Ids" class="control-label"/>
                 <div class="controls">
-                    <stripes:text id="sampleId" name="sampleId"/>
+                    <stripes:textarea id="sampleId" name="sampleIds" rows="4"/>
                 </div>
             </div>
 
@@ -108,9 +108,16 @@
                 </table>
 
                 <div class="control-group">
-                    <stripes:label for="createFingerprint" class="control-label"/>
+                    <stripes:label for="crosscheckFingerprint" class="control-label"/>
                     <div class="controls">
-                        <stripes:checkbox name="createFingerprint" id="createFingerprint"
+                        <stripes:checkbox name="crosscheckFingerprint" id="crosscheckFingerprint"
+                                          checked="${actionBean.crosscheckFingerprint}"/>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <stripes:label for="redoDemultiplex" class="control-label"/>
+                    <div class="controls">
+                        <stripes:checkbox name="redoDemultiplex" id="redoDemultiplex"
                                           checked="${actionBean.createFingerprint}"/>
                     </div>
                 </div>

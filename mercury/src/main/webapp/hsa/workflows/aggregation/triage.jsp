@@ -29,6 +29,10 @@
                 background: url('${ctxpath}/images/shown.gif') no-repeat center center;
             }
 
+            tr.spinning td.details-control {
+                background: url('${ctxpath}/images/spinner.gif') no-repeat center center;
+            }
+
             .table .text-right {text-align: right}
 
             .borderless td, .borderless th {
@@ -56,13 +60,19 @@
                         {sortable: true},
                         {sortable: true},
                         {sortable: true},
-                        {sortable: true},
+                        // {sortable: true},
+                        // {sortable: true},
                         {sortable: true}
                     ],
                 });
 
                 var oosTable = $j('#oosSpecTable').DataTable({
                     renderer: "bootstrap",
+                    paging: true,
+                    pageLength : 150,
+                    search : {
+                        fieldtype: 'textarea'
+                    },
                     columns: [
                         {sortable: false},
                         {
@@ -80,7 +90,8 @@
                         {sortable: true},
                         {sortable: true},
                         {sortable: true},
-                        {sortable: true},
+                        // {sortable: true},
+                        // {sortable: true},
                         {sortable: true}
                     ],
                 });
@@ -117,10 +128,37 @@
                         tr.removeClass('shown');
                     }
                     else {
-                        var jqueryObj = $j('#flowcellStatusTable-' + pdoSample);
-                        row.child(jqueryObj.html()).show();
-                        tr.addClass('shown');
+                        tr.addClass("spinning");
+                        $j.ajax({
+                            url: "${ctxpath}/hsa/workflows/aggregation_triage.action?expandSample=&pdoSample=" + pdoSample,
+                            datatype: 'html',
+                            success: function (resultHtml) {
+                                tr.removeClass("spinning");
+                                console.log(resultHtml);
+                                var div = $('<div/>');
+                                div.html(resultHtml);
+                                row.child(div).show();
+                                tr.addClass('shown');
+                            },
+                            error: function(results){
+                                tr.removeClass("spinning");
+                            },
+                            cache: false,
+                        });
                     }
+                });
+
+                $('.dataTables_filter input[type="search"]').css(
+                    {'width':'350px','display':'inline-block'}
+                );
+
+                // TODO JW Refactor
+                $('.dataTables_filter input[type="search"]').keyup(function() {
+                    var inputTxt = $(this).val();
+                    var searchTerms = inputTxt.split(/[ ,]+/).filter(Boolean);
+                    var asRegex = searchTerms.join("|");
+                    console.log(asRegex);
+                    oosTable.search(asRegex, true, false).draw() ;
                 });
 
                 $j('.flowcellStatusTable').hide();
@@ -131,13 +169,13 @@
 
     <stripes:layout-component name="content">
         <ul class="nav nav-tabs" id="specTabs">
-            <li><a href="#inSpecTab" data-toggle="tab">In Spec</a></li>
+            <li class="active"><a href="#inSpecTab" data-toggle="tab">In Spec</a></li>
             <li><a href="#oosSpecTab" data-toggle="tab">Out Of Spec</a></li>
         </ul>
 
         <div class="tab-content" id="specTabsContent">
             <div class="tab-pane active" id="inSpecTab">
-                <stripes:form beanclass="${actionBean.class.name}" id="inSpecForm">
+                <stripes:form beanclass="${actionBean.class.name}" id="inSpecForm" method="POST">
                     <c:set var="tableId" value="inSpecTable" scope="request"/>
                     <c:set var="inSpecTable" value="${true}" scope="request"/>
                     <c:set var="dtoList" value="${actionBean.passingTriageDtos}" scope="request"/>
@@ -147,7 +185,7 @@
                 </stripes:form>
             </div>
             <div class="tab-pane" id="oosSpecTab">
-                <stripes:form beanclass="${actionBean.class.name}" id="oosSpecForm" class="form-horizontal">
+                <stripes:form beanclass="${actionBean.class.name}" id="oosSpecForm" class="form-horizontal" method="POST">
                     <c:set var="tableId" value="oosSpecTable" scope="request"/>
                     <c:set var="inSpecTable" value="${false}" scope="request"/>
                     <c:set var="dtoList" value="${actionBean.oosTriageDtos}" scope="request"/>

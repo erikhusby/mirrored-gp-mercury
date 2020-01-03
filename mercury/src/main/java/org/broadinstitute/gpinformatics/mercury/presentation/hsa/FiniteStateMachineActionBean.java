@@ -6,12 +6,14 @@ import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import net.sourceforge.stripes.validation.ValidationState;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -23,17 +25,24 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequenci
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.ProcessTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.FiniteStateMachineFactory;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.metrics.GsUtilLogReader;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SlurmController;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AggregationState;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.DemultiplexState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,6 +50,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @UrlBinding(FiniteStateMachineActionBean.ACTION_BEAN_URL)
 public class FiniteStateMachineActionBean extends CoreActionBean {
@@ -103,6 +113,8 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
     private Status overrideStatus;
 
     private Map<String, MercurySample> mapIdToMercurySample = new HashMap<>();
+
+    private long processId;
 
     public FiniteStateMachineActionBean() {
         super(CREATE_MACHINE, EDIT_MACHINE, MACHINE_PARAMETER);
@@ -212,7 +224,6 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
         return new ForwardResolution(DRAGEN_VIEW_PAGE).addParameter("finiteStateMachineKey", finiteStateMachineKey);
     }
 
-    // TODO On cancel, it should look for all active tasks and cancel the runs
     @HandlesEvent(UPDATE_STATE_STATUS_ACTION)
     public Resolution updateMachineStatus() {
         List<FiniteStateMachine> states = stateMachineDao.findStatesById(selectedIds);
@@ -226,6 +237,21 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
     public Resolution createDemultiplex() {
         setSubmitString(CREATE_DEMULTIPLEX);
         return new ForwardResolution(DEMULTIPLEX_CREATE_PAGE);
+    }
+
+    @HandlesEvent("viewLog")
+    public Resolution viewLog() {
+        try {
+            // TODO JW set Slurm output logs to somewhere better
+            File homeDir = new File(System.getProperty("user.home"));
+            String fileName = String.format("slurm-%d.out", processId);
+            File logFile = new File(homeDir, fileName);
+            String contents = FileUtils.readFileToString(logFile);
+            return new StreamingResolution("text", contents);
+        } catch (Exception e) {
+            logger.error("Failed to read log file.", e);
+        }
+        return new StreamingResolution("text", "error grabbing log file.");
     }
 
     public FiniteStateMachine getEditFiniteStateMachine() {
@@ -283,5 +309,38 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
 
     public void setSampleIds(String sampleIds) {
         this.sampleIds = sampleIds;
+    }
+
+    public long getProcessId() {
+        return processId;
+    }
+
+    public void setProcessId(long processId) {
+        this.processId = processId;
+    }
+
+    public GsUtilLogReader.Result fetchUploadProgress(long processId) {
+        try {
+            return GsUtilLogReader.parseTransferStatus(slurmController.getLogFile(processId));
+        } catch (IOException e) {
+            logger.error("Error reading log file for slurm process " + processId, e);
+        }
+        return null;
+    }
+
+    public List<String> fetchPendingDemultiplexesForAggregation(State state) {
+        if (!OrmUtil.proxySafeIsInstance(state, AggregationState.class)) {
+            return Collections.emptyList();
+        }
+        List<String> missing = new ArrayList<>();
+        for (IlluminaSequencingRunChamber runChamber: state.getSequencingRunChambers()) {
+            Optional<DemultiplexState> demultiplexStateOpt =
+                    runChamber.getMostRecentCompleteStateOfType(DemultiplexState.class);
+            if (!demultiplexStateOpt.isPresent()) {
+                missing.add(runChamber.getIlluminaSequencingRun().getRunName() + " : Lane " + runChamber.getLaneNumber());
+            }
+        }
+        Collections.sort(missing);
+        return missing;
     }
 }

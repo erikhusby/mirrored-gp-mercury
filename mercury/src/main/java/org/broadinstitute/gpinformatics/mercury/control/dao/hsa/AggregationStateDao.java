@@ -3,6 +3,10 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.hsa;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AggregationState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AggregationState_;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber_;
+import org.broadinstitute.gpinformatics.mercury.entity.run.RunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample_;
 
@@ -55,11 +59,21 @@ public class AggregationStateDao extends GenericDao {
         }
 
         return resultList.stream()
-                .sorted(Comparator.comparing(AggregationState::getStartTime))
+                .sorted(new State.StateStartComparator().reversed())
                 .collect(Collectors.toList());
     }
 
     public List<AggregationState> findBySample(MercurySample mercurySample) {
         return findBySampleKey(mercurySample.getSampleKey());
+    }
+
+    public AggregationState findBySampleWithChambers(MercurySample mercurySample,
+                                                           Set<IlluminaSequencingRunChamber> chambers) {
+        for (AggregationState state: findBySampleKey(mercurySample.getSampleKey())) {
+            if (state.getSequencingRunChambers().equals(chambers)) {
+                return state;
+            }
+        }
+        return null;
     }
 }

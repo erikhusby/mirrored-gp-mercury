@@ -6,14 +6,24 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.AggregationStateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.DemultiplexStateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.TaskDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.SampleSheetBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AlignmentMetricsTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DemultiplexMetricsTask;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DemultiplexTask;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenFolderUtil;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.FiniteStateMachineFactory;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AggregationState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.DemultiplexState;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -27,7 +37,14 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
+import java.io.File;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample_.sampleKey;
@@ -48,7 +65,13 @@ public class TaskFixupTest extends Arquillian {
     private DemultiplexStateDao demultiplexStateDao;
 
     @Inject
+    private IlluminaSequencingRunDao illuminaSequencingRunDao;
+
+    @Inject
     private UserBean userBean;
+
+    @Inject
+    private FiniteStateMachineFactory finiteStateMachineFactory;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -153,6 +176,44 @@ public class TaskFixupTest extends Arquillian {
         demultiplexState.addExitTask(demultiplexMetricsTask);
 
         taskDao.persist(new FixupCommentary("GPLIM-6242 added demux metrics task to state "));
+        taskDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim6242CreateDemuxStateForChambers() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        IlluminaSequencingRun run = illuminaSequencingRunDao.findByRunName("190924_SL-NVB_0278_AHL5YWDSXX");
+        FiniteStateMachine finiteStateMachine = new FiniteStateMachine();
+        finiteStateMachine.setStateMachineName("Demultiplex_" + run.getRunName());
+
+        SampleSheetBuilder sampleSheetBuilder = new SampleSheetBuilder();
+        Set<IlluminaSequencingRunChamber> runChambers = run.getSequencingRunChambers();
+        Set<VesselPosition> lanes =
+                runChambers.stream().map(IlluminaSequencingRunChamber::getLanePosition).collect(Collectors.toSet());
+        SampleSheetBuilder.SampleSheet sampleSheet = sampleSheetBuilder.makeSampleSheet(
+                run, lanes, Collections.emptySet());
+        Set<MercurySample> samples = new HashSet<>(sampleSheet.getData().getMapSampleToMercurySample().values());
+
+        DemultiplexState demultiplexState =
+                new DemultiplexState("2019-12-06--15-33-04", finiteStateMachine, samples, runChambers);
+        demultiplexState.setAlive(false);
+        demultiplexState.setStartState(true);
+        demultiplexState.setStartTime(new Date());
+        demultiplexState.setEndTime(new Date());
+
+        File fastQ = new File("/seq/illumina/proc/SL-NVB/190924_SL-NVB_0278_AHL5YWDSXX/dragen/2019-12-06--15-33-04/fastq");
+        File runDir = new File("/seq/illumina/proc/SL-NVB/190924_SL-NVB_0278_AHL5YWDSXX");
+        File ssFile = new File("/seq/illumina/proc/SL-NVB/190924_SL-NVB_0278_AHL5YWDSXX/dragen/2019-12-06--15-33-04/SampleSheet_hsa.csv");
+        DemultiplexTask task = new DemultiplexTask(runDir, fastQ, ssFile);
+        task.setTaskName("Demux_" + run.getRunName());
+        task.setStatus(Status.COMPLETE);
+
+        finiteStateMachine.setStatus(Status.COMPLETE);
+        finiteStateMachine.setStates(Collections.singletonList(demultiplexState));
+
+        taskDao.persist(new FixupCommentary("GPLIM-6242 added misisng demux state"));
         taskDao.flush();
         utx.commit();
     }

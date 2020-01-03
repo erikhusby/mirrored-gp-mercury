@@ -160,21 +160,24 @@ public class DemultiplexMetricsTaskHandler extends AbstractMetricsTaskHandler {
                 ColumnPositionMappingStrategy<DemultiplexSampleMetric> mappingStrategy =
                         new ColumnPositionMappingStrategy<>();
                 mappingStrategy.setType(DemultiplexSampleMetric.class);
+
+                String metricsLog = String.format("%s.log", run.getSampleCartridge().getLabel());
                 File outputRecord = new File(dragenFolderUtil.getReportsFolder(), "demultiplex_metrics.dat");
                 metricsRecordWriter.writeBeanRecord(sequencingMetricRun, outputRecord, mappingStrategy);
 
                 List<ProcessResult> processResults = new ArrayList<>();
-                processResults.add(uploadMetric(
-                        "/seq/lims/datawh/dev/dragen/demultiplex_metric.ctl", outputRecord));
+                processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/demultiplex_metric.ctl",
+                        outputRecord, metricsLog));
 
+                String laneMetricsLog = String.format("%s_lane.log", run.getSampleCartridge().getLabel());
                 ColumnPositionMappingStrategy<DemultiplexLaneMetric> laneStrategy =
                         new ColumnPositionMappingStrategy<>();
                 laneStrategy.setType(DemultiplexLaneMetric.class);
                 outputRecord = new File(dragenFolderUtil.getReportsFolder(), "demultiplex_lane_metrics.dat");
                 metricsRecordWriter.writeBeanRecord(laneMetrics, outputRecord, laneStrategy);
 
-                processResults.add(uploadMetric(
-                        "/seq/lims/datawh/dev/dragen/demultiplex_lane_metric.ctl", outputRecord));
+                processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/demultiplex_lane_metric.ctl",
+                        outputRecord, laneMetricsLog));
 
                 boolean failed = false;
                 for (ProcessResult processResult : processResults) {

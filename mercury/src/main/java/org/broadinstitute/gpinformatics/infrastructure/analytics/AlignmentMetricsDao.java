@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.analytics;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.AlignmentMetric;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.AlignmentMetric_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
@@ -105,5 +106,10 @@ public class AlignmentMetricsDao {
     public Map<String, AlignmentMetric> findMapBySampleAlias(Collection<String> sampleAlias) {
         return findAggregationBySampleAlias(sampleAlias).stream().collect(Collectors.toMap(AlignmentMetric::getSampleAlias,
                 Function.identity()));
+    }
+
+    public Map<String, AlignmentMetric> findMapByMercurySample(Collection<MercurySample> mercurySamples) {
+        List<String> sampleKeys = mercurySamples.stream().map(MercurySample::getSampleKey).collect(Collectors.toList());
+        return findMapBySampleAlias(sampleKeys);
     }
 }
