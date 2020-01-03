@@ -28,8 +28,8 @@ public class QueueGroupingDao extends GenericDao {
     /**
      * Finds all the active entities by queue type.
      *
-     * @param queueType     Queue to search for Active Queue Entities within.
-     * @return              The active groupings within the requested Queue.
+     * @param queueType Queue to search for Active Queue Entities within.
+     * @return The active groupings within the requested Queue, sorted by priority.
      */
     public List<QueueGrouping> findActiveGroupsByQueueType(QueueType queueType) {
         return findAll(QueueGrouping.class, (criteriaQuery, root) -> {
@@ -38,6 +38,7 @@ public class QueueGroupingDao extends GenericDao {
             criteriaQuery.where(
                     criteriaBuilder.equal(genericQueuePath.get(GenericQueue_.queueType), queueType),
                     root.get(QueueGrouping_.queueStatus).in(Arrays.asList(QueueStatus.Active, QueueStatus.Repeat)));
+            criteriaQuery.orderBy(criteriaBuilder.asc(root.get(QueueGrouping_.sortOrder)));
         });
     }
 
