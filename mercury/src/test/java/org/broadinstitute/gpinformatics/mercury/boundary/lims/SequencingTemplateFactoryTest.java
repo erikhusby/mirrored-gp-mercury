@@ -109,7 +109,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
     @Override
     @BeforeMethod
     public void setUp() {
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
 
         super.setUp();
         factory = new SequencingTemplateFactory();

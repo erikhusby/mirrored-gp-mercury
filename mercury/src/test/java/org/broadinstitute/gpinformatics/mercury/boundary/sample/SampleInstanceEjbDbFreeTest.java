@@ -13,7 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemOfRecord;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.ReferenceSequenceDao;
@@ -88,7 +88,6 @@ import static org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleIns
 import static org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb.NONNEGATIVE_INTEGER;
 import static org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb.UNKNOWN;
 import static org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor.Headers.AGGREGATION_DATA_TYPE;
-import static org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor.Headers.BAIT;
 import static org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor.Headers.COLLABORATOR_SAMPLE_ID;
 import static org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor.Headers.CONCENTRATION;
 import static org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor.Headers.DATA_ANALYSIS_TYPE;
@@ -237,7 +236,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         productOrder.setJiraTicketKey(productOrder.getJiraTicketKey());
         productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         productOrder.getProduct().setWorkflowName(workflow);
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
 
         LabBatch workflowBatch = new LabBatch("a batch", new HashSet<>(mapBarcodeToTube.values()),
                 LabBatch.LabBatchType.WORKFLOW);

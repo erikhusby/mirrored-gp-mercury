@@ -39,8 +39,8 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
-import static org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System.MERCURY;
-import static org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System.SQUID;
+import static org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemOfRecord.System.MERCURY;
+import static org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemOfRecord.System.SQUID;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
@@ -57,7 +57,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @Test(singleThreaded = true, groups = DATABASE_FREE)
 public class LimsQueryResourceUnitTest {
 
-    private SystemRouter mockSystemRouter;
+    private SystemOfRecord mockSystemOfRecord;
     private ThriftService mockThriftService;
     private LimsQueries mockLimsQueries;
     private LimsQueryResourceResponseFactory mockResponseFactory;
@@ -69,7 +69,7 @@ public class LimsQueryResourceUnitTest {
 
     @BeforeMethod(groups = DATABASE_FREE)
     public void setUp() {
-        mockSystemRouter = createMock(SystemRouter.class);
+        mockSystemOfRecord = createMock(SystemOfRecord.class);
         mockThriftService = createMock(ThriftService.class);
         mockLimsQueries = createMock(LimsQueries.class);
         sequencingTemplateFactory = createMock(SequencingTemplateFactory.class);
@@ -80,7 +80,7 @@ public class LimsQueryResourceUnitTest {
         BSPUserList bspUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
         resource =
                 new LimsQueryResource(mockThriftService, mockLimsQueries, sequencingTemplateFactory,
-                        mockResponseFactory, mockSystemRouter, bspUserList, mockGenericReagentDao);
+                        mockResponseFactory, mockSystemOfRecord, bspUserList, mockGenericReagentDao);
 
     }
 
@@ -160,7 +160,7 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE)
     public void testDoesLimsRecognizeAllTubesFromSquid() {
-        expect(mockSystemRouter.getSystemOfRecordForVesselBarcodes(Arrays.asList("squid_barcode")))
+        expect(mockSystemOfRecord.getSystemOfRecord(Arrays.asList("squid_barcode")))
                 .andReturn(SQUID);
         expect(mockThriftService.doesSquidRecognizeAllLibraries(Arrays.asList("squid_barcode"))).andReturn(true);
         replayAll();
@@ -173,11 +173,11 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE)
     public void testDoesLimsRecognizeAllTubesFromMercury() {
-        expect(mockSystemRouter.getSystemOfRecordForVesselBarcodes(Arrays.asList("good_barcode"))).
+        expect(mockSystemOfRecord.getSystemOfRecord(Arrays.asList("good_barcode"))).
                 andReturn(MERCURY);
         expect(mockLimsQueries.doesLimsRecognizeAllTubes(Arrays.asList("good_barcode"))).andReturn(true);
 
-        expect(mockSystemRouter.getSystemOfRecordForVesselBarcodes(Arrays.asList("bad_barcode"))).
+        expect(mockSystemOfRecord.getSystemOfRecord(Arrays.asList("bad_barcode"))).
                 andReturn(SQUID);
         expect(mockThriftService.doesSquidRecognizeAllLibraries(Arrays.asList("bad_barcode"))).andReturn(false);
         replayAll();
@@ -197,7 +197,7 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFindImmediatePlateParentsFromMercury() {
-        expect(mockSystemRouter.getSystemOfRecordForVessel("mercuryPlate")).andReturn(MERCURY);
+        expect(mockSystemOfRecord.getSystemOfRecord("mercuryPlate")).andReturn(MERCURY);
         expect(mockLimsQueries.findImmediatePlateParents("mercuryPlate")).andReturn(Arrays.asList("mp1", "mp2"));
         replayAll();
 
@@ -209,7 +209,7 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFindImmediatePlateParentsFromSquid() {
-        expect(mockSystemRouter.getSystemOfRecordForVessel("squidPlate")).andReturn(SQUID);
+        expect(mockSystemOfRecord.getSystemOfRecord("squidPlate")).andReturn(SQUID);
         expect(mockThriftService.findImmediatePlateParents("squidPlate")).andReturn(Arrays.asList("sp1", "sp2"));
         replayAll();
 
@@ -221,7 +221,7 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFindImmediatePlateParentsFromBoth() {
-        expect(mockSystemRouter.getSystemOfRecordForVessel("squidPlate")).andReturn(SQUID);
+        expect(mockSystemOfRecord.getSystemOfRecord("squidPlate")).andReturn(SQUID);
         expect(mockThriftService.findImmediatePlateParents("squidPlate")).andReturn(Arrays.asList("sp1", "sp2"));
         replayAll();
 
@@ -274,7 +274,7 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFetchParentRackContentsForPlateFromMercury() {
-        expect(mockSystemRouter.getSystemOfRecordForVessel("mercuryPlate")).andReturn(MERCURY);
+        expect(mockSystemOfRecord.getSystemOfRecord("mercuryPlate")).andReturn(MERCURY);
         Map<String, Boolean> map = new HashMap<>();
         map.put("A01", true);
         map.put("A02", false);
@@ -289,7 +289,7 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFetchParentRackContentsForPlateFromSquid() {
-        expect(mockSystemRouter.getSystemOfRecordForVessel("squidPlate")).andReturn(SQUID);
+        expect(mockSystemOfRecord.getSystemOfRecord("squidPlate")).andReturn(SQUID);
         Map<String, Boolean> map = new HashMap<>();
         map.put("A01", true);
         map.put("A02", false);
@@ -304,7 +304,7 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFetchParentRackContentsForPlateFromBoth() {
-        expect(mockSystemRouter.getSystemOfRecordForVessel("squidPlate")).andReturn(SQUID);
+        expect(mockSystemOfRecord.getSystemOfRecord("squidPlate")).andReturn(SQUID);
         Map<String, Boolean> map = new HashMap<>();
         map.put("A01", true);
         map.put("A02", false);
@@ -323,7 +323,7 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFetchQpcrForTube() {
-        expect(mockSystemRouter.getSystemOfRecordForVessel("barcode")).andReturn(SQUID);
+        expect(mockSystemOfRecord.getSystemOfRecord("barcode")).andReturn(SQUID);
         expect(mockThriftService.fetchQpcrForTube("barcode")).andReturn(1.23);
         replayAll();
 
@@ -339,7 +339,7 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFetchQuantForTube() {
-        expect(mockSystemRouter.getSystemOfRecordForVessel("barcode")).andReturn(SQUID);
+        expect(mockSystemOfRecord.getSystemOfRecord("barcode")).andReturn(SQUID);
         expect(mockThriftService.fetchQuantForTube("barcode", "test")).andReturn(1.23);
         replayAll();
 
@@ -352,7 +352,7 @@ public class LimsQueryResourceUnitTest {
     @Test(groups = DATABASE_FREE)
     public void testFetchConcentrationAndVolumeForTubeBarcodesFromSquid() {
         List<String> barcodes = Arrays.asList("barcode");
-        expect(mockSystemRouter.getSystemOfRecordForVesselBarcodes(barcodes)).andReturn(SQUID);
+        expect(mockSystemOfRecord.getSystemOfRecord(barcodes)).andReturn(SQUID);
         Map<String, ConcentrationAndVolume> map = new HashMap<>();
         ConcentrationAndVolume concentrationAndVolume = new ConcentrationAndVolume();
         ConcentrationAndVolumeAndWeightType concentrationAndVolumeType = new ConcentrationAndVolumeAndWeightType();
@@ -371,7 +371,7 @@ public class LimsQueryResourceUnitTest {
     @Test(groups = DATABASE_FREE)
     public void testFetchConcentrationAndVolumeForTubeBarcodesFromMercury() {
         List<String> barcodes = Arrays.asList("barcode");
-        expect(mockSystemRouter.getSystemOfRecordForVesselBarcodes(barcodes)).andReturn(MERCURY);
+        expect(mockSystemOfRecord.getSystemOfRecord(barcodes)).andReturn(MERCURY);
         Map<String, ConcentrationAndVolumeAndWeightType> map = new HashMap<>();
         ConcentrationAndVolumeAndWeightType concentrationAndVolume  = new ConcentrationAndVolumeAndWeightType();
         map.put("barcode", concentrationAndVolume);
@@ -421,7 +421,7 @@ public class LimsQueryResourceUnitTest {
      */
     @Test(groups = DATABASE_FREE)
     public void testFetchTransfersForPlateForMercury() {
-        expect(mockSystemRouter.getSystemOfRecordForVessel("barcode")).andReturn(MERCURY);
+        expect(mockSystemOfRecord.getSystemOfRecord("barcode")).andReturn(MERCURY);
         expect(mockLimsQueries.fetchTransfersForPlate("barcode", 2)).andReturn(new ArrayList<PlateTransferType>());
         replayAll();
 
@@ -436,7 +436,7 @@ public class LimsQueryResourceUnitTest {
      */
     @Test(groups = DATABASE_FREE)
     public void testFetchTransfersForPlateForSquid() {
-        expect(mockSystemRouter.getSystemOfRecordForVessel("barcode")).andReturn(SQUID);
+        expect(mockSystemOfRecord.getSystemOfRecord("barcode")).andReturn(SQUID);
         expect(mockThriftService.fetchTransfersForPlate("barcode", (short) 2))
                 .andReturn(new ArrayList<PlateTransfer>());
         replayAll();
@@ -500,12 +500,12 @@ public class LimsQueryResourceUnitTest {
     }
 
     private void replayAll() {
-        replay(mockSystemRouter, mockThriftService, mockLimsQueries, sequencingTemplateFactory,
+        replay(mockSystemOfRecord, mockThriftService, mockLimsQueries, sequencingTemplateFactory,
                 mockResponseFactory, mockBarcodedTubeDao, mockStaticPlateDao, mockGenericReagentDao);
     }
 
     private void verifyAll() {
-        verify(mockSystemRouter, mockThriftService, mockLimsQueries, sequencingTemplateFactory,
+        verify(mockSystemOfRecord, mockThriftService, mockLimsQueries, sequencingTemplateFactory,
                 mockResponseFactory, mockBarcodedTubeDao, mockStaticPlateDao, mockGenericReagentDao);
     }
 }

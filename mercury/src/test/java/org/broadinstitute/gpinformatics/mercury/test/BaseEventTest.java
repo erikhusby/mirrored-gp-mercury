@@ -30,7 +30,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryP
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemOfRecord;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizerV2;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
@@ -101,7 +101,6 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.StoolTNAEntityBuil
 import org.broadinstitute.gpinformatics.mercury.test.builders.TenXEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
 import org.easymock.EasyMock;
-import org.jetbrains.annotations.NotNull;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -139,7 +138,7 @@ public class BaseEventTest {
     /**
      * Referenced in validation of routing.
      */
-    public static SystemRouter.System expectedRouting = SystemRouter.System.MERCURY;
+    public static SystemOfRecord.System expectedRouting = SystemOfRecord.System.MERCURY;
     private final CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils();
 
     private BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
@@ -1156,9 +1155,9 @@ public class BaseEventTest {
 
     public static void validateWorkflow(String nextEventTypeName, List<LabVessel> labVessels) {
         WorkflowConfig workflowConfig = new WorkflowLoader().load();
-        SystemRouter systemRouter = new SystemRouter(null, workflowConfig, null);
-        SystemRouter.System system = systemRouter.routeForVesselsDaoFree(labVessels, SystemRouter.Intent.ROUTE);
-        Assert.assertEquals(system, expectedRouting);
+
+        // All messages are now routed to Mercury.
+        Assert.assertEquals(SystemOfRecord.System.MERCURY, expectedRouting);
 
         WorkflowValidator workflowValidator = new WorkflowValidator();
         workflowValidator.setWorkflowConfig(workflowConfig);

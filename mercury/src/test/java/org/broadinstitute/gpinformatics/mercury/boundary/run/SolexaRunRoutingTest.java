@@ -1,15 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
-import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemOfRecord;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -44,6 +40,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.io.File;
+import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
@@ -75,7 +72,7 @@ public class SolexaRunRoutingTest extends BaseEventTest {
      * @throws Exception
      */
     public void testWholeGenomeFlowcell() throws Exception {
-        expectedRouting = SystemRouter.System.SQUID;
+        expectedRouting = SystemOfRecord.System.MERCURY;
 
         TemplateEngine templateEngine = new TemplateEngine();
         templateEngine.postConstruct();
@@ -152,17 +149,17 @@ public class SolexaRunRoutingTest extends BaseEventTest {
 
         LabVesselDao vesselDao = EasyMock.createNiceMock(LabVesselDao.class);
         VesselTransferEjb vesselTransferEjb = EasyMock.createMock(VesselTransferEjb.class);
-        BSPExportsService bspExportsService = EasyMock.createMock(BSPExportsService.class);
-
-        SystemRouter router = new SystemRouter(vesselDao, workflowConfig, bspExportsService);
-        MiSeqReagentKitDao reagentKitDao = EasyMock.createNiceMock(MiSeqReagentKitDao.class);
-
-        SolexaRunResource runResource = new SolexaRunResource(runDao, runFactory, flowcellDao, vesselTransferEjb,
-                router, SquidConnectorProducer.stubInstance(), SquidConfig.produce(Deployment.STUBBY), reagentKitDao);
+        SolexaRunResource runResource = new SolexaRunResource(runDao, runFactory, flowcellDao, vesselTransferEjb);
+        IlluminaSequencingRun run = new IlluminaSequencingRun(flowcell, "", "", "", 0L, true, new Date(), "");
+        EasyMock.expect(runFactory.build(runBean, flowcell)).andReturn(run);
 
         UriInfo uriInfoMock = EasyMock.createNiceMock(UriInfo.class);
         EasyMock.expect(uriInfoMock.getAbsolutePathBuilder()).andReturn(UriBuilder.fromPath(""));
-        EasyMock.replay(runDao, runFactory, flowcellDao, vesselDao, uriInfoMock);
+        UriBuilder uriBuilder = EasyMock.createNiceMock(UriBuilder.class);
+        EasyMock.expect(uriBuilder.build(runBean, flowcell)).andReturn(new URI(""));
+        runDao.persist(run);
+
+        EasyMock.replay(runDao, runFactory, flowcellDao, vesselDao, uriInfoMock, uriBuilder);
 
         Response response = runResource.createRun(runBean, uriInfoMock);
         Assert.assertEquals(SolexaRunBean.class, response.getEntity().getClass());
@@ -183,9 +180,6 @@ public class SolexaRunRoutingTest extends BaseEventTest {
         IlluminaSequencingRunFactory runFactory = EasyMock.createMock(IlluminaSequencingRunFactory.class);
 
         LabVesselDao vesselDao = EasyMock.createNiceMock(LabVesselDao.class);
-        BSPExportsService bspExportsService = EasyMock.createMock(BSPExportsService.class);
-
-        SystemRouter router = new SystemRouter(vesselDao, workflowConfig, bspExportsService);
         UriInfo uriInfoMock = EasyMock.createNiceMock(UriInfo.class);
 
 
@@ -242,8 +236,7 @@ public class SolexaRunRoutingTest extends BaseEventTest {
                                       .getAbsolutePath(), "reagentBlk" + runDate.getTime());
 
         SolexaRunResource miseqRunResource = new SolexaRunResource(runDao, runFactory, miseqFlowcellDao,
-                vesselTransferEjb, router, SquidConnectorProducer.failureStubInstance(),
-                SquidConfig.produce(Deployment.STUBBY), reagentKitDao);
+                vesselTransferEjb);
 
 
         Response miseqResponse = miseqRunResource.createRun(miseqRunBean, uriInfoMock);
@@ -274,14 +267,12 @@ public class SolexaRunRoutingTest extends BaseEventTest {
 
         IlluminaFlowcellDao flowcellDao = EasyMock.createNiceMock(IlluminaFlowcellDao.class);
         EasyMock.expect(flowcellDao.findByBarcode(EasyMock.anyObject(String.class))).andReturn(flowcell);
-
-        MiSeqReagentKitDao placeHolderReagentKitDao = EasyMock.createNiceMock(MiSeqReagentKitDao.class);
-        SolexaRunResource runResource = new SolexaRunResource(runDao, runFactory, flowcellDao, vesselTransferEjb,
-                router, SquidConnectorProducer.stubInstance(), SquidConfig.produce(Deployment.STUBBY),
-                placeHolderReagentKitDao);
+        SolexaRunResource runResource = new SolexaRunResource(runDao, runFactory, flowcellDao, vesselTransferEjb);
 
         EasyMock.expect(uriInfoMock.getAbsolutePathBuilder()).andReturn(UriBuilder.fromPath(""));
-        EasyMock.replay(runDao, runFactory, flowcellDao, vesselDao, uriInfoMock, reagentKitDao);
+        UriBuilder uriBuilder = EasyMock.createNiceMock(UriBuilder.class);
+        EasyMock.expect(uriBuilder.build(runBean, flowcell)).andReturn(new URI(""));
+        EasyMock.replay(runDao, runFactory, flowcellDao, vesselDao, uriInfoMock, reagentKitDao, uriBuilder);
 
         Response response = runResource.createRun(runBean, uriInfoMock);
         Assert.assertEquals(SolexaRunBean.class, response.getEntity().getClass());
@@ -310,18 +301,20 @@ public class SolexaRunRoutingTest extends BaseEventTest {
         LabVesselDao vesselDao = EasyMock.createNiceMock(LabVesselDao.class);
 
         IlluminaSequencingRunFactory runFactory = EasyMock.createMock(IlluminaSequencingRunFactory.class);
-        BSPExportsService bspExportsService = EasyMock.createMock(BSPExportsService.class);
-        SystemRouter router = new SystemRouter(vesselDao, workflowConfig, bspExportsService);
+        IlluminaSequencingRun run = new IlluminaSequencingRun(flowcell, "", "", "", 0L, true, new Date(), "");
+        EasyMock.expect(runFactory.build(runBean, flowcell)).andReturn(run);
+        runDao.persist(run);
 
         VesselTransferEjb vesselTransferEjb = EasyMock.createMock(VesselTransferEjb.class);
-        MiSeqReagentKitDao reagentKitDao = EasyMock.createNiceMock(MiSeqReagentKitDao.class);
 
-        SolexaRunResource runResource = new SolexaRunResource(runDao, runFactory, flowcellDao, vesselTransferEjb,
-                router, SquidConnectorProducer.stubInstance(), SquidConfig.produce(Deployment.STUBBY), reagentKitDao);
+        SolexaRunResource runResource = new SolexaRunResource(runDao, runFactory, flowcellDao, vesselTransferEjb);
 
         UriInfo uriInfoMock = EasyMock.createNiceMock(UriInfo.class);
         EasyMock.expect(uriInfoMock.getAbsolutePathBuilder()).andReturn(UriBuilder.fromPath(""));
-        EasyMock.replay(runDao, runFactory, flowcellDao, vesselDao, uriInfoMock);
+        UriBuilder uriBuilder = EasyMock.createNiceMock(UriBuilder.class);
+        EasyMock.expect(uriBuilder.build(runBean, flowcell)).andReturn(new URI("")).anyTimes();
+
+        EasyMock.replay(runDao, runFactory, flowcellDao, vesselDao, uriInfoMock, uriBuilder);
 
         Response response = runResource.createRun(runBean, uriInfoMock);
         Assert.assertEquals(SolexaRunBean.class, response.getEntity().getClass());

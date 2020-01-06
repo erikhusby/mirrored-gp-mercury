@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettaLimsConnector;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
@@ -15,9 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePl
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationSetupEvent;
-import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.BettaLimsMessageUtils;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
@@ -73,11 +70,7 @@ import java.util.Set;
 @Stateful
 public class BettaLimsMessageResource {
 
-    /**
-     * workflow error message from Squid
-     */
     private static final String WORKFLOW_MESSAGE = " error(s) processing workflows for ";
-    private static final String USER_ERROR_PREFIX = "The specified user does not exist";
     private static final Log log = LogFactory.getLog(BettaLimsMessageResource.class);
     private static final boolean VALIDATE_SCHEMA = false;
 
@@ -89,12 +82,6 @@ public class BettaLimsMessageResource {
 
     @Inject
     private WsMessageStore wsMessageStore;
-
-    @Inject
-    private BettaLimsConnector bettaLimsConnector;
-
-    @Inject
-    private SystemRouter systemRouter;
 
     @Inject
     private WorkflowValidator workflowValidator;
@@ -166,94 +153,12 @@ public class BettaLimsMessageResource {
             wsMessageStore.store(WsMessageStore.BETTALIMS_RESOURCE_TYPE, message, now);
 
             BettaLIMSMessage bettaLIMSMessage = unmarshal(message);
-
-            boolean processInMercury = false;
-            boolean processInSquid = false;
             // This has the side effect of setting the user for the audit trail.
             LabEventType labEventType = getLabEventType(bettaLIMSMessage);
             if (labEventType == null) {
                 throw new RuntimeException("Failed to find event type");
             }
-            if (bettaLIMSMessage.getMode() != null && bettaLIMSMessage.getMode().equals(LabEventFactory.MODE_MERCURY)) {
-                // Don't route Mercury test messages to BettalIMS/Squid
-                processInMercury = true;
-                processInSquid = false;
-            } else {
-                LabEventType.SystemOfRecord systemOfRecord = labEventType.getSystemOfRecord();
-
-                switch (systemOfRecord) {
-                case MERCURY:
-                    processInMercury = true;
-                    processInSquid = false;
-                    break;
-                case SQUID:
-                    processInMercury = false;
-                    processInSquid = true;
-                    break;
-                case WORKFLOW_DEPENDENT:
-
-                    Collection<String> barcodesToBeVerified = getRegisteredBarcodesFromMessage(bettaLIMSMessage);
-
-                    /*
-                    The logic has been Updated to take into account the routing definition being defined
-                    at the workflow level.  This 2 stage approach to routing gives the system the flexibility to
-                    target specific workflows and adjust where the system of record should be considered for
-                    each workflow
-                    */
-                    final SystemRouter.System route =
-                            systemRouter.routeForVesselBarcodes(barcodesToBeVerified);
-
-                    if (SystemRouter.System.MERCURY == route) {
-                        processInMercury = true;
-                    } else {
-                        if (SystemRouter.System.BOTH == route) {
-                            processInMercury = true;
-                        }
-                        processInSquid = true;
-                    }
-
-                    if (processInMercury && processInSquid && route != SystemRouter.System.BOTH) {
-                        throw new InformaticsServiceException(
-                                "For Workflow Dependent processing, we cannot process in both " +
-                                "Mercury and Squid unless routing specifies both");
-                    }
-                    break;
-                case BOTH:
-                    processInMercury = true;
-                    processInSquid = true;
-                    break;
-                default:
-                    throw new RuntimeException("Unexpected enum value " + systemOfRecord);
-                }
-            }
-
-            BettaLimsConnector.BettaLimsResponse bettaLimsResponse = null;
-            if (processInSquid) {
-                bettaLimsResponse = bettaLimsConnector.sendMessage(message);
-            }
-            if (processInMercury) {
-                try {
-                    processMessage(bettaLIMSMessage);
-                } catch (Exception e) {
-                    // If we're processing in both Mercury and Squid, and Squid succeeded while Mercury failed,
-                    // ignore the Mercury error.
-                    if (processInSquid && bettaLimsResponse.getCode() !=
-                                          Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()) {
-                        log.error("Mercury processing failed, returning Squid result to client", e);
-                    } else {
-                        throw e;
-                    }
-                }
-            }
-            if (bettaLimsResponse != null && bettaLimsResponse.getCode() != Response.Status.OK.getStatusCode()) {
-                // The intent here is to reduce log noise for certain cases which we can't control or act upon in
-                // Mercury. Throwing an exception is still useful to the client though so we shouldn't eliminate that.
-                String logMessage = bettaLimsResponse.getMessage();
-                if (logMessage.startsWith(USER_ERROR_PREFIX)) {
-                    logStacktrace = false;
-                }
-                throw new RuntimeException(logMessage);
-            }
+            processMessage(bettaLIMSMessage);
         } catch (Exception e) {
             wsMessageStore.recordError(WsMessageStore.BETTALIMS_RESOURCE_TYPE, message, now, e);
             if (logStacktrace) {
@@ -518,9 +423,4 @@ public class BettaLimsMessageResource {
             }
         }
     }
-
-    public void setBettaLimsConnector(BettaLimsConnector connector) {
-        this.bettaLimsConnector = connector;
-    }
-
 }

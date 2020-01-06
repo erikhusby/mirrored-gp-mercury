@@ -26,7 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransfe
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemOfRecord;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
@@ -253,8 +253,8 @@ public class LabEventTest extends BaseEventTest {
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testHybridSelection() {
 //        Controller.startCPURecording(true);
-
-        expectedRouting = SystemRouter.System.SQUID;
+        // All messaging is now routed to Mercury.
+        expectedRouting = SystemOfRecord.System.MERCURY;
         // todo jmt receipt batch?
         ProductOrder productOrder = ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK - 2,
                                                                                              "A");
@@ -332,7 +332,7 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 8, "Wrong number of lanes");
         Assert.assertEquals(zimsIlluminaRun.getActualReadStructure(), readStructureRequest.getActualReadStructure());
         Assert.assertEquals(zimsIlluminaRun.getSetupReadStructure(), readStructureRequest.getSetupReadStructure());
-        Assert.assertEquals(zimsIlluminaRun.getSystemOfRecord(), SystemRouter.System.MERCURY);
+        Assert.assertEquals(zimsIlluminaRun.getSystemOfRecord(), SystemOfRecord.System.MERCURY);
         ZimsIlluminaChamber zimsIlluminaChamber = zimsIlluminaRun.getLanes().iterator().next();
         Assert.assertEquals(zimsIlluminaChamber.getLibraries().size(), NUM_POSITIONS_IN_RACK,
                             "Wrong number of libraries");
@@ -403,7 +403,7 @@ public class LabEventTest extends BaseEventTest {
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testExomeExpress() {
 //        Controller.startCPURecording(true);
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
 
         // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
         ProductOrder productOrder = ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK - 2,
@@ -504,7 +504,7 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(zimsIlluminaRun.getSetupReadStructure(), readStructureRequest.getSetupReadStructure());
         Assert.assertEquals(zimsIlluminaRun.getImagedAreaPerLaneMM2(), readStructureRequest.getImagedArea());
         Assert.assertEquals(zimsIlluminaRun.getLanesSequenced(), "3,6");
-        Assert.assertEquals(zimsIlluminaRun.getSystemOfRecord(), SystemRouter.System.MERCURY);
+        Assert.assertEquals(zimsIlluminaRun.getSystemOfRecord(), SystemOfRecord.System.MERCURY);
 
         Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
@@ -558,7 +558,7 @@ public class LabEventTest extends BaseEventTest {
      */
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testExomeExpressAlternative() {
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
 
         ProductOrder productOrder = ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK,
                 "A");
@@ -640,7 +640,7 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(zimsIlluminaRun.getSetupReadStructure(), readStructureRequest.getSetupReadStructure());
         Assert.assertEquals(zimsIlluminaRun.getImagedAreaPerLaneMM2(), readStructureRequest.getImagedArea());
         Assert.assertNull(zimsIlluminaRun.getLanesSequenced());
-        Assert.assertEquals(zimsIlluminaRun.getSystemOfRecord(), SystemRouter.System.MERCURY);
+        Assert.assertEquals(zimsIlluminaRun.getSystemOfRecord(), SystemOfRecord.System.MERCURY);
 
         Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
@@ -692,7 +692,7 @@ public class LabEventTest extends BaseEventTest {
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testExomeExpressRework() {
         try {
-            expectedRouting = SystemRouter.System.MERCURY;
+            expectedRouting = SystemOfRecord.System.MERCURY;
 
             // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
             ProductOrder productOrder1 = ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK,
@@ -812,7 +812,7 @@ public class LabEventTest extends BaseEventTest {
 
             ZimsIlluminaRun zimsIlluminaRun2 = zimsIlluminaRunFactory.makeZimsIlluminaRun(run2);
             Assert.assertEquals(zimsIlluminaRun2.getLanes().size(), 2, "Wrong number of lanes");
-            Assert.assertEquals(zimsIlluminaRun2.getSystemOfRecord(), SystemRouter.System.MERCURY);
+            Assert.assertEquals(zimsIlluminaRun2.getSystemOfRecord(), SystemOfRecord.System.MERCURY);
 
             ZimsIlluminaChamber zimsIlluminaChamber2 = zimsIlluminaRun2.getLanes().iterator().next();
             for (LibraryBean libraryBean : zimsIlluminaChamber2.getLibraries()) {
@@ -833,7 +833,7 @@ public class LabEventTest extends BaseEventTest {
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testExomeExpressShearingRework() {
         try {
-            expectedRouting = SystemRouter.System.MERCURY;
+            expectedRouting = SystemOfRecord.System.MERCURY;
 
             // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
             ProductOrder productOrder1 = ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK,
@@ -959,7 +959,7 @@ public class LabEventTest extends BaseEventTest {
 
             ZimsIlluminaRun zimsIlluminaRun1 = zimsIlluminaRunFactory.makeZimsIlluminaRun(run1);
             Assert.assertEquals(zimsIlluminaRun1.getLanes().size(), 8, "Wrong number of lanes");
-            Assert.assertEquals(zimsIlluminaRun1.getSystemOfRecord(), SystemRouter.System.MERCURY);
+            Assert.assertEquals(zimsIlluminaRun1.getSystemOfRecord(), SystemOfRecord.System.MERCURY);
             ZimsIlluminaChamber zimsIlluminaChamber1 = zimsIlluminaRun1.getLanes().iterator().next();
             for (LibraryBean libraryBean : zimsIlluminaChamber1.getLibraries()) {
                 Assert.assertEquals(libraryBean.getLcSet(), workflowBatch1.getBatchName());
@@ -993,7 +993,7 @@ public class LabEventTest extends BaseEventTest {
      */
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testAmbiguousLcset() {
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
         Date runDate = new Date();
         int counter = 1;
         int tubesPerPlate = 2;
@@ -1113,7 +1113,7 @@ public class LabEventTest extends BaseEventTest {
     public void testExomeExpressIce() {
         // e.g. 0157473471
 //        Controller.startCPURecording(true);
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
 
         // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
         ProductOrder productOrder = ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK - 2,
@@ -1221,7 +1221,7 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(zimsIlluminaRun.getSetupReadStructure(), readStructureRequest.getSetupReadStructure());
         Assert.assertEquals(zimsIlluminaRun.getImagedAreaPerLaneMM2(), readStructureRequest.getImagedArea());
         Assert.assertEquals(zimsIlluminaRun.getLanesSequenced(), "3,6");
-        Assert.assertEquals(zimsIlluminaRun.getSystemOfRecord(), SystemRouter.System.MERCURY);
+        Assert.assertEquals(zimsIlluminaRun.getSystemOfRecord(), SystemOfRecord.System.MERCURY);
         for (ZimsIlluminaChamber zimsIlluminaChamber : zimsIlluminaRun.getLanes()) {
             Assert.assertEquals(zimsIlluminaChamber.getLibraries().size(), NUM_POSITIONS_IN_RACK);
             for (LibraryBean libraryBean : zimsIlluminaChamber.getLibraries()) {
@@ -1311,7 +1311,8 @@ public class LabEventTest extends BaseEventTest {
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testWholeGenomeShotgun() {
 //        Controller.startCPURecording(true);
-        expectedRouting = SystemRouter.System.SQUID;
+        // All messaging is now routed to Mercury.
+        expectedRouting = SystemOfRecord.System.MERCURY;
 
         ProductOrder productOrder =
                 ProductOrderTestFactory.buildWholeGenomeProductOrder(NUM_POSITIONS_IN_RACK);
@@ -1436,7 +1437,7 @@ public class LabEventTest extends BaseEventTest {
     @Test(groups = TestGroups.DATABASE_FREE)
     public void testDaughterPlateTransferFromMultipleSources() {
         //        Controller.startCPURecording(true);
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
 
         // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
         ProductOrder productOrder =
@@ -1513,7 +1514,7 @@ public class LabEventTest extends BaseEventTest {
 
     @Test(groups = TestGroups.DATABASE_FREE)
     public void testCrspPico() {
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
 
         // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
         int numSamples = NUM_POSITIONS_IN_RACK - 2;
@@ -1544,7 +1545,7 @@ public class LabEventTest extends BaseEventTest {
 
     @Test(groups = TestGroups.DATABASE_FREE)
     public void testCrspRibo() {
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
 
         // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
         int numSamples = NUM_POSITIONS_IN_RACK - 2;
@@ -1575,7 +1576,8 @@ public class LabEventTest extends BaseEventTest {
      */
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testFluidigm() {
-        expectedRouting = SystemRouter.System.SQUID;
+        // All messaging is now routed to Mercury.
+        expectedRouting = SystemOfRecord.System.MERCURY;
 
         // starting rack
         Map<String, BarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
@@ -1634,7 +1636,7 @@ public class LabEventTest extends BaseEventTest {
      */
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testFP() {
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
         int numSamples = NUM_POSITIONS_IN_RACK * 4;
         ProductOrder productOrder = ProductOrderTestFactory.buildFPProductOrder(numSamples);
         List<StaticPlate> sourcePlates = buildSamplePlates(productOrder, "FP_PCR1Plate");
@@ -1655,7 +1657,7 @@ public class LabEventTest extends BaseEventTest {
      */
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testSingleCellSmartSeq() {
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
         int numSamples = NUM_POSITIONS_IN_RACK * 4;
         ProductOrder productOrder = ProductOrderTestFactory.buildSingleCellProductOrder(numSamples);
         List<StaticPlate> sourcePlates = buildSamplePlates(productOrder, "SC_cDNAPlate");
@@ -1691,7 +1693,7 @@ public class LabEventTest extends BaseEventTest {
      */
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testSingleCell10X() {
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
         int numSamples = NUM_POSITIONS_IN_RACK - 2;
         ProductOrder productOrder = ProductOrderTestFactory.buildSingleCellHashingProductOrder(numSamples);
         Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
@@ -1721,7 +1723,7 @@ public class LabEventTest extends BaseEventTest {
      */
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testSingleCellVdj() {
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
         int numSamples = NUM_POSITIONS_IN_RACK - 2;
         ProductOrder productOrder = ProductOrderTestFactory.buildSingleCellHashingProductOrder(numSamples);
         Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
@@ -1757,7 +1759,7 @@ public class LabEventTest extends BaseEventTest {
      */
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testSingleCellhashing10X() {
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
         int numSamples = NUM_POSITIONS_IN_RACK - 2;
         ProductOrder productOrder = ProductOrderTestFactory.buildSingleCellHashingProductOrder(numSamples);
         Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
@@ -1788,7 +1790,7 @@ public class LabEventTest extends BaseEventTest {
      */
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testInfinium() {
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
         int numSamples = NUM_POSITIONS_IN_RACK - 2;
         ProductOrder productOrder = ProductOrderTestFactory.buildInfiniumProductOrder(numSamples);
         Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
@@ -1820,7 +1822,7 @@ public class LabEventTest extends BaseEventTest {
      */
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testInfiniumMethylation() {
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
         int numSamples = NUM_POSITIONS_IN_RACK - 2;
         ProductOrder productOrder = ProductOrderTestFactory.buildInfiniumMethylationProductOrder(numSamples);
         Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
@@ -1853,7 +1855,7 @@ public class LabEventTest extends BaseEventTest {
      */
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testStoolExtractionToTNA() {
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
         SimpleDateFormat sdf = new SimpleDateFormat("MMddHHmmss");
         String suffix = sdf.format(new Date());
 
@@ -1893,7 +1895,7 @@ public class LabEventTest extends BaseEventTest {
      */
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testArrayPlating() {
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
         int numSamples = NUM_POSITIONS_IN_RACK - 2;
         ProductOrder productOrder = ProductOrderTestFactory.buildArrayPlatingProductOrder(numSamples);
         Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
@@ -1919,7 +1921,7 @@ public class LabEventTest extends BaseEventTest {
      */
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testTenX() {
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
         int numSamples = NUM_POSITIONS_IN_RACK - 2;
         ProductOrder productOrder = ProductOrderTestFactory.buildArrayPlatingProductOrder(numSamples);
         Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
@@ -1949,7 +1951,7 @@ public class LabEventTest extends BaseEventTest {
      */
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testTruSeqStrandSpecific() {
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
         int numSamples = NUM_POSITIONS_IN_RACK - 2;
         ProductOrder productOrder = ProductOrderTestFactory.buildTruSeqStrandSpecificProductOrder(numSamples);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
@@ -2015,7 +2017,7 @@ public class LabEventTest extends BaseEventTest {
 
     public void testCellFreeHyperPrep() {
 //        Controller.startCPURecording(true);
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
 
         ProductOrder productOrder = ProductOrderTestFactory.buildCellFreeHyperPrepProductOrder(NUM_POSITIONS_IN_RACK);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
@@ -2041,7 +2043,7 @@ public class LabEventTest extends BaseEventTest {
     }
 
     public void testPcrPlusHyperPrep() {
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
 
         ProductOrder productOrder = ProductOrderTestFactory.buildPcrPlusHyperPrepProductOrder(NUM_POSITIONS_IN_RACK);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
@@ -2067,7 +2069,7 @@ public class LabEventTest extends BaseEventTest {
 
     public void testPcrFreeHyperPrep() {
 //        Controller.startCPURecording(true);
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
 
         ProductOrder productOrder = ProductOrderTestFactory.buildPcrFreeHyperPrepProductOrder(NUM_POSITIONS_IN_RACK);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
@@ -2094,7 +2096,7 @@ public class LabEventTest extends BaseEventTest {
 
     public void testICEHyperPrep() {
 //        Controller.startCPURecording(true);
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
 
         ProductOrder productOrder = ProductOrderTestFactory.buildICEHyperPrepProductOrder(NUM_POSITIONS_IN_RACK);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
@@ -2135,7 +2137,7 @@ public class LabEventTest extends BaseEventTest {
 
     public void testPcrFree() {
 //        Controller.startCPURecording(true);
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
 
         ProductOrder productOrder = ProductOrderTestFactory.buildPcrFreeProductOrder(NUM_POSITIONS_IN_RACK);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
@@ -2164,7 +2166,7 @@ public class LabEventTest extends BaseEventTest {
 
     public void testPcrPlus() {
 //        Controller.startCPURecording(true);
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
 
         ProductOrder productOrder = ProductOrderTestFactory.buildPcrPlusProductOrder(NUM_POSITIONS_IN_RACK);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
@@ -2193,7 +2195,7 @@ public class LabEventTest extends BaseEventTest {
     }
 
     public void testPcrPlusUMI() {
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
 
         ProductOrder productOrder = ProductOrderTestFactory.buildPcrPlusProductOrder(NUM_POSITIONS_IN_RACK);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
@@ -2318,7 +2320,7 @@ public class LabEventTest extends BaseEventTest {
 
     public void testCustomSelectionHyperPrep() {
 //        Controller.startCPURecording(true);
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
 
         ProductOrder productOrder = ProductOrderTestFactory.buildPcrFreeHyperPrepProductOrder(NUM_POSITIONS_IN_RACK);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
@@ -2410,7 +2412,7 @@ public class LabEventTest extends BaseEventTest {
                                                                               String workflow, String barcodeSuffix,
                                                                               LibraryConstructionEntityBuilder.Indexing indexing,
                                                                               LibraryConstructionEntityBuilder.Umi umi) {
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
 
         Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
 
