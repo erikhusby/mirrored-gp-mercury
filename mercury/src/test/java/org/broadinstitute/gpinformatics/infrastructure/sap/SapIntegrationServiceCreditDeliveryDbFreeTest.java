@@ -24,7 +24,6 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.sap.entity.SAPReturnOrder;
@@ -58,14 +57,13 @@ import static org.hamcrest.Matchers.not;
 public class SapIntegrationServiceCreditDeliveryDbFreeTest {
     public static final String QUOTE_ID = "2700103";
     private BSPUserList bspUserList = Mockito.mock(BSPUserList.class);
-    private QuoteService quoteService = Mockito.mock(QuoteService.class);
     private PriceListCache priceListCache = Mockito.mock(PriceListCache.class);
     private SAPProductPriceCache productPriceCache = Mockito.mock(SAPProductPriceCache.class);
     private SAPAccessControlEjb accessControlEjb = Mockito.mock(SAPAccessControlEjb.class);
 
     public void testCreditDeliveryMultipleDeliveryDocuments() throws Exception {
         SapIntegrationServiceImpl sapService =
-            new SapIntegrationServiceImpl(SapConfig.produce(Deployment.DEV), quoteService, bspUserList, priceListCache,
+            new SapIntegrationServiceImpl(SapConfig.produce(Deployment.DEV), bspUserList, priceListCache,
                 productPriceCache, accessControlEjb);
         SapIntegrationClientImpl sapIntegrationClient = Mockito.mock(SapIntegrationClientImpl.class);
 
@@ -118,7 +116,7 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
 
     public void testLedgerEntriesSameSample() throws Exception {
         SapIntegrationServiceImpl sapService =
-            new SapIntegrationServiceImpl(SapConfig.produce(Deployment.DEV), quoteService, bspUserList, priceListCache,
+            new SapIntegrationServiceImpl(SapConfig.produce(Deployment.DEV), bspUserList, priceListCache,
                 productPriceCache, accessControlEjb);
         SapIntegrationClientImpl sapIntegrationClient = Mockito.mock(SapIntegrationClientImpl.class);
 
@@ -185,7 +183,7 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
         throws Exception {
 
         SapIntegrationServiceImpl sapService =
-            new SapIntegrationServiceImpl(SapConfig.produce(Deployment.DEV), quoteService, bspUserList, priceListCache,
+            new SapIntegrationServiceImpl(SapConfig.produce(Deployment.DEV), bspUserList, priceListCache,
                 productPriceCache, accessControlEjb);
         SapIntegrationClientImpl sapIntegrationClient = Mockito.mock(SapIntegrationClientImpl.class);
 
