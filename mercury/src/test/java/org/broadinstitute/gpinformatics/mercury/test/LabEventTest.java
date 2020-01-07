@@ -242,7 +242,7 @@ public class LabEventTest extends BaseEventTest {
     @Override
     @BeforeClass(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
-        new BettaLimsMessageResource(new WorkflowLoader().load());
+        new BettaLimsMessageResource(new WorkflowLoader().getWorkflowConfig());
         templateEngine.postConstruct();
         super.setUp();
     }

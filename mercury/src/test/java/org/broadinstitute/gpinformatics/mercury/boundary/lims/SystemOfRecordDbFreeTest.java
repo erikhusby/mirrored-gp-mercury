@@ -124,7 +124,8 @@ public class SystemOfRecordDbFreeTest extends BaseEventTest {
         // existed before that method was factored out.
         mockLabVesselDao = mock(LabVesselDao.class);
         mockBspExportService = mock(BSPExportsService.class);
-        systemOfRecord = new SystemOfRecord(mockLabVesselDao, new WorkflowLoader().load(), mockBspExportService);
+        systemOfRecord = new SystemOfRecord(mockLabVesselDao, new WorkflowLoader().getWorkflowConfig(),
+                mockBspExportService);
 
         // By default, make BSP answer that it knows about all vessels and returns that they have not been exported.
         when(mockBspExportService.findExportDestinations(anyCollectionOf(LabVessel.class))).thenAnswer(

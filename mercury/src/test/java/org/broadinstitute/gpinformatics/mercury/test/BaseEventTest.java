@@ -209,7 +209,7 @@ public class BaseEventTest {
             }
         });
         labBatchEJB.setProductOrderDao(mockProductOrderDao);
-        labBatchEJB.setWorkflowConfig(new WorkflowLoader().load());
+        labBatchEJB.setWorkflowConfig(new WorkflowLoader().getWorkflowConfig());
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
         BSPSetVolumeConcentration bspSetVolumeConcentration =  new BSPSetVolumeConcentrationStub();
@@ -1154,7 +1154,7 @@ public class BaseEventTest {
     }
 
     public static void validateWorkflow(String nextEventTypeName, List<LabVessel> labVessels) {
-        WorkflowConfig workflowConfig = new WorkflowLoader().load();
+        WorkflowConfig workflowConfig = new WorkflowLoader().getWorkflowConfig();
 
         // All messages are now routed to Mercury.
         Assert.assertEquals(SystemOfRecord.System.MERCURY, expectedRouting);
@@ -1199,7 +1199,7 @@ public class BaseEventTest {
         });
         SequencingTemplateFactory sequencingTemplateFactory = new SequencingTemplateFactory();
         sequencingTemplateFactory.setFlowcellDesignationEjb(flowcellDesignationEjb);
-        sequencingTemplateFactory.setWorkflowConfig(new WorkflowLoader().load());
+        sequencingTemplateFactory.setWorkflowConfig(new WorkflowLoader().getWorkflowConfig());
         return new ZimsIlluminaRunFactory(
                 new SampleDataFetcher() {
                     @Override

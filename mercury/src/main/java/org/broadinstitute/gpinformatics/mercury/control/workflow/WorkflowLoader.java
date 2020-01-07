@@ -5,10 +5,11 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
-import org.broadinstitute.gpinformatics.infrastructure.jmx.ExternalDataCacheControl;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
+import javax.ejb.Lock;
+import javax.ejb.LockType;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.ApplicationScoped;
@@ -19,93 +20,74 @@ import javax.xml.bind.Unmarshaller;
 import java.io.Serializable;
 
 /**
- * This class is responsible for loading and refreshing the WorkflowConfiguration from the database. For database-free
- * tests, the configuration is read from the filesystem. As WorkflowLoader extends AbstractCache, the cached
- * WorkflowConfig is periodically refreshed.
- *
- * @see ExternalDataCacheControl#invalidateCache()
+ * This class holds the most recent copy of WorkflowConfig, loaded from either the database
+ * or from a file when doing database-free tests.
  */
 @ApplicationScoped
 public class WorkflowLoader extends AbstractCache implements Serializable {
-
-    // Valid for in-container only - DBFree tests will load workflow from file system
     @Inject
     private PreferenceDao preferenceDao;
 
     @Inject
     private SessionContextUtility sessionContextUtility;
 
-    // Standalone only (DBFree tests)
-    private static WorkflowConfig workflowConfigFromFile;
-
     private WorkflowConfig workflowConfig;
 
-    public WorkflowLoader(){}
-
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
-    public WorkflowConfig load() {
-        if (workflowConfig==null){
-            refreshCache();
+    public WorkflowLoader() {
+        if (preferenceDao == null) {
+            // A null preferenceDao indicates the DB Free test environment.
+            loadFromFile();
+        } else {
+            sessionContextUtility.executeInContext(() -> loadFromPrefs());
         }
+    }
+
+    public WorkflowConfig getWorkflowConfig() {
         return workflowConfig;
     }
 
+    /**
+     * Periodically reloads the WorkflowConfig from the database. Synchronization is expected to be
+     * provided by the container since this class is annotated ApplicationScoped.
+     */
     @Override
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public void refreshCache() {
-        if ( preferenceDao == null ) {
-            // DB Free tests will load from file
-            workflowConfig = loadFromFile();
-        } else {
-            sessionContextUtility.executeInContext(new SessionContextUtility.Function() {
-                @Override
-                public void apply() {
-                    workflowConfig = loadFromPrefs();
-                }
-            });
+        if (preferenceDao != null) {
+            sessionContextUtility.executeInContext(() -> loadFromPrefs());
         }
     }
 
     /**
-     * Pull workflow configuration from preferences when running in container
+     * Pulls workflow configuration from preference xml in the database.
      */
-    private WorkflowConfig loadFromPrefs() {
-
-        if( preferenceDao == null ) {
-            throw new RuntimeException("Attempt to load preferences from DB without JavaEE container services.");
-        }
-
+    private void loadFromPrefs() {
         Preference workflowConfigPref = preferenceDao.getGlobalPreference(PreferenceType.WORKFLOW_CONFIGURATION);
-        if( workflowConfigPref == null ) {
+        if (workflowConfigPref == null) {
             throw new RuntimeException("Failed to retreive WORKFLOW_CONFIGURATION preference");
         }
-
-        WorkflowConfig config = null;
-
         try {
-            config = (WorkflowConfig) PreferenceType.WORKFLOW_CONFIGURATION.getCreator().create(workflowConfigPref.getData());
-        } catch ( RuntimeException re ){
+            workflowConfig = (WorkflowConfig) PreferenceType.WORKFLOW_CONFIGURATION.getCreator()
+                    .create(workflowConfigPref.getData());
+        } catch (RuntimeException re) {
             throw re;
-        } catch ( Exception ex ) {
+        } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
-
-        return config;
     }
 
     /**
      *  Pull workflow configuration from file when running outside a container
      */
-    private WorkflowConfig loadFromFile() {
-            try {
-                JAXBContext jc = JAXBContext.newInstance(WorkflowConfig.class, WorkflowBucketDef.class);
-                Unmarshaller unmarshaller = jc.createUnmarshaller();
-                workflowConfigFromFile = (WorkflowConfig) unmarshaller.unmarshal(
-                        Thread.currentThread().getContextClassLoader().getResourceAsStream("WorkflowConfig.xml"));
-            } catch (JAXBException e) {
-                throw new RuntimeException(e);
-            }
-        return workflowConfigFromFile;
+    private void loadFromFile() {
+        try {
+            JAXBContext jc = JAXBContext.newInstance(WorkflowConfig.class, WorkflowBucketDef.class);
+            Unmarshaller unmarshaller = jc.createUnmarshaller();
+            workflowConfig = (WorkflowConfig) unmarshaller.unmarshal(
+                    Thread.currentThread().getContextClassLoader().getResourceAsStream("WorkflowConfig.xml"));
+        } catch (JAXBException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

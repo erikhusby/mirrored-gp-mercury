@@ -113,7 +113,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
 
         super.setUp();
         factory = new SequencingTemplateFactory();
-        factory.setWorkflowConfig(new WorkflowLoader().load());
+        factory.setWorkflowConfig(new WorkflowLoader().getWorkflowConfig());
 
         // Method calls on factory will always use our list of flowcell designations.
         factory.setFlowcellDesignationEjb(new FlowcellDesignationEjb(){

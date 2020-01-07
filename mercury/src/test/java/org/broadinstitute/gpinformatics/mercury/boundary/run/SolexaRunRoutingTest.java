@@ -61,7 +61,7 @@ public class SolexaRunRoutingTest extends BaseEventTest {
     @BeforeMethod
     public void setUp() {
         super.setUp();
-        workflowConfig = new WorkflowLoader().load();
+        workflowConfig = new WorkflowLoader().getWorkflowConfig();
     }
 
     /**
