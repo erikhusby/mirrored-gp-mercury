@@ -205,8 +205,7 @@
                                 <unzip src="${project.build.directory}/CrowdJaasLoginModule.zip" dest="${env.JBOSS_HOME}/modules"/>
                                 <chmod perm="ugo+rx" dir="${env.JBOSS_HOME}" includes="*.sh"/>
 
-				// Starting in Wildfly 13 yasson replaces jackson for json binding and
-				// this resteasy json binding provider should not be used.
+				<!-- Starting in Wildfly 13 yasson replaces jackson for json binding and this resteasy json binding provider should not be used. -->
 				<delete dir="${env.JBOSS_HOME}/modules/system/layers/base/org/jboss/resteasy/resteasy-json-binding-provider/" includeemptydirs="true"/>
 
                                 <echo>
