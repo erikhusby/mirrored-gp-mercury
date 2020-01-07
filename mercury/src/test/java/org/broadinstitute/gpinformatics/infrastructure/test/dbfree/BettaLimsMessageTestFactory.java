@@ -27,6 +27,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import java.io.StringWriter;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -572,6 +573,23 @@ public class BettaLimsMessageTestFactory {
         plateTransferEvent.setPlate(flowcell);
 
         return plateTransferEvent;
+    }
+
+    /**
+     * Adds explicit receptacles to a static plate and assigns a volume to them
+     * Replaces any which are present
+     */
+    public void createTargetPlateReceptacles(PlateTransferEventType plateTransfer, BigDecimal volume) {
+        PositionMapType positionMap = new PositionMapType();
+        positionMap.setBarcode(plateTransfer.getPlate().getBarcode());
+        plateTransfer.setPositionMap(positionMap);
+        for (ReceptacleType receptacle : plateTransfer.getSourcePositionMap().getReceptacle()) {
+            ReceptacleType well = new ReceptacleType();
+            well.setPosition(receptacle.getPosition());
+            well.setReceptacleType("Well2000");
+            well.setVolume(volume);
+            positionMap.getReceptacle().add(well);
+        }
     }
 
     private void setStationEventData(String eventType, StationEventType plateTransferEvent) {

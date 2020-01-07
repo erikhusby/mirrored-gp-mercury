@@ -132,7 +132,7 @@ public class BillingCreditDbFreeTest {
 
         SapOrderDetail sapOrderDetail = new SapOrderDetail(sapOrderNumber, 1, quoteId,
             SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode());
-        sapService = new SapIntegrationServiceImpl(SapConfig.produce(Deployment.DEV), quoteService, bspUserList,
+        sapService = new SapIntegrationServiceImpl(SapConfig.produce(Deployment.DEV), bspUserList,
             priceListCache, productPriceCache, accessControlEjb);
         mockSapClient = Mockito.mock(SapIntegrationClientImpl.class);
         sapService.setWrappedClient(mockSapClient);
