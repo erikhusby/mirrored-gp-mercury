@@ -474,9 +474,9 @@ public class QueueEjb {
     }
 
     /**
-     * Excludes lab vessels by their sample ids.
+     * Excludes lab vessels by their barcodes.
      *
-     * @param excludeVessels        List of Sample Ids to exclude.
+     * @param excludeVessels        List of barcodes to exclude.
      * @param queueType             Queue To exclude them from.
      * @param messageCollection     Messages back to the user.
      */
