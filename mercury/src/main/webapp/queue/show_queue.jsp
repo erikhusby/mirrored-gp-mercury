@@ -60,29 +60,30 @@
                     <c:forEach items="${actionBean.queueGroupings}" var="queueGrouping" varStatus="status">
                         <tr>
                             <td>
-                                <c:set var="popupText" value=""/>
-                                <!-- todo jmt add Mercury storage -->
-                                <c:forEach items="${queueGrouping.bspLocations()}" var="location">
-                                    <c:set var="popupText" value="${popupText += location}"/>
-                                </c:forEach>
-                                <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean"
-                                              event="viewGrouping" title="${popupText}">
-                                    <stripes:param name="queueGroupingId" value="${queueGrouping.queueGroupingId}" />
-                                    <stripes:param name="queueType" value="${actionBean.queueType}" />
+                                <stripes:link
+                                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean"
+                                        event="viewGrouping">
+                                    <stripes:param name="queueGroupingId" value="${queueGrouping.queueGroupingId}"/>
+                                    <stripes:param name="queueType" value="${actionBean.queueType}"/>
 
                                     ${queueGrouping.queueGroupingText}
                                 </stripes:link>
-
                             </td>
                             <td>${queueGrouping.queuePriority.displayName}</td>
-                            <td>${queueGrouping.queueOrigin.displayName} <c:if test="${not empty queueGrouping.queueSpecialization}">(${queueGrouping.queueSpecialization.displayName})</c:if> </td>
+                            <td>${queueGrouping.queueOrigin.displayName} <c:if
+                                    test="${not empty queueGrouping.queueSpecialization}">(${queueGrouping.queueSpecialization.displayName})</c:if></td>
 
-                            <c:set var="removedFromQueue" value="${fn:length(queueGrouping.queuedEntities) - queueGrouping.remainingEntities}" />
-                            <c:set var="stillInQueue" value="${actionBean.remainingEntities[queueGrouping.queueGroupingId]}" />
-                            <c:set var="percentRemovedFromQueue" value="${removedFromQueue * 100 / (removedFromQueue + stillInQueue)}" />
-                            <c:set var="percentStillInQueue" value="${stillInQueue * 100 / (removedFromQueue + stillInQueue)}" />
+                            <c:set var="removedFromQueue"
+                                   value="${actionBean.totalEntitiesInQueue[queueGrouping.queueGroupingId] - actionBean.remainingEntitiesInQueue[queueGrouping.queueGroupingId]}"/>
+                            <c:set var="stillInQueue"
+                                   value="${actionBean.remainingEntitiesInQueue[queueGrouping.queueGroupingId]}"/>
+                            <c:set var="percentRemovedFromQueue"
+                                   value="${removedFromQueue * 100 / (removedFromQueue + stillInQueue)}"/>
+                            <c:set var="percentStillInQueue"
+                                   value="${stillInQueue * 100 / (removedFromQueue + stillInQueue)}"/>
 
-                            <td title="${stillInQueue} need ${actionBean.queueType.textName}, ${removedFromQueue} do not need ${actionBean.queueType.textName}" class="barFull">
+                            <td title="${stillInQueue} need ${actionBean.queueType.textName}, ${removedFromQueue} do not need ${actionBean.queueType.textName}"
+                                class="barFull">
                                 <span class="barStillInQueue" style="width:${percentStillInQueue}%"></span>
                                 <span class="barRemovedFromQueue" style="width:${percentRemovedFromQueue}%"></span>
                                 <span class="numberInQueue">${stillInQueue}</span>
@@ -109,11 +110,11 @@
                 <tfoot>
                 <tr><td colspan="5">
                         Total Vessels In Queue: ${actionBean.totalInQueue}<br />
-                        <c:forEach items="${actionBean.queuePriorities}" var="priority">
-                            <c:if test="${actionBean.entitiesInQueueByPriority[priority] > 0}">
-                                ${priority.displayName} Vessels: ${actionBean.entitiesInQueueByPriority[priority]}<br />
-                            </c:if>
-                        </c:forEach>
+                    <c:forEach items="${actionBean.queuePriorities}" var="priority">
+                        <c:if test="${actionBean.entitiesQueuedByPriority[priority] > 0}">
+                            ${priority.displayName} Vessels: ${actionBean.entitiesQueuedByPriority[priority]}<br/>
+                        </c:if>
+                    </c:forEach>
                         Total Vessels in Rework: ${actionBean.totalNeedRework}
                     </td>
                 </tr>

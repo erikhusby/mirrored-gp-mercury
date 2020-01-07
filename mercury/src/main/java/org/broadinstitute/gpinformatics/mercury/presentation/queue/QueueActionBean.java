@@ -29,6 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueuePriority;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueSpecialization;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueStatus;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -89,8 +90,9 @@ public class QueueActionBean extends CoreActionBean {
     private QueueSpecialization queueSpecialization;
     private int totalInQueue;
     private int totalNeedRework;
-    private Map<Long, Long> remainingEntities = new HashMap<>();
-    private Map<QueuePriority, Long> entitiesInQueueByPriority = new HashMap<>();
+    private Map<Long, Integer> remainingEntitiesInQueue;
+    private Map<Long, Integer> totalEntitiesInQueue;
+    private Map<QueuePriority, Integer> entitiesQueuedByPriority;
     private List<QueueGrouping> queueGroupings;
 
     /**
@@ -108,42 +110,42 @@ public class QueueActionBean extends CoreActionBean {
             return new RedirectResolution(SecurityActionBean.HOME_PAGE);
         }
 
+        remainingEntitiesInQueue = new HashMap<>();
+        totalEntitiesInQueue = new HashMap<>();
+        entitiesQueuedByPriority = new HashMap<>();
+
         queue = queueEjb.findQueueByType(queueType);
         queueGroupings = queueGroupingDao.findActiveGroupsByQueueType(queueType);
-        List<MercurySample> mercurySamples = new ArrayList<>();
         for (QueueGrouping grouping : queueGroupings) {
 
             QueuePriority queuePriority = grouping.getQueuePriority();
+            Long queueGroupingId = grouping.getQueueGroupingId();
 
             // Fill in the initial value for both remaining entities within this grouping, and for the entities by
             // priority (if it is a new priority).
-            remainingEntities.put(grouping.getQueueGroupingId(), 0L);
-            if (!entitiesInQueueByPriority.containsKey(queuePriority)) {
-                entitiesInQueueByPriority.put(queuePriority, 0L);
+            remainingEntitiesInQueue.put(queueGroupingId, 0);
+            totalEntitiesInQueue.put(queueGroupingId, 0);
+            if (!entitiesQueuedByPriority.containsKey(queuePriority)) {
+                entitiesQueuedByPriority.put(queuePriority, 0);
             }
-            // Fill in the proper numbers.
-            for (QueueEntity queueEntity : grouping.getQueuedEntities()) {
-                switch (queueEntity.getQueueStatus()) {
-                    case Repeat:
-                        totalNeedRework++;
-                    case Active:
 
-                        totalInQueue++;
-                        entitiesInQueueByPriority.put(queuePriority, entitiesInQueueByPriority.get(queuePriority) + 1);
-                        remainingEntities.put(grouping.getQueueGroupingId(),
-                                remainingEntities.get(grouping.getQueueGroupingId()) + 1);
+            Map<QueueStatus, Long> entityStatusCounts = queueGroupingDao.getEntityStatusCounts(queueGroupingId);
+
+            // Fill in the proper numbers.
+            for (Map.Entry<QueueStatus, Long> entry : entityStatusCounts.entrySet()) {
+                totalEntitiesInQueue.put(queueGroupingId, totalEntitiesInQueue.get(queueGroupingId) + entry.getValue().intValue());
+                switch (entry.getKey()) {
+                    case Repeat:
+                        totalNeedRework += entry.getValue().intValue();
+                    case Active:
+                        totalInQueue += entry.getValue().intValue();
+                        entitiesQueuedByPriority.put(queuePriority, entitiesQueuedByPriority.get(queuePriority) + entry.getValue().intValue());
+                        remainingEntitiesInQueue.put(queueGroupingId,
+                                remainingEntitiesInQueue.get(queueGroupingId) + entry.getValue().intValue());
                         break;
+                    // Completed?, Excluded?
                     default:
                 }
-                mercurySamples.addAll(queueEntity.getLabVessel().getMercurySamples());
-            }
-        }
-
-        Map<String, SampleData> mapIdToData = loadData(mercurySamples);
-        for (MercurySample mercurySample : mercurySamples) {
-            SampleData sampleData = mapIdToData.get(mercurySample.getSampleKey());
-            if (sampleData != null) {
-                mercurySample.setSampleData(sampleData);
             }
         }
 
@@ -408,16 +410,20 @@ public class QueueActionBean extends CoreActionBean {
         return totalNeedRework;
     }
 
-    public Map<Long, Long> getRemainingEntities() {
-        return remainingEntities;
+    public Map<Long, Integer> getRemainingEntitiesInQueue() {
+        return remainingEntitiesInQueue;
     }
 
     public QueuePriority[] getQueuePriorities() {
         return QueuePriority.values();
     }
 
-    public Map<QueuePriority, Long> getEntitiesInQueueByPriority() {
-        return entitiesInQueueByPriority;
+    public Map<QueuePriority, Integer> getEntitiesQueuedByPriority() {
+        return entitiesQueuedByPriority;
+    }
+
+    public Map<Long, Integer> getTotalEntitiesInQueue() {
+        return totalEntitiesInQueue;
     }
 
     public List<QueueGrouping> getQueueGroupings() {
