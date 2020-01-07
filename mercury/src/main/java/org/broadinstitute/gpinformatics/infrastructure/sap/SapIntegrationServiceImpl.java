@@ -17,8 +17,8 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.SapQuoteItemReferen
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
-import org.broadinstitute.sap.entity.DeliveryCondition;
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.OrderCriteria;
 import org.broadinstitute.sap.entity.SAPDeliveryDocument;
@@ -65,6 +65,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                     SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES);
     private SapConfig sapConfig;
 
+    private QuoteService quoteService;
+
     private BSPUserList bspUserList;
 
     private PriceListCache priceListCache;
@@ -81,12 +83,13 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @Inject
-    public SapIntegrationServiceImpl(SapConfig sapConfigIn, BSPUserList bspUserList,
+    public SapIntegrationServiceImpl(SapConfig sapConfigIn, QuoteService quoteService, BSPUserList bspUserList,
                                      PriceListCache priceListCache, SAPProductPriceCache productPriceCache,
                                      SAPAccessControlEjb accessControlEjb) {
         if(sapConfig == null) {
             this.sapConfig = sapConfigIn;
         }
+        this.quoteService = quoteService;
         this.bspUserList = bspUserList;
         this.priceListCache = priceListCache;
         this.productPriceCache = productPriceCache;
@@ -264,8 +267,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * @return JAXB representation of a Product Order
      * @throws SAPIntegrationException
      */
-    protected SAPOrder initializeSAPOrder(SapQuote sapQuote, ProductOrder placedOrder, Option serviceOptions)
-            throws SAPIntegrationException {
+    protected SAPOrder initializeSAPOrder(SapQuote sapQuote, ProductOrder placedOrder, Option serviceOptions) {
         ProductOrder orderToUpdate = placedOrder;
         String sapOrderNumber = null;
         if (!serviceOptions.hasOption(Type.CREATING)) {
@@ -283,16 +285,12 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     private List<SAPOrderItem> getOrderItems(SapQuote sapQuote, ProductOrder placedOrder, Product primaryProduct,
-                                             Option serviceOptions) throws SAPIntegrationException {
+                                             Option serviceOptions) {
         List<SAPOrderItem> orderItems = new ArrayList<>();
-        Optional<SAPOrderItem> primaryOrderItem = Optional.ofNullable(getOrderItem(sapQuote, placedOrder, primaryProduct, 0, serviceOptions));
-
-            orderItems.add(primaryOrderItem.orElseThrow(() -> new SAPIntegrationException("Unable to call to SAP for this order.")));
-            for (ProductOrderAddOn addon : placedOrder.getAddOns()) {
-                Optional<SAPOrderItem> addOnOrderItem = Optional.ofNullable(getOrderItem(sapQuote, placedOrder, addon.getAddOn(), 0, serviceOptions));
-                orderItems.add(addOnOrderItem.orElseThrow(() -> new SAPIntegrationException("Unable to call to SAP for this order.")));
-            }
-
+        orderItems.add(getOrderItem(sapQuote, placedOrder, primaryProduct, 0, serviceOptions));
+        for (ProductOrderAddOn addon : placedOrder.getAddOns()) {
+            orderItems.add(getOrderItem(sapQuote, placedOrder, addon.getAddOn(), 0, serviceOptions));
+        }
         return orderItems;
     }
 
@@ -306,8 +304,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * is expected of it.
      */
     protected SAPOrderItem getOrderItem(SapQuote sapQuote, ProductOrder placedOrder, Product product,
-                                        int additionalSampleCount, SapIntegrationService.Option serviceOptions)
-            throws SAPIntegrationException {
+                                        int additionalSampleCount, SapIntegrationService.Option serviceOptions) {
         BigDecimal sampleCount = getSampleCount(placedOrder, product, additionalSampleCount, serviceOptions);
         Set<SapQuoteItemReference> quoteReferences;
         if(serviceOptions.hasOption(Type.CLOSING)) {
@@ -315,7 +312,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 SapQuote oldQuote = findSapQuote(placedOrder.latestSapOrderDetail().getQuoteId());
                 quoteReferences = ProductOrder.createSapQuoteItemReferences(placedOrder, oldQuote);
             } catch (SAPInterfaceException | SAPIntegrationException e) {
-                throw new SAPIntegrationException("Unable to determine the quote line items to which the products are associated");
+                return null;
             }
         } else {
             quoteReferences = placedOrder.getQuoteReferences();
@@ -405,7 +402,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                         (quantityOverride == null)?new BigDecimal(quoteItemForBilling.getQuantityForSAP()):quantityOverride);
 
         if(StringUtils.equals(quoteItemForBilling.getQuotePriceType(), LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType())) {
-            lineItem.addCondition(DeliveryCondition.LATE_DELIVERY_DISCOUNT);
+            lineItem.addCondition(quoteItemForBilling.getSapReplacementCondition());
         }
 
         deliveryDocument.addDeliveryItem(lineItem);
@@ -582,7 +579,6 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
     }
 
-
     @Override
     public String creditDelivery(BillingCredit billingReturn) throws SAPIntegrationException {
         Set<SAPOrderItem> orderItems = billingReturn.getReturnLines().stream()
@@ -616,25 +612,25 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     protected OrderCriteria generateOrderCriteria(SapQuote sapQuote, ProductOrder productOrder, int addedSampleCount,
-                                                  SapIntegrationService.Option orderOption)
-            throws SAPIntegrationException {
+                                                  SapIntegrationService.Option orderOption) {
 
         final Set<SAPOrderItem> sapOrderItems = new HashSet<>();
         String sapOrderNumber=null;
         if (productOrder != null && productOrder.getProduct() != null) {
-            Optional<SAPOrderItem> orderItem = Optional.ofNullable(getOrderItem(sapQuote, productOrder, productOrder.getProduct(), addedSampleCount,
-                orderOption));
-            sapOrderItems.add(orderItem.orElseThrow(() -> new SAPIntegrationException("Unable to call to SAP for this order.")));
+            SAPOrderItem orderItem = getOrderItem(sapQuote, productOrder, productOrder.getProduct(), addedSampleCount,
+                orderOption);
+            sapOrderItems.add(orderItem);
 
             for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
-                Optional<SAPOrderItem> orderSubItem =
-                    Optional.ofNullable(getOrderItem(sapQuote, productOrder, productOrderAddOn.getAddOn(), addedSampleCount,
-                        orderOption));
-                sapOrderItems.add(orderSubItem.orElseThrow(() -> new SAPIntegrationException("Unable to call to SAP for this order.")));
+                final SAPOrderItem orderSubItem =
+                    getOrderItem(sapQuote, productOrder, productOrderAddOn.getAddOn(), addedSampleCount,
+                        orderOption);
+                sapOrderItems.add(orderSubItem);
             }
             sapOrderNumber = productOrder.getSapOrderNumber();
         }
-        return new OrderCriteria(sapOrderNumber, sapOrderItems);
+        OrderCriteria orderCriteria = new OrderCriteria(sapOrderNumber, sapOrderItems);
+        return orderCriteria;
     }
 
     /**
@@ -658,6 +654,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         return companyCode;
     }
 
+    protected void setQuoteService(QuoteService quoteService) {
+        this.quoteService = quoteService;
+    }
 
     protected void setBspUserList(BSPUserList bspUserList) {
         this.bspUserList = bspUserList;
