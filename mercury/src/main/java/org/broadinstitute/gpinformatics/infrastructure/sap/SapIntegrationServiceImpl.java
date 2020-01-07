@@ -17,7 +17,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.SapQuoteItemReferen
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.sap.entity.DeliveryCondition;
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
@@ -65,8 +64,6 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             EnumSet.of(SAPCompanyConfiguration.PRISM,SAPCompanyConfiguration.GPP,
                     SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES);
     private SapConfig sapConfig;
-
-    private QuoteService quoteService;
 
     private BSPUserList bspUserList;
 
@@ -660,9 +657,6 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         return companyCode;
     }
 
-    protected void setQuoteService(QuoteService quoteService) {
-        this.quoteService = quoteService;
-    }
 
     protected void setBspUserList(BSPUserList bspUserList) {
         this.bspUserList = bspUserList;

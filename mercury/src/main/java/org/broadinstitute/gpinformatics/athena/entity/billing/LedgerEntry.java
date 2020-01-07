@@ -109,8 +109,8 @@ public class LedgerEntry implements Serializable {
     @JoinColumn(name = "PRODUCT_ID")
     private Product product;
 
-    @Column(name = "SAP_REPLACEMENT_CONDITION")
-    private String sapReplacement;
+    @Column(name = "SAP_REPLACEMENT_PRICING")
+    private Boolean sapReplacementPricing = Boolean.FALSE;
 
     public static final Predicate<LedgerEntry> IS_SUCCESSFULLY_BILLED = LedgerEntry::isSuccessfullyBilled;
 
@@ -203,8 +203,16 @@ public class LedgerEntry implements Serializable {
         this.product = product;
     }
 
+    public Boolean getSapReplacementPricing() {
+        return sapReplacementPricing;
+    }
+
     public boolean hasSapReplacementPricing() {
-        return sapReplacement != null;
+        return sapReplacementPricing != null && sapReplacementPricing;
+    }
+
+    public void setSapReplacementPricing(Boolean sapReplacementCondition) {
+        this.sapReplacementPricing = sapReplacementCondition;
     }
 
     /**
@@ -328,14 +336,6 @@ public class LedgerEntry implements Serializable {
         this.sapReturnOrderId = sapReturnOrderId;
     }
 
-    public String getSapReplacement() {
-        return sapReplacement;
-    }
-
-    public void setSapReplacement(String sapReplacement) {
-        this.sapReplacement = sapReplacement;
-    }
-
     @Override
     public boolean equals(Object other) {
         if (this == other) {
@@ -352,9 +352,7 @@ public class LedgerEntry implements Serializable {
                 .append(priceItem, castOther.getPriceItem())
                 .append(priceItemType, castOther.getPriceItemType())
                 .append(quoteId, castOther.getQuoteId())
-                .append(billingSession, castOther.getBillingSession())
-                .append(billingSession, castOther.getSapReturnOrderId())
-                .append(sapReplacement, castOther.getSapReplacement());
+                .append(billingSession, castOther.getBillingSession());
 
         ledgerEntryEqualsBuilder.append(product, castOther.getProduct());
         return ledgerEntryEqualsBuilder.isEquals();
@@ -367,10 +365,7 @@ public class LedgerEntry implements Serializable {
                 .append(priceItem)
                 .append(priceItemType)
                 .append(quoteId)
-                .append(billingSession)
-                .append(sapReplacement)
-                .append(sapReplacement);
-
+                .append(billingSession);
         ledgerEntryHashcodeBuilder.append(product);
         return ledgerEntryHashcodeBuilder.toHashCode();
     }

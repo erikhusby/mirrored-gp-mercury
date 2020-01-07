@@ -492,7 +492,7 @@ public class BillingCreditDbFreeTest {
         samplePairMap.forEach((productOrderSample, pricItemQtyPair) ->  {
             if(productOrderSample.getProductOrder().hasSapQuote()) {
                 productOrderSample.addLedgerItem(date, productOrderSample.getProductOrder().getProduct(),
-                        pricItemQtyPair.getValue(), null);
+                        pricItemQtyPair.getValue(), false);
             } else {
                 productOrderSample.addLedgerItem(date, pricItemQtyPair.getKey().getPriceItem(), pricItemQtyPair.getValue());
             }

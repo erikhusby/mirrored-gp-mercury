@@ -86,7 +86,7 @@ public class ProductOrderSampleTest {
             billedPriceItem = new PriceItem(priceItemType.name(), "", null, priceItemType.name());
         }
         if(sample.getProductOrder().hasSapQuote()) {
-            sample.addLedgerItem(new Date(), sample.getProductOrder().getProduct(), 1, null);
+            sample.addLedgerItem(new Date(), sample.getProductOrder().getProduct(), 1, false);
         } else {
             sample.addLedgerItem(new Date(), billedPriceItem, 1);
         }
@@ -162,7 +162,7 @@ public class ProductOrderSampleTest {
         PriceItem billedPriceItem = sample.getProductOrder().getProduct().getPrimaryPriceItem();
         if(sample.getProductOrder().hasSapQuote()) {
 
-            sample.addLedgerItem(new Date(), sample.getProductOrder().getProduct(), -1, null);
+            sample.addLedgerItem(new Date(), sample.getProductOrder().getProduct(), -1, false);
         } else {
 
             sample.addLedgerItem(new Date(), billedPriceItem, -1);
@@ -198,7 +198,7 @@ public class ProductOrderSampleTest {
         PriceItem billedPriceItem = sample.getProductOrder().getProduct().getPrimaryPriceItem();
         if(sample.getProductOrder().hasSapQuote()) {
 
-            sample.addLedgerItem(new Date(), sample.getProductOrder().getProduct(), -1, null);
+            sample.addLedgerItem(new Date(), sample.getProductOrder().getProduct(), -1, false);
         } else {
             sample.addLedgerItem(new Date(), billedPriceItem, -1);
         }
@@ -256,7 +256,7 @@ public class ProductOrderSampleTest {
         LedgerEntry ledgerEntrySap = new LedgerEntry(dataSap.sample1, dataSap.product, completedDate,1);
 
         // Bill sample2.
-        dataSap.sample2.addLedgerItem(completedDate, dataSap.product, 1, null);
+        dataSap.sample2.addLedgerItem(completedDate, dataSap.product, 1, false);
         LedgerEntry ledgerSap = dataSap.sample2.getLedgerItems().iterator().next();
         ledgerSap.setBillingMessage(BillingSession.SUCCESS);
         ledgerSap.setBillingSession(new BillingSession(0L, Collections.singleton(ledgerSap)));
@@ -691,7 +691,7 @@ public class ProductOrderSampleTest {
             ledgerUpdate =
                     new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(),
                             productOrderSample.getProductOrder().getProduct(), quantityBefore, currentQuantity,
-                            quantityRequested, workCompleteDate, null);
+                            quantityRequested, workCompleteDate, false);
         } else {
             ledgerUpdate =
                     new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem,
@@ -724,7 +724,7 @@ public class ProductOrderSampleTest {
         if(productOrderSample.getProductOrder().hasSapQuote()) {
 
             productOrderSample.addLedgerItem(oldWorkCompleteDate,
-                    productOrderSample.getProductOrder().getProduct(), quantityReadyToBill, null);
+                    productOrderSample.getProductOrder().getProduct(), quantityReadyToBill, false);
         } else {
             productOrderSample.addLedgerItem(oldWorkCompleteDate, priceItem,
                     quantityReadyToBill);
@@ -741,7 +741,7 @@ public class ProductOrderSampleTest {
             ledgerUpdate =
                     new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(),
                             productOrderSample.getProductOrder().getProduct(), 1, 0, 2,
-                            new Date(), null);
+                            new Date(), false);
         } else {
             ledgerUpdate =
                     new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem, productOrderSample.getProductOrder().getProduct(), 1, 0, 2,
@@ -764,7 +764,7 @@ public class ProductOrderSampleTest {
         if(productOrderSample.getProductOrder().hasSapQuote()) {
             ledgerUpdate =
                     new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(),
-                            productOrderSample.getProductOrder().getProduct(), 0, 0, 1, null, null);
+                            productOrderSample.getProductOrder().getProduct(), 0, 0, 1, null, false);
         } else {
             ledgerUpdate =
                     new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem,
