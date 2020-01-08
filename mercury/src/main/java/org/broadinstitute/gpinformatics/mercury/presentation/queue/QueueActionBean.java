@@ -8,6 +8,7 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.SimpleMessage;
 import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -36,8 +37,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.security.SecurityActionBean;
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import javax.inject.Inject;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -60,6 +65,7 @@ public class QueueActionBean extends CoreActionBean {
     private GenericQueue queue;
 
     private Long queueGroupingId;
+    private String newGroupName;
     private Integer positionToMoveTo;
     private String excludeVessels;
     private String enqueueSampleIds;
@@ -191,10 +197,52 @@ public class QueueActionBean extends CoreActionBean {
     }
 
     private BSPSampleSearchColumn[] getSearchColumns() {
-        return new BSPSampleSearchColumn[] {
+        return new BSPSampleSearchColumn[]{
                 BSPSampleSearchColumn.COLLECTION,
                 BSPSampleSearchColumn.LOCATION
         };
+    }
+
+    /**
+     * Rename a grouping - AJAX call!
+     */
+    @HandlesEvent("renameGroup")
+    public Resolution renameGroup() throws JSONException {
+        final JSONObject resultJson = new JSONObject();
+        final StringBuilder errors = new StringBuilder();
+        if (queueGroupingId == null) {
+            errors.append("Queue Grouping not specified");
+        } else if (StringUtils.isEmpty(newGroupName)) {
+            errors.append("New group name not supplied.");
+        } else {
+            try {
+                queueGroupingDao.renameGrouping(queueGroupingId, newGroupName);
+            } catch (Exception e) {
+                // Wrapped in an EJBException
+                if (!(e.getCause() instanceof IllegalArgumentException)) {
+                    errors.append("Unexpected error:  ").append(e.getMessage());
+                    log.error("Failure renaming queue group", e);
+                } else {
+                    errors.append(e.getCause().getMessage());
+                }
+            }
+        }
+
+        if (errors.length() > 0) {
+            resultJson.put("errors", new String[]{errors.toString()});
+        } else {
+            resultJson.put("newGroupName", newGroupName);
+        }
+
+        return new StreamingResolution("text/json") {
+            @Override
+            public void stream(HttpServletResponse response) throws Exception {
+                ServletOutputStream out = response.getOutputStream();
+                out.write(resultJson.toString().getBytes());
+                out.close();
+            }
+        };
+
     }
 
     /**
@@ -324,6 +372,10 @@ public class QueueActionBean extends CoreActionBean {
 
     public void setQueueGroupingId(Long queueGroupingId) {
         this.queueGroupingId = queueGroupingId;
+    }
+
+    public void setNewGroupName(String newGroupName) {
+        this.newGroupName = newGroupName.trim();
     }
 
     public QueueGrouping getQueueGrouping() {

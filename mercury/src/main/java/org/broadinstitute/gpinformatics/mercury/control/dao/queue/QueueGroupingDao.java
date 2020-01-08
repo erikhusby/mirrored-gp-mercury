@@ -28,7 +28,6 @@ import java.util.Map;
  * Data Access Object for QueueGroupings.
  */
 @Stateful
-@TransactionAttribute( TransactionAttributeType.SUPPORTS)
 @RequestScoped
 public class QueueGroupingDao extends GenericDao {
 
@@ -68,6 +67,34 @@ public class QueueGroupingDao extends GenericDao {
         }
 
         return entitiesInQueueByPriority;
+    }
+
+    /**
+     * Rename queue grouping
+     */
+    @TransactionAttribute(value = TransactionAttributeType.REQUIRED)
+    public void renameGrouping(Long queueGroupingId, String newName) throws IllegalArgumentException {
+        CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
+        CriteriaQuery qry = criteriaBuilder.createQuery();
+        Root<QueueGrouping> root = qry.from(QueueGrouping.class);
+        qry.select(root.get(QueueGrouping_.queueGroupingId));
+        qry.where(criteriaBuilder.equal(root.get(QueueGrouping_.queueGroupingText), newName));
+        List<Object> results = getEntityManager().createQuery(qry).getResultList();
+        if (results.size() > 0) {
+            throw new IllegalArgumentException("Queue grouping name already exists.");
+        }
+
+        List<QueueGrouping> groups = findAll(QueueGrouping.class, (criteriaQuery, groupRoot) -> {
+            criteriaQuery.where(
+                    criteriaBuilder.equal(groupRoot.get(QueueGrouping_.queueGroupingId), queueGroupingId));
+        });
+
+        if (groups.size() == 0) {
+            throw new IllegalArgumentException("No grouping with ID " + queueGroupingId + " exists.");
+        }
+
+        groups.get(0).setQueueGroupingText(newName);
+        flush();
     }
 
 }
