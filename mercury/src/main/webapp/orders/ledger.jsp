@@ -234,6 +234,12 @@
                     {'bVisible': false},
                     {'bSortable': true, 'sSortDataType': 'input-value', 'sType': 'numeric'}, // ${10 + status.index}: ${billingIndex.name}
                     </c:forEach>
+                    <c:if test="${actionBean.productOrder.hasSapQuote()}">
+                        <c:forEach items="${actionBean.potentialSapReplacements.keySet()}" var="sapReplacements">
+                    {'bVisible': false},
+                    {'bSortable': true, 'sSortDataType': 'input-value', 'sType': 'numeric'}, // ${10 + sapReplacements.productId}: ${sapReplacements.productName}
+                        </c:forEach>
+                    </c:if>
 
                     {'bSortable': true, 'sType': 'title-string'}    // billed
                 ],
@@ -960,11 +966,12 @@
         <table id="ledger" class="table simple" style="display: none">
         <thead>
             <tr>
-                <th colspan="4"></th>
+                <th colspan="4" id="adminStuff"></th>
                 <th colspan="5" style="text-align: center">Sample Information</th>
-                <th colspan="${actionBean.potentialBillings.size() * 2 + 2}" style="text-align: center">Billing</th>
+<%--                <th colspan="${(actionBean.potentialBillings.size() * 2) + 2}" style="text-align: center">Billing</th>--%>
+                <th colspan="${actionBean.potentialBillings.size() * 2 + 2 + actionBean.potentialReplacementCount}" style="text-align: center">Billing</th>
             </tr>
-            <c:>
+            <tr>
                 <th>
                     <input id="checkAllSamples" for="count" type="checkbox" class="checkAll"/>
                     <span id="count" class="checkedCount"></span>
@@ -982,11 +989,11 @@
                     <th>Original value for ${billingIndex.ledgerDisplay}</th>
                     <th style="text-align: center">${billingIndex.ledgerDisplay}</th>
                 </c:forEach>
-                <c:when test="${actionBean.productOrder.hasSapQuote()}">
-                    <c:forEach items="${actionBean.potentialSapReplacements}" var="sapReplacements">
-                        <th>Replacement ${sapReplacements.value.conditionName} for ${sapReplacements.key.displayName}</th>
+                <c:if test="${actionBean.productOrder.hasSapQuote()}">
+                    <c:forEach items="${actionBean.potentialSapReplacements.keySet()}" var="sapReplacements">
+                        <th>Replacement pricing for ${sapReplacements.displayName}</th>
                     </c:forEach>
-                </c:when>
+                </c:if>
                 <th style="text-align: center">Billed</th>
             </tr>
         </thead>
@@ -1098,10 +1105,16 @@
                         </td>
                     </c:forEach>
                     <c:if test="${actionBean.productOrder.hasSapQuote()}">
-                        <c:forEach items="${actionBean.potentialSapReplacements}" var="sapReplacements">
-
-                            <input type="checkbox" name="ledgerData[${info.sample.samplePosition}].primaryReplacement[${sapReplacements.key.productId}]"
-                                   value="${sapReplacements.value.conditionName}" data-rownum = "${info.sample.samplePosition}"/>
+                        <c:forEach items="${actionBean.potentialSapReplacements}" var="sapReplacement">
+                            <td style="text-align: center">
+                                <select name="ledgerData[${info.sample.samplePosition}].sapReplacement[${sapReplacement.key.productId}]"
+                                       data-rownum="${info.sample.samplePosition}">
+                                    <option value="">Select one if replacing price</option>
+                                    <c:forEach items="${sapReplacement.value}" var="deliveryConditions">
+                                        <option value="${deliveryConditions.conditionName}"> ${deliveryConditions.displayName}</option>
+                                    </c:forEach>
+                                </select>
+                            </td>
                         </c:forEach>
                     </c:if>
 

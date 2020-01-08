@@ -19,6 +19,7 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.ValidationError;
 import net.sourceforge.stripes.validation.ValidationErrors;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -57,6 +58,7 @@ import org.json.JSONException;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletResponse;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -176,7 +178,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
     boolean redirectOnSuccess=false;
     private List<Product> products;
 
-    private Map<Product, DeliveryCondition> potentialSapReplacements = new HashMap<>();
+    private Map<Product, List<DeliveryCondition>> potentialSapReplacements = new HashMap<>();
 
     /**
      * Load the product order, price items, sample data, and various other information based on the orderId parameter.
@@ -353,10 +355,17 @@ public class BillingLedgerActionBean extends CoreActionBean {
     }
 
     private void addPotentialSapReplacement(String salesOrg, Product primaryProduct) {
+        Product.setMaterialOnProduct(primaryProduct, productPriceCache);
         Optional<SAPMaterial> sapMaterial = Optional.ofNullable(primaryProduct.getSapMaterials().get(salesOrg));
         sapMaterial.ifPresent(material -> {
-            material.getPossibleDeliveryConditions().keySet().forEach(deliveryCondition -> {
-                potentialSapReplacements.put(primaryProduct, deliveryCondition);
+            material.getPossibleDeliveryConditions().entrySet().stream()
+                    .filter(deliveryConditionBigDecimalEntry ->
+                            deliveryConditionBigDecimalEntry.getValue().compareTo(BigDecimal.ZERO) != 0)
+                    .forEach(deliveryConditionEntry -> {
+                if(!potentialSapReplacements.containsKey(primaryProduct)) {
+                    potentialSapReplacements.put(primaryProduct, new ArrayList<>());
+                }
+                potentialSapReplacements.get(primaryProduct).add(deliveryConditionEntry.getKey());
             });
         });
     }
@@ -560,6 +569,19 @@ public class BillingLedgerActionBean extends CoreActionBean {
     public List<ProductLedgerIndex> getPotentialBillings() {
         return potentialBillings;
     }
+    public int getPotentialReplacementCount() {
+        int value = 0;
+
+        if(CollectionUtils.isNotEmpty(potentialBillings)) {
+            value += potentialBillings.size();
+        }
+
+        if(CollectionUtils.isNotEmpty(potentialSapReplacements.keySet())) {
+            value += potentialSapReplacements.keySet().size();
+        }
+
+        return value;
+    }
 
     public List<String> getRenderedPriceItemNames() {
         return renderedPriceItemNames;
@@ -623,7 +645,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
         this.products = products;
     }
 
-    public Map<Product, DeliveryCondition> getPotentialSapReplacements() {
+    public Map<Product, List<DeliveryCondition>> getPotentialSapReplacements() {
         return potentialSapReplacements;
     }
 

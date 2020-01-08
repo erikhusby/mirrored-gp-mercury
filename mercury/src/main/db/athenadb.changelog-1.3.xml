@@ -106,4 +106,10 @@
             <column name="REV"/>
         </createIndex>
     </changeSet>
+
+    <changeSet id="GPLIM-6779-sap-ledger-replacement" author="scottmat">
+        <addColumn tableName="BILLING_LEDGER" schemaName="ATHENA">
+            <column name="SAP_REPLACEMENT_CONDITION" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
