@@ -55,7 +55,7 @@
                 max-height: 18px;
                 padding: 0;
                 margin-left: 12px;
-                border-width: 0px;
+                border-width: 0;
                 background-repeat: no-repeat;
                 background-position: -64px -112px;
                 background-image: url('/Mercury/images/ui-icons_2e83ff_256x240.png');
@@ -108,9 +108,11 @@
                     doRename();
                 });
 
+                $j(".edit-cell").tooltip();
+
             });
 
-            var editGroupName = function (src) {
+            let editGroupName = function (src) {
                 let groupId = src.data("queueGroupingId");
                 // The link text
                 $j("#dialogRename").data("linkToUpdate", src.prev());
@@ -118,7 +120,7 @@
                 $j("#dialogRename").dialog("open");
             };
 
-            var doRename = function () {
+            let doRename = function () {
                 let formData = new FormData();
                 formData.append("newGroupName", $j("#txtNewGroupName").val());
                 formData.append("queueGroupingId", $j("#txtRenameGroupingId").val());
@@ -138,7 +140,7 @@
                             $j("#dialogRename").dialog("close");
                         }
                     },
-                    error: function (results) {
+                    error: function () {
                         $j("#dialogRenameError").text("A server error occurred");
                     },
                     cache: false,
@@ -171,7 +173,8 @@
 
                                 ${queueGrouping.queueGroupingText}
                             </stripes:link>
-                            <div class="edit-cell" data-queue-grouping-id="${queueGrouping.queueGroupingId}"
+                            <div class="edit-cell" title="Rename Grouping"
+                                 data-queue-grouping-id="${queueGrouping.queueGroupingId}"
                                  onclick="editGroupName($j(this));"></div>
                         </td>
                         <td>${queueGrouping.queuePriority.displayName}</td>
