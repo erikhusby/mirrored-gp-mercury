@@ -427,7 +427,10 @@ public class MercurySample extends AbstractSample {
         if (receiptEvent != null) {
             return receiptEvent.getEventDate();
         }
-        return null;
+        return metadata.stream().
+                filter(item -> item.getKey() == Metadata.Key.RECEIPT_DATE && item.getDateValue() != null).
+                map(item -> item.getDateValue()).
+                findFirst().orElse(null);
     }
 
     public LabEvent getReceiptEvent() {

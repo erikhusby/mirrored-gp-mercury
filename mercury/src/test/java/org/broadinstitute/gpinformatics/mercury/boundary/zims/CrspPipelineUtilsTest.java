@@ -4,7 +4,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -40,7 +39,7 @@ public class CrspPipelineUtilsTest {
 
     private ProductOrderSample nonCrspSampleWithBSPMetadata;
 
-    private CrspPipelineUtils crspPipelineAPIUtils = new CrspPipelineUtils(Deployment.DEV);
+    private CrspPipelineUtils crspPipelineAPIUtils = new CrspPipelineUtils();
 
     private SampleData sampleDataWithNonBspSample = new MercurySampleData("Not from BSP", Collections.<Metadata>emptySet());
 
@@ -132,15 +131,6 @@ public class CrspPipelineUtilsTest {
                             crspPipelineAPIUtils.getCrspLSIDForBSPSampleId("SM-5FGZM"));
     }
 
-    public void testSetFieldsForCrspThrowsExceptionForNonBspSampleInProduction() {
-        try {
-            new CrspPipelineUtils(Deployment.PROD).setFieldsForCrsp(new LibraryBean(), sampleDataWithNonBspSample,
-                    "bait");
-            Assert.fail("Should have thrown an exception because " + sampleDataWithNonBspSample.getSampleId() + " is not a bsp sample");
-        }
-        catch(RuntimeException ignored){}
-    }
-
     public void testSetFieldsSetsTestTypeToSomatic() {
         LibraryBean libraryBean = new LibraryBean();
         SampleData sampleData = new MercurySampleData("sampleId", Collections.<Metadata>emptySet());
@@ -151,12 +141,12 @@ public class CrspPipelineUtilsTest {
     }
 
     public void testSetFieldsForCrspDoesNotThrowExceptionForNonBspSampleInDevelopment() {
-        new CrspPipelineUtils(Deployment.DEV).setFieldsForCrsp(new LibraryBean(), sampleDataWithNonBspSample, "bait");
+        new CrspPipelineUtils().setFieldsForCrsp(new LibraryBean(), sampleDataWithNonBspSample, "bait");
     }
 
     public void testBuickCollectionAndVisitDateFields() {
         LibraryBean libraryBean = new LibraryBean();
-        new CrspPipelineUtils(Deployment.DEV).setFieldsForCrsp(libraryBean, crspSample.getSampleData(), "bait");
+        new CrspPipelineUtils().setFieldsForCrsp(libraryBean, crspSample.getSampleData(), "bait");
 
         Assert.assertEquals(libraryBean.getBuickVisit(),BUICK_VISIT);
         Assert.assertEquals(libraryBean.getBuickCollectionDate(),BUICK_COLLECTION_DATE);

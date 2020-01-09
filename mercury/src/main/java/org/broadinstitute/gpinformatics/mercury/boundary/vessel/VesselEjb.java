@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.DecisionType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryBeansType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryQuantBeanType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryQuantRunBean;
@@ -33,6 +34,7 @@ import org.broadinstitute.gpinformatics.mercury.control.sample.SampleVesselProce
 import org.broadinstitute.gpinformatics.mercury.control.vessel.CaliperPlateProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.GeminiPlateProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.LunaticPlateProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanPlateProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanPlateProcessorTwoCurve;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanPlatingProcessor;
@@ -328,7 +330,7 @@ public class VesselEjb {
                labEventType != LabEventType.PICO_MICROFLUOR_TRANSFER;
     }
 
-    public Triple<LabMetricRun, List<Result>, Map<String, String>>  createGeminiRun(InputStream inputStream,
+    public Triple<LabMetricRun, List<Result>, Map<String, String>> createGeminiRun(InputStream inputStream,
             String filename, LabMetric.MetricType metricType, Long decidingUser,
             MessageCollection messageCollection, boolean acceptRePico) {
         Triple<LabMetricRun, List<Result>, Map<String, String>> triple = null;
@@ -375,8 +377,9 @@ public class VesselEjb {
             // Nexomes are from Plate Wells not Tubes.
             boolean isNexomeStylePico = checkIfNexomeStylePico(microfluorPlates);
             if (isNexomeStylePico) {
-                LabMetricRun labMetricRun = createNexomeStylePicoRun(runInfo.getRunName(), runInfo.getRunStart(), metricType, decidingUser,
-                        plateWellResults, mapBarcodeToPlate, messageCollection);
+                LabMetricRun labMetricRun =
+                        createNexomeStylePicoRun(runInfo.getRunName(), runInfo.getRunStart(), metricType, decidingUser,
+                                plateWellResults, mapBarcodeToPlate, messageCollection);
                 if (messageCollection.hasErrors()) {
                     ejbContext.setRollbackOnly();
                 } else {
@@ -388,7 +391,8 @@ public class VesselEjb {
             }
 
             Map<Result, String> mapResultToBarcode = microfluorPlates.stream()
-                    .collect(Collectors.toMap(StaticPlate::nearestFormationAndTubePositionByWell, StaticPlate::getLabel));
+                    .collect(Collectors
+                            .toMap(StaticPlate::nearestFormationAndTubePositionByWell, StaticPlate::getLabel));
 
             Map<String, Result> mapBarcodeToTraverserResult = mapResultToBarcode.entrySet().stream()
                     .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
@@ -400,7 +404,7 @@ public class VesselEjb {
             boolean isDuplicatePico = uniqueTubeformations.size() == 1 && mapBarcodeToPlate.size() == 2;
 
             List<Result> traverserResults = new ArrayList<>(mapResultToBarcode.keySet());
-            traverserResults.forEach( (r) -> validateTraverserResult(
+            traverserResults.forEach((r) -> validateTraverserResult(
                     r, messageCollection, mapResultToBarcode.get(r), acceptRePico, metricType));
 
             if (messageCollection.hasErrors()) {
@@ -410,8 +414,8 @@ public class VesselEjb {
             // Filter out any plate well results that don't have an ancestor tube
             Set<String> tubeBarcodes = new HashSet<>();
             List<VarioskanPlateProcessor.PlateWellResult> filteredResults = new ArrayList<>();
-            for (Map.Entry<String, Result> entry: mapBarcodeToTraverserResult.entrySet()) {
-                for (VarioskanPlateProcessor.PlateWellResult plateWellResult: plateWellResults) {
+            for (Map.Entry<String, Result> entry : mapBarcodeToTraverserResult.entrySet()) {
+                for (VarioskanPlateProcessor.PlateWellResult plateWellResult : plateWellResults) {
                     if (plateWellResult.getPlateBarcode().equals(entry.getKey())) {
                         VesselPosition srcPos =
                                 entry.getValue().getWellToTubePosition().get(plateWellResult.getVesselPosition());
@@ -435,7 +439,7 @@ public class VesselEjb {
                 createVarioskanRunMultiCurveDaoFree(run, runInfo.getRunStart(), metricType,
                         filteredResults, mapBarcodeToPlate, decidingUser, messageCollection,
                         mapBarcodeToTraverserResult, percentDiff, false);
-            } else  {
+            } else {
                 run = new LabMetricRun(runInfo.getRunName(), runInfo.getRunStart(), metricType);
                 createVarioskanRunDaoFree(run, runInfo.getRunStart(), metricType, filteredResults, mapBarcodeToPlate,
                         decidingUser, messageCollection, mapBarcodeToTraverserResult, false);
@@ -460,11 +464,101 @@ public class VesselEjb {
         return triple;
     }
 
-    private LabMetricRun createNexomeStylePicoRun(String runName, Date runDate,
-                                                                                          LabMetric.MetricType metricType,
-                                                                                          long decidingUser,
-                                                                                          List<VarioskanPlateProcessor.PlateWellResult> plateWellResults,
-                                                                                          Map<String, StaticPlate> mapBarcodeToPlate, MessageCollection messageCollection) {
+    public Triple<LabMetricRun, List<Result>, Map<String, String>> createLunaticRun(InputStream inputStream,
+            String filename, LabMetric.MetricType metricType, Long decidingUser,
+            MessageCollection messageCollection, boolean acceptRePico) {
+
+        String runName;
+        Date runDate;
+        List<VarioskanPlateProcessor.PlateWellResult> reads;
+        try {
+            Workbook workbook = WorkbookFactory.create(inputStream);
+            Triple<String, Date, List<VarioskanPlateProcessor.PlateWellResult>> triple = LunaticPlateProcessor.parse(
+                    workbook, filename);
+            runName = triple.getLeft();
+            runDate = triple.getMiddle();
+            reads = triple.getRight();
+
+        } catch (IOException | InvalidFormatException | ValidationException e) {
+            messageCollection.addError(e.toString());
+            return null;
+        }
+
+        if (reads.isEmpty()) {
+            messageCollection.addError("No reads found.");
+            return null;
+        }
+        // Run name and date must be unique.
+        validateRunNameAndDate(runName, runDate, messageCollection);
+        if (messageCollection.hasErrors()) {
+            return null;
+        }
+
+        Map<String, StaticPlate> mapBarcodeToPlate = findPlatesFromResults(reads, messageCollection);
+        if (messageCollection.hasErrors()) {
+            return null;
+        }
+        Set<StaticPlate> lunaticPlates = new HashSet<>(mapBarcodeToPlate.values());
+
+        List<Result> traverserResults = null;
+        Map<String, String> tubeToQuant = null;
+        LabMetricRun run = null;
+        if (checkIfNexomeStylePico(lunaticPlates)) {
+            // Quant source was a plate.
+            run = createNexomeStylePicoRun(runName, runDate, metricType, decidingUser, reads,
+                    mapBarcodeToPlate, messageCollection);
+        } else {
+            // Quant source was a rack of tubes.
+            Map<Result, String> mapResultToBarcode = lunaticPlates.stream().
+                    collect(Collectors.toMap(StaticPlate::nearestFormationAndTubePositionByWell,
+                            StaticPlate::getLabel));
+            Map<String, Result> mapBarcodeToTraverserResult = mapResultToBarcode.entrySet().stream().
+                    collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
+            traverserResults = new ArrayList<>(mapResultToBarcode.keySet());
+            traverserResults.forEach((r) -> validateTraverserResult(r, messageCollection,
+                    mapResultToBarcode.get(r), acceptRePico, metricType));
+            if (messageCollection.hasErrors()) {
+                return null;
+            }
+
+            // Filter out any plate well results that don't have an ancestor tube
+            Set<String> tubeBarcodes = new HashSet<>();
+            List<VarioskanPlateProcessor.PlateWellResult> filteredResults = new ArrayList<>();
+            for (Map.Entry<String, Result> entry : mapBarcodeToTraverserResult.entrySet()) {
+                for (VarioskanPlateProcessor.PlateWellResult plateWellResult : reads) {
+                    if (plateWellResult.getPlateBarcode().equals(entry.getKey())) {
+                        VesselPosition srcPos = entry.getValue().getWellToTubePosition().
+                                get(plateWellResult.getVesselPosition());
+                        BarcodedTube tube = entry.getValue().getTubeFormation().getContainerRole().
+                                getVesselAtPosition(srcPos);
+                        if (tube != null) {
+                            filteredResults.add(plateWellResult);
+                            tubeBarcodes.add(tube.getLabel());
+                        }
+                    }
+                }
+            }
+            run = new LabMetricRun(runName, runDate, metricType);
+            createVarioskanRunDaoFree(run, runDate, metricType, filteredResults, mapBarcodeToPlate,
+                    decidingUser, messageCollection, mapBarcodeToTraverserResult, false);
+
+            tubeToQuant = run.getLabMetrics().stream().
+                    filter(labMetric -> tubeBarcodes.contains(labMetric.getLabVessel().getLabel())).
+                    collect(Collectors.toMap(labMetric -> labMetric.getLabVessel().getLabel(),
+                            labMetric -> labMetric.getValue().toPlainString()));
+        }
+        if (messageCollection.hasErrors()) {
+            ejbContext.setRollbackOnly();
+        } else {
+            labMetricRunDao.persist(run);
+            quantificationEjb.updateRisk(run.getLabMetrics(), metricType, messageCollection);
+        }
+        return Triple.of(run, traverserResults, tubeToQuant);
+    }
+
+    private LabMetricRun createNexomeStylePicoRun(String runName, Date runDate, LabMetric.MetricType metricType,
+            long decidingUser, List<VarioskanPlateProcessor.PlateWellResult> plateWellResults,
+            Map<String, StaticPlate> mapBarcodeToPlate, MessageCollection messageCollection) {
         Map<String, Set<LabVessel.VesselEvent>> mapPlateToVesselEvent = new HashMap<>();
         for (StaticPlate staticPlate: mapBarcodeToPlate.values()) {
             for (VesselPosition vesselPosition : staticPlate.getVesselGeometry().getVesselPositions()) {
@@ -1521,7 +1615,7 @@ public class VesselEjb {
     }
 
     public LabMetricRun createLibraryQuantsFromRunBean(LibraryQuantRunBean libraryQuantRun,
-                                                       MessageCollection messageCollection) {
+                                                       MessageCollection messageCollection, Long userId) {
         LabMetricRun labMetricRun = labMetricRunDao.findByName(libraryQuantRun.getRunName());
         if (labMetricRun != null) {
             messageCollection.addError("This run has been uploaded previously.");
@@ -1541,7 +1635,7 @@ public class VesselEjb {
                 LabMetric.MetricType metricType = LabMetric.MetricType.getByDisplayName(libraryQuantRun.getQuantType());
                 labMetricRun =
                         createLibraryQuantsFromRunBeanDaoFree(mapBarcodeToVessel, mapBarcodeToLibraryBean, metricType,
-                                messageCollection, libraryQuantRun);
+                                messageCollection, libraryQuantRun, userId);
                 if (messageCollection.hasErrors()) {
                     ejbContext.setRollbackOnly();
                 } else {
@@ -1558,7 +1652,8 @@ public class VesselEjb {
                                                                Map<String, LibraryQuantBeanType> mapBarcodeToLibraryBean,
                                                                LabMetric.MetricType metricType,
                                                                MessageCollection messageCollection,
-                                                               LibraryQuantRunBean libraryQuantRun) {
+                                                               LibraryQuantRunBean libraryQuantRun,
+                                                               Long userId) {
         LabMetricRun labMetricRun =
                 new LabMetricRun(libraryQuantRun.getRunName(), libraryQuantRun.getRunDate(), metricType);
         for (Map.Entry<String, LibraryQuantBeanType> barcodeAndQuant : mapBarcodeToLibraryBean.entrySet()) {
@@ -1570,6 +1665,7 @@ public class VesselEjb {
                 messageCollection.addError("Failed to find position " + libraryBeans.getRackPositionName());
                 continue;
             }
+
 
             LabMetric labMetric = new LabMetric(libraryBeans.getValue(), metricType,
                     metricType.getLabUnit(), libraryBeans.getRackPositionName(), libraryQuantRun.getRunDate());
@@ -1583,6 +1679,22 @@ public class VesselEjb {
                     throw new RuntimeException("Failed to find metadata " + metricMetadataType.getName());
                 }
             }
+
+            DecisionType decisionType = libraryBeans.getDecision();
+            if (decisionType != null) {
+                if (decisionType.getName() == null) {
+                    throw new RuntimeException("Decision name not specified");
+                }
+                LabMetricDecision.Decision decision = LabMetricDecision.Decision.getDecisionByName(decisionType.getName());
+                if (decision == null) {
+                    throw new RuntimeException("Failed to find decision with name " + decisionType.getName());
+                }
+
+                LabMetricDecision labMetricDecision = new LabMetricDecision(decision, libraryQuantRun.getRunDate(),
+                        userId, labMetric, decisionType.getNote());
+                labMetric.setLabMetricDecision(labMetricDecision);
+            }
+
             labVessel.addMetric(labMetric);
         }
         return labMetricRun;
@@ -1687,4 +1799,7 @@ public class VesselEjb {
         workbook.write(new FileOutputStream(tempFile));
         return new FileInputStream(tempFile);
     }
+
+
+
 }

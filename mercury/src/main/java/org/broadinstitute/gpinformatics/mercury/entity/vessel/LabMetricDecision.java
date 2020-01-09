@@ -14,8 +14,10 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -35,9 +37,12 @@ public class LabMetricDecision {
         TEN_PERCENT_DIFF_REPEAT(true),
         FAIL(true),
         RISK(true),
-        NORM(true);
+        NORM(true),
+        DIVERTED_TO_XL20(false);
 
         private boolean editable;
+
+        private static Map<String, Decision> MAP_NAME_TO_DECISION = new HashMap<>();
 
         Decision(boolean editable) {
             this.editable = editable;
@@ -54,10 +59,18 @@ public class LabMetricDecision {
                     editableDecisions.add(decision);
                 }
             }
+
+            for (Decision decision: Decision.values()) {
+                MAP_NAME_TO_DECISION.put(decision.name(), decision);
+            }
         }
 
         public static List<Decision> getEditableDecisions() {
             return editableDecisions;
+        }
+
+        public static Decision getDecisionByName(String name) {
+            return MAP_NAME_TO_DECISION.get(name);
         }
     }
 
@@ -110,7 +123,7 @@ public class LabMetricDecision {
 
     public LabMetricDecision(Decision decision, Date decidedDate, Long deciderUserId,
             LabMetric labMetric, @Nullable String note) {
-        this(decision, decidedDate, deciderUserId, labMetric, null, NeedsReview.FALSE);
+        this(decision, decidedDate, deciderUserId, labMetric, note, NeedsReview.FALSE);
     }
 
     public LabMetricDecision(Decision decision, Date decidedDate, Long deciderUserId,
