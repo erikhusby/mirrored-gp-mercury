@@ -85,8 +85,6 @@
                 <constraints nullable="false" />
             </column>
         </createTable>
-        <addPrimaryKey constraintName="pk_vc_run_metric" tableName="vc_run_metrics"
-                       columnNames="VC_RUN_METRIC_ID"/>
         <createSequence schemaName="mercurydw" sequenceName="SEQ_VC_RUN_METRIC" incrementBy="50"/>
     </changeSet>
 
@@ -192,8 +190,6 @@
                 <constraints nullable="false" />
             </column>
         </createTable>
-        <addPrimaryKey constraintName="pk_mapping_run_metric_id" tableName="mapping_run_metrics"
-                       columnNames="mapping_run_metric_id"/>
         <createSequence schemaName="mercurydw" sequenceName="SEQ_MAP_RUN_METRIC" incrementBy="50"/>
     </changeSet>
 

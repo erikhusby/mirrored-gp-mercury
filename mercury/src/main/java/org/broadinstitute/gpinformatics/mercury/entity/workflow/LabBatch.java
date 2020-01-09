@@ -557,6 +557,7 @@ public class LabBatch {
         RISK_CATEGORIZED_SAMPLES("Risk Categorized Samples", true),
         REWORK_SAMPLES("Rework Samples",true),
         PLATE_MAP_UDS("Plate Map UDS",true),
+        TOP_OFFS("Topoffs?",true),
 
         ISSUE_TYPE_MAP("Issue Type", false),
         ISSUE_TYPE_NAME("name", false),

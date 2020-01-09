@@ -128,7 +128,8 @@ public class SampleSheetBuilder {
 
     public static Pair<MercurySample, SampleInstanceV2> findExportedSample(MercurySample sample, SampleInstanceV2 sampleInstance) {
         ProductOrderSample productOrderSample = sampleInstance.getSingleProductOrderSample();
-        if (sampleInstance.getRootOrEarliestMercurySample().equals(sample) || productOrderSample.getMercurySample().equals(sample)) {
+        if (productOrderSample != null &&
+            (sampleInstance.getRootOrEarliestMercurySample().equals(sample) || productOrderSample.getMercurySample().equals(sample))) {
             LabBatchStartingVessel importLbsv =
                     sampleInstance.getSingleBatchVessel(LabBatch.LabBatchType.SAMPLES_IMPORT);
             if (importLbsv != null) {

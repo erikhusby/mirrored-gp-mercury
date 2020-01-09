@@ -291,7 +291,7 @@ dragen:
       dragenPath: /opt/edico/bin/
       slurmHost: login04
       referenceFileServer: helium
-      aggregationFilepath: /seq/dragen/aggregation/
+      aggregationFilepath: /seq/dragen/dev/aggregation/
       intermediateResults: /local/scratch
       gsBucket: gs://broad-gplims-dev
       prologScriptFolder: /seq/techdev/software/infrastructure/wildfly
@@ -301,7 +301,7 @@ dragen:
       dragenPath: /opt/edico/bin/
       slurmHost: login04
       referenceFileServer: helium
-      aggregationFilepath: /seq/dragen/aggregation/
+      aggregationFilepath: /seq/dragen/qa/aggregation/
       intermediateResults: /local/scratch
       gsBucket: gs://broad-gplims-dev
       prologScriptFolder: /seq/techdev/software/infrastructure/wildfly

@@ -127,14 +127,12 @@ public class AlignmentStatsParser {
         for (SummaryFields summaryFields: SummaryFields.values()) {
             if (mapSummaryToValue.containsKey(summaryFields)) {
                 summaryResults.add(mapSummaryToValue.get(summaryFields));
-                System.out.println(summaryFields.getRecordType() + "-" + mapSummaryToValue.get(summaryFields));
             }
         }
 
         for (CoverageFields coverageFields: CoverageFields.values()) {
             if (mapCovToValue.containsKey(coverageFields)) {
                 summaryResults.add(mapCovToValue.get(coverageFields));
-                System.out.println(coverageFields.getRecordType() + "-" + mapCovToValue.get(coverageFields));
             }
         }
         summaryResults.add(predictedSexChromosome);

@@ -33,7 +33,7 @@ public abstract class AbstractMetricsTaskHandler extends AbstractTaskHandler {
     protected ProcessResult uploadMetric(String ctlFilePath, File dataPath, String loadLog)
             throws IOException, TimeoutException, InterruptedException {
         String ldruid = "mercurydw/seq_dev3@\"(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=seqdev.broad.mit.edu)(PORT=1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SID=seqdev3)))\"";
-        List<String> cmds = Arrays.asList("sqlldr",
+        List<String> cmds = Arrays.asList("/Users/jowalsh/opt/oracle/sqlldr",
                 String.format("control=%s", ctlFilePath),
                 String.format("log=%s", loadLog),
                 "bad=load.bad",

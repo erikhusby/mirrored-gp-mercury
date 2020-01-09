@@ -14,6 +14,7 @@ public class DragenTaskBuilder {
     public static final String RGLB = "RGLB";
     public static final String RGID = "RGID";
     public static final String BCL_INPUT_DIRECTORY = "bcl-input-directory";
+    public static final String SAMPLE_SHEET = "sample-sheet";
 
     private final StringBuilder commandBuilder;
 
@@ -38,7 +39,7 @@ public class DragenTaskBuilder {
     }
 
     public DragenTaskBuilder sampleSheet(File sampleSheet) {
-        appendCommand(String.format("--sample-sheet %s", sampleSheet.getPath()));
+        appendCommand(String.format("--" + SAMPLE_SHEET + " %s", sampleSheet.getPath()));
         return this;
     }
 

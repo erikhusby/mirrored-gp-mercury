@@ -9,6 +9,7 @@ import org.zeroturnaround.exec.stream.slf4j.Slf4jStream;
 
 import javax.enterprise.context.Dependent;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;

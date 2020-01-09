@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa;
 
+import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 import com.opencsv.bean.ColumnPositionMappingStrategy;
 import com.opencsv.bean.CsvToBean;
@@ -67,6 +68,13 @@ public class FastQListBuilder {
     }
 
     public void buildAggregation(Set<FastQList> fastQLists, MercurySample mercurySample, File outputFile) throws IOException {
+        File parentFile = outputFile.getParentFile();
+        if (!parentFile.exists()) {
+            boolean mkdir = parentFile.mkdirs();
+            if (!mkdir) {
+                throw new RuntimeException("Failed to create aggregation directory " + parentFile.getPath());
+            }
+        }
         FileWriter writer = new FileWriter(outputFile);
         writer.write(HEADER);
         for (FastQList fastQList: fastQLists) {

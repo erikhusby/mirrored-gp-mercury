@@ -60,10 +60,18 @@ public class DemultiplexTask extends ProcessTask {
     }
 
     public File getOutputDirectory() {
+        if (outputDirectory == null) {
+            outputDirectory = new File(
+                    DragenTaskBuilder.parseCommandFromArgument(DragenTaskBuilder.OUTPUT_DIRECTORY, getCommandLineArgument()));
+        }
         return outputDirectory;
     }
 
     public File getSampleSheet() {
+        if (sampleSheet == null) {
+            sampleSheet = new File(
+                    DragenTaskBuilder.parseCommandFromArgument(DragenTaskBuilder.SAMPLE_SHEET, getCommandLineArgument()));
+        }
         return sampleSheet;
     }
 }

@@ -18,14 +18,18 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FingerprintResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.StateMachineDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.TaskDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.ProcessTask;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.FiniteStateMachineEngine;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.FiniteStateMachineFactory;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.metrics.GsUtilLogReader;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerContext;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerControllerStub;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SlurmController;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AggregationState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.DemultiplexState;
@@ -71,6 +75,7 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
     public static final String CREATE_DEMULTIPLEX_ACTION = "createDemultiplex";
     public static final String UPDATE_STATE_STATUS_ACTION = "updateStateStatus";
     public static final String UPDATE_TASK_STATUS_ACTION = "updateTaskStatus";
+    public static final String RESUME_MACHINE_ACTION = "resumeMachine";
 
     @Inject
     private StateMachineDao stateMachineDao;
@@ -89,6 +94,12 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
 
     @Inject
     private MercurySampleDao mercurySampleDao;
+
+    @Inject
+    protected Deployment deployment;
+
+    @Inject
+    private FiniteStateMachineEngine finiteStateMachineEngine;
 
     @ValidateNestedProperties({
             @Validate(field = "stateMachineName", label = "State Machine Name", required = true, maxlength = 255,
@@ -192,7 +203,7 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
         return new RedirectResolution(FiniteStateMachineActionBean.class, LIST_ACTION);
     }
 
-    @ValidationMethod(on = {UPDATE_TASK_STATUS_ACTION, UPDATE_STATE_STATUS_ACTION})
+    @ValidationMethod(on = {UPDATE_TASK_STATUS_ACTION, UPDATE_STATE_STATUS_ACTION, RESUME_MACHINE_ACTION})
     public void validateUpdateStatus() {
         if (selectedIds == null || selectedIds.size() == 0) {
             addGlobalValidationError("Must check at least one row.");
@@ -252,6 +263,16 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
             logger.error("Failed to read log file.", e);
         }
         return new StreamingResolution("text", "error grabbing log file.");
+    }
+
+    @HandlesEvent(RESUME_MACHINE_ACTION)
+    public Resolution resumeMachine() {
+        SchedulerContext schedulerContext = new SchedulerContext(new SchedulerControllerStub());
+        finiteStateMachineEngine.setContext(schedulerContext);
+        Long selectedId = getSelectedIds().iterator().next();
+        FiniteStateMachine stateMachine = stateMachineDao.findById(FiniteStateMachine.class, selectedId);
+        finiteStateMachineEngine.resumeMachine(stateMachine);
+        return new ForwardResolution(DRAGEN_LIST_PAGE);
     }
 
     public FiniteStateMachine getEditFiniteStateMachine() {
@@ -342,5 +363,10 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
         }
         Collections.sort(missing);
         return missing;
+    }
+
+    // For Testing
+    public boolean isDisplayIncrement() {
+        return deployment != Deployment.PROD;
     }
 }

@@ -109,7 +109,9 @@ public class DemultiplexMetricsTaskHandler extends AbstractMetricsTaskHandler {
 
     private IlluminaSequencingRun findRunFromDirectory(File runDir, Set<IlluminaSequencingRunChamber> runChambers) {
         for (IlluminaSequencingRunChamber runChamber: runChambers) {
-            if (runChamber.getIlluminaSequencingRun().getRunDirectory().equals(runDir.getPath())) {
+            String runDirectory = runChamber.getIlluminaSequencingRun().getRunDirectory();
+            File seqRunDir = new File(runDirectory);
+            if (seqRunDir.getName().equals(runDir.getName())) {
                 return runChamber.getIlluminaSequencingRun();
             }
         }

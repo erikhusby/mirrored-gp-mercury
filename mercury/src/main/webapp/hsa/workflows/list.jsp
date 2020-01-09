@@ -102,6 +102,9 @@
                                              enum="org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status"/>
             </stripes:select>
             <stripes:submit name="updateStateStatus" value="Update Status" class="btn btn-primary"/>
+            <c:if test="${actionBean.isDisplayIncrement()}">
+                <stripes:submit name="resumeMachine" value="Resume Machine" class="btn"/>
+            </c:if>
         </stripes:form>
     </stripes:layout-component>
 </stripes:layout-render>

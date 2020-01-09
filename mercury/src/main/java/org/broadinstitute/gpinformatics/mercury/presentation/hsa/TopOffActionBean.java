@@ -472,7 +472,7 @@ public class TopOffActionBean extends CoreActionBean {
                 sheet.autoSizeColumn(i);
             }
 
-            String filename = DateUtils.getFileDateTime(new Date()) + "_TopOff.xls";
+            String filename = "TopOffs.xls";
 
             // Streams the spreadsheet back to user.
             ByteArrayOutputStream out = new ByteArrayOutputStream();
