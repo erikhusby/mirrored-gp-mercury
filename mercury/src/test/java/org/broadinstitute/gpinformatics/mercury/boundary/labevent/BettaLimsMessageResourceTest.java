@@ -447,7 +447,6 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 bettaLimsMessageFactory, testPrefix, shearingJaxbBuilder.getShearCleanPlateBarcode(),
                 LibraryConstructionJaxbBuilder.P_7_INDEX_PLATE_BARCODE,
                 LibraryConstructionJaxbBuilder.P_5_INDEX_PLATE_BARCODE, BaseEventTest.NUM_POSITIONS_IN_RACK,
-                LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY,
                 Arrays.asList(Triple.of("KAPA Reagent Box", "0009753252", 1)),
                 Arrays.asList(Triple.of("PEG", "0009753352", 2), Triple.of("70% Ethanol", "LCEtohTest", 3),
                         Triple.of("EB", "0009753452", 4), Triple.of("SPRI", "LCSpriTest", 5)),
@@ -462,7 +461,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 testPrefix, Collections.singletonList(libraryConstructionJaxbBuilder.getPondRegRackBarcode()),
                 Collections.singletonList(libraryConstructionJaxbBuilder.getPondRegTubeBarcodes()),
                 "Bait" + testPrefix, "Bait" + testPrefix,
-                LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY, IceJaxbBuilder.PlexType.PLEX96,
+                IceJaxbBuilder.PlexType.PLEX96,
                 Arrays.asList(Triple.of("CT3", "0009763452", 1),
                         Triple.of("Rapid Capture Kit bait", "0009773452", 2),
                         Triple.of("Rapid Capture Kit Resuspension Buffer", "0009783452", 3)),
@@ -651,7 +650,6 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 bettaLimsMessageFactory, testPrefix, shearingJaxbBuilder.getShearCleanPlateBarcode(),
                 LibraryConstructionJaxbBuilder.P_7_INDEX_PLATE_BARCODE,
                 LibraryConstructionJaxbBuilder.P_5_INDEX_PLATE_BARCODE, numPositionsInRack,
-                LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY,
                 Arrays.asList(Triple.of("KAPA Reagent Box", "0009753252", 1)),
                 Arrays.asList(Triple.of("PEG", "0009753352", 2),
                         Triple.of("70% Ethanol", "LCEtohTest", 3),
@@ -1016,7 +1014,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                                             List<List<String>> listPondRegTubeBarcodes) {
         IceJaxbBuilder iceJaxbBuilder = new IceJaxbBuilder(bettaLimsMessageFactory, testPrefixes.get(0),
                 pondRegRackBarcodes, listPondRegTubeBarcodes, "0177198254", "0177198254",
-                LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY, IceJaxbBuilder.PlexType.PLEX96,
+                IceJaxbBuilder.PlexType.PLEX96,
                 new ArrayList<Triple<String, String, Integer>>() {{
                     add(Triple.of("CT3", "0009763452", 1));
                     add(Triple.of("Rapid Capture Kit bait", "0009773452", 2));
@@ -1093,7 +1091,6 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 bettaLimsMessageFactory, testPrefix, shearingExExJaxbBuilder.getShearCleanPlateBarcode(),
                 LibraryConstructionJaxbBuilder.P_7_INDEX_PLATE_BARCODE,
                 LibraryConstructionJaxbBuilder.P_5_INDEX_PLATE_BARCODE, BaseEventTest.NUM_POSITIONS_IN_RACK,
-                LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY,
                 Arrays.asList(Triple.of("KAPA Reagent Box", "0009753252", 1)),
                 Arrays.asList(Triple.of("PEG", "0009753352", 2),
                         Triple.of("70% Ethanol", "LCEtohTest", 3),
