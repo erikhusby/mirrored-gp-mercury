@@ -49,7 +49,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate.TubeFormationByWellCriteria.Result;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.sample.PicoDispositionActionBean;
@@ -291,7 +290,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
                 filter(tube -> tubeBarcodeToQuantValue.containsKey(tube.getLabel())).
                 forEach(tube -> {
                     // Clinical sample tubes should not go to BSP.
-                    if (tube.getMercurySamples().stream().anyMatch(sample -> sample.canSampleBeUsedForClinical())) {
+                    if (tube.getMercurySamples().stream().anyMatch(sample -> sample.isClinicalSample())) {
                         tubesNotSent.add(tube.getLabel());
                     } else {
                         tubes.add(tube);
