@@ -186,6 +186,23 @@ public class QueueGrouping {
     }
 
     /**
+     * @return True if there are no {@link QueueEntity} with a status of QueueStatus.Active or QueueStatus.Repeat.
+     */
+    public boolean hasRemainingEntities() {
+        return getRemainingEntities() == 0;
+    }
+
+    /**
+     * Utility method to go through the current queue grouping and check to see if all the {@link QueueEntity}'s have a
+     * status of QueueStatus.Active or QueueStatus.Repeat.
+     */
+    public void updateGroupingStatus() {
+        if (hasRemainingEntities()) {
+            setQueueStatus(QueueStatus.Completed);
+        }
+    }
+
+    /**
      * Comparator which sorts by the sort order.
      */
     public static class BySortOrder implements Comparator<QueueGrouping> {

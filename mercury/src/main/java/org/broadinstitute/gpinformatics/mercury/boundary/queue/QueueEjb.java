@@ -220,11 +220,10 @@ public class QueueEjb {
                 queueGroupings.add(queueEntity.getQueueGrouping());
             }
         }
+        queueEntityDao.flush();
 
         for (QueueGrouping queueGrouping : queueGroupings) {
-            if (queueGrouping.getRemainingEntities() == 0) {
-                queueGrouping.setQueueStatus(QueueStatus.Completed);
-            }
+            queueGrouping.updateGroupingStatus();
         }
 
         AbstractPostDequeueHandler abstractPostDequeueHandler = null;
@@ -347,8 +346,16 @@ public class QueueEjb {
 
         List<QueueEntity> queueEntities = queueEntityDao.findActiveEntitiesByVesselIds(queueType, labVesselIds);
 
+        Set<QueueGrouping> queueGroupings = new HashSet<>();
         for (QueueEntity queueEntity : queueEntities) {
             updateQueueEntityStatus(messageCollection, queueEntity, QueueStatus.Excluded);
+            queueGroupings.add(queueEntity.getQueueGrouping());
+        }
+
+        queueEntityDao.flush();
+
+        for (QueueGrouping queueGrouping : queueGroupings) {
+            queueGrouping.updateGroupingStatus();
         }
     }
 

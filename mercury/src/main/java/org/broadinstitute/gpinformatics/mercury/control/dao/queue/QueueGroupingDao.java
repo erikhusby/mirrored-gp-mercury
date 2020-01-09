@@ -23,6 +23,7 @@ import javax.persistence.criteria.Root;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Data Access Object for QueueGroupings.
@@ -96,5 +97,4 @@ public class QueueGroupingDao extends GenericDao {
         groups.get(0).setQueueGroupingText(newName);
         flush();
     }
-
 }
