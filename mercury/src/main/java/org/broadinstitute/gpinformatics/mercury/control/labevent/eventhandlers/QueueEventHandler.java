@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
+import org.broadinstitute.gpinformatics.mercury.boundary.manifest.MayoManifestEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.DnaQuantEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -89,9 +90,12 @@ public class QueueEventHandler extends AbstractEventHandler {
             case FINGERPRINTING_ALIQUOT_FORWARD_BSP: {
                 Set<LabVessel> allOfUsVessels = allOfUsVessels(targetEvent);
                 if (!allOfUsVessels.isEmpty()) {
-                    queueEjb.enqueueLabVessels(allOfUsVessels, QueueType.FINGERPRINTING,
-                            "Finger print aliquoted on " + DateUtils.convertDateTimeToString(targetEvent.getEventDate()),
-                            new MessageCollection(), QueueOrigin.RECEIVING, null);
+                    String[] productTypes = allOfUsVessels.iterator().next().getMetadataValues(Metadata.Key.PRODUCT_TYPE);
+                    if (productTypes.length > 0 && productTypes[0].equals(MayoManifestEjb.AUO_GENOME)) {
+                        queueEjb.enqueueLabVessels(allOfUsVessels, QueueType.FINGERPRINTING,
+                                "Finger print aliquoted on " + DateUtils.convertDateTimeToString(targetEvent.getEventDate()),
+                                new MessageCollection(), QueueOrigin.RECEIVING, null);
+                    }
                 }
                 // todo jmt add queue removal to fingerprint upload
                 break;

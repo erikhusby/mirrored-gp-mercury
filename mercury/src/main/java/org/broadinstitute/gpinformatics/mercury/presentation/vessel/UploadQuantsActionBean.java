@@ -184,6 +184,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
                     tubeFormationLabels = pair.getRight();
 
                     queueEjb.dequeueLabVessels(labMetricRun, QueueType.DNA_QUANT, messageCollection);
+                    // todo jmt add to plating queue
                 }
                 addMessages(messageCollection);
                 break;
@@ -230,6 +231,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
                     }
 
                     queueEjb.dequeueLabVessels(labMetricRun, QueueType.DNA_QUANT, messageCollection);
+                    // todo jmt add to plating queue
                 }
 
                 addMessages(messageCollection);
