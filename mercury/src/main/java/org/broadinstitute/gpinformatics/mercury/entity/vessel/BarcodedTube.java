@@ -79,6 +79,9 @@ public class BarcodedTube extends LabVessel {
         VacutainerBloodTubeEDTA_7("VacutainerBloodTubeEDTA_7", "Vacutainer EDTA Tube Purple-Top [7mL]"),
         VacutainerBloodTubeEDTA_10("VacutainerBloodTubeEDTA_10", "Vacutainer EDTA Tube Purple-Top [10mL]"),
         VacutainerBloodTubeGreenTigerTop8("VacutainerBloodTubeGreenTigerTop8", "Vacutainer Blood Tube Green Tiger-Top [8mL]"),
+        Vacutainer_Cell_Free_DNA_Tube_Camo_Top_10mL("Vacutainer_Cell_Free_DNA_Tube_Camo_Top_10mL", "Vacutainer Cell Free DNA Tube Camo Top 10mL"),
+        Vacutainer_Cell_Free_DNA_Tube_Purple_Top_10mL("Vacutainer_Cell_Free_DNA_Tube_Purple_Top_10mL", "Vacutainer Cell Free DNA Tube Purple Top 10mL"),
+        Vacutainer_Cell_Free_DNA_Tube_Purple_Yellow_10mL("Vacutainer_Cell_Free_DNA_Tube_Purple_Yellow_10mL", "Vacutainer Cell Free DNA Tube Purple Yellow 10mL"),
         VacutainerBloodTubeGreenTop10("VacutainerBloodTubeGreenTop10", "Vacutainer Blood Tube Green Top [10mL]"),
         VacutainerBloodTubePaxgene("VacutainerBloodTubePaxgene", "Vacutainer PAXGene Tube [10mL]"),
         VacutainerBloodTubeRedTigerTopSST10("VacutainerBloodTubeRedTigerTopSST10", "Vacutainer Blood Tube Red Tiger-Top SST [10mL]"),
@@ -86,7 +89,8 @@ public class BarcodedTube extends LabVessel {
         VacutainerBloodTubeYellowTop10("VacutainerBloodTubeYellowTop10", "Vacutainer Blood Tube Yellow Top [10mL]"),
         VacutainerCPTTube4("VacutainerCPTTube4", "Vacutainer CPT Tube [4mL]"),
         VacutainerCPTTube8("VacutainerCPTTube8", "Vacutainer CPT Tube [8mL]"),
-        Voucher_Bag("Voucher_Bag", "Voucher Bag");
+        Voucher_Bag("Voucher_Bag", "Voucher Bag"),
+        VWR_Tube_10mL("VWR_Tube_10mL", "VWR Tube [10mL]");
 
         /**
          * The name that will be supplied by automation scripts.

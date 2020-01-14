@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
+import org.broadinstitute.gpinformatics.mercury.boundary.run.InfiniumRunFinder;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -129,7 +130,7 @@ public class InfiniumArchiver {
      */
     public List<Pair<String, Boolean>> findChipsToArchive(int limit, Date archiveDate) {
         List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(
-                LabEventType.INFINIUM_AUTOCALL_SOME_STARTED,
+                InfiniumRunFinder.PIPELINE_TRIGGER_EVENT_TYPES,
                 LabEventType.INFINIUM_ARCHIVED);
         List<String> barcodes = new ArrayList<>();
         for (LabVessel labVessel : infiniumChips) {
