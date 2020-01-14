@@ -186,10 +186,10 @@ public class QueueGrouping {
     }
 
     /**
-     * @return True if there are no {@link QueueEntity} with a status of QueueStatus.Active or QueueStatus.Repeat.
+     * @return True if there are {@link QueueEntity} with a status of QueueStatus.Active or QueueStatus.Repeat.
      */
-    public boolean hasRemainingEntities() {
-        return getRemainingEntities() == 0;
+    public boolean hasRemainingActiveEntities() {
+        return getRemainingEntities() != 0;
     }
 
     /**
@@ -197,7 +197,7 @@ public class QueueGrouping {
      * status of QueueStatus.Active or QueueStatus.Repeat.
      */
     public void updateGroupingStatus() {
-        if (hasRemainingEntities()) {
+        if (!hasRemainingActiveEntities()) {
             setQueueStatus(QueueStatus.Completed);
         }
     }
@@ -247,7 +247,7 @@ public class QueueGrouping {
     public long getRemainingEntities() {
         int remainingEntities = 0;
         for (QueueEntity queueEntity : getQueuedEntities()) {
-            if (!queueEntity.getQueueStatus().isStillInQueue()) {
+            if (queueEntity.getQueueStatus().isStillInQueue()) {
                 remainingEntities++;
             }
         }
