@@ -2467,13 +2467,13 @@
             <column name="PIPELINE_DATA_TYPE" type="number(19,0)"/>
         </addColumn>
     </changeSet>
-    <changeSet id="GPLIM-5521-05-ADDFK" author="dryan">
-        <addForeignKeyConstraint constraintName="FK_SAMPINST_ENT_DATA_TYPE"
-                                 baseTableSchemaName="MERCURY" baseTableName="sample_instance_entity"
-                                 baseColumnNames="PIPELINE_DATA_TYPE"
-                                 referencedTableSchemaName="ATHENA" referencedTableName="PIPELINE_DATA_TYPE"
-                                 referencedColumnNames="PIPELINE_DATA_TYPE_ID"/>
-    </changeSet>
+<!--    <changeSet id="GPLIM-5521-05-ADDFK" author="dryan">-->
+<!--        <addForeignKeyConstraint constraintName="FK_SAMPINST_ENT_DATA_TYPE"-->
+<!--                                 baseTableSchemaName="MERCURY" baseTableName="sample_instance_entity"-->
+<!--                                 baseColumnNames="PIPELINE_DATA_TYPE"-->
+<!--                                 referencedTableSchemaName="ATHENA" referencedTableName="PIPELINE_DATA_TYPE"-->
+<!--                                 referencedColumnNames="PIPELINE_DATA_TYPE_ID"/>-->
+<!--    </changeSet>-->
 
     <changeSet id="GPLIM-6643_1" author="jowalsh">
         <createIndex indexName="IX_FSM_AUD" tableName="FINITE_STATE_MACHINE_AUD" schemaName="MERCURY">
