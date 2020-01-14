@@ -20,6 +20,8 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -27,6 +29,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
@@ -41,6 +45,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.AbstractBatchJiraFieldFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -54,6 +59,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
@@ -142,6 +148,10 @@ public class LabBatchEjb {
     private BSPExportsService bspExportsService;
 
     private SequencingTemplateFactory sequencingTemplateFactory;
+
+    private TubeFormationDao tubeFormationDao;
+
+    private AppConfig appConfig;
 
     private static final VesselPosition[] VESSEL_POSITIONS = {VesselPosition.LANE1, VesselPosition.LANE2,
             VesselPosition.LANE3, VesselPosition.LANE4, VesselPosition.LANE5, VesselPosition.LANE6,
@@ -816,7 +826,12 @@ public class LabBatchEjb {
                         // limit this logic to WGS.
                         if (Objects.equals(bucketEntry.getProductOrder().getProduct().getAggregationDataType(),
                                 Aggregation.DATA_TYPE_WGS)) {
-                            addAndRemoveSamples = true;
+                            // Microbial is also WGS but LCSETs are made up of multiple racks
+                            // Limit to just lab batches with total size less than 96
+                            int labBatchSize = bucketEntry.getLabBatch().getLabBatchStartingVessels().size();
+                            if (labBatchSize <= 96) {
+                                addAndRemoveSamples = true;
+                            }
                         }
                         found = true;
                         break;
@@ -875,8 +890,6 @@ public class LabBatchEjb {
      * <li>add control tubes</li>
      * <li>add sample tubes (e.g. clinical samples that displaced research samples)</li>
      * <li>remove sample tubes (e.g. research samples displaced by clinical samples)</li>
-     * <li>update rack layout in BSP (controls are not added through automation)</li>
-     * <li>auto-export from BSP to Mercury</li>
      * </ul>
      * @param lcsetName name of batch to update
      * @param controlBarcodes positive and negative control tubes
@@ -1023,6 +1036,53 @@ public class LabBatchEjb {
     }
 
     /**
+     * In the LCSET ticket, set a field that links back to a User Defined Search that shows a plate map.
+     * @param lcsetName which LCSET to update
+     * @param rackScan  the positions of the tubes after the positive control is added
+     */
+    public void linkLcsetToUds(String lcsetName, Map<String, String> rackScan) {
+        try {
+            SearchContext context = new SearchContext();
+            StringBuffer baseSearchURL = new StringBuffer();
+            baseSearchURL.append(appConfig.getUrl());
+            context.setBaseSearchURL(baseSearchURL);
+            Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
+
+            Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(rackScan.values());
+            HashMap<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
+            for (Map.Entry<String, String> positionBarcodeEntry : rackScan.entrySet()) {
+                mapPositionToTube.put(VesselPosition.getByName(positionBarcodeEntry.getKey()),
+                        mapBarcodeToTube.get(positionBarcodeEntry.getValue()));
+            }
+
+            String digest = TubeFormation.makeDigest(mapPositionToTube);
+            TubeFormation byDigest = tubeFormationDao.findByDigest(digest);
+            if (byDigest == null) {
+                TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
+                barcodedTubeDao.persist(tubeFormation);
+            }
+            // todo jmt create in-plate event?
+
+            LabBatch labBatch = labBatchDao.findByName(lcsetName);
+            Map<String, String[]> terms = new HashMap<>();
+            terms.put("Container Barcode", new String[]{digest});
+            StringBuilder linkBuilder = new StringBuilder();
+            SearchDefinitionFactory.buildDrillDownHref(
+                    ColumnEntity.LAB_VESSEL,
+                    "GLOBAL|GLOBAL_LAB_VESSEL_SEARCH_INSTANCES|Plate Map Drill Down",
+                    terms, linkBuilder, appConfig.getUrl());
+            String link = linkBuilder.toString();
+            link = StringUtils.replaceEachRepeatedly(link, new String[]{"[", "]", "{", "}", " ", "\"", "|"},
+                    new String[]{"%5B", "%5D", "%7B", "%7D", "%20", "%22", "%7C"});
+            CustomField mercuryUrlField = new CustomField( submissionFields, LabBatch.TicketFields.PLATE_MAP_UDS, link);
+            JiraIssue jiraIssue = jiraService.getIssue(labBatch.getJiraTicket().getTicketName());
+            jiraIssue.updateIssue(Collections.singleton(mercuryUrlField));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
      * Make FCT LabBatches and tickets, based on DTOs from the Create FCT Ticket web page.
      * @param createFctDtos information from web page
      * @param selectedFlowcellType holds number of lanes
@@ -1111,7 +1171,8 @@ public class LabBatchEjb {
         // Only uses the selected dtos.
         final List<DesignationDto> designationDtos = new ArrayList<>();
         for (DesignationDto designationDto : uiDtos) {
-            if (designationDto.isSelected()) {
+            // Dtos filtered out by the UI will be null.
+            if (designationDto != null && designationDto.isSelected()) {
                 designationDtos.add(designationDto);
             }
         }
@@ -1209,7 +1270,7 @@ public class LabBatchEjb {
             errorString += (isValid ? "" : "and ") + "number of lanes (" + designationDto.getNumberLanes() + ") ";
             isValid = false;
         }
-        if (designationDto.getReadLength() == null || designationDto.getReadLength() <= 0) {
+        if (designationDto.getReadLength() == null || designationDto.getReadLength() < 0) {
             errorString += (isValid ? "" : "and ") + "read length (" + designationDto.getReadLength() + ") ";
             isValid = false;
         }
@@ -1251,19 +1312,15 @@ public class LabBatchEjb {
         return isValid;
     }
 
+    /**
+     * Flowcells with mixed clinical and non-clinical samples are permitted for genome aggregation.
+     * @return true if any of the dto's products has a WGS aggregation type.
+     */
     public boolean isMixedFlowcellOk(FctDto designationDto) {
-        // Mixed flowcells are permitted for genomes
-        boolean mixedFlowcellOk = false;
-        for (String productName : designationDto.getProductNames()) {
-            if (!productName.equals(CONTROLS)) {
-                Product product = productDao.findByName(productName);
-                if (Objects.equals(product.getAggregationDataType(), Aggregation.DATA_TYPE_WGS)) {
-                    mixedFlowcellOk = true;
-                    break;
-                }
-            }
-        }
-        return mixedFlowcellOk;
+        return designationDto.getProductNames().stream().
+                filter(productName -> !productName.equals(CONTROLS)).
+                flatMap(productName -> productDao.findAvailableByName(productName).stream()).
+                anyMatch(product -> Objects.equals(product.getAggregationDataType(), Aggregation.DATA_TYPE_WGS));
     }
 
     /** Returns the number of lanes that would not fit onto an even number of flowcell lanes. */
@@ -1518,5 +1575,15 @@ public class LabBatchEjb {
     @Inject
     public void setSequencingTemplateFactory(SequencingTemplateFactory sequencingTemplateFactory) {
         this.sequencingTemplateFactory = sequencingTemplateFactory;
+    }
+
+    @Inject
+    public void setTubeFormationDao(TubeFormationDao tubeFormationDao) {
+        this.tubeFormationDao = tubeFormationDao;
+    }
+
+    @Inject
+    public void setAppConfig(AppConfig appConfig) {
+        this.appConfig = appConfig;
     }
 }

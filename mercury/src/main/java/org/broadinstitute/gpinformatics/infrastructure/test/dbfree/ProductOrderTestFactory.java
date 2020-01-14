@@ -45,7 +45,7 @@ public class ProductOrderTestFactory {
         if (StringUtils.isNotBlank(quoteId)){
         PriceItem exExPriceItem =
                 new PriceItem(quoteId, PriceItem.PLATFORM_GENOMICS, PriceItem.CATEGORY_EXOME_SEQUENCING_ANALYSIS,
-                        PriceItem.NAME_EXOME_EXPRESS);
+                        PriceItem.NAME_EXOME_EXPRESS+dummyProduct.getPartNumber());
             dummyProduct.setPrimaryPriceItem(exExPriceItem);
         }
 
@@ -74,7 +74,7 @@ public class ProductOrderTestFactory {
         dummyAddOnProduct.setProductName("addOnProduct");
         PriceItem exExAddOnPriceItem =
                 new PriceItem(quoteId, PriceItem.PLATFORM_GENOMICS, PriceItem.CATEGORY_EXOME_SEQUENCING_ANALYSIS,
-                        PriceItem.NAME_STANDARD_WHOLE_EXOME);
+                        PriceItem.NAME_STANDARD_WHOLE_EXOME+dummyAddOnProduct.getPartNumber());
         dummyAddOnProduct.setPrimaryPriceItem(exExAddOnPriceItem);
 
 
@@ -129,9 +129,8 @@ public class ProductOrderTestFactory {
     }
 
     public static ProductOrder buildProductOrder(int maxSamples, String sampleSuffix, String workflow) {
-        return createDummyProductOrder(maxSamples, "PD0-1EE", workflow, 101, "Test RP",
-                rpSynopsis,
-                ResearchProject.IRB_ENGAGED, "P-" + workflow + "-1232", sampleSuffix, "ExExQuoteId");
+        return createDummyProductOrder(maxSamples, "PD0-1EE", workflow, 101, "Test RP", rpSynopsis,
+            ResearchProject.IRB_ENGAGED, ProductTestFactory.generateProductPartNumber(), sampleSuffix, "ExExQuoteId");
     }
 
     public static ProductOrder buildIceProductOrder(int maxSamples) {
@@ -216,6 +215,10 @@ public class ProductOrderTestFactory {
         return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.INFINIUM);
     }
 
+    public static ProductOrder buildSingleCellHashingProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.SINGLE_CELL_HASHING_10X);
+    }
+
 
     /**
      * Database free creation of Product Order from scratch, including creation of a new Research Project and Product.
@@ -226,8 +229,9 @@ public class ProductOrderTestFactory {
     public static ProductOrder createProductOrder(String... sampleNames) {
         UUID uuid = UUID.randomUUID();
         ProductFamily productFamily = new ProductFamily("Product Family " + uuid);
+        String partNumber = ProductTestFactory.generateProductPartNumber();
         Product product =
-                new Product("Product Name " + uuid, productFamily, "Product Description " + uuid, "P-X" + uuid,
+                new Product("Product Name " + uuid, productFamily, "Product Description " + uuid, partNumber,
                         new Date(), null, 0, 0, 0, 1, "Input requirements", "Deliverables", true, null,
                         false, "Aggregation Data Type");
 

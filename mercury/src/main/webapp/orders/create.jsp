@@ -3,6 +3,7 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
+<%@ page import="static org.broadinstitute.sap.services.SapIntegrationClientImpl.FundingType.*" %>
 
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
@@ -124,10 +125,18 @@
             }
         }
 
-        function validateNumberOfLanes() {
+        function validateSaveOrder() {
             var numberOfLanes = $j("#numberOfLanes");
             var lanesFieldDiv = $j("#numberOfLanesDiv");
             var productOrderKey = $j("input[name='productOrder']");
+
+            var originalQuote = $j("input[name='originalQuote']");
+            var currentQuote = $j("#quote");
+
+            if(!validateChangeQuote(originalQuote.val().trim(), currentQuote.val().trim())) {
+                alert("Switching between Quote Server and SAP quotes is not permitted once an order has been placed.");
+                return false;
+            }
 
             if (lanesFieldDiv.css('display') !== 'none' && lanesFieldDiv.css("visibility") !== 'hidden' &&
                 lanesFieldDiv.css('opacity') !== 0 && numberOfLanes.length && productOrderKey.val().includes("Draft")) {
@@ -137,9 +146,29 @@
 
             return true;
         }
-        $j(document).ready(
 
+        function validateChangeQuote(originalQuote, currentQuote) {
+
+            var productOrderKey = $j("input[name='productOrder']");
+            var originalIsQuoteServer = isNaN(originalQuote) || originalQuote === "" || originalQuote === null;
+            var currentIsQuoteServer = isNaN(currentQuote) || currentQuote === "" || currentQuote === null;
+            var orderCanPlace = ${actionBean.editOrder.orderStatus.canPlace()};
+            var originalNotBlank = originalQuote !== 'undefined' && originalQuote !== "" && originalQuote !== 'null';
+            var currentNotBlank = (currentQuote !== 'undefined' && currentQuote !== "" && currentQuote !== 'null' &&
+            currentQuote !== "Enter the Quote ID for this order");
+
+            var result = true;
+            if(productOrderKey.val() !== 'undefined' && productOrderKey.val() !== "" && productOrderKey.val() !== 'null'
+                && !orderCanPlace) {
+                result = (originalIsQuoteServer === currentIsQuoteServer) && (originalNotBlank === currentNotBlank);
+            }
+
+            return result;
+        }
+        var $skipOrspCheckboxes;
+        $j(document).ready(
                 function () {
+                    $skipOrspCheckboxes = $j("#notFromHumansCheckbox, #clinicalLineCheckbox, #sampleManipulationOnlyCheckbox");
                     jQuery.fn.multiselect = function() {
                         $j(this).each(function() {
                             var checkboxes = $j(this).find("input:checkbox");
@@ -519,8 +548,7 @@
                     initializeQuoteOptions();
 
                     $j("#skipQuote").on("change", toggleSkipQuote);
-                    $j("#notFromHumansCheckbox").on("change", toggleSkipRegulatoryReason);
-                    $j("#clinicalLineCheckbox").on("change", toggleSkipRegulatoryReason);
+                    $skipOrspCheckboxes.on("change", toggleSkipRegulatoryReason);
                     $j("#regulatorySelect").change(function () {
                         $j("#attestationConfirmed").attr("checked", false)
                     });
@@ -567,31 +595,28 @@
         var quoteBeforeSkipping;
 
         function toggleSkipRegulatoryReason() {
-            var checked = $(this).prop("checked");
-            var notFromHumansElement = $j("#notFromHumansCheckbox");
-            var clinicalLineElement = $j("#clinicalLineCheckbox");
+            var thisChecked = this;
+            var checked = $(thisChecked).prop("checked");
+
+
             handleUpdateRegulatory(checked);
             if (checked) {
                 $j("#attestationConfirmed").attr("checked", false);
-                if($(this).is(notFromHumansElement)) {
-                    $j("#skipRegulatoryInfoReason").val("${ResearchProject.NOT_FROM_HUMANS_REASON_FILL}");
-                    $j("#clinicalLineCheckbox").attr("checked", false);
-                } else {
-                    $j("#skipRegulatoryInfoReason").val("${ResearchProject.FROM_CLINICAL_CELL_LINE}");
-                    $j("#notFromHumansCheckbox").attr("checked", false);
-                }
+                $skipOrspCheckboxes.filter(function () {
+                    return !$j(this).is(thisChecked);
+                }).attr("checked", false);
+                $j("#skipRegulatoryInfoReason").val($j(this).closest("label").text());
             }
-
         }
+
         function handleUpdateRegulatory(skipRegulatoryChecked){
             if (skipRegulatoryChecked) {
-                $j("#regulatorySelect :selected").prop("selected", false);
+                $j("#regulatorySelect :checked").attr('checked', false);
                 $j("#regulatorySelect").hide();
                 $j("#skipRegulatoryDiv").show();
             } else {
                 $j("#skipRegulatoryInfoReason").val("");
-                $j("#notFromHumansCheckbox").attr("checked", false);
-                $j("#clinicalLineCheckbox").attr("checked", false);
+                $skipOrspCheckboxes.attr("checked", false);
                 $j("#regulatorySelect").show();
                 populateRegulatorySelect();
             }
@@ -716,6 +741,7 @@
         function updateUIForProductChoice() {
 
             var productKey = $j("#product").val();
+            var quote = $j("#quote").val();
             if ((productKey === null) || (productKey === "")) {
                 $j("#customizationJsonString").val("");
                 customizationValues = {};
@@ -739,7 +765,8 @@
                     $j("#sampleInitiationKitRequestEdit").hide();
                 }
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getProductInfo=&product=" + productKey,
+                    url: "${ctxpath}/orders/order.action?getProductInfo=&product=" + productKey +
+                    "&quoteIdentifier=" + quote,
                     dataType: 'json',
                     success: selectedProductFollowup,
                     complete: detectNumberOfLanesVisibility
@@ -850,6 +877,7 @@
             var skipQuoteDiv = $j("#skipQuoteDiv");
             var quoteDiv = $j("#quote");
             if (data.supportsSkippingQuote) {
+
                 skipQuoteDiv.show();
                 quoteDiv.hide();
             }
@@ -1100,11 +1128,13 @@
 
         function updateFundsRemaining() {
             var quoteIdentifier = $j("#quote").val().trim();
+            var originalQuote = "${actionBean.editOrder.quoteId}";
             var quoteTitle = $j("#quote").attr('title');
             var productOrderKey = $j("input[name='productOrder']").val();
             if (quoteIdentifier && quoteIdentifier !== quoteTitle) {
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier + "&productOrder=" + productOrderKey,
+                    url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier +
+                        "&productOrder=" + productOrderKey + "&originalQuote=" + originalQuote,
                     dataType: 'json',
                     success: updateFunds
                 });
@@ -1114,48 +1144,14 @@
         }
 
         function updateFunds(data) {
+            var $fundsRemaining = $j("#fundsRemaining");
+            $fundsRemaining.html(data.quoteInfo);
 
-            var quoteWarning = false;
-
-            if (data.fundsRemaining && !data.error) {
-                var fundsRemainingNotification = 'Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining +
-                        ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
-                var fundingDetails = data.fundingDetails;
-
-                if(data.status != "Funded" ||
-                        Number(data.outstandingEstimate.replace(/[^0-9\.]+/g,"")) > Number(data.fundsRemaining.replace(/[^0-9\.]+/g,""))) {
-                    quoteWarning = true;
-                }
-
-                for(var detailIndex in fundingDetails) {
-                    fundsRemainingNotification += '\n'+fundingDetails[detailIndex].grantTitle;
-                    if(fundingDetails[detailIndex].activeGrant) {
-                        fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].grantEndDate;
-                        if(fundingDetails[detailIndex].daysTillExpire < 45) {
-                            fundsRemainingNotification += ' in ' + fundingDetails[detailIndex].daysTillExpire +
-                                ' days. If it is likely this work will not be completed by then, please work on updating the ' +
-                                'Funding Source so Billing Errors can be avoided.';
-                            quoteWarning = true;
-                        }
-                    } else {
-                        fundsRemainingNotification += ' -- Has Expired ' + fundingDetails[detailIndex].grantEndDate;
-                        quoteWarning = true;
-                    }
-                    if(fundingDetails[detailIndex].grantStatus != "Active") {
-                        quoteWarning = true;
-                    }
-                    fundsRemainingNotification += '\n';
-                }
-                $j("#fundsRemaining").text(fundsRemainingNotification);
+            if (data.warning) {
+                $fundsRemaining.find("li").attr('class', '');
+                $fundsRemaining.addClass("alert alert-error");
             } else {
-                $j("#fundsRemaining").text('Error: ' + data.error);
-                quoteWarning = true;
-            }
-
-            if(quoteWarning) {
-                $j("#fundsRemaining").addClass("alert alert-error");
-            } else {
-                $j("#fundsRemaining").removeClass("alert alert-error");
+                $fundsRemaining.removeClass("alert alert-error");
             }
         }
 
@@ -1243,7 +1239,8 @@
             $j.ajax({
                 url: "${ctxpath}/orders/order.action?openCustomView=",
                 data: {
-                    'customizationJsonString': JSON.stringify(customizationValues)
+                    'customizationJsonString': JSON.stringify(customizationValues),
+                    'quoteIdentifier': $j("#quote").val()
                 },
                 datatype: 'html',
                 success: function (html) {
@@ -1565,13 +1562,19 @@
                                 </stripes:label>
 
                                 <div id="skipRegulatoryDiv" class="controls controls-text">
-
-                                    <stripes:checkbox name="notFromHumans" id="notFromHumansCheckbox" title="Click if the sample does not involve samples from Humans"/>
-                                    ${ResearchProject.NOT_FROM_HUMANS_REASON_FILL}<br/>
-                                    <stripes:checkbox name="fromClinicalLine" id="clinicalLineCheckbox" title="Click if the sample comes from a Clinical cell line"/>
-                                    ${ResearchProject.FROM_CLINICAL_CELL_LINE}<br/>
-                                    <stripes:hidden id="skipRegulatoryInfoReason"
-                                                    name="editOrder.skipRegulatoryReason"/>
+                                    <label for="notFromHumansCheckbox">
+                                        <stripes:checkbox name="notFromHumans" id="notFromHumansCheckbox" title="Click if the sample does not involve samples from Humans"/>
+                                            ${ResearchProject.NOT_FROM_HUMANS_REASON_FILL}
+                                    </label>
+                                    <label for="clinicalLineCheckbox">
+                                        <stripes:checkbox name="fromClinicalLine" id="clinicalLineCheckbox" title="Click if the sample comes from a Clinical cell line"/>
+                                            ${ResearchProject.FROM_CLINICAL_CELL_LINE}
+                                    </label>
+                                    <label for="sampleManipulationOnlyCheckbox">
+                                        <stripes:checkbox name="sampleManipulationOnly" id="sampleManipulationOnlyCheckbox" title="Click if the sample does not produce genomic data"/>
+                                            ${ResearchProject.SAMPLE_MANIPULATION_ONLY}
+                                    </label>
+                                    <stripes:hidden id="skipRegulatoryInfoReason" name="editOrder.skipRegulatoryReason"/>
                                 </div>
                                 <div id="regulatorySelect" class="controls controls-text"></div>
                                 <div id="attestationDiv" class="controls controls-text">
@@ -1633,14 +1636,33 @@
 
                 <div class="control-group">
 
-                    <stripes:label for="product" class="control-label">
-                        Product <c:if test="${not actionBean.editOrder.draft}">*</c:if>
-                    </stripes:label>
-                    <div class="controls">
-                        <stripes:text id="product" name="productTokenInput.listOfKeys" class="defaultText"
-                                      title="Enter the product name for this order"/>
-                        <div id="primaryProductListPrice" ></div>
-                    </div>
+                    <c:choose>
+                        <c:when test="${actionBean.canEditProduct()}">
+                            <stripes:label for="product" class="control-label">
+                                Product <c:if test="${not actionBean.editOrder.draft}">*</c:if>
+                            </stripes:label>
+                            <div class="controls">
+                                <stripes:text id="product" name="productTokenInput.listOfKeys" class="defaultText"
+                                              title="Enter the product name for this order"/>
+                                <div id="primaryProductListPrice" ></div>
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+                            <label class="control-label">Product</label>
+                            <c:if test="${actionBean.editOrder.product != null}">
+                                <input type="hidden" name="productTokenInput.listOfKeys" value="${actionBean.editOrder.product.partNumber}"/>
+                                <div class="controls">
+                                <stripes:link title="Product" href="${ctxpath}/products/product.action?view">
+                                    <stripes:param name="product" value="${actionBean.editOrder.product.partNumber}"/>
+                                    <c:if test="${actionBean.editOrder.orderType != null}">
+                                        ${actionBean.editOrder.orderTypeDisplay} --
+                                    </c:if>
+                                    ${actionBean.editOrder.product.productName}
+                                </stripes:link>
+                                </div>
+                            </c:if>
+                        </c:otherwise>
+                    </c:choose>
                 </div>
 
                 <div class="control-group" id="reagentDesignGroup">
@@ -1733,6 +1755,7 @@
                         Quote <c:if test="${not actionBean.editOrder.draft}">*</c:if>
                     </stripes:label>
                     <div class="controls">
+                        <input type="hidden" name="originalQuote" value="${actionBean.editOrder.quoteId}"/>
                         <stripes:text id="quote" name="editOrder.quoteId" class="defaultText"
                                       onchange="updateFundsRemaining()"
                                       title="Enter the Quote ID for this order"/>
@@ -1805,7 +1828,7 @@
                         <stripes:submit name="save" value="${actionBean.saveButtonText}"
                                         disabled="${!actionBean.canSave}"
                                         style="margin-right: 10px;" class="btn btn-primary"
-                                        onclick="return validateNumberOfLanes();"/>
+                                        onclick="return validateSaveOrder();"/>
                         <c:choose>
                             <c:when test="${actionBean.creating}">
                                 <stripes:link beanclass="${actionBean.class.name}" event="list">Cancel</stripes:link>

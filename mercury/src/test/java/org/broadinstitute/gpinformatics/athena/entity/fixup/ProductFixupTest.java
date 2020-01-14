@@ -4,10 +4,12 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
@@ -17,7 +19,8 @@ import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTe
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.broadinstitute.sap.entity.SAPMaterial;
+import org.broadinstitute.sap.entity.material.SAPMaterial;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -32,10 +35,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 /**
  *
@@ -59,6 +68,9 @@ public class ProductFixupTest extends Arquillian {
 
     @Inject
     private SAPProductPriceCache productPriceCache;
+
+    @Inject
+    private ProductEjb productEjb;
 
     @Inject
     private PriceListCache priceListCache;
@@ -353,7 +365,8 @@ public class ProductFixupTest extends Arquillian {
             final QuotePriceItem byKeyFields = priceListCache.findByKeyFields(currentProduct.getPrimaryPriceItem());
             if(byKeyFields != null) {
                 BigDecimal qsPrice = new BigDecimal(byKeyFields.getPrice());
-                final SAPMaterial material = productPriceCache.findByProduct(currentProduct, configuration);
+                final SAPMaterial material = productPriceCache.findByProduct(currentProduct,
+                        configuration.getSalesOrganization());
                 if (material != null) {
                     BigDecimal sapPrice = new BigDecimal(material.getBasePrice());
                     if (sapPrice.compareTo(qsPrice) != 0) {
@@ -420,6 +433,137 @@ public class ProductFixupTest extends Arquillian {
         }
 
         System.out.println("Commercial statuses updated: "+ StringUtils.join(commercialStatusByProduct.keySet(), ", "));
+
+        productDao.persist(new FixupCommentary(fixupReason));
+        utx.commit();
+    }
+
+    @Test(enabled=false)
+    public void gplim6397RemoveBadProducts() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        final Set<Long> badProductIds = Stream.of(133054L, 133055L, 133053L).collect(Collectors.toSet());
+
+        final List<Product> badProducts = productDao.findListByList(Product.class, Product_.productId, badProductIds);
+
+        Assert.assertEquals(badProducts.size(), 3,"There should be 3 products found");
+
+        final Iterator<Product> productIterator = badProducts.iterator();
+
+        while(productIterator.hasNext()) {
+            final Product removedProduct = productIterator.next();
+            String nameOfRemovedProduct = removedProduct.getDisplayName();
+            removedProduct.getAddOns().clear();
+            productDao.remove(removedProduct);
+            System.out.println("Removed product " + nameOfRemovedProduct);
+        }
+
+        productDao.persist(new FixupCommentary("GPLIM-6397: Removing duplicate products to assist in Designation Creation"));
+
+        utx.commit();
+
+        final List<Product> doubleCheck = productDao.findListByList(Product.class, Product_.productId, badProductIds);
+        Assert.assertEquals(doubleCheck.size(), 0, "The products should have been removed");
+
+    }
+
+    @Test(enabled = false)
+    public void gplim6286rename93114() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        Product wes010241Bad = productDao.findById(Product.class, 93114L);
+        assertThat(wes010241Bad.getPartNumber(), is("WES-010241 Express Somatic Human WES (Deep Coverage)"));
+        wes010241Bad.setPartNumber("WES-010241_BAD");
+
+        productDao.persist(new FixupCommentary("GPLIM-6286 Rename invalid partNumber"));
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void gplim6362InitializeOfferAsCommercialFlag() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<String> offeredAsCommercialPartNumbers =
+                Stream.of("P-ALT-0018", "P-ALT-0019", "P-ALT-0023", "P-ALT-0034", "P-ESH-0002", "P-ESH-0021",
+                        "P-ESH-0053", "P-ESH-0055", "P-ESH-0056", "P-ESH-0057", "P-ESH-0063", "P-ESH-0064",
+                        "P-ESH-0072", "P-ESH-0073", "P-ESH-0078", "P-EX-0018", "P-EX-0039", "P-EX-0040", "P-EX-0041",
+                        "P-EX-0042", "P-EX-0048", "P-EX-0049", "P-EX-0051", "P-MCV-0012", "P-MCV-0013", "P-MCV-0014",
+                        "P-MCV-0015", "P-MCV-0016", "P-RNA-0016", "P-RNA-0019", "P-RNA-0022", "P-WG-0058", "P-WG-0072",
+                        "P-WG-0073", "P-WG-0083", "P-WG-0086", "P-WG-0087", "P-WG-0088", "P-WG-0090", "P-WG-0101",
+                        "P-WG-0102", "P-WG-0104", "P-WG-0105", "P-WG-0106", "P-WG-0107","P-SEQ-0001", "P-SEQ-0003",
+                        "P-SEQ-0004", "P-SEQ-0005", "P-SEQ-0006", "P-SEQ-0007", "P-SEQ-0010", "P-SEQ-0011",
+                        "P-SEQ-0014", "P-SEQ-0018", "P-SEQ-0020", "P-SEQ-0021", "P-SEQ-0022", "P-SEQ-0027",
+                        "P-SEQ-0029", "P-SEQ-0030", "P-SEQ-0031", "P-SEQ-0032", "P-SEQ-0032", "P-SEQ-0032",
+                        "P-SEQ-0034", "P-SEQ-0035", "P-SEQ-0036", "P-SEQ-0037", "P-SEQ-0038",
+                        "P-SEQ-0039").collect(Collectors.toList());
+
+        List<Product> productsToUpdate = productDao.findByPartNumbers(offeredAsCommercialPartNumbers);
+        productsToUpdate.forEach(product -> {
+            product.setOfferedAsCommercialProduct(true);
+            System.out.println("Updated " + product.getDisplayName() + " to be offered as a commercial product");
+        });
+
+        productDao.persist(new FixupCommentary("GPLIM-6362: pre-setting the Offered as Commercial flag on all relevant products upon SAP 2.0 rollout"));
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void gplim6657InitializeOfferAsCommercialFlag() throws Exception {
+        userBean.loginOSUser();
+
+        List<String> offeredAsCommercialPartNumbers =
+                Stream.of("P-WG-0080","P-WG-0081","P-WG-0089","P-WG-0068","P-ALT-0038","P-ALT-0039","P-ALT-0040",
+                        "P-WG-0097","").collect(Collectors.toList());
+
+        utx.begin();
+        List<Product> productsToUpdate = productDao.findByPartNumbers(offeredAsCommercialPartNumbers);
+        for (Product product : productsToUpdate) {
+            try {
+                product.setOfferedAsCommercialProduct(true);
+                productEjb.publishProductToSAP(product);
+                System.out.println("Updated " + product.getDisplayName() + " to be offered as a commercial product");
+            } catch (SAPIntegrationException e) {
+                System.out.println(Arrays.toString(e.getStackTrace()));
+            }
+        }
+
+        productDao.persist(new FixupCommentary("GPLIM-6657: pre-setting the Offered as Commercial flag on all relevant products upon SAP 2.0 rollout"));
+        utx.commit();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/ProductsExtendToCommercial.txt, so it
+     * can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-XXXX setting products as commercial
+     * P-EX-1123
+     * P-EX-1134
+     * P-EX-1124
+     * P-EX-1135
+     *
+     * @throws Exception
+     */
+    @Test(enabled = false)
+    public void genericInitializeOfferAsCommercialFlag() throws Exception {
+        userBean.loginOSUser();
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ProductsExtendToCommercial.txt"));
+        String fixupReason = lines.get(0);
+        Assert.assertTrue(StringUtils.isNotBlank(fixupReason), "A fixup reason needs to be defined");
+        final List<String> productsWithCommercialStatuses = lines.subList(1, lines.size());
+
+        utx.begin();
+        List<Product> productsToUpdate = productDao.findByPartNumbers(productsWithCommercialStatuses);
+        for (Product product : productsToUpdate) {
+            try {
+                product.setOfferedAsCommercialProduct(true);
+                productEjb.publishProductToSAP(product);
+                System.out.println("Updated " + product.getDisplayName() + " to be offered as a commercial product");
+            } catch (SAPIntegrationException e) {
+                System.out.println(Arrays.toString(e.getStackTrace()));
+            }
+        }
 
         productDao.persist(new FixupCommentary(fixupReason));
         utx.commit();

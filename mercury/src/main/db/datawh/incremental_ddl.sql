@@ -4,3 +4,13 @@ DROP INDEX IDX_ARRAY_PROCESS_FLOW_PDO_ETL;
 CREATE INDEX IDX_ARRAY_PROCESS_FLOW_ETL
 ON ARRAY_PROCESS_FLOW( BATCH_NAME, LCSET_SAMPLE_NAME );
 
+-- GPLIM-4108 add column for sap delivery document
+alter table ledger_entry add sap_delivery_document varchar2(255);
+alter table im_ledger_entry add sap_delivery_document varchar2(255);
+
+alter table ledger_entry add product_id numeric(19);
+alter table im_ledger_entry add product_id numeric(19);
+
+-- GPLIM-6508 add column for order type
+alter table product_order add order_type varchar2(255);
+alter table im_product_order add order_type varchar2(255);

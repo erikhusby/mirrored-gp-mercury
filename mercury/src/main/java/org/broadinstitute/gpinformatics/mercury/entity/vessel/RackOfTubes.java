@@ -2,6 +2,9 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.hibernate.annotations.BatchSize;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.workrequest.kit.ReceptacleType;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -9,9 +12,11 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.ManyToMany;
+import java.util.ArrayList;
 import javax.persistence.OneToMany;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -22,6 +27,7 @@ import java.util.Set;
 @Entity
 @Audited
 public class RackOfTubes extends LabVessel {
+    private static final Log log = LogFactory.getLog(RackOfTubes.class);
 
     @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "racksOfTubes")
     private Set<TubeFormation> tubeFormations = new HashSet<>();
@@ -40,29 +46,29 @@ public class RackOfTubes extends LabVessel {
         Eppendorf10x10Box("Eppendorf10x10Box", "Eppendorf 10x10 Box", VesselGeometry.G10x10_NUM),
         Eppendorf12x8Box("Eppendorf12x8Box", "Eppendorf 12x8 Box", VesselGeometry.G12x8),
         Eppendorf12x8BoxWell("Eppendorf12x8BoxWell", "Eppendorf 12x8 Box Well Format", VesselGeometry.G12x8),
+        FTAPaperHolder("FTAPaperHolder", "FTAPaperHolder 8x12", VesselGeometry.G12x8),
         FiveInch6x6Box("FiveInch6x6Box", "5\" 6x6 box", VesselGeometry.G12x8),
-        FlipperRackRow8("FlipperRackRow8", "Flipper Rack Row of 8", VesselGeometry.G8x1, false),
-        FlipperRackRow24("FlipperRackRow24", "Flipper Rack Row of 24", VesselGeometry.G24x1, false),
+        FlipperRackRow24("FlipperRackRow24", "Flipper Rack Row of 24", VesselGeometry.G24x1),
+        FlipperRackRow8("FlipperRackRow8", "Flipper Rack Row of 8", VesselGeometry.G8x1),
         FluidX_4x6_Rack("FluidX_4x6_Rack", "FluidX 4x6 Rack", VesselGeometry.G6x4_ALPHANUM, true),
         FourInch3x5Box("FourInch3x5Box", "4\" 3x5 box", VesselGeometry.G5x3_NUM),
         FourInch7x7Box("FourInch7x7Box", "4\" 7x7 box", VesselGeometry.G7x7_NUM),
-        FTAPaperHolder("FTAPaperHolder", "FTAPaperHolder 8x12", VesselGeometry.G12x8),
-        QiasymphonyCarrier24("QiasymphonyCarrier24", "QIAsymphony Carrier 24x4", VesselGeometry.G4x24),
         HamiltonSampleCarrier24("HamiltonSampleCarrier24", "HamiltonSampleCarrier24", VesselGeometry.G24x1),
         HamiltonSampleCarrier32("HamiltonSampleCarrier32", "HamiltonSampleCarrier32", VesselGeometry.G32x1),
         Matrix48SlotRack2mL("Matrix48SlotRack2mL", "2D Matrix 48 Slot Rack [2mL]", VesselGeometry.G12x8),
         Matrix96("Matrix96", "2D Matrix 96 Slot Rack", VesselGeometry.G12x8, CanRackScan.TRUE),
-        Matrix96Anonymous("Matrix96Anonymous", "2D Matrix 96 Slot Rack (anonymous)", VesselGeometry.G12x8, false),
-        StripTubeRackOf12("StripTubeRackOf12", "Strip Tube Rack Of 12", VesselGeometry.G12x8),
+        Matrix96Anonymous("Matrix96Anonymous", "2D Matrix 96 Slot Rack (anonymous)", VesselGeometry.G12x8,
         Matrix96SlotRack040("Matrix96SlotRack040", "2D Matrix 96 Slot Rack [0.40mL]", VesselGeometry.G12x8, CanRackScan.TRUE),
         Matrix96SlotRack075("Matrix96SlotRack075", "2D Matrix 96 Slot Rack [0.75ml]", VesselGeometry.G12x8, CanRackScan.TRUE),
         Matrix96SlotRack14("Matrix96SlotRack14", "2D Matrix 96 Slot Rack [1.4ml]", VesselGeometry.G12x8, CanRackScan.TRUE),
         Matrix96SlotRackSC05("Matrix96SlotRackSC05", "2D Matrix 96 Slot Rack [0.5ml SC]", VesselGeometry.G12x8, CanRackScan.TRUE),
         Matrix96SlotRackSC14("Matrix96SlotRackSC14", "2D Matrix 96 Slot Rack [1.0(1.4)ml SC]", VesselGeometry.G12x8, CanRackScan.TRUE),
+        QiasymphonyCarrier24("QiasymphonyCarrier24", "QIAsymphony Carrier 24x4", VesselGeometry.G4x24),
         SlideBox_1x10("SlideBox_1x10", "Slide Box (1x10)", VesselGeometry.G1x10_NUM),
         SlideBox_1x25("SlideBox_1x25", "Slide Box (1x25)", VesselGeometry.G1x25_NUM),
         SlideBox_2x50("SlideBox_2x50", "Slide Box (2x50)", VesselGeometry.G2x50_NUM),
         SpinColumn96SlotRack( "SpinColumn96SlotRack", "Spin Column 96 Slot Rack", VesselGeometry.G12x8),
+        StripTubeRackOf12("StripTubeRackOf12", "Strip Tube Rack Of 12", VesselGeometry.G12x8),
         TeFlow24("TeFlow24", "Te Flow 24", VesselGeometry.TEFLOW3x8, false),
         ThreeInch9x9box("ThreeInch9x9box", "3\" 9x9 box", VesselGeometry.G9x9_NUM),
         ThreeInch_FTA_Box("ThreeInch_FTA_Box", "Three Inch FTA Box", VesselGeometry.G1x100_NUM),
@@ -95,7 +101,7 @@ public class RackOfTubes extends LabVessel {
         private final String         automationName;
         private final VesselGeometry vesselGeometry;
         private boolean barcoded = true;
-        private CanRackScan canRackScan;
+        private CanRackScan canRackScan = CanRackScan.FALSE;
 
         RackType(String automationName, String displayName, VesselGeometry vesselGeometry) {
             this.automationName = automationName;
@@ -150,6 +156,25 @@ public class RackOfTubes extends LabVessel {
 
         public boolean isRackScannable() {
             return canRackScan == CanRackScan.TRUE;
+        }
+
+        public List<BarcodedTube.BarcodedTubeType> getAllowedChildTypes() {
+            // get the receptacle type
+            ReceptacleType receptacleType = ReceptacleType.findByName(this.name());
+
+            // for all the allowed tube types grab the applicable BarcodedTubeType objects
+            List<BarcodedTube.BarcodedTubeType> typesAllowed = new ArrayList<>();
+            for (ReceptacleType childReceptacleType : receptacleType.getChildReceptacleTypes()) {
+                try {
+
+                    BarcodedTube.BarcodedTubeType allowedType =
+                            BarcodedTube.BarcodedTubeType.valueOf(childReceptacleType.getName());
+                    typesAllowed.add(allowedType);
+                } catch (IllegalArgumentException exception) {
+                    log.error("Illegal Argument Exception when attempting to parse tube receptacle type of " + childReceptacleType.getName(), exception);
+                }
+            }
+            return typesAllowed;
         }
     }
 

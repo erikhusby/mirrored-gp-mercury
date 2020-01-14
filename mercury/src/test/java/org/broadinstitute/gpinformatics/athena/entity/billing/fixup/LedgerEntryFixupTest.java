@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.billing.fixup;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -14,6 +15,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
@@ -25,8 +27,10 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -90,6 +94,9 @@ public class LedgerEntryFixupTest extends Arquillian {
 
     @Inject
     private BillingEjb billingEjb;
+
+    @Inject
+    private SapIntegrationService sapService;
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
@@ -404,24 +411,29 @@ public class LedgerEntryFixupTest extends Arquillian {
         try {
             final List<QuoteImportItem> quoteImportItems = collectedEntriesByQuoteId.getQuoteImportItems(priceListCache);
             for (QuoteImportItem item : quoteImportItems) {
-                Quote quote = item.getProductOrder().getQuote(quoteService);
+                if(item.isSapOrder()) {
+                    Quote quote = item.getProductOrder().getQuote(quoteService);
 
-                System.out.println("SUPPORT-4208 For work item " + item.getSingleWorkItem() + " updating "
-                                   + item.getLedgerItems().size() + " ledger entries: "
-                                   + StringUtils.join(entriesByWorkItem.get(item.getSingleWorkItem()), ","));
-                final PriceList priceItemsForDate = quoteService.getPriceItemsForDate(Collections.singletonList(item));
-                String newWorkId = quoteService.registerNewWork(quote,
-                        QuotePriceItem.convertMercuryPriceItem(item.getPriceItem()),
-                        item.getPrimaryForReplacement(priceItemsForDate),
-                        item.getWorkCompleteDate(),
-                        item.getQuantity(),
-                        "https://gpinfojira.broadinstitute.org/jira/browse/SUPPORT-4208",
-                        "SupportTicket","SUPPORT-4208",null);
+                    System.out.println("SUPPORT-4208 For work item " + item.getSingleWorkItem() + " updating "
+                                       + item.getLedgerItems().size() + " ledger entries: "
+                                       + StringUtils.join(entriesByWorkItem.get(item.getSingleWorkItem()), ","));
+                    final PriceList priceItemsForDate =
+                            quoteService.getPriceItemsForDate(Collections.singletonList(item));
+                    String newWorkId = quoteService.registerNewWork(quote,
+                            QuotePriceItem.convertMercuryPriceItem(item.getPriceItem()),
+                            item.getPrimaryForReplacement(priceItemsForDate),
+                            item.getWorkCompleteDate(),
+                            item.getQuantity(),
+                            "https://gpinfojira.broadinstitute.org/jira/browse/SUPPORT-4208",
+                            "SupportTicket", "SUPPORT-4208", null);
 
-                newWorkItems.add(newWorkId);
+                    newWorkItems.add(newWorkId);
 
-                item.updateLedgerEntries(null, BillingSession.SUCCESS, newWorkId, Collections.emptyList(),
-                        item.getSapItems());
+                    item.updateLedgerEntries(null, BillingSession.SUCCESS, newWorkId, Collections.emptyList(),
+                            item.getSapItems());
+                }else {
+                    Assert.fail();
+                }
             }
 
         } catch (QuoteNotFoundException | QuoteServerException e) {
@@ -471,4 +483,74 @@ public class LedgerEntryFixupTest extends Arquillian {
         utx.commit();
     }
 
+    /**
+     * Use file ReverseBillingPDOs.txt
+     * File content Structure
+     * <table>
+     *     <th><td>quote work Item Reference</td><td>Reversal amount (Positive)</td><td>Quote ID</td><td>Support Ticket</td></th>
+     * </table>
+     * Example:
+     * 330679 5.25 MMMPM1 SUPPORT-5484
+     * @throws Exception
+     */
+    @Test(enabled = false)
+    public void reverseIncorrectBillingQuantity() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("ReverseBillingPDOs.txt"));
+
+        fixupLines.forEach(line -> {
+
+            final String[] lineSplit = line.split("\\s");
+            final String workItem = lineSplit[0];
+            final String quote = lineSplit[2];
+            final double reversalAmount = Double.parseDouble(lineSplit[1]);
+            final String supportTicket = lineSplit[3];
+
+            List<LedgerEntry> entryToCorrect =
+                    ledgerEntryFixupDao.findList(LedgerEntry.class, LedgerEntry_.workItem, workItem);
+            entryToCorrect.forEach(ledgerEntry -> Assert.assertEquals(ledgerEntry.getQuoteId(), quote));
+
+            final Set<PriceItem> collectedPriceItem =
+                    entryToCorrect.stream().map(LedgerEntry::getPriceItem).collect(Collectors.toSet());
+            final Set<Date> collectedWorkCompleteDate =
+                    entryToCorrect.stream().map(LedgerEntry::getWorkCompleteDate).collect(Collectors.toSet());
+
+            Quote quoteByAlphaId = null;
+            try {
+                quoteByAlphaId = quoteService.getQuoteByAlphaId(quote);
+            } catch (QuoteServerException | QuoteNotFoundException e) {
+                Assert.fail();
+            }
+            String fixupMessage =
+                    String.format(supportTicket + " Reverse samples billed in Quotes (workItem %s, Quote %s)", workItem,
+                            quote);
+
+            final String correction = quoteService.registerNewSAPWork(quoteByAlphaId,
+                    QuotePriceItem.convertMercuryPriceItem(collectedPriceItem.iterator().next()), null,
+                    collectedWorkCompleteDate.iterator().next(), -reversalAmount,
+                    "https://gpinfojira.broadinstitute.org/jira/browse/" + supportTicket,
+                    "correction", supportTicket, null);
+
+            final Map<ProductOrderSample, List<LedgerEntry>> ledgersByProductOrderSample =
+                    entryToCorrect.stream().collect(Collectors.groupingBy(LedgerEntry::getProductOrderSample));
+
+            ledgersByProductOrderSample.forEach((productOrderSample, ledgerEntries) -> {
+                final String formattedStatusMessage =
+                        String.format("Removing Ledger entries from product order %s which "
+                                      + "are associated with quote work Item %s",
+                                productOrderSample.getProductOrder().getBusinessKey(), workItem);
+                System.out.println(formattedStatusMessage);
+                productOrderSample.getProductOrder().setOrderStatus(ProductOrder.OrderStatus.Submitted);
+                productOrderSample.getLedgerItems().removeAll(ledgerEntries);
+            });
+
+            String messageWithCorrection = String.format("%s %s", fixupMessage, correction);
+            System.out.println(messageWithCorrection);
+            ledgerEntryFixupDao.persist(new FixupCommentary(messageWithCorrection));
+        });
+
+        utx.commit();
+    }
 }

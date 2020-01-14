@@ -107,10 +107,9 @@ public class ManualTransferActionBeanTest {
     public void testShearingTransfer() {
         // Get the skeleton station event
         String eventType = "ShearingTransfer";
-        ManualTransferActionBean initActionBean = chooseEvent(eventType);
-        List<StationEventType> stationEvents = initActionBean.getStationEvents();
+        ManualTransferActionBean actionBean = chooseEvent(eventType);
+        List<StationEventType> stationEvents = actionBean.getStationEvents();
 
-        ManualTransferActionBean actionBean = new ManualTransferActionBean();
         actionBean.setContext(new CoreActionBeanContext());
 
         // The action bean needs the user, to set the operator field in the event
@@ -158,8 +157,6 @@ public class ManualTransferActionBeanTest {
         PlateType destPlateType = plateTransferEventType.getPlate();
         String destBarcode = "DestPlate";
         destPlateType.setBarcode(destBarcode);
-        when(labVesselDao.findByIdentifier(destBarcode)).thenReturn(
-                new StaticPlate(destBarcode, StaticPlate.PlateType.Plate96Well200));
         actionBean.setStationEvents(stationEvents);
 
         BettaLIMSMessage bettaLIMSMessage = actionBean.buildBettaLIMSMessage();
@@ -175,10 +172,9 @@ public class ManualTransferActionBeanTest {
     public void testCherryPickTransfer() {
         // Get the skeleton station event
         String eventType = "PoolingTransfer";
-        ManualTransferActionBean initActionBean = chooseEvent(eventType);
-        List<StationEventType> stationEvents = initActionBean.getStationEvents();
+        ManualTransferActionBean actionBean = chooseEvent(eventType);
+        List<StationEventType> stationEvents = actionBean.getStationEvents();
 
-        ManualTransferActionBean actionBean = new ManualTransferActionBean();
         actionBean.setContext(new CoreActionBeanContext());
 
         // The action bean needs the user, to set the operator field in the event
@@ -234,10 +230,9 @@ public class ManualTransferActionBeanTest {
     public void testStripTubeTransfer() {
         // Get the skeleton station event
         String eventType = "StripTubeBTransfer";
-        ManualTransferActionBean initActionBean = chooseEvent(eventType);
-        List<StationEventType> stationEvents = initActionBean.getStationEvents();
+        ManualTransferActionBean actionBean = chooseEvent(eventType);
+        List<StationEventType> stationEvents = actionBean.getStationEvents();
 
-        ManualTransferActionBean actionBean = new ManualTransferActionBean();
         actionBean.setContext(new CoreActionBeanContext());
 
         // The action bean needs the user, to set the operator field in the event

@@ -11,6 +11,7 @@ import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
@@ -18,6 +19,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
+import org.broadinstitute.gpinformatics.athena.presentation.links.SapQuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
@@ -33,6 +35,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BSPRestSender;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.GeminiPlateProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
@@ -54,6 +57,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -74,7 +78,8 @@ public class UploadQuantsActionBean extends CoreActionBean {
         GEMINI("Gemini"),
         WALLAC("Wallac"),
         CALIPER("Caliper"),
-        GENERIC("Generic");
+        GENERIC("Generic"),
+        LUNATIC("Lunatic");
 
         private String displayName;
 
@@ -113,6 +118,8 @@ public class UploadQuantsActionBean extends CoreActionBean {
     private PriceListCache priceListCache;
     @Inject
     private QuoteLink quoteLink;
+    @Inject
+    private SapQuoteLink sapQuoteLink;
 
     @Validate(required = true, on = UPLOAD_QUANT)
     private FileBean quantSpreadsheet;
@@ -143,20 +150,10 @@ public class UploadQuantsActionBean extends CoreActionBean {
 
     @HandlesEvent(UPLOAD_QUANT)
     public Resolution uploadQuant() {
-        switch (quantFormat) {
-        case VARIOSKAN:
-            break;
-        case WALLAC:
-            break;
-        case CALIPER:
-            break;
-        case GEMINI:
-            break;
-        case GENERIC:
+        if (quantFormat == QuantFormat.GENERIC) {
             MessageCollection messageCollection = new MessageCollection();
             quantEJB.storeQuants(labMetrics, quantType, messageCollection);
             addMessages(messageCollection);
-            break;
         }
         if (getValidationErrors().isEmpty()) {
             addMessage("Successfully uploaded quant.");
@@ -209,7 +206,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
             }
             case GEMINI: {
                 MessageCollection messageCollection = new MessageCollection();
-                Triple<LabMetricRun, List<Result>, Set<StaticPlate>> triple = vesselEjb.createGeminiRun(
+                Triple<LabMetricRun, List<Result>, Map<String, String>> triple = vesselEjb.createGeminiRun(
                         quantStream, quantSpreadsheet.getFileName(), getQuantType(), userBean.getBspUser().getUserId(),
                         messageCollection, acceptRePico);
                 if (triple != null) {
@@ -218,8 +215,29 @@ public class UploadQuantsActionBean extends CoreActionBean {
                         tubeFormationLabels = triple.getMiddle().stream()
                                 .map(r -> r.getTubeFormation().getLabel()).collect(Collectors.toList());
                     }
+                    if (quantType == LabMetric.MetricType.PLATING_PICO ||
+                            quantType == LabMetric.MetricType.INITIAL_PICO) {
+                        sendTubeQuantsToBsp(triple.getRight(),
+                                GeminiPlateProcessor.RUN_DATE_FORMAT.format(labMetricRun.getRunDate()),
+                                messageCollection);
+                    }
                 }
 
+                addMessages(messageCollection);
+                break;
+            }
+            case LUNATIC: {
+                MessageCollection messageCollection = new MessageCollection();
+                Triple<LabMetricRun, List<Result>, Map<String, String>> triple = vesselEjb.createLunaticRun(
+                        quantStream, quantSpreadsheet.getFileName(), getQuantType(),
+                        userBean.getBspUser().getUserId(), messageCollection, acceptRePico);
+                if (triple != null) {
+                    labMetricRun = triple.getLeft();
+                    if (triple.getMiddle() != null) {
+                        tubeFormationLabels = triple.getMiddle().stream()
+                                .map(r -> r.getTubeFormation().getLabel()).collect(Collectors.toList());
+                    }
+                }
                 addMessages(messageCollection);
                 break;
             }
@@ -250,6 +268,44 @@ public class UploadQuantsActionBean extends CoreActionBean {
                 quantSpreadsheet.delete();
             } catch (IOException ignored) {
                 // If cannot delete, oh well.
+            }
+        }
+    }
+
+    public void sendTubeQuantsToBsp(Map<String, String> tubeBarcodeToQuantValue, String runDate,
+            MessageCollection messageCollection) {
+        List<String> tubesNotSent = new ArrayList<>();
+        List<BarcodedTube> tubes = new ArrayList<>();
+        tubeFormationDao.findByLabels(tubeFormationLabels).stream().
+                flatMap(tubeFormation -> tubeFormation.getContainerRole().getContainedVessels().stream()).
+                filter(tube -> tubeBarcodeToQuantValue.containsKey(tube.getLabel())).
+                forEach(tube -> {
+                    // Clinical sample tubes should not go to BSP.
+                    if (tube.getMercurySamples().stream().anyMatch(sample -> sample.canSampleBeUsedForClinical())) {
+                        tubesNotSent.add(tube.getLabel());
+                    } else {
+                        tubes.add(tube);
+                    }
+                });
+        if (!tubesNotSent.isEmpty()) {
+            tubesNotSent.sort(Comparator.naturalOrder());
+            messageCollection.addInfo("Mercury withheld " + tubesNotSent.size() + " CRSP samples from BSP (" +
+                    StringUtils.join(tubesNotSent, " ") + ").");
+        }
+        if (!tubes.isEmpty()) {
+            List<String> tubeBarcodes = tubes.stream().
+                    map(BarcodedTube::getLabel).collect(Collectors.toList());
+            List<String> quants = tubeBarcodes.stream().
+                    map(label -> tubeBarcodeToQuantValue.get(label)).collect(Collectors.toList());
+            List<String> volumes = tubes.stream()
+                    .map(tube -> tube.getVolume().toPlainString()).collect(Collectors.toList());
+            String user = userBean.getBspUser().getUsername();
+            BSPRestSender.TubeQuants tubeQuants = new BSPRestSender.TubeQuants(user, tubeBarcodes, quants, volumes,
+                    runDate);
+            try {
+                bspRestSender.postToBsp(tubeQuants, BSPRestSender.BSP_UPDATE_TUBE_QUANTS_URL, messageCollection);
+            } catch (Exception e) {
+                messageCollection.addError("Failed to send quants to BSP: " + e.toString());
             }
         }
     }
@@ -381,6 +437,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
         searchContext.setJiraConfig(jiraConfig);
         searchContext.setPriceListCache(priceListCache);
         searchContext.setQuoteLink(quoteLink);
+        searchContext.setSapQuoteLink(sapQuoteLink);
         ConfigurableList configurableList = configurableListFactory.create(labMetricList, "Default",
                 ColumnEntity.LAB_METRIC, searchContext,
                 SearchDefinitionFactory.getForEntity(ColumnEntity.LAB_METRIC.getEntityName()));
@@ -506,4 +563,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
         return null;
     }
 
+    public UserBean getUserBean() {
+        return userBean;
+    }
 }

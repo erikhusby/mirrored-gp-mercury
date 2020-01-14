@@ -10,20 +10,18 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapConfig;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
-import org.broadinstitute.sap.entity.Condition;
-import org.broadinstitute.sap.entity.DeliveryCondition;
-import org.broadinstitute.sap.entity.SAPMaterial;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -33,7 +31,6 @@ import org.testng.annotations.Test;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
-import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -49,7 +46,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 
-@Test(groups = TestGroups.ALTERNATIVES, enabled = true)
+@Test(groups = TestGroups.ALTERNATIVES)
 @Dependent
 public class BillingEjbJiraDownTest extends Arquillian {
 
@@ -70,8 +67,7 @@ public class BillingEjbJiraDownTest extends Arquillian {
     @Inject
     private BillingSessionAccessEjb billingSessionAccessEjb;
 
-    // Stub implementation
-    private SapIntegrationService sapService = new SapIntegrationServiceStub();
+    private SapIntegrationServiceImpl sapService;
 
     @Inject
     private ProductOrderEjb productOrderEjb;
@@ -88,10 +84,11 @@ public class BillingEjbJiraDownTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryDeployment() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(AcceptsAllWorkRegistrationsQuoteServiceStub.class, AlwaysThrowsRuntimeExceptionsJiraStub.class, SapIntegrationServiceStub.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(AcceptsAllWorkRegistrationsQuoteServiceStub.class,
+            AlwaysThrowsRuntimeExceptionsJiraStub.class);
     }
 
-    private String writeFixtureData() {
+    private String writeFixtureData() throws SAPIntegrationException {
 
         final String SM_A = "SM-" + (new Date()).getTime();
         final String SM_B = "SM-" + ((new Date()).getTime() + 1);
@@ -102,10 +99,17 @@ public class BillingEjbJiraDownTest extends Arquillian {
         final ProductOrderSample sampleA = samplesByName.get(SM_A).iterator().next();
         final ProductOrderSample sampleB = samplesByName.get(SM_B).iterator().next();
 
-        LedgerEntry ledgerEntryA =
-                new LedgerEntry(sampleA, productOrder.getProduct().getPrimaryPriceItem(), new Date(), 3);
-        LedgerEntry ledgerEntryB =
-                new LedgerEntry(sampleB, productOrder.getProduct().getPrimaryPriceItem(), new Date(), 3);
+        LedgerEntry ledgerEntryA;
+        LedgerEntry ledgerEntryB;
+        if(productOrder.hasSapQuote()) {
+            ledgerEntryA = new LedgerEntry(sampleA, productOrder.getProduct(), new Date(), 3);
+            ledgerEntryB = new LedgerEntry(sampleB, productOrder.getProduct(), new Date(), 3);
+        } else {
+            ledgerEntryA = new LedgerEntry(sampleA, productOrder.getProduct().getPrimaryPriceItem(), new Date(),
+                    3);
+            ledgerEntryB = new LedgerEntry(sampleB, productOrder.getProduct().getPrimaryPriceItem(), new Date(),
+                    3);
+        }
 
         final Collection<QuotePriceItem> quotePriceItems = priceListCache.getQuotePriceItems();
 
@@ -118,13 +122,20 @@ public class BillingEjbJiraDownTest extends Arquillian {
 
         PriceListCache tempPriceListCache = new PriceListCache(quotePriceItems);
 
-        productPriceCache = Mockito.mock(SAPProductPriceCache.class);
+        QuoteService mockQuoteService = Mockito.mock(QuoteService.class);
+        SAPAccessControlEjb mockAccessController = Mockito.mock(SAPAccessControlEjb.class);
+        sapService = new SapIntegrationServiceImpl(
+            SapConfig.produce(org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV),
+                Mockito.mock(BSPUserList.class), Mockito.mock(PriceListCache.class),
+            productPriceCache, mockAccessController);
+        productPriceCache = new SAPProductPriceCache(sapService);
+        sapService.setProductPriceCache(productPriceCache);
+        SapIntegrationClientImpl sapIntegrationClient = Mockito.mock(SapIntegrationClientImpl.class);
+        sapService.setWrappedClient(sapIntegrationClient);
+
         billingAdaptor = new BillingAdaptor(billingEjb, tempPriceListCache, quoteService,
                 billingSessionAccessEjb, sapService, productPriceCache, accessControlEjb);
-        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.any(
-                SapIntegrationClientImpl.SAPCompanyConfiguration.class))).thenReturn(new SAPMaterial("Test", "50", Collections.<Condition, BigDecimal>emptyMap(), Collections.singletonMap(
-                DeliveryCondition.LATE_DELIVERY_DISCOUNT, new BigDecimal("200.00"))));
-        Mockito.when(productPriceCache.productExists(Mockito.anyString())).thenReturn(true);
+
         billingAdaptor.setProductOrderEjb(productOrderEjb);
 
         BillingSession
@@ -137,8 +148,7 @@ public class BillingEjbJiraDownTest extends Arquillian {
         return billingSession.getBusinessKey();
     }
 
-
-    public void test() {
+    public void test() throws SAPIntegrationException {
 
         String businessKey = writeFixtureData();
 

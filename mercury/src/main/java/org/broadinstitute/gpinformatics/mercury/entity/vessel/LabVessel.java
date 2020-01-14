@@ -657,6 +657,21 @@ public abstract class LabVessel implements Serializable {
         return transfersTo;
     }
 
+    public Set<LabEvent> getTransfersToWithRearrays() {
+        Set<LabEvent> transfersTo = new HashSet<>();
+        for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsTarget) {
+            transfersTo.add(vesselToVesselTransfer.getLabEvent());
+        }
+        if (getContainerRole() == null) {
+            for (VesselContainer<?> vesselContainer : getVesselContainers()) {
+                transfersTo.addAll(vesselContainer.getTransfersToWithRearrays());
+            }
+        } else {
+            transfersTo.addAll(getContainerRole().getTransfersToWithRearrays());
+        }
+        return transfersTo;
+    }
+
     /**
      * Get LabEvents that are transfers to this vessel, including re-arrays
      *
@@ -1058,6 +1073,7 @@ public abstract class LabVessel implements Serializable {
      *  Get the AbandonVessel entry for a specific well <br/>
      *  Return null if well has not been abandoned.
      */
+    @Nullable
     public AbandonVessel getAbandonPositionForWell( VesselPosition well ) {
         for (AbandonVessel abandonVessel : getAbandonVessels() ) {
             if( abandonVessel.getVesselPosition() == well ){

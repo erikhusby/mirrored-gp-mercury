@@ -643,7 +643,7 @@ todo jmt adder methods
             // First attempt to find the LCSET that all single-sample vessels have in common
             for (SectionTransfer sectionTransfer : sectionTransfers) {
                 Set<LabBatch> sectionLcsets = sectionTransfer.getSourceVesselContainer().getComputedLcSetsForSection(
-                        sectionTransfer.getSourceSection());
+                            sectionTransfer.getSourceSection(), this);
                 if( !sectionLcsets.isEmpty() ) {
                     computedLcSets.addAll(sectionLcsets);
                 } else {
@@ -745,7 +745,7 @@ todo jmt adder methods
                         mapPositionToLcSets.put(targetPosition, labBatches);
                     }
                     Set<LabBatch> localComputedLcSets = VesselContainer.computeLcSets(mapLabBatchToCount,
-                            numVesselsWithBucketEntries);
+                            numVesselsWithBucketEntries, this);
                     labBatches.getLabBatchSet().addAll(localComputedLcSets);
                     totalLabBatches.addAll(localComputedLcSets);
                     mapLabBatchToCount.clear();
@@ -765,7 +765,7 @@ todo jmt adder methods
                 numVesselsWithBucketEntries = VesselContainer.collateLcSets(mapLabBatchToCount, numVesselsWithBucketEntries,
                         sampleInstancesAtPositionV2);
             }
-            return VesselContainer.computeLcSets(mapLabBatchToCount, numVesselsWithBucketEntries);
+            return VesselContainer.computeLcSets(mapLabBatchToCount, numVesselsWithBucketEntries, this);
         }
     }
 
@@ -778,7 +778,7 @@ todo jmt adder methods
             numVesselsWithBucketEntries = VesselContainer.collateLcSets(mapLabBatchToCount, numVesselsWithBucketEntries,
                     sampleInstancesAtPositionV2);
         }
-        return VesselContainer.computeLcSets(mapLabBatchToCount, numVesselsWithBucketEntries);
+        return VesselContainer.computeLcSets(mapLabBatchToCount, numVesselsWithBucketEntries, this);
     }
 
     /**
@@ -859,6 +859,14 @@ todo jmt adder methods
                 }
             }
         }
+    }
+
+    public Set<LabEvent> getAncestorEvents() {
+        HashSet<LabEvent> labEvents = new HashSet<>();
+        for (LabVessel labVessel : getSourceLabVessels()) {
+            labEvents.addAll(labVessel.getTransfersToWithRearrays());
+        }
+        return labEvents;
     }
 
 }

@@ -9,10 +9,15 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
+import org.broadinstitute.gpinformatics.athena.presentation.links.SapQuoteLink;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.PickerVesselPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -68,6 +73,16 @@ public class PickerActionBean extends CoreActionBean {
     @Inject
     private LabVesselDao labVesselDao;
 
+    @Inject
+    private BSPUserList bspUserList;
+    @Inject
+    private JiraConfig jiraConfig;
+    @Inject
+    private PriceListCache priceListCache;
+    @Inject
+    private QuoteLink quoteLink;
+    @Inject
+    private SapQuoteLink sapQuoteLink;
     @Validate(required = true, on = {SEARCH_ACTION})
     private String barcodes;
 
@@ -151,6 +166,12 @@ public class PickerActionBean extends CoreActionBean {
         this.unpickableBarcodes = new HashSet<>();
         Set<String> tubesNotInStorage = new HashSet<>();
         SearchContext searchContext = new SearchContext();
+        searchContext.setBspUserList(bspUserList);
+        searchContext.setUserBean(userBean);
+        searchContext.setJiraConfig(jiraConfig);
+        searchContext.setPriceListCache(priceListCache);
+        searchContext.setQuoteLink(quoteLink);
+        searchContext.setSapQuoteLink(sapQuoteLink);
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("XL20 Picker");
         searchTerm.setPluginClass(PickerVesselPlugin.class);
