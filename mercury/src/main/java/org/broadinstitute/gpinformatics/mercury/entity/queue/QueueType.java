@@ -25,10 +25,10 @@ public enum QueueType {
             DnaQuantPostDequeueHandler.class, DnaQuantDataDumpGenerator.class, QueueContainerRule.TUBES_ONLY),
     FINGERPRINTING("Fingerprinting", FingerprintingQueueValidator.class, FingerprintingEnqueueOverride.class,
             FingerprintingPostDequeueHandler.class, DnaQuantDataDumpGenerator.class, QueueContainerRule.TUBES_ONLY),
-//    ARRAY_PLATING("Array Plating", DnaQuantQueueValidator.class, DnaQuantEnqueueOverride.class, DnaQuantPostDequeueHandler.class,
-//            DnaQuantDataDumpGenerator.class, QueueContainerRule.TUBES_ONLY),
-//    SEQ_PLATING("Seq Plating", DnaQuantQueueValidator.class, DnaQuantEnqueueOverride.class, DnaQuantPostDequeueHandler.class,
-//            DnaQuantDataDumpGenerator.class, QueueContainerRule.TUBES_ONLY),
+    ARRAY_PLATING("Array Plating", DnaQuantQueueValidator.class, DnaQuantEnqueueOverride.class, DnaQuantPostDequeueHandler.class,
+            DnaQuantDataDumpGenerator.class, QueueContainerRule.TUBES_ONLY),
+    SEQ_PLATING("Seq Plating", DnaQuantQueueValidator.class, DnaQuantEnqueueOverride.class, DnaQuantPostDequeueHandler.class,
+            DnaQuantDataDumpGenerator.class, QueueContainerRule.TUBES_ONLY),
     ;
 
     // Name displayed in the queue page

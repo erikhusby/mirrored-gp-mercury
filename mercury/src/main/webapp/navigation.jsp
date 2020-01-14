@@ -266,6 +266,22 @@
                                 Fingerprinting Queue
                             </stripes:link>
                         </li>
+                        <li>
+                            <stripes:link id="arrayPlatingQueue"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean"
+                                          event="view">
+                                <stripes:param name="queueType" value="ARRAY_PLATING"/>
+                                Array Plating Queue
+                            </stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="seqPlatingQueue"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean"
+                                          event="view">
+                                <stripes:param name="queueType" value="SEQ_PLATING"/>
+                                Seq Plating Queue
+                            </stripes:link>
+                        </li>
                     </ul>
                 </li>
             </security:authorizeBlock>

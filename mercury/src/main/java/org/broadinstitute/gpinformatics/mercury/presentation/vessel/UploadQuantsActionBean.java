@@ -29,6 +29,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
+import org.broadinstitute.gpinformatics.mercury.boundary.manifest.MayoManifestEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.QuantificationEJB;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
@@ -37,6 +39,8 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunD
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BSPRestSender;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.GeminiPlateProcessor;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -45,6 +49,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric_;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate.TubeFormationByWellCriteria.Result;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
@@ -59,6 +64,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -177,14 +183,13 @@ public class UploadQuantsActionBean extends CoreActionBean {
             case VARIOSKAN: {
                 MessageCollection messageCollection = new MessageCollection();
 
-                Pair<LabMetricRun, List<String>> pair = spreadsheetToMercuryAndBsp(messageCollection,
+                Pair<LabMetricRun, List<TubeFormation>> pair = spreadsheetToMercuryAndBsp(messageCollection,
                         quantStream, getQuantType(), userBean, acceptRePico);
                 if (pair != null) {
                     labMetricRun = pair.getLeft();
-                    tubeFormationLabels = pair.getRight();
+                    tubeFormationLabels = pair.getRight().stream().map(LabVessel::getLabel).collect(Collectors.toList());
 
-                    queueEjb.dequeueLabVessels(labMetricRun, QueueType.DNA_QUANT, messageCollection);
-                    // todo jmt add to plating queue
+                    handleQueues(messageCollection, pair.getRight());
                 }
                 addMessages(messageCollection);
                 break;
@@ -230,8 +235,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
                                 messageCollection);
                     }
 
-                    queueEjb.dequeueLabVessels(labMetricRun, QueueType.DNA_QUANT, messageCollection);
-                    // todo jmt add to plating queue
+                    handleQueues(messageCollection, triple.getMiddle().stream().map(Result::getTubeFormation).collect(Collectors.toList()));
                 }
 
                 addMessages(messageCollection);
@@ -279,6 +283,31 @@ public class UploadQuantsActionBean extends CoreActionBean {
                 quantSpreadsheet.delete();
             } catch (IOException ignored) {
                 // If cannot delete, oh well.
+            }
+        }
+    }
+
+    private void handleQueues(MessageCollection messageCollection, List<TubeFormation> tubeFormations) {
+        queueEjb.dequeueLabVessels(labMetricRun, QueueType.DNA_QUANT, messageCollection);
+        Set<LabVessel> labVessels = tubeFormations.stream().flatMap(
+                tf -> tf.getContainerRole().getContainedVessels().stream()).collect(Collectors.toSet());
+        Set<String> productTypes = labVessels.stream().flatMap(
+                lv -> Arrays.stream(lv.getMetadataValues(Metadata.Key.PRODUCT_TYPE))).collect(Collectors.toSet());
+        if (!productTypes.isEmpty()) {
+            if (productTypes.size() == 1) {
+                String productType = productTypes.iterator().next();
+                QueueType queueType = null;
+                if (productType.equals(MayoManifestEjb.AUO_ARRAY)) {
+                    queueType = QueueType.ARRAY_PLATING;
+                } else if (productType.equals(MayoManifestEjb.AUO_GENOME)) {
+                    queueType = QueueType.SEQ_PLATING;
+                } else {
+                    messageCollection.addError("Unexpected product type " + productType);
+                }
+                queueEjb.enqueueLabVessels(labVessels, queueType,"Quanted on " + DateUtils.convertDateTimeToString(new Date()),
+                        messageCollection, QueueOrigin.OTHER, null);
+            } else {
+                messageCollection.addError("Multiple product types " + productTypes);
             }
         }
     }
@@ -362,7 +391,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
      * Persists the spreadsheet as a lab metrics run in Mercury and sends a filtered version of the spreadsheet
      * containing only the research sample quants to BSP.
      */
-    public Pair<LabMetricRun, List<String>> spreadsheetToMercuryAndBsp(MessageCollection messageCollection,
+    public Pair<LabMetricRun, List<TubeFormation>> spreadsheetToMercuryAndBsp(MessageCollection messageCollection,
             InputStream quantStream, LabMetric.MetricType quantType, UserBean userBean, boolean acceptRedoPico)
             throws Exception {
 
@@ -423,9 +452,9 @@ public class UploadQuantsActionBean extends CoreActionBean {
             }
         }
 
-        List<String> labels =
-                traverserResults.stream().map(r -> r.getTubeFormation().getLabel()).collect(Collectors.toList());
-        return Pair.of(runAndRackOfTubes.getLeft(), labels);
+        List<TubeFormation> tubeFormations =
+                traverserResults.stream().map(Result::getTubeFormation).collect(Collectors.toList());
+        return Pair.of(runAndRackOfTubes.getLeft(), tubeFormations);
     }
 
     private void buildColumns() {

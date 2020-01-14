@@ -2840,5 +2840,19 @@
             'Fingerprinting Queue for newly received or extracted samples.');
         </sql>
     </changeSet>
+    <changeSet id="GPLIM-6677-3" author="thompson">
+        <sql>
+            insert into mercury.queue(queue_id, queue_type, queue_name, queue_description)
+            values (mercury.seq_queue.nextval, 'ARRAY_PLATING', 'Array Plating Queue',
+            'Array Plating Queue for quanted samples.');
+        </sql>
+    </changeSet>
+    <changeSet id="GPLIM-6677-4" author="thompson">
+        <sql>
+            insert into mercury.queue(queue_id, queue_type, queue_name, queue_description)
+            values (mercury.seq_queue.nextval, 'SEQ_PLATING', 'Seq Plating Queue',
+            'Seq Plating Queue for quanted samples.');
+        </sql>
+    </changeSet>
 
 </databaseChangeLog>
