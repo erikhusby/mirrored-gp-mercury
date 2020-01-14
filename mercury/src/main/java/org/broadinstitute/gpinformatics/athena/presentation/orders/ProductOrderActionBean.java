@@ -101,6 +101,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryEnumUtils;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
@@ -323,6 +324,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private CoverageTypeDao coverageTypeDao;
 
+    @Inject
+    private Deployment deployment;
+
     private List<ProductOrderListEntry> displayedProductOrderListEntries;
 
     private String sampleList;
@@ -342,6 +346,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private boolean notFromHumans;
     private boolean fromClinicalLine;
+    private boolean sampleManipulationOnly;
 
     private GenotypingChip genotypingChip;
 
@@ -849,8 +854,9 @@ public class ProductOrderActionBean extends CoreActionBean {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
             logger.error(e);
         } catch (InvalidProductException | SAPIntegrationException e) {
-            addGlobalValidationError("Unable to determine the existing value of open orders for " +
-                                     editOrder.getQuoteId() + ": " + e.getMessage());
+            String errorMessage = "Unable to determine the existing value of open orders for " +
+                                  editOrder.getQuoteId() + ": " + e.getMessage();
+            addGlobalValidationError(errorMessage);
             logger.error(e);
         }
 
@@ -1423,10 +1429,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             Optional<String> skipRegulatoryReason = Optional.ofNullable(editOrder.getSkipRegulatoryReason());
             skipRegulatoryReason.ifPresent(reason -> {
-                if(reason.equals(ResearchProject.FROM_CLINICAL_CELL_LINE)) {
+                if (ResearchProject.FROM_CLINICAL_CELL_LINE.equals(reason)) {
                     fromClinicalLine = true;
-                } else {
+                } else if (ResearchProject.NOT_FROM_HUMANS_REASON_FILL.equals(reason)) {
                     notFromHumans = true;
+                } else if (ResearchProject.SAMPLE_MANIPULATION_ONLY.equals(reason)) {
+                    sampleManipulationOnly = true;
                 }
             });
 
@@ -2306,7 +2314,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                     logger.error(e);
                 } finally {
                     if (jsonGenerator!=null && !jsonGenerator.isClosed()) {
-                        jsonGenerator.close();
+                        try { jsonGenerator.close(); } catch (IOException e2) {}
                     }
                 }
             }
@@ -3637,6 +3645,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.fromClinicalLine = fromClinicalLine;
     }
 
+    public boolean isSampleManipulationOnly() {
+        return sampleManipulationOnly;
+    }
+
+    public void setSampleManipulationOnly(boolean sampleManipulationOnly) {
+        this.sampleManipulationOnly = sampleManipulationOnly;
+    }
+
     @Inject
     public void setRegulatoryInfoDao(RegulatoryInfoDao regulatoryInfoDao) {
         this.regulatoryInfoDao = regulatoryInfoDao;
@@ -4062,4 +4078,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void setQuoteSource(ProductOrder.QuoteSourceType quoteSource) {
         this.quoteSource = quoteSource;
     }
+
+    public boolean canEditProduct() {return editOrder.getOrderStatus().canPlace() || userBean.isPDMOrDev() ;}
 }

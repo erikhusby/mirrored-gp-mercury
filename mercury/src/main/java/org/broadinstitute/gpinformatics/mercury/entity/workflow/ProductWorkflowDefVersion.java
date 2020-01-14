@@ -7,13 +7,11 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
-import javax.annotation.Nonnull;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -199,6 +197,7 @@ public class ProductWorkflowDefVersion implements Serializable {
     public static class LabEventNode {
         private final LabEventType labEventType;
         private final List<LabEventNode> predecessors = new ArrayList<>();
+        private final List<LabEventNode> predecessorTransfers = new ArrayList<>();
         private final List<LabEventNode> successors = new ArrayList<>();
 
         private final WorkflowStepDef stepDef;
@@ -216,12 +215,20 @@ public class ProductWorkflowDefVersion implements Serializable {
             return predecessors;
         }
 
+        public List<LabEventNode> getPredecessorTransfers() {
+            return predecessorTransfers;
+        }
+
         public List<LabEventNode> getSuccessors() {
             return successors;
         }
 
         void addPredecessor(LabEventNode predecessor) {
             predecessors.add(predecessor);
+        }
+
+        void addPredecessorTransfer(LabEventNode predecessor) {
+            predecessorTransfers.add(predecessor);
         }
 
         void addSuccessor(LabEventNode successor) {
@@ -242,6 +249,7 @@ public class ProductWorkflowDefVersion implements Serializable {
     public void buildLabEventGraph() {
         mapNameToLabEvents = ArrayListMultimap.create();
         LabEventNode previousNode = null;
+        LabEventNode previousTransferNode = null;
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
             WorkflowProcessDefVersion effectiveProcessDef = workflowProcessDef.getEffectiveVersion();
             for (WorkflowStepDef workflowStepDef : effectiveProcessDef.getWorkflowStepDefs()) {
@@ -256,9 +264,16 @@ public class ProductWorkflowDefVersion implements Serializable {
                     }
                     if (previousNode != null) {
                         labEventNode.addPredecessor(previousNode);
+                        if (previousTransferNode != null) {
+                            labEventNode.addPredecessorTransfer(previousTransferNode);
+                        }
                         previousNode.addSuccessor(labEventNode);
                     }
                     previousNode = labEventNode;
+                    WorkflowStepDef.EventClass eventClass = labEventNode.getStepDef().getEventClass();
+                    if (eventClass != null && eventClass == WorkflowStepDef.EventClass.TRANSFER) {
+                        previousTransferNode = labEventNode;
+                    }
                 }
             }
         }

@@ -26,7 +26,9 @@ import org.hibernate.envers.NotAudited;
 
 import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
@@ -50,6 +52,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Manifest session contains the information related to a single manifest upload during the sample accessioning process.
@@ -115,6 +118,14 @@ public class ManifestSession implements Updatable {
     @Column(name = "RECEIPT_TICKET")
     private String receiptTicket;
 
+    @Column
+    private String manifestFilename;
+
+    // A vessel label can only refer to one manifest. There is a unique index on manifest_vessel_labels.vessel_labels.
+    @ElementCollection
+    @CollectionTable(name = "MANIFEST_VESSEL_LABELS", joinColumns=@JoinColumn(name="MANIFEST_SESSION"))
+    private Set<String> vesselLabels = new HashSet<>();
+
     /**
      * For JPA.
      */
@@ -129,7 +140,9 @@ public class ManifestSession implements Updatable {
     public ManifestSession(ResearchProject researchProject, String sessionName, BspUser createdBy, boolean fromSampleKit,
                            Collection<ManifestRecord> manifestRecords) {
         this.researchProject = researchProject;
-        researchProject.addManifestSession(this);
+        if (researchProject != null) {
+            researchProject.addManifestSession(this);
+        }
         sessionPrefix = sessionName;
         updateData.setCreatedBy(createdBy.getUserId());
         this.fromSampleKit = fromSampleKit;
@@ -155,6 +168,10 @@ public class ManifestSession implements Updatable {
      */
     public String getSessionName() {
         return sessionPrefix.trim() + "-" + manifestSessionId;
+    }
+
+    public String getSessionPrefix() {
+        return sessionPrefix;
     }
 
     public SessionStatus getStatus() {
@@ -219,8 +236,8 @@ public class ManifestSession implements Updatable {
      * context records from other manifests in the same Research Project) that have not already been validated.
      */
     public void validateManifest() {
-        List<ManifestRecord> allManifestRecordsAcrossThisResearchProject =
-                researchProject.collectNonQuarantinedManifestRecords();
+        List<ManifestRecord> allManifestRecordsAcrossThisResearchProject = researchProject != null ?
+                researchProject.collectNonQuarantinedManifestRecords() : Collections.emptyList();
 
         validateDuplicateCollaboratorSampleIDs(allManifestRecordsAcrossThisResearchProject);
         validateInconsistentGenders(allManifestRecordsAcrossThisResearchProject);
@@ -401,12 +418,22 @@ public class ManifestSession implements Updatable {
      */
     public ManifestRecord findRecordByKey(String value, Metadata.Key keyToFindRecordBy)
             throws TubeTransferException {
-        for (ManifestRecord record : records) {
-            if (record.getValueByKey(keyToFindRecordBy).equals(value)) {
-                return record;
-            }
+        List<ManifestRecord> records = findRecordsByKey(value, keyToFindRecordBy);
+        if (records.isEmpty()) {
+            throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST, Metadata.Key.SAMPLE_ID, value);
+        } else {
+            return records.iterator().next();
         }
-        throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST, Metadata.Key.SAMPLE_ID, value);
+    }
+
+    /**
+     * Method to find the manifest records that have the specified Key value combo as one of it's records.
+     * Returns empty list if no matches were found.
+     */
+    public List<ManifestRecord> findRecordsByKey(String value, Metadata.Key keyToFindRecordBy) {
+        return records.stream().
+                filter(record -> record.getValueByKey(keyToFindRecordBy).equals(value)).
+                collect(Collectors.toList());
     }
 
     /**
@@ -668,6 +695,22 @@ public class ManifestSession implements Updatable {
     @Override
     public UpdateData getUpdateData() {
         return updateData;
+    }
+
+    public String getManifestFilename() {
+        return manifestFilename;
+    }
+
+    public void setManifestFilename(String manifestFilename) {
+        this.manifestFilename = manifestFilename;
+    }
+
+    public Set<String> getVesselLabels() {
+        return vesselLabels;
+    }
+
+    public void setVesselLabels(Set<String> vesselLabels) {
+        this.vesselLabels = vesselLabels;
     }
 
     @Override

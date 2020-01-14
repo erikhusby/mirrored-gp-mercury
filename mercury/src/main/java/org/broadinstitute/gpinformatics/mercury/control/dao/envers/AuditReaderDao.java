@@ -16,8 +16,6 @@ import org.hibernate.envers.RevisionType;
 import org.hibernate.envers.exception.AuditException;
 import org.hibernate.envers.query.AuditEntity;
 import org.hibernate.envers.query.AuditQuery;
-import org.hibernate.envers.query.internal.property.RevisionPropertyPropertyName;
-import org.hibernate.envers.query.order.internal.PropertyAuditOrder;
 import org.hibernate.type.LongType;
 import org.hibernate.type.StringType;
 import org.hibernate.type.TimestampType;
@@ -36,6 +34,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -298,7 +297,6 @@ public class AuditReaderDao extends GenericDao {
         List<Object[]> versions = getAuditReader().createQuery()
                 .forRevisionsOfEntity(entityClass, false, true)
                 .add(AuditEntity.id().eq(entityId))
-                .addOrder(new PropertyAuditOrder(new RevisionPropertyPropertyName("revDate"), true))
                 .getResultList();
         for (Object[] version : versions) {
             RevInfo revInfo = (RevInfo) version[AuditReaderDao.AUDIT_READER_REV_INFO_IDX];
@@ -306,6 +304,8 @@ public class AuditReaderDao extends GenericDao {
             T entity = (revType == RevisionType.DEL) ? null : (T) version[AuditReaderDao.AUDIT_READER_ENTITY_IDX];
             list.add(Pair.of(revInfo.getRevDate(), entity));
         }
+        // Sorts by revision date.
+        list.sort(Comparator.comparing(pair -> pair.getLeft()));
         return list;
     }
 

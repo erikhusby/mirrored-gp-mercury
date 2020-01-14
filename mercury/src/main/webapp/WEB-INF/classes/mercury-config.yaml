@@ -11,7 +11,7 @@ app:
       gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
 
     AUTO_BUILD:
-      host:     vmercurydev.broadinstitute.org
+      host:     mercurydev.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
@@ -63,26 +63,6 @@ bsp:
       login:    seqsystem
       password: bspbsp
       host:     bsp.broadinstitute.org
-      port:     80
-
-gap:
-
-    DEV:
-      login:    seqsystem
-      password: bspbsp
-      host:     gapdev.broadinstitute.org
-      port:     8080
-
-    RC:
-      login:    seqsystem
-      password: bspbsp
-      host:     gaprc.broadinstitute.org
-      port:     8080
-
-    PROD:
-      login:    seqsystem
-      password: bspbsp
-      host:     gap.broadinstitute.org
       port:     80
 
 jira:
@@ -340,6 +320,35 @@ sap:
       sapSupportEmail: BUSSYS@broadinstitute.org
       sapSupportEmailSubjectPrefix: "SAP Order"
       url:  https://quote.broadinstitute.org
+
+MayoManifestGoogleStorage:
+    DEV:
+        credentialFilename: serviceAccountKeys/dev_reader.json
+        writerCredentialFilename: serviceAccountKeys/dev_writer.json
+        bucketName: dev_113959925643235198999
+        dailyCredentialRenewal: false
+    TEST:
+        credentialFilename: serviceAccountKeys/dev_reader.json
+        writerCredentialFilename: serviceAccountKeys/dev_writer.json
+        bucketName: dev_113959925643235198999
+        dailyCredentialRenewal: false
+    QA:
+        credentialFilename: serviceAccountKeys/rc_reader.json
+        writerCredentialFilename: serviceAccountKeys/rc_writer.json
+        bucketName: rc_113959925643235198999
+        dailyCredentialRenewal: false
+    RC:
+        credentialFilename: serviceAccountKeys/rc_reader.json
+        writerCredentialFilename: serviceAccountKeys/rc_writer.json
+        bucketName: rc_113959925643235198999
+        dailyCredentialRenewal: false
+    PROD:
+        # FYI the production storage bucket uses IP whitelisting which can only be configured by VUMC admins.
+        credentialFilename: serviceAccountKeys/prod_reader.json
+        writerCredentialFilename: DISABLED
+        bucketName: genomics-broad-dryrun
+        dailyCredentialRenewal: true
+
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 mercury:
 
@@ -347,7 +356,6 @@ mercury:
 
       app:      DEV
       bsp:      DEV
-      gap:      DEV
       jira:     TEST
       quote:    TEST
       squid:    TEST
@@ -362,13 +370,12 @@ mercury:
       infiniumStarter: DEV
       sap:  RC
       decoder: DEV
-
+      MayoManifestGoogleStorage: DEV
 
     AUTO_BUILD:
 
       app:      AUTO_BUILD
       bsp:      DEV
-      gap:      DEV
       jira:     TEST
       quote:    TEST
       squid:    TEST
@@ -383,12 +390,12 @@ mercury:
       infiniumStarter: DEV
       sap:  RC
       decoder: DEV
+      MayoManifestGoogleStorage: DEV
 
     TEST:
 
       app:      TEST
       bsp:      DEV
-      gap:      DEV
       jira:     TEST
       quote:    TEST
       squid:    TEST
@@ -403,11 +410,11 @@ mercury:
       infiniumStarter: DEV
       sap:  RC
       decoder: DEV
+      MayoManifestGoogleStorage: TEST
 
     QA:
       app:      QA
       bsp:      RC
-      gap:      RC
       jira:     TEST
       quote:    TEST
       squid:    QA
@@ -422,12 +429,12 @@ mercury:
       infiniumStarter: QA
       sap:  RC
       decoder: QA
+      MayoManifestGoogleStorage: QA
 
     RC:
 
       app:      RC
       bsp:      RC
-      gap:      RC
       jira:     TEST
       quote:    TEST
       squid:    QA
@@ -442,13 +449,12 @@ mercury:
       infiniumStarter: QA
       sap:  RC
       decoder: QA
-
+      MayoManifestGoogleStorage: RC
 
     PROD:
 
       app:      PROD
       bsp:      PROD
-      gap:      PROD
       jira:     PROD
       quote:    PROD
       squid:    PROD
@@ -463,4 +469,4 @@ mercury:
       infiniumStarter: PROD
       sap:  PROD
       decoder: PROD
-
+      MayoManifestGoogleStorage: PROD

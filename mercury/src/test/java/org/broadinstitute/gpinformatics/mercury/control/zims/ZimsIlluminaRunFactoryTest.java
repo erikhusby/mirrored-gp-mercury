@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -108,7 +107,7 @@ public class ZimsIlluminaRunFactoryTest {
         put(BSPSampleSearchColumn.PARTICIPANT_ID, POSITIVE_CONTROL_SAMPLE_PARTICIPANT_ID);
     }});
 
-    private CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils(Deployment.DEV);
+    private CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils();
     private static final String PRODUCT_ORDER_KEY = "TestPDO-1";
     private final String labBatchName = "LCSET-1";
     private static final short LANE_NUMBER = 1;

@@ -41,7 +41,8 @@ public class GeminiPlateProcessor extends TableProcessor {
     public static final String DATE_PREFIX = "Original Filename: .*; Date Last Saved: ";
     public static final String DATE_REGEX = DATE_PREFIX + "(.*)";
     private static final Pattern RUN_START_PATTERN = Pattern.compile(DATE_REGEX);
-
+    public static final SimpleDateFormat RUN_DATE_FORMAT =
+            new SimpleDateFormat(VarioskanRowParser.NameValue.RUN_STARTED.getDateFormat());
 
     private List<String> headers;
     private final List<String> barcodes;
@@ -68,10 +69,8 @@ public class GeminiPlateProcessor extends TableProcessor {
             if (cell != null && cell.getCellType() == Cell.CELL_TYPE_STRING) {
                 Matcher runStartMatcher = RUN_START_PATTERN.matcher(cell.getStringCellValue());
                 if (runStartMatcher.matches()) {
-                    SimpleDateFormat simpleDateFormat =
-                            new SimpleDateFormat(VarioskanRowParser.NameValue.RUN_STARTED.getDateFormat());
                     try {
-                        runStart = simpleDateFormat.parse(runStartMatcher.group(1));
+                        runStart = RUN_DATE_FORMAT.parse(runStartMatcher.group(1));
                     } catch (ParseException e) {
                         throw new RuntimeException("Failed to parse run date");
                     }
