@@ -51,6 +51,7 @@ public class QueueEventHandler extends AbstractEventHandler {
                 }
                 break;
             }
+            // todo jmt dilution plate is input to pico, then input to fingerprinting
             case PICO_DILUTION_TRANSFER_FORWARD_BSP: {
                 Set<LabVessel> allOfUsVessels = allOfUsVessels(targetEvent);
                 if (!allOfUsVessels.isEmpty()) {
