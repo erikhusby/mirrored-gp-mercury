@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.queue;
 
 import org.broadinstitute.bsp.client.queue.DequeueingOptions;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.datadump.AbstractDataDumpGenerator;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.dequeueRules.AbstractPostDequeueHandler;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.AbstractEnqueueOverride;
@@ -219,11 +220,10 @@ public class QueueEjb {
                 queueGroupings.add(queueEntity.getQueueGrouping());
             }
         }
+        queueEntityDao.flush();
 
         for (QueueGrouping queueGrouping : queueGroupings) {
-            if (queueGrouping.getRemainingEntities() == 0) {
-                queueGrouping.setQueueStatus(QueueStatus.Completed);
-            }
+            queueGrouping.updateGroupingStatus();
         }
 
         AbstractPostDequeueHandler abstractPostDequeueHandler = null;
@@ -346,8 +346,16 @@ public class QueueEjb {
 
         List<QueueEntity> queueEntities = queueEntityDao.findActiveEntitiesByVesselIds(queueType, labVesselIds);
 
+        Set<QueueGrouping> queueGroupings = new HashSet<>();
         for (QueueEntity queueEntity : queueEntities) {
             updateQueueEntityStatus(messageCollection, queueEntity, QueueStatus.Excluded);
+            queueGroupings.add(queueEntity.getQueueGrouping());
+        }
+
+        queueEntityDao.flush();
+
+        for (QueueGrouping queueGrouping : queueGroupings) {
+            queueGrouping.updateGroupingStatus();
         }
     }
 
@@ -401,28 +409,24 @@ public class QueueEjb {
     }
 
     private void setInitialOrder(QueueGrouping queueGrouping) {
-        try {
-            AbstractEnqueueOverride enqueueOverride = queueGrouping.getAssociatedQueue().getQueueType().getEnqueueOverrideClass().newInstance();
+        AbstractEnqueueOverride enqueueOverride = ServiceAccessUtility.getBean(queueGrouping.getAssociatedQueue().getQueueType().getEnqueueOverrideClass());
 
-            // Find the vessel ids which already have been in the queue.  These would get standard priority.
-            List<Long> vesselIds = new ArrayList<>();
-            // Grab the vessel is from the queue entity
-            for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
-                vesselIds.add(queueEntity.getLabVessel().getLabVesselId());
-            }
-
-            // Find the existing entities
-            List<QueueEntity> entitiesByVesselIds = queueEntityDao.findActiveEntitiesByVesselIds(queueGrouping.getAssociatedQueue().getQueueType(), vesselIds);
-
-            Set<Long> uniqueVesselIdsAlreadyInQueue = new HashSet<>();
-            for (QueueEntity entity : entitiesByVesselIds) {
-                uniqueVesselIdsAlreadyInQueue.add(entity.getLabVessel().getLabVesselId());
-            }
-
-            enqueueOverride.setInitialOrder(queueGrouping, uniqueVesselIdsAlreadyInQueue);
-        } catch (InstantiationException | IllegalAccessException e) {
-            throw new RuntimeException(e);
+        // Find the vessel ids which already have been in the queue.  These would get standard priority.
+        List<Long> vesselIds = new ArrayList<>();
+        // Grab the vessel is from the queue entity
+        for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
+            vesselIds.add(queueEntity.getLabVessel().getLabVesselId());
         }
+
+        // Find the existing entities
+        List<QueueEntity> entitiesByVesselIds = queueEntityDao.findActiveEntitiesByVesselIds(queueGrouping.getAssociatedQueue().getQueueType(), vesselIds);
+
+        Set<Long> uniqueVesselIdsAlreadyInQueue = new HashSet<>();
+        for (QueueEntity entity : entitiesByVesselIds) {
+            uniqueVesselIdsAlreadyInQueue.add(entity.getLabVessel().getLabVesselId());
+        }
+
+        enqueueOverride.setInitialOrder(queueGrouping, uniqueVesselIdsAlreadyInQueue);
     }
 
     /**
@@ -477,9 +481,9 @@ public class QueueEjb {
     }
 
     /**
-     * Excludes lab vessels by their sample ids.
+     * Excludes lab vessels by their barcodes.
      *
-     * @param excludeVessels        List of Sample Ids to exclude.
+     * @param excludeVessels        List of barcodes to exclude.
      * @param queueType             Queue To exclude them from.
      * @param messageCollection     Messages back to the user.
      */
