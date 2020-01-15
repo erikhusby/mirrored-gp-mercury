@@ -1,0 +1,3 @@
+SUPPORT-4504 delete BSP samples that were sent to Mercury, then rolled back
+SM-HVFMD
+SM-HVFMC

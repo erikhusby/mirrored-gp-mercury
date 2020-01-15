@@ -4,8 +4,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.queue.QueuePriority;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.RequestScoped;
 import java.util.Collection;
 
+@RequestScoped
 public class FingerprintingEnqueueOverride extends AbstractEnqueueOverride {
 
     @Nonnull
