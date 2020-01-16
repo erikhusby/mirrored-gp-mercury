@@ -1511,6 +1511,13 @@ nodePrinter.print(webapp)
         </dependency>
 
         <dependency>
+            <groupId>jstl</groupId>
+            <artifactId>jstl</artifactId>
+            <version>1.2</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
             <groupId>com.samaxes.stripes</groupId>
             <artifactId>stripes-injection-enricher</artifactId>
             <version>1.0.3</version>
