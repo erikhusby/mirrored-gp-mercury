@@ -67,6 +67,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -714,4 +715,23 @@ public class BillingCreditDbFreeTest {
                 .thenThrow(new RuntimeException("SAP Should not be called in this case"));
     }
 
+    public void testMergeSamePart() {
+        List<SAPOrderItem> orderItems = Arrays.asList(
+            new SAPOrderItem("P-EX", BigDecimal.valueOf(1D)),
+            new SAPOrderItem("P-EX", BigDecimal.valueOf(1D)));
+
+        List<SAPOrderItem> merged = BillingCredit.LineItem.merge(orderItems);
+        assertThat(merged, hasSize(1));
+        assertThat(merged.iterator().next().getItemQuantity(), equalTo(BigDecimal.valueOf(2D)));
+    }
+    public void testMergeDifferentPart() {
+        List<SAPOrderItem> orderItems = Arrays.asList(
+            new SAPOrderItem("P-EX", BigDecimal.valueOf(1D)),
+            new SAPOrderItem("P-E2", BigDecimal.valueOf(1D)));
+
+        List<SAPOrderItem> merged = BillingCredit.LineItem.merge(orderItems);
+        assertThat(merged, hasSize(2));
+        merged.forEach(i -> assertThat(i.getItemQuantity(), equalTo(BigDecimal.valueOf(1D))));
+
+    }
 }

@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class BillingCredit {
     public static final String CREDIT_REQUESTED = "CR-";
@@ -143,6 +144,18 @@ public class BillingCredit {
             this.ledgerEntry = ledgerEntry;
             this.quantity = BigDecimal.valueOf(quantity);
             this.billingMessage = billingMessage;
+        }
+
+        public static List<SAPOrderItem> merge(List<SAPOrderItem> orderItems) {
+            Map<String, List<SAPOrderItem>> orderItemsByPart =
+                orderItems.stream().collect(Collectors.groupingBy(SAPOrderItem::getProductIdentifier));
+            List<SAPOrderItem> newList = new ArrayList<>();
+            orderItemsByPart.forEach((partNumber, sapOrderItems) -> {
+                BigDecimal quantityOfParts = sapOrderItems.stream().map(SAPOrderItem::getItemQuantity)
+                    .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                newList.add(new SAPOrderItem(partNumber, quantityOfParts));
+            });
+            return newList;
         }
 
         public LedgerEntry getLedgerEntry() {

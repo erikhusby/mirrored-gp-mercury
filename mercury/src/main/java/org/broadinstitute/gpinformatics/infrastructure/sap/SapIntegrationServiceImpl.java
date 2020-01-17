@@ -585,9 +585,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
     @Override
     public String creditDelivery(BillingCredit billingReturn) throws SAPIntegrationException {
-        Set<SAPOrderItem> orderItems = billingReturn.getReturnLines().stream()
-                   .map(BillingCredit.LineItem::getSapOrderItem).collect(Collectors.toSet());
-
+        List<SAPOrderItem> orderItems = billingReturn.getReturnLines().stream()
+                   .map(BillingCredit.LineItem::getSapOrderItem).collect(Collectors.toList());
+        orderItems = BillingCredit.LineItem.merge(orderItems);
         SAPReturnOrder returnOrder =
             new SAPReturnOrder(billingReturn.getSapDeliveryDocumentId(), orderItems);
 

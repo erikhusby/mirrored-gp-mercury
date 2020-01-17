@@ -46,6 +46,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -125,8 +126,7 @@ public class BillingAdaptor implements Serializable {
         List<BillingEjb.BillingResult> billingResults;
 
         billingResults = bill(pageUrl, sessionKey);
-        updateBilledPdos(billingResults);
-
+        updateCreditedResults(billingResults);
         return billingResults;
     }
 
@@ -550,31 +550,29 @@ public class BillingAdaptor implements Serializable {
      * @param billingResults collection of "Billing Results".  Each one represents the aggregation of billing
      *                       charges and will record the success or failure of the billing attempt
      */
-    private void updateBilledPdos(Collection<BillingEjb.BillingResult> billingResults) {
-
+    private void updateCreditedResults(Collection<BillingEjb.BillingResult> billingResults) {
         Set<String> updatedPDOs = new HashSet<>();
-        for (BillingEjb.BillingResult result : billingResults) {
-            if (result.isSuccessfullyBilled()) {
-                Map<ProductOrder, List<Product>> productsMap = new HashMap<>();
-                for (BillingEjb.BillingResult billingResult : billingResults) {
-                    ProductOrder pdo = billingResult.getQuoteImportItem().getProductOrder();
-                    Product product = billingResult.getQuoteImportItem().getProduct();
-                    productsMap.computeIfAbsent(pdo, key -> new ArrayList<>()).add(product);
-                }
-                MessageCollection updateOrderMessages = new MessageCollection();
-                productsMap.forEach((productOrder, products) -> {
-                    try {
-                        productOrderEjb.updateOrderInSap(productOrder, products, updateOrderMessages, false);
-                    } catch (SAPIntegrationException e) {
+        Predicate<BillingEjb.BillingResult> isSuccessfullyBilled = BillingEjb.BillingResult::isSuccessfullyBilled;
+        Predicate<BillingEjb.BillingResult> filter = isSuccessfullyBilled.and(BillingEjb.BillingResult::isBillingCredit);
 
-                        log.error("Error updating billing credits on order.", e);
-                    }
-                });
-
-
-                updatedPDOs.addAll(result.getQuoteImportItem().getOrderKeys());
+        billingResults.stream().filter(filter).forEach(result -> {
+            Map<ProductOrder, List<Product>> productsMap = new HashMap<>();
+            for (BillingEjb.BillingResult billingResult : billingResults) {
+                ProductOrder pdo = billingResult.getQuoteImportItem().getProductOrder();
+                Product product = billingResult.getQuoteImportItem().getProduct();
+                productsMap.computeIfAbsent(pdo, key -> new ArrayList<>()).add(product);
             }
-        }
+            MessageCollection updateOrderMessages = new MessageCollection();
+            productsMap.forEach((productOrder, products) -> {
+                try {
+                    productOrderEjb.updateOrderInSap(productOrder, products, updateOrderMessages, false);
+                } catch (SAPIntegrationException e) {
+
+                    log.error("Error updating billing credits on order.", e);
+                }
+            });
+            updatedPDOs.addAll(result.getQuoteImportItem().getOrderKeys());
+        });
 
         // Update the state of all PDOs affected by this billing session.
         for (String key : updatedPDOs) {

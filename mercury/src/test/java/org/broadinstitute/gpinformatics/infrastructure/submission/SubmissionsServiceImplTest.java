@@ -13,6 +13,7 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
+import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
@@ -24,7 +25,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.core.Response;
-import java.util.Arrays;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -45,15 +46,19 @@ public class SubmissionsServiceImplTest {
     private static int sequenceNumber = 1;
 
     public static final String BIO_PROJECT_ACCESSION_ID = "PRJNA325068";
-    public static final String SAMPLE1_ID = "ALCH-ABN1-NB1-A-1-0-D-A488-36";
+    public static final String SAMPLE1_BIO_PROJECT_ACCESSION_ID = "PRJNA41443";
+    public static final String SAMPLE1_ID = "TCGA-GU-A762-10A-01D-A339-08";
     private static final String SAMPLE2_ID = "ALCH-ABNA-TTP1-A-1-0-D-A488-36";
     private static final String SAMPLE3_ID = "ALCH-ABBH-NB1-A-1-0-D-A485-36";
     public static final String broadProject= "RP-1145";
+    public static final String sample1broadProject= "RP-1657";
     public static final String bamVersion ="4";
+    public static final String sample1bamVersion ="1";
 
     private SubmissionsService submissionsService;
 
     private BioProject bioProject;
+    private BioProject sample1BioProject;
     private SubmissionContactBean contactBean;
     private SubmissionRepository submissionRepository;
     private SubmissionLibraryDescriptor submissionLibraryDescriptor;
@@ -61,6 +66,8 @@ public class SubmissionsServiceImplTest {
     @BeforeMethod
     public void setUp() throws Exception {
         bioProject = new BioProject(BIO_PROJECT_ACCESSION_ID);
+        sample1BioProject = new BioProject(SAMPLE1_BIO_PROJECT_ACCESSION_ID);
+
         contactBean =
                 new SubmissionContactBean("Jeff", "A", "Gentry", "jgentry@broadinstitute.org", "617-555-9292", "homer");
         submissionsService = new SubmissionsServiceImpl(SubmissionConfig.produce(Deployment.DEV));
@@ -123,15 +130,17 @@ public class SubmissionsServiceImplTest {
     }
 
     @Test
-    public void testSubmit() {
+    public void testSubmit() throws IOException {
         SubmissionBean submissionBean1 = new SubmissionBean(getTestUUID(), "jgentry",
-                bioProject, new SubmissionBioSampleBean(SAMPLE1_ID, SubmissionBioSampleBean.GCP, contactBean),
-                submissionRepository, submissionLibraryDescriptor, broadProject, bamVersion);
+                sample1BioProject, new SubmissionBioSampleBean(SAMPLE1_ID, SubmissionBioSampleBean.GCP, contactBean),
+                submissionRepository, submissionLibraryDescriptor, sample1broadProject, sample1bamVersion);
+
         SubmissionBean submissionBean2 = new SubmissionBean(getTestUUID(), "jgentry",
                 bioProject, new SubmissionBioSampleBean(SAMPLE2_ID, SubmissionBioSampleBean.ON_PREM, contactBean),
                 submissionRepository, submissionLibraryDescriptor, broadProject, bamVersion);
         SubmissionRequestBean submissionRequestBean =
-                new SubmissionRequestBean(Arrays.asList(submissionBean1, submissionBean2));
+                new SubmissionRequestBean(Collections.singletonList(submissionBean1));
+        System.out.println(MercuryStringUtils.serializeJsonBean(submissionRequestBean));
         Collection<SubmissionStatusDetailBean>
                 submissionResult = submissionsService.postSubmissions(submissionRequestBean);
         assertThat(submissionResult.size(), is(2));

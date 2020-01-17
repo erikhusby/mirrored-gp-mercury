@@ -124,6 +124,10 @@ public class BillingEjb {
             return BillingSession.SUCCESS.equals(getQuoteImportItem().getBillingMessage())
                    || BillingSession.BILLING_CREDIT.equals(getQuoteImportItem().getBillingMessage());
         }
+
+        public boolean isBillingCredit() {
+            return getQuoteImportItem().isBillingCredit();
+        }
     }
 
     private PriceListCache priceListCache;
