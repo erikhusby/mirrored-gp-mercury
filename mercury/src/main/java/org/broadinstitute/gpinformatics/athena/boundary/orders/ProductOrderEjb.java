@@ -393,11 +393,13 @@ public class ProductOrderEjb {
     public void updateOrderInSap(ProductOrder orderToUpdate, List<Product> allProductsOrdered,
                                   MessageCollection messageCollection, boolean closingOrder)
             throws SAPIntegrationException {
+        boolean hasBillingCredits = orderToUpdate.hasBillingCredits();
         SapIntegrationService.Option serviceOptions =
-            SapIntegrationService.Option.create(SapIntegrationService.Option.isClosing(closingOrder));
-        sapService.updateOrder(orderToUpdate, closingOrder);
+            SapIntegrationService.Option.create(SapIntegrationService.Option.isClosing(closingOrder),
+                SapIntegrationService.Option.isUpdating(hasBillingCredits));
+        sapService.updateOrder(orderToUpdate, hasBillingCredits, closingOrder);
         BigDecimal sampleCount = BigDecimal.ZERO ;
-        if(orderToUpdate.isPriorToSAP1_5()) {
+        if (orderToUpdate.isPriorToSAP1_5()) {
             sampleCount =
                 SapIntegrationServiceImpl.getSampleCount(orderToUpdate, orderToUpdate.getProduct(), 0, serviceOptions);
         }

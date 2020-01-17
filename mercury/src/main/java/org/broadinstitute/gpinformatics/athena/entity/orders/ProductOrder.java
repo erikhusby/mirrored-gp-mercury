@@ -156,6 +156,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return cachedSapQuote;
     }
 
+    public boolean hasBillingCredits() {
+        return getSamples().stream().anyMatch(productOrderSample -> productOrderSample.getLedgerItems().stream()
+            .anyMatch(LedgerEntry::isCredit));
+    }
+
     public enum SaveType {CREATING, UPDATING}
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)

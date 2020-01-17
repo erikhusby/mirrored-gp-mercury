@@ -130,6 +130,10 @@ public class BillingCredit {
         return billingResult;
     }
 
+    public void setSapDeliveryDocumentId(String sapDeliveryDocumentId) {
+        this.sapDeliveryDocumentId = sapDeliveryDocumentId;
+    }
+
     public static class LineItem {
         private final LedgerEntry ledgerEntry;
         private final BigDecimal quantity;

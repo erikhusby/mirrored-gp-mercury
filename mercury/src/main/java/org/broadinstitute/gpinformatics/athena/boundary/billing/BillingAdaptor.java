@@ -7,6 +7,7 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
@@ -15,6 +16,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.PriceAdjustment;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
@@ -317,7 +319,7 @@ public class BillingAdaptor implements Serializable {
      */
     public static List<BillingCredit> findCreditsForEmail(Collection<BillingCredit> billingCredits) {
         return billingCredits.stream()
-            .filter(billingCredit -> billingCredit.getReturnOrderId().startsWith(BillingCredit.CREDIT_REQUESTED))
+            .filter(billingCredit -> StringUtils.startsWith(billingCredit.getReturnOrderId(), BillingCredit.CREDIT_REQUESTED))
             .collect(Collectors.toList());
     }
 
@@ -426,23 +428,31 @@ public class BillingAdaptor implements Serializable {
 
         // There are cases where a single QuoteImportItem will need to be credited to more than one sapDocumentId.
         for (BillingCredit billingCredit : billingCredits) {
-                try {
+            try {
                     Set<LedgerEntry> updatedLedgers = billingCredit.getReturnLines().stream()
                         .map(BillingCredit.LineItem::getLedgerEntry).collect(Collectors.toSet());
                     BillingEjb.BillingResult billingResult = new BillingEjb.BillingResult(item);
                     billingCredit.setBillingResult(billingResult);
                     String billingMessage;
                     try {
-                        billingCredit.setReturnOrderId(sapService.creditDelivery(billingCredit));
-                        billingMessage = BillingSession.SUCCESS;
+                        String returnOrderId = sapService.creditDelivery(billingCredit);
+                        if (StringUtils.isNotBlank(returnOrderId)) {
+                            billingCredit.setReturnOrderId(returnOrderId);
+                            billingMessage = BillingSession.SUCCESS;
+                        } else {
+                            billingMessage = handleBillingCreditInvoiceNotFound(billingCredit);
+                        }
                         billingResult.setSapBillingId(billingCredit.getReturnOrderId());
                     } catch (SAPIntegrationException e) {
                         billingMessage = e.getLocalizedMessage();
                         if (billingMessage.contains(INVOICE_NOT_FOUND)) {
-                            billingCredit.setReturnOrderInvoiceNotFound();
-                            billingMessage = BillingSession.BILLING_CREDIT;
+                            billingMessage = handleBillingCreditInvoiceNotFound(billingCredit);
                         } else {
-                            billingResult.setErrorMessage(e.getLocalizedMessage());
+
+                            // the billing credit failed so clear out the sapDeliveryDocumentId to prevent the ledgers
+                            // from being incorrectly updated.
+                            billingCredit.setSapDeliveryDocumentId(null);
+                            billingResult.setErrorMessage(billingMessage);
                         }
                     }
                     billingEjb.updateSapLedgerEntries(updatedLedgers, item.getQuoteId(), item.getSingleWorkItem(),
@@ -460,6 +470,11 @@ public class BillingAdaptor implements Serializable {
         }
 
         return billingCredits;
+    }
+
+    public String handleBillingCreditInvoiceNotFound(BillingCredit billingCredit) {
+        billingCredit.setReturnOrderInvoiceNotFound();
+        return BillingSession.BILLING_CREDIT;
     }
 
     /**
@@ -540,6 +555,23 @@ public class BillingAdaptor implements Serializable {
         Set<String> updatedPDOs = new HashSet<>();
         for (BillingEjb.BillingResult result : billingResults) {
             if (result.isSuccessfullyBilled()) {
+                Map<ProductOrder, List<Product>> productsMap = new HashMap<>();
+                for (BillingEjb.BillingResult billingResult : billingResults) {
+                    ProductOrder pdo = billingResult.getQuoteImportItem().getProductOrder();
+                    Product product = billingResult.getQuoteImportItem().getProduct();
+                    productsMap.computeIfAbsent(pdo, key -> new ArrayList<>()).add(product);
+                }
+                MessageCollection updateOrderMessages = new MessageCollection();
+                productsMap.forEach((productOrder, products) -> {
+                    try {
+                        productOrderEjb.updateOrderInSap(productOrder, products, updateOrderMessages, false);
+                    } catch (SAPIntegrationException e) {
+
+                        log.error("Error updating billing credits on order.", e);
+                    }
+                });
+
+
                 updatedPDOs.addAll(result.getQuoteImportItem().getOrderKeys());
             }
         }

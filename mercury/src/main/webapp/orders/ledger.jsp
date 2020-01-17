@@ -308,6 +308,10 @@
 
                         updateSubmitButton();
                     });
+
+                    if ($j('input.ledgerQuantity.pending').size() > 0) {
+                        $j('#billPdo').show();
+                    };
                 }
             });
             // Reuse the existing filter input, but unbind its usual behavior and replace it with our own.
@@ -634,7 +638,6 @@
                     }
                 }
             }
-
         });
 
         /*
@@ -888,7 +891,7 @@
 
         <%-- Datatable filters --%>
         <div id="filters" class="row-fluid" style="display: none;">
-            <div class="span11">
+            <div class="span10">
                 <ul class="nav nav-pills">
                     <li class="dropdownLabel">Risk:</li>
                     <li class="dropdown">
@@ -937,12 +940,19 @@
                     </li>
                 </ul>
             </div>
-            <div class="span1" style="text-align: right;">
+            <div class="actionButtons span2" style="text-align: right;display: inline-block;">
                 <c:choose>
                     <c:when test="${actionBean.productOrderListEntry.billing}">
                         <button id="updateLedgers" class="btn" title="No updates allowed while billing is in progress" disabled><strike>Update</strike></button>
                     </c:when>
                     <c:otherwise>
+                        <span id="billPdo" style="display: none"><stripes:link
+                                    beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
+                                    event="startBilling" style="text-decoration: none;" class="btn">
+                                Start Billing Session
+                                <stripes:param name="selectedProductOrderBusinessKeys" value="${actionBean.orderId}"/>
+                                <stripes:param name="_sourcePage" value="<%=request.getServletPath()%>"/>
+                            </stripes:link></span>
                         <input type="submit" id="updateLedgers" name="updateLedgers" value="Update" class="btn btn-primary" disabled>
                     </c:otherwise>
                 </c:choose>
