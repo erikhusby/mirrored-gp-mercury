@@ -240,11 +240,7 @@ public class DeploymentBuilder {
             // This is some old stuff I had to pull up to use new API and be consistent
             // TODO: remove all test-scoped dependencies; optionally explicitly add certain test dependencies that we commit to supporting
             // TODO: remove exclusion of xerces, which is a workaround until all test-scoped dependencies are removed
-            // TODO: remove exclusion of dom4j, WildFly problem with an older release in it's runtime classpath
-            if( artifact.getExtension().equals("jar")
-                    && !artifact.getCoordinate().getArtifactId().contains("xerces")
-                    // Pulled in with another dependency
-                    && !artifact.getCoordinate().getArtifactId().contains("dom4j") ) {
+            if( artifact.getExtension().equals("jar") && !artifact.getCoordinate().getArtifactId().contains("xerces")) {
                 artifacts.add(artifact.asFile());
             }
         }

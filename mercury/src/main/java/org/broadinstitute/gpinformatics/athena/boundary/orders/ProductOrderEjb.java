@@ -418,27 +418,30 @@ public class ProductOrderEjb {
                                     MessageCollection messageCollection, boolean closingOrder)
             throws SAPIntegrationException {
 
-        if(closingOrder && orderToPublish.isSavedInSAP()) {
-            updateOrderInSap(orderToPublish, allProductsOrdered, messageCollection, closingOrder);
+        try {
+            if(closingOrder && orderToPublish.isSavedInSAP()) {
+                updateOrderInSap(orderToPublish, allProductsOrdered, messageCollection, closingOrder);
+            }
+        } catch (SAPIntegrationException e) {
+            if(quoteIdChange ) {
+                String oldNumber = null;
+                if(StringUtils.isNotBlank(orderToPublish.getSapOrderNumber())) {
+                    oldNumber = orderToPublish.getSapOrderNumber();
+                }
+                String body = "The SAP order " + oldNumber + " for PDO "+ orderToPublish.getBusinessKey()+
+                              " is being associated with a new quote by "+
+                              userBean.getBspUser().getFullName() +" and needs" + " to be short closed.";
+                sendSapOrderShortCloseRequest(body);
+            }
         }
 
         String sapOrderIdentifier = sapService.createOrder(orderToPublish);
 
-        String oldNumber = null;
-        if(StringUtils.isNotBlank(orderToPublish.getSapOrderNumber())) {
-            oldNumber = orderToPublish.getSapOrderNumber();
-        }
         SapQuote quote = orderToPublish.getSapQuote(sapService);
         orderToPublish.addSapOrderDetail(new SapOrderDetail(sapOrderIdentifier,0,
                 orderToPublish.getQuoteId(),
                 orderToPublish.getSapCompanyConfigurationForProductOrder(quote).getCompanyCode()));
 
-        if(quoteIdChange ) {
-            String body = "The SAP order " + oldNumber + " for PDO "+ orderToPublish.getBusinessKey()+
-                          " is being associated with a new quote by "+
-                          userBean.getBspUser().getFullName() +" and needs" + " to be short closed.";
-            sendSapOrderShortCloseRequest(body);
-        }
         orderToPublish.setPriorToSAP1_5(false);
         messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +
                                   " has been successfully created in SAP");
@@ -1263,14 +1266,20 @@ public class ProductOrderEjb {
              targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY) < targetSapPdo.latestSapOrderDetail().getPrimaryQuantity()
            ) || CollectionUtils.containsAny(Arrays.asList(OrderStatus.Abandoned, OrderStatus.Completed),Collections.singleton(targetSapPdo.getOrderStatus())))) {
 
-            if(targetSapPdo.hasSapQuote()) {
-                publishProductOrderToSAP(productOrder, new MessageCollection(), false);
+            try {
+                if(targetSapPdo.hasSapQuote()) {
+                    publishProductOrderToSAP(productOrder, new MessageCollection(), false);
 
-            }   else {
+                }   else {
+                    sendSapOrderShortCloseRequest(
+                            "The SAP order " + productOrder.getSapOrderNumber() + " for PDO "+productOrder.getBusinessKey() +
+                            " has been marked as completed in Mercury by " +
+                            userBean.getBspUser().getFullName() + " and may need to be short closed.");
+                }
+            } catch (SAPInterfaceException e) {
                 sendSapOrderShortCloseRequest(
-                        "The SAP order " + productOrder.getSapOrderNumber() + " for PDO "+productOrder.getBusinessKey() +
-                        " has been marked as completed in Mercury by " +
-                        userBean.getBspUser().getFullName() + " and may need to be short closed.");
+                        "Mercury is unable to close The SAP order " + productOrder.getSapOrderNumber() + " for PDO "+productOrder.getBusinessKey() +
+                        " so it needs to be short closed.");
             }
         }
     }

@@ -15,7 +15,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingReq
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.ControlWell;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraCustomFieldsUtil;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
@@ -103,7 +102,7 @@ import java.util.Map;
 public class ExomeExpressEndToEndTest {
 
 
-    private final CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils(Deployment.DEV);
+    private final CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils();
 
     // if this bombs because of a jira refresh, just switch it to JiraServiceTestProducer.stubInstance();
     // for integration test fun where we post things back to a real jira, try JiraServiceTestProducer.testInstance();

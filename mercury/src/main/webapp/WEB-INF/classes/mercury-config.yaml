@@ -65,26 +65,6 @@ bsp:
       host:     bsp.broadinstitute.org
       port:     80
 
-gap:
-
-    DEV:
-      login:    seqsystem
-      password: bspbsp
-      host:     gapdev.broadinstitute.org
-      port:     8080
-
-    RC:
-      login:    seqsystem
-      password: bspbsp
-      host:     gaprc.broadinstitute.org
-      port:     8080
-
-    PROD:
-      login:    seqsystem
-      password: bspbsp
-      host:     gap.broadinstitute.org
-      port:     80
-
 jira:
 
     TEST:
@@ -408,7 +388,6 @@ mercury:
 
       app:      DEV
       bsp:      DEV
-      gap:      DEV
       jira:     TEST
       quote:    TEST
       squid:    TEST
@@ -430,7 +409,6 @@ mercury:
 
       app:      AUTO_BUILD
       bsp:      DEV
-      gap:      DEV
       jira:     TEST
       quote:    TEST
       squid:    TEST
@@ -452,7 +430,6 @@ mercury:
 
       app:      TEST
       bsp:      DEV
-      gap:      DEV
       jira:     TEST
       quote:    TEST
       squid:    TEST
@@ -473,7 +450,6 @@ mercury:
     QA:
       app:      QA
       bsp:      RC
-      gap:      RC
       jira:     TEST
       quote:    TEST
       squid:    QA
@@ -495,7 +471,6 @@ mercury:
 
       app:      RC
       bsp:      RC
-      gap:      RC
       jira:     TEST
       quote:    TEST
       squid:    QA
@@ -518,7 +493,6 @@ mercury:
 
       app:      PROD
       bsp:      PROD
-      gap:      PROD
       jira:     PROD
       quote:    PROD
       squid:    PROD
