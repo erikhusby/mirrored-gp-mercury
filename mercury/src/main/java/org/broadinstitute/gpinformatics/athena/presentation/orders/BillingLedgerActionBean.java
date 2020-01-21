@@ -19,7 +19,6 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.ValidationError;
 import net.sourceforge.stripes.validation.ValidationErrors;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -568,19 +567,6 @@ public class BillingLedgerActionBean extends CoreActionBean {
 
     public List<ProductLedgerIndex> getPotentialBillings() {
         return potentialBillings;
-    }
-    public int getPotentialReplacementCount() {
-        int value = 0;
-
-        if(CollectionUtils.isNotEmpty(potentialBillings)) {
-            value += potentialBillings.size();
-        }
-
-        if(CollectionUtils.isNotEmpty(potentialSapReplacements.keySet())) {
-            value += potentialSapReplacements.keySet().size();
-        }
-
-        return value;
     }
 
     public List<String> getRenderedPriceItemNames() {

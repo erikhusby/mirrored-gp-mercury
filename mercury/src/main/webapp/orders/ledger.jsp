@@ -234,12 +234,6 @@
                     {'bVisible': false},
                     {'bSortable': true, 'sSortDataType': 'input-value', 'sType': 'numeric'}, // ${10 + status.index}: ${billingIndex.name}
                     </c:forEach>
-                    <c:if test="${actionBean.productOrder.hasSapQuote()}">
-                        <c:forEach items="${actionBean.potentialSapReplacements.keySet()}" var="sapReplacements">
-                    {'bVisible': false},
-                    {'bSortable': true, 'sSortDataType': 'input-value', 'sType': 'numeric'}, // ${10 + sapReplacements.productId}: ${sapReplacements.productName}
-                        </c:forEach>
-                    </c:if>
 
                     {'bSortable': true, 'sType': 'title-string'}    // billed
                 ],
@@ -968,8 +962,7 @@
             <tr>
                 <th colspan="4" id="adminStuff"></th>
                 <th colspan="5" style="text-align: center">Sample Information</th>
-<%--                <th colspan="${(actionBean.potentialBillings.size() * 2) + 2}" style="text-align: center">Billing</th>--%>
-                <th colspan="${actionBean.potentialBillings.size() * 2 + 2 + actionBean.potentialReplacementCount}" style="text-align: center">Billing</th>
+                <th colspan="${(actionBean.potentialBillings.size() * 2) + 2}" style="text-align: center">Billing</th>
             </tr>
             <tr>
                 <th>
@@ -989,11 +982,6 @@
                     <th>Original value for ${billingIndex.ledgerDisplay}</th>
                     <th style="text-align: center">${billingIndex.ledgerDisplay}</th>
                 </c:forEach>
-                <c:if test="${actionBean.productOrder.hasSapQuote()}">
-                    <c:forEach items="${actionBean.potentialSapReplacements.keySet()}" var="sapReplacements">
-                        <th>Replacement pricing for ${sapReplacements.displayName}</th>
-                    </c:forEach>
-                </c:if>
                 <th style="text-align: center">Billed</th>
             </tr>
         </thead>
@@ -1086,7 +1074,20 @@
                                            class="ledgerQuantity" data-rownum = "${info.sample.samplePosition}"
                                            priceItemId="${billingIndex.indexId}"
                                            billedQuantity="${info.getBilledForPriceIndex(billingIndex)}"/>
-
+                                    &nbsp;
+                                    <c:if test="${actionBean.productOrder.hasSapQuote()}">
+                                        <c:forEach items="${actionBean.potentialSapReplacements}" var="replacement">
+                                                <c:if test="${billingIndex.product.equals(replacement.key)}">
+                                                <select name="ledgerData[${info.sample.samplePosition}].sapReplacement[${billingIndex.indexId}]"
+                                                        data-rownum="${info.sample.samplePosition}">
+                                                    <option value="">Select one if replacing price</option>
+                                                    <c:forEach items="${replacement.value}" var="deliveryConditions">
+                                                        <option value="${deliveryConditions.conditionName}"> ${deliveryConditions.displayName}</option>
+                                                    </c:forEach>
+                                                </select>
+                                            </c:if>
+                                        </c:forEach>
+                                    </c:if>
                                 </c:if>
                             <c:choose>
                                 <c:when test="${actionBean.productOrder.hasSapQuote()}">
@@ -1104,19 +1105,6 @@
                             </c:if>
                         </td>
                     </c:forEach>
-                    <c:if test="${actionBean.productOrder.hasSapQuote()}">
-                        <c:forEach items="${actionBean.potentialSapReplacements}" var="sapReplacement">
-                            <td style="text-align: center">
-                                <select name="ledgerData[${info.sample.samplePosition}].sapReplacement[${sapReplacement.key.productId}]"
-                                       data-rownum="${info.sample.samplePosition}">
-                                    <option value="">Select one if replacing price</option>
-                                    <c:forEach items="${sapReplacement.value}" var="deliveryConditions">
-                                        <option value="${deliveryConditions.conditionName}"> ${deliveryConditions.displayName}</option>
-                                    </c:forEach>
-                                </select>
-                            </td>
-                        </c:forEach>
-                    </c:if>
 
                     <td style="text-align: center">
                         <c:if test="${info.sample.completelyBilled}">
