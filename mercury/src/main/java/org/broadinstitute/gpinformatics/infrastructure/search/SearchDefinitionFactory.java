@@ -257,8 +257,11 @@ public class SearchDefinitionFactory {
      */
     public static void buildDrillDownHref(ColumnEntity entityType, String selectedSearchName,
                                           Map<String, String[]> terms, StringBuilder link, String baseSearchURL) {
-        link.append(baseSearchURL)
-            .append("?")
+        link.append(baseSearchURL);
+        if (!baseSearchURL.contains(ConfigurableSearchActionBean.URL_BINDING)) {
+            link.append(ConfigurableSearchActionBean.URL_BINDING);
+        }
+        link.append("?")
             .append(ConfigurableSearchActionBean.DRILL_DOWN_EVENT)
             .append("=&drillDownRequest=");
 
