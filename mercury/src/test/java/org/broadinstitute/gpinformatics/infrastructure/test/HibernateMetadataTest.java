@@ -115,19 +115,19 @@ public class HibernateMetadataTest extends StubbyContainerTest {
     /**
      * This test iterates through all JPA'd classes validates them
      */
-    @Test(groups = TestGroups.STUBBY, description = "Tests all the hibernate mappings in the mercury_pu")
+    @Test(enabled = false, groups = TestGroups.STUBBY, description = "Tests all the hibernate mappings in the mercury_pu")
     public void testMercuryPersistenceUnit() throws Exception {
         Session session = entityManager.unwrap(Session.class);
         testPersistenceUnit(session, ArrayUtils.addAll(metricsEntities, analyticsEntities), null);
     }
 
-    @Test(groups = TestGroups.STUBBY, description = "Tests all the hibernate mappings in the metrics_pu.")
+    @Test(enabled = false, groups = TestGroups.STUBBY, description = "Tests all the hibernate mappings in the metrics_pu.")
     public void testMetricsPersistenceUnit() throws Exception {
         Session session = metricsEntityManager.unwrap(Session.class);
         testPersistenceUnit(session, null, metricsEntities);
     }
 
-    @Test(groups = TestGroups.STUBBY, description = "Tests all the hibernate mappings in the analytics_pu.")
+    @Test(enabled = false, groups = TestGroups.STUBBY, description = "Tests all the hibernate mappings in the analytics_pu.")
     public void testAnalyticsPersistenceUnit() throws Exception {
         Session session = analyticsEntityManager.unwrap(Session.class);
         testPersistenceUnit(session, null, analyticsEntities);
