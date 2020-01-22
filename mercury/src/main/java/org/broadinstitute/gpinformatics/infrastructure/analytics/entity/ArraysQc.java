@@ -72,6 +72,10 @@ public class ArraysQc {
     @BatchSize(size = 100)
     private Set<ArraysQcGtConcordance> arraysQcGtConcordances;
 
+    /**
+     * This is actually OneToOne, see getArraysQcContamination() <br/>
+     * Mapped as OneToMany to avoid a separate query for each ArraysQc entity
+     */
     @OneToMany(mappedBy = "arraysQcId")
     @BatchSize(size = 100)
     private Set<ArraysQcContamination> arraysQcContamination;
