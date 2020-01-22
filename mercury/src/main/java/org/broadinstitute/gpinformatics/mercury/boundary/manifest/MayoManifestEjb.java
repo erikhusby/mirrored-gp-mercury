@@ -881,7 +881,7 @@ public class MayoManifestEjb {
             QueueSpecialization queueSpecialization =
                     dnaQuantEnqueueOverride.determineDnaQuantQueueSpecialization(labVessels);
             queueEjb.enqueueLabVessels(labVessels, QueueType.VOLUME_CHECK,
-                    "Accessioned on " + DateUtils.convertDateTimeToString(new Date()), messages,
+                    bean.getRackBarcode() + " Accessioned on " + DateUtils.convertDateTimeToString(new Date()), messages,
                     QueueOrigin.RECEIVING, queueSpecialization);
         }
         // Adds comment to the existing RCT.

@@ -12,19 +12,21 @@ import org.broadinstitute.gpinformatics.mercury.boundary.manifest.MayoManifestEj
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.DnaQuantEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueSpecialization;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.jetbrains.annotations.NotNull;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.mercury.entity.sample.ContractClient.MAYO;
 
@@ -41,24 +43,20 @@ public class QueueEventHandler extends AbstractEventHandler {
     private PreferenceDao preferenceDao;
 
     @Override
-    public void handleEvent(LabEvent targetEvent, StationEventType stationEvent) {
-        switch (targetEvent.getLabEventType()) {
-            case VOLUME_MEASUREMENT: {
-                Set<LabVessel> allOfUsVessels = allOfUsVessels(targetEvent);
-                if (!allOfUsVessels.isEmpty()) {
-                    queueEjb.dequeueLabVessels(allOfUsVessels, QueueType.VOLUME_CHECK,
-                            new MessageCollection(), DequeueingOptions.DEFAULT_DEQUEUE_RULES);
-                }
+    public void handleEvent(LabEvent labEvent, StationEventType stationEvent) {
+        switch (labEvent.getLabEventType()) {
+            case VOLUME_MEASUREMENT:
+                dequeue(labEvent, Direction.SOURCE, QueueType.VOLUME_CHECK);
                 break;
-            }
-            // todo jmt dilution plate is input to pico, then input to fingerprinting
+            // dilution plate is input to pico, then input to fingerprinting
+            // Determine: whether All of Us; source or dest; queue or dequeue; queue type
             case PICO_DILUTION_TRANSFER_FORWARD_BSP: {
-                Set<LabVessel> allOfUsVessels = allOfUsVessels(targetEvent);
-                if (!allOfUsVessels.isEmpty()) {
+                if (isAllOfUs(labEvent)) {
                     try {
                         // Check the contract client preference
                         boolean addToQueue = true;
-                        LabVessel labVessel = allOfUsVessels.iterator().next();
+                        Set<LabVessel> vesselsPreferTubes = getVesselsPreferTubes(labEvent, Direction.DEST);
+                        LabVessel labVessel = vesselsPreferTubes.iterator().next();
                         Optional<Metadata> optionalMetadata = labVessel.getSampleInstancesV2().stream().
                                 findFirst().orElseThrow(() -> new RuntimeException("No samples for " + labVessel.getLabel())).
                                 getRootOrEarliestMercurySample().getMetadata().stream().
@@ -76,9 +74,9 @@ public class QueueEventHandler extends AbstractEventHandler {
                         }
                         if (addToQueue) {
                             QueueSpecialization queueSpecialization =
-                                    dnaQuantEnqueueOverride.determineDnaQuantQueueSpecialization(allOfUsVessels);
-                            queueEjb.enqueueLabVessels(allOfUsVessels, QueueType.DNA_QUANT,
-                                    "Volume checked on " + DateUtils.convertDateTimeToString(targetEvent.getEventDate()),
+                                    dnaQuantEnqueueOverride.determineDnaQuantQueueSpecialization(vesselsPreferTubes);
+                            queueEjb.enqueueLabVessels(vesselsPreferTubes, QueueType.DNA_QUANT,
+                                    vesselsPreferTubes.iterator().next().getLabel() + " dilution on " + DateUtils.convertDateTimeToString(labEvent.getEventDate()),
                                     new MessageCollection(), QueueOrigin.RECEIVING, queueSpecialization);
                         }
                     } catch (Exception e) {
@@ -87,33 +85,67 @@ public class QueueEventHandler extends AbstractEventHandler {
                 }
                 break;
             }
-            case FINGERPRINTING_ALIQUOT:
-            case FINGERPRINTING_ALIQUOT_FORWARD_BSP: {
-                Set<LabVessel> allOfUsVessels = allOfUsVessels(targetEvent);
-                if (!allOfUsVessels.isEmpty()) {
-                    String[] productTypes = allOfUsVessels.iterator().next().getMetadataValues(Metadata.Key.PRODUCT_TYPE);
+            case PICO_TRANSFER:
+            case PICO_MICROFLUOR_TRANSFER: {
+                if (isAllOfUs(labEvent)) {
+                    Set<LabVessel> vesselsPreferTubes = getVesselsPreferTubes(labEvent, Direction.SOURCE);
+                    String[] productTypes = vesselsPreferTubes.iterator().next().getMetadataValues(Metadata.Key.PRODUCT_TYPE);
                     if (productTypes.length > 0 && productTypes[0].equals(MayoManifestEjb.AUO_GENOME)) {
-                        queueEjb.enqueueLabVessels(allOfUsVessels, QueueType.FINGERPRINTING,
-                                "Finger print aliquoted on " + DateUtils.convertDateTimeToString(targetEvent.getEventDate()),
+                        String sourcePlate = labEvent.getSectionTransfers().iterator().next().getSourceVessel().getLabel();
+                        queueEjb.enqueueLabVessels(vesselsPreferTubes, QueueType.FINGERPRINTING,
+                                sourcePlate + " DNA quant on " + DateUtils.convertDateTimeToString(labEvent.getEventDate()),
                                 new MessageCollection(), QueueOrigin.RECEIVING, null);
                     }
                 }
                 // todo jmt add queue removal to fingerprint upload
                 break;
             }
+            case ARRAY_PLATING_DILUTION:
+                dequeue(labEvent, Direction.SOURCE, QueueType.ARRAY_PLATING);
+                break;
+            case AUTO_DAUGHTER_PLATE_CREATION:
+                dequeue(labEvent, Direction.SOURCE, QueueType.SEQ_PLATING);
+                break;
         }
     }
 
-    @NotNull
-    private Set<LabVessel> allOfUsVessels(LabEvent targetEvent) {
-        Set<LabVessel> vesselTubes = targetEvent.getSourceVesselTubes();
-        if (vesselTubes.isEmpty()) {
-            vesselTubes = (Set<LabVessel>) targetEvent.getInPlaceLabVessel().getContainerRole().getContainedVessels();
+    enum Direction {
+        SOURCE,
+        DEST
+    }
+
+    private void dequeue(LabEvent labEvent, Direction direction, QueueType arrayPlating) {
+        if (isAllOfUs(labEvent)) {
+            queueEjb.dequeueLabVessels(getVesselsPreferTubes(labEvent, direction), arrayPlating, new MessageCollection(),
+                    DequeueingOptions.DEFAULT_DEQUEUE_RULES);
         }
-        return vesselTubes.stream().filter(
-                labVessel -> labVessel.getSampleInstancesV2().iterator().next().getRootOrEarliestMercurySample().
-                        getMetadata().stream().anyMatch(metadata -> metadata.getKey() == Metadata.Key.CLIENT &&
-                                    metadata.getStringValue().equals(MAYO.name()))).
-                collect(Collectors.toSet());
+    }
+
+    private boolean isAllOfUs(LabEvent labEvent) {
+        Set<LabVessel> labVessels = getVesselsPreferTubes(labEvent, Direction.SOURCE);
+        return labVessels.stream().anyMatch(lv -> lv.getSampleInstancesV2().stream().anyMatch(
+                si -> si.getRootOrEarliestMercurySample().getMetadata().stream().anyMatch(
+                        md -> md.getKey() == Metadata.Key.CLIENT && md.getStringValue().equals(MAYO.name()))));
+    }
+
+    /*
+    get
+     */
+    @NotNull
+    private Set<LabVessel> getVesselsPreferTubes(LabEvent labEvent, Direction direction) {
+        Set<LabVessel> labVessels = direction == Direction.SOURCE ? labEvent.getSourceVesselTubes() :
+                labEvent.getTargetVesselTubes();
+        if (labVessels.isEmpty()) {
+            LabVessel labVessel = labEvent.getInPlaceLabVessel();
+            if (labVessel != null) {
+                if (labVessel.getContainerRole() != null &&
+                        OrmUtil.proxySafeIsInstance(labVessel, TubeFormation.class)) {
+                    labVessels = (Set<LabVessel>) labVessel.getContainerRole().getContainedVessels();
+                } else {
+                    labVessels = Collections.singleton(labVessel);
+                }
+            }
+        }
+        return labVessels;
     }
 }

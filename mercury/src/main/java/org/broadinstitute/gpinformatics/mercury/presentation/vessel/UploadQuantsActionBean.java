@@ -40,6 +40,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormation
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BSPRestSender;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.GeminiPlateProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -288,7 +289,17 @@ public class UploadQuantsActionBean extends CoreActionBean {
     }
 
     private void handleQueues(MessageCollection messageCollection, List<TubeFormation> tubeFormations) {
+        // We don't know whether the rack of tubes or the dilution plate was queued, so dequeue both, one will fail
+        // silently
         queueEjb.dequeueLabVessels(labMetricRun, QueueType.DNA_QUANT, messageCollection);
+        Set<LabVessel> dilutionPlates = tubeFormations.stream().
+                flatMap(tubeFormation -> tubeFormation.getTransfersFrom().stream()).
+                filter(labEvent -> labEvent.getLabEventType() == LabEventType.PICO_DILUTION_TRANSFER_FORWARD_BSP).
+                flatMap(labEvent -> labEvent.getTargetLabVessels().stream()).
+                collect(Collectors.toSet());
+        queueEjb.dequeueLabVessels(dilutionPlates, QueueType.DNA_QUANT, messageCollection, null);
+
+        // todo jmt add to plating queues after volume check
         Set<LabVessel> labVessels = tubeFormations.stream().flatMap(
                 tf -> tf.getContainerRole().getContainedVessels().stream()).collect(Collectors.toSet());
         Set<String> productTypes = labVessels.stream().flatMap(
@@ -304,8 +315,12 @@ public class UploadQuantsActionBean extends CoreActionBean {
                 } else {
                     messageCollection.addError("Unexpected product type " + productType);
                 }
-                queueEjb.enqueueLabVessels(labVessels, queueType,"Quanted on " + DateUtils.convertDateTimeToString(new Date()),
-                        messageCollection, QueueOrigin.OTHER, null);
+                if (!messageCollection.hasErrors()) {
+                    String rackBarcode = tubeFormations.get(0).getRacksOfTubes().iterator().next().getLabel();
+                    queueEjb.enqueueLabVessels(labVessels, queueType,
+                            rackBarcode + " Quanted on " + DateUtils.convertDateTimeToString(new Date()),
+                            messageCollection, QueueOrigin.OTHER, null);
+                }
             } else {
                 messageCollection.addError("Multiple product types " + productTypes);
             }

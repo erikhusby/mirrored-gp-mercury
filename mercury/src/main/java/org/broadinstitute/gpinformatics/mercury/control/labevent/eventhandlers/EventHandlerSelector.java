@@ -92,11 +92,14 @@ public class EventHandlerSelector {
             break;
         case ARRAY_PLATING_DILUTION:
             createLabBatchHandler.handleEvent(targetEvent, stationEvent);
+            queueEventHandler.handleEvent(targetEvent, stationEvent);
             break;
         case VOLUME_MEASUREMENT:
         case PICO_DILUTION_TRANSFER_FORWARD_BSP:
+        case PICO_TRANSFER:
         case FINGERPRINTING_ALIQUOT:
         case FINGERPRINTING_ALIQUOT_FORWARD_BSP:
+        case AUTO_DAUGHTER_PLATE_CREATION:
             queueEventHandler.handleEvent(targetEvent, stationEvent);
             break;
         }
