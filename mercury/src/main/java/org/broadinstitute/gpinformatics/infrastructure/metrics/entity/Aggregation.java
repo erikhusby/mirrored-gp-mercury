@@ -39,11 +39,17 @@ import java.util.Set;
 @Entity
 @Table(name = "AGGREGATION", schema = "METRICS")
 public class Aggregation implements ISubmissionTuple  {
-    public static final String DATA_TYPE_EXOME = "Exome";
-    public static final String DATA_TYPE_RNA = "RNA";
-    public static final String DATA_TYPE_WGS = "WGS";
     public static final String DATA_TYPE_10X_WGS = "10X_WGS";
+    public static final String DATA_TYPE_16X = "16S";
+    public static final String DATA_TYPE_CUSTOM_SELECTION = "Custom_Selection";
+    public static final String DATA_TYPE_EXOME = "Exome";
+    public static final String DATA_TYPE_EXOME_PLUS = "ExomePlus";
+    public static final String DATA_TYPE_JUMP = "Jump";
+    public static final String DATA_TYPE_PCR = "PCR";
+    public static final String DATA_TYPE_RNA = "RNA";
+    public static final String DATA_TYPE_RBBS = "RRBS";
     public static final String DATA_TYPE_SHORT_RANGE_PCR = "ShortRangePCR";
+    public static final String DATA_TYPE_WGS = "WGS";
 
     @SuppressWarnings("unused")
     @Id @Column(name = "ID")

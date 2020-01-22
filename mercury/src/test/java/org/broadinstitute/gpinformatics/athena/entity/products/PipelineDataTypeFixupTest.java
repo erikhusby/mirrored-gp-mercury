@@ -28,7 +28,6 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,7 +36,13 @@ import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation.DATA_TYPE_10X_WGS;
+import static org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation.DATA_TYPE_16X;
+import static org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation.DATA_TYPE_CUSTOM_SELECTION;
 import static org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation.DATA_TYPE_EXOME;
+import static org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation.DATA_TYPE_EXOME_PLUS;
+import static org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation.DATA_TYPE_JUMP;
+import static org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation.DATA_TYPE_PCR;
+import static org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation.DATA_TYPE_RBBS;
 import static org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation.DATA_TYPE_RNA;
 import static org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation.DATA_TYPE_SHORT_RANGE_PCR;
 import static org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation.DATA_TYPE_WGS;
@@ -79,16 +84,17 @@ public class PipelineDataTypeFixupTest extends Arquillian {
         userBean.loginOSUser();
         utx.begin();
 
-        List<String> validDataTypes =
-            Arrays.asList(DATA_TYPE_10X_WGS, DATA_TYPE_EXOME, DATA_TYPE_RNA, DATA_TYPE_WGS, DATA_TYPE_SHORT_RANGE_PCR);
+        List<String> validDataTypes = Arrays.asList(DATA_TYPE_10X_WGS, DATA_TYPE_16X, DATA_TYPE_CUSTOM_SELECTION,
+            DATA_TYPE_EXOME, DATA_TYPE_EXOME_PLUS, DATA_TYPE_JUMP, DATA_TYPE_PCR, DATA_TYPE_RNA, DATA_TYPE_RBBS,
+            DATA_TYPE_SHORT_RANGE_PCR, DATA_TYPE_WGS);
 
         validDataTypes.stream()
             .map(dataType -> new PipelineDataType(dataType, true))
             .forEach(pipelineDataTypeDao::persist);
 
-        Set<String> allNotInList = productDao.findAllNotInList(Product.class,
-            org.broadinstitute.gpinformatics.athena.entity.products.Product_.aggregationDataType, validDataTypes)
-            .stream().map(Product::getAggregationDataType).collect(Collectors.toSet());
+        Set<String> allNotInList =
+            productDao.findAllNotInList(Product.class, Product_.aggregationDataType, validDataTypes).stream()
+                .map(Product::getAggregationDataType).collect(Collectors.toSet());
 
         allNotInList.addAll(sampleInstanceEntityDao.findAllNotInList(SampleInstanceEntity.class,
             SampleInstanceEntity_.aggregationDataType, validDataTypes).stream()
@@ -112,7 +118,7 @@ public class PipelineDataTypeFixupTest extends Arquillian {
         //noinspection unchecked
         List<Product> productsWithDataType =
             productDao.findListWithWildcard(Product.class, "%", false,
-                org.broadinstitute.gpinformatics.athena.entity.products.Product_.aggregationDataType);
+                Product_.aggregationDataType);
 
         productsWithDataType.stream().filter(PipelineDataTypeFixupTest::isNullPipelineDataType).forEach(product -> {
             String aggregationDataType = product.getAggregationDataType();
