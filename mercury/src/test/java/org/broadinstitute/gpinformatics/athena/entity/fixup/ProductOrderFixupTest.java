@@ -46,9 +46,11 @@ import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -167,6 +169,9 @@ public class ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private SAPAccessControlEjb accessController;
+
+    @Inject
+    private ManifestSessionDao manifestSessionDao;
 
     // When you run this on prod, change to PROD and prod.
     @Deployment
@@ -1900,6 +1905,40 @@ public class ProductOrderFixupTest extends Arquillian {
         }
 
         productOrderDao.persist(new FixupCommentary(commentary));
+        commitTransaction();
+    }
+
+    @Test(enabled = true)
+    public void support6107ReplaceReciept() throws Exception {
+
+        String oldReceipt = "RCT-219";
+        String newReceipt = "RCT-719";
+        String accessionPrefix = "ORDER-20459";
+
+        userBean.loginOSUser();
+        beginTransaction();
+        ManifestSession sessionToChange = manifestSessionDao.getSessionByPrefix(accessionPrefix);
+
+        String pdoSuffix = sessionToChange.getSessionPrefix().substring(sessionToChange.getSessionPrefix().indexOf("-"), sessionToChange.getSessionPrefix().length());
+        String pdoKey = "PDO" + pdoSuffix;
+        System.out.println("PDO key to find is " + pdoKey);
+        ProductOrder pdoToChange = productOrderDao.findByBusinessKey(pdoKey);
+
+        Assert.assertNotNull(pdoToChange, "Unable to find a PDO for" + "PDO"+pdoSuffix);
+
+        sessionToChange.setReceiptTicket(newReceipt);
+        System.out.println("Updated the receipt on session "+sessionToChange.getSessionName()+" from "+oldReceipt+
+                           " to "+sessionToChange.getReceiptTicket());
+        JiraIssue pdoIssue = jiraService.getIssue(pdoToChange.getBusinessKey());
+        JiraIssue rpIssue = jiraService.getIssue(pdoToChange.getResearchProject().getBusinessKey());
+
+        pdoIssue.updateIssueLink(newReceipt, oldReceipt);
+        rpIssue.updateIssueLink(newReceipt, oldReceipt);
+        System.out.println(String.format("Updated the links on PDO %s and RP %s from %s to %s",
+                pdoToChange.getBusinessKey(), pdoToChange.getResearchProject().getBusinessKey(),
+                oldReceipt, newReceipt));
+
+        productOrderDao.persist(new FixupCommentary("SUPPORT-6107: replaced an incorrect receipt ticket in the Accessioning Session, Research Project link AND Product Order link"));
         commitTransaction();
     }
 }
