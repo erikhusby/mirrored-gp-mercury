@@ -37,6 +37,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @UrlBinding("/workflow/CreateFCT.action")
 public class CreateFCTActionBean extends CoreActionBean {
@@ -304,23 +305,25 @@ public class CreateFCTActionBean extends CoreActionBean {
     @HandlesEvent(SAVE_ACTION)
     public Resolution createFCTTicket() {
         String regulatoryDesignation = null;
+        // Only uses the selected dtos.
+        final List<CreateFctDto> dtos = createFctDtos.stream().
+                filter(dto -> dto != null && dto.getNumberLanes() > 0).
+                collect(Collectors.toList());
         // Checks selected tubes for a mix of regulatory designations.
-        for (CreateFctDto createFctDto : createFctDtos) {
-            if (createFctDto.getNumberLanes() > 0) {
-                if (regulatoryDesignation == null) {
-                    regulatoryDesignation = createFctDto.getRegulatoryDesignation();
-                }
-                if (!regulatoryDesignation.equals(createFctDto.getRegulatoryDesignation()) ||
-                        regulatoryDesignation.equals(MIXED)) {
-                    boolean mixedFlowcellOk = labBatchEjb.isMixedFlowcellOk(createFctDto);
-                    if (!mixedFlowcellOk) {
-                        addGlobalValidationError("Cannot mix Clinical and Research on a flowcell.");
-                        return new ForwardResolution(VIEW_PAGE);
-                    }
+        for (CreateFctDto createFctDto : dtos) {
+            if (regulatoryDesignation == null) {
+                regulatoryDesignation = createFctDto.getRegulatoryDesignation();
+            }
+            if (!regulatoryDesignation.equals(createFctDto.getRegulatoryDesignation()) ||
+                    regulatoryDesignation.equals(MIXED)) {
+                boolean mixedFlowcellOk = labBatchEjb.isMixedFlowcellOk(createFctDto);
+                if (!mixedFlowcellOk) {
+                    addGlobalValidationError("Cannot mix Clinical and Research on a flowcell.");
+                    return new ForwardResolution(VIEW_PAGE);
                 }
             }
         }
-        labBatchEjb.makeFcts(createFctDtos, selectedFlowcellType, userBean.getLoginUserName(), this);
+        labBatchEjb.makeFcts(dtos, selectedFlowcellType, userBean.getLoginUserName(), this);
         return new RedirectResolution(CreateFCTActionBean.class, VIEW_ACTION);
     }
 
