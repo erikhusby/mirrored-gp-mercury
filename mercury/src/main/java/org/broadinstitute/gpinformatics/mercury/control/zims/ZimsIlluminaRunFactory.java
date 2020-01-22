@@ -154,9 +154,9 @@ public class ZimsIlluminaRunFactory {
                     vesselPosition)) {
                 BucketEntry singleBucketEntry = sampleInstance.getSingleBucketEntry();
                 if (singleBucketEntry != null) {
-                    if (Objects.equals(singleBucketEntry.getProductOrder().getProduct().getAggregationDataType(),
+                    if (Objects.equals(singleBucketEntry.getProductOrder().getProduct().getPipelineDataTypeString(),
                             Aggregation.DATA_TYPE_WGS) ||
-                            Aggregation.DATA_TYPE_WGS.equals(sampleInstance.getAggregationDataType())) {
+                            Aggregation.DATA_TYPE_WGS.equals(sampleInstance.getPipelineDataTypeString())) {
                         mixedLaneOk = true;
                         break;
                     }
@@ -327,13 +327,15 @@ public class ZimsIlluminaRunFactory {
                     sampleInstanceDto.getSampleInstance().getAnalysisType().getName() : null;
             String referenceSequence = sampleInstanceDto.getSampleInstance().getReferenceSequence() != null ?
                     sampleInstanceDto.getSampleInstance().getReferenceSequence().getName() : null;
-            String aggregationDataType = sampleInstanceDto.getSampleInstance().getAggregationDataType();
+            String aggregationDataType = sampleInstanceDto.getSampleInstance().getPipelineDataTypeString();
             String insertSize = sampleInstanceDto.getSampleInstance().getExpectedInsertSize();
 
             ProductOrder productOrder = (sampleInstanceDto.getProductOrderKey() != null) ?
                     mapKeyToProductOrder.get(sampleInstanceDto.getProductOrderKey()) : null;
             if (productOrder != null) {
                 Product product = productOrder.getProduct();
+                analysisTypes.add(product.getAnalysisTypeKey());
+                aggregationDataTypes.add(product.getPipelineDataTypeString());
                 ResearchProject project = productOrder.getResearchProject();
                 ResearchProject positiveControlResearchProject = product.getPositiveControlResearchProject();
                 ResearchProject negativeControlResearchProject = product.getNegativeControlResearchProject();
@@ -349,8 +351,8 @@ public class ZimsIlluminaRunFactory {
                 if (referenceSequence == null && !StringUtils.isBlank(project.getReferenceSequenceKey())) {
                     referenceSequence = project.getReferenceSequenceKey();
                 }
-                if (aggregationDataType == null) {
-                    aggregationDataType = product.getAggregationDataType();
+                if (StringUtils.isBlank(aggregationDataType)) {
+                    aggregationDataType = product.getPipelineDataTypeString();
                 }
                 if (insertSize == null && product.getInsertSize() != null) {
                     insertSize = String.valueOf(product.getInsertSize());
@@ -602,8 +604,8 @@ public class ZimsIlluminaRunFactory {
         }
         String aggregationParticle = sampleInstanceDto.sampleInstance.getAggregationParticle();
         Boolean isImpliedSampleName = sampleInstanceDto.sampleInstance.getImpliedSampleName();
-        if (aggregationDataType == null) {
-            aggregationDataType = sampleInstanceDto.sampleInstance.getAggregationDataType();
+        if (StringUtils.isBlank(aggregationDataType)) {
+            aggregationDataType = sampleInstanceDto.sampleInstance.getPipelineDataTypeString();
         }
         if (sampleInstanceDto.sampleInstance.getReferenceSequence() != null) {
             referenceSequence = sampleInstanceDto.sampleInstance.getReferenceSequence().getName();
