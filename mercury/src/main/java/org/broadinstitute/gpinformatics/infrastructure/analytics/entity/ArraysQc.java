@@ -2,12 +2,15 @@ package org.broadinstitute.gpinformatics.infrastructure.analytics.entity;
 
 import org.hibernate.annotations.BatchSize;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.MapsId;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
+import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -69,9 +72,9 @@ public class ArraysQc {
     @BatchSize(size = 100)
     private Set<ArraysQcGtConcordance> arraysQcGtConcordances;
 
-    @OneToOne // Until there is no longer a unique index on ARRAYS_QC_CONTAMINATION.ARRAYS_QC_ID
-    @JoinColumn(name = "id", referencedColumnName = "arrays_qc_id")
-    private ArraysQcContamination arraysQcContamination;
+    @OneToMany(mappedBy = "arraysQcId")
+    @BatchSize(size = 100)
+    private Set<ArraysQcContamination> arraysQcContamination;
 
     public Long getId() {
         return id;
@@ -280,7 +283,14 @@ public class ArraysQc {
         return arraysQcGtConcordances;
     }
 
+    /**
+     * This is OneToOne, mapped as OneToMany to avoid separate query for each ArraysQc entity <br/>
+     * As of 01/2020, PK = ANALYTICS.ARRAYS_QC_CONTAMINATION(ARRAYS_QC_ID)
+     */
     public ArraysQcContamination getArraysQcContamination() {
-        return arraysQcContamination;
+        if (arraysQcContamination == null || arraysQcContamination.size() == 0) {
+            return null;
+        }
+        return arraysQcContamination.iterator().next();
     }
 }
