@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.rapsheet;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.PipelineDataTypeDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
@@ -130,6 +131,9 @@ public class ReworkEjbTest extends Arquillian {
     private ProductOrderDao productOrderDao;
 
     @Inject
+    private PipelineDataTypeDao pipelineDataTypeDao;
+
+    @Inject
     private PriceItemDao priceItemDao;
 
     @Inject
@@ -193,6 +197,7 @@ public class ReworkEjbTest extends Arquillian {
     private String somaticSample2;
     private String somaticSample3;
 
+    private PipelineDataType pipelineDataType;
     /**
      * Local map of SampleData to use when creating MercurySamples for ProductOrderSamples.
      */
@@ -209,7 +214,7 @@ public class ReworkEjbTest extends Arquillian {
         if (reworkEjb == null) {
             return;
         }
-
+        pipelineDataType = pipelineDataTypeDao.findDataType(Aggregation.DATA_TYPE_EXOME);
         setupProducts();
 
         String testPrefix = "SGM_Test_RWIT";
@@ -594,7 +599,7 @@ public class ReworkEjbTest extends Arquillian {
                                       true,
                                       workflow,
                                       false,
-                                      new PipelineDataType(Aggregation.DATA_TYPE_EXOME, true));
+                                      pipelineDataType);
 
         product.setPrimaryPriceItem(priceItem);
         return product;
