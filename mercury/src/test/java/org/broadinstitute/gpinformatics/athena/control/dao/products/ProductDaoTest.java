@@ -47,6 +47,9 @@ public class ProductDaoTest extends StubbyContainerTest {
     private PriceItemDao priceItemDao;
 
     @Inject
+    private PipelineDataTypeDao pipelineDataTypeDao;
+
+    @Inject
     private UserTransaction utx;
 
 
@@ -76,7 +79,8 @@ public class ProductDaoTest extends StubbyContainerTest {
     }
 
 
-    public static Product createProduct(ProductFamilyDao productFamilyDao, PriceItemDao priceItemDao) {
+    public static Product createProduct(ProductFamilyDao productFamilyDao, PriceItemDao priceItemDao,
+                                        PipelineDataTypeDao pipelineDataTypeDao) {
 
         ProductFamily metagenomicsProductFamily = productFamilyDao.find("Metagenomics");
 
@@ -85,6 +89,8 @@ public class ProductDaoTest extends StubbyContainerTest {
         final Calendar yesterday = Calendar.getInstance();
         yesterday.add(Calendar.DATE, -1);
         String partNumber = ProductTestFactory.generateProductPartNumber();
+        PipelineDataType pipelineDataType = pipelineDataTypeDao.findDataType(Aggregation.DATA_TYPE_EXOME);
+
         Product product = new Product(
                 "Test Data",                               // product name
                 metagenomicsProductFamily,                 // product family
@@ -101,7 +107,7 @@ public class ProductDaoTest extends StubbyContainerTest {
                 false,                                     // top level product
                 Workflow.NONE,
                 false,
-                new PipelineDataType(Aggregation.DATA_TYPE_EXOME, true)
+                pipelineDataType
         );
 
         // we have some tests that call this method more than once so the price item compound key must be unique
@@ -119,7 +125,7 @@ public class ProductDaoTest extends StubbyContainerTest {
 
 
     private Product createProduct() {
-        return createProduct(productFamilyDao, priceItemDao);
+        return createProduct(productFamilyDao, priceItemDao, pipelineDataTypeDao);
     }
 
 

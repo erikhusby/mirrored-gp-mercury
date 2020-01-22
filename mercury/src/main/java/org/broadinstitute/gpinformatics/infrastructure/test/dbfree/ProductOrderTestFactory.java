@@ -6,13 +6,11 @@ import com.google.common.collect.Multimaps;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 
@@ -235,7 +233,7 @@ public class ProductOrderTestFactory {
         Product product =
                 new Product("Product Name " + uuid, productFamily, "Product Description " + uuid, partNumber,
                         new Date(), null, 0, 0, 0, 1, "Input requirements", "Deliverables", true, null,
-                        false, new PipelineDataType(Aggregation.DATA_TYPE_EXOME, true));
+                        false, null);
 
 
         ResearchProject researchProject = new ResearchProject(-1L, "Research Project " + uuid, "Synopsis", false,

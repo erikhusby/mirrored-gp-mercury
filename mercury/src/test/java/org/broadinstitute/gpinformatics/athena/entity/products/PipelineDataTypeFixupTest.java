@@ -27,12 +27,13 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation.DATA_TYPE_10X_WGS;
@@ -84,14 +85,23 @@ public class PipelineDataTypeFixupTest extends Arquillian {
         userBean.loginOSUser();
         utx.begin();
 
-        List<String> validDataTypes = Arrays.asList(DATA_TYPE_10X_WGS, DATA_TYPE_16X, DATA_TYPE_CUSTOM_SELECTION,
-            DATA_TYPE_EXOME, DATA_TYPE_EXOME_PLUS, DATA_TYPE_JUMP, DATA_TYPE_PCR, DATA_TYPE_RNA, DATA_TYPE_RBBS,
-            DATA_TYPE_SHORT_RANGE_PCR, DATA_TYPE_WGS);
+        List<String> validDataTypes =
+            Stream.of(DATA_TYPE_10X_WGS, DATA_TYPE_16X, DATA_TYPE_CUSTOM_SELECTION,
+                DATA_TYPE_EXOME, DATA_TYPE_EXOME_PLUS, DATA_TYPE_JUMP, DATA_TYPE_PCR, DATA_TYPE_RNA, DATA_TYPE_RBBS,
+                DATA_TYPE_SHORT_RANGE_PCR, DATA_TYPE_WGS).collect(Collectors.toList());
 
+        List<String> removeDataTypes = new ArrayList<>();
+        List<PipelineDataType> existing = pipelineDataTypeDao.findAll();
+        existing.forEach(pipelineDataType -> {
+            if (validDataTypes.contains(pipelineDataType.getName())) {
+                removeDataTypes.add(pipelineDataType.getName());
+            }
+        });
+        validDataTypes.removeAll(removeDataTypes);
         validDataTypes.stream()
             .map(dataType -> new PipelineDataType(dataType, true))
             .forEach(pipelineDataTypeDao::persist);
-
+        validDataTypes.addAll(removeDataTypes);
         Set<String> allNotInList =
             productDao.findAllNotInList(Product.class, Product_.aggregationDataType, validDataTypes).stream()
                 .map(Product::getAggregationDataType).collect(Collectors.toSet());
