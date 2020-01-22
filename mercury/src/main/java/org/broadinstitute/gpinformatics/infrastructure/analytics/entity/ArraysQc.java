@@ -5,7 +5,9 @@ import org.hibernate.annotations.BatchSize;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -66,6 +68,10 @@ public class ArraysQc {
     @OneToMany(mappedBy = "arraysQcId")
     @BatchSize(size = 100)
     private Set<ArraysQcGtConcordance> arraysQcGtConcordances;
+
+    @OneToOne // Until there is no longer a unique index on ARRAYS_QC_CONTAMINATION.ARRAYS_QC_ID
+    @JoinColumn(name = "id", referencedColumnName = "arrays_qc_id")
+    private ArraysQcContamination arraysQcContamination;
 
     public Long getId() {
         return id;
@@ -272,5 +278,9 @@ public class ArraysQc {
 
     public Set<ArraysQcGtConcordance> getArraysQcGtConcordances() {
         return arraysQcGtConcordances;
+    }
+
+    public ArraysQcContamination getArraysQcContamination() {
+        return arraysQcContamination;
     }
 }
