@@ -464,7 +464,7 @@
                                     Allow for Commercial Orders
                                 </stripes:label>
                                 <div class="controls">
-                                    <stripes:checkbox id="offeredAsCommercialProduct" name="editProduct.offeredAsCommercialProduct" style="margin-top: 10px;" disabled="${actionBean.productUsedInOrders}"/>
+                                    <stripes:checkbox id="offeredAsCommercialProduct" name="editProduct.offeredAsCommercialProduct" style="margin-top: 10px;" disabled="${actionBean.productUsedInLLCOrders}"/>
                                     <c:if test="${actionBean.productUsedInLLCOrders}">
                                         <stripes:hidden name="editProduct.offeredAsCommercialProduct" value="${actionBean.editProduct.offeredAsCommercialProduct}" />
                                     </c:if>
