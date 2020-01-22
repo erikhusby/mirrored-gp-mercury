@@ -6,7 +6,7 @@ usage() {
 
     Usage: $0 start|stop|restart|status|parameters [hostname]
 
-    Controls a Wildlfy 10 server.
+    Controls a Wildlfy server.
 
     start -- starts the server in the background using the standalone-full.xml configuration file. Stores the pid of the server in
         JBOSS_HOME/wildfly-standalone.pid. If hostname is specified, then binds the management and public interfaces to hostname.

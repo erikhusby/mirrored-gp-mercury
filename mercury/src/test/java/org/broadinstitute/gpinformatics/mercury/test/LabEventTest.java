@@ -104,6 +104,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuil
 import org.broadinstitute.gpinformatics.mercury.test.builders.SingleCell10XEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SingleCellHashingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SingleCellSmartSeqEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.SingleCellVdjEnrichmentEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.StoolTNAEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
 import org.easymock.EasyMock;
@@ -138,6 +139,8 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 
 /**
@@ -1711,6 +1714,42 @@ public class LabEventTest extends BaseEventTest {
         TubeFormation finalRack = entityBuilder.getDoubleSidedSpriTubeFormation();
         Set<SampleInstanceV2> sampleInstancesV2 = finalRack.getSampleInstancesV2();
         Assert.assertEquals(sampleInstancesV2.size(), NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
+    }
+
+    /**
+     * Build object graph for Single Cell VDJ messages
+     */
+    @Test(groups = {TestGroups.DATABASE_FREE})
+    public void testSingleCellVdj() {
+        expectedRouting = SystemRouter.System.MERCURY;
+        int numSamples = NUM_POSITIONS_IN_RACK - 2;
+        ProductOrder productOrder = ProductOrderTestFactory.buildSingleCellHashingProductOrder(numSamples);
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+
+        TubeFormation tcrDaughterTubeFormation = daughterPlateTransferNoWorkflow(mapBarcodeToTube, "Tcr");
+        Map<String, BarcodedTube> mapBarcodeToTubeTcr = tcrDaughterTubeFormation.getContainerRole()
+                .getMapPositionToVessel().values().stream()
+                .collect(Collectors.toMap(BarcodedTube::getLabel, Function.identity()));
+
+        LabBatch tcrBatch = new LabBatch("SC Tcr Batch",
+                new HashSet<>(mapBarcodeToTubeTcr.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        tcrBatch.setWorkflow(Workflow.TENX_5PRIME_TCR);
+        bucketBatchAndDrain(mapBarcodeToTubeTcr, productOrder, tcrBatch, "2");
+
+        TubeFormation bcrDaughterTubeFormation = daughterPlateTransferNoWorkflow(mapBarcodeToTube, "Bcr");
+        Map<String, BarcodedTube> mapBarcodeToTubeBcr = bcrDaughterTubeFormation.getContainerRole()
+                .getMapPositionToVessel().values().stream()
+                .collect(Collectors.toMap(BarcodedTube::getLabel, Function.identity()));
+
+        LabBatch bcrBatch = new LabBatch("SC Bcr Batch",
+                new HashSet<>(mapBarcodeToTubeBcr.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        bcrBatch.setWorkflow(Workflow.TENX_5PRIME_BCR);
+        bucketBatchAndDrain(mapBarcodeToTubeBcr, productOrder, bcrBatch, "2");
+
+        SingleCellVdjEnrichmentEntityBuilder entityBuilder = runSingleCellVdjProcess(tcrDaughterTubeFormation, bcrDaughterTubeFormation,
+                mapBarcodeToTubeTcr, mapBarcodeToTubeBcr, "Vdj");
     }
 
     /**
