@@ -59,6 +59,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -595,15 +596,33 @@ public class LabEventFactory implements Serializable {
      */
     private void extractBarcodes(List<String> barcodes, List<PositionMapType> positionMapTypes) {
         for (PositionMapType positionMapType : positionMapTypes) {
-            List<Pair<VesselPosition, String>> positionBarcodeList = new ArrayList<>();
             for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
                 barcodes.add(receptacleType.getBarcode());
                 VesselPosition vesselPosition = VesselPosition.getByName(receptacleType.getPosition());
                 if (vesselPosition == null) {
                     throw new RuntimeException("Failed to find position " + receptacleType.getPosition());
                 }
-                positionBarcodeList.add(new ImmutablePair<>(vesselPosition, receptacleType.getBarcode()));
             }
+        }
+    }
+
+    /**
+     * Extract the well barcodes from position maps, in order to make a DAO call
+     *
+     * @param plateBarcode barcode of static plate - prefix for well barcodes
+     * @param wellBarcodes array to which to add extracted well barcodes
+     * @param receptacles  well list from liquid handling deck
+     */
+    private void extractPlateWells(String plateBarcode, List<String> wellBarcodes, List<ReceptacleType> receptacles) {
+        if (receptacles == null) {
+            return;
+        }
+        for (ReceptacleType receptacleType : receptacles) {
+            VesselPosition vesselPosition = VesselPosition.getByName(receptacleType.getPosition());
+            if (vesselPosition == null) {
+                throw new RuntimeException("Failed to find position " + receptacleType.getPosition());
+            }
+            wellBarcodes.add(plateBarcode + vesselPosition.name());
         }
     }
 
@@ -642,6 +661,17 @@ public class LabEventFactory implements Serializable {
                 mapOfDestContainerBarcodeToPositionMap.put(positionMapType.getBarcode(), mapOfDestPosToVol);
             }
         }
+        Set<String> found = new HashSet<>();
+        boolean allowSourceVolRemovalUpdate = true;
+        for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
+            if(!found.add(cherryPickSourceType.getDestinationBarcode()+cherryPickSourceType.getDestinationWell())) {
+                allowSourceVolRemovalUpdate = false;
+                break;
+            }
+        }
+
+        // Set used to track whether a source has had it's volume updated in a cherry pick event (initial vol set)
+        Set<String> sourceUpdated = new HashSet<>();
 
         for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
             String destinationRackBarcode = cherryPickSourceType.getDestinationBarcode();
@@ -679,9 +709,24 @@ public class LabEventFactory implements Serializable {
                     ancillaryTargetVessel,
                     labEvent));
 
-            // If the event is removing destination volume from the sources, proceed to find the source barcoded tube and remove destination volume.
+            PositionMapType sourceContainerPositionMapType = findContainerPositionMapType(cherryPickSourceType.getBarcode(), plateCherryPickEvent.getSourcePositionMap());
+            ReceptacleType sourceReceptacleType = findReceptacleType(cherryPickSourceType.getWell(), sourceContainerPositionMapType);
+            LabVessel sourceVessel = sourceContainer.getContainerRole().getVesselAtPosition(VesselPosition.getByName(cherryPickSourceType.getWell()));
+
+            // If this is an event where we are allowing destination volume to be removed from the source, we may need to
+            // update the source volume in cherry pick before doing the transfer.
             if (labEvent.getLabEventType().removeDestVolFromSource()) {
-                String sourceWell = cherryPickSourceType.getWell();
+                if(sourceReceptacleType != null && sourceReceptacleType.getVolume() != null) {
+                    // We only want to update the source vessel volume to the vol from the message one time per entire set of cherry picks.
+                    if(sourceUpdated.add(sourceReceptacleType.getBarcode())) {
+                        sourceVessel.setVolume(sourceReceptacleType.getVolume());
+                    }
+                }
+            }
+
+            // If the event is removing destination volume from the sources and there are no multiple sources to one
+            // destination, proceed to find the source barcoded tube and remove destination volume.
+            if (labEvent.getLabEventType().removeDestVolFromSource() && allowSourceVolRemovalUpdate) {
                 String destinationWell = cherryPickSourceType.getDestinationWell();
 
                 // Get the destination volume amount to remove as noted in the PositionMap of the lab event message.
@@ -690,16 +735,57 @@ public class LabEventFactory implements Serializable {
                 // Check to see if the destination map had a volume to remove.
                 if (destVolToRemove != null && destVolToRemove.doubleValue() > 0.0) {
                     // Get the source BarcodedTube so we can update the source vessel volume directly.
-                    BarcodedTube sourceVessel =
-                            (BarcodedTube) sourceContainer.getContainerRole().getVesselAtPosition(VesselPosition.valueOf(sourceWell));
                     BigDecimal currentSourceVolume = sourceVessel.getVolume() == null ? BigDecimal.ZERO : sourceVessel.getVolume();
                     BigDecimal finalSourceVolume = currentSourceVolume.subtract(destVolToRemove);
                     // Subtract the current source vessel volume from the destination volume amount noted in the message.
                     sourceVessel.setVolume((finalSourceVolume.doubleValue() < 0.0) ? BigDecimal.ZERO : finalSourceVolume);
                 }
             }
+
+            // Check whether there's a flag set for depleting sources.
+            Boolean depleteSource = labEvent.getLabEventType().depleteSources() ||
+                                    getSourceMetadataManipulationType(sourceReceptacleType, LabEventType.SourceHandling.DEPLETE);
+
+            if (depleteSource) {
+                sourceVessel.setVolume(BigDecimal.ZERO);
+            }
         }
         return labEvent;
+    }
+
+    /**
+     * Given a {@link PositionMapType} find the {@link ReceptacleType} for the tube matching the position given.
+     *
+     * @param position         Position to look for
+     * @param positionMapType  PositionMapType that holds the information
+     * @return {@link PositionMapType} of the desired receptacle or null if not found.
+     */
+    private ReceptacleType findReceptacleType(String position, PositionMapType positionMapType) {
+        if (positionMapType != null) {
+            for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
+                VesselPosition mapPosition = VesselPosition.getByName(receptacleType.getPosition());
+                VesselPosition cherryPickPosition = VesselPosition.getByName(position);
+                if (mapPosition == cherryPickPosition) {
+                    return receptacleType;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Given a container barcode and a list of {@link PositionMapType} objects, find the {@link PositionMapType} for the container.
+     * @param containerBarcode Barcode of the container
+     * @param positionMapTypes List of position maps from a message.
+     * @return
+     */
+    private PositionMapType findContainerPositionMapType(String containerBarcode, List<PositionMapType> positionMapTypes) {
+        for (PositionMapType positionMapType : positionMapTypes) {
+            if (positionMapType.getBarcode().equalsIgnoreCase(containerBarcode)) {
+                return positionMapType;
+            }
+        }
+        return null;
     }
 
     /**
@@ -739,68 +825,100 @@ public class LabEventFactory implements Serializable {
                                                    boolean create, boolean areSourceTubes, LabEvent labEvent) {
         Map<String, TubeFormation> mapBarcodeToTubeFormation = new HashMap<>();
         for (PlateType plateType : platesJaxb) {
+            String plateBarcode = plateType.getBarcode();
+
+            // Find the map associated with the plate
+            PositionMapType positionMapType = null;
+            boolean positionsFound = false;
+            for (PositionMapType theMap : positionMaps) {
+                if (theMap.getBarcode().equals(plateBarcode)) {
+                    positionsFound = true;
+                    positionMapType = theMap;
+                    break;
+                }
+            }
+
             if (plateType.getPhysType().equals(PHYS_TYPE_TUBE_RACK) ||
                     RackOfTubes.RackType.getByName(plateType.getPhysType()) != null) {
-                boolean found = false;
-                for (PositionMapType positionMapType : positionMaps) {
-                    if (positionMapType.getBarcode().equals(plateType.getBarcode())) {
-                        found = true;
-                        String digest = makeDigest(positionMapType, mapBarcodeToVessel);
-                        TubeFormation tubeFormation = OrmUtil.proxySafeCast(mapBarcodeToVessel.get(digest),
-                                TubeFormation.class);
-                        RackOfTubes rackOfTubes = OrmUtil.proxySafeCast(
-                                mapBarcodeToVessel.get(plateType.getBarcode()), RackOfTubes.class);
-                        boolean rackOfTubesWasNull = rackOfTubes == null;
+                if (positionsFound) {
+                    String digest = makeDigest(positionMapType, mapBarcodeToVessel);
+                    TubeFormation tubeFormation = OrmUtil.proxySafeCast(mapBarcodeToVessel.get(digest),
+                            TubeFormation.class);
+                    RackOfTubes rackOfTubes = OrmUtil.proxySafeCast(
+                            mapBarcodeToVessel.get(plateBarcode), RackOfTubes.class);
+                    boolean rackOfTubesWasNull = rackOfTubes == null;
 
-                        Map<String, BarcodedTube> mapBarcodeToTube = new HashMap<>();
-                        for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
-                            mapBarcodeToTube.put(receptacleType.getBarcode(),
-                                    OrmUtil.proxySafeCast(mapBarcodeToVessel.get(receptacleType.getBarcode()),
-                                            BarcodedTube.class)
-                            );
-                        }
-                        if (tubeFormation == null) {
-                            tubeFormation = buildRackDaoFree(mapBarcodeToTube, rackOfTubes, plateType,
-                                    positionMapType, areSourceTubes, create, labEvent);
-                            mapBarcodeToVessel.put(tubeFormation.getLabel(), tubeFormation);
-                            if (rackOfTubesWasNull) {
-                                rackOfTubes = tubeFormation.getRacksOfTubes().iterator().next();
-                                mapBarcodeToVessel.put(rackOfTubes.getLabel(), rackOfTubes);
-                            }
-                        } else {
-                            if (rackOfTubes == null) {
-                                RackOfTubes.RackType rackType = getRackType(plateType);
-                                rackOfTubes = new RackOfTubes(plateType.getBarcode(), rackType);
-                                mapBarcodeToVessel.put(rackOfTubes.getLabel(), rackOfTubes);
-                                tubeFormation.addRackOfTubes(rackOfTubes);
-                            }
-                            setTubeQuantities(mapBarcodeToTube, positionMapType, labEvent, areSourceTubes);
-                        }
-                        mapBarcodeToTubeFormation.put(plateType.getBarcode(), tubeFormation);
-                        break;
+                    Map<String, BarcodedTube> mapBarcodeToTube = new HashMap<>();
+                    for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
+                        mapBarcodeToTube.put(receptacleType.getBarcode(),
+                                OrmUtil.proxySafeCast(mapBarcodeToVessel.get(receptacleType.getBarcode()),
+                                        BarcodedTube.class)
+                        );
                     }
-                }
-                if (!found) {
-                    throw new RuntimeException("Failed to find positionMap for " + plateType.getBarcode());
+                    if (tubeFormation == null) {
+                        tubeFormation = buildRackDaoFree(mapBarcodeToTube, rackOfTubes, plateType,
+                                positionMapType, areSourceTubes, create, labEvent);
+                        mapBarcodeToVessel.put(tubeFormation.getLabel(), tubeFormation);
+                        if (rackOfTubesWasNull) {
+                            rackOfTubes = tubeFormation.getRacksOfTubes().iterator().next();
+                            mapBarcodeToVessel.put(rackOfTubes.getLabel(), rackOfTubes);
+                        }
+                    } else {
+                        if (rackOfTubes == null) {
+                            RackOfTubes.RackType rackType = getRackType(plateType);
+                            rackOfTubes = new RackOfTubes(plateBarcode, rackType);
+                            mapBarcodeToVessel.put(rackOfTubes.getLabel(), rackOfTubes);
+                            tubeFormation.addRackOfTubes(rackOfTubes);
+                        }
+                        setTubeQuantities(mapBarcodeToTube, positionMapType, labEvent, areSourceTubes);
+                    }
+                    mapBarcodeToTubeFormation.put(plateBarcode, tubeFormation);
+                } else {
+                    // Position map for rack of tubes is mandatory
+                    throw new RuntimeException("Failed to find positionMap for " + plateBarcode);
                 }
             } else {
-                LabVessel labVessel = mapBarcodeToVessel.get(plateType.getBarcode());
+                LabVessel labVessel = mapBarcodeToVessel.get(plateBarcode);
+
                 if (labVessel == null) {
                     IlluminaFlowcell.FlowcellType flowcellType = IlluminaFlowcell.FlowcellType.getTypeForPhysTypeAndBarcode(
-                            plateType.getPhysType(), plateType.getBarcode());
+                            plateType.getPhysType(), plateBarcode);
                     if (flowcellType != null) {
-                        labVessel = new IlluminaFlowcell(flowcellType, plateType.getBarcode());
+                        labVessel = new IlluminaFlowcell(flowcellType, plateBarcode);
                     }
 
                     if (labVessel == null) {
                         if (areSourceTubes && !create) {
-                            throw new RuntimeException("Failed to find plate " + plateType.getBarcode());
+                            throw new RuntimeException("Failed to find plate " + plateBarcode);
                         }
-                        labVessel = new StaticPlate(plateType.getBarcode(),
+                        labVessel = new StaticPlate(plateBarcode,
                                 StaticPlate.PlateType.getByAutomationName(plateType.getPhysType()));
                     }
-                    mapBarcodeToVessel.put(plateType.getBarcode(), labVessel);
                 }
+
+                // Handle wells if positionMap contains entries
+                if (positionsFound && OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
+                    StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
+                    Map<String, PlateWell> mapBarcodeToWell = new HashMap<>();
+                    staticPlate.getContainerRole().getContainedVessels().stream().forEach((well) -> mapBarcodeToWell.put(well.getLabel(), well));
+
+                    // Build wells only if receptacles explicitly provided in message
+                    for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
+                        VesselPosition position = VesselPosition.getByName(receptacleType.getPosition());
+                        String wellBarcode = plateBarcode + position;
+                        if (mapBarcodeToWell.get(wellBarcode) == null) {
+                            if (position == null) {
+                                throw new RuntimeException("Failed to find position " + receptacleType.getPosition());
+                            }
+                            PlateWell well = new PlateWell(staticPlate, position);
+                            staticPlate.getContainerRole().addContainedVessel(well, position);
+                            mapBarcodeToWell.put(wellBarcode, well);
+                            mapBarcodeToVessel.put(wellBarcode, well);
+                        }
+                    }
+                    setWellQuantities(mapBarcodeToWell, positionMapType);
+                }
+                mapBarcodeToVessel.put(plateBarcode, labVessel);
             }
         }
         return mapBarcodeToTubeFormation;
@@ -1034,15 +1152,10 @@ public class LabEventFactory implements Serializable {
      */
     public LabEvent buildFromBettaLims(PlateEventType plateEventType) {
         LabEvent labEvent;
-        if (plateEventType.getPositionMap() == null) {
-            PlateType plate = plateEventType.getPlate();
-            if (plate == null) {
-                // todo jmt why isn't this error caught in JAXB?
-                throw new RuntimeException("No plate element in plateEvent");
-            }
-            StaticPlate staticPlate = staticPlateDao.findByBarcode(plate.getBarcode());
-            labEvent = buildFromBettaLimsPlateEventDbFree(plateEventType, staticPlate);
-        } else {
+        PlateType plateType = plateEventType.getPlate();
+        if (plateType.getPhysType().equals(PHYS_TYPE_TUBE_RACK) ||
+                RackOfTubes.RackType.getByName(plateType.getPhysType()) != null) {
+
             RackOfTubes rackOfTubes = rackOfTubesDao.findByBarcode(plateEventType.getPlate().getBarcode());
             Map<String, BarcodedTube> mapBarcodeToVessel = findTubesByBarcodes(plateEventType.getPositionMap());
             //noinspection unchecked
@@ -1052,6 +1165,14 @@ public class LabEventFactory implements Serializable {
             trySampleIds(plateEventType.getPositionMap().getReceptacle().stream().map(ReceptacleType::getBarcode).
                     collect(Collectors.toList()), (Map<String, LabVessel>) (Map<?, ?>)mapBarcodeToVessel, mercurySampleDao);
             labEvent = buildFromBettaLimsRackEventDbFree(plateEventType, tubeFormation, mapBarcodeToVessel, rackOfTubes);
+        } else {
+            PlateType plate = plateEventType.getPlate();
+            if (plate == null) {
+                // todo jmt why isn't this error caught in JAXB?
+                throw new RuntimeException("No plate element in plateEvent");
+            }
+            StaticPlate staticPlate = staticPlateDao.findByBarcode(plate.getBarcode());
+            labEvent = buildFromBettaLimsPlateEventDbFree(plateEventType, staticPlate);
         }
         labEvent.setStationEventType(plateEventType);
         return labEvent;
@@ -1076,15 +1197,25 @@ public class LabEventFactory implements Serializable {
             return labEvent;
         }
         List<String> barcodes = new ArrayList<>();
+        // Source and destination plate barcodes
         barcodes.add(plateTransferEvent.getSourcePlate().getBarcode());
-        if (plateTransferEvent.getSourcePositionMap() != null &&
-                expectBarcodedReceptacleTypes(plateTransferEvent.getSourcePlate())) {
-            extractBarcodes(barcodes, Collections.singletonList(plateTransferEvent.getSourcePositionMap()));
-        }
         barcodes.add(plateTransferEvent.getPlate().getBarcode());
-        if (plateTransferEvent.getPositionMap() != null &&
-                expectBarcodedReceptacleTypes(plateTransferEvent.getPlate())) {
-            extractBarcodes(barcodes, Collections.singletonList(plateTransferEvent.getPositionMap()));
+
+        // Source
+        if (plateTransferEvent.getSourcePositionMap() != null) {
+            if (expectBarcodedReceptacleTypes(plateTransferEvent.getSourcePlate())) {
+                extractBarcodes(barcodes, Collections.singletonList(plateTransferEvent.getSourcePositionMap()));
+            } else if (shouldCreatePlateWells(plateTransferEvent.getSourcePlate(), plateTransferEvent.getSourcePositionMap().getReceptacle())) {
+                extractPlateWells(plateTransferEvent.getSourcePlate().getBarcode(), barcodes, plateTransferEvent.getSourcePositionMap().getReceptacle());
+            }
+        }
+        // Destination
+        if (plateTransferEvent.getPositionMap() != null) {
+            if (expectBarcodedReceptacleTypes(plateTransferEvent.getPlate())) {
+                extractBarcodes(barcodes, Collections.singletonList(plateTransferEvent.getPositionMap()));
+            } else if (shouldCreatePlateWells(plateTransferEvent.getPlate(), plateTransferEvent.getPositionMap().getReceptacle())) {
+                extractPlateWells(plateTransferEvent.getPlate().getBarcode(), barcodes, plateTransferEvent.getPositionMap().getReceptacle());
+            }
         }
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
         trySampleIds(barcodes, mapBarcodeToVessel, mercurySampleDao);
@@ -1271,6 +1402,16 @@ public class LabEventFactory implements Serializable {
     }
 
     /**
+     * If a plate event message occurs on a static plate with positionMap receptacles,
+     *   explicit vessels for each well should be created
+     */
+    private boolean shouldCreatePlateWells(PlateType plateType, List<ReceptacleType> receptacles) {
+        return receptacles != null && (
+                plateType.getPhysType().equals(PHYS_TYPE_EPPENDORF_96)
+                        || StaticPlate.PlateType.getByAutomationName(plateType.getPhysType()) != null);
+    }
+
+    /**
      * Set volume, concentration, receptacleWeight etc.
      *
      * @param mapBarcodeToTubes map from tube barcode to tube
@@ -1279,7 +1420,7 @@ public class LabEventFactory implements Serializable {
      */
     @DaoFree
     private void setTubeQuantities(Map<String, BarcodedTube> mapBarcodeToTubes, PositionMapType positionMap,
-            LabEvent labEvent, Boolean areSourceTubes) {
+                                   LabEvent labEvent, Boolean areSourceTubes) {
         for (ReceptacleType receptacleType : positionMap.getReceptacle()) {
             BarcodedTube barcodedTube = mapBarcodeToTubes.get(receptacleType.getBarcode());
             if (barcodedTube != null) {
@@ -1290,14 +1431,17 @@ public class LabEventFactory implements Serializable {
 
     private void setTubeQuantities(ReceptacleType receptacleType, BarcodedTube barcodedTube, LabEvent labEvent,
                                    Boolean areSourceTubes) {
-        if (receptacleType.getVolume() != null) {
-            barcodedTube.setVolume(receptacleType.getVolume());
-        }
-        if (receptacleType.getConcentration() != null) {
-            barcodedTube.setConcentration(receptacleType.getConcentration());
-        }
-        if (receptacleType.getReceptacleWeight() != null) {
-            barcodedTube.setReceptacleWeight(receptacleType.getReceptacleWeight());
+        // Allow update if the tubes are destination tubes or the lab event is NOT removing destination volume amount from sources.
+        if (!areSourceTubes || (!labEvent.getLabEventType().removeDestVolFromSource())) {
+            if (receptacleType.getVolume() != null) {
+                barcodedTube.setVolume(receptacleType.getVolume());
+            }
+            if (receptacleType.getConcentration() != null) {
+                barcodedTube.setConcentration(receptacleType.getConcentration());
+            }
+            if (receptacleType.getReceptacleWeight() != null) {
+                barcodedTube.setReceptacleWeight(receptacleType.getReceptacleWeight());
+            }
         }
         if (labEvent.getLabEventType().getVolumeConcUpdate() == LabEventType.VolumeConcUpdate.BSP_AND_MERCURY) {
             MercurySample mercurySample = extractSample(barcodedTube.getSampleInstancesV2());
@@ -1357,28 +1501,72 @@ public class LabEventFactory implements Serializable {
      */
     private Boolean getSourceMetadataManipulationType(ReceptacleType receptacleType,
                                                       LabEventType.SourceHandling sourceHandling) {
-        for (MetadataType metadataType : receptacleType.getMetadata()) {
-            // If the individual tube has the metadata flag set, then use the value set.
-            if (metadataType.getName().compareToIgnoreCase(sourceHandling.getDisplayName()) == 0) {
-                return Boolean.valueOf(metadataType.getValue());
+        if (receptacleType != null) {
+            for (MetadataType metadataType : receptacleType.getMetadata()) {
+                // If the individual tube has the metadata flag set, then use the value set.
+                if (metadataType.getName().compareToIgnoreCase(sourceHandling.getDisplayName()) == 0) {
+                    return Boolean.valueOf(metadataType.getValue());
+                }
             }
         }
         return false;
     }
 
+    /**
+     * When plate wells are created from a bettalims message, copy over any associated volume and concentration data
+     *
+     * @param mapBarcodeToWell map from well barcode to well
+     * @param positionMap       JAXB quantities from deck
+     */
     @DaoFree
-    public LabEvent buildFromBettaLimsPlateEventDbFree(PlateEventType plateEvent, StaticPlate plate) {
+    private void setWellQuantities(Map<String, PlateWell> mapBarcodeToWell, PositionMapType positionMap) {
+        for (ReceptacleType receptacleType : positionMap.getReceptacle()) {
+            PlateWell plateWell = mapBarcodeToWell.get(positionMap.getBarcode() + VesselPosition.getByName(receptacleType.getPosition()));
+            if (plateWell != null) {
+                if (receptacleType.getVolume() != null) {
+                    plateWell.setVolume(receptacleType.getVolume());
+                }
+                if (receptacleType.getConcentration() != null) {
+                    plateWell.setConcentration(receptacleType.getConcentration());
+                }
+            }
+        }
+    }
+
+    @DaoFree
+    public LabEvent buildFromBettaLimsPlateEventDbFree(PlateEventType plateEvent, StaticPlate staticPlate) {
         LabEvent labEvent = constructReferenceData(plateEvent, labEventRefDataFetcher);
-        if (plate == null) {
+        Map<String, PlateWell> mapBarcodeToWell = new HashMap<>();
+
+        if (staticPlate == null) {
             if (CREATE_SOURCES) {
-                plate = new StaticPlate(plateEvent.getPlate().getBarcode(), StaticPlate.PlateType.getByAutomationName(
+                staticPlate = new StaticPlate(plateEvent.getPlate().getBarcode(), StaticPlate.PlateType.getByAutomationName(
                         plateEvent.getPlate().getPhysType()));
             } else {
                 throw new RuntimeException("Failed to find plate " + plateEvent.getPlate().getBarcode());
             }
+        } else {
+            staticPlate.getContainerRole().getContainedVessels().stream().forEach((well) -> mapBarcodeToWell.put(well.getLabel(), well));
         }
 
-        plate.addInPlaceEvent(labEvent);
+        PositionMapType positionMapType = plateEvent.getPositionMap();
+        if (positionMapType != null && positionMapType.getReceptacle() != null) {
+            for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
+                VesselPosition position = VesselPosition.getByName(receptacleType.getPosition());
+                if (position == null) {
+                    throw new RuntimeException("Failed to find position " + receptacleType.getPosition());
+                }
+                String wellBarcode = staticPlate.getLabel() + position;
+                if (mapBarcodeToWell.get(wellBarcode) == null) {
+                    PlateWell well = new PlateWell(staticPlate, position);
+                    staticPlate.getContainerRole().addContainedVessel(well, position);
+                    mapBarcodeToWell.put(wellBarcode, well);
+                }
+            }
+            setWellQuantities(mapBarcodeToWell, positionMapType);
+        }
+
+        staticPlate.addInPlaceEvent(labEvent);
         return labEvent;
     }
 

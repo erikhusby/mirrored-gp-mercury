@@ -1171,7 +1171,8 @@ public class LabBatchEjb {
         // Only uses the selected dtos.
         final List<DesignationDto> designationDtos = new ArrayList<>();
         for (DesignationDto designationDto : uiDtos) {
-            if (designationDto.isSelected()) {
+            // Dtos filtered out by the UI will be null.
+            if (designationDto != null && designationDto.isSelected()) {
                 designationDtos.add(designationDto);
             }
         }
