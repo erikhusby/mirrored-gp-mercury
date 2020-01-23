@@ -11,6 +11,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
@@ -73,6 +74,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -327,7 +329,8 @@ public class ZimsIlluminaRunFactory {
                     sampleInstanceDto.getSampleInstance().getAnalysisType().getName() : null;
             String referenceSequence = sampleInstanceDto.getSampleInstance().getReferenceSequence() != null ?
                     sampleInstanceDto.getSampleInstance().getReferenceSequence().getName() : null;
-            String aggregationDataType = sampleInstanceDto.getSampleInstance().getPipelineDataTypeString();
+            Optional.ofNullable(sampleInstanceDto.getSampleInstance().getPipelineDataType())
+                .map(PipelineDataType::getName).ifPresent(aggregationDataTypes::add);
             String insertSize = sampleInstanceDto.getSampleInstance().getExpectedInsertSize();
 
             ProductOrder productOrder = (sampleInstanceDto.getProductOrderKey() != null) ?
@@ -335,7 +338,8 @@ public class ZimsIlluminaRunFactory {
             if (productOrder != null) {
                 Product product = productOrder.getProduct();
                 analysisTypes.add(product.getAnalysisTypeKey());
-                aggregationDataTypes.add(product.getPipelineDataTypeString());
+                Optional.ofNullable(product.getPipelineDataType()).map(PipelineDataType::getName)
+                    .ifPresent(aggregationDataTypes::add);
                 ResearchProject project = productOrder.getResearchProject();
                 ResearchProject positiveControlResearchProject = product.getPositiveControlResearchProject();
                 ResearchProject negativeControlResearchProject = product.getNegativeControlResearchProject();
@@ -351,9 +355,6 @@ public class ZimsIlluminaRunFactory {
                 if (referenceSequence == null && !StringUtils.isBlank(project.getReferenceSequenceKey())) {
                     referenceSequence = project.getReferenceSequenceKey();
                 }
-                if (StringUtils.isBlank(aggregationDataType)) {
-                    aggregationDataType = product.getPipelineDataTypeString();
-                }
                 if (insertSize == null && product.getInsertSize() != null) {
                     insertSize = String.valueOf(product.getInsertSize());
                 }
@@ -363,9 +364,6 @@ public class ZimsIlluminaRunFactory {
             }
             if (referenceSequence != null) {
                 referenceSequenceKeys.add(referenceSequence);
-            }
-            if (aggregationDataType != null) {
-                aggregationDataTypes.add(aggregationDataType);
             }
             if (insertSize != null) {
                 insertSizes.add(insertSize);
