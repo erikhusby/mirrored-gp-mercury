@@ -364,7 +364,7 @@ public class ZimsIlluminaRunFactory {
             if (referenceSequence != null) {
                 referenceSequenceKeys.add(referenceSequence);
             }
-            if (aggregationDataType != null) {
+            if (StringUtils.isNotBlank(aggregationDataType)) {
                 aggregationDataTypes.add(aggregationDataType);
             }
             if (insertSize != null) {
