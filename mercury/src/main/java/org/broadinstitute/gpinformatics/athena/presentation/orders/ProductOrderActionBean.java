@@ -4000,6 +4000,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (sameQuote){
             return true;
         }
+        if(!productOrder.hasAtLeastOneBilledLedgerEntry()) {
+            return true;
+        }
         if (productOrder!=null) {
             if (!productOrder.getOrderStatus().canPlace()) {
                 boolean sameQuoteType = StringUtils.isNumeric(oldQuote) == StringUtils.isNumeric(newQuote);
