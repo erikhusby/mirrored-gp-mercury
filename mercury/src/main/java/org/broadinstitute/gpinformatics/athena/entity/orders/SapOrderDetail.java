@@ -146,7 +146,6 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
         for (LedgerEntry ledgerEntry : moreLedgerEntries) {
             addLedgerEntry(ledgerEntry);
         }
-        ledgerEntries.addAll(moreLedgerEntries);
     }
 
     public void addLedgerEntry(LedgerEntry ledgerEntry) {
