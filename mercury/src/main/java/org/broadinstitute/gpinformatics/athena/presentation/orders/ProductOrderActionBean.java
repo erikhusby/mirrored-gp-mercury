@@ -994,26 +994,26 @@ public class ProductOrderActionBean extends CoreActionBean {
         try {
             editOrder.updateQuoteItems(quote);
 
-            final Optional<OrderCalculatedValues> sapOrderCalculatedValues =
-                    Optional.ofNullable(sapService.calculateOpenOrderValues(additionalSampleCount, quote, editOrder));
-            double outstandingEstimate = 0;
-            if(sapOrderCalculatedValues.isPresent()) {
-                outstandingEstimate =
-                        sapOrderCalculatedValues.get().calculateTotalOpenOrderValue().doubleValue();
-            }
-            BigDecimal fundsRemaining = quote.getQuoteHeader().fundsRemaining();
-            if(sapOrderCalculatedValues.isPresent()) {
-                fundsRemaining = fundsRemaining.subtract(sapOrderCalculatedValues.get().openDeliveryValues());
-            }
-            double valueOfCurrentOrder = 0;
-
-            if ((fundsRemaining.compareTo(BigDecimal.ZERO) <= 0)
-                || (fundsRemaining.compareTo(BigDecimal.valueOf(outstandingEstimate + valueOfCurrentOrder))<0)) {
-                String insufficientFundsMessage = "Insufficient funds are available on " +
-                        //todo replace the following with a helper method for quote display
-                        quote.getQuoteHeader().getQuoteNumber()+" -- " + quote.getQuoteHeader().getProjectName();
-                addGlobalValidationError(insufficientFundsMessage);
-            }
+//            final Optional<OrderCalculatedValues> sapOrderCalculatedValues =
+//                    Optional.ofNullable(sapService.calculateOpenOrderValues(additionalSampleCount, quote, editOrder));
+//            double outstandingEstimate = 0;
+//            if(sapOrderCalculatedValues.isPresent()) {
+//                outstandingEstimate =
+//                        sapOrderCalculatedValues.get().calculateTotalOpenOrderValue().doubleValue();
+//            }
+//            BigDecimal fundsRemaining = quote.getQuoteHeader().fundsRemaining();
+//            if(sapOrderCalculatedValues.isPresent()) {
+//                fundsRemaining = fundsRemaining.subtract(sapOrderCalculatedValues.get().openDeliveryValues());
+//            }
+//            double valueOfCurrentOrder = 0;
+//
+//            if ((fundsRemaining.compareTo(BigDecimal.ZERO) <= 0)
+//                || (fundsRemaining.compareTo(BigDecimal.valueOf(outstandingEstimate + valueOfCurrentOrder))<0)) {
+//                String insufficientFundsMessage = "Insufficient funds are available on " +
+//                        //todo replace the following with a helper method for quote display
+//                        quote.getQuoteHeader().getQuoteNumber()+" -- " + quote.getQuoteHeader().getProjectName();
+//                addGlobalValidationError(insufficientFundsMessage);
+//            }
         } catch (SAPInterfaceException e) {
             logger.error(e);
             addGlobalValidationError(e.getMessage());
