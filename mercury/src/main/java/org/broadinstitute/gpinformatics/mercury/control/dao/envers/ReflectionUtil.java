@@ -114,15 +114,22 @@ public class ReflectionUtil {
         // Caches the fields after they are looked up the first time.
         if (persistedFields == null) {
             persistedFields = new ArrayList<>();
-            // Goes to the corresponding generated jpa model class and collects the field names,
+            // Goes to the corresponding generated jpa model class and collects the field names
+            // representing persisted fields (they will have a "volatile" modifier),
             // then finds the fields on the persistedClass that have the same name.
             Class generatedClass = entityClassnameToGeneratedClass.get(persistedClass.getCanonicalName());
             for (Field jpaField : generatedClass.getDeclaredFields()) {
-                try {
-                    persistedFields.add(persistedClass.getDeclaredField(jpaField.getName()));
-                } catch (NoSuchFieldException e) {
-                    throw new RuntimeException("Missing field " + jpaField.getName() +
-                                               " on class " + persistedClass.getSimpleName(), e);
+                if (Modifier.isVolatile(jpaField.getModifiers())) {
+                    try {
+                        persistedFields.add(persistedClass.getDeclaredField(jpaField.getName()));
+                    } catch (NoSuchFieldException e) {
+                        throw new RuntimeException("Missing field " + jpaField.getName() +
+                                " on class " + persistedClass.getSimpleName(), e);
+                    }
+                } else if (!Modifier.isFinal(jpaField.getModifiers())) {
+                    // Defensive coding to ensure all modifiers are either persistable or not.
+                    throw new RuntimeException("Unexpected modifiers on " + generatedClass.getSimpleName() +
+                            " " + jpaField.getName());
                 }
             }
             mapClassToPersistedFields.put(persistedClass, persistedFields);

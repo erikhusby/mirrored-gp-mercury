@@ -102,9 +102,12 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @Column(name = "DESCRIPTION", length = 2000)
     private String description;
 
-    @Column(name = "AGGREGATION_DATA_TYPE", length = 200)
+    @Column(name = "AGGREGATION_DATA_TYPE", length = 200, insertable = false)
     private String aggregationDataType;
 
+    @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.REFRESH})
+    @JoinColumn(name = "PIPELINE_DATA_TYPE")
+    private PipelineDataType pipelineDataType;
 
     @Column(name = "ANALYSIS_TYPE_KEY", nullable = true, length = 200)
     private String analysisTypeKey;
@@ -261,11 +264,11 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
                 productToClone.getSamplesPerWeek(),productToClone.getMinimumOrderSize(),
                 productToClone.getInputRequirements(), productToClone.getDeliverables(),
                 productToClone.isTopLevelProduct(), productToClone.getWorkflowName(),
-                productToClone.isPdmOrderableOnly(),productToClone.getAggregationDataType());
+            productToClone.isPdmOrderableOnly(), productToClone.getPipelineDataType());
 
         clonedProduct.setExternalOnlyProduct(productToClone.isExternalOnlyProduct());
 
-        clonedProduct.setAggregationDataType(productToClone.getAggregationDataType());
+        clonedProduct.setPipelineDataType(productToClone.getPipelineDataType());
         clonedProduct.setAnalysisTypeKey(productToClone.getAnalysisTypeKey());
         clonedProduct.setCoverageTypeKey(productToClone.getCoverageTypeKey());
         clonedProduct.setReagentDesignKey(productToClone.getReagentDesignKey());
@@ -317,7 +320,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
                    boolean topLevelProduct,
                    String workflowName,
                    boolean pdmOrderableOnly,
-                   String aggregationDataType) {
+                   PipelineDataType pipelineDataType) {
         this.productName = productName;
         this.productFamily = productFamily;
         this.description = description;
@@ -333,7 +336,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.topLevelProduct = topLevelProduct;
         this.workflowName = workflowName;
         this.pdmOrderableOnly = pdmOrderableOnly;
-        this.aggregationDataType = aggregationDataType;
+        this.pipelineDataType = pipelineDataType;
     }
 
     public Long getProductId() {
@@ -423,7 +426,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @Nullable
     public Boolean getPairedEndRead() {
         // Disallows null when sequencing params are present.
-        if (StringUtils.isNotBlank(aggregationDataType)) {
+        if (pipelineDataType != null) {
             return Boolean.TRUE.equals(pairedEndRead);
         }
         return pairedEndRead;
@@ -599,12 +602,21 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.useAutomatedBilling = useAutomatedBilling;
     }
 
+    /**
+     * @deprecated This column will soon be removed. Please call getPipelineDataType() or getPipelineDataTypeString()
+     *             instead.
+     */
+    @Deprecated
     public String getAggregationDataType() {
         return aggregationDataType;
     }
 
-    public void setAggregationDataType(String aggregationDataType) {
-        this.aggregationDataType = aggregationDataType;
+    public PipelineDataType getPipelineDataType() {
+        return pipelineDataType;
+    }
+
+    public void setPipelineDataType(PipelineDataType pipelineDataType) {
+        this.pipelineDataType = pipelineDataType;
     }
 
     public BillingRequirement getRequirement() {
@@ -1180,6 +1192,12 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
             }
         }
         return fee;
+
+    }
+
+    @Transient
+    public String getPipelineDataTypeString() {
+        return Optional.ofNullable(pipelineDataType).map(PipelineDataType::getName).orElse("");
     }
 
     public String getUnitsDisplay()  {

@@ -5,6 +5,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -13,8 +14,8 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
@@ -106,7 +107,7 @@ public class ZimsIlluminaRunFactoryTest {
         put(BSPSampleSearchColumn.PARTICIPANT_ID, POSITIVE_CONTROL_SAMPLE_PARTICIPANT_ID);
     }});
 
-    private CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils(Deployment.DEV);
+    private CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils();
     private static final String PRODUCT_ORDER_KEY = "TestPDO-1";
     private final String labBatchName = "LCSET-1";
     private static final short LANE_NUMBER = 1;
@@ -166,7 +167,7 @@ public class ZimsIlluminaRunFactoryTest {
         // Create a test product
         testProduct = new Product("Test Product", new ProductFamily("Test Product Family"), "Test product",
                                           "P-EX-0011", new Date(), new Date(), 0, 0, 0, 0, "Test samples only", "None",
-                                          true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type");
+                                          true, Workflow.AGILENT_EXOME_EXPRESS, false, new PipelineDataType(Aggregation.DATA_TYPE_EXOME, true));
         ResearchProject positiveControlResearchProject = new ResearchProject(101L, "Positive controls",
                 "Positive Controls", false, ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP);
         positiveControlResearchProject.setJiraTicketKey("RP-805");
@@ -627,7 +628,7 @@ public class ZimsIlluminaRunFactoryTest {
                 assertThat(libraryBean.getResearchProjectName(), equalTo("Test Project"));
                 assertThat(libraryBean.getResearchProjectId(), equalTo("TestRP-1"));
                 assertThat(libraryBean.getProduct(), equalTo("Test Product"));
-                assertThat(libraryBean.getDataType(), equalTo("agg type"));
+                assertThat(libraryBean.getDataType(), equalTo(Aggregation.DATA_TYPE_EXOME));
                 assertThat(libraryBean.getProductFamily(), equalTo("Test Product Family"));
                 assertThat(libraryBean.getRootSample(), equalTo(sampleId + "root"));
                 assertThat(libraryBean.getGender(), equalTo("M"));

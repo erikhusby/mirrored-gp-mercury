@@ -79,6 +79,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -991,6 +992,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
             EnumSet<org.broadinstitute.bsp.client.workrequest.kit.ReceptacleType> childReceptacleTypes =
                     org.broadinstitute.bsp.client.workrequest.kit.ReceptacleType
                             .findByName(selectedTargetGeometry.getDisplayName()).getChildReceptacleTypes();
+
             // For each type returned grab the BarcodedTubeType.
             for (org.broadinstitute.bsp.client.workrequest.kit.ReceptacleType childReceptacleType : childReceptacleTypes) {
                 BarcodedTube.BarcodedTubeType childBarcodedTubeType =
@@ -1000,6 +1002,10 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 } else {
                     log.error("Unable to find a BarcodedTubeType for " + childReceptacleType.name());
                 }
+            }
+
+            if (!found.isEmpty()) {
+                Collections.sort(found);
             }
         }
         ObjectMapper mapper = new ObjectMapper();
@@ -1147,15 +1153,37 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                     manualTransferDetails;
                     PlateCherryPickEvent plateCherryPickEvent = (PlateCherryPickEvent) stationEvent;
 
-                    //Source
-                    VesselTypeGeometry sourceVesselTypeGeometryCp = localManualTransferDetails.getSourceVesselTypeGeometry();
+                    VesselTypeGeometry sourceVesselTypeGeometryCp;
+                    if (selectedSourceGeometry != null) {
+                        sourceVesselTypeGeometryCp = selectedSourceGeometry;
+                    } else {
+                        sourceVesselTypeGeometryCp = localManualTransferDetails.getSourceVesselTypeGeometry();
+                    }
+
                     if (sourceVesselTypeGeometryCp != null) {
                         assignSyntheticBarcode(plateCherryPickEvent.getSourcePlate().get(0), sourceVesselTypeGeometryCp,
                                 localManualTransferDetails.getSourceContainerPrefix());
                     }
 
                     //Target
-                    VesselTypeGeometry targetVesselTypeGeometryCp = localManualTransferDetails.getTargetVesselTypeGeometry();
+                    VesselTypeGeometry targetVesselTypeGeometryCp;
+
+                    String targetVesselTypeGeometryString = getContext().getRequest().getParameter("stationEvents[0].plate[0].physType");
+                    if (targetVesselTypeGeometryString != null) {
+                        selectedTargetGeometry = LabEventType.ManualTransferDetails.convertGeometryFromReceptacleTypeString(targetVesselTypeGeometryString);
+                    } else {
+                        String targetContainerTypeGeometryString = getContext().getRequest().getParameter("targetVesselTypeGeometryString");
+                        if (targetContainerTypeGeometryString != null) {
+                            selectedTargetGeometry = LabEventType.ManualTransferDetails.convertGeometryFromReceptacleTypeString(targetContainerTypeGeometryString);
+                        }
+                    }
+
+                    if (selectedTargetGeometry != null) {
+                        targetVesselTypeGeometryCp = selectedTargetGeometry;
+                    } else {
+                        targetVesselTypeGeometryCp = localManualTransferDetails.getTargetVesselTypeGeometry();
+                    }
+
                     if (targetVesselTypeGeometryCp != null) {
                         assignSyntheticBarcode(plateCherryPickEvent.getPlate().get(0), targetVesselTypeGeometryCp,
                                 localManualTransferDetails.getTargetContainerPrefix() + anonymousRackDisambiguator);

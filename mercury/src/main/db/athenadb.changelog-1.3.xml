@@ -107,6 +107,15 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="GPLIM-5521-Fix_Audit_Constraint" author="dryan">
+        <dropPrimaryKey constraintName="PK_PIPELINE_DT_AUD" tableName="PIPELINE_DATA_TYPE_AUD"/>
+        <addPrimaryKey constraintName="PK_PIPELINE_DT_AUD" tableName="PIPELINE_DATA_TYPE_AUD"
+                       columnNames="rev, PIPELINE_DATA_TYPE_ID" schemaName="athena"/>
+        <createIndex tableName="PIPELINE_DATA_TYPE_AUD" indexName="IDX_PIPELINE_DATA_TYPE_AUD">
+            <column name="PIPELINE_DATA_TYPE_ID"/>
+        </createIndex>
+    </changeSet>
+
     <changeSet id="GPLIM-6779-sap-ledger-replacement" author="scottmat">
         <addColumn tableName="BILLING_LEDGER" schemaName="ATHENA">
             <column name="SAP_REPLACEMENT_CONDITION" type="varchar(255)"/>
