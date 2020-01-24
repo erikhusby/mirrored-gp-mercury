@@ -205,11 +205,17 @@ public class LabEvent {
     @Column(name = "LAB_EVENT_TYPE")
     private LabEventType labEventType;
 
-    /** For events that apply to an entire Batch in a Workflow, e.g. add reagent. */
+    /**
+     * For events that apply to an entire Batch in a Workflow, e.g. add reagent.
+     */
     @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
     @JoinColumn(name = "LAB_BATCH")
     private LabBatch labBatch;
 
+    /**
+     * Used to keep track of STORAGE_CHECK_IN and STORAGE_CHECK_OUT locations
+     * TODO JMS Sparsely populated, it might be better if persisted out of line in another table
+     **/
     @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
     @JoinColumn(name = "STORAGE_LOCATION")
     private StorageLocation storageLocation;

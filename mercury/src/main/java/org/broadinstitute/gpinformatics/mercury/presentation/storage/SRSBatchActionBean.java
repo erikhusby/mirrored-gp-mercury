@@ -70,6 +70,7 @@ public class SRSBatchActionBean extends CoreActionBean {
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
         stage = Stage.SEARCHING;
+        // TODO: JMS Show active by default?  Add option for other states?
         return new ForwardResolution(VIEW_PAGE);
     }
 

@@ -1173,7 +1173,7 @@ public class LabEventFactory implements Serializable {
                 // todo jmt why isn't this error caught in JAXB?
                 throw new RuntimeException("No plate element in plateEvent");
             }
-            StaticPlate staticPlate = staticPlateDao.findByBarcode(plate.getBarcode());
+            StaticPlate staticPlate = staticPlateDao.findByBarcode(plateType.getBarcode());
             labEvent = buildFromBettaLimsPlateEventDbFree(plateEventType, staticPlate);
         }
         labEvent.setStationEventType(plateEventType);
