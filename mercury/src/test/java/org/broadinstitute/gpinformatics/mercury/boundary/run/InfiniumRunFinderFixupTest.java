@@ -214,7 +214,7 @@ public class InfiniumRunFinderFixupTest extends Arquillian {
                 force = fields[1];
             }
 
-            // Don't mark archived if no archive file (may be a problem for Danish Blood Spots)
+            // Don't mark archived if no archive file, unless "force" is specified
             File baseArchiveDir = new File(infiniumStarterConfig.getArchivePath());
             File zipFile = new File(baseArchiveDir, chipBarcode + ".zip");
             if (!zipFile.exists()) {
