@@ -29,8 +29,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
-import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
-import org.broadinstitute.gpinformatics.mercury.boundary.manifest.MayoManifestEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.QuantificationEJB;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
@@ -39,9 +37,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunD
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BSPRestSender;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.GeminiPlateProcessor;
-import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -65,7 +61,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -298,33 +293,6 @@ public class UploadQuantsActionBean extends CoreActionBean {
                 flatMap(labEvent -> labEvent.getTargetLabVessels().stream()).
                 collect(Collectors.toSet());
         queueEjb.dequeueLabVessels(dilutionPlates, QueueType.DNA_QUANT, messageCollection, null);
-
-        // todo jmt add to plating queues after volume check
-        Set<LabVessel> labVessels = tubeFormations.stream().flatMap(
-                tf -> tf.getContainerRole().getContainedVessels().stream()).collect(Collectors.toSet());
-        Set<String> productTypes = labVessels.stream().flatMap(
-                lv -> Arrays.stream(lv.getMetadataValues(Metadata.Key.PRODUCT_TYPE))).collect(Collectors.toSet());
-        if (!productTypes.isEmpty()) {
-            if (productTypes.size() == 1) {
-                String productType = productTypes.iterator().next();
-                QueueType queueType = null;
-                if (productType.equals(MayoManifestEjb.AUO_ARRAY)) {
-                    queueType = QueueType.ARRAY_PLATING;
-                } else if (productType.equals(MayoManifestEjb.AUO_GENOME)) {
-                    queueType = QueueType.SEQ_PLATING;
-                } else {
-                    messageCollection.addError("Unexpected product type " + productType);
-                }
-                if (!messageCollection.hasErrors()) {
-                    String rackBarcode = tubeFormations.get(0).getRacksOfTubes().iterator().next().getLabel();
-                    queueEjb.enqueueLabVessels(labVessels, queueType,
-                            rackBarcode + " Quanted on " + DateUtils.convertDateTimeToString(new Date()),
-                            messageCollection, QueueOrigin.OTHER, null);
-                }
-            } else {
-                messageCollection.addError("Multiple product types " + productTypes);
-            }
-        }
     }
 
     public void sendTubeQuantsToBsp(Map<String, String> tubeBarcodeToQuantValue, String runDate,

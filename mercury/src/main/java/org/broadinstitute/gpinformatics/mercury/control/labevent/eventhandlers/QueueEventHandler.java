@@ -23,10 +23,13 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.mercury.entity.sample.ContractClient.MAYO;
 
@@ -45,9 +48,34 @@ public class QueueEventHandler extends AbstractEventHandler {
     @Override
     public void handleEvent(LabEvent labEvent, StationEventType stationEvent) {
         switch (labEvent.getLabEventType()) {
-            case VOLUME_MEASUREMENT:
+            case VOLUME_MEASUREMENT: {
                 dequeue(labEvent, Direction.SOURCE, QueueType.VOLUME_CHECK);
+
+                // Add to plating queue
+                Set<LabVessel> labVessels = getVesselsPreferTubes(labEvent, Direction.SOURCE);
+                Set<String> productTypes = labVessels.stream().flatMap(
+                        lv -> Arrays.stream(lv.getMetadataValues(Metadata.Key.PRODUCT_TYPE))).collect(Collectors.toSet());
+                if (!productTypes.isEmpty()) {
+                    if (productTypes.size() == 1) {
+                        String productType = productTypes.iterator().next();
+                        QueueType queueType;
+                        if (productType.equals(MayoManifestEjb.AUO_ARRAY)) {
+                            queueType = QueueType.ARRAY_PLATING;
+                        } else if (productType.equals(MayoManifestEjb.AUO_GENOME)) {
+                            queueType = QueueType.SEQ_PLATING;
+                        } else {
+                            throw new RuntimeException("Unexpected product type " + productType);
+                        }
+                        String rack = ((TubeFormation) labEvent.getInPlaceLabVessel()).getRacksOfTubes().iterator().next().getLabel();
+                        queueEjb.enqueueLabVessels(labVessels, queueType,
+                                rack + " Volme Checked on " + DateUtils.convertDateTimeToString(new Date()),
+                                new MessageCollection(), QueueOrigin.OTHER, null);
+                    } else {
+                        throw new RuntimeException("Multiple product types " + productTypes);
+                    }
+                }
                 break;
+            }
             // dilution plate is input to pico, then input to fingerprinting
             // Determine: whether All of Us; source or dest; queue or dequeue; queue type
             case PICO_DILUTION_TRANSFER_FORWARD_BSP: {
