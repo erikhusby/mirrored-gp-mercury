@@ -1195,7 +1195,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     @Transient
     public String getPipelineDataTypeString() {
-        return Optional.ofNullable(pipelineDataType).map(PipelineDataType::getName).orElse("");
+        return Optional.ofNullable(pipelineDataType).map(PipelineDataType::getName).orElse(null);
     }
 
     public String getUnitsDisplay()  {
