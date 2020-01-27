@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
@@ -31,8 +30,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.PositionLabBatches;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -824,7 +821,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     }
 
     public String getPipelineDataTypeString() {
-        return Optional.ofNullable(pipelineDataType).map(PipelineDataType::getName).orElse("");
+        return Optional.ofNullable(pipelineDataType).map(PipelineDataType::getName).orElse(null);
     }
 
     public Boolean getUmisPresent() {
