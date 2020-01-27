@@ -493,7 +493,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
                         ledgerUpdate = new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), product,
                                 quantities.originalQuantity, currentQuantity, quantities.submittedQuantity,
                                 data.getWorkCompleteDate(),
-                                DeliveryCondition.fromConditionName(data.sapReplacement.get(product.getProductId())));
+                                DeliveryCondition.fromConditionName(quantities.replacementCondition));
 
                     } else {
                         ledgerUpdate =
@@ -730,7 +730,6 @@ public class BillingLedgerActionBean extends CoreActionBean {
         private Date workCompleteDate;
         private boolean sapOrder;
         private Map<Long, ProductOrderSampleQuantities> quantities;
-        private Map<Long, String> sapReplacement;
         private boolean deliveryConditionAvailable;
 
         public String getSampleName() {
@@ -765,13 +764,6 @@ public class BillingLedgerActionBean extends CoreActionBean {
             this.quantities = quantities;
         }
 
-        public Map<Long, String> getSapReplacement() {
-            return sapReplacement;
-        }
-
-        public void setSapReplacement(Map<Long, String> sapReplacement) {
-            this.sapReplacement = sapReplacement;
-        }
 
         public boolean isDeliveryConditionAvailable() {
             return deliveryConditionAvailable;
@@ -788,6 +780,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
     public static class ProductOrderSampleQuantities {
         private double originalQuantity;
         private double submittedQuantity;
+        private String replacementCondition;
 
         public double getOriginalQuantity() {
             return originalQuantity;
@@ -803,6 +796,14 @@ public class BillingLedgerActionBean extends CoreActionBean {
 
         public void setSubmittedQuantity(double submittedQuantity) {
             this.submittedQuantity = submittedQuantity;
+        }
+
+        public String getReplacementCondition() {
+            return replacementCondition;
+        }
+
+        public void setReplacementCondition(String replacementCondition) {
+            this.replacementCondition = replacementCondition;
         }
     }
 

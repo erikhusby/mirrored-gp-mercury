@@ -1078,7 +1078,7 @@
                                     <c:if test="${actionBean.productOrder.hasSapQuote()}">
                                         <c:forEach items="${actionBean.potentialSapReplacements}" var="replacement">
                                                 <c:if test="${billingIndex.product.equals(replacement.key)}">
-                                                <select name="ledgerData[${info.sample.samplePosition}].sapReplacement[${billingIndex.indexId}]"
+                                                <select name="ledgerData[${info.sample.samplePosition}].quantities[${billingIndex.indexId}].replacementCondition"
                                                         data-rownum="${info.sample.samplePosition}">
                                                     <option value="">Select one if replacing price</option>
                                                     <c:forEach items="${replacement.value}" var="deliveryConditions">
