@@ -28,6 +28,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.ArraysQcDao;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcBlacklisting;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcContamination;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcFingerprint;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcGtConcordance;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
@@ -531,6 +532,14 @@ public class MetricsViewActionBean extends RackScanActionBean {
                         addGlobalValidationError(e.getMessage());
                     }
                 }
+            }
+
+            // Contamination
+            ArraysQcContamination contamination = arraysQc.getArraysQcContamination();
+            if (contamination != null) {
+                metadata.add(Metadata.create("Contamination Pct", String.valueOf(contamination.getPctMix())));
+                metadata.add(Metadata.create("Contamination LLK", String.valueOf(contamination.getLlk())));
+                metadata.add(Metadata.create("Contamination LLK0", String.valueOf(contamination.getLlk0())));
             }
 
             // Blacklisting
