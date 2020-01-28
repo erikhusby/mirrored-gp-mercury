@@ -146,7 +146,9 @@
 
                     var $pipelineDataTypeOption = $j("#pipelineDataType");
                     $pipelineDataTypeOption.on("change", function () {
-                        var $selectedOption = $pipelineDataTypeOption.find("option:selected");
+                        var $selectedOption = $pipelineDataTypeOption.find("option:selected").filter(function () {
+                            return $j(this).text() !== "Choose...";
+                        });
                         var dtActive = !$selectedOption.attr('disabled');
                         if ($selectedOption != undefined && dtActive === false) {
                             $pipelineDataTypeOption.addClass("error")
@@ -160,7 +162,9 @@
                     if ("${pipelineDataType}" !== "") {
 
                         // Check if the selected aggregation type is valid
-                        $pipelineDataTypeOption.find("option:contains('${pipelineDataType}')").attr('selected', true);
+                        $pipelineDataTypeOption.find("option")
+                            .filter(function(){return $j(this).val() === 'Exome';})
+                            .attr('selected', true);
                         $pipelineDataTypeOption.trigger("change");
                     }
 
