@@ -4000,7 +4000,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (sameQuote){
             return true;
         }
-        if(!productOrder.hasAtLeastOneBilledLedgerEntry()) {
+
+        List<LedgerEntry> ledgerEntries = new ArrayList<>();
+        productOrder.getSamples().stream().map(ProductOrderSample::getLedgerItems).forEach(ledgerEntries::addAll);
+
+        if(CollectionUtils.isEmpty(ledgerEntries)) {
             return true;
         }
         if (productOrder!=null) {
