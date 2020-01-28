@@ -163,7 +163,7 @@
 
                         // Check if the selected aggregation type is valid
                         $pipelineDataTypeOption.find("option")
-                            .filter(function(){return $j(this).val() === 'Exome';})
+                            .filter(function(){return $j(this).text() === 'Exome';})
                             .attr('selected', true);
                         $pipelineDataTypeOption.trigger("change");
                     }
