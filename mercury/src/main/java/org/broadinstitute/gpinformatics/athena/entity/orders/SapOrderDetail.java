@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.infrastructure.common.StreamUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
@@ -142,8 +141,8 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
         return ledgerEntries;
     }
 
-    public void addLedgerEntries(Collection<LedgerEntry> moreLedgerEntries) {
-        for (LedgerEntry ledgerEntry : moreLedgerEntries) {
+    public void addLedgerEntries(Collection<LedgerEntry> ledgerEntries) {
+        for (LedgerEntry ledgerEntry : ledgerEntries) {
             addLedgerEntry(ledgerEntry);
         }
     }
@@ -153,24 +152,9 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
         this.ledgerEntries.add(ledgerEntry);
     }
 
-    public Map<Product, Double> getNumberOfBillingCreditsByProduct() {
-        Map<Product, Double> billedCount = new HashMap<>();
-        this.ledgerEntries.stream().filter(LedgerEntry::isCredit).forEach(ledgerEntry -> {
-            billedEntriesByProduct(billedCount, ledgerEntry);
-        });
-
-        return billedCount;
-    }
-
     public Map<Product, Double> getNumberOfBilledEntriesByProduct() {
         Map<Product, Double> billedCount = new HashMap<>();
-        this.ledgerEntries.stream().filter(StreamUtils.not(LedgerEntry::isCredit)).forEach(ledgerEntry -> {
-            billedEntriesByProduct(billedCount, ledgerEntry);
-        });
-        return billedCount;
-    }
-
-    public void billedEntriesByProduct(Map<Product, Double> billedCount, LedgerEntry ledgerEntry) {
+        for (LedgerEntry ledgerEntry : this.ledgerEntries) {
             final ProductOrder productOrder = ledgerEntry.getProductOrderSample().getProductOrder();
             Product aggregatingProduct = null;
 
@@ -192,6 +176,9 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
                 billedCount.put(aggregatingProduct, oldCount + ledgerEntry.getQuantity());
             }
         }
+
+        return billedCount;
+    }
 
     private boolean hasLedgerMatch(ProductOrder order, PriceItem priceItem, Product product, LedgerEntry ledgerEntry) {
         boolean ledgerIndexMatch = false;
