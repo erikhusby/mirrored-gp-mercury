@@ -165,10 +165,10 @@
 
             return result;
         }
-
+        var $skipOrspCheckboxes;
         $j(document).ready(
-
                 function () {
+                    $skipOrspCheckboxes = $j("#notFromHumansCheckbox, #clinicalLineCheckbox, #sampleManipulationOnlyCheckbox");
                     jQuery.fn.multiselect = function() {
                         $j(this).each(function() {
                             var checkboxes = $j(this).find("input:checkbox");
@@ -548,8 +548,7 @@
                     initializeQuoteOptions();
 
                     $j("#skipQuote").on("change", toggleSkipQuote);
-                    $j("#notFromHumansCheckbox").on("change", toggleSkipRegulatoryReason);
-                    $j("#clinicalLineCheckbox").on("change", toggleSkipRegulatoryReason);
+                    $skipOrspCheckboxes.on("change", toggleSkipRegulatoryReason);
                     $j("#regulatorySelect").change(function () {
                         $j("#attestationConfirmed").attr("checked", false)
                     });
@@ -596,31 +595,28 @@
         var quoteBeforeSkipping;
 
         function toggleSkipRegulatoryReason() {
-            var checked = $(this).prop("checked");
-            var notFromHumansElement = $j("#notFromHumansCheckbox");
-            var clinicalLineElement = $j("#clinicalLineCheckbox");
+            var thisChecked = this;
+            var checked = $(thisChecked).prop("checked");
+
+
             handleUpdateRegulatory(checked);
             if (checked) {
                 $j("#attestationConfirmed").attr("checked", false);
-                if($(this).is(notFromHumansElement)) {
-                    $j("#skipRegulatoryInfoReason").val("${ResearchProject.NOT_FROM_HUMANS_REASON_FILL}");
-                    $j("#clinicalLineCheckbox").attr("checked", false);
-                } else {
-                    $j("#skipRegulatoryInfoReason").val("${ResearchProject.FROM_CLINICAL_CELL_LINE}");
-                    $j("#notFromHumansCheckbox").attr("checked", false);
-                }
+                $skipOrspCheckboxes.filter(function () {
+                    return !$j(this).is(thisChecked);
+                }).attr("checked", false);
+                $j("#skipRegulatoryInfoReason").val($j(this).closest("label").text());
             }
-
         }
+
         function handleUpdateRegulatory(skipRegulatoryChecked){
             if (skipRegulatoryChecked) {
-                $j("#regulatorySelect :selected").prop("selected", false);
+                $j("#regulatorySelect :checked").attr('checked', false);
                 $j("#regulatorySelect").hide();
                 $j("#skipRegulatoryDiv").show();
             } else {
                 $j("#skipRegulatoryInfoReason").val("");
-                $j("#notFromHumansCheckbox").attr("checked", false);
-                $j("#clinicalLineCheckbox").attr("checked", false);
+                $skipOrspCheckboxes.attr("checked", false);
                 $j("#regulatorySelect").show();
                 populateRegulatorySelect();
             }
@@ -1566,13 +1562,19 @@
                                 </stripes:label>
 
                                 <div id="skipRegulatoryDiv" class="controls controls-text">
-
-                                    <stripes:checkbox name="notFromHumans" id="notFromHumansCheckbox" title="Click if the sample does not involve samples from Humans"/>
-                                    ${ResearchProject.NOT_FROM_HUMANS_REASON_FILL}<br/>
-                                    <stripes:checkbox name="fromClinicalLine" id="clinicalLineCheckbox" title="Click if the sample comes from a Clinical cell line"/>
-                                    ${ResearchProject.FROM_CLINICAL_CELL_LINE}<br/>
-                                    <stripes:hidden id="skipRegulatoryInfoReason"
-                                                    name="editOrder.skipRegulatoryReason"/>
+                                    <label for="notFromHumansCheckbox">
+                                        <stripes:checkbox name="notFromHumans" id="notFromHumansCheckbox" title="Click if the sample does not involve samples from Humans"/>
+                                            ${ResearchProject.NOT_FROM_HUMANS_REASON_FILL}
+                                    </label>
+                                    <label for="clinicalLineCheckbox">
+                                        <stripes:checkbox name="fromClinicalLine" id="clinicalLineCheckbox" title="Click if the sample comes from a Clinical cell line"/>
+                                            ${ResearchProject.FROM_CLINICAL_CELL_LINE}
+                                    </label>
+                                    <label for="sampleManipulationOnlyCheckbox">
+                                        <stripes:checkbox name="sampleManipulationOnly" id="sampleManipulationOnlyCheckbox" title="Click if the sample does not produce genomic data"/>
+                                            ${ResearchProject.SAMPLE_MANIPULATION_ONLY}
+                                    </label>
+                                    <stripes:hidden id="skipRegulatoryInfoReason" name="editOrder.skipRegulatoryReason"/>
                                 </div>
                                 <div id="regulatorySelect" class="controls controls-text"></div>
                                 <div id="attestationDiv" class="controls controls-text">
@@ -1634,14 +1636,33 @@
 
                 <div class="control-group">
 
-                    <stripes:label for="product" class="control-label">
-                        Product <c:if test="${not actionBean.editOrder.draft}">*</c:if>
-                    </stripes:label>
-                    <div class="controls">
-                        <stripes:text id="product" name="productTokenInput.listOfKeys" class="defaultText"
-                                      title="Enter the product name for this order"/>
-                        <div id="primaryProductListPrice" ></div>
-                    </div>
+                    <c:choose>
+                        <c:when test="${actionBean.canEditProduct()}">
+                            <stripes:label for="product" class="control-label">
+                                Product <c:if test="${not actionBean.editOrder.draft}">*</c:if>
+                            </stripes:label>
+                            <div class="controls">
+                                <stripes:text id="product" name="productTokenInput.listOfKeys" class="defaultText"
+                                              title="Enter the product name for this order"/>
+                                <div id="primaryProductListPrice" ></div>
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+                            <label class="control-label">Product</label>
+                            <c:if test="${actionBean.editOrder.product != null}">
+                                <input type="hidden" name="productTokenInput.listOfKeys" value="${actionBean.editOrder.product.partNumber}"/>
+                                <div class="controls">
+                                <stripes:link title="Product" href="${ctxpath}/products/product.action?view">
+                                    <stripes:param name="product" value="${actionBean.editOrder.product.partNumber}"/>
+                                    <c:if test="${actionBean.editOrder.orderType != null}">
+                                        ${actionBean.editOrder.orderTypeDisplay} --
+                                    </c:if>
+                                    ${actionBean.editOrder.product.productName}
+                                </stripes:link>
+                                </div>
+                            </c:if>
+                        </c:otherwise>
+                    </c:choose>
                 </div>
 
                 <div class="control-group" id="reagentDesignGroup">

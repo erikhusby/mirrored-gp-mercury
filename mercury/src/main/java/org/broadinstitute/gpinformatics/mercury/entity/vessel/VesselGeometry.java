@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 
 /**
  * Row / column geometry for vessels
@@ -581,17 +582,21 @@ public enum VesselGeometry {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return other instanceof RowColumn &&
-                    ((RowColumn) other).getRow() == getRow() &&
-                    ((RowColumn) other).getColumn() == getColumn();
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            RowColumn rowColumn = (RowColumn) o;
+            return row == rowColumn.row &&
+                    column == rowColumn.column;
         }
 
         @Override
         public int hashCode() {
-            int result = getRow();
-            result = 31 * result + getColumn();
-            return result;
+            return Objects.hash(row, column);
         }
     }
 
@@ -609,6 +614,7 @@ public enum VesselGeometry {
         int rowIndex= 0;
 
         for (VesselPosition vesselPosition : vesselPositions) {
+            // RowColumn uses 1-based numbering.
             mapVesselPositionToRowColumn.put(vesselPosition, new RowColumn(rowIndex + 1, columnIndex + 1));
             columnIndex++;
             if(columnIndex >= columnNames.length) {
@@ -679,5 +685,10 @@ public enum VesselGeometry {
 
     public RowColumn getRowColumnForVesselPosition(VesselPosition vesselPosition) {
         return mapVesselPositionToRowColumn.get(vesselPosition);
+    }
+
+    /** Returns a RowColumn. RowColumn uses 1-based numbering. */
+    public RowColumn makeRowColumn(int row, int column) {
+        return new RowColumn(row, column);
     }
 }

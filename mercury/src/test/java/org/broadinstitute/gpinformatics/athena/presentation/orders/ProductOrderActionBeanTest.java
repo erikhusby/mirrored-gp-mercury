@@ -201,7 +201,7 @@ public class ProductOrderActionBeanTest {
 
         mockAccessController = Mockito.mock(SAPAccessControlEjb.class);
         mockSAPService = new SapIntegrationServiceImpl(SapConfig.produce(Deployment.DEV),
-                mockQuoteService, Mockito.mock(BSPUserList.class), Mockito.mock(PriceListCache.class),
+                Mockito.mock(BSPUserList.class), Mockito.mock(PriceListCache.class),
                 stubProductPriceCache, mockAccessController);
         stubProductPriceCache = new SAPProductPriceCache(mockSAPService);
         mockSAPService.setProductPriceCache(stubProductPriceCache);

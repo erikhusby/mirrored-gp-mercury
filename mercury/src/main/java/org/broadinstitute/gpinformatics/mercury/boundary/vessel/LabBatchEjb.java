@@ -824,7 +824,7 @@ public class LabBatchEjb {
                         bucketEntries.add(bucketEntry);
                         // Exome Express currently does strange things with multiple LCSETs at shearing, so
                         // limit this logic to WGS.
-                        if (Objects.equals(bucketEntry.getProductOrder().getProduct().getAggregationDataType(),
+                        if (Objects.equals(bucketEntry.getProductOrder().getProduct().getPipelineDataTypeString(),
                                 Aggregation.DATA_TYPE_WGS)) {
                             // Microbial is also WGS but LCSETs are made up of multiple racks
                             // Limit to just lab batches with total size less than 96
@@ -1171,7 +1171,8 @@ public class LabBatchEjb {
         // Only uses the selected dtos.
         final List<DesignationDto> designationDtos = new ArrayList<>();
         for (DesignationDto designationDto : uiDtos) {
-            if (designationDto.isSelected()) {
+            // Dtos filtered out by the UI will be null.
+            if (designationDto != null && designationDto.isSelected()) {
                 designationDtos.add(designationDto);
             }
         }
@@ -1319,7 +1320,7 @@ public class LabBatchEjb {
         return designationDto.getProductNames().stream().
                 filter(productName -> !productName.equals(CONTROLS)).
                 flatMap(productName -> productDao.findAvailableByName(productName).stream()).
-                anyMatch(product -> Objects.equals(product.getAggregationDataType(), Aggregation.DATA_TYPE_WGS));
+                anyMatch(product -> Objects.equals(product.getPipelineDataTypeString(), Aggregation.DATA_TYPE_WGS));
     }
 
     /** Returns the number of lanes that would not fit onto an even number of flowcell lanes. */

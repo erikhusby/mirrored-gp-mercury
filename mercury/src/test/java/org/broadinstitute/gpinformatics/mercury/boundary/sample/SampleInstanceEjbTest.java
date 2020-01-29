@@ -38,7 +38,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
@@ -262,7 +261,7 @@ public class SampleInstanceEjbTest extends Arquillian {
                 Assert.assertTrue(testEquals(processor.getDataAnalysisTypes(), i,
                         sampleInstanceEntity.getAnalysisType().getName()), msg);
                 Assert.assertTrue(testEquals(processor.getAggregationDataTypes(), i,
-                        sampleInstanceEntity.getAggregationDataType()), msg);
+                        sampleInstanceEntity.getPipelineDataTypeString()), msg);
                 Assert.assertTrue(testEquals(processor.getReadLengths(), i, sampleInstanceEntity.getReadLength1()),
                         msg);
                 Assert.assertTrue(testEquals(processor.getUmisPresents(), i, sampleInstanceEntity.getUmisPresent()),

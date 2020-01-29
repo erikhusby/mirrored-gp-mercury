@@ -32,7 +32,6 @@ import javax.inject.Inject;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -51,7 +50,6 @@ import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric.M
  */
 @Test(groups = TestGroups.STANDARD, singleThreaded = true)
 public class GeminiParserContainerTest extends Arquillian {
-    private SimpleDateFormat sdf = new SimpleDateFormat(VarioskanRowParser.NameValue.RUN_STARTED.getDateFormat());
     private static final String PLATE_DUPLICATE_START = "Original Filename: Plating Pico; Date Last Saved: ";
     // This boolean controls whether the test will send the Gemini quants to BSP.
     private static final boolean SEND_TO_BSP = false;
@@ -74,7 +72,7 @@ public class GeminiParserContainerTest extends Arquillian {
     public void testPersistence96InDuplicate() throws Exception {
         Thread.sleep(2000L);
 
-        String timestamp = sdf.format(new Date());
+        String runDate = GeminiPlateProcessor.RUN_DATE_FORMAT.format(new Date());
         String plate1Barcode = System.currentTimeMillis() + "01";
         String plate2Barcode = System.currentTimeMillis() + "02";
 
@@ -86,7 +84,7 @@ public class GeminiParserContainerTest extends Arquillian {
 
         final String baseFile = GeminiPlateProcessorTest.DUPLICATE_96_PICO;
         makeGeminiRun(baseFile, replicate,
-                timestamp, messageCollection, !ACCEPT_PICO_REDO, PERSIST_VESSELS, plate1Barcode, plate2Barcode);
+                runDate, messageCollection, !ACCEPT_PICO_REDO, PERSIST_VESSELS, plate1Barcode, plate2Barcode);
         Assert.assertEquals(StringUtils.join(messageCollection.getErrors(), "; "), "");
         // Informational message from BSP saying it doesn't know the tube barcodes.
         if (SEND_TO_BSP) {
@@ -102,7 +100,7 @@ public class GeminiParserContainerTest extends Arquillian {
     public void testNexomePondpico() throws Exception {
         Thread.sleep(2000L);
 
-        String timestamp = sdf.format(new Date());
+        String runDate = GeminiPlateProcessor.RUN_DATE_FORMAT.format(new Date());
         String plate1Barcode = System.currentTimeMillis() + "01";
 
         final boolean PERSIST_VESSELS = true;
@@ -113,7 +111,7 @@ public class GeminiParserContainerTest extends Arquillian {
         // Plate Barcode shows up twice in a row
         final String baseFile = GeminiPlateProcessorTest.NEXOME_PICO;
         LabMetricRun labMetricRun = makeGeminiRun(baseFile, Replicate.Nexome,
-                timestamp, messageCollection, !ACCEPT_PICO_REDO, PERSIST_VESSELS, plate1Barcode, plate1Barcode);
+                runDate, messageCollection, !ACCEPT_PICO_REDO, PERSIST_VESSELS, plate1Barcode, plate1Barcode);
         Assert.assertEquals(messageCollection.getErrors().size(), 0);
         if (SEND_TO_BSP) {
             // Should not even have attempted to send Nexome wells to BSP.
@@ -123,11 +121,11 @@ public class GeminiParserContainerTest extends Arquillian {
         Assert.assertEquals(labMetricRun.getLabMetrics().size(),  576);
     }
 
-    private LabMetricRun makeGeminiRun(String baseFile, Replicate replicate, String timestamp,
+    private LabMetricRun makeGeminiRun(String baseFile, Replicate replicate, String runDate,
             MessageCollection messageCollection, boolean acceptRePico, boolean persistVessels, String... plateBarcode)
             throws Exception {
 
-        BufferedInputStream quantStream = makeGeminiSpreadsheet(baseFile, plateBarcode, timestamp, replicate);
+        BufferedInputStream quantStream = makeGeminiSpreadsheet(baseFile, plateBarcode, runDate, replicate);
 
         Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
         List<Map<VesselPosition, BarcodedTube>> mapPositionToTube = new ArrayList<>();
@@ -147,7 +145,7 @@ public class GeminiParserContainerTest extends Arquillian {
                 labVesselDao.persistAll(list);
             }
         }
-        String runName = "Gemini Run " + timestamp;
+        String runName = "Gemini Run " + runDate;
         Triple<LabMetricRun, List<Result>, Map<String, String>> triple = vesselEjb.createGeminiRun(quantStream,
                 runName, POND_PICO, BSPManagerFactoryStub.QA_DUDE_USER_ID, messageCollection, acceptRePico);
         Map<String, String> tubeBarcodeToQuant = triple.getRight();
@@ -166,7 +164,7 @@ public class GeminiParserContainerTest extends Arquillian {
             uploadQuantsActionBean.setTubeFormationLabels(triple.getMiddle().stream()
                     .map(r -> r.getTubeFormation().getLabel()).collect(Collectors.toList()));
             Map<String, String> tubeBarcodeToQuantValue = triple.getRight();
-            uploadQuantsActionBean.sendTubeQuantsToBsp(tubeBarcodeToQuantValue, messageCollection);
+            uploadQuantsActionBean.sendTubeQuantsToBsp(tubeBarcodeToQuantValue, runDate, messageCollection);
         }
         return triple.getLeft();
     }

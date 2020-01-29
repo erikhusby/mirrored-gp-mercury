@@ -328,7 +328,7 @@ public class BillingEjb {
 
         // Convert aliquotId to BSP ID, if it's an LSID.
         if (!BSPUtil.isInBspFormat(aliquotId)) {
-            aliquotId = BSPLSIDUtil.lsidToBareId(aliquotId);
+            aliquotId = BSPLSIDUtil.lsidToBareId(aliquotId); // todo jmt
         }
 
         for (ProductOrderSample sample : order.getSamples()) {
