@@ -499,7 +499,7 @@ public class ReworkEjbTest extends Arquillian {
      */
     public static WorkflowBucketDef findBucketDef(@Nonnull String workflow, @Nonnull LabEventType stepDef) {
 
-        WorkflowConfig workflowConfig = (new WorkflowLoader()).load();
+        WorkflowConfig workflowConfig = (new WorkflowLoader()).getWorkflowConfig();
         assert (workflowConfig != null && workflowConfig.getProductWorkflowDefs() != null &&
                 !workflowConfig.getProductWorkflowDefs().isEmpty());
         ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(workflow);

@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryQ
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.MetricMetadataType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.QpcrRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
@@ -26,16 +25,13 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 @Test(groups = TestGroups.STANDARD)
 public class LibraryQuantResourceTest extends Arquillian {
-
-    @Inject
-    private LabVesselDao labVesselDao;
 
     @Inject
     private LibraryQuantResource libraryQuantResource;
@@ -49,35 +45,21 @@ public class LibraryQuantResourceTest extends Arquillian {
     }
 
     @Test
-    public void testCreateQpcrRunMercury() throws Exception {
+    public void testCreateQpcrRunMercury() {
         QpcrRunBean qpcrRunBean = createQpcrRunBean("0177174735");
         Response response = libraryQuantResource.createQpcrRun(qpcrRunBean);
         assertThat(response.getStatus(), is(200));
     }
 
     @Test
-    public void testCreateQpcrRunSquid() throws Exception {
-        QpcrRunBean qpcrRunBean = createQpcrRunBean("0116403448");
-        Response response = libraryQuantResource.createQpcrRun(qpcrRunBean);
-        assertThat(response.getStatus(), is(200));
-    }
-
-    @Test
-    public void testCreatePicoRunMercury() throws Exception {
+    public void testCreatePicoRunMercury() {
         LibraryQuantRunBean libraryQuantRun = createLibraryQuantRunBean("0177174735");
         Response response = libraryQuantResource.createLibraryQuants(libraryQuantRun);
         assertThat(response.getStatus(), is(200));
     }
 
     @Test
-    public void testCreatePicoRunSquid() throws Exception {
-        LibraryQuantRunBean libraryQuantRun = createLibraryQuantRunBean("0116403448");
-        Response response = libraryQuantResource.createLibraryQuants(libraryQuantRun);
-        assertThat(response.getStatus(), is(200));
-    }
-
-    @Test
-    public void testCreateVVPVolumeRun() throws Exception {
+    public void testCreateVVPVolumeRun() {
             LibraryQuantRunBean libraryQuantRun = createLibraryQuantRunBean("0177175086", "VVP_Run", "VVP Volume",
                 "85.4");
         LibraryQuantBeanType libraryQuantBeanType = libraryQuantRun.getLibraryQuantBeans().get(0);

@@ -29,6 +29,7 @@ import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -254,7 +255,7 @@ public class BillingSessionFixupTest extends Arquillian {
         Set<LedgerEntry> orderList = ledgerEntryDao
             .findByOrderList(productOrderBusinessKeys, LedgerEntryDao.BillingSessionInclusion.NO_SESSION_STARTED);
         Set<LedgerEntry> negativeEntries = orderList.stream().filter(
-            ledgerEntry -> ledgerEntry.getQuantity() < 0 && !StringUtils
+            ledgerEntry -> ledgerEntry.getQuantity().compareTo(BigDecimal.ZERO) < 0 && !StringUtils
                 .equals(ledgerEntry.getBillingMessage(), BillingSession.SUCCESS)).collect(Collectors.toSet());
         if (negativeEntries == null) {
             negativeEntries = Collections.emptySet();

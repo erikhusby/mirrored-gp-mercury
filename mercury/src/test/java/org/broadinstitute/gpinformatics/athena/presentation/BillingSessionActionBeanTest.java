@@ -29,6 +29,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -136,13 +137,13 @@ public class BillingSessionActionBeanTest {
             new QuoteImportItem(sapQuoteId, new PriceItem(sapQuoteId, null, null, null), "",
                 Collections.singletonList(ledgerEntry), new Date(), sapProductOrder.getProduct(), sapProductOrder);
         sapQuoteImportItem.setSapQuote(TestUtils
-            .buildTestSapQuote(sapQuoteId, 0d, 0d, sapProductOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED,
+            .buildTestSapQuote(sapQuoteId, BigDecimal.valueOf(0), BigDecimal.valueOf(0), sapProductOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED,
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization()));
         QuoteImportItem sapQuoteImportItem2 =
             new QuoteImportItem(sapQuoteId2, new PriceItem(sapQuoteId2, null, null, null), "",
                 Collections.singletonList(ledgerEntry), new Date(), sapProductOrder.getProduct(), sapProductOrder);
         sapQuoteImportItem2.setSapQuote(TestUtils
-            .buildTestSapQuote(sapQuoteId2, 0d, 0d, sapProductOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED,
+            .buildTestSapQuote(sapQuoteId2, BigDecimal.valueOf(0), BigDecimal.valueOf(0), sapProductOrder, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED,
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization()));
 
         List<Object[]> testCases = new ArrayList<>();
@@ -300,10 +301,10 @@ public class BillingSessionActionBeanTest {
         List<LedgerEntry> ledgerItems = new ArrayList<>();
         LedgerEntry ledgerEntry = null;
         if (!pdo.hasSapQuote()){
-            ledgerEntry = new LedgerEntry(null, new PriceItem(), new Date(), 2);
+            ledgerEntry = new LedgerEntry(null, new PriceItem(), new Date(), BigDecimal.valueOf(2));
             ledgerEntry.setWorkItem(TEST_WORKID);
         } else {
-            ledgerEntry = new LedgerEntry(null, pdo.getProduct(), new Date(), 2);
+            ledgerEntry = new LedgerEntry(null, pdo.getProduct(), new Date(), BigDecimal.valueOf(2));
             ledgerEntry.setWorkItem(TEST_WORKID);
         }
         ledgerItems.add(ledgerEntry);

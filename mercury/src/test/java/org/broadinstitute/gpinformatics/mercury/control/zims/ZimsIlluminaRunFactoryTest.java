@@ -156,7 +156,7 @@ public class ZimsIlluminaRunFactoryTest {
                 thenReturn(flowcellDesignations);
 
         WorkflowLoader workflowLoader = new WorkflowLoader();
-        WorkflowConfig workflowConfig = workflowLoader.load();
+        WorkflowConfig workflowConfig = workflowLoader.getWorkflowConfig();
 
         SequencingTemplateFactory sequencingTemplateFactory = new SequencingTemplateFactory();
         sequencingTemplateFactory.setFlowcellDesignationEjb(flowcellDesignationEjb);

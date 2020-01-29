@@ -804,7 +804,7 @@ public class VesselContainer<T extends LabVessel> {
             }
         }
         // check whether event matches any workflows unambiguously
-        WorkflowConfig workflowConfig = new WorkflowLoader().load();
+        WorkflowConfig workflowConfig = new WorkflowLoader().getWorkflowConfig();
         for (SampleInstanceV2.LabBatchDepth labBatchDepth : labBatchDepths) {
             LabBatch labBatch = labBatchDepth.getLabBatch();
             if (StringUtils.isEmpty(labBatch.getWorkflowName())) {
