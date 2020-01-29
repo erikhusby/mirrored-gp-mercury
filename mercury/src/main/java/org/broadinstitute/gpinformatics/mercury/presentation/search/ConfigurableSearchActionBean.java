@@ -319,7 +319,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         try {
             configurableSearchDef = SearchDefinitionFactory.getForEntity(entityType.getEntityName());
             // TODO JMS Use SearchInstanceNameCache
-            searchInstanceEjb.fetchInstances( entityType, preferenceMap,  searchInstanceNames, newSearchLevels );
+            searchInstanceEjb.fetchInstances(entityType, preferenceMap, searchInstanceNames, newSearchLevels);
         } catch (Exception e) {
             addGlobalValidationError("Failed to retrieve search definitions");
         }
@@ -337,7 +337,6 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         PreferenceType.PreferenceScope scope = PreferenceType.PreferenceScope.valueOf(searchValues[0]);
         PreferenceType type = PreferenceType.valueOf(searchValues[1]);
         String searchName = searchValues[2];
-
         searchInstance = SearchInstance.findSearchInstance(type, searchName, configurableSearchDef, preferenceMap);
         buildSearchContext();
         return new ForwardResolution("/search/configurable_search.jsp");
@@ -558,10 +557,11 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      *                  search
      */
     private void persistSearch(boolean newSearch) {
-        String searchName = null;
-        PreferenceType preferenceType = null;
+        String searchName;
+        PreferenceType preferenceType;
         if( newSearch ) {
             searchName = newSearchName;
+            newSearchName = "";
             preferenceType = PreferenceType.valueOf(newSearchLevel);
         } else {
             String[] searchValues = selectedSearchName.split("\\|");
@@ -576,13 +576,8 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         addMessages(messageCollection);
         getPreferences();
         searchInstance.establishRelationships(configurableSearchDef);
-
-        // Tried to do the UI a favor and select the new search but fails to do so
-        /*
-        if( newSearch ) {
-            setSelectedSearchName( preferenceType.getPreferenceScope().toString() + "|" + preferenceType.toString() + "|" + searchName );
-        }
-        */
+        // Need to set this value and fetch new search
+        setSelectedSearchName(preferenceType.getPreferenceScope().name() + "|" + preferenceType + "|" + searchName);
     }
 
     /**
@@ -600,6 +595,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
             MessageCollection messageCollection = new MessageCollection();
             searchInstanceEjb.deleteSearch( messageCollection, preferenceType, searchName, preferenceMap);
             addMessages(messageCollection);
+            selectedSearchName = null;
         }
         return queryPage();
     }
