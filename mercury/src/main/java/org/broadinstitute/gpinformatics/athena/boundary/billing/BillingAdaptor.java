@@ -458,9 +458,11 @@ public class BillingAdaptor implements Serializable {
                     Set<String> billedPdos = billingCredit.getBillingResult().getQuoteImportItem().getLedgerItems()
                         .stream().map(le -> le.getProductOrderSample().getProductOrder().getBusinessKey())
                         .collect(Collectors.toSet());
+                if (!billingResult.isError()) {
                     logSapBillingCredit(item, billedPdos, billingCredit.getSapDeliveryDocumentId(),
                         billingCredit.getReturnOrderId());
-                } catch (BillingException billingException) {
+                }
+            } catch (BillingException billingException) {
                     BillingEjb.BillingResult billingResult = billingCredit.getBillingResult();
                     billingResult.setErrorMessage(billingException.getMessage());
                     billingEjb.updateSapQuoteImportItem(item, null, null, billingException.getMessage());
