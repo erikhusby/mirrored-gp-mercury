@@ -176,7 +176,8 @@ public class ProductOrderResource {
             throws DuplicateTitleException, ApplicationValidationException, NoSamplesException,
             WorkRequestCreationException, InvalidProductException {
 
-        ProductOrder productOrder = createProductOrder(productOrderData);
+        userBean.login(productOrderData.getUsername());
+        ProductOrder productOrder = productOrderEjb.createProductOrder(productOrderData);
 
         ResearchProject researchProject =
                 researchProjectDao.findByBusinessKey(productOrderData.getResearchProjectId());
@@ -222,15 +223,6 @@ public class ProductOrderResource {
         }
         if (!managers.isEmpty()) {
             productOrderJiraUtil.setJiraPMsField(productOrder, managers);
-        }
-    }
-
-    private void validateAndLoginUser(ProductOrderData productOrderData) {
-        userBean.login(productOrderData.getUsername());
-
-        if(userBean.getBspUser() == UserBean.UNKNOWN) {
-            throw new ResourceException("A valid Username is required to complete this request",
-                    Response.Status.UNAUTHORIZED);
         }
     }
 
@@ -289,76 +281,9 @@ public class ProductOrderResource {
     public ProductOrderData create(@Nonnull ProductOrderData productOrderData)
             throws DuplicateTitleException, NoSamplesException, ApplicationValidationException,
             InvalidProductException {
-        return new ProductOrderData(createProductOrder(productOrderData), true);
-    }
 
-    /**
-     * Create a product order in Pending state, and create its corresponding JIRA ticket.
-     */
-    private ProductOrder createProductOrder(ProductOrderData productOrderData)
-            throws DuplicateTitleException, NoSamplesException, ApplicationValidationException,
-            InvalidProductException {
-
-        validateAndLoginUser(productOrderData);
-
-        ProductOrder productOrder = productOrderData.toProductOrder(productOrderDao, researchProjectDao, productDao,
-                sapService);
-
-        // Figure out who called this so we can record the owner.
-        BspUser user = userBean.getBspUser();
-        if (user == null) {
-            throw new ApplicationValidationException(
-                    "Problem creating the product order, cannot find the user " + productOrderData.getUsername());
-        }
-
-        try {
-            productOrder.setCreatedBy(user.getUserId());
-            productOrder.prepareToSave(user, ProductOrder.SaveType.CREATING);
-            productOrder.setOrderStatus(ProductOrder.OrderStatus.Pending);
-            if(productOrder.getProduct().isClinicalProduct()) {
-                productOrder.setClinicalAttestationConfirmed(true);
-            }
-
-            // The PDO's IRB information is copied from its RP. For Collaboration PDOs, we require that there
-            // is only one IRB on the RP.
-            productOrder.setRegulatoryInfos(productOrder.getResearchProject().getRegulatoryInfos());
-
-            productOrderJiraUtil.createIssueForOrder(productOrder);
-
-            // Not supplying add-ons at this point, just saving what we defined above and then flushing to make sure
-            // any DB constraints have been enforced.
-            productOrderDao.persist(productOrder);
-            productOrderDao.flush();
-
-            MessageCollection messageCollection = new MessageCollection();
-
-            for (String error : messageCollection.getErrors()) {
-                log.error(error);
-            }
-            for (String warn : messageCollection.getWarnings()) {
-                log.info("Warning: " + warn);
-            }
-            for (String info : messageCollection.getInfos()) {
-                log.info(info);
-            }
-
-
-        } catch (Exception e) {
-            String keyText;
-            if (productOrder.getJiraTicketKey() != null) {
-                keyText = " (" + productOrder.getJiraTicketKey() + ")";
-            } else {
-                keyText = "";
-            }
-            log.error(user.getUsername() + " could not create the product order " + productOrder.getTitle()
-                      + keyText, e);
-            throw new ApplicationValidationException("Cannot create the product order - " + e.getMessage());
-        }
-
-        log.info(user.getUsername() + " created product order " + productOrder.getBusinessKey()
-                 + " with an order status of " + productOrder.getOrderStatus().getDisplayName() + " that includes "
-                 + productOrder.getSamples().size() + " samples");
-        return productOrder;
+        userBean.login(productOrderData.getUsername());
+        return new ProductOrderData(productOrderEjb.createProductOrder(productOrderData), true);
     }
 
     /**

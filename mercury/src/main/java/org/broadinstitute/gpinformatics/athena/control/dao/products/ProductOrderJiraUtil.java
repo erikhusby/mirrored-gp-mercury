@@ -70,6 +70,10 @@ public class ProductOrderJiraUtil {
      * </ul>
      */
     public void createIssueForOrder(@Nonnull ProductOrder order) throws IOException {
+        createIssueForOrder(order, Collections.emptyList());
+    }
+
+    public void createIssueForOrder(@Nonnull ProductOrder order, List<String> watchers) throws IOException {
         Product product = order.getProduct();
         List<ProductOrderAddOn> addOns = order.getAddOns();
         Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
@@ -127,6 +131,9 @@ public class ProductOrderJiraUtil {
                 CreateFields.ProjectType.PRODUCT_ORDERING, bspUserList.getById(order.getCreatedBy()).getUsername(),
                 issueType, order.getTitle(), fields.fields);
 
+        for (String username : watchers) {
+            jiraService.addWatcher(issue.getKey(), username);
+        }
         order.setJiraTicketKey(issue.getKey());
         issue.addLink(order.getResearchProject().getJiraTicketKey());
     }

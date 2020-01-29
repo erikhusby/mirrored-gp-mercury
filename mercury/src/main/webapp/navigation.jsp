@@ -41,6 +41,11 @@
                                           beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
                                           tabindex="=1" event="create">Create</stripes:link>
                         </li>
+                        <li>
+                            <stripes:link id="aouPdoConfig"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.AouPdoConfigActionBean"
+                                          tabindex="=1" event="list">AoU PDO Parameters</stripes:link>
+                        </li>
                     </security:authorizeBlock>
 
                     <security:authorizeBlock roles="<%= roles(Developer, BillingManager, PDM) %>">
