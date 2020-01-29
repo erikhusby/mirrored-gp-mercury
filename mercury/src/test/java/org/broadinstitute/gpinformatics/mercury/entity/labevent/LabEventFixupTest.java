@@ -2283,6 +2283,104 @@ public class LabEventFixupTest extends Arquillian {
         utx.commit();
     }
 
+    /**
+     * fixupGplim4798() should be used instead of this method.
+     * This method was added in error and used for SUPPORT-5914.
+     */
+    @Deprecated
+    @Test(enabled = false)
+    public void manualOverrideLcset() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ManualOverrideLcset.txt"));
+        Assert.assertTrue(lines.size() > 1);
+
+        String reason = lines.get(0);
+        Assert.assertTrue(StringUtils.isNotBlank(reason));
+
+        for (String line : lines.subList(1, lines.size())) {
+            String[] fields = line.split("\\s");
+            Assert.assertEquals(fields.length, 2, "Cannot parse '" + line + "'.");
+            Long labEventId = Long.parseLong(fields[0]);
+            String lcset = fields[1];
+
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, labEventId);
+            Assert.assertNotNull(labEvent);
+            LabBatch labBatch = labBatchDao.findByName(lcset);
+            Assert.assertNotNull(labBatch);
+            System.out.println("Setting lab event " + labEventId + " to " + lcset);
+            labEvent.setManualOverrideLcSet(labBatch);
+        }
+        labEventDao.persist(new FixupCommentary(reason));
+        labEventDao.flush();
+        utx.commit();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/ReplaceLabEventReagent.txt, so it can
+     * be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-5904 updating reagents
+     * 4079991,IceCatchEnrichmentSetup,RapCap Box#2 (Enrichment Amp Mix),19J28A0024,11/12/19
+     */
+    @Test(enabled = false)
+    public void fixupSupport5904ReplaceLabEventReagent() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ReplaceLabEventReagent.txt"));
+        String reason = lines.get(0);
+
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MM/dd/yy");
+        for (String line : lines.subList(1, lines.size())) {
+            String[] fields = line.split("\\|");
+            if (fields.length != 5) {
+                throw new RuntimeException("Expected five | separated fields in " + line);
+            }
+            String labEventId = fields[0];
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, Long.parseLong(labEventId));
+            if (labEvent == null || !labEvent.getLabEventType().getName().equals(fields[1])) {
+                throw new RuntimeException("Cannot find event " + labEventId + " or is not " + fields[1]);
+            }
+
+            String reagentName = fields[2];
+            String reagentLot = fields[3];
+            Date reagentExpiration = simpleDateFormat.parse(fields[4]);
+            boolean foundReagent = false;
+            Reagent reagentToRemove = null;
+            for (LabEventReagent labEventReagent: labEvent.getLabEventReagents()) {
+                if (labEventReagent.getReagent().getName().equalsIgnoreCase(reagentName)) {
+                    foundReagent = true;
+                    reagentToRemove = labEventReagent.getReagent();
+                    break;
+                }
+            }
+
+            if (!foundReagent) {
+                throw new RuntimeException("Failed to find reagent " + reagentName + " in lab event " + labEventId);
+            }
+
+            GenericReagent genericReagent = genericReagentDao.findByReagentNameLotExpiration(
+                    reagentName, reagentLot, reagentExpiration);
+            if (genericReagent == null) {
+                genericReagent = new GenericReagent(reagentName, reagentLot, reagentExpiration);
+            }
+
+            if (!genericReagent.equals(reagentToRemove)) {
+                labEvent.removeLabEventReagent(reagentToRemove);
+                labEvent.addReagent(genericReagent);
+
+                System.out.print("LabEvent " + labEventId + " type " + labEvent.getLabEventType());
+                System.out.print(" replacing reagent " + reagentToRemove.getName() + " " + reagentToRemove.getLot());
+                System.out.println(" to " + genericReagent.getName() + " " + genericReagent.getLot());
+                genericReagentDao.remove(reagentToRemove);
+            }
+        }
+
+        labEventDao.persist(new FixupCommentary(reason));
+        labEventDao.flush();
+        utx.commit();
+    }
+
     @Test(enabled = false)
     public void extractEventOperatorList() throws Exception {
 

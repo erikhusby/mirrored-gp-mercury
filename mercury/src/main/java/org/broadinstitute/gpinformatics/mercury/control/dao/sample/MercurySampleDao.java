@@ -20,6 +20,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
 import javax.persistence.TypedQuery;
@@ -41,6 +43,7 @@ import java.util.Map;
  */
 @Stateful
 @RequestScoped
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class MercurySampleDao extends GenericDao {
 
     /**

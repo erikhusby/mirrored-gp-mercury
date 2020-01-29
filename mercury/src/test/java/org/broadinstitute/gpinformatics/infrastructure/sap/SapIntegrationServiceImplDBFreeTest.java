@@ -44,7 +44,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -572,27 +571,29 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         int ledgerCount = 4;
 
-        IntStream.range(0,ledgerCount).forEach(value -> {
+        for (int i = 0; i < ledgerCount; i++) {
             addLedgerItems(productOrder, 1);
 
-            SAPOrder newOrder = integrationService.initializeSAPOrder(sapQuote, productOrder, Option.create(Option.Type.CREATING));
+            SAPOrder newOrder =
+                    integrationService.initializeSAPOrder(sapQuote, productOrder, Option.create(Option.Type.CREATING));
 
-            assertThat(newOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size()+1)));
+            assertThat(newOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size() + 1)));
             for (SAPOrderItem orderItem : newOrder.getOrderItems()) {
                 assertThat(orderItem.getItemQuantity(), is(not(lessThan(BigDecimal.ZERO))));
                 if (orderItem.getProductIdentifier().equals(productOrder.getProduct().getPartNumber())) {
 
-                    assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(8 - (value + 1))),
+                    assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(8 - (i + 1))),
                             is(equalTo(0)));
                 } else {
-                    assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(productOrder.getSamples().size() - (value + 1))),
+                    assertThat(orderItem.getItemQuantity()
+                                    .compareTo(BigDecimal.valueOf(productOrder.getSamples().size() - (i + 1))),
                             is(greaterThanOrEqualTo(0)));
                 }
             }
 
             SAPOrder noneOrder = integrationService.initializeSAPOrder(sapQuote, productOrder, Option.NONE);
 
-            assertThat(noneOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size()+1)));
+            assertThat(noneOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size() + 1)));
             for (SAPOrderItem orderItem : noneOrder.getOrderItems()) {
                 assertThat(orderItem.getItemQuantity(), is(not(lessThan(BigDecimal.ZERO))));
                 if (orderItem.getProductIdentifier().equals(productOrder.getProduct().getPartNumber())) {
@@ -600,7 +601,8 @@ public class SapIntegrationServiceImplDBFreeTest {
                     assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(8)),
                             is(equalTo(0)));
                 } else {
-                    assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(productOrder.getSamples().size())),
+                    assertThat(
+                            orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(productOrder.getSamples().size())),
                             is(greaterThanOrEqualTo(0)));
                 }
             }
@@ -608,14 +610,15 @@ public class SapIntegrationServiceImplDBFreeTest {
             SAPOrder queryOrder = integrationService.initializeSAPOrder(sapQuote, productOrder,
                     Option.create(Option.Type.ORDER_VALUE_QUERY));
 
-            assertThat(queryOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size()+1)));
+            assertThat(queryOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size() + 1)));
             for (SAPOrderItem orderItem : queryOrder.getOrderItems()) {
                 assertThat(orderItem.getItemQuantity(), is(not(lessThan(BigDecimal.ZERO))));
-                if(orderItem.getProductIdentifier().equals(productOrder.getProduct().getPartNumber())) {
+                if (orderItem.getProductIdentifier().equals(productOrder.getProduct().getPartNumber())) {
                     assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(8)),
                             is(equalTo(0)));
                 } else {
-                    assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(productOrder.getSamples().size() )),
+                    assertThat(
+                            orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(productOrder.getSamples().size())),
                             is(equalTo(0)));
                 }
             }
@@ -623,12 +626,12 @@ public class SapIntegrationServiceImplDBFreeTest {
             SAPOrder closingOrder =
                     integrationService.initializeSAPOrder(sapQuote, productOrder, Option.create(Option.Type.CLOSING));
 
-            assertThat(closingOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size()+1)));
+            assertThat(closingOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size() + 1)));
             for (SAPOrderItem orderItem : closingOrder.getOrderItems()) {
                 assertThat(orderItem.getItemQuantity(), is(not(lessThan(BigDecimal.ZERO))));
-                assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(value+1)), is(equalTo(0)));
+                assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(i + 1)), is(equalTo(0)));
             }
-        });
+        }
 
         //Mimic creating a new order
         productOrder.addSapOrderDetail(new SapOrderDetail(orderId+2, productOrder.getSampleCount(),
@@ -689,26 +692,28 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         int newLedgerCount = 4;
 
-        IntStream.range(0,newLedgerCount).forEach(value -> {
+        for (int value = 0; value < newLedgerCount; value++) {
             addLedgerItems(productOrder, 1);
 
-            SAPOrder newOrder = integrationService.initializeSAPOrder(sapQuote, productOrder, Option.create(Option.Type.CREATING));
+            SAPOrder newOrder =
+                    integrationService.initializeSAPOrder(sapQuote, productOrder, Option.create(Option.Type.CREATING));
 
-            assertThat(newOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size()+1)));
+            assertThat(newOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size() + 1)));
             for (SAPOrderItem orderItem : newOrder.getOrderItems()) {
                 assertThat(orderItem.getItemQuantity(), is(not(lessThan(BigDecimal.ZERO))));
                 if (orderItem.getProductIdentifier().equals(productOrder.getProduct().getPartNumber())) {
                     assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(8 - ledgerCount - (value + 1))),
                             is(equalTo(0)));
                 } else {
-                    assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(productOrder.getSamples().size() - ledgerCount - (value + 1))),
+                    assertThat(orderItem.getItemQuantity().compareTo(
+                            BigDecimal.valueOf(productOrder.getSamples().size() - ledgerCount - (value + 1))),
                             is(greaterThanOrEqualTo(0)));
                 }
             }
 
             SAPOrder noneOrder = integrationService.initializeSAPOrder(sapQuote, productOrder, Option.NONE);
 
-            assertThat(noneOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size()+1)));
+            assertThat(noneOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size() + 1)));
             for (SAPOrderItem orderItem : noneOrder.getOrderItems()) {
                 assertThat(orderItem.getItemQuantity(), is(not(lessThan(BigDecimal.ZERO))));
                 if (orderItem.getProductIdentifier().equals(productOrder.getProduct().getPartNumber())) {
@@ -716,7 +721,8 @@ public class SapIntegrationServiceImplDBFreeTest {
                     assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(8 - ledgerCount)),
                             is(equalTo(0)));
                 } else {
-                    assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(productOrder.getSamples().size() - ledgerCount)),
+                    assertThat(orderItem.getItemQuantity()
+                                    .compareTo(BigDecimal.valueOf(productOrder.getSamples().size() - ledgerCount)),
                             is(greaterThanOrEqualTo(0)));
                 }
             }
@@ -724,14 +730,15 @@ public class SapIntegrationServiceImplDBFreeTest {
             SAPOrder queryOrder = integrationService.initializeSAPOrder(sapQuote, productOrder,
                     Option.create(Option.Type.ORDER_VALUE_QUERY));
 
-            assertThat(queryOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size()+1)));
+            assertThat(queryOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size() + 1)));
             for (SAPOrderItem orderItem : queryOrder.getOrderItems()) {
                 assertThat(orderItem.getItemQuantity(), is(not(lessThan(BigDecimal.ZERO))));
-                if(orderItem.getProductIdentifier().equals(productOrder.getProduct().getPartNumber())) {
+                if (orderItem.getProductIdentifier().equals(productOrder.getProduct().getPartNumber())) {
                     assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(8 - ledgerCount)),
                             is(equalTo(0)));
                 } else {
-                    assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(productOrder.getSamples().size() - ledgerCount )),
+                    assertThat(orderItem.getItemQuantity()
+                                    .compareTo(BigDecimal.valueOf(productOrder.getSamples().size() - ledgerCount)),
                             is(equalTo(0)));
                 }
             }
@@ -739,12 +746,12 @@ public class SapIntegrationServiceImplDBFreeTest {
             SAPOrder closingOrder =
                     integrationService.initializeSAPOrder(sapQuote, productOrder, Option.create(Option.Type.CLOSING));
 
-            assertThat(closingOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size()+1)));
+            assertThat(closingOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size() + 1)));
             for (SAPOrderItem orderItem : closingOrder.getOrderItems()) {
                 assertThat(orderItem.getItemQuantity(), is(not(lessThan(BigDecimal.ZERO))));
-                assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(value+1)), is(equalTo(0)));
+                assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(value + 1)), is(equalTo(0)));
             }
-        });
+        }
     }
 
     @Test(dataProvider = "orderStatusForSampleCount")

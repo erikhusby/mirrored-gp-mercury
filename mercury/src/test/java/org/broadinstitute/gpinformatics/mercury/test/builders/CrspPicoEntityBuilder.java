@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ConcentrationAndVolumeAndWeightType;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
@@ -96,14 +97,19 @@ public class CrspPicoEntityBuilder {
         initialPicoTransfer1 = labEventFactory.buildFromBettaLims(crspPicoJaxbBuilder.getInitialPicoTransfer1(),
                 mapBarcodeToVessel);
         StaticPlate initialPicoPlate1 = (StaticPlate) initialPicoTransfer1.getTargetLabVessels().iterator().next();
+        Assert.assertEquals(initialPicoPlate1.getContainerRole().getVesselAtPosition(VesselPosition.A01).getVolume(), new BigDecimal("2.00"));
+
         initialPicoTransfer2 = labEventFactory.buildFromBettaLims(crspPicoJaxbBuilder.getInitialPicoTransfer2(),
                 mapBarcodeToVessel);
         StaticPlate initialPicoPlate2 = (StaticPlate) initialPicoTransfer1.getTargetLabVessels().iterator().next();
+        Assert.assertEquals(initialPicoPlate2.getContainerRole().getVesselAtPosition(VesselPosition.A01).getVolume(), new BigDecimal("2.00"));
 
         labEventFactory.buildFromBettaLimsPlateEventDbFree(crspPicoJaxbBuilder.getInitialPicoBufferAddition1(),
                 initialPicoPlate1);
+        Assert.assertEquals(initialPicoPlate1.getContainerRole().getVesselAtPosition(VesselPosition.A01).getVolume(), new BigDecimal("4.00"));
         labEventFactory.buildFromBettaLimsPlateEventDbFree(crspPicoJaxbBuilder.getInitialPicoBufferAddition2(),
                 initialPicoPlate2);
+        Assert.assertEquals(initialPicoPlate2.getContainerRole().getVesselAtPosition(VesselPosition.A01).getVolume(), new BigDecimal("4.00"));
 
         // FingerprintingAliquot
         LabEventTest.validateWorkflow("FingerprintingAliquot", mapBarcodeToTube.values());

@@ -39,7 +39,6 @@ import javax.enterprise.context.RequestScoped;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
-import javax.persistence.OptimisticLockException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -48,9 +47,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.instanceOf;
 
 @Test(groups = TestGroups.ALTERNATIVES)
 @Dependent
@@ -121,13 +117,11 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
         int numErrors = 0;
         if (placePdoThread.getError() != null) {
             pdoJiraError = placePdoThread.getError();
-            assertThat(pdoJiraError.getCause(), instanceOf(OptimisticLockException.class));
             logger.info("Error found in Thread 1: " + pdoJiraError.getMessage());
             numErrors++;
         }
         if (placePdoThread2.getError() != null) {
             pdoJiraError = placePdoThread2.getError();
-            assertThat(pdoJiraError.getCause(), instanceOf(OptimisticLockException.class));
             logger.info("Error found in Thread 2: " + pdoJiraError.getMessage());
             numErrors++;
         }

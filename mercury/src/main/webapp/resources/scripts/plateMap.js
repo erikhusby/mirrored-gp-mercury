@@ -71,6 +71,11 @@
             });
         }
 
+        // Attach metadata to each cell
+        $.each(platemap.wellMetadataMap, function (cell, metavals) {
+            plugin.attachMetadata($(cellIdPrefix + cell), metavals, cellMetadataSelector);
+        });
+
         metricsListBox.change(function() {
             var selectedMetric = this.value;
             var datasetList = $.grep(datasets, function(e){
@@ -80,14 +85,9 @@
             var wells = $(".metricCell");
             $.each(wells, function () {
                 $(this).text("");
-                $(this).unbind('mouseenter mouseleave');
                 $(this).css("background-color", "");
             });
 
-            // Attach metadata to each cell
-            $.each( platemap.wellMetadataMap, function( cell, metavals ) {
-                plugin.attachMetadata($(cellIdPrefix + cell), metavals, cellMetadataSelector);
-            });
             legend.empty();
             if (datasetList.length === 1){
                 var dataset = datasetList[0];
