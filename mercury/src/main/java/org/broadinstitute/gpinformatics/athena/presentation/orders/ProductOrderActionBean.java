@@ -405,7 +405,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Validate(required = true, on = SET_PROCEED_OOS)
     private ProductOrderSample.ProceedIfOutOfSpec proceedOos;
 
+    @Validate(required = true, on = ABANDON_SAMPLES_ACTION, maxlength = 255)
     private String abandonComment;
+    @Validate(required = true, on = UNABANDON_SAMPLES_ACTION, maxlength = 255)
     private String unAbandonComment;
 
     // This is used for prompting why the abandon button is disabled.
