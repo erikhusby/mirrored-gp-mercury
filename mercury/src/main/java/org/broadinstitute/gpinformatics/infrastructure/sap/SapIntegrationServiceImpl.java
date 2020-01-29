@@ -43,6 +43,7 @@ import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -52,7 +53,6 @@ import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegration
 import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option.create;
 import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option.isClosing;
 import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option.isForValueQuery;
-import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option.isUpdating;
 import static org.broadinstitute.sap.services.SapIntegrationClientImpl.SAPCompanyConfiguration;
 import static org.broadinstitute.sap.services.SapIntegrationClientImpl.SAPEnvironment;
 
@@ -172,9 +172,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
 
         double previousBilledCount = 0;
-        double previousCreditedCount = 0;
 
-        boolean creatignOrUpdating = serviceOptions.hasOption(Type.CREATING) || serviceOptions.hasOption(Type.UPDATING);
+        boolean creatingNewOrder = serviceOptions.hasOption(Type.CREATING);
         boolean closingOrder = serviceOptions.hasOption(Type.CLOSING);
         boolean forOrderValueQuery = serviceOptions.hasOption(Type.ORDER_VALUE_QUERY);
 
@@ -185,14 +184,15 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
             // If we are NOT creating a new order (General order update or order value query)
             // then the current SAP order quantity will be:
-            // Non abandoned product order quantity MINUS anything that has been billed on a previous SAP order
-            // PLUS anything which has been credited.
+            // Non abandoned product order quantity MINUS anything that has been billed on a previous SAP order.
 
-            if (!sapOrderDetail.equals(placedOrder.latestSapOrderDetail()) || creatignOrUpdating) {
-                previousBilledCount +=
-                    Optional.ofNullable(sapOrderDetail.getNumberOfBilledEntriesByProduct().get(product)).orElse(0d);
-                previousCreditedCount +=
-                    Optional.ofNullable(sapOrderDetail.getNumberOfBillingCreditsByProduct().get(product)).orElse(0d);
+            if (!sapOrderDetail.equals(placedOrder.latestSapOrderDetail()) || creatingNewOrder) {
+
+                final Map<Product, Double> numberOfBilledEntriesByProduct =
+                        sapOrderDetail.getNumberOfBilledEntriesByProduct();
+                if (numberOfBilledEntriesByProduct.containsKey(product)) {
+                    previousBilledCount += numberOfBilledEntriesByProduct.get(product);
+                }
             }
         }
 
@@ -213,7 +213,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 + additionalSampleCount;
         }
 
-        BigDecimal countResults = BigDecimal.valueOf(sampleCount + Math.abs(previousCreditedCount));
+        BigDecimal countResults = BigDecimal.valueOf(sampleCount);
         if(!closingOrder) {
             countResults = countResults.subtract(BigDecimal.valueOf(previousBilledCount));
             if (countResults.compareTo(BigDecimal.ZERO) < 0) {
@@ -245,10 +245,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @Override
-    public void updateOrder(ProductOrder placedOrder, boolean updateOrder, boolean closeOrder) throws SAPIntegrationException {
+    public void updateOrder(ProductOrder placedOrder, boolean closeOrder) throws SAPIntegrationException {
         SAPOrder order =
-            initializeSAPOrder(placedOrder.getSapQuote(this), placedOrder,
-                Option.create(isClosing(closeOrder), isUpdating(updateOrder)));
+            initializeSAPOrder(placedOrder.getSapQuote(this), placedOrder, Option.create(isClosing(closeOrder)));
 
         if(placedOrder.getSapOrderNumber() == null) {
             throw new SAPIntegrationException("Cannot update an order in SAP since this product order does not have "

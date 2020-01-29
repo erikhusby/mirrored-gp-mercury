@@ -13,12 +13,10 @@ import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  *
@@ -48,7 +46,7 @@ public interface SapIntegrationService {
      * @return Unique order identifier of the sales/release order currently in SAP
      * @throws SAPIntegrationException
      */
-    void updateOrder(ProductOrder placedOrder, boolean updatingOrder, boolean closingOrder) throws SAPIntegrationException;
+    void updateOrder(ProductOrder placedOrder, boolean closingOrder) throws SAPIntegrationException;
 
     /**
      * This method will allow mercury to record completed work in SAP in order to complete the Billing process
@@ -104,23 +102,17 @@ public interface SapIntegrationService {
         private Set<Type> options = new HashSet<>();
 
         private Option(Type... options) {
-            this.options = Stream.of(options).filter(Objects::nonNull).collect(Collectors.toSet());
+            this.options = new HashSet<>(Arrays.asList(options));
         }
 
         public static Option create(Type... orderOptions) {
             return new Option(orderOptions);
+
         }
 
         public static Type isClosing(boolean booleanFlag) {
             if (booleanFlag) {
                 return Type.CLOSING;
-            }
-            return null;
-        }
-
-        public static Type isUpdating(boolean booleanFlag) {
-            if (booleanFlag) {
-                return Type.UPDATING;
             }
             return null;
         }
@@ -145,7 +137,6 @@ public interface SapIntegrationService {
 
         public enum Type {
             CREATING,
-            UPDATING,
             CLOSING,
             ORDER_VALUE_QUERY
         }
