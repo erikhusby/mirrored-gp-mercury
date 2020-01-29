@@ -2623,7 +2623,26 @@
     <changeSet author="thompson" id="GPLIM-6080-3">
         <addForeignKeyConstraint constraintName="FK_MC_MERCURY_SAMPLE"
                 baseTableSchemaName="mercury" baseTableName="mercury_control" baseColumnNames="CONCORDANCE_SAMPLE_ID"
-                referencedTableSchemaName="mercury" referencedTableName="mercury_sample" referencedColumnNames="mercury_sample_id"/>
+                referencedTableSchemaName="mercury"
+		referencedTableName="mercury_sample"
+		referencedColumnNames="mercury_sample_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6695-001" author="epolk">
+        <createIndex indexName="ix_lab_vessel_plate" tableName="lab_vessel" schemaName="mercury">
+            <column name="plate"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-6695-002" author="epolk">
+        <createIndex indexName="ix_vessl_xfer_anc_source" tableName="vessel_transfer" schemaName="mercury">
+            <column name="ancillary_source_vessel"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-6695-003" author="epolk">
+        <createIndex indexName="ix_vessl_xfer_anc_target" tableName="vessel_transfer" schemaName="mercury">
+            <column name="ancillary_target_vessel"/>
+        </createIndex>
+
     </changeSet>
 
 </databaseChangeLog>

@@ -97,6 +97,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -1900,6 +1901,7 @@ public class LabBatchFixUpTest extends Arquillian {
 
     /*
      * This test removes samples (starting vessels and bucket entries) from an LCSET.
+     * Does NOT remove reworks.
      * To simplify reuse, parameters come from file testdata/RemoveLabBatchSample.txt
      * The file needs a ticket id, an lcset, and comma-delimited list of samples.
      * For example:
@@ -1946,8 +1948,10 @@ public class LabBatchFixUpTest extends Arquillian {
                 }
             }
         }
-        Assert.assertEquals(sampleNamesFound, sampleNames, labBatch.getBatchName() + " does not contain " +
-                StringUtils.join(CollectionUtils.subtract(sampleNames, sampleNamesFound), ", "));
+        sampleNames.sort(Comparator.naturalOrder());
+        sampleNamesFound.sort(Comparator.naturalOrder());
+        String diffs = StringUtils.join(CollectionUtils.subtract(sampleNames, sampleNamesFound), ", ");
+        Assert.assertTrue(diffs.isEmpty(), labBatch.getBatchName() + " does not contain " + diffs);
 
         System.out.println("Removing starting vessels and bucket entries for samples " +
                 StringUtils.join(sampleNames, ", ") + " from " + labBatch.getBatchName());
@@ -1965,6 +1969,60 @@ public class LabBatchFixUpTest extends Arquillian {
             labBatchDao.remove(bucketEntry);
         }
         return vesselsToRemove;
+    }
+
+    /**
+     * This test removes rework vessels from an LCSET.
+     * To simplify reuse, parameters come from file testdata/RemoveReworkVessel.txt
+     * The file needs a ticket id, an lcset, and one or more vessel labels.
+     * For example:
+     * SUPPORT-1234
+     * LCSET-1234
+     * 0123456789
+     * 0123456790
+     */
+    @Test(enabled = false)
+    public void removeReworkFromLcset() throws Exception {
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("RemoveReworkVessel.txt"));
+        Assert.assertTrue(lines.size() >= 3);
+
+        String lcsetName = lines.get(1).trim();
+        LabBatch lcset = labBatchDao.findByName(lcsetName);
+        Assert.assertNotNull(lcset);
+
+        userBean.loginOSUser();
+        userTransaction.begin();
+        for (LabVessel vesselToRemove : labVesselDao.findByListIdentifiers(lines.subList(2, lines.size()))) {
+            Assert.assertNotNull(vesselToRemove);
+            Assert.assertTrue(vesselToRemove.getReworkLabBatches().contains(lcset),
+                    vesselToRemove.getLabel() + " is not in " + lcsetName);
+
+            vesselToRemove.getEvents().forEach(labEvent -> {
+                labEvent.getComputedLcSets().remove(lcset);
+                if (labEvent.getManualOverrideLcSet() == lcset) {
+                    System.out.println("Setting lab event " + labEvent.getLabEventId() +
+                            " manual override lcset to null.");
+                    labEvent.setManualOverrideLcSet(null);
+                }
+            });
+            Set<BucketEntry> bucketEntries = lcset.getBucketEntries().stream().
+                    filter(bucketEntry -> bucketEntry.getLabVessel() == vesselToRemove).
+                    collect(Collectors.toSet());
+
+            System.out.println("Removing vessel " + vesselToRemove.getLabel() + " from " + lcsetName);
+            vesselToRemove.removeFromBatch(lcset);
+            for (BucketEntry bucketEntry : bucketEntries) {
+                lcset.removeBucketEntry(bucketEntry);
+                vesselToRemove.removeBucketEntry(bucketEntry);
+                ProductOrder productOrder = bucketEntry.getProductOrder();
+                productOrder.getBucketEntries().remove(bucketEntry);
+                System.out.println("Removing bucket entry " + bucketEntry.getBucketEntryId());
+                labBatchDao.remove(bucketEntry);
+            }
+        }
+        labBatchDao.persist(new FixupCommentary(lines.get(0) + " Removed vessels from " + lcsetName));
+        labBatchDao.flush();
+        userTransaction.commit();
     }
 
     /**
