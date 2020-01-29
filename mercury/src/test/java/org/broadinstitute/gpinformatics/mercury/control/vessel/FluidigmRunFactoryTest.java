@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
@@ -24,6 +25,7 @@ import org.testng.annotations.Test;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -39,11 +41,11 @@ import static org.mockito.Mockito.when;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class FluidigmRunFactoryTest extends BaseEventTest {
 
-    public static final String FLUIDIGM_OUTPUT_CSV = "FluidigmOutput.csv";
-    public static final String CHIP_BARCODE = "000010553069";
+    static final String FLUIDIGM_OUTPUT_CSV = "FluidigmOutput.csv";
+    private static final String CHIP_BARCODE = "000010553069";
 
     @Test
-    public void testBasic() throws Exception {
+    public void testBasic() {
         InputStream testSpreadSheet = VarioskanParserTest.getSpreadsheet(FLUIDIGM_OUTPUT_CSV);
         FluidigmChipProcessor fluidigmChipProcessor = new FluidigmChipProcessor();
         FluidigmChipProcessor.FluidigmRun run  = fluidigmChipProcessor.parse(testSpreadSheet);
@@ -72,7 +74,7 @@ public class FluidigmRunFactoryTest extends BaseEventTest {
 
         MessageCollection messageCollection = new MessageCollection();
         LabMetricRun labMetricRun = fluidigmRunFactory.createFluidigmRunDaoFree(run, ifcChip, 1L,
-                result, mapAssayToSnp, null);
+                result, mapAssayToSnp, null, Collections.emptyList());
 
         Assert.assertEquals(messageCollection.hasErrors(), false);
 
@@ -106,9 +108,11 @@ public class FluidigmRunFactoryTest extends BaseEventTest {
         int numSamples = NUM_POSITIONS_IN_RACK - 2;
         ProductOrder productOrder = ProductOrderTestFactory.buildFingerprintingProductOrder(numSamples);
         Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        mapBarcodeToTube.values().forEach(barcodedTube -> barcodedTube.getMercurySamples().iterator().next().
+                setSampleData(new BspSampleData()));
 
         LabBatch workflowBatch = new LabBatch("Fingerprinting Batch",
-                new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                new HashSet<>(mapBarcodeToTube.values()),
                 LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setWorkflow(Workflow.FINGERPRINTING);
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");

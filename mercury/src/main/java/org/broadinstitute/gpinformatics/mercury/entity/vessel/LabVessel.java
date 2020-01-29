@@ -833,7 +833,7 @@ public abstract class LabVessel implements Serializable {
     public List<LabMetric> getNearestMetricsOfType(LabMetric.MetricType metricType,
             TransferTraverserCriteria.TraversalDirection traversalDirection) {
         if (getContainerRole() != null) {
-            return getContainerRole().getNearestMetricOfType(metricType);
+            return getContainerRole().getNearestMetricOfType(metricType, traversalDirection);
         } else {
             TransferTraverserCriteria.NearestLabMetricOfTypeCriteria metricOfTypeCriteria =
                     new TransferTraverserCriteria.NearestLabMetricOfTypeCriteria(metricType);

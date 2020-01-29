@@ -15,7 +15,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
-import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselFingerprintingMetricPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -63,9 +62,6 @@ public class UploadFingerprintingRunActionBean extends CoreActionBean {
 
     @Inject
     private LabMetricRunDao labMetricRunDao;
-
-    @Inject
-    private ConfigurableListFactory configurableListFactory;
 
     @Validate(required = true, on = UPLOAD_ACTION)
     private FileBean runFile;
@@ -129,7 +125,7 @@ public class UploadFingerprintingRunActionBean extends CoreActionBean {
         searchContext.setPriceListCache(priceListCache);
         searchContext.setQuoteLink(quoteLink);
         SearchTerm searchTerm = new SearchTerm();
-        searchTerm.setName("Fluidigm Chip Drill Down");
+        searchTerm.setName("Fluidigm Metrics");
         searchTerm.setPluginClass(LabVesselFingerprintingMetricPlugin.class);
 
         List<ColumnTabulation> columnTabulations = new ArrayList<>();
