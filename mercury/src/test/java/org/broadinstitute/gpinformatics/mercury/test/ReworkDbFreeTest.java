@@ -4,7 +4,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemOfRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -38,7 +38,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
 
     @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
     public void testAddReworkToBatchFromBucket() {
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
 
         String origLcsetSuffix = "-111";
         String reworkLcsetSuffix = "-222";
@@ -141,7 +141,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
     // Advance to Pond Pico, rework a sample from the start
     @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
     public void testRework() {
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
 
         String origLcsetSuffix = "-111";
         String reworkLcsetSuffix = "-222";
@@ -219,7 +219,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
 
     @Test(enabled = true)
     public void testMultiplePdos() {
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
 
         ProductOrder productOrder1 = ProductOrderTestFactory.createDummyProductOrder(4, "PDO-8",
                                                                                      Workflow.AGILENT_EXOME_EXPRESS, 1L,

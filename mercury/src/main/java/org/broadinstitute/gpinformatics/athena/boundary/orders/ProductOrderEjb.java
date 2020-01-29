@@ -1268,7 +1268,8 @@ public class ProductOrderEjb {
 
         if(targetSapPdo.isSavedInSAP() &&
            ((targetSapPdo.allOrdersAreComplete() &&
-             targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY) < targetSapPdo.latestSapOrderDetail().getPrimaryQuantity()
+             targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY)
+                     .compareTo(BigDecimal.valueOf(targetSapPdo.latestSapOrderDetail().getPrimaryQuantity()))<0
            ) || CollectionUtils.containsAny(Arrays.asList(OrderStatus.Abandoned, OrderStatus.Completed),Collections.singleton(targetSapPdo.getOrderStatus())))) {
 
             try {

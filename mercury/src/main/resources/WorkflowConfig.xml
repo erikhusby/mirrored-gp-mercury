@@ -4819,6 +4819,38 @@
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>Fingerprinting</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2017-10-07T10:03:24.085-04:00</effectiveDate>
+            <workflowStepDefs>
+                <name>FingerprintingSTAAddition</name>
+                <labEventTypes>FINGERPRINTING_STA_ADDITION</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>FingerprintingPostSTAAdditionThermoCyclerLoaded</name>
+                <labEventTypes>FINGERPRINTING_POST_STA_ADDITION_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>true</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>FingerprintingSLRDilution</name>
+                <labEventTypes>FINGERPRINTING_SLR_ADDITION</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>FingerprintingIFCTransfer</name>
+                <labEventTypes>FINGERPRINTING_IFC_TRANSFER</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>FingerprintingFC1Loaded</name>
+                <labEventTypes>FINGERPRINTING_FC1_LOADED</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
     <productWorkflowDefs>
         <name>Agilent Exome Express</name>
         <productWorkflowDefVersions>
@@ -5342,6 +5374,16 @@
             <!-- No JIRA setup, because BSP creates ARRAY tickets <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType> -->
             <effectiveDate>2015-10-01T10:03:24.085-04:00</effectiveDate>
             <workflowProcessDefs>Infinium</workflowProcessDefs>
+            <routingRule>MERCURY</routingRule>
+            <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Fingerprinting</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2017-10-07T10:03:24.085-04:00</effectiveDate>
+            <workflowProcessDefs>Fingerprinting</workflowProcessDefs>
             <routingRule>MERCURY</routingRule>
             <inValidation>false</inValidation>
         </productWorkflowDefVersions>

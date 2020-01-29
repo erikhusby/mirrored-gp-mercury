@@ -1555,6 +1555,12 @@ nodePrinter.print(webapp)
         </dependency>
 
         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math3</artifactId>
+            <version>3.6.1</version>
+        </dependency>
+
+        <dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
             <version>1.2.16</version>
@@ -1870,20 +1876,6 @@ nodePrinter.print(webapp)
             <artifactId>cloning</artifactId>
             <version>1.9.5</version>
         </dependency>
-
-<!-- todo jmt for fingerprint concordance checking
-        <dependency>
-            <groupId>com.github.broadinstitute</groupId>
-            <artifactId>picard</artifactId>
-            <version>2.16.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.github.broadinstitute</groupId>
-            <artifactId>picard-private</artifactId>
-            <version>1.1</version>
-        </dependency>
--->
 
         <dependency>
             <groupId>com.github.pukkaone</groupId>

@@ -6,7 +6,6 @@ import com.google.common.collect.Multimap;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -53,9 +52,8 @@ public class ProductWorkflowDefVersion implements Serializable {
     private transient LabEventNode rootLabEventNode;
     private transient ProductWorkflowDef productWorkflowDef;
 
-    /**
-     * e.g. SQUID, MERCURY or BOTH
-     */
+    public enum RoutingRule {SQUID, MERCURY, BOTH};
+
     private String routingRule;
 
     private String batchJiraIssueType;
@@ -164,30 +162,11 @@ public class ProductWorkflowDefVersion implements Serializable {
     }
 
     /**
-     * Accessor for the routing logic associated with a workflow instance.  The routing logic helps the system determine
-     * which LIMS system ({@see MercuryOrSquid}) should be considered the primary system of record.  Based on this
-     * value, mercury will either keep all LIMS related information to itself, share that information with another
-     * system, or pass all information to another system
-     *
-     * @return String to represent the routing intent.  Values are based on enums found in
-     *         {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System}
+     * The routing rule is used to determine whether vessels processed with this workflow were routed to
+     * Mercury, Squid, or both. This is still relevant for LimsQueries on Squid vessels.
      */
-    public String getRoutingRule() {
-        return routingRule;
-    }
-
-    /**
-     * This method is an extension of {@link #getRoutingRule()}.  Since the values defined in the routingRule are
-     * based on {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System},
-     * this method helps solidify that point.  It provides the user with an interpretation of the routing rule
-     * in the form of a MercuryOrSquid enum
-     *
-     * @return an instance of
-     *         {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System} that
-     *         corresponds to the String value found in the routing rule.
-     */
-    public SystemRouter.System getRouting() {
-        return SystemRouter.System.valueOf(getRoutingRule());
+    public RoutingRule getRoutingRule() {
+        return RoutingRule.valueOf(routingRule);
     }
 
     public boolean getInValidation() {
