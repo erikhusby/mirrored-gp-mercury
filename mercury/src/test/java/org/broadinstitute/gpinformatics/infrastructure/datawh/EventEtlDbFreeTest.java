@@ -1,8 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
@@ -25,6 +27,7 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -50,6 +53,8 @@ public class EventEtlDbFreeTest {
     private final String pdoName = "PDO-123";
     private final String location = "Machine-XYZ";
     private final String programName = "FlowcellLoader";
+    private final String operator = "theshizz";
+    private final Long operator_id = Long.valueOf(666);
     private final long vesselId = 5511223344L;
     private final Date eventDate = new Date(1413676800000L);
     private final String workflowName = Workflow.AGILENT_EXOME_EXPRESS;
@@ -71,6 +76,7 @@ public class EventEtlDbFreeTest {
     private final MercurySample sample = EasyMock.createMock(MercurySample.class);
     private final LabBatch labBatch = EasyMock.createMock(LabBatch.class);
     private final BucketEntry bucketEntry = EasyMock.createMock(BucketEntry.class);
+    private final BSPUserList bspUserList = EasyMock.createMock(BSPUserList.class);
 
     private final SequencingSampleFactEtl sequencingSampleFactEtl = EasyMock.createNiceMock(
             SequencingSampleFactEtl.class);
@@ -82,7 +88,7 @@ public class EventEtlDbFreeTest {
 
     private final Object[] mocks = new Object[]{auditReader, dao, wfLookup, wfConfig, obj, product, pdo,
             pdoSample, vessel, sampleInst, sample, labBatch, sequencingSampleFactEtl, modEvent, denature, cartridge,
-            cartridgeEvent, flowcell, bucketEntry};
+            cartridgeEvent, flowcell, bucketEntry, bspUserList};
 
     private final Set<LabVessel> vesselList = new HashSet<>();
     private final Set<SampleInstanceV2> sampleInstList = new HashSet<>();
@@ -112,7 +118,7 @@ public class EventEtlDbFreeTest {
         mercurySamples.clear();
         mercurySamples.add(sample);
 
-        tst = new LabEventEtl(wfLookup, dao, sequencingSampleFactEtl, new WorkflowLoader().getWorkflowConfig());
+        tst = new LabEventEtl(wfLookup, dao, sequencingSampleFactEtl, new WorkflowLoader().getWorkflowConfig(), bspUserList);
         tst.setAuditReaderDao(auditReader);
     }
 
@@ -157,6 +163,7 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(obj.getEventLocation()).andReturn(location);
         EasyMock.expect(obj.getProgramName()).andReturn(programName);
         EasyMock.expect(obj.getLabEventId()).andReturn(entityId).anyTimes();
+        EasyMock.expect(obj.getEventOperator()).andReturn(operator_id).anyTimes();
 
         EasyMock.expect(wfLookup.lookupWorkflowConfig(LabEventType.A_BASE.getName(),
                 null, eventDate)).andReturn(wfConfig);
@@ -166,6 +173,10 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(wfConfig.getWorkflowProcessName()).andReturn("ABase");
         EasyMock.expect(wfConfig.getWorkflowStepName()).andReturn(LabEventType.A_BASE.toString());
         EasyMock.expect(wfConfig.getProcessId()).andReturn(processId);
+
+        EasyMock.expect(bspUserList.getById(operator_id)).andReturn(
+                new BspUser(operator_id, "", "", ""
+                        , "", Collections.emptyList(), operator_id, operator));
 
         EasyMock.replay(mocks);
 
@@ -177,7 +188,7 @@ public class EventEtlDbFreeTest {
                           + workflowId + "," + processId + ","
                           + LabEventType.A_BASE.getName() + ",,,,NONE,"
                           + location + ",,," + ExtractTransform.formatTimestamp(eventDate)
-                          + "," + programName + ",,,E";
+                + "," + programName + ",,," + operator + ",E";
 
         Assert.assertEquals(record, expected, "Record for no-vessel event is not as expected" );
 
@@ -192,11 +203,16 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(obj.getLabEventId()).andReturn(entityId).times(2);
         EasyMock.expect(obj.getEventLocation()).andReturn(location);
         EasyMock.expect(obj.getProgramName()).andReturn(programName);
+        EasyMock.expect(obj.getEventOperator()).andReturn(operator_id).anyTimes();
 
         EasyMock.expect(vessel.getSampleInstancesV2()).andReturn(new HashSet<SampleInstanceV2>());
         EasyMock.expect(vessel.getContainerRole()).andReturn(null);
         EasyMock.expect(vessel.getLabVesselId()).andReturn(vesselId);
         EasyMock.expect(vessel.getLabel()).andReturn(String.valueOf(vesselId)).times(2);
+
+        EasyMock.expect(bspUserList.getById(operator_id)).andReturn(
+                new BspUser(operator_id, "", "", ""
+                        , "", Collections.emptyList(), operator_id, operator));
 
         EasyMock.replay(mocks);
 
@@ -216,11 +232,16 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(obj.getLabEventId()).andReturn(entityId).anyTimes();
         EasyMock.expect(obj.getEventLocation()).andReturn(location);
         EasyMock.expect(obj.getProgramName()).andReturn(programName);
+        EasyMock.expect(obj.getEventOperator()).andReturn(operator_id).anyTimes();
 
         EasyMock.expect(vessel.getContainerRole()).andReturn(null);
         EasyMock.expect(vessel.getSampleInstancesV2()).andReturn(sampleInstList);
         EasyMock.expect(vessel.getLabVesselId()).andReturn(vesselId).anyTimes();
         EasyMock.expect(vessel.getLabel()).andReturn(String.valueOf(vesselId)).anyTimes();
+
+        EasyMock.expect(bspUserList.getById(operator_id)).andReturn(
+                new BspUser(operator_id, "", "", ""
+                        , "", Collections.emptyList(), operator_id, operator));
 
         EasyMock.expect(sampleInst.getSingleProductOrderSample()).andReturn(null);
         EasyMock.expect(sampleInst.getSingleBucketEntry()).andReturn(null);
@@ -262,11 +283,16 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(obj.getEventDate()).andReturn(eventDate).anyTimes();
         EasyMock.expect(obj.getEventLocation()).andReturn(location);
         EasyMock.expect(obj.getProgramName()).andReturn(programName);
+        EasyMock.expect(obj.getEventOperator()).andReturn(operator_id).anyTimes();
 
         EasyMock.expect(vessel.getLabVesselId()).andReturn(vesselId);
         EasyMock.expect(vessel.getContainerRole()).andReturn(null);
         EasyMock.expect(vessel.getSampleInstancesV2()).andReturn(sampleInstList);
         EasyMock.expect(vessel.getLabel()).andReturn(String.valueOf(vesselId)).anyTimes();
+
+        EasyMock.expect(bspUserList.getById(operator_id)).andReturn(
+                new BspUser(operator_id, "", "", ""
+                        , "", Collections.emptyList(), operator_id, operator));
 
         EasyMock.expect(sampleInst.getSingleProductOrderSample()).andReturn(pdoSample);
         EasyMock.expect(sampleInst.getNearestMercurySampleName()).andReturn(null);
@@ -315,11 +341,16 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(obj.getEventLocation()).andReturn(location);
         EasyMock.expect(obj.getProgramName()).andReturn(programName);
         EasyMock.expect(obj.getEventDate()).andReturn(eventDate).anyTimes();
+        EasyMock.expect(obj.getEventOperator()).andReturn(operator_id).anyTimes();
 
         EasyMock.expect(vessel.getContainerRole()).andReturn(null);
         EasyMock.expect(vessel.getSampleInstancesV2()).andReturn(sampleInstList);
         EasyMock.expect(vessel.getLabel()).andReturn(String.valueOf(vesselId)).anyTimes();
         EasyMock.expect(vessel.getLabVesselId()).andReturn(vesselId);
+
+        EasyMock.expect(bspUserList.getById(operator_id)).andReturn(
+                new BspUser(operator_id, "", "", ""
+                        , "", Collections.emptyList(), operator_id, operator));
 
         EasyMock.expect(sampleInst.getSingleProductOrderSample()).andReturn(pdoSample);
         EasyMock.expect(sampleInst.getSingleBucketEntry()).andReturn(bucketEntry);
@@ -371,11 +402,16 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(obj.getLabEventId()).andReturn(entityId).anyTimes();
         EasyMock.expect(obj.getEventLocation()).andReturn(location);
         EasyMock.expect(obj.getProgramName()).andReturn(programName);
+        EasyMock.expect(obj.getEventOperator()).andReturn(operator_id).anyTimes();
 
         EasyMock.expect(vessel.getLabVesselId()).andReturn(vesselId).anyTimes();
         EasyMock.expect(vessel.getLabel()).andReturn(String.valueOf(vesselId)).anyTimes();
         EasyMock.expect(vessel.getContainerRole()).andReturn(null);
         EasyMock.expect(vessel.getSampleInstancesV2()).andReturn(sampleInstList);
+
+        EasyMock.expect(bspUserList.getById(operator_id)).andReturn(
+                new BspUser(operator_id, "", "", ""
+                        , "", Collections.emptyList(), operator_id, operator));
 
         EasyMock.expect(sampleInst.getSingleProductOrderSample()).andReturn(null);
         EasyMock.expect(sampleInst.getProductOrderSampleForSingleBucket()).andReturn(null);
@@ -422,11 +458,16 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(obj.getLabEventId()).andReturn(entityId).anyTimes();
         EasyMock.expect(obj.getEventLocation()).andReturn(location);
         EasyMock.expect(obj.getProgramName()).andReturn(programName);
+        EasyMock.expect(obj.getEventOperator()).andReturn(operator_id).anyTimes();
 
         EasyMock.expect(vessel.getLabVesselId()).andReturn(vesselId).anyTimes();
         EasyMock.expect(vessel.getLabel()).andReturn(String.valueOf(vesselId)).anyTimes();
         EasyMock.expect(vessel.getContainerRole()).andReturn(null);
         EasyMock.expect(vessel.getSampleInstancesV2()).andReturn(sampleInstList);
+
+        EasyMock.expect(bspUserList.getById(operator_id)).andReturn(
+                new BspUser(operator_id, "", "", ""
+                        , "", Collections.emptyList(), operator_id, operator));
 
         EasyMock.expect(sampleInst.getSingleProductOrderSample()).andReturn(pdoSample);
         EasyMock.expect(sampleInst.getSingleBucketEntry()).andReturn(bucketEntry);
@@ -477,11 +518,16 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(obj.getEventDate()).andReturn(eventDate).times(2);
         EasyMock.expect(obj.getEventLocation()).andReturn(location);
         EasyMock.expect(obj.getProgramName()).andReturn(programName);
+        EasyMock.expect(obj.getEventOperator()).andReturn(operator_id).anyTimes();
 
         EasyMock.expect(vessel.getLabVesselId()).andReturn(vesselId);
         EasyMock.expect(vessel.getContainerRole()).andReturn(null);
         EasyMock.expect(vessel.getSampleInstancesV2()).andReturn(sampleInstList);
         EasyMock.expect(vessel.getLabel()).andReturn(String.valueOf(vesselId)).anyTimes();
+
+        EasyMock.expect(bspUserList.getById(operator_id)).andReturn(
+                new BspUser(operator_id, "", "", ""
+                        , "", Collections.emptyList(), operator_id, operator));
 
         EasyMock.expect(sampleInst.getSingleProductOrderSample()).andReturn(pdoSample);
         EasyMock.expect(sampleInst.getSingleBucketEntry()).andReturn(bucketEntry);
@@ -537,11 +583,16 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(obj.getLabEventId()).andReturn(entityId);
         EasyMock.expect(obj.getEventLocation()).andReturn(location);
         EasyMock.expect(obj.getProgramName()).andReturn(programName);
+        EasyMock.expect(obj.getEventOperator()).andReturn(operator_id).anyTimes();
 
         EasyMock.expect(vessel.getLabVesselId()).andReturn(vesselId);
         EasyMock.expect(vessel.getLabel()).andReturn(String.valueOf(vesselId));
         EasyMock.expect(vessel.getContainerRole()).andReturn(null);
         EasyMock.expect(vessel.getSampleInstancesV2()).andReturn(sampleInstList);
+
+        EasyMock.expect(bspUserList.getById(operator_id)).andReturn(
+                new BspUser(operator_id, "", "", ""
+                        , "", Collections.emptyList(), operator_id, operator));
 
         EasyMock.expect(sampleInst.getSingleProductOrderSample()).andReturn(pdoSample);
         EasyMock.expect(sampleInst.getSingleBucketEntry()).andReturn(bucketEntry);
@@ -593,7 +644,7 @@ public class EventEtlDbFreeTest {
         EtlTestUtilities.verifyRecord( record, etlDateStr, "F", String.valueOf(entityId),
                 String.valueOf(workflowId), String.valueOf(processId), eventName, String.valueOf(pdoId),
                 sampleKey, expectedLabBatchName.equals(LabEventEtl.NONE)?"":lcsetSampleKey, String.valueOf(expectedLabBatchName), location, String.valueOf(vesselId),
-                "", ExtractTransform.formatTimestamp(eventDate), programName, indexingSchemeName, "", "E");
+                "", ExtractTransform.formatTimestamp(eventDate), programName, indexingSchemeName, "", operator, "E");
     }
 }
 
