@@ -109,11 +109,11 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
     @Override
     @BeforeMethod
     public void setUp() {
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
 
         super.setUp();
         factory = new SequencingTemplateFactory();
-        factory.setWorkflowConfig(new WorkflowLoader().load());
+        factory.setWorkflowConfig(new WorkflowLoader().getWorkflowConfig());
 
         // Method calls on factory will always use our list of flowcell designations.
         factory.setFlowcellDesignationEjb(new FlowcellDesignationEjb(){

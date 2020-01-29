@@ -268,10 +268,17 @@
                                 // Clear old values so we ensure nothing is doubling up.
                                 $j('#selectedTargetChildReceptacleType').empty();
                                 $j('#selectedTargetChildReceptacleType').append($j('<option value="">Select One</option>'));
-                                // Loop through the options returned
-                                $j.each(data, function (i, selectOption) {
-                                    $j('#selectedTargetChildReceptacleType').append($j('<option></option>').attr('value', selectOption).text(selectOption));
-                                });
+
+                                // Check to ensure that the destination container type selected returns allowed tube types.
+                                if ($j.isEmptyObject(data)) {
+                                    // Hide the view transfer button because the rack type picked doesn't have tube types!
+                                    $j("#viewTransfer").hide();
+                                } else {
+                                    // Loop through the options returned
+                                    $j.each(data, function (i, selectOption) {
+                                        $j('#selectedTargetChildReceptacleType').append($j('<option></option>').attr('value', selectOption).text(selectOption));
+                                    });
+                                }
                             }
                         },
                         error: function (req, textstatus, msg) {
@@ -280,6 +287,15 @@
                         }
                     });
 
+                });
+
+                $j('#selectedTargetChildReceptacleType').change(function() {
+
+                    if ($j('#selectedTargetChildReceptacleType').text().trim() !== "Select One") {
+                        $j("#viewTransfer").show();
+                    } else {
+                        $j("#viewTransfer").hide();
+                    }
                 });
             });
 
@@ -458,7 +474,7 @@
 
                                             <c:choose>
                                                 <%-- If there are multiple source types, a source type isn't selected and the event doesn't have a source type set already. --%>
-                                                <c:when test="${not empty actionBean.manualTransferDetails.sourceVesselTypeGeometries && empty actionBean.selectedSourceGeometry}">
+                                                <c:when test="${not empty actionBean.manualTransferDetails.sourceVesselTypeGeometries and empty actionBean.selectedSourceGeometry}">
                                                     <stripes:label for="sourceReceptacleType">Type </stripes:label>
                                                     <stripes:select name="stationEvents[${stationEventStatus.index}].sourcePlate[0].physType"
                                                                     id="sourceReceptacleType">
@@ -501,7 +517,7 @@
                                         <h5>Destination</h5>
                                     </c:if>
                                     <c:choose>
-                                        <c:when test="${not empty actionBean.manualTransferDetails.targetVesselTypeGeometries && empty actionBean.selectedTargetGeometry}">
+                                        <c:when test="${not empty actionBean.manualTransferDetails.targetVesselTypeGeometries and empty actionBean.selectedTargetGeometry}">
                                             <div>
                                                 <stripes:label for="targetReceptacleType">Type </stripes:label>
                                                 <stripes:select name="stationEvents[${stationEventStatus.index}].plate[0].physType"
@@ -510,7 +526,7 @@
                                                     <stripes:options-collection collection="${actionBean.manualTransferDetails.targetVesselTypeGeometriesString}"/>
                                                 </stripes:select>
 
-                                                <stripes:label for="selectedTargetChildReceptacleType">Type </stripes:label>
+                                                <stripes:label for="selectedTargetChildReceptacleType"> Tube Type </stripes:label>
                                                 <stripes:select name="selectedTargetChildReceptacleType"
                                                                 id="selectedTargetChildReceptacleType">
                                                     <stripes:option value="">Select One</stripes:option>
@@ -536,6 +552,9 @@
                                                 <c:choose>
                                                     <c:when test="${not empty actionBean.selectedTargetChildReceptacleType}">
                                                         <c:set var="selectedTargetChildReceptacleType" value="${actionBean.selectedTargetChildReceptacleType}" scope="request"/>
+                                                    </c:when>
+                                                    <c:when test="${stationEvent.class.simpleName.equals('PlateCherryPickEvent') and not empty positionMap and not empty plateTransfer.positionMap[0].receptacle}">
+                                                            <c:set var="selectedTargetChildReceptacleType" value="${positionMap[0].receptacle[0].receptacleType}" scope="request"/>
                                                     </c:when>
                                                 </c:choose>
 
@@ -673,8 +692,8 @@
                         </c:forEach>
                         <c:choose>
                             <%--If there are multiple source & target vessel geometries allowed and one hasn't been selected, we need to be able to select the option and re-display the page.--%>
-                            <c:when test="${not empty actionBean.manualTransferDetails.sourceVesselTypeGeometries && not empty actionBean.manualTransferDetails.targetVesselTypeGeometries && empty actionBean.selectedSourceGeometry}">
-                                <stripes:submit name="viewTransfer" id="viewTransfer" value="View Transfer" class="btn"/>
+                            <c:when test="${not empty actionBean.manualTransferDetails.sourceVesselTypeGeometries and not empty actionBean.manualTransferDetails.targetVesselTypeGeometries and empty actionBean.selectedSourceGeometry}">
+                                <stripes:submit name="viewTransfer" id="viewTransfer" value="View Transfer" class="btn" style="display:none;"/>
                             </c:when>
                             <c:otherwise>
 
