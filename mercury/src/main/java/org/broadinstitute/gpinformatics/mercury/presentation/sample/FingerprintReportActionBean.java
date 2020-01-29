@@ -8,7 +8,6 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Triple;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -17,7 +16,6 @@ import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.StreamCreated
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.SnpListDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
-import org.broadinstitute.gpinformatics.mercury.control.run.ConcordanceCalculator;
 import org.broadinstitute.gpinformatics.mercury.control.run.FingerprintEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FpGenotype;
@@ -31,16 +29,12 @@ import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 
 @UrlBinding(value = FingerprintReportActionBean.ACTIONBEAN_URL_BININDING)
@@ -59,9 +53,6 @@ public class FingerprintReportActionBean extends CoreActionBean {
     private FingerprintEjb fingerprintEjb;
 
     @Inject
-    private ConcordanceCalculator concordanceCalculator;
-
-    @Inject
     private SnpListDao snpListDao;
 
 
@@ -71,8 +62,6 @@ public class FingerprintReportActionBean extends CoreActionBean {
     private boolean showLayout = false;
     private List<Fingerprint> fingerprints = new ArrayList<>();
     private Map<String, MercurySample> mapSmidToMercurySample = new HashMap<>();
-
-
     private Map<Fingerprint, String> lodScoreMap = new HashMap<>();
 
 
@@ -107,6 +96,7 @@ public class FingerprintReportActionBean extends CoreActionBean {
                 showLayout = true;
             }
         }
+
         return new ForwardResolution(VIEW_PAGE);
     }
 
@@ -158,7 +148,7 @@ public class FingerprintReportActionBean extends CoreActionBean {
         fingerprints = fingerprintEjb.findFingerprints(mapSmidToMercurySample);
         fingerprints.sort(new Fingerprint.OrderFpPtidRootSamp());
 
-        lodScoreMap = findLodScore(fingerprints);
+        lodScoreMap = fingerprintEjb.findLodScore(fingerprints);
     }
 
     /**
@@ -223,74 +213,10 @@ public class FingerprintReportActionBean extends CoreActionBean {
         return SpreadsheetCreator.createSpreadsheet(sheets);
     }
 
-    /**
-     * Calculate lod score using oldest fluidigm fingerprint if available
-     *
-     * @param fingerprints used to determine anchor fp and compare against to find lod score
-     * @return map of fingerprints and their lod scores "N/A" if fail, "Anchor FP" if oldest fluidigm fingerprint(general array if no fluidigm),
-     * calculated lod score compared to Anchor FP
-     */
-    private Map<Fingerprint, String> findLodScore(List<Fingerprint> fingerprints) {
-        Map<Fingerprint, String> lodScoreMap = new HashMap<>();
-        List<Fingerprint> expected = new ArrayList<>();
-        List<Fingerprint> observed = new ArrayList<>();
-        String lodScoreStr;
-
-        for (Fingerprint fingerprint : fingerprints) {
-            Optional<Fingerprint> oldFluidigmFp = fingerprints.stream()
-                    .filter(fp -> fp.getMercurySample().getSampleData().getPatientId()
-                            .equals(fingerprint.getMercurySample().getSampleData().getPatientId()))
-                    .filter(fp -> fp.getPlatform() == Fingerprint.Platform.FLUIDIGM
-                                  && fp.getDisposition() == Fingerprint.Disposition.PASS)
-                    .min(Comparator.comparing(Fingerprint::getDateGenerated));
-
-            if (!oldFluidigmFp.isPresent()) {
-                oldFluidigmFp = fingerprints.stream()
-                        .filter(fp -> fp.getMercurySample().getSampleData().getPatientId()
-                                .equals(fingerprint.getMercurySample().getSampleData().getPatientId()))
-                        .filter(fp -> fp.getPlatform() == Fingerprint.Platform.GENERAL_ARRAY
-                                      && fp.getDisposition() == Fingerprint.Disposition.PASS)
-                        .min(Comparator.comparing(Fingerprint::getDateGenerated));
-            }
-
-            if (oldFluidigmFp.isPresent() && oldFluidigmFp.get().getMercurySample().getSampleKey()
-                    .equals(fingerprint.getMercurySample().getSampleKey())
-                && fingerprint.getDisposition() == Fingerprint.Disposition.PASS) {
-                lodScoreStr = "Anchor FP";
-                lodScoreMap.put(fingerprint, lodScoreStr);
-            } else if (oldFluidigmFp.isPresent() && oldFluidigmFp.get().getGender() != null
-                       && oldFluidigmFp.get().getDisposition() == Fingerprint.Disposition.PASS
-                       && fingerprint.getDisposition() == Fingerprint.Disposition.PASS
-                       && fingerprint.getGender() != null) {
-                expected.add(fingerprint);
-                observed.add(oldFluidigmFp.get());
-            } else {
-                lodScoreStr = "N/A";
-                lodScoreMap.put(fingerprint, lodScoreStr);
-            }
-        }
-
-        DecimalFormat df = new DecimalFormat("##.####");
-        df.setRoundingMode(RoundingMode.HALF_UP);
-
-        List<Triple<String, String, Double>> scores = concordanceCalculator
-                .calculateLodScores(expected, observed, ConcordanceCalculator.Comparison.ONE_TO_ONE);
-
-        for (Fingerprint fingerprint : fingerprints) {
-            for (Triple<String, String, Double> triple : scores) {
-                if (fingerprint.getMercurySample().getSampleKey().equals(triple.getLeft())) {
-                    lodScoreMap.put(fingerprint, df.format(triple.getRight()));
-                }
-            }
-        }
-        return lodScoreMap;
-    }
-
 
     public String formatDate(Date date) {
         return DateUtils.getDate(date);
     }
-
 
     public String getSampleId() {
         return sampleId;

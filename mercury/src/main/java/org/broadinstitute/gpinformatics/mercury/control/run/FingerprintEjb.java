@@ -38,11 +38,13 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -59,6 +61,9 @@ public class FingerprintEjb {
 
     @Inject
     private SampleDataFetcher sampleDataFetcher;
+
+    @Inject
+    private ConcordanceCalculator concordanceCalculator;
 
     /**
      * Builds a pairwise matrix to display calculated lod scores for each combination of samples
@@ -235,5 +240,69 @@ public class FingerprintEjb {
         }
         return mapSmidToMercurySample;
     }
+
+    /**
+     * Calculate lod score using oldest fluidigm fingerprint if available
+     *
+     * @param fingerprints used to determine anchor fp and compare against to find lod score
+     * @return map of fingerprints and their lod scores "N/A" if fail, "Anchor FP" if oldest fluidigm fingerprint(general array if no fluidigm),
+     * calculated lod score compared to Anchor FP
+     */
+    public Map<Fingerprint, String> findLodScore(List<Fingerprint> fingerprints) {
+        Map<Fingerprint, String> lodScoreMap = new HashMap<>();
+        List<Fingerprint> expected = new ArrayList<>();
+        List<Fingerprint> observed = new ArrayList<>();
+        String lodScoreStr;
+
+        for (Fingerprint fingerprint : fingerprints) {
+            Optional<Fingerprint> oldFluidigmFp = fingerprints.stream()
+                    .filter(fp -> fp.getMercurySample().getSampleData().getPatientId()
+                            .equals(fingerprint.getMercurySample().getSampleData().getPatientId()))
+                    .filter(fp -> fp.getPlatform() == Fingerprint.Platform.FLUIDIGM
+                                  && fp.getDisposition() == Fingerprint.Disposition.PASS)
+                    .min(Comparator.comparing(Fingerprint::getDateGenerated));
+
+            if (!oldFluidigmFp.isPresent()) {
+                oldFluidigmFp = fingerprints.stream()
+                        .filter(fp -> fp.getMercurySample().getSampleData().getPatientId()
+                                .equals(fingerprint.getMercurySample().getSampleData().getPatientId()))
+                        .filter(fp -> fp.getPlatform() == Fingerprint.Platform.GENERAL_ARRAY
+                                      && fp.getDisposition() == Fingerprint.Disposition.PASS)
+                        .min(Comparator.comparing(Fingerprint::getDateGenerated));
+            }
+
+            if (oldFluidigmFp.isPresent() && oldFluidigmFp.get().getMercurySample().getSampleKey()
+                    .equals(fingerprint.getMercurySample().getSampleKey())
+                && fingerprint.getDisposition() == Fingerprint.Disposition.PASS) {
+                lodScoreStr = "Anchor FP";
+                lodScoreMap.put(fingerprint, lodScoreStr);
+            } else if (oldFluidigmFp.isPresent() && oldFluidigmFp.get().getGender() != null
+                       && oldFluidigmFp.get().getDisposition() == Fingerprint.Disposition.PASS
+                       && fingerprint.getDisposition() == Fingerprint.Disposition.PASS
+                       && fingerprint.getGender() != null) {
+                expected.add(fingerprint);
+                observed.add(oldFluidigmFp.get());
+            } else {
+                lodScoreStr = "N/A";
+                lodScoreMap.put(fingerprint, lodScoreStr);
+            }
+        }
+
+        DecimalFormat df = new DecimalFormat("##.####");
+        df.setRoundingMode(RoundingMode.HALF_UP);
+
+        List<Triple<String, String, Double>> scores = concordanceCalculator
+                .calculateLodScores(expected, observed, ConcordanceCalculator.Comparison.ONE_TO_ONE);
+
+        for (Fingerprint fingerprint : fingerprints) {
+            for (Triple<String, String, Double> triple : scores) {
+                if (fingerprint.getMercurySample().getSampleKey().equals(triple.getLeft())) {
+                    lodScoreMap.put(fingerprint, df.format(triple.getRight()));
+                }
+            }
+        }
+        return lodScoreMap;
+    }
+
 
 }

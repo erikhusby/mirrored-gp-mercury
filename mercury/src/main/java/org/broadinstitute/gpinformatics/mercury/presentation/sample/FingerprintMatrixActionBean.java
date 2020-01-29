@@ -19,7 +19,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -46,7 +45,6 @@ public class FingerprintMatrixActionBean extends CoreActionBean {
     private String sampleId;
     private String participantId;
     private List<Fingerprint> fingerprints = new ArrayList<>();
-    private Map<String, String> mapLodScoreToFingerprint = new HashMap<>();
     private Set<Fingerprint.Platform> platforms;
     private Map<String, MercurySample> mapSmidToMercurySample = new HashMap<>();
 
@@ -147,10 +145,6 @@ public class FingerprintMatrixActionBean extends CoreActionBean {
         return fingerprints;
     }
 
-    public Map<String, String> getMapLodScoreToFingerprint() {
-        return mapLodScoreToFingerprint;
-    }
-
     public Set<Fingerprint.Platform> getPlatforms() {
         return platforms;
     }
@@ -158,4 +152,6 @@ public class FingerprintMatrixActionBean extends CoreActionBean {
     public void setPlatforms(Set<Fingerprint.Platform> platforms) {
         this.platforms = platforms;
     }
+
 }
+
