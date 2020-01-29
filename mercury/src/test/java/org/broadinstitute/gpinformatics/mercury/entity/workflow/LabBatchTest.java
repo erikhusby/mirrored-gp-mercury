@@ -2,10 +2,12 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -56,7 +58,7 @@ public class LabBatchTest {
         List<ProductOrderSample> productOrderSamples = new ArrayList<>();
         ProductOrder productOrder = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, workflow, false, "agg type"),
+                40, null, null, true, workflow, false, new PipelineDataType(Aggregation.DATA_TYPE_EXOME, true)),
                 new ResearchProject(101L, "Test RP", "Test synopsis",
                         false, ResearchProject.RegulatoryDesignation.RESEARCH_ONLY));
         productOrder.setJiraTicketKey(pdoBusinessName);

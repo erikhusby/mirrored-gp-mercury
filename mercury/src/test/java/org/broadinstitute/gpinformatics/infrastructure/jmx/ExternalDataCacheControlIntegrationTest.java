@@ -47,7 +47,7 @@ public class ExternalDataCacheControlIntegrationTest extends Arquillian {
     @Test
     public void testThatCacheRefreshErrorIsLogged() {
         cacheControl.registerCache(new ExplodingCache());
-
+        cacheControl.invalidateCache();
         doLogMessageAssertionsForError();
     }
 

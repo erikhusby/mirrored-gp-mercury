@@ -110,6 +110,7 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         Eppendorf384("Eppendorf384", VesselGeometry.G24x16),
         FilterPlate96("FilterPlate96", VesselGeometry.G12x8),
         Fluidigm48_48AccessArrayIFC("Fluidigm48.48AccessArrayIFC", VesselGeometry.FLUIDIGM_48_48),
+        Fluidigm96_96AccessArrayIFC("Fluidigm96.96AccessArrayIFC", VesselGeometry.FLUIDIGM_96_96),
         UniqueMolecularIdentifierPlate96("UniqueMolecularIdentifierPlate96", VesselGeometry.G12x8),
         IndexedAdapterPlate96("IndexedAdapterPlate96", VesselGeometry.G12x8),
         IndexedAdapterPlate384("IndexedAdapterPlate384", VesselGeometry.G24x16),

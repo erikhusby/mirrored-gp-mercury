@@ -58,7 +58,7 @@ public class ProductEtl extends GenericEntityEtl<Product, Product> {
                 format(entity.getWorkflowName()),
                 format(entity.getProductFamily() != null ? entity.getProductFamily().getName() : null),
                 format(entity.getPrimaryPriceItem() != null ? entity.getPrimaryPriceItem().getPriceItemId() : null),
-                format(entity.getAggregationDataType()),
+                format(entity.getPipelineDataTypeString()),
                 format(entity.isExternalOnlyProduct()),
                 format(entity.isSavedInSAP())
         );

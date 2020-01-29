@@ -8,10 +8,14 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Represents additional 'data' that a message may need to convey
@@ -73,6 +77,16 @@ public class LabEventMetadata {
     private String value;
 
     /**
+     * Find the events associated <br />
+     * (Mercury never accesses from this direction - this direction put into place for DW ETL purpose only
+     */
+    @ManyToMany
+    @JoinTable(name = "le_lab_event_metadatas"
+            , joinColumns = {@JoinColumn(name = "LAB_EVENT_METADATAS")}
+            , inverseJoinColumns = {@JoinColumn(name = "LAB_EVENT")})
+    private Set<LabEvent> labEvents;
+
+    /**
      * For JPA
      */
     public LabEventMetadata() {
@@ -102,5 +116,12 @@ public class LabEventMetadata {
 
     public void setValue(String value) {
         this.value = value;
+    }
+
+    /**
+     * Typically 1:1
+     */
+    public Set<LabEvent> getLabEvents() {
+        return labEvents;
     }
 }

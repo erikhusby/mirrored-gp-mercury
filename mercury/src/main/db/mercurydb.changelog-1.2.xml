@@ -2447,6 +2447,35 @@
                              constraintName="u_quarantined" schemaName="mercury" />
     </changeSet>
 
+    <changeSet id="GPLIM-5521-10-ADDCOLUMN" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="PIPELINE_DATA_TYPE" schemaName="MERCURY" tableName="sample_instance_entity"/>
+            </not>
+        </preConditions>
+        <addColumn schemaName="MERCURY" tableName="sample_instance_entity">
+            <column name="PIPELINE_DATA_TYPE" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-5521-10-ADDCOLUMN_AUD" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="MERCURY" columnName="PIPELINE_DATA_TYPE"
+                              tableName="SAMPLE_INSTANCE_ENTITY_AUD"/>
+            </not>
+        </preConditions>
+        <addColumn schemaName="mercury" tableName="sample_instance_entity_aud">
+            <column name="PIPELINE_DATA_TYPE" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+<!--    <changeSet id="GPLIM-5521-05-ADDFK" author="dryan">-->
+<!--        <addForeignKeyConstraint constraintName="FK_SAMPINST_ENT_DATA_TYPE"-->
+<!--                                 baseTableSchemaName="MERCURY" baseTableName="sample_instance_entity"-->
+<!--                                 baseColumnNames="PIPELINE_DATA_TYPE"-->
+<!--                                 referencedTableSchemaName="ATHENA" referencedTableName="PIPELINE_DATA_TYPE"-->
+<!--                                 referencedColumnNames="PIPELINE_DATA_TYPE_ID"/>-->
+<!--    </changeSet>-->
+
     <changeSet id="GPLIM-6643_1" author="jowalsh">
         <createIndex indexName="IX_FSM_AUD" tableName="FINITE_STATE_MACHINE_AUD" schemaName="MERCURY">
             <column name="FINITE_STATE_MACHINE_ID"/>
@@ -2610,24 +2639,6 @@
         </createIndex>
     </changeSet>
 
-    <changeSet author="thompson" id="GPLIM-6080-1">
-        <addColumn schemaName="mercury" tableName="mercury_control">
-            <column name="CONCORDANCE_SAMPLE_ID" type="number(19,0)"/>
-        </addColumn>
-    </changeSet>
-    <changeSet author="thompson" id="GPLIM-6080-2">
-        <addColumn schemaName="mercury" tableName="mercury_control_aud">
-            <column name="CONCORDANCE_SAMPLE_ID" type="number(19,0)"/>
-        </addColumn>
-    </changeSet>
-    <changeSet author="thompson" id="GPLIM-6080-3">
-        <addForeignKeyConstraint constraintName="FK_MC_MERCURY_SAMPLE"
-                baseTableSchemaName="mercury" baseTableName="mercury_control" baseColumnNames="CONCORDANCE_SAMPLE_ID"
-                referencedTableSchemaName="mercury"
-		referencedTableName="mercury_sample"
-		referencedColumnNames="mercury_sample_id"/>
-    </changeSet>
-
     <changeSet id="GPLIM-6695-001" author="epolk">
         <createIndex indexName="ix_lab_vessel_plate" tableName="lab_vessel" schemaName="mercury">
             <column name="plate"/>
@@ -2642,7 +2653,22 @@
         <createIndex indexName="ix_vessl_xfer_anc_target" tableName="vessel_transfer" schemaName="mercury">
             <column name="ancillary_target_vessel"/>
         </createIndex>
+    </changeSet>
 
+    <changeSet author="thompson" id="GPLIM-6080-1">
+        <addColumn schemaName="mercury" tableName="mercury_control">
+            <column name="CONCORDANCE_SAMPLE_ID" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-6080-2">
+        <addColumn schemaName="mercury" tableName="mercury_control_aud">
+            <column name="CONCORDANCE_SAMPLE_ID" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-6080-3">
+        <addForeignKeyConstraint constraintName="FK_MC_MERCURY_SAMPLE"
+                baseTableSchemaName="mercury" baseTableName="mercury_control" baseColumnNames="CONCORDANCE_SAMPLE_ID"
+                referencedTableSchemaName="mercury" referencedTableName="mercury_sample" referencedColumnNames="mercury_sample_id"/>
     </changeSet>
 
 </databaseChangeLog>

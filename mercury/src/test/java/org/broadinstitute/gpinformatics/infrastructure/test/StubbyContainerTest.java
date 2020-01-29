@@ -21,7 +21,6 @@ public class StubbyContainerTest extends Arquillian {
     public static WebArchive buildMercuryWar() {
         WebArchive stubbyArchive = DeploymentBuilder.buildMercuryWarWithAlternatives(
                 "org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub",
-                "org.broadinstitute.gpinformatics.infrastructure.bettalims.BettaLimsConnectorStub",
                 "org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcherStub",
                 "org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortSearchServiceStub",
                 "org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleReceiptServiceStub",

@@ -4,7 +4,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemOfRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -27,7 +27,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -47,7 +46,7 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
         super.setUp();
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
 
         final ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         runDate = new Date();

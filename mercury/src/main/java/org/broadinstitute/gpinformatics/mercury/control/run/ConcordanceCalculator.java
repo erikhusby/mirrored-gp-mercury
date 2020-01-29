@@ -49,13 +49,21 @@ public class ConcordanceCalculator {
         }
     }
 
+    /**
+     * For a list of observed fingerprints and a list of expected fingerprints, calculates LOD scores, one-to-one
+     * or a matrix.
+     * @param observedFps
+     * @param expectedFps
+     * @param comparison
+     * @return list of triples of observed sample ID, expected sample ID, LOD score
+     */
     public List<Triple<String, String, Double>> calculateLodScores(List<Fingerprint> observedFps,
             List<Fingerprint> expectedFps, Comparison comparison) {
+        // Spawn a separate process, so temp VCF files get deleted.
         List<String> commands = new ArrayList<>();
         commands.add(System.getProperty("java.home") + File.separator + "bin" + File.separator + "java");
 //        commands.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5070");
         commands.add("-cp");
-        // todo jmt decide a permanent location for this. \\neon\prodinfo_prodapps /prodinfo/prodapps ?
         commands.add(convertFilePaths(JAR_FILE));
         commands.add("org.broadinstitute.gpinformatics.infrastructure.picard.LodScoreCalculator");
 
@@ -77,6 +85,11 @@ public class ConcordanceCalculator {
         }
     }
 
+    /**
+     * Read JSON array of LOD scores.
+     * @param jsonTokener
+     * @return list of triples of observed sample ID, expected sample ID, LOD score
+     */
     private List<Triple<String, String, Double>> readJson(JSONTokener jsonTokener) {
         List<Triple<String, String, Double>> lodScores = new ArrayList<>();
         try {
@@ -93,6 +106,9 @@ public class ConcordanceCalculator {
         return lodScores;
     }
 
+    /**
+     * Write JSON of arrays of observed fingerprints and expected fingerprints.
+     */
     private void writeJson(Writer writer, List<Fingerprint> observedFps, List<Fingerprint> expectedFps,
             Comparison comparison) {
         try {
@@ -122,6 +138,9 @@ public class ConcordanceCalculator {
         }
     }
 
+    /**
+     * Write JSON for a fingerprint and its genotypes.
+     */
     private void writeFingerprint(JSONWriter jsonWriter, Fingerprint fingerprint) throws JSONException {
         jsonWriter.object();
         jsonWriter.key("sampleId").value(fingerprint.getMercurySample().getSampleKey());
@@ -165,10 +184,6 @@ public class ConcordanceCalculator {
         // todo jmt most recent passed
         Fingerprint controlFp = concordanceMercurySample.getFingerprints().iterator().next();
         return calculateLodScore(fingerprint, controlFp);
-    }
-
-    // todo jmt remove
-    public void done() {
     }
 
     /**

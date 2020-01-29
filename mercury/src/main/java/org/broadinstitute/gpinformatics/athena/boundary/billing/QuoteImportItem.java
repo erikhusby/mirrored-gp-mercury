@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerExceptio
 import org.broadinstitute.sap.entity.quote.SapQuote;
 
 import javax.annotation.Nonnull;
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.MessageFormat;
 import java.util.Collection;
@@ -83,7 +84,7 @@ public class QuoteImportItem {
     }
 
     public Collection<LedgerEntry> getBillingCredits(){
-        return ledgerItems.stream().filter(ledgerEntry -> ledgerEntry.getQuantity() < 0).collect(Collectors.toSet());
+        return ledgerItems.stream().filter(ledgerEntry -> ledgerEntry.getQuantity().compareTo(BigDecimal.ZERO) < 0).collect(Collectors.toSet());
     }
 
     public String getSapItems() {
@@ -92,10 +93,10 @@ public class QuoteImportItem {
 
 
     public String getChargedAmountForPdo(@Nonnull String pdoBusinessKey) {
-        double quantity = 0;
+        BigDecimal quantity = BigDecimal.ZERO;
         for (LedgerEntry ledgerItem : ledgerItems) {
             if (pdoBusinessKey.equals(ledgerItem.getProductOrderSample().getProductOrder().getBusinessKey())) {
-                quantity += ledgerItem.getQuantity();
+                quantity = quantity.add(ledgerItem.getQuantity());
             }
         }
         return new DecimalFormat(PDO_QUANTITY_FORMAT).format(quantity);
@@ -135,19 +136,19 @@ public class QuoteImportItem {
         return priceItem;
     }
 
-    public double getQuantity() {
-        double quantity = 0;
+    public BigDecimal getQuantity() {
+        BigDecimal quantity = BigDecimal.ZERO;
         for (LedgerEntry ledgerItem : ledgerItems) {
-            quantity += ledgerItem.getQuantity();
+            quantity = quantity.add(ledgerItem.getQuantity());
         }
         return quantity;
     }
 
-    public double getQuantityForSAP() {
-        double quantity = 0;
+    public BigDecimal getQuantityForSAP() {
+        BigDecimal quantity = BigDecimal.ZERO;
         for (LedgerEntry ledgerItem : ledgerItems) {
             if (StringUtils.isBlank(ledgerItem.getSapDeliveryDocumentId())) {
-                quantity += ledgerItem.getQuantity();
+                quantity = quantity.add(ledgerItem.getQuantity());
             }
         }
         return quantity;
@@ -376,7 +377,7 @@ public class QuoteImportItem {
     }
 
     public boolean isBillingCredit() {
-        return getQuantity() < 0;
+        return getQuantity().compareTo(BigDecimal.ZERO) < 0;
     }
 
     public SapQuote getSapQuote() {

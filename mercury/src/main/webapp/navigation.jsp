@@ -189,6 +189,11 @@
                                           event="view">Single Cell Metadata Upload</stripes:link>
                         </li>
                         <li>
+                            <stripes:link id="uploadFingerprintingRun"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.UploadFingerprintingRunActionBean"
+                                          event="view">Upload Fingerprinting Run</stripes:link>
+                        </li>
+                        <li>
                             <stripes:link id="fingerprintReport"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.FingerprintReportActionBean"
                                           event="view">Fingerprint Report</stripes:link>

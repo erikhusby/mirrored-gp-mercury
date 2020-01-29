@@ -62,6 +62,7 @@ import static java.util.Arrays.asList;
 import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell;
 import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell;
 import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FlowcellType.HiSeqFlowcell;
+import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FlowcellType.ISeqFlowcell;
 import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FlowcellType.MiSeqFlowcell;
 
 /**
@@ -410,9 +411,9 @@ public class LabBatchEjbStandardTest extends Arquillian {
         // Iterates on the loading tube barcodes to be used in the test.
         Iterator<String> barcodeIterator = mapBarcodeToTube.keySet().iterator();
         // Defines the number of tubes used for each test run, and the number of lanes to be allocated for each tube.
-        int[][] numberLanes = {{3}, {5, 17}};
+        int[][] numberLanes = {{3}, {5, 17}, {2}};
         // Defines the flowcell type to be used on each test run.
-        IlluminaFlowcell.FlowcellType[] flowcellTypes = {MiSeqFlowcell, HiSeq4000Flowcell};
+        IlluminaFlowcell.FlowcellType[] flowcellTypes = {MiSeqFlowcell, HiSeq4000Flowcell, ISeqFlowcell};
 
         for (int runIdx = 0; runIdx < numberLanes.length; ++runIdx) {
 
