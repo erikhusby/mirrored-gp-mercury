@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService.Option;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -560,7 +561,8 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         int ledgerCount = 4;
 
-        IntStream.range(0,ledgerCount).forEach(value -> {
+        for(int value=0;value<ledgerCount;value++) {
+
             addLedgerItems(productOrder, BigDecimal.valueOf(1));
 
             SAPOrder newOrder =
@@ -681,8 +683,9 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         int newLedgerCount = 4;
 
-        IntStream.range(0,newLedgerCount).forEach(value -> {
-            addLedgerItems(productOrder, BigDecimal.valueOf(1));
+            for(int value=0;value<ledgerCount;value++) {
+
+                addLedgerItems(productOrder, BigDecimal.valueOf(1));
 
             SAPOrder newOrder =
                     integrationService.initializeSAPOrder(sapQuote, productOrder, Option.create(Option.Type.CREATING));
