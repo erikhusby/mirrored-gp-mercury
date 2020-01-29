@@ -84,6 +84,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.CrspPicoEntityBuil
 import org.broadinstitute.gpinformatics.mercury.test.builders.CrspRiboPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.FPEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.FingerprintingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq4000FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
@@ -1848,6 +1849,44 @@ public class LabEventTest extends BaseEventTest {
                 InfiniumJaxbBuilder.IncludeMethylation.TRUE);
         Set<SampleInstanceV2> samples = infiniumEntityBuilder.getHybChips().get(0).getSampleInstancesV2();
         Assert.assertEquals(samples.size(), 24, "Wrong number of sample instances");
+    }
+
+    /**
+     * Build object graph for fingerprinting messages
+     */
+    @Test(groups = {TestGroups.DATABASE_FREE})
+    public void testFingerprinting() {
+        expectedRouting = SystemOfRecord.System.MERCURY;
+        int numSamples = NUM_POSITIONS_IN_RACK - 2;
+        ProductOrder productOrder = ProductOrderTestFactory.buildFingerprintingProductOrder(numSamples);
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+
+        LabBatch workflowBatch = new LabBatch("Fingerprinting Batch",
+                new HashSet<>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflow(Workflow.FINGERPRINTING);
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
+
+        TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube, workflowBatch);
+
+        Map<String, LabVessel> mapBarcodeToDaughterTube = new HashMap<>();
+        for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(barcodedTube.getLabel(), barcodedTube);
+        }
+
+        String fingerprintingInputPlate = "FingerprintingInputPlate";
+        PlateTransferEventType fingerprintingPlateSetup = getBettaLimsMessageTestFactory().buildRackToPlate(
+                "FingerprintingPlateSetupForwardBsp", "FingerprintingRack",
+                new ArrayList<>(mapBarcodeToDaughterTube.keySet()), fingerprintingInputPlate);
+        LabEvent fingerprintingPlateSetupEvent = getLabEventFactory().buildFromBettaLims(
+                fingerprintingPlateSetup, mapBarcodeToDaughterTube);
+        getLabEventHandler().processEvent(fingerprintingPlateSetupEvent);
+        StaticPlate fingerprintingPlate = (StaticPlate) fingerprintingPlateSetupEvent.getTargetLabVessels().iterator().next();
+
+        FingerprintingEntityBuilder fingerprintingEntityBuilder = runFingerprintingProcess(
+                fingerprintingPlate, "Fingerprinting");
+        Set<SampleInstanceV2> samples = fingerprintingEntityBuilder.getIfcChip().getSampleInstancesV2();
+        Assert.assertEquals(samples.size(), 96, "Wrong number of sample instances");
     }
 
     /**

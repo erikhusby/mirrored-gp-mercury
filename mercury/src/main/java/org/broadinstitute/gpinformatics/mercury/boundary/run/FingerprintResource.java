@@ -314,39 +314,6 @@ public class FingerprintResource {
             }
         }
 
-        // todo jmt check concordance
-/*
-        List<DownloadGenotypes.GapGetGenotypesResult> gapResults = new ArrayList<>();
-        for (FingerprintCallsBean fingerprintCallsBean : fingerprintBean.getCalls()) {
-            gapResults.add(new DownloadGenotypes.GapGetGenotypesResult(fingerprintBean.getAliquotLsid(),
-                    sampleKey, fingerprintCallsBean.getRsid(), fingerprintCallsBean.getGenotype(),
-                    fingerprintBean.getPlatform()));
-        }
-        HaplotypeMap haplotypes = new HaplotypeMap(new File(
-                "\\\\iodine\\seq_references\\Homo_sapiens_assembly19\\v1\\Homo_sapiens_assembly19.haplotype_database.txt"));
-        DownloadGenotypes downloadGenotypes = new DownloadGenotypes();
-        List<DownloadGenotypes.SnpGenotype> snpGenotypes = downloadGenotypes.getGenotypesFromGap(gapResults, haplotypes);
-        downloadGenotypes.cleanupGenotypes(snpGenotypes, haplotypes);
-        File reference = new File(
-                "\\\\iodine\\seq_references\\Homo_sapiens_assembly19\\v1\\Homo_sapiens_assembly19.fasta");
-        File fpFile;
-        try (final ReferenceSequenceFile ref = ReferenceSequenceFileFactory.getReferenceSequenceFile(reference)) {
-            SequenceUtil.assertSequenceDictionariesEqual(ref.getSequenceDictionary(),
-                    haplotypes.getHeader().getSequenceDictionary());
-            SortedSet<VariantContext> variantContexts = downloadGenotypes.makeVariantContexts(snpGenotypes, sampleKey,
-                    haplotypes, ref);
-            fpFile = File.createTempFile("Fingerprint", ".vcf");
-            downloadGenotypes.writeVcf(variantContexts, fpFile, reference, ref.getSequenceDictionary(), sampleKey);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        picard.fingerprint.Fingerprint observedFp = new picard.fingerprint.Fingerprint(sampleKey, fpFile, "");
-        picard.fingerprint.Fingerprint expectedFp = new picard.fingerprint.Fingerprint(sampleKey, fpFile, "");
-        MatchResults matchResults = FingerprintChecker.calculateMatchResults(observedFp, expectedFp);
-        matchResults.getLOD();
-*/
-
         mercurySampleDao.flush();
         return "Stored fingerprint";
     }

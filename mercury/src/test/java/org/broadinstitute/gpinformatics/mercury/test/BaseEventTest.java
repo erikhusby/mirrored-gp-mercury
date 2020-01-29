@@ -74,6 +74,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ArrayPlatingEntity
 import org.broadinstitute.gpinformatics.mercury.test.builders.CrspRiboPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.FPEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.FingerprintingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq4000FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
@@ -860,6 +861,11 @@ public class BaseEventTest {
                                                                 int numSamples, String prefix) {
         return new StoolTNAEntityBuilder(sourcePlate, numSamples, bettaLimsMessageTestFactory,
                 labEventFactory, getLabEventHandler(), prefix).invoke();
+    }
+
+    public FingerprintingEntityBuilder runFingerprintingProcess(StaticPlate sourcePlate, String barcodeSuffix) {
+        return new FingerprintingEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                sourcePlate, barcodeSuffix).invoke();
     }
 
     /**
