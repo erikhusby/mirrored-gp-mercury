@@ -1185,6 +1185,84 @@
         </sql>
     </changeSet>
 
+    <changeSet id="GPLIM-5521-01-TABLE" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="PIPELINE_DATA_TYPE" schemaName="ATHENA"/>
+            </not>
+        </preConditions>
+        <createTable tableName="PIPELINE_DATA_TYPE" schemaName="ATHENA">
+
+            <!--picard.read_group_index.data_type is varchar2(50)-->
+            <column name="PIPELINE_DATA_TYPE_ID" type="number(19,0)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="NAME" type="varchar2(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ACTIVE" type="number(1,0)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-5521-02-AUD" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="PIPELINE_DATA_TYPE_AUD" schemaName="ATHENA"/>
+            </not>
+        </preConditions>
+        <createTable tableName="PIPELINE_DATA_TYPE_AUD" schemaName="ATHENA">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)"/>
+            <column name="PIPELINE_DATA_TYPE_ID" type="number(19,0)"/>
+            <column name="NAME" type="varchar2(50)"/>
+            <column name="ACTIVE" type="number(1,0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="GPLIM-5521-02-AUDPK" author="dryan">
+        <addPrimaryKey constraintName="PK_PIPELINE_DT_AUD" tableName="PIPELINE_DATA_TYPE_AUD"
+                       columnNames="PIPELINE_DATA_TYPE_ID, rev" schemaName="athena"/>
+        <addForeignKeyConstraint constraintName="FK_PIPELINE_DT_AUD" baseTableSchemaName="athena"
+                                 baseTableName="PIPELINE_DATA_TYPE_AUD" baseColumnNames="rev"
+                                 referencedTableSchemaName="mercury"
+                                 referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-5521-03-ADDCOLUMN" author="dryan">
+            <preConditions onFail="MARK_RAN">
+                <not>
+                    <columnExists columnName="PIPELINE_DATA_TYPE" tableName="PRODUCT" schemaName="ATHENA"/>
+                </not>
+            </preConditions>
+            <addColumn tableName="PRODUCT" schemaName="ATHENA">
+                <column name="PIPELINE_DATA_TYPE" type="number(19,0)"/>
+            </addColumn>
+        </changeSet>
+
+        <changeSet id="GPLIM-5521-04-ADDCOLUMN_AUD" author="dryan">
+            <preConditions onFail="MARK_RAN">
+                <not>
+                    <columnExists columnName="PIPELINE_DATA_TYPE" tableName="PRODUCT_AUD" schemaName="ATHENA"/>
+                </not>
+            </preConditions>
+            <addColumn tableName="PRODUCT_AUD" schemaName="ATHENA">
+                <column name="PIPELINE_DATA_TYPE" type="number(19,0)"/>
+            </addColumn>
+        </changeSet>
+        <changeSet id="GPLIM-5521-05-ADDFK" author="dryan">
+            <addForeignKeyConstraint constraintName="FK_PRODUCT_PIPELINE_DATA_TYPE"
+                                     baseTableSchemaName="ATHENA" baseTableName="PRODUCT"
+                                     baseColumnNames="PIPELINE_DATA_TYPE"
+                                     referencedTableSchemaName="ATHENA" referencedTableName="PIPELINE_DATA_TYPE"
+                                     referencedColumnNames="PIPELINE_DATA_TYPE_ID"/>
+        </changeSet>
+        <changeSet id="GPLIM-5521-06-SEQ" author="dryan">
+            <createSequence sequenceName="SEQ_PIPELINE_DATA_TYPE" schemaName="athena" startValue="1" incrementBy="50"/>
+        </changeSet>
+        <changeSet id="GPLIM-5521-07_UNQ" author="dryan">
+            <addUniqueConstraint schemaName="athena" tableName="PIPELINE_DATA_TYPE" columnNames="NAME"
+                                 constraintName="UNQ_PIPELINE_DATA_TYPE_NAME"/>
+        </changeSet>
     <changeSet author="jowalsh" id="GPLIM-5266-1">
         <addColumn tableName="PRODUCT" schemaName="ATHENA">
             <column name="ANALYZE_UMI" type="number(1,0)" />

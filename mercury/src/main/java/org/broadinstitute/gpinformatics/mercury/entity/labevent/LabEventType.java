@@ -15,12 +15,13 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -353,7 +354,7 @@ public enum LabEventType {
     VARIOUS_TUBE_TRANSFER("VariousTubeTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP_APPLY_SM_IDS,
-            VolumeConcUpdate.BSP_AND_MERCURY,
+            VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT, RackOfTubes.RackType.values(),
                     RackOfTubes.RackType.values()).sourceVolume(true).targetVolume(true).requireSingleParticipant(true).
                     destinationMarkStockOptions(new MarkStock[]{MarkStock.ActiveStock, MarkStock.BackupStock,
@@ -2493,6 +2494,78 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
 
+    // 5' For T and B cells
+    TCR_BUCKET("TcrBucket",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    TCR_PCR_1("TcrPcr1",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    TCR_SPRI_1("TcrSpri1",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    TCR_PCR_2("TcrPcr2",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    TCR_SPRI_2("TcrSpri2",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    TCR_REGISTRATION("TcrRegistration",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+
+    BCR_BUCKET("BcrBucket",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    BCR_PCR_1("BcrPcr1",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    BCR_SPRI_1("BcrSpri1",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    BCR_PCR_2("BcrPcr2",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    BCR_SPRI_2("BcrSpri2",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    BCR_REGISTRATION("BcrRegistration",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+
+    VDJ_END_REPAIR_ABASE("VdjEndRepairABase",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    VDJ_ADAPTER_LIGATION("VdjAdapterLigation",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    VDJ_LIGATION_CLEANUP("VdjLigationCleanup",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    VDJ_INDEX_ADAPTER_PCR("VdjIndexAdapterPcr",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    VDJ_SINGLE_SIDED_CLEANUP("VdjSingleSidedCleanup",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+
 
     // Generic events that are qualified by workflow
     CENTRIFUGE("Centrifuge",
@@ -3278,6 +3351,40 @@ public enum LabEventType {
             return vesselTypeGeometry;
         }
 
+        /**
+         * Utility method used to get the VesselTypeGeometry based off the String receptacle type enum name, but only
+         * used when you don't know which enum the type is from.
+         *
+         * @param sourceVesselTypeGeometryString String representing the container/tube type (e.g. "CovarisRack" or "Matrix48SlotRack2mL")
+         * @return {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry} object representing the
+         * receptacle type requested or it will throw an exception.
+         */
+        public static VesselTypeGeometry convertGeometryFromReceptacleTypeString(
+                String sourceVesselTypeGeometryString) {
+            VesselTypeGeometry vesselTypeGeometry = null;
+            if (sourceVesselTypeGeometryString != null) {
+                vesselTypeGeometry = RackOfTubes.RackType.getByName(sourceVesselTypeGeometryString);
+
+                if (vesselTypeGeometry == null) {
+                    vesselTypeGeometry = StaticPlate.PlateType.getByAutomationName(sourceVesselTypeGeometryString);
+
+                    if (vesselTypeGeometry == null) {
+                        vesselTypeGeometry =
+                                BarcodedTube.BarcodedTubeType.getByAutomationName(sourceVesselTypeGeometryString);
+
+                        if (vesselTypeGeometry == null) {
+                            vesselTypeGeometry = PlateWell.WellType.getByAutomationName(sourceVesselTypeGeometryString);
+
+                            if (vesselTypeGeometry == null) {
+                                throw new RuntimeException("Unknown type " + sourceVesselTypeGeometryString);
+                            }
+                        }
+                    }
+                }
+            }
+            return vesselTypeGeometry;
+        }
+
         public SBSSection getSourceSection() {
             return sourceSection;
         }
@@ -3341,8 +3448,8 @@ public enum LabEventType {
             return sourceVesselTypeGeometries;
         }
 
-        public Set<String> getSourceVesselTypeGeometriesString() {
-            Set<String> vesselTypeNames = new HashSet<>();
+        public SortedSet<String> getSourceVesselTypeGeometriesString() {
+            SortedSet<String> vesselTypeNames = new TreeSet<>();
             for (VesselTypeGeometry vesselTypeGeometry: getSourceVesselTypeGeometries()) {
                 vesselTypeNames.add(vesselTypeGeometry.getDisplayName());
             }
@@ -3361,8 +3468,8 @@ public enum LabEventType {
             return targetVesselTypeGeometries;
         }
 
-        public Set<String> getTargetVesselTypeGeometriesString() {
-            Set<String> vesselTypeNames = new HashSet<>();
+        public SortedSet<String> getTargetVesselTypeGeometriesString() {
+            SortedSet<String> vesselTypeNames = new TreeSet<>();
             for (VesselTypeGeometry vesselTypeGeometry: getTargetVesselTypeGeometries()) {
                 vesselTypeNames.add(vesselTypeGeometry.getDisplayName());
             }

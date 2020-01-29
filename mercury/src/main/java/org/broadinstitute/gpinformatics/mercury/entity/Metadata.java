@@ -133,6 +133,10 @@ public class Metadata {
         return dateValue;
     }
 
+    public void setDateValue(Date dateValue) {
+        this.dateValue = dateValue;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

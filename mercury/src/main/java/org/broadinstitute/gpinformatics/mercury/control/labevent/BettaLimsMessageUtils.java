@@ -27,7 +27,8 @@ import java.util.Set;
 public class BettaLimsMessageUtils {
 
     /**
-     * Based on LabEventType, get tube barcodes for validation or routing
+     * Based on LabEventType, get tube barcodes for validation or routing <br/>
+     * For static plate, just get plate barcode
      *
      * @param plateCherryPickEvent from deck
      *
@@ -45,9 +46,7 @@ public class BettaLimsMessageUtils {
                 }
             } else {
                 for (PositionMapType positionMapType : plateCherryPickEvent.getSourcePositionMap()) {
-                    for (ReceptacleType receptacle : positionMapType.getReceptacle()) {
-                        barcodes.add(receptacle.getBarcode());
-                    }
+                    addPlateReceptacleBarcodes(barcodes, positionMapType);
                 }
             }
         }
@@ -59,9 +58,7 @@ public class BettaLimsMessageUtils {
                 }
             } else {
                 for (PositionMapType positionMapType : plateCherryPickEvent.getPositionMap()) {
-                    for (ReceptacleType receptacle : positionMapType.getReceptacle()) {
-                        barcodes.add(receptacle.getBarcode());
-                    }
+                    addPlateReceptacleBarcodes(barcodes, positionMapType);
                 }
             }
         }
@@ -69,7 +66,8 @@ public class BettaLimsMessageUtils {
     }
 
     /**
-     * Based on LabEventType, get plate barcodes for validation or routing
+     * Based on LabEventType, get tube barcodes for validation or routing <br/>
+     * For static plate, just get plate barcode
      *
      * @param plateEventType from deck
      *
@@ -82,9 +80,7 @@ public class BettaLimsMessageUtils {
             if (plateEventType.getPositionMap() == null) {
                 barcodes.add(plateEventType.getPlate().getBarcode());
             } else {
-                for (ReceptacleType position : plateEventType.getPositionMap().getReceptacle()) {
-                    barcodes.add(position.getBarcode());
-                }
+                addPlateReceptacleBarcodes(barcodes, plateEventType.getPositionMap());
             }
             break;
         }
@@ -119,7 +115,8 @@ public class BettaLimsMessageUtils {
     }
 
     /**
-     * Based on LabEventType, get plate barcodes for validation or routing
+     * Based on LabEventType, get tube barcodes for validation or routing <br/>
+     * For static plate, just get plate barcode
      *
      * @param plateTransferEventType from deck
      *
@@ -132,21 +129,14 @@ public class BettaLimsMessageUtils {
             if (plateTransferEventType.getSourcePositionMap() == null) {
                 barcodes.add(plateTransferEventType.getSourcePlate().getBarcode());
             } else {
-                for (ReceptacleType receptacleType : plateTransferEventType.getSourcePositionMap()
-                        .getReceptacle()) {
-                    barcodes.add(receptacleType.getBarcode());
-                }
+                addPlateReceptacleBarcodes(barcodes, plateTransferEventType.getSourcePositionMap());
             }
             break;
         case TARGET:
-
             if (plateTransferEventType.getPositionMap() == null) {
                 barcodes.add(plateTransferEventType.getPlate().getBarcode());
             } else {
-                for (ReceptacleType targetReceptacle : plateTransferEventType.getPositionMap()
-                        .getReceptacle()) {
-                    barcodes.add(targetReceptacle.getBarcode());
-                }
+                addPlateReceptacleBarcodes(barcodes, plateTransferEventType.getPositionMap());
             }
             break;
         }
@@ -212,6 +202,23 @@ public class BettaLimsMessageUtils {
             barcodes.add(receptacleTransferEventType.getReceptacle().getBarcode());
         }
         return barcodes;
+    }
+
+    /**
+     * Pulls tube barcodes out of position maps. If static plate, use plate barcode
+     *
+     * @param barcodes    Append barcodes to this set
+     * @param positionMap tubes (use barcodes) or wells (ignore null barcodes)
+     */
+    private static void addPlateReceptacleBarcodes(Set<String> barcodes, PositionMapType positionMap) {
+        for (ReceptacleType receptacleType : positionMap.getReceptacle()) {
+            if (receptacleType.getBarcode() == null) {
+                // Wells don't have barcodes in messages - use the plate
+                barcodes.add(positionMap.getBarcode());
+            } else {
+                barcodes.add(receptacleType.getBarcode());
+            }
+        }
     }
 
 }

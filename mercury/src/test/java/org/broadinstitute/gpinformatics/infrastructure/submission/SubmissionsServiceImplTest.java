@@ -44,23 +44,29 @@ public class SubmissionsServiceImplTest {
 
     private static int sequenceNumber = 1;
 
-    public static final String BIO_PROJECT_ACCESSION_ID = "PRJNA325068";
-    public static final String SAMPLE1_ID = "ALCH-ABN1-NB1-A-1-0-D-A488-36";
+    public static final String ACCESSION_ID_SAMPLE1 = "PRJNA41443";
+    public static final String SAMPLE1_ID = "TCGA-77-6843-10A-01D-1945-08";
+    public static final String broadProjectSample1 = "RP-1572";
+    public static final String bamVersionSample1 ="2";
+
+    public static final String ACCESSION_ID_SAMPLE2 = "PRJNA325068";
     private static final String SAMPLE2_ID = "ALCH-ABNA-TTP1-A-1-0-D-A488-36";
+    public static final String broadProjectSample2 = "RP-1145";
+    public static final String bamVersionSample2 ="4";
     private static final String SAMPLE3_ID = "ALCH-ABBH-NB1-A-1-0-D-A485-36";
-    public static final String broadProject= "RP-1145";
-    public static final String bamVersion ="4";
 
     private SubmissionsService submissionsService;
 
-    private BioProject bioProject;
+    private BioProject bioProjectSample2;
+    private BioProject bioProjectSample1;
     private SubmissionContactBean contactBean;
     private SubmissionRepository submissionRepository;
     private SubmissionLibraryDescriptor submissionLibraryDescriptor;
 
     @BeforeMethod
     public void setUp() throws Exception {
-        bioProject = new BioProject(BIO_PROJECT_ACCESSION_ID);
+        bioProjectSample2 = new BioProject(ACCESSION_ID_SAMPLE2);
+        bioProjectSample1 = new BioProject(ACCESSION_ID_SAMPLE1);
         contactBean =
                 new SubmissionContactBean("Jeff", "A", "Gentry", "jgentry@broadinstitute.org", "617-555-9292", "homer");
         submissionsService = new SubmissionsServiceImpl(SubmissionConfig.produce(Deployment.DEV));
@@ -105,9 +111,9 @@ public class SubmissionsServiceImplTest {
     }
 
     public void testGetSubmissionSamples() throws Exception {
-        String[] expectedSampleNames = {SAMPLE1_ID, SAMPLE2_ID, SAMPLE3_ID};
+        String[] expectedSampleNames = {SAMPLE2_ID, SAMPLE3_ID};
 
-        Collection<String> submissionSamples = submissionsService.getSubmissionSamples(bioProject);
+        Collection<String> submissionSamples = submissionsService.getSubmissionSamples(bioProjectSample2);
         int minimumExpectedSizeOfResult = 300;
         assertThat(submissionSamples.size(), greaterThan(minimumExpectedSizeOfResult));
         assertThat(submissionSamples, hasItems(expectedSampleNames));
@@ -125,11 +131,11 @@ public class SubmissionsServiceImplTest {
     @Test
     public void testSubmit() {
         SubmissionBean submissionBean1 = new SubmissionBean(getTestUUID(), "jgentry",
-                bioProject, new SubmissionBioSampleBean(SAMPLE1_ID, SubmissionBioSampleBean.GCP, contactBean),
-                submissionRepository, submissionLibraryDescriptor, broadProject, bamVersion);
+                bioProjectSample1, new SubmissionBioSampleBean(SAMPLE1_ID, SubmissionBioSampleBean.GCP, contactBean),
+                submissionRepository, SubmissionLibraryDescriptor.WHOLE_GENOME, broadProjectSample1, bamVersionSample1);
         SubmissionBean submissionBean2 = new SubmissionBean(getTestUUID(), "jgentry",
-                bioProject, new SubmissionBioSampleBean(SAMPLE2_ID, SubmissionBioSampleBean.ON_PREM, contactBean),
-                submissionRepository, submissionLibraryDescriptor, broadProject, bamVersion);
+            bioProjectSample2, new SubmissionBioSampleBean(SAMPLE2_ID, SubmissionBioSampleBean.ON_PREM, contactBean),
+                submissionRepository, submissionLibraryDescriptor, broadProjectSample2, bamVersionSample2);
         SubmissionRequestBean submissionRequestBean =
                 new SubmissionRequestBean(Arrays.asList(submissionBean1, submissionBean2));
         Collection<SubmissionStatusDetailBean>
@@ -161,9 +167,9 @@ public class SubmissionsServiceImplTest {
     public void testGetSubmissionStatusReadyForSubmission() {
         String testUUID = getTestUUID();
 
-        SubmissionBean submissionBean = new SubmissionBean(testUUID, "jgentry", bioProject,
-                new SubmissionBioSampleBean(SAMPLE1_ID, SubmissionBioSampleBean.ON_PREM, contactBean), submissionRepository,
-                submissionLibraryDescriptor, broadProject, bamVersion);
+        SubmissionBean submissionBean = new SubmissionBean(testUUID, "jgentry", bioProjectSample2,
+                new SubmissionBioSampleBean(SAMPLE2_ID, SubmissionBioSampleBean.ON_PREM, contactBean), submissionRepository,
+                submissionLibraryDescriptor, broadProjectSample2, bamVersionSample2);
         SubmissionRequestBean submissionRequestBean = new SubmissionRequestBean(Collections.singletonList(submissionBean));
         Collection<SubmissionStatusDetailBean> submissionResult =
                 submissionsService.postSubmissions(submissionRequestBean);

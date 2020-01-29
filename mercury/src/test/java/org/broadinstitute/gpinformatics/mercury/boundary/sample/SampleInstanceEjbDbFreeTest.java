@@ -4,9 +4,11 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.PipelineDataTypeDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -74,6 +76,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor.REQUIRED_VALUE_IS_MISSING;
 import static org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb.BAD_RANGE;
@@ -119,7 +122,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
     private SampleDataFetcher sampleDataFetcher = Mockito.mock(SampleDataFetcher.class);
     private ReferenceSequenceDao referenceSequenceDao = Mockito.mock(ReferenceSequenceDao.class);
     private AnalysisTypeDao analysisTypeDao = Mockito.mock(AnalysisTypeDao.class);
-    private ProductDao productDao = Mockito.mock(ProductDao.class);
+    private PipelineDataTypeDao pipelineDataTypeDao = Mockito.mock(PipelineDataTypeDao.class);
 
     @Test
     public void testWalkupSequencing() {
@@ -220,7 +223,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(entity.getSequencerModel().getExternalUiName(),
                     select(i, "HiSeq X 10", "HiSeq 2500 Rapid Run"));
 
-            Assert.assertEquals(entity.getAggregationDataType(), select(i, "", "Exome"));
+            Assert.assertEquals(entity.getPipelineDataTypeString(), select(i, "", "Exome"));
         }
         assertSampleInstanceEntitiesPresent(mapBarcodeToTube.values(), entities);
 
@@ -564,18 +567,19 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                             setDesignName(name);
                         }}).
                         collect(Collectors.toList()));
-        // Product.aggregationDataType
-        Mockito.when(productDao.findAggregationDataTypes()).thenAnswer(
-                (Answer<List<String>>) invocation -> Arrays.asList("10X_WGS", "16S", "CustomHybSel",
-                        "Custom_Selection", "Exome", "ExomePlus",
-                        "Jump", "PCR", "RNA", "RRBS", "ShortRangePCR", "WGS"));
+
+        Mockito.when(pipelineDataTypeDao.findAll()).thenAnswer((Answer<List<PipelineDataType>>) invocation ->
+            Stream.of("10X_WGS", "16S", "CustomHybSel", "Custom_Selection", "Exome", "ExomePlus", "Jump", "PCR",
+                "RNA", "RRBS", "ShortRangePCR", "WGS")
+                .map(dataType -> new PipelineDataType(dataType, true)).collect(Collectors.toList())
+        );
 
         // SampleInstanceEntity
         Mockito.when(sampleInstanceEntityDao.findByBarcodes(anyCollection())).thenReturn(Collections.emptyList());
 
         return new SampleInstanceEjb(molecularIndexingSchemeDao,
                 reagentDesignDao, labVesselDao, mercurySampleDao, sampleInstanceEntityDao,
-                analysisTypeDao, sampleDataFetcher, referenceSequenceDao, productDao);
+                analysisTypeDao, sampleDataFetcher, referenceSequenceDao, pipelineDataTypeDao);
     }
 
 }

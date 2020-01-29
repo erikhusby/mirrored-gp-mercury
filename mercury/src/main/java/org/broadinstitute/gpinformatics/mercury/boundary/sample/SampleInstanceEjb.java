@@ -6,7 +6,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.PipelineDataTypeDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -44,6 +46,8 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -108,7 +112,7 @@ public class SampleInstanceEjb {
     private ReferenceSequenceDao referenceSequenceDao;
 
     @Inject
-    private ProductDao productDao;
+    private PipelineDataTypeDao pipelineDataTypeDao;
 
     public SampleInstanceEjb() {
     }
@@ -119,7 +123,7 @@ public class SampleInstanceEjb {
     public SampleInstanceEjb(MolecularIndexingSchemeDao molecularIndexingSchemeDao,
             ReagentDesignDao reagentDesignDao, LabVesselDao labVesselDao, MercurySampleDao mercurySampleDao,
             SampleInstanceEntityDao sampleInstanceEntityDao, AnalysisTypeDao analysisTypeDao,
-            SampleDataFetcher sampleDataFetcher, ReferenceSequenceDao referenceSequenceDao, ProductDao productDao) {
+            SampleDataFetcher sampleDataFetcher, ReferenceSequenceDao referenceSequenceDao, PipelineDataTypeDao pipelineDataTypeDao) {
         this.molecularIndexingSchemeDao = molecularIndexingSchemeDao;
         this.reagentDesignDao = reagentDesignDao;
         this.labVesselDao = labVesselDao;
@@ -128,7 +132,7 @@ public class SampleInstanceEjb {
         this.analysisTypeDao = analysisTypeDao;
         this.sampleDataFetcher = sampleDataFetcher;
         this.referenceSequenceDao = referenceSequenceDao;
-        this.productDao = productDao;
+        this.pipelineDataTypeDao = pipelineDataTypeDao;
     }
 
     /**
@@ -274,9 +278,10 @@ public class SampleInstanceEjb {
                 stream().
                 collect(Collectors.toMap(ReagentDesign::getBusinessKey, Function.identity())));
 
-        // todo emp GPLIM-6001 should make this map be String->Entity for only the values present.
-        processor.getAggregationDataTypeMap().putAll(productDao.findAggregationDataTypes().stream().
-                collect(Collectors.toMap(Function.identity(), Function.identity())));
+        Map<String, PipelineDataType> pipelineDatatypeMap =
+            Optional.ofNullable(pipelineDataTypeDao.findAll()).orElse(Collections.emptyList()).stream()
+                .collect(Collectors.toMap(PipelineDataType::getName, Function.identity()));
+        processor.getPipelineDataTypeMap().putAll(pipelineDatatypeMap);
     }
 
     /**
