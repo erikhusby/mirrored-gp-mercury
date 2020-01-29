@@ -173,8 +173,8 @@ public class CreateFields extends UpdateFields {
         SAMPLE_INITIATION("Sample Initiation"),
         RECEIPT("Receipt"),
         ALLPREP("AllPrep Extraction"),
-        CDNA_EXTRACTION("10X 3' cDNA Extraction"),
-        CDNA_5PRIME_EXTRACTION("10X 5' cDNA Extraction"),
+        CDNA_EXTRACTION("10x 3' cDNA Extraction"),
+        CDNA_5PRIME_EXTRACTION("10x 5' cDNA Extraction"),
         DNA_EXTRACTION("DNA Extraction"),
         EXTRACTION_OTHER("Extraction (Other)"),
         RNA_EXTRACTION("RNA Extraction"),
@@ -186,6 +186,8 @@ public class CreateFields extends UpdateFields {
         TENX_5PRIME_TCR("10x 5' TCR"),
         TENX_5PRIME_BCR("10x 5' BCR"),
         TENX_SINGLE_CELL("10x Single Cell"),
+        TENX_5PRIME("10x 5' Gene Expression"),
+        ISEQ("iSeq"),
         ;
 
         private final String jiraName;
