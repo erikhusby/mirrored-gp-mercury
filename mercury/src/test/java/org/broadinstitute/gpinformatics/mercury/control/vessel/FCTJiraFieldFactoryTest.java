@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemOfRecord;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
@@ -73,7 +73,7 @@ public class FCTJiraFieldFactoryTest extends BaseEventTest {
 
         //Build Event History
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, BARCODE_SUFFIX);
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
         PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
                 String.valueOf(runDate.getTime()),
                 BARCODE_SUFFIX, true);
@@ -123,7 +123,7 @@ public class FCTJiraFieldFactoryTest extends BaseEventTest {
 
         FlowcellDesignationEjb flowcellDesignationEjb = mock(FlowcellDesignationEjb.class);
         SequencingTemplateFactory sequencingTemplateFactory = new SequencingTemplateFactory();
-        sequencingTemplateFactory.setWorkflowConfig(new WorkflowLoader().load());
+        sequencingTemplateFactory.setWorkflowConfig(new WorkflowLoader().getWorkflowConfig());
         sequencingTemplateFactory.setFlowcellDesignationEjb(flowcellDesignationEjb);
         when(flowcellDesignationEjb.getFlowcellDesignations(labBatch)).thenReturn(Collections.emptyList());
 

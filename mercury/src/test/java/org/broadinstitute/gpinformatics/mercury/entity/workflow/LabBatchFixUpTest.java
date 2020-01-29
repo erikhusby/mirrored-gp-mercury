@@ -34,7 +34,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
@@ -50,7 +49,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation_;
@@ -150,8 +148,11 @@ public class LabBatchFixUpTest extends Arquillian {
     @Inject
     private MercurySampleDao mercurySampleDao;
 
+    /*
+       Kept as a historical record of what was used in a fixup.
     @Inject
     private SystemRouter systemRouter;
+    */
 
     @Inject
     private LabEventDao labEventDao;
@@ -869,6 +870,11 @@ public class LabBatchFixUpTest extends Arquillian {
         userTransaction.commit();
     }
 
+    /*
+                   These tests are kept as a historical record but are commented out because Squid LCSET
+                   processing is no longer supported and the relevant underlying method calls to systemRouter
+                   no longer exist.
+
     @Test(enabled = false)
     public void fixupSupport1592() throws Exception{
         List<String> tubeBarcodes = Arrays.asList(
@@ -892,8 +898,9 @@ public class LabBatchFixUpTest extends Arquillian {
 
         changeBucketEntriesToAliquots(tubeBarcodes, 1191104L, "LCSET-8673", "SUPPORT-1592");
     }
+    */
 
-    /**
+    /*
      * Starting with a set of tubes, looks for ancestors in the given LCSET, then changes bucket entries to the
      * aliquots created by the given event.  This is intended to fix the case where a root / stock tube appears in a
      * Mercury LCSET, but an aliquot is later used in a Squid LCSET, causing a routing error.  Moving the bucket entry
@@ -903,7 +910,11 @@ public class LabBatchFixUpTest extends Arquillian {
      * @param eventId id of daughter plate transfer that creates Mercury aliquots
      * @param lcset Mercury LCSET
      * @param ticket for FixupCommentary
-     */
+
+                   This test is kept as a historical record but is commented out because Squid LCSET
+                   processing is no longer supported and the relevant method calls to systemRouter
+                   no longer exist.
+
     private void changeBucketEntriesToAliquots(List<String> childBarcodes, long eventId, String lcset, String ticket)
             throws Exception {
         userBean.loginOSUser();
@@ -1030,6 +1041,7 @@ public class LabBatchFixUpTest extends Arquillian {
 
         changeBucketEntriesToAliquots(tubeBarcodes, 1371144L, "LCSET-9347", "SUPPORT-1848");
     }
+    */
 
     /**
      * The first attempt used the wrong daughter plate event, so change the entries back, based on the log entries.
@@ -1189,6 +1201,10 @@ public class LabBatchFixUpTest extends Arquillian {
         userTransaction.commit();
     }
 
+    /*
+                   These tests are kept as a historical record but are commented out because Squid LCSET
+                   processing is no longer supported and the relevant method calls to systemRouter no longer exist.
+
     @Test(enabled = false)
     public void fixupSupport1848_Try2b() throws Exception{
         List<String> tubeBarcodes = Arrays.asList(
@@ -1319,6 +1335,7 @@ public class LabBatchFixUpTest extends Arquillian {
 
         changeBucketEntriesToAliquots(tubeBarcodes, 1651091L, "LCSET-9978", "SUPPORT-2239");
     }
+    */
 
     /**
      * At last step in extraction, the SM-ID was scanned, should have been the 2D barcode.
@@ -1388,6 +1405,11 @@ public class LabBatchFixUpTest extends Arquillian {
         labBatchDao.flush();
     }
 
+    /*
+                   These tests are kept as a historical record but are commented out because Squid LCSET
+                   processing is no longer supported and the underlying relevant method calls to systemRouter
+                   no longer exist.
+
     @Test(enabled = false)
     public void fixupSupport2414() throws Exception{
         List<String> tubeBarcodes = Arrays.asList(
@@ -1405,7 +1427,7 @@ public class LabBatchFixUpTest extends Arquillian {
 
         changeBucketEntriesToAliquots(tubeBarcodes, 1716867L, "LCSET-10218", "SUPPORT-2461");
     }
-
+    */
 
     /**
      * Likely that user scanned same rack for two different LCSETs, so one control was associated with 2 LCSETs,
