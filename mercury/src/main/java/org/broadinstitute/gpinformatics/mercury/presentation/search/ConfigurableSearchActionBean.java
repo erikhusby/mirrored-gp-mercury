@@ -61,7 +61,7 @@ import java.util.Random;
  * searches.
  */
 @SuppressWarnings("UnusedDeclaration")
-@UrlBinding("/search/ConfigurableSearch.action")
+@UrlBinding(ConfigurableSearchActionBean.URL_BINDING)
 public class ConfigurableSearchActionBean extends CoreActionBean {
 
     private static final Log log = LogFactory.getLog(ConfigurableSearchActionBean.class);
@@ -78,6 +78,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
 
     public static final String RACK_SCAN_PAGE_TITLE = "Rack Scan Barcodes";
     public static final String DRILL_DOWN_EVENT = "drillDown";
+    public static final String URL_BINDING = "/search/ConfigurableSearch.action";
 
     /**
      * The definition from which the user will create the search

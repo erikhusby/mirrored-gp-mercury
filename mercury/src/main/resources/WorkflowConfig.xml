@@ -4249,6 +4249,118 @@
         </workflowProcessDefVersions>
     </workflowProcessDefs>
     <workflowProcessDefs>
+        <name>Single Cell TCR</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2019-10-22T12:15:24.085-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>TcrBucket</name>
+                <labEventTypes>TCR_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <materialTypes>RNA</materialTypes>
+                    <materialTypes>RNA_TOTAL_RNA</materialTypes>
+                    <materialTypes>DNA_CDNA_LIBRARY</materialTypes>
+                    <materialTypes>DNA_CDNA</materialTypes>
+                    <materialTypes>HASH_LIBRARY</materialTypes>
+                </bucketEntryEvaluator>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TcrPcr1</name>
+                <labEventTypes>TCR_PCR_1</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TcrSpri1</name>
+                <labEventTypes>TCR_SPRI_1</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TcrPcr2</name>
+                <labEventTypes>TCR_PCR_2</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TcrSpri2</name>
+                <labEventTypes>TCR_SPRI_2</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TcrRegistration</name>
+                <labEventTypes>TCR_REGISTRATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>Single Cell BCR</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2019-10-22T12:15:24.085-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>BcrBucket</name>
+                <labEventTypes>BCR_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <materialTypes>RNA</materialTypes>
+                    <materialTypes>RNA_TOTAL_RNA</materialTypes>
+                    <materialTypes>DNA_CDNA_LIBRARY</materialTypes>
+                    <materialTypes>DNA_CDNA</materialTypes>
+                    <materialTypes>HASH_LIBRARY</materialTypes>
+                </bucketEntryEvaluator>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>BcrPcr1</name>
+                <labEventTypes>BCR_PCR_1</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>BcrSpri1</name>
+                <labEventTypes>BCR_SPRI_1</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>BcrPcr2</name>
+                <labEventTypes>BCR_PCR_2</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>BcrSpri2</name>
+                <labEventTypes>BCR_SPRI_2</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>BcrRegistration</name>
+                <labEventTypes>BCR_REGISTRATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
         <name>10X Extraction</name>
         <workflowProcessDefVersions>
             <version>01</version>
@@ -4271,6 +4383,7 @@
                     <materialTypes>DNA_CDNA</materialTypes>
                     <materialTypes>HASH_LIBRARY</materialTypes>
                     <workflows>10X Extraction</workflows>
+                    <workflows>10X Extraction 5 Prime</workflows>
                 </bucketEntryEvaluator>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -4383,6 +4496,8 @@
                     <materialTypes>RNA_TOTAL_RNA</materialTypes>
                     <materialTypes>DNA_CDNA_LIBRARY</materialTypes>
                     <materialTypes>DNA_CDNA</materialTypes>
+                    <materialTypes>HASH_LIBRARY</materialTypes>
+                    <materialTypes>OTHER_LYSATE</materialTypes>
                 </bucketEntryEvaluator>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -4423,6 +4538,53 @@
             <workflowStepDefs>
                 <name>SingleCellDoubleSidedCleanup</name>
                 <labEventTypes>SINGLE_CELL_DOUBLE_SIDED_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Pond Pico</name>
+                <labEventTypes>POND_PICO</labEventTypes>
+                <optional>true</optional>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>Single Cell VDJ LC</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2019-10-22T12:15:24.085-04:00</effectiveDate>
+            <workflowStepDefs>
+                <name>VdjEndRepairABase</name>
+                <labEventTypes>VDJ_END_REPAIR_ABASE</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>VdjAdapterLigation</name>
+                <labEventTypes>VDJ_ADAPTER_LIGATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>VdjLigationCleanup</name>
+                <labEventTypes>VDJ_LIGATION_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>VdjIndexAdapterPCR</name>
+                <labEventTypes>VDJ_INDEX_ADAPTER_PCR</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>VdjSingleSidedCleanup</name>
+                <labEventTypes>VDJ_SINGLE_SIDED_CLEANUP</labEventTypes>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -5245,7 +5407,7 @@
         <productWorkflowDefVersions>
             <version>1.0</version>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
-            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
+            <batchJiraIssueType>TENX_SINGLE_CELL</batchJiraIssueType>
             <effectiveDate>2018-04-02T12:03:24.085-04:00</effectiveDate>
             <workflowProcessDefs>Single Cell 10X</workflowProcessDefs>
             <workflowProcessDefs>QTP</workflowProcessDefs>
@@ -5268,6 +5430,50 @@
             <batchJiraIssueType>TENX_3PRIME_HASHING</batchJiraIssueType>
             <effectiveDate>2019-06-19T00:00:00.000-04:00</effectiveDate>
             <workflowProcessDefs>Single Cell 10X Hashing</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+            <routingRule>MERCURY</routingRule>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Single Cell TCR</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>TENX_5PRIME_TCR</batchJiraIssueType>
+            <effectiveDate>2019-10-22T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>Single Cell TCR</workflowProcessDefs>
+            <workflowProcessDefs>Single Cell VDJ LC</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+            <routingRule>MERCURY</routingRule>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Single Cell BCR</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>TENX_5PRIME_BCR</batchJiraIssueType>
+            <effectiveDate>2019-10-22T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>Single Cell BCR</workflowProcessDefs>
+            <workflowProcessDefs>Single Cell VDJ LC</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+            <routingRule>MERCURY</routingRule>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Single Cell 5 Prime</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>TENX_5PRIME</batchJiraIssueType>
+            <effectiveDate>2019-10-22T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>Single Cell 10X</workflowProcessDefs>
             <workflowProcessDefs>QTP</workflowProcessDefs>
             <workflowProcessDefs>MiSEQ</workflowProcessDefs>
             <workflowProcessDefs>HiSEQ</workflowProcessDefs>
@@ -5302,6 +5508,17 @@
             <version>01</version>
             <batchJiraProjectType>XTR</batchJiraProjectType>
             <batchJiraIssueType>CDNA_EXTRACTION</batchJiraIssueType>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>10X Extraction</workflowProcessDefs>
+            <routingRule>MERCURY</routingRule>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>10X Extraction 5 Prime</name>
+        <productWorkflowDefVersions>
+            <version>01</version>
+            <batchJiraProjectType>XTR</batchJiraProjectType>
+            <batchJiraIssueType>CDNA_5PRIME_EXTRACTION</batchJiraIssueType>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowProcessDefs>10X Extraction</workflowProcessDefs>
             <routingRule>MERCURY</routingRule>

@@ -15,7 +15,7 @@
             <activation-config>
                 <activation-config-property>
                     <activation-config-property-name>destination</activation-config-property-name>
-                    <activation-config-property-value>queue/broad.queue.mercury.bettalims.production
+                    <activation-config-property-value>queue/broad.queue.mercury.bettalims.rc
                     </activation-config-property-value>
                 </activation-config-property>
                 <!--
@@ -37,7 +37,7 @@
             <activation-config>
                 <activation-config-property>
                     <activation-config-property-name>destination</activation-config-property-name>
-                    <activation-config-property-value>queue/broad.queue.mercury.samplereceipt.production
+                    <activation-config-property-value>queue/broad.queue.mercury.samplereceipt.rc
                     </activation-config-property-value>
                 </activation-config-property>
                 <!--
@@ -59,7 +59,7 @@
             <activation-config>
                 <activation-config-property>
                     <activation-config-property-name>destination</activation-config-property-name>
-                    <activation-config-property-value>queue/broad.queue.athena.workreporting.production
+                    <activation-config-property-value>queue/broad.queue.athena.workreporting.rc
                     </activation-config-property-value>
                 </activation-config-property>
                 <!--
