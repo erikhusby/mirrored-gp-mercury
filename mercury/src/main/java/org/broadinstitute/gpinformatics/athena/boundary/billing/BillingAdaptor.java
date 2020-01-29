@@ -7,7 +7,6 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
@@ -16,7 +15,6 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.PriceAdjustment;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
@@ -46,7 +44,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -126,7 +123,8 @@ public class BillingAdaptor implements Serializable {
         List<BillingEjb.BillingResult> billingResults;
 
         billingResults = bill(pageUrl, sessionKey);
-        updateCreditedResults(billingResults);
+        updateBilledPdos(billingResults);
+
         return billingResults;
     }
 
@@ -550,29 +548,14 @@ public class BillingAdaptor implements Serializable {
      * @param billingResults collection of "Billing Results".  Each one represents the aggregation of billing
      *                       charges and will record the success or failure of the billing attempt
      */
-    private void updateCreditedResults(Collection<BillingEjb.BillingResult> billingResults) {
+    private void updateBilledPdos(Collection<BillingEjb.BillingResult> billingResults) {
+
         Set<String> updatedPDOs = new HashSet<>();
-        Predicate<BillingEjb.BillingResult> isSuccessfullyBilled = BillingEjb.BillingResult::isSuccessfullyBilled;
-        Predicate<BillingEjb.BillingResult> filter = isSuccessfullyBilled.and(BillingEjb.BillingResult::isBillingCredit);
-
-        billingResults.stream().filter(filter).forEach(result -> {
-            Map<ProductOrder, List<Product>> productsMap = new HashMap<>();
-            for (BillingEjb.BillingResult billingResult : billingResults) {
-                ProductOrder pdo = billingResult.getQuoteImportItem().getProductOrder();
-                Product product = billingResult.getQuoteImportItem().getProduct();
-                productsMap.computeIfAbsent(pdo, key -> new ArrayList<>()).add(product);
+        for (BillingEjb.BillingResult result : billingResults) {
+            if (result.isSuccessfullyBilled()) {
+                updatedPDOs.addAll(result.getQuoteImportItem().getOrderKeys());
             }
-            MessageCollection updateOrderMessages = new MessageCollection();
-            productsMap.forEach((productOrder, products) -> {
-                try {
-                    productOrderEjb.updateOrderInSap(productOrder, products, updateOrderMessages, false);
-                } catch (SAPIntegrationException e) {
-
-                    log.error("Error updating billing credits on order.", e);
-                }
-            });
-            updatedPDOs.addAll(result.getQuoteImportItem().getOrderKeys());
-        });
+        }
 
         // Update the state of all PDOs affected by this billing session.
         for (String key : updatedPDOs) {
