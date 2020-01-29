@@ -498,7 +498,7 @@ public class ProductOrderEjbTest {
         if(quoteSwapsForBadQuote) {
             Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString()))
                     .thenReturn(TestUtils.buildTestSapQuote(conversionPdo.getQuoteId(),
-                            10000, 1000000, conversionPdo,
+                            BigDecimal.valueOf(10000), BigDecimal.valueOf(1000000), conversionPdo,
                             TestUtils.SapQuoteTestScenario.PRODUCTS_DIFFER, companyCode.getSalesOrganization()));
         }
 
