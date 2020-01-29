@@ -40,6 +40,7 @@ public class ArraysQcDaoTest extends Arquillian {
         for (ArraysQc arraysQc : arraysQcList) {
             arraysQc.getArraysQcFingerprints().size();
             arraysQc.getArraysQcGtConcordances().size();
+            arraysQc.getArraysQcContamination();
         }
     }
 

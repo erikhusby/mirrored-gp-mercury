@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -37,7 +38,6 @@ public class ProductEtlDbFreeTest {
     private static final String WORKFLOW = Workflow.AGILENT_EXOME_EXPRESS;
     private static final String PRODUCT_FAMILY_NAME = "Test ProductFamily";
     private static final long PRIMARY_PRICE_ITEM_ID = 987654321L;
-    private static final String AGGREGATION_DATA_TYPE = "Exome";
     private static final boolean commercialIndicator = true;
     private static final boolean savedInSapIndicator = true;
 
@@ -95,7 +95,7 @@ public class ProductEtlDbFreeTest {
         EasyMock.expect(product.getWorkflowName()).andReturn(WORKFLOW).anyTimes();
         EasyMock.expect(product.getProductFamily()).andReturn(family).anyTimes();
         EasyMock.expect(product.getPrimaryPriceItem()).andReturn(primaryPriceItem).anyTimes();
-        EasyMock.expect(product.getAggregationDataType()).andReturn(AGGREGATION_DATA_TYPE).anyTimes();
+        EasyMock.expect(product.getPipelineDataTypeString()).andReturn(Aggregation.DATA_TYPE_EXOME).anyTimes();
 
         EasyMock.expect(primaryPriceItem.getPriceItemId()).andReturn(PRIMARY_PRICE_ITEM_ID);
 
@@ -131,7 +131,7 @@ public class ProductEtlDbFreeTest {
         Assert.assertEquals(parts[i++], WORKFLOW);
         Assert.assertEquals(parts[i++], PRODUCT_FAMILY_NAME);
         Assert.assertEquals(parts[i++], String.valueOf(PRIMARY_PRICE_ITEM_ID));
-        Assert.assertEquals(parts[i++], String.valueOf(AGGREGATION_DATA_TYPE));
+        Assert.assertEquals(parts[i++], Aggregation.DATA_TYPE_EXOME);
         Assert.assertEquals(parts[i++], EtlTestUtilities.format(commercialIndicator));
         Assert.assertEquals(parts[i++], EtlTestUtilities.format(savedInSapIndicator));
         Assert.assertEquals(parts.length, 17);

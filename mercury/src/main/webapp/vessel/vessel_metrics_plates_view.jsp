@@ -56,7 +56,7 @@ This fragment is used by vessel_metrics_view.jsp to re-use code when displaying 
                     </table>
                 </div>
                 <div class="span4">
-                    <div class="well" style="height: 335px">
+                    <div class="well" style="height: 390px">
                         Vessel Metadata
                         <dl class="metadataDefinitionPlateList dl-horizontal">
                         </dl>

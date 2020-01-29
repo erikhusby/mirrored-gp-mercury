@@ -102,7 +102,7 @@ public class ProductOrderData {
         if (product != null) {
             this.product = product.getBusinessKey();
             productName = product.getProductName();
-            aggregationDataType = product.getAggregationDataType();
+            aggregationDataType = product.getPipelineDataTypeString();
         }
 
 
