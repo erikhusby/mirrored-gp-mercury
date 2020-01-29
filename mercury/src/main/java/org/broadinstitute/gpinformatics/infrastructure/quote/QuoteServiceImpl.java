@@ -101,7 +101,7 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
 
     @Override
     public String registerNewWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
-                                  Date reportedCompletionDate, double numWorkUnits,
+                                  Date reportedCompletionDate, BigDecimal numWorkUnits,
                                   String callbackUrl, String callbackParameterName, String callbackParameterValue,
                                   BigDecimal priceAdjustment) {
 
@@ -112,7 +112,7 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
 
     @Override
     public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
-                                     Date reportedCompletionDate, double numWorkUnits,
+                                     Date reportedCompletionDate, BigDecimal numWorkUnits,
                                      String callbackUrl, String callbackParameterName, String callbackParameterValue,
                                      BigDecimal priceAdjustment) {
 
@@ -122,7 +122,7 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
     }
 
     private String registerWorkHelper(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
-                                      Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
+                                      Date reportedCompletionDate, BigDecimal numWorkUnits, String callbackUrl,
                                       String callbackParameterName, String callbackParameterValue,
                                       BigDecimal priceAdjustment, Endpoint endpoint) {
         Format dateFormat = FastDateFormat.getInstance("MM/dd/yyyy");
@@ -147,7 +147,7 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
             params.put("replacement_item_name", quotePriceItem.getName());
         }
 
-        params.put("quantity", String.valueOf(numWorkUnits));
+        params.put("quantity", numWorkUnits.toString());
         params.put("complete", Boolean.TRUE.toString());
         params.put("completion_date", dateFormat.format(reportedCompletionDate));
         params.put("url", callbackUrl);
@@ -174,7 +174,7 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
      *
      * @return The work item id returned (as a string).
      */
-    String registerNewWork(@Nonnull Response response, Quote quote, QuotePriceItem quotePriceItem, double numWorkUnits) {
+    String registerNewWork(@Nonnull Response response, Quote quote, QuotePriceItem quotePriceItem, BigDecimal numWorkUnits) {
 
         if (response.getStatusInfo() != Response.Status.OK) {
             throw new RuntimeException(
@@ -208,7 +208,7 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
     }
 
     private static RuntimeException newQuoteServerFailureException(
-            Quote quote, QuotePriceItem quotePriceItem, double numWorkUnits) {
+            Quote quote, QuotePriceItem quotePriceItem, BigDecimal numWorkUnits) {
         String message = "Quote server did not return the appropriate response.  Registering work for " + numWorkUnits +
                 " of " + quotePriceItem.getName() + " against quote " + quote.getAlphanumericId() +
                 " appears to have failed.";

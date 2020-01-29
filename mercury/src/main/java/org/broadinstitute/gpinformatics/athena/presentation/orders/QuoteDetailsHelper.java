@@ -108,7 +108,7 @@ public class QuoteDetailsHelper {
                         quoteDetail.setError("This quote is not yet Funded");
                     }
 
-                    double outstandingOrdersValue = actionBean.estimateOutstandingOrders(quote, 0, null);
+                    BigDecimal outstandingOrdersValue = actionBean.estimateOutstandingOrders(quote, 0, null);
                     quoteDetail.setOutstandingEstimate(outstandingOrdersValue);
 
                     if (CollectionUtils.isEmpty(quoteFunding.getFundingLevel())) {
@@ -159,10 +159,9 @@ public class QuoteDetailsHelper {
                         fundsRemaining =fundsRemaining.subtract(sapOrderCalculatedValues.get().openDeliveryValues());
                     }
                     quoteDetail.setFundsRemaining(fundsRemaining.doubleValue());
-                    double openOrderEstimate = 0;
+                    BigDecimal openOrderEstimate = BigDecimal.ZERO;
                     if(sapOrderCalculatedValues.isPresent()) {
-                        openOrderEstimate =
-                                sapOrderCalculatedValues.get().calculateTotalOpenOrderValue().doubleValue();
+                        openOrderEstimate = sapOrderCalculatedValues.get().calculateTotalOpenOrderValue();
                     }
                     quoteDetail.setOutstandingEstimate(openOrderEstimate);
 
@@ -317,7 +316,7 @@ public class QuoteDetailsHelper {
             "Status: %s - Funds Remaining: %s with %s unbilled across existing open orders";
         List<FundingInfo> fundingDetails = new ArrayList<>();
         Double fundsRemaining;
-        Double outstandingEstimate;
+        BigDecimal outstandingEstimate;
         ProductOrder.QuoteSourceType quoteType;
         String quoteIdentifier;
         String status;
@@ -330,7 +329,7 @@ public class QuoteDetailsHelper {
                 String formattedFundsRemaining =
                     NumberFormat.getCurrencyInstance().format(Optional.ofNullable(fundsRemaining).orElse(0D));
                 String outstandingEstimateString =
-                    NumberFormat.getCurrencyInstance().format(Optional.ofNullable(outstandingEstimate).orElse(0D));
+                    NumberFormat.getCurrencyInstance().format(Optional.ofNullable(outstandingEstimate).orElse(BigDecimal.ZERO));
                 if (!quoteType.isSapType()) {
                     fundsRemainingString =
                         String
@@ -368,11 +367,11 @@ public class QuoteDetailsHelper {
             this.quoteIdentifier = quoteIdentifier;
         }
 
-        public Double getOutstandingEstimate() {
+        public BigDecimal getOutstandingEstimate() {
             return outstandingEstimate;
         }
 
-        public void setOutstandingEstimate(Double outstandingEstimate) {
+        public void setOutstandingEstimate(BigDecimal outstandingEstimate) {
             this.outstandingEstimate = outstandingEstimate;
         }
 

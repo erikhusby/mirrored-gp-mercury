@@ -13,6 +13,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -44,9 +45,9 @@ public class BillingResultTest {
             pdoSample.setProductOrder(testProductOrder);
             LedgerEntry ledgerEntry;
             if(testProductOrder.hasSapQuote()) {
-                ledgerEntry = new LedgerEntry(pdoSample, testProduct, new Date(), 3);
+                ledgerEntry = new LedgerEntry(pdoSample, testProduct, new Date(), BigDecimal.valueOf(3));
             }else {
-                ledgerEntry = new LedgerEntry(pdoSample, new PriceItem(), new Date(), 3);
+                ledgerEntry = new LedgerEntry(pdoSample, new PriceItem(), new Date(), BigDecimal.valueOf(3));
             }
             ledgerEntries.add(ledgerEntry);
         }

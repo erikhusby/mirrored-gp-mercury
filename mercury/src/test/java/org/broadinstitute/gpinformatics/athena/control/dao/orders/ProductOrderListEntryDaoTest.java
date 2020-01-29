@@ -23,6 +23,7 @@ import org.testng.annotations.Test;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -173,10 +174,10 @@ public class ProductOrderListEntryDaoTest extends StubbyContainerTest {
         if(order.hasSapQuote()) {
             ledgerEntry =
                     new LedgerEntry(order.getSamples().iterator().next(), order.getProduct(),
-                            new Date(), 2);
+                            new Date(), BigDecimal.valueOf(2));
         } else {
             ledgerEntry = new LedgerEntry(order.getSamples().iterator().next(), order.getProduct().getPrimaryPriceItem(),
-                    new Date(), 2);
+                    new Date(), BigDecimal.valueOf(2));
         }
 
         ledgerEntryDao.persist(ledgerEntry);
@@ -194,11 +195,11 @@ public class ProductOrderListEntryDaoTest extends StubbyContainerTest {
         LedgerEntry ledgerEntry;
         if(order.hasSapQuote()) {
             ledgerEntry = new LedgerEntry(order.getSamples().iterator().next(), order.getProduct(),
-                    new Date(), 2);
+                    new Date(), BigDecimal.valueOf(2));
 
         } else {
             ledgerEntry = new LedgerEntry(order.getSamples().iterator().next(), order.getProduct().getPrimaryPriceItem(),
-                    new Date(), 2);
+                    new Date(), BigDecimal.valueOf(2));
 
         }
 
