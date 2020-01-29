@@ -1856,13 +1856,13 @@ public class LabEventTest extends BaseEventTest {
      */
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testFingerprinting() {
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
         int numSamples = NUM_POSITIONS_IN_RACK - 2;
         ProductOrder productOrder = ProductOrderTestFactory.buildFingerprintingProductOrder(numSamples);
         Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
 
         LabBatch workflowBatch = new LabBatch("Fingerprinting Batch",
-                new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                new HashSet<>(mapBarcodeToTube.values()),
                 LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setWorkflow(Workflow.FINGERPRINTING);
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
