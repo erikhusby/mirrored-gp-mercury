@@ -4,6 +4,7 @@ import org.apache.commons.collections4.ListValuedMap;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.ArraysQcDao;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcBlacklisting;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcContamination;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcFingerprint;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcGtConcordance;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
@@ -52,7 +53,10 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
         LAB_ABANDON("Lab Abandon"),
         BLACKLISTED_ON("Blacklisted Date"),
         BLACKLIST_REASON("Blacklist Reason"),
-        WHITELISTED_ON("Whitelisted Date");
+        WHITELISTED_ON("Whitelisted Date"),
+        CONTAMINATION_PCT_MIX("Contamination Pct"),
+        CONTAMINATION_LLK("Contamination LLK"),
+        CONTAMINATION_LLK0("Contamination LLK0");
 
         private String displayName;
         private ConfigurableList.Header resultHeader;
@@ -297,6 +301,20 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
                 }
                 row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.WHITELISTED_ON.getResultHeader(),
                         value, value));
+
+                ArraysQcContamination qcContamination = arraysQc.getArraysQcContamination();
+                if (qcContamination != null) {
+                    // No nullables in database
+                    value = ColumnValueType.TWO_PLACE_DECIMAL.format(qcContamination.getPctMix().multiply(BigDecimal.valueOf(100)), "");
+                    row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.CONTAMINATION_PCT_MIX.getResultHeader(),
+                            value, value));
+                    value = ColumnValueType.TWO_PLACE_DECIMAL.format(qcContamination.getLlk(), "");
+                    row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.CONTAMINATION_LLK.getResultHeader(),
+                            value, value));
+                    value = ColumnValueType.TWO_PLACE_DECIMAL.format(qcContamination.getLlk0(), "");
+                    row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.CONTAMINATION_LLK0.getResultHeader(),
+                            value, value));
+                }
             }
 
         } /* End LabVessel loop */
