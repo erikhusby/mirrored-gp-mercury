@@ -46,37 +46,14 @@ public class SolexaRunResourceLiveTest extends Arquillian {
     public void testSquidLanes(@ArquillianResource URL baseUrl) throws Exception {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(LabBatchDbTest.XML_DATE_FORMAT);
         String timeStamp = simpleDateFormat.format(new Date());
-        String wsUrl =
-                RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/solexarun/storeRunReadStructure";
 
         String runName1 = "120907_SL-HBV_0191_BFCD15DDACXX";
-        ReadStructureRequest readStructureData = new ReadStructureRequest();
-        readStructureData.setRunName(runName1);
-        readStructureData.setRunBarcode("D15DDACXX120907");
-        readStructureData.setImagedArea(20.23932);
-        readStructureData.setActualReadStructure("71T8B8B101T");
-        readStructureData.setActualReadStructure("76T8B8B76T");
-        for (int i = 1; i <= 8; i++) {
-            LaneReadStructure laneReadStructure = new LaneReadStructure();
-            laneReadStructure.setLaneNumber(i);
-            laneReadStructure.setActualReadStructure("STRUC" + timeStamp + i);
-            readStructureData.getLaneStructures().add(laneReadStructure);
-        }
-
-        ClientBuilder clientBuilder = JaxRsUtils.getClientBuilderAcceptCertificate();
-
-        Client client = clientBuilder.build();
-        client.register(new EntityLoggingFilter());
-        ReadStructureRequest returnedReadStructureRequest = client.target(wsUrl).
-                request(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).
-                post(Entity.json(readStructureData), ReadStructureRequest.class);
-
         ZimsIlluminaRun zimsIlluminaRun = IlluminaRunResourceLiveTest.getZimsIlluminaRun(baseUrl,
                 runName1);
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 8);
         for (ZimsIlluminaChamber zimsIlluminaChamber : zimsIlluminaRun.getLanes()) {
-            Assert.assertEquals(zimsIlluminaChamber.getActualReadStructure(),
-                    "STRUC" + timeStamp + zimsIlluminaChamber.getName());
+            Assert.assertTrue(zimsIlluminaChamber.getActualReadStructure().startsWith("STRUC2020-"),
+                    "Unexpected value " + zimsIlluminaChamber.getActualReadStructure());
         }
     }
 }
