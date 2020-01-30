@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -92,7 +93,7 @@ public class ProductOrderSampleTestFactory {
         if(sampleToBeBilled.getProductOrder().hasSapQuote()) {
             sampleToBeBilled.addLedgerItem(new Date(), sampleToBeBilled.getProductOrder().getProduct(), 1d, false);
         } else {
-            sampleToBeBilled.addLedgerItem(new Date(), priceItem, 1d);
+            sampleToBeBilled.addLedgerItem(new Date(), priceItem, BigDecimal.ONE);
         }
 
         LedgerEntry toclose = sampleToBeBilled.getLedgerItems().iterator().next();

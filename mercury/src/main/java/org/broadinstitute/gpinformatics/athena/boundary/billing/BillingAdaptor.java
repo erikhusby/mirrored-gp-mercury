@@ -192,6 +192,16 @@ public class BillingAdaptor implements Serializable {
                         }
                     }
 
+                    if (item.isSapOrder()) {
+                        workId = null;
+                        sapBillingId = item.getSapItems();
+                    } else {
+                        workId = CollectionUtils.isEmpty(item.getWorkItems())?null:item.getWorkItems().toArray(new String[item.getWorkItems().size()])[0];
+                        sapBillingId = NOT_ELIGIBLE_FOR_SAP_INDICATOR;
+                    }
+
+                    BigDecimal quantityForSAP = item.getQuantity();
+
                     if (item.getProductOrder().getQuoteSource() != null) {
                         if (item.getProductOrder().hasQuoteServerQuote()) {
                             itemResults.add(billQuoteServer(item, quoteItemsByQuote, pageUrl, sessionKey));
@@ -205,7 +215,7 @@ public class BillingAdaptor implements Serializable {
                                 if (!item.getProductOrder().getOrderStatus().canPlace()) {
                                     if (StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
 
-                                        if (quantityForSAP > 0) {
+                                        if (quantityForSAP.compareTo(BigDecimal.ZERO) > 0) {
                                             itemResults.add(billSap(item));
                                         } else if (item.isBillingCredit()) {
                                             Collection<BillingCredit> billingCredits = handleBillingCredit(item);

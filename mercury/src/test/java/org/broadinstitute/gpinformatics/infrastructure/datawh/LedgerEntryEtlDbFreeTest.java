@@ -14,6 +14,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Date;
 
@@ -31,7 +32,7 @@ public class LedgerEntryEtlDbFreeTest {
     private static final String QUOTE_ID = "ABCD9";
     private static final long PRICE_ITEM_ID = 123;
     private static final LedgerEntry.PriceItemType PRICE_ITEM_TYPE = LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM;
-    private static final double LEDGER_QUANTITY = 1;
+    private static final BigDecimal LEDGER_QUANTITY = BigDecimal.ONE;
     private static final long BILLING_SESSION_ID = 456;
     private static final String BILLING_SESSION_MESSAGE = "Quote server returned:\nERROR";
     private static final String FORMATTED_BILLING_SESSION_MESSAGE = BILLING_SESSION_MESSAGE.replace('\n', ' ');

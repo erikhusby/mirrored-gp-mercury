@@ -14,6 +14,7 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -38,32 +39,32 @@ public class LedgerEntryTest {
     }
 
     public static LedgerEntry createOneLedgerEntry(String sampleName, String priceItemName,
-                                                   double quantity) {
+                                                   BigDecimal quantity) {
         return createOneLedgerEntry(sampleName, priceItemName, quantity, null);
     }
 
-    public static LedgerEntry createOneLedgerEntry(String sampleName, String priceItemName, double quantity,
+    public static LedgerEntry createOneLedgerEntry(String sampleName, String priceItemName, BigDecimal quantity,
                                                    Date workCompleteDate) {
         ProductOrderSample sample = createSample(sampleName);
         return createOneLedgerEntry(sample, priceItemName, quantity, workCompleteDate);
     }
 
-    public static LedgerEntry createOneLedgerEntry(ProductOrderSample sample, String priceItemName, double quantity,
+    public static LedgerEntry createOneLedgerEntry(ProductOrderSample sample, String priceItemName, BigDecimal quantity,
                                                    Date workCompleteDate) {
         Product product = new Product();
         return createOneLedgerEntry(sample, priceItemName, quantity, workCompleteDate, product);
     }
 
     @NotNull
-    public static LedgerEntry createOneLedgerEntry(ProductOrderSample sample, String priceItemName, double quantity,
-                                                    Date workCompleteDate, Product product) {
+    public static LedgerEntry createOneLedgerEntry(ProductOrderSample sample, String priceItemName, BigDecimal quantity,
+                                                   Date workCompleteDate, Product product) {
         PriceItem priceItem = new PriceItem("quoteServerId", "platform", "category", priceItemName);
         return createOneLedgerEntry(sample, quantity, workCompleteDate, product, priceItem);
     }
 
     @NotNull
-    public static LedgerEntry createOneLedgerEntry(ProductOrderSample sample, double quantity, Date workCompleteDate,
-                                                    Product product, PriceItem priceItem) {
+    public static LedgerEntry createOneLedgerEntry(ProductOrderSample sample, BigDecimal quantity, Date workCompleteDate,
+                                                   Product product, PriceItem priceItem) {
         LedgerEntry ledgerEntry;
         if(priceItem == null) {
             sample.getProductOrder().setQuoteId("2700039");
@@ -78,9 +79,9 @@ public class LedgerEntryTest {
                                                       LedgerEntry.PriceItemType priceItemType, boolean forSap) {
         LedgerEntry entry;
         if(forSap) {
-            entry = createOneLedgerEntry(sample, null, 1, new Date(), new Product());
+            entry = createOneLedgerEntry(sample, null, BigDecimal.ONE, new Date(), new Product());
         } else {
-            entry = createOneLedgerEntry(sample, "priceItem", 1, new Date(), new Product());
+            entry = createOneLedgerEntry(sample, "priceItem", BigDecimal.ONE, new Date(), new Product());
         }
         entry.setPriceItemType(priceItemType);
         entry.setBillingMessage(BillingSession.SUCCESS);
@@ -89,14 +90,14 @@ public class LedgerEntryTest {
 
     @DataProvider(name = "testIsBilled")
     public Object[][] createTestIsBilledData() {
-        LedgerEntry billedEntry = createOneLedgerEntry("test", "priceItem", 1);
+        LedgerEntry billedEntry = createOneLedgerEntry("test", "priceItem", BigDecimal.ONE);
         BillingSession session = new BillingSession(0L, Collections.singleton(billedEntry));
         session.setBilledDate(new Date());
         return new Object[][] {
                 {createBilledLedgerEntry(createSample("test"), LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM,false ), true},
                 {createBilledLedgerEntry(createSample("test"), LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM, false), true},
                 {billedEntry, true},
-                {createOneLedgerEntry("test", "price item", 1), false}
+                {createOneLedgerEntry("test", "price item", BigDecimal.ONE), false}
         };
     }
 
@@ -113,18 +114,18 @@ public class LedgerEntryTest {
         String priceItemName2 = "DNA Extract from Tissue";
         ProductOrderSample sample = createSample("SM-3KBZD");
 
-        LedgerEntry ledgerEntry1 = LedgerEntryTest.createOneLedgerEntry(sample, priceItemName1, 1, date1
+        LedgerEntry ledgerEntry1 = LedgerEntryTest.createOneLedgerEntry(sample, priceItemName1, BigDecimal.ONE, date1
         );
         ledgerEntry1.setBillingMessage("anything");
 
-        LedgerEntry ledgerEntry2 = LedgerEntryTest.createOneLedgerEntry(sample, priceItemName1, 1, date2
+        LedgerEntry ledgerEntry2 = LedgerEntryTest.createOneLedgerEntry(sample, priceItemName1, BigDecimal.ONE, date2
         );
         ledgerEntry2.setBillingMessage("something else");
 
-        LedgerEntry ledgerEntrySap1 = LedgerEntryTest.createOneLedgerEntry(sample, 1, date1, new Product(), null);
+        LedgerEntry ledgerEntrySap1 = LedgerEntryTest.createOneLedgerEntry(sample, BigDecimal.ONE, date1, new Product(), null);
         ledgerEntrySap1.setBillingMessage("anything");
 
-        LedgerEntry ledgerEntrySap2 = LedgerEntryTest.createOneLedgerEntry(sample, 1, date2,new Product(), null);
+        LedgerEntry ledgerEntrySap2 = LedgerEntryTest.createOneLedgerEntry(sample, BigDecimal.ONE, date2,new Product(), null);
         ledgerEntrySap2.setBillingMessage("something else");
 
         return new Object[][] {
@@ -136,13 +137,13 @@ public class LedgerEntryTest {
                 {ledgerEntry1, ledgerEntrySap1, false},
                 {ledgerEntry2, ledgerEntrySap2, false},
                 // Different priceItem should be not equals.
-                {ledgerEntry1, LedgerEntryTest.createOneLedgerEntry(sample, priceItemName2, 1, date1), false },
+                {ledgerEntry1, LedgerEntryTest.createOneLedgerEntry(sample, priceItemName2, BigDecimal.ONE, date1), false },
                 // Different quantity, should equate since quantity is not used for comparison.
-                {ledgerEntry1, LedgerEntryTest.createOneLedgerEntry(sample, priceItemName1, 2, date1), true },
-                {ledgerEntry1, LedgerEntryTest.createOneLedgerEntry(sample, 2, date1, new Product(), null), false },
-                {ledgerEntrySap1, LedgerEntryTest.createOneLedgerEntry(sample, priceItemName2, 1, date1), false },
-                {ledgerEntrySap1, LedgerEntryTest.createOneLedgerEntry(sample, priceItemName1, 2, date1), false },
-                {ledgerEntrySap1, LedgerEntryTest.createOneLedgerEntry(sample, 2, date1, new Product(), null), true}
+                {ledgerEntry1, LedgerEntryTest.createOneLedgerEntry(sample, priceItemName1, BigDecimal.valueOf(2), date1), true },
+                {ledgerEntry1, LedgerEntryTest.createOneLedgerEntry(sample, BigDecimal.valueOf(2), date1, new Product(), null), false },
+                {ledgerEntrySap1, LedgerEntryTest.createOneLedgerEntry(sample, priceItemName2, BigDecimal.valueOf(1), date1), false },
+                {ledgerEntrySap1, LedgerEntryTest.createOneLedgerEntry(sample, priceItemName1, BigDecimal.valueOf(2), date1), false },
+                {ledgerEntrySap1, LedgerEntryTest.createOneLedgerEntry(sample, BigDecimal.valueOf(2), date1, new Product(), null), true}
         };
     }
 

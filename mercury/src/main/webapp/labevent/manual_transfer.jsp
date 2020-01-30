@@ -709,6 +709,9 @@
                                     <stripes:submit value="Clear Cherry Picks" id="ClearConnectionsButton" name="ClearConnectionsButton"  class="btn"/>
                                 </c:if>
                                 <input type="button" onclick="$('.clearable').each(function (){$(this).val('');});" value="Clear non-reagent fields" class="btn">
+                                <c:if test="${not empty actionBean.manualTransferDetails.downloadFileType}">
+                                    <stripes:submit name="downloadFile" value="Download ${actionBean.manualTransferDetails.downloadFileType.displayName}" class="btn"/>
+                                </c:if>
 
                                 <div id="cherryPickSourceElements">
                                     <c:forEach items="${actionBean.stationEvents}" var="stationEvent" varStatus="stationEventStatus">

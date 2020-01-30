@@ -33,6 +33,7 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -86,9 +87,9 @@ public class ProductOrderSampleTest {
             billedPriceItem = new PriceItem(priceItemType.name(), "", null, priceItemType.name());
         }
         if(sample.getProductOrder().hasSapQuote()) {
-            sample.addLedgerItem(new Date(), sample.getProductOrder().getProduct(), 1, false);
+            sample.addLedgerItem(new Date(), sample.getProductOrder().getProduct(), BigDecimal.ONE, false);
         } else {
-            sample.addLedgerItem(new Date(), billedPriceItem, 1);
+            sample.addLedgerItem(new Date(), billedPriceItem, BigDecimal.ONE);
         }
         LedgerEntry entry = sample.getLedgerItems().iterator().next();
         entry.setPriceItemType(priceItemType);
@@ -104,7 +105,7 @@ public class ProductOrderSampleTest {
 
     private static ProductOrderSample createUnbilledSampleWithLedger(String name, boolean sapOrder) {
         ProductOrderSample sample = createOrderedSample(name, sapOrder);
-        LedgerEntry billedEntry = LedgerEntryTest.createOneLedgerEntry(sample, "price item", 1, new Date());
+        LedgerEntry billedEntry = LedgerEntryTest.createOneLedgerEntry(sample, "price item", BigDecimal.ONE, new Date());
         sample.getLedgerItems().add(billedEntry);
         return sample;
     }
@@ -162,10 +163,10 @@ public class ProductOrderSampleTest {
         PriceItem billedPriceItem = sample.getProductOrder().getProduct().getPrimaryPriceItem();
         if(sample.getProductOrder().hasSapQuote()) {
 
-            sample.addLedgerItem(new Date(), sample.getProductOrder().getProduct(), -1, false);
+            sample.addLedgerItem(new Date(), sample.getProductOrder().getProduct(), BigDecimal.ONE.negate(), false);
         } else {
 
-            sample.addLedgerItem(new Date(), billedPriceItem, -1);
+            sample.addLedgerItem(new Date(), billedPriceItem, BigDecimal.ONE.negate());
         }
         // Flag the credit ledger entry as billed successfully
         for( LedgerEntry entry : sample.getLedgerItems() ) {
@@ -198,9 +199,9 @@ public class ProductOrderSampleTest {
         PriceItem billedPriceItem = sample.getProductOrder().getProduct().getPrimaryPriceItem();
         if(sample.getProductOrder().hasSapQuote()) {
 
-            sample.addLedgerItem(new Date(), sample.getProductOrder().getProduct(), -1, false);
+            sample.addLedgerItem(new Date(), sample.getProductOrder().getProduct(), BigDecimal.ONE.negate(), false);
         } else {
-            sample.addLedgerItem(new Date(), billedPriceItem, -1);
+            sample.addLedgerItem(new Date(), billedPriceItem, BigDecimal.ONE.negate());
         }
         LedgerEntry entry = sample.getLedgerItems().iterator().next();
         entry.setPriceItemType(LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM);
@@ -243,20 +244,20 @@ public class ProductOrderSampleTest {
         TestPDOData data = new TestPDOData("GSP-123");
         Date completedDate = new Date();
         LedgerEntry ledgerEntry = new LedgerEntry(data.sample1, data.product.getPrimaryPriceItem(), completedDate,
-                1);
+                BigDecimal.ONE);
 
         // Bill sample2.
-        data.sample2.addLedgerItem(completedDate, data.product.getPrimaryPriceItem(), 1);
+        data.sample2.addLedgerItem(completedDate, data.product.getPrimaryPriceItem(), BigDecimal.ONE);
         LedgerEntry ledger = data.sample2.getLedgerItems().iterator().next();
         ledger.setBillingMessage(BillingSession.SUCCESS);
         ledger.setBillingSession(new BillingSession(0L, Collections.singleton(ledger)));
 
         TestPDOData dataSap = new TestPDOData("2700039");
         completedDate = new Date();
-        LedgerEntry ledgerEntrySap = new LedgerEntry(dataSap.sample1, dataSap.product, completedDate,1);
+        LedgerEntry ledgerEntrySap = new LedgerEntry(dataSap.sample1, dataSap.product, completedDate, BigDecimal.ONE);
 
         // Bill sample2.
-        dataSap.sample2.addLedgerItem(completedDate, dataSap.product, 1, false);
+        dataSap.sample2.addLedgerItem(completedDate, dataSap.product, BigDecimal.ONE, false);
         LedgerEntry ledgerSap = dataSap.sample2.getLedgerItems().iterator().next();
         ledgerSap.setBillingMessage(BillingSession.SUCCESS);
         ledgerSap.setBillingSession(new BillingSession(0L, Collections.singleton(ledgerSap)));
@@ -279,7 +280,7 @@ public class ProductOrderSampleTest {
 
     @Test(dataProvider = "autoBillSample")
     public void testAutoBillSample(ProductOrderSample sample, Date completedDate, Set<LedgerEntry> ledgerEntries) {
-        sample.autoBillSample(completedDate, 1);
+        sample.autoBillSample(completedDate, BigDecimal.ONE);
         assertThat(sample.getBillableLedgerItems(), is(ledgerEntries));
     }
 
@@ -624,18 +625,18 @@ public class ProductOrderSampleTest {
         return new Object[][]{
             // billed       existing        requested       expected resulting
             // quantity     ready-to-bill   quantity        ready-to-bill
-            {  0,           0,              0,              0              }, // no change (no existing billing)
-            {  0,           0,              1,              1              }, // request new billing
-            {  0,           0,              2,              2              }, // (redundant with "request new billing", but included for combinatorial completeness
-            {  0,           1,              0,              0              }, // cancel unbilled request (no existing billing)
-            {  0,           1,              1,              1              }, // no change (pending billing request)
-            {  0,           1,              2,              2              }, // update unbilled request (increase quantity, no existing billing)
-            {  1,           0,              0,             -1              }, // credit
-            {  1,           0,              1,              0              }, // no change (completed billing)
-            {  1,           0,              2,              1              }, // request more billing
-            {  1,           1,              0,             -1              }, // update unbilled request (change from charge to credit)
-            {  1,           1,              1,              0              }, // cancel unbilled request (completed billing)
-            {  1,           1,              2,              1              }  // no change (completed billing and pending billing request)
+            {BigDecimal.valueOf(0), BigDecimal.valueOf(0), BigDecimal.valueOf(0), BigDecimal.valueOf(0)}, // no change (no existing billing)
+            {BigDecimal.valueOf(0), BigDecimal.valueOf(0), BigDecimal.valueOf(1), BigDecimal.valueOf(1)}, // request new billing
+            {BigDecimal.valueOf(0), BigDecimal.valueOf(0), BigDecimal.valueOf(2), BigDecimal.valueOf(2)}, // (redundant with "request new billing", but included for combinatorial completeness
+            {BigDecimal.valueOf(0), BigDecimal.valueOf(1), BigDecimal.valueOf(0), BigDecimal.valueOf(0)}, // cancel unbilled request (no existing billing)
+            {BigDecimal.valueOf(0), BigDecimal.valueOf(1), BigDecimal.valueOf(1), BigDecimal.valueOf(1)}, // no change (pending billing request)
+            {BigDecimal.valueOf(0), BigDecimal.valueOf(1), BigDecimal.valueOf(2), BigDecimal.valueOf(2)}, // update unbilled request (increase quantity, no existing billing)
+            {BigDecimal.valueOf(1), BigDecimal.valueOf(0), BigDecimal.valueOf(0), BigDecimal.valueOf(-1)}, // credit
+            {BigDecimal.valueOf(1), BigDecimal.valueOf(0), BigDecimal.valueOf(1), BigDecimal.valueOf(0)}, // no change (completed billing)
+            {BigDecimal.valueOf(1), BigDecimal.valueOf(0), BigDecimal.valueOf(2), BigDecimal.valueOf(1)}, // request more billing
+            {BigDecimal.valueOf(1), BigDecimal.valueOf(1), BigDecimal.valueOf(0), BigDecimal.valueOf(-1)}, // update unbilled request (change from charge to credit)
+            {BigDecimal.valueOf(1), BigDecimal.valueOf(1), BigDecimal.valueOf(1), BigDecimal.valueOf(0)}, // cancel unbilled request (completed billing)
+            {BigDecimal.valueOf(1), BigDecimal.valueOf(1), BigDecimal.valueOf(2), BigDecimal.valueOf(1)}  // no change (completed billing and pending billing request)
         };
         // @formatter:on
     }
@@ -653,8 +654,8 @@ public class ProductOrderSampleTest {
      * @throws StaleLedgerUpdateException
      */
     @Test(dataProvider = "everything")
-    public void testEverything(int quantityBilled, double quantityReadyToBill, double quantityRequested,
-                               double expectedQuantityReadyToBill) throws StaleLedgerUpdateException {
+    public void testEverything(BigDecimal quantityBilled, BigDecimal quantityReadyToBill, BigDecimal quantityRequested,
+                               BigDecimal expectedQuantityReadyToBill) throws StaleLedgerUpdateException {
 
         /*
          * The expected resulting unbilled ledger quantity must equal the new quantity being requested minus the
@@ -663,27 +664,25 @@ public class ProductOrderSampleTest {
          *
          * This assertion is here both to document that point and as a guard against nonsensical test cases.
          */
-        assertThat(expectedQuantityReadyToBill, equalTo(quantityRequested - quantityBilled));
-        assertThat(quantityBilled, anyOf(equalTo(0), equalTo(1)));
+        assertThat(expectedQuantityReadyToBill, equalTo(quantityRequested.subtract(quantityBilled)));
+        assertThat(quantityBilled, anyOf(equalTo(BigDecimal.valueOf(0)), equalTo(BigDecimal.valueOf(1))));
 
         ProductOrderSample productOrderSample;
-        if (quantityBilled == 0) {
+        if (quantityBilled.compareTo(BigDecimal.ZERO) == 0) {
             productOrderSample = createOrderedSample("TEST", false);
         } else {
             productOrderSample = createBilledSample("TEST", false);
         }
 
         PriceItem priceItem = productOrderSample.getProductOrder().getProduct().getPrimaryPriceItem();
-        if (quantityReadyToBill > 0) {
+        if (quantityReadyToBill.compareTo(BigDecimal.ZERO) > 0) {
             addUnbilledLedgerEntry(productOrderSample, priceItem, quantityReadyToBill);
         }
 
-//        ProductLedgerIndex quantityIndex = new ProductLedgerIndex(productOrderSample.getProductOrder().getProduct(), priceItem);
-//        ProductOrderSample.LedgerQuantities ledgerQuantities = productOrderSample.getLedgerQuantities().get(quantityIndex );
         ProductOrderSample.LedgerQuantities ledgerQuantities = productOrderSample.getLedgerQuantities().get(
                 ProductLedgerIndex.create(null, priceItem, productOrderSample.getProductOrder().hasSapQuote()));
-        double quantityBefore = ledgerQuantities != null ? ledgerQuantities.getTotal() : 0;
-        double currentQuantity = quantityBefore; // these tests all assume no external changes
+        BigDecimal quantityBefore = ledgerQuantities != null ? ledgerQuantities.getTotal() : BigDecimal.ZERO;
+        BigDecimal currentQuantity = quantityBefore; // these tests all assume no external changes
         Date workCompleteDate = new Date();
 
         ProductOrderSample.LedgerUpdate ledgerUpdate;
@@ -707,7 +706,7 @@ public class ProductOrderSampleTest {
         } else {
             ledgerEntry = productOrderSample.findUnbilledLedgerEntryForPriceItem(priceItem);
         }
-        if (expectedQuantityReadyToBill == 0) {
+        if (expectedQuantityReadyToBill.compareTo(BigDecimal.ZERO) == 0) {
             assertThat(ledgerEntry, nullValue());
             assertThat(productOrderSample.getBillableLedgerItems(), empty());
         } else {
@@ -717,7 +716,7 @@ public class ProductOrderSampleTest {
     }
 
     private void addUnbilledLedgerEntry(ProductOrderSample productOrderSample, PriceItem priceItem,
-                                        double quantityReadyToBill) {
+                                        BigDecimal quantityReadyToBill) {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DAY_OF_MONTH, -1);
         Date oldWorkCompleteDate = calendar.getTime();
@@ -740,11 +739,13 @@ public class ProductOrderSampleTest {
         if(productOrderSample.getProductOrder().hasSapQuote()) {
             ledgerUpdate =
                     new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(),
-                            productOrderSample.getProductOrder().getProduct(), 1, 0, 2,
+                            productOrderSample.getProductOrder().getProduct(), BigDecimal.valueOf(1),
+                            BigDecimal.valueOf(0), BigDecimal.valueOf(2),
                             new Date(), false);
         } else {
             ledgerUpdate =
-                    new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem, productOrderSample.getProductOrder().getProduct(), 1, 0, 2,
+                    new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem, productOrderSample.getProductOrder().getProduct(),
+                            BigDecimal.valueOf(1), BigDecimal.valueOf(0), BigDecimal.valueOf(2),
                             new Date());
         }
         Exception caught = null;
@@ -764,11 +765,13 @@ public class ProductOrderSampleTest {
         if(productOrderSample.getProductOrder().hasSapQuote()) {
             ledgerUpdate =
                     new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(),
-                            productOrderSample.getProductOrder().getProduct(), 0, 0, 1, null, false);
+                            productOrderSample.getProductOrder().getProduct(), BigDecimal.valueOf(0),
+                            BigDecimal.valueOf(0), BigDecimal.valueOf(1), null, false);
         } else {
             ledgerUpdate =
                     new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem,
-                            productOrderSample.getProductOrder().getProduct(), 0, 0, 1, null);
+                            productOrderSample.getProductOrder().getProduct(), BigDecimal.valueOf(0),
+                            BigDecimal.valueOf(0), BigDecimal.valueOf(1), null);
         }
         Exception caught = null;
         try {

@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -135,7 +136,7 @@ public class QuoteImportInfo {
 
                             // Separate the items into debits and credits so that the quote server will not cancel out items.
                             for (LedgerEntry ledger : ledgerItems) {
-                                if (ledger.getQuantity() < 0) {
+                                if (ledger.getQuantity().compareTo(BigDecimal.ZERO) < 0) {
                                     if (isReplacementPriceItem(priceListCache, ledger)) {
                                         replacementCreditLedgerItems.add(ledger);
                                     } else {

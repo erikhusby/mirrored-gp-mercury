@@ -93,7 +93,6 @@ public class ExomeExpressIntegrationTest {
             LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LibraryConstructionJaxbBuilder(
                     bettaLimsMessageTestFactory, testSuffix, shearingJaxbBuilder.getShearCleanPlateBarcode(),
                     "000002453323", null, sampleBarcodeMap.size(),
-                    LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY,
                     Arrays.asList(Triple.of("KAPA Reagent Box", "0009753252", 1)),
                     Arrays.asList(Triple.of("PEG", "0009753352", 2), Triple.of("70% Ethanol", "LCEtohTest", 3),
                             Triple.of("EB", "0009753452", 4), Triple.of("SPRI", "LCSpriTest", 5)),
