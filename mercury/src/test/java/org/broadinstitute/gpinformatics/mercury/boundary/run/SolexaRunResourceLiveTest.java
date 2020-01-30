@@ -3,14 +3,9 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResourceLiveTest;
-import org.broadinstitute.gpinformatics.mercury.control.EntityLoggingFilter;
-import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchDbTest;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
-import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
-import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneReadStructure;
-import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -19,10 +14,6 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -52,6 +43,8 @@ public class SolexaRunResourceLiveTest extends Arquillian {
                 runName1);
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 8);
         for (ZimsIlluminaChamber zimsIlluminaChamber : zimsIlluminaRun.getLanes()) {
+            // After LimsQuery stops accessing Squid, the read structure for this Squid run will freeze
+            // at a date in 2020. Testing the year should be sufficient to show that access succeeded.
             Assert.assertTrue(zimsIlluminaChamber.getActualReadStructure().startsWith("STRUC2020-"),
                     "Unexpected value " + zimsIlluminaChamber.getActualReadStructure());
         }

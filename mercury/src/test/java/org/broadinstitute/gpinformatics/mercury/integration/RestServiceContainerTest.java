@@ -4,7 +4,6 @@ import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.jboss.arquillian.testng.Arquillian;
 import org.testng.annotations.BeforeMethod;
 
-import javax.decorator.Decorator;
 import javax.enterprise.context.Dependent;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
