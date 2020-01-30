@@ -34,6 +34,7 @@ import org.mockito.stubbing.Answer;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -82,7 +83,7 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
         quantities.stream().sorted(Comparator.naturalOrder()).forEach(i -> {
             String deliveryDocumentId = String.format("00%d", i);
             ProductOrderSample productOrderSample = productOrder.getSamples().get(i);
-            double quantity = i + i;
+            BigDecimal quantity = BigDecimal.valueOf(i).add(BigDecimal.valueOf(i));
             LedgerEntry ledger = createLedgerEntry(productOrderSample, product, deliveryDocumentId, quantity);
             ledger.setBillingMessage(BillingSession.SUCCESS);
             ledgerEntries.add(ledger);
@@ -93,7 +94,7 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
         quantities.stream().sorted(Comparator.reverseOrder()).forEach(i -> {
             String deliveryDocumentId = String.format("00%d", i);
             ProductOrderSample productOrderSample = productOrder.getSamples().get(i);
-            double quantity = -(i + i);
+            BigDecimal quantity = BigDecimal.valueOf(i).add(BigDecimal.valueOf(i)).negate();
             LedgerEntry ledger = createLedgerEntry(productOrderSample, product, deliveryDocumentId, quantity);
             ledgerEntries.add(ledger);
         });
@@ -135,7 +136,7 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
         quantities.stream().sorted(Comparator.naturalOrder()).forEach(i -> {
             String deliveryDocumentId = String.format("00%d", i);
             ProductOrderSample productOrderSample = productOrder.getSamples().get(i);
-            double quantity = i + i;
+            BigDecimal quantity = BigDecimal.valueOf(i).add(BigDecimal.valueOf(i));
             LedgerEntry ledger = createLedgerEntry(productOrderSample, product, deliveryDocumentId, quantity);
             ledger.setBillingMessage(BillingSession.SUCCESS);
             positiveEntries.add(ledger);
@@ -144,14 +145,14 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
         quantities.stream().sorted(Comparator.reverseOrder()).forEach(i -> {
             String deliveryDocumentId = String.format("00%d", i);
             ProductOrderSample productOrderSample = productOrder.getSamples().get(i);
-            double quantity = -(i + i);
+            BigDecimal quantity = BigDecimal.valueOf(i).add(BigDecimal.valueOf(i)).negate();
             LedgerEntry ledger = createLedgerEntry(productOrderSample, product, deliveryDocumentId, quantity);
             negativeEntries.add(ledger);
         });
 
         negativeEntries.forEach(negativeEntry -> negativeEntry.findCreditSource().forEach((positiveEntry, quantity) -> {
             assertThat(negativeEntry.getProductOrderSample(), equalTo(positiveEntry.getProductOrderSample()));
-            assertThat(positiveEntry.getQuantity() + negativeEntry.getQuantity(), equalTo(0.0d));
+            assertThat(positiveEntry.getQuantity().add(negativeEntry.getQuantity()), equalTo(BigDecimal.ZERO));
         }));
         List<LedgerEntry> result = new ArrayList<>();
         positiveEntries.forEach(ledgerEntry -> result.addAll(ledgerEntry.findCreditSource().keySet()));
@@ -161,25 +162,25 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
 
     @DataProvider(name = "billingQuantityDataProvider")
     public Iterator<Object[]> billingQuantityDataProvider() {
+        BigDecimal pointFour = BigDecimal.valueOf(.4d);
+        BigDecimal pointFive = BigDecimal.valueOf(.5d);
+        BigDecimal pointSix = BigDecimal.valueOf(.6d);
+        BigDecimal two = BigDecimal.valueOf(2);
         List<Object[]> testCases = new ArrayList<>();
-        testCases.add(new Object[]{Collections.singletonList(1d), Collections.singletonList(-1d), null});
-        testCases.add(new Object[]{Arrays.asList(.4d, .6d), Collections.singletonList(-1d), null});
-        testCases.add(new Object[]{Collections.singletonList(-1d), Arrays.asList(.5d, .5d), BillingAdaptor.NEGATIVE_BILL_ERROR});
-        testCases.add(new Object[]{Arrays.asList(.5d, .6d), Collections.singletonList(-1d),
-            BillingAdaptor.CREDIT_QUANTITY_INVALID});
-        testCases.add(new Object[]{Collections.singletonList(-1d), Collections.singletonList(-2d),
-            BillingAdaptor.NEGATIVE_BILL_ERROR});
-        testCases.add(new Object[]{Collections.singletonList(0d), Collections.singletonList(-1d),
-            BillingAdaptor.NEGATIVE_BILL_ERROR});
-        testCases.add(
-            new Object[]{Collections.emptyList(), Collections.singletonList(-1d), BillingAdaptor.NEGATIVE_BILL_ERROR});
+        testCases.add(new Object[]{Collections.singletonList(BigDecimal.ONE), Collections.singletonList(BigDecimal.ONE.negate()), null});
+        testCases.add(new Object[]{Arrays.asList(pointFour, pointSix), Collections.singletonList(BigDecimal.ONE.negate()), null});
+        testCases.add(new Object[]{Collections.singletonList(BigDecimal.ONE.negate()), Arrays.asList(pointFive, pointFive), BillingAdaptor.NEGATIVE_BILL_ERROR});
+        testCases.add(new Object[]{Arrays.asList(pointFive, pointSix), Collections.singletonList(BigDecimal.ONE.negate()), BillingAdaptor.CREDIT_QUANTITY_INVALID});
+        testCases.add(new Object[]{Collections.singletonList(BigDecimal.ONE.negate()), Collections.singletonList(two.negate()), BillingAdaptor.NEGATIVE_BILL_ERROR});
+        testCases.add(new Object[]{Collections.singletonList(BigDecimal.ZERO), Collections.singletonList(BigDecimal.ONE.negate()), BillingAdaptor.NEGATIVE_BILL_ERROR});
+        testCases.add(new Object[]{Collections.emptyList(), Collections.singletonList(BigDecimal.ONE.negate()), BillingAdaptor.NEGATIVE_BILL_ERROR});
         return testCases.iterator();
     }
 
 
     @Test(dataProvider = "billingQuantityDataProvider")
-    public void testLedgerEntriesSameSampleMultiplePositive(List<Double> positiveQuantities,
-                                                            List<Double> negativeQuantities, String error)
+    public void testLedgerEntriesSameSampleMultiplePositive(List<BigDecimal> positiveQuantities,
+                                                            List<BigDecimal> negativeQuantities, String error)
         throws Exception {
 
         SapIntegrationServiceImpl sapService =
@@ -202,7 +203,7 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
         ledgerEntries.clear();
         ProductOrderSample productOrderSample = productOrder.getSamples().iterator().next();
         for (int i = 0; i < positiveQuantities.size(); i++) {
-            double quantity = positiveQuantities.get(i);
+            BigDecimal quantity = positiveQuantities.get(i);
             String deliveryDocumentId = String.format("00%d", i);
             LedgerEntry ledger = createLedgerEntry(productOrderSample, product, deliveryDocumentId, quantity);
             ledger.setBillingMessage(BillingSession.SUCCESS);
@@ -210,7 +211,7 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
             new BillingSession(System.currentTimeMillis(), new HashSet<>(ledgerEntries));
         }
         for (int i = 0; i < negativeQuantities.size(); i++) {
-            double quantity = negativeQuantities.get(i);
+            BigDecimal quantity = negativeQuantities.get(i);
             String deliveryDocumentId = String.format("00%d", i);
             LedgerEntry ledger = createLedgerEntry(productOrderSample, product, deliveryDocumentId, quantity);
             ledgerEntries.add(ledger);
@@ -244,7 +245,7 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
     }
 
     public LedgerEntry createLedgerEntry(ProductOrderSample productOrderSample, Product product,
-                                         String deliveryDocument, double qty) {
+                                         String deliveryDocument, BigDecimal qty) {
         LedgerEntry ledgerEntry =
             new LedgerEntry(productOrderSample, product, new Date(), qty);
         ledgerEntry.setQuoteId(String.valueOf(System.nanoTime()));

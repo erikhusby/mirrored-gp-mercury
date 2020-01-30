@@ -410,4 +410,8 @@ public class QuoteImportItem {
         return priorSapBillings;
     }
 
+    public BigDecimal totalPriorBillingQuantity() {
+        return getPriorBillings().stream().map(LedgerEntry::totalPreviouslyBilledQuantity)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 }

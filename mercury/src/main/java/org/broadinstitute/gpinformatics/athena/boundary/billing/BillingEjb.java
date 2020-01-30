@@ -34,6 +34,7 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.StringWriter;
+import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -444,7 +445,10 @@ public class BillingEjb {
         Collection<String> ccUsers = new HashSet<>(appConfig.getGpBillingManagers());
         ccUsers.clear();
         Map<String, Set<Map<String, Object>>> returnMap = new HashMap<>();
-        final double creditQuantity = Math.abs(billingLedgers.stream().mapToDouble(LedgerEntry::getQuantity).sum());
+
+        final BigDecimal creditQuantity = billingLedgers.stream().map(LedgerEntry::totalPreviouslyBilledQuantity)
+            .reduce(BigDecimal.ZERO, BigDecimal::add).abs();
+
         BspUser billedBy = bspUserList.getById(billedById);
         billingLedgers.forEach(billingLedger->{
             if (billedBy != null) {

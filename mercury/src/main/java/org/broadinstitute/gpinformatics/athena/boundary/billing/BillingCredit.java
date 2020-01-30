@@ -54,33 +54,32 @@ public class BillingCredit {
      */
     public static Collection<BillingCredit> setupSapCredits(QuoteImportItem quoteItem) {
         Set<BillingCredit> credits = new HashSet<>();
-        double totalAvailable = quoteItem.getPriorBillings().stream().mapToDouble(LedgerEntry::getQuantity).sum();
-        double quoteItemQuantity = quoteItem.getQuantity();
-        if (quoteItemQuantity > 0) {
+        BigDecimal totalAvailable = quoteItem.totalPriorBillingQuantity();
+        BigDecimal quoteItemQuantity = quoteItem.getQuantity();
+        if (quoteItemQuantity.compareTo(BigDecimal.ZERO) > 0) {
             throw new BillingException(BillingAdaptor.CREDIT_QUANTITY_INVALID);
-        } if (totalAvailable + quoteItemQuantity < 0 ){
+        } if (totalAvailable.add(quoteItemQuantity).compareTo(BigDecimal.ZERO) < 0 ){
             throw new BillingException(BillingAdaptor.NEGATIVE_BILL_ERROR);
         } else {
             Map<String, List<LineItem>> orderItemsByDeliveryDocument = new HashMap<>();
             quoteItem.getBillingCredits().forEach(ledgerCreditEntry -> {
-                Map<LedgerEntry, Double> creditSource = ledgerCreditEntry.findCreditSource();
+                Map<LedgerEntry, BigDecimal> creditSource = ledgerCreditEntry.findCreditSource();
                 creditSource.forEach((sourceLedger, quantityAvailableInCreditSource) -> {
                     BillingMessage billingMessage=new BillingMessage();
-                    if (creditSource.isEmpty() && Math.abs(quoteItemQuantity) > 0) {
+                    if (creditSource.isEmpty() && quoteItemQuantity.abs().compareTo(BigDecimal.ZERO) > 0) {
                         billingMessage.setValidationError(BillingAdaptor.NEGATIVE_BILL_ERROR);
                     }
 
-                    Double totalQuantitiesAvailableInLedger =
-                        sourceLedger.getPreviouslyBilled().stream().mapToDouble(LedgerEntry::getQuantity).sum();
+                    BigDecimal totalQuantitiesAvailableInLedger = sourceLedger.totalPreviouslyBilledQuantity();
 
-                    if (ledgerCreditEntry.getQuantity() >= 0) {
+                    if (ledgerCreditEntry.getQuantity().compareTo(BigDecimal.ZERO) >= 0) {
                         billingMessage.setValidationError(BillingAdaptor.CREDIT_QUANTITY_INVALID);
                         return;
                     }
-                    Double requiredCreditQuantity = Math.abs(ledgerCreditEntry.getQuantity());
-                    Double requestedCreditQuantity = 0d;
-                    if (requiredCreditQuantity > quantityAvailableInCreditSource
-                        && requiredCreditQuantity > totalQuantitiesAvailableInLedger) {
+                    BigDecimal requiredCreditQuantity = ledgerCreditEntry.getQuantity().abs();
+                    BigDecimal requestedCreditQuantity;
+                    if (requiredCreditQuantity.compareTo(quantityAvailableInCreditSource)>0
+                        && requiredCreditQuantity.compareTo(totalQuantitiesAvailableInLedger)>0) {
                         billingMessage.setValidationError(BillingAdaptor.NEGATIVE_BILL_ERROR);
                         return;
                     } else if (requiredCreditQuantity.equals(quantityAvailableInCreditSource)) {
@@ -140,9 +139,9 @@ public class BillingCredit {
         private final BigDecimal quantity;
         private BillingMessage billingMessage;
 
-        LineItem(LedgerEntry ledgerEntry, Double quantity, BillingMessage billingMessage) {
+        LineItem(LedgerEntry ledgerEntry, BigDecimal quantity, BillingMessage billingMessage) {
             this.ledgerEntry = ledgerEntry;
-            this.quantity = BigDecimal.valueOf(quantity);
+            this.quantity = quantity;
             this.billingMessage = billingMessage;
         }
 

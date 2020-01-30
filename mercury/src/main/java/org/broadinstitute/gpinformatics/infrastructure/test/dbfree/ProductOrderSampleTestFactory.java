@@ -91,7 +91,8 @@ public class ProductOrderSampleTestFactory {
         final PriceItem priceItem = new PriceItem(sampleToBeBilled.getProductOrder().getQuoteId(), "platform", "category", "test");
 
         if(sampleToBeBilled.getProductOrder().hasSapQuote()) {
-            sampleToBeBilled.addLedgerItem(new Date(), sampleToBeBilled.getProductOrder().getProduct(), 1d, false);
+            sampleToBeBilled
+                .addLedgerItem(new Date(), sampleToBeBilled.getProductOrder().getProduct(), BigDecimal.ONE, false);
         } else {
             sampleToBeBilled.addLedgerItem(new Date(), priceItem, BigDecimal.ONE);
         }

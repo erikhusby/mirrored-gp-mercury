@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -251,7 +252,7 @@ public class LedgerEntry implements Serializable {
     }
 
     public boolean isCredit() {
-        return quantity < 0;
+        return quantity.compareTo(BigDecimal.ZERO) < 0;
     }
 
     public boolean isCredited() {
@@ -264,22 +265,19 @@ public class LedgerEntry implements Serializable {
      *
      * @return a Map<LedgerEntry, Double> which represents the quantities to be deducted for each LedgerEntry.
      */
-    public Map<LedgerEntry, Double> findCreditSource(){
-        Predicate<LedgerEntry> hasDeliveryDocument =
-            ledgerEntry -> StringUtils.isNotBlank(ledgerEntry.getSapDeliveryDocumentId());
+    public Map<LedgerEntry, BigDecimal> findCreditSource(){
+        BigDecimal ledgerQuantities =
+            getProductOrderSample().getLedgerItems().stream().map(LedgerEntry::totalPreviouslyBilledQuantity)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        double ledgerQuantities =
-            getProductOrderSample().getLedgerItems().stream()
-                .filter(hasDeliveryDocument).mapToDouble(LedgerEntry::getQuantity).sum();
-
-        if (!isCredit() || isCredited() || ledgerQuantities < 0) {
+        if (!isCredit() || isCredited() || ledgerQuantities.compareTo(BigDecimal.ZERO) < 0) {
             return Collections.emptyMap();
         }
         Predicate<LedgerEntry> isNotCredited = StreamUtils.not(LedgerEntry::isCredited);
-        Map<LedgerEntry, Double> creditSources = getProductOrderSample().getLedgerItems().stream()
+        return getProductOrderSample().getLedgerItems().stream()
             .filter(IS_SUCCESSFULLY_BILLED.and(isNotCredited))
-            .collect(Collectors.groupingBy(ledger->ledger,Collectors.summingDouble(LedgerEntry::getQuantity)));
-        return creditSources;
+            .collect(Collectors.groupingBy(Function.identity(),
+                Collectors.reducing(BigDecimal.ZERO, LedgerEntry::getQuantity,BigDecimal::add)));
 
     }
     /**
@@ -389,6 +387,10 @@ public class LedgerEntry implements Serializable {
     public Set<LedgerEntry> getPreviouslyBilled() {
         return productOrderSample.getLedgerItems().stream().filter(IS_SUCCESSFULLY_BILLED)
             .collect(Collectors.toSet());
+    }
+
+    public BigDecimal totalPreviouslyBilledQuantity(){
+        return getPreviouslyBilled().stream().map(LedgerEntry::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     /**

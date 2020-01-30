@@ -192,23 +192,13 @@ public class BillingAdaptor implements Serializable {
                         }
                     }
 
-                    if (item.isSapOrder()) {
-                        workId = null;
-                        sapBillingId = item.getSapItems();
-                    } else {
-                        workId = CollectionUtils.isEmpty(item.getWorkItems())?null:item.getWorkItems().toArray(new String[item.getWorkItems().size()])[0];
-                        sapBillingId = NOT_ELIGIBLE_FOR_SAP_INDICATOR;
-                    }
-
-                    BigDecimal quantityForSAP = item.getQuantity();
-
                     if (item.getProductOrder().getQuoteSource() != null) {
                         if (item.getProductOrder().hasQuoteServerQuote()) {
                             itemResults.add(billQuoteServer(item, quoteItemsByQuote, pageUrl, sessionKey));
                         }
 
                         if (item.getProductOrder().hasSapQuote()) {
-                            double quantityForSAP = item.getQuantityForSAP();
+                            BigDecimal quantityForSAP = item.getQuantityForSAP();
                             if (StringUtils.isBlank(item.getSapItems()) &&
                                 CollectionUtils.isEmpty(item.getSapReturnOrders())) {
 
