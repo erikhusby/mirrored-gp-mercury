@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.jboss.arquillian.testng.Arquillian;
 import org.testng.annotations.BeforeMethod;
 
+import javax.decorator.Decorator;
 import javax.enterprise.context.Dependent;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
@@ -111,18 +112,18 @@ public abstract class RestServiceContainerTest extends Arquillian {
 
     /**
      * Performs a GET on the given WebResource, expecting an error response and
-     * returning the UniformInterfaceException. Throws an assertion failure if
-     * the call does NOT result in a UniformInterfaceException.
+     * returning an exception. Throws an assertion failure if
+     * the call does NOT result in a WebApplicationException.
      *
      * @param resource the web resource to GET
      *
-     * @return the caught UniformInterfaceException
+     * @return the caught WebApplicationException
      */
     protected WebApplicationException getWithError(WebTarget resource) {
         WebApplicationException caught = null;
         try {
             resource.request(APPLICATION_JSON_TYPE).get(String.class);
-            fail("Expected UniformInterfaceException not thrown");
+            fail("Expected exception not thrown");
         } catch (WebApplicationException e) {
             caught = e;
         }
