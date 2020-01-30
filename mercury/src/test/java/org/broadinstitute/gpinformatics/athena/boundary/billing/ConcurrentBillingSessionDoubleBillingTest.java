@@ -216,7 +216,7 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
 
         @Override
         public String registerNewWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
-                                      Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
+                                      Date reportedCompletionDate, BigDecimal numWorkUnits, String callbackUrl,
                                       String callbackParameterName, String callbackParameterValue, BigDecimal priceAdjustment) {
 
             try {
@@ -231,7 +231,7 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
 
         @Override
         public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
-                                         Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
+                                         Date reportedCompletionDate, BigDecimal numWorkUnits, String callbackUrl,
                                          String callbackParameterName, String callbackParameterValue, BigDecimal priceAdjustment) {
             try {
                 // sleep here for a while to increase the likelihood that the vm really does try to call bill() at the same time

@@ -34,13 +34,13 @@ public interface QuoteService extends Serializable {
      */
     public String registerNewWork(
             Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
-            double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue,
+            BigDecimal numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue,
             BigDecimal priceAdjustment);
 
 
     public String registerNewSAPWork(
             Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
-            double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue,
+            BigDecimal numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue,
             BigDecimal priceAdjustment);
     /**
      * Get the quote for a particular quote identifier.

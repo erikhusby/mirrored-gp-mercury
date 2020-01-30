@@ -52,7 +52,6 @@ public class ConcordanceCalculatorTest extends Arquillian {
         double lodScore = concordanceCalculator.calculateLodScore(fingerprint1,
                 fingerprint2);
         Assert.assertTrue(lodScore > 20.0);
-        concordanceCalculator.done();
     }
 
     @Test
@@ -63,6 +62,5 @@ public class ConcordanceCalculatorTest extends Arquillian {
         double lodScore = concordanceCalculator.calculateHapMapConcordance(fingerprint1,
                 controlDao.findByCollaboratorParticipantId("NA12878"));
         Assert.assertTrue(lodScore > 20.0);
-        concordanceCalculator.done();
     }
 }

@@ -521,4 +521,27 @@ public class GenericDao {
 
         return foundValues;
     }
+
+    /**
+     * @param entity            the class of entity to return
+     * @param singularAttribute metadata field for the property to query
+     * @param values            list of values to query. These values will <b>NOT</b> be returned from the query since this
+     *                          DAO <b>call returns all values which are not in the list</b>
+     * @param <VALUE_TYPE>      the type of the value in the query, e.g. String
+     * @param <METADATA_TYPE>   the type on which the property is defined, this can be different from the ENTITY_TYPE if
+     *                          there is inheritance
+     * @param <ENTITY_TYPE>     the type of the entity to return
+     *
+     * @return list of entities who's values are not in singularAttribute, or empty list if not found
+     */
+    public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findAllNotInList(
+        Class<ENTITY_TYPE> entity, SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute,
+        List<VALUE_TYPE> values) {
+
+        return findAll(entity, (criteriaQuery, root) -> {
+            CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+            criteriaQuery.where(criteriaBuilder.not(root.get(singularAttribute).in(values)));
+        });
+    }
+
 }
