@@ -77,11 +77,13 @@ public class ProductOrderListEntryDaoTest extends StubbyContainerTest {
         // We need to initialize the price items here as we will be exercising their hashCode methods when we create
         // LedgerEntry entities in some of our tests.
 
-        //noinspection ResultOfMethodCallIgnored
-        order.getProduct().getPrimaryPriceItem().hashCode();
-        for (QuotePriceItem quotePriceItem : priceListCache.getReplacementPriceItems(order.getProduct())) {
+        if(order.getProduct().getPrimaryPriceItem() != null) {
             //noinspection ResultOfMethodCallIgnored
-            quotePriceItem.hashCode();
+            order.getProduct().getPrimaryPriceItem().hashCode();
+            for (QuotePriceItem quotePriceItem : priceListCache.getReplacementPriceItems(order.getProduct())) {
+                //noinspection ResultOfMethodCallIgnored
+                quotePriceItem.hashCode();
+            }
         }
         productOrderDao.persist(order);
         productOrderDao.persist(pendingOrder);
