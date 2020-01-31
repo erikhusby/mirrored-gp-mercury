@@ -471,7 +471,7 @@
                     var allDataByRow = {};
                     var allRows = [];
                     var changedRows = $j(ledgerTable.fnGetNodes()).filter('.changed');
-                    var dom = changedRows.find("input").filter("[name^='ledgerData']").get();
+                    var dom = changedRows.find("input, select").filter("[name^='ledgerData']").get();
                     var totalRowsToUpdate=0;
                     for (var i = dom.length - 1; i >= 0; i--) {
                         var input = {};
@@ -1077,11 +1077,11 @@
                                     &nbsp;
                                     <c:if test="${actionBean.productOrder.hasSapQuote()}">
                                         <c:forEach items="${actionBean.potentialSapReplacements}" var="replacement">
-                                                <c:if test="${billingIndex.product.equals(replacement.key)}">
+                                            <c:if test="${billingIndex.product.equals(replacement.key)}">
                                                 <select name="ledgerData[${info.sample.samplePosition}].quantities[${billingIndex.indexId}].replacementCondition"
                                                         id="ledgerData[${info.sample.samplePosition}].quantities[${billingIndex.indexId}].replacementCondition"
                                                         data-rownum="${info.sample.samplePosition}">
-                                                    <option value="">Select one if replacing price</option>
+                                                    <option value="">Select one if replacing price...</option>
                                                     <c:forEach items="${replacement.value}" var="deliveryConditions">
                                                         <option value="${deliveryConditions.conditionName}"> ${deliveryConditions.displayName}</option>
                                                     </c:forEach>
