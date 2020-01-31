@@ -78,6 +78,7 @@ public class FingerprintReportActionBean extends CoreActionBean {
     public Resolution search() {
         int smidLimit = 200;
 
+        try{
         if (sampleId == null && pdoId == null && participantId == null) {
             addGlobalValidationError("You must input a valid search term.");
         } else if (StringUtils.isNotBlank(sampleId)
@@ -95,6 +96,10 @@ public class FingerprintReportActionBean extends CoreActionBean {
             } else {
                 showLayout = true;
             }
+        }
+        } catch (Exception e) {
+            addGlobalValidationError(e.getMessage());
+            return new ForwardResolution(VIEW_PAGE);
         }
 
         return new ForwardResolution(VIEW_PAGE);

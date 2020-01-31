@@ -5,6 +5,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
+@Test(groups = TestGroups.STANDARD)
 public class FingerprintEjbTest extends Arquillian {
 
     private Map<String, MercurySample> mapIdToMercurySample = new HashMap<>();
