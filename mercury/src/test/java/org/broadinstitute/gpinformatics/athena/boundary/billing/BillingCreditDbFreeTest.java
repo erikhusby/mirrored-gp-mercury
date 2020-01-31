@@ -42,7 +42,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapConfig;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
@@ -73,6 +72,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -117,6 +117,25 @@ public class BillingCreditDbFreeTest {
     public static final BigDecimal HUNDRED_THOUSAND = BigDecimal.valueOf(100000);
     public static final BigDecimal BILL_QUANTITY_ONE = BigDecimal.ONE;
     public static final BigDecimal CREDIT_QTY_ONE = BILL_QUANTITY_ONE.negate();
+
+    @DataProvider(name = "mockedClientProvider")
+    public static Iterator<Object[]> mockedClientProvider() throws SAPIntegrationException {
+        List<Object[]> testCases = new ArrayList<>();
+        SapIntegrationClientImpl sapClient = Mockito.mock(SapIntegrationClientImpl.class);
+        Mockito.when(sapClient.createReturnOrder(Mockito.any(SAPReturnOrder.class)))
+            .thenThrow(new SAPIntegrationException(BillingAdaptor.INVOICE_NOT_FOUND));
+        testCases.add(new Object[]{sapClient});
+
+        sapClient = Mockito.mock(SapIntegrationClientImpl.class);
+        Mockito.when(sapClient.createReturnOrder(Mockito.any(SAPReturnOrder.class))).thenReturn("");
+        testCases.add(new Object[]{sapClient});
+
+        sapClient = Mockito.mock(SapIntegrationClientImpl.class);
+        Mockito.when(sapClient.createReturnOrder(Mockito.any(SAPReturnOrder.class))).thenReturn(null);
+        testCases.add(new Object[]{sapClient});
+
+        return testCases.iterator();
+    }
 
     @BeforeMethod
     public void setUp()
@@ -517,20 +536,18 @@ public class BillingCreditDbFreeTest {
         return billingAdaptor.billSessionItems("url", billingSession.getBusinessKey());
     }
 
-    public void testManyPositiveLedgersOneNegativeLedgerCreatesTwoBillingCredits() throws Exception {
+    @Test(dataProvider = "mockedClientProvider")
+    public void testManyPositiveLedgersOneNegativeLedgerCreatesTwoBillingCredits(SapIntegrationClientImpl sapClient) throws Exception {
         List<LedgerEntry> ledgerEntries = new ArrayList<>();
         SapQuote sapQuote = TestUtils.buildTestSapQuote("1234", TEN_THOUSAND, HUNDRED_THOUSAND,
             pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
         pdo.setQuoteId(sapQuote.getQuoteHeader().getQuoteNumber());
-        SapIntegrationService sapService = Mockito.mock(SapIntegrationService.class);
-        Mockito.when(sapService.creditDelivery(Mockito.any(BillingCredit.class)))
-            .thenThrow(new SAPIntegrationException(BillingAdaptor.INVOICE_NOT_FOUND));
+        sapService.setWrappedClient(sapClient);
 
         Date sameDate = new Date();
         List<ProductOrderSample> samples = pdo.getSamples();
         for (int i = 0; i < samples.size(); i++) {
-            Date uniqueDate =
-                Date.from(LocalDate.now().minusDays(i + 1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
+            Date uniqueDate = getUniqueDate(i);
 
             ProductOrderSample pdoSample = samples.get(i);
 
@@ -566,20 +583,18 @@ public class BillingCreditDbFreeTest {
             BigDecimal::add)));
     }
 
-    public void testOnePositiveLedgerManyNegativeLedgersCreateOneBillingCredit() throws Exception {
+    @Test(dataProvider = "mockedClientProvider")
+    public void testOnePositiveLedgerManyNegativeLedgersCreateOneBillingCredit(SapIntegrationClientImpl sapClient)
+        throws Exception {
         List<LedgerEntry> ledgerEntries = new ArrayList<>();
         SapQuote sapQuote = TestUtils.buildTestSapQuote("1234", TEN_THOUSAND, HUNDRED_THOUSAND,
             pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
         pdo.setQuoteId(sapQuote.getQuoteHeader().getQuoteNumber());
-        SapIntegrationService sapService = Mockito.mock(SapIntegrationService.class);
-        Mockito.when(sapService.creditDelivery(Mockito.any(BillingCredit.class)))
-            .thenThrow(new SAPIntegrationException(BillingAdaptor.INVOICE_NOT_FOUND));
-
+        sapService.setWrappedClient(sapClient);
         Date sameDate = new Date();
         List<ProductOrderSample> samples = pdo.getSamples();
         for (int i = 0; i < samples.size(); i++) {
-            Date uniqueDate =
-                Date.from(LocalDate.now().minusDays(i + 1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
+            Date uniqueDate = getUniqueDate(i);
 
             ProductOrderSample pdoSample = samples.get(i);
 
@@ -611,18 +626,21 @@ public class BillingCreditDbFreeTest {
                 .collect(Collectors.toList());
         assertThat(returnLineItems, hasSize(2));
         assertThat(quoteImportItem.getQuantity().abs(),
-            equalTo(returnLineItems.stream().map(BillingCredit.LineItem::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add)));
+            equalTo(returnLineItems.stream().map(BillingCredit.LineItem::getQuantity)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)));
     }
 
-    public void testPositiveQtyCredit() throws Exception {
+    public Date getUniqueDate(int i) {
+        return Date.from(LocalDate.now().minusDays(i + 1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
+    }
+
+    @Test(dataProvider = "mockedClientProvider")
+    public void testPositiveQtyCredit(SapIntegrationClientImpl sapClient) throws Exception {
         List<LedgerEntry> ledgerEntries = new ArrayList<>();
         SapQuote sapQuote = TestUtils.buildTestSapQuote("1234", TEN_THOUSAND, HUNDRED_THOUSAND,
             pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
         pdo.setQuoteId(sapQuote.getQuoteHeader().getQuoteNumber());
-        SapIntegrationService sapService = Mockito.mock(SapIntegrationService.class);
-        Mockito.when(sapService.creditDelivery(Mockito.any(BillingCredit.class)))
-            .thenThrow(new SAPIntegrationException(BillingAdaptor.INVOICE_NOT_FOUND));
-
+        sapService.setWrappedClient(sapClient);
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
         Date billDate = new Date();
 
@@ -651,14 +669,11 @@ public class BillingCreditDbFreeTest {
         }
     }
 
-    public void testBillingCreditNotSapOrder() throws Exception {
+    @Test(dataProvider = "mockedClientProvider")
+    public void testBillingCreditNotSapOrder(SapIntegrationClientImpl sapClient) throws Exception {
         List<LedgerEntry> ledgerEntries = new ArrayList<>();
         pdo.setQuoteId("ABCDE");
-
-        SapIntegrationService sapService = Mockito.mock(SapIntegrationService.class);
-        Mockito.when(sapService.creditDelivery(Mockito.any(BillingCredit.class)))
-            .thenThrow(new SAPIntegrationException(BillingAdaptor.INVOICE_NOT_FOUND));
-
+        sapService.setWrappedClient(sapClient);
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
         Date billDate = new Date();
 
