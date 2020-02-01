@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -23,6 +24,9 @@ public class ControlFixupTest extends Arquillian {
     @Inject
     private MercurySampleDao mercurySampleDao;
 
+    @Inject
+    private UserBean userBean;
+
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(
@@ -31,6 +35,8 @@ public class ControlFixupTest extends Arquillian {
 
     @Test(enabled = false)
     public void gplim6080ControlFingerprintFixup() {
+        userBean.loginOSUser();
+
         // Plate CO-28400592_04101019
         // http://gapdev.broadinstitute.org:8080/esp/ViewFluidigmPlate.action?packetId=1200050
         Map<String, String> mapCollabIdToFpSample = new HashMap<String, String>() {{
