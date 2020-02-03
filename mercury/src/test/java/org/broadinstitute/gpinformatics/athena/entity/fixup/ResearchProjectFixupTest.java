@@ -400,7 +400,7 @@ public class ResearchProjectFixupTest extends Arquillian {
             String[] tokens = line.split(",", 2);
 
             ResearchProject researchProject = rpDao.findByBusinessKey(tokens[0]);
-            boolean irbNotEngagedIntendedFlag = Boolean.parseBoolean(tokens[1]);
+            boolean irbNotEngagedIntendedFlag = Boolean.parseBoolean(tokens[1].trim());
             researchProject.setIrbNotEngaged(irbNotEngagedIntendedFlag);
 
             System.out.println("Set the value of IRB not engaged on " + researchProject.getBusinessKey() + " to " + researchProject.getIrbNotEngaged());
