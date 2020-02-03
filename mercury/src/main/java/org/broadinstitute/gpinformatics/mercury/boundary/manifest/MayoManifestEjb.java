@@ -1038,13 +1038,11 @@ public class MayoManifestEjb {
                 }
             }
         }
-        // Excludes tubes that are already in a PDO, to support when a quarantined rack
-        // gets accessioned after the initial PDO was made.
-        List<ProductOrderSample> pdoSamples = productDao.findListByList(ProductOrderSample.class,
+        // Excludes any samples that are already in a PDO.
+        List<ProductOrderSample> existingPdoSamples = productDao.findListByList(ProductOrderSample.class,
                 ProductOrderSample_.sampleName, accessionedTubes);
-        accessionedTubes.removeAll(pdoSamples.stream().
-                map(ProductOrderSample::getSampleKey).
-                collect(Collectors.toList()));
+        accessionedTubes.removeAll(
+                existingPdoSamples.stream().map(ProductOrderSample::getSampleKey).collect(Collectors.toList()));
         if (accessionedTubes.isEmpty()) {
             return;
         }
@@ -1098,8 +1096,14 @@ public class MayoManifestEjb {
         productOrderData.setSamples(accessionedTubes);
         productOrderData.setTitle(title);
         productOrderData.setUsername(owner);
+
         try {
             ProductOrder productOrder = productOrderEjb.createProductOrder(productOrderData, watchers);
+            // Links the pdo sample to the mercury sample.
+            Map<String, MercurySample> mercurySampleMap = mercurySampleDao.findMapIdToMercurySample(accessionedTubes);
+            productOrder.getSamples().forEach(pdoSample -> {
+                pdoSample.setMercurySample(mercurySampleMap.get(pdoSample.getSampleKey()));
+            });
             productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
             messages.addInfo("Created " + productOrder.getBusinessKey() +
                     " for " + accessionedTubes.size() + " samples.");
