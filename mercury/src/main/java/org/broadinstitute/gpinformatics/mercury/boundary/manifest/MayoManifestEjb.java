@@ -906,36 +906,6 @@ public class MayoManifestEjb {
             }
 
             labVesselDao.persistAll(newEntities);
-            // The accessioning should persist when the PDO create fails.
-            labVesselDao.flush();
-
-            // Makes a PDO if this is the last rack to be accessioned in the package, i.e. all other
-            // racks have been accessioned or quarantined.
-            Multimap<String, ManifestRecord> rackToRecords =
-                    manifestSession.buildMultimapByKey(manifestSession.getRecords(), Metadata.Key.RACK_LABEL);
-            Set<String> rackBarcodes = rackToRecords.keySet();
-            int rackProcessedCount = 0;
-            Set<LabVessel> accessionedTubes = new HashSet<>();
-            for (String rackBarcode : rackBarcodes) {
-                if (quarantinedDao.findItem(Quarantined.ItemSource.MAYO, Quarantined.ItemType.RACK, rackBarcode)
-                        != null) {
-                    ++rackProcessedCount;
-                } else {
-                    Set<String> tubeBarcodes = manifestSession.buildMultimapByKey(rackToRecords.get(rackBarcode),
-                            Metadata.Key.BROAD_2D_BARCODE).keySet();
-                    List<LabVessel> tubes = labVesselDao.findByListIdentifiers(new ArrayList<>(tubeBarcodes));
-                    if (CollectionUtils.isNotEmpty(tubes)) {
-                        ++rackProcessedCount;
-                        accessionedTubes.addAll(tubes);
-                    }
-                }
-            }
-            if (rackProcessedCount == rackBarcodes.size()) {
-                // The manifest has already been tested for consistent test_name, so the first found will do.
-                String manifestTestName = manifestSession.buildMultimapByKey(rackToRecords.values(),
-                        Metadata.Key.PRODUCT_TYPE).keySet().iterator().next();
-                makeAouPdo(manifestSession.getSessionPrefix(), manifestTestName, accessionedTubes, messages);
-            }
         }
         // Adds comment to the existing RCT.
         addRctComment(manifestSession.getReceiptTicket(), messages, rctMessages);
@@ -1046,69 +1016,96 @@ public class MayoManifestEjb {
     /**
      * Makes a PDO from all accessioned samples in the given package.
      */
-    public void makeAouPdo(String packageId, String manifestTestName, Set<LabVessel> accessionedTubes,
-            MessageCollection messageCollection) {
-        // Excludes tubes that are already in a PDO, to support quarantined racks that get accessioned.
-        List<ProductOrderSample> pdoSamples = productDao.findListByList(ProductOrderSample.class,
-                ProductOrderSample_.sampleName,
-                accessionedTubes.stream().map(LabVessel::getLabel).collect(Collectors.toList()));
-        List<String> pdoSampleNames = pdoSamples.stream().
-                map(ProductOrderSample::getSampleKey).
-                sorted().
-                collect(Collectors.toList());
-        for (Iterator<LabVessel> iterator = accessionedTubes.iterator(); iterator.hasNext(); ) {
-            if (pdoSampleNames.contains(iterator.next().getLabel())) {
-                iterator.remove();
-            }
-        }
-        if (!accessionedTubes.isEmpty()) {
-            // Determines the product type and the lookup key for attributeArchetype params.
-            String wgsKey = attributeArchetypeDao.findKeyValueByKeyAndMappingName(TEST_NAME,
-                    KeyValueMapping.AOU_PDO_WGS).getValue();
-            String arrayKey = attributeArchetypeDao.findKeyValueByKeyAndMappingName(TEST_NAME,
-                    KeyValueMapping.AOU_PDO_ARRAY).getValue();
-            String mappingName = manifestTestName.equalsIgnoreCase(wgsKey) ? MAPPING_NAMES[WGS_INDEX] :
-                    manifestTestName.equalsIgnoreCase(arrayKey) ? MAPPING_NAMES[ARRAY_INDEX] : null;
-            if (mappingName != null) {
-                // Fetches the attribute archetype values for the test_name.
-                Map<String, String> params = attributeArchetypeDao.findKeyValueMap(mappingName);
-                String owner = params.get(OWNER_PARAM).toLowerCase();
-                List<String> watchers = Arrays.asList(StringUtils.normalizeSpace(params.get(WATCHERS_PARAM).
-                        replaceAll(",", " ")).toLowerCase().split(" "));
-                String rpId = params.get(RESEARCH_PROJECT_PARAM);
-                String productPartNumber = params.get(PRODUCT_PARAM);
-                String quoteId = params.get(QUOTE_PARAM);
-
-                Product product = productDao.findByPartNumber(productPartNumber);
-                Date now = new Date();
-                String titleType = manifestTestName.equalsIgnoreCase(wgsKey) ? "WGS" : "Array";
-                String title = String.format("%s_%s_%s", packageId, titleType, DATE_TIME_FORMAT.format(now));
-                // For Mayo the tube barcode is also used as the Broad sample name.
-                List<String> accessionedTubeBarcodes = accessionedTubes.stream().
-                        map(LabVessel::getLabel).sorted().collect(Collectors.toList());
-
-                ProductOrderData productOrderData = new ProductOrderData();
-                productOrderData.setCreatedDate(now);
-                productOrderData.setModifiedDate(now);
-                productOrderData.setPlacedDate(now);
-                productOrderData.setNumberOfSamples(accessionedTubes.size());
-                productOrderData.setProduct(productPartNumber);
-                productOrderData.setProductName(product.getProductName());
-                productOrderData.setQuoteId(quoteId);
-                productOrderData.setResearchProjectId(rpId);
-                productOrderData.setSamples(accessionedTubeBarcodes);
-                productOrderData.setTitle(title);
-                productOrderData.setUsername(owner);
-                try {
-                    ProductOrder productOrder = productOrderEjb.createProductOrder(productOrderData, watchers);
-                    productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-                    messageCollection.addInfo("Created Product Order " + productOrder.getBusinessKey() +
-                            " for " + accessionedTubeBarcodes.size() + " samples.");
-                } catch (Exception e) {
-                    logger.error("Failed to make an AoU PDO", e);
-                    messageCollection.addError("Failed to make a PDO: " + e.toString());
+    public void makeAouPdo(MayoSampleReceiptActionBean bean) {
+        // Silently does nothing if the manifest doesn't exist, or if one or more racks in the package have
+        // not yet been accessioned (or quarantined).
+        List<String> accessionedTubes = new ArrayList<>();
+        ManifestSession manifestSession = manifestSessionDao.getSessionByVesselLabel(bean.getRackBarcode());
+        if (manifestSession != null && !CollectionUtils.isEmpty(manifestSession.getRecords())) {
+            Multimap<String, ManifestRecord> rackToRecords =
+                    manifestSession.buildMultimapByKey(manifestSession.getRecords(), Metadata.Key.RACK_LABEL);
+            Map<String, LabVessel> racks = labVesselDao.findByBarcodes(new ArrayList<>(rackToRecords.keySet()));
+            for (String rackBarcode : racks.keySet()) {
+                if (racks.get(rackBarcode) == null) {
+                    if (quarantinedDao.findItem(Quarantined.ItemSource.MAYO, Quarantined.ItemType.RACK, rackBarcode)
+                            == null) {
+                        // This rack is neither accessioned nor quarantined.
+                        return;
+                    }
+                } else {
+                    accessionedTubes.addAll(manifestSession.buildMultimapByKey(rackToRecords.get(rackBarcode),
+                            Metadata.Key.BROAD_2D_BARCODE).keySet());
                 }
             }
+        }
+        // Excludes tubes that are already in a PDO, to support when a quarantined rack
+        // gets accessioned after the initial PDO was made.
+        List<ProductOrderSample> pdoSamples = productDao.findListByList(ProductOrderSample.class,
+                ProductOrderSample_.sampleName, accessionedTubes);
+        accessionedTubes.removeAll(pdoSamples.stream().
+                map(ProductOrderSample::getSampleKey).
+                collect(Collectors.toList()));
+        if (accessionedTubes.isEmpty()) {
+            return;
+        }
+
+        // The manifest has already been tested for consistent test_name, so the first found will do.
+        String manifestTestName = manifestSession.getRecords().stream().
+                map(record -> record.getValueByKey(Metadata.Key.PRODUCT_TYPE)).
+                filter(value -> StringUtils.isNotBlank(value)).
+                findFirst().orElse("[missing]");
+
+        MessageCollection messages = bean.getMessageCollection();
+
+        // Determines the product type and the lookup key for attributeArchetype params.
+        String wgsKey = attributeArchetypeDao.findKeyValueByKeyAndMappingName(TEST_NAME,
+                KeyValueMapping.AOU_PDO_WGS).getValue();
+        String arrayKey = attributeArchetypeDao.findKeyValueByKeyAndMappingName(TEST_NAME,
+                KeyValueMapping.AOU_PDO_ARRAY).getValue();
+        String mappingName = manifestTestName.equalsIgnoreCase(wgsKey) ? MAPPING_NAMES[WGS_INDEX] :
+                manifestTestName.equalsIgnoreCase(arrayKey) ? MAPPING_NAMES[ARRAY_INDEX] : null;
+        if (mappingName == null) {
+            // Puts up a message about a harmless but unexpected occurrance.
+            messages.addInfo("Manifest test_name " + manifestTestName + " is not configured for automatic PDOs.");
+            return;
+        }
+
+        // Fetches the attribute archetype values for the test_name.
+        Map<String, String> params = attributeArchetypeDao.findKeyValueMap(mappingName);
+        String owner = params.get(OWNER_PARAM).toLowerCase();
+        List<String> watchers = Arrays.asList(StringUtils.normalizeSpace(params.get(WATCHERS_PARAM).
+                replaceAll(",", " ")).toLowerCase().split(" "));
+        String rpId = params.get(RESEARCH_PROJECT_PARAM);
+        String productPartNumber = params.get(PRODUCT_PARAM);
+        String quoteId = params.get(QUOTE_PARAM);
+        Product product = productDao.findByPartNumber(productPartNumber);
+
+        String packageId = manifestSession.getSessionPrefix();
+        Date now = new Date();
+        String titleType = manifestTestName.equalsIgnoreCase(wgsKey) ? "WGS" : "Array";
+        String title = String.format("%s_%s_%s", packageId, titleType, DATE_TIME_FORMAT.format(now));
+
+        ProductOrderData productOrderData = new ProductOrderData();
+        productOrderData.setCreatedDate(now);
+        productOrderData.setModifiedDate(now);
+        productOrderData.setPlacedDate(now);
+        productOrderData.setNumberOfSamples(accessionedTubes.size());
+        productOrderData.setProduct(productPartNumber);
+        productOrderData.setProductName(product.getProductName());
+        productOrderData.setQuoteId(quoteId);
+        productOrderData.setResearchProjectId(rpId);
+        // For Mayo the tube barcode is also used as the Broad sample name.
+        productOrderData.setSamples(accessionedTubes);
+        productOrderData.setTitle(title);
+        productOrderData.setUsername(owner);
+        try {
+            ProductOrder productOrder = productOrderEjb.createProductOrder(productOrderData, watchers);
+            productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+            messages.addInfo("Created " + productOrder.getBusinessKey() +
+                    " for " + accessionedTubes.size() + " samples.");
+        } catch (Exception e) {
+            logger.error("Failed to make an AoU PDO", e);
+            messages.addError("Failed to make a PDO: " + e.toString());
         }
     }
 
@@ -1172,6 +1169,9 @@ public class MayoManifestEjb {
                 default:
                     throw new RuntimeException("Unknown AoU PDO parameter '" + dto.getParamName() + "'.");
                 }
+            }
+            if (!messageCollection.hasErrors()) {
+                messageCollection.addInfo("Parameters appear valid, but quote id validity will depend on PDO details.");
             }
         } else {
             messageCollection.addError("Parameter names must contain " + StringUtils.join(EXPECTED_PDO_PARAMS, ", "));
