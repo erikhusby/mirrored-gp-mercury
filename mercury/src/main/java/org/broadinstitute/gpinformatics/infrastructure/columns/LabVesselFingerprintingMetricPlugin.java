@@ -96,7 +96,6 @@ public class LabVesselFingerprintingMetricPlugin implements ListPlugin {
             , @Nonnull SearchContext context) {
         List<LabVessel> labVesselList = (List<LabVessel>) entityList;
 
-        List<ConfigurableList.Row> metricRows = new ArrayList<>();
         SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
 
         // Append headers for metric data of interest.
@@ -104,28 +103,33 @@ public class LabVesselFingerprintingMetricPlugin implements ListPlugin {
             headerGroup.addHeader(valueColumnType.getResultHeader());
         }
 
-        Map<StaticPlate, StaticPlate.TubeFormationByWellCriteria.Result> plateResultMap = new HashMap<>();
-
-        Map<String, ConfigurableList.Row> mapPlateWellToRow = new HashMap<>();
-
         Map<LabVessel, List<LabMetric>> mapLabVesselToMetrics = new HashMap<>();
         for (LabVessel labVessel: labVesselList) {
             LabMetricRun labMetricRun =
                     labVessel.getMostRecentLabMetricRunForType(LabMetric.MetricType.CALL_RATE_Q20);
 
-            mapLabVesselToMetrics = labMetricRun.getLabMetrics().stream()
-                    .collect(groupingBy(LabMetric::getLabVessel));
+            if (labMetricRun != null) {
+                mapLabVesselToMetrics = labMetricRun.getLabMetrics().stream()
+                        .collect(groupingBy(LabMetric::getLabVessel));
+            }
         }
 
+        List<ConfigurableList.Row> metricRows = new ArrayList<>();
+        Map<StaticPlate, StaticPlate.TubeFormationByWellCriteria.Result> plateResultMap = new HashMap<>();
+        Map<String, ConfigurableList.Row> mapPlateWellToRow = new HashMap<>();
         for (LabVessel labVessel: labVesselList) {
 
-            for (LabMetric labMetric: mapLabVesselToMetrics.get(labVessel)) {
+            if (!mapPlateWellToRow.containsKey(labVessel.getLabel())) {
+                ConfigurableList.Row row = new ConfigurableList.Row(labVessel.getLabel());
+                mapPlateWellToRow.put(labVessel.getLabel(), row);
+                metricRows.add(row);
+            }
+            List<LabMetric> labMetrics = mapLabVesselToMetrics.get(labVessel);
+            if (labMetrics == null) {
+                continue;
+            }
+            for (LabMetric labMetric: labMetrics) {
 
-                if (!mapPlateWellToRow.containsKey(labVessel.getLabel())) {
-                    ConfigurableList.Row row = new ConfigurableList.Row(labVessel.getLabel());
-                    mapPlateWellToRow.put(labVessel.getLabel(), row);
-                    metricRows.add(row);
-                }
                 ConfigurableList.Row row = mapPlateWellToRow.get(labVessel.getLabel());
 
                 if (!OrmUtil.proxySafeIsInstance(labVessel, PlateWell.class)) {
@@ -284,7 +288,6 @@ public class LabVesselFingerprintingMetricPlugin implements ListPlugin {
                             LabMetricDecision.Decision.PASS ? "Pass" : "Fail";
                     row.addCell(new ConfigurableList.Cell(
                             VALUE_COLUMN_TYPE.HAPMAP_CONCOORDANCE_QC.getResultHeader(), lodDecision, lodDecision));
-                default:
                 }
             }
         }
