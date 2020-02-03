@@ -292,16 +292,16 @@
                             var $selectedInputs = getSelectedRows().find('input.dateComplete:enabled');
                             for (var i = 0; i < $selectedInputs.length; i++) {
                                 var $selectedInput = $selectedInputs.eq(i);
-                                if ($selectedInput.attr('name') != inputName) {
+                                if ($selectedInput.attr('name') !== inputName) {
                                     $selectedInput.val(value);
-                                    var changed = value != $selectedInput.attr('originalValue');
+                                    var changed = value !== $selectedInput.attr('originalValue');
                                     $selectedInput.toggleClass('changed', changed);
                                     $selectedInput.closest("tr").toggleClass('changed', changed);
                                     updateDateCompleteValidation($selectedInput);
                                 }
                             }
                         }
-                        var changed = value != $input.attr('originalValue');
+                        var changed = value !== $input.attr('originalValue');
                         $input.toggleClass('changed', changed);
                         $input.closest("tr").toggleClass('changed', changed);
                         updateDateCompleteValidation($input);
@@ -1067,6 +1067,7 @@
                                    name="ledgerData[${info.sample.samplePosition}].quantities[${billingIndex.indexId}].originalQuantity"
                                    value="${info.getTotalForPriceIndex(billingIndex)}"/>
                             <c:set var="submittedQuantity" value="${actionBean.ledgerData[info.sample.samplePosition].quantities[billingIndex.indexId].submittedQuantity}"/>
+                            <c:set var="selectedReplacement" value="${actionBean.ledgerData[info.sample.samplePosition].quantities[billingIndex.indexId].replacementCondition}"/>
                                 <c:if test="${!disableAbandon}">
                                     <input id="ledgerData[${info.sample.samplePosition}].quantities[${billingIndex.indexId}].submittedQuantity"
                                            name="ledgerData[${info.sample.samplePosition}].quantities[${billingIndex.indexId}].submittedQuantity"
@@ -1083,7 +1084,15 @@
                                                         data-rownum="${info.sample.samplePosition}">
                                                     <option value="">Select one if replacing price...</option>
                                                     <c:forEach items="${replacement.value}" var="deliveryConditions">
-                                                        <option value="${deliveryConditions.conditionName}"> ${deliveryConditions.displayName}</option>
+                                                        <c:choose>
+                                                            <c:when test="${selectedReplacement != null && replacement.equals(selectedReplacement)}">
+                                                                <option value="${deliveryConditions.conditionName}" selected> ${deliveryConditions.displayName}</option>
+                                                            </c:when>
+                                                            <c:otherwise>
+
+                                                                <option value="${deliveryConditions.conditionName}"> ${deliveryConditions.displayName}</option>
+                                                            </c:otherwise>
+                                                        </c:choose>
                                                     </c:forEach>
                                                 </select>
                                             </c:if>
