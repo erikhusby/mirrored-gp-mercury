@@ -26,7 +26,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class BillingCredit {
-    public static final String CREDIT_REQUESTED = "CR-";
+    public static final String CREDIT_REQUESTED_PREFIX = "CR-";
     private String sapDeliveryDocumentId;
     private List<LineItem> returnLines;
     private String returnOrderId;
@@ -118,7 +118,7 @@ public class BillingCredit {
     public void setReturnOrderInvoiceNotFound() {
         String sapDeliveryDocumentId = getSapDeliveryDocumentId();
         if (StringUtils.isNotBlank(sapDeliveryDocumentId)) {
-            setReturnOrderId(String.format("%s%s", CREDIT_REQUESTED, sapDeliveryDocumentId));
+            setReturnOrderId(String.format("%s%s", CREDIT_REQUESTED_PREFIX, sapDeliveryDocumentId));
         }
     }
 

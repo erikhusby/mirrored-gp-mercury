@@ -317,7 +317,7 @@ public class BillingAdaptor implements Serializable {
      */
     public static List<BillingCredit> findCreditsForEmail(Collection<BillingCredit> billingCredits) {
         return billingCredits.stream()
-            .filter(billingCredit -> StringUtils.startsWith(billingCredit.getReturnOrderId(), BillingCredit.CREDIT_REQUESTED))
+            .filter(billingCredit -> StringUtils.startsWith(billingCredit.getReturnOrderId(), BillingCredit.CREDIT_REQUESTED_PREFIX))
             .collect(Collectors.toList());
     }
 
