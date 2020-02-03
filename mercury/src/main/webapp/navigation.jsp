@@ -12,15 +12,15 @@
                 <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
                     <li>
                         <stripes:link id="editProject"
-                                beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"
-                                tabindex="=1" event="list">List</stripes:link>
+                                      beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"
+                                      tabindex="=1" event="list">List</stripes:link>
                     </li>
                     <%-- PMs and sometimes PDMs (and Developers) can create Research Projects. --%>
                     <security:authorizeBlock roles="<%= roles(Developer, GPProjectManager, PM, PDM) %>">
                         <li>
                             <stripes:link id="createProject"
-                                    beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"
-                                    tabindex="=1" event="create">Create</stripes:link>
+                                          beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"
+                                          tabindex="=1" event="create">Create</stripes:link>
                         </li>
                     </security:authorizeBlock>
                 </ul>
@@ -81,7 +81,8 @@
                     <a id="labNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
                             class="icon-tasks"></span> Lab <b class="caret"></b></a>
                     <ul class="dropdown-menu" role="menu">
-                        <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, GPProjectManager, PM, Developer) %>">
+                        <security:authorizeBlock
+                                roles="<%= roles(LabUser, LabManager, PDM, GPProjectManager, PM, Developer) %>">
                             <li>
                                 <stripes:link id="addToBucket"
                                               beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AddReworkActionBean"
@@ -150,7 +151,7 @@
                         <li>
                             <stripes:link id="manifestTubeTransfer"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ManifestTubeTransferActionBean">
-                            Transfer Tubes from Manifest
+                                Transfer Tubes from Manifest
                             </stripes:link>
                         </li>
                         <li>
@@ -175,8 +176,8 @@
                         </li>
                         <li>
                             <stripes:link id="sampleSheet"
-                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.ArraysReportActionBean"
-                                    event="view">Arrays Reports</stripes:link>
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.ArraysReportActionBean"
+                                          event="view">Arrays Reports</stripes:link>
                         </li>
                         <li>
                             <stripes:link id="externalLibraryUpload"
@@ -189,11 +190,6 @@
                                           event="view">Single Cell Metadata Upload</stripes:link>
                         </li>
                         <li>
-                            <stripes:link id="uploadFingerprintingRun"
-                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.UploadFingerprintingRunActionBean"
-                                          event="view">Upload Fingerprinting Run</stripes:link>
-                        </li>
-                        <li>
                             <stripes:link id="fingerprintReport"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.FingerprintReportActionBean"
                                           event="view">Fingerprint Report</stripes:link>
@@ -203,6 +199,12 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.FingerprintMatrixActionBean"
                                           event="view">Fingerprint Matrix</stripes:link>
                         </li>
+                        <li>
+                            <stripes:link id="uploadFingerprintingRun"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.UploadFingerprintingRunActionBean"
+                                          event="view">Upload Fingerprinting Run</stripes:link>
+                        </li>
+
                     </ul>
                 </li>
             </security:authorizeBlock>
@@ -424,8 +426,8 @@
                     </li>
                     <li>
                         <stripes:link id="transferVisualizer"
-                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.TransferVisualizerActionBean"
-                                event="view">Transfer Visualizer</stripes:link>
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.TransferVisualizerActionBean"
+                                      event="view">Transfer Visualizer</stripes:link>
                     </li>
                     <li>
                         <stripes:link id="plateMapView"

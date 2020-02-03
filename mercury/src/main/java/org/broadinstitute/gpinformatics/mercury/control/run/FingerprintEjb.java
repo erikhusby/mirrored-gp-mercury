@@ -252,8 +252,30 @@ public class FingerprintEjb {
         Map<Fingerprint, String> lodScoreMap = new HashMap<>();
         List<Fingerprint> expected = new ArrayList<>();
         List<Fingerprint> observed = new ArrayList<>();
-        String lodScoreStr;
 
+        findAnchor(fingerprints, lodScoreMap, expected, observed);
+
+        DecimalFormat df = new DecimalFormat("##.####");
+        df.setRoundingMode(RoundingMode.HALF_UP);
+
+        List<Triple<String, String, Double>> scores = concordanceCalculator
+                .calculateLodScores(expected, observed, ConcordanceCalculator.Comparison.ONE_TO_ONE);
+
+        for (Fingerprint fingerprint : fingerprints) {
+            for (Triple<String, String, Double> triple : scores) {
+                if (fingerprint.getMercurySample().getSampleKey().equals(triple.getLeft())) {
+                    if (!lodScoreMap.containsKey(fingerprint)) {
+                        lodScoreMap.put(fingerprint, df.format(triple.getRight()));
+                    }
+                }
+            }
+        }
+        return lodScoreMap;
+    }
+
+    public void findAnchor(List<Fingerprint> fingerprints, Map<Fingerprint, String> lodScoreMap,
+                            List<Fingerprint> expected, List<Fingerprint> observed) {
+        String lodScoreStr;
         for (Fingerprint fingerprint : fingerprints) {
             Optional<Fingerprint> oldFluidigmFp = fingerprints.stream()
                     .filter(fp -> fp.getMercurySample().getSampleData().getPatientId()
@@ -271,38 +293,43 @@ public class FingerprintEjb {
                         .min(Comparator.comparing(Fingerprint::getDateGenerated));
             }
 
-            if (oldFluidigmFp.isPresent() && oldFluidigmFp.get().getMercurySample().getSampleKey()
-                    .equals(fingerprint.getMercurySample().getSampleKey())
-                && fingerprint.getDisposition() == Fingerprint.Disposition.PASS) {
-                lodScoreStr = "Anchor FP";
-                lodScoreMap.put(fingerprint, lodScoreStr);
-            } else if (oldFluidigmFp.isPresent() && oldFluidigmFp.get().getGender() != null
-                       && oldFluidigmFp.get().getDisposition() == Fingerprint.Disposition.PASS
-                       && fingerprint.getDisposition() == Fingerprint.Disposition.PASS
-                       && fingerprint.getGender() != null) {
-                expected.add(fingerprint);
-                observed.add(oldFluidigmFp.get());
-            } else {
-                lodScoreStr = "N/A";
-                lodScoreMap.put(fingerprint, lodScoreStr);
-            }
-        }
-
-        DecimalFormat df = new DecimalFormat("##.####");
-        df.setRoundingMode(RoundingMode.HALF_UP);
-
-        List<Triple<String, String, Double>> scores = concordanceCalculator
-                .calculateLodScores(expected, observed, ConcordanceCalculator.Comparison.ONE_TO_ONE);
-
-        for (Fingerprint fingerprint : fingerprints) {
-            for (Triple<String, String, Double> triple : scores) {
-                if (fingerprint.getMercurySample().getSampleKey().equals(triple.getLeft())) {
-                    lodScoreMap.put(fingerprint, df.format(triple.getRight()));
+            Fingerprint oldFingerprint;
+            if (oldFluidigmFp.isPresent()) {
+                oldFingerprint = oldFluidigmFp.get();
+                if (isAnchor(fingerprint, oldFingerprint)
+                    ) {
+                    lodScoreStr = "Anchor FP";
+                    lodScoreMap.put(fingerprint, lodScoreStr);
+                } else if (oldFingerprint.getGender() != null
+                           && oldFingerprint.getDisposition() == Fingerprint.Disposition.PASS
+                           && fingerprint.getDisposition() == Fingerprint.Disposition.PASS
+                           && fingerprint.getGender() != null) {
+                    expected.add(fingerprint);
+                    observed.add(oldFingerprint);
+                } else {
+                    lodScoreStr = "N/A";
+                    lodScoreMap.put(fingerprint, lodScoreStr);
                 }
             }
         }
-        return lodScoreMap;
     }
 
+    private boolean isAnchor(Fingerprint fingerprint, Fingerprint oldFingerprint) {
+        boolean anchor = false;
+        boolean isBefore = (fingerprint.getDateGenerated().before(oldFingerprint.getDateGenerated()) ||
+                            oldFingerprint.getDateGenerated().equals(fingerprint.getDateGenerated()));
+        boolean samePassingSample = oldFingerprint.getMercurySample().getSampleKey()
+                            .equals(fingerprint.getMercurySample().getSampleKey()) &&
+                                    fingerprint.getDisposition() == Fingerprint.Disposition.PASS;
 
+        boolean isFluigidm = isBefore && samePassingSample && fingerprint.getPlatform() == Fingerprint.Platform.FLUIDIGM;
+        boolean isGenArray = samePassingSample && isBefore;
+
+        if (oldFingerprint.getPlatform() == Fingerprint.Platform.GENERAL_ARRAY){
+            anchor = isGenArray;
+        }else if (oldFingerprint.getPlatform() == Fingerprint.Platform.FLUIDIGM){
+            anchor = isFluigidm;
+        }
+        return anchor;
+    }
 }
