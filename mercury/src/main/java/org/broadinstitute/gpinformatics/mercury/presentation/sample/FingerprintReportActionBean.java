@@ -152,7 +152,7 @@ public class FingerprintReportActionBean extends CoreActionBean {
                     fingerprintEjb.getPtIdMercurySamples(mapSmidToMercurySample, participantId, mercurySampleDao);
         }
 
-        if (mapSmidToMercurySample.isEmpty()) {
+        if (mapSmidToMercurySample.values().isEmpty()) {
             throw new RuntimeException("No samples found.");
         } else {
             fingerprints = fingerprintEjb.findFingerprints(mapSmidToMercurySample);
