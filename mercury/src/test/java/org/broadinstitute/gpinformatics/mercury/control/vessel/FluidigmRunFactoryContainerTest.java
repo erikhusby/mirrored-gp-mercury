@@ -68,9 +68,8 @@ public class FluidigmRunFactoryContainerTest extends Arquillian {
 
         String failSampleId = null;
         String passFemaleSmId = null;
-        String posControlSmId = null;
         for (VesselPosition vesselPosition : RackOfTubes.RackType.Matrix96.getVesselGeometry().getVesselPositions()) {
-            BarcodedTube barcodedTube = new BarcodedTube(platerackBarcodearcode + vesselPosition.toString());
+            BarcodedTube barcodedTube = new BarcodedTube(platerackBarcodearcode + vesselPosition);
             barcodedTube.setVolume(new BigDecimal("75"));
             String sm = "SM-" + vesselPosition.name() + platerackBarcodearcode;
             MercurySample mercurySample = new MercurySample(sm, MercurySample.MetadataSource.MERCURY);
@@ -85,7 +84,6 @@ public class FluidigmRunFactoryContainerTest extends Arquillian {
                     put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, "NA12878");
                 }});
                 mercurySample.setSampleData(sampleData);
-                posControlSmId = sm;
             } else if (vesselPosition == VesselPosition.H09) {
                 // Fails in the test upload due to bad call rate
                 failSampleId = sm;
@@ -139,7 +137,8 @@ public class FluidigmRunFactoryContainerTest extends Arquillian {
         Assert.assertEquals(failFp.getDisposition(), Fingerprint.Disposition.FAIL);
         Assert.assertEquals(failFp.getGender(), Fingerprint.Gender.MALE);
 
-        PlateWell plateWell = fluidigmChipRun.getKey().getContainerRole().getVesselAtPosition(VesselPosition.A05);
+        // A05 in the source plate is A11 in the destination chip
+        PlateWell plateWell = fluidigmChipRun.getKey().getContainerRole().getVesselAtPosition(VesselPosition.A11);
         boolean found = false;
         for (LabMetric metric : plateWell.getMetrics()) {
             if (metric.getName() == LabMetric.MetricType.HAPMAP_CONCORDANCE_LOD) {
