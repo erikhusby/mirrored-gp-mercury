@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Nonnull;
@@ -70,10 +71,11 @@ public class ProductOrderJiraUtil {
      * </ul>
      */
     public void createIssueForOrder(@Nonnull ProductOrder order) throws IOException {
-        createIssueForOrder(order, Collections.emptyList());
+        createIssueForOrder(order, Collections.emptyList(), null, null);
     }
 
-    public void createIssueForOrder(@Nonnull ProductOrder order, List<String> watchers) throws IOException {
+    public void createIssueForOrder(@Nonnull ProductOrder order, List<String> watchers, String owner,
+            String linkedIssue) throws IOException {
         Product product = order.getProduct();
         List<ProductOrderAddOn> addOns = order.getAddOns();
         Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
@@ -131,8 +133,14 @@ public class ProductOrderJiraUtil {
                 CreateFields.ProjectType.PRODUCT_ORDERING, bspUserList.getById(order.getCreatedBy()).getUsername(),
                 issueType, order.getTitle(), fields.fields);
 
+        if (StringUtils.isNotBlank(owner)) {
+            jiraService.updateAssignee(issue.getKey(), owner);
+        }
         for (String username : watchers) {
             jiraService.addWatcher(issue.getKey(), username);
+        }
+        if (StringUtils.isNotBlank(linkedIssue)) {
+            jiraService.addLink(AddIssueLinkRequest.LinkType.Related, issue.getKey(), linkedIssue);
         }
         order.setJiraTicketKey(issue.getKey());
         issue.addLink(order.getResearchProject().getJiraTicketKey());

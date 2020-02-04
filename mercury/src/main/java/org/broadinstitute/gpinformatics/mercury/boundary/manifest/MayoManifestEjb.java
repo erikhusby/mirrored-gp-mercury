@@ -69,7 +69,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1095,18 +1094,17 @@ public class MayoManifestEjb {
         // For Mayo the tube barcode is also used as the Broad sample name.
         productOrderData.setSamples(accessionedTubes);
         productOrderData.setTitle(title);
-        productOrderData.setUsername(owner);
 
         try {
-            ProductOrder productOrder = productOrderEjb.createProductOrder(productOrderData, watchers);
-            // Links the pdo sample to the mercury sample.
+            ProductOrder productOrder = productOrderEjb.createProductOrder(productOrderData, watchers, owner,
+                    manifestSession.getReceiptTicket());
+            // Links the pdo samples to the mercury samples.
             Map<String, MercurySample> mercurySampleMap = mercurySampleDao.findMapIdToMercurySample(accessionedTubes);
-            productOrder.getSamples().forEach(pdoSample -> {
-                pdoSample.setMercurySample(mercurySampleMap.get(pdoSample.getSampleKey()));
-            });
-            productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-            messages.addInfo("Created " + productOrder.getBusinessKey() +
-                    " for " + accessionedTubes.size() + " samples.");
+            productOrder.getSamples().forEach(pdoSample ->
+                    pdoSample.setMercurySample(mercurySampleMap.get(pdoSample.getSampleKey())));
+            productOrderEjb.placeProductOrder(productOrder.getProductOrderId(), productOrder.getBusinessKey(), messages);
+            messages.addInfo("Created " + productOrder.getBusinessKey() + " for " + accessionedTubes.size() +
+                    " samples.");
         } catch (Exception e) {
             logger.error("Failed to make an AoU PDO", e);
             messages.addError("Failed to make a PDO: " + e.toString());

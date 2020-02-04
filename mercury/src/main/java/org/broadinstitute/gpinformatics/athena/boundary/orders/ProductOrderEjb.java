@@ -1701,13 +1701,14 @@ public class ProductOrderEjb {
      */
     public ProductOrder createProductOrder(ProductOrderData productOrderData) throws DuplicateTitleException,
             NoSamplesException, ApplicationValidationException, InvalidProductException {
-        return createProductOrder(productOrderData, Collections.emptyList());
+        return createProductOrder(productOrderData, Collections.emptyList(), null, null);
     }
 
     /**
      * Creates a product order in Pending state, and creates its corresponding JIRA ticket.
      */
-    public ProductOrder createProductOrder(ProductOrderData productOrderData, List<String> jiraWatchers)
+    public ProductOrder createProductOrder(ProductOrderData productOrderData, List<String> jiraWatchers,
+            String owner, String jiraLink)
             throws DuplicateTitleException, NoSamplesException, ApplicationValidationException,
             InvalidProductException {
 
@@ -1733,7 +1734,7 @@ public class ProductOrderEjb {
             // is only one IRB on the RP.
             productOrder.setRegulatoryInfos(productOrder.getResearchProject().getRegulatoryInfos());
 
-            productOrderJiraUtil.createIssueForOrder(productOrder, jiraWatchers);
+            productOrderJiraUtil.createIssueForOrder(productOrder, jiraWatchers, owner, jiraLink);
 
             // Not supplying add-ons at this point, just saving what we defined above and then flushing to make sure
             // any DB constraints have been enforced.
