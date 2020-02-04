@@ -26,7 +26,7 @@ public class LabEventMetadataEtl extends GenericEntityEtl<LabEventMetadata, LabE
 
     @Inject
     public LabEventMetadataEtl(LabEventDao dao) {
-        super(LabEventMetadata.class, "le_metadata", "le_metadata_aud", "lab_event_metadata_id", dao);
+        super(LabEventMetadata.class, "event_metadata", "le_metadata_aud", "lab_event_metadata_id", dao);
     }
 
     @Override
