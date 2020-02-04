@@ -1,0 +1,15 @@
+GPLIM-6614 add initial AoU PDO params for WGS samples
+mappingName AoU_PDO_WGS
+definition theValue
+archetype manifest test_name
+archetype Owner
+archetype JIRA Watchers
+archetype Research Project Id
+archetype Product Part Number
+archetype Quote Id
+attribute manifest test_name|theValue|aou_wgs
+attribute Owner|theValue|hatfield
+attribute JIRA Watchers|theValue|namrata
+attribute Research Project Id|theValue|RP-2079
+attribute Product Part Number|theValue|P-CLA-0008
+attribute Quote Id|theValue|2800046
