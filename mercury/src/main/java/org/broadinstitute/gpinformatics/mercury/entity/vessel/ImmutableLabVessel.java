@@ -9,7 +9,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
+import javax.annotation.Nullable;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -33,6 +35,13 @@ public class ImmutableLabVessel extends LabVessel {
     }
 
     @Override
+    @Nullable
+    public List<LabMetric> getNearestMetricsOfType(LabMetric.MetricType metricType,
+            TransferTraverserCriteria.TraversalDirection traversalDirection) {
+        return vesselContainer.getNearestMetricOfType(metricType, vesselPosition, traversalDirection);
+    }
+
+    @Override
     public VesselGeometry getVesselGeometry() {
         return null;
     }
@@ -48,7 +57,7 @@ public class ImmutableLabVessel extends LabVessel {
     }
 
     @Override
-    public void addAbandonedVessel(AbandonVessel vessels) {
+    public void addAbandonedVessel(AbandonVessel abandonVessel) {
         throw new RuntimeException("Immutable LabVessel");
     }
 

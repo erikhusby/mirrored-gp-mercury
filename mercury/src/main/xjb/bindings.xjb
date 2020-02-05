@@ -1,8 +1,8 @@
 <bindings xmlns="http://java.sun.com/xml/ns/jaxb" version="2.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
     <globalBindings>
         <javaType name="java.util.Date" xmlType="xs:dateTime"
-                parseMethod="org.broadinstitute.gpinformatics.infrastructure.bettalims.DateAdapter.parseDate"
-                printMethod="org.broadinstitute.gpinformatics.infrastructure.bettalims.DateAdapter.printDate"
+                parseMethod="org.broadinstitute.gpinformatics.infrastructure.common.DateAdapter.parseDate"
+                printMethod="org.broadinstitute.gpinformatics.infrastructure.common.DateAdapter.printDate"
                 />
     </globalBindings>
 </bindings>
