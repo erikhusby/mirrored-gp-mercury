@@ -47,6 +47,8 @@ import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.sap.entity.SAPDeliveryDocument;
 import org.broadinstitute.sap.entity.SAPReturnOrder;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
@@ -66,7 +68,6 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -74,7 +75,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -99,7 +99,7 @@ public class BillingCreditDbFreeTest {
     private QuotePriceItem quotePriceItem;
     private BillingAdaptor billingAdaptor;
     private ProductOrder pdo;
-
+    private String addonPartNumber = "test-product-addon";
     private EmailSender mockEmailSender = Mockito.mock(EmailSender.class);
     private BillingSessionDao billingSessionDao = Mockito.mock(BillingSessionDao.class);
     private PriceListCache priceListCache = Mockito.mock(PriceListCache.class);
@@ -149,7 +149,9 @@ public class BillingCreditDbFreeTest {
 
         pdo = ProductOrderTestFactory.createDummyProductOrder(2, "PDO-1234");
         pdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-        pdo.setProductOrderAddOns(Collections.emptyList());
+        Product addonProduct = ProductTestFactory.createDummyProduct(Workflow.NONE, addonPartNumber);
+        pdo.getProduct().addAddOn(addonProduct);
+        pdo.updateAddOnProducts(new ArrayList<>(pdo.getProduct().getAddOns()));
 
         String quoteId = pdo.getQuoteId();
         String sapOrderNumber = "sap1234";
@@ -239,17 +241,17 @@ public class BillingCreditDbFreeTest {
             setupMocksWhichThrowExceptionsWhenSAPCalled();
         }
 
-        HashMap<ProductOrderSample, Pair<ProductLedgerIndex, BigDecimal>> billingMap = new HashMap<>();
-        billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem, pdo.hasSapQuote()), qtyPositiveTwo));
+        HashMap<ProductOrderSample, List<Pair<ProductLedgerIndex, BigDecimal>>> billingMap = new HashMap<>();
+        billingMap.computeIfAbsent(pdoSample, k -> new ArrayList<>()).add(Pair.of(ProductLedgerIndex.create(pdo.getProduct(), priceItem, pdo.hasSapQuote()), qtyPositiveTwo));
 
         List<BillingEjb.BillingResult> billingResults = bill(billingMap);
-        validateBillingResults(pdoSample, billingResults, qtyPositiveTwo);
+        validateBillingResults(pdoSample, billingResults, qtyPositiveTwo, false);
 
         billingMap.clear();
-        billingMap.put(pdoSample,
-                Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem, pdo.hasSapQuote()), qtyNegativeTwo));
+        billingMap.computeIfAbsent(pdoSample, k -> new ArrayList<>()).add(
+            Pair.of(ProductLedgerIndex.create(pdo.getProduct(), priceItem, pdo.hasSapQuote()), qtyNegativeTwo));
         billingResults = bill(billingMap);
-        validateBillingResults(pdoSample, billingResults, BigDecimal.ZERO);
+        validateBillingResults(pdoSample, billingResults, BigDecimal.ZERO, false);
 
         if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
             Mockito.verify(mockSapClient, Mockito.times(1)).createReturnOrder(Mockito.any(SAPReturnOrder.class));
@@ -283,15 +285,16 @@ public class BillingCreditDbFreeTest {
             setupMocksWhichThrowExceptionsWhenSAPCalled();
         }
 
-        HashMap<ProductOrderSample, Pair<ProductLedgerIndex, BigDecimal>> billingMap = new HashMap<>();
-        billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem, pdo.hasSapQuote()), qtyPositiveTwo));
+        HashMap<ProductOrderSample, List<Pair<ProductLedgerIndex, BigDecimal>>> billingMap = new HashMap<>();
+        billingMap.computeIfAbsent(pdoSample, k -> new ArrayList<>())
+            .add(Pair.of(ProductLedgerIndex.create(pdo.getProduct(), priceItem, pdo.hasSapQuote()), qtyPositiveTwo));
 
         List<BillingEjb.BillingResult> billingResults = bill(billingMap);
-        validateBillingResults(pdoSample, billingResults, qtyPositiveTwo);
+        validateBillingResults(pdoSample, billingResults, qtyPositiveTwo, false);
 
         billingMap.clear();
-        billingMap.put(pdoSample,
-                Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem, pdo.hasSapQuote()), qtyNegativeTwo));
+        billingMap.computeIfAbsent(pdoSample, k -> new ArrayList<>()).add(
+            Pair.of(ProductLedgerIndex.create(pdo.getProduct(), priceItem, pdo.hasSapQuote()), qtyNegativeTwo));
         try {
             billingResults = bill(billingMap);
         } catch (Exception e) {
@@ -304,7 +307,7 @@ public class BillingCreditDbFreeTest {
         }
 
         if (quoteSourceType != ProductOrder.QuoteSourceType.SAP_SOURCE) {
-            validateBillingResults(pdoSample, billingResults, BigDecimal.ZERO);        }
+            validateBillingResults(pdoSample, billingResults, BigDecimal.ZERO, false);        }
 
         if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
             Mockito.verify(mockSapClient, Mockito.times(1)).createReturnOrder(Mockito.any(SAPReturnOrder.class));
@@ -358,11 +361,12 @@ public class BillingCreditDbFreeTest {
             setupMocksWhichThrowExceptionsWhenSAPCalled();
         }
 
-        HashMap<ProductOrderSample, Pair<ProductLedgerIndex, BigDecimal>> billingMap = new HashMap<>();
-        billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem, pdo.hasSapQuote()), qtyPositiveTwo));
+        HashMap<ProductOrderSample, List<Pair<ProductLedgerIndex, BigDecimal>>> billingMap = new HashMap<>();
+        billingMap.computeIfAbsent(pdoSample, k -> new ArrayList<>())
+            .add(Pair.of(ProductLedgerIndex.create(pdo.getProduct(), priceItem, pdo.hasSapQuote()), qtyPositiveTwo));
 
         List<BillingEjb.BillingResult> billingResults = bill(billingMap);
-        validateBillingResults(pdoSample, billingResults, qtyPositiveTwo);
+        validateBillingResults(pdoSample, billingResults, qtyPositiveTwo, false);
 
         Quote quote = null;
         if (quoteSourceType == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
@@ -377,9 +381,10 @@ public class BillingCreditDbFreeTest {
 
 
         billingMap.clear();
-        billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem,pdo.hasSapQuote()), qtyNegativeTwo));
+        billingMap.computeIfAbsent(pdoSample, k -> new ArrayList<>())
+            .add(Pair.of(ProductLedgerIndex.create(pdo.getProduct(), priceItem, pdo.hasSapQuote()), qtyNegativeTwo));
         billingResults = bill(billingMap);
-        validateBillingResults(pdoSample, billingResults, BigDecimal.ZERO);
+        validateBillingResults(pdoSample, billingResults, BigDecimal.ZERO, false);
 
         Mockito.verify(mockEmailSender, Mockito.never()).sendHtmlEmail(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString(),
                 Mockito.anyBoolean(), Mockito.anyBoolean());
@@ -389,6 +394,115 @@ public class BillingCreditDbFreeTest {
 
     }
 
+
+    public void testCreateBillingCreditPartialSuccess() throws Exception {
+        ProductOrderSample pdoSample = pdo.getSamples().get(0);
+        ProductOrderSample pdoSample2 = pdo.getSamples().get(1);
+        pdo.setQuoteId("99339288");
+
+        SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), TEN_THOUSAND, HUNDRED_THOUSAND,
+            pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
+        Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapQuote);
+        Mockito.when(mockSapClient.createDeliveryDocument(Mockito.any(SAPDeliveryDocument.class)))
+            .thenReturn(DELIVERY_DOCUMENT);
+
+        Mockito.when(mockSapClient.createReturnOrder(Mockito.any(SAPReturnOrder.class)))
+            .thenAnswer((Answer<String>) invocationOnMock -> {
+                final Object[] arguments = invocationOnMock.getArguments();
+                SAPReturnOrder testReturnOrder = (SAPReturnOrder) arguments[0];
+                assertThat(testReturnOrder.getDeliveryId(), is(equalTo(DELIVERY_DOCUMENT)));
+
+                for (SAPOrderItem deliveryItem : testReturnOrder.getDeliveryItems()) {
+                    if (deliveryItem.getProductIdentifier().equals(addonPartNumber)) {
+                        throw new SAPIntegrationException("UnknownException");
+                    }
+                }
+                return RETURN_ORDER_ID;
+            });
+
+        setupMocksWhichThrowExceptionsWhenQuoteServerIsCalled();
+
+        HashMap<ProductOrderSample, List<Pair<ProductLedgerIndex, BigDecimal>>> billingMap = new HashMap<>();
+        billingMap.computeIfAbsent(pdoSample, k -> new ArrayList<>()).add(Pair.of(
+            ProductLedgerIndex.create(pdo.getAddOns().iterator().next().getAddOn(), priceItem, pdo.hasSapQuote()),
+            BigDecimal.ONE));
+        billingMap.computeIfAbsent(pdoSample2, k -> new ArrayList<>()).add(Pair.of(
+            ProductLedgerIndex.create(pdo.getProduct(), priceItem, pdo.hasSapQuote()),
+            BigDecimal.ONE));
+
+        List<BillingEjb.BillingResult> billingResults = bill(billingMap);
+        validateBillingResults(pdoSample, billingResults, BigDecimal.ONE, false);
+        validateBillingResults(pdoSample2, billingResults, BigDecimal.ONE, false);
+
+        billingMap.clear();
+
+        billingMap.computeIfAbsent(pdoSample, k -> new ArrayList<>()).add(Pair.of(
+            ProductLedgerIndex.create(pdo.getAddOns().iterator().next().getAddOn(), priceItem, pdo.hasSapQuote()),
+            BigDecimal.ONE.negate()));
+        billingMap.computeIfAbsent(pdoSample2, k -> new ArrayList<>()).add(Pair.of(
+            ProductLedgerIndex.create(pdo.getProduct(), priceItem, pdo.hasSapQuote()),
+            BigDecimal.ONE.negate()));
+
+        billingResults = bill(billingMap);
+        validateBillingResults(pdoSample2, billingResults, BigDecimal.ZERO, true);
+
+        // this sample would have failed because of the exception thrown
+        validateBillingResults(pdoSample, billingResults, BigDecimal.ONE, true);
+
+        Mockito.verify(mockEmailSender, Mockito.never())
+            .sendHtmlEmail(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString(),
+                Mockito.anyBoolean(), Mockito.anyBoolean());
+
+        Mockito.verify(mockSapClient, Mockito.times(2)).createReturnOrder(Mockito.any(SAPReturnOrder.class));
+    }
+
+    public void testCreateBillingCreditWithAddons() throws Exception {
+        ProductOrderSample pdoSample = pdo.getSamples().get(0);
+        ProductOrderSample pdoSample2 = pdo.getSamples().get(1);
+        pdo.setQuoteId("99339288");
+
+        SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), TEN_THOUSAND, HUNDRED_THOUSAND,
+            pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
+        Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapQuote);
+        Mockito.when(mockSapClient.createDeliveryDocument(Mockito.any(SAPDeliveryDocument.class)))
+            .thenReturn(DELIVERY_DOCUMENT);
+
+        Mockito.when(mockSapClient.createReturnOrder(Mockito.any(SAPReturnOrder.class))).thenReturn(RETURN_ORDER_ID);;
+
+        setupMocksWhichThrowExceptionsWhenQuoteServerIsCalled();
+
+        HashMap<ProductOrderSample, List<Pair<ProductLedgerIndex, BigDecimal>>> billingMap = new HashMap<>();
+        billingMap.computeIfAbsent(pdoSample, k -> new ArrayList<>()).add(Pair.of(
+            ProductLedgerIndex.create(pdo.getAddOns().iterator().next().getAddOn(), priceItem, pdo.hasSapQuote()),
+            BigDecimal.ONE));
+        billingMap.computeIfAbsent(pdoSample2, k -> new ArrayList<>()).add(Pair.of(
+            ProductLedgerIndex.create(pdo.getProduct(), priceItem, pdo.hasSapQuote()),
+            BigDecimal.ONE));
+
+        List<BillingEjb.BillingResult> billingResults = bill(billingMap);
+        validateBillingResults(pdoSample, billingResults, BigDecimal.ONE, false);
+        validateBillingResults(pdoSample2, billingResults, BigDecimal.ONE, false);
+
+        billingMap.clear();
+
+        billingMap.computeIfAbsent(pdoSample, k -> new ArrayList<>()).add(Pair.of(
+            ProductLedgerIndex.create(pdo.getAddOns().iterator().next().getAddOn(), priceItem, pdo.hasSapQuote()),
+            BigDecimal.ONE.negate()));
+        billingMap.computeIfAbsent(pdoSample2, k -> new ArrayList<>()).add(Pair.of(
+            ProductLedgerIndex.create(pdo.getProduct(), priceItem, pdo.hasSapQuote()),
+            BigDecimal.ONE.negate()));
+
+        billingResults = bill(billingMap);
+        validateBillingResults(pdoSample2, billingResults, BigDecimal.ZERO, false);
+        validateBillingResults(pdoSample, billingResults, BigDecimal.ZERO, false);
+
+        Mockito.verify(mockEmailSender, Mockito.never())
+            .sendHtmlEmail(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString(),
+                Mockito.anyBoolean(), Mockito.anyBoolean());
+
+        Mockito.verify(mockSapClient, Mockito.times(2)).createReturnOrder(Mockito.any(SAPReturnOrder.class));
+    }
+
     @Test(dataProvider = "sapOrQuoteProvider")
     public void testNegativeBilling(ProductOrder.QuoteSourceType quoteSourceType) throws Exception {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
@@ -396,8 +510,7 @@ public class BillingCreditDbFreeTest {
             pdo.setQuoteId("99339288");
         }
 
-        SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), BigDecimal.valueOf(10000),
-                BigDecimal.valueOf(100000),
+        SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), TEN_THOUSAND, HUNDRED_THOUSAND,
                 pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
 
         if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
@@ -407,8 +520,9 @@ public class BillingCreditDbFreeTest {
             setupMocksWhichThrowExceptionsWhenSAPCalled();
         }
 
-        HashMap<ProductOrderSample, Pair<ProductLedgerIndex, BigDecimal>> billingMap = new HashMap<>();
-        billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem,pdo.hasSapQuote()), qtyNegativeTwo));
+        HashMap<ProductOrderSample, List<Pair<ProductLedgerIndex, BigDecimal>>> billingMap = new HashMap<>();
+        billingMap.computeIfAbsent(pdoSample, k -> new ArrayList<>())
+            .add(Pair.of(ProductLedgerIndex.create(pdo.getProduct(), priceItem, pdo.hasSapQuote()), qtyNegativeTwo));
         List<BillingEjb.BillingResult> billingResults = bill(billingMap);
 
         if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
@@ -430,8 +544,7 @@ public class BillingCreditDbFreeTest {
         }
 
         if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
-            SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), BigDecimal.valueOf(10000),
-                    BigDecimal.valueOf(100000),
+            SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), TEN_THOUSAND, HUNDRED_THOUSAND,
                     pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
 
             Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapQuote);
@@ -444,8 +557,9 @@ public class BillingCreditDbFreeTest {
             setupMocksWhichThrowExceptionsWhenSAPCalled();
         }
 
-        HashMap<ProductOrderSample, Pair<ProductLedgerIndex, BigDecimal>> billingMap = new HashMap<>();
-        billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem, pdo.hasSapQuote()), qtyPositiveTwo));
+        HashMap<ProductOrderSample, List<Pair<ProductLedgerIndex, BigDecimal>>> billingMap = new HashMap<>();
+        billingMap.computeIfAbsent(pdoSample, k -> new ArrayList<>())
+            .add(Pair.of(ProductLedgerIndex.create(pdo.getProduct(), priceItem, pdo.hasSapQuote()), qtyPositiveTwo));
         List<BillingEjb.BillingResult> billingResults = bill(billingMap);
         billingResults.forEach(
             billingResult -> {
@@ -468,8 +582,7 @@ public class BillingCreditDbFreeTest {
         }
 
         if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
-            SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), BigDecimal.valueOf(10000),
-                    BigDecimal.valueOf(100000),
+            SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), TEN_THOUSAND, HUNDRED_THOUSAND,
                     pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED, "GP01");
 
             Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapQuote);
@@ -481,15 +594,15 @@ public class BillingCreditDbFreeTest {
 
         }
 
-        HashMap<ProductOrderSample, Pair<ProductLedgerIndex, BigDecimal>> billingMap = new HashMap<>();
-        billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem,pdo.hasSapQuote()),
+        HashMap<ProductOrderSample, List<Pair<ProductLedgerIndex, BigDecimal>>> billingMap = new HashMap<>();
+        billingMap.computeIfAbsent(pdoSample, k -> new ArrayList<>()).add(Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem,pdo.hasSapQuote()),
                 BigDecimal.valueOf(1)));
 
         List<BillingEjb.BillingResult> billingResults = bill(billingMap);
-        validateBillingResults(pdoSample, billingResults, BigDecimal.ONE);
+        validateBillingResults(pdoSample, billingResults, BigDecimal.ONE, false);
 
         billingMap.clear();
-        billingMap.put(pdoSample, Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem,pdo.hasSapQuote()), qtyNegativeTwo));
+        billingMap.computeIfAbsent(pdoSample, k -> new ArrayList<>()).add(Pair.of(ProductLedgerIndex.create(pdo.getProduct(),priceItem,pdo.hasSapQuote()), qtyNegativeTwo));
         billingResults = bill(billingMap);
 
         if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
@@ -504,12 +617,14 @@ public class BillingCreditDbFreeTest {
     }
 
     private void validateBillingResults(ProductOrderSample sample, List<BillingEjb.BillingResult> results,
-                                        BigDecimal quantity) {
-        results.forEach(billingResult -> {
-            assertThat(billingResult.isError(), is(false));
-            assertThat(billingResult.getSapBillingId(),
-                sample.getProductOrder().hasSapQuote() ? notNullValue() : nullValue());
-        });
+                                        BigDecimal quantity, boolean isFailure) {
+        if (!isFailure) {
+            results.forEach(billingResult -> {
+                assertThat(billingResult.isError(), is(false));
+                assertThat(billingResult.getSapBillingId(),
+                    sample.getProductOrder().hasSapQuote() ? notNullValue() : nullValue());
+            });
+        }
         List<LedgerEntry> successfullyBilled = sample.getLedgerItems().stream()
             .filter(LedgerEntry.IS_SUCCESSFULLY_BILLED).collect(Collectors.toList());
         BigDecimal totalBilled =
@@ -517,18 +632,22 @@ public class BillingCreditDbFreeTest {
         assertThat(totalBilled, equalTo(quantity));
     }
 
-    private List<BillingEjb.BillingResult> bill(Map<ProductOrderSample, Pair<ProductLedgerIndex, BigDecimal>> samplePairMap) {
-        final Date date = new Date();
-        samplePairMap.forEach((productOrderSample, pricItemQtyPair) ->  {
-            if(productOrderSample.getProductOrder().hasSapQuote()) {
-                productOrderSample.addLedgerItem(date, productOrderSample.getProductOrder().getProduct(),
-                        pricItemQtyPair.getValue(), false);
-            } else {
-                productOrderSample.addLedgerItem(date, pricItemQtyPair.getKey().getPriceItem(), pricItemQtyPair.getValue());
-            }
-        });
+    private List<BillingEjb.BillingResult> bill(
+        HashMap<ProductOrderSample, List<Pair<ProductLedgerIndex, BigDecimal>>> samplePairList) {
         Set<LedgerEntry> ledgerItems = new HashSet<>();
-        samplePairMap.keySet().stream().map(ProductOrderSample::getLedgerItems).forEach(ledgerItems::addAll);
+        final Date date = new Date();
+        samplePairList.forEach((productOrderSample, priceItemQtyPairList) -> {
+            priceItemQtyPairList.forEach(priceItemQtyPair -> {
+                if (productOrderSample.getProductOrder().hasSapQuote()) {
+                    productOrderSample.addLedgerItem(date, priceItemQtyPair.getKey().getProduct(),
+                        priceItemQtyPair.getValue(), false);
+                } else {
+                    productOrderSample
+                        .addLedgerItem(date, priceItemQtyPair.getKey().getPriceItem(), priceItemQtyPair.getValue());
+                }
+            });
+        });
+        samplePairList.keySet().stream().map(ProductOrderSample::getLedgerItems).forEach(ledgerItems::addAll);
 
         BillingSession billingSession = new BillingSession(1L, ledgerItems);
         Mockito.reset(billingSessionAccessEjb);
@@ -620,14 +739,14 @@ public class BillingCreditDbFreeTest {
         assertThat(billingCredits, hasSize(1));
         List<BillingCredit> billingCreditsForItem = BillingAdaptor.findCreditsForEmail(billingCredits);
         assertThat(billingCreditsForItem, hasSize(1));
-
+        BigDecimal qtyBilled = billingCredits.stream().flatMap(billingCredit -> billingCredit.getReturnLines().stream())
+            .map(BillingCredit.LineItem::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
         List<BillingCredit.LineItem> returnLineItems =
             billingCredits.stream().flatMap((BillingCredit billingCredit) -> billingCredit.getReturnLines().stream())
                 .collect(Collectors.toList());
         assertThat(returnLineItems, hasSize(2));
         assertThat(quoteImportItem.getQuantity().abs(),
-            equalTo(returnLineItems.stream().map(BillingCredit.LineItem::getQuantity)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)));
+            equalTo(qtyBilled));
     }
 
     public Date getUniqueDate(int i) {
@@ -732,25 +851,5 @@ public class BillingCreditDbFreeTest {
                 .thenThrow(new RuntimeException("SAP Should not be called in this case"));
         Mockito.when(mockSapClient.createReturnOrder(Mockito.any(SAPReturnOrder.class)))
                 .thenThrow(new RuntimeException("SAP Should not be called in this case"));
-    }
-
-    public void testMergeSamePart() {
-        List<SAPOrderItem> orderItems = Arrays.asList(
-            new SAPOrderItem("P-EX", BigDecimal.valueOf(1D)),
-            new SAPOrderItem("P-EX", BigDecimal.valueOf(1D)));
-
-        List<SAPOrderItem> merged = BillingCredit.LineItem.merge(orderItems);
-        assertThat(merged, hasSize(1));
-        assertThat(merged.iterator().next().getItemQuantity(), equalTo(BigDecimal.valueOf(2D)));
-    }
-    public void testMergeDifferentPart() {
-        List<SAPOrderItem> orderItems = Arrays.asList(
-            new SAPOrderItem("P-EX", BigDecimal.valueOf(1D)),
-            new SAPOrderItem("P-E2", BigDecimal.valueOf(1D)));
-
-        List<SAPOrderItem> merged = BillingCredit.LineItem.merge(orderItems);
-        assertThat(merged, hasSize(2));
-        merged.forEach(i -> assertThat(i.getItemQuantity(), equalTo(BigDecimal.valueOf(1D))));
-
     }
 }

@@ -445,6 +445,7 @@ public class BillingAdaptor implements Serializable {
                         billingMessage = e.getLocalizedMessage();
                         if (billingMessage.contains(INVOICE_NOT_FOUND)) {
                             billingMessage = handleBillingCreditInvoiceNotFound(billingCredit);
+                            billingResult.setSapBillingId(billingCredit.getSapDeliveryDocumentId());
                         } else {
 
                             // the billing credit failed so clear out the sapDeliveryDocumentId to prevent the ledgers

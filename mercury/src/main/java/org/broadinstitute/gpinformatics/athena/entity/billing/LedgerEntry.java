@@ -267,7 +267,9 @@ public class LedgerEntry implements Serializable {
      */
     public Map<LedgerEntry, BigDecimal> findCreditSource(){
         BigDecimal ledgerQuantities =
-            getProductOrderSample().getLedgerItems().stream().map(LedgerEntry::totalPreviouslyBilledQuantity)
+            getProductOrderSample().getLedgerItems().stream()
+                .filter(ledgerEntry -> ledgerEntry.getProduct().equals(this.getProduct()))
+                .map(LedgerEntry::totalPreviouslyBilledQuantity)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         if (!isCredit() || isCredited() || ledgerQuantities.compareTo(BigDecimal.ZERO) < 0) {
@@ -275,9 +277,10 @@ public class LedgerEntry implements Serializable {
         }
         Predicate<LedgerEntry> isNotCredited = StreamUtils.not(LedgerEntry::isCredited);
         return getProductOrderSample().getLedgerItems().stream()
-            .filter(IS_SUCCESSFULLY_BILLED.and(isNotCredited))
+            .filter(IS_SUCCESSFULLY_BILLED.and(isNotCredited)
+                .and(ledgerEntry -> ledgerEntry.getProduct().equals(this.getProduct())))
             .collect(Collectors.groupingBy(Function.identity(),
-                Collectors.reducing(BigDecimal.ZERO, LedgerEntry::getQuantity,BigDecimal::add)));
+                Collectors.reducing(BigDecimal.ZERO, LedgerEntry::getQuantity, BigDecimal::add)));
 
     }
     /**

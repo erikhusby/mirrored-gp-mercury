@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.common.StreamUtils;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
@@ -16,10 +17,8 @@ import javax.annotation.Nonnull;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -398,20 +397,16 @@ public class QuoteImportItem {
     /**
      * @return A List of LedgerEntries which have been previously been billed in this QuoteImportItem.
      */
-    public List<LedgerEntry> getPriorBillings() {
-        List<LedgerEntry> priorSapBillings = new ArrayList<>();
-        getBillingCredits().stream()
-            .filter(ledgerEntry -> ledgerEntry.getProductOrderSample()
-                .getProductOrder().getProduct().equals(getProduct()))
-            .forEach(productLedgerEntries -> productLedgerEntries.getPreviouslyBilled().stream()
-                .filter(previousBilled -> StringUtils.isNotBlank(previousBilled.getSapDeliveryDocumentId()))
-                .sorted(Comparator.comparing(LedgerEntry::getSapDeliveryDocumentId).reversed())
-                .collect(Collectors.toCollection(() -> priorSapBillings)));
+    public Set<LedgerEntry> getPriorBillings() {
+        Set<LedgerEntry> priorSapBillings = new HashSet<>();
+        ledgerItems.stream().flatMap(ledgerEntry -> ledgerEntry.getPreviouslyBilled().stream())
+                .filter(StreamUtils.not(LedgerEntry::isCredited))
+            .collect(Collectors.toCollection(() -> priorSapBillings));
         return priorSapBillings;
     }
 
     public BigDecimal totalPriorBillingQuantity() {
-        return getPriorBillings().stream().map(LedgerEntry::totalPreviouslyBilledQuantity)
+        return getPriorBillings().stream().map(LedgerEntry::getQuantity)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

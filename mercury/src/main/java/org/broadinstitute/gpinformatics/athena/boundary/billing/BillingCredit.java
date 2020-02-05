@@ -78,7 +78,7 @@ public class BillingCredit {
                     }
                     BigDecimal requiredCreditQuantity = ledgerCreditEntry.getQuantity().abs();
                     BigDecimal requestedCreditQuantity;
-                    if (requiredCreditQuantity.compareTo(quantityAvailableInCreditSource)>0
+                    if (requiredCreditQuantity.compareTo(quantityAvailableInCreditSource) > 0
                         && requiredCreditQuantity.compareTo(totalQuantitiesAvailableInLedger)>0) {
                         billingMessage.setValidationError(BillingAdaptor.NEGATIVE_BILL_ERROR);
                         return;
