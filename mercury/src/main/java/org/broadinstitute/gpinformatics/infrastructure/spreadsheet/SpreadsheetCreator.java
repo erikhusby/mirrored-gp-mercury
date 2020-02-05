@@ -22,7 +22,7 @@ import java.util.Map;
 public class SpreadsheetCreator {
     private static final int MAX_ROW_NUMBER = 65536;
 
-    public static XSSFWorkbook createEmptySpreadsheet() {
+    public static Workbook createEmptySpreadsheet() {
         return new XSSFWorkbook();
     }
 
