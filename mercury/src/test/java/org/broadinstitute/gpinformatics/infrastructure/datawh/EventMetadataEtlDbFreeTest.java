@@ -51,7 +51,7 @@ public class EventMetadataEtlDbFreeTest {
         EasyMock.replay(mocks);
 
         Assert.assertEquals(tst.entityClass, LabEventMetadata.class);
-        Assert.assertEquals(tst.baseFilename, "le_metadata");
+        Assert.assertEquals(tst.baseFilename, "event_metadata");
         Assert.assertEquals(tst.entityId(obj), (Long) entityId);
 
         EasyMock.verify(mocks);
