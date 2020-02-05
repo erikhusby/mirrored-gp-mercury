@@ -1556,6 +1556,44 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
 
+    // Fingerprinting
+    FINGERPRINTING_STA_ADDITION("FingerprintingSTAAddition",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    FINGERPRINTING_POST_STA_ADDITION_THERMO_CYCLER_LOADED("FingerprintingPostSTAAdditionThermoCyclerLoaded",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    FINGERPRINTING_SLR_ADDITION("FingerprintingSLRDilution",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    FINGERPRINTING_IFC_TRANSFER("FingerprintingIFCTransfer",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, StaticPlate.PlateType.Eppendorf96,
+                    StaticPlate.PlateType.Fluidigm96_96AccessArrayIFC).
+                    sourceSection(SBSSection.ALL96).
+                    targetSection(SBSSection.P384COLS7_12BYROW).
+                    machineNames(new String[]{"HX10412", "HX10411", "HX10327", "HX10322"}).
+                    reagentRequirements(new ReagentRequirements[]{
+                            new ReagentRequirements("LSP Oligo Plate"),
+                            new ReagentRequirements("ASP Oligo Plate"),
+                            new ReagentRequirements("H2O"),
+                            new ReagentRequirements("2X"),
+                            new ReagentRequirements("1X Low TE")}).build(),
+            LibraryType.NONE_ASSIGNED),
+    FINGERPRINTING_FC1_LOADED("FingerprintingFC1Loaded",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_EVENT, StaticPlate.PlateType.Eppendorf96,
+                    StaticPlate.PlateType.Fluidigm96_96AccessArrayIFC).
+                    reagentRequirements(new ReagentRequirements[]{}).
+                    machineNames(new String[]{"FC60317", "FC60308", "FC60306", "FC60187"}).
+                    downloadFileType(DownloadFileType.FLUIDGM_SAMPLE_SHEET).build(),
+            LibraryType.NONE_ASSIGNED),
+
     // mRRBS
     MRRBS_GENOMIC_TRANSFER("mRRBSGenomicTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
@@ -2779,6 +2817,20 @@ public enum LabEventType {
         RECEPTACLE_TRANSFER_EVENT
     }
 
+    public enum DownloadFileType {
+        FLUIDGM_SAMPLE_SHEET("Fluidigm Sample Sheet");
+
+        private String displayName;
+
+        DownloadFileType(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
+
     public enum LibraryType {
         ENRICHED_POND("Enriched Pond", "Pond"),
         PCR_FREE_POND("PCR-Free Pond", "Pond"),
@@ -3092,6 +3144,9 @@ public enum LabEventType {
         /** Details regarding reagents used. */
         private ReagentRequirements[] reagentRequirements = {};
 
+        /** Download file, e.g. Fluidigm sample sheet. */
+        DownloadFileType downloadFileType;
+
         @XmlTransient
         private Map<String, ReagentRequirements> mapReagentNameToReagentRequirements;
 
@@ -3129,6 +3184,7 @@ public enum LabEventType {
             useWebCam = builder.useWebCam;
             targetWellTypeGeometry = builder.targetWellTypeGeometry;
             reagentRequirements = builder.reagentRequirements;
+            downloadFileType = builder.downloadFileType;
         }
 
         public static class Builder {
@@ -3161,6 +3217,7 @@ public enum LabEventType {
             private boolean useWebCam = false;
             private boolean requireSingleParticipant = false;
             private ReagentRequirements[] reagentRequirements = {};
+            private DownloadFileType downloadFileType;
 
             public Builder(MessageType messageType, VesselTypeGeometry sourceVesselTypeGeometry,
                            VesselTypeGeometry targetVesselTypeGeometry, ReagentRequirements[] reagentRequirements) {
@@ -3306,6 +3363,11 @@ public enum LabEventType {
 
             public Builder reagentRequirements(ReagentRequirements[] reagentRequirements) {
                 this.reagentRequirements = reagentRequirements;
+                return this;
+            }
+
+            public Builder downloadFileType(DownloadFileType downloadFileType) {
+                this.downloadFileType = downloadFileType;
                 return this;
             }
 
@@ -3539,6 +3601,10 @@ public enum LabEventType {
 
         public ReagentRequirements[] getReagentRequirements() {
             return reagentRequirements;
+        }
+
+        public DownloadFileType getDownloadFileType() {
+            return downloadFileType;
         }
     }
 

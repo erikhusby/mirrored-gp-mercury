@@ -153,7 +153,9 @@ public class SampleInstanceEntitySearchDefinition {
             IlluminaFlowcell.FlowcellType flowcellType = sampleInstanceEntity.getSequencerModel();
             return flowcellType == null ? "" : flowcellType.getExternalUiName();
         }));
-        terms.add(sampleInstanceEntityEvaluator("Aggregation Data Type", SampleInstanceEntity::getAggregationDataType));
+        SearchTerm pipelineTerm =
+            sampleInstanceEntityEvaluator("Aggregation Data Type", SampleInstanceEntity::getPipelineDataTypeString);
+        terms.add(pipelineTerm);
         terms.add(sampleInstanceEntityEvaluator("Data Analysis Type", sampleInstanceEntity -> {
             AnalysisType analysisType = sampleInstanceEntity.getAnalysisType();
             return analysisType == null ? "" : analysisType.getBusinessKey();

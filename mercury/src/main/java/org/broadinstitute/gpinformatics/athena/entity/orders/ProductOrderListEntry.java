@@ -13,6 +13,7 @@ import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.SetJoin;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -52,7 +53,7 @@ public class ProductOrderListEntry implements Serializable {
 
     private final Date placedDate;
 
-    private final Integer laneCount;
+    private final BigDecimal laneCount;
 
     private final String quoteId;
 
@@ -66,7 +67,7 @@ public class ProductOrderListEntry implements Serializable {
 
     private ProductOrderListEntry(Long orderId, String title, String jiraTicketKey,
                                   ProductOrder.OrderStatus orderStatus, Product product, String researchProjectTitle,
-                                  Long ownerId, Date placedDate, Integer laneCount, String quoteId,
+                                  Long ownerId, Date placedDate, BigDecimal laneCount, String quoteId,
                                   Long billingSessionId,
                                   long constructedCount, ProductOrder.OrderAccessType orderType) {
         this.orderId = orderId;
@@ -95,7 +96,7 @@ public class ProductOrderListEntry implements Serializable {
     // This is called through reflection and only appears to be unused.
     public ProductOrderListEntry(Long orderId, String title, String jiraTicketKey, ProductOrder.OrderStatus orderStatus,
                                  Product product, String researchProjectTitle, Long ownerId,
-                                 Date placedDate, Integer laneCount, String quoteId, ProductOrder.OrderAccessType orderType) {
+                                 Date placedDate, BigDecimal laneCount, String quoteId, ProductOrder.OrderAccessType orderType) {
 
         // No billing session and a the constructed count is set to 0 because it is not used for this constructor.
         this(orderId, title, jiraTicketKey, orderStatus, product, researchProjectTitle, ownerId, placedDate,
@@ -176,7 +177,7 @@ public class ProductOrderListEntry implements Serializable {
         return placedDate;
     }
 
-    public Integer getLaneCount() {
+    public BigDecimal getLaneCount() {
         return laneCount;
     }
 

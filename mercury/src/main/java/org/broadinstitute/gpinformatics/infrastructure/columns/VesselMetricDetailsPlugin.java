@@ -109,6 +109,8 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
             headerGroup.addHeader(header);
         }
 
+        // Reset for next page of data
+        isDataInitialized = false;
         return metricRows;
     }
 

@@ -35,6 +35,7 @@ public class Workflow {
     public static final String TENX_5PRIME_BCR = "Single Cell BCR";
     public static final String TENX_5PRIME = "Single Cell 5 Prime";
     public static final String SINGLE_CELL_HASHING_10X = "Single Cell 10X Hashing";
+    public static final String FINGERPRINTING = "Fingerprinting";
     /** Use this to indicate that no workflow is associated. */
     public static final String NONE = null;
 }
