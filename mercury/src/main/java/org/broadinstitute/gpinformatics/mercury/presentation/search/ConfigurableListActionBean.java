@@ -42,7 +42,7 @@ import java.util.List;
 @UrlBinding("/util/ConfigurableList.action")
 public class ConfigurableListActionBean extends CoreActionBean {
     protected static final Log log = LogFactory.getLog(ConfigurableListActionBean.class);
-    private static final String SPREADSHEET_FILENAME = "List.xls";
+    private static final String SPREADSHEET_FILENAME = "List.xlsx";
 
     private String downloadColumnSetName;
 
