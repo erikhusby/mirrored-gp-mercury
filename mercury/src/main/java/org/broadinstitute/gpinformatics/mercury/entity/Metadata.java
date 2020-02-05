@@ -338,7 +338,7 @@ public class Metadata {
         TRACKING_NUMBER(Category.SAMPLE, DataType.STRING, "Tracking Number", Visibility.USER),
         CONTACT(Category.SAMPLE, DataType.STRING, "Contact", Visibility.USER),
         CONTACT_EMAIL(Category.SAMPLE, DataType.STRING, "Contact Email", Visibility.USER),
-        REQUESTING_PHYSICIAN(Category.SAMPLE, DataType.STRING, "Requesting Physician", Visibility.USER),
+        STUDY_PI(Category.SAMPLE, DataType.STRING, "Study PI", Visibility.USER),
         PRODUCT_TYPE(Category.SAMPLE, DataType.STRING, "Product Type", Visibility.USER),
         // Fingerprinting Metadata
         TOTAL_POSSIBLE_CALLS(Category.LAB_METRIC, DataType.NUMBER, "Total Calls", Visibility.USER),

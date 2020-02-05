@@ -90,7 +90,7 @@ public class MayoManifestImportProcessor {
         TRACKING_NUMBER("tracking number", Metadata.Key.TRACKING_NUMBER),
         CONTACT("contact", Metadata.Key.CONTACT),
         EMAIL("email", Metadata.Key.CONTACT_EMAIL),
-        REQUESTING_PHYSICIAN("requesting physician", Metadata.Key.REQUESTING_PHYSICIAN),
+        STUDY_PI("study pi", Metadata.Key.STUDY_PI),
         TEST_NAME("test name", Metadata.Key.PRODUCT_TYPE),
         FAILURE_MODE("failure mode", null, Attribute.IGNORE),
         FAILURE_MODE_DESC("failure mode desc", null, Attribute.IGNORE);
