@@ -393,7 +393,9 @@ public class LedgerEntry implements Serializable {
     }
 
     public BigDecimal totalPreviouslyBilledQuantity(){
-        return getPreviouslyBilled().stream().map(LedgerEntry::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
+        return getPreviouslyBilled().stream().filter(
+            ledgerEntry -> ledgerEntry.isSuccessfullyBilled() && !ledgerEntry.isCredit() && ledgerEntry.getProduct()
+                .equals(this.getProduct())).map(LedgerEntry::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     /**
