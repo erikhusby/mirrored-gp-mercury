@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.spreadsheet;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.BuiltinFormats;
 import org.apache.poi.ss.usermodel.Cell;
@@ -11,6 +10,7 @@ import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -23,7 +23,7 @@ public class SpreadsheetCreator {
     private static final int MAX_ROW_NUMBER = 65536;
 
     public static Workbook createEmptySpreadsheet() {
-        return new HSSFWorkbook();
+        return new XSSFWorkbook();
     }
 
     /**
