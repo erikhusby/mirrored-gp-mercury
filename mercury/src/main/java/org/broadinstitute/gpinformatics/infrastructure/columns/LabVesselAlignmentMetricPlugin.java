@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -46,7 +47,7 @@ public class LabVesselAlignmentMetricPlugin implements ListPlugin {
                 .map(SampleInstanceV2::getRootOrEarliestMercurySampleName)
                 .collect(Collectors.toSet());
 
-        List<AlignmentMetric> runMetrics = alignmentMetricsDao.findBySampleAlias(new ArrayList<>(sampleKeys));
+        Set<AlignmentMetric> runMetrics = new HashSet<>(alignmentMetricsDao.findBySampleAlias(new ArrayList<>(sampleKeys)));
 
         // Gather Sequencing Lanes
         for( AlignmentMetric metric: runMetrics) {

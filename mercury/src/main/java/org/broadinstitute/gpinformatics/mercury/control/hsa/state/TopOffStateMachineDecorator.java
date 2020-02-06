@@ -15,7 +15,7 @@ public class TopOffStateMachineDecorator {
     public enum StateNames {
         HoldForTopOff("Hold For Top Off", false),
         HiSeqX("Illumina HiSeq X 10"),
-        Nova("Illumina NovaSeq"),
+        Nova("Illumina NovaSeq 6000"),
         SentToRework("Sent To Rework"),
         PoolGroups("Pool Groups", false);
 

@@ -19,6 +19,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.DragenConfig;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FingerprintResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.StateMachineDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.TaskDao;
@@ -55,6 +56,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @UrlBinding(FiniteStateMachineActionBean.ACTION_BEAN_URL)
 public class FiniteStateMachineActionBean extends CoreActionBean {
@@ -101,6 +104,9 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
     @Inject
     private FiniteStateMachineEngine finiteStateMachineEngine;
 
+    @Inject
+    private DragenConfig dragenConfig;
+
     @ValidateNestedProperties({
             @Validate(field = "stateMachineName", label = "State Machine Name", required = true, maxlength = 255,
                     on = {SAVE_ACTION})
@@ -126,6 +132,8 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
     private Map<String, MercurySample> mapIdToMercurySample = new HashMap<>();
 
     private long processId;
+
+    private boolean bcl2Fastq;
 
     public FiniteStateMachineActionBean() {
         super(CREATE_MACHINE, EDIT_MACHINE, MACHINE_PARAMETER);
@@ -187,8 +195,13 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
         MessageCollection messageCollection = new MessageCollection();
 
         try {
-            FiniteStateMachine finiteStateMachine = finiteStateMachineFactory.createFiniteStateMachineForRun(
-                    illuminaSequencingRun, runName, mapIdToMercurySample.keySet(), messageCollection);
+            if (bcl2Fastq) {
+                editFiniteStateMachine = finiteStateMachineFactory.createBcl2FastMachine(
+                        illuminaSequencingRun, messageCollection);
+            } else {
+                editFiniteStateMachine = finiteStateMachineFactory.createFiniteStateMachineForRun(
+                        illuminaSequencingRun, runName, mapIdToMercurySample.keySet(), messageCollection);
+            }
         } catch (Exception e) {
             addGlobalValidationError(e.getMessage());
             logger.error("Failed to create machine", e);
@@ -217,6 +230,9 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
     @HandlesEvent(UPDATE_TASK_STATUS_ACTION)
     public Resolution updateTaskStatus() {
         List<Task> tasks = taskDao.findTasksById(selectedIds);
+        Set<Task> incompleteTasks = tasks.stream().filter(t -> !t.isComplete()).collect(Collectors.toSet());
+        boolean turnFsmBackOn = incompleteTasks.isEmpty() && overrideStatus == Status.QUEUED ||
+                             overrideStatus == Status.REQUEUE || overrideStatus == Status.RETRY;
         for (Task task: tasks) {
             if (overrideStatus == Status.CANCELLED &&
                 (task.getStatus() == Status.RUNNING || task.getStatus() == Status.QUEUED)
@@ -228,6 +244,11 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
             } else {
                 task.setStatus(overrideStatus);
             }
+        }
+        State state = tasks.iterator().next().getState();
+        if (turnFsmBackOn && !state.isAlive()) {
+            state.setAlive(true);
+            state.getFiniteStateMachine().setStatus(Status.RUNNING);
         }
         tasks.forEach(t -> t.setStatus(overrideStatus));
         taskDao.persistAll(tasks);
@@ -253,10 +274,10 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
     @HandlesEvent("viewLog")
     public Resolution viewLog() {
         try {
-            // TODO JW set Slurm output logs to somewhere better
-            File homeDir = new File(System.getProperty("user.home"));
+            File logPath = new File(dragenConfig.getLogFilePath());
+            File logDir = logPath.getParentFile();
             String fileName = String.format("slurm-%d.out", processId);
-            File logFile = new File(homeDir, fileName);
+            File logFile = new File(logDir, fileName);
             String contents = FileUtils.readFileToString(logFile);
             return new StreamingResolution("text", contents);
         } catch (Exception e) {
@@ -363,6 +384,14 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
         }
         Collections.sort(missing);
         return missing;
+    }
+
+    public boolean getBcl2Fastq() {
+        return bcl2Fastq;
+    }
+
+    public void setBcl2Fastq(boolean bcl2Fastq) {
+        this.bcl2Fastq = bcl2Fastq;
     }
 
     // For Testing

@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.DragenConfig;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.metrics.DemultiplexStatsParser;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.metrics.DragenReplayInfo;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.ShellUtils;
@@ -25,6 +26,9 @@ public abstract class AbstractMetricsTaskHandler extends AbstractTaskHandler {
     @Inject
     private ShellUtils shellUtils;
 
+    @Inject
+    private DragenConfig dragenConfig;
+
     protected ProcessResult uploadMetric(String ctlFilePath, File dataPath)
             throws IOException, TimeoutException, InterruptedException {
         return uploadMetric(ctlFilePath, dataPath, "load.log");
@@ -33,7 +37,7 @@ public abstract class AbstractMetricsTaskHandler extends AbstractTaskHandler {
     protected ProcessResult uploadMetric(String ctlFilePath, File dataPath, String loadLog)
             throws IOException, TimeoutException, InterruptedException {
         String ldruid = "mercurydw/seq_dev3@\"(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=seqdev.broad.mit.edu)(PORT=1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SID=seqdev3)))\"";
-        List<String> cmds = Arrays.asList("/Users/jowalsh/opt/oracle/sqlldr",
+        List<String> cmds = Arrays.asList(dragenConfig.getSqlldrPath(),
                 String.format("control=%s", ctlFilePath),
                 String.format("log=%s", loadLog),
                 "bad=load.bad",

@@ -64,7 +64,7 @@
 
         <c:if test="${not empty actionBean.sampleRunData}">
             <stripes:form beanclass="${actionBean.class.name}"
-                          id="showScanForm" class="form-horizontal">
+                          id="showScanForm" class="form-horizontal" method="POST">
                 <stripes:hidden name="submitString" value="${actionBean.submitString}"/>
                 <table id="sampleRunList" class="table simple">
                     <thead>
@@ -121,6 +121,46 @@
                                           checked="${actionBean.createFingerprint}"/>
                     </div>
                 </div>
+                <div class="control-group">
+                    <stripes:label for="referenceGenome" class="control-label"/>
+                    <div class="controls">
+                        <stripes:select name="referenceGenome" id="referenceGenome">
+                            <stripes:options-enumeration
+                                    enum="org.broadinstitute.gpinformatics.mercury.presentation.hsa.AggregationActionBean.ReferenceGenome"
+                                    label="name"/>
+                        </stripes:select>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <stripes:label for="cramFilenameFormat" class="control-label"/>
+                    <div class="controls">
+                        <stripes:select name="cramFilenameFormat" id="cramFilenameFormat">
+                            <stripes:options-enumeration
+                                    enum="org.broadinstitute.gpinformatics.mercury.control.hsa.engine.CramFileNameBuilder.CramFilenameFormat"
+                                    label="displayName"/>
+                        </stripes:select>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <stripes:label for="configFile" class="control-label">
+                        Config File Name
+                    </stripes:label>
+                    <div class="controls">
+                        <select id="selectedConfig" name="selectedConfig">
+                            <option>None</option>
+                            <c:forEach items="${actionBean.configFiles}" var="filename">
+                                <option>${filename}</option>
+                            </c:forEach>
+                        </select>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <stripes:label for="allowMultipleAggregationTasks" class="control-label"/>
+                    <div class="controls">
+                        <stripes:checkbox name="allowMultipleAggregationTasks" id="allowMultipleAggregationTasks"
+                                          checked="${actionBean.allowMultipleAggregationTasks}"/>
+                    </div>
+                </div
                 <div class="control-group">
                     <div class="controls">
                         <stripes:submit name="create" class="btn btn-primary" value="Submit"/>

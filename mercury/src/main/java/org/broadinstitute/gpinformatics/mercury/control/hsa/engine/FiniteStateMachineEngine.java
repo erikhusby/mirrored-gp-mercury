@@ -23,6 +23,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.transaction.SystemException;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -148,8 +149,14 @@ public class FiniteStateMachineEngine implements Serializable {
                     }
                 }
             } else {
-                for (Task task: state.getTasksWithStatus(Status.RETRY)) {
+                for (Task task: state.getTasksFromStatusList(Arrays.asList(Status.RETRY, Status.REQUEUE))) {
                     try {
+                        if (task.getStatus() == Status.REQUEUE) {
+                            if (!stateManager.handleOnEnter(task.getState())) {
+                                log.error("Failed to re-enter state");
+                                continue;
+                            }
+                        }
                         taskManager.fireEvent(task, context);
                         if (task.getStatus() == Status.COMPLETE) {
                             task.setEndTime(new Date());

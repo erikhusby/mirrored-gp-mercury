@@ -70,4 +70,28 @@ public abstract class ProcessTask extends Task {
     public boolean requiresDragenPrefix() {
         return true;
     }
+
+    /**
+     * Job Allocation cannot share nodes. e.g. all dragen tasks must be exclusive per Illumina's documentation
+     * @return - true if job allocation cannot share nodes.
+     */
+    public boolean isExclusive() {
+        return true;
+    }
+
+    /**
+     * @return true if job allocation should include cpus-per-task flag. Shouldn't be used for dragens as those
+     * are set to exclusive and will thus use all of the cpus on a node.
+     */
+    public boolean hasCpuPerTaskLimit () {
+        return false;
+    }
+
+    /**
+     * Informs the slurm controller that ensuing jobs will require n-cpus number of processors per task.
+     * @return number of cpus on a node to be allocated to job.
+     */
+    public int getCpusPerTask() {
+        return -1;
+    }
 }

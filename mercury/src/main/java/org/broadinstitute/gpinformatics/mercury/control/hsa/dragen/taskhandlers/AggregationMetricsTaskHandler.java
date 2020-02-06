@@ -5,7 +5,6 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AggregationTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AlignmentMetricsTask;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenTaskBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.metrics.AlignmentStatsParser;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.metrics.DragenReplayInfo;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerContext;
@@ -66,8 +65,7 @@ public class AggregationMetricsTaskHandler extends AbstractMetricsTaskHandler {
                 return;
             }
 
-            String outputFilePrefix =  DragenTaskBuilder.parseCommandFromArgument(
-                    DragenTaskBuilder.OUTPUT_FILE_PREFIX, commandLineArgument);
+            String outputFilePrefix =  aggregationTask.getOutputFilePrefix();
             if (outputFilePrefix == null) {
                 task.setErrorMessage("Failed to parse output file prefix from task " + task);
                 task.setStatus(Status.FAILED);
@@ -88,15 +86,16 @@ public class AggregationMetricsTaskHandler extends AbstractMetricsTaskHandler {
                 return;
             }
 
-            String runName = outputFilePrefix + "_" + outputDirectory.getName();
+            String sampleName =  aggregationTask.getFastQSampleId();
+            String runName = sampleName + "_" + outputDirectory.getName();
             Date runDate = new Date();
             String analysisname = outputDirectory.getName();
-            String readGroup = outputFilePrefix + "_Aggregation";
-
+            String readGroup = sampleName + "_Aggregation";
+            boolean containsContamination = aggregationTask.getQcContaminationFile() != null;
             AlignmentStatsParser alignmentStatsParser = new AlignmentStatsParser();
             AlignmentStatsParser.AlignmentDataFiles alignmentDataFiles = alignmentStatsParser
                     .parseFolder(runName, runDate, analysisname, dragenReplayInfo, outputDirectory,
-                            readGroup, outputFilePrefix);
+                            readGroup, outputFilePrefix, containsContamination);
 
             List<ProcessResult> processResults = new ArrayList<>();
             processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/mapping_run_metrics.ctl",
@@ -105,6 +104,7 @@ public class AggregationMetricsTaskHandler extends AbstractMetricsTaskHandler {
             processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/mapping_rg_metrics.ctl",
                     alignmentDataFiles.getMappingMetricsOutputFile(), alignmentDataFiles.getAlignMetricLoad()));
 
+            // TODO Only if enabled
             processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/variant_call_run_metrics.ctl",
                     alignmentDataFiles.getVcSummaryOutputFile(),  alignmentDataFiles.getVcSummaryMetricLoad()));
 

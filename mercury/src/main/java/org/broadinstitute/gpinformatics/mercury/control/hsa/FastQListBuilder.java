@@ -13,6 +13,7 @@ import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import org.apache.commons.io.FileUtils;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenFolderUtil;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FastQList;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.ReadGroupUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
@@ -98,7 +99,8 @@ public class FastQListBuilder {
             if (!mapLaneToSample.containsKey(fastQList.getLane())) {
                 mapLaneToSample.put(fastQList.getLane(), new HashMap<>());
             }
-            String sampleId = fastQList.getRgSm().split("_")[2];
+            String rgSm = fastQList.getRgSm();
+            String sampleId = ReadGroupUtil.parseSampleIdFromRgSampleSheet(rgSm);
             if (!mapLaneToSample.get(fastQList.getLane()).containsKey(sampleId)) {
                 mapLaneToSample.get(fastQList.getLane()).put(sampleId, new ArrayList<>());
             }

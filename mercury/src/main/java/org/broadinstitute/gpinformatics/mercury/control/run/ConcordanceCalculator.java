@@ -1,12 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.control.run;
 
-import edu.mit.broad.picard.genotype.fingerprint.DownloadGenotypes;
-import edu.mit.broad.picard.genotype.fingerprint.Fingerprints;
-import edu.mit.broad.picard.util.Gender;
-import htsjdk.samtools.reference.ReferenceSequenceFile;
-import htsjdk.samtools.reference.ReferenceSequenceFileFactory;
-import htsjdk.samtools.util.SequenceUtil;
-import htsjdk.variant.variantcontext.VariantContext;
+//import edu.mit.broad.picard.genotype.fingerprint.DownloadGenotypes;
+//import edu.mit.broad.picard.genotype.fingerprint.Fingerprints;
+//import edu.mit.broad.picard.util.Gender;
+//import htsjdk.samtools.reference.ReferenceSequenceFile;
+//import htsjdk.samtools.reference.ReferenceSequenceFileFactory;
+//import htsjdk.samtools.util.SequenceUtil;
+//import htsjdk.variant.variantcontext.VariantContext;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.DragenConfig;
@@ -14,9 +14,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FpGenotype;
 import org.broadinstitute.gpinformatics.mercury.presentation.hsa.AggregationActionBean;
 import org.jetbrains.annotations.NotNull;
-import picard.fingerprint.FingerprintChecker;
-import picard.fingerprint.HaplotypeMap;
-import picard.fingerprint.MatchResults;
+//import picard.fingerprint.FingerprintChecker;
+//import picard.fingerprint.HaplotypeMap;
+//import picard.fingerprint.MatchResults;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
@@ -39,47 +39,48 @@ public class ConcordanceCalculator {
     private DragenConfig dragenConfig;
 
     // todo jmt OS-specific configuration, or require mount on Windows / MacOs?
-    private HaplotypeMap haplotypes;
+//    private HaplotypeMap haplotypes;
     private File reference;
-    private ReferenceSequenceFile ref;
+//    private ReferenceSequenceFile ref;
 
     public ConcordanceCalculator() {
         initReference(AggregationActionBean.ReferenceGenome.HG19);
     }
 
     public void initReference(AggregationActionBean.ReferenceGenome referenceGenome) {
-        haplotypes = fetchHaplotypesFile(referenceGenome);
+//        haplotypes = fetchHaplotypesFile(referenceGenome);
         reference = fetchReferenceFile(referenceGenome);
-        ref = ReferenceSequenceFileFactory.getReferenceSequenceFile(reference);
+//        ref = ReferenceSequenceFileFactory.getReferenceSequenceFile(reference);
     }
 
     public double calculateLodScore(Fingerprint observedFingerprint, Fingerprint expectedFingerprint) {
-        picard.fingerprint.Fingerprint observedFp = getFingerprint(observedFingerprint,
-                observedFingerprint.getMercurySample().getSampleKey());
-        picard.fingerprint.Fingerprint expectedFp = getFingerprint(expectedFingerprint,
-                expectedFingerprint.getMercurySample().getSampleKey());
-
-        FingerprintChecker fingerprintChecker = new FingerprintChecker(haplotypes);
-        Map<String, picard.fingerprint.Fingerprint> mapSampleToObservedFp =
-                fingerprintChecker.loadFingerprints(observedFp.getSource(), observedFp.getSample());
-        Map<String, picard.fingerprint.Fingerprint> mapSampleToExpectedFp =
-                fingerprintChecker.loadFingerprints(expectedFp.getSource(), expectedFp.getSample());
-
-        picard.fingerprint.Fingerprint observedFp1 = mapSampleToObservedFp.get(observedFp.getSample());
-        picard.fingerprint.Fingerprint expectedFp1 = mapSampleToExpectedFp.get(expectedFp.getSample());
-        MatchResults matchResults = FingerprintChecker.calculateMatchResults( observedFp1, expectedFp1);
-        try {
-            Files.delete(observedFp1.getSource());
-            Files.delete(expectedFp1.getSource());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return matchResults.getLOD();
+//        picard.fingerprint.Fingerprint observedFp = getFingerprint(observedFingerprint,
+//                observedFingerprint.getMercurySample().getSampleKey());
+//        picard.fingerprint.Fingerprint expectedFp = getFingerprint(expectedFingerprint,
+//                expectedFingerprint.getMercurySample().getSampleKey());
+//
+//        FingerprintChecker fingerprintChecker = new FingerprintChecker(haplotypes);
+//        Map<String, picard.fingerprint.Fingerprint> mapSampleToObservedFp =
+//                fingerprintChecker.loadFingerprints(observedFp.getSource(), observedFp.getSample());
+//        Map<String, picard.fingerprint.Fingerprint> mapSampleToExpectedFp =
+//                fingerprintChecker.loadFingerprints(expectedFp.getSource(), expectedFp.getSample());
+//
+//        picard.fingerprint.Fingerprint observedFp1 = mapSampleToObservedFp.get(observedFp.getSample());
+//        picard.fingerprint.Fingerprint expectedFp1 = mapSampleToExpectedFp.get(expectedFp.getSample());
+//        MatchResults matchResults = FingerprintChecker.calculateMatchResults( observedFp1, expectedFp1);
+//        try {
+//            Files.delete(observedFp1.getSource());
+//            Files.delete(expectedFp1.getSource());
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
+//        return matchResults.getLOD();
+        return 0;
     }
 
     @NotNull
-    private picard.fingerprint.Fingerprint getFingerprint(Fingerprint fingerprint, String sampleKey) {
-        List<Fingerprints.Fingerprint> fingerprints = new ArrayList<>();
+    private void getFingerprint(Fingerprint fingerprint, String sampleKey) {
+        /*List<Fingerprints.Fingerprint> fingerprints = new ArrayList<>();
         List<Fingerprints.Call> calls = new ArrayList<>();
         fingerprints.add(new Fingerprints.Fingerprint(fingerprint.getMercurySample().getSampleKey(),
                 Fingerprints.Disposition.valueOf(fingerprint.getDisposition().getAbbreviation()),
@@ -119,22 +120,22 @@ public class ConcordanceCalculator {
             return new picard.fingerprint.Fingerprint(sampleKey, fpFile.toPath(), "");
         } catch (IOException e) {
             throw new RuntimeException(e);
-        }
+        }*/
 
     }
 
     public void done() {
-        try {
-            ref.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            ref.close();
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
     }
 
-    public HaplotypeMap fetchHaplotypesFile(AggregationActionBean.ReferenceGenome referenceGenome) {
-        String haplotypeDatabase = convertFilePaths(referenceGenome.getHaplotypeDatabase());
-        return new HaplotypeMap(new File(haplotypeDatabase));
-    }
+//    public HaplotypeMap fetchHaplotypesFile(AggregationActionBean.ReferenceGenome referenceGenome) {
+//        String haplotypeDatabase = convertFilePaths(referenceGenome.getHaplotypeDatabase());
+//        return new HaplotypeMap(new File(haplotypeDatabase));
+//    }
 
     public File fetchReferenceFile(AggregationActionBean.ReferenceGenome referenceGenome) {
         return new File(convertFilePaths(referenceGenome.getFasta()));

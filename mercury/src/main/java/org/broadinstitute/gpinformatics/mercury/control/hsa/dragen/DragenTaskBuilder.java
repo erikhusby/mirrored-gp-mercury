@@ -15,6 +15,7 @@ public class DragenTaskBuilder {
     public static final String RGID = "RGID";
     public static final String BCL_INPUT_DIRECTORY = "bcl-input-directory";
     public static final String SAMPLE_SHEET = "sample-sheet";
+    public static final String QC_CROSS_CONT_VCF = "qc-cross-cont-vcf";
 
     private final StringBuilder commandBuilder;
 
@@ -89,7 +90,7 @@ public class DragenTaskBuilder {
     }
 
     public DragenTaskBuilder qcCrossContaminationVcf(File file) {
-        appendCommand(String.format("--qc-cross-cont-vcf %s", file.getPath()));
+        appendCommand(String.format("--" + QC_CROSS_CONT_VCF + " %s", file.getPath()));
         return this;
     }
 
@@ -100,6 +101,31 @@ public class DragenTaskBuilder {
 
     public DragenTaskBuilder qcCoverageReports(String reports) {
         appendCommand(String.format("--qc-coverage-reports-1 %s", reports));
+        return this;
+    }
+
+    public DragenTaskBuilder qcCoverageRegion2(File bedFile) {
+        appendCommand(String.format("--qc-coverage-region-2 %s", bedFile.getPath()));
+        return this;
+    }
+
+    public DragenTaskBuilder qcCoverageReports2(String reports) {
+        appendCommand(String.format("--qc-coverage-reports-2 %s", reports));
+        return this;
+    }
+
+    public DragenTaskBuilder qcCoverageRegion3(File bedFile) {
+        appendCommand(String.format("--qc-coverage-region-3 %s", bedFile.getPath()));
+        return this;
+    }
+
+    public DragenTaskBuilder qcCoverageReports3(String reports) {
+        appendCommand(String.format("--qc-coverage-reports-3 %s", reports));
+        return this;
+    }
+
+    public DragenTaskBuilder configFile(File file) {
+        appendCommand(String.format("--config-file %s", file.getPath()));
         return this;
     }
 

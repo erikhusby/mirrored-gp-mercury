@@ -18,7 +18,6 @@
         <th></th>
         <th>PDO Sample</th>
         <th>Sample Vessel</th>
-        <th>Pond</th>
         <th>PDO</th>
         <th>Cov >= 95%@20X</th>
         <th>% Contamination</th>
@@ -47,7 +46,6 @@
                     <stripes:hidden name="${dtoName}[${status.index}].sampleVessel" value="${dto.sampleVessel}"/>
             </td>
             <td>
-                    ${dto.library}
                     <stripes:hidden name="${dtoName}[${status.index}].library" value="${dto.library}"/>
             </td>
             <td>
@@ -70,16 +68,6 @@
                     ${dto.gender}
                     <stripes:hidden name="${dtoName}[${status.index}].gender" value="${dto.gender}"/>
             </td>
-<%--            <td>--%>
-<%--                    ${dto.numberOfReadGroupsAggregated}/${dto.numberOfReadGroupsOnFlowcell}--%>
-<%--                    <stripes:hidden name="${dtoName}[${status.index}].numberOfReadGroupsAggregated" value="${dto.numberOfReadGroupsAggregated}"/>--%>
-<%--                    <stripes:hidden name="${dtoName}[${status.index}].numberOfReadGroupsOnFlowcell" value="${dto.numberOfReadGroupsOnFlowcell}"/>--%>
-<%--            </td>--%>
-<%--            <td>--%>
-<%--                    ${dto.numberOfReadGroupsAggregated}/${dto.numberOfReadGroupsOnFlowcell}--%>
-<%--                    <stripes:hidden name="${dtoName}[${status.index}].numberOfReadGroupsAggregated" value="${dto.numberOfLanesDesignated}"/>--%>
-<%--                    <stripes:hidden name="${dtoName}[${status.index}].numberOfReadGroupsOnFlowcell" value="${dto.numberOfReadGroupsOnFlowcell}"/>--%>
-<%--            </td>--%>
             <td>
                 ${dto.genderConcordance}
                     <stripes:hidden name="${dtoName}[${status.index}].genderConcordance" value="${dto.genderConcordance}"/>

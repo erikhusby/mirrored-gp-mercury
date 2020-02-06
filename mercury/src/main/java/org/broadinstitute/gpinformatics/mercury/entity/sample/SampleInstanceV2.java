@@ -924,9 +924,13 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     }
 
     public String getSequencingLibraryName() {
-        String library = getFirstPcrVessel().getLabel();
-        library = String.format("%s_%s", library, getMolecularIndexingScheme().getName());
-        return library;
+        LabVessel pcrVessel = getFirstPcrVessel();
+        if (pcrVessel != null) {
+            String library = pcrVessel.getLabel();
+            return String.format("%s_%s", library, getMolecularIndexingScheme().getName());
+        } else { // Dev/SeqOnly samples start at pooling
+            return String.format("%s_%s", getRootOrEarliestMercurySampleName(), getMolecularIndexingScheme().getName());
+        }
     }
 
     public String getIndexingSchemeString() {

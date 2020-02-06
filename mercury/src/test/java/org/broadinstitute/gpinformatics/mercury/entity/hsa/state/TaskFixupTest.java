@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.AggregationStateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.DemultiplexStateDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.StateMachineDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.TaskDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.SampleSheetBuilder;
@@ -12,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AlignmentMetr
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DemultiplexMetricsTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DemultiplexTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenFolderUtil;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.ProcessTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.FiniteStateMachineFactory;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AggregationState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.DemultiplexState;
@@ -19,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMac
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
@@ -28,6 +31,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -57,6 +61,9 @@ public class TaskFixupTest extends Arquillian {
 
     @Inject
     private TaskDao taskDao;
+
+    @Inject
+    private StateMachineDao finiteStateMachineDao;
 
     @Inject
     private AggregationStateDao aggregationStateDao;
@@ -118,7 +125,7 @@ public class TaskFixupTest extends Arquillian {
      * GPLIM-6242
      * {Task ID},CANCELLED
      */
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void fixupGplim6242Status() throws Exception {
         userBean.loginOSUser();
         utx.begin();
@@ -148,11 +155,43 @@ public class TaskFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
+    public void fixupGplim6242AddExitTaskToStateAndStart() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("AddExitTaskAndStartMachine.txt"));
+        String reason = lines.get(0);
+        for (String line : lines.subList(1, lines.size())) {
+            String[] fields = line.split("\\s");
+            Long fsm = Long.valueOf(fields[0]);
+            FiniteStateMachine stateMachine = finiteStateMachineDao.findById(FiniteStateMachine.class, fsm);
+            if (stateMachine == null) {
+                throw new RuntimeException("Not a valid state machine");
+            }
+            Long stateId = Long.valueOf(fields[1]);
+            AggregationState aggregationState = aggregationStateDao.findById(AggregationState.class, stateId);
+            if (aggregationState == null) {
+                throw new RuntimeException("Not a valid aggregation state");
+            }
+
+            AlignmentMetricsTask alignmentMetricsTask = new AlignmentMetricsTask();
+            alignmentMetricsTask.setTaskName(aggregationState.getStateName().replace("Agg", "AggMetric"));
+            aggregationState.addExitTask(alignmentMetricsTask);
+
+            stateMachine.setStatus(Status.RUNNING);
+            aggregationState.setAlive(true);
+        }
+
+        taskDao.persist(new FixupCommentary("GPLIM-6242 added alignment metrics task to state "));
+        taskDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
     public void fixupGplim6242AddExitTaskToState() throws Exception {
         userBean.loginOSUser();
         utx.begin();
 
-        //
         AggregationState aggregationState = aggregationStateDao.findById(AggregationState.class, 6253L);
 
         AlignmentMetricsTask alignmentMetricsTask = new AlignmentMetricsTask();
@@ -214,6 +253,36 @@ public class TaskFixupTest extends Arquillian {
         finiteStateMachine.setStates(Collections.singletonList(demultiplexState));
 
         taskDao.persist(new FixupCommentary("GPLIM-6242 added misisng demux state"));
+        taskDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim6242ReplaceCommandLineArg() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("FixTaskArg.txt"));
+        String reason = lines.get(0);
+        for (String line : lines.subList(1, lines.size())) {
+            String[] fields = line.split("\\s");
+            Long taskId = Long.valueOf(fields[0]);
+            Task task = taskDao.findTaskById(taskId);
+            if (task == null) {
+                throw new RuntimeException("Not a valid task");
+            }
+
+            ProcessTask processTask = OrmUtil.proxySafeCast(task, ProcessTask.class);
+            String replace = fields[1];
+            String replacement = fields[2];
+            Assert.assertEquals(true, processTask.getCommandLineArgument().contains(replace));
+            String commandLineArgument = processTask.getCommandLineArgument();
+            String testOutput = commandLineArgument.replace(replace, replacement);
+            System.out.println(testOutput);
+            processTask.setCommandLineArgument(testOutput);
+        }
+
+        taskDao.persist(new FixupCommentary("GPLIM-6242 fix task command line argument"));
         taskDao.flush();
         utx.commit();
     }

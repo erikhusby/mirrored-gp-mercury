@@ -3066,4 +3066,12 @@
         <dropNotNullConstraint columnName="REVTYPE" schemaName="mercury" tableName="FINITE_STATE_MACHINE_AUD"/>
     </changeSet>
 
+    <changeSet id="GPLIM-6242-45" author="jowalsh">
+        <modifyDataType tableName="TASK" schemaName="mercury" columnName="COMMAND_LINE_ARGUMENT" newDataType="varchar2(1200)"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-46" author="jowalsh">
+        <modifyDataType tableName="TASK_AUD" schemaName="mercury" columnName="COMMAND_LINE_ARGUMENT" newDataType="varchar2(1200)"/>
+    </changeSet>
+
 </databaseChangeLog>

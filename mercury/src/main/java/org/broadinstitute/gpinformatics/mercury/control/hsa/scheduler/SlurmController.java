@@ -6,17 +6,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.DragenConfig;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.PicardTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.ProcessTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.zeroturnaround.exec.ProcessResult;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -53,11 +51,8 @@ public class SlurmController implements SchedulerController {
 
         String dragenCmd = "";
         if (processTask.requiresDragenPrefix()) {
-            /*String prolog = "srun --prolog=/seq/dragen/scripts/slurm_dragen_prolog.sh";
-            dragenCmd = String.format("--wrap=\"%s %s%s\"", prolog, dragenConfig.getDragenPath(),
-                    processTask.getCommandLineArgument());*/
-            dragenCmd = String.format("--wrap=\"%s%s\"", dragenConfig.getDragenPath(),
-                    processTask.getCommandLineArgument());
+            dragenCmd = String.format("--wrap=\"%sdragen_reset && %s%s\"", dragenConfig.getDragenPath(),
+                    dragenConfig.getDragenPath(), processTask.getCommandLineArgument());
         } else {
             if (processTask.hasProlog()) {
                 File prologFolder = new File(dragenConfig.getPrologScriptFolder());
@@ -72,9 +67,22 @@ public class SlurmController implements SchedulerController {
         }
 
         if (partition == null) {
-            cmd = Arrays.asList( "ssh", dragenConfig.getSlurmHost(), "sbatch", "--exclusive", "-J", processTask.getTaskName(), dragenCmd);
+            cmd = Arrays.asList( "ssh", dragenConfig.getSlurmHost(), "sbatch", "--exclusive",
+                    "-J", processTask.getTaskName(), "--output", dragenConfig.getLogFilePath(), dragenCmd);
         } else {
-            cmd = Arrays.asList( "ssh", dragenConfig.getSlurmHost(), "sbatch", "--exclusive", "-J", processTask.getTaskName(), "-p", partition, dragenCmd);
+            cmd = new ArrayList<>(Arrays.asList( "ssh", dragenConfig.getSlurmHost(), "sbatch",
+                    "-J", processTask.getTaskName(), "--output", dragenConfig.getLogFilePath(),
+                    "-p", partition));
+            if (processTask.isExclusive()) {
+                cmd.add( "--exclusive");
+            }
+            if (processTask.hasCpuPerTaskLimit()) {
+                if (processTask.getCpusPerTask() <= 0) {
+                    throw new RuntimeException("Must override cpus per task to positive number if flag is set.");
+                }
+                cmd.add("--cpus-per-task=" + processTask.getCpusPerTask());
+            }
+            cmd.add(dragenCmd);
         }
         ProcessResult processResult = runProcess(cmd);
         if (processResult.getExitValue() != 0) {

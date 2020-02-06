@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
+import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.zims.SquidThriftLibraryConverter;
@@ -34,6 +35,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -117,6 +119,19 @@ public class IlluminaRunResource implements Serializable {
         }
 
         return runBean;
+    }
+
+    @GET
+    @Path("/cancel")
+    public Response cancelRun(@QueryParam("runName") String runName) {
+        IlluminaSequencingRun illuminaSequencingRun = illuminaSequencingRunDao.findByRunName(runName);
+        if (illuminaSequencingRun == null) {
+            throw new ResourceException(runName + " is not registered.", Response.Status.INTERNAL_SERVER_ERROR);
+        }
+
+        illuminaSequencingRun.setCancelled(true);
+        illuminaSequencingRunDao.persist(illuminaSequencingRun);
+        return Response.status(Response.Status.OK).entity("Run cancelled").type(MediaType.TEXT_PLAIN_TYPE).build();
     }
 
     @GET

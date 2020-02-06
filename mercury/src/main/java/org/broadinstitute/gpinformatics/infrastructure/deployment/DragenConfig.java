@@ -26,6 +26,12 @@ public class DragenConfig extends AbstractConfig implements Serializable {
 
     private String prologScriptFolder;
 
+    private String configFilePath;
+
+    private String logFilePath;
+
+    private String sqlldrPath;
+
     public DragenConfig() {
     }
 
@@ -96,5 +102,29 @@ public class DragenConfig extends AbstractConfig implements Serializable {
 
     public void setPrologScriptFolder(String prologScriptFolder) {
         this.prologScriptFolder = prologScriptFolder;
+    }
+
+    public String getConfigFilePath() {
+        return configFilePath;
+    }
+
+    public void setConfigFilePath(String configFilePath) {
+        this.configFilePath = configFilePath;
+    }
+
+    public String getLogFilePath() {
+        return logFilePath;
+    }
+
+    public void setLogFilePath(String logFilePath) {
+        this.logFilePath = logFilePath;
+    }
+
+    public String getSqlldrPath() {
+        return sqlldrPath;
+    }
+
+    public void setSqlldrPath(String sqlldrPath) {
+        this.sqlldrPath = sqlldrPath;
     }
 }

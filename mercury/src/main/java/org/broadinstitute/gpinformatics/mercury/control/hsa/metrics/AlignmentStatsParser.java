@@ -37,9 +37,10 @@ public class AlignmentStatsParser {
 
     public static final String RG_TYPE = "MAPPING/ALIGNING PER RG";
 
+    // TODO Should check aggregation task to see if it has mapping files, vc etc.
     public AlignmentDataFiles parseFolder(String runName, Date runDate, String analysisName,
                                                 DragenReplayInfo dragenReplayInfo, File directory, String readGroup,
-                                                String filePrefix) throws IOException {
+                                                String filePrefix, boolean sampleContamination) throws IOException {
         File mappingMetricsFile = new File(directory, filePrefix + ".mapping_metrics.csv");
         File covMetrics = new File(directory, filePrefix + ".qc-coverage-region-1_coverage_metrics.csv");
         File vcMetrics = new File(directory, filePrefix + ".vc_metrics.csv");
@@ -50,6 +51,8 @@ public class AlignmentStatsParser {
         Map<RecordType, String> mapCovToValue = new HashMap<>();
         Map<RecordType, String> mapVcToPrefilterValue = new HashMap<>();
         Map<RecordType, String> mapVcToPostfilterValue = new HashMap<>();
+        Map<RecordType, String> mapVcToPrefilterRates = new HashMap<>();
+        Map<RecordType, String> mapVcToPostfilterRates = new HashMap<>();
 
         CSVReader csvReader = new CSVReader(new BufferedReader(new FileReader(mappingMetricsFile)));
         String recordType = null;
@@ -90,6 +93,8 @@ public class AlignmentStatsParser {
         // Vc Metrics
         csvReader = new CSVReader(new BufferedReader(new FileReader(vcMetrics)));
 
+        // Boolean some vc runs skip pre-filter
+        boolean isHardSkipFilter = true;
         String numSamples = csvReader.readNext()[3];
         String readsProcessed = csvReader.readNext()[3];
         String childSample = csvReader.readNext()[3];
@@ -98,11 +103,21 @@ public class AlignmentStatsParser {
             recordField = nextRecord[2];
             recordValue = nextRecord[3];
 
-            if (recordType.equals("VARIANT CALLER PREFILTER") && VcFields.getRecordFromField(recordField) != null) {
-                mapVcToPrefilterValue.put(VcFields.getRecordFromField(recordField), recordValue);
-            }
-            if (recordType.equals("VARIANT CALLER POSTFILTER") && VcFields.getRecordFromField(recordField) != null) {
-                mapVcToPostfilterValue.put(VcFields.getRecordFromField(recordField), recordValue);
+            VcFields vcRecord = VcFields.getRecordFromField(recordField);
+            Map<RecordType, String> vcMap = null;
+            if (vcRecord != null) {
+                boolean isPrefilter = recordType.equals("VARIANT CALLER PREFILTER");
+                vcMap = isPrefilter ? mapVcToPrefilterValue : mapVcToPostfilterValue;
+                vcMap.put(vcRecord, recordValue);
+
+                if (isPrefilter) {
+                    isHardSkipFilter = false;
+                }
+                if (vcRecord.getIncludeRate()) {
+                    String rateRecord = nextRecord[4];
+                    Map<RecordType, String> vcRateMap = isPrefilter ? mapVcToPrefilterRates :  mapVcToPostfilterRates;
+                    vcRateMap.put(vcRecord, rateRecord);
+                }
             }
         }
 
@@ -127,6 +142,9 @@ public class AlignmentStatsParser {
         for (SummaryFields summaryFields: SummaryFields.values()) {
             if (mapSummaryToValue.containsKey(summaryFields)) {
                 summaryResults.add(mapSummaryToValue.get(summaryFields));
+                // TODO
+            } else if (summaryFields == SummaryFields.EST_SAMPLE_CONTAM && !sampleContamination) {
+                summaryResults.add("NA");
             }
         }
 
@@ -159,7 +177,6 @@ public class AlignmentStatsParser {
             for (RgFields rgField: RgFields.values()) {
                 if (mapRgRecordToVal.containsKey(rgField)) {
                     rgResults.add(mapRgRecordToVal.get(rgField));
-                    System.out.println(rgField.getRecordType() + " " + entry.getKey() + " " + mapRgRecordToVal.get(rgField));
                 }
             }
 
@@ -204,11 +221,26 @@ public class AlignmentStatsParser {
         for (VcFields field: VcFields.values()) {
             if (mapVcToPrefilterValue.containsKey(field)) {
                 vcPreMetricsList.add(mapVcToPrefilterValue.get(field));
+                if (field.getIncludeRate()) {
+                    vcPreMetricsList.add(mapVcToPrefilterRates.get(field));
+                }
+            } else if (field.isOptional()) {
+                vcPreMetricsList.add("NA");
+            }
+
+            if (mapVcToPostfilterValue.containsKey(field)) {
                 vcPostMetricsList.add(mapVcToPostfilterValue.get(field));
+                if (field.getIncludeRate()) {
+                    vcPostMetricsList.add(mapVcToPostfilterRates.get(field));
+                }
+            } else if (field.isOptional()) {
+                vcPostMetricsList.add("NA");
             }
         }
 
-        csvWriterSummary.writeNext(vcPreMetricsList.toArray(new String[0]));
+        if (!isHardSkipFilter) { // No prefilter metrics, so skip
+            csvWriterSummary.writeNext(vcPreMetricsList.toArray(new String[0]));
+        }
         csvWriterSummary.writeNext(vcPostMetricsList.toArray(new String[0]));
         csvWriterSummary.close();
 
@@ -496,8 +528,38 @@ public class AlignmentStatsParser {
         }
     }
 
+    public enum IncludeRate {
+        TRUE(true),
+        FALSE(false);
+        private final boolean value;
+
+        IncludeRate(boolean value) {
+            this.value = value;
+        }
+
+        public boolean booleanValue() {
+            return value;
+        }
+    }
+
+    public enum OptionalRecord {
+        TRUE(true),
+        FALSE(false);
+        private final boolean value;
+
+        OptionalRecord(boolean value) {
+            this.value = value;
+        }
+
+        public boolean booleanValue() {
+            return value;
+        }
+    }
+
     public interface RecordType {
         String getRecordType();
+        boolean getIncludeRate();
+        boolean isOptional();
     }
 
     public enum SummaryFields implements RecordType {
@@ -573,6 +635,16 @@ public class AlignmentStatsParser {
         @Override
         public String getRecordType() {
             return recordType;
+        }
+
+        @Override
+        public boolean getIncludeRate() {
+            return false;
+        }
+
+        @Override
+        public boolean isOptional() {
+            return false;
         }
 
         public static SummaryFields getRecordFromField(String field) {
@@ -654,6 +726,16 @@ public class AlignmentStatsParser {
         public static RgFields getRecordFromField(String field) {
             return mapFieldToCoverage.get(field);
         }
+
+        @Override
+        public boolean getIncludeRate() {
+            return false;
+        }
+
+        @Override
+        public boolean isOptional() {
+            return false;
+        }
     }
 
     public enum CoverageFields implements RecordType {
@@ -711,12 +793,22 @@ public class AlignmentStatsParser {
         public static CoverageFields getRecordFromField(String field) {
             return mapFieldToCoverage.get(field);
         }
+
+        @Override
+        public boolean getIncludeRate() {
+            return false;
+        }
+
+        @Override
+        public boolean isOptional() {
+            return false;
+        }
     }
 
     public enum VcFields implements RecordType {
-        NUM_SAMPLES("Number of samples"),
-        READS_PROCESSED("Reads Processed"),
-        CHILD_SAMPLE("Child Sample"),
+        NUM_SAMPLES("Number of samples", IncludeRate.FALSE),
+        READS_PROCESSED("Reads Processed", IncludeRate.FALSE),
+        CHILD_SAMPLE("Child Sample", IncludeRate.FALSE),
         TOTAL("Total"),
         BIALLELIC("Biallelic"),
         MULTIALLELIC("Multiallelic"),
@@ -726,19 +818,25 @@ public class AlignmentStatsParser {
         DELETIONS_HOM("Deletions (Hom)"),
         DELETIONS_HET("Deletions (Het)"),
         INDELS_HET("Indels (Het)"),
-        CHR_X("Chr X number of SNPs over genome"),
-        CHR_Y("Chr Y number of SNPs over genome"),
-        CHR_XY_RATIO("(Chr X SNPs)/(chr Y SNPs) ratio over genome"),
-        SNP_TRANSITIONS("SNP Transitions"),
-        SNP_TRANSVERSIONS("SNP Transversions"),
-        TI_TV_RATIO("Ti/Tv ratio"),
-        HET("Heterozygous"),
-        HOM("Homozygous"),
+        CHR_X("Chr X number of SNPs over genome", IncludeRate.FALSE),
+        CHR_Y("Chr Y number of SNPs over genome", IncludeRate.FALSE),
+        CHR_XY_RATIO("(Chr X SNPs)/(chr Y SNPs) ratio over genome", IncludeRate.FALSE),
+        SNP_TRANSITIONS("SNP Transitions", IncludeRate.FALSE),
+        SNP_TRANSVERSIONS("SNP Transversions", IncludeRate.FALSE),
+        TI_TV_RATIO("Ti/Tv ratio", IncludeRate.FALSE),
+        HET("Heterozygous", IncludeRate.FALSE),
+        HOM("Homozygous", IncludeRate.FALSE),
+        HET_HOM_RATIO("Het/Hom ratio", IncludeRate.FALSE),
         IN_DBSNP("In dbSNP"),
         NOT_IN_DBSNP("Not in dbSNP"),
+        PERCENT_CALLABILITY("Percent Callability", IncludeRate.FALSE, OptionalRecord.TRUE),
+        PERCENT_AUTOSOME_CALLABILITY("Percent Autosome Callability", IncludeRate.FALSE, OptionalRecord.TRUE),
+        PERCENT_AUTOSOME_EXOME_CALLABILITY("Percent Autosome Exome Callability", IncludeRate.FALSE, OptionalRecord.TRUE),
         ;
 
         private final String recordType;
+        private final IncludeRate includeRate;
+        private final OptionalRecord optionalRecord;
         private static final Map<String, AlignmentStatsParser.VcFields> mapFieldToSummary = new HashMap<>();
 
         static {
@@ -748,7 +846,17 @@ public class AlignmentStatsParser {
         }
 
         VcFields(String recordType) {
+            this(recordType, IncludeRate.TRUE);
+        }
+
+        VcFields(String recordType, IncludeRate includeRate) {
+            this(recordType, includeRate, OptionalRecord.FALSE);
+        }
+
+        VcFields(String recordType, IncludeRate includeRate, OptionalRecord optionalRecord) {
             this.recordType = recordType;
+            this.includeRate = includeRate;
+            this.optionalRecord = optionalRecord;
         }
 
         @Override
@@ -758,6 +866,16 @@ public class AlignmentStatsParser {
 
         public static AlignmentStatsParser.VcFields getRecordFromField(String field) {
             return mapFieldToSummary.get(field);
+        }
+
+        @Override
+        public boolean getIncludeRate() {
+            return includeRate == IncludeRate.TRUE;
+        }
+
+        @Override
+        public boolean isOptional() {
+            return optionalRecord == OptionalRecord.TRUE;
         }
     }
 }

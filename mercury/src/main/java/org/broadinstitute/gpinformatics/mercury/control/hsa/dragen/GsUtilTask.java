@@ -15,9 +15,11 @@ import java.util.List;
 @Audited
 public class GsUtilTask extends ComputeTask {
 
+    private static final int PARALLEL_THREAD_COUNT = 4;
+
     private static final String[] GSUTIL_CP_PARALLEL_LIMIT_PARAMETERS = {
             "-o", "GSUtil:parallel_process_count=1",
-            "-o", "GSUtil:parallel_thread_count=4",
+            "-o", "GSUtil:parallel_thread_count=" + PARALLEL_THREAD_COUNT,
             "-o", "GSUtil:parallel_composite_upload_threshold=150M"
     };
 
@@ -40,13 +42,13 @@ public class GsUtilTask extends ComputeTask {
         List<String> cmds = gsUtilParallel();
         cmds.add(String.format("cp %s %s", srcFile.getPath(), destPath));
         task.setCommandLineArgument(String.join(" ", cmds));
-        task.setPartition("dragen");
         return task;
     }
 
     private static List<String> gsUtilParallel() {
         List<String> cmds = new ArrayList<>();
-        cmds.add("gsutil");
+        // TODO JW Fix path issue
+        cmds.add("/broad/software/free/Linux/redhat_7_x86_64/pkgs/google-cloud-sdk/bin/gsutil");
         cmds.addAll(Arrays.asList(GSUTIL_CP_PARALLEL_LIMIT_PARAMETERS));
         return cmds;
     }
@@ -59,5 +61,20 @@ public class GsUtilTask extends ComputeTask {
     @Override
     public String getPrologFileName() {
         return GCLOUD_AUTH_SH;
+    }
+
+    @Override
+    public boolean isExclusive() {
+        return false;
+    }
+
+    @Override
+    public boolean hasCpuPerTaskLimit() {
+        return true;
+    }
+
+    @Override
+    public int getCpusPerTask() {
+        return PARALLEL_THREAD_COUNT;
     }
 }

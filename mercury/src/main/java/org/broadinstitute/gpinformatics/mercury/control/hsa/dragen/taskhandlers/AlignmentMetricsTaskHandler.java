@@ -150,7 +150,7 @@ public class AlignmentMetricsTaskHandler extends AbstractMetricsTaskHandler {
         AlignmentStatsParser alignmentStatsParser = new AlignmentStatsParser();
         AlignmentStatsParser.AlignmentDataFiles alignmentDataFiles = alignmentStatsParser
                 .parseFolder(runName, new Date(), analysisname, dragenReplayInfo, outputDirectory,
-                        outputFilePrefix, outputFilePrefix);
+                        outputFilePrefix, outputFilePrefix, true);
 
         if (messageCollection.hasErrors()) {
             alignmentMetricsTask.setStatus(Status.SUSPENDED);

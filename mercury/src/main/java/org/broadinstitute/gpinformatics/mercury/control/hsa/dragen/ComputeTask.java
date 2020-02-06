@@ -15,7 +15,7 @@ public class ComputeTask extends ProcessTask {
     }
 
     public ComputeTask() {
-        setPartition("dragen"); // TODO JW Switch when done
+        setPartition("dragen_cpu");
     }
 
     public boolean requiresDragenPrefix() {

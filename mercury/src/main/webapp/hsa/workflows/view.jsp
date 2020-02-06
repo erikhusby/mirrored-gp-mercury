@@ -15,7 +15,7 @@
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.FiniteStateMachineActionBean"/>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="View Workflow"
-                       sectionTitle="View Workflow: ${actionBean.editFiniteStateMachine.stateMachineName}">
+                       sectionTitle="View Workflow: ${actionBean.editFiniteStateMachine.stateMachineName}: Current Status ${actionBean.editFiniteStateMachine.status}">
 
     <stripes:layout-component name="extraHead">
         <style type="text/css">
@@ -114,23 +114,56 @@
             <div id="logFileDiv"></div>
         </div>
 
-        <h4>Active States</h4>
-        <div id="accordion" style="display:none;" class="accordion">
-            <c:forEach items="${actionBean.editFiniteStateMachine.activeStates}" var="state">
-                <c:set var="state" value="${state}" scope="request"/>
-                <c:set var="finiteStateMachine" value="${actionBean.editFiniteStateMachine}" scope="request"/>
-                <div style="padding-left: 30px;padding-bottom: 2px">
-                    <div id="headerId" class="fourcolumn">
-                        <div>State Name: ${state.stateName}</div>
-                        <div>Type: <td>${state.class.simpleName}</td></div>
-                        <div>
-                            Start Time: <td>${state.startTime}</td>
-                        </div>
-                    </div>
-                </div>
-                <jsp:include page="state_view.jsp"/>
-            </c:forEach>
-        </div>
 
+        <stripes:form beanclass="${actionBean.class.name}" id="machineStatusForm">
+            <stripes:hidden name="selectedIds[0]" value="${actionBean.editFiniteStateMachine.finiteStateMachineId}"/>
+            <stripes:select name="overrideStatus" value="${actionBean.editFiniteStateMachine.status}">
+                <stripes:options-enumeration label="statusName"
+                                             enum="org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status"/>
+            </stripes:select>
+            <stripes:submit name="updateStateStatus" value="Update Machine Status" class="btn btn-primary"/>
+        </stripes:form>
+
+        <c:set var="activeStates" value="${actionBean.editFiniteStateMachine.activeStates}"/>
+        <c:choose>
+            <c:when test="${empty activeStates}">
+                <h4>Completed/Not Active States</h4>
+                <div id="accordion" style="display:none;" class="accordion">
+                    <c:forEach items="${actionBean.editFiniteStateMachine.states}" var="state">
+                        <c:set var="state" value="${state}" scope="request"/>
+                        <c:set var="finiteStateMachine" value="${actionBean.editFiniteStateMachine}" scope="request"/>
+                        <div style="padding-left: 30px;padding-bottom: 2px">
+                            <div class="fourcolumn">
+                                <div>State Name: ${state.stateName}</div>
+                                <div>Type: <td>${state.class.simpleName}</td></div>
+                                <div>
+                                    Start Time: <td>${state.startTime}</td>
+                                </div>
+                            </div>
+                        </div>
+                        <jsp:include page="state_view.jsp"/>
+                    </c:forEach>
+                </div>
+            </c:when>
+            <c:otherwise>
+                <h4>Active States</h4>
+                <div id="accordion" style="display:none;" class="accordion">
+                    <c:forEach items="${actionBean.editFiniteStateMachine.activeStates}" var="state">
+                        <c:set var="state" value="${state}" scope="request"/>
+                        <c:set var="finiteStateMachine" value="${actionBean.editFiniteStateMachine}" scope="request"/>
+                        <div style="padding-left: 30px;padding-bottom: 2px">
+                            <div id="headerId" class="fourcolumn">
+                                <div>State Name: ${state.stateName}</div>
+                                <div>Type: <td>${state.class.simpleName}</td></div>
+                                <div>
+                                    Start Time: <td>${state.startTime}</td>
+                                </div>
+                            </div>
+                        </div>
+                        <jsp:include page="state_view.jsp"/>
+                    </c:forEach>
+                </div>
+            </c:otherwise>
+        </c:choose>
     </stripes:layout-component>
 </stripes:layout-render>

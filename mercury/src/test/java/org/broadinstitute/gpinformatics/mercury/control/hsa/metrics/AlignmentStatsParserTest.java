@@ -23,7 +23,7 @@ public class AlignmentStatsParserTest {
         replayInfo.setSystem(system);
         AlignmentStatsParser.AlignmentDataFiles alignmentDataFiles =
                 parser.parseFolder("runName", new Date(), "analysistest", replayInfo, folder, "SM-1",
-                        "SM-1");
+                        "SM-1", true);
         Assert.assertNotNull(alignmentDataFiles);
     }
 }

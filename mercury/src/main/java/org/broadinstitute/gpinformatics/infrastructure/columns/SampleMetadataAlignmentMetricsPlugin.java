@@ -8,7 +8,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class SampleMetadataAlignmentMetricsPlugin implements ListPlugin {
@@ -86,7 +88,7 @@ public class SampleMetadataAlignmentMetricsPlugin implements ListPlugin {
         List<ConfigurableList.Row> metricRows = new ArrayList<>();
 
         List<String> sampleAlias = samples.stream().map(MercurySample::getSampleKey).collect(Collectors.toList());
-        List<AlignmentMetric> runMetrics = alignmentMetricsDao.findBySampleAlias(sampleAlias);
+        Set<AlignmentMetric> runMetrics = new HashSet<>(alignmentMetricsDao.findBySampleAlias(sampleAlias));
 
         // Gather Sequencing Lanes
         for( AlignmentMetric metric: runMetrics) {

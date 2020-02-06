@@ -143,6 +143,13 @@ public abstract class State {
                 .collect(Collectors.toSet());
     }
 
+    public Set<Task> getTasksFromStatusList(List<Status> status) {
+        return tasks.stream()
+                .filter(t -> t.getTaskActionTime() == Task.TaskActionTime.DEFAULT &&
+                             status.contains(t.getStatus()))
+                .collect(Collectors.toSet());
+    }
+
     public Set<Task> getTasksWithStatus(Status status) {
         return tasks.stream()
                 .filter(t -> t.getTaskActionTime() == Task.TaskActionTime.DEFAULT &&
@@ -231,6 +238,7 @@ public abstract class State {
         if (getStartTime() == null) {
             return true;
         }
+
         Optional<Task> first = getTasks().stream()
                 .filter(t -> t.getStatus() != Status.QUEUED ||
                              !OrmUtil.proxySafeIsInstance(t, ProcessTask.class) ||
@@ -240,7 +248,8 @@ public abstract class State {
     }
 
     public boolean isMainTasksComplete() {
-        return getTasks().stream().allMatch(t -> t.getStatus() == Status.COMPLETE || t.getStatus() == Status.CANCELLED);
+        return getTasks().stream().allMatch(t -> t.getStatus() == Status.COMPLETE || t.getStatus() == Status.CANCELLED
+         || t.getStatus() == Status.IGNORE);
     }
 
     public long getNumberOfRunningTasks() {

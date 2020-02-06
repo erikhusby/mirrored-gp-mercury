@@ -275,6 +275,9 @@ dragen:
       intermediateResults: /local/scratch
       gsBucket: gs://broad-gplims-dev
       prologScriptFolder: /seq/techdev/software/infrastructure/wildfly
+      configFilePath: /seq/dragen/config/
+      logFilePath: /seq/dragen/log/slurm-%j.out
+      sqlldrPath: /opt/oracle/sqlldr
 
     QA:
       demultiplexOutputPath:  /seq/illumina/proc/
@@ -285,6 +288,9 @@ dragen:
       intermediateResults: /local/scratch
       gsBucket: gs://broad-gplims-dev
       prologScriptFolder: /seq/techdev/software/infrastructure/wildfly
+      configFilePath: /seq/dragen/config/
+      logFilePath: /seq/dragen/log/slurm-%j.out
+      sqlldrPath: sqlldr
 
     PROD:
       demultiplexOutputPath:  /seq/illumina/proc/
@@ -295,6 +301,9 @@ dragen:
       intermediateResults: /local/scratch
       gsBucket: gs://broad-gplims-dev
       prologScriptFolder: /seq/techdev/software/infrastructure/wildfly
+      configFilePath: /seq/dragen/config/
+      logFilePath: /seq/dragen/log/slurm-%j.out
+      sqlldrPath: sqlldr
 
 hipchat:
     DEV:

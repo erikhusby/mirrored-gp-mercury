@@ -1,48 +1,27 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.hsa;
 
-import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
-import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
-import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.DragenConfig;
 import org.broadinstitute.gpinformatics.infrastructure.search.LabVesselSearchDefinition;
-import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
-import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.AlignmentStateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.StateMachineDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.FastQListBuilder;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.SampleSheetBuilder;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AggregationTask;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DemultiplexTask;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenFolderUtil;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.CramFileNameBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.FiniteStateMachineFactory;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AggregationState;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AlignmentState;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.state.DemultiplexState;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FastQList;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Transition;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
-import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
-import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
@@ -51,17 +30,14 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -83,25 +59,19 @@ public class AggregationActionBean extends CoreActionBean {
     private String sampleIds;
 
     @Inject
-    private AlignmentStateDao alignmentStateDao;
-
-    @Inject
     private IlluminaSequencingRunDao illuminaSequencingRunDao;
 
     @Inject
     private MercurySampleDao mercurySampleDao;
 
     @Inject
-    private DragenConfig dragenConfig;
-
-    @Inject
     private StateMachineDao stateMachineDao;
 
     @Inject
-    private FastQListBuilder fastQListBuilder;
+    private FiniteStateMachineFactory finiteStateMachineFactory;
 
     @Inject
-    private FiniteStateMachineFactory finiteStateMachineFactory;
+    private DragenConfig dragenConfig;
 
     private String alignmentStateName;
 
@@ -122,6 +92,13 @@ public class AggregationActionBean extends CoreActionBean {
     private Collection<MercurySample> samples;
 
     private boolean crosscheckFingerprint;
+
+    private String[] configFiles;
+
+    private String selectedConfig;
+
+    private CramFileNameBuilder.CramFilenameFormat cramFilenameFormat;
+    private boolean allowMultipleAggregationTasks;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -196,6 +173,7 @@ public class AggregationActionBean extends CoreActionBean {
         if (selectedRuns == null || selectedRuns.isEmpty()) {
             addGlobalValidationError("Must check at least one run to continue.");
         } else {
+            // TODO For sample pairs disallow if different seq type
             sampleRunData = sampleRunData.stream()
                     .filter(s -> selectedRuns.contains(s.getRunName()))
                     .collect(Collectors.toList());
@@ -210,8 +188,14 @@ public class AggregationActionBean extends CoreActionBean {
         try {
             Map<String, List<SampleRunData>> sampleToLanes =
                     sampleRunData.stream().collect(groupingBy(SampleRunData::getSampleKey));
+            boolean useConfig = !selectedConfig.equals("None");
+            String configFilePath = null;
+            if (useConfig) {
+                configFilePath = dragenConfig.getConfigFilePath() + selectedConfig;
+            }
             finiteStateMachines = finiteStateMachineFactory.createAggegations(
-                    sampleToLanes, redoDemultiplex, crosscheckFingerprint, messageCollection);
+                    sampleToLanes, redoDemultiplex, crosscheckFingerprint, referenceGenome,
+                    useConfig, configFilePath, cramFilenameFormat, allowMultipleAggregationTasks, messageCollection);
             addMessage("Created aggregation workflow.");
         } catch (Exception e) {
             logger.error("Error creating aggregation workflow", e);
@@ -258,8 +242,7 @@ public class AggregationActionBean extends CoreActionBean {
         return referenceGenome;
     }
 
-    public void setReferenceGenome(
-            ReferenceGenome referenceGenome) {
+    public void setReferenceGenome(ReferenceGenome referenceGenome) {
         this.referenceGenome = referenceGenome;
     }
 
@@ -303,18 +286,65 @@ public class AggregationActionBean extends CoreActionBean {
         this.crosscheckFingerprint = crosscheckFingerprint;
     }
 
+    public String[] getConfigFiles() {
+        if (configFiles == null) {
+            File configDir = new File(dragenConfig.getConfigFilePath());
+            configFiles = configDir.list();
+        }
+        return configFiles;
+    }
+
+    public void setConfigFiles(String[] configFiles) {
+        this.configFiles = configFiles;
+    }
+
+    public String getSelectedConfig() {
+        return selectedConfig;
+    }
+
+    public void setSelectedConfig(String selectedConfig) {
+        this.selectedConfig = selectedConfig;
+    }
+
+    public CramFileNameBuilder.CramFilenameFormat getCramFilenameFormat() {
+        return cramFilenameFormat;
+    }
+
+    public void setCramFilenameFormat(
+            CramFileNameBuilder.CramFilenameFormat cramFilenameFormat) {
+        this.cramFilenameFormat = cramFilenameFormat;
+    }
+
+    public boolean getAllowMultipleAggregationTasks() {
+        return allowMultipleAggregationTasks;
+    }
+
+    public void setAllowMultipleAggregationTasks(boolean allowMultipleAggregationTasks) {
+        this.allowMultipleAggregationTasks = allowMultipleAggregationTasks;
+    }
+
     // TODO JW Move somewhere better
     public enum ReferenceGenome {
-        HG19("hg19", "/seq/dragen/references/hg19/current/",
-                "/seq/references/Homo_sapiens_assembly19/v1/Homo_sapiens_assembly19.haplotype_database.txt",
-                "/seq/references/Homo_sapiens_assembly19/v1/Homo_sapiens_assembly19.fasta",
-                "/opt/edico/config/sample_cross_contamination_resource_hg19.vcf",
-                "/seq/dragen/references/hg19/v1/wgs_coverage_regions.hg19.interval_list.bed"),
         HG38("hg38", "/seq/dragen/references/hg38/current/",
                 "/seq/references/Homo_sapiens_assembly38/v0/Homo_sapiens_assembly38.haplotype_database.txt",
                 "/seq/references/Homo_sapiens_assembly38/v0/Homo_sapiens_assembly38.fasta",
                 "/opt/edico/config/sample_cross_contamination_resource_hg38.vcf",
-                "/seq/dragen/references/hg38/current/wgs_coverage_regions.hg38.interval_list.bed");
+                "/seq/dragen/references/hg38/current/wgs_coverage_regions.hg38.interval_list.bed"),
+        HG19("hg19", "/seq/dragen/references/hg19/current/",
+                "/seq/references/Homo_sapiens_assembly19/v1/Homo_sapiens_assembly19.haplotype_database.txt",
+                "/seq/references/Homo_sapiens_assembly19/v1/Homo_sapiens_assembly19.fasta",
+                "/seq/dragen/references/hg19/current/sample_cross_contamination_resource_hg19_JIM_EDIT.vcf",
+                "/seq/dragen/references/hg19/v1/wgs_coverage_regions.hg19.interval_list.bed"),
+        GRCH38DH("GRCh38dh", "/seq/dragen/references/GRCh38dh/current/",
+                null, null, "/seq/dragen/references/GRCh38dh/current/SNP_NCBI_GRCh38.vcf",
+                "/seq/dragen/references/GRCh38dh/current/wgs_coverage_regions.hg38_minus_N.interval_list.bed",
+                "/seq/dragen/references/GRCh38dh/current/acmg59_allofus_19dec2019.GRC38.wGenes.bed",
+                "/seq/dragen/references/GRCh38dh/current/PGx_singleSite_GRCh38_ActualTableToSendToFDA_21jan2020.bed"),
+        HS37D5("hs37d5", "/seq/dragen/references/hs37d5/current/",
+                null, null, "/seq/dragen/references/hs37d5/current/SNP_NCBI_hs37d5.vcf",
+                "/seq/dragen/references/hs37d5/current/wgs_coverage_regions.hs37d5_minus_N.interval_list.bed",
+                "/seq/dragen/references/hs37d5/current/acmg59_allofus_19dec2019.bed",
+                "/seq/dragen/references/hs37d5/current/PGx_singleSite_GRCh37_ActualTableToSendToFDA_21jan2020.annotated.bed");
 
         private final String name;
         private final String path;
@@ -322,16 +352,25 @@ public class AggregationActionBean extends CoreActionBean {
         private final String fasta;
         private final String contamFile;
         private final String coverageBedFile;
+        private final String coverageBed2File;
+        private final String coverageBed3File;
 
         private final static Map<String, ReferenceGenome> MAP_PATH_TO_REF = new HashMap<>();
 
         ReferenceGenome(String name, String path, String haplotypeDatabase, String fasta, String contamFile, String coverageBedFile) {
+            this(name, path, haplotypeDatabase, fasta, contamFile, coverageBedFile, null, null);
+        }
+
+        ReferenceGenome(String name, String path, String haplotypeDatabase, String fasta, String contamFile, String coverageBedFile,
+                        String coverageBed2File, String coverageBed3File) {
             this.name = name;
             this.path = path;
             this.haplotypeDatabase = haplotypeDatabase;
             this.fasta = fasta;
             this.contamFile = contamFile;
             this.coverageBedFile = coverageBedFile;
+            this.coverageBed2File = coverageBed2File;
+            this.coverageBed3File = coverageBed3File;
         }
 
         static {
@@ -372,6 +411,14 @@ public class AggregationActionBean extends CoreActionBean {
         public String getCoverageBedFile() {
             return coverageBedFile;
         }
+
+        public String getCoverageBed2File() {
+            return coverageBed2File;
+        }
+
+        public String getCoverageBed3File() {
+            return coverageBed3File;
+        }
     }
 
     public static class SampleRunData {
@@ -410,6 +457,7 @@ public class AggregationActionBean extends CoreActionBean {
 
         public String getLanesString() {
             return getLanes().stream()
+                    .filter(Objects::nonNull)
                     .map(e -> e.name().replace("LANE", ""))
                     .sorted()
                     .collect(Collectors.joining(","));

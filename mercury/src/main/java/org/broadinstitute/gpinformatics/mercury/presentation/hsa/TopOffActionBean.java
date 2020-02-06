@@ -268,7 +268,7 @@ public class TopOffActionBean extends CoreActionBean {
                     messageCollection.addWarning(warning);
                 }
 
-                batchName = "ignore";//batch.getBatchName();
+                batchName = batch.getBatchName();
             } else {
                 action = "updated";
                 try {

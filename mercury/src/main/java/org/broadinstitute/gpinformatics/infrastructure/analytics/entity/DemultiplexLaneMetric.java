@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.analytics.entity;
 
 import com.opencsv.bean.CsvBindByPosition;
 import com.opencsv.bean.CsvDate;
+import com.opencsv.bean.CsvNumber;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -54,6 +55,7 @@ public class DemultiplexLaneMetric {
 
     @CsvBindByPosition(position = 8)
     @Column(name = "ORPHAN_RATE")
+    @CsvNumber("#.##")
     private BigDecimal orphanRate;
 
     public DemultiplexLaneMetric() {

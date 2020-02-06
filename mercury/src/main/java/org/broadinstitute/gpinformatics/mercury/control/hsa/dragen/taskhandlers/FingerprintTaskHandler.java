@@ -1,9 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers;
 
-import htsjdk.samtools.metrics.MetricBase;
-import htsjdk.samtools.metrics.MetricsFile;
-import htsjdk.samtools.util.CloserUtil;
-import htsjdk.samtools.util.IOUtil;
+//import htsjdk.samtools.metrics.MetricBase;
+//import htsjdk.samtools.metrics.MetricsFile;
+//import htsjdk.samtools.util.CloserUtil;
+//import htsjdk.samtools.util.IOUtil;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
@@ -36,7 +36,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.Snp;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SnpList;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
-import picard.analysis.FingerprintingDetailMetrics;
+//import picard.analysis.FingerprintingDetailMetrics;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
@@ -196,7 +196,7 @@ public class FingerprintTaskHandler extends AbstractTaskHandler {
         // TODO Some magic to get reference sequence from Mercury Sample (SampleInstanceV2 has it)
         String refSeqName = "Homo_sapiens_assembly38";
 
-        MetricsFile<FingerprintingDetailMetrics, ?> fingerprintingDetailMetrics = loadMetricsIfPresent(detailFile);
+//        MetricsFile<FingerprintingDetailMetrics, ?> fingerprintingDetailMetrics = loadMetricsIfPresent(detailFile);
 
         // TODO This uses a dao
         Fingerprint.Gender gender = Fingerprint.Gender.byDisplayname(mercurySample.getSampleData().getGender());
@@ -216,15 +216,16 @@ public class FingerprintTaskHandler extends AbstractTaskHandler {
 
         List<FingerprintCallsBean> fingerprintCallBeans = new ArrayList<>();
         fingerprintBean.setCalls(fingerprintCallBeans);
-        for (FingerprintingDetailMetrics metrics: fingerprintingDetailMetrics.getMetrics()) {
-            FingerprintCallsBean fingerprintCallsBean = new FingerprintCallsBean(metrics.SNP,
-                    metrics.OBSERVED_GENOTYPE,  null); //TODO Call confidence? gq/pl? lod score?
-            fingerprintCallBeans.add(fingerprintCallsBean);
-        }
+//        for (FingerprintingDetailMetrics metrics: fingerprintingDetailMetrics.getMetrics()) {
+//            FingerprintCallsBean fingerprintCallsBean = new FingerprintCallsBean(metrics.SNP,
+//                    metrics.OBSERVED_GENOTYPE,  null); //TODO Call confidence? gq/pl? lod score?
+//            fingerprintCallBeans.add(fingerprintCallsBean);
+//        }
 
         return fingerprintBean;
     }
 
+    /*
     private <M extends MetricBase> MetricsFile<M,?> loadMetricsIfPresent(final File file) {
         IOUtil.assertFileIsReadable(file);
 
@@ -234,5 +235,5 @@ public class FingerprintTaskHandler extends AbstractTaskHandler {
         CloserUtil.close(in);
 
         return metrics;
-    }
+    }*/
 }

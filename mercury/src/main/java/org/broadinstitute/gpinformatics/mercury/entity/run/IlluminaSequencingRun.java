@@ -9,6 +9,7 @@ import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.OneToMany;
+import javax.persistence.Transient;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -26,6 +27,9 @@ public class IlluminaSequencingRun extends SequencingRun {
     private Double imagedAreaPerMM2;
 
     private String lanesSequenced;
+
+    @Transient
+    private boolean cancelled;
 
     @OneToMany(mappedBy = "illuminaSequencingRun", cascade = CascadeType.PERSIST)
     private Set<IlluminaSequencingRunChamber> sequencingRunChambers = new HashSet<>();
@@ -108,5 +112,13 @@ public class IlluminaSequencingRun extends SequencingRun {
 
     public void addSequencingRunChamber(IlluminaSequencingRunChamber sequencingRunChamber) {
         sequencingRunChambers.add(sequencingRunChamber);
+    }
+
+    public boolean isCancelled() {
+        return cancelled;
+    }
+
+    public void setCancelled(boolean cancelled) {
+        this.cancelled = cancelled;
     }
 }

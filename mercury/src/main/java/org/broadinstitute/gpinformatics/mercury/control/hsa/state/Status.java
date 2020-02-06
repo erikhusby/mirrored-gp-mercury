@@ -10,8 +10,10 @@ public enum Status {
     COMPLETE("Complete"),
     CANCELLED("Cancelled"),
     SUSPENDED("Suspended"),
+    IGNORE("Ignore"),
     FAILED("Failed"),
     RETRY("Retry"),
+    REQUEUE("Requeue"),
     UNKNOWN("Unknown");
 
     private final String statusName;

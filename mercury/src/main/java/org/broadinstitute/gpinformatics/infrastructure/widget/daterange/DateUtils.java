@@ -44,7 +44,7 @@ public class DateUtils {
 
     private static final String DATE_TIME_PATTERN_YY_DASH = "yy-MM-dd hh:mm a";
 
-    private static final String DATE_TIME_FILE_PATTERN_YY_DASH = "yy-MM-dd_hh-mm-ss";
+    private static final String DATE_TIME_FILE_PATTERN_YY_DASH = "yy-MM-dd_HH-mm-ss";
 
     private static final String DATE_TIME_PATTERN_YYYYMMDD_DASH = "yyyy-MMM-dd hh:mm a";
 

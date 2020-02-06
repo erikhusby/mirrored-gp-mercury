@@ -75,10 +75,10 @@
             <column name="CHR_X_Y_RATIO" type="number(19,3)" />
             <column name="snp_transitions" type="number(19,0)" />
             <column name="snp_tranversions" type="number(19,0)" />
-            <column name="ti_tv_ratio" type="number(19,0)" />
+            <column name="ti_tv_ratio" type="number(19,2)" />
             <column name="heterozygous" type="number(19,0)" />
             <column name="homozygous" type="number(19,0)" />
-            <column name="het_hom_ratio" type="number(19,0)" />
+            <column name="het_hom_ratio" type="number(19,2)" />
             <column name="in_dbsnp" type="number(19,0)" />
             <column name="not_in_dbsnp" type="number(19,0)" />
             <column name="VC_RUN_METRIC_ID" type="VARCHAR2(255)">
@@ -153,7 +153,7 @@
             <column name="insert_length_median" type="number(19,0)" />
             <column name="insert_length_stddev" type="number(19,3)" />
             <column name="provided_sex_chr_ploidy" type="VARCHAR2(55)" />
-            <column name="est_sample_contamination" type="number(15,3)"/>
+            <column name="est_sample_contamination" type="varchar2(10)"/>
             <column name="dragen_mapping_rate" type="number(6,2)" />
             <column name="aligned_bases" type="number(19,0)" />
             <column name="aligned_bases_in_region" type="number(19,0)" />
@@ -311,4 +311,42 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="GPLIM-6242-44" author="jowalsh">
+        <createIndex tableName="mapping_rg_metrics" indexName="IX_MAP_RG_SAMPLE">
+            <column name="SAMPLE_ALIAS"/>
+        </createIndex>
+        <createIndex tableName="mapping_run_metrics" indexName="IX_MAP_RUN_SAMPLE">
+            <column name="SAMPLE_ALIAS"/>
+        </createIndex>
+        <createIndex tableName="SEQ_DEMULTIPLEX_SAMPLE_METRIC" indexName="IX_SEQ_DEMX_SAM_SAMPLE">
+            <column name="SAMPLE_ALIAS"/>
+        </createIndex>
+        <createIndex tableName="vc_run_metrics" indexName="IX_VC_RUN_SAMPLE">
+            <column name="SAMPLE_ALIAS"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-45" author="jowalsh">
+        <addColumn tableName="VC_RUN_METRICS" schemaName="mercurydw">
+            <column name="total_rate" type="VARCHAR2(55)" />
+            <column name="biallelic_rate" type="number(19,2)" />
+            <column name="multiallelic_rate" type="number(19,2)" />
+            <column name="snps_rate" type="number(19,2)" />
+            <column name="insertions_hom_rate" type="number(19,2)" />
+            <column name="insertions_het_rate" type="number(19,2)" />
+            <column name="deletions_hom_rate" type="number(19,2)" />
+            <column name="deletions_het_rate" type="number(19,2)" />
+            <column name="indels_rate" type="number(19,2)" />
+            <column name="in_dbsnp_rate" type="number(19,2)" />
+            <column name="not_in_dbsnp_rate" type="number(19,2)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-6242-46" author="jowalsh">
+        <addColumn tableName="VC_RUN_METRICS" schemaName="mercurydw">
+            <column name="PCT_CALLABILITY" type="VARCHAR2(55)" />
+            <column name="PCT_AUTOSOME_CALLABILITY" type="VARCHAR2(55)" />
+            <column name="PCT_AUTOSOME_EXO_CALLABILITY" type="VARCHAR2(55)" />
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

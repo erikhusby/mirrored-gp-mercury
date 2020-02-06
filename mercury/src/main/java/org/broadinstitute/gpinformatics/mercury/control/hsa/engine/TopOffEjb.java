@@ -155,8 +155,10 @@ public class TopOffEjb {
                 username, bucketName, messageReporter,
                 Collections.emptyList());
 
-        updateTopOffStateMachine(seqType, selectedSamples);
-        return null;
+        if (batch != null) {
+            updateTopOffStateMachine(seqType, selectedSamples);
+        }
+        return batch;
     }
 
     public void updateBatchToState(String batchName, List<Long> bucketEntryIds, String bucketName,

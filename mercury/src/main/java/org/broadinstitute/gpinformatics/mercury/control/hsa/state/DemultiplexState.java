@@ -53,4 +53,11 @@ public class DemultiplexState extends State {
         }
         return null;
     }
+
+    public boolean isIgnored() {
+        return getTasks().stream()
+                .filter(t -> OrmUtil.proxySafeIsInstance(t, DemultiplexTask.class))
+                .map(t -> OrmUtil.proxySafeCast(t, DemultiplexTask.class))
+                .anyMatch(t -> t.getStatus() == Status.IGNORE);
+    }
 }

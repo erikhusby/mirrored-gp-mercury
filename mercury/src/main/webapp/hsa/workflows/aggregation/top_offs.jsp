@@ -461,7 +461,7 @@
                 </div>
                 <div class="tab-pane" id="novaSeqTab">
                     <c:set var="tableId" value="novaSeqTable" scope="request"/>
-                    <c:set var="dtoList" value="${actionBean.getTabData('Illumina NovaSeq')}" scope="request"/>
+                    <c:set var="dtoList" value="${actionBean.getTabData('Illumina NovaSeq 6000')}" scope="request"/>
                     <c:set var="machineType" value="Illumina NovaSeq" scope="request"/>
                     <jsp:include page="top_offs_machine_table.jsp"/>
                 </div>

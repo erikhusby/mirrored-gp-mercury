@@ -2,7 +2,9 @@ package org.broadinstitute.gpinformatics.infrastructure.analytics;
 
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.AlignmentMetric;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.AlignmentMetric_;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.CriteriaInClauseCreator;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.JPASplitter;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import javax.ejb.Stateful;
@@ -13,6 +15,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceContextType;
+import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Expression;
@@ -23,8 +26,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -40,32 +45,30 @@ public class AlignmentMetricsDao {
         if (sampleAlias == null || sampleAlias.isEmpty()) {
             return Collections.emptyList();
         }
+        System.out.println(sampleAlias);
 
-        List<AlignmentMetric> resultList = new ArrayList<>();
+        return JPASplitter.runCriteriaQuery(sampleAlias, new CriteriaInClauseCreator<String>() {
+            @Override
+            public Query createCriteriaInQuery(Collection<String> sampleAlias) {
+                CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+                CriteriaQuery<AlignmentMetric> query = cb.createQuery(AlignmentMetric.class);
+                Root<AlignmentMetric> root = query.from(AlignmentMetric.class);
 
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<AlignmentMetric> query = cb.createQuery(AlignmentMetric.class);
-        Root<AlignmentMetric> root = query.from(AlignmentMetric.class);
+                // Build subquery to select the max run date per Sample Alias
+                Subquery<Date> sq = query.subquery(Date.class);
+                Root<AlignmentMetric> subRoot = sq.from(AlignmentMetric.class);
+                sq.select(cb.greatest(subRoot.get(AlignmentMetric_.runDate)));
+                sq.where(cb.equal(root.get(AlignmentMetric_.sampleAlias), subRoot.get(AlignmentMetric_.sampleAlias)));
+                Predicate subQueryPredicate = cb.equal(root.get(AlignmentMetric_.runDate), sq);
 
-        // Build subquery to select the max run date per Sample Alias
-        Subquery<Date> sq = query.subquery(Date.class);
-        Root<AlignmentMetric> subRoot = sq.from(AlignmentMetric.class);
-        sq.select(cb.greatest(subRoot.get(AlignmentMetric_.runDate)));
-        sq.where(cb.equal(root.get(AlignmentMetric_.sampleAlias), subRoot.get(AlignmentMetric_.sampleAlias)));
-        Predicate subQueryPredicate = cb.equal(root.get(AlignmentMetric_.runDate), sq);
+                Expression<String> parentExpression = root.get(AlignmentMetric_.sampleAlias);
+                Predicate parentPredicate = parentExpression.in(sampleAlias);
 
-        Expression<String> parentExpression = root.get(AlignmentMetric_.sampleAlias);
-        Predicate parentPredicate = parentExpression.in(sampleAlias);
+                query.where(cb.and(parentPredicate, subQueryPredicate));
 
-        query.where(cb.and(parentPredicate, subQueryPredicate));
-
-        try {
-            resultList.addAll(entityManager.createQuery(query).getResultList());
-        } catch (NoResultException ignored) {
-            return resultList;
-        }
-
-        return resultList;
+                return entityManager.createQuery(query);
+            }
+        });
     }
 
     public List<AlignmentMetric> findAggregationBySampleAlias(Collection<String> sampleAlias) {

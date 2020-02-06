@@ -4,7 +4,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 
 public enum PicardTool implements Displayable {
     CHECK_FINGERPRINT("CheckFingerprint", "Check Fingerprint"),
-    CROSSCHECK_FINGERPRINT("CrosscheckFingerprints", "Crosscheck Fingerprint");
+    CROSSCHECK_FINGERPRINT( "CrosscheckFingerprints", "Crosscheck Fingerprint");
 
     private final String toolName;
     private final String displayName;

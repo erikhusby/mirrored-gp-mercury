@@ -9,7 +9,7 @@ import java.util.Objects;
 
 @Entity
 @Audited
-public class CrosscheckFingerprintTask extends PicardTask {
+public class CrosscheckFingerprintTask extends ComputeTask {
 
     @Transient
     private File cramFile;
@@ -34,7 +34,6 @@ public class CrosscheckFingerprintTask extends PicardTask {
      */
     public CrosscheckFingerprintTask(File cramFile, File haplotypeDatabse, String outputPrefix,
                            int lodThreshold, File referenceSequence) {
-        super("dragen");
         this.cramFile = cramFile;
         this.haplotypeDatabse = haplotypeDatabse;
         this.outputPrefix = outputPrefix;

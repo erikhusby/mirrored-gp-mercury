@@ -23,6 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.metrics.MetricsRecor
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerContext;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.ShellUtils;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.DemultiplexState;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.ReadGroupUtil;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
@@ -226,6 +227,7 @@ public class DemultiplexMetricsTaskHandler extends AbstractMetricsTaskHandler {
                                                                                                              DragenReplayInfo dragenReplayInfo,
                                                                                                              List<DemultiplexStats> demultiplexStats) {
         Map<String, Set<Integer>> mapSampleToLanes = new HashMap<>();
+        Map<String, String> mapSampleIdToKey = new HashMap<>();
 
         RunCartridge flowcell = run.getSampleCartridge();
         int laneNum = 0;
@@ -254,6 +256,11 @@ public class DemultiplexMetricsTaskHandler extends AbstractMetricsTaskHandler {
                     mapSampleToLanes.put(mercurySample.getSampleKey(),  new HashSet<>());
                 }
                 mapSampleToLanes.get(mercurySample.getSampleKey()).add(laneNum);
+
+                String ssKey = ReadGroupUtil.convertSampleKeyToSampleSheetId(mercurySample.getSampleKey());
+                if (!mapSampleIdToKey.containsKey(ssKey)) {
+                    mapSampleIdToKey.put(ssKey, mercurySample.getSampleKey());
+                }
             }
         }
 
@@ -265,19 +272,21 @@ public class DemultiplexMetricsTaskHandler extends AbstractMetricsTaskHandler {
         Map<Integer, Long> mapLaneToReads = new HashMap<>();
         for (DemultiplexStats stat: demultiplexStats) {
             int lane = stat.getLane();
-            if (stat.getSampleID().contains("Undetermined")) {
+            String rgSampleId = stat.getSampleID();
+            if (rgSampleId.contains("Undetermined")) {
                 mapLaneToUndeterminedReads.put(lane,  stat.getNumberOfReads());
                 continue;
             }
-            String sampleId = stat.getSampleID().split("_")[2];
-            if (!mapSampleToLanes.containsKey(sampleId)) {
+            String escapedSampleId = ReadGroupUtil.parseSampleIdFromRgSampleSheet(rgSampleId);
+            String sampleId = mapSampleIdToKey.get(escapedSampleId);
+            if (sampleId == null) {
+                messageCollection.addError("Failed to parse sample ID from rg Sample Id", rgSampleId);
+            } else if (!mapSampleToLanes.containsKey(sampleId)) {
                 messageCollection.addError("Unexpected Sample ID in Demultiplex Stats file " + sampleId);
             } else if (!mapSampleToLanes.get(sampleId).contains(stat.getLane())) {
                 messageCollection.addError("Unexpected lane in Demultiplex Stats file " + stat.getLane());
             } else {
-                String sampleAlias = sampleId;
-
-                DemultiplexSampleMetric sequencingMetric = new DemultiplexSampleMetric(lane, sampleAlias);
+                DemultiplexSampleMetric sequencingMetric = new DemultiplexSampleMetric(lane, sampleId);
                 sequencingMetric.setRunName(run.getRunName());
                 sequencingMetric.setRunDate(run.getRunDate());
                 sequencingMetric.setFlowcell(run.getSampleCartridge().getLabel());

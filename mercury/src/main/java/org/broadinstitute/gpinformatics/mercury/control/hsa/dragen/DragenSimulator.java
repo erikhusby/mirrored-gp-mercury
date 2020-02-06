@@ -98,6 +98,9 @@ public class DragenSimulator implements Dragen {
                 sb.append("VARIANT CALLER POSTFILTER,,").append(fields.getRecordType());
                 sb.append(",");
                 sb.append("1");
+                if (fields.getIncludeRate()) {
+                    sb.append(",1.25");
+                }
                 break;
             }
             sb.append("\n");

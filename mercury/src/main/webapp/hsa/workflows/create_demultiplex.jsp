@@ -52,6 +52,14 @@
             </div>
 
             <div class="control-group">
+                <stripes:label for="bcl2Fastq" class="control-label"/>
+                <div class="controls">
+                    <stripes:checkbox name="bcl2Fastq" id="bcl2Fastq"
+                                      checked="${actionBean.bcl2Fastq}"/>
+                </div>
+            </div>
+
+            <div class="control-group">
                 <div class="controls">
                     <div class="row-fluid">
                         <div class="span2">

@@ -9,7 +9,7 @@ import java.util.Objects;
 
 @Entity
 @Audited
-public class FingerprintTask extends PicardTask {
+public class FingerprintTask extends ComputeTask {
 
     @Transient
     private File bamFile;
@@ -37,7 +37,6 @@ public class FingerprintTask extends PicardTask {
      */
     public FingerprintTask(File bamFile, File genotypesFile, File haplotypeDatabse, String outputPrefix,
                            File referenceSequence) {
-        super("dragen");
         this.bamFile = bamFile;
         this.genotypesFile = genotypesFile;
         this.haplotypeDatabse = haplotypeDatabse;

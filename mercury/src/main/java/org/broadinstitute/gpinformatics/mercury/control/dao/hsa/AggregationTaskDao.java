@@ -18,7 +18,6 @@ import java.util.List;
 public class AggregationTaskDao extends GenericDao {
 
     public List<AggregationTask> findByStatus(Status status) {
-        List<AggregationTask> resultList = new ArrayList<>();
         return findList(AggregationTask.class, AggregationTask_.status, status);
     }
 }

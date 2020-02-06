@@ -4,7 +4,6 @@ import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
-import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
@@ -21,7 +20,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.AlignmentMetricsDao;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.FingerprintScoreDao;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.AlignmentMetric;
@@ -31,7 +29,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.ReworkReasonDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.AggregationStateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.AggregationTaskDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.StateMachineDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -39,11 +36,7 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AggregationTa
 import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.FiniteStateMachineFactory;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.TriageEjb;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AggregationState;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.state.TopOffStateMachineDecorator;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkReason;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -57,7 +50,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -166,27 +158,29 @@ public class AggregationTriageActionBean extends CoreActionBean {
                 .map(AggregationTask::getFastQSampleId)
                 .collect(Collectors.toSet());
 
-        // TODO For testing limit to a few sample Ids
-//        sampleIds = new HashSet<>(Arrays.asList("SM-IYY5P", "SM-GSLTC", "SM-IEU3I"));
-
         Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(sampleIds);
 
-        List<AlignmentMetric> alignmentMetrics = alignmentMetricsDao.findBySampleAlias(sampleIds);
+        List<AlignmentMetric> bySampleAlias = alignmentMetricsDao.findBySampleAlias(sampleIds);
+        Set<AlignmentMetric> alignmentMetrics = new HashSet<>(bySampleAlias);
         Map<String, AlignmentMetric> mapAliasToMetric = alignmentMetrics.stream()
                 .collect(Collectors.toMap(AlignmentMetric::getSampleAlias, Function.identity()));
 
         // For each tube grab most recent pond
-        for (MercurySample mercurySample: mapIdToMercurySample.values()) {
-            for (LabVessel labVessel : mercurySample.getLabVessel()) {
-                LabVesselSearchDefinition.VesselsForEventTraverserCriteria eval
-                        = new LabVesselSearchDefinition.VesselsForEventTraverserCriteria(
-                        LabVesselSearchDefinition.POND_LAB_EVENT_TYPES);
-                labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
-                Set<LabVessel> ponds = eval.getPositions().keySet();
-                LabVessel pond = ponds.iterator().next();
-                mapKeyToPond.put(mercurySample.getSampleKey(), pond);
-            }
-        }
+//        for (MercurySample mercurySample: mapIdToMercurySample.values()) {
+//            for (LabVessel labVessel : mercurySample.getLabVessel()) {
+//                LabVesselSearchDefinition.VesselsForEventTraverserCriteria eval
+//                        = new LabVesselSearchDefinition.VesselsForEventTraverserCriteria(
+//                        LabVesselSearchDefinition.POND_LAB_EVENT_TYPES);
+//                labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+//                Set<LabVessel> ponds = eval.getPositions().keySet();
+//                if (ponds == null || ponds.isEmpty()) {
+//                    // TODO Probably a dev set, Ignoring since there won't be a normal topoff loop
+//                    continue;
+//                }
+//                LabVessel pond = ponds.iterator().next();
+//                mapKeyToPond.put(mercurySample.getSampleKey(), pond);
+//            }
+//        }
 
         List<TriageDto> dtos = new ArrayList<>();
         for (Map.Entry<String, MercurySample> entry: mapIdToMercurySample.entrySet()) {
@@ -272,6 +266,9 @@ public class AggregationTriageActionBean extends CoreActionBean {
         for (String sample: mapNameToSample.keySet()) {
             ProductOrder productOrder = mapKeyToProductOrder.get(sample);
             LabVessel library = mapKeyToPond.get(sample);
+            if (oosDecision == OutOfSpecCommands.REWORK_FROM_STOCK) {
+                library = mapNameToSample.get(sample).getLabVessel().iterator().next();
+            }
             String lastEventName = library.getLastEventName();
             String tubeBarcode = library.getLabel();
             ReworkEjb.BucketCandidate bucketCandidate = new ReworkEjb.BucketCandidate(
@@ -289,6 +286,7 @@ public class AggregationTriageActionBean extends CoreActionBean {
                     addGlobalValidationError(validationMessage);
                 }
             } else {
+                // TODO Change status of aggregation state to be rework
                 addMessage("{0} vessel(s) have been added to the {1} bucket.", bucketCandidates.size(), oosDecision.getBucketDefName());
             }
 
@@ -307,7 +305,6 @@ public class AggregationTriageActionBean extends CoreActionBean {
             addMessages(messageCollection);
         } else {
             addMessage("{0} file(s) have been queued for upload.", selectedSamples.size());
-            // TODO Add To uploading state?
         }
         return view();
     }
@@ -410,7 +407,7 @@ public class AggregationTriageActionBean extends CoreActionBean {
         dto.setGender(gender);
         dto.setPdo(pdo);
         dto.setPdoSample(sampleKey);
-        dto.setLibrary(mapKeyToPond.get(sampleKey).getLabel());
+//        dto.setLibrary(mapKeyToPond.get(sampleKey).getLabel());
 
         // Gender Concordance
         Fingerprint.Gender dragenGender = Fingerprint.Gender.byChromosome(alignmentMetric.getPredictedSexChromosomePloidy());

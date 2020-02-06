@@ -1,11 +1,17 @@
 package org.broadinstitute.gpinformatics.infrastructure.analytics.entity;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.Objects;
 
 @Entity
 @Table(schema = "MERCURYDW", name = "MAPPING_RUN_METRICS")
@@ -575,5 +581,35 @@ public class AlignmentMetric {
 
     public void setPredictedSexChromosomePloidy(String predictedSexChromosomePloidy) {
         this.predictedSexChromosomePloidy = predictedSexChromosomePloidy;
+    }
+
+    public Long getMapping_run_metric_id() {
+        return mapping_run_metric_id;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || !(OrmUtil.proxySafeIsInstance(o, AlignmentMetric.class))) {
+            return false;
+        }
+
+        AlignmentMetric that = OrmUtil.proxySafeCast(o, AlignmentMetric.class);
+
+        return new EqualsBuilder().append(getSampleAlias(), that.getSampleAlias())
+                .append(getRunName(), that.getRunName())
+                .append(getRunDate(), that.getRunDate())
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder().append(getSampleAlias())
+                .append(getRunName())
+                .append(getRunDate())
+                .toHashCode();
     }
 }
