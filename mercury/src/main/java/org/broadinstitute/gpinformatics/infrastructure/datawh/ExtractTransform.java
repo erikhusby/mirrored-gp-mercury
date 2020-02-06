@@ -15,20 +15,11 @@ import org.broadinstitute.gpinformatics.infrastructure.datawh.SequencingSampleFa
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
-import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 
 import javax.annotation.Nonnull;
 import javax.ejb.TransactionManagement;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.persistence.LockModeType;
 import javax.transaction.UserTransaction;
 import javax.ws.rs.core.Response;
 import java.io.File;
@@ -44,12 +35,10 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.Semaphore;
 
@@ -257,10 +246,10 @@ public class ExtractTransform implements Serializable {
     }
 
     /**
-     * This time period (in seconds) should be well beyond the expected time that a committing
-     * transaction may need in order to finish and become visible to AuditReader. See GPLIM-3590.
+     * This time period (in seconds) should exceed the server's configured transaction timeout in order to
+     * capture long running transaction commits which must be visible to AuditReader. See GPLIM-3590, GPLIM-6687.
      */
-    static final int TRANSACTION_COMPLETION_GUARDBAND = 10;
+    static final int TRANSACTION_COMPLETION_GUARDBAND = 600;
 
     /**
      * Extracts data from operational database, transforms the data into data warehouse records,
@@ -307,13 +296,19 @@ public class ExtractTransform implements Serializable {
                     log.warn("Skipping periodic ETL because the file with the last ETL run time can't be read");
                     return -1;
                 }
+                log.debug("Timer cycle readLastEtlRun() timestamp: " + startTimeSec);
+                // Start last run time back to catch band of transactions guaranteed to be committed
+                startTimeSec = startTimeSec - TRANSACTION_COMPLETION_GUARDBAND;
+                log.debug("Reading commits starting at timestamp: " + startTimeSec);
             } else {
                 startTimeSec = parseTimestamp(requestedStart).getTime() / MSEC_IN_SEC;
             }
 
             long endTimeSec;
             if (isZero(requestedEnd)) {
+                // Set end time back from current time to catch band of transactions guaranteed to be committed
                 endTimeSec = (System.currentTimeMillis() / MSEC_IN_SEC) - TRANSACTION_COMPLETION_GUARDBAND;
+                log.debug("Reading commits ending at timestamp: " + endTimeSec);
             } else {
                 endTimeSec = parseTimestamp(requestedEnd).getTime() / MSEC_IN_SEC;
             }
@@ -332,13 +327,16 @@ public class ExtractTransform implements Serializable {
                 // Updates the lastEtlRun file with the actual end of etl, but only when doing etl ending now,
                 // which is the case for timer-driven incremental etl.
                 if (isZero(requestedEnd)) {
-                    writeLastEtlRun(parseTimestamp(countDateException.getMiddle()).getTime() / MSEC_IN_SEC);
+                    // The ETL was pushed into the past to catch committed transactions
+                    // Push this time forward by the max transaction time for next timer cycle to capture
+                    long lastRunTs = (parseTimestamp(countDateException.getMiddle()).getTime() / MSEC_IN_SEC) + TRANSACTION_COMPLETION_GUARDBAND;
+                    writeLastEtlRun(lastRunTs);
                 }
 
                 if (countDateException.getLeft() > 0) {
                     writeIsReadyFile(countDateException.getMiddle());
                     log.debug("Incremental ETL created " + countDateException.getLeft() + " data records in " +
-                            minutesSince(incrementalRunStartTime) + " minutes");
+                            secondsSince(incrementalRunStartTime) + " seconds");
                 }
 
                 return countDateException.getLeft();
@@ -350,8 +348,12 @@ public class ExtractTransform implements Serializable {
         return -1;
     }
 
-    // Returns the record count and the date of the actual end of etl interval for this run, which will
-    // be on a whole second boundary.
+    /**
+     * Returns 3 values:<ul>
+     * <li>Left: The record count</li>
+     * <li>Middle: The timestamp date of the actual end of etl (seconds precision)</li>
+     * <li>Right: Any Exception thrown</li></ul>
+     */
     private @Nonnull Triple<Integer, String, Exception> incrementalEtl(final long startTimeSec, final long endTimeSec) {
         final MutableTriple<Integer, String, Exception> countDateException = MutableTriple.of(null, null, null);
 
@@ -376,15 +378,14 @@ public class ExtractTransform implements Serializable {
 
                         // Limits batch size and sets end date accordingly.
                         ImmutablePair<SortedMap<Long, Date>, Long> revsAndDate = limitBatchSize(revs, endTimeSec);
+                        String actualEtlDateStr = formatTimestamp(new Date(revsAndDate.right * MSEC_IN_SEC ) );
 
                         if (revsAndDate.left.size() < revs.size()) {
-                            log.debug("ETL run will only process " + revsAndDate.left.size() + " of the "
-                                    + revs.size() + " changes");
+                            log.info("ETL run will process " + revsAndDate.left.size() + " of "
+                                    + revs.size() + " changes, latest timestamp: " + actualEtlDateStr );
                         } else {
-                            log.debug("Incremental ETL found " + revs.size() + " changes");
+                            log.debug("Incremental ETL found " + revs.size() + " changes, latest timestamp: " + actualEtlDateStr );
                         }
-
-                        String actualEtlDateStr = formatTimestamp(new Date(revsAndDate.right * MSEC_IN_SEC));
 
                         int recordCount = 0;
                         if (!revsAndDate.left.isEmpty()) {
@@ -745,7 +746,14 @@ public class ExtractTransform implements Serializable {
      * Returns the whole number of minutes since the given mSec timestamp, rounded up.
      */
     private int minutesSince(long msecTimestamp) {
-        return (int) Math.ceil((System.currentTimeMillis() - msecTimestamp) / MSEC_IN_SEC / SEC_IN_MIN);
+        return (int) Math.ceil(secondsSince(msecTimestamp) / SEC_IN_MIN);
+    }
+
+    /**
+     * Returns the whole number of seconds since the given mSec timestamp, rounded up.
+     */
+    private int secondsSince(long msecTimestamp) {
+        return (int) Math.ceil((System.currentTimeMillis() - msecTimestamp) / MSEC_IN_SEC);
     }
 
     private Response createErrorResponse(String msg) {
