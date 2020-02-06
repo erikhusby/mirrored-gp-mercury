@@ -73,6 +73,9 @@ public class FingerprintMatrixActionBean extends CoreActionBean {
                 participantId, mercurySampleDao).size() == 0) {
             addGlobalValidationError("There were no matching items for " + "'" + participantId + "'.");
             return new ForwardResolution(VIEW_PAGE);
+        } else if (fingerprints.size() == 0) {
+            addMessage("No fingerprints found");
+            return new ForwardResolution(VIEW_PAGE);
         } else {
             searchFingerprints();
             if (mapSmidToMercurySample.size() > smidLimit) {

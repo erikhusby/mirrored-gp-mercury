@@ -93,6 +93,9 @@ public class FingerprintReportActionBean extends CoreActionBean {
             searchFingerprints();
             if (mapSmidToMercurySample.size() > smidLimit) {
                 addGlobalValidationError("Over " + smidLimit + " SM-IDs have been selected");
+            } else if (fingerprints.size() == 0) {
+                showLayout = false;
+                addMessage("No fingerprints found");
             } else {
                 showLayout = true;
             }
