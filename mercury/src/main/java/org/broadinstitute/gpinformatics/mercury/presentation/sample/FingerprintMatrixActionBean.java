@@ -61,7 +61,6 @@ public class FingerprintMatrixActionBean extends CoreActionBean {
     @HandlesEvent("downloadMatrix")
     public Resolution downloadMatrix() throws Exception {
         int smidLimit = 200;
-
         if (sampleId == null && participantId == null) {
             addGlobalValidationError("You must input a valid search term.");
             return new ForwardResolution(VIEW_PAGE);
@@ -73,13 +72,13 @@ public class FingerprintMatrixActionBean extends CoreActionBean {
                 participantId, mercurySampleDao).size() == 0) {
             addGlobalValidationError("There were no matching items for " + "'" + participantId + "'.");
             return new ForwardResolution(VIEW_PAGE);
-        } else if (fingerprints.size() == 0) {
-            addMessage("No fingerprints found");
-            return new ForwardResolution(VIEW_PAGE);
-        } else {
+        }  else {
             searchFingerprints();
             if (mapSmidToMercurySample.size() > smidLimit) {
                 addGlobalValidationError("Over " + smidLimit + " SM-IDs have been selected");
+                return new ForwardResolution(VIEW_PAGE);
+            } else if (fingerprints.size() == 0) {
+                addMessage("No fingerprints found");
                 return new ForwardResolution(VIEW_PAGE);
             }
         }

@@ -10,6 +10,11 @@
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
+            $j(document).ready(function () {
+                $j("#downloadMatrix").click(function () {
+                    $j(".alert").hide();
+                });
+            });
         </script>
     </stripes:layout-component>
     <stripes:layout-component name="content">
@@ -40,7 +45,7 @@
                 <div class="control-label">&nbsp;</div>
                 <div class="controls actionButtons">
                    <br>
-                    <stripes:submit name="downloadMatrix" value="Download Matrix"/>
+                    <stripes:submit name="downloadMatrix" value="Download Matrix" id="downloadMatrix"/>
                 </div>
             </div>
         </stripes:form>
