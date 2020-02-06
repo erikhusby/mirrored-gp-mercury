@@ -2,9 +2,11 @@ package org.broadinstitute.gpinformatics.infrastructure.test.dbfree;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
+import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 
@@ -27,8 +29,8 @@ public class ProductTestFactory {
                                              boolean pdmOrderableOnly) {
         Product product =
                 new Product("productName", new ProductFamily("Test product family"), "description", partNumber,
-                        new Date(), null, 12345678, 123456, 100, 96, "inputRequirements", "deliverables", true,
-                        workflow, pdmOrderableOnly, "an aggregation data type");
+                        new Date(), new Date(), 12345678, 123456, 100, 96, "inputRequirements", "deliverables", true,
+                        workflow, pdmOrderableOnly, new PipelineDataType(Aggregation.DATA_TYPE_EXOME, true));
         product.setReadLength(76);
         product.setPairedEndRead(true);
         if (addRisk) {
@@ -54,7 +56,7 @@ public class ProductTestFactory {
                     "*Funding and compliance requirements must be in place - this includes a valid IRB or letter of non-engagement where needed \n"
                     + "*Minimum Sample data including - Collaborator Participant ID, Collaborator Sample ID, Gender",
                     "Data delivery will include a de-multiplexed, aggregated Picard BAM file which will be accessed via the BASS file server system or FTP for non-Broad users. Data storage for 5 years is provided.",
-                    true, Workflow.WHOLE_GENOME, false, null);
+                    true, Workflow.WHOLE_GENOME, false, new PipelineDataType(Aggregation.DATA_TYPE_EXOME, true));
             product.addRiskCriteria(
                     new RiskCriterion(RiskCriterion.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "2"));
             product.addRiskCriteria(new RiskCriterion(RiskCriterion.RiskCriteriaType.FFPE, Operator.IS, null));

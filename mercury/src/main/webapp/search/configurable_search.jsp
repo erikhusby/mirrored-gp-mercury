@@ -56,10 +56,17 @@ Move the mouse over the question marks to see details about each section.
                 </legend>
                 <div style="display:none" id="savedSearchesDiv">
                     <p>
-                        <label>Search Name:</label>
-                        <stripes:select name="selectedSearchName">
-                            <stripes:options-collection collection="${actionBean.searchInstanceNames.entrySet()}" label="key" value="value"/>
-                        </stripes:select>
+                        <label>Search Name: </label>
+                        <select name="selectedSearchName">
+                            <c:forEach var="keyValue" items="${actionBean.searchInstanceNames.entrySet()}">
+                                <c:choose><c:when test="${keyValue.value eq actionBean.selectedSearchName}">
+                                    <option value="${keyValue.value}" selected="true">${keyValue.key}</option>
+                                </c:when>
+                                    <c:otherwise>
+                                        <option value="${keyValue.value}">${keyValue.key}</option>
+                                    </c:otherwise></c:choose>
+                            </c:forEach>
+                        </select>
                         <stripes:submit name="fetchSearch" value="Load Search" onclick="this.wasClicked = true" class="btn btn-primary" />
                         <stripes:submit name="updateSearch" value="Update Search" class="btn btn-primary" />
                         <stripes:submit name="deleteSearch" value="Delete Search" onclick="this.wasClicked = true" class="btn btn-primary" />
@@ -71,7 +78,7 @@ Move the mouse over the question marks to see details about each section.
                             <stripes:options-collection collection="${actionBean.newSearchLevels.entrySet()}" label="key" value="value" />
                         </stripes:select>
                         <label>New Search Name:</label>
-                        <stripes:text name="newSearchName" id="newSearchName"/>
+                        <input type="text" name="newSearchName" id="newSearchName" value="${actionBean.newSearchName}"/>
                         <stripes:submit name="saveNewSearch" value="Save New Search"
                                         onclick="return validateNewSearch();" class="btn btn-primary" />
                     </p>

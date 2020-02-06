@@ -19,7 +19,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.infrastructure.QuarantinedDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -52,7 +51,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -836,8 +834,8 @@ public class MayoManifestEjb {
             }
 
             // Creates mercury samples, all with MetadataSource.MERCURY and metadata from the manifest.
-            Set<Metadata> receiptDate = Collections.singleton(
-                    Metadata.createMetadata(Metadata.Key.RECEIPT_DATE, DateUtils.getDate(new Date())));
+            Set<Metadata> receiptDate = Collections.singleton(Metadata.createMetadata(Metadata.Key.RECEIPT_DATE,
+                    manifestSession.getUpdateData().getCreatedDate()));
             for (BarcodedTube tube : vesselPositionToTube.values()) {
                 String sampleName = tube.getLabel();
                 MercurySample mercurySample = new MercurySample(sampleName, MercurySample.MetadataSource.MERCURY);

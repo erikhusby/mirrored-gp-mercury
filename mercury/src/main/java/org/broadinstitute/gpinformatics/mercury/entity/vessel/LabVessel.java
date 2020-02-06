@@ -521,6 +521,26 @@ public abstract class LabVessel implements Serializable {
         return metricList.get(0);
     }
 
+    @Nullable
+    public LabMetricRun getMostRecentLabMetricRunForType(LabMetric.MetricType metricType) {
+        if(labMetrics != null) {
+            Set<LabMetric> metrics = new HashSet<>();
+            for (LabMetric labMetric: labMetrics) {
+                if(labMetric.getName()== metricType) {
+                    metrics.add(labMetric);
+                }
+            }
+            if (metrics.isEmpty()) {
+                return null;
+            }
+            List<LabMetric> metricList = new ArrayList<>(metrics);
+            metricList.sort(Collections.reverseOrder());
+            return metricList.get(0).getLabMetricRun();
+        }
+
+        return null;
+    }
+
     public StorageLocation getStorageLocation() {
         return storageLocation;
     }
@@ -653,6 +673,21 @@ public abstract class LabVessel implements Serializable {
             }
         } else {
             transfersTo.addAll(getContainerRole().getTransfersTo());
+        }
+        return transfersTo;
+    }
+
+    public Set<LabEvent> getTransfersToWithRearrays() {
+        Set<LabEvent> transfersTo = new HashSet<>();
+        for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsTarget) {
+            transfersTo.add(vesselToVesselTransfer.getLabEvent());
+        }
+        if (getContainerRole() == null) {
+            for (VesselContainer<?> vesselContainer : getVesselContainers()) {
+                transfersTo.addAll(vesselContainer.getTransfersToWithRearrays());
+            }
+        } else {
+            transfersTo.addAll(getContainerRole().getTransfersToWithRearrays());
         }
         return transfersTo;
     }
@@ -799,7 +834,7 @@ public abstract class LabVessel implements Serializable {
     public List<LabMetric> getNearestMetricsOfType(LabMetric.MetricType metricType,
             TransferTraverserCriteria.TraversalDirection traversalDirection) {
         if (getContainerRole() != null) {
-            return getContainerRole().getNearestMetricOfType(metricType);
+            return getContainerRole().getNearestMetricOfType(metricType, traversalDirection);
         } else {
             TransferTraverserCriteria.NearestLabMetricOfTypeCriteria metricOfTypeCriteria =
                     new TransferTraverserCriteria.NearestLabMetricOfTypeCriteria(metricType);

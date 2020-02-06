@@ -682,6 +682,7 @@
             <workflowStepDefs>
                 <name>PreEndRepairTransfer</name>
                 <labEventTypes>PRE_END_REPAIR_TRANSFER</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -689,6 +690,7 @@
             <workflowStepDefs>
                 <name>EndRepair_ABase</name>
                 <labEventTypes>END_REPAIR_ABASE</labEventTypes>
+                <eventClass>IN_PLACE</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -701,6 +703,7 @@
             <workflowStepDefs>
                 <name>PostEndRepairThermoCyclerLoaded</name>
                 <labEventTypes>POST_END_REPAIR_THERMO_CYCLER_LOADED</labEventTypes>
+                <eventClass>IN_PLACE</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -708,6 +711,7 @@
             <workflowStepDefs>
                 <name>UMI Addition</name>
                 <labEventTypes>UMI_ADDITION</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -715,6 +719,7 @@
             <workflowStepDefs>
                 <name>PostUMIAdditionThermoCyclerLoaded</name>
                 <labEventTypes>POST_UMI_ADDITION_THERMO_CYCLER_LOADED</labEventTypes>
+                <eventClass>IN_PLACE</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -722,6 +727,7 @@
             <workflowStepDefs>
                 <name>UMI Cleanup</name>
                 <labEventTypes>UMI_CLEANUP</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -729,6 +735,7 @@
             <workflowStepDefs>
                 <name>Indexed Adaptor Ligation</name>
                 <labEventTypes>INDEXED_ADAPTER_LIGATION</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -736,6 +743,7 @@
             <workflowStepDefs>
                 <name>Index P5 Pond Enrichment</name>
                 <labEventTypes>INDEX_P5_POND_ENRICHMENT</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -743,6 +751,7 @@
             <workflowStepDefs>
                 <name>PostIndexedAdapterLigationThermoCyclerLoaded</name>
                 <labEventTypes>POST_INDEXED_ADAPTER_LIGATION_THERMO_CYCLER_LOADED</labEventTypes>
+                <eventClass>IN_PLACE</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -750,12 +759,14 @@
             <workflowStepDefs>
                 <name>Cell Free Pond Registration</name>
                 <labEventTypes>CF_DNA_POND_REGISTRATION</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>false</optional>
                 <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Pond Pico</name>
                 <labEventTypes>POND_PICO</labEventTypes>
+                <eventClass>SIDE_BRANCH_TRANSFER</eventClass>
                 <optional>true</optional>
             </workflowStepDefs>
         </workflowProcessDefVersions>
@@ -1042,6 +1053,7 @@
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
                 <name>ICE Bucket</name>
                 <labEventTypes>ICE_BUCKET</labEventTypes>
+                <eventClass>IN_PLACE</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1057,6 +1069,7 @@
             <workflowStepDefs>
                 <name>IcePoolingTransfer</name>
                 <labEventTypes>ICE_POOLING_TRANSFER</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1071,6 +1084,7 @@
             <workflowStepDefs>
                 <name>IceSPRIConcentration</name>
                 <labEventTypes>ICE_SPRI_CONCENTRATION</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1078,6 +1092,7 @@
             <workflowStepDefs>
                 <name>Ice96PlexSPRIConcentration</name>
                 <labEventTypes>ICE_96_PLEX_SPRI_CONCENTRATION</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1090,6 +1105,7 @@
             <workflowStepDefs>
                 <name>IcePoolTest</name>
                 <labEventTypes>ICE_POOL_TEST</labEventTypes>
+                <eventClass>SIDE_BRANCH_TRANSFER</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1098,6 +1114,7 @@
             <workflowStepDefs>
                 <name>IceHyperPrep1stBaitPick</name>
                 <labEventTypes>ICE_HYPERPREP_1ST_BAIT_PICK</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1105,6 +1122,7 @@
             <workflowStepDefs>
                 <name>IceHyperPrep1stBaitAddition</name>
                 <labEventTypes>ICE_HYPERPREP_1ST_BAIT_ADDITION</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1112,6 +1130,7 @@
             <workflowStepDefs>
                 <name>IceHyperPrep1stHybridization</name>
                 <labEventTypes>ICE_HYPERPREP_1ST_HYBRIDIZATION</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1119,6 +1138,7 @@
             <workflowStepDefs>
                 <name>Ice1stHybridization</name>
                 <labEventTypes>ICE_1ST_HYBRIDIZATION</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1127,6 +1147,7 @@
             <workflowStepDefs>
                 <name>Ice1stBaitAddition</name>
                 <labEventTypes>ICE_1S_TBAIT_ADDITION</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1134,6 +1155,7 @@
             <workflowStepDefs>
                 <name>Ice1stBaitPick</name>
                 <labEventTypes>ICE_1S_TBAIT_PICK</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1142,6 +1164,7 @@
             <workflowStepDefs>
                 <name>PostIce1stHybridizationThermoCyclerLoaded</name>
                 <labEventTypes>POST_ICE_1ST_HYBRIDIZATION_THERMO_CYCLER_LOADED</labEventTypes>
+                <eventClass>IN_PLACE</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1149,6 +1172,7 @@
             <workflowStepDefs>
                 <name>Ice1stCapture</name>
                 <labEventTypes>ICE_1ST_CAPTURE</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1156,6 +1180,7 @@
             <workflowStepDefs>
                 <name>PostIce1stCaptureThermoCyclerLoaded</name>
                 <labEventTypes>POST_ICE_1ST_CAPTURE_THERMO_CYCLER_LOADED</labEventTypes>
+                <eventClass>IN_PLACE</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1164,6 +1189,7 @@
             <workflowStepDefs>
                 <name>IceHyperPrep2ndBaitPick</name>
                 <labEventTypes>ICE_HYPERPREP_2ND_BAIT_PICK</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1171,6 +1197,7 @@
             <workflowStepDefs>
                 <name>IceHyperPrep2ndBaitAddition</name>
                 <labEventTypes>ICE_HYPERPREP_2ND_BAIT_ADDITION</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1179,6 +1206,7 @@
             <workflowStepDefs>
                 <name>Ice2ndBaitAddition</name>
                 <labEventTypes>ICE_2ND_BAIT_ADDITION</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1186,6 +1214,7 @@
             <workflowStepDefs>
                 <name>Ice2ndBaitPick</name>
                 <labEventTypes>ICE_2ND_BAIT_PICK</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1193,6 +1222,7 @@
             <workflowStepDefs>
                 <name>Ice2ndHybridization</name>
                 <labEventTypes>ICE_2ND_HYBRIDIZATION</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1201,6 +1231,7 @@
             <workflowStepDefs>
                 <name>PostIce2ndHybridizationThermoCyclerLoaded</name>
                 <labEventTypes>POST_ICE_2ND_HYBRIDIZATION_THERMO_CYCLER_LOADED</labEventTypes>
+                <eventClass>IN_PLACE</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1208,6 +1239,7 @@
             <workflowStepDefs>
                 <name>Ice2ndCapture</name>
                 <labEventTypes>ICE_2ND_CAPTURE</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1215,6 +1247,7 @@
             <workflowStepDefs>
                 <name>PostIce2ndCaptureThermoCyclerLoaded</name>
                 <labEventTypes>POST_ICE_2ND_CAPTURE_THERMO_CYCLER_LOADED</labEventTypes>
+                <eventClass>IN_PLACE</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1222,6 +1255,7 @@
             <workflowStepDefs>
                 <name>IceCatchCleanup</name>
                 <labEventTypes>ICE_CATCH_CLEANUP</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1229,6 +1263,7 @@
             <workflowStepDefs>
                 <name>IceCatchEnrichmentSetup</name>
                 <labEventTypes>ICE_CATCH_ENRICHMENT_SETUP</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1236,6 +1271,7 @@
             <workflowStepDefs>
                 <name>PostIceCatchEnrichmentSetupThermoCyclerLoaded</name>
                 <labEventTypes>POST_ICE_CATCH_ENRICHMENT_SETUP_THERMO_CYCLER_LOADED</labEventTypes>
+                <eventClass>IN_PLACE</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1243,6 +1279,7 @@
             <workflowStepDefs>
                 <name>IceCatchEnrichmentCleanup</name>
                 <labEventTypes>ICE_CATCH_ENRICHMENT_CLEANUP</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1255,6 +1292,7 @@
             <workflowStepDefs>
                 <name>IceCatchPico</name> <!-- will change on deck, from CatchPico -->
                 <labEventTypes>ICE_CATCH_PICO</labEventTypes>
+                <eventClass>SIDE_BRANCH_TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1412,6 +1450,7 @@
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
                 <name>Pooling Bucket</name>
                 <labEventTypes>POOLING_BUCKET</labEventTypes>
+                <eventClass>IN_PLACE</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1426,6 +1465,7 @@
             <workflowStepDefs>
                 <name>Pooling Transfer</name>
                 <labEventTypes>POOLING_TRANSFER</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1439,6 +1479,7 @@
             <workflowStepDefs>
                 <name>Calibrated Pooling Transfer</name>
                 <labEventTypes>CALIBRATED_POOLING_TRANSFER</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1452,6 +1493,7 @@
             <workflowStepDefs>
                 <name>Pool Correction</name>
                 <labEventTypes>POOL_CORRECTION</labEventTypes>
+                <eventClass>IN_PLACE</eventClass> <!-- todo jmt check -->
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1465,6 +1507,7 @@
             <workflowStepDefs>
                 <name>EcoTransfer</name>
                 <labEventTypes>ECO_TRANSFER</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1472,6 +1515,7 @@
             <workflowStepDefs>
                 <name>Viia7Transfer</name>
                 <labEventTypes>VIIA7_TRANSFER</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1479,6 +1523,7 @@
             <workflowStepDefs>
                 <name>Normalization Transfer</name>
                 <labEventTypes>NORMALIZATION_TRANSFER</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1487,6 +1532,7 @@
             <workflowStepDefs>
                 <name>Denature Transfer</name>
                 <labEventTypes>DENATURE_TRANSFER</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -4049,6 +4095,10 @@
                     <materialTypes>RNA</materialTypes>
                     <materialTypes>RNA_TOTAL_RNA</materialTypes>
                     <materialTypes>OTHER_LYSATE</materialTypes>
+                    <materialTypes>DNA_CDNA_LIBRARY</materialTypes>
+                    <materialTypes>DNA_CDNA</materialTypes>
+                    <materialTypes>HASH_LIBRARY</materialTypes>
+                    <materialTypes>OTHER_LYSATE</materialTypes>
                 </bucketEntryEvaluator>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -4143,6 +4193,174 @@
         </workflowProcessDefVersions>
     </workflowProcessDefs>
     <workflowProcessDefs>
+        <name>Single Cell 10X Hashing</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2018-04-02T12:15:24.085-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Single Cell Hashing</name>
+                <labEventTypes>SINGLE_CELL_HASHING_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <materialTypes>RNA</materialTypes>
+                    <materialTypes>RNA_TOTAL_RNA</materialTypes>
+                    <materialTypes>DNA_CDNA_LIBRARY</materialTypes>
+                    <materialTypes>DNA_CDNA</materialTypes>
+                    <materialTypes>HASH_LIBRARY</materialTypes>
+                </bucketEntryEvaluator>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellHashingSPRI1</name>
+                <labEventTypes>SINGLE_CELL_HASHING_SPRI_ADDITION1</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellHashingSPRI2</name>
+                <labEventTypes>SINGLE_CELL_HASHING_SPRI_ADDITION2</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellHashingIndexAddition</name>
+                <labEventTypes>SINGLE_CELL_HASHING_INDEX_ADDITION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellHashingPCR</name>
+                <labEventTypes>SINGLE_CELL_HASHING_PCR</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellHashingPCRCleanup</name>
+                <labEventTypes>SINGLE_CELL_HASHING_PCR_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>Single Cell TCR</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2019-10-22T12:15:24.085-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>TcrBucket</name>
+                <labEventTypes>TCR_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <materialTypes>RNA</materialTypes>
+                    <materialTypes>RNA_TOTAL_RNA</materialTypes>
+                    <materialTypes>DNA_CDNA_LIBRARY</materialTypes>
+                    <materialTypes>DNA_CDNA</materialTypes>
+                    <materialTypes>HASH_LIBRARY</materialTypes>
+                </bucketEntryEvaluator>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TcrPcr1</name>
+                <labEventTypes>TCR_PCR_1</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TcrSpri1</name>
+                <labEventTypes>TCR_SPRI_1</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TcrPcr2</name>
+                <labEventTypes>TCR_PCR_2</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TcrSpri2</name>
+                <labEventTypes>TCR_SPRI_2</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TcrRegistration</name>
+                <labEventTypes>TCR_REGISTRATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>Single Cell BCR</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2019-10-22T12:15:24.085-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>BcrBucket</name>
+                <labEventTypes>BCR_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <materialTypes>RNA</materialTypes>
+                    <materialTypes>RNA_TOTAL_RNA</materialTypes>
+                    <materialTypes>DNA_CDNA_LIBRARY</materialTypes>
+                    <materialTypes>DNA_CDNA</materialTypes>
+                    <materialTypes>HASH_LIBRARY</materialTypes>
+                </bucketEntryEvaluator>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>BcrPcr1</name>
+                <labEventTypes>BCR_PCR_1</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>BcrSpri1</name>
+                <labEventTypes>BCR_SPRI_1</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>BcrPcr2</name>
+                <labEventTypes>BCR_PCR_2</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>BcrSpri2</name>
+                <labEventTypes>BCR_SPRI_2</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>BcrRegistration</name>
+                <labEventTypes>BCR_REGISTRATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
         <name>10X Extraction</name>
         <workflowProcessDefVersions>
             <version>01</version>
@@ -4159,7 +4377,13 @@
                     <materialTypes>TISSUE_FRESH_TISSUE</materialTypes>
                     <materialTypes>TISSUE_FRESH_FROZEN_TISSUE</materialTypes>
                     <materialTypes>NUCLEI_SUSPENSION</materialTypes>
+                    <materialTypes>RNA</materialTypes>
+                    <materialTypes>RNA_TOTAL_RNA</materialTypes>
+                    <materialTypes>DNA_CDNA_LIBRARY</materialTypes>
+                    <materialTypes>DNA_CDNA</materialTypes>
+                    <materialTypes>HASH_LIBRARY</materialTypes>
                     <workflows>10X Extraction</workflows>
+                    <workflows>10X Extraction 5 Prime</workflows>
                 </bucketEntryEvaluator>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -4270,6 +4494,10 @@
                 <bucketEntryEvaluator>
                     <materialTypes>RNA</materialTypes>
                     <materialTypes>RNA_TOTAL_RNA</materialTypes>
+                    <materialTypes>DNA_CDNA_LIBRARY</materialTypes>
+                    <materialTypes>DNA_CDNA</materialTypes>
+                    <materialTypes>HASH_LIBRARY</materialTypes>
+                    <materialTypes>OTHER_LYSATE</materialTypes>
                 </bucketEntryEvaluator>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -4310,6 +4538,53 @@
             <workflowStepDefs>
                 <name>SingleCellDoubleSidedCleanup</name>
                 <labEventTypes>SINGLE_CELL_DOUBLE_SIDED_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Pond Pico</name>
+                <labEventTypes>POND_PICO</labEventTypes>
+                <optional>true</optional>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>Single Cell VDJ LC</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2019-10-22T12:15:24.085-04:00</effectiveDate>
+            <workflowStepDefs>
+                <name>VdjEndRepairABase</name>
+                <labEventTypes>VDJ_END_REPAIR_ABASE</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>VdjAdapterLigation</name>
+                <labEventTypes>VDJ_ADAPTER_LIGATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>VdjLigationCleanup</name>
+                <labEventTypes>VDJ_LIGATION_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>VdjIndexAdapterPCR</name>
+                <labEventTypes>VDJ_INDEX_ADAPTER_PCR</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>VdjSingleSidedCleanup</name>
+                <labEventTypes>VDJ_SINGLE_SIDED_CLEANUP</labEventTypes>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -4541,6 +4816,38 @@
                     <statusTransition>Ready for Selection</statusTransition>
                     <endStatus>Ready for Selection</endStatus>
                 </jiraTransition>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>Fingerprinting</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2017-10-07T10:03:24.085-04:00</effectiveDate>
+            <workflowStepDefs>
+                <name>FingerprintingSTAAddition</name>
+                <labEventTypes>FINGERPRINTING_STA_ADDITION</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>FingerprintingPostSTAAdditionThermoCyclerLoaded</name>
+                <labEventTypes>FINGERPRINTING_POST_STA_ADDITION_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>true</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>FingerprintingSLRDilution</name>
+                <labEventTypes>FINGERPRINTING_SLR_ADDITION</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>FingerprintingIFCTransfer</name>
+                <labEventTypes>FINGERPRINTING_IFC_TRANSFER</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>FingerprintingFC1Loaded</name>
+                <labEventTypes>FINGERPRINTING_FC1_LOADED</labEventTypes>
+                <optional>false</optional>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -5072,6 +5379,16 @@
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>
+        <name>Fingerprinting</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2017-10-07T10:03:24.085-04:00</effectiveDate>
+            <workflowProcessDefs>Fingerprinting</workflowProcessDefs>
+            <routingRule>MERCURY</routingRule>
+            <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
         <name>Infinium Methylation</name>
         <productWorkflowDefVersions>
             <version>1.0</version>
@@ -5132,7 +5449,7 @@
         <productWorkflowDefVersions>
             <version>1.0</version>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
-            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
+            <batchJiraIssueType>TENX_SINGLE_CELL</batchJiraIssueType>
             <effectiveDate>2018-04-02T12:03:24.085-04:00</effectiveDate>
             <workflowProcessDefs>Single Cell 10X</workflowProcessDefs>
             <workflowProcessDefs>QTP</workflowProcessDefs>
@@ -5145,6 +5462,64 @@
             <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
             <routingRule>MERCURY</routingRule>
             <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Single Cell 10X Hashing</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>TENX_3PRIME_HASHING</batchJiraIssueType>
+            <effectiveDate>2019-06-19T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>Single Cell 10X Hashing</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+            <routingRule>MERCURY</routingRule>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Single Cell TCR</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>TENX_5PRIME_TCR</batchJiraIssueType>
+            <effectiveDate>2019-10-22T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>Single Cell TCR</workflowProcessDefs>
+            <workflowProcessDefs>Single Cell VDJ LC</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+            <routingRule>MERCURY</routingRule>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Single Cell BCR</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>TENX_5PRIME_BCR</batchJiraIssueType>
+            <effectiveDate>2019-10-22T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>Single Cell BCR</workflowProcessDefs>
+            <workflowProcessDefs>Single Cell VDJ LC</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+            <routingRule>MERCURY</routingRule>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Single Cell 5 Prime</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>TENX_5PRIME</batchJiraIssueType>
+            <effectiveDate>2019-10-22T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>Single Cell 10X</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+            <routingRule>MERCURY</routingRule>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>
@@ -5175,6 +5550,17 @@
             <version>01</version>
             <batchJiraProjectType>XTR</batchJiraProjectType>
             <batchJiraIssueType>CDNA_EXTRACTION</batchJiraIssueType>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>10X Extraction</workflowProcessDefs>
+            <routingRule>MERCURY</routingRule>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>10X Extraction 5 Prime</name>
+        <productWorkflowDefVersions>
+            <version>01</version>
+            <batchJiraProjectType>XTR</batchJiraProjectType>
+            <batchJiraIssueType>CDNA_5PRIME_EXTRACTION</batchJiraIssueType>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowProcessDefs>10X Extraction</workflowProcessDefs>
             <routingRule>MERCURY</routingRule>

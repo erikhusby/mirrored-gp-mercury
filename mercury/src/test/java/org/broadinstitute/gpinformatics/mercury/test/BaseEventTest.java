@@ -30,7 +30,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryP
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemOfRecord;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizerV2;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
@@ -74,6 +74,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ArrayPlatingEntity
 import org.broadinstitute.gpinformatics.mercury.test.builders.CrspRiboPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.FPEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.FingerprintingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq4000FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
@@ -94,7 +95,9 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SingleCell10XEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.SingleCellHashingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SingleCellSmartSeqEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.SingleCellVdjEnrichmentEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.StoolTNAEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TenXEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
@@ -136,8 +139,8 @@ public class BaseEventTest {
     /**
      * Referenced in validation of routing.
      */
-    public static SystemRouter.System expectedRouting = SystemRouter.System.MERCURY;
-    private final CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils(Deployment.DEV);
+    public static SystemOfRecord.System expectedRouting = SystemOfRecord.System.MERCURY;
+    private final CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils();
 
     private BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
 
@@ -207,7 +210,7 @@ public class BaseEventTest {
             }
         });
         labBatchEJB.setProductOrderDao(mockProductOrderDao);
-        labBatchEJB.setWorkflowConfig(new WorkflowLoader().load());
+        labBatchEJB.setWorkflowConfig(new WorkflowLoader().getWorkflowConfig());
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
         BSPSetVolumeConcentration bspSetVolumeConcentration =  new BSPSetVolumeConcentrationStub();
@@ -803,9 +806,24 @@ public class BaseEventTest {
                 sourcePlates, numSamples, barcodeSuffix).invoke();
     }
 
-    public SingleCell10XEntityBuilder runSingleCell10XProcess(StaticPlate sourcePlate, int numSamples, String barcodeSuffix) {
-        return new SingleCell10XEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
-                sourcePlate, numSamples, barcodeSuffix).invoke();
+    public SingleCell10XEntityBuilder runSingleCell10XProcess(Map<String, BarcodedTube> mapBarcodeToTube,
+                                                              TubeFormation rack, String rackBarcode, String barcodeSuffix) {
+        return new SingleCell10XEntityBuilder(mapBarcodeToTube, rack, bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                rackBarcode, barcodeSuffix).invoke();
+    }
+
+    public SingleCellVdjEnrichmentEntityBuilder runSingleCellVdjProcess(TubeFormation tcrRack, TubeFormation bcrRack,
+                                                                        Map<String, BarcodedTube> tcrTubeMap, Map<String, BarcodedTube> bcrTubeMap,
+                                                                        String barcodeSuffix) {
+        return new SingleCellVdjEnrichmentEntityBuilder(tcrRack, bcrRack, tcrTubeMap, bcrTubeMap, bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                barcodeSuffix).invoke();
+    }
+
+    public SingleCellHashingEntityBuilder runSingleCellHashingProcess(Map<String, BarcodedTube> mapBarcodeToTube,
+                                                                    TubeFormation rack, String rackBarcode,
+                                                                    String barcodeSuffix) {
+        return new SingleCellHashingEntityBuilder(mapBarcodeToTube, rack, bettaLimsMessageTestFactory, labEventFactory,
+                getLabEventHandler(), rackBarcode, barcodeSuffix).invoke();
     }
 
     public InfiniumEntityBuilder runInfiniumProcess(StaticPlate sourcePlate, String barcodeSuffix) {
@@ -845,6 +863,11 @@ public class BaseEventTest {
                 labEventFactory, getLabEventHandler(), prefix).invoke();
     }
 
+    public FingerprintingEntityBuilder runFingerprintingProcess(StaticPlate sourcePlate, String barcodeSuffix) {
+        return new FingerprintingEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                sourcePlate, barcodeSuffix).invoke();
+    }
+
     /**
      * This method runs the entities through the TruSeqStrandSpecific process.
      *
@@ -880,6 +903,14 @@ public class BaseEventTest {
     }
 
     /**
+     * Simulate a BSP daughter plate transfer without adding controls
+     */
+    public TubeFormation daughterPlateTransferNoWorkflow(Map<String, BarcodedTube> mapBarcodeToTube, String prefix) {
+        List<String> daughterTubeBarcodes = generateDaughterTubeBarcodes(mapBarcodeToTube);
+        return getDaughterTubeFormation(mapBarcodeToTube, daughterTubeBarcodes);
+    }
+
+    /**
      * Simulates a BSP daughter plate transfer with a mismatched layout prior to export from BSP to Mercury,
      * then does a re-array to add controls.
      *
@@ -905,10 +936,21 @@ public class BaseEventTest {
      * @return list of daughter tube barcodes
      */
     private List<String> generateDaughterTubeBarcodes(Map<String, BarcodedTube> mapBarcodeToTube) {
+        return generateDaughterTubeBarcodes(mapBarcodeToTube, "D");
+    }
+
+    /**
+     * Generates the daughter tube barcodes for the destination tube formation .
+     *
+     * @param mapBarcodeToTube source tubes
+     *
+     * @return list of daughter tube barcodes
+     */
+    private List<String> generateDaughterTubeBarcodes(Map<String, BarcodedTube> mapBarcodeToTube, String prefix) {
         // Daughter plate transfer that doesn't include controls
         List<String> daughterTubeBarcodes = new ArrayList<>();
         for (int i = 0; i < mapBarcodeToTube.size(); i++) {
-            daughterTubeBarcodes.add("D" + i);
+            daughterTubeBarcodes.add(prefix + i);
         }
         return daughterTubeBarcodes;
     }
@@ -961,6 +1003,25 @@ public class BaseEventTest {
         mapBarcodeToDaughterTube.put(VesselPosition.H12, negControlTube);
         workflowBatch.addLabVessel(negControlTube);
 
+        return new TubeFormation(mapBarcodeToDaughterTube, RackOfTubes.RackType.Matrix96);
+    }
+
+    private TubeFormation getDaughterTubeFormation(Map<String, BarcodedTube> mapBarcodeToTube, List<String> daughterTubeBarcodes) {
+        PlateTransferEventType daughterPlateTransferJaxb =
+                bettaLimsMessageTestFactory.buildRackToRack("SamplesDaughterPlateCreation", "MotherRack",
+                                                            new ArrayList<>(mapBarcodeToTube.keySet()), "DaughterRack",
+                                                            daughterTubeBarcodes);
+        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<String, LabVessel>(mapBarcodeToTube);
+        LabEvent daughterPlateTransferEntity =
+                labEventFactory.buildFromBettaLims(daughterPlateTransferJaxb, mapBarcodeToVessel);
+        TubeFormation daughterPlate =
+                (TubeFormation) daughterPlateTransferEntity.getTargetLabVessels().iterator().next();
+
+        Map<VesselPosition, BarcodedTube> mapBarcodeToDaughterTube = new EnumMap<>(VesselPosition.class);
+        for (BarcodedTube barcodedTube : daughterPlate.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(daughterPlate.getContainerRole().getPositionOfVessel(barcodedTube),
+                                         barcodedTube);
+        }
         return new TubeFormation(mapBarcodeToDaughterTube, RackOfTubes.RackType.Matrix96);
     }
 
@@ -1099,10 +1160,10 @@ public class BaseEventTest {
     }
 
     public static void validateWorkflow(String nextEventTypeName, List<LabVessel> labVessels) {
-        WorkflowConfig workflowConfig = new WorkflowLoader().load();
-        SystemRouter systemRouter = new SystemRouter(null, workflowConfig, null);
-        SystemRouter.System system = systemRouter.routeForVesselsDaoFree(labVessels, SystemRouter.Intent.ROUTE);
-        Assert.assertEquals(system, expectedRouting);
+        WorkflowConfig workflowConfig = new WorkflowLoader().getWorkflowConfig();
+
+        // All messages are now routed to Mercury.
+        Assert.assertEquals(SystemOfRecord.System.MERCURY, expectedRouting);
 
         WorkflowValidator workflowValidator = new WorkflowValidator();
         workflowValidator.setWorkflowConfig(workflowConfig);
@@ -1144,7 +1205,7 @@ public class BaseEventTest {
         });
         SequencingTemplateFactory sequencingTemplateFactory = new SequencingTemplateFactory();
         sequencingTemplateFactory.setFlowcellDesignationEjb(flowcellDesignationEjb);
-        sequencingTemplateFactory.setWorkflowConfig(new WorkflowLoader().load());
+        sequencingTemplateFactory.setWorkflowConfig(new WorkflowLoader().getWorkflowConfig());
         return new ZimsIlluminaRunFactory(
                 new SampleDataFetcher() {
                     @Override

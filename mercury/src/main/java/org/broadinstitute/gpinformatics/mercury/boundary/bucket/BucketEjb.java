@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -38,6 +39,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -345,8 +347,9 @@ public class BucketEjb {
     public Map<String, Collection<ProductOrderSample>> addSamplesToBucket(ProductOrder order,
             Collection<ProductOrderSample> samples, ProductWorkflowDefVersion.BucketingSource bucketingSource) {
         boolean hasWorkflow = false;
+        WorkflowConfig workflowConfig = workflowLoader.getWorkflowConfig();
         for (String workflow : order.getProductWorkflows()) {
-            ProductWorkflowDef productWorkflowDef = workflowLoader.load().getWorkflowByName(workflow);
+            ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(workflow);
             ProductWorkflowDefVersion workflowDefVersion = productWorkflowDef.getEffectiveVersion();
             hasWorkflow = !workflowDefVersion.getBuckets().isEmpty();
             if (hasWorkflow){
@@ -466,6 +469,7 @@ public class BucketEjb {
         possibleProducts.add(productOrder.getProduct());
         ProductWorkflowDefVersion workflowDefVersion = null;
         int offset = 0;
+        WorkflowConfig workflowConfig = workflowLoader.getWorkflowConfig();
         for (Product product : possibleProducts) {
             Date localDate = date;
             if (offset > 0) {
@@ -473,7 +477,7 @@ public class BucketEjb {
                 localDate = new Date(date.getTime() + offset);
             }
             if (product.getWorkflowName() != null) {
-                ProductWorkflowDef productWorkflowDef = workflowLoader.load().getWorkflowByName(product.getWorkflowName());
+                ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(product.getWorkflowName());
                 workflowDefVersion = productWorkflowDef.getEffectiveVersion();
                 Map<WorkflowBucketDef, Collection<LabVessel>> initialBucket =
                         workflowDefVersion.getInitialBucket(productOrder, vessels, bucketingSource);
@@ -499,7 +503,10 @@ public class BucketEjb {
      * @return the created LabVessels
      */
     public Collection<LabVessel> createInitialVessels(Collection<String> samplesWithoutVessel, String username) {
-        Map<String, BspSampleData> bspSampleDataMap = bspSampleDataFetcher.fetchSampleData(samplesWithoutVessel);
+        Map<String, BspSampleData> bspSampleDataMap = bspSampleDataFetcher.fetchSampleData(samplesWithoutVessel,
+                BSPSampleSearchColumn.MATERIAL_TYPE, BSPSampleSearchColumn.RECEPTACLE_TYPE,
+                BSPSampleSearchColumn.MANUFACTURER_BARCODE, BSPSampleSearchColumn.ROOT_SAMPLE,
+                BSPSampleSearchColumn.RECEIPT_DATE);
         Collection<LabVessel> vessels = new ArrayList<>();
         List<String> cannotAddToBucket = new ArrayList<>();
         List<String> missingSampleData = new ArrayList<>();

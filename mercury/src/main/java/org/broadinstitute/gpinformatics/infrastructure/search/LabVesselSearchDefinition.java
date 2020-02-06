@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.DisplayExpression;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselArrayMetricPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselFingerprintingMetricPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselLatestEventPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselLatestPositionPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetadataPlugin;
@@ -43,6 +44,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -60,6 +62,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -90,10 +93,13 @@ public class LabVesselSearchDefinition {
     public static final List<LabEventType> CHIP_EVENT_TYPES = Collections.singletonList(
             LabEventType.INFINIUM_HYBRIDIZATION);
 
-    static final List<LabEventType> FLOWCELL_LAB_EVENT_TYPES = new ArrayList<>();
     static final String PDO_SEARCH_TERM = "PDO";
     private static final String CONTAINER_BARCODE = "Container Barcode";
 
+    public static final List<LabEventType> FINGERPRINTING_CHIP_EVENT_TYPES = Collections.singletonList(
+            LabEventType.FINGERPRINTING_IFC_TRANSFER);
+
+    public static final List<LabEventType> FLOWCELL_LAB_EVENT_TYPES = new ArrayList<>();
     static {
         FLOWCELL_LAB_EVENT_TYPES.add(LabEventType.FLOWCELL_TRANSFER);
         FLOWCELL_LAB_EVENT_TYPES.add(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER);
@@ -109,7 +115,8 @@ public class LabVesselSearchDefinition {
         INFINIUM_AMP_PLATE("Amp Plate Barcode"),
         INFINIUM_CHIP("Infinium Chip Barcode"),
         INITIAL_VOLUME("Initial Volume"),
-        VOLUME_HISTORY("Volume History");
+        VOLUME_HISTORY("Volume History"),
+        FLUIDIGM_CHIP("Fluidigm Chip Barcode");
 
         MultiRefTerm(String termRefName ) {
             this.termRefName = termRefName;
@@ -178,6 +185,9 @@ public class LabVesselSearchDefinition {
 
         searchTerms = srchDef.buildArrayTerms();
         mapGroupSearchTerms.put("Arrays", searchTerms);
+
+        searchTerms = srchDef.buildFingerprintingTerms();
+        mapGroupSearchTerms.put("Fingerprinting", searchTerms);
 
         searchTerms = srchDef.buildLabVesselMultiCols();
         mapGroupSearchTerms.put("Multi-Columns", searchTerms);
@@ -263,7 +273,37 @@ public class LabVesselSearchDefinition {
         configurableSearchDefinition.addCustomTraversalOption( InfiniumVesselTraversalEvaluator.DNA_PLATEWELL_INSTANCE );
         configurableSearchDefinition.addCustomTraversalOption( new TubeStripTubeFlowcellTraversalEvaluator() );
         configurableSearchDefinition.addCustomTraversalOption( new VesselByEventTypeTraversalEvaluator() );
+        configurableSearchDefinition.addCustomTraversalOption(new CustomTraversalEvaluator("Plate Wells", "plateWells") {
+            @Override
+            public Set<Object> evaluate(List<? extends Object> rootEntities,
+                                        TransferTraverserCriteria.TraversalDirection traversalDirection,
+                                        SearchInstance searchInstance) {
+                Set<Object> plateWells = new TreeSet<>(new Comparator() {
+                    @Override
+                    public int compare(Object first, Object second) {
+                        return ((LabVessel)first).getLabel().compareTo(((LabVessel)second).getLabel());
+                    }
+                });
 
+                for( StaticPlate startingVessel : (List<StaticPlate>) rootEntities ) {
+                    plateWells.addAll(startingVessel.getContainerRole().getContainedVessels());
+                }
+
+                return plateWells;
+            }
+
+            @Override
+            public List<Object> buildEntityIdList(Set<? extends Object> entities) {
+                List<Object> idList = new ArrayList<>();
+
+                // Filter out the containers, otherwise we get the DNA plate container in addition to the wells
+                for( LabVessel vessel : (Set<LabVessel>) entities ) {
+                    idList.add(vessel.getLabel());
+                }
+
+                return idList;
+            }
+        });
         configurableSearchDefinition.setAddRowsListenerFactory(
                 new ConfigurableSearchDefinition.AddRowsListenerFactory() {
                     @Override
@@ -518,6 +558,11 @@ public class LabVesselSearchDefinition {
             }
         );
         searchTerm.setHelpText("Creates a column with a link to an existing search which functions as a drill-down.  <br/>Note: Selected search MUST have a single term which expects a barcode value.");
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Sales Order Number");
+        searchTerm.setDisplayExpression(DisplayExpression.SALES_ORDER_NUMBER);
         searchTerms.add(searchTerm);
 
         return searchTerms;
@@ -2539,8 +2584,8 @@ public class LabVesselSearchDefinition {
 
                 LabVessel vessel = (LabVessel)entity;
                 TransferTraverserCriteria.VesselForEventTypeCriteria traverserCriteria =
-                        new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(
-                                LabEventType.INFINIUM_XSTAIN), true);
+                        new TransferTraverserCriteria.VesselForEventTypeCriteria(Arrays.asList(
+                                LabEventType.INFINIUM_XSTAIN, LabEventType.INFINIUM_XSTAIN_HD), true);
 
                 if( vessel.getType() == LabVessel.ContainerType.PLATE_WELL ) {
                     vessel.evaluateCriteria(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
@@ -2596,8 +2641,8 @@ public class LabVesselSearchDefinition {
 
                 LabVessel vessel = (LabVessel)entity;
                 TransferTraverserCriteria.VesselForEventTypeCriteria traverserCriteria =
-                        new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(
-                                LabEventType.INFINIUM_XSTAIN), true);
+                        new TransferTraverserCriteria.VesselForEventTypeCriteria(Arrays.asList(
+                                LabEventType.INFINIUM_XSTAIN, LabEventType.INFINIUM_XSTAIN_HD), true);
 
                 if( vessel.getType() == LabVessel.ContainerType.PLATE_WELL ) {
                     vessel.evaluateCriteria(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
@@ -2627,6 +2672,56 @@ public class LabVesselSearchDefinition {
         });
         searchTerms.add(searchTerm);
 
+        return searchTerms;
+    }
+
+    /**
+     * Build search terms to display details for fingerprinting chips and plates processing<br/>
+     * <strong>Note: Search term names are dependent on links built in LabEventSearchDefinition#buildLabEventDrillDownLinks</strong>
+     * @return List of search terms/column definitions for array processing
+     */
+    private List<SearchTerm> buildFingerprintingTerms() {
+        List<SearchTerm> searchTerms = new ArrayList<>();
+        SearchTerm searchTerm;
+        searchTerm = new SearchTerm();
+
+        // Criteria paths all use label
+        List<SearchTerm.CriteriaPath> labelCriteriaPaths = new ArrayList<>();
+        SearchTerm.CriteriaPath labelCriteriaPath = new SearchTerm.CriteriaPath();
+        labelCriteriaPath.setPropertyName("label");
+        labelCriteriaPaths.add(labelCriteriaPath);
+
+        searchTerm.setName(MultiRefTerm.FLUIDIGM_CHIP.getTermRefName());
+        searchTerm.setCriteriaPaths(labelCriteriaPaths);
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> result = null;
+                LabVessel vessel = (LabVessel)entity;
+
+                // Plate well will only show latest chip in the case of a re-hyb
+                if( vessel.getType() == LabVessel.ContainerType.PLATE_WELL ) {
+                    for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
+                            : InfiniumVesselTraversalEvaluator.getChipDetailsForDnaWell(vessel, FINGERPRINTING_CHIP_EVENT_TYPES, context ).asMap().entrySet()) {
+                        (result == null?result = new HashSet<>():result).add(labVesselAndPositions.getKey().getLabel());
+                        break;
+                    }
+                } else {
+                    // Plate shows list of all chips, initial and re-hyb
+                    for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
+                            : InfiniumVesselTraversalEvaluator.getChipDetailsForDnaPlate(vessel, FINGERPRINTING_CHIP_EVENT_TYPES, context ).asMap().entrySet()) {
+                        (result == null?result = new HashSet<>():result).add(labVesselAndPositions.getKey().getLabel());
+                    }
+                }
+                return result;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Fingerprinting Metrics");
+        searchTerm.setPluginClass(LabVesselFingerprintingMetricPlugin.class);
+        searchTerms.add(searchTerm);
         return searchTerms;
     }
 
@@ -3136,7 +3231,7 @@ public class LabVesselSearchDefinition {
             LabVessel.VesselEvent vesselEvent = context.getVesselEvent();
             // Starting vessel has no event
             if (vesselEvent != null) {
-                MaterialType resultingMaterialType = 
+                MaterialType resultingMaterialType =
                         vesselEvent.getLabEvent().getLabEventType().getResultingMaterialType();
                 if (resultingMaterialType != null && resultingMaterialType == materialType) {
                     labVessels.add(vesselEvent.getTargetLabVessel());

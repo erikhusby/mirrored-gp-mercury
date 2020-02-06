@@ -215,6 +215,14 @@ public class ProductOrderTestFactory {
         return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.INFINIUM);
     }
 
+    public static ProductOrder buildSingleCellHashingProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.SINGLE_CELL_HASHING_10X);
+    }
+
+    public static ProductOrder buildFingerprintingProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.FINGERPRINTING);
+    }
+
 
     /**
      * Database free creation of Product Order from scratch, including creation of a new Research Project and Product.
@@ -229,7 +237,7 @@ public class ProductOrderTestFactory {
         Product product =
                 new Product("Product Name " + uuid, productFamily, "Product Description " + uuid, partNumber,
                         new Date(), null, 0, 0, 0, 1, "Input requirements", "Deliverables", true, null,
-                        false, "Aggregation Data Type");
+                        false, null);
 
 
         ResearchProject researchProject = new ResearchProject(-1L, "Research Project " + uuid, "Synopsis", false,

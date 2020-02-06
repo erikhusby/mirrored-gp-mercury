@@ -47,6 +47,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -125,7 +126,7 @@ public class QuoteDetailsHelperTest {
         QuoteDetailsHelper.QuoteDetail quoteDetails = quoteDetailsHelper.getQuoteDetails(quoteId, actionBean);
         QuoteDetailsHelper.FundingInfo fundingInfo = quoteDetails.fundingDetails.iterator().next();
         assertThat(fundingInfo.isQuoteWarning(), is(false));
-        assertThat(quoteDetails.outstandingEstimate, equalTo(Double.valueOf(price) * 2));
+        assertThat(quoteDetails.outstandingEstimate, equalTo((new BigDecimal(price)).multiply(BigDecimal.valueOf(2))));
         assertThat(quoteDetails.fundsRemaining, equalTo(66724d));
         assertThat(fundingInfo.getFundingInfoString(), containsString("Funds Reservation [<b>FR -- 1996, CO -- 6010040</b>]"));
         assertThat(fundingInfo.getFundingInfoString(), containsString("Active"));
@@ -151,7 +152,7 @@ public class QuoteDetailsHelperTest {
         QuoteDetailsHelper.QuoteDetail quoteDetails = quoteDetailsHelper.getQuoteDetails(quoteId, actionBean);
         QuoteDetailsHelper.FundingInfo fundingInfo = quoteDetails.fundingDetails.iterator().next();
         assertThat(fundingInfo.isQuoteWarning(), is(true));
-        assertThat(quoteDetails.outstandingEstimate, equalTo(price * 2));
+        assertThat(quoteDetails.outstandingEstimate, equalTo(BigDecimal.valueOf(price*2)));
         assertThat(quoteDetails.fundsRemaining, equalTo(86042.5d));
         assertThat(fundingInfo.getFundingInfoString(), containsString("Funds Reservation [<b>FR -- 1383, CO -- 5210500</b>]"));
         assertThat(fundingInfo.getFundingInfoString(), containsString("Active"));
@@ -232,7 +233,7 @@ public class QuoteDetailsHelperTest {
         QuoteDetailsHelper.QuoteDetail quoteDetails = quoteDetailsHelper.getQuoteDetails(quoteId, actionBean);
         QuoteDetailsHelper.FundingInfo fundingInfo = quoteDetails.fundingDetails.iterator().next();
         assertThat(fundingInfo.isQuoteWarning(), is(true));
-        assertThat(quoteDetails.outstandingEstimate, equalTo(price * 2));
+        assertThat(quoteDetails.outstandingEstimate, equalTo(BigDecimal.valueOf(price * 2)));
         assertThat(quoteDetails.fundsRemaining, equalTo(86042.5d));
         assertThat(fundingInfo.getFundingInfoString(), containsString("Funds Reservation [<b>FR -- 1383, CO -- 5210500</b>]"));
         assertThat(fundingInfo.getFundingInfoString(), containsString("Active"));

@@ -229,7 +229,7 @@ public class BillingAdaptor implements Serializable {
                         sapBillingId = NOT_ELIGIBLE_FOR_SAP_INDICATOR;
                     }
 
-                    double quantityForSAP = item.getQuantityForSAP();
+                    BigDecimal quantityForSAP = item.getQuantity();
 
                     if (item.getProductOrder().getQuoteSource() != null) {
                         if (item.getProductOrder().hasQuoteServerQuote()) {
@@ -263,9 +263,10 @@ public class BillingAdaptor implements Serializable {
                                 if (!item.getProductOrder().getOrderStatus().canPlace()) {
                                     if (StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
 
-                                        if (quantityForSAP > 0) {
+                                        if (quantityForSAP.compareTo(BigDecimal.ZERO) > 0) {
                                             //todo, validate if the quantity override parameter is still necessary
-                                            sapBillingId = sapService.billOrder(item, null, new Date());
+                                            sapBillingId = sapService.billOrder(item, null,
+                                                    item.getWorkCompleteDate());
                                             result.setSapBillingId(sapBillingId);
                                             billingEjb.updateSapLedgerEntries(item, workId, sapBillingId,
                                                     BillingSession.SUCCESS);
@@ -290,14 +291,13 @@ public class BillingAdaptor implements Serializable {
 
                                             // Negative billing is allowed if the same positive number has been previously billed.
                                             // When this is not the case throw an exception.
-                                            double previouslyBilledQty =
+                                            BigDecimal previouslyBilledQty =
                                                     priorSapBillings.stream().map(LedgerEntry::getQuantity)
-                                                            .mapToDouble(Double::doubleValue)
-                                                            .sum();
-                                            if (quantityForSAP + previouslyBilledQty < 0) {
+                                                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                                            if (quantityForSAP.add(previouslyBilledQty).compareTo(BigDecimal.ZERO) < 0) {
                                                 result.setErrorMessage(NEGATIVE_BILL_ERROR);
                                                 throw new BillingException(NEGATIVE_BILL_ERROR);
-                                            } else if (quantityForSAP < 0) {
+                                            } else if (quantityForSAP.compareTo(BigDecimal.ZERO) < 0) {
                                                 billingEjb.sendBillingCreditRequestEmail(item, priorSapBillings,
                                                         billingSession.getCreatedBy());
                                                 item.setBillingMessages(BillingSession.BILLING_CREDIT);

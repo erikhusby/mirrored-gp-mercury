@@ -5,17 +5,22 @@ import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.jetbrains.annotations.NotNull;
 import org.owasp.encoder.Encode;
 
 import javax.annotation.Nonnull;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Fetches available lab metric detail data for each page of a lab vessel search. </br>
@@ -104,6 +109,8 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
             headerGroup.addHeader(header);
         }
 
+        // Reset for next page of data
+        isDataInitialized = false;
         return metricRows;
     }
 
@@ -147,22 +154,12 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
            return row;
         }
 
-        List<LabMetric> metricList = new ArrayList<>();
-
-        // Interested in tubes only
-        for( LabMetric labMetric : metrics ) {
-            if( labMetric.getLabVessel().getType() != LabVessel.ContainerType.PLATE_WELL ) {
-                metricList.add(labMetric);
-            }
-        }
+        Map<Date, LabMetric> sortedMapRunDateToMetric = buildMapRunDateToMetric(metrics);
 
         // Bail out if there are no metrics (unlikely - tubes accompany plate wells)
-        if (CollectionUtils.isEmpty(metricList)) {
+        if (CollectionUtils.isEmpty(sortedMapRunDateToMetric.values())) {
             return row;
         }
-
-        // Sort oldest to newest so they display right to left
-        Collections.sort( metricList );
 
         // Create a map of each run and the associated metrics because ancestor/descendant metrics
         // can have more than a single metric, for example starting with a pond pico vessel
@@ -170,7 +167,7 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
         // Need to get to cell if more than a single vessel metric is related to an ancestor
         Map<String,List<LabMetric>> metricRunMap = new LinkedHashMap<>();
 
-        for( LabMetric labMetric : metricList ) {
+        for( LabMetric labMetric : sortedMapRunDateToMetric.values() ) {
 
             if (labMetric.getLabMetricRun() == null) {
                 // Concoct a (hopefully) unique header for metrics with no associated run
@@ -280,6 +277,27 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
         }
 
         return row;
+    }
+
+    /**
+     * Builds a map from run date to lab metric.  If there is only one metric per run, use it.
+     * For multiples: prefer tube to well, else prefer well that has a decision.
+     */
+    @NotNull
+    static TreeMap<Date, LabMetric> buildMapRunDateToMetric(Collection<LabMetric> metrics) {
+        return metrics.stream().collect(Collectors.toMap(
+                    LabMetric::getCreatedDate,
+                    Function.identity(),
+                    (existing, replacement) -> {
+                        if (replacement.getLabVessel().getType() != LabVessel.ContainerType.PLATE_WELL) {
+                            return replacement;
+                        }
+                        if (replacement.getName().getDecider() != null && replacement.getLabMetricDecision() != null) {
+                            return replacement;
+                        }
+                        return existing;
+                    },
+                    TreeMap::new));
     }
 
     @Override

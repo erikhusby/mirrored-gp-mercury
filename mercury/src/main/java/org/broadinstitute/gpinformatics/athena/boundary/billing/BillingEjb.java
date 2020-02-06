@@ -292,7 +292,7 @@ public class BillingEjb {
         } else {
             // Always bill if the sample is on risk, otherwise, check if the requirement is met for billing.
             if (sample.isOnRisk() || product.getRequirement().canBill(data)) {
-                sample.autoBillSample(completedDate, 1);
+                sample.autoBillSample(completedDate, BigDecimal.ONE);
             }
         }
 
@@ -328,7 +328,7 @@ public class BillingEjb {
 
         // Convert aliquotId to BSP ID, if it's an LSID.
         if (!BSPUtil.isInBspFormat(aliquotId)) {
-            aliquotId = BSPLSIDUtil.lsidToBareId(aliquotId);
+            aliquotId = BSPLSIDUtil.lsidToBareId(aliquotId); // todo jmt
         }
 
         for (ProductOrderSample sample : order.getSamples()) {

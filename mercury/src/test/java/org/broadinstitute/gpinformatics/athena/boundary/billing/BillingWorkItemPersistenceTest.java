@@ -30,6 +30,7 @@ import org.testng.annotations.Test;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -125,9 +126,9 @@ public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
             LedgerEntry ledgerEntry;
             if(pdo.hasSapQuote()) {
 
-                ledgerEntry = new LedgerEntry(pdoSample, pdo.getProduct(), new Date(), 3);
+                ledgerEntry = new LedgerEntry(pdoSample, pdo.getProduct(), new Date(), BigDecimal.valueOf(3));
             } else {
-                ledgerEntry = new LedgerEntry(pdoSample, priceItem, new Date(), 3);
+                ledgerEntry = new LedgerEntry(pdoSample, priceItem, new Date(), BigDecimal.valueOf(3));
             }
             pdoSample.getLedgerItems().add(ledgerEntry);
             ledgerEntries.add(ledgerEntry);

@@ -83,12 +83,14 @@ public class Metadata {
         }
     }
 
-    public static Metadata createMetadata(Key key, String stringValue) {
+    public static Metadata createMetadata(Key key, Object value) {
         switch (key.getDataType()) {
         case STRING:
-            return new Metadata(key, stringValue);
+            return new Metadata(key, (String)value);
         case NUMBER:
-            return new Metadata(key, new BigDecimal(stringValue));
+            return new Metadata(key, new BigDecimal((String)value));
+        case DATE:
+            return new Metadata(key, (Date)value);
         }
         throw new RuntimeException("Unhandled data type " + key.getDataType());
     }
@@ -129,6 +131,10 @@ public class Metadata {
 
     public Date getDateValue() {
         return dateValue;
+    }
+
+    public void setDateValue(Date dateValue) {
+        this.dateValue = dateValue;
     }
 
     @Override
@@ -320,7 +326,7 @@ public class Metadata {
         PACKAGE_ID(Category.SAMPLE, DataType.STRING, "Package ID", Visibility.USER),
         RACK_LABEL(Category.SAMPLE, DataType.STRING, "Rack Label", Visibility.NONE),
         BOX_ID(Category.SAMPLE, DataType.STRING, "Box ID", Visibility.USER),
-        RECEIPT_DATE(Category.SAMPLE, DataType.STRING, "Receipt Date", Visibility.USER),
+        RECEIPT_DATE(Category.SAMPLE, DataType.DATE, "Receipt Date", Visibility.USER),
         WELL_POSITION(Category.SAMPLE, DataType.STRING, "Well Location", Visibility.NONE),
         COLLAB_SAMPLE_ID2(Category.SAMPLE, DataType.STRING, "Collaborator Sample ID 2", Visibility.USER),
         COLLAB_SAMPLE_ID3(Category.SAMPLE, DataType.STRING, "Collaborator Sample ID 3", Visibility.USER),
@@ -334,6 +340,10 @@ public class Metadata {
         CONTACT_EMAIL(Category.SAMPLE, DataType.STRING, "Contact Email", Visibility.USER),
         REQUESTING_PHYSICIAN(Category.SAMPLE, DataType.STRING, "Requesting Physician", Visibility.USER),
         PRODUCT_TYPE(Category.SAMPLE, DataType.STRING, "Product Type", Visibility.USER),
+        // Fingerprinting Metadata
+        TOTAL_POSSIBLE_CALLS(Category.LAB_METRIC, DataType.NUMBER, "Total Calls", Visibility.USER),
+        CALLS(Category.LAB_METRIC, DataType.NUMBER, "Calls", Visibility.USER),
+        FLUIDIGM_GENDER(Category.LAB_METRIC, DataType.STRING, "Fluidigm Gender", Visibility.USER),
         ;
 
         private final Category category;

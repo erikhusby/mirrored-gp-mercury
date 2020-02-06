@@ -189,6 +189,9 @@ public class Fingerprint {
         return fpGenotypesOrdered;
     }
 
+    /**
+     * @deprecated not truly deprecated, but you very likely should be using {@link #getFpGenotypesOrdered()}
+     */
     public Set<FpGenotype> getFpGenotypes() {
         return fpGenotypes;
     }

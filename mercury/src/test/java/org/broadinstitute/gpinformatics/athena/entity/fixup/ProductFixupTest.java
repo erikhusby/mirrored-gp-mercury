@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -526,6 +527,65 @@ public class ProductFixupTest extends Arquillian {
 
         utx.begin();
         productDao.persist(new FixupCommentary("GPLIM-6369: Disabled all previously discontinued products in SAP"));
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void gplim6657InitializeOfferAsCommercialFlag() throws Exception {
+        userBean.loginOSUser();
+
+        List<String> offeredAsCommercialPartNumbers =
+                Stream.of("P-WG-0080","P-WG-0081","P-WG-0089","P-WG-0068","P-ALT-0038","P-ALT-0039","P-ALT-0040",
+                        "P-WG-0097","").collect(Collectors.toList());
+
+        utx.begin();
+        List<Product> productsToUpdate = productDao.findByPartNumbers(offeredAsCommercialPartNumbers);
+        for (Product product : productsToUpdate) {
+            try {
+                product.setOfferedAsCommercialProduct(true);
+                productEjb.publishProductToSAP(product);
+                System.out.println("Updated " + product.getDisplayName() + " to be offered as a commercial product");
+            } catch (SAPIntegrationException e) {
+                System.out.println(Arrays.toString(e.getStackTrace()));
+            }
+        }
+
+        productDao.persist(new FixupCommentary("GPLIM-6657: pre-setting the Offered as Commercial flag on all relevant products upon SAP 2.0 rollout"));
+        utx.commit();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/ProductsExtendToCommercial.txt, so it
+     * can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-XXXX setting products as commercial
+     * P-EX-1123
+     * P-EX-1134
+     * P-EX-1124
+     * P-EX-1135
+     *
+     * @throws Exception
+     */
+    @Test(enabled = false)
+    public void genericInitializeOfferAsCommercialFlag() throws Exception {
+        userBean.loginOSUser();
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ProductsExtendToCommercial.txt"));
+        String fixupReason = lines.get(0);
+        Assert.assertTrue(StringUtils.isNotBlank(fixupReason), "A fixup reason needs to be defined");
+        final List<String> productsWithCommercialStatuses = lines.subList(1, lines.size());
+
+        utx.begin();
+        List<Product> productsToUpdate = productDao.findByPartNumbers(productsWithCommercialStatuses);
+        for (Product product : productsToUpdate) {
+            try {
+                product.setOfferedAsCommercialProduct(true);
+                productEjb.publishProductToSAP(product);
+                System.out.println("Updated " + product.getDisplayName() + " to be offered as a commercial product");
+            } catch (SAPIntegrationException e) {
+                System.out.println(Arrays.toString(e.getStackTrace()));
+            }
+        }
+
+        productDao.persist(new FixupCommentary(fixupReason));
         utx.commit();
     }
 }
