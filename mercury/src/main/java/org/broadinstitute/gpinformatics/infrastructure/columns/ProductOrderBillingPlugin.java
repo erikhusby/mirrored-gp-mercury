@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -165,18 +166,20 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
                         businessKey = billingKey.get().getBusinessKey();
                     }
 
+                    String workItemId = singleWorkItem.orElse("");
+                    String sapDocumentId = sapItems.orElse("");
                     final List<String> cellList = new ArrayList<String>(Arrays.asList(
-                            getBillingSessionLink(businessKey, singleWorkItem.orElse(""), context),
-                            billedDate.map(dateFormatter::format).orElse(""),
-                            getQuoteLink(quoteImportItem, context),
-                            getWorkItemLink(singleWorkItem.orElse(""), quoteImportItem.getQuoteId(), context),
-                            sapItems.orElse(""),
-                            quoteImportItem.getProduct().getDisplayName(),
-                            quoteImportItem.getRoundedQuantity(), quoteImportItem.getNumSamples(),
-                            workCompleteDate.map(dateFormatter::format).orElse(""),
-                            quoteImportItem.getBillingMessage()));
+                        getBillingSessionLink(businessKey, workItemId, sapDocumentId, context),
+                        billedDate.map(dateFormatter::format).orElse(""),
+                        getQuoteLink(quoteImportItem, context),
+                        getWorkItemLink(workItemId, quoteImportItem.getQuoteId(), context),
+                        sapDocumentId,
+                        quoteImportItem.getProduct().getDisplayName(),
+                        quoteImportItem.getRoundedQuantity(), quoteImportItem.getNumSamples(),
+                        workCompleteDate.map(dateFormatter::format).orElse(""),
+                        quoteImportItem.getBillingMessage()));
                     ConfigurableList.ResultRow row =
-                            new ConfigurableList.ResultRow(null, cellList, String.valueOf(count));
+                        new ConfigurableList.ResultRow(null, cellList, String.valueOf(count));
                     billingRows.add(row);
                     count++;
                 }
@@ -206,7 +209,7 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
         if(StringUtils.isNotBlank(importItem.getQuoteId())) {
             if(context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB) {
                 quoteLink.append("<a class=\"external\" target=\"QUOTE\" href=\"");
-                if(StringUtils.isNumeric(importItem.getQuoteId())) {
+                if (importItem.isSapOrder()) {
                     quoteLink.append(context.getSapQuoteLink().sapUrl(importItem.getQuoteId()));
                 } else {
                     quoteLink.append(context.getQuoteLink().quoteUrl(importItem.getQuoteId()));
@@ -252,22 +255,24 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
     /**
      * Helper method to create a link to the definition of the billing session in Mercury
      * @param billingSession Unique business key for the billing session for which the generated link will be
-     *                     associated
-     * @param workItem Quote service work item with which the billing session aggregation is associated
+     *                       associated
+     * @param workItem       Quote service work item with which the billing session aggregation is associated
+     * @param sapDocumentId SAP delivery document
      * @param context
      * @return
      */
-    private String getBillingSessionLink(String billingSession, String workItem,
+    private String getBillingSessionLink(String billingSession, String workItem, String sapDocumentId,
                                          SearchContext context) {
-        String billingSessionFormat =
-                "<a class=\"external\" target=\"new\" href=\"/Mercury/billing/session.action?billingSession=%s"
-                + "&workId=%s" +
-                "\">%s</a>";
-
         String formattedOutput = "";
         if(StringUtils.isNotBlank(billingSession)) {
             if(context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB) {
-                formattedOutput = String.format(billingSessionFormat, billingSession, workItem, billingSession);
+                formattedOutput = String.format(
+                    "<a class='external' target='new' href='/Mercury/billing/session.action?billingSession=%s&%s=%s&%s=%s'>%s</a>",
+                    billingSession,
+                    BillingSessionActionBean.WORK_ITEM_FROM_URL_PARAMETER, workItem,
+                    BillingSessionActionBean.SAP_DELIVERY_DOCUMENT_ID_URL_PARAMETER, sapDocumentId,
+                    billingSession
+                );
             } else {
                 formattedOutput = billingSession;
             }
