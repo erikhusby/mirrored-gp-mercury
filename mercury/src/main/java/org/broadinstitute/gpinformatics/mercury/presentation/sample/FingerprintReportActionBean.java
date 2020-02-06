@@ -142,18 +142,23 @@ public class FingerprintReportActionBean extends CoreActionBean {
         } else if (StringUtils.isNotBlank(pdoId)) {
             ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoId);
             for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
-                mapSmidToMercurySample
-                        .put(productOrderSample.getSampleKey(), productOrderSample.getMercurySample());
+                if (productOrderSample.getMercurySample() != null) {
+                    mapSmidToMercurySample
+                            .put(productOrderSample.getSampleKey(), productOrderSample.getMercurySample());
+                }
             }
         } else if (StringUtils.isNotBlank(participantId)) {
             mapSmidToMercurySample =
                     fingerprintEjb.getPtIdMercurySamples(mapSmidToMercurySample, participantId, mercurySampleDao);
         }
 
-        fingerprints = fingerprintEjb.findFingerprints(mapSmidToMercurySample);
-        fingerprints.sort(new Fingerprint.OrderFpPtidRootSamp());
-
-        lodScoreMap = fingerprintEjb.findLodScore(fingerprints);
+        if (mapSmidToMercurySample.values().isEmpty()) {
+            throw new RuntimeException("No samples found.");
+        } else {
+            fingerprints = fingerprintEjb.findFingerprints(mapSmidToMercurySample);
+            fingerprints.sort(new Fingerprint.OrderFpPtidRootSamp());
+            lodScoreMap = fingerprintEjb.findLodScore(fingerprints);
+        }
     }
 
     /**
