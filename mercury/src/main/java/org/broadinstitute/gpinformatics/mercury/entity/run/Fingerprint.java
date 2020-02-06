@@ -39,7 +39,9 @@ public class Fingerprint {
     public enum Disposition {
         PASS("P"),
         FAIL("F"),
-        NONE("N");
+        NONE("N"),
+        /** Set by fixups, to indicate that the fingerprint should not be included in the pipeline's consensus fingerprint */
+        IGNORE("I");
 
         private final String abbreviation;
 
@@ -187,6 +189,9 @@ public class Fingerprint {
         return fpGenotypesOrdered;
     }
 
+    /**
+     * @deprecated not truly deprecated, but you very likely should be using {@link #getFpGenotypesOrdered()}
+     */
     public Set<FpGenotype> getFpGenotypes() {
         return fpGenotypes;
     }

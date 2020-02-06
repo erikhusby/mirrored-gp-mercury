@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 
 /**
  * Row / column geometry for vessels
@@ -98,6 +99,28 @@ public enum VesselGeometry {
                     VesselPosition.N04, VesselPosition.N05, VesselPosition.N06,
                     VesselPosition.O04, VesselPosition.O05, VesselPosition.O06,
                     VesselPosition.P04, VesselPosition.P05, VesselPosition.P06,
+            }),
+    FLUIDIGM_96_96(
+            "Fluidigm 96.96 Chip",
+            new String[]{"07", "08", "09", "10", "11", "12"},
+            new String[]{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"},
+            new VesselPosition[]{
+                    VesselPosition.A07, VesselPosition.A08, VesselPosition.A09, VesselPosition.A10, VesselPosition.A11, VesselPosition.A12,
+                    VesselPosition.B07, VesselPosition.B08, VesselPosition.B09, VesselPosition.B10, VesselPosition.B11, VesselPosition.B12,
+                    VesselPosition.C07, VesselPosition.C08, VesselPosition.C09, VesselPosition.C10, VesselPosition.C11, VesselPosition.C12,
+                    VesselPosition.D07, VesselPosition.D08, VesselPosition.D09, VesselPosition.D10, VesselPosition.D11, VesselPosition.D12,
+                    VesselPosition.E07, VesselPosition.E08, VesselPosition.E09, VesselPosition.E10, VesselPosition.E11, VesselPosition.E12,
+                    VesselPosition.F07, VesselPosition.F08, VesselPosition.F09, VesselPosition.F10, VesselPosition.F11, VesselPosition.F12,
+                    VesselPosition.G07, VesselPosition.G08, VesselPosition.G09, VesselPosition.G10, VesselPosition.G11, VesselPosition.G12,
+                    VesselPosition.H07, VesselPosition.H08, VesselPosition.H09, VesselPosition.H10, VesselPosition.H11, VesselPosition.H12,
+                    VesselPosition.I07, VesselPosition.I08, VesselPosition.I09, VesselPosition.I10, VesselPosition.I11, VesselPosition.I12,
+                    VesselPosition.J07, VesselPosition.J08, VesselPosition.J09, VesselPosition.J10, VesselPosition.J11, VesselPosition.J12,
+                    VesselPosition.K07, VesselPosition.K08, VesselPosition.K09, VesselPosition.K10, VesselPosition.K11, VesselPosition.K12,
+                    VesselPosition.L07, VesselPosition.L08, VesselPosition.L09, VesselPosition.L10, VesselPosition.L11, VesselPosition.L12,
+                    VesselPosition.M07, VesselPosition.M08, VesselPosition.M09, VesselPosition.M10, VesselPosition.M11, VesselPosition.M12,
+                    VesselPosition.N07, VesselPosition.N08, VesselPosition.N09, VesselPosition.N10, VesselPosition.N11, VesselPosition.N12,
+                    VesselPosition.O07, VesselPosition.O08, VesselPosition.O09, VesselPosition.O10, VesselPosition.O11, VesselPosition.O12,
+                    VesselPosition.P07, VesselPosition.P08, VesselPosition.P09, VesselPosition.P10, VesselPosition.P11, VesselPosition.P12
             }),
 
 
@@ -579,6 +602,24 @@ public enum VesselGeometry {
         public int getColumn() {
             return column;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            RowColumn rowColumn = (RowColumn) o;
+            return row == rowColumn.row &&
+                    column == rowColumn.column;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(row, column);
+        }
     }
 
     VesselGeometry(String name, String[] columnNames, String[] rowNames) {
@@ -595,6 +636,7 @@ public enum VesselGeometry {
         int rowIndex= 0;
 
         for (VesselPosition vesselPosition : vesselPositions) {
+            // RowColumn uses 1-based numbering.
             mapVesselPositionToRowColumn.put(vesselPosition, new RowColumn(rowIndex + 1, columnIndex + 1));
             columnIndex++;
             if(columnIndex >= columnNames.length) {
@@ -665,5 +707,10 @@ public enum VesselGeometry {
 
     public RowColumn getRowColumnForVesselPosition(VesselPosition vesselPosition) {
         return mapVesselPositionToRowColumn.get(vesselPosition);
+    }
+
+    /** Returns a RowColumn. RowColumn uses 1-based numbering. */
+    public RowColumn makeRowColumn(int row, int column) {
+        return new RowColumn(row, column);
     }
 }

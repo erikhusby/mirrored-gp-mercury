@@ -4,11 +4,14 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType;
+import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
@@ -101,6 +104,9 @@ public class ProductOrderDBTestFactory {
      */
     public static ProductOrder createProductOrder(GenericDao dao, ProductOrder.QuoteSourceType quoteSource, String... sampleNames) {
         ProductOrder productOrder = ProductOrderTestFactory.createProductOrder(sampleNames);
+        PipelineDataType exome =
+            dao.findSingle(PipelineDataType.class, PipelineDataType_.name, Aggregation.DATA_TYPE_EXOME);
+        productOrder.getProduct().setPipelineDataType(exome);
         dao.persist(productOrder.getResearchProject());
         dao.persist(productOrder.getProduct());
         dao.persist(productOrder);

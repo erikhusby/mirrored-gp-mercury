@@ -35,6 +35,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.Objects;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
@@ -164,6 +165,84 @@ public class InfiniumRunFinderFixupTest extends Arquillian {
             i++;
         }
         labVesselDao.persist(new FixupCommentary("GPLIM-5110 mark chips archived by GAP"));
+        userTransaction.commit();
+    }
+
+    /**
+     * Add INFINIUM_ARCHIVED event to chips that were recently changed to Forward to GAP = N.  Driven by a file
+     * generated from this query:
+     * SELECT
+     *     *
+     * FROM
+     *     lab_vessel lv
+     *     INNER JOIN lab_event le
+     *         ON  le.in_place_lab_vessel = lv.lab_vessel_id
+     * WHERE
+     *     le.lab_event_type = 'INFINIUM_XSTAIN'
+     *     AND NOT EXISTS (
+     *                 SELECT
+     *                     1
+     *                 FROM
+     *                     lab_event le2
+     *                 WHERE
+     *                     le2.in_place_lab_vessel = lv.lab_vessel_id
+     *                     AND le2.lab_event_type = 'INFINIUM_ARCHIVED'
+     *         )
+     * ORDER BY
+     *     lv.created_on;
+     * The file has a chip barcode on each line.  The fixup will not mark a chip as archived if it doesn't have a
+     * corresponding zip file, unless you override this by adding a space and F (for force) after a barcode.
+     */
+    @Test(enabled = false)
+    public void testSupport6117() throws SystemException, NotSupportedException, HeuristicRollbackException,
+            HeuristicMixedException, RollbackException, IOException {
+        userBean.loginOSUser();
+        userTransaction.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("MarkArchived.txt"));
+        int i = 1;
+        for (String line : lines) {
+            // Allow lines to be commented out
+            if (line.startsWith("#")) {
+                continue;
+            }
+
+            String[] fields = line.split("\\s");
+            String chipBarcode = fields[0];
+            String force = null;
+            if (fields.length == 2) {
+                force = fields[1];
+            }
+
+            // Don't mark archived if no archive file, unless "force" is specified
+            File baseArchiveDir = new File(infiniumStarterConfig.getArchivePath());
+            File zipFile = new File(baseArchiveDir, chipBarcode + ".zip");
+            if (!zipFile.exists()) {
+                System.out.println("No archive file for " + zipFile.getAbsolutePath());
+                File baseDataDir = new File(infiniumStarterConfig.getDataPath());
+                File dataDir = new File(baseDataDir, chipBarcode);
+                System.out.println(dataDir.getAbsolutePath() +  (dataDir.exists() ? " exists" : " doesn't exist"));
+                if (!Objects.equals(force, "F")) {
+                    continue;
+                }
+            }
+
+            LabVessel chip = labVesselDao.findByIdentifier(chipBarcode);
+            if (chip.getInPlaceLabEvents().stream().noneMatch(
+                    labEvent -> labEvent.getLabEventType() == LabEventType.INFINIUM_ARCHIVED)) {
+                System.out.println("Marking " + chip.getLabel() + " archived");
+                chip.addInPlaceEvent(new LabEvent(LabEventType.INFINIUM_ARCHIVED, new Date(), LabEvent.UI_EVENT_LOCATION,
+                        1L, userBean.getBspUser().getUserId(), LabEvent.UI_PROGRAM_NAME));
+            }
+            // Flush and clear periodically, to avoid running out of memory
+            if (i % 100 == 0) {
+                labVesselDao.flush();
+                labVesselDao.clear();
+                System.out.println("Marked " + i + " chips");
+            }
+            i++;
+        }
+        labVesselDao.persist(new FixupCommentary("SUPPORT-6117 mark chips archived by GAP"));
         userTransaction.commit();
     }
 

@@ -46,9 +46,11 @@ import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -167,6 +169,9 @@ public class ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private SAPAccessControlEjb accessController;
+
+    @Inject
+    private ManifestSessionDao manifestSessionDao;
 
     // When you run this on prod, change to PROD and prod.
     @Deployment
@@ -564,6 +569,7 @@ public class ProductOrderFixupTest extends Arquillian {
 
         for (ProductOrder productOrder : ordersToUpdate) {
             productOrder.setQuoteId("GP87U");
+            productOrderEjb.updateJiraIssue(productOrder);
         }
         productOrderDao.persistAll(ordersToUpdate);
         productOrderDao.flush();
@@ -1864,6 +1870,93 @@ public class ProductOrderFixupTest extends Arquillian {
             addOrspToPdo(pdoOrspInfo[0], pdoOrspInfo[1]);
         }
         beginTransaction();
+
+        productOrderDao.persist(new FixupCommentary(commentary));
+        commitTransaction();
+    }
+
+    /**
+     *
+     * File for input
+     * File name: UpdatePdoQuote.txt
+     *
+     * Content example
+     *
+     * <ol><li>SUPPORT-5945 updating PDO's without quote set on them to be GP87U</li>
+     * <li>PDO-19935, GP87U</li>
+     * <li>PDO-19934, GP87U</li></ol>
+     *
+     * @throws Exception
+     */
+    @Test(enabled = false)
+    public void updateQuoteOnPdos() throws Exception {
+
+        userBean.loginOSUser();
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("UpdatePdoQuote.txt"));
+        String commentary = fixupLines.get(0);
+
+        beginTransaction();
+        for (String line : fixupLines.subList(1, fixupLines.size())) {
+            final String[] pdoAndQuote = line.split(",");
+            ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoAndQuote[0].trim());
+            productOrder.setQuoteId(pdoAndQuote[1].trim());
+            productOrder.setSkipQuoteReason("");
+            productOrderEjb.updateJiraIssue(productOrder);
+        }
+
+        productOrderDao.persist(new FixupCommentary(commentary));
+        commitTransaction();
+    }
+
+    /**
+     * Takes in a file named CorrectReceipt.txt and has the following content:
+     * SUPPORT-XXXXX  fixup auditing comment
+     * ORDER-XXX1, RCT-old, RCT-new
+     * ORDER-XXX2, RCT-old2, RCT-new2
+     *
+     * Example:
+     * SUPPORT-6107 replaced an incorrect receipt ticket in the Accessioning Session, Research Project link AND Product Order link
+     * ORDER-20459, RCT-219, RCT-719
+     * @throws Exception
+     */
+    @Test(enabled = false)
+    public void support6107ReplaceReciept() throws Exception {
+
+        userBean.loginOSUser();
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("CorrectReceipt.txt"));
+        String commentary = fixupLines.get(0);
+        beginTransaction();
+        for (String line : fixupLines.subList(1, fixupLines.size())) {
+
+            final String[] lineSegments = line.split(",");
+            String accessionPrefix = lineSegments[0].trim();
+            String oldReceipt = lineSegments[1].trim();
+            String newReceipt = lineSegments[2].trim();
+
+            ManifestSession sessionToChange = manifestSessionDao.getSessionByPrefix(accessionPrefix);
+
+            String pdoSuffix = sessionToChange.getSessionPrefix()
+                    .substring(sessionToChange.getSessionPrefix().indexOf("-"),
+                            sessionToChange.getSessionPrefix().length());
+            String pdoKey = "PDO" + pdoSuffix;
+            System.out.println("PDO key to find is " + pdoKey);
+            ProductOrder pdoToChange = productOrderDao.findByBusinessKey(pdoKey);
+
+            Assert.assertNotNull(pdoToChange, "Unable to find a PDO for" + "PDO" + pdoSuffix);
+
+            sessionToChange.setReceiptTicket(newReceipt);
+            System.out.println(
+                    "Updated the receipt on session " + sessionToChange.getSessionName() + " from " + oldReceipt +
+                    " to " + sessionToChange.getReceiptTicket());
+            JiraIssue pdoIssue = jiraService.getIssue(pdoToChange.getBusinessKey());
+            JiraIssue rpIssue = jiraService.getIssue(pdoToChange.getResearchProject().getBusinessKey());
+
+            pdoIssue.updateIssueLink(newReceipt, oldReceipt);
+            rpIssue.updateIssueLink(newReceipt, oldReceipt);
+            System.out.println(String.format("Updated the links on PDO %s and RP %s from %s to %s",
+                    pdoToChange.getBusinessKey(), pdoToChange.getResearchProject().getBusinessKey(),
+                    oldReceipt, newReceipt));
+        }
 
         productOrderDao.persist(new FixupCommentary(commentary));
         commitTransaction();

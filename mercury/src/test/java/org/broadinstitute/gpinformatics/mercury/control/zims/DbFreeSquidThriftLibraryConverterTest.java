@@ -4,6 +4,7 @@ import edu.mit.broad.prodinfo.thrift.lims.TZamboniLibrary;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -35,7 +36,7 @@ public class DbFreeSquidThriftLibraryConverterTest {
         pdo.setJiraTicketKey("PDO-2");
         pdo.setProduct(
                 new Product("Mashed Potatoes", new ProductFamily("Mashed Things"), null, null, null, null, null, null,
-                        null, null, null, null, false, Workflow.NONE, false, "with gravy"));
+                        null, null, null, null, false, Workflow.NONE, false,new PipelineDataType("with gravy", true)));
 
         SquidThriftLibraryConverter converter = new SquidThriftLibraryConverter();
         TZamboniLibrary zamboniLibrary = thriftRun.getLanes().iterator().next().getLibraries().iterator().next();

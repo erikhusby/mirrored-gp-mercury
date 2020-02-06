@@ -1,16 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.jmx;
 
-import org.broadinstitute.gpinformatics.infrastructure.common.TestLogHandler;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mocks.ExplodingCache;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import javax.inject.Inject;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
-import java.util.logging.Logger;
 
 
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -31,7 +25,7 @@ public class ExternalDataCacheControlTest {
     @Test
     public void testCacheRegistrationCatchesExceptions() {
         cacheControl.registerCache(explodingCache);
-        Assert.assertTrue(explodingCache.numRefreshes == 1);
+        Assert.assertEquals(explodingCache.numRefreshes, 0);
     }
 
     @Test
@@ -40,7 +34,7 @@ public class ExternalDataCacheControlTest {
         cacheControl.unRegisterCache(explodingCache);
         cacheControl.invalidateCache();
 
-        Assert.assertTrue(explodingCache.numRefreshes == 1);
+        Assert.assertEquals(explodingCache.numRefreshes, 0);
     }
 
     @Test
@@ -48,9 +42,6 @@ public class ExternalDataCacheControlTest {
         cacheControl.registerCache(explodingCache);
         cacheControl.invalidateCache();
 
-        Assert.assertTrue(explodingCache.numRefreshes == 2);
+        Assert.assertEquals(explodingCache.numRefreshes, 1);
     }
-
-
-
 }

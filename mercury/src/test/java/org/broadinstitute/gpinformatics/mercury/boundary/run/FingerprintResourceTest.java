@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.EntityLoggingFilter;
 import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -14,12 +15,14 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -33,14 +36,20 @@ public class FingerprintResourceTest extends Arquillian {
 
     private static final String WS_BASE = "rest/external/fingerprint";
 
+    @Inject
+    private FingerprintResource fingerprintResource;
+
+    @Inject
+    private FpWsRoleEjb fpWsRoleEjb;
+
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    @Test(groups = TestGroups.STANDARD, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = TestGroups.STANDARD, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = false)
     @RunAsClient
-    public void testStoreAndRetrieve(@ArquillianResource URL baseUrl) throws MalformedURLException {
+    public void testStoreAndRetrieveAsClient(@ArquillianResource URL baseUrl) throws MalformedURLException {
         Client client = getClient(true);
 
         String rsidsUrl = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WS_BASE + "/rsids";
@@ -52,7 +61,7 @@ public class FingerprintResourceTest extends Arquillian {
             calls.add(new FingerprintCallsBean(rsid, "AA", "99.99"));
         }
 
-        String aliquotLsid = "org.broad:" + System.currentTimeMillis();
+        String aliquotLsid = LibraryBean.MERCURY_LSID_PREFIX + System.currentTimeMillis();
         FingerprintBean fingerprintBean = new FingerprintBean("", "P", aliquotLsid,
                 "FLUIDIGM", "HG19", "FluidigmFPv5", new Date(), "M", calls);
         String response = client.target(postUrl).request(MediaType.APPLICATION_JSON_TYPE).
@@ -61,26 +70,59 @@ public class FingerprintResourceTest extends Arquillian {
         String getUrl = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WS_BASE + "/query";
         FingerprintsBean fingerprintsBean = client.target(getUrl).queryParam("lsids", aliquotLsid).
                 request(MediaType.APPLICATION_JSON).get(FingerprintsBean.class);
-        // todo jmt asserts
-        fingerprintsBean.getFingerprints();
+        compareFingerprints(fingerprintBean,fingerprintsBean.getFingerprints().get(0));
     }
 
-    @Test(groups = TestGroups.STANDARD, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
-    @RunAsClient
-    public void testRetrieveBackfill(@ArquillianResource URL baseUrl) throws MalformedURLException {
-        Client client = getClient(true);
+    @Test
+    public void testStoreAndRetrieve() {
+        try {
+            RsIdsBean rsIdsBean = fpWsRoleEjb.call(() -> fingerprintResource.get());
 
-        String getUrl = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WS_BASE + "/query";
-        String queryLsid = "broadinstitute.org:bsp.prod.sample:GOHM6";
-        FingerprintsBean fingerprintsBean = client.target(getUrl).
-                queryParam("lsids", queryLsid).
-                request(MediaType.APPLICATION_JSON).get(FingerprintsBean.class);
+            List<FingerprintCallsBean> calls = new ArrayList<>();
+            for (String rsid : rsIdsBean.getRsids()) {
+                calls.add(new FingerprintCallsBean(rsid, "AA", "99.99"));
+            }
 
-        Assert.assertEquals(fingerprintsBean.getFingerprints().size(), 1);
-        FingerprintBean fingerprintBean = fingerprintsBean.getFingerprints().get(0);
-        Assert.assertEquals(fingerprintBean.getQueriedLsid(), queryLsid);
-        Assert.assertEquals(fingerprintBean.getAliquotLsid(), "broadinstitute.org:bsp.prod.sample:GP3T6");
-        Assert.assertEquals(fingerprintBean.getCalls().size(), 96);
+            String aliquotLsid = LibraryBean.MERCURY_LSID_PREFIX + System.currentTimeMillis();
+            FingerprintBean fingerprintBean = new FingerprintBean("", "P", aliquotLsid,
+                    "FLUIDIGM", "HG19", "FluidigmFPv5", new Date(), "M", calls);
+            String response = fpWsRoleEjb.call(() -> fingerprintResource.post(fingerprintBean));
+            Assert.assertEquals(response, "Stored fingerprint");
+
+            FingerprintsBean fingerprintsBean = fpWsRoleEjb.call(() ->
+                    fingerprintResource.get(Collections.singletonList(aliquotLsid)));
+
+            compareFingerprints(fingerprintBean, fingerprintsBean.getFingerprints().get(0));
+        } catch (Exception e) {
+            throw new RuntimeException();
+        }
+    }
+
+    private void compareFingerprints(FingerprintBean fingerprintBean1, FingerprintBean fingerprintBean2) {
+        Assert.assertEquals(fingerprintBean1.getAliquotLsid(), fingerprintBean2.getAliquotLsid());
+        List<FingerprintCallsBean> calls1 = fingerprintBean1.getCalls();
+        List<FingerprintCallsBean> calls2 = fingerprintBean2.getCalls();
+        for (int i = 0; i < calls1.size(); i++) {
+            Assert.assertEquals(calls1.get(i).getRsid(), calls2.get(i).getRsid());
+            Assert.assertEquals(calls1.get(i).getGenotype(), calls2.get(i).getGenotype());
+            Assert.assertEquals(calls1.get(i).getCallConfidence(), calls2.get(i).getCallConfidence());
+        }
+    }
+
+    @Test
+    public void testRetrieveBackfill() {
+        try {
+            String queryLsid = "broadinstitute.org:bsp.prod.sample:GOHM6";
+            FingerprintsBean fingerprintsBean = fpWsRoleEjb.call(() ->
+                    fingerprintResource.get(Collections.singletonList(queryLsid)));
+            Assert.assertEquals(fingerprintsBean.getFingerprints().size(), 2);
+            FingerprintBean fingerprintBean = fingerprintsBean.getFingerprints().get(1);
+            Assert.assertEquals(fingerprintBean.getQueriedLsid(), queryLsid);
+            Assert.assertEquals(fingerprintBean.getAliquotLsid(), "broadinstitute.org:bsp.prod.sample:GP3T6");
+            Assert.assertEquals(fingerprintBean.getCalls().size(), 96);
+        } catch (Exception e) {
+            throw new RuntimeException();
+        }
     }
 
     /**
@@ -103,6 +145,17 @@ public class FingerprintResourceTest extends Arquillian {
             exception = true;
         }
         Assert.assertTrue(exception);
+    }
+
+    @Test
+    public void testCrsp() {
+        try {
+            FingerprintsBean fingerprintsBean = fpWsRoleEjb.call(
+                    () -> fingerprintResource.get(Collections.singletonList("org.broadinstitute:crsp:G947T")));
+            Assert.assertNotNull(fingerprintsBean);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private Client getClient(boolean basicAuth) {

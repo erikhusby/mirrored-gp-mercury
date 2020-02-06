@@ -16,6 +16,8 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -73,359 +75,54 @@ public class SearchInstanceEjb {
     }
 
     static {
-        mapTypeToPreferenceAccess.put(PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES, new PreferenceAccess() {
-            @Override
-            public List<Preference> getPreferences(Long userID,
-                                                   PreferenceDao preferenceDao) {
-                List<Preference> preferences = new ArrayList<>();
-                Preference preference =  preferenceDao.getGlobalPreference(PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES);
-                if( preference != null ) {
-                    preferences.add(preference);
+        for (PreferenceType preferenceType : new PreferenceType[]{
+                PreferenceType.GLOBAL_LAB_EVENT_SEARCH_INSTANCES,
+                PreferenceType.GLOBAL_LAB_METRIC_RUN_SEARCH_INSTANCES,
+                PreferenceType.GLOBAL_LAB_METRIC_SEARCH_INSTANCES,
+                PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES,
+                PreferenceType.GLOBAL_MERCURY_SAMPLE_SEARCH_INSTANCES,
+                PreferenceType.GLOBAL_PRODUCT_ORDER_SEARCH_INSTANCES,
+                PreferenceType.GLOBAL_REAGENT_SEARCH_INSTANCES,
+                PreferenceType.GLOBAL_EXT_LIBRARY_SEARCH_INSTANCES,
+                PreferenceType.USER_LAB_EVENT_SEARCH_INSTANCES,
+                PreferenceType.USER_LAB_METRIC_RUN_SEARCH_INSTANCES,
+                PreferenceType.USER_LAB_METRIC_SEARCH_INSTANCES,
+                PreferenceType.USER_LAB_VESSEL_SEARCH_INSTANCES,
+                PreferenceType.USER_MERCURY_SAMPLE_SEARCH_INSTANCES,
+                PreferenceType.USER_PRODUCT_ORDER_SEARCH_INSTANCES,
+                PreferenceType.USER_REAGENT_SEARCH_INSTANCES,
+                PreferenceType.USER_EXT_LIBRARY_SEARCH_INSTANCES,
+        }) {
+            mapTypeToPreferenceAccess.put(preferenceType, new PreferenceAccess() {
+                @Override
+                public List<Preference> getPreferences(Long userId, PreferenceDao preferenceDao) throws Exception {
+                    if (preferenceType.getPreferenceScope() == PreferenceType.PreferenceScope.USER) {
+                        return preferenceDao.getPreferences(userId, preferenceType);
+                    } else if (preferenceType.getPreferenceScope() == PreferenceType.PreferenceScope.GLOBAL) {
+                        Preference preference = preferenceDao.getGlobalPreference(preferenceType);
+                        if (preference != null) {
+                            return Collections.singletonList(preference);
+                        }
+                    }
+                    return null;
                 }
-                return preferences;
-            }
 
-            @Override
-            public Preference createNewPreference(Long userID) {
-                return new Preference(userID, PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES, "");
-            }
-
-            @Override
-            public boolean canModifyPreference(Long userID) {
-                return true; // actionBeanContext.isAdmin();  (BSP carryover not implemented as of 7/22/2014)
-            }
-
-            @Override
-            public PreferenceType.PreferenceScope getScope() {
-                return PreferenceType.PreferenceScope.GLOBAL;
-            }
-        });
-
-        mapTypeToPreferenceAccess.put(PreferenceType.GLOBAL_LAB_EVENT_SEARCH_INSTANCES, new PreferenceAccess() {
-            @Override
-            public List<Preference> getPreferences(Long userID,
-                                                   PreferenceDao preferenceDao) {
-                List<Preference> preferences = new ArrayList<>();
-                Preference preference =  preferenceDao.getGlobalPreference(PreferenceType.GLOBAL_LAB_EVENT_SEARCH_INSTANCES);
-                if( preference != null ) {
-                    preferences.add(preference);
+                @Override
+                public Preference createNewPreference(Long userID) {
+                    return new Preference(userID, preferenceType, "");
                 }
-                return preferences;
-            }
 
-            @Override
-            public Preference createNewPreference(Long userID) {
-                return new Preference(userID, PreferenceType.GLOBAL_LAB_EVENT_SEARCH_INSTANCES, "");
-            }
-
-            @Override
-            public boolean canModifyPreference(Long userID) {
-                return true;
-            }
-
-            @Override
-            public PreferenceType.PreferenceScope getScope() {
-                return PreferenceType.PreferenceScope.GLOBAL;
-            }
-        });
-
-        mapTypeToPreferenceAccess.put(PreferenceType.GLOBAL_MERCURY_SAMPLE_SEARCH_INSTANCES, new PreferenceAccess() {
-            @Override
-            public List<Preference> getPreferences(Long userID,
-                                                   PreferenceDao preferenceDao) {
-                List<Preference> preferences = new ArrayList<>();
-                Preference preference =  preferenceDao.getGlobalPreference(PreferenceType.GLOBAL_MERCURY_SAMPLE_SEARCH_INSTANCES);
-                if( preference != null ) {
-                    preferences.add(preference);
+                @Override
+                public boolean canModifyPreference(Long userID) {
+                    return true; // actionBeanContext.isAdmin();  (BSP carryover not implemented as of 7/22/2014)
                 }
-                return preferences;
-            }
 
-            @Override
-            public Preference createNewPreference(Long userID) {
-                return new Preference(userID, PreferenceType.GLOBAL_MERCURY_SAMPLE_SEARCH_INSTANCES, "");
-            }
-
-            @Override
-            public boolean canModifyPreference(Long userID) {
-                return true;
-            }
-
-            @Override
-            public PreferenceType.PreferenceScope getScope() {
-                return PreferenceType.PreferenceScope.GLOBAL;
-            }
-        });
-
-        mapTypeToPreferenceAccess.put(PreferenceType.GLOBAL_REAGENT_SEARCH_INSTANCES, new PreferenceAccess() {
-            @Override
-            public List<Preference> getPreferences(Long userID,
-                                                   PreferenceDao preferenceDao) {
-                List<Preference> preferences = new ArrayList<>();
-                Preference preference =  preferenceDao.getGlobalPreference(PreferenceType.GLOBAL_REAGENT_SEARCH_INSTANCES);
-                if( preference != null ) {
-                    preferences.add(preference);
+                @Override
+                public PreferenceType.PreferenceScope getScope() {
+                    return preferenceType.getPreferenceScope();
                 }
-                return preferences;
-            }
-
-            @Override
-            public Preference createNewPreference(Long userID) {
-                return new Preference(userID, PreferenceType.GLOBAL_REAGENT_SEARCH_INSTANCES, "");
-            }
-
-            @Override
-            public boolean canModifyPreference(Long userID) {
-                return true;
-            }
-
-            @Override
-            public PreferenceType.PreferenceScope getScope() {
-                return PreferenceType.PreferenceScope.GLOBAL;
-            }
-        });
-
-        mapTypeToPreferenceAccess.put(PreferenceType.GLOBAL_LAB_METRIC_SEARCH_INSTANCES, new PreferenceAccess() {
-            @Override
-            public List<Preference> getPreferences(Long userID,
-                                                   PreferenceDao preferenceDao) {
-                List<Preference> preferences = new ArrayList<>();
-                Preference preference =  preferenceDao.getGlobalPreference(PreferenceType.GLOBAL_LAB_METRIC_SEARCH_INSTANCES);
-                if( preference != null ) {
-                    preferences.add(preference);
-                }
-                return preferences;
-            }
-
-            @Override
-            public Preference createNewPreference(Long userID) {
-                return new Preference(userID, PreferenceType.GLOBAL_LAB_METRIC_SEARCH_INSTANCES, "");
-            }
-
-            @Override
-            public boolean canModifyPreference(Long userID) {
-                return true;
-            }
-
-            @Override
-            public PreferenceType.PreferenceScope getScope() {
-                return PreferenceType.PreferenceScope.GLOBAL;
-            }
-        });
-
-        mapTypeToPreferenceAccess.put(PreferenceType.GLOBAL_LAB_METRIC_RUN_SEARCH_INSTANCES, new PreferenceAccess() {
-            @Override
-            public List<Preference> getPreferences(Long userID,
-                                                   PreferenceDao preferenceDao) {
-                List<Preference> preferences = new ArrayList<>();
-                Preference preference =  preferenceDao.getGlobalPreference(PreferenceType.GLOBAL_LAB_METRIC_RUN_SEARCH_INSTANCES);
-                if( preference != null ) {
-                    preferences.add(preference);
-                }
-                return preferences;
-            }
-
-            @Override
-            public Preference createNewPreference(Long userID) {
-                return new Preference(userID, PreferenceType.GLOBAL_LAB_METRIC_RUN_SEARCH_INSTANCES, "");
-            }
-
-            @Override
-            public boolean canModifyPreference(Long userID) {
-                return true;
-            }
-
-            @Override
-            public PreferenceType.PreferenceScope getScope() {
-                return PreferenceType.PreferenceScope.GLOBAL;
-            }
-        });
-
-        mapTypeToPreferenceAccess.put(PreferenceType.USER_LAB_VESSEL_SEARCH_INSTANCES, new PreferenceAccess() {
-            @Override
-            public List<Preference> getPreferences(Long userID,
-                                                   PreferenceDao preferenceDao) throws Exception {
-                return preferenceDao.getPreferences(userID, PreferenceType.USER_LAB_VESSEL_SEARCH_INSTANCES);
-            }
-
-            @Override
-            public Preference createNewPreference(Long userID) {
-                return new Preference(userID, PreferenceType.USER_LAB_VESSEL_SEARCH_INSTANCES, "");
-            }
-
-            @Override
-            public boolean canModifyPreference(Long userID) {
-                return true;
-            }
-
-            @Override
-            public PreferenceType.PreferenceScope getScope() {
-                return PreferenceType.PreferenceScope.USER;
-            }
-        });
-
-        mapTypeToPreferenceAccess.put(PreferenceType.USER_LAB_EVENT_SEARCH_INSTANCES, new PreferenceAccess() {
-            @Override
-            public List<Preference> getPreferences(Long userID,
-                                                   PreferenceDao preferenceDao) throws Exception {
-                return preferenceDao.getPreferences(userID, PreferenceType.USER_LAB_EVENT_SEARCH_INSTANCES);
-            }
-
-            @Override
-            public Preference createNewPreference(Long userID) {
-                return new Preference(userID, PreferenceType.USER_LAB_EVENT_SEARCH_INSTANCES, "");
-            }
-
-            @Override
-            public boolean canModifyPreference(Long userID) {
-                return true;
-            }
-
-            @Override
-            public PreferenceType.PreferenceScope getScope() {
-                return PreferenceType.PreferenceScope.USER;
-            }
-        });
-
-        mapTypeToPreferenceAccess.put(PreferenceType.USER_MERCURY_SAMPLE_SEARCH_INSTANCES, new PreferenceAccess() {
-            @Override
-            public List<Preference> getPreferences(Long userID,
-                                                   PreferenceDao preferenceDao) throws Exception {
-                return preferenceDao.getPreferences(userID, PreferenceType.USER_MERCURY_SAMPLE_SEARCH_INSTANCES);
-            }
-
-            @Override
-            public Preference createNewPreference(Long userID) {
-                return new Preference(userID, PreferenceType.USER_MERCURY_SAMPLE_SEARCH_INSTANCES, "");
-            }
-
-            @Override
-            public boolean canModifyPreference(Long userID) {
-                return true;
-            }
-
-            @Override
-            public PreferenceType.PreferenceScope getScope() {
-                return PreferenceType.PreferenceScope.USER;
-            }
-        });
-
-        mapTypeToPreferenceAccess.put(PreferenceType.USER_REAGENT_SEARCH_INSTANCES, new PreferenceAccess() {
-            @Override
-            public List<Preference> getPreferences(Long userID,
-                                                   PreferenceDao preferenceDao) throws Exception {
-                return preferenceDao.getPreferences(userID, PreferenceType.USER_REAGENT_SEARCH_INSTANCES);
-            }
-
-            @Override
-            public Preference createNewPreference(Long userID) {
-                return new Preference(userID, PreferenceType.USER_REAGENT_SEARCH_INSTANCES, "");
-            }
-
-            @Override
-            public boolean canModifyPreference(Long userID) {
-                return true;
-            }
-
-            @Override
-            public PreferenceType.PreferenceScope getScope() {
-                return PreferenceType.PreferenceScope.USER;
-            }
-        });
-
-        mapTypeToPreferenceAccess.put(PreferenceType.USER_LAB_METRIC_SEARCH_INSTANCES, new PreferenceAccess() {
-            @Override
-            public List<Preference> getPreferences(Long userID,
-                                                   PreferenceDao preferenceDao) throws Exception {
-                return preferenceDao.getPreferences(userID, PreferenceType.USER_LAB_METRIC_SEARCH_INSTANCES);
-            }
-
-            @Override
-            public Preference createNewPreference(Long userID) {
-                return new Preference(userID, PreferenceType.USER_LAB_METRIC_SEARCH_INSTANCES, "");
-            }
-
-            @Override
-            public boolean canModifyPreference(Long userID) {
-                return true;
-            }
-
-            @Override
-            public PreferenceType.PreferenceScope getScope() {
-                return PreferenceType.PreferenceScope.USER;
-            }
-        });
-
-        mapTypeToPreferenceAccess.put(PreferenceType.USER_LAB_METRIC_RUN_SEARCH_INSTANCES, new PreferenceAccess() {
-            @Override
-            public List<Preference> getPreferences(Long userID,
-                                                   PreferenceDao preferenceDao) throws Exception {
-                return preferenceDao.getPreferences(userID, PreferenceType.USER_LAB_METRIC_RUN_SEARCH_INSTANCES);
-            }
-
-            @Override
-            public Preference createNewPreference(Long userID) {
-                return new Preference(userID, PreferenceType.USER_LAB_METRIC_RUN_SEARCH_INSTANCES, "");
-            }
-
-            @Override
-            public boolean canModifyPreference(Long userID) {
-                return true;
-            }
-
-            @Override
-            public PreferenceType.PreferenceScope getScope() {
-                return PreferenceType.PreferenceScope.USER;
-            }
-        });
-
-        mapTypeToPreferenceAccess.put(PreferenceType.USER_PRODUCT_ORDER_SEARCH_INSTANCES, new PreferenceAccess() {
-            @Override
-            public List<Preference> getPreferences(Long userID, PreferenceDao preferenceDao) throws Exception {
-                return preferenceDao.getPreferences(userID, PreferenceType.USER_PRODUCT_ORDER_SEARCH_INSTANCES);
-            }
-
-            @Override
-            public Preference createNewPreference(Long userID) {
-                return new Preference(userID, PreferenceType.USER_PRODUCT_ORDER_SEARCH_INSTANCES, "");
-            }
-
-            @Override
-            public boolean canModifyPreference(Long userID) {
-                return true;
-            }
-
-            @Override
-            public PreferenceType.PreferenceScope getScope() {
-                return PreferenceType.PreferenceScope.USER;
-            }
-        });
-        mapTypeToPreferenceAccess.put(PreferenceType.GLOBAL_PRODUCT_ORDER_SEARCH_INSTANCES, new PreferenceAccess() {
-            @Override
-            public List<Preference> getPreferences(Long userID, PreferenceDao preferenceDao) throws Exception {
-                List<Preference> preferences = new ArrayList<>();
-                Preference preference =  preferenceDao.getGlobalPreference(PreferenceType.GLOBAL_PRODUCT_ORDER_SEARCH_INSTANCES);
-                if( preference != null ) {
-                    preferences.add(preference);
-                }
-                return preferences;
-            }
-
-            @Override
-            public Preference createNewPreference(Long userID) {
-                return new Preference(userID, PreferenceType.GLOBAL_PRODUCT_ORDER_SEARCH_INSTANCES, "");
-            }
-
-            @Override
-            public boolean canModifyPreference(Long userID) {
-                return true;
-            }
-
-            @Override
-            public PreferenceType.PreferenceScope getScope() {
-                return PreferenceType.PreferenceScope.GLOBAL;
-            }
-        });
+            });
+        }
     }
 
     /**
@@ -557,9 +254,6 @@ public class SearchInstanceEjb {
                                 newSearchType, searchInstanceList);
                     } else {
                         preference.markModified(searchInstanceList.marshal());
-                        // Changing the preference definition doesn't seem to make the
-                        // Hibernate object "dirty", so change something else too
-                        preference.setModifiedDate(new Date());
                     }
 
                     messageCollection.addInfo("The search was saved");

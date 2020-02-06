@@ -153,8 +153,9 @@ public class ManifestRecord implements Updatable {
         Metadata metadata = getMetadataByKey(key);
 
         if (metadata != null) {
-            throw new InformaticsServiceException(key.getDisplayName() +
-                                                  " is already set for the record " + toString());
+            throw new InformaticsServiceException(key.getDisplayName() + (manifestSession == null ?
+                    (" is already set to " + metadata.getValue()) :
+                    (" is already set for the record " + toString())));
         }
         this.metadata.add(new Metadata(key, value));
         updateMetadataMap();

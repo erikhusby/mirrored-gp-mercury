@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.util.MessageCollection;
-import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettaLimsConnector;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryBeansType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryQuantBeanType;
@@ -32,12 +31,6 @@ public class LibraryQuantResource {
     private VesselEjb vesselEjb;
 
     @Inject
-    private SystemRouter systemRouter;
-
-    @Inject
-    private BettaLimsConnector bettaLimsConnector;
-
-    @Inject
     private BSPUserList bspUserList;
 
     @Inject
@@ -49,24 +42,17 @@ public class LibraryQuantResource {
     public Response createQpcrRun(QpcrRunBean qpcrRunBean) {
 
         List<String> tubeBarcodes = new ArrayList<>();
-        for (LibraryBeansType libraryBeans: qpcrRunBean.getLibraryBeans()) {
+        for (LibraryBeansType libraryBeans : qpcrRunBean.getLibraryBeans()) {
             tubeBarcodes.add(libraryBeans.getTubeBarcode());
         }
-        switch (systemRouter.getSystemOfRecordForVesselBarcodes(tubeBarcodes)) {
-            case MERCURY:
-                BspUser bspUser = getBspUser(qpcrRunBean.getOperator());
-                MessageCollection messageCollection = new MessageCollection();
-                vesselEjb.createQpcrRunFromRunBean(qpcrRunBean, messageCollection, bspUser.getUserId());
-                if (messageCollection.hasErrors()) {
-                    String errors = StringUtils.join(messageCollection.getErrors(), ",");
-                    return Response.serverError().entity(errors).build();
-                } else {
-                    return Response.ok().build();
-                }
-            case SQUID:
-                return bettaLimsConnector.createQpcrRun(qpcrRunBean);
-            default:
-                throw new RuntimeException("Unable to route createQpcrRun for tubes: " + tubeBarcodes);
+        BspUser bspUser = getBspUser(qpcrRunBean.getOperator());
+        MessageCollection messageCollection = new MessageCollection();
+        vesselEjb.createQpcrRunFromRunBean(qpcrRunBean, messageCollection, bspUser.getUserId());
+        if (messageCollection.hasErrors()) {
+            String errors = StringUtils.join(messageCollection.getErrors(), ",");
+            return Response.serverError().entity(errors).build();
+        } else {
+            return Response.ok().build();
         }
     }
 
@@ -77,21 +63,14 @@ public class LibraryQuantResource {
         for (LibraryQuantBeanType libraryBeans: libraryQuantRunBean.getLibraryQuantBeans()) {
             tubeBarcodes.add(libraryBeans.getTubeBarcode());
         }
-        switch (systemRouter.getSystemOfRecordForVesselBarcodes(tubeBarcodes)) {
-        case MERCURY:
-            MessageCollection messageCollection = new MessageCollection();
-            getBspUser(libraryQuantRunBean.getOperator());
-            vesselEjb.createLibraryQuantsFromRunBean(libraryQuantRunBean, messageCollection);
-            if (messageCollection.hasErrors()) {
-                String errors = StringUtils.join(messageCollection.getErrors(), ",");
-                return Response.serverError().entity(errors).build();
-            } else {
-                return Response.ok().build();
-            }
-        case SQUID:
-            return bettaLimsConnector.createLibraryQuants(libraryQuantRunBean);
-        default:
-            throw new RuntimeException("Unable to route createQpcrRun for tubes: " + tubeBarcodes);
+        MessageCollection messageCollection = new MessageCollection();
+        BspUser bspUser = getBspUser(libraryQuantRunBean.getOperator());
+        vesselEjb.createLibraryQuantsFromRunBean(libraryQuantRunBean, messageCollection, bspUser.getUserId());
+        if (messageCollection.hasErrors()) {
+            String errors = StringUtils.join(messageCollection.getErrors(), ",");
+            return Response.serverError().entity(errors).build();
+        } else {
+            return Response.ok().build();
         }
     }
 

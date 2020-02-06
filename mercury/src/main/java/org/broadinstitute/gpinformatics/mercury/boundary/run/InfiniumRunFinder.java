@@ -30,6 +30,7 @@ import javax.inject.Inject;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -45,6 +46,8 @@ import java.util.stream.Collectors;
 @TransactionManagement(value= TransactionManagementType.BEAN)
 public class InfiniumRunFinder implements Serializable {
     private static final Log log = LogFactory.getLog(InfiniumRunFinder.class);
+    public static final List<LabEventType> PIPELINE_TRIGGER_EVENT_TYPES = Arrays.asList(
+            LabEventType.INFINIUM_XSTAIN, LabEventType.INFINIUM_XSTAIN_HD);
 
     @Inject
     private InfiniumRunProcessor infiniumRunProcessor;
@@ -82,7 +85,8 @@ public class InfiniumRunFinder implements Serializable {
 
         try {
             userBean.login("seqsystem");
-            List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(LabEventType.INFINIUM_XSTAIN,
+            List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(
+                    PIPELINE_TRIGGER_EVENT_TYPES,
                     LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
             List<String> barcodes = infiniumChips.stream().map(LabVessel::getLabel).collect(Collectors.toList());
             for (String barcode : barcodes) {

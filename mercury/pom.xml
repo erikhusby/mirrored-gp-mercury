@@ -8,7 +8,7 @@
     file as well until such a time that we reconfigure the mercury structure to have a dependant project or something
      that can inherit this version setting. -->
 
-    <version>1.116-SNAPSHOT</version>
+    <version>1.124-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -58,7 +58,6 @@
             <name>Broad Prodinfo</name>
             <url>file:///seq/prodinfo/m2-repository</url>
         </repository>
-
     </distributionManagement>
 
     <developers>
@@ -179,8 +178,7 @@
 
         <oracle.version>12.1.0.2</oracle.version>
 
-        <!-- todo jmt fix -->
-        <wildfly.version>10.1.0.Final</wildfly.version>
+        <wildfly.version>17.0.1.Final</wildfly.version>
 
         <!-- In order to ignore the UI tests by default but turn them on in the Tests.UI profile, we need to do this
         by using properties. The Tests.UI profile basically reverses these properties. Doing this from the command line
@@ -217,8 +215,11 @@
 
         <bspclient.version>[1.3,)</bspclient.version>
 
-	<mercuryCloverDatabase>${project.build.directory}/clover/clover.db</mercuryCloverDatabase>
-
+        <mercuryCloverDatabase>${project.build.directory}/clover/clover.db</mercuryCloverDatabase>
+        <jboss.arquillian.version>1.5.0.Final</jboss.arquillian.version>
+        <jboss.shrinkwrap.resolver.version>3.1.3</jboss.shrinkwrap.resolver.version>
+        <apache.httpcomponents.version>4.5.10</apache.httpcomponents.version>
+        <wildfly.arquillian.version>2.2.0.Final</wildfly.arquillian.version>
     </properties>
 
     <profiles>
@@ -781,7 +782,7 @@
                 <dependency>
                     <groupId>org.wildfly.arquillian</groupId>
                     <artifactId>wildfly-arquillian-container-managed</artifactId>
-                    <version>2.1.0.Final</version>
+                    <version>${wildfly.arquillian.version}</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
@@ -837,7 +838,7 @@
                     <dependency>
                         <groupId>org.jboss.shrinkwrap.resolver</groupId>
                         <artifactId>shrinkwrap-resolver-bom</artifactId>
-                        <version>2.2.4</version>
+                        <version>${jboss.shrinkwrap.resolver.version}</version>
                         <type>pom</type>
                         <scope>import</scope>
                     </dependency>
@@ -849,44 +850,51 @@
                 <dependency>
                     <groupId>org.jboss.arquillian.testng</groupId>
                     <artifactId>arquillian-testng-container</artifactId>
+                    <version>${jboss.arquillian.version}</version>
                     <scope>test</scope>
                 </dependency>
 
                  <dependency>
                     <groupId>org.jboss.shrinkwrap.resolver</groupId>
                     <artifactId>shrinkwrap-resolver-api</artifactId>
+                     <version>${jboss.shrinkwrap.resolver.version}</version>
                     <scope>test</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.jboss.shrinkwrap.resolver</groupId>
                     <artifactId>shrinkwrap-resolver-spi</artifactId>
+                    <version>${jboss.shrinkwrap.resolver.version}</version>
                     <scope>test</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.jboss.shrinkwrap.resolver</groupId>
                     <artifactId>shrinkwrap-resolver-api-maven</artifactId>
+                    <version>${jboss.shrinkwrap.resolver.version}</version>
                     <scope>test</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.jboss.shrinkwrap.resolver</groupId>
                     <artifactId>shrinkwrap-resolver-spi-maven</artifactId>
+                    <version>${jboss.shrinkwrap.resolver.version}</version>
                     <scope>test</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.jboss.shrinkwrap.resolver</groupId>
                     <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
+                    <version>${jboss.shrinkwrap.resolver.version}</version>
                     <scope>test</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.jboss.shrinkwrap.resolver</groupId>
                     <artifactId>shrinkwrap-resolver-impl-maven-archive</artifactId>
+                    <version>${jboss.shrinkwrap.resolver.version}</version>
                     <scope>test</scope>
                 </dependency>
 
                 <dependency>
                     <groupId>org.wildfly.arquillian</groupId>
                     <artifactId>wildfly-arquillian-container-remote</artifactId>
-                    <version>2.1.0.Final</version>
+                    <version>${wildfly.arquillian.version}</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
@@ -1277,7 +1285,7 @@ nodePrinter.print(webapp)
             <dependency>
                 <groupId>org.jboss.arquillian</groupId>
                 <artifactId>arquillian-bom</artifactId>
-                <version>1.4.0.Final</version>
+                <version>${jboss.arquillian.version}</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
@@ -1293,18 +1301,6 @@ nodePrinter.print(webapp)
     </dependencyManagement>
 
     <dependencies>
-
-        <!-- Hibernate classes include this but at deploy causes versioning error :
-           - java.lang.ClassCastException: org.dom4j.DocumentFactory cannot be cast to org.dom4j.DocumentFactory
-           - Exclude by declaring scope private and explicitly exclude jar in Arquillian shrinkwrap DeploymentBuilder!
-           - TODO:  Failed 10.0.0, retry for 10.1.0+
-           -->
-        <dependency>
-            <groupId>dom4j</groupId>
-            <artifactId>dom4j</artifactId>
-            <version>1.6.1</version>
-            <scope>provided</scope>
-        </dependency>
 
         <dependency>
             <groupId>org.testng</groupId>
@@ -1331,27 +1327,22 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>24.0-jre</version>
+            <version>27.0.1-jre</version>
         </dependency>
 
-        <!-- ***
-             * For WildFly, use org.jboss.spec:jboss-javaee-7.0 in lieu of javax:javaee-api.
-             * See: https://community.jboss.org/wiki/WhatsTheCauseOfThisExceptionJavalangClassFormatErrorAbsentCode
-             *** -->
-        <dependency> <!-- WildFly 10.1 patched to CDI 1.2 API -->
+        <dependency>
             <groupId>javax.enterprise</groupId>
             <artifactId>cdi-api</artifactId>
-            <version>1.2</version>
+            <version>2.0.SP1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.spec</groupId>
             <artifactId>jboss-javaee-7.0</artifactId>
-            <version>1.0.0.Final</version>
+            <version>1.1.1.Final</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
-
 
         <!-- https://mvnrepository.com/artifact/org.hamcrest/java-hamcrest   -->
         <dependency>
@@ -1387,99 +1378,117 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.jboss.arquillian.core</groupId>
             <artifactId>arquillian-core-api</artifactId>
+            <version>${jboss.arquillian.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.core</groupId>
             <artifactId>arquillian-core-spi</artifactId>
+            <version>${jboss.arquillian.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.core</groupId>
             <artifactId>arquillian-core-impl-base</artifactId>
+            <version>${jboss.arquillian.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.config</groupId>
             <artifactId>arquillian-config-api</artifactId>
+            <version>${jboss.arquillian.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.config</groupId>
             <artifactId>arquillian-config-spi</artifactId>
+            <version>${jboss.arquillian.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.config</groupId>
             <artifactId>arquillian-config-impl-base</artifactId>
+            <version>${jboss.arquillian.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.test</groupId>
             <artifactId>arquillian-test-api</artifactId>
+            <version>${jboss.arquillian.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.test</groupId>
             <artifactId>arquillian-test-spi</artifactId>
+            <version>${jboss.arquillian.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.test</groupId>
             <artifactId>arquillian-test-impl-base</artifactId>
+            <version>${jboss.arquillian.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.container</groupId>
             <artifactId>arquillian-container-spi</artifactId>
+            <version>${jboss.arquillian.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.container</groupId>
             <artifactId>arquillian-container-impl-base</artifactId>
-            <version>1.1.11.Final</version>
+            <version>${jboss.arquillian.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.container</groupId>
             <artifactId>arquillian-container-test-api</artifactId>
+            <version>${jboss.arquillian.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.container</groupId>
             <artifactId>arquillian-container-test-spi</artifactId>
+            <version>${jboss.arquillian.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.container</groupId>
             <artifactId>arquillian-container-test-impl-base</artifactId>
+            <version>${jboss.arquillian.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.jboss.arquillian.testenricher</groupId>
             <artifactId>arquillian-testenricher-ejb</artifactId>
+            <version>${jboss.arquillian.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.jboss.arquillian.testenricher</groupId>
             <artifactId>arquillian-testenricher-cdi</artifactId>
+            <version>${jboss.arquillian.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.testenricher</groupId>
             <artifactId>arquillian-testenricher-resource</artifactId>
+            <version>${jboss.arquillian.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.testenricher</groupId>
             <artifactId>arquillian-testenricher-initialcontext</artifactId>
+            <version>${jboss.arquillian.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.protocol</groupId>
             <artifactId>arquillian-protocol-servlet</artifactId>
+            <version>${jboss.arquillian.version}</version>
             <scope>test</scope>
         </dependency>
         <!-- End of dependencies for Arquillian shrinkwrap war -->
@@ -1532,18 +1541,23 @@ nodePrinter.print(webapp)
             <scope>test</scope>
         </dependency>
 
-        <!-- Match what's in WildFly 10 CDI patch -->
         <dependency>
             <groupId>org.jboss.weld</groupId>
             <artifactId>weld-core-impl</artifactId>
-            <version>2.4.1.Final</version>
+            <version>3.1.1.Final</version>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.2</version>
+            <version>3.9</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math3</artifactId>
+            <version>3.6.1</version>
         </dependency>
 
         <dependency>
@@ -1562,13 +1576,13 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-core</artifactId>
-            <version>5.0.10.Final</version>
+            <version>5.3.10.Final</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-entitymanager</artifactId>
-            <version>5.0.10.Final</version>
+            <version>5.3.10.Final</version>
             <scope>provided</scope>
             <exclusions>
                 <!-- using cglib-nodep instead -->
@@ -1581,13 +1595,13 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-jpamodelgen</artifactId>
-            <version>5.0.10.Final</version>
+            <version>5.3.10.Final</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-envers</artifactId>
-            <version>5.0.10.Final</version>
+            <version>5.3.10.Final</version>
             <scope>provided</scope>
         </dependency>
         <!-- End of Hibernate API dependencies -->
@@ -1635,19 +1649,19 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>3.0.19.Final</version>
+            <version>3.7.0.Final</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-multipart-provider</artifactId>
-            <version>3.0.19.Final</version>
+            <version>3.7.0.Final</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-jackson2-provider</artifactId>
-            <version>3.0.19.Final</version>
+            <version>3.7.0.Final</version>
             <scope>provided</scope>
         </dependency>
 
@@ -1686,7 +1700,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-jaxrs</artifactId>
-            <version>3.0.19.Final</version>
+            <version>3.7.0.Final</version>
             <scope>provided</scope>
         </dependency>
 
@@ -1703,7 +1717,6 @@ nodePrinter.print(webapp)
             <version>1.9.2</version>
         </dependency>
 
-        <!-- Before bspclient until it's dependency version is updated from 1.4.4! -->
         <dependency>
             <groupId>com.thoughtworks.xstream</groupId>
             <artifactId>xstream</artifactId>
@@ -1713,17 +1726,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.broadinstitute.bsp</groupId>
             <artifactId>bspclient</artifactId>
-            <!-- Unfortunately (for now) there is also a rest-pom.xml.  Changes to this version should be reflected in that
-            file as well until such a time that we reconfigure the mercury structure to have a dependant project or something.
-             -->
-
-            <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-            <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-            <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
             <version>${bspclient.version}</version>
-            <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-            <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-            <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
         </dependency>
 
         <dependency>
@@ -1791,22 +1794,22 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>4.3.1</version>
+            <version>${apache.httpcomponents.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>fluent-hc</artifactId>
-            <version>4.3.1</version>
+            <version>${apache.httpcomponents.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpmime</artifactId>
-            <version>4.3.1</version>
+            <version>${apache.httpcomponents.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient-cache</artifactId>
-            <version>4.3.1</version>
+            <version>${apache.httpcomponents.version}</version>
         </dependency>
 
         <dependency>
@@ -1874,20 +1877,6 @@ nodePrinter.print(webapp)
             <version>1.9.5</version>
         </dependency>
 
-<!-- todo jmt for fingerprint concordance checking
-        <dependency>
-            <groupId>com.github.broadinstitute</groupId>
-            <artifactId>picard</artifactId>
-            <version>2.16.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.github.broadinstitute</groupId>
-            <artifactId>picard-private</artifactId>
-            <version>1.1</version>
-        </dependency>
--->
-
         <dependency>
             <groupId>com.github.pukkaone</groupId>
             <artifactId>webappenhance</artifactId>
@@ -1903,7 +1892,22 @@ nodePrinter.print(webapp)
             <artifactId>csrfguard</artifactId>
             <version>3.1.0</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-storage</artifactId>
+            <version>1.64.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.apis</groupId>
+            <artifactId>google-api-services-iam</artifactId>
+            <version>v1-rev285-1.25.0</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet.jsp</groupId>
+            <artifactId>javax.servlet.jsp-api</artifactId>
+            <version>2.3.3</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -2014,7 +2018,7 @@ nodePrinter.print(webapp)
                     <artifactId>jgitflow-maven-plugin</artifactId>
                     <version>1.0-m5.1</version>
                 </plugin>
-		
+
                 <plugin>
                     <groupId>com.amashchenko.maven.plugin</groupId>
                     <artifactId>gitflow-maven-plugin</artifactId>
@@ -2400,7 +2404,7 @@ nodePrinter.print(webapp)
                     </execution>
                 </executions>
             </plugin>
-	    
+
             <plugin>
                 <groupId>external.atlassian.jgitflow</groupId>
                 <artifactId>jgitflow-maven-plugin</artifactId>
@@ -2453,7 +2457,7 @@ nodePrinter.print(webapp)
                     <pushRemote>true</pushRemote>
                 </configuration>
             </plugin>
-            
+
         </plugins>
 
         <extensions>

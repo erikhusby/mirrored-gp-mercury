@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
@@ -44,7 +45,6 @@ import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -54,11 +54,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell;
 import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell;
 import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FlowcellType.HiSeqFlowcell;
+import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FlowcellType.ISeqFlowcell;
 import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FlowcellType.MiSeqFlowcell;
 
 /**
@@ -407,9 +411,9 @@ public class LabBatchEjbStandardTest extends Arquillian {
         // Iterates on the loading tube barcodes to be used in the test.
         Iterator<String> barcodeIterator = mapBarcodeToTube.keySet().iterator();
         // Defines the number of tubes used for each test run, and the number of lanes to be allocated for each tube.
-        int[][] numberLanes = {{3}, {5, 17}};
+        int[][] numberLanes = {{3}, {5, 17}, {2}};
         // Defines the flowcell type to be used on each test run.
-        IlluminaFlowcell.FlowcellType[] flowcellTypes = {MiSeqFlowcell, HiSeq4000Flowcell};
+        IlluminaFlowcell.FlowcellType[] flowcellTypes = {MiSeqFlowcell, HiSeq4000Flowcell, ISeqFlowcell};
 
         for (int runIdx = 0; runIdx < numberLanes.length; ++runIdx) {
 
@@ -683,6 +687,30 @@ public class LabBatchEjbStandardTest extends Arquillian {
         Assert.assertEquals(list.size(), 0, messages.toString());
         Assert.assertTrue(messages.toString().contains("has invalid regulatory designation (Clinical and Research)"),
                 messages.toString());
+
+        // Should handle non-unique product name (same name on two products).
+        // Finds duplicate names by counting the occurrence of each product name.
+        List<String> duplicateNames = labBatchDao.findAll(Product.class).stream().
+                map(Product::getProductName).
+                sorted().
+                collect(Collectors.groupingBy(Function.identity(), Collectors.counting())).
+                entrySet().stream().
+                filter(mapEntry -> mapEntry.getValue().intValue() > 0).
+                map(mapEntry -> mapEntry.getKey()).
+                collect(Collectors.toList());
+        // Tests a WES product, a WGS product, and any other product, just for variety of product dates, etc.
+        // For the purposes of this test it doesn't matter if the products apply to these samples or not
+        // since the product lookup and handling is the same.
+        Stream.of(duplicateNames.stream().filter(name -> name.startsWith("WES")).findFirst().orElse(null),
+                duplicateNames.stream().filter(name -> name.startsWith("WGS")).findFirst().orElse(null),
+                duplicateNames.stream().findFirst().orElse(null)).
+                filter(name -> name != null).
+                forEach(duplicateName -> {
+                    messages.setLength(0);
+                    Assert.assertEquals(designationErrorHelper(messages, messageReporter,
+                            Pair.of(duplicateName, DesignationUtils.RESEARCH),
+                            Pair.of(duplicateName, DesignationUtils.RESEARCH)).size(), 1, messages.toString());
+                });
 
         // Makes Genome mixed designation FCT just fine.
         messages.setLength(0);

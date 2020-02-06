@@ -19,6 +19,15 @@
         <xs:attributeGroup ref="metadataGroup"/>
     </xs:complexType>
 
+    <xs:complexType name="decisionType">
+        <xs:attributeGroup ref="decisionGroup"/>
+    </xs:complexType>
+
+    <xs:attributeGroup name="decisionGroup">
+        <xs:attribute name="name" type="xs:normalizedString" use="required"/>
+        <xs:attribute name="note" type="xs:normalizedString" use="required"/>
+    </xs:attributeGroup>
+
     <xs:element name="qpcrRunBean">
         <xs:complexType>
             <xs:sequence>
@@ -36,6 +45,7 @@
             <xs:element type="xs:string" name="tubeBarcode"/>
             <xs:element type="xs:string" name="rackPositionName"/>
             <xs:element name="metadata" type="metricMetadataType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="decision" type="decisionType"/>
         </xs:sequence>
     </xs:complexType>
 

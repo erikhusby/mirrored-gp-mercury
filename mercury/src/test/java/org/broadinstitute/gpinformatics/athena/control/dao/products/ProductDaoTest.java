@@ -3,9 +3,11 @@ package org.broadinstitute.gpinformatics.athena.control.dao.products;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Predicate;
+import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
@@ -45,6 +47,9 @@ public class ProductDaoTest extends StubbyContainerTest {
     private PriceItemDao priceItemDao;
 
     @Inject
+    private PipelineDataTypeDao pipelineDataTypeDao;
+
+    @Inject
     private UserTransaction utx;
 
 
@@ -74,7 +79,8 @@ public class ProductDaoTest extends StubbyContainerTest {
     }
 
 
-    public static Product createProduct(ProductFamilyDao productFamilyDao, PriceItemDao priceItemDao) {
+    public static Product createProduct(ProductFamilyDao productFamilyDao, PriceItemDao priceItemDao,
+                                        PipelineDataTypeDao pipelineDataTypeDao) {
 
         ProductFamily metagenomicsProductFamily = productFamilyDao.find("Metagenomics");
 
@@ -83,6 +89,8 @@ public class ProductDaoTest extends StubbyContainerTest {
         final Calendar yesterday = Calendar.getInstance();
         yesterday.add(Calendar.DATE, -1);
         String partNumber = ProductTestFactory.generateProductPartNumber();
+        PipelineDataType pipelineDataType = pipelineDataTypeDao.findDataType(Aggregation.DATA_TYPE_EXOME);
+
         Product product = new Product(
                 "Test Data",                               // product name
                 metagenomicsProductFamily,                 // product family
@@ -98,7 +106,9 @@ public class ProductDaoTest extends StubbyContainerTest {
                 "dummy deliverables",                      // deliverables
                 false,                                     // top level product
                 Workflow.NONE,
-                false, "agg type");
+                false,
+                pipelineDataType
+        );
 
         // we have some tests that call this method more than once so the price item compound key must be unique
         // across invocations
@@ -115,7 +125,7 @@ public class ProductDaoTest extends StubbyContainerTest {
 
 
     private Product createProduct() {
-        return createProduct(productFamilyDao, priceItemDao);
+        return createProduct(productFamilyDao, priceItemDao, pipelineDataTypeDao);
     }
 
 

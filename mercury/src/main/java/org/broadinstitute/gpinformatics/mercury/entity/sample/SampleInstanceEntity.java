@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
@@ -18,6 +19,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -26,12 +28,14 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -102,6 +106,10 @@ public class SampleInstanceEntity {
     private String insertSize;
     private Boolean umisPresent;
     private String aggregationDataType;
+
+    @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.REFRESH})
+    @JoinColumn(name = "PIPELINE_DATA_TYPE")
+    private PipelineDataType pipelineDataType;
 
     /**
      * Implied sample name means there was no explicit sample name provided in the upload and that the library
@@ -291,13 +299,30 @@ public class SampleInstanceEntity {
     public void setUmisPresent(Boolean umisPresent) {
         this.umisPresent = umisPresent;
     }
+    public Long getSampleInstanceEntityId() {
+        return sampleInstanceEntityId;
+    }
 
+    /**
+     * @deprecated This column will soon be removed. Please call getPipelineDataType() or getPipelineDataTypeString()
+     *             instead.
+     */
+    @Deprecated
     public String getAggregationDataType() {
         return aggregationDataType;
     }
 
-    public void setAggregationDataType(String aggregationDataType) {
-        this.aggregationDataType = aggregationDataType;
+    @Transient
+    public String getPipelineDataTypeString() {
+        return Optional.ofNullable(pipelineDataType).map(PipelineDataType::getName).orElse("");
+    }
+
+    public PipelineDataType getPipelineDataType() {
+        return pipelineDataType;
+    }
+
+    public void setPipelineDataType(PipelineDataType pipelineDataType) {
+        this.pipelineDataType = pipelineDataType;
     }
 
     public FlowcellDesignation.IndexType getIndexType() {

@@ -1,12 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.rapsheet;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.PipelineDataTypeDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -21,6 +23,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
@@ -128,6 +131,9 @@ public class ReworkEjbTest extends Arquillian {
     private ProductOrderDao productOrderDao;
 
     @Inject
+    private PipelineDataTypeDao pipelineDataTypeDao;
+
+    @Inject
     private PriceItemDao priceItemDao;
 
     @Inject
@@ -191,6 +197,7 @@ public class ReworkEjbTest extends Arquillian {
     private String somaticSample2;
     private String somaticSample3;
 
+    private PipelineDataType pipelineDataType;
     /**
      * Local map of SampleData to use when creating MercurySamples for ProductOrderSamples.
      */
@@ -207,7 +214,7 @@ public class ReworkEjbTest extends Arquillian {
         if (reworkEjb == null) {
             return;
         }
-
+        pipelineDataType = pipelineDataTypeDao.findDataType(Aggregation.DATA_TYPE_EXOME);
         setupProducts();
 
         String testPrefix = "SGM_Test_RWIT";
@@ -492,7 +499,7 @@ public class ReworkEjbTest extends Arquillian {
      */
     public static WorkflowBucketDef findBucketDef(@Nonnull String workflow, @Nonnull LabEventType stepDef) {
 
-        WorkflowConfig workflowConfig = (new WorkflowLoader()).load();
+        WorkflowConfig workflowConfig = (new WorkflowLoader()).getWorkflowConfig();
         assert (workflowConfig != null && workflowConfig.getProductWorkflowDefs() != null &&
                 !workflowConfig.getProductWorkflowDefs().isEmpty());
         ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(workflow);
@@ -592,7 +599,7 @@ public class ReworkEjbTest extends Arquillian {
                                       true,
                                       workflow,
                                       false,
-                                      null);
+                                      pipelineDataType);
 
         product.setPrimaryPriceItem(priceItem);
         return product;

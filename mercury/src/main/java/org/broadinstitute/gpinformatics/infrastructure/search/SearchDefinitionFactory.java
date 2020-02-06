@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -104,6 +105,7 @@ public class SearchDefinitionFactory {
         fact.buildLabMetricSearchDef();
         fact.buildLabMetricRunSearchDef();
         fact.buildProductOrderSearchDef();
+        fact.buildSampleInstanceEntitySearchDef();
     }
 
     public static ConfigurableSearchDefinition getForEntity(String entity) {
@@ -120,6 +122,7 @@ public class SearchDefinitionFactory {
             fact.buildLabMetricSearchDef();
             fact.buildLabMetricRunSearchDef();
             fact.buildProductOrderSearchDef();
+            fact.buildSampleInstanceEntitySearchDef();
         }
 
         return MAP_NAME_TO_DEF.get(entity);
@@ -165,6 +168,12 @@ public class SearchDefinitionFactory {
         ConfigurableSearchDefinition productOrderSearchDefinition
                 = new ProductOrderSearchDefinition().buildSearchDefinition();
         MAP_NAME_TO_DEF.put(ColumnEntity.PRODUCT_ORDER.getEntityName(), productOrderSearchDefinition);
+    }
+
+    private void buildSampleInstanceEntitySearchDef() {
+        ConfigurableSearchDefinition configurableSearchDefinition
+                = new SampleInstanceEntitySearchDefinition().buildSearchDefinition();
+        MAP_NAME_TO_DEF.put(ColumnEntity.EXTERNAL_LIBRARY.getEntityName(), configurableSearchDefinition);
     }
 
     /**
@@ -227,30 +236,46 @@ public class SearchDefinitionFactory {
      */
     public static String buildDrillDownLink( String linkText, ColumnEntity entityType, String selectedSearchName, Map<String,String[]> terms, SearchContext context ) {
 
-        List<SearchValueBean> searchValues = new ArrayList<>();
-        for( Map.Entry<String,String[]> term : terms.entrySet()){
-            searchValues.add( new SearchValueBean( term.getKey(), Arrays.asList( term.getValue() ) ) );
-        }
-        SearchRequestBean searchRequest = new SearchRequestBean(entityType.getEntityName(), selectedSearchName, searchValues);
-
-        StringBuilder link = new StringBuilder()
-            .append("<a class=\"external\" target=\"new\" href=\"")
-            .append(context.getBaseSearchURL())
-            .append("/search/ConfigurableSearch.action?")
-            .append(ConfigurableSearchActionBean.DRILL_DOWN_EVENT)
-            .append("=&drillDownRequest=");
-
-        try {
-            link.append( StringEscapeUtils.escapeHtml4( new ObjectMapper().writeValueAsString(searchRequest) ) );
-        } catch (IOException e) {
-            throw new RuntimeException("Fail marshalling drill down configuration", e);
-        }
+        StringBuilder link = new StringBuilder();
+        link.append("<a class=\"external\" target=\"new\" href=\"");
+        buildDrillDownHref(entityType, selectedSearchName, terms, link, context.getBaseSearchURL());
 
         link.append("\">")
             .append(StringEscapeUtils.escapeHtml4(linkText))
             .append("</a>");
 
         return link.toString();
+    }
+
+    /**
+     * Builds an href for result cell to facilitate a drill down link to another UDS
+     * @param baseSearchURL
+     * @param entityType The entity type of the targeted search
+     * @param selectedSearchName The name of a saved search to use (must exist)
+     * @param terms Terms and values as required to match saved search
+     * @return Encoded href to present in search result column
+     */
+    public static void buildDrillDownHref(ColumnEntity entityType, String selectedSearchName,
+                                          Map<String, String[]> terms, StringBuilder link, String baseSearchURL) {
+        link.append(baseSearchURL);
+        if (!baseSearchURL.contains(ConfigurableSearchActionBean.URL_BINDING)) {
+            link.append(ConfigurableSearchActionBean.URL_BINDING);
+        }
+        link.append("?")
+            .append(ConfigurableSearchActionBean.DRILL_DOWN_EVENT)
+            .append("=&drillDownRequest=");
+
+        List<SearchValueBean> searchValues = new ArrayList<>();
+        for( Map.Entry<String,String[]> term : terms.entrySet()){
+            searchValues.add( new SearchValueBean( term.getKey(), Arrays.asList( term.getValue() ) ) );
+        }
+        SearchRequestBean searchRequest = new SearchRequestBean(entityType.getEntityName(), selectedSearchName, searchValues);
+
+        try {
+            link.append(URLEncoder.encode(new ObjectMapper().writeValueAsString(searchRequest), "UTF-8"));
+        } catch (IOException e) {
+            throw new RuntimeException("Fail marshalling drill down configuration", e);
+        }
     }
 
 

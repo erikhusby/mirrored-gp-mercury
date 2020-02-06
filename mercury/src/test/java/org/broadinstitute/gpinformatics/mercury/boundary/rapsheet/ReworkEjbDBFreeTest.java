@@ -56,7 +56,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
 
         reworkEjb = new ReworkEjb();
         WorkflowLoader workflowLoader = new WorkflowLoader();
-        reworkEjb.setWorkflowConfig(workflowLoader.load());
+        reworkEjb.setWorkflowConfig(workflowLoader.getWorkflowConfig());
 
         labVessel = new BarcodedTube("22834023", BarcodedTube.BarcodedTubeType.MatrixTube);
 
@@ -201,7 +201,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
 
 
         BSPSampleDataFetcher mockFetcher = Mockito.mock(BSPSampleDataFetcher.class);
-        Mockito.when(mockFetcher.fetchSampleData(Mockito.anyCollectionOf(String.class))).then(new Answer<Object>() {
+        Mockito.when(mockFetcher.fetchSampleData(Mockito.anyCollectionOf(String.class), Mockito.anyObject(), Mockito.anyObject())).then(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 Collection<String> sampleIds = (Collection<String>) invocationOnMock.getArguments()[0];
@@ -262,7 +262,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
         productOrderSampleSet.add(nonExomesample);
 
         BSPSampleDataFetcher mockFetcher = Mockito.mock(BSPSampleDataFetcher.class);
-        Mockito.when(mockFetcher.fetchSampleData(Mockito.anyCollectionOf(String.class))).then(new Answer<Object>() {
+        Mockito.when(mockFetcher.fetchSampleData(Mockito.anyCollectionOf(String.class), Mockito.anyObject(), Mockito.anyObject())).then(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 Collection<String> sampleIds = (Collection<String>) invocationOnMock.getArguments()[0];
@@ -290,9 +290,9 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
     @Test
     public void testValidBucketEntry() {
 
-        ReworkEjb.BucketCandidate validCandidate = reworkEjb.getBucketCandidateConsideringProductFamily(
+        ReworkEjb.BucketCandidate validCandidate = reworkEjb.buildBucketCandidate(
                 sampleList1.get(0), sampleList1.get(0).getSampleKey(), labVessel.getLabel(),
-                ProductFamily.ProductFamilyInfo.EXOME, labVessel, ""
+                labVessel, ""
         );
 
         Assert.assertTrue(validCandidate.isValid());
