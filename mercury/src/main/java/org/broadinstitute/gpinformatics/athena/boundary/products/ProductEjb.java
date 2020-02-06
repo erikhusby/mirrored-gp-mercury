@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.products;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
@@ -42,6 +43,7 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 @Stateful
 @RequestScoped
@@ -366,6 +368,7 @@ public class ProductEjb {
         for (Product productToPublish : productsToPublish) {
             try {
                 publishProductToSAP(productToPublish, extendProductsToOtherPlatforms, publishType);
+                log.debug("Published the product "+productToPublish.getDisplayName() + " to SAP");
             } catch (SAPIntegrationException e) {
                 errorMessages.add(productToPublish.getPartNumber() + ": " + e.getMessage());
                 log.error(e.getMessage());
@@ -375,5 +378,32 @@ public class ProductEjb {
             throw new ValidationException("Some errors were found pushing products", errorMessages);
         }
         productPriceCache.refreshCache();
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void adjustMaterialStatusForToday() {
+        List<Product> discontinuedProducts = productDao.findDiscontinuedProducts();
+        List<Product> currentProducts = productDao.findProducts(ProductDao.Availability.CURRENT,
+                ProductDao.TopLevelOnly.YES, ProductDao.IncludePDMOnly.YES);
+
+        Date today = new Date();
+        List<Product> productsToProcessToday = discontinuedProducts.stream()
+                .filter(product -> {
+                    return product.getDiscontinuedDate() != null && DateUtils.isSameDay(today, product.getDiscontinuedDate());
+                })
+                .collect(Collectors.toList());
+
+        productsToProcessToday.addAll(currentProducts.stream()
+                .filter(product -> product.getAvailabilityDate() != null && DateUtils.isSameDay(today, product.getAvailabilityDate()))
+                .collect(Collectors.toList()));
+
+        for (Product product : productsToProcessToday) {
+            try {
+                sapService.publishProductInSAP(product);
+                log.debug(String.format("Updated the product %s in SAP to be Disabled", product.getDisplayName()));
+            } catch (SAPIntegrationException e) {
+                log.error("Unable to call SAP to disable " + product.getDisplayName());
+            }
+        }
     }
 }
