@@ -352,7 +352,7 @@
                 var $target = $j(event.target);
                 var filterIndex = filterIndexes[$target.attr('name')];
                 var filterFunction = window[$target.attr('value')];
-                var filterText = $target.text()
+                var filterText = $target.text();
                 var pill = $target.parentsUntil('li.dropdown').siblings
                 ('a');
                 var check = $target.siblings('div');
@@ -622,7 +622,9 @@
                  * same price item, but not the current input, and apply the action.
                  */
                 var priceItemId = input.attr('priceItemId');
-                var $quantityInputs = getSelectedRows().find('input.ledgerQuantity[priceItemId=' + priceItemId + ']');
+                let selectedRows = getSelectedRows();
+                var $quantityInputs = selectedRows.find('input.ledgerQuantity[priceItemId=' + priceItemId + ']');
+                var $replacementSelectInputs = selectedRows.find('select');
                 var value = input.val();
 
                 for (var i = 0; i < $quantityInputs.length; i++) {
@@ -634,7 +636,6 @@
                     }
                 }
             }
-
         });
 
         /*
@@ -1085,11 +1086,10 @@
                                                     <option value="">Select one if replacing price...</option>
                                                     <c:forEach items="${replacement.value}" var="deliveryConditions">
                                                         <c:choose>
-                                                            <c:when test="${selectedReplacement != null && replacement.equals(selectedReplacement)}">
+                                                            <c:when test="${selectedReplacement != null && deliveryConditions.conditionName.equals(selectedReplacement)}">
                                                                 <option value="${deliveryConditions.conditionName}" selected> ${deliveryConditions.displayName}</option>
                                                             </c:when>
                                                             <c:otherwise>
-
                                                                 <option value="${deliveryConditions.conditionName}"> ${deliveryConditions.displayName}</option>
                                                             </c:otherwise>
                                                         </c:choose>
