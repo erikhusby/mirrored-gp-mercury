@@ -40,12 +40,11 @@ public class SRSBatchActionBean extends CoreActionBean {
 
     // Stages
     public enum Stage {
-        CREATING, SEARCHING, EDITING
+        CHOOSING, EDITING
     }
 
     // Events and outcomes
     private Stage stage;
-    private static final String SEARCH_ACTION = "evtSearch";
     private static final String ADD_SAMPLES_ACTION = "evtAddSamples";
     private static final String ADD_BARCODES_ACTION = "evtAddBarcodes";
     private static final String REMOVE_ACTION = "evtRemove";
@@ -54,6 +53,7 @@ public class SRSBatchActionBean extends CoreActionBean {
     private LabBatch labBatch;
     private Long labBatchId;
     private String[] inputValues;
+    List<PickWorkspaceActionBean.BatchSelectionData> batchSelectionList;
 
     public SRSBatchActionBean(){
         super(CREATE_BATCH, EDIT_BATCH, SRS_BATCH_PARAMETER);
@@ -69,56 +69,40 @@ public class SRSBatchActionBean extends CoreActionBean {
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
-        stage = Stage.SEARCHING;
-        // TODO: JMS Show active by default?  Add option for other states?
+
+        batchSelectionList = new ArrayList<>();
+        // TODO: JMS Add option for inactive batches
+        for (LabBatch batch : labBatchDao.findByTypeAndActiveStatus(LabBatch.LabBatchType.SRS, Boolean.TRUE)) {
+            batchSelectionList.add(new PickWorkspaceActionBean.BatchSelectionData(batch.getLabBatchId(), batch.getBatchName(), false, false));
+        }
+
+        if (labBatchId == null) {
+            stage = Stage.CHOOSING;
+        } else {
+            labBatch = labBatchDao.findById(LabBatch.class, labBatchId);
+            if (labBatch == null) {
+                stage = Stage.CHOOSING;
+            } else {
+                stage = Stage.EDITING;
+            }
+        }
+
         return new ForwardResolution(VIEW_PAGE);
     }
 
-    @HandlesEvent(SEARCH_ACTION)
-    public Resolution search() {
-        if( batchName == null || batchName.trim().isEmpty() ) {
-            addValidationError("batchName", "Batch name required.");
-            stage = Stage.SEARCHING;
-            return new ForwardResolution(VIEW_PAGE);
-        }
-
-        LabBatch batch = labBatchDao.findByName(batchName.trim());
-        if( batch == null ) {
-            addValidationError("batchName", "No batch found for {1}.", batchName);
-            stage = Stage.SEARCHING;
-            return new ForwardResolution(VIEW_PAGE);
-        }
-
-        if(batch.getLabBatchType() != LabBatch.LabBatchType.SRS ) {
-            addValidationError("batchName", "Batch {1} type is not SRS.", batchName);
-            stage = Stage.SEARCHING;
-            return new ForwardResolution(VIEW_PAGE);
-        }
-
-        if( !batch.getActive() ) {
-            addValidationError("batchName", "Batch {1} is no longer active.", batchName);
-            stage = Stage.SEARCHING;
-            return new ForwardResolution(VIEW_PAGE);
-        }
-
-        this.labBatch = batch;
-        stage = Stage.EDITING;
-
-        return new ForwardResolution(VIEW_PAGE);
-    }
 
     @HandlesEvent(SAVE_ACTION)
     public Resolution saveNew() {
         if( batchName == null || batchName.trim().isEmpty() ) {
             addValidationError("batchName", "Batch name required.");
-            stage = Stage.CREATING;
+            stage = Stage.CHOOSING;
             return new ForwardResolution(VIEW_PAGE);
         }
 
         LabBatch batch = labBatchDao.findByName(batchName.trim());
         if( batch != null ) {
             addValidationError("batchName", "A batch already exists named {1}.", batchName);
-            stage = Stage.CREATING;
+            stage = Stage.CHOOSING;
             return new ForwardResolution(VIEW_PAGE);
         }
 
@@ -136,6 +120,10 @@ public class SRSBatchActionBean extends CoreActionBean {
     @ValidationMethod(on = {ADD_SAMPLES_ACTION,ADD_BARCODES_ACTION,REMOVE_ACTION})
     public void validateAdd() {
         stage = Stage.EDITING;
+        if (labBatchId == null) {
+            stage = Stage.CHOOSING;
+            return;
+        }
         if (inputValues == null || inputValues.length == 0) {
             addValidationError("inputValues", "No values to add");
         }
@@ -249,12 +237,6 @@ public class SRSBatchActionBean extends CoreActionBean {
         return new ForwardResolution(VIEW_PAGE);
     }
 
-    @HandlesEvent(CREATE_ACTION)
-    public Resolution create() {
-        stage = Stage.CREATING;
-        return new ForwardResolution(VIEW_PAGE);
-    }
-
     public String getBatchName() {
         return labBatch!=null?labBatch.getBatchName():batchName;
     }
@@ -276,8 +258,12 @@ public class SRSBatchActionBean extends CoreActionBean {
         return labBatch;
     }
 
-    public Stage getStage(){
+    public Stage getStage() {
         return stage;
+    }
+
+    public List<PickWorkspaceActionBean.BatchSelectionData> getBatchSelectionList() {
+        return batchSelectionList;
     }
 
     // For Testing

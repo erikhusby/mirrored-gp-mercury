@@ -77,8 +77,8 @@ public class PickWorkspaceActionBean extends CoreActionBean {
         pickerDataRows = new ArrayList<>();
 
         batchSelectionList = new ArrayList<>();
-        for( LabBatch batch :  labBatchDao.findActiveByType(LabBatch.LabBatchType.SRS) ) {
-            batchSelectionList.add( new BatchSelectionData(batch.getLabBatchId(), batch.getBatchName(),false,false) );
+        for (LabBatch batch : labBatchDao.findByTypeAndActiveStatus(LabBatch.LabBatchType.SRS, Boolean.TRUE)) {
+            batchSelectionList.add(new BatchSelectionData(batch.getLabBatchId(), batch.getBatchName(), false, false));
         }
         return new ForwardResolution(UI_DEFAULT);
     }

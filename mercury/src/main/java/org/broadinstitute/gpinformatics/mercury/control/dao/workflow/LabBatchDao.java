@@ -31,12 +31,18 @@ public class LabBatchDao extends GenericDao {
         return findList(LabBatch.class, LabBatch_.labBatchType, labBatchType);
     }
 
-    public List<LabBatch> findActiveByType(LabBatch.LabBatchType labBatchType) {
+    /**
+     * @param labBatchType The desired LabBatch.LabBatchType
+     * @param isActive     The desired active status, Boolean.TRUE for active batches
+     * @return A list of lab batches sorted descending by created date
+     */
+    public List<LabBatch> findByTypeAndActiveStatus(LabBatch.LabBatchType labBatchType, Boolean isActive) {
         CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
         CriteriaQuery<LabBatch> criteriaQuery = criteriaBuilder.createQuery(LabBatch.class);
         Root<LabBatch> root = criteriaQuery.from(LabBatch.class);
 
-        criteriaQuery.where(criteriaBuilder.equal(root.get(LabBatch_.labBatchType), labBatchType), criteriaBuilder.equal(root.get(LabBatch_.isActive), Boolean.TRUE) );
+        criteriaQuery.where(criteriaBuilder.equal(root.get(LabBatch_.labBatchType), labBatchType), criteriaBuilder.equal(root.get(LabBatch_.isActive), isActive))
+                .orderBy(criteriaBuilder.desc(root.get(LabBatch_.createdOn)));
 
         try {
             return getQuery(criteriaQuery, LockModeType.NONE).getResultList();
