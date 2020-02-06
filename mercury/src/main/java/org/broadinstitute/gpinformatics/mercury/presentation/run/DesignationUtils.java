@@ -75,7 +75,7 @@ public class DesignationUtils {
 
         for (Iterator<DesignationDto> iter = caller.getDtos().iterator(); iter.hasNext(); ) {
             DesignationDto dto = iter.next();
-            if (dto.isSelected()) {
+            if (dto != null && dto.isSelected()) {
                 if (multiEdit.getStatus() != null) {
                     // Abandoning an unsaved dto just removes it from the list and not persisted.
                     if (dto.getStatus() == FlowcellDesignation.Status.UNSAVED
