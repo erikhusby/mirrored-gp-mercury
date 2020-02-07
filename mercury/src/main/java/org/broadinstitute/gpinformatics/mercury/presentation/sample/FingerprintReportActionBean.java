@@ -220,7 +220,7 @@ public class FingerprintReportActionBean extends CoreActionBean {
         String[] sheetNames = {"Fingerprints"};
         sheets.put(sheetNames[0], fingerprintCells);
 
-        return SpreadsheetCreator.createSpreadsheet(sheets);
+        return SpreadsheetCreator.createSpreadsheet(sheets, SpreadsheetCreator.Type.XLSX);
     }
 
 
