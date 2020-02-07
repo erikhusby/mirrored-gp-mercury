@@ -590,7 +590,7 @@ public class SequencingTemplateFactory {
         }
         boolean mixedFlowcellOk = false;
         for (Product product : products) {
-            if (Objects.equals(product.getAggregationDataType(), Aggregation.DATA_TYPE_WGS)) {
+            if (Objects.equals(product.getPipelineDataTypeString(), Aggregation.DATA_TYPE_WGS)) {
                 mixedFlowcellOk = true;
                 break;
             }

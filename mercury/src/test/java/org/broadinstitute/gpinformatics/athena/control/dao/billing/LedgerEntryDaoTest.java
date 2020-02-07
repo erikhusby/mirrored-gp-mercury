@@ -20,6 +20,7 @@ import org.testng.annotations.Test;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Set;
 
@@ -73,9 +74,9 @@ public class LedgerEntryDaoTest extends StubbyContainerTest {
         Date date1 = formatter.parse("12/5/12");
         LedgerEntry unBilledLedger1;
         if(order.hasSapQuote()) {
-            unBilledLedger1 = new LedgerEntry(productOrderSample1, order.getProduct(), date1, 1);
+            unBilledLedger1 = new LedgerEntry(productOrderSample1, order.getProduct(), date1, BigDecimal.ONE);
         } else {
-            unBilledLedger1 = new LedgerEntry(productOrderSample1, priceItem, date1,1);
+            unBilledLedger1 = new LedgerEntry(productOrderSample1, priceItem, date1,BigDecimal.ONE);
         }
 
         // Add one ledger item to sample 1.
@@ -98,11 +99,12 @@ public class LedgerEntryDaoTest extends StubbyContainerTest {
         LedgerEntry unBilledLedger2ForDupes;
         if(orderWithDupes.hasSapQuote()) {
 
-            unBilledLedger1ForDupes = new LedgerEntry(productOrderSample1ForDupes, orderWithDupes.getProduct(), date2, 8);
-            unBilledLedger2ForDupes = new LedgerEntry(productOrderSample2ForDupes, orderWithDupes.getProduct(), date2, 16);
+            unBilledLedger1ForDupes = new LedgerEntry(productOrderSample1ForDupes, orderWithDupes.getProduct(), date2,
+                    BigDecimal.valueOf(8));
+            unBilledLedger2ForDupes = new LedgerEntry(productOrderSample2ForDupes, orderWithDupes.getProduct(), date2, BigDecimal.valueOf(16));
         } else {
-            unBilledLedger1ForDupes = new LedgerEntry(productOrderSample1ForDupes, priceItem, date2, 8);
-            unBilledLedger2ForDupes = new LedgerEntry(productOrderSample2ForDupes, priceItem, date2, 16);
+            unBilledLedger1ForDupes = new LedgerEntry(productOrderSample1ForDupes, priceItem, date2, BigDecimal.valueOf(8));
+            unBilledLedger2ForDupes = new LedgerEntry(productOrderSample2ForDupes, priceItem, date2, BigDecimal.valueOf(16));
         }
 
         // Add the ledger items one to each of the dupes samples.

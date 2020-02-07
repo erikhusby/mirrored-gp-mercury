@@ -142,7 +142,7 @@ public class LibraryConstructionEntityBuilder {
     public LibraryConstructionEntityBuilder invoke() {
         final LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LibraryConstructionJaxbBuilder(
                 bettaLimsMessageTestFactory, testPrefix, shearCleanPlateBarcode, p7IndexPlateBarcode, p5IndexPlateBarcode,
-                numSamples, LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY,
+                numSamples,
                 Arrays.asList(Triple.of("KAPA Reagent Box", "0009753252", 1)),
                 Arrays.asList(Triple.of("PEG", "0009753352", 2), Triple.of("70% Ethanol", "LCEtohTest", 3),
                         Triple.of("EB", "0009753452", 4), Triple.of("SPRI", "LCSpriTest", 5)),

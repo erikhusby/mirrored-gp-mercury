@@ -286,7 +286,7 @@
                     <label class="control-label label-form">Aggregation Data Type</label>
                     <div class="controls">
                         <div class="form-value">
-                                ${actionBean.editProduct.aggregationDataType}
+                                ${actionBean.editProduct.pipelineDataTypeString}
                         </div>
                     </div>
                 </div>

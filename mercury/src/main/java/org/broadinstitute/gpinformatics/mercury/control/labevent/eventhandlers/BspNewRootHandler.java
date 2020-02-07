@@ -150,7 +150,7 @@ public class BspNewRootHandler extends AbstractEventHandler {
 
         // Call BSP KitResource web service
         String sheetName = "Sample Submission Form";
-        Workbook workbook = SpreadsheetCreator.createSpreadsheet(sheetName, rows);
+        Workbook workbook = SpreadsheetCreator.createSpreadsheet(sheetName, rows, SpreadsheetCreator.Type.XLS);
         String urlString = bspRestClient.getUrl(BSP_KIT_REST_URL);
         WebTarget webTarget = bspRestClient.getWebResource(urlString);
         MultipartFormDataOutput multipartFormDataOutput = new MultipartFormDataOutput();

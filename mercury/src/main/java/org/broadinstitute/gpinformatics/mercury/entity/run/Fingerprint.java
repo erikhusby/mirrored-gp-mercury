@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.hibernate.envers.Audited;
+import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -18,6 +19,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,14 +35,17 @@ import java.util.Set;
 @Entity
 @Audited
 @Table(schema = "mercury",
-    indexes = {@Index(name = "IX_FP_MERCURY_SAMPLE", columnList = "MERCURY_SAMPLE", unique = false)})
+        indexes = {@Index(name = "IX_FP_MERCURY_SAMPLE", columnList = "MERCURY_SAMPLE", unique = false)})
 public class Fingerprint {
+
 
     public enum Disposition {
         PASS("P"),
         FAIL("F"),
         NONE("N"),
-        /** Set by fixups, to indicate that the fingerprint should not be included in the pipeline's consensus fingerprint */
+        /**
+         * Set by fixups, to indicate that the fingerprint should not be included in the pipeline's consensus fingerprint
+         */
         IGNORE("I");
 
         private final String abbreviation;
@@ -69,7 +74,9 @@ public class Fingerprint {
         GENERAL_ARRAY(2),
         FAT_PANDA(1);
 
-        /** Lower number indicates higher preference as "initial" fingerprint. */
+        /**
+         * Lower number indicates higher preference as "initial" fingerprint.
+         */
         private int precedenceForInitial;
 
         Platform(int precedenceForInitial) {
@@ -149,12 +156,14 @@ public class Fingerprint {
     // fatPandaGq
     // fatPandaPl
 
-    /** For JPA. */
+    /**
+     * For JPA.
+     */
     protected Fingerprint() {
     }
 
     public Fingerprint(MercurySample mercurySample, Disposition disposition, Platform platform, GenomeBuild genomeBuild,
-            Date dateGenerated, SnpList snpList, Gender gender, Boolean match) {
+                       Date dateGenerated, SnpList snpList, Gender gender, Boolean match) {
         this.mercurySample = mercurySample;
         this.snpList = snpList;
         mercurySample.getFingerprints().add(this);
@@ -189,6 +198,32 @@ public class Fingerprint {
         return fpGenotypesOrdered;
     }
 
+
+    public static class OrderFpPtidRootSamp implements Comparator<Fingerprint> {
+
+        @Override
+        public int compare(Fingerprint o1, Fingerprint o2) {
+            String patientId1 = o1.getMercurySample().getSampleData().getPatientId();
+            String patientId2 = o2.getMercurySample().getSampleData().getPatientId();
+            String root1 = o1.getMercurySample().getSampleData().getRootSample();
+            String root2 = o2.getMercurySample().getSampleData().getRootSample();
+            String aliquot1 = o1.getMercurySample().getSampleKey();
+            String aliquot2 = o2.getMercurySample().getSampleKey();
+
+            if (patientId1.compareTo(patientId2) == 0) {
+                if (root1.compareTo(root2) == 0) {
+                    return aliquot1.compareTo(aliquot2);
+                }
+                return root1.compareTo(root2);
+            }
+            return patientId1.compareTo(patientId2);
+        }
+    }
+
+
+    /**
+     * @deprecated not truly deprecated, but you very likely should be using {@link #getFpGenotypesOrdered()}
+     */
     public Set<FpGenotype> getFpGenotypes() {
         return fpGenotypes;
     }
@@ -244,4 +279,6 @@ public class Fingerprint {
     public Boolean getMatch() {
         return match;
     }
+
+
 }

@@ -98,7 +98,7 @@ public enum PreferenceType {
     USER_EXT_LIBRARY_SEARCH_INSTANCES("User External Library Search Instances", PreferenceScope.USER, 1,
             new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
     USER_EXT_LIBRARY_COLUMN_SETS("User External Library Column Sets", PreferenceScope.USER, 1,
-            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
+            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator())
     ;
 
     private final String preferenceTypeName;

@@ -56,6 +56,19 @@
                     <div class="form-value">${actionBean.workingControl.state.displayName}</div>
                 </div>
             </div>
+
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Concordance Sample</label>
+
+                <div class="controls">
+                    <div class="form-value">
+                        <c:if test="${not empty actionBean.workingControl.concordanceMercurySample}">
+                            ${actionBean.workingControl.concordanceMercurySample.sampleKey}
+                        </c:if>
+                    </div>
+                </div>
+            </div>
+
         </stripes:form>
     </stripes:layout-component>
 </stripes:layout-render>
