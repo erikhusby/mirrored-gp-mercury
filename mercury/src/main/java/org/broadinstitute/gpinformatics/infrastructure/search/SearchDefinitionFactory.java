@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -264,8 +265,11 @@ public class SearchDefinitionFactory {
      */
     public static void buildDrillDownHref(ColumnEntity entityType, String selectedSearchName,
                                           Map<String, String[]> terms, StringBuilder link, String baseSearchURL) {
-        link.append(baseSearchURL)
-            .append("/search/ConfigurableSearch.action?")
+        link.append(baseSearchURL);
+        if (!baseSearchURL.contains(ConfigurableSearchActionBean.URL_BINDING)) {
+            link.append(ConfigurableSearchActionBean.URL_BINDING);
+        }
+        link.append("?")
             .append(ConfigurableSearchActionBean.DRILL_DOWN_EVENT)
             .append("=&drillDownRequest=");
 
@@ -276,7 +280,7 @@ public class SearchDefinitionFactory {
         SearchRequestBean searchRequest = new SearchRequestBean(entityType.getEntityName(), selectedSearchName, searchValues);
 
         try {
-            link.append( StringEscapeUtils.escapeHtml4( new ObjectMapper().writeValueAsString(searchRequest) ) );
+            link.append(URLEncoder.encode(new ObjectMapper().writeValueAsString(searchRequest), "UTF-8"));
         } catch (IOException e) {
             throw new RuntimeException("Fail marshalling drill down configuration", e);
         }

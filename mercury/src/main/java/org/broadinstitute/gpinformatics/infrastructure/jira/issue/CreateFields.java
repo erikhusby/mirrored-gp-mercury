@@ -187,6 +187,7 @@ public class CreateFields extends UpdateFields {
         TENX_5PRIME_BCR("10x 5' BCR"),
         TENX_SINGLE_CELL("10x Single Cell"),
         TENX_5PRIME("10x 5' Gene Expression"),
+        ISEQ("iSeq"),
         ;
 
         private final String jiraName;

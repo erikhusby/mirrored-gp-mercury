@@ -186,6 +186,23 @@ public class QueueGrouping {
     }
 
     /**
+     * @return True if there are {@link QueueEntity} with a status of QueueStatus.Active or QueueStatus.Repeat.
+     */
+    public boolean hasRemainingActiveEntities() {
+        return getRemainingEntities() != 0;
+    }
+
+    /**
+     * Utility method to go through the current queue grouping and check to see if all the {@link QueueEntity}'s have a
+     * status of QueueStatus.Active or QueueStatus.Repeat.
+     */
+    public void updateGroupingStatus() {
+        if (!hasRemainingActiveEntities()) {
+            setQueueStatus(QueueStatus.Completed);
+        }
+    }
+
+    /**
      * Comparator which sorts by the sort order.
      */
     public static class BySortOrder implements Comparator<QueueGrouping> {
@@ -230,7 +247,7 @@ public class QueueGrouping {
     public long getRemainingEntities() {
         int remainingEntities = 0;
         for (QueueEntity queueEntity : getQueuedEntities()) {
-            if (!queueEntity.getQueueStatus().isStillInQueue()) {
+            if (queueEntity.getQueueStatus().isStillInQueue()) {
                 remainingEntities++;
             }
         }

@@ -4,7 +4,6 @@ import clover.org.apache.commons.lang3.StringUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -35,8 +34,6 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
     private Set<SAPMaterial> sapMaterials = new HashSet<>();
 
     private SapIntegrationService sapService;
-
-    private SAPAccessControlEjb accessControlEjb;
 
     private static final Log logger = LogFactory.getLog(SAPProductPriceCache.class);
 
@@ -170,11 +167,4 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
         }
         return result;
     }
-
-    @Inject
-    public void setAccessControlEjb(
-            SAPAccessControlEjb accessControlEjb) {
-        this.accessControlEjb = accessControlEjb;
-    }
-
 }

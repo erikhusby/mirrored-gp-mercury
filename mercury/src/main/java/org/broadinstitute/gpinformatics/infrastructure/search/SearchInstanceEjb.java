@@ -256,9 +256,6 @@ public class SearchInstanceEjb {
                                 newSearchType, searchInstanceList);
                     } else {
                         preference.markModified(searchInstanceList.marshal());
-                        // Changing the preference definition doesn't seem to make the
-                        // Hibernate object "dirty", so change something else too
-                        preference.setModifiedDate(new Date());
                     }
 
                     messageCollection.addInfo("The search was saved");

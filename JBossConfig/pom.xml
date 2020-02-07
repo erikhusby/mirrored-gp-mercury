@@ -23,7 +23,7 @@
         <ssl.keystore.password>changeit</ssl.keystore.password>
         <ssl.truststore.password>changeit</ssl.truststore.password>
         <crsp.enable>false</crsp.enable>
-	<ssl.keystore.alias>vmercurydev</ssl.keystore.alias>
+	<ssl.keystore.alias>mercurydev</ssl.keystore.alias>
     </properties>
 
     <repositories>
@@ -60,6 +60,11 @@
             <type>zip</type>
             <classifier>deploy</classifier>
         </dependency>
+	<dependency>
+	    <groupId>org.jdom</groupId>
+	    <artifactId>jdom</artifactId>
+	    <version>1.1.3</version>
+	</dependency>
     </dependencies>
 
     <profiles>
@@ -147,6 +152,12 @@
 
                                 </artifactItem>
                                 <artifactItem>
+                                    <groupId>org.jdom</groupId>
+                                    <artifactId>jdom</artifactId>
+                                    <outputDirectory>${project.build.directory}/modules/org/jdom/main
+				    </outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
                                     <groupId>com.oracle.jdbc</groupId>
                                     <artifactId>ojdbc7</artifactId>
                                     <version>${oracle.version}</version>
@@ -158,9 +169,7 @@
                     </execution>
                 </executions>
             </plugin>
-
             <plugin>
-
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <version>1.8</version>
@@ -194,12 +203,14 @@
                                 </copy>
 
                                 <unzip src="${project.build.directory}/CrowdJaasLoginModule.zip" dest="${env.JBOSS_HOME}/modules"/>
-
                                 <chmod perm="ugo+rx" dir="${env.JBOSS_HOME}" includes="*.sh"/>
+
+				<!-- Starting in Wildfly 13 yasson replaces jackson for json binding and this resteasy json binding provider should not be used. -->
+				<delete dir="${env.JBOSS_HOME}/modules/system/layers/base/org/jboss/resteasy/resteasy-json-binding-provider/" includeemptydirs="true"/>
 
                                 <echo>
 
-                                    Your Wildfly 10 has been updated with the Mercury configurations.
+                                    ${env.JBOSS_HOME} has been updated for Mercury use.
 
                                     It is recommended that you increase the memory settings. For example:
                                     JAVA_OPTS="-Xms64m -Xmx4096M -XXMetaspace=4G"

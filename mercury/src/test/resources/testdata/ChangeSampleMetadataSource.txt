@@ -1,0 +1,2 @@
+SUPPORT-4205 change metadata source
+SM-HJJAR MERCURY

@@ -5,6 +5,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Set;
@@ -31,7 +32,7 @@ public class QuoteServiceTest {
         Quote fetchedQuote = service.getQuoteByAlphaId(quote.getAlphanumericId());
         System.out.println(fetchedQuote.getQuoteFunding().getFundsRemaining());
         String workBatchId =
-            service.registerNewWork(quote, quotePriceItem, null, new Date(), 0.0001,
+            service.registerNewWork(quote, quotePriceItem, null, new Date(), BigDecimal.valueOf(0.0001),
                     "http://www.MercuryTesting", "paramName", "paramValue", null);
         System.out.println(fetchedQuote.getQuoteFunding().getFundsRemaining());
 

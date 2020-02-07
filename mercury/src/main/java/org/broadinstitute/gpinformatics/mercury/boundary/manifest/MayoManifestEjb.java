@@ -106,6 +106,9 @@ public class MayoManifestEjb {
     public static final String WRONG_TUBE_IN_POSITION = "At position %s the rack has %s but manifest shows %s.";
     enum MessageLevel {NONE, WARN_ONLY, ERROR}
 
+    public static final String AUO_GENOME = "aou_wgs";
+    public static final String AUO_ARRAY = "aou_array";
+
     public static final Map<String, CustomFieldDefinition> JIRA_DEFINITION_MAP =
             new HashMap<String, CustomFieldDefinition>() {{
                 put("MaterialTypeCounts", new CustomFieldDefinition("customfield_15660", "Material Type Counts", true));
@@ -878,7 +881,7 @@ public class MayoManifestEjb {
             QueueSpecialization queueSpecialization =
                     dnaQuantEnqueueOverride.determineDnaQuantQueueSpecialization(labVessels);
             queueEjb.enqueueLabVessels(labVessels, QueueType.VOLUME_CHECK,
-                    "Accessioned on " + DateUtils.convertDateTimeToString(new Date()), messages,
+                    bean.getRackBarcode() + " Accessioned on " + DateUtils.convertDateTimeToString(new Date()), messages,
                     QueueOrigin.RECEIVING, queueSpecialization);
         }
         // Adds comment to the existing RCT.

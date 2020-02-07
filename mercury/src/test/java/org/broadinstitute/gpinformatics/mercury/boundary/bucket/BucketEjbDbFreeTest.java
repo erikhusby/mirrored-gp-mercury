@@ -103,7 +103,7 @@ public class BucketEjbDbFreeTest {
     private void beforeClass() {
         bspUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
         pdoCreator = bspUserList.getById(BSPManagerFactoryStub.QA_DUDE_USER_ID).getUsername();
-        workflowLoader.load();
+        workflowLoader.getWorkflowConfig();
     }
 
     private void setUp(String workflow) {
@@ -255,7 +255,7 @@ public class BucketEjbDbFreeTest {
                 .andReturn(bspSampleDataMap);
 
         replay(mocks);
-        ProductWorkflowDef workflowDef = workflowLoader.load().getWorkflow(AGILENT_EXOME_EXPRESS);
+        ProductWorkflowDef workflowDef = workflowLoader.getWorkflowConfig().getWorkflow(AGILENT_EXOME_EXPRESS);
 
         WorkflowBucketDef picoBucket = workflowDef.getEffectiveVersion().findBucketDefByName("Pico/Plating Bucket");
 
