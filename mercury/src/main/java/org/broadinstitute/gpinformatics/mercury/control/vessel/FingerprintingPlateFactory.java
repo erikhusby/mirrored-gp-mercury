@@ -260,7 +260,7 @@ public class FingerprintingPlateFactory {
         sheets.put(sheetNames[0], participantsCells);
         sheets.put(sheetNames[1], plateCells);
 
-        return SpreadsheetCreator.createSpreadsheet(sheets);
+        return SpreadsheetCreator.createSpreadsheet(sheets, SpreadsheetCreator.Type.XLS);
     }
 
 
