@@ -202,7 +202,7 @@ public class ConfigurableListActionBean extends CoreActionBean {
     private static Resolution streamResultList(ConfigurableList.ResultList resultList) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
-            SpreadsheetCreator.createSpreadsheet("Sample Info", resultList.getAsArray(), out);
+            SpreadsheetCreator.createSpreadsheet("Sample Info", resultList.getAsArray(), out, SpreadsheetCreator.Type.XLSX);
         } catch (IOException ioEx) {
             log.error("Failed to create spreadsheet");
             throw new RuntimeException(ioEx);
