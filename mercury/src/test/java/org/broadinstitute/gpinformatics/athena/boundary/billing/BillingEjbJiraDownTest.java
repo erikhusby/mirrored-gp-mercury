@@ -31,6 +31,7 @@ import org.testng.annotations.Test;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -102,13 +103,13 @@ public class BillingEjbJiraDownTest extends Arquillian {
         LedgerEntry ledgerEntryA;
         LedgerEntry ledgerEntryB;
         if(productOrder.hasSapQuote()) {
-            ledgerEntryA = new LedgerEntry(sampleA, productOrder.getProduct(), new Date(), 3);
-            ledgerEntryB = new LedgerEntry(sampleB, productOrder.getProduct(), new Date(), 3);
+            ledgerEntryA = new LedgerEntry(sampleA, productOrder.getProduct(), new Date(), BigDecimal.valueOf(3));
+            ledgerEntryB = new LedgerEntry(sampleB, productOrder.getProduct(), new Date(), BigDecimal.valueOf(3));
         } else {
             ledgerEntryA = new LedgerEntry(sampleA, productOrder.getProduct().getPrimaryPriceItem(), new Date(),
-                    3);
+                    BigDecimal.valueOf(3));
             ledgerEntryB = new LedgerEntry(sampleB, productOrder.getProduct().getPrimaryPriceItem(), new Date(),
-                    3);
+                    BigDecimal.valueOf(3));
         }
 
         final Collection<QuotePriceItem> quotePriceItems = priceListCache.getQuotePriceItems();

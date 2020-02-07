@@ -11,6 +11,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
@@ -19,7 +20,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemOfRecord;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
@@ -73,6 +74,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -154,9 +156,9 @@ public class ZimsIlluminaRunFactory {
                     vesselPosition)) {
                 BucketEntry singleBucketEntry = sampleInstance.getSingleBucketEntry();
                 if (singleBucketEntry != null) {
-                    if (Objects.equals(singleBucketEntry.getProductOrder().getProduct().getAggregationDataType(),
+                    if (Objects.equals(singleBucketEntry.getProductOrder().getProduct().getPipelineDataTypeString(),
                             Aggregation.DATA_TYPE_WGS) ||
-                            Aggregation.DATA_TYPE_WGS.equals(sampleInstance.getAggregationDataType())) {
+                            Aggregation.DATA_TYPE_WGS.equals(sampleInstance.getPipelineDataTypeString())) {
                         mixedLaneOk = true;
                         break;
                     }
@@ -244,7 +246,7 @@ public class ZimsIlluminaRunFactory {
                 illuminaRun.getRunDate()),
                                                   isPaired, illuminaRun.getActualReadStructure(), imagedArea,
                                                   illuminaRun.getSetupReadStructure(), illuminaRun.getLanesSequenced(),
-                                                  illuminaRun.getRunDirectory(), SystemRouter.System.MERCURY);
+                                                  illuminaRun.getRunDirectory(), SystemOfRecord.System.MERCURY);
 
         IlluminaFlowcell illuminaFlowcell = (IlluminaFlowcell) flowcell;
         Set<VesselAndPosition> loadedVesselsAndPositions = illuminaFlowcell.getLoadingVessels();
@@ -327,13 +329,17 @@ public class ZimsIlluminaRunFactory {
                     sampleInstanceDto.getSampleInstance().getAnalysisType().getName() : null;
             String referenceSequence = sampleInstanceDto.getSampleInstance().getReferenceSequence() != null ?
                     sampleInstanceDto.getSampleInstance().getReferenceSequence().getName() : null;
-            String aggregationDataType = sampleInstanceDto.getSampleInstance().getAggregationDataType();
+            Optional.ofNullable(sampleInstanceDto.getSampleInstance().getPipelineDataType())
+                .map(PipelineDataType::getName).ifPresent(aggregationDataTypes::add);
             String insertSize = sampleInstanceDto.getSampleInstance().getExpectedInsertSize();
 
             ProductOrder productOrder = (sampleInstanceDto.getProductOrderKey() != null) ?
                     mapKeyToProductOrder.get(sampleInstanceDto.getProductOrderKey()) : null;
             if (productOrder != null) {
                 Product product = productOrder.getProduct();
+                analysisTypes.add(product.getAnalysisTypeKey());
+                Optional.ofNullable(product.getPipelineDataType()).map(PipelineDataType::getName)
+                    .ifPresent(aggregationDataTypes::add);
                 ResearchProject project = productOrder.getResearchProject();
                 ResearchProject positiveControlResearchProject = product.getPositiveControlResearchProject();
                 ResearchProject negativeControlResearchProject = product.getNegativeControlResearchProject();
@@ -349,9 +355,6 @@ public class ZimsIlluminaRunFactory {
                 if (referenceSequence == null && !StringUtils.isBlank(project.getReferenceSequenceKey())) {
                     referenceSequence = project.getReferenceSequenceKey();
                 }
-                if (aggregationDataType == null) {
-                    aggregationDataType = product.getAggregationDataType();
-                }
                 if (insertSize == null && product.getInsertSize() != null) {
                     insertSize = String.valueOf(product.getInsertSize());
                 }
@@ -361,9 +364,6 @@ public class ZimsIlluminaRunFactory {
             }
             if (referenceSequence != null) {
                 referenceSequenceKeys.add(referenceSequence);
-            }
-            if (aggregationDataType != null) {
-                aggregationDataTypes.add(aggregationDataType);
             }
             if (insertSize != null) {
                 insertSizes.add(insertSize);
@@ -602,8 +602,8 @@ public class ZimsIlluminaRunFactory {
         }
         String aggregationParticle = sampleInstanceDto.sampleInstance.getAggregationParticle();
         Boolean isImpliedSampleName = sampleInstanceDto.sampleInstance.getImpliedSampleName();
-        if (aggregationDataType == null) {
-            aggregationDataType = sampleInstanceDto.sampleInstance.getAggregationDataType();
+        if (StringUtils.isBlank(aggregationDataType)) {
+            aggregationDataType = sampleInstanceDto.sampleInstance.getPipelineDataTypeString();
         }
         if (sampleInstanceDto.sampleInstance.getReferenceSequence() != null) {
             referenceSequence = sampleInstanceDto.sampleInstance.getReferenceSequence().getName();

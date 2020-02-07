@@ -18,7 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemOfRecord;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -89,7 +89,9 @@ public class MetricsViewActionBeanTest {
         String blacklistFailReason = "DATA_QUALITY";
 
         int numSamples = 94;
-        BaseEventTest.expectedRouting = SystemRouter.System.SQUID;
+        // All messaging is now routed to Mercury.
+        BaseEventTest.expectedRouting = SystemOfRecord.System.MERCURY;
+
         ProductOrder productOrder = ProductOrderTestFactory.buildInfiniumProductOrder(numSamples);
         List<StaticPlate> sourcePlates = buildSamplePlates(productOrder, "AmpPlate");
         StaticPlate sourcePlate = sourcePlates.get(0);

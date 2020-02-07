@@ -55,6 +55,7 @@ import org.json.JSONException;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletResponse;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -439,7 +440,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
                             productOrder.hasSapQuote());
                     ProductOrderSampleQuantities quantities = entry.getValue();
                     ProductOrderSample.LedgerQuantities ledgerQuantities = ledgerQuantitiesMap.get(quantityIndex);
-                    double currentQuantity = ledgerQuantities != null ? ledgerQuantities.getTotal() : 0;
+                    BigDecimal currentQuantity = ledgerQuantities != null ? ledgerQuantities.getTotal() : BigDecimal.ZERO;
 
                     ProductOrderSample.LedgerUpdate ledgerUpdate;
                     if(data.sapOrder) {
@@ -449,13 +450,13 @@ public class BillingLedgerActionBean extends CoreActionBean {
                             data.setDeliveryConditionAvailable(true);
                         }
                         ledgerUpdate = new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), product,
-                                quantities.originalQuantity, currentQuantity, quantities.submittedQuantity,
+                                new BigDecimal(quantities.originalQuantity), currentQuantity, new BigDecimal(quantities.submittedQuantity),
                                 data.getWorkCompleteDate(), data.isPrimaryReplacement());
 
                     } else {
                         ledgerUpdate =
                                 new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem,product,
-                                        quantities.originalQuantity, currentQuantity, quantities.submittedQuantity,
+                                        new BigDecimal(quantities.originalQuantity), currentQuantity, new BigDecimal(quantities.submittedQuantity),
                                         data.getWorkCompleteDate());
                     }
                     ledgerUpdates.put(productOrderSample, ledgerUpdate);
@@ -494,7 +495,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
         } else {
             result.put(ledgerEntry.getPriceItem().getName());
         }
-        result.put(Double.valueOf(ledgerEntry.getQuantity()));
+        result.put(ledgerEntry.getQuantity());
         result.put(ledgerEntry.getQuoteId());
         result.put(new SimpleDateFormat("MMM d, yyyy").format(ledgerEntry.getWorkCompleteDate()));
         BillingSession billingSession = ledgerEntry.getBillingSession();
@@ -613,7 +614,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
             ledgerQuantities = productOrderSample.getLedgerQuantities();
 
             for(Map.Entry<ProductLedgerIndex, ProductOrderSample.LedgerQuantities> quantityEntry: ledgerQuantities.entrySet()) {
-                if(quantityEntry.getValue().getTotal()>0) {
+                if(quantityEntry.getValue().getTotal().compareTo(BigDecimal.ZERO)>0) {
                     anyQuantitySet = true;
                 }
             }
@@ -656,14 +657,14 @@ public class BillingLedgerActionBean extends CoreActionBean {
             return workCompleteDate != null ? new SimpleDateFormat("MMM d, yyyy").format(workCompleteDate) : null;
         }
 
-        public double getTotalForPriceIndex(ProductLedgerIndex index) {
+        public BigDecimal getTotalForPriceIndex(ProductLedgerIndex index) {
             ProductOrderSample.LedgerQuantities quantities = ledgerQuantities.get(index);
-            return quantities != null ? quantities.getTotal() : 0;
+            return quantities != null ? quantities.getTotal() : BigDecimal.ZERO;
         }
 
-        public double getBilledForPriceIndex(ProductLedgerIndex index) {
+        public BigDecimal getBilledForPriceIndex(ProductLedgerIndex index) {
             ProductOrderSample.LedgerQuantities quantities = ledgerQuantities.get(index);
-            return quantities != null ? quantities.getBilled() : 0;
+            return quantities != null ? quantities.getBilled() : BigDecimal.ZERO;
         }
 
         public int getAutoFillQuantity() {
@@ -739,22 +740,22 @@ public class BillingLedgerActionBean extends CoreActionBean {
      * Quantity data for a single price item posted from the billing ledger UI.
      */
     public static class ProductOrderSampleQuantities {
-        private double originalQuantity;
-        private double submittedQuantity;
+        private String originalQuantity;
+        private String submittedQuantity;
 
-        public double getOriginalQuantity() {
+        public String getOriginalQuantity() {
             return originalQuantity;
         }
 
-        public void setOriginalQuantity(double originalQuantity) {
+        public void setOriginalQuantity(String originalQuantity) {
             this.originalQuantity = originalQuantity;
         }
 
-        public double getSubmittedQuantity() {
+        public String getSubmittedQuantity() {
             return submittedQuantity;
         }
 
-        public void setSubmittedQuantity(double submittedQuantity) {
+        public void setSubmittedQuantity(String submittedQuantity) {
             this.submittedQuantity = submittedQuantity;
         }
     }

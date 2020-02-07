@@ -139,7 +139,7 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
                                       QuotePriceItem quotePriceItem,
                                       QuotePriceItem itemIsReplacing,
                                       Date reportedCompletionDate,
-                                      double numWorkUnits,
+                                      BigDecimal numWorkUnits,
                                       String callbackUrl, String callbackParameterName, String callbackParameterValue,
                                       BigDecimal priceAdjustment) {
             // Simulate failure only for one particular PriceItem.
@@ -164,7 +164,7 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
 
         @Override
         public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
-                                         Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
+                                         Date reportedCompletionDate, BigDecimal numWorkUnits, String callbackUrl,
                                          String callbackParameterName, String callbackParameterValue,
                                          BigDecimal priceAdjustment) {
             // Simulate failure only for one particular PriceItem.
@@ -252,9 +252,9 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
                 billingSessionDao1.persist(replacementPriceItem);
 
                 if(productOrder.hasSapQuote()) {
-                    billingSessionEntries.add(new LedgerEntry(ledgerSample, productOrder.getProduct(), new Date(), 5));
+                    billingSessionEntries.add(new LedgerEntry(ledgerSample, productOrder.getProduct(), new Date(), BigDecimal.valueOf(5)));
                 } else {
-                    billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), 5));
+                    billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), BigDecimal.valueOf(5)));
                 }
             }
         }

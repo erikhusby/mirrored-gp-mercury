@@ -64,7 +64,7 @@ public class IceEntityBuilder {
     public IceEntityBuilder invoke() {
         IceJaxbBuilder iceJaxbBuilder = new IceJaxbBuilder(bettaLimsMessageTestFactory, testPrefix, pondRegRackBarcodes,
                 listPondRegTubeBarcodes, testPrefix + "IceBait1", testPrefix + "IceBait2",
-                LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY, plexType,
+                plexType,
                 Arrays.asList(Triple.of("CT3", "0009763452", 1), Triple.of("Rapid Capture Kit bait", "0009773452", 2),
                         Triple.of("Rapid Capture Kit Resuspension Buffer", "0009783452", 3)),
                 Arrays.asList(Triple.of("Dual Index Primers Lot", "0009764452", 4),

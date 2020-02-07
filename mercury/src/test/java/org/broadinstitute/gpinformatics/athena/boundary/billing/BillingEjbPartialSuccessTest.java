@@ -187,7 +187,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                                       QuotePriceItem quotePriceItem,
                                       QuotePriceItem itemIsReplacing,
                                       Date reportedCompletionDate,
-                                      double numWorkUnits,
+                                      BigDecimal numWorkUnits,
                                       String callbackUrl, String callbackParameterName, String callbackParameterValue,
                                       BigDecimal priceAdjustment) {
             // Simulate failure only for one particular PriceItem.
@@ -220,7 +220,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
         @Override
         public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
-                                         Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
+                                         Date reportedCompletionDate, BigDecimal numWorkUnits, String callbackUrl,
                                          String callbackParameterName, String callbackParameterValue,
                                          BigDecimal priceAdjustment) {
             // Simulate failure only for one particular PriceItem.
@@ -345,22 +345,20 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                     billingSessionDao.persist(replacementPriceItem);
 
                     if(productOrder.hasSapQuote()) {
-                        billingSessionEntries.add(new LedgerEntry(ledgerSample, productOrder.getProduct(), new Date(), 5));
+                        billingSessionEntries.add(new LedgerEntry(ledgerSample, productOrder.getProduct(), new Date(),
+                                BigDecimal.valueOf(5)));
                     } else {
-//                        billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), productOrder.getProduct(), 5));
-                        billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), 5));
+                        billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(),
+                                BigDecimal.valueOf(5)));
                     }
                 } else {
                     if(productOrder.hasSapQuote()) {
 
                         billingSessionEntries.add(new LedgerEntry(ledgerSample, productOrder.getProduct(),
-                                new Date(), 3));
+                                new Date(), BigDecimal.valueOf(3)));
                     } else {
-//                        billingSessionEntries.add(new LedgerEntry(ledgerSample,
-//                                productOrder.getProduct().getPrimaryPriceItem(), new Date(), productOrder.getProduct(),
-//                                3));
                         billingSessionEntries.add(new LedgerEntry(ledgerSample,
-                                productOrder.getProduct().getPrimaryPriceItem(), new Date(),3));
+                                productOrder.getProduct().getPrimaryPriceItem(), new Date(), BigDecimal.valueOf(3)));
                     }
                 }
             }
@@ -413,22 +411,20 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
                     if(ledgerSample.getProductOrder().hasSapQuote()) {
 
-                        billingSessionEntries.add(new LedgerEntry(ledgerSample, productOrder.getProduct(), new Date(), 5));
+                        billingSessionEntries.add(new LedgerEntry(ledgerSample, productOrder.getProduct(), new Date(),
+                                BigDecimal.valueOf(5)));
                     } else {
-//                        billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), productOrder.getProduct(), 5));
-                        billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), 5));
+                        billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(),
+                                BigDecimal.valueOf(5)));
                     }
                 } else {
                     if(ledgerSample.getProductOrder().hasSapQuote()) {
                         billingSessionEntries.add(new LedgerEntry(ledgerSample, productOrder.getProduct(), new Date(),
-                                3));
+                                BigDecimal.valueOf(3)));
 
                     } else {
-//                        billingSessionEntries.add(new LedgerEntry(ledgerSample,
-//                                productOrder.getProduct().getPrimaryPriceItem(), new Date(), productOrder.getProduct(),
-//                                3));
                         billingSessionEntries.add(new LedgerEntry(ledgerSample,
-                                productOrder.getProduct().getPrimaryPriceItem(), new Date(), 3));
+                                productOrder.getProduct().getPrimaryPriceItem(), new Date(), BigDecimal.valueOf(3)));
                     }
                 }
             }
@@ -585,8 +581,10 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         LedgerEntry ledgerEntry2;
         ProductOrder productOrder = new ProductOrder();
 
-        ledgerEntry1 = new LedgerEntry(new ProductOrderSample("SM-1234"), priceItem, new Date(), 5);
-        ledgerEntry2 = new LedgerEntry(new ProductOrderSample("SM-5678"), priceItem, new Date(), 5);
+        ledgerEntry1 = new LedgerEntry(new ProductOrderSample("SM-1234"), priceItem, new Date(),
+                BigDecimal.valueOf(5));
+        ledgerEntry2 = new LedgerEntry(new ProductOrderSample("SM-5678"), priceItem, new Date(),
+                BigDecimal.valueOf(5));
         List<LedgerEntry> ledgerItems = Arrays.asList(ledgerEntry1, ledgerEntry2);
         QuoteImportItem quoteImportItem =
                 new QuoteImportItem("QUOTE-1", priceItem, "priceType", ledgerItems, new Date(), product, productOrder);
