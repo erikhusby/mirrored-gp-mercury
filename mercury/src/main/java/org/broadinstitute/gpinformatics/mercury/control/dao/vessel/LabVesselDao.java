@@ -33,6 +33,7 @@ import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Subquery;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -73,7 +74,7 @@ public class LabVesselDao extends GenericDao {
 
     public List<LabVessel> findBySampleKeyOrLabVesselLabel(Collection<String> sampleKeys) {
 
-        List<LabVessel> labVessels = new ArrayList<>();
+        LinkedHashSet<LabVessel> labVessels = new LinkedHashSet<>();
         List<MercurySample> mercurySamples = findListByList(MercurySample.class, MercurySample_.sampleKey, sampleKeys);
 
         for (MercurySample mercurySample : mercurySamples) {
@@ -82,7 +83,7 @@ public class LabVesselDao extends GenericDao {
 
         labVessels.addAll(findListByList(LabVessel.class, LabVessel_.label, sampleKeys));
 
-        return labVessels;
+        return new ArrayList<>(labVessels);
     }
 
     /**
