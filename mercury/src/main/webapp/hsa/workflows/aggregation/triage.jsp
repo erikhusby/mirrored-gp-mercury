@@ -56,11 +56,9 @@
                         {sortable: true, "sClass": "nowrap"},
                         {sortable: true, "sClass": "nowrap"},
                         {sortable: true, "sClass": "nowrap"},
+                        {sortable: true, "sClass": "nowrap"},
                         {sortable: true},
                         {sortable: true},
-                        {sortable: true},
-                        // {sortable: true},
-                        // {sortable: true},
                         {sortable: true}
                     ],
                 });
@@ -85,11 +83,9 @@
                         {sortable: true, "sClass": "nowrap"},
                         {sortable: true, "sClass": "nowrap"},
                         {sortable: true, "sClass": "nowrap"},
+                        {sortable: true, "sClass": "nowrap"},
                         {sortable: true},
                         {sortable: true},
-                        {sortable: true},
-                        // {sortable: true},
-                        // {sortable: true},
                         {sortable: true}
                     ],
                 });

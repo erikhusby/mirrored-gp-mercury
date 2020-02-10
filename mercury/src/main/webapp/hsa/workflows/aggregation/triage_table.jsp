@@ -23,8 +23,6 @@
         <th>% Contamination</th>
         <th>Aligned Q20 Bases</th>
         <th>Sex@Birth</th>
-<%--        <th>Aggregated/Pending Lanes</th>--%>
-<%--        <th>Aggregated/Pending Designations</th>--%>
         <th>Sex Concordant</th>
         <th>LOD</th>
     </tr>
@@ -44,9 +42,6 @@
             <td>
                     ${dto.sampleVessel}
                     <stripes:hidden name="${dtoName}[${status.index}].sampleVessel" value="${dto.sampleVessel}"/>
-            </td>
-            <td>
-                    <stripes:hidden name="${dtoName}[${status.index}].library" value="${dto.library}"/>
             </td>
             <td>
                     ${dto.pdo}

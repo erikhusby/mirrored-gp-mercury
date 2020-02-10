@@ -160,27 +160,10 @@ public class AggregationTriageActionBean extends CoreActionBean {
 
         Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(sampleIds);
 
-        List<AlignmentMetric> bySampleAlias = alignmentMetricsDao.findBySampleAlias(sampleIds);
+        List<AlignmentMetric> bySampleAlias = alignmentMetricsDao.findAggregationBySampleAlias(sampleIds);
         Set<AlignmentMetric> alignmentMetrics = new HashSet<>(bySampleAlias);
         Map<String, AlignmentMetric> mapAliasToMetric = alignmentMetrics.stream()
                 .collect(Collectors.toMap(AlignmentMetric::getSampleAlias, Function.identity()));
-
-        // For each tube grab most recent pond
-//        for (MercurySample mercurySample: mapIdToMercurySample.values()) {
-//            for (LabVessel labVessel : mercurySample.getLabVessel()) {
-//                LabVesselSearchDefinition.VesselsForEventTraverserCriteria eval
-//                        = new LabVesselSearchDefinition.VesselsForEventTraverserCriteria(
-//                        LabVesselSearchDefinition.POND_LAB_EVENT_TYPES);
-//                labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
-//                Set<LabVessel> ponds = eval.getPositions().keySet();
-//                if (ponds == null || ponds.isEmpty()) {
-//                    // TODO Probably a dev set, Ignoring since there won't be a normal topoff loop
-//                    continue;
-//                }
-//                LabVessel pond = ponds.iterator().next();
-//                mapKeyToPond.put(mercurySample.getSampleKey(), pond);
-//            }
-//        }
 
         List<TriageDto> dtos = new ArrayList<>();
         for (Map.Entry<String, MercurySample> entry: mapIdToMercurySample.entrySet()) {
@@ -193,7 +176,7 @@ public class AggregationTriageActionBean extends CoreActionBean {
 
             AlignmentMetric alignmentMetric = mapAliasToMetric.get(sampleKey);
             if (alignmentMetric == null) {
-                log.error("Failed to find alignment metric for sample in 'triage' " + sampleKey);
+                log.debug("Failed to find alignment metric for sample in 'triage' " + sampleKey);
                 continue;
             }
 
@@ -227,7 +210,6 @@ public class AggregationTriageActionBean extends CoreActionBean {
                 if (selectedSamples.contains(dto.getPdoSample())) {
                     selectedDtos.add(dto);
                     pdos.add(dto.getPdo());
-                    labVesselBarcodes.add(dto.getLibrary());
                 }
             }
         }
@@ -244,15 +226,22 @@ public class AggregationTriageActionBean extends CoreActionBean {
             }
         }
 
-        Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(new ArrayList<>(labVesselBarcodes));
-        for (LabVessel labVessel: mapBarcodeToVessel.values()) {
-            for (TriageDto dto: selectedDtos) {
-                if (dto.getLibrary().equalsIgnoreCase(labVessel.getLabel())) {
-                    mapKeyToPond.put(dto.getPdoSample(), labVessel);
+        for (MercurySample mercurySample: mapNameToSample.values()) {
+            for (LabVessel labVessel : mercurySample.getLabVessel()) {
+                LabVesselSearchDefinition.VesselsForEventTraverserCriteria eval
+                        = new LabVesselSearchDefinition.VesselsForEventTraverserCriteria(
+                        LabVesselSearchDefinition.POND_LAB_EVENT_TYPES);
+                labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+                Set<LabVessel> ponds = eval.getPositions().keySet();
+                if (ponds == null || ponds.isEmpty()) {
+                    // TODO Probably a dev set, Ignoring since there won't be a normal topoff loop
+                    continue;
                 }
+                LabVessel pond = ponds.iterator().next();
+                labVesselBarcodes.add(pond.getLabel());
+                mapKeyToPond.put(mercurySample.getSampleKey(), pond);
             }
         }
-
     }
 
     @HandlesEvent(UPDATE_OOS_ACTION)
@@ -407,7 +396,7 @@ public class AggregationTriageActionBean extends CoreActionBean {
         dto.setGender(gender);
         dto.setPdo(pdo);
         dto.setPdoSample(sampleKey);
-//        dto.setLibrary(mapKeyToPond.get(sampleKey).getLabel());
+        dto.setSampleVessel(mercurySample.getLabVessel().iterator().next().getLabel());
 
         // Gender Concordance
         Fingerprint.Gender dragenGender = Fingerprint.Gender.byChromosome(alignmentMetric.getPredictedSexChromosomePloidy());

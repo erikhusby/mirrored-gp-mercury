@@ -45,7 +45,6 @@ public class AlignmentMetricsDao {
         if (sampleAlias == null || sampleAlias.isEmpty()) {
             return Collections.emptyList();
         }
-        System.out.println(sampleAlias);
 
         return JPASplitter.runCriteriaQuery(sampleAlias, new CriteriaInClauseCreator<String>() {
             @Override
@@ -78,7 +77,6 @@ public class AlignmentMetricsDao {
 
         List<AlignmentMetric> resultList = new ArrayList<>();
 
-        // TODO JW Just set a type or something
         sampleAlias = sampleAlias.stream().map(sa -> sa + "_Aggregation").collect(Collectors.toList());
 
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();

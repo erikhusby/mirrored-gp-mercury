@@ -46,7 +46,6 @@ public class AggregationMetricsTaskHandler extends AbstractMetricsTaskHandler {
         }
 
         AggregationTask aggregationTask = tasks.iterator().next();
-        String commandLineArgument = aggregationTask.getCommandLineArgument();
         String outputDirectoryPath = aggregationTask.getOutputDir().getPath();
 
         MessageCollection messageCollection = new MessageCollection();
