@@ -119,6 +119,11 @@ public abstract class State {
         this.sequencingRunChambers = sequencingRunChamberList;
     }
 
+    public void removeRunChamber(IlluminaSequencingRunChamber sequencingRunChamber) {
+        sequencingRunChambers.remove(sequencingRunChamber);
+        sequencingRunChamber.getStates().remove(this);
+    }
+
     public Set<MercurySample> getMercurySamples() {
         return mercurySamples;
     }

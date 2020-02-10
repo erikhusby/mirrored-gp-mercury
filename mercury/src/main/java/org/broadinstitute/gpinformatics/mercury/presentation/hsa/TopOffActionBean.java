@@ -642,6 +642,7 @@ public class TopOffActionBean extends CoreActionBean {
                     mapVesselToLcset.put(labVessel, lcSet);
                     IlluminaFlowcell.FlowcellType latestFlowcellForSample = topOffEjb.getLatestFlowcellForSample(mercurySample);
                     mapVesselToSeqType.put(labVessel, latestFlowcellForSample.getSequencerModel());
+                    break;
                 }
             }
         }
@@ -714,7 +715,9 @@ public class TopOffActionBean extends CoreActionBean {
         Map<String, AlignmentMetric> mapSampleToMetrics = alignmentMetricsDao.findMapByMercurySample(state.getMercurySamples());
         List<HoldForTopoffDto> dtos = new ArrayList<>();
         for (MercurySample mercurySample: state.getMercurySamples()) {
-            HoldForTopoffDto dto = parseSampleData(mapSampleToMetrics, mercurySample, messageCollection);
+            boolean requirePondData =
+                    !tabName.equals(TopOffStateMachineDecorator.StateNames.SentToRework.getDisplayName());
+            HoldForTopoffDto dto = parseSampleData(mapSampleToMetrics, mercurySample, messageCollection, requirePondData);
             dtos.add(dto);
         }
         mapTabToDto.put(tabName, dtos);
@@ -722,73 +725,79 @@ public class TopOffActionBean extends CoreActionBean {
 
     @NotNull
     private HoldForTopoffDto parseSampleData(Map<String, AlignmentMetric> mapSampleToMetrics,
-                                             MercurySample mercurySample, MessageCollection messageCollection) {
+                                             MercurySample mercurySample, MessageCollection messageCollection,
+                                             boolean requirePondData) {
         if (mapSampleToDto.containsKey(mercurySample.getSampleKey())) {
             return mapSampleToDto.get(mercurySample.getSampleKey());
         }
-        LabVessel labVessel = mercurySample.getLabVessel().iterator().next();
-        LabVesselSearchDefinition.VesselsForEventTraverserCriteria eval
-                = new LabVesselSearchDefinition.VesselsForEventTraverserCriteria(
-                LabVesselSearchDefinition.POND_LAB_EVENT_TYPES);
-        labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
-        Set<LabVessel> ponds = eval.getPositions().keySet();
-        LabVessel pond = ponds.iterator().next();
-
         HoldForTopoffDto dto = new HoldForTopoffDto();
-
-        Set<String> molecularIndexes = new HashSet<>();
-        String lcset = null;
-        String topOffLcset = null;
-        ProductOrder productOrder = null;
-        for (SampleInstanceV2 sampleInstanceV2: pond.getSampleInstancesV2()) {
-            MolecularIndexingScheme molecularIndexingScheme = sampleInstanceV2.getMolecularIndexingScheme();
-            if (molecularIndexingScheme != null) {
-                molecularIndexes.add(molecularIndexingScheme.getName());
-            }
-
-            if (sampleInstanceV2.getSingleBatch() != null) {
-                lcset = sampleInstanceV2.getSingleBatch().getBatchName();
-            }
-            List<LabBatch> allWorkflowBatches = sampleInstanceV2.getAllWorkflowBatches();
-            List<String> sortedLcsets =
-                    allWorkflowBatches.stream().map(LabBatch::getBatchName).sorted().collect(Collectors.toList());
-            topOffLcset = sortedLcsets.get(sortedLcsets.size() - 1);
-            ProductOrderSample productOrderSample = sampleInstanceV2.getProductOrderSampleForSingleBucket();
-            if (productOrderSample != null) {
-                productOrder = productOrderSample.getProductOrder();
-            } else {
-                for (ProductOrderSample pdoSample: sampleInstanceV2.getAllProductOrderSamples()) {
-                    if (pdoSample.getSampleKey().equals(mercurySample.getSampleKey())) {
-                        productOrder = pdoSample.getProductOrder();
-                        break;
-                    }
-                }
-            }
-        }
-        Boolean isClinical = false;
-        if (productOrder == null) {
-            messageCollection.addError("Failed to find product order for " + mercurySample.getSampleKey());
-        } else {
-            dto.setPdo(productOrder.getBusinessKey());
-            AlignmentMetric alignmentMetric = mapSampleToMetrics.get(mercurySample.getSampleKey());
-            BigDecimal xNeeded = calculateXNeeded(productOrder, alignmentMetric, messageCollection);
-            if (xNeeded != null) {
-                dto.setxNeeded(xNeeded.floatValue());
-            }
-            isClinical = !productOrder.getResearchProject().isResearchOnly();
-        }
-
 
         IlluminaFlowcell.FlowcellType latestFlowcellForSample = topOffEjb.getLatestFlowcellForSample(mercurySample);
         dto.setSeqType(latestFlowcellForSample.getSequencerModel());
         dto.setPdoSample(mercurySample.getSampleKey());
-        dto.setIndex(StringUtils.join(molecularIndexes, ","));
-        dto.setLcset(lcset);
-        dto.setTopOffLcset(topOffLcset);
-        dto.setLibrary(pond.getLabel());
-        dto.setVolume(pond.getVolume());
-        dto.setStorage(pond.getStorageLocationStringify());
-        dto.setClinical(isClinical);
+
+        if (requirePondData) {
+            Set<String> molecularIndexes = new HashSet<>();
+            String lcset = null;
+            String topOffLcset = null;
+            ProductOrder productOrder = null;
+            LabVessel labVessel = mercurySample.getLabVessel().iterator().next();
+            LabVessel pond = null;
+
+            LabVesselSearchDefinition.VesselsForEventTraverserCriteria eval
+                    = new LabVesselSearchDefinition.VesselsForEventTraverserCriteria(
+                    LabVesselSearchDefinition.POND_LAB_EVENT_TYPES);
+            labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+            Set<LabVessel> ponds = eval.getPositions().keySet();
+            pond = ponds.iterator().next();
+
+            for (SampleInstanceV2 sampleInstanceV2 : pond.getSampleInstancesV2()) {
+                MolecularIndexingScheme molecularIndexingScheme = sampleInstanceV2.getMolecularIndexingScheme();
+                if (molecularIndexingScheme != null) {
+                    molecularIndexes.add(molecularIndexingScheme.getName());
+                }
+
+                if (sampleInstanceV2.getSingleBatch() != null) {
+                    lcset = sampleInstanceV2.getSingleBatch().getBatchName();
+                }
+                List<LabBatch> allWorkflowBatches = sampleInstanceV2.getAllWorkflowBatches();
+                List<String> sortedLcsets =
+                        allWorkflowBatches.stream().map(LabBatch::getBatchName).sorted().collect(Collectors.toList());
+                topOffLcset = sortedLcsets.get(sortedLcsets.size() - 1);
+                ProductOrderSample productOrderSample = sampleInstanceV2.getProductOrderSampleForSingleBucket();
+                if (productOrderSample != null) {
+                    productOrder = productOrderSample.getProductOrder();
+                } else {
+                    for (ProductOrderSample pdoSample : sampleInstanceV2.getAllProductOrderSamples()) {
+                        if (pdoSample.getSampleKey().equals(mercurySample.getSampleKey())) {
+                            productOrder = pdoSample.getProductOrder();
+                            break;
+                        }
+                    }
+                }
+            }
+            boolean isClinical = false;
+            if (productOrder == null) {
+                messageCollection.addError("Failed to find product order for " + mercurySample.getSampleKey());
+            } else {
+                dto.setPdo(productOrder.getBusinessKey());
+                AlignmentMetric alignmentMetric = mapSampleToMetrics.get(mercurySample.getSampleKey());
+                BigDecimal xNeeded = calculateXNeeded(productOrder, alignmentMetric, messageCollection);
+                if (xNeeded != null) {
+                    dto.setxNeeded(xNeeded.floatValue());
+                }
+                isClinical = !productOrder.getResearchProject().isResearchOnly();
+            }
+
+
+            dto.setIndex(StringUtils.join(molecularIndexes, ","));
+            dto.setLcset(lcset);
+            dto.setTopOffLcset(topOffLcset);
+            dto.setLibrary(pond.getLabel());
+            dto.setVolume(pond.getVolume());
+            dto.setStorage(pond.getStorageLocationStringify());
+            dto.setClinical(isClinical);
+        }
         return dto;
     }
 
@@ -808,7 +817,7 @@ public class TopOffActionBean extends CoreActionBean {
             List<HoldForTopoffDto> dtos = new ArrayList<>();
             Integer expectedYieldPerLane = 25;
             for (MercurySample mercurySample: state.getMercurySamples()) {
-                HoldForTopoffDto dto = parseSampleData(alignmentMetricsMap, mercurySample, messageCollection);
+                HoldForTopoffDto dto = parseSampleData(alignmentMetricsMap, mercurySample, messageCollection, true);
                 dtos.add(dto);
                 if (maxXNeeded == null || dto.getxNeeded() > maxXNeeded) {
                     maxXNeeded = dto.getxNeeded();

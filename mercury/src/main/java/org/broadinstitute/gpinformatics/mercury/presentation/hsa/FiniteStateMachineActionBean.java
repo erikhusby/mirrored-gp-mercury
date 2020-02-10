@@ -226,6 +226,7 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
     /**
      * Handle changing a task's state. Cancels a dragen job if its running and new status is cancelled
      * TODO Determine if its safe to actually cancel. See a few spots in the beginning where it says 'Do Not Interrupt'
+     * TODO Jw: If its a demultiplex then need to either delete the existing fastq folder or add force flag
      */
     @HandlesEvent(UPDATE_TASK_STATUS_ACTION)
     public Resolution updateTaskStatus() {

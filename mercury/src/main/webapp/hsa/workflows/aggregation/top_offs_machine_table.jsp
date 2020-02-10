@@ -84,18 +84,10 @@
     <div class="control-group">
         <div class="controls">
             <stripes:hidden name="sequencingType" value="${machineType}"/>
-            <c:choose>
-                <c:when test="${machineType != 'Sent To Rework'}">
-                    <stripes:submit name="createTopOffGroup" value="Create Top Off Group" id="${tableId}-createTopOffGroup" class="btn btn-primary ajaxSubmit"/>
-                    <stripes:submit name="sendToRework" value="Send To Rework" id="${tableId}-sendToRework" class="btn btn-primary ajaxSubmit"/>
-                    <stripes:submit name="sendToHolding" value="Send Back To Holding" id="${tableId}-sendToHolding" class="btn btn-primary ajaxSubmit"/>
-                    <stripes:submit name="downloadPickList" value="Download Picklist" id="${tableId}-downloadPickList" class="btn ajaxSubmit"/>
-                </c:when>
-                <c:otherwise>
-                    <stripes:submit name="sendBackToSeqQueue" value="Back To Sequencing Queue" class="btn btn-primary ajaxSubmit"/>
-                    <stripes:submit name="clearRework" value="Clear" class="btn btn-primary ajaxSubmit"/>
-                </c:otherwise>
-            </c:choose>
+            <stripes:submit name="createTopOffGroup" value="Create Top Off Group" id="${tableId}-createTopOffGroup" class="btn btn-primary ajaxSubmit"/>
+            <stripes:submit name="sendToRework" value="Send To Rework" id="${tableId}-sendToRework" class="btn btn-primary ajaxSubmit"/>
+            <stripes:submit name="sendToHolding" value="Send Back To Holding" id="${tableId}-sendToHolding" class="btn btn-primary ajaxSubmit"/>
+            <stripes:submit name="downloadPickList" value="Download Picklist" id="${tableId}-downloadPickList" class="btn ajaxSubmit"/>
         </div>
     </div>
 </stripes:form>

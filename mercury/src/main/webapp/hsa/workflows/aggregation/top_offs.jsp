@@ -247,12 +247,6 @@
                     columns: [
                         {sortable: false},
                         {sortable: true, "sClass": "nowrap"},
-                        {sortable: true, "sClass": "nowrap"},
-                        {sortable: true, "sClass": "nowrap"},
-                        {sortable: true, "sClass": "nowrap"},
-                        {sortable: true, "sClass": "nowrap"},
-                        {sortable: true, "sClass": "nowrap"},
-                        {sortable: true, "sClass": "nowrap"},
                     ],
                     select: {
                         style:    'os',
@@ -299,6 +293,11 @@
                     checkAllClass:'novaSeqTable-checkAll',
                     countDisplayClass:'novaSeqTable-checkedCount',
                     checkboxClass:'novaSeqTable-checkbox'});
+
+                $j('.sentToReworkTable-checkbox').enableCheckboxRangeSelection({
+                    checkAllClass:'sentToReworkTable-checkAll',
+                    countDisplayClass:'sentToReworkTable-checkedCount',
+                    checkboxClass:'sentToReworkTable-checkbox'});
 
                 function calculateLanesNeeded() {
                     var lanesNeededSelector = $j("#poolGroupsTable .lanesNeeded");
@@ -462,7 +461,7 @@
                 <div class="tab-pane" id="novaSeqTab">
                     <c:set var="tableId" value="novaSeqTable" scope="request"/>
                     <c:set var="dtoList" value="${actionBean.getTabData('Illumina NovaSeq 6000')}" scope="request"/>
-                    <c:set var="machineType" value="Illumina NovaSeq" scope="request"/>
+                    <c:set var="machineType" value="Illumina NovaSeq 6000" scope="request"/>
                     <jsp:include page="top_offs_machine_table.jsp"/>
                 </div>
                 <div class="tab-pane" id="poolGroupsTab">
@@ -470,9 +469,42 @@
                 </div>
                 <div class="tab-pane" id="reworksTab">
                     <c:set var="tableId" value="sentToReworkTable" scope="request"/>
-                    <c:set var="dtoList" value="${actionBean.getTabData('Sent To Rework')}" scope="request"/>
                     <c:set var="machineType" value="Sent To Rework" scope="request"/>
-                    <jsp:include page="top_offs_machine_table.jsp"/>
+                    <stripes:form beanclass="${actionBean.class.name}" id="topOffForm-sentToReworkTable" class="form-horizontal" method="POST">
+                        <table id="sentToReworkTable" class="table simple">
+                            <thead>
+                            <tr>
+                                <th width="30px">
+                                    <input type="checkbox" class="sentToReworkTable-checkAll" title="Check All"/>
+                                    <span id="hiseq-count" class="sentToReworkTable-checkedCount"></span>
+                                </th>
+                                <th>PDO Sample</th>
+                            </tr>
+                            </thead>
+                            <tbody class="context-menu-sentToReworkTable">
+                            <c:forEach items="${actionBean.getTabData('Sent To Rework')}" var="dto" varStatus="status">
+                                <tr>
+                                    <stripes:hidden name="mapTabToDto['Sent To Rework'].[${status.index}].seqType" value="${dto.seqType}"/>
+                                    <td>
+                                        <stripes:checkbox name="selectedSamples" class="sentToReworkTable-checkbox"
+                                                          value="${dto.pdoSample}"/>
+                                    </td>
+                                    <td>
+                                            ${dto.pdoSample}
+                                        <stripes:hidden name="mapTabToDto['Sent To Rework'].[${status.index}].pdoSample" value="${dto.pdoSample}"/>
+                                    </td>
+                                </tr>
+                            </c:forEach>
+                            </tbody>
+                        </table>
+                        <div class="control-group">
+                            <div class="controls">
+                                <stripes:hidden name="sequencingType" value="Sent To Rework"/>
+                                <stripes:submit name="sendBackToSeqQueue" value="Back To Sequencing Queue" class="btn btn-primary ajaxSubmit"/>
+                                <stripes:submit name="clearRework" value="Clear" class="btn btn-primary ajaxSubmit"/>
+                            </div>
+                        </div>
+                    </stripes:form>
                 </div>
             </div>
         </div>

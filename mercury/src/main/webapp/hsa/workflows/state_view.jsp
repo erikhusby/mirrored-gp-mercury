@@ -26,6 +26,10 @@ This fragment is used by  workflows view.jsp to re-use code when displaying stat
             <td>${state.stateName}</td>
         </tr>
         <tr>
+            <td>State ID</td>
+            <td>${state.stateId}</td>
+        </tr>
+        <tr>
             <td>Alive?</td>
             <td>${state.alive}</td>
         </tr>
