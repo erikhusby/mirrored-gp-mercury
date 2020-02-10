@@ -270,7 +270,7 @@ public class QueueActionBean extends CoreActionBean {
     private Resolution streamSpreadsheet(Object[][] rows) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
-            SpreadsheetCreator.createSpreadsheet("Sample Info", rows, out);
+            SpreadsheetCreator.createSpreadsheet("Sample Info", rows, out, SpreadsheetCreator.Type.XLS);
         } catch (IOException ioEx) {
             log.error("Failed to create spreadsheet");
             throw new RuntimeException(ioEx);
