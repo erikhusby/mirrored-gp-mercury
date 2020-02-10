@@ -521,6 +521,7 @@ public abstract class LabVessel implements Serializable {
         return metricList.get(0);
     }
 
+    @Nullable
     public LabMetricRun getMostRecentLabMetricRunForType(LabMetric.MetricType metricType) {
         if(labMetrics != null) {
             Set<LabMetric> metrics = new HashSet<>();

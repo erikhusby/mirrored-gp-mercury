@@ -71,7 +71,7 @@ public class BillingSessionActionBeanTest {
         roundTrip.addParameter(BillingSessionActionBean.BILLING_SESSION_FROM_URL_PARAMETER,
                                BILLING_SESSION_ID);
         roundTrip.execute(BillingSessionActionBean.VIEW_ACTION);
-        assertThat(roundTrip.getActionBean(BillingSessionActionBean.class).getWorkItemIdToHighlight(),equalTo(
+        assertThat(roundTrip.getActionBean(BillingSessionActionBean.class).getHighlightRow(),equalTo(
                 WORK_ITEM_ID));
     }
 
@@ -87,7 +87,7 @@ public class BillingSessionActionBeanTest {
     public void testLoadingNullWorkItemId() throws Exception  {
         roundTrip.addParameter(BillingSessionActionBean.WORK_ITEM_FROM_URL_PARAMETER,null);
         roundTrip.execute(BillingSessionActionBean.VIEW_ACTION);
-        assertThat(roundTrip.getActionBean(BillingSessionActionBean.class).getWorkItemIdToHighlight(), is(nullValue()));
+        assertThat(roundTrip.getActionBean(BillingSessionActionBean.class).getHighlightRow(), is(nullValue()));
     }
 
     @Test
@@ -109,7 +109,7 @@ public class BillingSessionActionBeanTest {
         roundTrip.addParameter(BillingSessionActionBean.BILLING_SESSION_FROM_URL_PARAMETER,
                                BILLING_SESSION_ID);
         roundTrip.execute(BillingSessionActionBean.VIEW_ACTION);
-        assertThat(roundTrip.getActionBean(BillingSessionActionBean.class).getWorkItemIdToHighlight(),equalTo(
+        assertThat(roundTrip.getActionBean(BillingSessionActionBean.class).getHighlightRow(),equalTo(
                 WORK_ITEM_ID));
     }
 

@@ -15,6 +15,7 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.NameValuePair;
@@ -368,8 +369,14 @@ public class BillingSessionActionBean extends CoreActionBean {
      * Javascript uses this to perform the actual
      * styling.
      */
-    public String getWorkItemIdToHighlight() {
-        return workId;
+    public String getHighlightRow() {
+        String highlightRowId = null;
+        if (StringUtils.isNotBlank(workId)) {
+            highlightRowId = workId;
+        } else if (StringUtils.isNotBlank(sapDeliveryId)) {
+            highlightRowId = sapDeliveryId;
+        }
+        return highlightRowId;
     }
 
     public String getSapDeliveryId() {
