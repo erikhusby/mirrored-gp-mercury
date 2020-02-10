@@ -396,7 +396,7 @@ public class QuoteImportItem {
     /**
      * @return A List of LedgerEntries which have been previously been billed in this QuoteImportItem.
      */
-    public Set<LedgerEntry> getPriorBillings() {
+    public Set<LedgerEntry> getPriorUncreditedBillings() {
         Set<LedgerEntry> priorSapBillings = new HashSet<>();
         ledgerItems.stream().flatMap(ledgerEntry -> ledgerEntry.getPreviouslyBilled().stream())
                 .filter(StreamUtils.not(LedgerEntry::isCredited))
@@ -405,7 +405,7 @@ public class QuoteImportItem {
     }
 
     public BigDecimal totalPriorBillingQuantity() {
-        return getPriorBillings().stream().map(LedgerEntry::getQuantity)
+        return getPriorUncreditedBillings().stream().map(LedgerEntry::getQuantity)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

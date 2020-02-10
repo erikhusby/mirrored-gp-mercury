@@ -40,7 +40,7 @@ public class BillingEjbTest {
                     }
                 }
             },
-        null, null, null, null, null, null);
+        null, null, null, null, null);
 
     public void testMapAliquotIdToSampleInvalid() {
         ProductOrder order = ProductOrderDBTestFactory.createTestProductOrder(STOCK_ID);

@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -19,31 +18,23 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapConfig;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
-import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
-import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @Stateful
 @RequestScoped
@@ -144,13 +135,12 @@ public class BillingEjb {
     private AppConfig appConfig;
     private SapConfig sapConfig;
     private EmailSender emailSender;
-    private TemplateEngine templateEngine;
     private BSPUserList bspUserList;
 
     private SAPProductPriceCache productPriceCache;
 
     public BillingEjb() {
-        this(null, null, null, null, null, null, null, null, null, null, null);
+        this(null, null, null, null, null, null, null, null, null, null);
     }
 
     @Inject
@@ -161,7 +151,6 @@ public class BillingEjb {
                       SampleDataFetcher sampleDataFetcher,
                       AppConfig appConfig, SapConfig sapConfig,
                       EmailSender emailSender,
-                      TemplateEngine templateEngine,
                       BSPUserList bspUserList,
                       SAPProductPriceCache productPriceCache) {
 
@@ -173,7 +162,6 @@ public class BillingEjb {
         this.appConfig = appConfig;
         this.sapConfig = sapConfig;
         this.emailSender = emailSender;
-        this.templateEngine = templateEngine;
         this.bspUserList = bspUserList;
         this.productPriceCache = productPriceCache;
     }
@@ -440,55 +428,4 @@ public class BillingEjb {
         );
     }
 
-    public void sendBillingCreditRequestEmail(List<LedgerEntry> billingLedgers, Long billedById)
-        throws InformaticsServiceException {
-        Collection<String> ccUsers = new HashSet<>(appConfig.getGpBillingManagers());
-        ccUsers.clear();
-        Map<String, Set<Map<String, Object>>> returnMap = new HashMap<>();
-
-        final BigDecimal creditQuantity = billingLedgers.stream().map(LedgerEntry::totalPreviouslyBilledQuantity)
-            .reduce(BigDecimal.ZERO, BigDecimal::add).abs();
-
-        BspUser billedBy = bspUserList.getById(billedById);
-        billingLedgers.forEach(billingLedger->{
-            if (billedBy != null) {
-                ccUsers.add(billedBy.getEmail());
-            }
-
-            ProductOrder productOrder = billingLedger.getProductOrderSample().getProductOrder();
-            BspUser orderPlacedBy = bspUserList.getById(productOrder.getCreatedBy());
-            if (orderPlacedBy != null) {
-                ccUsers.add(orderPlacedBy.getEmail());
-            }
-            Map<String, Object> rootMap = new HashMap<>();
-
-            Product product = productOrder.getProduct();
-            rootMap.put("mercuryOrder", productOrder.getJiraTicketKey());
-            rootMap.put("material", product.getPartNumber() + "<br>" + product.getProductName());
-            rootMap.put("sapOrderNumber", productOrder.getSapOrderNumber());
-            rootMap.put("sapDeliveryDocuments", billingLedger.getSapDeliveryDocumentId());
-            rootMap.put("quantity", creditQuantity);
-            Set<Map<String, Object>> returnList = returnMap.getOrDefault("returnList", new HashSet<>());
-            returnList.add(rootMap);
-            returnMap.put("returnList", returnList);
-        });
-
-        String body;
-        try {
-            body = processTemplate(SapConfig.BILLING_CREDIT_TEMPLATE, returnMap);
-        } catch (RuntimeException e) {
-            throw new InformaticsServiceException("Error creating message body from template", e);
-        }
-        Deployment deployment = appConfig.getDeploymentConfig();
-        boolean isProduction = deployment.equals(Deployment.PROD);
-
-        emailSender.sendHtmlEmail(appConfig, sapConfig.getSapSupportEmail(), ccUsers,
-            sapConfig.getSapReverseBillingSubject(), body, !isProduction, false);
-    }
-
-    String processTemplate(String template, Map<String, Set<Map<String, Object>>> objectMap) {
-        StringWriter stringWriter = new StringWriter();
-        templateEngine.processTemplate(template, objectMap, stringWriter);
-        return stringWriter.toString();
-    }
 }

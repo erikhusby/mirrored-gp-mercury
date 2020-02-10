@@ -118,8 +118,8 @@ public class BillingCreditDbFreeTest {
     public static final BigDecimal BILL_QUANTITY_ONE = BigDecimal.ONE;
     public static final BigDecimal CREDIT_QTY_ONE = BILL_QUANTITY_ONE.negate();
 
-    @DataProvider(name = "mockedClientProvider")
-    public static Iterator<Object[]> mockedClientProvider() throws SAPIntegrationException {
+    @DataProvider(name = "mockedFailureClientProvider")
+    public static Iterator<Object[]> mockedFailureClientProvider() throws SAPIntegrationException {
         List<Object[]> testCases = new ArrayList<>();
         SapIntegrationClientImpl sapClient = Mockito.mock(SapIntegrationClientImpl.class);
         Mockito.when(sapClient.createReturnOrder(Mockito.any(SAPReturnOrder.class)))
@@ -204,7 +204,7 @@ public class BillingCreditDbFreeTest {
         templateEngine.postConstruct();
         billingEjb =
             new BillingEjb(priceListCache, billingSessionDao, null, null, null, AppConfig.produce(Deployment.DEV),
-                SapConfig.produce(Deployment.DEV), mockEmailSender, templateEngine, bspUserList,
+                SapConfig.produce(Deployment.DEV), mockEmailSender, bspUserList,
                     mockProductPriceCache);
         billingAdaptor = new BillingAdaptor(billingEjb, priceListCache, quoteService, billingSessionAccessEjb,
             sapService, productPriceCache, accessControlEjb);
@@ -655,7 +655,7 @@ public class BillingCreditDbFreeTest {
         return billingAdaptor.billSessionItems("url", billingSession.getBusinessKey());
     }
 
-    @Test(dataProvider = "mockedClientProvider")
+    @Test(dataProvider = "mockedFailureClientProvider")
     public void testManyPositiveLedgersOneNegativeLedgerCreatesTwoBillingCredits(SapIntegrationClientImpl sapClient) throws Exception {
         List<LedgerEntry> ledgerEntries = new ArrayList<>();
         SapQuote sapQuote = TestUtils.buildTestSapQuote("1234", TEN_THOUSAND, HUNDRED_THOUSAND,
@@ -690,9 +690,6 @@ public class BillingCreditDbFreeTest {
         Collection<BillingCredit> billingCredits = billingAdaptor.handleBillingCredit(quoteImportItem);
         assertThat(billingCredits, hasSize(2));
 
-        List<BillingCredit> billingCreditsForItem = BillingAdaptor.findCreditsForEmail(billingCredits);
-        assertThat(billingCreditsForItem, hasSize(2));
-
         List<BillingCredit.LineItem> returnLineItems =
             billingCredits.stream().flatMap((BillingCredit billingCredit) -> billingCredit.getReturnLines().stream())
                 .collect(Collectors.toList());
@@ -702,7 +699,7 @@ public class BillingCreditDbFreeTest {
             BigDecimal::add)));
     }
 
-    @Test(dataProvider = "mockedClientProvider")
+    @Test(dataProvider = "mockedFailureClientProvider")
     public void testOnePositiveLedgerManyNegativeLedgersCreateOneBillingCredit(SapIntegrationClientImpl sapClient)
         throws Exception {
         List<LedgerEntry> ledgerEntries = new ArrayList<>();
@@ -737,8 +734,6 @@ public class BillingCreditDbFreeTest {
                 pdo);
         Collection<BillingCredit> billingCredits = billingAdaptor.handleBillingCredit(quoteImportItem);
         assertThat(billingCredits, hasSize(1));
-        List<BillingCredit> billingCreditsForItem = BillingAdaptor.findCreditsForEmail(billingCredits);
-        assertThat(billingCreditsForItem, hasSize(1));
         BigDecimal qtyBilled = billingCredits.stream().flatMap(billingCredit -> billingCredit.getReturnLines().stream())
             .map(BillingCredit.LineItem::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
         List<BillingCredit.LineItem> returnLineItems =
@@ -753,7 +748,7 @@ public class BillingCreditDbFreeTest {
         return Date.from(LocalDate.now().minusDays(i + 1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
     }
 
-    @Test(dataProvider = "mockedClientProvider")
+    @Test(dataProvider = "mockedFailureClientProvider")
     public void testPositiveQtyCredit(SapIntegrationClientImpl sapClient) throws Exception {
         List<LedgerEntry> ledgerEntries = new ArrayList<>();
         SapQuote sapQuote = TestUtils.buildTestSapQuote("1234", TEN_THOUSAND, HUNDRED_THOUSAND,
@@ -788,7 +783,7 @@ public class BillingCreditDbFreeTest {
         }
     }
 
-    @Test(dataProvider = "mockedClientProvider")
+    @Test(dataProvider = "mockedFailureClientProvider")
     public void testBillingCreditNotSapOrder(SapIntegrationClientImpl sapClient) throws Exception {
         List<LedgerEntry> ledgerEntries = new ArrayList<>();
         pdo.setQuoteId("ABCDE");

@@ -39,10 +39,8 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -154,8 +152,6 @@ public class BillingAdaptor implements Serializable {
 
         BillingSession billingSession = billingSessionAccessEjb.findAndLockSession(sessionKey);
 
-        // Keep track of failed billingCredits so emails can be sent at the end of the billing session.
-        Collection<BillingCredit> billingCreditsForEmail = new HashSet<>();
         try {
             List<QuoteImportItem> unBilledQuoteImportItems = null;
             PriceList priceItemsForDate = null;
@@ -212,9 +208,6 @@ public class BillingAdaptor implements Serializable {
                                             Set<BillingEjb.BillingResult> creditResults = billingCredits.stream()
                                                 .map(BillingCredit::getBillingResult).collect(Collectors.toSet());
                                             itemResults.addAll(creditResults);
-
-                                            List<BillingCredit> billingCreditsForItem = findCreditsForEmail(billingCredits);
-                                            billingCreditsForEmail.addAll(billingCreditsForItem);
                                         }
                                         item.getProductOrder().latestSapOrderDetail()
                                             .addLedgerEntries(item.getLedgerItems());
@@ -279,30 +272,6 @@ public class BillingAdaptor implements Serializable {
             billingSessionAccessEjb.saveAndUnlockSession(billingSession);
         }
 
-        /*
-         In cases where a credit spans >1 quoteImportItem, we will have n number of BillingCredit objects with the
-         same sapDocumentId. Since we want to send only one email per sapDeliveryDocument we need to re-loop through
-         the results to correlate the credits by sapDeliveryDocumentId.
-         (ex: two credits against the same sapDeliveryDocument for different dates)
-        */
-        Map<String, List<BillingCredit>> creditsByDeliveryDocument = new HashMap<>();
-        billingCreditsForEmail.forEach(billingCredit -> billingCredit.getReturnLines().forEach(lineItem -> {
-            creditsByDeliveryDocument.computeIfAbsent(
-                billingCredit.getSapDeliveryDocumentId(), deliveryDocumentId -> new ArrayList<>()).add(billingCredit);
-        }));
-
-        creditsByDeliveryDocument.forEach((deliveryDocumentId, billingCredits) -> {
-            List<LedgerEntry> ledgerEntries =
-                billingCredits.stream().flatMap(billingCredit -> billingCredit.getReturnLines().stream()).map(
-                    BillingCredit.LineItem::getLedgerEntry).collect(Collectors.toList());
-
-            billingEjb.sendBillingCreditRequestEmail(ledgerEntries, billingSession.getCreatedBy());
-
-            // Now that the email is sent, we update the billingResult with a message back to the user.
-            billingCredits.stream().map(BillingCredit::getBillingResult)
-                .forEach(billingResult -> billingResult.setInformationMessage(BILLING_CREDIT_EMAIL_SENT));
-        });
-
         // If there were no errors in billing, then end the session, which will add the billed date and remove
         // all sessions from the ledger.
         if (!errorsInBilling) {
@@ -310,15 +279,6 @@ public class BillingAdaptor implements Serializable {
         }
 
         return allResults;
-    }
-
-    /**
-     * Filter billingCredits to find ones for which users should be emailed .
-     */
-    public static List<BillingCredit> findCreditsForEmail(Collection<BillingCredit> billingCredits) {
-        return billingCredits.stream()
-            .filter(billingCredit -> StringUtils.startsWith(billingCredit.getReturnOrderId(), BillingCredit.CREDIT_REQUESTED_PREFIX))
-            .collect(Collectors.toList());
     }
 
     /**

@@ -50,9 +50,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.emptyOrNullString;
-import static org.hamcrest.Matchers.not;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SapIntegrationServiceCreditDeliveryDbFreeTest {
@@ -166,14 +164,21 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
         BigDecimal pointFive = BigDecimal.valueOf(.5d);
         BigDecimal pointSix = BigDecimal.valueOf(.6d);
         BigDecimal two = BigDecimal.valueOf(2);
+        BigDecimal three = BigDecimal.valueOf(3);
         List<Object[]> testCases = new ArrayList<>();
         testCases.add(new Object[]{Collections.singletonList(BigDecimal.ONE), Collections.singletonList(BigDecimal.ONE.negate()), null});
+        testCases.add(new Object[]{Collections.singletonList(BigDecimal.ONE), Collections.singletonList(two.negate()), BillingAdaptor.NEGATIVE_BILL_ERROR});
         testCases.add(new Object[]{Arrays.asList(pointFour, pointSix), Collections.singletonList(BigDecimal.ONE.negate()), null});
-        testCases.add(new Object[]{Collections.singletonList(BigDecimal.ONE.negate()), Arrays.asList(pointFive, pointFive), BillingAdaptor.NEGATIVE_BILL_ERROR});
-        testCases.add(new Object[]{Arrays.asList(pointFive, pointSix), Collections.singletonList(BigDecimal.ONE.negate()), BillingAdaptor.CREDIT_QUANTITY_INVALID});
+        testCases.add(new Object[]{Arrays.asList(BigDecimal.ONE.negate(),pointFour), Arrays.asList( pointFive.negate()), BillingAdaptor.NEGATIVE_BILL_ERROR});
+        testCases.add(new Object[]{Arrays.asList(pointFive, BigDecimal.ONE), Collections.singletonList(pointSix.negate()), null});
         testCases.add(new Object[]{Collections.singletonList(BigDecimal.ONE.negate()), Collections.singletonList(two.negate()), BillingAdaptor.NEGATIVE_BILL_ERROR});
         testCases.add(new Object[]{Collections.singletonList(BigDecimal.ZERO), Collections.singletonList(BigDecimal.ONE.negate()), BillingAdaptor.NEGATIVE_BILL_ERROR});
         testCases.add(new Object[]{Collections.emptyList(), Collections.singletonList(BigDecimal.ONE.negate()), BillingAdaptor.NEGATIVE_BILL_ERROR});
+        testCases.add(new Object[]{Arrays.asList(two, BigDecimal.ONE,two), Arrays.asList(BigDecimal.valueOf(3).negate(),BigDecimal.ONE.negate()), null});
+        testCases.add(new Object[]{Arrays.asList(BigDecimal.ONE,two, three), Arrays.asList(BigDecimal.ONE.negate(),two.negate(), three.negate()), null});
+        testCases.add(new Object[]{Arrays.asList(three,two, BigDecimal.ONE), Arrays.asList(BigDecimal.ONE.negate(),two.negate(), three.negate()), null});
+        testCases.add(new Object[]{Arrays.asList(BigDecimal.ONE,two, three), Arrays.asList(three.negate(),two.negate(), BigDecimal.ONE.negate()), null});
+        testCases.add(new Object[]{Arrays.asList(three,two, BigDecimal.ONE), Arrays.asList(three.negate(),two.negate(), BigDecimal.ONE.negate()), null});
         return testCases.iterator();
     }
 
@@ -199,25 +204,23 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
         Product product = productOrder.getProduct();
 
         List<LedgerEntry> ledgerEntries = new ArrayList<>();
-        new BillingSession(System.currentTimeMillis(), new HashSet<>(ledgerEntries));
-        ledgerEntries.clear();
+
         ProductOrderSample productOrderSample = productOrder.getSamples().iterator().next();
         for (int i = 0; i < positiveQuantities.size(); i++) {
             BigDecimal quantity = positiveQuantities.get(i);
             String deliveryDocumentId = String.format("00%d", i);
             LedgerEntry ledger = createLedgerEntry(productOrderSample, product, deliveryDocumentId, quantity);
             ledger.setBillingMessage(BillingSession.SUCCESS);
-            ledgerEntries.add(ledger);
-            new BillingSession(System.currentTimeMillis(), new HashSet<>(ledgerEntries));
         }
+
         for (int i = 0; i < negativeQuantities.size(); i++) {
             BigDecimal quantity = negativeQuantities.get(i);
             String deliveryDocumentId = String.format("00%d", i);
             LedgerEntry ledger = createLedgerEntry(productOrderSample, product, deliveryDocumentId, quantity);
             ledgerEntries.add(ledger);
-            new BillingSession(System.currentTimeMillis(), new HashSet<>(ledgerEntries));
         }
-
+        BillingSession billingSession = new BillingSession(System.currentTimeMillis(), new HashSet<>(ledgerEntries));
+        billingSession.getUnBilledQuoteImportItems(priceListCache);
         QuoteImportItem quoteImportItem =
             new QuoteImportItem(QUOTE_ID, null, null, ledgerEntries, new Date(), product, productOrder);
 
@@ -225,7 +228,7 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
         Collection<BillingCredit> billingCredits = new HashSet<>();
         try {
             billingCredits.addAll(BillingCredit.setupSapCredits(quoteImportItem));
-            assertThat(error, anyOf(is(emptyOrNullString()), is(not(BillingAdaptor.CREDIT_QUANTITY_INVALID))));
+            assertThat(error, is(emptyOrNullString()));
         } catch (Exception e) {
             assertThat(e.getMessage(), equalTo(error));
         }
