@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.AlignmentMetricsDao;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.FingerprintScoreDao;
@@ -61,6 +62,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn.PDO_SEARCH_COLUMNS;
 
 
 @UrlBinding(AggregationTriageActionBean.ACTION_BEAN_URL)
@@ -147,6 +150,9 @@ public class AggregationTriageActionBean extends CoreActionBean {
     @Inject
     private FiniteStateMachineFactory finiteStateMachineFactory;
 
+    @Inject
+    private SampleDataFetcher sampleDataFetcher;
+
     private TriageDto dto;
 
 
@@ -158,7 +164,7 @@ public class AggregationTriageActionBean extends CoreActionBean {
                 .map(AggregationTask::getFastQSampleId)
                 .collect(Collectors.toSet());
 
-        Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(sampleIds);
+        List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(sampleIds);
 
         List<AlignmentMetric> bySampleAlias = alignmentMetricsDao.findBySampleAlias(sampleIds);
         Set<AlignmentMetric> alignmentMetrics = new HashSet<>(bySampleAlias);
@@ -183,21 +189,20 @@ public class AggregationTriageActionBean extends CoreActionBean {
 //        }
 
         List<TriageDto> dtos = new ArrayList<>();
-        for (Map.Entry<String, MercurySample> entry: mapIdToMercurySample.entrySet()) {
-            String sampleKey = entry.getKey();
-            MercurySample mercurySample = entry.getValue();
-            if (mercurySample == null) {
-                log.debug("Failed to find mercury sample " + sampleKey);
-                continue;
-            }
+        // todo jmt optimize search column list
+        Map<String, SampleData> mapIdToSampleData = sampleDataFetcher.fetchSampleDataForSamples(mercurySamples,
+                PDO_SEARCH_COLUMNS);
 
-            AlignmentMetric alignmentMetric = mapAliasToMetric.get(sampleKey);
+        for (MercurySample mercurySample: mercurySamples) {
+            mercurySample.setSampleData(mapIdToSampleData.get(mercurySample.getSampleKey()));
+
+            AlignmentMetric alignmentMetric = mapAliasToMetric.get(mercurySample.getSampleKey());
             if (alignmentMetric == null) {
-                log.error("Failed to find alignment metric for sample in 'triage' " + sampleKey);
+                log.error("Failed to find alignment metric for sample in 'triage' " + mercurySample.getSampleKey());
                 continue;
             }
 
-            TriageDto dto = createTriageDto(sampleKey, mercurySample, alignmentMetric);
+            TriageDto dto = createTriageDto(mercurySample.getSampleKey(), mercurySample, alignmentMetric);
             dtos.add(dto);
         }
 

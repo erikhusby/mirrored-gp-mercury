@@ -8,8 +8,6 @@ import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AlignmentState;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FingerprintState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -184,6 +182,7 @@ public class MercurySample extends AbstractSample {
     private Boolean isRoot;
 
     @OneToMany(mappedBy = "mercurySample", cascade = CascadeType.PERSIST, orphanRemoval = true)
+    @BatchSize(size = 20)
     private Set<Fingerprint> fingerprints = new HashSet<>();
 
     @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "mercurySamples")
