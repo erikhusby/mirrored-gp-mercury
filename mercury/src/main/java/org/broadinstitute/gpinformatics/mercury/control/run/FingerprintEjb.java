@@ -131,7 +131,7 @@ public class FingerprintEjb {
 
         String[] sheetNames = {"Fluidigm Matrix"};
         sheets.put(sheetNames[0], fluiLodCells);
-        Workbook workbook = SpreadsheetCreator.createSpreadsheet(sheets);
+        Workbook workbook = SpreadsheetCreator.createSpreadsheet(sheets, SpreadsheetCreator.Type.XLSX);
         Sheet sheet = workbook.getSheet("Fluidigm Matrix");
 
         Row row;
