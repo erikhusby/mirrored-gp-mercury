@@ -16,8 +16,12 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * A collection of methods that query for MolecularIndexingSchemes. For all
@@ -114,6 +118,14 @@ public class MolecularIndexingSchemeDao extends GenericDao {
 
     public List<MolecularIndexingScheme> findByNames(Collection<String> names) {
         return findListByList(MolecularIndexingScheme.class, MolecularIndexingScheme_.name, new HashSet<>(names));
+    }
+
+    public Map<String, MolecularIndexingScheme> mapByNames(List<String> names) {
+        // Puts all the names in as map keys then overwrites the map entries with looked-up molecular indexing schemes.
+        Map<String, MolecularIndexingScheme> map = new HashMap<>();
+        names.stream().distinct().forEach(name -> map.put(name, null));
+        findByNames(names).stream().forEach(mis -> map.put(mis.getName(), mis));
+        return map;
     }
 
     public List<MolecularIndexingScheme> findAllIlluminaSchemes() {

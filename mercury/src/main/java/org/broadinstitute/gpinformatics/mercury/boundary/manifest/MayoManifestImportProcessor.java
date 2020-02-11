@@ -183,12 +183,21 @@ public class MayoManifestImportProcessor {
      */
     @NotNull
     static List<List<String>> parseAsCellGrid(byte[] content, String filename, MessageCollection messages) {
+        return parseAsCellGrid(content, filename, false, messages);
+    }
+
+    /**
+     * Returns spreadsheet cell contents as strings. Blank lines are removed if flag is false.
+     */
+    @NotNull
+    public static List<List<String>> parseAsCellGrid(byte[] content, String filename, boolean keepBlankLines,
+            MessageCollection messages) {
         List<List<String>> cellGrid = new ArrayList<>();
         try {
             // Parses file as a .csv spreadsheet.
             CsvParser.parseToCellGrid(new ByteArrayInputStream(content)).
                     stream().
-                    filter(line -> StringUtils.isNotBlank(StringUtils.join(line))).
+                    filter(line -> keepBlankLines || StringUtils.isNotBlank(StringUtils.join(line))).
                     map(Arrays::asList).
                     forEach(cellGrid::add);
         } catch(Exception e) {

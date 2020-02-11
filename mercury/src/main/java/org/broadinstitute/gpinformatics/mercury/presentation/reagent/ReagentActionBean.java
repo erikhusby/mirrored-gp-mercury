@@ -10,13 +10,14 @@ import net.sourceforge.stripes.validation.Validate;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.control.reagent.ControlReagentFactory;
 import org.broadinstitute.gpinformatics.mercury.control.reagent.UniqueMolecularIdentifierReagentFactory;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.IndexedPlateFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -27,7 +28,8 @@ public class ReagentActionBean extends CoreActionBean {
 
     public enum ReagentFormat {
         CONTROLS("Control tubes"),
-        UMI("Unique Molecular Identifiers");
+        UMI("Unique Molecular Identifiers"),
+        INDEXES("Molecular Indexes");
         private String displayName;
 
         ReagentFormat(String displayName) {
@@ -43,16 +45,23 @@ public class ReagentActionBean extends CoreActionBean {
     public static final String UPLOAD_ACTION = "upload";
 
     public static final String REAGENT_UPLOAD_PAGE = "/reagent/reagent_upload.jsp";
+    public static final String REAGENT_UPLOAD_PAGE2 = "/reagent/reagent_upload2.jsp";
+    private static final String DELIMITER = " ";
 
     @Validate(required = true, on = UPLOAD_ACTION)
     private FileBean reagentsFile;
     private ReagentFormat reagentFormat;
+    private List<String> tubesAndIndexNames = new ArrayList<>();
+    private boolean hasWarnings;
 
     @Inject
     private ControlReagentFactory controlReagentFactory;
 
     @Inject
     private UniqueMolecularIdentifierReagentFactory umiReagentFactory;
+
+    @Inject
+    private IndexedPlateFactory indexedPlateFactory;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -80,6 +89,23 @@ public class ReagentActionBean extends CoreActionBean {
                     uploadCount = 0;
                 }
                 break;
+            case INDEXES:
+                // A header must be present but it is ignored. Data rows consist of barcode, mis name.
+                List<List<String>> rows = indexedPlateFactory.parseSpreadsheet(reagentsFile.getFileName(),
+                        reagentsFile.getInputStream(), 2, messageCollection);
+                if (!messageCollection.hasErrors()) {
+                    indexedPlateFactory.validateTubesAndIndexNames(rows, messageCollection);
+                }
+                addMessages(messageCollection);
+                if (messageCollection.hasErrors()) {
+                    return new ForwardResolution(REAGENT_UPLOAD_PAGE);
+                } else {
+                    hasWarnings = messageCollection.hasWarnings();
+                    // Populates the list of pairs so the jsp can return it for the save action.
+                    rows.subList(1, rows.size()).
+                            forEach(row -> tubesAndIndexNames.add(row.get(0) + DELIMITER + row.get(1)));
+                    return new ForwardResolution(REAGENT_UPLOAD_PAGE2);
+                }
             default:
                 throw new RuntimeException("Unexpected reagent format " + reagentFormat);
             }
@@ -93,6 +119,22 @@ public class ReagentActionBean extends CoreActionBean {
         }
     }
 
+    @HandlesEvent(SAVE_ACTION)
+    public Resolution reagentTubeSave() {
+        MessageCollection messageCollection = new MessageCollection();
+        List<String> tubeBarcodes = new ArrayList<>();
+        List<String> indexNames = new ArrayList<>();
+        tubesAndIndexNames.forEach(tubeAndIndexName -> {
+            String[] splitString = tubeAndIndexName.split(DELIMITER);
+            tubeBarcodes.add(splitString[0]);
+            indexNames.add(splitString[1]);
+        });
+
+        indexedPlateFactory.saveTubesAndIndexNames(tubeBarcodes, indexNames, messageCollection);
+        addMessages(messageCollection);
+        return new ForwardResolution(REAGENT_UPLOAD_PAGE);
+    }
+
     public ReagentFormat getReagentFormat() {
         return reagentFormat;
     }
@@ -103,5 +145,29 @@ public class ReagentActionBean extends CoreActionBean {
 
     public void setReagentsFile(FileBean reagentsFile) {
         this.reagentsFile = reagentsFile;
+    }
+
+    public String formatTubeAndIndexName(String tubeBarcode, String indexName) {
+        return tubeBarcode + " " + indexName;
+    }
+
+    public String[] parseTubeAndIndexName(String tubeAndIndexName) {
+        return tubeAndIndexName.split(" ");
+    }
+
+    public List<String> getTubesAndIndexNames() {
+        return tubesAndIndexNames;
+    }
+
+    public void setTubesAndIndexNames(List<String> tubesAndIndexNames) {
+        this.tubesAndIndexNames = tubesAndIndexNames;
+    }
+
+    public boolean isHasWarnings() {
+        return hasWarnings;
+    }
+
+    public void setHasWarnings(boolean hasWarnings) {
+        this.hasWarnings = hasWarnings;
     }
 }

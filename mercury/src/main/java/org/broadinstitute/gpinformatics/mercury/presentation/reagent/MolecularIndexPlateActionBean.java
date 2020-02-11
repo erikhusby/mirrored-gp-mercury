@@ -125,7 +125,8 @@ public class MolecularIndexPlateActionBean extends CoreActionBean {
         } else {
             List<List<String>> rows = null;
             try {
-                rows = indexedPlateFactory.parseSpreadsheet(spreadsheet.getInputStream(), 2, messageCollection);
+                rows = indexedPlateFactory.parseSpreadsheet(spreadsheet.getFileName(), spreadsheet.getInputStream(),
+                        2, messageCollection);
             } catch (IOException e) {
                 messageCollection.addError("Cannot read file: " + e.toString());
             }
@@ -168,7 +169,8 @@ public class MolecularIndexPlateActionBean extends CoreActionBean {
     public Resolution createInstance() {
         List<List<String>> rows = null;
         try {
-            rows = indexedPlateFactory.parseSpreadsheet(spreadsheet.getInputStream(), 1, messageCollection);
+            rows = indexedPlateFactory.parseSpreadsheet(spreadsheet.getFileName(), spreadsheet.getInputStream(),
+                    1, messageCollection);
         } catch (IOException e) {
             messageCollection.addError("Cannot read file: " + e.toString());
         }

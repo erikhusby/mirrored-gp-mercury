@@ -1,16 +1,20 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.CharUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.GenericTableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
+import org.broadinstitute.gpinformatics.mercury.boundary.manifest.MayoManifestImportProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.IndexPlateDefinitionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.reagent.MolecularIndexingSchemeFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.IndexPlateDefinition;
@@ -18,6 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.IndexPlateDefinit
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -33,6 +38,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -42,6 +48,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -63,6 +70,7 @@ public class IndexedPlateFactory {
     public static final String UNKNOWN_POSITION = "Unknown vessel position \"%s\".";
     public static final String UNKNOWN_STATIC_PLATE_TYPE = "Unknown static plate geometry \"%s\".";
     public static final String WRONG_COLUMN_COUNT = "At row %d expected %d columns but found %d.";
+    public static final String REMOVE_INDICATOR = "remove";
 
     @Inject
     private MolecularIndexingSchemeFactory indexingSchemeFactory;
@@ -78,6 +86,9 @@ public class IndexedPlateFactory {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    LabVesselDao labVesselDao;
 
     public enum TechnologiesAndParsers {
         FOUR54_SINGLE("454 (Single Index)",
@@ -258,26 +269,40 @@ public class IndexedPlateFactory {
     }
 
     /** Parses the spreadsheet into list of header and data rows. */
-    public List<List<String>> parseSpreadsheet(InputStream inputStream, int expectedNumberOfColumns,
+    public List<List<String>> parseSpreadsheet(String filename, InputStream inputStream, int expectedNumberOfColumns,
             MessageCollection messageCollection) {
-        GenericTableProcessor processor = new GenericTableProcessor();
-        try {
-            PoiSpreadsheetParser.processSingleWorksheet(inputStream, processor);
-        } catch (Exception e) {
-            messageCollection.addError("Error while reading Excel file: " + e.toString());
-        }
-        if (CollectionUtils.isEmpty(processor.getHeaderAndDataRows()) ||
-                CollectionUtils.isEmpty(processor.getHeaderAndDataRows().get(0))) {
-            messageCollection.addError(SPREADSHEET_EMPTY);
-        }
-        int rowNumber = 0;
-        for (List<String> row : processor.getHeaderAndDataRows()) {
-            ++rowNumber;
-            if (row.size() > 0 && row.size() != expectedNumberOfColumns) {
-                messageCollection.addError(WRONG_COLUMN_COUNT, rowNumber, expectedNumberOfColumns, row.size());
+        List<List<String>> rows = Collections.emptyList();
+        if (filename.toLowerCase().endsWith(".csv")) {
+            // Parse as csv.
+            try {
+                rows = MayoManifestImportProcessor.parseAsCellGrid(IOUtils.toByteArray(inputStream),
+                        filename, true, messageCollection);
+            } catch (IOException e) {
+                messageCollection.addError("Error while reading .csv file: " + e.toString());
+            }
+        } else {
+            // Parse as Excel.
+            GenericTableProcessor processor = new GenericTableProcessor();
+            try {
+                PoiSpreadsheetParser.processSingleWorksheet(inputStream, processor);
+                // Removes blank rows.
+                rows = processor.getHeaderAndDataRows().stream().
+                        filter(columns -> columns.size() > 0).collect(Collectors.toList());
+            } catch (Exception e) {
+                messageCollection.addError("Error while reading Excel file: " + e.toString());
             }
         }
-        return processor.getHeaderAndDataRows().stream().filter(row -> row.size() > 0).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(rows) || CollectionUtils.isEmpty(rows.get(0))) {
+            messageCollection.addError(SPREADSHEET_EMPTY);
+        } else {
+            for (int rowNumber = 1; rowNumber <= rows.size(); ++rowNumber) {
+                int numberOfColumns = rows.get(rowNumber - 1).size();
+                if (numberOfColumns != expectedNumberOfColumns) {
+                    messageCollection.addError(WRONG_COLUMN_COUNT, rowNumber, expectedNumberOfColumns, numberOfColumns);
+                }
+            }
+        }
+        return rows;
     }
 
     /**
@@ -631,5 +656,183 @@ public class IndexedPlateFactory {
     /** Converts a plateSelectionName into a plate name. */
     public String selectionNameToPlateName(String plateNameSelection) {
         return StringUtils.substringBeforeLast(plateNameSelection, SEPARATOR);
+    }
+
+    /**
+     * Issues warnings and errors if the upload has problems.
+     *
+     * @param rows spreadsheet cell grid, including a header row.
+     */
+    public void validateTubesAndIndexNames(List<List<String>> rows, MessageCollection messages) {
+        final int tubeBarcodeColumnIndex = 0;
+        final int misNameColumnIndex = 1;
+
+        // Assumes a header row is present and ignores it.
+        if (CollectionUtils.isEmpty(rows) || rows.size() < 2) {
+            messages.addError("Upload contains no data.");
+            return;
+        }
+
+        List<String> barcodes = new ArrayList<>();
+        List<String> misNames = new ArrayList<>();
+        rows.subList(1, rows.size()).forEach(row -> {
+            barcodes.add(row.get(tubeBarcodeColumnIndex).trim());
+            misNames.add(row.size() < misNameColumnIndex ? "" : row.get(misNameColumnIndex).trim());
+        });
+
+        // Each row must have a non-blank barcode and non-blank mis name.
+        String missingBarcodeRows = IntStream.range(0, barcodes.size()).
+                filter(i -> StringUtils.isBlank(barcodes.get(i))).
+                mapToObj(i -> String.valueOf(i + 2)). // outputs the 1-based spreadsheet row number.
+                collect(Collectors.joining(", "));
+        if (!missingBarcodeRows.isEmpty()) {
+            messages.addError("Tube barcode is blank at rows " + missingBarcodeRows + ".");
+        }
+        String missingMisNameRows = IntStream.range(0, misNames.size()).
+                filter(i -> StringUtils.isBlank(misNames.get(i))).
+                mapToObj(i -> String.valueOf(i + 2)). // outputs the 1-based spreadsheet row number.
+                collect(Collectors.joining(", "));
+        if (!missingMisNameRows.isEmpty()) {
+            messages.addError("Molecular index name is blank at rows " + missingMisNameRows + ".");
+        }
+        if (messages.hasErrors()) {
+            return;
+        }
+
+        // Barcodes must be unique.
+        Set<String> uniqueBarcodes = new HashSet<>();
+        String duplicateBarcodeRows = IntStream.range(0, barcodes.size()).
+                filter(i -> !uniqueBarcodes.add(barcodes.get(i))).
+                mapToObj(i -> String.valueOf(i + 2)). // outputs the 1-based spreadsheet row number.
+                collect(Collectors.joining(", "));
+        if (!duplicateBarcodeRows.isEmpty()) {
+            messages.addError("Duplicate tube barcode at rows " + duplicateBarcodeRows + ".");
+        }
+
+        // Checks that molecular indexing scheme names are valid, or the remove indicator.
+        Map<String, MolecularIndexingScheme> mises = molecularIndexingSchemeDao.mapByNames(misNames);
+        String invalidMisNameRows = IntStream.range(0, misNames.size()).
+                filter(i -> mises.get(misNames.get(i)) == null && !misNames.get(i).equals(REMOVE_INDICATOR)).
+                mapToObj(i -> String.valueOf(i + 2)).
+                collect(Collectors.joining(", "));
+        if (!invalidMisNameRows.isEmpty()) {
+            messages.addError("Molecular index name at rows " + invalidMisNameRows + " is unregistered in Mercury.");
+        }
+        // Checks that all valid mis names have a reagent.
+        Map<String, MolecularIndexReagent> reagents = new HashMap<>();
+        mises.entrySet().stream().forEach(mapEntry ->
+                reagents.put(mapEntry.getKey(), molecularIndexingSchemeDao.reagentFor(mapEntry.getValue())));
+        String invalidReagentRows = IntStream.range(0, misNames.size()).
+                filter(i -> mises.get(misNames.get(i)) != null && reagents.get(misNames.get(i)) == null).
+                mapToObj(i -> String.valueOf(i + 2)).
+                collect(Collectors.joining(", "));
+        if (!invalidReagentRows.isEmpty()) {
+            messages.addError("Molecular index at rows " + invalidReagentRows + " has no linked reagent in Mercury.");
+        }
+
+        // Normally the tube doesn't exist yet in Mercury, so warn if the tube exists and a reagent
+        // is being added. But error if the tube already has a reagent and a new one is being added.
+        // If the remove indicator is present only warn if the tube does not exist.
+        Map<String, LabVessel> tubes = labVesselDao.findByBarcodes(barcodes);
+        List<Integer> tubeExists = new ArrayList<>();
+        List<Integer> tubeDoesntExist = new ArrayList<>();
+        List<Integer> alreadyContains = new ArrayList<>();
+        List<Integer> alreadyEmpty = new ArrayList<>();
+        List<Integer> multipleReagents = new ArrayList<>();
+        for (int i = 0; i < barcodes.size(); ++i) {
+            int rowNumber = i + 2;
+            LabVessel tube = tubes.get(barcodes.get(i));
+            if (REMOVE_INDICATOR.equals(misNames.get(i))) {
+                if (tube == null) {
+                    tubeDoesntExist.add(rowNumber);
+                } else if (tube.getReagentContents().isEmpty()) {
+                    alreadyEmpty.add(rowNumber);
+                } else if (tube.getReagentContents().size() > 1) {
+                    multipleReagents.add(rowNumber);
+                }
+            } else if (tube != null) {
+                // Looks for a molecular index reagent in the tube.
+                if (tube.getSampleInstancesV2().stream().
+                        anyMatch(sampleInstance -> CollectionUtils.isNotEmpty(sampleInstance.getReagents()))) {
+                    alreadyContains.add(rowNumber);
+                } else {
+                    tubeExists.add(rowNumber);
+                }
+            }
+        }
+        if (!alreadyContains.isEmpty()) {
+            messages.addError("Tube at rows " + StringUtils.join(alreadyContains, ", ") +
+                    " already contains a molecular index.");
+        }
+        if (!tubeDoesntExist.isEmpty()) {
+            messages.addError("Tube at rows " + StringUtils.join(tubeDoesntExist, ", ") + " is not in Mercury.");
+        }
+        if (!tubeExists.isEmpty()) {
+            messages.addWarning("Tube at rows " + StringUtils.join(tubeExists, ", ") + " is already registered.");
+        }
+        if (!alreadyEmpty.isEmpty()) {
+            messages.addWarning("Tube at rows " + StringUtils.join(alreadyEmpty, ", ") +
+                    " does not contain a molecular index.");
+        }
+        if (!multipleReagents.isEmpty()) {
+            messages.addWarning("Tube at rows " + StringUtils.join(multipleReagents, ", ") +
+                    " contains more than one reagent and all of them will be removed.");
+        }
+        // Warns about short numeric barcodes that lack a leading zero, which is typical of an Excel upload.
+        String missingZeroRowNumbers = IntStream.range(0, barcodes.size()).
+                filter(i -> !barcodes.get(i).startsWith("0") && barcodes.get(i).length() < 10 &&
+                        NumberUtils.isDigits(barcodes.get(i))).
+                mapToObj(i -> String.valueOf(i + 2)).
+                collect(Collectors.joining(", "));
+        if (!missingZeroRowNumbers.isEmpty()) {
+            messages.addWarning("Tube barcode appears to lack leading zeros at rows " + missingZeroRowNumbers + ".");
+        }
+        if (!messages.hasWarnings() && !messages.hasWarnings()) {
+            messages.addInfo("Spreadsheet validation found no problems.");
+        }
+    }
+
+    /**
+     * Saves tubes and reagent contents.
+     */
+    public void saveTubesAndIndexNames(List<String> barcodes, List<String> misNames, MessageCollection messages) {
+        Map<String, LabVessel> tubes = labVesselDao.findByBarcodes(barcodes);
+        // Makes any new barcoded tubes needed.
+        barcodes.stream().
+                filter(barcode -> tubes.get(barcode) == null).
+                forEach(barcode -> tubes.put(barcode, new BarcodedTube(barcode)));
+
+        // Maps the mis name to the reagent.
+        Map<String, MolecularIndexReagent> reagents = new HashMap<>();
+        molecularIndexingSchemeDao.mapByNames(misNames).entrySet().stream().forEach(mapEntry ->
+                reagents.put(mapEntry.getKey(), molecularIndexingSchemeDao.reagentFor(mapEntry.getValue())));
+
+        int added = 0;
+        int removed = 0;
+        for (int i = 0; i < barcodes.size(); ++i) {
+            LabVessel labVessel = tubes.get(barcodes.get(i));
+            if (REMOVE_INDICATOR.equals(misNames.get(i))) {
+                if (!labVessel.getReagentContents().isEmpty()) {
+                    labVessel.getReagentContents().clear();
+                    ++removed;
+                }
+            } else {
+                MolecularIndexReagent reagent = reagents.get(misNames.get(i));
+                // Just assert since this should already have been validated.
+                assert (reagent != null);
+                labVessel.addReagent(reagent);
+                ++added;
+            }
+        }
+        labVesselDao.persistAll(tubes.values());
+        if (added > 0) {
+            messages.addInfo("Added reagents to " + added + " tubes.");
+        }
+        if (removed > 0) {
+            messages.addInfo("Removed reagents from " + removed + " tubes.");
+        }
+        if (added == 0 && removed == 0) {
+            messages.addInfo("No changes were made.");
+        }
     }
 }
