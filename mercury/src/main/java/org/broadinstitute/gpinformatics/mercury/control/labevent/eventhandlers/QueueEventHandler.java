@@ -125,7 +125,6 @@ public class QueueEventHandler extends AbstractEventHandler {
                                 new MessageCollection(), QueueOrigin.RECEIVING, null);
                     }
                 }
-                // todo jmt add queue removal to fingerprint upload
                 break;
             }
             case ARRAY_PLATING_DILUTION:

@@ -20,20 +20,27 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.FluidigmRunFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @UrlBinding(value = "/view/uploadFingerprintingRun.action")
@@ -62,6 +69,9 @@ public class UploadFingerprintingRunActionBean extends CoreActionBean {
 
     @Inject
     private LabMetricRunDao labMetricRunDao;
+
+    @Inject
+    private QueueEjb queueEjb;
 
     @Validate(required = true, on = UPLOAD_ACTION)
     private FileBean runFile;
@@ -92,6 +102,29 @@ public class UploadFingerprintingRunActionBean extends CoreActionBean {
             fileStream = runFile.getInputStream();
             Pair<StaticPlate, LabMetricRun> pair = fluidigmRunFactory.createFluidigmChipRun(runFile.getInputStream(),
                     userBean.getBspUser().getUserId(), messageCollection);
+
+            // todo jmt move into an EJB?
+            // Find the ancestor dilution plate
+            TransferTraverserCriteria.VesselForEventTypeCriteria transferTraverserCriteria =
+                    new TransferTraverserCriteria.VesselForEventTypeCriteria(
+                            Arrays.asList(LabEventType.PICO_DILUTION_TRANSFER,
+                                    LabEventType.PICO_DILUTION_TRANSFER_FORWARD_BSP),
+                            true, true);
+            pair.getLeft().getContainerRole().applyCriteriaToAllPositions(transferTraverserCriteria,
+                    TransferTraverserCriteria.TraversalDirection.Ancestors);
+            Collection<Set<LabVessel>> vesselSets = transferTraverserCriteria.getVesselsForLabEventType().values();
+            if (vesselSets.size() == 1) {
+                Set<LabVessel> labVessels = vesselSets.iterator().next();
+                if (labVessels.size() == 1) {
+                    // No reworks for All of Us fingerprints, so dequeue regardless of pass / fail
+                    queueEjb.dequeueLabVessels(labVessels, QueueType.FINGERPRINTING,messageCollection, null);
+                } else {
+                    messageCollection.addError("Expected one dilution vessel, but found " + vesselSets.size());
+                }
+            } else {
+                messageCollection.addError("Expected one dilution event, but found " + vesselSets.size());
+            }
+
             if (messageCollection.hasErrors()) {
                 addMessages(messageCollection);
             } else {
