@@ -43,7 +43,7 @@ public class ProductOrderAddOnPriceAdjustment extends PriceAdjustment{
     private String customProductName;
 
     @Column(name = "adjustment_quantity")
-    private Integer adjustmentQuantity;
+    private BigDecimal adjustmentQuantity;
 
     @Transient
     private Condition priceAdjustmentCondition;
@@ -51,7 +51,7 @@ public class ProductOrderAddOnPriceAdjustment extends PriceAdjustment{
     public ProductOrderAddOnPriceAdjustment() {
     }
 
-    public ProductOrderAddOnPriceAdjustment(BigDecimal adjustmentValue, Integer quantity, String customProductName) {
+    public ProductOrderAddOnPriceAdjustment(BigDecimal adjustmentValue, BigDecimal quantity, String customProductName) {
         this.adjustmentValue = adjustmentValue;
         this.adjustmentQuantity = quantity;
         this.customProductName = customProductName;
@@ -73,7 +73,7 @@ public class ProductOrderAddOnPriceAdjustment extends PriceAdjustment{
         return customProductName;
     }
 
-    public Integer getAdjustmentQuantity() {
+    public BigDecimal getAdjustmentQuantity() {
         return adjustmentQuantity;
     }
 

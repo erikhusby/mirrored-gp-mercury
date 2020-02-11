@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -36,6 +37,7 @@ import java.util.TreeSet;
 @TransactionManagement(TransactionManagementType.BEAN)
 public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     private WorkflowConfigLookup workflowConfigLookup;
+    private BSPUserList bspUserList;
     private final Collection<EventFactDto> loggingDtos = new ArrayList<>();
     private final Set<Long> loggingDeletedEventIds = new HashSet<>();
     private SequencingSampleFactEtl sequencingSampleFactEtl;
@@ -50,11 +52,12 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
     @Inject
     public LabEventEtl(WorkflowConfigLookup workflowConfigLookup, LabEventDao dao,
-                       SequencingSampleFactEtl sequencingSampleFactEtl, WorkflowConfig workflowConfig) {
+                       SequencingSampleFactEtl sequencingSampleFactEtl, WorkflowConfig workflowConfig, BSPUserList bspUserList) {
         super(LabEvent.class, "event_fact", "lab_event_aud", "lab_event_id", dao);
         this.workflowConfigLookup = workflowConfigLookup;
         this.sequencingSampleFactEtl = sequencingSampleFactEtl;
         this.workflowConfig = workflowConfig;
+        this.bspUserList = bspUserList;
     }
 
     @Override
@@ -102,6 +105,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                             format(fact.getEventProgram()),
                             format(fact.getMolecularIndex()),
                             format(fact.isEtlLibrary()?fact.getLibraryName():""),
+                                format(fact.getOperator()),
                             "E"
                         )
                     );
@@ -256,12 +260,13 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         private String barcode;
         private VesselPosition vesselPosition;
         private String rejectReason;
+        private String operator;
         private boolean isEtlLibrary = false;
 
         EventFactDto(LabEvent labEvent, LabVessel labVessel, VesselPosition vesselPosition, String molecularIndexName, String batchName,
                      Date workflowEffectiveDate,
                      String workflowName, String pdoSampleId, String lcsetSampleID,
-                     ProductOrder productOrder, WorkflowConfigDenorm wfDenorm, boolean canEtl) {
+                     ProductOrder productOrder, WorkflowConfigDenorm wfDenorm, String operator, boolean canEtl) {
 
             this.labEventId = labEvent.getLabEventId();
             this.labEventType = labEvent.getLabEventType();
@@ -286,6 +291,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             this.labVesselId = labVessel == null ? null : labVessel.getLabVesselId();
             this.barcode = labVessel == null ? null : labVessel.getLabel();
             this.vesselPosition = vesselPosition;
+            this.operator = operator;
 
             this.canEtl = canEtl;
         }
@@ -391,7 +397,11 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             return vesselPosition==null?"":vesselPosition.name();
         }
 
-        public void addAllAncestryDtos( List<EventAncestryEtlUtil.AncestryFactDto> ancestryFactDtos ) {
+        public String getOperator() {
+            return operator;
+        }
+
+        public void addAllAncestryDtos(List<EventAncestryEtlUtil.AncestryFactDto> ancestryFactDtos) {
             if( this.ancestryFactDtos == null ) {
                 this.ancestryFactDtos = new ArrayList<>();
             }
@@ -468,6 +478,11 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             vessels.add(entity.getInPlaceLabVessel());
         }
 
+        String operator = null;
+        if (entity.getEventOperator() != null) {
+            operator = bspUserList.getById(entity.getEventOperator()).getUsername();
+        }
+
         // If a synthetic event exists, record it, otherwise, skip it
         if (vessels.isEmpty()) {
             // Record ActivityBegin/End events (synthetic events)
@@ -475,12 +490,12 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                     entity.getLabEventType().getName(), null, entity.getEventDate());
             if( wfDenorm != null ) {
                 EventFactDto placeholderEventDto =
-                        new EventFactDto(entity, null, null, null, null, null, null, null, null, null, wfDenorm, true);
+                        new EventFactDto(entity, null, null, null, null, null, null, null, null, null, wfDenorm, operator, true);
                 dtos.add(placeholderEventDto);
             } else {
                 // Record the failure
                 EventFactDto rejectedDto =
-                        new EventFactDto(entity, null, null, null, null, null, null, null, null, null, null, false);
+                        new EventFactDto(entity, null, null, null, null, null, null, null, null, null, null, null, false);
                 rejectedDto.setRejectReason("Skipping ETL on labEvent with no vessels " + entity.getLabEventId()
                                             + ": No synthetic workflow configured");
                 dtos.add(rejectedDto);
@@ -497,7 +512,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                         VesselPosition position = vesselContainer.getPositionOfVessel(containedVessel);
                         sampleInstances = containedVessel.getSampleInstancesV2();
                         List<EventFactDto> vesselDTOs =
-                                createDtoFromEventVessel(entity, containedVessel, position, sampleInstances);
+                                createDtoFromEventVessel(entity, containedVessel, position, sampleInstances, operator);
                         // Generate ancestor for each vessel in the container
                         eventAncestryEtlUtil.generateAncestryData(vesselDTOs, entity, containedVessel);
                         eventVesselDtos.addAll(vesselDTOs);
@@ -507,7 +522,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                     for( VesselPosition targetPosition : vesselContainer.getPositions() ) {
                         sampleInstances = vesselContainer.getSampleInstancesAtPositionV2(targetPosition);
                         List<EventFactDto> vesselDTOs = createDtoFromEventVessel(entity, vesselContainer.getEmbedder(),
-                                targetPosition, sampleInstances);
+                                targetPosition, sampleInstances, operator);
                         eventVesselDtos.addAll(vesselDTOs );
                     }
                     // Generate ancestor for just the container
@@ -515,7 +530,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                 } else {
                     // Build a row for the vessel (e.g barcoded tube)
                     sampleInstances = vessel.getSampleInstancesV2();
-                    List<EventFactDto> vesselDTOs = createDtoFromEventVessel(entity, vessel, null, sampleInstances);
+                    List<EventFactDto> vesselDTOs = createDtoFromEventVessel(entity, vessel, null, sampleInstances, operator);
                     eventAncestryEtlUtil.generateAncestryData(vesselDTOs, entity, vessel);
                     eventVesselDtos.addAll(vesselDTOs);
                 }
@@ -539,13 +554,13 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
      */
     private List<EventFactDto> createDtoFromEventVessel(
             LabEvent labEvent, LabVessel vessel,
-            VesselPosition targetPosition, Set<SampleInstanceV2> sampleInstances ) {
+            VesselPosition targetPosition, Set<SampleInstanceV2> sampleInstances, String operator) {
         List<EventFactDto> dtos = new ArrayList<>();
 
         if( sampleInstances.isEmpty() ) {
             // Reject for lack of any sample instances
             EventFactDto rejectedDto =
-                    new EventFactDto(labEvent, vessel, null, null, null, null, null, null, null, null, null, false);
+                    new EventFactDto(labEvent, vessel, null, null, null, null, null, null, null, null, null, null, false);
             rejectedDto.setRejectReason("Skipping ETL on labEvent: " + labEvent.getLabEventId() +
                                         ", vessel: " + vessel.getLabel() +
                                         (targetPosition == null ? "" : ", position: " + targetPosition) +
@@ -555,7 +570,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         } else if (sampleInstances.size() == 1 && sampleInstances.iterator().next().isReagentOnly() ) {
             // Reject for sample instance having only reagent (Hybridization bait)
             EventFactDto rejectedDto =
-                    new EventFactDto(labEvent, vessel, null, null, null, null, null, null, null, null, null, false);
+                    new EventFactDto(labEvent, vessel, null, null, null, null, null, null, null, null, null, null, false);
             rejectedDto.setRejectReason("Skipping ETL on labEvent: " + labEvent.getLabEventId() +
                                         ", vessel: " + vessel.getLabel() +
                                         (targetPosition == null ? "" : ", position: " + targetPosition) +
@@ -601,7 +616,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
                     dtos.add(new EventFactDto(labEvent, vessel, targetPosition, molecularIndexingSchemeName,
                             batchName, workflowEffectiveDate, workflowName,
-                            pdoSampleID, lcsetSampleID, pdo, wfDenorm, true));
+                            pdoSampleID, lcsetSampleID, pdo, wfDenorm, operator, true));
 
                 } // sampleInstances loop
             } catch (RuntimeException e) {

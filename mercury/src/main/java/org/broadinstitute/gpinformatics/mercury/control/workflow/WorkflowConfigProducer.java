@@ -21,6 +21,6 @@ public class WorkflowConfigProducer {
     @Produces
     @Default
     public WorkflowConfig produce() {
-        return loader.load();
+        return loader.getWorkflowConfig();
     }
 }

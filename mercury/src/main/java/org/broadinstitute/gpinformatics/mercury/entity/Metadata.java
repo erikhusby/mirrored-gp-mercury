@@ -341,6 +341,10 @@ public class Metadata {
         CONTACT_EMAIL(Category.SAMPLE, DataType.STRING, "Contact Email", Visibility.USER),
         REQUESTING_PHYSICIAN(Category.SAMPLE, DataType.STRING, "Requesting Physician", Visibility.USER),
         PRODUCT_TYPE(Category.SAMPLE, DataType.STRING, "Product Type", Visibility.USER),
+        // Fingerprinting Metadata
+        TOTAL_POSSIBLE_CALLS(Category.LAB_METRIC, DataType.NUMBER, "Total Calls", Visibility.USER),
+        CALLS(Category.LAB_METRIC, DataType.NUMBER, "Calls", Visibility.USER),
+        FLUIDIGM_GENDER(Category.LAB_METRIC, DataType.STRING, "Fluidigm Gender", Visibility.USER),
         ;
 
         private final Category category;

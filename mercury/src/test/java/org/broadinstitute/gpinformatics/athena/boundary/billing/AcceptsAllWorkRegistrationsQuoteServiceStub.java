@@ -51,7 +51,7 @@ class AcceptsAllWorkRegistrationsQuoteServiceStub implements QuoteService {
 
     @Override
     public String registerNewWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
-                                  Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
+                                  Date reportedCompletionDate, BigDecimal numWorkUnits, String callbackUrl,
                                   String callbackParameterName, String callbackParameterValue,
                                   BigDecimal priceAdjustment) {
         return WORK_ITEM_PREPEND + (1000 + counter++);
@@ -59,7 +59,7 @@ class AcceptsAllWorkRegistrationsQuoteServiceStub implements QuoteService {
 
     @Override
     public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
-                                     Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
+                                     Date reportedCompletionDate, BigDecimal numWorkUnits, String callbackUrl,
                                      String callbackParameterName, String callbackParameterValue,
                                      BigDecimal priceAdjustment) {
         return WORK_ITEM_PREPEND + (1000 + counter++);

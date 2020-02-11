@@ -147,7 +147,7 @@ public class LCSetJiraFieldFactoryTest {
 
         testBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         testBatch.setBatchDescription("Batch Test Description");
-        WorkflowConfig workflowConfig = new WorkflowLoader().load();
+        WorkflowConfig workflowConfig = new WorkflowLoader().getWorkflowConfig();
 
         Set<LabVessel> reworks = new HashSet<>();
         reworks.add(testProductOrder.getSamples().get(testProductOrder.getSamples().size()-3).getMercurySample().getLabVessel().iterator().next());

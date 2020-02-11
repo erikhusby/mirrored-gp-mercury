@@ -374,4 +374,39 @@ public class ResearchProjectFixupTest extends Arquillian {
         utx.commit();
 
     }
+
+    /**
+     * Updates the irb not engaged flag on a given research project
+     *
+     * <h1>File Name</h1>
+     * mercury/src/test/resources/testdata/ResearchProjectChangeIRBEngaged.txt
+     * <ul><li>GPLIM-6876 Changing the setting for IRB Exempt that was accidentally set during RP creation</li>
+     * <li>RP-2191, true</li>
+     * </ul>
+     * @throws Exception
+     */
+    @Test(enabled = false)
+    public void flipIRBNotEngaged() throws Exception {
+
+        List<String> fixupLines = IOUtils.readLines((VarioskanParserTest.getTestResource("ResearchProjectChangeIRBEngaged.txt")));
+        Assert.assertTrue(CollectionUtils.size(fixupLines)>=2, "The fixup file content is not in the correct format");
+        String reason = fixupLines.get(0).trim();
+
+
+        userBean.loginOSUser();
+        utx.begin();
+        for(String line:fixupLines.subList(1, fixupLines.size())) {
+
+            String[] tokens = line.split(",", 2);
+
+            ResearchProject researchProject = rpDao.findByBusinessKey(tokens[0]);
+            boolean irbNotEngagedIntendedFlag = Boolean.parseBoolean(tokens[1]);
+            researchProject.setIrbNotEngaged(irbNotEngagedIntendedFlag);
+
+            System.out.println("Set the value of IRB not engaged on " + researchProject.getBusinessKey() + " to " + researchProject.getIrbNotEngaged());
+        }
+
+        rpDao.persist(new FixupCommentary(reason));
+        utx.commit();
+    }
 }

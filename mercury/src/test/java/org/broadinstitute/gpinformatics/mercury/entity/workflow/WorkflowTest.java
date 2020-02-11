@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import com.google.common.collect.ImmutableSet;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataTestFactory;
@@ -74,7 +73,7 @@ public class WorkflowTest {
 
     @BeforeTest
     public void setupWorkflow() {
-        workflowConfig = new WorkflowLoader().load();
+        workflowConfig = new WorkflowLoader().getWorkflowConfig();
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
         BSPSetVolumeConcentration bspSetVolumeConcentration =  new BSPSetVolumeConcentrationStub();
         labEventFactory = new LabEventFactory(testUserList, bspSetVolumeConcentration);
@@ -86,7 +85,7 @@ public class WorkflowTest {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        workflowConfig = new WorkflowLoader().load();
+        workflowConfig = new WorkflowLoader().getWorkflowConfig();
     }
 
     @Test
