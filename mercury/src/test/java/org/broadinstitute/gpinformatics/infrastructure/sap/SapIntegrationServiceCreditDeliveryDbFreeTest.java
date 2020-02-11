@@ -50,7 +50,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.emptyOrNullString;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SapIntegrationServiceCreditDeliveryDbFreeTest {
@@ -210,6 +210,9 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
             BigDecimal quantity = positiveQuantities.get(i);
             String deliveryDocumentId = String.format("00%d", i);
             LedgerEntry ledger = createLedgerEntry(productOrderSample, product, deliveryDocumentId, quantity);
+            if (quantity.compareTo(BigDecimal.ZERO) < 0) {
+                ledger.setSapReturnOrderId(String.format("99%d", i));
+            }
             ledger.setBillingMessage(BillingSession.SUCCESS);
         }
 
@@ -219,6 +222,7 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
             LedgerEntry ledger = createLedgerEntry(productOrderSample, product, deliveryDocumentId, quantity);
             ledgerEntries.add(ledger);
         }
+
         BillingSession billingSession = new BillingSession(System.currentTimeMillis(), new HashSet<>(ledgerEntries));
         billingSession.getUnBilledQuoteImportItems(priceListCache);
         QuoteImportItem quoteImportItem =
@@ -226,9 +230,10 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
 
         List<BillingCredit> billingReturns = new ArrayList<>();
         Collection<BillingCredit> billingCredits = new HashSet<>();
+        boolean expectError = StringUtils.isNotBlank(error);
         try {
             billingCredits.addAll(BillingCredit.setupSapCredits(quoteImportItem));
-            assertThat(error, is(emptyOrNullString()));
+            assertThat(expectError, is(false));
         } catch (Exception e) {
             assertThat(e.getMessage(), equalTo(error));
         }
@@ -238,9 +243,19 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
             billingReturns.add(billingReturn);
         }
 
+        ledgerEntries.forEach(ledgerEntry -> {
+            ledgerEntry.findCreditSource().forEach((ledgerEntry1, bigDecimal) -> {
+                if (!expectError) {
+                    assertThat(bigDecimal, greaterThanOrEqualTo(ledgerEntry.getQuantity()));
+                } else {
+                    assertThat(bigDecimal, greaterThanOrEqualTo(ledgerEntry.getQuantity()));
+                }
+            });
+        });
+
         assertThat(billingReturns.stream().map(BillingCredit::getReturnOrderId).collect(Collectors.toList()),
             Matchers.everyItem(startsWith("RETURN_OF_00")));
-        if (StringUtils.isBlank(error)) {
+        if (!expectError) {
             Mockito.verify(sapIntegrationClient, Mockito.times(positiveQuantities.size())).createReturnOrder(Mockito.any(SAPReturnOrder.class));
         }else {
             Mockito.verify(sapIntegrationClient, Mockito.never()).createReturnOrder(Mockito.any(SAPReturnOrder.class));
