@@ -22,7 +22,7 @@ public class ReagentDesign implements BusinessObject {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_REAGENT_DESIGN")
     private Long reagentDesignId;
 
-    @Column(name = "reagent_design", updatable = false, insertable = true, nullable = false)
+    @Column(name = "reagent_design", nullable = false)
     private String designName;
 
     private String targetSetName;
@@ -31,8 +31,6 @@ public class ReagentDesign implements BusinessObject {
 
     @OneToMany(mappedBy = "reagentDesign")
     private Set<DesignedReagent> designedReagents = new HashSet<>();
-
-    private static final char SEPERATOR = '|';
 
     /**
      * For JPA
