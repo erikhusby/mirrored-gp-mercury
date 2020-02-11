@@ -233,6 +233,26 @@ public class QueueEjb {
         } catch (InstantiationException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
+        //            AbstractEnqueueOverride enqueueOverride = queueGrouping.getAssociatedQueue().getQueueType().getEnqueueOverrideClass().newInstance();
+//        AbstractEnqueueOverride enqueueOverride = ServiceAccessUtility.getBean(queueGrouping.getAssociatedQueue().getQueueType().getEnqueueOverrideClass());
+//
+//
+//        // Find the vessel ids which already have been in the queue.  These would get standard priority.
+//        List<Long> vesselIds = new ArrayList<>();
+//        // Grab the vessel is from the queue entity
+//        for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
+//            vesselIds.add(queueEntity.getLabVessel().getLabVesselId());
+//        }
+//
+//        // Find the existing entities
+//        List<QueueEntity> entitiesByVesselIds = queueEntityDao.findActiveEntitiesByVesselIds(queueGrouping.getAssociatedQueue().getQueueType(), vesselIds);
+//
+//        Set<Long> uniqueVesselIdsAlreadyInQueue = new HashSet<>();
+//        for (QueueEntity entity : entitiesByVesselIds) {
+//            uniqueVesselIdsAlreadyInQueue.add(entity.getLabVessel().getLabVesselId());
+//        }
+//
+//        enqueueOverride.setInitialOrder(queueGrouping, uniqueVesselIdsAlreadyInQueue);
     }
 
     /**

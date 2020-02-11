@@ -17,6 +17,14 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
+import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.search.QueueEntitySearchDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.StreamCreatedSpreadsheetUtil;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
@@ -47,18 +55,23 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
 /**
  * ActionBean for interacting with Queues.
  */
-@UrlBinding("/queue/Queue.action")
+@UrlBinding(QueueActionBean.QUEUE_QUEUE_ACTION)
 public class QueueActionBean extends CoreActionBean {
     private static final Log log = LogFactory.getLog(QueueActionBean.class);
     private static final String SPREADSHEET_FILENAME = "_queue_data_dump.xls";
+
+    public static final String QUEUE_QUEUE_ACTION = "/queue/Queue.action";
 
     private QueueType queueType;
 
@@ -89,6 +102,9 @@ public class QueueActionBean extends CoreActionBean {
     @Inject
     private SampleDataFetcher sampleDataFetcher;
 
+    @Inject
+    private ConfigurableListFactory configurableListFactory;
+
     private static final String READABLE_TEXT = "Manually added on ";
     private Map<String, SampleData> sampleIdToSampleData;
     private Map<Long, String> labVesselIdToSampleId;
@@ -100,6 +116,157 @@ public class QueueActionBean extends CoreActionBean {
     private Map<Long, Integer> totalEntitiesInQueue;
     private Map<QueuePriority, Integer> entitiesQueuedByPriority;
     private List<QueueGrouping> queueGroupings;
+
+    // todo this is actually going to need to be changed somehow to be loaded based off the
+    private String selectedSearchTermType;
+    private String selectedSearchTermValues;
+
+    /**
+     * Search results in column set chosen by user
+     */
+    private ConfigurableList.ResultList labSearchResultList;
+
+    /**
+     * The search the user is creating or running
+     */
+    private SearchInstance searchInstance;
+    private ConfigurableSearchDefinition configurableSearchDef;
+
+    private String entityName;
+
+    /**
+     * Which set of columns to use for displaying results
+     */
+    private String columnSetName;
+
+    /**
+     * For multi-page results, the Hibernate property to order by
+     */
+    private String dbSortPath;
+
+    /**
+     * Prefix for search instance session key
+     */
+    public static final String SEARCH_INSTANCE_PREFIX = "searchInstance_";
+
+    /**
+     * HTTP session key for search parameters, used in re-sorting results columns
+     */
+    private String sessionKey;
+
+    /**
+     * Prefix for pagination session key
+     */
+    public static final String PAGINATION_PREFIX = "pagination_";
+
+    public SearchInstance getSearchInstance() {
+        return searchInstance;
+    }
+
+    public String getSelectedSearchTermType() {
+        return selectedSearchTermType;
+    }
+
+    public void setSelectedSearchTermType(String selectedSearchTermType) {
+        this.selectedSearchTermType = selectedSearchTermType;
+    }
+
+    public String getSelectedSearchTermValues() {
+        return selectedSearchTermValues;
+    }
+
+    public void setSelectedSearchTermValues(String selectedSearchTermValues) {
+        this.selectedSearchTermValues = selectedSearchTermValues;
+    }
+
+    public Set<SearchTerm> getAllowedSearchTerms() {
+        return QueueEntitySearchDefinition.QUEUE_ENTITY_SEARCH_TERMS.getAllowedSearchTerms();
+    }
+
+    public String getEntityName() {
+        return entityName;
+    }
+
+    public String getSessionKey() {
+        return sessionKey;
+    }
+
+    public void setSessionKey(String sessionKey) {
+        this.sessionKey = sessionKey;
+    }
+
+    public String getColumnSetName() {
+        return columnSetName;
+    }
+
+    public void setColumnSetName(String columnSetName) {
+        this.columnSetName = columnSetName;
+    }
+
+    public String getDownloadColumnSets() {
+        return columnSetName;
+    }
+
+    public String getDbSortPath() {
+        return dbSortPath;
+    }
+
+    public void setDbSortPath(String dbSortPath) {
+        this.dbSortPath = dbSortPath;
+    }
+
+    /**
+     * Perform a search of the corresponding queue
+     * @return
+     */
+    @HandlesEvent("searchQueue")
+    public Resolution searchQueue() {
+        // Construct the search instance.
+
+        if (sessionKey == null) {
+            searchInstance = new SearchInstance();
+            // todo need to figure out how this is best used.. We want to have only one ID required per search.
+//            searchInstance.addRequired(configurableSearchDef);
+
+            // Save the searchInstance, in case the user re-sorts the results
+            sessionKey = Integer.toString(new Random().nextInt(10000));
+            getContext().getRequest().getSession().setAttribute(SEARCH_INSTANCE_PREFIX + sessionKey, searchInstance);
+        } else {
+            // We're resorting results we retrieved previously
+            // Get saved form parameters, so the JSP re-renders correctly
+            searchInstance = (SearchInstance) getContext().getRequest().getSession()
+                    .getAttribute(SEARCH_INSTANCE_PREFIX + sessionKey);
+        }
+
+        entityName = ColumnEntity.QUEUE_ENTITY.getEntityName();
+        configurableSearchDef = SearchDefinitionFactory.getForEntity(entityName);
+
+        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm(selectedSearchTermType, configurableSearchDef);
+        searchValue.setOperator(SearchInstance.Operator.IN);
+
+        searchValue.setValues(Collections.singletonList(selectedSearchTermValues));
+
+        // Check for vessels specifically in DNA Quant queue.
+        SearchInstance.SearchValue queue_type = searchInstance.addTopLevelTerm("Queue Type", configurableSearchDef);
+        queue_type.setOperator(SearchInstance.Operator.EQUALS);
+        queue_type.setValues(Collections.singletonList(QueueType.DNA_QUANT.toString()));
+
+        // Check for vessels in an active queue entity
+        SearchInstance.SearchValue queue_entity_status = searchInstance.addTopLevelTerm("Queue Entity Status", configurableSearchDef);
+        queue_entity_status.setOperator(SearchInstance.Operator.EQUALS);
+        queue_entity_status.setValues(Collections.singletonList(QueueStatus.Active.getName()));
+
+        searchInstance.getPredefinedViewColumns().add("Barcode");
+        searchInstance.getPredefinedViewColumns().add("Container Barcode");
+        searchInstance.getPredefinedViewColumns().add("Rack Position"); // unclear if this is right. (e.g. what is Event Vessel Position?)
+        searchInstance.establishRelationships(configurableSearchDef);
+
+        ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
+                searchInstance, configurableSearchDef, null, 0, null, "ASC", entityName);
+        labSearchResultList = firstPageResults.getResultList();
+
+        return new ForwardResolution("/queue/show_search_results.jsp");
+    }
 
     /**
      * Shows the main Queue page.
@@ -480,5 +647,9 @@ public class QueueActionBean extends CoreActionBean {
 
     public List<QueueGrouping> getQueueGroupings() {
         return queueGroupings;
+    }
+
+    public ConfigurableList.ResultList getLabSearchResultList() {
+        return labSearchResultList;
     }
 }

@@ -10,6 +10,8 @@ import org.broadinstitute.gpinformatics.mercury.boundary.search.SearchRequestBea
 import org.broadinstitute.gpinformatics.mercury.boundary.search.SearchValueBean;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueStatus;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -107,6 +109,7 @@ public class SearchDefinitionFactory {
         fact.buildProductOrderSearchDef();
         fact.buildSampleInstanceEntitySearchDef();
         fact.buildQueueGroupingSearchDef();
+        fact.buildDNAQuantQueueEntitySearchDef();
     }
 
     public static ConfigurableSearchDefinition getForEntity(String entity) {
@@ -114,7 +117,7 @@ public class SearchDefinitionFactory {
         //noinspection ConstantIfStatement
 
         // *************************************** REVERT TO FALSE BEFORE MERGE ************** //
-        if( false ) {
+        if( true ) {
             SearchDefinitionFactory fact = new SearchDefinitionFactory();
             fact.buildLabEventSearchDef();
             fact.buildLabVesselSearchDef();
@@ -125,6 +128,7 @@ public class SearchDefinitionFactory {
             fact.buildProductOrderSearchDef();
             fact.buildSampleInstanceEntitySearchDef();
             fact.buildQueueGroupingSearchDef();
+            fact.buildDNAQuantQueueEntitySearchDef();
         }
 
         return MAP_NAME_TO_DEF.get(entity);
@@ -182,6 +186,12 @@ public class SearchDefinitionFactory {
         ConfigurableSearchDefinition queueGroupingSearchDefinition
                 = new QueueGroupingSearchDefinition().buildSearchDefinition();
         MAP_NAME_TO_DEF.put(ColumnEntity.QUEUE_GROUPING.getEntityName(), queueGroupingSearchDefinition);
+    }
+
+    private void buildDNAQuantQueueEntitySearchDef() {
+        ConfigurableSearchDefinition queueGroupingSearchDefinition
+                = new QueueEntitySearchDefinition().buildSearchDefinition();
+        MAP_NAME_TO_DEF.put(ColumnEntity.QUEUE_ENTITY.getEntityName(), queueGroupingSearchDefinition);
     }
 
     /**
@@ -317,4 +327,63 @@ public class SearchDefinitionFactory {
         }
     }
 
+    /**
+     * Shared value list of all queue types.
+     */
+    public static class QueueTypeValuesExpression extends SearchTerm.Evaluator<List<ConstrainedValue>> {
+
+        public static List<ConstrainedValue> getConstrainedValues() {
+            List<ConstrainedValue> constrainedValues = new ArrayList<>();
+            for (QueueType queueType : QueueType.values()) {
+                constrainedValues.add(new ConstrainedValue(queueType.toString(), queueType.getTextName()));
+            }
+            Collections.sort(constrainedValues);
+            return constrainedValues;
+        }
+
+        @Override
+        public List<ConstrainedValue> evaluate(Object entity, SearchContext context) {
+            return getConstrainedValues();
+        }
+    }
+
+    /**
+     * Shared conversion of input String to QueueType enumeration value
+     */
+    public static class QueueTypeValueConversionExpression extends SearchTerm.Evaluator<Object> {
+        @Override
+        public QueueType evaluate(Object entity, SearchContext context) {
+            return Enum.valueOf(QueueType.class, context.getSearchValueString());
+        }
+    }
+
+    /**
+     * Shared value list of all queue types.
+     */
+    public static class QueueStatusValuesExpression extends SearchTerm.Evaluator<List<ConstrainedValue>> {
+
+        public static List<ConstrainedValue> getConstrainedValues() {
+            List<ConstrainedValue> constrainedValues = new ArrayList<>();
+            for (QueueStatus queueStatus : QueueStatus.values()) {
+                constrainedValues.add(new ConstrainedValue(queueStatus.toString(), queueStatus.getName()));
+            }
+            Collections.sort(constrainedValues);
+            return constrainedValues;
+        }
+
+        @Override
+        public List<ConstrainedValue> evaluate(Object entity, SearchContext context) {
+            return getConstrainedValues();
+        }
+    }
+
+    /**
+     * Shared conversion of input String to QueueType enumeration value
+     */
+    public static class QueueStatusValueConversionExpression extends SearchTerm.Evaluator<Object> {
+        @Override
+        public QueueStatus evaluate(Object entity, SearchContext context) {
+            return Enum.valueOf(QueueStatus.class, context.getSearchValueString());
+        }
+    }
 }

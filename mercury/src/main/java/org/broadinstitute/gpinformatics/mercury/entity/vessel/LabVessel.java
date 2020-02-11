@@ -775,7 +775,7 @@ public abstract class LabVessel implements Serializable {
         return totalInPlaceEventsSet;
     }
 
-    private List<LabEvent> getAllEventsSortedByDate() {
+    public List<LabEvent> getAllEventsSortedByDate() {
         Map<Date, LabEvent> sortedTreeMap = new TreeMap<>();
         for (LabEvent event : getEvents()) {
             sortedTreeMap.put(event.getEventDate(), event);

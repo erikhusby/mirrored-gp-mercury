@@ -1,0 +1,303 @@
+package org.broadinstitute.gpinformatics.infrastructure.search.queue;
+
+
+import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+public class DNAQuantQueueSearchTerms extends AbstractQueueSearchTerms {
+
+    public DNAQuantQueueSearchTerms() {
+    }
+
+    public enum DNA_QUANT_TERMS {
+        MANUFACTURER_BARCODE("Manufacturer Barcode"),
+        SAMPLE_ID("Sample ID"),
+        CONTAINER_BARCODE("Container Barcode");
+
+        String term;
+
+        DNA_QUANT_TERMS(String term) {
+            this.term = term;
+        }
+
+        public String getTerm() {
+            return term;
+        }
+    }
+
+    /**
+     * Add the search terms that are allowed
+     */
+    protected void addSearchTerms() {
+        {
+            SearchTerm searchTerm = new SearchTerm();
+            searchTerm.setName(DNA_QUANT_TERMS.MANUFACTURER_BARCODE.getTerm());
+            searchTerm.setRackScanSupported(Boolean.TRUE);
+            SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+
+            searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+                @Override
+                public String evaluate(Object entity, SearchContext context) {
+                    QueueEntity queueEntity = (QueueEntity) entity;
+
+                    return queueEntity.getLabVessel().getLabel();
+                }
+            });
+
+            criteriaPath.setCriteria(Arrays.asList("ManufacturerBarcode", "labVessel"));
+            criteriaPath.setPropertyName("label"); // might need to be lab_vessel_id
+
+            searchTerm.setCriteriaPaths(Collections.singletonList(criteriaPath));
+
+            termDescriptionMap.put(searchTerm, "Manufacturer Barcode");
+            mapNameToSearchTerm.put(searchTerm.getName(), searchTerm);
+        }
+        {
+            SearchTerm searchTerm = new SearchTerm();
+            searchTerm.setName("Queue Type");
+            searchTerm.setRackScanSupported(Boolean.FALSE);
+
+            searchTerm.setConstrainedValuesExpression(new SearchDefinitionFactory.QueueTypeValuesExpression());
+            searchTerm.setSearchValueConversionExpression( new SearchDefinitionFactory.QueueTypeValueConversionExpression());
+            SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+
+            searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+                @Override
+                public String evaluate(Object entity, SearchContext context) {
+                    QueueEntity queueEntity = (QueueEntity) entity;
+                    return queueEntity.getQueueGrouping().getAssociatedQueue().getQueueType().toString();
+
+//                    GenericQueue associatedQueue = (GenericQueue) entity;
+//
+//                    return associatedQueue.getQueueType().toString();
+                }
+            });
+
+            criteriaPath.setCriteria(Arrays.asList("QueueType", "queueGrouping", "associatedQueue"));
+            criteriaPath.setPropertyName("queueType");
+            searchTerm.setCriteriaPaths(Collections.singletonList(criteriaPath));
+
+            termDescriptionMap.put(searchTerm, "Queue Type");
+            mapNameToSearchTerm.put(searchTerm.getName(), searchTerm);
+        }
+        {
+            SearchTerm searchTerm = new SearchTerm();
+            searchTerm.setName("Queue Entity Status");
+            searchTerm.setRackScanSupported(Boolean.FALSE);
+            searchTerm.setConstrainedValuesExpression(new SearchDefinitionFactory.QueueStatusValuesExpression());
+            searchTerm.setSearchValueConversionExpression( new SearchDefinitionFactory.QueueStatusValueConversionExpression());
+
+            SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+
+//            criteriaPath.setCriteria(Arrays.asList("queueEntityId"));
+            criteriaPath.setPropertyName("queueStatus");
+            searchTerm.setCriteriaPaths(Collections.singletonList(criteriaPath));
+            searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+                @Override
+                public String evaluate(Object entity, SearchContext context) {
+                    QueueEntity queueEntity = (QueueEntity) entity;
+
+                    return queueEntity.getQueueStatus().getName();
+                }
+            });
+
+            searchTerm.setCriteriaPaths(Collections.singletonList(criteriaPath));
+
+            termDescriptionMap.put(searchTerm, "Queue Status");
+            mapNameToSearchTerm.put(searchTerm.getName(), searchTerm);
+        }
+        {
+            SearchTerm searchTerm = new SearchTerm();
+            searchTerm.setName("Barcode");
+            searchTerm.setRackScanSupported(Boolean.TRUE);
+//            searchTerm.setDbSortPath("labVessel.label");
+            List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
+            SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+            criteriaPath.setCriteria(Collections.singletonList("labVessel"));
+            criteriaPath.setPropertyName("label");
+            criteriaPaths.add(criteriaPath);
+            searchTerm.setCriteriaPaths(criteriaPaths);
+            searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+                @Override
+                public String evaluate(Object entity, SearchContext context) {
+                    QueueEntity queueEntity = (QueueEntity) entity;
+                    return queueEntity.getLabVessel().getLabel();
+                }
+            });
+            termDescriptionMap.put(searchTerm, "Barcode");
+            mapNameToSearchTerm.put(searchTerm.getName(), searchTerm);
+        }
+        /*
+        {
+            SearchTerm searchTerm = new SearchTerm();
+            searchTerm.setName(DNA_QUANT_TERMS.SAMPLE_ID.getTerm());
+            searchTerm.setRackScanSupported(Boolean.TRUE);
+            SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+            criteriaPath.setCriteria(
+                    Arrays.asList("SampleID", "queuedEntities", "queueGrouping", "queuedEntities", "labVessel", "mercurySamples"));
+            criteriaPath.setPropertyName("sampleKey");
+            searchTerm.setCriteriaPaths(Collections.singletonList(criteriaPath));
+            searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+                @Override
+                public List<String> evaluate(Object entity, SearchContext context) {
+                    QueueGrouping queueGrouping = (QueueGrouping) entity;
+                    List<String> results = new ArrayList<>();
+                    for (QueueEntity queuedEntity : queueGrouping.getQueuedEntities()) {
+                        for (MercurySample mercurySample : queuedEntity.getLabVessel().getMercurySamples()) {
+                            results.add(mercurySample.getSampleKey());
+                        }
+                    }
+
+                    return results;
+                }
+            });
+            termDescriptionMap.put(searchTerm, "Mercury Sample ID");
+            mapNameToSearchTerm.put(searchTerm.getName(), searchTerm);
+        }
+        */
+        {
+            SearchTerm searchTerm = new SearchTerm();
+            searchTerm.setName(DNA_QUANT_TERMS.CONTAINER_BARCODE.getTerm());
+            SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+//            criteriaPath.setCriteria(Arrays.asList("queuedEntities", "queueGrouping", "queuedEntities", "labVessel"));
+            criteriaPath.setCriteria(Arrays.asList("ContainerBarcode", "rackOfTubes", "tubeFormation", "labVessel", "queuedEntities"));
+
+            searchTerm.setCriteriaPaths(Collections.singletonList(criteriaPath));
+            searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+                @Override
+                public Set<String> evaluate(Object entity, SearchContext context) {
+                    QueueEntity queueEntity = (QueueEntity) entity;
+                    Set<String> results = new HashSet<>();
+//                    for (QueueEntity queuedEntity : queueGrouping.getQueuedEntities()) {
+
+
+                        LabVessel labVessel = queueEntity.getLabVessel();
+
+                        // todo need to figure out what the difference is between these. also how to find latest tube formation...
+//                        labVessel.getContainerRole();
+//                        labVessel.getVesselContainers();
+//                        labVessel.getContainers();
+//                        labVessel.getEvents();
+//                        labVessel.getLatestEvent();
+//                        List<LabEvent> eventsList = labVessel.getAllEventsSortedByDate();
+
+                        // todo Believe that this is going to find all the vessels in the queue and check to see if
+                        LabEvent latestEvent = labVessel.getLatestEvent();
+                        for (LabVessel vessel : latestEvent.getAllLabVessels()) {
+                            LabVessel container = vessel.getContainers().iterator().next();
+                            if (context.getSearchValueString() != null && (container.getLabel().compareTo(context.getSearchValueString())==0)) {
+                                if (OrmUtil.proxySafeIsInstance(container, TubeFormation.class)) {
+                                    TubeFormation tubeFormation = OrmUtil.proxySafeCast(container, TubeFormation.class);
+                                    for (RackOfTubes rackOfTubes : tubeFormation.getRacksOfTubes()) {
+                                        results.add(rackOfTubes.getLabel());
+                                    }
+                                }
+                            }
+                        }
+
+//                        for (LabVessel vessel : labVessel.getContainers()) {
+//                            if (OrmUtil.proxySafeIsInstance(vessel, TubeFormation.class)) {
+//                                TubeFormation tubeFormation = OrmUtil.proxySafeCast(vessel, TubeFormation.class);
+//                                for (RackOfTubes rackOfTubes : tubeFormation.getRacksOfTubes()) {
+//                                    results.add(rackOfTubes.getLabel());
+//                                }
+//                            }
+//                        }
+//                    }
+                    return results;
+                }
+            });
+            termDescriptionMap.put(searchTerm, "Container Barcode");
+            mapNameToSearchTerm.put(searchTerm.getName(), searchTerm);
+        }
+
+        // Viewable ONLY search terms. Without the criteria part these should just show as result columns.
+        {
+            SearchTerm searchTerm = new SearchTerm();
+            searchTerm.setName("Rack Position");
+
+            searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+                @Override
+                public Set<String> evaluate(Object entity, SearchContext context) {
+                    QueueEntity queueEntity = (QueueEntity) entity;
+                    Set<String> results = new HashSet<>();
+//                    for (QueueEntity queuedEntity : queueGrouping.getQueuedEntities()) {
+//                        for (MercurySample mercurySample : queuedEntity.getLabVessel().getMercurySamples()) {
+//                            results.add(mercurySample.getSampleKey());
+//                        }
+                        LabVessel labVessel = queueEntity.getLabVessel();
+                        for (LabVessel vessel : labVessel.getContainers()) {
+                            if (OrmUtil.proxySafeIsInstance(vessel, TubeFormation.class)) {
+                                TubeFormation tubeFormation = OrmUtil.proxySafeCast(vessel, TubeFormation.class);
+                                results.add(tubeFormation.getContainerRole().getPositionOfVessel(labVessel).name());
+                            }
+                        }
+//                    }
+
+                    return results;
+                }
+            });
+            termDescriptionMap.put(searchTerm, "Rack Position");
+            mapNameToSearchTerm.put(searchTerm.getName(), searchTerm);
+        }
+    }
+
+    /**
+     *
+     * @return
+     */
+    public Set<SearchTerm> getAllowedSearchTerms() {
+        Set<SearchTerm> allowed = new HashSet();
+        // Loop through the terms and if there is a criteria path, then add it to the allowed terms.
+        for (SearchTerm searchTerm : termDescriptionMap.keySet()) {
+            List<SearchTerm.CriteriaPath> criteriaPaths = searchTerm.getCriteriaPaths();
+            if(criteriaPaths != null && !criteriaPaths.isEmpty()) {
+                allowed.add(searchTerm);
+            }
+        }
+        return allowed;
+    }
+
+    /**
+     * Utility method used to get all possible search terms. Note that SearchTerm with no criteriapath isn't expected
+     * to be used to search with.
+     *
+     * @return
+     */
+    @Override
+    public Set<SearchTerm> getAllowedTerms() {
+        return termDescriptionMap.keySet();
+    }
+
+    @Override
+    public List<String> getAllowedResultFields() {
+        ArrayList resultFields = new ArrayList();
+        resultFields.add("Rack Position");
+        return resultFields;
+    }
+
+    @Override
+    public List<String> getNotFoundResultRows() {
+        return null;
+    }
+}

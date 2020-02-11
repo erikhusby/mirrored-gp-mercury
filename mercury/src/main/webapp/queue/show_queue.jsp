@@ -61,6 +61,21 @@
                 background-image: url('/Mercury/images/ui-icons_2e83ff_256x240.png');
             }
 
+            .searchWrapper {
+                list-style: none;
+                width: 100%;
+                height: 100px;
+                margin: 0;
+                padding: 0;
+                overflow: hidden;
+            }
+
+            .searchWrapper > li {
+                float: left;
+                width: 200px;
+                height: 100px;
+                padding: 15px;
+            }
         </style>
 
         <script type="text/javascript">
@@ -153,6 +168,28 @@
         </script>
     </stripes:layout-component>
     <stripes:layout-component name="content">
+
+        <stripes:form id="queueSearchForm" beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean">
+            <stripes:param name="queueType" value="${actionBean.queueType}" />
+            <div>
+                <ul class="searchWrapper">
+                    <c:forEach items="${actionBean.allowedSearchTerms}" var="searchTerm">
+                        <li style="width:70px;height:auto;">
+                            <input name="selectedSearchTermType" id="selectedSearchTermType" value="${searchTerm.name}" type="radio" />
+                            <label for="selectedSearchTermType">${searchTerm.name}</label>
+                        </li>
+                    </c:forEach>
+                </ul>
+
+                <textarea name="selectedSearchTermValues" id="selectedSearchTermValues" rows="4" ></textarea>
+                <br/>
+                <stripes:submit id="searchQueue" name="searchQueue">Search</stripes:submit>
+            </div>
+        </stripes:form>
+
+        <div id="searchResults"></div>
+
+
         <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean">
             <stripes:hidden name="queueType" />
             <table class="table simple dataTable" id="queueTable">
