@@ -1,6 +1,7 @@
 <%--<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.BillingLedgerActionBean" %>--%>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry" %>
+<%@ page import="org.apache.commons.lang3.StringUtils" %>
 
 <stripes:useActionBean var="actionBean" beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.BillingLedgerActionBean"/>
 
@@ -115,6 +116,11 @@
             width: 4em;
         }
 
+        .ledgerReplacement {
+            text-align: right;
+            width: 10em;
+        }
+
         .changed {
             background-color: lawngreen;
         }
@@ -137,7 +143,7 @@
             opacity: .35;
         }
 
-        .ledgerQuantity.pending, .unbilledStatus.pending {
+        .ledgerQuantity.pending, .unbilledStatus.pending .ledgerReplacement.pending{
             font-weight: bold;
         }
 
@@ -205,6 +211,8 @@
             enableDefaultPagingOptions();
             var $ledger = $j("#ledger");
             var $ledgerQuantities = $ledger.find('input.ledgerQuantity');
+            var $ledgerReplacements = $ledger.find('select.ledgerReplacement');
+
             var ledgerTable = $ledger.dataTable({
                 <%-- copy/csv/print buttons don't work very will with the hidden columns and text inputs. Buttons need
                      to be overridden with custom mColumns and fnCellRender. Disabling this feature for now by removing
@@ -308,6 +316,28 @@
 
                         updateSubmitButton();
                     });
+
+                    $j('#ledger').on('change', '.ledgerReplacement', function(event) {
+                        var $input = $j(event.target);
+                        var value = $input.find(":selected").val();
+                        if(getSelectedRows().length > 0) {
+                            var inputName = $input.attr(name);
+                            var $selectedInputs = getSelectedRows().find('select.ledgerReplacement:enabled');
+                            for (var i = 0; i < $selectedInputs.length; i++) {
+                                var $selectedSelect = $selectedInputs.eq(i);
+                                if($selectedSelect.attr('name') !== inputName) {
+                                    $selectedSelect.val(value).change();
+                                    var changed = value !== $selectedSelect.attr('originalValue');
+                                    $selectedSelect.toggleClass('changed', changed);
+                                    $selectedSelect.cosest("tr").toggleClass('changed', changed)
+                                }
+                            }
+                        }
+                        var changed = value !== $input.attr('originalValue');
+                        $input.toggleClass('changed', changed);
+                        $input.closest("tr").toggleClass('changed', changed);
+                        updateSubmitButton();
+                    })
                 }
             });
             // Reuse the existing filter input, but unbind its usual behavior and replace it with our own.
@@ -393,6 +423,7 @@
                 }
 
                 // Update display styles in response to change event fired after auto-fill.
+                // TODO investigate if we have to do something for replacements
                 $ledgerQuantities.on('change', function(event) {
                     updateUnbilledStatus($j(event.target), $dateCompleteInputs);
                     updateSubmitButton();
@@ -432,13 +463,16 @@
                 if ($selectedRows.length > 0) {
                     unselectedRows.filter(".dateComplete").prop('disabled',true);
                     unselectedRows.filter(".ledgerQuantity").hSpinner().hSpinner('disable');
+                    unselectedRows.filter(".ledgerRepacement").prop('disabled', true);
                     var isChecked = function () {
                         $j(this).closest("tr").filter("input[name=selectedProductOrderSampleIds]:checked") !== 0;
                     };
                     inputs.filter(".dateComplete.pending").prop('disabled', false);
+                    unselectedRows.filter(".ledgerRepacement").prop('disabled', false);
                     $ledgerQuantities.filter(isChecked()).hSpinner().hSpinner('enable');
                 } else {
                     inputs.filter(".dateComplete.pending").prop('disabled', false);
+                    unselectedRows.filter(".ledgerRepacement").prop('disabled', false);
                     inputs.filter(".ledgerQuantity").hSpinner().hSpinner('enable');
                 }
             });
@@ -1079,10 +1113,15 @@
                                     &nbsp;
                                     <c:if test="${actionBean.productOrder.hasSapQuote()}">
                                         <c:forEach items="${actionBean.potentialSapReplacements}" var="replacement">
+                                            <c:set var="submittedReplacement"
+                                                   value="${actionBean.ledgerData[info.sample.samplePosition].quantities[billingIndex.indexId].replacementCondition}"/>
+                                            <c:set var="currentReplacement"
+                                                   value="${submittedReplacement != null ? submittedReplacement : ''}"/>
+
                                             <c:if test="${billingIndex.product.equals(replacement.key)}">
                                                 <select name="ledgerData[${info.sample.samplePosition}].quantities[${billingIndex.indexId}].replacementCondition"
                                                         id="ledgerData[${info.sample.samplePosition}].quantities[${billingIndex.indexId}].replacementCondition"
-                                                        data-rownum="${info.sample.samplePosition}">
+                                                        data-rownum="${info.sample.samplePosition}" class="ledgerReplacement" originalValue="${currentReplacement}">
                                                     <option value="">Select one if replacing price...</option>
                                                     <c:forEach items="${replacement.value}" var="deliveryConditions">
                                                         <c:choose>
