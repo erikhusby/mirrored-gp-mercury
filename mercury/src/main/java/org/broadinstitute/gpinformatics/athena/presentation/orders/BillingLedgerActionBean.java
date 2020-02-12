@@ -491,7 +491,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
                             data.setDeliveryConditionAvailable(true);
                         }
                         ledgerUpdate = new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), product,
-                                quantities.originalQuantity, currentQuantity, new BigDecimal(quantities.submittedQuantity),
+                                new BigDecimal(quantities.originalQuantity), currentQuantity, new BigDecimal(quantities.submittedQuantity),
                                 data.getWorkCompleteDate(),
                                 DeliveryCondition.fromConditionName(quantities.replacementCondition));
 
