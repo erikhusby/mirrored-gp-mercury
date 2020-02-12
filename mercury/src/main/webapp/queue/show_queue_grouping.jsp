@@ -39,7 +39,7 @@
                     <td>${actionBean.sampleIdToSampleData[sampleId].bspStorageLocation}</td>
                     <td>${actionBean.sampleIdToSampleData[sampleId].collection}</td>
                     <td>${actionBean.labVesselIdToMercurySample[queueEntity.labVessel.labVesselId].metadataSource.displayName}</td>
-                    <td>${queueEntity.queueStatus.name}</td>
+                    <td>${queueEntity.queueStatus.displayName}</td>
                     <td>${queueEntity.completedOn}</td>
                 </tr>
             </c:forEach>

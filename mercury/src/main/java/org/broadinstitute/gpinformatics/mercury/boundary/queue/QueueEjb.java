@@ -133,7 +133,7 @@ public class QueueEjb {
                 Set<Long> verifyingVesselIds = new HashSet<>(vesselIds);
                 for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
                     // If the status isn't active, already there is a difference so cut out.
-                    if (queueEntity.getQueueStatus() != QueueStatus.Active) {
+                    if (queueEntity.getQueueStatus() != QueueStatus.ACTIVE) {
                         verifyingVesselIds.clear();
                         break;
                     }
@@ -216,11 +216,10 @@ public class QueueEjb {
                         + " has been denoted as not yet completed"
                         + " from the " + queueType.getTextName() + " queue.");
             } else {
-                updateQueueEntityStatus(messageCollection, queueEntity, QueueStatus.Completed);
+                updateQueueEntityStatus(messageCollection, queueEntity, QueueStatus.COMPLETED);
                 queueGroupings.add(queueEntity.getQueueGrouping());
             }
         }
-        queueEntityDao.flush();
 
         for (QueueGrouping queueGrouping : queueGroupings) {
             queueGrouping.updateGroupingStatus();
@@ -281,7 +280,7 @@ public class QueueEjb {
         List<QueueEntity> queueEntities = queueEntityDao.findActiveEntitiesByVesselIds(queueType, labVesselIds);
 
         for (QueueEntity queueEntity : queueEntities) {
-            queueEntity.setQueueStatus(QueueStatus.Repeat);
+            queueEntity.setQueueStatus(QueueStatus.REPEAT);
         }
     }
 
@@ -348,11 +347,9 @@ public class QueueEjb {
 
         Set<QueueGrouping> queueGroupings = new HashSet<>();
         for (QueueEntity queueEntity : queueEntities) {
-            updateQueueEntityStatus(messageCollection, queueEntity, QueueStatus.Excluded);
+            updateQueueEntityStatus(messageCollection, queueEntity, QueueStatus.EXCLUDED);
             queueGroupings.add(queueEntity.getQueueGrouping());
         }
-
-        queueEntityDao.flush();
 
         for (QueueGrouping queueGrouping : queueGroupings) {
             queueGrouping.updateGroupingStatus();
@@ -362,12 +359,12 @@ public class QueueEjb {
     private void updateQueueEntityStatus(MessageCollection messageCollection, QueueEntity queueEntity, QueueStatus queueStatus) {
 
         switch (queueStatus) {
-            case Completed:
+            case COMPLETED:
                 if (queueEntity.getQueueStatus().isStillInQueue()) {
                     queueEntity.setCompletedOn(new Date());
                 }
                 //  Purposefully not breaking here as the remaining code is the same for both completed and excluded.
-            case Excluded:
+            case EXCLUDED:
                 if (queueEntity.getQueueStatus().isStillInQueue()) {
                     queueEntity.setQueueStatus(queueStatus);
                 } else {

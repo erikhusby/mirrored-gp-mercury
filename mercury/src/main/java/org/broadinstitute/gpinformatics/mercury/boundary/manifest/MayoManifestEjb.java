@@ -106,8 +106,8 @@ public class MayoManifestEjb {
     public static final String WRONG_TUBE_IN_POSITION = "At position %s the rack has %s but manifest shows %s.";
     enum MessageLevel {NONE, WARN_ONLY, ERROR}
 
-    public static final String AUO_GENOME = "aou_wgs";
-    public static final String AUO_ARRAY = "aou_array";
+    public static final String AOU_GENOME = "aou_wgs";
+    public static final String AOU_ARRAY = "aou_array";
 
     public static final Map<String, CustomFieldDefinition> JIRA_DEFINITION_MAP =
             new HashMap<String, CustomFieldDefinition>() {{

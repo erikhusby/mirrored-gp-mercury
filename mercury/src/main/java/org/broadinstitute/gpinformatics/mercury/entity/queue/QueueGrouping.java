@@ -98,7 +98,7 @@ public class QueueGrouping {
         this.sortOrder = Long.MAX_VALUE;
         this.associatedQueue = genericQueue;
         this.queueSpecialization = queueSpecialization;
-        this.queueStatus = QueueStatus.Active;
+        this.queueStatus = QueueStatus.ACTIVE;
 
         this.queuedEntities = new ArrayList<>();
     }
@@ -176,7 +176,7 @@ public class QueueGrouping {
     public boolean shouldSkipPriorityCheck() {
         boolean isRepeat = false;
         for (QueueEntity queueEntity : getQueuedEntities()) {
-            if (queueEntity.getQueueStatus() == QueueStatus.Repeat) {
+            if (queueEntity.getQueueStatus() == QueueStatus.REPEAT) {
                 isRepeat = true;
                 break;
             }
@@ -198,7 +198,7 @@ public class QueueGrouping {
      */
     public void updateGroupingStatus() {
         if (!hasRemainingActiveEntities()) {
-            setQueueStatus(QueueStatus.Completed);
+            setQueueStatus(QueueStatus.COMPLETED);
         }
     }
 

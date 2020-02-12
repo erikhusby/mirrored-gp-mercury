@@ -23,7 +23,6 @@ import javax.persistence.criteria.Root;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Data Access Object for QueueGroupings.
@@ -44,7 +43,7 @@ public class QueueGroupingDao extends GenericDao {
             Join<QueueGrouping, GenericQueue> genericQueueJoin = root.join(QueueGrouping_.associatedQueue, JoinType.INNER);
             criteriaQuery.where(
                     criteriaBuilder.equal(genericQueueJoin.get(GenericQueue_.queueType), queueType),
-                    root.get(QueueGrouping_.queueStatus).in(QueueStatus.Active, QueueStatus.Repeat));
+                    root.get(QueueGrouping_.queueStatus).in(QueueStatus.ACTIVE, QueueStatus.REPEAT));
             criteriaQuery.orderBy(criteriaBuilder.asc(root.get(QueueGrouping_.sortOrder)));
         });
     }

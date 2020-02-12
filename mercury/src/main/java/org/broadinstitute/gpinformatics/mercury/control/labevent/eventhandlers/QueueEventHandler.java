@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.queue.DequeueingOptions;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
@@ -47,9 +48,10 @@ public class QueueEventHandler extends AbstractEventHandler {
 
     @Override
     public void handleEvent(LabEvent labEvent, StationEventType stationEvent) {
+        MessageCollection messageCollection = new MessageCollection();
         switch (labEvent.getLabEventType()) {
             case VOLUME_MEASUREMENT: {
-                dequeue(labEvent, Direction.SOURCE, QueueType.VOLUME_CHECK);
+                dequeue(labEvent, Direction.SOURCE, QueueType.VOLUME_CHECK, messageCollection);
 
                 // Add to plating queue
                 Set<LabVessel> labVessels = getVesselsPreferTubes(labEvent, Direction.SOURCE);
@@ -59,9 +61,9 @@ public class QueueEventHandler extends AbstractEventHandler {
                     if (productTypes.size() == 1) {
                         String productType = productTypes.iterator().next();
                         QueueType queueType;
-                        if (productType.equals(MayoManifestEjb.AUO_ARRAY)) {
+                        if (productType.equals(MayoManifestEjb.AOU_ARRAY)) {
                             queueType = QueueType.ARRAY_PLATING;
-                        } else if (productType.equals(MayoManifestEjb.AUO_GENOME)) {
+                        } else if (productType.equals(MayoManifestEjb.AOU_GENOME)) {
                             queueType = QueueType.SEQ_PLATING;
                         } else {
                             throw new RuntimeException("Unexpected product type " + productType);
@@ -69,7 +71,7 @@ public class QueueEventHandler extends AbstractEventHandler {
                         String rack = ((TubeFormation) labEvent.getInPlaceLabVessel()).getRacksOfTubes().iterator().next().getLabel();
                         queueEjb.enqueueLabVessels(labVessels, queueType,
                                 rack + " Volme Checked on " + DateUtils.convertDateTimeToString(new Date()),
-                                new MessageCollection(), QueueOrigin.OTHER, null);
+                                messageCollection, QueueOrigin.OTHER, null);
                     } else {
                         throw new RuntimeException("Multiple product types " + productTypes);
                     }
@@ -105,7 +107,7 @@ public class QueueEventHandler extends AbstractEventHandler {
                                     dnaQuantEnqueueOverride.determineDnaQuantQueueSpecialization(vesselsPreferTubes);
                             queueEjb.enqueueLabVessels(vesselsPreferTubes, QueueType.DNA_QUANT,
                                     vesselsPreferTubes.iterator().next().getLabel() + " dilution on " + DateUtils.convertDateTimeToString(labEvent.getEventDate()),
-                                    new MessageCollection(), QueueOrigin.RECEIVING, queueSpecialization);
+                                    messageCollection, QueueOrigin.RECEIVING, queueSpecialization);
                         }
                     } catch (Exception e) {
                         throw new RuntimeException("Failed to get client preference", e);
@@ -118,21 +120,24 @@ public class QueueEventHandler extends AbstractEventHandler {
                 if (isAllOfUs(labEvent)) {
                     Set<LabVessel> vesselsPreferTubes = getVesselsPreferTubes(labEvent, Direction.SOURCE);
                     String[] productTypes = vesselsPreferTubes.iterator().next().getMetadataValues(Metadata.Key.PRODUCT_TYPE);
-                    if (productTypes.length > 0 && productTypes[0].equals(MayoManifestEjb.AUO_GENOME)) {
+                    if (productTypes.length > 0 && productTypes[0].equals(MayoManifestEjb.AOU_GENOME)) {
                         String sourcePlate = labEvent.getSectionTransfers().iterator().next().getSourceVessel().getLabel();
                         queueEjb.enqueueLabVessels(vesselsPreferTubes, QueueType.FINGERPRINTING,
                                 sourcePlate + " DNA quant on " + DateUtils.convertDateTimeToString(labEvent.getEventDate()),
-                                new MessageCollection(), QueueOrigin.RECEIVING, null);
+                                messageCollection, QueueOrigin.RECEIVING, null);
                     }
                 }
                 break;
             }
             case ARRAY_PLATING_DILUTION:
-                dequeue(labEvent, Direction.SOURCE, QueueType.ARRAY_PLATING);
+                dequeue(labEvent, Direction.SOURCE, QueueType.ARRAY_PLATING, messageCollection);
                 break;
             case AUTO_DAUGHTER_PLATE_CREATION:
-                dequeue(labEvent, Direction.SOURCE, QueueType.SEQ_PLATING);
+                dequeue(labEvent, Direction.SOURCE, QueueType.SEQ_PLATING, messageCollection);
                 break;
+        }
+        if (messageCollection.hasErrors()) {
+            throw new RuntimeException(StringUtils.join(messageCollection.getErrors(), ","));
         }
     }
 
@@ -141,9 +146,10 @@ public class QueueEventHandler extends AbstractEventHandler {
         DEST
     }
 
-    private void dequeue(LabEvent labEvent, Direction direction, QueueType arrayPlating) {
+    private void dequeue(LabEvent labEvent, Direction direction, QueueType arrayPlating,
+            MessageCollection messageCollection) {
         if (isAllOfUs(labEvent)) {
-            queueEjb.dequeueLabVessels(getVesselsPreferTubes(labEvent, direction), arrayPlating, new MessageCollection(),
+            queueEjb.dequeueLabVessels(getVesselsPreferTubes(labEvent, direction), arrayPlating, messageCollection,
                     DequeueingOptions.DEFAULT_DEQUEUE_RULES);
         }
     }
