@@ -92,6 +92,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @UrlBinding(TopOffActionBean.ACTION_BEAN_URL)
@@ -171,6 +172,7 @@ public class TopOffActionBean extends CoreActionBean {
     private Set<HoldForTopoffDto> selectedHoldForTopOffs;
     private String sequencingType;
     private List<PoolGroup> poolGroups = new ArrayList<>();
+    private Map<String, CoverageType> mapKeyToCoverage = new HashMap<>();
 
     @DefaultHandler
     @HandlesEvent(LIST_ACTION)
@@ -547,8 +549,6 @@ public class TopOffActionBean extends CoreActionBean {
         } else {
             List<String> libraries = selectedDtos.stream().map(HoldForTopoffDto::getLibrary).collect(Collectors.toList());
             Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(libraries);
-            Map<String, MercurySample> mapIdToMercurySample =
-                    mercurySampleDao.findMapIdToMercurySample(selectedSamples);
             for (Map.Entry<String, LabVessel> entry: mapBarcodeToVessel.entrySet()) {
                 if (entry.getValue() == null) {
                     messageCollection.addError("Failed to find lab vessel " + entry.getKey());
@@ -647,7 +647,17 @@ public class TopOffActionBean extends CoreActionBean {
             }
         }
 
-        Map<String, AlignmentMetric> mapSampleToMetrics = alignmentMetricsDao.findMapBySampleAlias(sampleIds);
+        List<AlignmentMetric> alignmentMetrics = alignmentMetricsDao.findAggregationBySampleAlias(sampleIds);
+        Map<String, AlignmentMetric> mapAliasToMetric = alignmentMetrics.stream()
+                .collect(Collectors.toMap(AlignmentMetric::getSampleAlias, Function.identity()));
+
+        Set<String> coverageTypeKeys = bucketEntrySet.stream()
+                .map(BucketEntry::getProductOrder)
+                .map(ProductOrder::getCoverageTypeKey)
+                .collect(Collectors.toSet());
+
+        List<CoverageType> coverageTypes = coverageTypeDao.findListByIdentifier(new ArrayList<>(coverageTypeKeys));
+        coverageTypes.forEach(cov -> mapKeyToCoverage.put(cov.getName(), cov));
 
         for (BucketEntry bucketEntry: bucketEntrySet) {
             LabVessel labVessel = bucketEntry.getLabVessel();
@@ -667,7 +677,7 @@ public class TopOffActionBean extends CoreActionBean {
             holdForTopoffDto.setSeqType( mapVesselToSeqType.get(labVessel));
             holdForTopoffDto.setLcset(mapVesselToLcset.get(labVessel));
             holdForTopoffDto.setBucketEntryId(bucketEntry.getBucketEntryId());
-            AlignmentMetric alignmentMetric = mapSampleToMetrics.get(mapVesselToSample.get(labVessel));
+            AlignmentMetric alignmentMetric = mapAliasToMetric.get(mapVesselToSample.get(labVessel));
 
             BigDecimal xNeeded = calculateXNeeded(productOrder, alignmentMetric, messageCollection);
             if (xNeeded != null) {
@@ -694,7 +704,7 @@ public class TopOffActionBean extends CoreActionBean {
 
     private BigDecimal calculateXNeeded(ProductOrder productOrder, AlignmentMetric metric, MessageCollection messageCollection) {
         String coverageTypeKey = productOrder.getCoverageTypeKey();
-        CoverageType coverageType = coverageTypeDao.findByBusinessKey(coverageTypeKey);
+        CoverageType coverageType = fetchCoverageType(coverageTypeKey);
         if (coverageType != null) {
             if (coverageType.getMeanCoverage() == null) {
                 messageCollection.addError("No mean coverage Specified for " + productOrder.getBusinessKey());
@@ -712,15 +722,27 @@ public class TopOffActionBean extends CoreActionBean {
     }
 
     private void initStateMachineData(State state, String tabName, MessageCollection messageCollection) {
-        Map<String, AlignmentMetric> mapSampleToMetrics = alignmentMetricsDao.findMapByMercurySample(state.getMercurySamples());
+        Set<String> sampleIds = state.getMercurySamples().stream()
+                .map(MercurySample::getSampleKey).collect(Collectors.toSet());
+        List<AlignmentMetric> alignmentMetrics = alignmentMetricsDao.findAggregationBySampleAlias(sampleIds);
+        Map<String, AlignmentMetric> mapAliasToMetric = alignmentMetrics.stream()
+                .collect(Collectors.toMap(AlignmentMetric::getSampleAlias, Function.identity()));
         List<HoldForTopoffDto> dtos = new ArrayList<>();
         for (MercurySample mercurySample: state.getMercurySamples()) {
             boolean requirePondData =
                     !tabName.equals(TopOffStateMachineDecorator.StateNames.SentToRework.getDisplayName());
-            HoldForTopoffDto dto = parseSampleData(mapSampleToMetrics, mercurySample, messageCollection, requirePondData);
+            HoldForTopoffDto dto = parseSampleData(mapAliasToMetric, mercurySample, messageCollection, requirePondData);
             dtos.add(dto);
         }
         mapTabToDto.put(tabName, dtos);
+    }
+
+    private CoverageType fetchCoverageType(String key) {
+        if (!mapKeyToCoverage.containsKey(key)) {
+            mapKeyToCoverage.put(key, coverageTypeDao.findByBusinessKey(key));
+        }
+
+        return mapKeyToCoverage.get(key);
     }
 
     @NotNull
@@ -802,12 +824,15 @@ public class TopOffActionBean extends CoreActionBean {
     }
 
     private void initPoolGroupData(List<State> poolGroupStates, MessageCollection messageCollection) {
-        List<MercurySample> mercurySamples = poolGroupStates.stream()
+        Set<String> sampleIds = poolGroupStates.stream()
                 .map(State::getMercurySamples)
                 .flatMap(Collection::stream)
-                .distinct()
-                .collect(Collectors.toList());
-        Map<String, AlignmentMetric> alignmentMetricsMap = alignmentMetricsDao.findMapByMercurySample(mercurySamples);
+                .map(MercurySample::getSampleKey)
+                .collect(Collectors.toSet());
+
+        List<AlignmentMetric> alignmentMetrics = alignmentMetricsDao.findAggregationBySampleAlias(sampleIds);
+        Map<String, AlignmentMetric> mapAliasToMetric = alignmentMetrics.stream()
+                .collect(Collectors.toMap(AlignmentMetric::getSampleAlias, Function.identity()));
 
         for (State state: poolGroupStates) {
             PoolGroup poolGroup = new PoolGroup();
@@ -817,7 +842,7 @@ public class TopOffActionBean extends CoreActionBean {
             List<HoldForTopoffDto> dtos = new ArrayList<>();
             Integer expectedYieldPerLane = 25;
             for (MercurySample mercurySample: state.getMercurySamples()) {
-                HoldForTopoffDto dto = parseSampleData(alignmentMetricsMap, mercurySample, messageCollection, true);
+                HoldForTopoffDto dto = parseSampleData(mapAliasToMetric, mercurySample, messageCollection, true);
                 dtos.add(dto);
                 if (maxXNeeded == null || dto.getxNeeded() > maxXNeeded) {
                     maxXNeeded = dto.getxNeeded();

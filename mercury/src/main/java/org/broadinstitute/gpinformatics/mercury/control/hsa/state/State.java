@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,12 +60,14 @@ public abstract class State {
     @JoinTable(schema = "mercury", name = "sample_alignment_state"
             , joinColumns = {@JoinColumn(name = "ALIGNMENT_STATE")}
             , inverseJoinColumns = {@JoinColumn(name = "MERCURY_SAMPLE")})
+    @BatchSize(size = 20)
     private Set<MercurySample> mercurySamples = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST})
     @JoinTable(schema = "mercury", name = "src_demultiplix_state"
             , joinColumns = {@JoinColumn(name = "DEMULTIPLEX_STATE")}
             , inverseJoinColumns = {@JoinColumn(name = "SEQUENCING_RUN_CHAMBER")})
+    @BatchSize(size = 20)
     private Set<IlluminaSequencingRunChamber> sequencingRunChambers = new HashSet<>();
 
     private String stateName;

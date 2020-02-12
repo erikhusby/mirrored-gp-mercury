@@ -23,6 +23,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
@@ -135,6 +137,7 @@ public class TopOffEjb {
         return Pair.of(mercurySamples, statesToDelete);
     }
 
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public IlluminaFlowcell.FlowcellType getLatestFlowcellForSample(MercurySample mercurySample) {
         Optional<AggregationState> aggregationOpt =
                 mercurySample.getMostRecentStateOfType(AggregationState.class);

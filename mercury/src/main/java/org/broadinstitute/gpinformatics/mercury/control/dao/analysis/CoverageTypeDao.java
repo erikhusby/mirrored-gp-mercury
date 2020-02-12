@@ -28,4 +28,8 @@ public class CoverageTypeDao extends GenericDao implements BusinessObjectFinder<
     public CoverageType findByBusinessKey(String businessKey) {
         return findSingle(CoverageType.class, CoverageType_.name, businessKey);
     }
+
+    public List<CoverageType> findListByIdentifier(List<String> identifiers) {
+        return findListByList(CoverageType.class, CoverageType_.name, identifiers);
+    }
 }

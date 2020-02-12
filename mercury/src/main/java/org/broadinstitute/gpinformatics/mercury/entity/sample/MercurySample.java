@@ -186,6 +186,7 @@ public class MercurySample extends AbstractSample {
     private Set<Fingerprint> fingerprints = new HashSet<>();
 
     @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "mercurySamples")
+    @BatchSize(size = 20)
     private Set<State> states = new HashSet<>();
 
     /**
