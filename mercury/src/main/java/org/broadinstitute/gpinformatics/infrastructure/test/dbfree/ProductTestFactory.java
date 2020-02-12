@@ -29,7 +29,7 @@ public class ProductTestFactory {
                                              boolean pdmOrderableOnly) {
         Product product =
                 new Product("productName", new ProductFamily("Test product family"), "description", partNumber,
-                        new Date(), new Date(), 12345678, 123456, 100, 96, "inputRequirements", "deliverables", true,
+                        new Date(), null, 12345678, 123456, 100, 96, "inputRequirements", "deliverables", true,
                         workflow, pdmOrderableOnly, new PipelineDataType(Aggregation.DATA_TYPE_EXOME, true));
         product.setReadLength(76);
         product.setPairedEndRead(true);

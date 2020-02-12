@@ -131,7 +131,7 @@ public class FingerprintEjb {
 
         String[] sheetNames = {"Fluidigm Matrix"};
         sheets.put(sheetNames[0], fluiLodCells);
-        Workbook workbook = SpreadsheetCreator.createSpreadsheet(sheets);
+        Workbook workbook = SpreadsheetCreator.createSpreadsheet(sheets, SpreadsheetCreator.Type.XLSX);
         Sheet sheet = workbook.getSheet("Fluidigm Matrix");
 
         Row row;
@@ -200,7 +200,10 @@ public class FingerprintEjb {
                 FingerprintResource.getMercurySampleMultimap(lsids, mapSmidToMercurySample, bspLsids, mapSmidToFpLsid,
                         bspGetExportedSamplesFromAliquots, mercurySampleDao);
 
-        Collection<MercurySample> mercurySamples = mapLsidToFpSamples.values();
+        Collection<MercurySample> mercurySamples = mapLsidToFpSamples.values().stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
         for (MercurySample mercurySample : mercurySamples) {
             fingerprints.addAll(mercurySample.getFingerprints());
         }
@@ -274,7 +277,7 @@ public class FingerprintEjb {
     }
 
     public void findAnchor(List<Fingerprint> fingerprints, Map<Fingerprint, String> lodScoreMap,
-                            List<Fingerprint> expected, List<Fingerprint> observed) {
+                           List<Fingerprint> expected, List<Fingerprint> observed) {
         String lodScoreStr;
         for (Fingerprint fingerprint : fingerprints) {
             Optional<Fingerprint> oldFluidigmFp = fingerprints.stream()
@@ -297,7 +300,7 @@ public class FingerprintEjb {
             if (oldFluidigmFp.isPresent()) {
                 oldFingerprint = oldFluidigmFp.get();
                 if (isAnchor(fingerprint, oldFingerprint)
-                    ) {
+                ) {
                     lodScoreStr = "Anchor FP";
                     lodScoreMap.put(fingerprint, lodScoreStr);
                 } else if (oldFingerprint.getGender() != null
@@ -319,15 +322,16 @@ public class FingerprintEjb {
         boolean isBefore = (fingerprint.getDateGenerated().before(oldFingerprint.getDateGenerated()) ||
                             oldFingerprint.getDateGenerated().equals(fingerprint.getDateGenerated()));
         boolean samePassingSample = oldFingerprint.getMercurySample().getSampleKey()
-                            .equals(fingerprint.getMercurySample().getSampleKey()) &&
+                                            .equals(fingerprint.getMercurySample().getSampleKey()) &&
                                     fingerprint.getDisposition() == Fingerprint.Disposition.PASS;
 
-        boolean isFluigidm = isBefore && samePassingSample && fingerprint.getPlatform() == Fingerprint.Platform.FLUIDIGM;
+        boolean isFluigidm =
+                isBefore && samePassingSample && fingerprint.getPlatform() == Fingerprint.Platform.FLUIDIGM;
         boolean isGenArray = samePassingSample && isBefore;
 
-        if (oldFingerprint.getPlatform() == Fingerprint.Platform.GENERAL_ARRAY){
+        if (oldFingerprint.getPlatform() == Fingerprint.Platform.GENERAL_ARRAY) {
             anchor = isGenArray;
-        }else if (oldFingerprint.getPlatform() == Fingerprint.Platform.FLUIDIGM){
+        } else if (oldFingerprint.getPlatform() == Fingerprint.Platform.FLUIDIGM) {
             anchor = isFluigidm;
         }
         return anchor;
