@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.jmx;
 
+import org.apache.commons.collections4.set.ListOrderedSet;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -7,8 +8,6 @@ import javax.annotation.Nonnull;
 import javax.ejb.Schedule;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Registry of scheduled items for the application.  To use this class, subclass AbstractCache
@@ -20,7 +19,8 @@ public class ExternalDataCacheControl extends AbstractCacheControl {
 
     private static final Log logger = LogFactory.getLog(ExternalDataCacheControl.class);
 
-    private final List<AbstractCache> caches = new ArrayList<>();
+    // Synchronization is expected be provided by the container since this class is annotated Singleton.
+    private final ListOrderedSet<AbstractCache> caches = new ListOrderedSet<>();
 
     private static final int MAX_SIZE = 100000;
 
@@ -35,12 +35,12 @@ public class ExternalDataCacheControl extends AbstractCacheControl {
     }
 
     /**
-     * Add a cache to the list of caches to refresh.
+     * Adds the cache to the set of caches to be refreshed. This does not do an initial load
+     * of the cache.
      * @param cache the cache to add
      */
     public void registerCache(AbstractCache cache) {
         caches.add(cache);
-        refreshCacheAndLogException(cache);
     }
 
     /**

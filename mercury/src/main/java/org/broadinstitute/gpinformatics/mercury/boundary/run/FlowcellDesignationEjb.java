@@ -118,7 +118,7 @@ public class FlowcellDesignationEjb {
             EnumSet<FlowcellDesignation.Status> targetableStatuses) {
         List<Pair<DesignationDto, FlowcellDesignation>> dtoAndTube = new ArrayList<>();
         for (DesignationDto dto : dtos) {
-            if (dto.isSelected() && targetableStatuses.contains(dto.getStatus())) {
+            if (dto != null && dto.isSelected() && targetableStatuses.contains(dto.getStatus())) {
                 if (dto.getDesignationId() == null) {
                     LabVessel startingTube = barcodedTubeDao.findByBarcode(dto.getBarcode());
                     LabBatch chosenLcset = StringUtils.isBlank(dto.getChosenLcset()) ?

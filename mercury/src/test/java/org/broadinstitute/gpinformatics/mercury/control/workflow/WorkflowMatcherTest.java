@@ -83,7 +83,7 @@ public class WorkflowMatcherTest {
 
         WorkflowMatcher workflowMatcher = new WorkflowMatcher();
         WorkflowLoader workflowLoader = new WorkflowLoader();
-        WorkflowConfig workflowConfig = workflowLoader.load();
+        WorkflowConfig workflowConfig = workflowLoader.getWorkflowConfig();
 
         List<WorkflowMatcher.WorkflowEvent> workflowEvents = workflowMatcher.match(
                 workflowConfig.getWorkflowVersionByName(Workflow.CLINICAL_WHOLE_BLOOD_EXTRACTION, new Date()),

@@ -44,7 +44,8 @@ public class ProductDao extends GenericDao implements Serializable {
     public enum Availability {
         ALL,
         CURRENT,
-        CURRENT_OR_FUTURE
+        CURRENT_OR_FUTURE,
+        PAST
     }
 
     public enum TopLevelOnly {
@@ -116,27 +117,32 @@ public class ProductDao extends GenericDao implements Serializable {
 
         switch (availability) {
 
-            case CURRENT:
-                // there is an availability date
-                predicateList.add(cb.isNotNull(product.get(Product_.availabilityDate)));
-                // and it is in the past
-                predicateList.add(cb.lessThan(product.get(Product_.availabilityDate), Calendar.getInstance().getTime()));
+        case CURRENT:
+            // there is an availability date
+            predicateList.add(cb.isNotNull(product.get(Product_.availabilityDate)));
+            // and it is in the past
+            predicateList.add(cb.lessThan(product.get(Product_.availabilityDate), Calendar.getInstance().getTime()));
 
-                // fall through to get the discontinued date!
+            // fall through to get the discontinued date!
 
-            case CURRENT_OR_FUTURE:
+        case CURRENT_OR_FUTURE:
 
-                // the discontinued date is null or in the future
-                predicateList.add(
-                        cb.or( cb.isNull(product.get(Product_.discontinuedDate)),
-                                cb.greaterThan(product.get(Product_.discontinuedDate), Calendar.getInstance().getTime()))
-                );
+            // the discontinued date is null or in the future
+            predicateList.add(
+                    cb.or(cb.isNull(product.get(Product_.discontinuedDate)),
+                            cb.greaterThan(product.get(Product_.discontinuedDate), Calendar.getInstance().getTime()))
+            );
 
-                break;
+            break;
 
-            case ALL:
-            default:
-                break;
+        case PAST:
+            predicateList.add(cb.lessThanOrEqualTo(product.get(Product_.discontinuedDate),
+                    Calendar.getInstance().getTime()));
+            break;
+
+        case ALL:
+        default:
+            break;
 
         }
 
@@ -226,6 +232,11 @@ public class ProductDao extends GenericDao implements Serializable {
                 TopLevelOnly.YES,
                 IncludePDMOnly.toIncludePDMOnly(canIncludePdmProducts(), userBean.isGPPMUser()), searchTerms);
     }
+
+    public List<Product> findDiscontinuedProducts() {
+        return findProducts(Availability.PAST, TopLevelOnly.YES, IncludePDMOnly.YES, Collections.emptyList());
+    }
+
 
     private boolean canIncludePdmProducts() {
         return userBean.isPDMUser() || userBean.isDeveloperUser();

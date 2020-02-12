@@ -19,6 +19,7 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -56,10 +57,10 @@ public class CreateBillingDataTest extends Arquillian {
                     if(productOrder.hasSapQuote()) {
                         ledgerEntries.add(new LedgerEntry(productOrderSample,
                                 productOrder.getProduct(),
-                                new Date(), 0.5));
+                                new Date(), new BigDecimal("0.5")));
                     } else {
                         ledgerEntries.add(new LedgerEntry(productOrderSample,
-                                productOrder.getProduct().getPrimaryPriceItem(), new Date(), 0.5));
+                                productOrder.getProduct().getPrimaryPriceItem(), new Date(), new BigDecimal("0.5")));
                     }
                 }
             }
@@ -72,11 +73,11 @@ public class CreateBillingDataTest extends Arquillian {
                     if(productOrder.hasSapQuote()) {
                         productOrderDao.persist(
                                 new LedgerEntry(productOrderSample, productOrder.getProduct(),
-                                        new Date(), 1.1));
+                                        new Date(), BigDecimal.valueOf(1.1)));
                     } else {
                         productOrderDao.persist(
                                 new LedgerEntry(productOrderSample, productOrder.getProduct().getPrimaryPriceItem(),
-                                        new Date(), 1.1));
+                                        new Date(), BigDecimal.valueOf(1.1)));
                     }
                 }
             }

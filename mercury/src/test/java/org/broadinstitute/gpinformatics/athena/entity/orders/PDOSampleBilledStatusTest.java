@@ -11,6 +11,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.util.Date;
 
@@ -37,9 +38,9 @@ public class PDOSampleBilledStatusTest {
         pdo.addSample(pdoSample);
         pdo.getProduct().setPrimaryPriceItem(primaryPriceItem);
         if(pdo.hasSapQuote()) {
-            pdoSample.addLedgerItem(new Date(System.currentTimeMillis()), pdo.getProduct(),3d, null);
+            pdoSample.addLedgerItem(new Date(System.currentTimeMillis()), pdo.getProduct(), BigDecimal.valueOf(3), null);
         } else {
-            pdoSample.addLedgerItem(new Date(System.currentTimeMillis()), primaryPriceItem,3d);
+            pdoSample.addLedgerItem(new Date(System.currentTimeMillis()), primaryPriceItem,BigDecimal.valueOf(3));
         }
 
         BillingSession billingSession = new BillingSession(3L,pdoSample.getLedgerItems());

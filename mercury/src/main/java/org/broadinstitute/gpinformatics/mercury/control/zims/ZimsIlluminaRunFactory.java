@@ -20,7 +20,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemOfRecord;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
@@ -246,7 +246,7 @@ public class ZimsIlluminaRunFactory {
                 illuminaRun.getRunDate()),
                                                   isPaired, illuminaRun.getActualReadStructure(), imagedArea,
                                                   illuminaRun.getSetupReadStructure(), illuminaRun.getLanesSequenced(),
-                                                  illuminaRun.getRunDirectory(), SystemRouter.System.MERCURY);
+                                                  illuminaRun.getRunDirectory(), SystemOfRecord.System.MERCURY);
 
         IlluminaFlowcell illuminaFlowcell = (IlluminaFlowcell) flowcell;
         Set<VesselAndPosition> loadedVesselsAndPositions = illuminaFlowcell.getLoadingVessels();
