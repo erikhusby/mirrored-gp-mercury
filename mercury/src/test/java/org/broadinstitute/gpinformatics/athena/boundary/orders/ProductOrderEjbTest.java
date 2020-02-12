@@ -131,8 +131,8 @@ public class ProductOrderEjbTest {
                 mockAccessController);
         productPriceCache = new SAPProductPriceCache(sapService);
 
-        productPriceCache.setAccessControlEjb(mockAccessController);
-
+        productPriceCache = new SAPProductPriceCache(sapService);
+        priceListCache = new PriceListCache(mockQuoteService);
 
         //  this additon is for the temporary support of current processing of recognizing a valid Product.
         //  When the full implementation of the fetchMatarials interface for SAP is completed, this will be removed

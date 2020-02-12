@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
 import clover.org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.sample.WalkUpSequencing;
 
 import javax.ejb.Stateless;
@@ -22,6 +23,9 @@ public class WalkupSequencingResource {
     @Inject
     private SampleInstanceEjb sampleInstanceEjb;
 
+    @Inject
+    private UserBean userBean;
+
     @GET
     @Path("/query")
     @Produces(MediaType.APPLICATION_JSON)
@@ -34,6 +38,7 @@ public class WalkupSequencingResource {
     @Produces({"application/json"})
     @Path("/postSequenceData")
     public String getJson(WalkUpSequencing walkUpSequencing) {
+        userBean.login("seqsystem");
         MessageCollection messageCollection = new MessageCollection();
         sampleInstanceEjb.verifyAndPersistSubmission(walkUpSequencing, messageCollection);
         return messageCollection.hasErrors() ?
