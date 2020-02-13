@@ -25,6 +25,7 @@ import org.broadinstitute.gpinformatics.infrastructure.search.QueueEntitySearchD
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
+import org.broadinstitute.gpinformatics.infrastructure.search.queue.DNAQuantQueueSearchTerms;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.StreamCreatedSpreadsheetUtil;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
@@ -250,15 +251,17 @@ public class QueueActionBean extends CoreActionBean {
         SearchInstance.SearchValue queue_type = searchInstance.addTopLevelTerm("Queue Type", configurableSearchDef);
         queue_type.setOperator(SearchInstance.Operator.EQUALS);
         queue_type.setValues(Collections.singletonList(QueueType.DNA_QUANT.toString()));
+        queue_type.setIncludeInResults(false);
 
-        // Check for vessels in an active queue entity
+        // Check for vessels that are NOT active in a queue entity
         SearchInstance.SearchValue queue_entity_status = searchInstance.addTopLevelTerm("Queue Entity Status", configurableSearchDef);
-        queue_entity_status.setOperator(SearchInstance.Operator.EQUALS);
+        queue_entity_status.setOperator(SearchInstance.Operator.NOT_IN);
         queue_entity_status.setValues(Collections.singletonList(QueueStatus.Active.getName()));
+        queue_entity_status.setIncludeInResults(false);
 
-        searchInstance.getPredefinedViewColumns().add("Barcode");
-        searchInstance.getPredefinedViewColumns().add("Container Barcode");
-        searchInstance.getPredefinedViewColumns().add("Rack Position"); // unclear if this is right. (e.g. what is Event Vessel Position?)
+        searchInstance.getPredefinedViewColumns().add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.SAMPLE_ID.getTerm());
+        searchInstance.getPredefinedViewColumns().add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.MANUFACTURER_BARCODE.getTerm());
+        searchInstance.getPredefinedViewColumns().add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.CONTAINER_INFO.getTerm());
         searchInstance.establishRelationships(configurableSearchDef);
 
         ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(

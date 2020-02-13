@@ -10,23 +10,30 @@
 <stripes:layout-component name="extraHead">
 </stripes:layout-component>
 <stripes:layout-component name="content">
-    <c:if test="${not empty actionBean.labSearchResultList.resultRows}">
-        <div style="margin-top: 50px;">
-            <stripes:layout-render name="/columns/configurable_list.jsp"
-                                   entityName="${actionBean.entityName}"
-                                   sessionKey="${actionBean.sessionKey}"
-                                   columnSetName="${actionBean.columnSetName}"
-                                   downloadColumnSets="${actionBean.downloadColumnSets}"
-                                   resultList="${actionBean.labSearchResultList}"
-                                   action="${ctxpath}/search/ConfigurableSearch.action"
-                                   downloadViewedColumns="False"
-                                   isDbSortAllowed="False"
-                                   dbSortPath=""
-                                   dataTable="true"
-                                   loadDatatable="false"
-                                   showJumpToEnd="false"
-            />
-        </div>
-    </c:if>
+    <c:choose>
+        <c:when test="${not empty actionBean.labSearchResultList.resultRows}">
+            <div style="margin-top: 50px;">
+                <stripes:layout-render name="/columns/configurable_list.jsp"
+                                       entityName="${actionBean.entityName}"
+                                       sessionKey="${actionBean.sessionKey}"
+                                       columnSetName="${actionBean.columnSetName}"
+                                       downloadColumnSets="${actionBean.downloadColumnSets}"
+                                       resultList="${actionBean.labSearchResultList}"
+                                       action="${ctxpath}/search/ConfigurableSearch.action"
+                                       downloadViewedColumns="True"
+                                       isDbSortAllowed="False"
+                                       dbSortPath=""
+                                       dataTable="true"
+                                       loadDatatable="false"
+                                       showJumpToEnd="false"
+                />
+            </div>
+        </c:when>
+        <c:otherwise>
+            <div style="margin-top: 50px;">
+                All samples within the search are currently actively in the queue.
+            </div>
+        </c:otherwise>
+    </c:choose>
 </stripes:layout-component>
 </stripes:layout-render>

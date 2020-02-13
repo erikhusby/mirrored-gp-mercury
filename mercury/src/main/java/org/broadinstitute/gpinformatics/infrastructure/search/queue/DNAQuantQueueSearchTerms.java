@@ -1,25 +1,21 @@
 package org.broadinstitute.gpinformatics.infrastructure.search.queue;
 
 
-import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
-import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
-import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
-import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -32,7 +28,7 @@ public class DNAQuantQueueSearchTerms extends AbstractQueueSearchTerms {
     public enum DNA_QUANT_TERMS {
         MANUFACTURER_BARCODE("Manufacturer Barcode"),
         SAMPLE_ID("Sample ID"),
-        CONTAINER_BARCODE("Container Barcode");
+        CONTAINER_INFO("Container Information");
 
         String term;
 
@@ -86,10 +82,6 @@ public class DNAQuantQueueSearchTerms extends AbstractQueueSearchTerms {
                 public String evaluate(Object entity, SearchContext context) {
                     QueueEntity queueEntity = (QueueEntity) entity;
                     return queueEntity.getQueueGrouping().getAssociatedQueue().getQueueType().toString();
-
-//                    GenericQueue associatedQueue = (GenericQueue) entity;
-//
-//                    return associatedQueue.getQueueType().toString();
                 }
             });
 
@@ -109,7 +101,6 @@ public class DNAQuantQueueSearchTerms extends AbstractQueueSearchTerms {
 
             SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
 
-//            criteriaPath.setCriteria(Arrays.asList("queueEntityId"));
             criteriaPath.setPropertyName("queueStatus");
             searchTerm.setCriteriaPaths(Collections.singletonList(criteriaPath));
             searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
@@ -130,7 +121,6 @@ public class DNAQuantQueueSearchTerms extends AbstractQueueSearchTerms {
             SearchTerm searchTerm = new SearchTerm();
             searchTerm.setName("Barcode");
             searchTerm.setRackScanSupported(Boolean.TRUE);
-//            searchTerm.setDbSortPath("labVessel.label");
             List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
             SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
             criteriaPath.setCriteria(Collections.singletonList("labVessel"));
@@ -147,117 +137,66 @@ public class DNAQuantQueueSearchTerms extends AbstractQueueSearchTerms {
             termDescriptionMap.put(searchTerm, "Barcode");
             mapNameToSearchTerm.put(searchTerm.getName(), searchTerm);
         }
-        /*
         {
             SearchTerm searchTerm = new SearchTerm();
             searchTerm.setName(DNA_QUANT_TERMS.SAMPLE_ID.getTerm());
             searchTerm.setRackScanSupported(Boolean.TRUE);
+            List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
             SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
-            criteriaPath.setCriteria(
-                    Arrays.asList("SampleID", "queuedEntities", "queueGrouping", "queuedEntities", "labVessel", "mercurySamples"));
+            criteriaPath.setCriteria(Arrays.asList("labVessel", "mercurySamples"));
             criteriaPath.setPropertyName("sampleKey");
+            criteriaPaths.add(criteriaPath);
+            searchTerm.setCriteriaPaths(criteriaPaths);
+            searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+                @Override
+                public List<String> evaluate(Object entity, SearchContext context) {
+                    List<String> results = new ArrayList<>();
+                    QueueEntity queueEntity = (QueueEntity) entity;
+                    for (MercurySample mercurySample : queueEntity.getLabVessel().getMercurySamples()) {
+                        results.add(mercurySample.getSampleKey());
+                    }
+                    return results;
+                }
+            });
+            termDescriptionMap.put(searchTerm, "Barcode");
+            mapNameToSearchTerm.put(searchTerm.getName(), searchTerm);
+        }
+        {
+            SearchTerm searchTerm = new SearchTerm();
+            searchTerm.setName(DNA_QUANT_TERMS.CONTAINER_INFO.getTerm());
+            SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+            criteriaPath.setCriteria(Arrays.asList("ContainerInfo", "rackOfTubes", "tubeFormation", "labVessel", "queuedEntities"));
+
             searchTerm.setCriteriaPaths(Collections.singletonList(criteriaPath));
             searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
                 @Override
                 public List<String> evaluate(Object entity, SearchContext context) {
-                    QueueGrouping queueGrouping = (QueueGrouping) entity;
+                    QueueEntity queueEntity = (QueueEntity) entity;
                     List<String> results = new ArrayList<>();
-                    for (QueueEntity queuedEntity : queueGrouping.getQueuedEntities()) {
-                        for (MercurySample mercurySample : queuedEntity.getLabVessel().getMercurySamples()) {
-                            results.add(mercurySample.getSampleKey());
+                    LabVessel labVessel = queueEntity.getLabVessel();
+
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm");
+                    context.setMultiValueDelimiter(", ");
+                    context.setResultCellTargetPlatform(SearchContext.ResultCellTargetPlatform.WEB);
+
+                    for (LabVessel container : labVessel.getContainers()) {
+                        TubeFormation containerTubeFormation = (TubeFormation) container;
+
+                        TubeFormation tubeFormation = OrmUtil.proxySafeCast(container, TubeFormation.class);
+
+                        String vesselPositionInContainer = tubeFormation.getContainerRole().getPositionOfVessel(labVessel).name();
+                        Date createdOn = containerTubeFormation.getCreatedOn();
+
+                        Set<RackOfTubes> racksOfTubes = containerTubeFormation.getRacksOfTubes();
+                        for (RackOfTubes rackOfTubes : racksOfTubes) {
+                            results.add(rackOfTubes.getLabel() + "/" + vesselPositionInContainer + ":" + dateFormat.format(createdOn));
                         }
                     }
 
                     return results;
                 }
             });
-            termDescriptionMap.put(searchTerm, "Mercury Sample ID");
-            mapNameToSearchTerm.put(searchTerm.getName(), searchTerm);
-        }
-        */
-        {
-            SearchTerm searchTerm = new SearchTerm();
-            searchTerm.setName(DNA_QUANT_TERMS.CONTAINER_BARCODE.getTerm());
-            SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
-//            criteriaPath.setCriteria(Arrays.asList("queuedEntities", "queueGrouping", "queuedEntities", "labVessel"));
-            criteriaPath.setCriteria(Arrays.asList("ContainerBarcode", "rackOfTubes", "tubeFormation", "labVessel", "queuedEntities"));
-
-            searchTerm.setCriteriaPaths(Collections.singletonList(criteriaPath));
-            searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-                @Override
-                public Set<String> evaluate(Object entity, SearchContext context) {
-                    QueueEntity queueEntity = (QueueEntity) entity;
-                    Set<String> results = new HashSet<>();
-//                    for (QueueEntity queuedEntity : queueGrouping.getQueuedEntities()) {
-
-
-                        LabVessel labVessel = queueEntity.getLabVessel();
-
-                        // todo need to figure out what the difference is between these. also how to find latest tube formation...
-//                        labVessel.getContainerRole();
-//                        labVessel.getVesselContainers();
-//                        labVessel.getContainers();
-//                        labVessel.getEvents();
-//                        labVessel.getLatestEvent();
-//                        List<LabEvent> eventsList = labVessel.getAllEventsSortedByDate();
-
-                        // todo Believe that this is going to find all the vessels in the queue and check to see if
-                        LabEvent latestEvent = labVessel.getLatestEvent();
-                        for (LabVessel vessel : latestEvent.getAllLabVessels()) {
-                            LabVessel container = vessel.getContainers().iterator().next();
-                            if (context.getSearchValueString() != null && (container.getLabel().compareTo(context.getSearchValueString())==0)) {
-                                if (OrmUtil.proxySafeIsInstance(container, TubeFormation.class)) {
-                                    TubeFormation tubeFormation = OrmUtil.proxySafeCast(container, TubeFormation.class);
-                                    for (RackOfTubes rackOfTubes : tubeFormation.getRacksOfTubes()) {
-                                        results.add(rackOfTubes.getLabel());
-                                    }
-                                }
-                            }
-                        }
-
-//                        for (LabVessel vessel : labVessel.getContainers()) {
-//                            if (OrmUtil.proxySafeIsInstance(vessel, TubeFormation.class)) {
-//                                TubeFormation tubeFormation = OrmUtil.proxySafeCast(vessel, TubeFormation.class);
-//                                for (RackOfTubes rackOfTubes : tubeFormation.getRacksOfTubes()) {
-//                                    results.add(rackOfTubes.getLabel());
-//                                }
-//                            }
-//                        }
-//                    }
-                    return results;
-                }
-            });
-            termDescriptionMap.put(searchTerm, "Container Barcode");
-            mapNameToSearchTerm.put(searchTerm.getName(), searchTerm);
-        }
-
-        // Viewable ONLY search terms. Without the criteria part these should just show as result columns.
-        {
-            SearchTerm searchTerm = new SearchTerm();
-            searchTerm.setName("Rack Position");
-
-            searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-                @Override
-                public Set<String> evaluate(Object entity, SearchContext context) {
-                    QueueEntity queueEntity = (QueueEntity) entity;
-                    Set<String> results = new HashSet<>();
-//                    for (QueueEntity queuedEntity : queueGrouping.getQueuedEntities()) {
-//                        for (MercurySample mercurySample : queuedEntity.getLabVessel().getMercurySamples()) {
-//                            results.add(mercurySample.getSampleKey());
-//                        }
-                        LabVessel labVessel = queueEntity.getLabVessel();
-                        for (LabVessel vessel : labVessel.getContainers()) {
-                            if (OrmUtil.proxySafeIsInstance(vessel, TubeFormation.class)) {
-                                TubeFormation tubeFormation = OrmUtil.proxySafeCast(vessel, TubeFormation.class);
-                                results.add(tubeFormation.getContainerRole().getPositionOfVessel(labVessel).name());
-                            }
-                        }
-//                    }
-
-                    return results;
-                }
-            });
-            termDescriptionMap.put(searchTerm, "Rack Position");
+            termDescriptionMap.put(searchTerm, "Container Information");
             mapNameToSearchTerm.put(searchTerm.getName(), searchTerm);
         }
     }

@@ -4,10 +4,8 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.SampleDataFetcherAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.search.queue.DNAQuantQueueSearchTerms;
-import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
-import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,9 +40,9 @@ public class QueueEntitySearchDefinition {
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("QueueEntityStatus", "queueStatus",
                 "queueStatus", QueueEntity.class));
 
-        // todo confused about this, want the "Barcode' to be returned, but this wasn't being recognized as a SearchTerm.
-//        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("Barcode", "queueEntityId",
-//                "queueEntities", LabVessel.class));
+        // Note that RackOfTubes inherits from LabVessel. The container ID would be the label.
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("ContainerInfo", "label",
+                "label", TubeFormation.class));
 
 
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
