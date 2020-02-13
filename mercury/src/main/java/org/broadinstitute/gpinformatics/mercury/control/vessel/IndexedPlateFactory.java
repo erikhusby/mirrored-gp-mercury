@@ -718,17 +718,6 @@ public class IndexedPlateFactory {
         if (!invalidMisNameRows.isEmpty()) {
             messages.addError("Molecular index name at rows " + invalidMisNameRows + " is unregistered in Mercury.");
         }
-        // Checks that all valid mis names have a reagent.
-        Map<String, MolecularIndexReagent> reagents = new HashMap<>();
-        mises.entrySet().stream().forEach(mapEntry ->
-                reagents.put(mapEntry.getKey(), molecularIndexingSchemeDao.reagentFor(mapEntry.getValue())));
-        String invalidReagentRows = IntStream.range(0, misNames.size()).
-                filter(i -> mises.get(misNames.get(i)) != null && reagents.get(misNames.get(i)) == null).
-                mapToObj(i -> String.valueOf(i + 2)).
-                collect(Collectors.joining(", "));
-        if (!invalidReagentRows.isEmpty()) {
-            messages.addError("Molecular index at rows " + invalidReagentRows + " has no linked reagent in Mercury.");
-        }
 
         // Normally the tube doesn't exist yet in Mercury, so warn if the tube exists and a reagent
         // is being added. But error if the tube already has a reagent and a new one is being added.
@@ -802,10 +791,15 @@ public class IndexedPlateFactory {
                 filter(barcode -> tubes.get(barcode) == null).
                 forEach(barcode -> tubes.put(barcode, new BarcodedTube(barcode)));
 
-        // Maps the mis name to the reagent.
+        // Looks up or makes reagents from the molecular index schemes.
         Map<String, MolecularIndexReagent> reagents = new HashMap<>();
-        molecularIndexingSchemeDao.mapByNames(misNames).entrySet().stream().forEach(mapEntry ->
-                reagents.put(mapEntry.getKey(), molecularIndexingSchemeDao.reagentFor(mapEntry.getValue())));
+        molecularIndexingSchemeDao.mapByNames(misNames).entrySet().stream().
+                filter(mapEntry -> mapEntry.getValue() != null).
+                forEach(mapEntry -> {
+                    MolecularIndexReagent reagent = molecularIndexingSchemeDao.reagentFor(mapEntry.getValue());
+                    reagents.put(mapEntry.getKey(),
+                            reagent == null ? new MolecularIndexReagent(mapEntry.getValue()) : reagent);
+                });
 
         int added = 0;
         int removed = 0;
