@@ -113,7 +113,7 @@ public class MayoManifestEjb {
     public static final String UNKNOWN_WELL_SCAN = "Rack scan contains unknown well position: %s.";
     public static final String UNQUARANTINED = "%s was unquarantined.";
     public static final String WRONG_TUBE_IN_POSITION = "At position %s the rack has %s but manifest shows %s.";
-    private static final FastDateFormat DATE_TIME_FORMAT = FastDateFormat.getInstance("yyyy-MMM-dd-HHmm");
+    private static final FastDateFormat DATE_TIME_FORMAT = FastDateFormat.getInstance("yyyy-MMM-dd-HHmmss");
     // AoU PDO parameter names.
     private final static String[] MAPPING_NAMES = {KeyValueMapping.AOU_PDO_WGS, KeyValueMapping.AOU_PDO_ARRAY};
     private final static int WGS_INDEX = 0;
