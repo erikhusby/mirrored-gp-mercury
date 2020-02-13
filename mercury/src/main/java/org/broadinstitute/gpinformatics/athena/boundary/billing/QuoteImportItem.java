@@ -68,8 +68,12 @@ public class QuoteImportItem {
                     if (tabularIdentifier == null) {
                         tabularIdentifier = ledger.getWorkItem();
                     }
-                } else if (StringUtils.isNotBlank(ledger.getSapDeliveryDocumentId())) {
+                }
+                if (StringUtils.isNotBlank(ledger.getSapDeliveryDocumentId())) {
                     sapItems = ledger.getSapDeliveryDocumentId();
+                    if (tabularIdentifier == null) {
+                        tabularIdentifier = sapItems;
+                    }
                     String sapReturnOrderId = ledger.getSapReturnOrderId();
                     if (StringUtils.isNotBlank(sapReturnOrderId)) {
                         sapReturnOrders.add(sapReturnOrderId);
