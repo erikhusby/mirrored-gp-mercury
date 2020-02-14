@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -48,7 +49,7 @@ public class LabMetricProcessor extends TableProcessor {
     public void processRowDetails(Map<String, String> dataRow, int dataRowNumber, boolean requiredValuesPresent) {
         String barcode = dataRow.get(LabMetricHeaders.BARCODE.getText());
         String metric = dataRow.get(LabMetricHeaders.METRIC.getText());
-        String vesselPosition = dataRow.get(LabMetricHeaders.LOCATION.getText());
+        String positionValInput = dataRow.get(LabMetricHeaders.LOCATION.getText());
 
         // If the barcode is blank, we just skip the row. This is a valid case since we only want to update
         // rows that have a barcode.
@@ -59,25 +60,33 @@ public class LabMetricProcessor extends TableProcessor {
         // Get the barcode.
         barcode = padBarcode(barcode);
 
-        // Convert to a number.
+        // Convert to a number and validate position input.
+        BigDecimal metricDecimal;
         try {
-            BigDecimal metricDecimal = new BigDecimal(dataRow.get(LabMetricHeaders.METRIC.getText()));
-            LabMetric currentMetric = new LabMetric(metricDecimal, metricType, LabMetric.LabUnit.NG_PER_UL,
-                    vesselPosition, metricDate);
-            LabVessel metricVessel = labVesselDao.findByIdentifier(barcode);
-            if (metricVessel == null) {
-                addDataMessage("Vessel not found for " + barcode, dataRowNumber);
-            } else {
-
-                currentMetric.setLabVessel(metricVessel);
-            }
-
-            metrics.add(currentMetric);
-        } catch (NumberFormatException e) {
+            metricDecimal = new BigDecimal(dataRow.get(LabMetricHeaders.METRIC.getText()));
+        } catch (NumberFormatException nfe) {
             addDataMessage(
                     "Value for quant: " + dataRow.get(LabMetricHeaders.METRIC.getText()) + " is invalid.",
                     dataRowNumber);
+            return;
         }
+
+        VesselPosition position = VesselPosition.getByName(positionValInput);
+        // Allow null only if input value is null
+        if (position == null && positionValInput != null) {
+            addDataMessage("Unknown position: " + positionValInput, dataRowNumber);
+            return;
+        }
+
+        LabVessel metricVessel = labVesselDao.findByIdentifier(barcode);
+        if (metricVessel == null) {
+            addDataMessage("Vessel not found for " + barcode, dataRowNumber);
+            return;
+        }
+
+        LabMetric currentMetric = new LabMetric(metricDecimal, metricType, LabMetric.LabUnit.NG_PER_UL,
+                position, metricDate);
+        metrics.add(currentMetric);
     }
 
     private static final int SHORT_BARCODE = 10;
