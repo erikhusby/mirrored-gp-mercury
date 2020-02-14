@@ -3,14 +3,17 @@ package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -1457,4 +1460,41 @@ public class ReagentFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void renameReagentDesign() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        //
+        // File should consist of at least two lines:
+        // <JIRA ticket id>
+        // <old reagent name>,<new reagent name>
+        //
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("reagentDesignRename"));
+        Assert.assertTrue(CollectionUtils.size(fixupLines) >= 2, "Missing content");
+        String jiraTicketId = fixupLines.get(0).trim();
+        for (String line : fixupLines.subList(1, fixupLines.size())) {
+            Assert.assertTrue(StringUtils.isNotBlank(line));
+            String[] parts = line.split(",");
+            Assert.assertEquals(parts.length, 2, line);
+            String existingName = parts[0].trim();
+            String newName = parts[1].trim();
+
+            ReagentDesign reagentDesign = reagentDesignDao.findByBusinessKey(existingName);
+            Assert.assertNotNull(reagentDesign, line);
+            System.out.println("Renaming reagent \"" + existingName + "\" to \"" + newName + "\".");
+            reagentDesign.setDesignName(newName);
+            if (existingName.equals(reagentDesign.getTargetSetName())) {
+                reagentDesign.setTargetSetName(newName);
+            }
+            reagentDesignDao.persist(reagentDesign);
+            // Products need to be explicitly updated because they reference reagents by name, not by entity id.
+            for (Product product : reagentDesignDao.findList(Product.class, Product_.reagentDesignKey, existingName)) {
+                System.out.println("Updating product " + product.getPartNumber() + " to reagent \"" + newName + "\".");
+                product.setReagentDesignKey(newName);
+            }
+        }
+        reagentDesignDao.persist(new FixupCommentary(jiraTicketId + " reagent rename."));
+        reagentDesignDao.flush();
+        utx.commit();
+    }
 }

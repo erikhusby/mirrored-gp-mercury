@@ -3,14 +3,9 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResourceLiveTest;
-import org.broadinstitute.gpinformatics.mercury.control.EntityLoggingFilter;
-import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchDbTest;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
-import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
-import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneReadStructure;
-import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -19,10 +14,6 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -46,37 +37,16 @@ public class SolexaRunResourceLiveTest extends Arquillian {
     public void testSquidLanes(@ArquillianResource URL baseUrl) throws Exception {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(LabBatchDbTest.XML_DATE_FORMAT);
         String timeStamp = simpleDateFormat.format(new Date());
-        String wsUrl =
-                RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/solexarun/storeRunReadStructure";
 
         String runName1 = "120907_SL-HBV_0191_BFCD15DDACXX";
-        ReadStructureRequest readStructureData = new ReadStructureRequest();
-        readStructureData.setRunName(runName1);
-        readStructureData.setRunBarcode("D15DDACXX120907");
-        readStructureData.setImagedArea(20.23932);
-        readStructureData.setActualReadStructure("71T8B8B101T");
-        readStructureData.setActualReadStructure("76T8B8B76T");
-        for (int i = 1; i <= 8; i++) {
-            LaneReadStructure laneReadStructure = new LaneReadStructure();
-            laneReadStructure.setLaneNumber(i);
-            laneReadStructure.setActualReadStructure("STRUC" + timeStamp + i);
-            readStructureData.getLaneStructures().add(laneReadStructure);
-        }
-
-        ClientBuilder clientBuilder = JaxRsUtils.getClientBuilderAcceptCertificate();
-
-        Client client = clientBuilder.build();
-        client.register(new EntityLoggingFilter());
-        ReadStructureRequest returnedReadStructureRequest = client.target(wsUrl).
-                request(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).
-                post(Entity.json(readStructureData), ReadStructureRequest.class);
-
         ZimsIlluminaRun zimsIlluminaRun = IlluminaRunResourceLiveTest.getZimsIlluminaRun(baseUrl,
                 runName1);
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 8);
         for (ZimsIlluminaChamber zimsIlluminaChamber : zimsIlluminaRun.getLanes()) {
-            Assert.assertEquals(zimsIlluminaChamber.getActualReadStructure(),
-                    "STRUC" + timeStamp + zimsIlluminaChamber.getName());
+            // After LimsQuery stops accessing Squid, the read structure for this Squid run will freeze
+            // at a date in 2020. Testing the year should be sufficient to show that access succeeded.
+            Assert.assertTrue(zimsIlluminaChamber.getActualReadStructure().startsWith("STRUC2020-"),
+                    "Unexpected value " + zimsIlluminaChamber.getActualReadStructure());
         }
     }
 }

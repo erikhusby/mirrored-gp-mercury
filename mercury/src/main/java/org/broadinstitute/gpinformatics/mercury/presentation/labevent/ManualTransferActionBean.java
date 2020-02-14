@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.labevent;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
@@ -14,6 +15,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -44,6 +46,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
+import org.broadinstitute.gpinformatics.mercury.control.run.FluidigmSampleSheetGenerator;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.DBSPuncherFileParser;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LimsFileType;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.QiagenRackFileParser;
@@ -60,6 +63,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -71,6 +75,8 @@ import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActi
 import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -78,7 +84,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -99,6 +107,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
     public static final String TRANSFER_ACTION = "transfer";
     public static final String FETCH_EXISTING_ACTION = "fetchExisting";
     public static final String CLEAR_CONNECTIONS_ACTION = "ClearConnectionsButton";
+    public static final String DOWNLOAD_FILE_ACTION = "downloadFile";
     public static final String ACTION_BEAN_URL = "/labevent/manualtransfer.action";
     public static final String PAGE_TITLE = "Manual Transfers";
     public static final String RACK_SCAN_EVENT = "rackScan";
@@ -106,6 +115,9 @@ public class ManualTransferActionBean extends RackScanActionBean {
     public static final String SKIP_LIMS_FILE_ACTION = "skipLimsFile";
     public static final String DECODE_IMAGE_ACTION = "decodeImage";
     public static final String BAD_STATION_NAME = "None";
+    private static final String VIEW_TRANSFER_ACTION = "viewTransfer";
+    private static final String SELECTABLE_BARCODED_TUBE_TYPE_ACTION = "selectableTargetBarcodedTubeTypes";
+
     private final String syntheticBarcode = String.valueOf(System.currentTimeMillis());
 
     /** Parameter from batch workflow page. */
@@ -174,10 +186,24 @@ public class ManualTransferActionBean extends RackScanActionBean {
     @Inject
     private SampleDataFetcher sampleDataFetcher;
 
+    private VesselTypeGeometry selectedSourceGeometry;
+
+    private VesselTypeGeometry selectedTargetGeometry;
+
+    private String selectedTargetChildReceptacleType;
+
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+    }
+
+    @HandlesEvent(VIEW_TRANSFER_ACTION)
+    public Resolution viewTransfer() {
+
+        initializeMessageObjects();
+
+        return view();
     }
 
     /**
@@ -247,6 +273,21 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 stationEvents.add(stationEvent);
             }
         }
+
+        String sourceVesselTypeGeometryString = getContext().getRequest().getParameter("stationEvents[0].sourcePlate[0].physType");
+        if (sourceVesselTypeGeometryString != null) {
+            selectedSourceGeometry = LabEventType.ManualTransferDetails.convertGeometryFromReceptacleTypeString(sourceVesselTypeGeometryString);
+        }
+
+        String targetVesselTypeGeometryString = getContext().getRequest().getParameter("stationEvents[0].plate[0].physType");
+        if (targetVesselTypeGeometryString != null) {
+            selectedTargetGeometry = LabEventType.ManualTransferDetails.convertGeometryFromReceptacleTypeString(targetVesselTypeGeometryString);
+        } else {
+            String targetContainerTypeGeometryString = getContext().getRequest().getParameter("targetVesselTypeGeometryString");
+            if (targetContainerTypeGeometryString != null) {
+                selectedTargetGeometry = LabEventType.ManualTransferDetails.convertGeometryFromReceptacleTypeString(targetContainerTypeGeometryString);
+            }
+        }
     }
 
     @HandlesEvent(CHOOSE_EVENT_TYPE_ACTION)
@@ -272,6 +313,14 @@ public class ManualTransferActionBean extends RackScanActionBean {
             }
         }
 
+        initializeMessageObjects();
+
+        isParseLimsFile = manualTransferDetails.isLimsFile();
+        isUseWebCam = manualTransferDetails.isUseWebCam();
+        return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+    }
+
+    private void initializeMessageObjects() {
         int stationEventIndex = 0;
         for (StationEventType stationEvent : stationEvents) {
             if (manualTransferDetails.getSecondaryEvent() != null && stationEventIndex > 0) {
@@ -341,8 +390,17 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
                     //Source
                     PlateType sourcePlateCp = new PlateType();
-                    VesselTypeGeometry sourceVesselTypeGeometryCp = localManualTransferDetails.getSourceVesselTypeGeometry();
-                    sourcePlateCp.setPhysType(sourceVesselTypeGeometryCp.getDisplayName());
+                    VesselTypeGeometry sourceVesselTypeGeometryCp;
+                    if (selectedSourceGeometry != null) {
+                        sourceVesselTypeGeometryCp = selectedSourceGeometry;
+                    } else {
+                        sourceVesselTypeGeometryCp = localManualTransferDetails.getSourceVesselTypeGeometry();
+                    }
+
+                    if (sourceVesselTypeGeometryCp != null) {
+                        sourcePlateCp.setPhysType(sourceVesselTypeGeometryCp.getDisplayName());
+                    }
+
                     plateCherryPickEvent.getSourcePlate().add(sourcePlateCp);
                     if (sourceVesselTypeGeometryCp instanceof RackOfTubes.RackType) {
                         plateCherryPickEvent.getSourcePositionMap().add(new PositionMapType());
@@ -350,8 +408,28 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
                     //Target
                     PlateType destinationPlateTypeCp = new PlateType();
-                    VesselTypeGeometry targetVesselTypeGeometryCp = localManualTransferDetails.getTargetVesselTypeGeometry();
-                    destinationPlateTypeCp.setPhysType(targetVesselTypeGeometryCp.getDisplayName());
+                    VesselTypeGeometry targetVesselTypeGeometryCp;
+
+                    String targetVesselTypeGeometryString = getContext().getRequest().getParameter("stationEvents[0].plate[0].physType");
+                    if (targetVesselTypeGeometryString != null) {
+                        selectedTargetGeometry = LabEventType.ManualTransferDetails.convertGeometryFromReceptacleTypeString(targetVesselTypeGeometryString);
+                    } else {
+                        String targetContainerTypeGeometryString = getContext().getRequest().getParameter("targetVesselTypeGeometryString");
+                        if (targetContainerTypeGeometryString != null) {
+                            selectedTargetGeometry = LabEventType.ManualTransferDetails.convertGeometryFromReceptacleTypeString(targetContainerTypeGeometryString);
+                        }
+                    }
+
+                    if (selectedTargetGeometry != null) {
+                        targetVesselTypeGeometryCp = selectedTargetGeometry;
+                    } else {
+                        targetVesselTypeGeometryCp = localManualTransferDetails.getTargetVesselTypeGeometry();
+                    }
+
+                    if (targetVesselTypeGeometryCp != null ) {
+                        destinationPlateTypeCp.setPhysType(targetVesselTypeGeometryCp.getDisplayName());
+                    }
+
                     plateCherryPickEvent.getPlate().add(destinationPlateTypeCp);
                     if (targetVesselTypeGeometryCp instanceof RackOfTubes.RackType) {
                         plateCherryPickEvent.getPositionMap().add(new PositionMapType());
@@ -396,10 +474,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
             stationEventIndex++;
         }
         assignSyntheticBarcodes();
-        isParseLimsFile = manualTransferDetails.isLimsFile();
-        isUseWebCam = manualTransferDetails.isUseWebCam();
-        return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
+
 
     private void assignSyntheticBarcode(PlateType plateType, VesselTypeGeometry vesselTypeGeometry,
             String containerPrefix) {
@@ -572,6 +648,35 @@ public class ManualTransferActionBean extends RackScanActionBean {
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
+    @HandlesEvent(DOWNLOAD_FILE_ACTION)
+    public Resolution downloadFile() {
+        switch (manualTransferDetails.getDownloadFileType()) {
+            case FLUIDGM_SAMPLE_SHEET:
+                String barcode = ((PlateEventType) stationEvents.get(0)).getPlate().getBarcode();
+                if (StringUtils.isEmpty(barcode)) {
+                    addGlobalValidationError("You must enter a barcode.");
+                    return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+                }
+                LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
+                return new Resolution() {
+                    @Override
+                    public void execute(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse)
+                            throws IOException {
+                        httpServletResponse.setContentType("text");
+                        httpServletResponse.setHeader("Expires:", "0"); // eliminates browser caching
+                        httpServletResponse.setHeader("Content-Disposition", "attachment; filename=" +
+                                ObjectUtils.defaultIfNull(labVessel.getName(), labVessel.getLabel()) +
+                                "_SampleSheet.csv");
+                        new FluidigmSampleSheetGenerator().writeSheet((StaticPlate) labVessel,
+                                httpServletResponse.getWriter());
+                    }
+                };
+            default:
+                addGlobalValidationError("Unknown download type " + manualTransferDetails.getDownloadFileType());
+                return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+        }
+    }
+
     public String getImageFile() {
         return imageFile;
     }
@@ -606,7 +711,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 for (StationEventType stationEvent : stationEvents) {
                     PlateEventType plateEventType = (PlateEventType) stationEvent;
                     loadPlateFromDb(plateEventType.getPlate(), plateEventType.getPositionMap(), true, null, labBatch,
-                            messageCollection, Direction.SOURCE);
+                            messageCollection, Direction.SOURCE, false);
                 }
                 break;
             case PLATE_TRANSFER_EVENT:
@@ -614,7 +719,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
                     Map<String, LabVessel> mapBarcodeToVessel = loadPlateFromDb(plateTransferEventType.getSourcePlate(),
                             plateTransferEventType.getSourcePositionMap(), true, null, labBatch, messageCollection,
-                            Direction.SOURCE);
+                            Direction.SOURCE, false);
                     LabEventType repeatedEvent = manualTransferDetails.getRepeatedEvent();
                     if (repeatedEvent != null) {
                         validateRepeatedEvent(plateTransferEventType, mapBarcodeToVessel, repeatedEvent,
@@ -623,7 +728,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     loadPlateFromDb(plateTransferEventType.getPlate(), plateTransferEventType.getPositionMap(),
                             manualTransferDetails.isTargetExpectedToExist(),
                             manualTransferDetails.isTargetExpectedEmpty(), labBatch, messageCollection,
-                            Direction.TARGET);
+                            Direction.TARGET, false);
                 }
                 break;
             case STATION_SETUP_EVENT:
@@ -634,11 +739,11 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
                     loadPlateFromDb(plateCherryPickEvent.getSourcePlate().get(0),
                             plateCherryPickEvent.getSourcePositionMap().get(0), true, null, labBatch, messageCollection,
-                            Direction.SOURCE);
+                            Direction.SOURCE, false);
 
                     loadPlateFromDb(plateCherryPickEvent.getPlate().get(0), plateCherryPickEvent.getPositionMap().get(0),
                             false, null, labBatch, messageCollection,
-                            Direction.TARGET);
+                            Direction.TARGET, false);
 
                     if (messageCollection.hasErrors() || isValidation) {
                         break;
@@ -656,7 +761,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     if (manualTransferDetails.getSecondaryEvent() == null || eventIndex == 0) {
                         Map<String, LabVessel> mapBarcodeToVessel = loadPlateFromDb(plateCherryPickEvent.getSourcePlate().get(0),
                                 plateCherryPickEvent.getSourcePositionMap().get(0), true, null, labBatch, messageCollection,
-                                Direction.SOURCE);
+                                Direction.SOURCE, false);
 
                         //Check for duplicate molecular indexes in source tubes.
                         Set<String> molIndexSchemes = new HashSet<>();
@@ -706,7 +811,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                 mapSampleIdToData = sampleDataFetcher.fetchSampleData(rootSampleIds);
                                 for (SampleData sampleData : mapSampleIdToData.values()) {
                                     if (StringUtils.isEmpty(sampleData.getCollaboratorParticipantId())) {
-                                        messageCollection.addError("No collaborator participant ID for " +
+                                        messageCollection.addWarning("No collaborator participant ID for " +
                                                 sampleData.getSampleId());
                                     }
                                 }
@@ -734,7 +839,13 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                         Collection<String> sampleIds = mapPositionToSampleIds.get(source);
                                         for (String sampleId : sampleIds) {
                                             SampleData sampleData = mapSampleIdToData.get(sampleId);
-                                            ptIds.add(sampleData.getCollaboratorParticipantId());
+                                            String collabPtId = sampleData.getCollaboratorParticipantId();
+                                            if (StringUtils.isEmpty(collabPtId)) {
+                                                messageCollection.addError("Cannot combine " + sampleId +
+                                                        ", it has no metadata");
+                                            } else {
+                                                ptIds.add(collabPtId);
+                                            }
                                         }
                                     }
                                 }
@@ -745,9 +856,10 @@ public class ManualTransferActionBean extends RackScanActionBean {
                             }
                         }
                     }
-
-                    loadPlateFromDb(plateCherryPickEvent.getPlate().get(0), plateCherryPickEvent.getPositionMap().get(0),
-                            false, null, labBatch, messageCollection, Direction.TARGET);
+                    Map<String, LabVessel> stringLabVesselMap = loadPlateFromDb(plateCherryPickEvent.getPlate().get(0),
+                            plateCherryPickEvent.getPositionMap().get(0),
+                            false, null, labBatch, messageCollection, Direction.TARGET, true);
+                    verifyCherryPickDestinations(((PlateCherryPickEvent) stationEvent).getPositionMap().get(0), ((PlateCherryPickEvent) stationEvent).getSource(), stringLabVesselMap , messageCollection);
                 }
                 break;
             case RECEPTACLE_PLATE_TRANSFER_EVENT:
@@ -766,6 +878,34 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     loadReceptacleFromDb(receptacleTransferEventType.getReceptacle(), false, messageCollection);
                 }
                 break;
+        }
+    }
+
+    /**
+     * Verify that none of the destinations in the cherry pick exist.
+     *
+     * @param positionMapType       Destination PositionMap containing all of the destination barcodes in the message.
+     * @param cherryPickSourceTypes List of cherry pick transfers from the message.
+     * @param labelLabVesselMap     Map of vessel barcode to vessel.
+     * @param messageCollection     Message collection object used to give information back to the user.
+     */
+    private void verifyCherryPickDestinations(PositionMapType positionMapType,
+                                              List<CherryPickSourceType> cherryPickSourceTypes,
+                                              Map<String, LabVessel> labelLabVesselMap,
+                                              MessageCollection messageCollection) {
+        List<String> destinationBarcodes = new ArrayList<>();
+        // Only check to see if the cherry picked destinations are found in Mercury.
+        for (CherryPickSourceType cherryPickSource : cherryPickSourceTypes) {
+            ReceptacleType receptacleAtPosition =
+                    findReceptacleAtPosition(positionMapType, cherryPickSource.getDestinationWell());
+            destinationBarcodes.add(receptacleAtPosition.getBarcode());
+        }
+
+        for (String destinationBarcode : destinationBarcodes) {
+            if (labelLabVesselMap.get(destinationBarcode) != null) {
+                messageCollection.addError("Unable to use destination " + destinationBarcode
+                                           + " as it is in the database and has seen transfers.");
+            }
         }
     }
 
@@ -872,6 +1012,41 @@ public class ManualTransferActionBean extends RackScanActionBean {
         }
     }
 
+    /**
+     * Based off the selected 'targetVesselTypeGeometryString', return list of allowed BarcodedTubeType objects.
+     * @return
+     */
+    @HandlesEvent(SELECTABLE_BARCODED_TUBE_TYPE_ACTION)
+    public Resolution selectableTargetBarcodedTubeTypes() throws JsonProcessingException {
+        List<BarcodedTube.BarcodedTubeType> found = new ArrayList<>();
+        String targetTubeTypeGeometryString = getContext().getRequest().getParameter("targetVesselTypeGeometryString");
+        if (targetTubeTypeGeometryString != null) {
+            selectedTargetGeometry = RackOfTubes.RackType.getByName(targetTubeTypeGeometryString);
+        }
+        if (selectedTargetGeometry != null) {
+            EnumSet<org.broadinstitute.bsp.client.workrequest.kit.ReceptacleType> childReceptacleTypes =
+                    org.broadinstitute.bsp.client.workrequest.kit.ReceptacleType
+                            .findByName(selectedTargetGeometry.getDisplayName()).getChildReceptacleTypes();
+
+            // For each type returned grab the BarcodedTubeType.
+            for (org.broadinstitute.bsp.client.workrequest.kit.ReceptacleType childReceptacleType : childReceptacleTypes) {
+                BarcodedTube.BarcodedTubeType childBarcodedTubeType =
+                        BarcodedTube.BarcodedTubeType.getByAutomationName(childReceptacleType.name());
+                if (childBarcodedTubeType != null ) {
+                    found.add(childBarcodedTubeType);
+                } else {
+                    log.error("Unable to find a BarcodedTubeType for " + childReceptacleType.name());
+                }
+            }
+
+            if (!found.isEmpty()) {
+                Collections.sort(found);
+            }
+        }
+        ObjectMapper mapper = new ObjectMapper();
+        return new StreamingResolution("application/json", mapper.writeValueAsString(found));
+    }
+
     private enum Direction {
         SOURCE("Source"),
         TARGET("Destination");
@@ -888,8 +1063,9 @@ public class ManualTransferActionBean extends RackScanActionBean {
     }
 
     private Map<String, LabVessel> loadPlateFromDb(PlateType plateType, PositionMapType positionMapType,
-            boolean required, Boolean expectedEmpty, @Nullable LabBatch labBatch, MessageCollection messageCollection,
-            Direction direction) {
+                                                   boolean required, Boolean expectedEmpty, @Nullable LabBatch labBatch,
+                                                   MessageCollection messageCollection,
+                                                   Direction direction, boolean allowKnownDestinations) {
         Map<String, LabVessel> returnMapBarcodeToVessel = new HashMap<>();
         if (plateType != null) {
             String barcode = plateType.getBarcode();
@@ -933,8 +1109,11 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     String message = direction.getText() + " " + barcode + " is in the database";
                     if (required) {
                         messageCollection.addInfo(message);
+                    } else if (!allowKnownDestinations){
+                        messageCollection.addError(message);
                     } else {
-                        if (labEventType != LabEventType.DEV) {
+                        // If we are allowing known destinations in the plate (e.g. cherry pick transfer event expects cherry picks to be unknown, but regular position map can have known)
+                        if (labEventType != LabEventType.DEV && !allowKnownDestinations) {
                             messageCollection.addError(message);
                         } else {
                             messageCollection.addWarning(message);
@@ -1009,20 +1188,46 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                     manualTransferDetails;
                     PlateCherryPickEvent plateCherryPickEvent = (PlateCherryPickEvent) stationEvent;
 
-                    //Source
-                    VesselTypeGeometry sourceVesselTypeGeometryCp = localManualTransferDetails.getSourceVesselTypeGeometry();
-                    assignSyntheticBarcode(plateCherryPickEvent.getSourcePlate().get(0), sourceVesselTypeGeometryCp,
-                            localManualTransferDetails.getSourceContainerPrefix());
+                    VesselTypeGeometry sourceVesselTypeGeometryCp;
+                    if (selectedSourceGeometry != null) {
+                        sourceVesselTypeGeometryCp = selectedSourceGeometry;
+                    } else {
+                        sourceVesselTypeGeometryCp = localManualTransferDetails.getSourceVesselTypeGeometry();
+                    }
+
+                    if (sourceVesselTypeGeometryCp != null) {
+                        assignSyntheticBarcode(plateCherryPickEvent.getSourcePlate().get(0), sourceVesselTypeGeometryCp,
+                                localManualTransferDetails.getSourceContainerPrefix());
+                    }
 
                     //Target
-                    VesselTypeGeometry targetVesselTypeGeometryCp = localManualTransferDetails.getTargetVesselTypeGeometry();
-                    assignSyntheticBarcode(plateCherryPickEvent.getPlate().get(0), targetVesselTypeGeometryCp,
-                            localManualTransferDetails.getTargetContainerPrefix() + anonymousRackDisambiguator);
+                    VesselTypeGeometry targetVesselTypeGeometryCp;
+
+                    String targetVesselTypeGeometryString = getContext().getRequest().getParameter("stationEvents[0].plate[0].physType");
+                    if (targetVesselTypeGeometryString != null) {
+                        selectedTargetGeometry = LabEventType.ManualTransferDetails.convertGeometryFromReceptacleTypeString(targetVesselTypeGeometryString);
+                    } else {
+                        String targetContainerTypeGeometryString = getContext().getRequest().getParameter("targetVesselTypeGeometryString");
+                        if (targetContainerTypeGeometryString != null) {
+                            selectedTargetGeometry = LabEventType.ManualTransferDetails.convertGeometryFromReceptacleTypeString(targetContainerTypeGeometryString);
+                        }
+                    }
+
+                    if (selectedTargetGeometry != null) {
+                        targetVesselTypeGeometryCp = selectedTargetGeometry;
+                    } else {
+                        targetVesselTypeGeometryCp = localManualTransferDetails.getTargetVesselTypeGeometry();
+                    }
+
+                    if (targetVesselTypeGeometryCp != null) {
+                        assignSyntheticBarcode(plateCherryPickEvent.getPlate().get(0), targetVesselTypeGeometryCp,
+                                localManualTransferDetails.getTargetContainerPrefix() + anonymousRackDisambiguator);
+                    }
                     for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
-                        if (!sourceVesselTypeGeometryCp.isBarcoded()) {
+                        if (sourceVesselTypeGeometryCp != null && !sourceVesselTypeGeometryCp.isBarcoded()) {
                             cherryPickSourceType.setBarcode(plateCherryPickEvent.getSourcePlate().get(0).getBarcode());
                         }
-                        if (!targetVesselTypeGeometryCp.isBarcoded()) {
+                        if (targetVesselTypeGeometryCp != null && !targetVesselTypeGeometryCp.isBarcoded()) {
                             cherryPickSourceType.setDestinationBarcode(plateCherryPickEvent.getPlate().get(0).getBarcode());
                         }
                     }
@@ -1201,8 +1406,39 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                 plateCherryPickEvent.getSourcePlate().get(0),
                                 manualTransferDetails.getSourceVesselTypeGeometry());
                     }
+
+                    if (labEventType.removeDestVolFromSource()) {
+                        boolean depleteAll = getDepleteAll() != null && getDepleteAll().containsKey(eventIndex) &&
+                                             getDepleteAll().get(eventIndex);
+                        addDepleteMetadata(plateCherryPickEvent.getSourcePositionMap().get(0), depleteAll);
+                    }
+
+                    // If there was a selected geometry then we have to specifically set the tube type in the message.
+                    if (selectedSourceGeometry != null &&
+                        (labEventType.getManualTransferDetails() != null && labEventType.getManualTransferDetails().getSourceVesselTypeGeometries() != null & labEventType.getManualTransferDetails().getSourceVesselTypeGeometries().length > 1)) {
+                        Map<String, LabVessel> mapBarcodeToVessel = loadPlateFromDb(plateCherryPickEvent.getSourcePlate().get(0),
+                                plateCherryPickEvent.getSourcePositionMap().get(0), true, null, labBatch, messageCollection,
+                                Direction.SOURCE, false);
+                        // Look up each sample and get the receptacle type.
+                        for (ReceptacleType receptacleType : plateCherryPickEvent.getSourcePositionMap().get(0)
+                                .getReceptacle()) {
+                            LabVessel currentLabVessel = mapBarcodeToVessel.get(receptacleType.getBarcode());
+                            if (currentLabVessel == null) {
+                                continue;
+                            }
+                            if(receptacleType.getReceptacleType() == null) {
+                                receptacleType.setReceptacleType(((BarcodedTube) currentLabVessel).getTubeType().toString());
+                            }
+                        }
+                    }
+
+                    VesselTypeGeometry selectedTargetGeometry = getSelectedTargetGeometry();
+                    if (selectedTargetGeometry == null && labEventType.getManualTransferDetails() != null
+                        && manualTransferDetails.getTargetVesselTypeGeometry() != null) {
+                        selectedTargetGeometry = manualTransferDetails.getTargetVesselTypeGeometry();
+                    }
                     cleanupPositionMap(plateCherryPickEvent.getPositionMap().get(0), plateCherryPickEvent.getPlate().get(0),
-                            manualTransferDetails.getTargetVesselTypeGeometry());
+                            selectedTargetGeometry);
                     if (manualTransferDetails.getSecondaryEvent() != null && eventIndex > 0) {
                         // copy source from primary
                         PlateCherryPickEvent firstPlateCherryPickEventType =
@@ -1213,7 +1449,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     if (plateCherryPickEvent.getPositionMap().size() == 1) {
                         addMarkStockMetadata(plateCherryPickEvent.getPositionMap().get(0));
                     }
-                    bettaLIMSMessage.getPlateCherryPickEvent().add((PlateCherryPickEvent) stationEvent);
+                    bettaLIMSMessage.getPlateCherryPickEvent().add((PlateCherryPickEvent)stationEvent);
                 } else if (stationEvent instanceof ReceptaclePlateTransferEvent) {
                     bettaLIMSMessage.getReceptaclePlateTransferEvent().add((ReceptaclePlateTransferEvent) stationEvent);
                 } else if (stationEvent instanceof ReceptacleTransferEventType) {
@@ -1518,7 +1754,33 @@ public class ManualTransferActionBean extends RackScanActionBean {
         return depleteAll;
     }
 
+    public String selectedStockType;
+
+    public void setSelectedStockType(String selectedStockType) { this.selectedStockType = selectedStockType; }
+
+    public String getSelectedStockType() { return this.selectedStockType; }
+
     public void setDepleteAll(Map<Integer, Boolean> depleteAll) {
         this.depleteAll = depleteAll;
+    }
+
+    public VesselTypeGeometry getSelectedSourceGeometry() {
+        return selectedSourceGeometry;
+    }
+
+    public void setSelectedSourceGeometry(VesselTypeGeometry selectedSourceGeometry) { this.selectedSourceGeometry = selectedSourceGeometry; }
+
+    public VesselTypeGeometry getSelectedTargetGeometry() {
+        return selectedTargetGeometry;
+    }
+
+    public void setSelectedTargetGeometry(VesselTypeGeometry selectedTargetGeometry) { this.selectedTargetGeometry = selectedTargetGeometry; }
+
+    public String getSelectedTargetChildReceptacleType() {
+        return selectedTargetChildReceptacleType;
+    }
+
+    public void setSelectedTargetChildReceptacleType(String selectedTargetChildReceptacleType) {
+        this.selectedTargetChildReceptacleType = selectedTargetChildReceptacleType;
     }
 }

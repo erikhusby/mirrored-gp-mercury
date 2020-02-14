@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.fixup;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -13,6 +14,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
@@ -511,6 +513,24 @@ public class ProductFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
+    public void disableDiscontinuedProductsInSAP() throws Exception {
+        userBean.loginOSUser();
+
+        List<Product> discontinuedProducts = productDao.findDiscontinuedProducts();
+        System.out.println("About to discontinue this many products: " + discontinuedProducts.size());
+        discontinuedProducts.forEach(product -> {
+            System.out.println(String.format("The product %s is selected to be pushed to SAP to disable the associated Material: %s", product.getDisplayName(),
+                    FastDateFormat.getInstance("MM/dd/yyyy").format(product.getDiscontinuedDate())));
+        });
+        productEjb.publishProductsToSAP(discontinuedProducts,true,
+                SapIntegrationService.PublishType.UPDATE_ONLY);
+
+        utx.begin();
+        productDao.persist(new FixupCommentary("GPLIM-6369: Disabled all previously discontinued products in SAP"));
+        utx.commit();
+    }
+
+    @Test(enabled = false)
     public void gplim6657InitializeOfferAsCommercialFlag() throws Exception {
         userBean.loginOSUser();
 
@@ -531,6 +551,41 @@ public class ProductFixupTest extends Arquillian {
         }
 
         productDao.persist(new FixupCommentary("GPLIM-6657: pre-setting the Offered as Commercial flag on all relevant products upon SAP 2.0 rollout"));
+        utx.commit();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/ProductsExtendToCommercial.txt, so it
+     * can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-XXXX setting products as commercial
+     * P-EX-1123
+     * P-EX-1134
+     * P-EX-1124
+     * P-EX-1135
+     *
+     * @throws Exception
+     */
+    @Test(enabled = false)
+    public void genericInitializeOfferAsCommercialFlag() throws Exception {
+        userBean.loginOSUser();
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ProductsExtendToCommercial.txt"));
+        String fixupReason = lines.get(0);
+        Assert.assertTrue(StringUtils.isNotBlank(fixupReason), "A fixup reason needs to be defined");
+        final List<String> productsWithCommercialStatuses = lines.subList(1, lines.size());
+
+        utx.begin();
+        List<Product> productsToUpdate = productDao.findByPartNumbers(productsWithCommercialStatuses);
+        for (Product product : productsToUpdate) {
+            try {
+                product.setOfferedAsCommercialProduct(true);
+                productEjb.publishProductToSAP(product);
+                System.out.println("Updated " + product.getDisplayName() + " to be offered as a commercial product");
+            } catch (SAPIntegrationException e) {
+                System.out.println(Arrays.toString(e.getStackTrace()));
+            }
+        }
+
+        productDao.persist(new FixupCommentary(fixupReason));
         utx.commit();
     }
 }

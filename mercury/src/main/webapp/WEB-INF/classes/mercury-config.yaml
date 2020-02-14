@@ -65,26 +65,6 @@ bsp:
       host:     bsp.broadinstitute.org
       port:     80
 
-gap:
-
-    DEV:
-      login:    seqsystem
-      password: bspbsp
-      host:     gapdev.broadinstitute.org
-      port:     8080
-
-    RC:
-      login:    seqsystem
-      password: bspbsp
-      host:     gaprc.broadinstitute.org
-      port:     8080
-
-    PROD:
-      login:    seqsystem
-      password: bspbsp
-      host:     gap.broadinstitute.org
-      port:     80
-
 jira:
 
     TEST:
@@ -187,37 +167,6 @@ deckMsgs:
 
     PROD:
         messageStoreDirRoot: /seq/lims/mercury/prod
-
-
-bettaLimsServer:
-
-    DEV:
-        wsHost: vbettalimsqa1
-        wsPort: 9997
-        jmsHost: vbettalimsqa1
-        jmsPort: 61616
-        jmsQueue: broad.queue.bettalims.test
-
-    TEST:
-        wsHost: vbettalimsqa1
-        wsPort: 9997
-        jmsHost: vbettalimsqa1
-        jmsPort: 61616
-        jmsQueue: broad.queue.bettalims.test
-
-    QA:
-        wsHost: vbettalimsqa1
-        wsPort: 9998
-        jmsHost: vbettalimsqa1
-        jmsPort: 61616
-        jmsQueue: broad.queue.bettalims.qa
-
-    PROD:
-        wsHost: seqlims
-        wsPort: 9998
-        jmsHost: seqlims
-        jmsPort: 61616
-        jmsQueue: broad.queue.bettalims
 
 datawhEtl:
 
@@ -376,7 +325,6 @@ mercury:
 
       app:      DEV
       bsp:      DEV
-      gap:      DEV
       jira:     TEST
       quote:    TEST
       squid:    TEST
@@ -384,7 +332,6 @@ mercury:
       thrift:   TEST
       deckMsgs: DEV
       datawhEtl: DEV
-      bettaLimsServer: DEV
       hipchat: DEV
       collaborate: DEV
       submission: DEV
@@ -397,7 +344,6 @@ mercury:
 
       app:      AUTO_BUILD
       bsp:      DEV
-      gap:      DEV
       jira:     TEST
       quote:    TEST
       squid:    TEST
@@ -405,7 +351,6 @@ mercury:
       thrift:   TEST
       deckMsgs: DEV
       datawhEtl: DEV
-      bettaLimsServer: DEV
       hipchat: DEV
       collaborate: DEV
       submission: DEV
@@ -418,7 +363,6 @@ mercury:
 
       app:      TEST
       bsp:      DEV
-      gap:      DEV
       jira:     TEST
       quote:    TEST
       squid:    TEST
@@ -426,7 +370,6 @@ mercury:
       thrift:   TEST
       deckMsgs: DEV
       datawhEtl: DEV
-      bettaLimsServer: TEST
       hipchat: DEV
       collaborate: DEV
       submission: DEV
@@ -438,7 +381,6 @@ mercury:
     QA:
       app:      QA
       bsp:      RC
-      gap:      RC
       jira:     TEST
       quote:    TEST
       squid:    QA
@@ -446,7 +388,6 @@ mercury:
       thrift:   QA
       deckMsgs: QA
       datawhEtl: QA
-      bettaLimsServer: QA
       hipchat: DEV
       collaborate: RC
       submission: DEV
@@ -459,7 +400,6 @@ mercury:
 
       app:      RC
       bsp:      RC
-      gap:      RC
       jira:     TEST
       quote:    TEST
       squid:    QA
@@ -467,7 +407,6 @@ mercury:
       thrift:   QA
       deckMsgs: QA
       datawhEtl: QA
-      bettaLimsServer: QA
       hipchat: DEV
       collaborate: RC
       submission: DEV
@@ -480,7 +419,6 @@ mercury:
 
       app:      PROD
       bsp:      PROD
-      gap:      PROD
       jira:     PROD
       quote:    PROD
       squid:    PROD
@@ -488,7 +426,6 @@ mercury:
       thrift:   PROD
       deckMsgs: PROD
       datawhEtl: PROD
-      bettaLimsServer: PROD
       hipchat: PROD
       collaborate: PROD
       submission: PROD

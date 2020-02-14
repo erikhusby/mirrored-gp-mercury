@@ -11,6 +11,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -31,19 +32,19 @@ public class QuoteImportItemTest {
 
     private static final String WORK_ITEM1 = "workItem1";
 
-    private static final double PDO1_AMOUNT_PER_LEDGER_ITEM = 7.6;
+    private static final BigDecimal PDO1_AMOUNT_PER_LEDGER_ITEM = new BigDecimal("7.6");
 
     private static final String PDO2 = "PDO-2";
 
     private static final String WORK_ITEM2 = "workItem2";
 
-    private static final double PDO2_AMOUNT_PER_LEDGER_ITEM = 9.30000001299;
+    private static final BigDecimal PDO2_AMOUNT_PER_LEDGER_ITEM = new BigDecimal("9.30000001299");
 
-    private static final double PDO2_ROUNDED_AMOUNT_PER_LEDGER_ITEM = 9.3;
+    private static final BigDecimal PDO2_ROUNDED_AMOUNT_PER_LEDGER_ITEM = BigDecimal.valueOf(9.3);
 
     private static final String PDO3 = "PDO-3";
 
-    private static final double PDO3_AMOUNT_PER_LEDGER_ITEM = 19.000020000001;
+    private static final BigDecimal PDO3_AMOUNT_PER_LEDGER_ITEM = new BigDecimal("19.000020000001");
 
     private static final String WORK_ITEM3 = "workItem3";
 
@@ -68,7 +69,7 @@ public class QuoteImportItemTest {
     }
 
     private ProductOrder createProductOrderWithLedgerEntry(String pdoJiraKey, int numSamples,
-                                                           double amountPerLedgerEntry, String workItem) {
+                                                           BigDecimal amountPerLedgerEntry, String workItem) {
         ProductOrder pdo = new ProductOrder();
         PriceItem priceItem = new PriceItem();
         Product product = new Product();
@@ -83,7 +84,7 @@ public class QuoteImportItemTest {
         return pdo;
     }
 
-    private void updateProductOrderWithLedgerEntry(ProductOrder pdo, int numSamples, double amountPerLedgerEntry,
+    private void updateProductOrderWithLedgerEntry(ProductOrder pdo, int numSamples, BigDecimal amountPerLedgerEntry,
                                                    String workItem, PriceItem priceItem) {
         for (int i = 0; i < numSamples; i++) {
             ProductOrderSample sample = new ProductOrderSample("sam" + System.currentTimeMillis() + "." + i + pdo.getSamples().size());
@@ -113,7 +114,6 @@ public class QuoteImportItemTest {
     public void testGetNumberOfSamples() {
         String errorText = "Billing session UI is probably not showing the right number of samples in the billing transaction";
         assertThat(errorText, quoteImportItem.getNumberOfSamples(PDO1), is(pdo1.getSamples().size()));
-//        assertThat(errorText,quoteImportItems.get(1).getNumberOfSamples(PDO2), is(pdo2.getSamples().size()));
     }
 
     public void testGetWorkItems() {
@@ -124,22 +124,23 @@ public class QuoteImportItemTest {
     public void testGetPdoBusinessKeys() {
         assertThat("Billing session UI is probably not displaying the right PDOs.",quoteImportItem.getOrderKeys(),containsInAnyOrder(
                 PDO1));
-//        assertThat("Billing session UI is probably not displaying the right PDOs.",quoteImportItems.get(1).getOrderKeys(),containsInAnyOrder(
-//                PDO2));
-//        assertThat("Billing session UI is probably not displaying the right PDOs.",quoteImportItems.get(2).getOrderKeys(),containsInAnyOrder(
-//                PDO3));
     }
 
     public void testGetChargedAmountForPdo() {
         assertThat("Per-PDO rollup of quantity is broken.",quoteImportItem.getChargedAmountForPdo(PDO1),
                 is(
-                        new DecimalFormat(QuoteImportItem.PDO_QUANTITY_FORMAT).format((2 * PDO1_AMOUNT_PER_LEDGER_ITEM) + (1 * PDO2_AMOUNT_PER_LEDGER_ITEM) + (1 * PDO3_AMOUNT_PER_LEDGER_ITEM))));
-//        assertThat("Rounding/formatting of per-PDO quantity seems to have changed.",quoteImportItems.get(1).getChargedAmountForPdo(PDO2), is(Double.toString(PDO2_ROUNDED_AMOUNT_PER_LEDGER_ITEM)));
+                        new DecimalFormat(QuoteImportItem.PDO_QUANTITY_FORMAT)
+                                .format(BigDecimal.valueOf(2).multiply( PDO1_AMOUNT_PER_LEDGER_ITEM)
+                                        .add(BigDecimal.valueOf(1).multiply( PDO2_AMOUNT_PER_LEDGER_ITEM))
+                                        .add(BigDecimal.valueOf(1).multiply(PDO3_AMOUNT_PER_LEDGER_ITEM))
+                                )
+                )
+        );
     }
 
     public void testGetRoundedQuantity() {
-        double totalQuantity = quoteImportItem.getQuantity();
-        assertThat("Total precision is not high enough for this test.",Double.toString(totalQuantity).length(),greaterThan(7));
+        BigDecimal totalQuantity = quoteImportItem.getQuantity();
+        assertThat("Total precision is not high enough for this test.",totalQuantity.toString().length(),greaterThan(7));
         assertThat("Rounding/formatting of quantity seems to have changed.",quoteImportItem.getRoundedQuantity().length(), lessThan(
                 5));
     }
@@ -174,9 +175,9 @@ public class QuoteImportItemTest {
         product.setPrimaryPriceItem(priceItem);
         LedgerEntry ledgerEntry;
         if(pdo.hasSapQuote()) {
-            ledgerEntry = new LedgerEntry(blah, product, new Date(),2);
+            ledgerEntry = new LedgerEntry(blah, product, new Date(), BigDecimal.valueOf(2));
         } else {
-            ledgerEntry = new LedgerEntry(blah, priceItem, new Date(), 2);
+            ledgerEntry = new LedgerEntry(blah, priceItem, new Date(), BigDecimal.valueOf(2));
         }
         ledgerEntry.setWorkItem(WORK_ITEM2);
         List<LedgerEntry> ledgerEntries = new ArrayList<>();

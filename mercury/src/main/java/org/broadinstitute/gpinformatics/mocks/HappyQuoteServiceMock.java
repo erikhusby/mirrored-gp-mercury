@@ -12,7 +12,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerExceptio
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quotes;
 
-
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Alternative;
 import java.math.BigDecimal;
@@ -45,14 +44,14 @@ public class HappyQuoteServiceMock implements QuoteService {
 
     @Override
     public String registerNewWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
-                                  Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
+                                  Date reportedCompletionDate, BigDecimal numWorkUnits, String callbackUrl,
                                   String callbackParameterName, String callbackParameterValue, BigDecimal priceAdjustment) {
         throw new RuntimeException("happy mock can't do this");
     }
 
     @Override
     public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
-                                     Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
+                                     Date reportedCompletionDate, BigDecimal numWorkUnits, String callbackUrl,
                                      String callbackParameterName, String callbackParameterValue, BigDecimal priceAdjustment) {
         throw new RuntimeException("happy mock can't do this");
     }

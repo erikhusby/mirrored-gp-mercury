@@ -168,10 +168,10 @@ public class ExtractTransformTest extends Arquillian {
         // Pick up the ID
         final long entityId = labVessel.getLabVesselId();
 
-        // Wait since incremental etl won't pick up entities in the current second.
+        // Wait since incremental etl won't pick up entities within the last transaction timeout ( TRANSACTION_COMPLETION_GUARDBAND ).
         Thread.sleep((ExtractTransform.TRANSACTION_COMPLETION_GUARDBAND + 1) * MSEC_IN_SEC);
 
-        ExtractTransform.writeLastEtlRun(startSec);
+        ExtractTransform.writeLastEtlRun(startSec - ExtractTransform.TRANSACTION_COMPLETION_GUARDBAND);
         // Runs incremental etl from last_etl_run (i.e. startSec) to now.
         int recordCount = extractTransform.incrementalEtl("0", "0");
         final long endEtlMSec = ExtractTransform.readLastEtlRun() * MSEC_IN_SEC;
@@ -198,6 +198,7 @@ public class ExtractTransformTest extends Arquillian {
         Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "F", entityId));
         EtlTestUtilities.deleteEtlFiles(datafileDir);
 
+        String adjustedStartEtl = ExtractTransform.formatTimestamp(new Date());
         // Deletes the entity.
         utx.begin();
         // Gets the entity.
@@ -206,10 +207,13 @@ public class ExtractTransformTest extends Arquillian {
         labVesselDao.remove(entity);
         labVesselDao.flush();
         utx.commit();
-        Thread.sleep(MSEC_IN_SEC);
 
-        // Incremental etl should pick up the delete and not the earlier create.
-        recordCount = extractTransform.incrementalEtl(startEtl, distantEnd);
+        Thread.sleep(2000);
+        String adjustedEndEtl = ExtractTransform.formatTimestamp(new Date());
+
+        // Less than a second ?
+        // Incremental etl starting at transaction timeout advance + 599 seconds should pick up the delete and not the earlier create.
+        recordCount = extractTransform.incrementalEtl(adjustedStartEtl, adjustedEndEtl);
         Assert.assertTrue(recordCount > 0);
         Assert.assertFalse(searchEtlFile(datafileDir, datFileEnding, "F", entityId));
         Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "T", entityId));
@@ -508,8 +512,8 @@ public class ExtractTransformTest extends Arquillian {
         int recordCount = fixUpEtl.doIncrementalEtl(Collections.singleton(fixupCommentaryRevId), etlDateStr);
 
         // Batch vessel change is way back in workflow so there's many downstream events * samples
-        Assert.assertTrue(recordCount > 38000, "Extracted row count is less than expected");
-        Assert.assertTrue( new File(datafileDir, eventFileName ).exists(), "Event fact ETL file does not exist");
+        Assert.assertTrue(recordCount > 38000, "Extracted row count " + recordCount + " is less than expected 38000");
+        Assert.assertTrue(new File(datafileDir, eventFileName).exists(), "Event fact ETL file does not exist");
         Assert.assertTrue( new File(datafileDir, seqSampleFileName ).exists(), "Sequencing sample fact ETL file does not exist");
 
         // Check for a handful of events

@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.infrastructure.bettalims;
+package org.broadinstitute.gpinformatics.infrastructure.common;
 
 import javax.xml.bind.DatatypeConverter;
 import java.util.Calendar;

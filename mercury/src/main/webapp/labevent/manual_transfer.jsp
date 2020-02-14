@@ -250,6 +250,53 @@
                         displayCamera();
                     });
                 </c:if>
+
+                $j('#targetReceptacleType').change(function() {
+
+                    var data = new FormData();
+                    var eventClass = $j('input[name=\"eventClass[0]\"').val();
+                    data.append("eventClass", eventClass);
+
+                    // Get the selectable barcoded tube types based off container type 'targetReceptacleType'
+                    $j.ajax({
+                        url: '/Mercury/labevent/manualtransfer.action?selectableTargetBarcodedTubeTypes&targetVesselTypeGeometryString='+$j('#targetReceptacleType').val(),
+                        datatype: "application/json",
+                        type: 'GET',
+                        success: function (data) {
+
+                            if (!data.hasErrors) {
+                                // Clear old values so we ensure nothing is doubling up.
+                                $j('#selectedTargetChildReceptacleType').empty();
+                                $j('#selectedTargetChildReceptacleType').append($j('<option value="">Select One</option>'));
+
+                                // Check to ensure that the destination container type selected returns allowed tube types.
+                                if ($j.isEmptyObject(data)) {
+                                    // Hide the view transfer button because the rack type picked doesn't have tube types!
+                                    $j("#viewTransfer").hide();
+                                } else {
+                                    // Loop through the options returned
+                                    $j.each(data, function (i, selectOption) {
+                                        $j('#selectedTargetChildReceptacleType').append($j('<option></option>').attr('value', selectOption).text(selectOption));
+                                    });
+                                }
+                            }
+                        },
+                        error: function (req, textstatus, msg) {
+                            console.log(req);
+                            console.log(msg);
+                        }
+                    });
+
+                });
+
+                $j('#selectedTargetChildReceptacleType').change(function() {
+
+                    if ($j('#selectedTargetChildReceptacleType').text().trim() !== "Select One") {
+                        $j("#viewTransfer").show();
+                    } else {
+                        $j("#viewTransfer").hide();
+                    }
+                });
             });
 
             // Some scanners send carriage return, we don't want this to submit the form
@@ -425,22 +472,43 @@
                                             <h4>Plate Transfer</h4>
                                             <h5>Source</h5>
 
-                                            <c:set var="stationEvent" value="${stationEvent}" scope="request"/>
-                                            <c:set var="plate" value="${plateTransfer.sourcePlate}" scope="request"/>
-                                            <c:set var="positionMap" value="${plateTransfer.sourcePositionMap}" scope="request"/>
-                                            <c:set var="stationEventIndex" value="${stationEventStatus.index}" scope="request"/>
-                                            <c:set var="vesselTypeGeometry" value="${actionBean.manualTransferDetails.sourceVesselTypeGeometry}" scope="request"/>
-                                            <c:set var="section" value="${actionBean.manualTransferDetails.sourceSection}" scope="request"/>
-                                            <c:set var="source" value="${true}" scope="request"/>
-                                            <c:set var="tableName" value="sourceTable" scope="request"/>
-                                            <c:set var="transferType" value="${actionBean.stationEvents[stationEventStatus.index].eventType}"/>
-
                                             <c:choose>
-                                                <c:when test="${ stationEvent.class.simpleName.equals('PlateCherryPickEvent')}">
-                                                    <jsp:include page="transfer_plate_cherry_pick.jsp"/>
+                                                <%-- If there are multiple source types, a source type isn't selected and the event doesn't have a source type set already. --%>
+                                                <c:when test="${not empty actionBean.manualTransferDetails.sourceVesselTypeGeometries and empty actionBean.selectedSourceGeometry}">
+                                                    <stripes:label for="sourceReceptacleType">Type </stripes:label>
+                                                    <stripes:select name="stationEvents[${stationEventStatus.index}].sourcePlate[0].physType"
+                                                                    id="sourceReceptacleType">
+                                                        <stripes:option value="">Select One</stripes:option>
+                                                        <stripes:options-collection collection="${actionBean.manualTransferDetails.sourceVesselTypeGeometriesString}"/>
+                                                    </stripes:select>
                                                 </c:when>
                                                 <c:otherwise>
-                                                    <jsp:include page="transfer_plate.jsp"/>
+                                                    <c:set var="stationEvent" value="${stationEvent}" scope="request"/>
+                                                    <c:set var="plate" value="${plateTransfer.sourcePlate}" scope="request"/>
+                                                    <c:set var="positionMap" value="${plateTransfer.sourcePositionMap}" scope="request"/>
+                                                    <c:set var="stationEventIndex" value="${stationEventStatus.index}" scope="request"/>
+                                                    <c:set var="section" value="${actionBean.manualTransferDetails.sourceSection}" scope="request"/>
+                                                    <c:set var="source" value="${true}" scope="request"/>
+                                                    <c:set var="tableName" value="sourceTable" scope="request"/>
+                                                    <c:set var="transferType" value="${actionBean.stationEvents[stationEventStatus.index].eventType}"/>
+
+                                                    <c:choose>
+                                                        <c:when test="${not empty actionBean.selectedSourceGeometry}">
+                                                            <c:set var="vesselTypeGeometry" value="${actionBean.selectedSourceGeometry}" scope="request"/>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <c:set var="vesselTypeGeometry" value="${actionBean.manualTransferDetails.sourceVesselTypeGeometry}" scope="request"/>
+                                                        </c:otherwise>
+                                                    </c:choose>
+
+                                                    <c:choose>
+                                                        <c:when test="${ stationEvent.class.simpleName.equals('PlateCherryPickEvent')}">
+                                                            <jsp:include page="transfer_plate_cherry_pick.jsp"/>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <jsp:include page="transfer_plate.jsp"/>
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                 </c:otherwise>
                                             </c:choose>
 
@@ -448,24 +516,59 @@
 
                                         <h5>Destination</h5>
                                     </c:if>
-                                    <c:set var="stationEvent" value="${stationEvent}" scope="request"/>
-                                    <c:set var="plate" value="${plateTransfer.plate}" scope="request"/>
-                                    <c:set var="positionMap" value="${plateTransfer.positionMap}" scope="request"/>
-                                    <c:set var="stationEventIndex" value="${stationEventStatus.index}" scope="request"/>
-                                    <c:set var="vesselTypeGeometry" value="${actionBean.manualTransferDetails.targetVesselTypeGeometry}" scope="request"/>
-                                    <c:set var="eventType" value="${stationEvent.eventType}" scope="request"/>
-                                    <c:set var="section" value="${actionBean.manualTransferDetails.targetSection}" scope="request"/>
-                                    <c:set var="source" value="${false}" scope="request"/>
-
                                     <c:choose>
-                                        <c:when test = "${eventType.equals('StripTubeBTransfer')}">
-                                            <jsp:include page="transfer_plate_strip_tube.jsp"/>
-                                        </c:when>
-                                        <c:when test="${stationEvent.class.simpleName.equals('PlateCherryPickEvent')}">
-                                            <jsp:include page="transfer_plate_cherry_pick.jsp"/>
+                                        <c:when test="${not empty actionBean.manualTransferDetails.targetVesselTypeGeometries and empty actionBean.selectedTargetGeometry}">
+                                            <div>
+                                                <stripes:label for="targetReceptacleType">Type </stripes:label>
+                                                <stripes:select name="stationEvents[${stationEventStatus.index}].plate[0].physType"
+                                                                id="targetReceptacleType">
+                                                    <stripes:option value="">Select One</stripes:option>
+                                                    <stripes:options-collection collection="${actionBean.manualTransferDetails.targetVesselTypeGeometriesString}"/>
+                                                </stripes:select>
+
+                                                <stripes:label for="selectedTargetChildReceptacleType"> Tube Type </stripes:label>
+                                                <stripes:select name="selectedTargetChildReceptacleType"
+                                                                id="selectedTargetChildReceptacleType">
+                                                    <stripes:option value="">Select One</stripes:option>
+                                                </stripes:select>
+                                            </div>
                                         </c:when>
                                         <c:otherwise>
-                                            <jsp:include page="transfer_plate.jsp"/>
+                                                <c:set var="stationEvent" value="${stationEvent}" scope="request"/>
+                                                <c:set var="plate" value="${plateTransfer.plate}" scope="request"/>
+                                                <c:set var="positionMap" value="${plateTransfer.positionMap}" scope="request"/>
+                                                <c:set var="stationEventIndex" value="${stationEventStatus.index}" scope="request"/>
+                                                <c:set var="eventType" value="${stationEvent.eventType}" scope="request"/>
+                                                <c:set var="section" value="${actionBean.manualTransferDetails.targetSection}" scope="request"/>
+                                                <c:set var="source" value="${false}" scope="request"/>
+                                                <c:choose>
+                                                    <c:when test="${not empty actionBean.selectedTargetGeometry}">
+                                                        <c:set var="vesselTypeGeometry" value="${actionBean.selectedTargetGeometry}" scope="request"/>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <c:set var="vesselTypeGeometry" value="${actionBean.manualTransferDetails.targetVesselTypeGeometry}" scope="request"/>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                                <c:choose>
+                                                    <c:when test="${not empty actionBean.selectedTargetChildReceptacleType}">
+                                                        <c:set var="selectedTargetChildReceptacleType" value="${actionBean.selectedTargetChildReceptacleType}" scope="request"/>
+                                                    </c:when>
+                                                    <c:when test="${stationEvent.class.simpleName.equals('PlateCherryPickEvent') and not empty positionMap and not empty plateTransfer.positionMap[0].receptacle}">
+                                                            <c:set var="selectedTargetChildReceptacleType" value="${positionMap[0].receptacle[0].receptacleType}" scope="request"/>
+                                                    </c:when>
+                                                </c:choose>
+
+                                                <c:choose>
+                                                    <c:when test = "${eventType.equals('StripTubeBTransfer')}">
+                                                        <jsp:include page="transfer_plate_strip_tube.jsp"/>
+                                                    </c:when>
+                                                    <c:when test="${stationEvent.class.simpleName.equals('PlateCherryPickEvent')}">
+                                                        <jsp:include page="transfer_plate_cherry_pick.jsp"/>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <jsp:include page="transfer_plate.jsp"/>
+                                                    </c:otherwise>
+                                                </c:choose>
                                         </c:otherwise>
                                     </c:choose>
 
@@ -587,37 +690,48 @@
                                 </c:when> <%-- end ReceptacleEventType --%>
                             </c:choose>
                         </c:forEach>
+                        <c:choose>
+                            <%--If there are multiple source & target vessel geometries allowed and one hasn't been selected, we need to be able to select the option and re-display the page.--%>
+                            <c:when test="${not empty actionBean.manualTransferDetails.sourceVesselTypeGeometries and not empty actionBean.manualTransferDetails.targetVesselTypeGeometries and empty actionBean.selectedSourceGeometry}">
+                                <stripes:submit name="viewTransfer" id="viewTransfer" value="View Transfer" class="btn" style="display:none;"/>
+                            </c:when>
+                            <c:otherwise>
 
-                        <c:if test="${stationEvent.class.simpleName.equals('PlateCherryPickEvent')}">
-                            <input type="button" value="Add Cherry Picks" id="PreviewButton" name="PreviewButton" class="btn btn-primary" >
-                        </c:if>
-
-                        <stripes:submit name="fetchExisting" value="Validate Barcodes" class="btn"/>
-                        <stripes:submit name="transfer" value="${actionBean.manualTransferDetails.buttonValue}"
-                                class="btn btn-primary"/>
-                        <%-- todo jmt why does this require server roundtrip? --%>
-                        <c:if test="${stationEvent.class.simpleName.equals('PlateCherryPickEvent')}">
-                            <stripes:submit value="Clear Cherry Picks" id="ClearConnectionsButton" name="ClearConnectionsButton"  class="btn"/>
-                        </c:if>
-                        <input type="button" onclick="$('.clearable').each(function (){$(this).val('');});" value="Clear non-reagent fields" class="btn">
-
-                        <div id="cherryPickSourceElements">
-                            <c:forEach items="${actionBean.stationEvents}" var="stationEvent" varStatus="stationEventStatus">
-                                <c:if test="${stationEvent.class.simpleName == 'PlateCherryPickEvent'}">
-                                    <c:set var="plateCherryPickEvent" value="${stationEvent}"/>
-                                    <%--@elvariable id="plateCherryPickEvent" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent"--%>
-                                    <c:forEach items="${plateCherryPickEvent.source}" var="sourceElement" varStatus="sourceStatus">
-                                        <c:set var="namePrefix" value="stationEvents[${stationEventStatus.index}].source[${sourceStatus.index}]"/>
-                                        <div class="sourceElements">
-                                            <input type="text" readonly name="${namePrefix}.barcode" value="${sourceElement.barcode}"/>
-                                            <input type="text" readonly name="${namePrefix}.well" value="${sourceElement.well}"/>->
-                                            <input type="text" readonly name="${namePrefix}.destinationBarcode" value="${sourceElement.destinationBarcode}"/>
-                                            <input type="text" readonly name="${namePrefix}.destinationWell" value="${sourceElement.destinationWell}"/>
-                                        </div>
-                                    </c:forEach>
+                                <c:if test="${stationEvent.class.simpleName.equals('PlateCherryPickEvent')}">
+                                    <input type="button" value="Add Cherry Picks" id="PreviewButton" name="PreviewButton" class="btn btn-primary" >
                                 </c:if>
-                            </c:forEach>
-                        </div>
+
+                                <stripes:submit name="fetchExisting" value="Validate Barcodes" class="btn"/>
+                                <stripes:submit name="transfer" value="${actionBean.manualTransferDetails.buttonValue}"
+                                        class="btn btn-primary"/>
+                                <%-- todo jmt why does this require server roundtrip? --%>
+                                <c:if test="${stationEvent.class.simpleName.equals('PlateCherryPickEvent')}">
+                                    <stripes:submit value="Clear Cherry Picks" id="ClearConnectionsButton" name="ClearConnectionsButton"  class="btn"/>
+                                </c:if>
+                                <input type="button" onclick="$('.clearable').each(function (){$(this).val('');});" value="Clear non-reagent fields" class="btn">
+                                <c:if test="${not empty actionBean.manualTransferDetails.downloadFileType}">
+                                    <stripes:submit name="downloadFile" value="Download ${actionBean.manualTransferDetails.downloadFileType.displayName}" class="btn"/>
+                                </c:if>
+
+                                <div id="cherryPickSourceElements">
+                                    <c:forEach items="${actionBean.stationEvents}" var="stationEvent" varStatus="stationEventStatus">
+                                        <c:if test="${stationEvent.class.simpleName == 'PlateCherryPickEvent'}">
+                                            <c:set var="plateCherryPickEvent" value="${stationEvent}"/>
+                                            <%--@elvariable id="plateCherryPickEvent" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent"--%>
+                                            <c:forEach items="${plateCherryPickEvent.source}" var="sourceElement" varStatus="sourceStatus">
+                                                <c:set var="namePrefix" value="stationEvents[${stationEventStatus.index}].source[${sourceStatus.index}]"/>
+                                                <div class="sourceElements">
+                                                    <input type="text" readonly name="${namePrefix}.barcode" value="${sourceElement.barcode}"/>
+                                                    <input type="text" readonly name="${namePrefix}.well" value="${sourceElement.well}"/>->
+                                                    <input type="text" readonly name="${namePrefix}.destinationBarcode" value="${sourceElement.destinationBarcode}"/>
+                                                    <input type="text" readonly name="${namePrefix}.destinationWell" value="${sourceElement.destinationWell}"/>
+                                                </div>
+                                            </c:forEach>
+                                        </c:if>
+                                    </c:forEach>
+                                </div>
+                            </c:otherwise>
+                        </c:choose>
                     </c:if>
                 </stripes:form>
             </c:otherwise>

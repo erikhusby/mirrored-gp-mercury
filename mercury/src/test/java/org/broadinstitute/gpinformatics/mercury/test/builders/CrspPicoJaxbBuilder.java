@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 
 import java.math.BigDecimal;
@@ -108,6 +109,30 @@ public class CrspPicoJaxbBuilder {
 
         // Initial PicoBufferAddition
         buildPicoBufferAddition(initialPico1, initialPico2);
+        // Increase pico volumes
+        BigDecimal picoNewVolume = new BigDecimal(4);
+        PositionMapType positionMap1 = new PositionMapType();
+        PositionMapType positionMap2 = new PositionMapType();
+        positionMap1.setBarcode(picoBufferAddition1.getPlate().getBarcode());
+        positionMap2.setBarcode(picoBufferAddition2.getPlate().getBarcode());
+        List<ReceptacleType> bufferReceptacles1 = new ArrayList<>();
+        List<ReceptacleType> bufferReceptacles2 = new ArrayList<>();
+        for (ReceptacleType receptacle : initialPicoTransfer1.getPositionMap().getReceptacle()) {
+            ReceptacleType newReceptacle1 = new ReceptacleType();
+            ReceptacleType newReceptacle2 = new ReceptacleType();
+            newReceptacle1.setVolume(picoNewVolume);
+            newReceptacle2.setVolume(picoNewVolume);
+            newReceptacle1.setReceptacleType(receptacle.getReceptacleType());
+            newReceptacle2.setReceptacleType(receptacle.getReceptacleType());
+            newReceptacle1.setPosition(receptacle.getPosition());
+            newReceptacle2.setPosition(receptacle.getPosition());
+            bufferReceptacles1.add(newReceptacle1);
+            bufferReceptacles2.add(newReceptacle2);
+        }
+        positionMap1.getReceptacle().addAll(bufferReceptacles1);
+        picoBufferAddition1.setPositionMap(positionMap1);
+        positionMap2.getReceptacle().addAll(bufferReceptacles2);
+        picoBufferAddition2.setPositionMap(positionMap2);
         initialPicoBufferAddition1 = picoBufferAddition1;
         initialPicoBufferAddition2 = picoBufferAddition2;
 
@@ -258,6 +283,8 @@ public class CrspPicoJaxbBuilder {
             String initialPico1, String initialPico2) {
         picoTransfer1 = bettaLimsMessageTestFactory.buildRackToPlate("PicoTransfer", rackBarcode,
                 tubeBarcodes, initialPico1);
+        // Pico plates need receptacles for expected lab metrics
+        bettaLimsMessageTestFactory.createTargetPlateReceptacles(picoTransfer1, new BigDecimal(2));
         int i = 0;
         for (ReceptacleType receptacleType : picoTransfer1.getSourcePositionMap().getReceptacle()) {
             receptacleType.setVolume(volumes.get(i));
@@ -265,6 +292,7 @@ public class CrspPicoJaxbBuilder {
         }
         picoTransfer2 = bettaLimsMessageTestFactory.buildRackToPlate("PicoTransfer", rackBarcode,
                 tubeBarcodes, initialPico2);
+        bettaLimsMessageTestFactory.createTargetPlateReceptacles(picoTransfer2, new BigDecimal(2));
         i = 0;
         for (ReceptacleType receptacleType : picoTransfer2.getSourcePositionMap().getReceptacle()) {
             receptacleType.setVolume(volumes.get(i));

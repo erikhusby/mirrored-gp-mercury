@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRead;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemOfRecord;
 
 import javax.xml.bind.annotation.XmlElement;
 import java.text.ParseException;
@@ -39,7 +39,7 @@ public class ZimsIlluminaRun {
     private String sequencerModel;
 
     @JsonProperty("systemOfRecord")
-    private SystemRouter.System systemOfRecord;
+    private SystemOfRecord.System systemOfRecord;
 
     @JsonIgnore
     private Date runDate;
@@ -89,7 +89,7 @@ public class ZimsIlluminaRun {
                            String actualReadStructure,
                            double imagedAreaPerLaneMM2,
                            String lanesSequenced,
-                           SystemRouter.System systemOfRecord) {
+                           SystemOfRecord.System systemOfRecord) {
         this.runName = runName;
         this.runBarcode = runBarcode;
         this.flowcellBarcode = flowcellBarcode;
@@ -117,7 +117,7 @@ public class ZimsIlluminaRun {
                            Boolean isPaired,
                            String actualReadStructure,
                            double imagedAreaPerLaneMM2,
-                           SystemRouter.System systemOfRecord) {
+                           SystemOfRecord.System systemOfRecord) {
         this(runName, runBarcode, flowcellBarcode, sequencer, sequencerModel, runDate, isPaired, actualReadStructure,
                 imagedAreaPerLaneMM2, null, systemOfRecord);
     }
@@ -125,7 +125,7 @@ public class ZimsIlluminaRun {
     public ZimsIlluminaRun(String runName, String runBarcode, String flowcellBarcode, String sequencer,
                            String sequencerModel, String runDate, Boolean paired, String actualReadStructure,
                            double imagedAreaPerLaneMM2, String setupReadStructure, String lanesSequenced,
-                           String runFolder, SystemRouter.System systemOfRecord) {
+                           String runFolder, SystemOfRecord.System systemOfRecord) {
         this(runName, runBarcode, flowcellBarcode, sequencer, sequencerModel, runDate, paired, actualReadStructure,
                 imagedAreaPerLaneMM2, lanesSequenced, systemOfRecord);
         this.setupReadStructure = setupReadStructure;
@@ -158,7 +158,7 @@ public class ZimsIlluminaRun {
                 zamboniRun.getSetupReadStructure(),
                 zamboniRun.getLanesSequenced(),
                 zamboniRun.getRunFolder(),
-                SystemRouter.System.SQUID);
+                SystemOfRecord.System.SQUID);
     }
 
     /**
@@ -270,7 +270,7 @@ public class ZimsIlluminaRun {
         return runFolder;
     }
 
-    public SystemRouter.System getSystemOfRecord() {
+    public SystemOfRecord.System getSystemOfRecord() {
         return systemOfRecord;
     }
 }

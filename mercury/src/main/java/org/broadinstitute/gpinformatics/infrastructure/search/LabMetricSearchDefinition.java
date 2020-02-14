@@ -770,7 +770,7 @@ public class LabMetricSearchDefinition {
     }
 
     @NotNull
-    static List<Object> runBspSearch(SearchItem searchItem) {
+    public static List<Object> runBspSearch(SearchItem searchItem) {
         BSPConfig bspConfig = ServiceAccessUtility.getBean(BSPConfig.class);
         SearchManager searchManager = new SearchManager(bspConfig.getHost(), bspConfig.getPort(),
                 bspConfig.getLogin(), bspConfig.getPassword());

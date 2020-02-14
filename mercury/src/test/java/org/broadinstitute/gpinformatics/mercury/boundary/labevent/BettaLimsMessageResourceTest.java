@@ -7,12 +7,14 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.PipelineDataTypeDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -24,6 +26,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
@@ -142,6 +145,9 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
     @Inject
     private ProductDao productDao;
+
+    @Inject
+    private PipelineDataTypeDao pipelineDataTypeDao;
 
     @Inject
     private ProductFamilyDao productFamilyDao;
@@ -447,7 +453,6 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 bettaLimsMessageFactory, testPrefix, shearingJaxbBuilder.getShearCleanPlateBarcode(),
                 LibraryConstructionJaxbBuilder.P_7_INDEX_PLATE_BARCODE,
                 LibraryConstructionJaxbBuilder.P_5_INDEX_PLATE_BARCODE, BaseEventTest.NUM_POSITIONS_IN_RACK,
-                LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY,
                 Arrays.asList(Triple.of("KAPA Reagent Box", "0009753252", 1)),
                 Arrays.asList(Triple.of("PEG", "0009753352", 2), Triple.of("70% Ethanol", "LCEtohTest", 3),
                         Triple.of("EB", "0009753452", 4), Triple.of("SPRI", "LCSpriTest", 5)),
@@ -462,7 +467,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 testPrefix, Collections.singletonList(libraryConstructionJaxbBuilder.getPondRegRackBarcode()),
                 Collections.singletonList(libraryConstructionJaxbBuilder.getPondRegTubeBarcodes()),
                 "Bait" + testPrefix, "Bait" + testPrefix,
-                LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY, IceJaxbBuilder.PlexType.PLEX96,
+                IceJaxbBuilder.PlexType.PLEX96,
                 Arrays.asList(Triple.of("CT3", "0009763452", 1),
                         Triple.of("Rapid Capture Kit bait", "0009773452", 2),
                         Triple.of("Rapid Capture Kit Resuspension Buffer", "0009783452", 3)),
@@ -651,7 +656,6 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 bettaLimsMessageFactory, testPrefix, shearingJaxbBuilder.getShearCleanPlateBarcode(),
                 LibraryConstructionJaxbBuilder.P_7_INDEX_PLATE_BARCODE,
                 LibraryConstructionJaxbBuilder.P_5_INDEX_PLATE_BARCODE, numPositionsInRack,
-                LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY,
                 Arrays.asList(Triple.of("KAPA Reagent Box", "0009753252", 1)),
                 Arrays.asList(Triple.of("PEG", "0009753352", 2),
                         Triple.of("70% Ethanol", "LCEtohTest", 3),
@@ -718,11 +722,12 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     private ProductOrder buildProductOrder(String testPrefix, int numberOfSamples, String workflow) {
         String partNumber = mapWorkflowToPartNum.get(workflow);
         Product product = productDao.findByPartNumber(partNumber);
+        PipelineDataType dataType = pipelineDataTypeDao.findDataType(Aggregation.DATA_TYPE_EXOME);
         if (product == null) {
             // todo jmt change to exome express
             product = new Product("Standard Exome Sequencing", productFamilyDao.find("Exome"),
                     "Standard Exome Sequencing", "P-EX-0001", new Date(), null, 1814400, 1814400, 184, null, null,
-                    null, true, Workflow.HYBRID_SELECTION, false, "agg type");
+                    null, true, Workflow.HYBRID_SELECTION, false, dataType);
             product.setPrimaryPriceItem(new PriceItem("1234", PriceItem.PLATFORM_GENOMICS, "Pony Genomics",
                     "Standard Pony"));
             productDao.persist(product);
@@ -1016,7 +1021,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                                             List<List<String>> listPondRegTubeBarcodes) {
         IceJaxbBuilder iceJaxbBuilder = new IceJaxbBuilder(bettaLimsMessageFactory, testPrefixes.get(0),
                 pondRegRackBarcodes, listPondRegTubeBarcodes, "0177198254", "0177198254",
-                LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY, IceJaxbBuilder.PlexType.PLEX96,
+                IceJaxbBuilder.PlexType.PLEX96,
                 new ArrayList<Triple<String, String, Integer>>() {{
                     add(Triple.of("CT3", "0009763452", 1));
                     add(Triple.of("Rapid Capture Kit bait", "0009773452", 2));
@@ -1093,7 +1098,6 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 bettaLimsMessageFactory, testPrefix, shearingExExJaxbBuilder.getShearCleanPlateBarcode(),
                 LibraryConstructionJaxbBuilder.P_7_INDEX_PLATE_BARCODE,
                 LibraryConstructionJaxbBuilder.P_5_INDEX_PLATE_BARCODE, BaseEventTest.NUM_POSITIONS_IN_RACK,
-                LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY,
                 Arrays.asList(Triple.of("KAPA Reagent Box", "0009753252", 1)),
                 Arrays.asList(Triple.of("PEG", "0009753352", 2),
                         Triple.of("70% Ethanol", "LCEtohTest", 3),

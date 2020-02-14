@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventTy
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.GapHandler;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -26,7 +25,6 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyCollection;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -43,8 +41,6 @@ public class WorkflowContainerTest extends Arquillian {
     @Inject
     private WorkflowValidator workflowValidator;
 
-    private GapHandler mockGapHandler;
-
     public static final String INFINIUM_INPUT_PLATE = "CO-19456459";
 
     @Deployment
@@ -54,9 +50,6 @@ public class WorkflowContainerTest extends Arquillian {
 
     @Test
     public void testMultiplePlateEvents() throws Exception {
-        mockGapHandler = mock(GapHandler.class);
-        doNothing().when(mockGapHandler).postToGap(any(BettaLIMSMessage.class));
-        labEventFactory.setGapHandler(mockGapHandler);
         bettaLimsMessageResource.setLabEventFactory(labEventFactory);
 
         String timestamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());

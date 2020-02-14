@@ -94,7 +94,6 @@ public class SapIntegrationServiceImplDBFreeTest {
         integrationService.setProductPriceCache(productPriceCache);
         final SAPAccessControlEjb mockAccessController = Mockito.mock(SAPAccessControlEjb.class);
         Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenThrow(new RuntimeException());
-        productPriceCache.setAccessControlEjb(mockAccessController);
     }
 
 
@@ -134,7 +133,7 @@ public class SapIntegrationServiceImplDBFreeTest {
                     SAP_QUOTE_ID);
         }
 
-        sapQuote = TestUtils.buildTestSapQuote(SAP_QUOTE_ID, 10d, 10d, conversionPdo,
+        sapQuote = TestUtils.buildTestSapQuote(SAP_QUOTE_ID, BigDecimal.valueOf(10), BigDecimal.valueOf(10), conversionPdo,
                 TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS, "GP02");
         conversionPdo.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
 
@@ -153,17 +152,17 @@ public class SapIntegrationServiceImplDBFreeTest {
         for(SAPOrderItem item:convertedOrder.getOrderItems()) {
 
             if(item.getProductIdentifier().equals(primaryProduct.getPartNumber())) {
-                assertThat(item.getItemQuantity().doubleValue(), equalTo(
-                        (new BigDecimal(conversionPdo.getSamples().size())).doubleValue()));
+                assertThat(item.getItemQuantity(), equalTo(
+                        (new BigDecimal(conversionPdo.getSamples().size()))));
                 assertThat(item.getProductAlias(), equalTo(primaryProduct.getAlternateExternalName()));
-                assertThat(item.getItemQuantity().doubleValue(), equalTo(new BigDecimal(conversionPdo.getSamples().size()).doubleValue()));
+                assertThat(item.getItemQuantity(), equalTo(new BigDecimal(conversionPdo.getSamples().size())));
             }
             else {
                 final Map<String, String> alternateNameByPartNumber = conversionPdo.getAddOns().stream().map(ProductOrderAddOn::getAddOn)
                         .collect(Collectors.toMap(Product::getPartNumber, Product::getAlternateExternalName));
 
                 assertThat(item.getProductAlias(), equalTo(alternateNameByPartNumber.get(item.getProductIdentifier())));
-                assertThat(item.getItemQuantity().doubleValue(), equalTo(new BigDecimal(conversionPdo.getSamples().size()).doubleValue()));
+                assertThat(item.getItemQuantity(), equalTo(new BigDecimal(conversionPdo.getSamples().size())));
             }
         }
 
@@ -176,7 +175,7 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
             final ProductOrderAddOnPriceAdjustment customAdjustment =
-                    new ProductOrderAddOnPriceAdjustment(null,1, customExternalAddonProductName);
+                    new ProductOrderAddOnPriceAdjustment(null,BigDecimal.ONE, customExternalAddonProductName);
             productOrderAddOn.setCustomPriceAdjustment(customAdjustment);
         }
 
@@ -187,29 +186,26 @@ public class SapIntegrationServiceImplDBFreeTest {
         for(SAPOrderItem item:convertedOrder.getOrderItems()) {
 
             if(item.getProductIdentifier().equals(primaryProduct.getPartNumber())) {
-                assertThat(item.getItemQuantity().doubleValue(), equalTo(
-                        (new BigDecimal(conversionPdo.getSamples().size())).doubleValue()));
+                assertThat(item.getItemQuantity(), equalTo((new BigDecimal(conversionPdo.getSamples().size()))));
                 assertThat(item.getProductAlias(), equalTo(customExternalProductName));
-                assertThat(item.getItemQuantity().doubleValue(), equalTo(new BigDecimal(conversionPdo.getSamples().size()).doubleValue()));
+                assertThat(item.getItemQuantity(), equalTo(new BigDecimal(conversionPdo.getSamples().size())));
             }
             else {
                 final Map<String, String> alternateNameByPartNumber = conversionPdo.getAddOns().stream().map(ProductOrderAddOn::getAddOn)
                         .collect(Collectors.toMap(Product::getPartNumber, Product::getAlternateExternalName));
 
                 assertThat(item.getProductAlias(), equalTo(customExternalAddonProductName));
-                assertThat(item.getItemQuantity().doubleValue(), equalTo(1.0d));
+                assertThat(item.getItemQuantity(), equalTo(BigDecimal.ONE));
             }
         }
 
-
-
-        sapQuote = TestUtils.buildTestSapQuote(SAP_QUOTE_ID, 10d, 10d, conversionPdo,
+        sapQuote = TestUtils.buildTestSapQuote(SAP_QUOTE_ID, BigDecimal.valueOf(10), BigDecimal.valueOf(10), conversionPdo,
                 TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS, "GP01");
         conversionPdo.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
         conversionPdo.clearCustomPriceAdjustment();
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
             final ProductOrderAddOnPriceAdjustment customAdjustment =
-                    new ProductOrderAddOnPriceAdjustment(null,1, customExternalAddonProductName);
+                    new ProductOrderAddOnPriceAdjustment(null,BigDecimal.ONE, customExternalAddonProductName);
             productOrderAddOn.clearCustomPriceAdjustment();
         }
 
@@ -229,16 +225,11 @@ public class SapIntegrationServiceImplDBFreeTest {
         for(SAPOrderItem item:convertedOrder.getOrderItems()) {
 
             if(item.getProductIdentifier().equals(primaryProduct.getPartNumber())) {
-                assertThat(item.getItemQuantity().doubleValue(), equalTo(
-                        (new BigDecimal(conversionPdo.getSamples().size())).doubleValue()));
+                assertThat(item.getItemQuantity(), equalTo((new BigDecimal(conversionPdo.getSamples().size()))));
             }
             assertThat(item.getProductAlias(), is(nullValue()));
-            assertThat(item.getItemQuantity().doubleValue(), equalTo(new BigDecimal(conversionPdo.getSamples().size()).doubleValue()));
+            assertThat(item.getItemQuantity(), equalTo(new BigDecimal(conversionPdo.getSamples().size())));
         }
-
-
-
-
         final String customProductName = "Test custom material";
         final String customAddonProductName = "Test custom addon material";
         final ProductOrderPriceAdjustment customPriceAdjustment =
@@ -248,7 +239,7 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
             final ProductOrderAddOnPriceAdjustment customAdjustment =
-                    new ProductOrderAddOnPriceAdjustment(new BigDecimal("39.50"),1, customAddonProductName);
+                    new ProductOrderAddOnPriceAdjustment(new BigDecimal("39.50"),BigDecimal.ONE, customAddonProductName);
             productOrderAddOn.setCustomPriceAdjustment(customAdjustment);
         }
         convertedOrder = integrationService.initializeSAPOrder(sapQuote, conversionPdo,
@@ -265,57 +256,54 @@ public class SapIntegrationServiceImplDBFreeTest {
         for(SAPOrderItem item:convertedOrder.getOrderItems()) {
 
             if(item.getProductIdentifier().equals(primaryProduct.getPartNumber())) {
-                assertThat(item.getItemQuantity().doubleValue(), equalTo(
-                        (new BigDecimal(conversionPdo.getSamples().size())).doubleValue()));
+                assertThat(item.getItemQuantity(), equalTo((new BigDecimal(conversionPdo.getSamples().size()))));
                 assertThat(item.getProductAlias(), equalTo(customProductName));
-                assertThat(item.getItemQuantity().doubleValue(), equalTo(new BigDecimal(conversionPdo.getSamples().size()).doubleValue()));
+                assertThat(item.getItemQuantity(), equalTo(new BigDecimal(conversionPdo.getSamples().size())));
                 final ConditionValue foundCondition = item.getConditions().iterator().next();
                 assertThat(foundCondition.getValue(), equalTo(new BigDecimal("29.50")));
                 assertThat(foundCondition.getCondition(), equalTo(Condition.PRICE_OVERRIDE));
             }
             else {
-                assertThat(item.getItemQuantity().doubleValue(), equalTo((new BigDecimal(1.0d)).doubleValue()));
+                assertThat(item.getItemQuantity(), equalTo((BigDecimal.ONE)));
                 final ConditionValue foundCondition = item.getConditions().iterator().next();
                 assertThat(foundCondition.getValue(), equalTo(new BigDecimal("39.50")));
                 assertThat(foundCondition.getCondition(), equalTo(Condition.PRICE_OVERRIDE));
             }
         }
 
-        conversionPdo.addSapOrderDetail(new SapOrderDetail("testsap001", conversionPdo.getTotalNonAbandonedCount(
-                ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),
+        conversionPdo.addSapOrderDetail(new SapOrderDetail("testsap001",
+                conversionPdo.getTotalNonAbandonedCount(
+                ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY).intValue(),
                 conversionPdo.getQuoteId(),
                 conversionPdo.getSapCompanyConfigurationForProductOrder(sapQuote).getCompanyCode()));
 
         SAPOrder convertedOrder2 = integrationService.initializeSAPOrder(sapQuote, conversionPdo, Option.create(Option.Type.CREATING));
         for(SAPOrderItem item:convertedOrder2.getOrderItems()) {
             if(item.getProductIdentifier().equals(primaryProduct.getPartNumber())) {
-                assertThat(item.getItemQuantity().doubleValue(), equalTo(
-                        (new BigDecimal(conversionPdo.getSamples().size())).doubleValue()));
+                assertThat(item.getItemQuantity(), equalTo((new BigDecimal(conversionPdo.getSamples().size()))));
             }
             else {
-                assertThat(item.getItemQuantity().doubleValue(), equalTo((new BigDecimal(1)).doubleValue()));
+                assertThat(item.getItemQuantity(), equalTo((new BigDecimal(1))));
             }
         }
-
 
         SAPOrder convertedOrder3 = integrationService.initializeSAPOrder(sapQuote, conversionPdo, Option.create(Option.Type.CREATING));
         for(SAPOrderItem item:convertedOrder3.getOrderItems()) {
             if(item.getProductIdentifier().equals(primaryProduct.getPartNumber())) {
-                assertThat(item.getItemQuantity().doubleValue(), equalTo(
-                        (new BigDecimal(conversionPdo.getSamples().size())).doubleValue()));
+                assertThat(item.getItemQuantity(), equalTo((new BigDecimal(conversionPdo.getSamples().size()))));
             }
             else {
-                assertThat(item.getItemQuantity().doubleValue(), equalTo((new BigDecimal(1)).doubleValue()));
+                assertThat(item.getItemQuantity(), equalTo((new BigDecimal(1))));
             }
         }
 
         convertedOrder3 = integrationService.initializeSAPOrder(sapQuote, conversionPdo, Option.create(Option.Type.CREATING));
         for(SAPOrderItem item:convertedOrder3.getOrderItems()) {
             if(item.getProductIdentifier().equals(conversionPdo.getProduct().getPartNumber())) {
-                assertThat(item.getItemQuantity().doubleValue(), equalTo(new BigDecimal(conversionPdo.getSamples().size()).doubleValue()));
+                assertThat(item.getItemQuantity(), equalTo(new BigDecimal(conversionPdo.getSamples().size())));
             }
             else {
-                assertThat((item.getItemQuantity()).doubleValue(), equalTo((new BigDecimal(1)).doubleValue()));
+                assertThat((item.getItemQuantity()), equalTo((new BigDecimal(1))));
             }
         }
 
@@ -346,7 +334,7 @@ public class SapIntegrationServiceImplDBFreeTest {
             assertThat(sapOrderItem.getProductAlias(), is(emptyOrNullString()));
         }
 
-        ProductOrderPriceAdjustment customAdjustment3 = new ProductOrderPriceAdjustment(null, 99, null);
+        ProductOrderPriceAdjustment customAdjustment3 = new ProductOrderPriceAdjustment(null, BigDecimal.valueOf(99), null);
         conversionPdo.setCustomPriceAdjustment(customAdjustment3);
 
 
@@ -354,7 +342,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         assertThat(sapOrder.getOrderItems().size(), is(equalTo(1)));
         for (SAPOrderItem sapOrderItem : sapOrder.getOrderItems()) {
             assertThat(sapOrderItem.getConditions(), is(Collections.<ConditionValue>emptyList()));
-            assertThat(sapOrderItem.getItemQuantity().doubleValue(), is(equalTo((new BigDecimal(99)).doubleValue())));
+            assertThat(sapOrderItem.getItemQuantity(), is(equalTo((new BigDecimal(99)))));
             assertThat(sapOrderItem.getProductAlias(), is(emptyOrNullString()));
         }
 
@@ -363,17 +351,17 @@ public class SapIntegrationServiceImplDBFreeTest {
         if(conversionPdo.hasSapQuote()) {
             ledgerEntry =
                     new LedgerEntry(conversionPdo.getSamples().get(0), conversionPdo.getProduct(),
-                            new Date(), 3d);
+                            new Date(), BigDecimal.valueOf(3));
         } else {
             ledgerEntry =
                     new LedgerEntry(conversionPdo.getSamples().get(0), conversionPdo.getProduct().getPrimaryPriceItem(),
-                            new Date(), 3d);
+                            new Date(), BigDecimal.valueOf(3));
         }
         sapOrderDetail.addLedgerEntry(ledgerEntry);
 
         sapOrder = integrationService.initializeSAPOrder(sapQuote, conversionPdo, Option.create(Option.Type.CLOSING));
         for (SAPOrderItem sapOrderItem : sapOrder.getOrderItems()) {
-                assertThat(sapOrderItem.getItemQuantity().doubleValue(), is(equalTo((new BigDecimal(0)).doubleValue())));
+                assertThat(sapOrderItem.getItemQuantity(), is(equalTo((new BigDecimal(0)))));
             assertThat(sapOrderItem.getConditions(), is(Collections.<ConditionValue>emptyList()));
             assertThat(sapOrderItem.getProductAlias(), is(emptyOrNullString()));
         }
@@ -382,7 +370,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         assertThat(sapOrder.getOrderItems().size(), is(equalTo(1)));
         for (SAPOrderItem sapOrderItem : sapOrder.getOrderItems()) {
             assertThat(sapOrderItem.getConditions(), is(Collections.<ConditionValue>emptyList()));
-            assertThat(sapOrderItem.getItemQuantity().doubleValue(), is(equalTo((new BigDecimal(99)).doubleValue())));
+            assertThat(sapOrderItem.getItemQuantity(), is(equalTo((new BigDecimal(99)))));
             assertThat(sapOrderItem.getProductAlias(), is(emptyOrNullString()));
         }
 
@@ -392,9 +380,9 @@ public class SapIntegrationServiceImplDBFreeTest {
         sapOrder = integrationService.initializeSAPOrder(sapQuote, conversionPdo, Option.create(Option.Type.CLOSING));
         for (SAPOrderItem sapOrderItem : sapOrder.getOrderItems()) {
             if(sapOrderItem.getProductIdentifier().equals(conversionPdo.getProduct().getPartNumber())) {
-                assertThat(sapOrderItem.getItemQuantity().doubleValue(), is(equalTo((new BigDecimal(3)).doubleValue())));
+                assertThat(sapOrderItem.getItemQuantity(), is(equalTo((new BigDecimal(3)))));
             } else {
-            assertThat(sapOrderItem.getItemQuantity().doubleValue(), is(equalTo((new BigDecimal(0)).doubleValue())));
+            assertThat(sapOrderItem.getItemQuantity(), is(equalTo((new BigDecimal(0)))));
             }
             assertThat(sapOrderItem.getConditions(), is(Collections.<ConditionValue>emptyList()));
             assertThat(sapOrderItem.getProductAlias(), is(emptyOrNullString()));
@@ -404,14 +392,14 @@ public class SapIntegrationServiceImplDBFreeTest {
         assertThat(sapOrder.getOrderItems().size(), is(equalTo(1)));
         for (SAPOrderItem sapOrderItem : sapOrder.getOrderItems()) {
             assertThat(sapOrderItem.getConditions(), is(Collections.<ConditionValue>emptyList()));
-            assertThat(sapOrderItem.getItemQuantity().doubleValue(), is(equalTo((new BigDecimal(99)).doubleValue())));
+            assertThat(sapOrderItem.getItemQuantity(), is(equalTo((new BigDecimal("99")))));
             assertThat(sapOrderItem.getProductAlias(), is(emptyOrNullString()));
         }
 
-        double initialQuantity = 4d;
-        Map<String, Double> productToQuantityMapping = new HashMap<>();
+        BigDecimal initialQuantity = BigDecimal.valueOf(4);
+        Map<String, BigDecimal> productToQuantityMapping = new HashMap<>();
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
-            productToQuantityMapping.put(productOrderAddOn.getAddOn().getPartNumber(), initialQuantity++);
+            productToQuantityMapping.put(productOrderAddOn.getAddOn().getPartNumber(), initialQuantity.add(BigDecimal.ONE));
             LedgerEntry addonLedgerEntry;
 
             if(conversionPdo.hasSapQuote()) {
@@ -431,10 +419,10 @@ public class SapIntegrationServiceImplDBFreeTest {
         sapOrder = integrationService.initializeSAPOrder(sapQuote, conversionPdo, Option.create(Option.Type.CLOSING));
         for (SAPOrderItem sapOrderItem : sapOrder.getOrderItems()) {
             if(sapOrderItem.getProductIdentifier().equals(conversionPdo.getProduct().getPartNumber())) {
-                assertThat(sapOrderItem.getItemQuantity().doubleValue(), is(equalTo((new BigDecimal(3)).doubleValue())));
+                assertThat(sapOrderItem.getItemQuantity(), is(equalTo((new BigDecimal(3)))));
             } else {
-                assertThat(sapOrderItem.getItemQuantity().doubleValue(), is(equalTo(
-                        (new BigDecimal(productToQuantityMapping.get(sapOrderItem.getProductIdentifier()))).doubleValue())));
+                assertThat(sapOrderItem.getItemQuantity(), is(equalTo(
+                        (productToQuantityMapping.get(sapOrderItem.getProductIdentifier())))));
             }
             assertThat(sapOrderItem.getConditions(), is(Collections.<ConditionValue>emptyList()));
             assertThat(sapOrderItem.getProductAlias(), is(emptyOrNullString()));
@@ -444,7 +432,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         assertThat(sapOrder.getOrderItems().size(), is(equalTo(1)));
         for (SAPOrderItem sapOrderItem : sapOrder.getOrderItems()) {
             assertThat(sapOrderItem.getConditions(), is(Collections.<ConditionValue>emptyList()));
-            assertThat(sapOrderItem.getItemQuantity().doubleValue(), is(equalTo((new BigDecimal(99)).doubleValue())));
+            assertThat(sapOrderItem.getItemQuantity(), is(equalTo((new BigDecimal(99)))));
             assertThat(sapOrderItem.getProductAlias(), is(emptyOrNullString()));
         }
     }
@@ -469,7 +457,7 @@ public class SapIntegrationServiceImplDBFreeTest {
                     SAP_QUOTE_ID);
         }
 
-        this.sapQuote = TestUtils.buildTestSapQuote(SAP_QUOTE_ID, 100000d, 200000d, productOrder,
+        this.sapQuote = TestUtils.buildTestSapQuote(SAP_QUOTE_ID, BigDecimal.valueOf(100000), BigDecimal.valueOf(200000), productOrder,
                 TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
 
@@ -517,7 +505,7 @@ public class SapIntegrationServiceImplDBFreeTest {
             assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.ZERO), is(equalTo(0)));
         }
 
-        productOrder.addCustomPriceAdjustment(new ProductOrderPriceAdjustment(BigDecimal.valueOf(80), 8, null));
+        productOrder.addCustomPriceAdjustment(new ProductOrderPriceAdjustment(BigDecimal.valueOf(80), BigDecimal.valueOf(8), null));
 
 
         sapOrderNew = integrationService.initializeSAPOrder(sapQuote, productOrder, Option.create(Option.Type.CREATING));
@@ -572,12 +560,14 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         int ledgerCount = 4;
 
-        IntStream.range(0,ledgerCount).forEach(value -> {
-            addLedgerItems(productOrder, 1);
+        for(int value=0;value<ledgerCount;value++) {
 
-            SAPOrder newOrder = integrationService.initializeSAPOrder(sapQuote, productOrder, Option.create(Option.Type.CREATING));
+            addLedgerItems(productOrder, BigDecimal.valueOf(1));
 
-            assertThat(newOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size()+1)));
+            SAPOrder newOrder =
+                    integrationService.initializeSAPOrder(sapQuote, productOrder, Option.create(Option.Type.CREATING));
+
+            assertThat(newOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size() + 1)));
             for (SAPOrderItem orderItem : newOrder.getOrderItems()) {
                 assertThat(orderItem.getItemQuantity(), is(not(lessThan(BigDecimal.ZERO))));
                 if (orderItem.getProductIdentifier().equals(productOrder.getProduct().getPartNumber())) {
@@ -585,14 +575,15 @@ public class SapIntegrationServiceImplDBFreeTest {
                     assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(8 - (value + 1))),
                             is(equalTo(0)));
                 } else {
-                    assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(productOrder.getSamples().size() - (value + 1))),
+                    assertThat(orderItem.getItemQuantity()
+                                    .compareTo(BigDecimal.valueOf(productOrder.getSamples().size() - (value + 1))),
                             is(greaterThanOrEqualTo(0)));
                 }
             }
 
             SAPOrder noneOrder = integrationService.initializeSAPOrder(sapQuote, productOrder, Option.NONE);
 
-            assertThat(noneOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size()+1)));
+            assertThat(noneOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size() + 1)));
             for (SAPOrderItem orderItem : noneOrder.getOrderItems()) {
                 assertThat(orderItem.getItemQuantity(), is(not(lessThan(BigDecimal.ZERO))));
                 if (orderItem.getProductIdentifier().equals(productOrder.getProduct().getPartNumber())) {
@@ -600,7 +591,8 @@ public class SapIntegrationServiceImplDBFreeTest {
                     assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(8)),
                             is(equalTo(0)));
                 } else {
-                    assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(productOrder.getSamples().size())),
+                    assertThat(
+                            orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(productOrder.getSamples().size())),
                             is(greaterThanOrEqualTo(0)));
                 }
             }
@@ -608,14 +600,15 @@ public class SapIntegrationServiceImplDBFreeTest {
             SAPOrder queryOrder = integrationService.initializeSAPOrder(sapQuote, productOrder,
                     Option.create(Option.Type.ORDER_VALUE_QUERY));
 
-            assertThat(queryOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size()+1)));
+            assertThat(queryOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size() + 1)));
             for (SAPOrderItem orderItem : queryOrder.getOrderItems()) {
                 assertThat(orderItem.getItemQuantity(), is(not(lessThan(BigDecimal.ZERO))));
-                if(orderItem.getProductIdentifier().equals(productOrder.getProduct().getPartNumber())) {
+                if (orderItem.getProductIdentifier().equals(productOrder.getProduct().getPartNumber())) {
                     assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(8)),
                             is(equalTo(0)));
                 } else {
-                    assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(productOrder.getSamples().size() )),
+                    assertThat(
+                            orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(productOrder.getSamples().size())),
                             is(equalTo(0)));
                 }
             }
@@ -623,12 +616,12 @@ public class SapIntegrationServiceImplDBFreeTest {
             SAPOrder closingOrder =
                     integrationService.initializeSAPOrder(sapQuote, productOrder, Option.create(Option.Type.CLOSING));
 
-            assertThat(closingOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size()+1)));
+            assertThat(closingOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size() + 1)));
             for (SAPOrderItem orderItem : closingOrder.getOrderItems()) {
                 assertThat(orderItem.getItemQuantity(), is(not(lessThan(BigDecimal.ZERO))));
-                assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(value+1)), is(equalTo(0)));
+                assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(value + 1)), is(equalTo(0)));
             }
-        });
+        }
 
         //Mimic creating a new order
         productOrder.addSapOrderDetail(new SapOrderDetail(orderId+2, productOrder.getSampleCount(),
@@ -689,26 +682,29 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         int newLedgerCount = 4;
 
-        IntStream.range(0,newLedgerCount).forEach(value -> {
-            addLedgerItems(productOrder, 1);
+            for(int value=0;value<ledgerCount;value++) {
 
-            SAPOrder newOrder = integrationService.initializeSAPOrder(sapQuote, productOrder, Option.create(Option.Type.CREATING));
+                addLedgerItems(productOrder, BigDecimal.valueOf(1));
 
-            assertThat(newOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size()+1)));
+            SAPOrder newOrder =
+                    integrationService.initializeSAPOrder(sapQuote, productOrder, Option.create(Option.Type.CREATING));
+
+            assertThat(newOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size() + 1)));
             for (SAPOrderItem orderItem : newOrder.getOrderItems()) {
                 assertThat(orderItem.getItemQuantity(), is(not(lessThan(BigDecimal.ZERO))));
                 if (orderItem.getProductIdentifier().equals(productOrder.getProduct().getPartNumber())) {
                     assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(8 - ledgerCount - (value + 1))),
                             is(equalTo(0)));
                 } else {
-                    assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(productOrder.getSamples().size() - ledgerCount - (value + 1))),
+                    assertThat(orderItem.getItemQuantity().compareTo(
+                            BigDecimal.valueOf(productOrder.getSamples().size() - ledgerCount - (value + 1))),
                             is(greaterThanOrEqualTo(0)));
                 }
             }
 
             SAPOrder noneOrder = integrationService.initializeSAPOrder(sapQuote, productOrder, Option.NONE);
 
-            assertThat(noneOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size()+1)));
+            assertThat(noneOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size() + 1)));
             for (SAPOrderItem orderItem : noneOrder.getOrderItems()) {
                 assertThat(orderItem.getItemQuantity(), is(not(lessThan(BigDecimal.ZERO))));
                 if (orderItem.getProductIdentifier().equals(productOrder.getProduct().getPartNumber())) {
@@ -716,7 +712,8 @@ public class SapIntegrationServiceImplDBFreeTest {
                     assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(8 - ledgerCount)),
                             is(equalTo(0)));
                 } else {
-                    assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(productOrder.getSamples().size() - ledgerCount)),
+                    assertThat(orderItem.getItemQuantity()
+                                    .compareTo(BigDecimal.valueOf(productOrder.getSamples().size() - ledgerCount)),
                             is(greaterThanOrEqualTo(0)));
                 }
             }
@@ -724,14 +721,15 @@ public class SapIntegrationServiceImplDBFreeTest {
             SAPOrder queryOrder = integrationService.initializeSAPOrder(sapQuote, productOrder,
                     Option.create(Option.Type.ORDER_VALUE_QUERY));
 
-            assertThat(queryOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size()+1)));
+            assertThat(queryOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size() + 1)));
             for (SAPOrderItem orderItem : queryOrder.getOrderItems()) {
                 assertThat(orderItem.getItemQuantity(), is(not(lessThan(BigDecimal.ZERO))));
-                if(orderItem.getProductIdentifier().equals(productOrder.getProduct().getPartNumber())) {
+                if (orderItem.getProductIdentifier().equals(productOrder.getProduct().getPartNumber())) {
                     assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(8 - ledgerCount)),
                             is(equalTo(0)));
                 } else {
-                    assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(productOrder.getSamples().size() - ledgerCount )),
+                    assertThat(orderItem.getItemQuantity()
+                                    .compareTo(BigDecimal.valueOf(productOrder.getSamples().size() - ledgerCount)),
                             is(equalTo(0)));
                 }
             }
@@ -739,12 +737,12 @@ public class SapIntegrationServiceImplDBFreeTest {
             SAPOrder closingOrder =
                     integrationService.initializeSAPOrder(sapQuote, productOrder, Option.create(Option.Type.CLOSING));
 
-            assertThat(closingOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size()+1)));
+            assertThat(closingOrder.getOrderItems().size(), is(equalTo(productOrder.getAddOns().size() + 1)));
             for (SAPOrderItem orderItem : closingOrder.getOrderItems()) {
                 assertThat(orderItem.getItemQuantity(), is(not(lessThan(BigDecimal.ZERO))));
-                assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(value+1)), is(equalTo(0)));
+                assertThat(orderItem.getItemQuantity().compareTo(BigDecimal.valueOf(value + 1)), is(equalTo(0)));
             }
-        });
+        }
     }
 
     @Test(dataProvider = "orderStatusForSampleCount")
@@ -796,7 +794,7 @@ public class SapIntegrationServiceImplDBFreeTest {
                 assertThat(addonClosingCount, is(equalTo(closingCount)));
                 assertThat(addOnOrderValueQueryCount, is(equalTo((double) countTestPDO.getSamples().size()+extraSamples )));
             }
-            addLedgerItems(countTestPDO, 1);
+            addLedgerItems(countTestPDO, BigDecimal.valueOf(1));
 
             closingCount++;
         }
@@ -899,21 +897,21 @@ public class SapIntegrationServiceImplDBFreeTest {
                 is(equalTo(primaryGPPMaterial)));
     }
 
-    private void addLedgerItems(ProductOrder order, int ledgerCount) {
+    private void addLedgerItems(ProductOrder order, BigDecimal ledgerCount) {
         for (ProductOrderSample productOrderSample : order.getSamples()) {
             if(!productOrderSample.isCompletelyBilled()) {
                 if(order.hasSapQuote()) {
-                    productOrderSample.addLedgerItem(new Date(), order.getProduct(), ledgerCount * 1d, false);
+                    productOrderSample.addLedgerItem(new Date(), order.getProduct(), ledgerCount, false);
                     for (ProductOrderAddOn productOrderAddOn : order.getAddOns()) {
                         productOrderSample.addLedgerItem(new Date(), productOrderAddOn.getAddOn(),
-                                ledgerCount * 1d, false);
+                                ledgerCount, false);
                     }
                 } else {
                     productOrderSample
-                            .addLedgerItem(new Date(), order.getProduct().getPrimaryPriceItem(), ledgerCount * 1d);
+                            .addLedgerItem(new Date(), order.getProduct().getPrimaryPriceItem(), ledgerCount);
                     for (ProductOrderAddOn productOrderAddOn : order.getAddOns()) {
                         productOrderSample.addLedgerItem(new Date(), productOrderAddOn.getAddOn().getPrimaryPriceItem(),
-                                ledgerCount * 1d);
+                                ledgerCount);
                     }
                 }
 
