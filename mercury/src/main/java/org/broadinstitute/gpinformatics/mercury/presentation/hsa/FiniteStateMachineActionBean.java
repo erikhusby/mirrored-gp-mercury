@@ -211,6 +211,7 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
         if (messageCollection.hasErrors()) {
             addMessages(messageCollection);
         } else {
+            stateMachineDao.persist(editFiniteStateMachine);
             addMessage(getSubmitString() + " '" + editFiniteStateMachine.getStateMachineName() + "' was successful");
         }
         return new RedirectResolution(FiniteStateMachineActionBean.class, LIST_ACTION);
@@ -289,7 +290,7 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
 
     @HandlesEvent(RESUME_MACHINE_ACTION)
     public Resolution resumeMachine() {
-        SchedulerContext schedulerContext = new SchedulerContext(new SchedulerControllerStub());
+        SchedulerContext schedulerContext = new SchedulerContext(slurmController);
         finiteStateMachineEngine.setContext(schedulerContext);
         Long selectedId = getSelectedIds().iterator().next();
         FiniteStateMachine stateMachine = stateMachineDao.findById(FiniteStateMachine.class, selectedId);

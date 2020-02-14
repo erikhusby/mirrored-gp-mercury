@@ -97,15 +97,15 @@ public class AggregationMetricsTaskHandler extends AbstractMetricsTaskHandler {
                             readGroup, outputFilePrefix, containsContamination);
 
             List<ProcessResult> processResults = new ArrayList<>();
-            processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/mapping_run_metrics.ctl",
-                    alignmentDataFiles.getMappingSummaryOutputFile(), alignmentDataFiles.getAlignSummaryLoad()));
+            processResults.add(uploadMetric(getCtlFilePath("mapping_run_metrics.ctl"),
+                    alignmentDataFiles.getMappingSummaryOutputFile(), getLogPath(alignmentDataFiles.getAlignSummaryLoad())));
 
-            processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/mapping_rg_metrics.ctl",
-                    alignmentDataFiles.getMappingMetricsOutputFile(), alignmentDataFiles.getAlignMetricLoad()));
+            processResults.add(uploadMetric(getCtlFilePath("mapping_rg_metrics.ctl"),
+                    alignmentDataFiles.getMappingMetricsOutputFile(), getLogPath(alignmentDataFiles.getAlignMetricLoad())));
 
-            // TODO Only if enabled
-            processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/variant_call_run_metrics.ctl",
-                    alignmentDataFiles.getVcSummaryOutputFile(),  alignmentDataFiles.getVcSummaryMetricLoad()));
+            // TODO Only if vc enabled
+            processResults.add(uploadMetric(getCtlFilePath("variant_call_run_metrics.ctl"),
+                    alignmentDataFiles.getVcSummaryOutputFile(),  getLogPath(alignmentDataFiles.getVcSummaryMetricLoad())));
 
             boolean failed = false;
             for (ProcessResult processResult : processResults) {

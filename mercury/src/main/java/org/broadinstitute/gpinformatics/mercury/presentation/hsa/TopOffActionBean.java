@@ -111,6 +111,7 @@ public class TopOffActionBean extends CoreActionBean {
     public static final String POOLING_BUCKET = "Pooling Bucket";
     public static final String CLEAR_REWORK = "clearRework";
     public static final String DOWNLOAD_POOL_GROUPS = "downloadPoolGroups";
+    public static final String MARK_COMPLETE = "markComplete";
 
     private List<String> selectedSamples;
 
@@ -134,9 +135,6 @@ public class TopOffActionBean extends CoreActionBean {
     private LabVesselDao labVesselDao;
 
     @Inject
-    private ProductOrderDao productOrderDao;
-
-    @Inject
     private WorkflowConfig workflowConfig;
 
     @Inject
@@ -146,9 +144,6 @@ public class TopOffActionBean extends CoreActionBean {
     private LabBatchEjb labBatchEjb;
 
     @Inject
-    private JiraConfig jiraConfig;
-
-    @Inject
     private StateMachineDao stateMachineDao;
 
     @Inject
@@ -156,12 +151,6 @@ public class TopOffActionBean extends CoreActionBean {
 
     @Inject
     private CoverageTypeDao coverageTypeDao;
-
-    @Inject
-    private ReworkEjb reworkEjb;
-
-    @Inject
-    private ReworkReasonDao reworkReasonDao;
 
     @Inject
     private JiraService jiraService;
@@ -295,7 +284,7 @@ public class TopOffActionBean extends CoreActionBean {
     }
 
     @ValidationMethod(on = {DOWNLOAD_PICK_LIST, CREATE_TOP_OFF_GROUP, SEND_TO_REWORK, SEND_TO_HOLDING,
-            REMOVE_FROM_POOL_GROUP, CLEAR_REWORK, DOWNLOAD_POOL_GROUPS, DOWNLOAD_PG_PICK_LIST})
+            REMOVE_FROM_POOL_GROUP, CLEAR_REWORK, DOWNLOAD_POOL_GROUPS, DOWNLOAD_PG_PICK_LIST, MARK_COMPLETE})
     public void validateSelectedSamples() {
         if (CollectionUtils.isEmpty(selectedSamples)) {
             addGlobalValidationError("Must select at least one sample.");
@@ -305,6 +294,13 @@ public class TopOffActionBean extends CoreActionBean {
 
     @ValidationMethod(on = {CREATE_TOP_OFF_GROUP}, priority = 2, when = ValidationState.NO_ERRORS)
     public void validateIndexes () {
+        validateSelectedIndexes();
+        if (!getContext().getValidationErrors().isEmpty()) {
+            initData();
+        }
+    }
+
+    public void validateSelectedIndexes() {
         mapTabToDto.get(sequencingType).stream()
             .filter(dto -> selectedSamples.contains(dto.getPdoSample()))
             .collect(Collectors.groupingBy(HoldForTopoffDto::getIndex))
@@ -315,9 +311,6 @@ public class TopOffActionBean extends CoreActionBean {
                 addGlobalValidationError("Can't add duplicate index to same group: " + dto.getIndex()
                                          + " for sample: " + dto.getPdoSample());
             });
-        if (!getContext().getValidationErrors().isEmpty()) {
-            initData();
-        }
     }
 
     @HandlesEvent(SEND_TO_HOLDING)
@@ -422,10 +415,9 @@ public class TopOffActionBean extends CoreActionBean {
         return view();
     }
 
-    @HandlesEvent("markComplete")
+    @HandlesEvent(MARK_COMPLETE)
     public Resolution markPoolGroupComplete() {
-        Map<String, List<String>> mapSeqToSamples = buildSamplesToRemoveFromPoolGroup();
-        topOffEjb.drainPools(mapSeqToSamples);
+        topOffEjb.drainPoolGroups(selectedSamples);
         return view();
     }
 

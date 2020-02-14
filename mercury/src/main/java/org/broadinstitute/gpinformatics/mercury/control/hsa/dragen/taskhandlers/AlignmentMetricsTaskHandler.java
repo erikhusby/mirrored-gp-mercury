@@ -158,11 +158,11 @@ public class AlignmentMetricsTaskHandler extends AbstractMetricsTaskHandler {
         }
 
         List<ProcessResult> processResults = new ArrayList<>();
-        processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/mapping_run_metrics.ctl",
-                alignmentDataFiles.getMappingSummaryOutputFile(), alignmentDataFiles.getAlignSummaryLoad()));
+        processResults.add(uploadMetric(getCtlFilePath("mapping_run_metrics.ctl"),
+                alignmentDataFiles.getMappingSummaryOutputFile(), getLogPath(alignmentDataFiles.getAlignSummaryLoad())));
 
-        processResults.add(uploadMetric("/seq/lims/datawh/dev/dragen/variant_call_run_metrics.ctl",
-                alignmentDataFiles.getVcSummaryOutputFile(),  alignmentDataFiles.getVcSummaryMetricLoad()));
+        processResults.add(uploadMetric(getCtlFilePath("variant_call_run_metrics.ctl"),
+                alignmentDataFiles.getVcSummaryOutputFile(),  getLogPath(alignmentDataFiles.getVcSummaryMetricLoad())));
         boolean failed = false;
         for (ProcessResult processResult : processResults) {
             if (processResult.getExitValue() != 0) {

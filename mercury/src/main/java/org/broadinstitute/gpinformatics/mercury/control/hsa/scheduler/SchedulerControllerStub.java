@@ -60,4 +60,16 @@ public class SchedulerControllerStub implements SchedulerController {
         jobInfo.setState("COMPLETED");
         return jobInfo;
     }
+
+    @Override
+    public boolean holdJobs(List<Long> jobIds) {
+
+        return false;
+    }
+
+    @Override
+    public boolean releaseJobs(List<Long> jobIds) {
+
+        return false;
+    }
 }

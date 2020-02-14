@@ -494,9 +494,14 @@ public class MercurySample extends AbstractSample {
     }
 
     public <T extends State> Optional<T> getMostRecentStateOfType(Class<T> clazz) {
-        return getStates().stream()
-                .filter(state -> OrmUtil.proxySafeIsInstance(state, clazz) && state.isComplete() && state.getMercurySamples().contains(this))
-                .map(state -> OrmUtil.proxySafeCast(state, clazz))
-                .max(Comparator.comparing(State::getEndTime));
+        Set<State> states = getStates();
+        State maxState = states.stream()
+                .filter(state -> state.getEndTime() != null && OrmUtil.proxySafeIsInstance(state, clazz))
+                .max(Comparator.comparing(State::getEndTime)).orElse(null);
+        if (maxState == null) {
+            return Optional.empty();
+        } else {
+            return Optional.of(OrmUtil.proxySafeCast(maxState, clazz));
+        }
     }
 }

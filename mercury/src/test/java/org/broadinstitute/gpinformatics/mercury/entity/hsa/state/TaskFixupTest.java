@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.TaskDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.SampleSheetBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AlignmentMetricsTask;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.BclDemultiplexMetricsTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DemultiplexMetricsTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DemultiplexTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenFolderUtil;
@@ -154,7 +155,7 @@ public class TaskFixupTest extends Arquillian {
         utx.commit();
     }
 
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void fixupGplim6242AddExitTaskToStateAndStart() throws Exception {
         userBean.loginOSUser();
         utx.begin();
@@ -163,26 +164,21 @@ public class TaskFixupTest extends Arquillian {
         String reason = lines.get(0);
         for (String line : lines.subList(1, lines.size())) {
             String[] fields = line.split("\\s");
-            Long fsm = Long.valueOf(fields[0]);
-            FiniteStateMachine stateMachine = finiteStateMachineDao.findById(FiniteStateMachine.class, fsm);
-            if (stateMachine == null) {
-                throw new RuntimeException("Not a valid state machine");
-            }
             Long stateId = Long.valueOf(fields[1]);
-            AggregationState aggregationState = aggregationStateDao.findById(AggregationState.class, stateId);
+            DemultiplexState aggregationState = demultiplexStateDao.findById(DemultiplexState.class, stateId);
             if (aggregationState == null) {
                 throw new RuntimeException("Not a valid aggregation state");
             }
 
-            AlignmentMetricsTask alignmentMetricsTask = new AlignmentMetricsTask();
-            alignmentMetricsTask.setTaskName(aggregationState.getStateName().replace("Agg", "AggMetric"));
+            BclDemultiplexMetricsTask alignmentMetricsTask = new BclDemultiplexMetricsTask();
+            alignmentMetricsTask.setTaskName(aggregationState.getStateName().replace("Bcl", "BclMetric"));
             aggregationState.addExitTask(alignmentMetricsTask);
 
-            stateMachine.setStatus(Status.RUNNING);
+            aggregationState.getFiniteStateMachine().setStatus(Status.RUNNING);
             aggregationState.setAlive(true);
         }
 
-        taskDao.persist(new FixupCommentary("GPLIM-6242 added alignment metrics task to state "));
+        taskDao.persist(new FixupCommentary("GPLIM-6242 added bcl metrics task to state "));
         taskDao.flush();
         utx.commit();
     }

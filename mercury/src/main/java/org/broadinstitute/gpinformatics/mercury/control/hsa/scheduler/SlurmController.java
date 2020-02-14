@@ -110,14 +110,30 @@ public class SlurmController implements SchedulerController {
 
     @Override
     public JobInfo fetchJobInfo(long jobId) {
-        String format = "--format=jobid,jobname,partition,account,alloccpus,state,exitcode,start,end";
+        String format = "--format=jobid,jobname,partition,account,alloccpus,state,exitcode,start,end,nodelist";
         List<JobInfo> jobInfoList = runProcesssParseList(Arrays.asList(
-                        "ssh", dragenConfig.getSlurmHost(), "sacct", "-j", String.valueOf(jobId), format, "-p"), JobInfo.class);
+                        "ssh", dragenConfig.getSlurmHost(), "sacct", "-j", String.valueOf(jobId), "-X", format, "-p"), JobInfo.class);
         if (jobInfoList.size() > 0) {
             return jobInfoList.get(0);
         }
 
         return null;
+    }
+
+    @Override
+    public boolean holdJobs(List<Long> jobIds) {
+        String joblist = StringUtils.join(jobIds, ",");
+        List<String> cmd = Arrays.asList("ssh", dragenConfig.getSlurmHost(), "scontrol", "hold", joblist);
+        ProcessResult result = runProcess(cmd);
+        return result.getExitValue() == 0;
+    }
+
+    @Override
+    public boolean releaseJobs(List<Long> jobIds) {
+        String joblist = StringUtils.join(jobIds, ",");
+        List<String> cmd = Arrays.asList("ssh", dragenConfig.getSlurmHost(), "scontrol", "release", joblist);
+        ProcessResult result = runProcess(cmd);
+        return result.getExitValue() == 0;
     }
 
     private ProcessResult runProcess(List<String> cmd) {
@@ -154,8 +170,10 @@ public class SlurmController implements SchedulerController {
     }
 
     public File getLogFile(long processId) {
-        File homeDir = new File(System.getProperty("user.home"));
-        return new File(homeDir, "slurm-" + processId + ".out");
+        File logPath = new File(dragenConfig.getLogFilePath());
+        File logDir = logPath.getParentFile();
+        String fileName = String.format("slurm-%d.out", processId);
+        return new File(logDir, fileName);
     }
 
     // For Testing

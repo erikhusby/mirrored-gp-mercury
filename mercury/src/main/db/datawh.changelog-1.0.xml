@@ -36,7 +36,7 @@
             <column name="DRAGEN_VERSION" type="VARCHAR2(25))"/>
             <column name="SEQUENCING_SAMPLE_METRIC_ID" type="number(19,0)"/>
         </createTable>
-        <createSequence schemaName="mercurydw" sequenceName="SEQ_SEQ_RUN_METRIC" incrementBy="50"/>
+        <createSequence schemaName="mercurydw" sequenceName="SEQ_SEQ_RUN_METRIC" incrementBy="1"/>
     </changeSet>
 
     <changeSet id="GPLIM-6242-37" author="jowalsh">
@@ -85,7 +85,7 @@
                 <constraints nullable="false" />
             </column>
         </createTable>
-        <createSequence schemaName="mercurydw" sequenceName="SEQ_VC_RUN_METRIC" incrementBy="50"/>
+        <createSequence schemaName="mercurydw" sequenceName="SEQ_VC_RUN_METRIC" incrementBy="1"/>
     </changeSet>
 
     <changeSet id="GPLIM-6242-39" author="jowalsh">
@@ -190,7 +190,7 @@
                 <constraints nullable="false" />
             </column>
         </createTable>
-        <createSequence schemaName="mercurydw" sequenceName="SEQ_MAP_RUN_METRIC" incrementBy="50"/>
+        <createSequence schemaName="mercurydw" sequenceName="SEQ_MAP_RUN_METRIC" incrementBy="1"/>
     </changeSet>
 
     <changeSet id="GPLIM-6242-41" author="jowalsh">
@@ -216,7 +216,7 @@
             <column name="DRAGEN_VERSION" type="VARCHAR2(25))"/>
             <column name="SEQUENCING_LANE_METRIC_ID" type="number(19,0)"/>
         </createTable>
-        <createSequence schemaName="mercurydw" sequenceName="SEQ_SEQ_LANE_METRIC" incrementBy="50"/>
+        <createSequence schemaName="mercurydw" sequenceName="SEQ_SEQ_LANE_METRIC" incrementBy="1"/>
     </changeSet>
 
     <changeSet id="GPLIM-6242-42" author="jowalsh">
@@ -244,7 +244,7 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <createSequence schemaName="mercurydw" sequenceName="SEQ_FP_SCORE" incrementBy="50"/>
+        <createSequence schemaName="mercurydw" sequenceName="SEQ_FP_SCORE" incrementBy="1"/>
     </changeSet>
 
     <changeSet id="GPLIM-6242-43" author="jowalsh">

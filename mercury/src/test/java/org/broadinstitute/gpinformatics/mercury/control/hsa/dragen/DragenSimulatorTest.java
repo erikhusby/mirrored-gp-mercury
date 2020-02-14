@@ -223,10 +223,13 @@ public class DragenSimulatorTest extends BaseEventTest {
         DragenConfig dragenConfig = new DragenConfig(Deployment.DEV);
         EtlConfig etlConfig = new EtlConfig(Deployment.DEV);
         dragenConfig.setDemultiplexOutputPath(baseDirectory);
-        DemultiplexMetricsTaskHandler demultiplexMetricsTaskHandler = new DemultiplexMetricsTaskHandler();
-        demultiplexMetricsTaskHandler.setDragenConfig(dragenConfig);
-        demultiplexMetricsTaskHandler.setShellUtils(new ShellUtils());
-        demultiplexMetricsTaskHandler.setDemultiplexStatsParser(new DemultiplexStatsParser());
+
+        DemultiplexMetricsTaskHandler demultiplexMetricsTaskHandler = mock(DemultiplexMetricsTaskHandler.class);
+        doAnswer(invocation -> {
+            Task task = (Task) invocation.getArguments()[0];
+            task.setStatus(Status.COMPLETE);
+            return null;
+        }).when(demultiplexMetricsTaskHandler).handleTask(any(Task.class), any(SchedulerContext.class));
 
         ShellUtils shellUtils = mock(ShellUtils.class);
         AlignmentMetricsTaskHandler alignmentMetricsTaskHandler = mock(AlignmentMetricsTaskHandler.class);
@@ -283,9 +286,6 @@ public class DragenSimulatorTest extends BaseEventTest {
         // Verify that the demultiplex exit task ran and the stats were parsed
         List<DemultiplexStats> demultiplexStats = demultiplexMetricsTaskHandler.getDemultiplexStats();
         Assert.assertNotNull(demultiplexStats);
-
-        DragenReplayInfo dragenReplayInfo = demultiplexMetricsTaskHandler.getDragenReplayInfo();
-        Assert.assertNotNull(dragenReplayInfo);
 
         // Alignment ran so state machine should now be complete
         engine.executeProcessDaoFree(finiteStateMachine);

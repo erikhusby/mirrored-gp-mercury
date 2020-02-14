@@ -32,6 +32,8 @@ public class DragenConfig extends AbstractConfig implements Serializable {
 
     private String sqlldrPath;
 
+    private String ctlFolder;
+
     public DragenConfig() {
     }
 
@@ -126,5 +128,13 @@ public class DragenConfig extends AbstractConfig implements Serializable {
 
     public void setSqlldrPath(String sqlldrPath) {
         this.sqlldrPath = sqlldrPath;
+    }
+
+    public String getCtlFolder() {
+        return ctlFolder;
+    }
+
+    public void setCtlFolder(String ctlFolder) {
+        this.ctlFolder = ctlFolder;
     }
 }

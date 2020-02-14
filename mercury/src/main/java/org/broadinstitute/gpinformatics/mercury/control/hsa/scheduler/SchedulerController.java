@@ -12,4 +12,6 @@ public interface SchedulerController {
     boolean cancelJob(String jobId);
     Status fetchJobStatus(long pid);
     JobInfo fetchJobInfo(long jobId);
+    boolean holdJobs(List<Long> jobIds);
+    boolean releaseJobs(List<Long> jobIds);
 }

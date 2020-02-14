@@ -278,6 +278,7 @@ dragen:
       configFilePath: /seq/dragen/config/
       logFilePath: /seq/dragen/log/slurm-%j.out
       sqlldrPath: /opt/oracle/sqlldr
+      ctlFolder: /seq/lims/datawh/dev/dragen
 
     QA:
       demultiplexOutputPath:  /seq/illumina/proc/
@@ -291,6 +292,7 @@ dragen:
       configFilePath: /seq/dragen/config/
       logFilePath: /seq/dragen/log/slurm-%j.out
       sqlldrPath: sqlldr
+      ctlFolder: /seq/lims/datawh/dev/dragen
 
     PROD:
       demultiplexOutputPath:  /seq/illumina/proc/
@@ -304,6 +306,7 @@ dragen:
       configFilePath: /seq/dragen/config/
       logFilePath: /seq/dragen/log/slurm-%j.out
       sqlldrPath: sqlldr
+      ctlFolder: /seq/lims/datawh/prod/dragen
 
 hipchat:
     DEV:

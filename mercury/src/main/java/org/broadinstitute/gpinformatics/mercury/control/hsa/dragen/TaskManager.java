@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.control.hsa.dragen;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.AggregationMetricsTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.AlignmentMetricsTaskHandler;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.BclMetricsTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.CrosscheckFingerprintUploadTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.DemultiplexMetricsTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.FingerprintTaskHandler;
@@ -25,6 +26,9 @@ public class TaskManager {
     private DemultiplexMetricsTaskHandler demultiplexMetricsTaskHandler;
 
     @Inject
+    private BclMetricsTaskHandler bclMetricsTaskHandler;
+
+    @Inject
     private AlignmentMetricsTaskHandler alignmentMetricsTaskHandler;
 
     @Inject
@@ -44,6 +48,8 @@ public class TaskManager {
             Thread.sleep(1000L); // Slurm Docs recommend a slight delay between job creation
         } else if (OrmUtil.proxySafeIsInstance(task, DemultiplexMetricsTask.class)) {
             demultiplexMetricsTaskHandler.handleTask(task, schedulerContext);
+        }  else if (OrmUtil.proxySafeIsInstance(task, BclDemultiplexMetricsTask.class)) {
+            bclMetricsTaskHandler.handleTask(task, schedulerContext);
         } else if (OrmUtil.proxySafeIsInstance(task, AlignmentMetricsTask.class)) {
             if (OrmUtil.proxySafeIsInstance(task.getState(), AggregationState.class)) {
                 aggregationMetricsTaskHandler.handleTask(task, schedulerContext);

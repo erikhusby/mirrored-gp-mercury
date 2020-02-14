@@ -8,6 +8,8 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.metrics.DemultiplexS
 import org.broadinstitute.gpinformatics.mercury.control.hsa.metrics.DragenReplayInfo;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.ShellUtils;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
 import org.zeroturnaround.exec.ProcessResult;
 
 import javax.inject.Inject;
@@ -17,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
 public abstract class AbstractMetricsTaskHandler extends AbstractTaskHandler {
@@ -36,13 +39,14 @@ public abstract class AbstractMetricsTaskHandler extends AbstractTaskHandler {
 
     protected ProcessResult uploadMetric(String ctlFilePath, File dataPath, String loadLog)
             throws IOException, TimeoutException, InterruptedException {
+        // TODO JW set host from config
         String ldruid = "mercurydw/seq_dev3@\"(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=seqdev.broad.mit.edu)(PORT=1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SID=seqdev3)))\"";
         List<String> cmds = Arrays.asList(dragenConfig.getSqlldrPath(),
                 String.format("control=%s", ctlFilePath),
                 String.format("log=%s", loadLog),
-                "bad=load.bad",
+                String.format("bad=%s/load.bad", dataPath.getParentFile().getPath()),
                 String.format("data=%s", dataPath.getPath()),
-                "discard=load.dsc",
+                String.format("discard=%s/load.dsc", dataPath.getParentFile().getPath()),
                 "direct=false",
                 String.format("userId=%s", ldruid));
         return shellUtils.runSyncProcess(cmds);
@@ -58,7 +62,30 @@ public abstract class AbstractMetricsTaskHandler extends AbstractTaskHandler {
         }
     }
 
+    protected IlluminaSequencingRun findRunFromDirectory(File runDir, Set<IlluminaSequencingRunChamber> runChambers) {
+        for (IlluminaSequencingRunChamber runChamber: runChambers) {
+            String runDirectory = runChamber.getIlluminaSequencingRun().getRunDirectory();
+            File seqRunDir = new File(runDirectory);
+            if (seqRunDir.getName().equals(runDir.getName())) {
+                return runChamber.getIlluminaSequencingRun();
+            }
+        }
+        return null;
+    }
+
+    protected String getCtlFilePath(String ctlFilename) {
+        return String.format("%s/%s", dragenConfig.getCtlFolder(), ctlFilename);
+    }
+
+    protected String getLogPath(String filename) {
+        return String.format("%s/log/%s", dragenConfig.getCtlFolder(), filename);
+    }
+
     public void setShellUtils(ShellUtils shellUtils) {
         this.shellUtils = shellUtils;
+    }
+
+    public void setDragenConfig(DragenConfig dragenConfig) {
+        this.dragenConfig = dragenConfig;
     }
 }

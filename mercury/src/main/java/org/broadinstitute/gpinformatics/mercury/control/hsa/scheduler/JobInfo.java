@@ -36,6 +36,9 @@ public class JobInfo {
     @CsvBindByName(column = "Start")
     private String start;
 
+    @CsvBindByName(column = "NodeList")
+    private String nodeList;
+
     public JobInfo() {
     }
 
@@ -77,6 +80,14 @@ public class JobInfo {
 
     public void setPartition(String partition) {
         this.partition = partition;
+    }
+
+    public String getNodeList() {
+        return nodeList;
+    }
+
+    public void setNodeList(String nodeList) {
+        this.nodeList = nodeList;
     }
 
     public Date getEnd() {

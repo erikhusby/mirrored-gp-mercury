@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.state;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DemultiplexTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.GsUtilTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.ProcessTask;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -50,6 +51,7 @@ public abstract class State {
     private Long stateId;
 
     @OneToMany(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY, mappedBy = "state")
+    @BatchSize(size = 20)
     private Set<Task> tasks = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST})
@@ -162,6 +164,13 @@ public abstract class State {
         return tasks.stream()
                 .filter(t -> t.getTaskActionTime() == Task.TaskActionTime.DEFAULT &&
                              t.getStatus() == status)
+                .collect(Collectors.toSet());
+    }
+
+    public <T extends Task> Set<T> getTasksOfType(Class<T> clazz) {
+        return getTasks().stream()
+                .filter(t -> OrmUtil.proxySafeIsInstance(t, clazz))
+                .map(t -> OrmUtil.proxySafeCast(t, clazz))
                 .collect(Collectors.toSet());
     }
 
