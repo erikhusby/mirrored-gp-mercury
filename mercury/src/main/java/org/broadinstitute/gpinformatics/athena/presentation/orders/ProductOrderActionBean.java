@@ -188,6 +188,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public static final String ACTIONBEAN_URL_BINDING = "/orders/order.action";
     public static final String PRODUCT_ORDER_PARAMETER = "productOrder";
+    public static final String SAP_ORDER_PARAMETER = "sapOrder";
     public static final String REGULATORY_ID_PARAMETER = "selectedRegulatoryIds";
 
     private static final String PRODUCT_ORDER = "Product Order";
@@ -231,6 +232,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String sampleSummary;
     private State state;
     private ProductOrder.QuoteSourceType quoteSource;
+    private String sapOrdder;
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -567,11 +569,16 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, GET_SAMPLE_DATA})
     public void editInit() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
+        sapOrdder = getContext().getRequest().getParameter(SAP_ORDER_PARAMETER);
         // If there's no product order parameter, send an error.
-        if (StringUtils.isBlank(productOrder)) {
+        if (StringUtils.isBlank(productOrder) && StringUtils.isBlank(sapOrdder)) {
             addGlobalValidationError("No product order was specified.");
         } else {
-            editOrder = productOrderDao.findByBusinessKey(productOrder);
+            if(StringUtils.isNotBlank(productOrder)) {
+                editOrder = productOrderDao.findByBusinessKey(productOrder);
+            } else if (StringUtils.isNotBlank(sapOrdder)) {
+                editOrder = productOrderDao.findBySapOrderId(sapOrdder);
+            }
             if (editOrder != null) {
                 List<Long> productOrderIds = new ArrayList<>();
                 productOrderIds.add(editOrder.getProductOrderId());
