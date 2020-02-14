@@ -81,7 +81,7 @@ public class FingerprintingSpreadsheetActionBeanTest {
             BarcodedTube tube = new BarcodedTube("tube" + idValue);
             tube.addSample(mercurySample);
             tube.addMetric(new LabMetric(new BigDecimal(i), LabMetric.MetricType.INITIAL_PICO,
-                    LabMetric.LabUnit.NG_PER_UL, position.name(), now));
+                    LabMetric.LabUnit.NG_PER_UL, position, now));
             initialPicoMap.put(position, tube);
         }
         initialPicoRack = new TubeFormation(initialPicoMap, Matrix96);
@@ -109,7 +109,7 @@ public class FingerprintingSpreadsheetActionBeanTest {
             aliquotTube.addAllSamples(initialTube.getMercurySamples());
             BigDecimal conc = new BigDecimal("5." + StringUtil.leftPad(String.valueOf(i), 3, '0'));
             aliquotTube.addMetric(new LabMetric(conc, LabMetric.MetricType.FINGERPRINT_PICO,
-                    LabMetric.LabUnit.NG_PER_UL, aliquotPosition.name(), later));
+                    LabMetric.LabUnit.NG_PER_UL, aliquotPosition, later));
 
             aliquotDestMap.put(aliquotPosition, aliquotTube);
 
