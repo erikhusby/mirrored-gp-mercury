@@ -321,7 +321,7 @@
                         var $input = $j(event.target);
                         var value = $input.find(":selected").val();
                         if(getSelectedRows().length > 0) {
-                            var inputName = $input.attr(name);
+                            var inputName = $input.attr('name');
                             var $selectedInputs = getSelectedRows().find('select.ledgerReplacement:enabled');
                             for (var i = 0; i < $selectedInputs.length; i++) {
                                 var $selectedSelect = $selectedInputs.eq(i);
@@ -329,13 +329,15 @@
                                     $selectedSelect.val(value).change();
                                     var changed = value !== $selectedSelect.attr('originalValue');
                                     $selectedSelect.toggleClass('changed', changed);
-                                    $selectedSelect.cosest("tr").toggleClass('changed', changed)
+                                    $selectedSelect.cosest("tr").toggleClass('changed', changed);
+                                    updateUnbilledStatus($selectedSelect, $dateCompleteInputs);
                                 }
                             }
                         }
                         var changed = value !== $input.attr('originalValue');
                         $input.toggleClass('changed', changed);
                         $input.closest("tr").toggleClass('changed', changed);
+                        updateUnbilledStatus($input, $dateCompleteInputs);
                         updateSubmitButton();
                     })
                 }
@@ -429,6 +431,11 @@
                     updateSubmitButton();
                 });
 
+                $ledgerReplacements.on('change', function(event) {
+                    updateUnbilledStatus($j(event.target), $dateCompleteInputs);
+                    updateSubmitButton();
+                });
+
                 // Update display styles for all quantities when the page loads.
                 for (var i = 0; i < $ledgerQuantities.length; i++) {
                     updateUnbilledStatus($ledgerQuantities.eq(i), $dateCompleteInputs);
@@ -475,8 +482,16 @@
                     unselectedRows.filter(".ledgerRepacement").prop('disabled', false);
                     inputs.filter(".ledgerQuantity").hSpinner().hSpinner('enable');
                 }
+
             });
 
+            // initialize delivery discount select lists to the pre-selected value upon page load
+            var replacementInput = $ledger.find("select.ledgerReplacement");
+            for(var index = 0;index<replacementInput.length; index++) {
+                indexedInput = replacementInput.eq(index);
+                var initialValue = indexedInput.attr('originalValue');
+                indexedInput.val(initialValue).change();
+            }
             /*
              * This page's DataTable reserves a spot, #dtButtonHolder (see its sDom property), above the table between
              * the filter input and download buttons. This one-liner moves the existing #dtButtons element into that
@@ -658,7 +673,7 @@
                 var priceItemId = input.attr('priceItemId');
                 let selectedRows = getSelectedRows();
                 var $quantityInputs = selectedRows.find('input.ledgerQuantity[priceItemId=' + priceItemId + ']');
-                var $replacementSelectInputs = selectedRows.find('select');
+                var $replacementSelectInputs = selectedRows.find('select.ledgerReplacement[priceItemId=' + priceItemId + ']');
                 var value = input.val();
 
                 for (var i = 0; i < $quantityInputs.length; i++) {
@@ -760,8 +775,10 @@
          * dependent on the pending processing of the unbilled ledger entries.
          */
         function updateUnbilledStatus($input, dateComplete) {
-            var hasUnbilledQuantity = parseFloat($input.val()) != parseFloat($input.attr('billedQuantity'));
+            var quantityInput = $input.parentsUntil('td').find('input.ledgerQuantity');
+            var hasUnbilledQuantity = parseFloat(quantityInput.val()) != parseFloat(quantityInput.attr('billedQuantity'));
             $input.toggleClass('pending', hasUnbilledQuantity);
+            quantityInput.toggleClass('pending', hasUnbilledQuantity);
             var row = $input.parentsUntil('tbody', 'tr');
             var hasUnbilledQuantityForAnyPriceItem = row.find('input.ledgerQuantity.pending').length > 0;
             row.find('.unbilledStatus').text(hasUnbilledQuantityForAnyPriceItem ? '*' : '');
@@ -1102,7 +1119,6 @@
                                    name="ledgerData[${info.sample.samplePosition}].quantities[${billingIndex.indexId}].originalQuantity"
                                    value="${info.getTotalForPriceIndex(billingIndex)}"/>
                             <c:set var="submittedQuantity" value="${actionBean.ledgerData[info.sample.samplePosition].quantities[billingIndex.indexId].submittedQuantity}"/>
-                            <c:set var="selectedReplacement" value="${actionBean.ledgerData[info.sample.samplePosition].quantities[billingIndex.indexId].replacementCondition}"/>
                                 <c:if test="${!disableAbandon}">
                                     <input id="ledgerData[${info.sample.samplePosition}].quantities[${billingIndex.indexId}].submittedQuantity"
                                            name="ledgerData[${info.sample.samplePosition}].quantities[${billingIndex.indexId}].submittedQuantity"
@@ -1110,32 +1126,21 @@
                                            class="ledgerQuantity" data-rownum = "${info.sample.samplePosition}"
                                            priceItemId="${billingIndex.indexId}"
                                            billedQuantity="${info.getBilledForPriceIndex(billingIndex)}"/>
-                                    &nbsp;
                                     <c:if test="${actionBean.productOrder.hasSapQuote()}">
-                                        <c:forEach items="${actionBean.potentialSapReplacements}" var="replacement">
-                                            <c:set var="submittedReplacement"
-                                                   value="${actionBean.ledgerData[info.sample.samplePosition].quantities[billingIndex.indexId].replacementCondition}"/>
+                                            <c:set var="submittedReplacement" value="${info.replacementsByProduct.get(billingIndex)}"/>
                                             <c:set var="currentReplacement"
                                                    value="${submittedReplacement != null ? submittedReplacement : ''}"/>
 
-                                            <c:if test="${billingIndex.product.equals(replacement.key)}">
                                                 <select name="ledgerData[${info.sample.samplePosition}].quantities[${billingIndex.indexId}].replacementCondition"
                                                         id="ledgerData[${info.sample.samplePosition}].quantities[${billingIndex.indexId}].replacementCondition"
-                                                        data-rownum="${info.sample.samplePosition}" class="ledgerReplacement" originalValue="${currentReplacement}">
+                                                        data-rownum="${info.sample.samplePosition}" class="ledgerReplacement" priceItemId="${billingIndex.indexId}"
+                                                        originalValue="${currentReplacement}">
                                                     <option value="">Select one if replacing price...</option>
-                                                    <c:forEach items="${replacement.value}" var="deliveryConditions">
-                                                        <c:choose>
-                                                            <c:when test="${selectedReplacement != null && deliveryConditions.conditionName.equals(selectedReplacement)}">
-                                                                <option value="${deliveryConditions.conditionName}" selected> ${deliveryConditions.displayName}</option>
-                                                            </c:when>
-                                                            <c:otherwise>
-                                                                <option value="${deliveryConditions.conditionName}"> ${deliveryConditions.displayName}</option>
-                                                            </c:otherwise>
-                                                        </c:choose>
+                                                    <c:set var="replacementsByProduct" value="${actionBean.potentialSapReplacements.get(billingIndex.product)}"/>
+                                                    <c:forEach items="${replacementsByProduct}" var="deliveryConditions">
+                                                        <option value="${deliveryConditions.conditionName}"> ${deliveryConditions.displayName}</option>
                                                     </c:forEach>
                                                 </select>
-                                            </c:if>
-                                        </c:forEach>
                                     </c:if>
                                 </c:if>
                             <c:choose>

@@ -40,6 +40,7 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.cognos.SampleCoverageFirstMetFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.SampleCoverageFirstMet;
+import org.broadinstitute.gpinformatics.infrastructure.common.CommonUtils;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
@@ -643,6 +644,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
         private Date coverageFirstMet;
         private Date workCompleteDate;
         private Map<ProductLedgerIndex, ProductOrderSample.LedgerQuantities> ledgerQuantities;
+        private Map<ProductLedgerIndex, String> replacementsByProduct = new HashMap<>();
         private ListMultimap<ProductLedgerIndex, LedgerEntry> ledgerEntriesByPriceItem = ArrayListMultimap.create();
         private int autoFillQuantity = 0;
         private boolean anyQuantitySet = false;
@@ -663,6 +665,21 @@ public class BillingLedgerActionBean extends CoreActionBean {
                 if(quantityEntry.getValue().getTotal().compareTo(BigDecimal.ZERO)>0) {
                     anyQuantitySet = true;
                 }
+            }
+
+            if (productOrderSample.getProductOrder().hasSapQuote()) {
+                productOrderSample.getLedgerItems().stream()
+                        .filter(ledgerEntry -> !ledgerEntry.isBilled() || !productOrderSample.isToBeBilled())
+                        .sorted((ledger1, ledger2) -> {
+                            return ledger1.getSapDeliveryDocumentId().compareTo(ledger2.getSapDeliveryDocumentId());
+                        }).forEach(ledgerEntry -> {
+                    ProductLedgerIndex key = ProductLedgerIndex
+                            .create(ledgerEntry.getProduct(), ledgerEntry.getPriceItem(),
+                                    productOrderSample.getProductOrder().hasSapQuote());
+                    if (!replacementsByProduct.containsKey(key)) {
+                        replacementsByProduct.put(key, ledgerEntry.getSapReplacement());
+                    }
+                });
             }
 
             boolean primaryBilled = false;
@@ -713,12 +730,23 @@ public class BillingLedgerActionBean extends CoreActionBean {
             return quantities != null ? quantities.getBilled() : BigDecimal.ZERO;
         }
 
+        public String getReplacementForPriceIndex(ProductLedgerIndex index) {
+            List<LedgerEntry> ledgerEntries = ledgerEntriesByPriceItem.get(index);
+            String sapReplacement =
+                    ledgerEntries.stream().map(LedgerEntry::getSapReplacement).collect(CommonUtils.toSingleton());
+            return sapReplacement;
+        }
+
         public int getAutoFillQuantity() {
             return autoFillQuantity;
         }
 
         public boolean isAnyQuantitySet() {
             return anyQuantitySet;
+        }
+
+        public Map<ProductLedgerIndex, String> getReplacementsByProduct() {
+            return replacementsByProduct;
         }
     }
 
