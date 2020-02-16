@@ -86,6 +86,7 @@ public class LabMetricProcessor extends TableProcessor {
 
         LabMetric currentMetric = new LabMetric(metricDecimal, metricType, LabMetric.LabUnit.NG_PER_UL,
                 position, metricDate);
+        currentMetric.setLabVessel(metricVessel);
         metrics.add(currentMetric);
     }
 
