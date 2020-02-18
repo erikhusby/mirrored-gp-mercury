@@ -1717,7 +1717,7 @@ public class ProductOrderEjb {
 
         // A valid user is required.
         BspUser user = userBean.getBspUser();
-        if (user == null) {
+        if (user == null || StringUtils.isBlank(user.getUsername())) {
             throw new ApplicationValidationException(
                     "Problem creating the product order, cannot find the user " + productOrderData.getUsername());
         }
