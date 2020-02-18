@@ -2,15 +2,26 @@ package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderData;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
@@ -21,11 +32,13 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.mercury.control.dao.infrastructure.QuarantinedDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.storage.GoogleBucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.infrastructure.KeyValueMapping;
 import org.broadinstitute.gpinformatics.mercury.entity.infrastructure.Quarantined;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket_;
@@ -38,6 +51,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.receiving.AouPdoConfigActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoAdminActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoPackageReceiptActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoSampleReceiptActionBean;
@@ -48,9 +62,11 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -97,7 +113,19 @@ public class MayoManifestEjb {
     public static final String UNKNOWN_WELL_SCAN = "Rack scan contains unknown well position: %s.";
     public static final String UNQUARANTINED = "%s was unquarantined.";
     public static final String WRONG_TUBE_IN_POSITION = "At position %s the rack has %s but manifest shows %s.";
-    enum MessageLevel {NONE, WARN_ONLY, ERROR}
+    private static final FastDateFormat DATE_TIME_FORMAT = FastDateFormat.getInstance("yyyy-MMM-dd-HHmmss");
+    // AoU PDO parameter names.
+    private final static String[] MAPPING_NAMES = {KeyValueMapping.AOU_PDO_WGS, KeyValueMapping.AOU_PDO_ARRAY};
+    private final static int WGS_INDEX = 0;
+    private final static int ARRAY_INDEX = 1;
+    private static final String OWNER_PARAM = "Owner";
+    private static final String WATCHERS_PARAM = "JIRA Watchers";
+    private static final String RESEARCH_PROJECT_PARAM = "Research Project Id";
+    private static final String PRODUCT_PARAM = "Product Part Number";
+    private static final String QUOTE_PARAM = "Quote Id";
+    private static final String TEST_NAME = "manifest test_name";
+    private static final List<String> EXPECTED_PDO_PARAMS = ImmutableList.of(OWNER_PARAM, WATCHERS_PARAM,
+            RESEARCH_PROJECT_PARAM, PRODUCT_PARAM, QUOTE_PARAM, TEST_NAME);
 
     public static final Map<String, CustomFieldDefinition> JIRA_DEFINITION_MAP =
             new HashMap<String, CustomFieldDefinition>() {{
@@ -124,6 +152,11 @@ public class MayoManifestEjb {
     private TubeFormationDao tubeFormationDao;
     private JiraService jiraService;
     private QuarantinedDao quarantinedDao;
+    private ProductOrderEjb productOrderEjb;
+    private AttributeArchetypeDao attributeArchetypeDao;
+    private ProductDao productDao;
+    private BSPUserList bspUserList;
+    private ResearchProjectDao researchProjectDao;
 
     /**
      * CDI constructor.
@@ -135,7 +168,10 @@ public class MayoManifestEjb {
     @Inject
     public MayoManifestEjb(ManifestSessionDao manifestSessionDao, GoogleBucketDao googleBucketDao, UserBean userBean,
             LabVesselDao labVesselDao, MercurySampleDao mercurySampleDao, TubeFormationDao tubeFormationDao,
-            QuarantinedDao quarantinedDao, JiraService jiraService, Deployment deployment) {
+            QuarantinedDao quarantinedDao, JiraService jiraService, Deployment deployment,
+            ProductOrderEjb productOrderEjb, AttributeArchetypeDao attributeArchetypeDao, ProductDao productDao,
+            BSPUserList bspUserList, ResearchProjectDao researchProjectDao) {
+
         this.manifestSessionDao = manifestSessionDao;
         this.googleBucketDao = googleBucketDao;
         this.userBean = userBean;
@@ -144,6 +180,11 @@ public class MayoManifestEjb {
         this.tubeFormationDao = tubeFormationDao;
         this.quarantinedDao = quarantinedDao;
         this.jiraService = jiraService;
+        this.productOrderEjb = productOrderEjb;
+        this.attributeArchetypeDao = attributeArchetypeDao;
+        this.productDao = productDao;
+        this.bspUserList = bspUserList;
+        this.researchProjectDao = researchProjectDao;
         // This config is from the yaml file.
         MayoManifestConfig mayoManifestConfig = (MayoManifestConfig) MercuryConfiguration.getInstance().
                 getConfig(MayoManifestConfig.class, deployment);
@@ -153,7 +194,7 @@ public class MayoManifestEjb {
     /**
      * Package receipt validation should be comprehensive and must not persist entities since the
      * lab user may choose to cancel the receipt and fix problems first.
-     *
+     * <p>
      * UI errors should only be given for things that prevent the lab user from doing a receipt-only
      * operation. Manifest parsing, validation, and rack mismatch problems are warnings.
      */
@@ -230,7 +271,7 @@ public class MayoManifestEjb {
 
     /**
      * Finalizes a package receipt by making a manifest session (with or without records) and an RCT ticket.
-     *
+     * <p>
      * If the package already has a manifest session, this is a re-receipt and the manifest session is updated
      * including the received rack barcodes.
      */
@@ -331,7 +372,7 @@ public class MayoManifestEjb {
      * - The received package has no previously linked manifest data.
      * - Manifest data is present but none of the package racks have been accessioned.
      * - Package racks have been accessioned, but the manifest only changes the sample metadata.
-     *
+     * <p>
      * In each case the manifest file must match the rack barcodes entered at the time of package receipt.
      */
     public void updateManifest(MayoPackageReceiptActionBean bean) {
@@ -474,7 +515,9 @@ public class MayoManifestEjb {
         manifestSession.setManifestFilename(filename);
     }
 
-    /** Returns the contents of the Google bucket file given by bean.getFilename() or bean.getPackageId(). */
+    /**
+     * Returns the contents of the Google bucket file given by bean.getFilename() or bean.getPackageId().
+     */
     public byte[] download(MayoPackageReceiptActionBean bean) {
         bean.setFilename(searchForFile(bean));
         if (StringUtils.isNotBlank(bean.getFilename())) {
@@ -528,7 +571,7 @@ public class MayoManifestEjb {
         // Bucket access or csv parsing errors are put in the MessageCollection.
         byte[] spreadsheet = googleBucketDao.download(filename, messages);
         List<List<String>> cellGrid = (spreadsheet == null || spreadsheet.length == 0) ?
-            Collections.emptyList() : MayoManifestImportProcessor.parseAsCellGrid(spreadsheet, filename, messages);
+                Collections.emptyList() : MayoManifestImportProcessor.parseAsCellGrid(spreadsheet, filename, messages);
         // Makes manifest records from the spreadsheet cell grid.
         MayoManifestImportProcessor processor = new MayoManifestImportProcessor();
         List<ManifestRecord> records = processor.makeManifestRecords(cellGrid, filename, messages);
@@ -598,7 +641,9 @@ public class MayoManifestEjb {
         return metadataDiffs;
     }
 
-    /** Returns a list of racks that have tube or position changes, and an accompanying description. */
+    /**
+     * Returns a list of racks that have tube or position changes, and an accompanying description.
+     */
     private Map<String, String> rackDiffs(ManifestSession manifestSession, List<ManifestRecord> updateRecords) {
         // List of the update record's rack barcode, position, and tube barcode.
         List<Triple<String, String, String>> updateVessels = updateRecords.stream().
@@ -722,7 +767,7 @@ public class MayoManifestEjb {
         // Finds the existing manifest session.
         ManifestSession manifestSession = manifestSessionDao.getSessionByVesselLabel(bean.getRackBarcode());
         // This check was already done in validateForAccessioning(). This assert is for unit tests.
-        assert(manifestSession != null);
+        assert (manifestSession != null);
         // If manifest records don't exist it means the package was received without having a manifest file.
         // This is unusable for accessioning.
         if (CollectionUtils.isEmpty(manifestSession.getRecords())) {
@@ -896,7 +941,9 @@ public class MayoManifestEjb {
         googleBucketDao.rotateServiceAccountKey(bean.getMessageCollection());
     }
 
-    /** Makes a new RCT in Jira for the Mayo package or updates an existing RCT. */
+    /**
+     * Makes a new RCT in Jira for the Mayo package or updates an existing RCT.
+     */
     private JiraTicket makeOrUpdatePackageRct(MayoPackageReceiptActionBean bean,
             @NotNull ManifestSession manifestSession, List<String> comments) {
         String title = bean.getPackageBarcode();
@@ -963,5 +1010,194 @@ public class MayoManifestEjb {
 
     public UserBean getUserBean() {
         return userBean;
+    }
+
+    /**
+     * Makes a PDO from all accessioned samples in the given package.
+     */
+    public void makeAouPdo(MayoSampleReceiptActionBean bean) {
+        // Silently does nothing if the manifest doesn't exist, or if one or more racks in the package have
+        // not yet been accessioned (or quarantined).
+        List<String> accessionedTubes = new ArrayList<>();
+        ManifestSession manifestSession = manifestSessionDao.getSessionByVesselLabel(bean.getRackBarcode());
+        if (manifestSession != null && !CollectionUtils.isEmpty(manifestSession.getRecords())) {
+            Multimap<String, ManifestRecord> rackToRecords =
+                    manifestSession.buildMultimapByKey(manifestSession.getRecords(), Metadata.Key.RACK_LABEL);
+            Map<String, LabVessel> racks = labVesselDao.findByBarcodes(new ArrayList<>(rackToRecords.keySet()));
+            for (String rackBarcode : racks.keySet()) {
+                if (racks.get(rackBarcode) == null) {
+                    if (quarantinedDao.findItem(Quarantined.ItemSource.MAYO, Quarantined.ItemType.RACK, rackBarcode)
+                            == null) {
+                        // This rack is neither accessioned nor quarantined.
+                        return;
+                    }
+                } else {
+                    accessionedTubes.addAll(manifestSession.buildMultimapByKey(rackToRecords.get(rackBarcode),
+                            Metadata.Key.BROAD_2D_BARCODE).keySet());
+                }
+            }
+        }
+        // Excludes any samples that are already in a PDO.
+        List<ProductOrderSample> existingPdoSamples = productDao.findListByList(ProductOrderSample.class,
+                ProductOrderSample_.sampleName, accessionedTubes);
+        accessionedTubes.removeAll(
+                existingPdoSamples.stream().map(ProductOrderSample::getSampleKey).collect(Collectors.toList()));
+        if (accessionedTubes.isEmpty()) {
+            return;
+        }
+
+        // The manifest has already been tested for consistent test_name, so the first found will do.
+        String manifestTestName = manifestSession.getRecords().stream().
+                map(record -> record.getValueByKey(Metadata.Key.PRODUCT_TYPE)).
+                filter(value -> StringUtils.isNotBlank(value)).
+                findFirst().orElse("[missing]");
+
+        MessageCollection messages = bean.getMessageCollection();
+
+        // Determines the product type and the lookup key for attributeArchetype params.
+        String wgsKey = attributeArchetypeDao.findKeyValueByKeyAndMappingName(TEST_NAME,
+                KeyValueMapping.AOU_PDO_WGS).getValue();
+        String arrayKey = attributeArchetypeDao.findKeyValueByKeyAndMappingName(TEST_NAME,
+                KeyValueMapping.AOU_PDO_ARRAY).getValue();
+        String mappingName = manifestTestName.equalsIgnoreCase(wgsKey) ? MAPPING_NAMES[WGS_INDEX] :
+                manifestTestName.equalsIgnoreCase(arrayKey) ? MAPPING_NAMES[ARRAY_INDEX] : null;
+        if (mappingName == null) {
+            // Puts up a message about a harmless but unexpected occurrance.
+            messages.addInfo("Manifest test_name " + manifestTestName + " is not configured for automatic PDOs.");
+            return;
+        }
+
+        // Fetches the attribute archetype values for the test_name.
+        Map<String, String> params = attributeArchetypeDao.findKeyValueMap(mappingName);
+        String owner = params.get(OWNER_PARAM).toLowerCase();
+        List<String> watchers = Arrays.asList(StringUtils.normalizeSpace(params.get(WATCHERS_PARAM).
+                replaceAll(",", " ")).toLowerCase().split(" "));
+        String rpId = params.get(RESEARCH_PROJECT_PARAM);
+        String productPartNumber = params.get(PRODUCT_PARAM);
+        String quoteId = params.get(QUOTE_PARAM);
+        Product product = productDao.findByPartNumber(productPartNumber);
+
+        String packageId = manifestSession.getSessionPrefix();
+        Date now = new Date();
+        String titleType = manifestTestName.equalsIgnoreCase(wgsKey) ? "WGS" : "Array";
+        String title = String.format("%s_%s_%s", packageId, titleType, DATE_TIME_FORMAT.format(now));
+
+        ProductOrderData productOrderData = new ProductOrderData();
+        productOrderData.setCreatedDate(now);
+        productOrderData.setModifiedDate(now);
+        productOrderData.setPlacedDate(now);
+        productOrderData.setNumberOfSamples(accessionedTubes.size());
+        productOrderData.setProduct(productPartNumber);
+        productOrderData.setProductName(product.getProductName());
+        productOrderData.setQuoteId(quoteId);
+        productOrderData.setResearchProjectId(rpId);
+        // For Mayo the tube barcode is also used as the Broad sample name.
+        productOrderData.setSamples(accessionedTubes);
+        productOrderData.setTitle(title);
+
+        try {
+            ProductOrder productOrder = productOrderEjb.createProductOrder(productOrderData, watchers, owner,
+                    manifestSession.getReceiptTicket());
+            // Links the pdo samples to the mercury samples.
+            Map<String, MercurySample> mercurySampleMap = mercurySampleDao.findMapIdToMercurySample(accessionedTubes);
+            productOrder.getSamples().forEach(pdoSample ->
+                    pdoSample.setMercurySample(mercurySampleMap.get(pdoSample.getSampleKey())));
+            productOrderEjb.placeProductOrder(productOrder.getProductOrderId(), productOrder.getBusinessKey(), messages);
+            messages.addInfo("Created " + productOrder.getBusinessKey() + " for " + accessionedTubes.size() +
+                    " samples.");
+        } catch (Exception e) {
+            logger.error("Failed to make an AoU PDO", e);
+            messages.addError("Failed to make a PDO: " + e.toString());
+        }
+    }
+
+    /**
+     * Validates the AoU PDO parameters.
+     */
+    public void validateAouPdoParams(List<AouPdoConfigActionBean.Dto> dtos, MessageCollection messageCollection) {
+        if (dtos.size() == EXPECTED_PDO_PARAMS.size() &&
+                dtos.stream().allMatch(dto -> EXPECTED_PDO_PARAMS.contains(dto.getParamName()))) {
+
+            for (AouPdoConfigActionBean.Dto dto : dtos) {
+                switch (dto.getParamName()) {
+                case OWNER_PARAM:
+                    if (bspUserList.getByUsername(dto.getWgsValue()) == null) {
+                        messageCollection.addError("WGS owner '" + dto.getWgsValue() + "' is an unknown user.");
+                    }
+                    if (bspUserList.getByUsername(dto.getArrayValue()) == null) {
+                        messageCollection.addError("Array owner '" + dto.getArrayValue() + "' is an unknown user.");
+                    }
+                    break;
+                case WATCHERS_PARAM:
+                    String concatWatchers = (dto.getWgsValue() + " " + dto.getArrayValue()).replaceAll(",", " ").toLowerCase();
+                    Stream.of(StringUtils.normalizeSpace(concatWatchers).split(" ")).forEach(watcher -> {
+                        if (bspUserList.getByUsername(watcher) == null) {
+                            messageCollection.addError("Watcher '" + watcher + "' is an unknown user.");
+                        }
+                    });
+                    break;
+                case RESEARCH_PROJECT_PARAM:
+                    if (researchProjectDao.findByBusinessKey(dto.getWgsValue()) == null) {
+                        messageCollection.addError("WGS research project id '" + dto.getWgsValue() + "' is unknown.");
+                    }
+                    if (researchProjectDao.findByBusinessKey(dto.getArrayValue()) == null) {
+                        messageCollection.addError("Array research project id '" + dto.getArrayValue() + "' is unknown.");
+                    }
+                    break;
+                case PRODUCT_PARAM:
+                    if (productDao.findByPartNumber(dto.getWgsValue()) == null) {
+                        messageCollection.addError("WGS product '" + dto.getWgsValue() + "' is unknown.");
+                    }
+                    if (productDao.findByPartNumber(dto.getArrayValue()) == null) {
+                        messageCollection.addError("Array product '" + dto.getArrayValue() + "' is unknown.");
+                    }
+                    break;
+                case QUOTE_PARAM:
+                    if (StringUtils.isBlank(dto.getWgsValue())) {
+                        messageCollection.addError("WGS quote id is blank.");
+                    }
+                    if (StringUtils.isBlank(dto.getArrayValue())) {
+                        messageCollection.addError("Array quote id is blank.");
+                    }
+                    break;
+                case TEST_NAME:
+                    if (StringUtils.isBlank(dto.getWgsValue())) {
+                        messageCollection.addError("WGS test_name is blank.");
+                    }
+                    if (StringUtils.isBlank(dto.getArrayValue())) {
+                        messageCollection.addError("Array test_name is blank.");
+                    }
+                    break;
+                default:
+                    throw new RuntimeException("Unknown AoU PDO parameter '" + dto.getParamName() + "'.");
+                }
+            }
+            if (!messageCollection.hasErrors()) {
+                messageCollection.addInfo("Parameters appear valid, but quote id validity will depend on PDO details.");
+            }
+        } else {
+            messageCollection.addError("Parameter names must contain " + StringUtils.join(EXPECTED_PDO_PARAMS, ", "));
+        }
+    }
+
+    /**
+     * Saves changes to the AoU PDO parameters.
+     */
+    public void saveAouPdoParams(List<AouPdoConfigActionBean.Dto> dtos) {
+        for (int i = 0; i < 2; ++i) {
+            String mappingName = MAPPING_NAMES[i];
+            Map<String, KeyValueMapping> keyValueMap = attributeArchetypeDao.findKeyValueMappings(mappingName).
+                    stream().
+                    collect(Collectors.toMap(KeyValueMapping::getKey, Function.identity()));
+            for (AouPdoConfigActionBean.Dto dto : dtos) {
+                String value = (i == 0) ? dto.getWgsValue() : dto.getArrayValue();
+                if (keyValueMap.containsKey(dto.getParamName())) {
+                    keyValueMap.get(dto.getParamName()).setValue(value);
+                } else {
+                    throw new RuntimeException("Missing AoU PDO parameter '" + dto.getParamName() + "'.");
+                }
+            }
+            attributeArchetypeDao.persistAll(keyValueMap.values());
+        }
     }
 }

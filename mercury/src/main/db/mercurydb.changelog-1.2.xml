@@ -2702,5 +2702,4 @@
                 baseTableSchemaName="mercury" baseTableName="mercury_control" baseColumnNames="CONCORDANCE_SAMPLE_ID"
                 referencedTableSchemaName="mercury" referencedTableName="mercury_sample" referencedColumnNames="mercury_sample_id"/>
     </changeSet>
-
 </databaseChangeLog>

@@ -210,6 +210,11 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
         }
 
         @Override
+        public void updateAssignee(String key, String name) {
+        }
+
+
+        @Override
         public JiraIssue getIssue(String key) throws IOException {
             // This mock object is required to support the initial transition of a PDO from Submitted to Open.
             return new JiraIssue(key, this) {
