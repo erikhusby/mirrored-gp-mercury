@@ -43,7 +43,7 @@ public class Bcl2FastqTaskBuilder {
     }
 
     public Bcl2FastqTaskBuilder numberOfWritingThreads(int threads) {
-        appendCommand(String.format("--processing-threads %d", threads));
+        appendCommand(String.format("--writing-threads %d", threads));
         return this;
     }
 
