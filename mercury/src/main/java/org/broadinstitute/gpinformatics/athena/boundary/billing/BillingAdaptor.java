@@ -35,6 +35,7 @@ import javax.inject.Inject;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
@@ -375,61 +376,94 @@ public class BillingAdaptor implements Serializable {
      * @return BillingResult with results of billing credit attempt.
      */
     public Collection<BillingCredit> handleBillingCredit(final QuoteImportItem item) throws Exception {
+        Set<BillingCredit> errorCredits = new HashSet<>();
         if (!item.isSapOrder()) {
-            throw new Exception(NON_SAP_ITEM_ERROR_MESSAGE);
+            item.setBillingMessages(NON_SAP_ITEM_ERROR_MESSAGE);
+
+            BillingEjb.BillingResult billingResult = new BillingEjb.BillingResult(item);
+            billingResult.setErrorMessage(NON_SAP_ITEM_ERROR_MESSAGE);
+            BillingCredit billingCredit = new BillingCredit(null, null);
+            billingCredit.setBillingResult(billingResult);
+            errorCredits.add(billingCredit);
+            return errorCredits;
         }
         if (!item.isBillingCredit()) {
-            throw new Exception(POSITIVE_QTY_ERROR_MESSAGE);
+            item.setBillingMessages(POSITIVE_QTY_ERROR_MESSAGE);
+            BillingEjb.BillingResult billingResult = new BillingEjb.BillingResult(item);
+            billingResult.setErrorMessage(POSITIVE_QTY_ERROR_MESSAGE);
+            BillingCredit billingCredit = new BillingCredit(null, null);
+            billingCredit.setBillingResult(billingResult);
+            errorCredits.add(billingCredit);
+            return errorCredits;
         }
 
-        Collection<BillingCredit> billingCredits = BillingCredit.setupSapCredits(item);
+        Collection<BillingCredit> billingCredits = new HashSet<>();
+        try {
+            billingCredits.addAll(BillingCredit.setupSapCredits(item));
+        } catch (Exception e) {
+            BillingEjb.BillingResult billingResult = new BillingEjb.BillingResult(item);
+            item.setBillingMessages(e.getMessage());
+            billingResult.setErrorMessage(e.getMessage());
+            BillingCredit billingCredit = new BillingCredit(null, null);
+            billingCredit.setBillingResult(billingResult);
+            errorCredits.add(billingCredit);
+        }
 
         // There are cases where a single QuoteImportItem will need to be credited to more than one sapDocumentId.
         for (BillingCredit billingCredit : billingCredits) {
             try {
-                    Set<LedgerEntry> updatedLedgers = billingCredit.getReturnLines().stream()
-                        .map(BillingCredit.LineItem::getLedgerEntry).collect(Collectors.toSet());
-                    BillingEjb.BillingResult billingResult = new BillingEjb.BillingResult(item);
-                    billingCredit.setBillingResult(billingResult);
-                    String billingMessage;
-                    try {
-                        String returnOrderId = sapService.creditDelivery(billingCredit);
-                        if (StringUtils.isNotBlank(returnOrderId)) {
-                            billingCredit.setReturnOrderId(returnOrderId);
-                            billingMessage = BillingSession.SUCCESS;
-                        } else {
-                            billingMessage = handleBillingCreditInvoiceNotFound(billingCredit);
-                        }
-                        billingResult.setSapBillingId(billingCredit.getReturnOrderId());
-                    } catch (SAPIntegrationException e) {
-                        billingMessage = e.getLocalizedMessage();
-                        if (billingMessage.contains(INVOICE_NOT_FOUND)) {
-                            billingMessage = handleBillingCreditInvoiceNotFound(billingCredit);
-                            billingResult.setSapBillingId(billingCredit.getSapDeliveryDocumentId());
-                        } else {
+                Set<LedgerEntry> updatedLedgers = billingCredit.getReturnLines().stream()
+                    .map(BillingCredit.LineItem::getLedgerEntry).collect(Collectors.toSet());
 
-                            // the billing credit failed so clear out the sapDeliveryDocumentId to prevent the ledgers
-                            // from being incorrectly updated.
-                            billingCredit.setSapDeliveryDocumentId(null);
-                            billingResult.setErrorMessage(billingMessage);
-                        }
+                BillingEjb.BillingResult billingResult = new BillingEjb.BillingResult(item);
+                billingCredit.setBillingResult(billingResult);
+                String billingMessage;
+                try {
+                    String returnOrderId = sapService.creditDelivery(billingCredit);
+                    if (StringUtils.isNotBlank(returnOrderId)) {
+                        billingCredit.setReturnOrderId(returnOrderId);
+                        billingMessage = BillingSession.SUCCESS;
+                    } else {
+                        billingMessage = handleBillingCreditInvoiceNotFound(billingCredit);
                     }
-                    billingEjb.updateSapLedgerEntries(updatedLedgers, item.getQuoteId(), item.getSingleWorkItem(),
-                        billingCredit.getSapDeliveryDocumentId(), billingCredit.getReturnOrderId(), billingMessage);
-                    Set<String> billedPdos = billingCredit.getBillingResult().getQuoteImportItem().getLedgerItems()
-                        .stream().map(le -> le.getProductOrderSample().getProductOrder().getBusinessKey())
-                        .collect(Collectors.toSet());
+                    billingResult.setSapBillingId(billingCredit.getReturnOrderId());
+
+                } catch (SAPIntegrationException e) {
+                    billingMessage = e.getLocalizedMessage();
+                    if (billingMessage.contains(INVOICE_NOT_FOUND)) {
+                        billingMessage = handleBillingCreditInvoiceNotFound(billingCredit);
+                        billingResult.setSapBillingId(billingCredit.getSourceLedger().getSapDeliveryDocumentId());
+                    } else {
+
+                        // the billing credit failed so clear out the sapDeliveryDocumentId to prevent the ledgers
+                        // from being incorrectly updated.
+                        billingCredit.setSourceLedger(null);
+                        billingResult.setErrorMessage(billingMessage);
+                    }
+                }
+                if (Arrays.asList(BillingSession.SUCCESS, BillingSession.BILLING_CREDIT).contains(billingMessage)) {
+                    billingCredit.getReturnLines().forEach(lineItem -> {
+                        billingCredit.getSourceLedger().addCredit(lineItem.getLedgerEntry(), lineItem.getQuantity());
+                    });
+                }
+
+                billingEjb.updateSapLedgerEntries(updatedLedgers, item.getQuoteId(), item.getSingleWorkItem(),
+                    billingCredit.getSourceLedger().getSapDeliveryDocumentId(), billingCredit.getReturnOrderId(),
+                    billingMessage);
+                Set<String> billedPdos = billingCredit.getBillingResult().getQuoteImportItem().getLedgerItems()
+                    .stream().map(le -> le.getProductOrderSample().getProductOrder().getBusinessKey())
+                    .collect(Collectors.toSet());
                 if (!billingResult.isError()) {
-                    logSapBillingCredit(item, billedPdos, billingCredit.getSapDeliveryDocumentId(),
+                    logSapBillingCredit(item, billedPdos, billingCredit.getSourceLedger().getSapDeliveryDocumentId(),
                         billingCredit.getReturnOrderId());
                 }
             } catch (BillingException billingException) {
-                    BillingEjb.BillingResult billingResult = billingCredit.getBillingResult();
-                    billingResult.setErrorMessage(billingException.getMessage());
-                    billingEjb.updateSapQuoteImportItem(item, null, null, billingException.getMessage());
-                }
+                BillingEjb.BillingResult billingResult = billingCredit.getBillingResult();
+                billingResult.setErrorMessage(billingException.getMessage());
+                billingEjb.updateSapQuoteImportItem(item, null, null, billingException.getMessage());
+            }
         }
-
+        billingCredits.addAll(errorCredits);
         return billingCredits;
     }
 

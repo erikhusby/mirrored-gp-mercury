@@ -128,6 +128,76 @@
         </addColumn>
     </changeSet>
 
+    <changeSet author="dryan" id="GPLIM-6436-2_JOIN_TABLE">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="athena" tableName="LEDGER_ENTRY_BILLING_CREDITS"/>
+            </not>
+        </preConditions>
+        <createTable schemaName="athena" tableName="LEDGER_ENTRY_BILLING_CREDITS">
+            <column name="LEDGER_ID" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="LEDGER_CREDITS" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="dryan" id="GPLIM-6436-2_JOIN_TABLE_AUD">
+        <preConditions onFail="MARK_RAN">
+            <tableExists schemaName="athena" tableName="LEDGER_ENTRY_BILLING_CREDITS"/>
+        </preConditions>
+        <createTable schemaName="athena" tableName="LEDGER_ENTRY_BC_AUD">
+            <column name="LEDGER_ID" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="LEDGER_CREDITS" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="revtype" type="number(3,0)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="LEDGER_ENTRY_BC_AUD" columnNames="LEDGER_ID, LEDGER_CREDITS, rev"
+                       schemaName="ATHENA" constraintName="PK_LEDGER_ENTRY_BC_AUD"/>
+        <addForeignKeyConstraint baseTableName="LEDGER_ENTRY_BC_AUD" baseTableSchemaName="athena"
+                                 baseColumnNames="rev" constraintName="PK_LEDGER_ENTRY_BC_REV_INFO"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
+        <createIndex tableName="LEDGER_ENTRY_BC_AUD" indexName="IDX_LEDGER_ENTRY_BC_AUD">
+            <column name="LEDGER_ID"/>
+        </createIndex>
+
+    </changeSet>
+    <changeSet author="dryan" id="GPLIM-6436-2_JOIN_PK">
+        <addPrimaryKey constraintName="LEDGER_ENTRY_BC_PK" schemaName="athena"
+                       tableName="LEDGER_ENTRY_BILLING_CREDITS" columnNames="LEDGER_ID, LEDGER_CREDITS"/>
+    </changeSet>
+    <changeSet author="dryan" id="GPLIM-6436-2_FK">
+        <addForeignKeyConstraint constraintName="FK_LEDGER_ENTRY_BC" baseColumnNames="LEDGER_ID"
+                                 baseTableSchemaName="athena" baseTableName="LEDGER_ENTRY_BILLING_CREDITS"
+                                 referencedTableSchemaName="athena" referencedColumnNames="LEDGER_ID"
+                                 referencedTableName="BILLING_LEDGER"/>
+    </changeSet>
+    <changeSet author="dryan" id="GPLIM-6436-3_ADD_LEDGER_COLUMN">
+        <preConditions>
+            <not>
+                <columnExists schemaName="athena" tableName="BILLING_LEDGER" columnName="QUANTITY_CREDITED"/>
+            </not>
+        </preConditions>
+        <addColumn schemaName="athena" tableName="BILLING_LEDGER">
+                <column name="QUANTITY_CREDITED" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6436-3_ADD_LEDGER_COLUMN_AUD" author="dryan">
+         <addColumn tableName="BILLING_LEDGER_AUD" schemaName="ATHENA">
+             <column name="QUANTITY_CREDITED" type="number(19,0)"/>
+         </addColumn>
+     </changeSet>
+
     <changeSet id="GPLIM-5521-Fix_Audit_Constraint" author="dryan">
         <dropPrimaryKey constraintName="PK_PIPELINE_DT_AUD" tableName="PIPELINE_DATA_TYPE_AUD"/>
         <addPrimaryKey constraintName="PK_PIPELINE_DT_AUD" tableName="PIPELINE_DATA_TYPE_AUD"

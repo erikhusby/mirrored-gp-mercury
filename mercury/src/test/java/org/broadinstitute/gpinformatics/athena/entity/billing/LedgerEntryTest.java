@@ -20,6 +20,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+
 @Test(groups = TestGroups.DATABASE_FREE)
 public class LedgerEntryTest {
 
@@ -36,6 +39,31 @@ public class LedgerEntryTest {
             sampleMap.put(sampleName, sample);
         }
         return sample;
+    }
+
+    public void testCreditCalculation(){
+        LedgerEntry ledger1 = createOneLedgerEntry("SM1", null, BigDecimal.TEN, null);
+        BillingSession billingSession = new BillingSession();
+        billingSession.setBilledDate(new Date());
+        ledger1.setBillingSession(billingSession);
+        LedgerEntry ledger2 = createOneLedgerEntry("SM1", null, BigDecimal.ONE.negate(), null);
+        ledger2.setBillingSession(billingSession);
+        ledger1.addCredit(ledger2, BigDecimal.ONE);
+        assertThat(ledger1.calculateAvailableQuantity(), is(BigDecimal.valueOf(9)));
+
+        ledger1.addCredit(createOneLedgerEntry("SM1", null, BigDecimal.ONE.negate(), null), BigDecimal.ONE);
+        assertThat(ledger1.calculateAvailableQuantity(), is(BigDecimal.valueOf(8)));
+        assertThat(ledger1.getQuantityCredited(), is(BigDecimal.valueOf(2)));
+    }
+
+    public void testCreditIsNegative() {
+        LedgerEntry ledger1 = createOneLedgerEntry("SM1", null, BigDecimal.TEN, null);
+        try {
+            ledger1.addCredit(createOneLedgerEntry("SM1", null, BigDecimal.ONE, null), BigDecimal.ONE);
+            Assert.fail("An Exception should have been thrown when a credit is a positive number");
+        } catch (Exception e) {
+            assertThat(e.getMessage(), is("Billing credits must have negative numbers"));
+        }
     }
 
     public static LedgerEntry createOneLedgerEntry(String sampleName, String priceItemName,
@@ -159,7 +187,7 @@ public class LedgerEntryTest {
     @Test
     public void testBean() {
         new BeanTester().testBean(LedgerEntry.class);
-        new EqualsMethodTester().testEqualsMethod(LedgerEntry.class, "autoLedgerTimestamp", "billingMessage", "quantity", "workItem", "workCompleteDate", "sapDeliveryDocumentId", "sapReturnOrderId", "sapOrderDetail", "sapReplacementPricing");
+        new EqualsMethodTester().testEqualsMethod(LedgerEntry.class, "autoLedgerTimestamp", "billingMessage", "quantity", "workItem", "workCompleteDate", "sapDeliveryDocumentId", "sapReturnOrderId", "sapOrderDetail", "sapReplacementPricing", "quantityCredited");
         new HashCodeMethodTester().testHashCodeMethod(LedgerEntry.class);
     }
 }

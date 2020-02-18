@@ -3,11 +3,11 @@ package org.broadinstitute.gpinformatics.athena.entity.billing;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.infrastructure.common.StreamUtils;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
@@ -20,15 +20,20 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -114,13 +119,21 @@ public class LedgerEntry implements Serializable {
     @Column(name = "SAP_REPLACEMENT_PRICING")
     private Boolean sapReplacementPricing = Boolean.FALSE;
 
+    @OneToMany
+    @JoinTable(name = "LEDGER_ENTRY_BILLING_CREDITS")
+    private List<LedgerEntry> billingCredits = new ArrayList<>();
+
+    @Column(name = "QUANTITY_CREDITED")
+    private BigDecimal quantityCredited = BigDecimal.ZERO;
+
     public static final Predicate<LedgerEntry> IS_SUCCESSFULLY_BILLED = LedgerEntry::isSuccessfullyBilled;
 
     /**
      * Package private constructor for JPA use.
      */
     @SuppressWarnings("UnusedDeclaration")
-    protected LedgerEntry() {}
+    protected LedgerEntry() {
+    }
 
     public LedgerEntry(@Nonnull ProductOrderSample productOrderSample,
                        PriceItem priceItem,
@@ -140,6 +153,12 @@ public class LedgerEntry implements Serializable {
         this.product = product;
         this.quantity = quantity;
         this.workCompleteDate = workCompleteDate;
+    }
+
+    private static int byDeliveryDocument(LedgerEntry o1, LedgerEntry o2) {
+        Double d1 = NumberUtils.toDouble(o1.getSapDeliveryDocumentId());
+        Double d2 = NumberUtils.toDouble(o2.getSapDeliveryDocumentId());
+        return d1.compareTo(d2);
     }
 
     public ProductOrderSample getProductOrderSample() {
@@ -167,6 +186,13 @@ public class LedgerEntry implements Serializable {
 
     public BigDecimal getQuantity() {
         return quantity;
+    }
+
+    public BigDecimal calculateAvailableQuantity() {
+        if (!isCredit() && isBilled()) {
+            return getQuantity().subtract(getQuantityCredited());
+        }
+        return BigDecimal.ZERO;
     }
 
     public void setQuantity(BigDecimal quantity) {
@@ -265,24 +291,34 @@ public class LedgerEntry implements Serializable {
      *
      * @return a Map<LedgerEntry, Double> which represents the quantities to be deducted for each LedgerEntry.
      */
-    public Map<LedgerEntry, BigDecimal> findCreditSource(){
-        BigDecimal ledgerQuantities =
-            getProductOrderSample().getLedgerItems().stream()
-                .filter(ledgerEntry -> ledgerEntry.getProduct().equals(this.getProduct()))
-                .map(LedgerEntry::totalPreviouslyBilledQuantity)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    public Map<LedgerEntry, BigDecimal> findCreditSource() {
+        List<LedgerEntry> potentialCreditSources = getPotentialCreditSources();
+
+        Map<LedgerEntry, BigDecimal> creditSourceMap =
+            potentialCreditSources.stream().collect(Collectors.groupingBy(Function.identity(),
+                Collectors.reducing(BigDecimal.ZERO, LedgerEntry::getQuantity, BigDecimal::add)));
+
+        BigDecimal ledgerQuantities = potentialCreditSources.stream().map(LedgerEntry::totalPreviouslyBilledQuantity)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         if (!isCredit() || isCredited() || ledgerQuantities.compareTo(BigDecimal.ZERO) < 0) {
             return Collections.emptyMap();
         }
-        Predicate<LedgerEntry> isNotCredited = StreamUtils.not(LedgerEntry::isCredited);
-        return getProductOrderSample().getLedgerItems().stream()
-            .filter(IS_SUCCESSFULLY_BILLED.and(isNotCredited)
-                .and(ledgerEntry -> ledgerEntry.getProduct().equals(this.getProduct())))
-            .collect(Collectors.groupingBy(Function.identity(),
-                Collectors.reducing(BigDecimal.ZERO, LedgerEntry::getQuantity, BigDecimal::add)));
 
+        LinkedHashMap<LedgerEntry, BigDecimal> sorted = new LinkedHashMap<>();
+        creditSourceMap.entrySet().stream().sorted(Map.Entry.comparingByKey(LedgerEntry::byDeliveryDocument))
+            .forEachOrdered(x -> sorted.put(x.getKey(), x.getValue()));
+        return sorted;
     }
+
+    public List<LedgerEntry> getPotentialCreditSources() {
+        return getProductOrderSample().getProductOrder().getSamples().stream().flatMap(
+            pdo1 -> pdo1.getLedgerItems().stream()
+                .filter(pdoLedgers -> !pdoLedgers.isCredit() && pdoLedgers.getProduct().equals(getProduct())))
+            .filter(ledgerEntry -> ledgerEntry.calculateAvailableQuantity().compareTo(BigDecimal.ZERO) > 0)
+            .sorted(LedgerEntry::byDeliveryDocument).collect(Collectors.toList());
+    }
+
     /**
      * This ledger has a billing message but it is not the success message, which means it is an error message.
      */
@@ -392,10 +428,29 @@ public class LedgerEntry implements Serializable {
             .collect(Collectors.toSet());
     }
 
-    public BigDecimal totalPreviouslyBilledQuantity(){
-        return getPreviouslyBilled().stream().filter(
-            ledgerEntry -> ledgerEntry.isSuccessfullyBilled() && !ledgerEntry.isCredit() && ledgerEntry.getProduct()
-                .equals(this.getProduct())).map(LedgerEntry::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
+    public BigDecimal totalPreviouslyBilledQuantity() {
+        return getPotentialCreditSources().stream()
+            .map(LedgerEntry::calculateAvailableQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public void addCredit(LedgerEntry ledgerEntry, BigDecimal quantityForThisCredit) {
+        if (!ledgerEntry.isCredit()) {
+            throw new RuntimeException("Billing credits must have negative numbers");
+        }
+        setQuantityCredited(quantityCredited.add(quantityForThisCredit));
+        billingCredits.add(ledgerEntry);
+    }
+
+    public List<LedgerEntry> getBillingCredits() {
+        return billingCredits;
+    }
+
+    public void setQuantityCredited(BigDecimal quantityCredited) {
+        this.quantityCredited = quantityCredited;
+    }
+
+    public BigDecimal getQuantityCredited() {
+        return quantityCredited;
     }
 
     /**

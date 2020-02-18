@@ -4,9 +4,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.infrastructure.common.StreamUtils;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
@@ -397,19 +397,17 @@ public class QuoteImportItem {
         return productOrder.hasQuoteServerQuote();
     }
 
-    /**
-     * @return A List of LedgerEntries which have been previously been billed in this QuoteImportItem.
-     */
-    public Set<LedgerEntry> getPriorUncreditedBillings() {
-        Set<LedgerEntry> priorSapBillings = new HashSet<>();
-        ledgerItems.stream().flatMap(ledgerEntry -> ledgerEntry.getPreviouslyBilled().stream())
-                .filter(StreamUtils.not(LedgerEntry::isCredited))
-            .collect(Collectors.toCollection(() -> priorSapBillings));
-        return priorSapBillings;
+    public List<LedgerEntry> getPriorLedgersMatchingProduct() {
+        return productOrder.getSamples().stream().flatMap(ledgerItems -> ledgerItems.getBilledLedgerItems().stream())
+            .filter(ledgerEntry -> ledgerEntry.isSuccessfullyBilled() && ledgerEntry
+                .getProduct().equals(product)).collect(Collectors.toList());
     }
 
     public BigDecimal totalPriorBillingQuantity() {
-        return getPriorUncreditedBillings().stream().map(LedgerEntry::getQuantity)
+        Set<LedgerEntry> allProductOrderLedgers = ledgerItems.stream().map(LedgerEntry::getProductOrderSample).flatMap(
+            (ProductOrderSample productOrderSample) -> productOrderSample.getLedgerItems().stream()).collect(
+            Collectors.toSet());
+        return allProductOrderLedgers.stream().map(LedgerEntry::calculateAvailableQuantity)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

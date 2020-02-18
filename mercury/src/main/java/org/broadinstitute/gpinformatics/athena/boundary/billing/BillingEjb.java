@@ -286,20 +286,6 @@ public class BillingEjb {
     }
 
     /**
-     * Helper method to update all ledgers in a QuoteImportItem for the common case when the ledger
-     * <b>is not a return</b>
-     * @param ledgerItems         LedgerEntries to update.
-     * @param quoteId             quoteId of the ledgers
-     * @param quoteServerWorkItem The ID of the transaction in the quote server.
-     * @param sapDeliveryDocumentId       The SAP delivery document returned from SAP.
-     * @param billingMessage      The message to be assigned to all entries.
-     */
-    public void updateSapLedgerEntries(Collection<LedgerEntry> ledgerItems, String quoteId, String quoteServerWorkItem,
-                                       String sapDeliveryDocumentId, String billingMessage) {
-        updateSapLedgerEntries(ledgerItems, quoteId, quoteServerWorkItem, sapDeliveryDocumentId, null, billingMessage);
-    }
-
-    /**
      * If the order's product supports automated billing, and it's not currently locked out,
      * generate a list of billing ledger items for the sample and add them to the billing ledger.
      *

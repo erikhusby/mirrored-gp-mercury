@@ -80,6 +80,7 @@ import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.blankOrNullString;
+import static org.hamcrest.Matchers.emptyCollectionOf;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -709,6 +710,7 @@ public class BillingCreditDbFreeTest {
         sapService.setWrappedClient(sapClient);
         Date sameDate = new Date();
         List<ProductOrderSample> samples = pdo.getSamples();
+        LedgerEntry creditEntry=null;
         for (int i = 0; i < samples.size(); i++) {
             Date uniqueDate = getUniqueDate(i);
 
@@ -722,15 +724,15 @@ public class BillingCreditDbFreeTest {
 
             // for each the sample in the pdo, a ledger for a return is created with unique dates.
             // This will create multiple quoteItems
-            ledgerEntry = new LedgerEntry(pdoSample, pdo.getProduct(), uniqueDate, CREDIT_QTY_ONE);
-            pdoSample.getLedgerItems().add(ledgerEntry);
-            ledgerEntries.add(ledgerEntry);
+            creditEntry = new LedgerEntry(pdoSample, pdo.getProduct(), uniqueDate, CREDIT_QTY_ONE);
+            pdoSample.getLedgerItems().add(creditEntry);
+            ledgerEntries.add(creditEntry);
         }
         BillingEjb billingEjb = Mockito.mock(BillingEjb.class);
         BillingAdaptor billingAdaptor = new BillingAdaptor(billingEjb, null, null, null, sapService, null, null);
 
         QuoteImportItem quoteImportItem =
-            new QuoteImportItem(quotePriceItem.getId(), priceItem, "1234", ledgerEntries, new Date(), pdo.getProduct(),
+            new QuoteImportItem(quotePriceItem.getId(), priceItem, "1234", Collections.singletonList(creditEntry), new Date(), pdo.getProduct(),
                 pdo);
         Collection<BillingCredit> billingCredits = billingAdaptor.handleBillingCredit(quoteImportItem);
         assertThat(billingCredits, hasSize(1));
@@ -739,9 +741,8 @@ public class BillingCreditDbFreeTest {
         List<BillingCredit.LineItem> returnLineItems =
             billingCredits.stream().flatMap((BillingCredit billingCredit) -> billingCredit.getReturnLines().stream())
                 .collect(Collectors.toList());
-        assertThat(returnLineItems, hasSize(2));
-        assertThat(quoteImportItem.getQuantity().abs(),
-            equalTo(qtyBilled));
+        assertThat(returnLineItems, hasSize(1));
+        assertThat(quoteImportItem.getQuantity().abs(), equalTo(qtyBilled));
     }
 
     public Date getUniqueDate(int i) {
@@ -775,12 +776,12 @@ public class BillingCreditDbFreeTest {
         QuoteImportItem quoteImportItem =
             new QuoteImportItem(quotePriceItem.getId(), priceItem, "1234", ledgerEntries, new Date(), pdo.getProduct(),
                 pdo);
-        try {
-            billingAdaptor.handleBillingCredit(quoteImportItem);
-            Assert.fail("Positive credits aren't a thing. An error should have been thrown.");
-        } catch (Exception e) {
-            assertThat(e.getLocalizedMessage(), equalTo(BillingAdaptor.POSITIVE_QTY_ERROR_MESSAGE));
-        }
+
+        Collection<BillingCredit> billingCredits = billingAdaptor.handleBillingCredit(quoteImportItem);
+        assertThat(billingCredits, not(emptyCollectionOf(BillingCredit.class)));
+        billingAdaptor.handleBillingCredit(quoteImportItem)
+            .forEach(billingCredit -> assertThat(billingCredit.getBillingResult().getErrorMessage(),
+                        is(BillingAdaptor.POSITIVE_QTY_ERROR_MESSAGE)));
     }
 
     @Test(dataProvider = "mockedFailureClientProvider")
@@ -807,12 +808,11 @@ public class BillingCreditDbFreeTest {
         QuoteImportItem quoteImportItem =
             new QuoteImportItem(quotePriceItem.getId(), priceItem, "1234", ledgerEntries, new Date(), pdo.getProduct(),
                 pdo);
-        try {
-            billingAdaptor.handleBillingCredit(quoteImportItem);
-            Assert.fail("Positive credits aren't a thing. An error should have been thrown.");
-        } catch (Exception e) {
-            assertThat(e.getLocalizedMessage(), equalTo(BillingAdaptor.NON_SAP_ITEM_ERROR_MESSAGE));
-        }
+
+            Collection<BillingCredit> billingCredits = billingAdaptor.handleBillingCredit(quoteImportItem);
+            assertThat(billingCredits, not(emptyCollectionOf(BillingCredit.class)));
+            billingCredits.forEach(billingCredit -> assertThat(billingCredit.getBillingResult().getErrorMessage(),
+                is(BillingAdaptor.NON_SAP_ITEM_ERROR_MESSAGE)));
     }
 
     private void resetMocks(){

@@ -23,18 +23,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class BillingCredit {
     public static final String CREDIT_REQUESTED_PREFIX = "CR-";
-    private String sapDeliveryDocumentId;
+    private LedgerEntry sourceLedger;
     private List<LineItem> returnLines;
     private String returnOrderId;
     private BillingMessage billingMessage = new BillingMessage();
     private BillingEjb.BillingResult billingResult;
 
-    BillingCredit(String sapDeliveryDocumentId, List<LineItem> returnLines) {
-        this.sapDeliveryDocumentId = sapDeliveryDocumentId;
+    BillingCredit(LedgerEntry sourceLedger, List<LineItem> returnLines) {
+        this.sourceLedger = sourceLedger;
         this.returnLines = returnLines;
     }
 
@@ -56,44 +56,55 @@ public class BillingCredit {
         Set<BillingCredit> credits = new HashSet<>();
         BigDecimal totalAvailable = quoteItem.totalPriorBillingQuantity();
         BigDecimal quoteItemQuantity = quoteItem.getQuantity();
-        if (quoteItemQuantity.compareTo(BigDecimal.ZERO) > 0) {
+        AtomicReference<BigDecimal> requiredCreditQuantity = new AtomicReference<>(quoteItemQuantity.abs());
+        if (quoteItemQuantity.compareTo(BigDecimal.ZERO) >=0) {
             throw new BillingException(BillingAdaptor.CREDIT_QUANTITY_INVALID);
         } if (totalAvailable.add(quoteItemQuantity).compareTo(BigDecimal.ZERO) < 0 ){
             throw new BillingException(BillingAdaptor.NEGATIVE_BILL_ERROR);
         } else {
-            Map<String, List<LineItem>> orderItemsByDeliveryDocument = new HashMap<>();
-            quoteItem.getBillingCredits().forEach(ledgerCreditEntry -> {
+            Map<LedgerEntry, List<LineItem>> orderItemsByDeliveryDocument = new HashMap<>();
+            Collection<LedgerEntry> billingCredits = quoteItem.getBillingCredits();
+            billingCredits.forEach(ledgerCreditEntry -> {
+
                 Map<LedgerEntry, BigDecimal> creditSource = ledgerCreditEntry.findCreditSource();
-                creditSource.forEach((sourceLedger, quantityAvailableInCreditSource) -> {
-                    BillingMessage billingMessage=new BillingMessage();
-                    if (creditSource.isEmpty() && quoteItemQuantity.abs().compareTo(BigDecimal.ZERO) > 0) {
-                        billingMessage.setValidationError(BillingAdaptor.NEGATIVE_BILL_ERROR);
-                    }
+                    creditSource.forEach((sourceLedger, quantityAvailableInCreditSource) -> {
+                        BillingMessage billingMessage = new BillingMessage();
+                        if (creditSource.isEmpty() && quoteItemQuantity.abs().compareTo(BigDecimal.ZERO) > 0) {
+                            billingMessage.setValidationError(BillingAdaptor.NEGATIVE_BILL_ERROR);
+                        }
 
-                    BigDecimal totalQuantitiesAvailableInLedger = sourceLedger.totalPreviouslyBilledQuantity();
+                        if (ledgerCreditEntry.getQuantity().compareTo(BigDecimal.ZERO) >= 0) {
+                            billingMessage.setValidationError(BillingAdaptor.CREDIT_QUANTITY_INVALID);
+                            return;
+                        }
 
-                    if (ledgerCreditEntry.getQuantity().compareTo(BigDecimal.ZERO) >= 0) {
-                        billingMessage.setValidationError(BillingAdaptor.CREDIT_QUANTITY_INVALID);
-                        return;
-                    }
-                    BigDecimal requiredCreditQuantity = ledgerCreditEntry.getQuantity().abs();
-                    BigDecimal requestedCreditQuantity;
-                    if (requiredCreditQuantity.compareTo(quantityAvailableInCreditSource) > 0
-                        && requiredCreditQuantity.compareTo(totalQuantitiesAvailableInLedger)>0) {
-                        billingMessage.setValidationError(BillingAdaptor.NEGATIVE_BILL_ERROR);
-                        return;
-                    } else if (requiredCreditQuantity.equals(quantityAvailableInCreditSource)) {
-                        requestedCreditQuantity = quantityAvailableInCreditSource;
-                    } else {
-                        requestedCreditQuantity = requiredCreditQuantity;
-                    }
-                    orderItemsByDeliveryDocument.computeIfAbsent(sourceLedger.getSapDeliveryDocumentId(), k -> new ArrayList<>())
-                        .add(new LineItem(ledgerCreditEntry, requestedCreditQuantity, billingMessage));
+
+                        BigDecimal quantityInLineItems = orderItemsByDeliveryDocument.values().stream().map(
+                            lineItems -> lineItems.stream().map(LineItem::getQuantity)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add)).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                        if (quantityInLineItems.compareTo(quoteItemQuantity.abs()) >= 0) {
+                            return;
+                        }
+                        BigDecimal quantityToCredit =
+                            quantityAvailableInCreditSource.compareTo(requiredCreditQuantity.get()) > 0 ?
+                                requiredCreditQuantity.get() : quantityAvailableInCreditSource;
+
+
+                        if (requiredCreditQuantity.get().compareTo(quantityAvailableInCreditSource) > 0
+                            && requiredCreditQuantity.get().compareTo(totalAvailable) > 0) {
+                            billingMessage.setValidationError(BillingAdaptor.NEGATIVE_BILL_ERROR);
+                            return;
+                        }
+                        requiredCreditQuantity.getAndAccumulate(quantityToCredit, BigDecimal::subtract);
+                        orderItemsByDeliveryDocument
+                            .computeIfAbsent(sourceLedger, k -> new ArrayList<>())
+                            .add(new LineItem(ledgerCreditEntry, quantityToCredit, billingMessage));
+                    });
                 });
-            });
 
-            orderItemsByDeliveryDocument.forEach((deliveryDocument, creditItems) -> {
-                credits.add(new BillingCredit(deliveryDocument, creditItems));
+            orderItemsByDeliveryDocument.forEach((sourceLedger, creditItems) -> {
+                credits.add(new BillingCredit(sourceLedger, creditItems));
             });
         }
         return credits;
@@ -103,8 +114,12 @@ public class BillingCredit {
         return returnLines;
     }
 
-    public String getSapDeliveryDocumentId() {
-        return sapDeliveryDocumentId;
+    public LedgerEntry getSourceLedger() {
+        return sourceLedger;
+    }
+
+    public void setSourceLedger(LedgerEntry sourceLedger) {
+        this.sourceLedger = sourceLedger;
     }
 
     public void setReturnOrderId(String returnOrderId) {
@@ -116,7 +131,7 @@ public class BillingCredit {
     }
 
     public void setReturnOrderInvoiceNotFound() {
-        String sapDeliveryDocumentId = getSapDeliveryDocumentId();
+        String sapDeliveryDocumentId = sourceLedger.getSapDeliveryDocumentId();
         if (StringUtils.isNotBlank(sapDeliveryDocumentId)) {
             setReturnOrderId(String.format("%s%s", CREDIT_REQUESTED_PREFIX, sapDeliveryDocumentId));
         }
@@ -130,10 +145,6 @@ public class BillingCredit {
         return billingResult;
     }
 
-    public void setSapDeliveryDocumentId(String sapDeliveryDocumentId) {
-        this.sapDeliveryDocumentId = sapDeliveryDocumentId;
-    }
-
     public static class LineItem {
         private final LedgerEntry ledgerEntry;
         private final BigDecimal quantity;
@@ -143,18 +154,6 @@ public class BillingCredit {
             this.ledgerEntry = ledgerEntry;
             this.quantity = quantity;
             this.billingMessage = billingMessage;
-        }
-
-        public static List<SAPOrderItem> merge(List<SAPOrderItem> orderItems) {
-            Map<String, List<SAPOrderItem>> orderItemsByPart =
-                orderItems.stream().collect(Collectors.groupingBy(SAPOrderItem::getProductIdentifier));
-            List<SAPOrderItem> newList = new ArrayList<>();
-            orderItemsByPart.forEach((partNumber, sapOrderItems) -> {
-                BigDecimal quantityOfParts = sapOrderItems.stream().map(SAPOrderItem::getItemQuantity)
-                    .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-                newList.add(new SAPOrderItem(partNumber, quantityOfParts));
-            });
-            return newList;
         }
 
         public LedgerEntry getLedgerEntry() {
