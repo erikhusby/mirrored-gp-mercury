@@ -177,6 +177,10 @@ public class ProductOrderResource {
             WorkRequestCreationException, InvalidProductException {
 
         userBean.login(productOrderData.getUsername());
+        if(userBean.getBspUser() == UserBean.UNKNOWN) {
+            throw new ResourceException("A valid Username is required to complete this request",
+                    Response.Status.UNAUTHORIZED);
+        }
         ProductOrder productOrder = productOrderEjb.createProductOrder(productOrderData);
 
         ResearchProject researchProject =
@@ -283,6 +287,10 @@ public class ProductOrderResource {
             InvalidProductException {
 
         userBean.login(productOrderData.getUsername());
+        if(userBean.getBspUser() == UserBean.UNKNOWN) {
+            throw new ResourceException("A valid Username is required to complete this request",
+                    Response.Status.UNAUTHORIZED);
+        }
         return new ProductOrderData(productOrderEjb.createProductOrder(productOrderData), true);
     }
 
