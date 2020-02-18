@@ -277,7 +277,7 @@ dragen:
       prologScriptFolder: /seq/techdev/software/infrastructure/wildfly
       configFilePath: /seq/dragen/config/
       logFilePath: /seq/dragen/log/slurm-%j.out
-      sqlldrPath: /opt/oracle/sqlldr
+      sqlldrPath: sqlldr #/opt/oracle/sqlldr
       ctlFolder: /seq/lims/datawh/dev/dragen
 
     QA:
