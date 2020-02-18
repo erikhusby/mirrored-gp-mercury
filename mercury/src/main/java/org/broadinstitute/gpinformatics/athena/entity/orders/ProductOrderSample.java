@@ -1197,6 +1197,11 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
 
             // Update quantity, adding a new ledger entry if needed.
+            Optional<DeliveryCondition> replacementUsed = Optional.ofNullable(ledgerUpdate.replacementUsed);
+            String deliveryCondtionName = null;
+            if(replacementUsed.isPresent()) {
+                deliveryCondtionName = replacementUsed.get().getConditionName();
+            }
             if (ledgerUpdate.isQuantityChanging()) {
                 if (ledgerUpdate.isChangeRequestCurrent()) {
 
@@ -1207,7 +1212,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
                         if(ledgerUpdate.getPriceItem() == null) {
 
                             addLedgerItem(ledgerUpdate.getWorkCompleteDate(), ledgerUpdate.getProduct(), quantityDelta,
-                                    ledgerUpdate.replacementUsed.getConditionName());
+                                    deliveryCondtionName);
                         } else {
                             addLedgerItem(ledgerUpdate.getWorkCompleteDate(), ledgerUpdate.getPriceItem(),
                                     quantityDelta);
@@ -1234,7 +1239,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
             // Update work complete date for existing entry, whether or not the quantity is changing.
             if (haveExistingEntry) {
                 existingLedgerEntry.setWorkCompleteDate(ledgerUpdate.getWorkCompleteDate());
-                existingLedgerEntry.setSapReplacement(ledgerUpdate.replacementUsed.getConditionName());
+                existingLedgerEntry.setSapReplacement(deliveryCondtionName);
             }
         }
     }

@@ -753,7 +753,7 @@
 
         function updateSubmitButton() {
 <c:if test="${!actionBean.productOrderListEntry.billing}">
-            var changedInputs = $j('input.changed');
+            var changedInputs = $j('input.changed, select.changed') ;
             $j('#updateLedgers').attr('disabled', changedInputs.length == 0);
 </c:if>
         }
@@ -1126,7 +1126,8 @@
                                            class="ledgerQuantity" data-rownum = "${info.sample.samplePosition}"
                                            priceItemId="${billingIndex.indexId}"
                                            billedQuantity="${info.getBilledForPriceIndex(billingIndex)}"/>
-                                    <c:if test="${actionBean.productOrder.hasSapQuote()}">
+                                    <c:set var="replacementsByProduct" value="${actionBean.potentialSapReplacements.get(billingIndex.product)}"/>
+                                    <c:if test="${actionBean.productOrder.hasSapQuote() && actionBean.potentialSapReplacements.containsKey(billingIndex.product)}">
                                             <c:set var="submittedReplacement" value="${info.replacementsByProduct.get(billingIndex)}"/>
                                             <c:set var="currentReplacement"
                                                    value="${submittedReplacement != null ? submittedReplacement : ''}"/>
@@ -1135,7 +1136,7 @@
                                                         id="ledgerData[${info.sample.samplePosition}].quantities[${billingIndex.indexId}].replacementCondition"
                                                         data-rownum="${info.sample.samplePosition}" class="ledgerReplacement" priceItemId="${billingIndex.indexId}"
                                                         originalValue="${currentReplacement}">
-                                                    <option value="">Select one if replacing price...</option>
+                                                    <option value="">Price Replacement ...</option>
                                                     <c:set var="replacementsByProduct" value="${actionBean.potentialSapReplacements.get(billingIndex.product)}"/>
                                                     <c:forEach items="${replacementsByProduct}" var="deliveryConditions">
                                                         <option value="${deliveryConditions.conditionName}"> ${deliveryConditions.displayName}</option>
