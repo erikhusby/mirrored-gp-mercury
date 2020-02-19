@@ -157,10 +157,14 @@
                         </c:if>
                     </td>
                     <td>
-                        <c:if test="${inSAP}">
+                        <c:if test="${inSAP && !product.replacementPrices.isEmpty()}">
+                            <ul>
                             <c:forEach items="${product.replacementPrices}" var="replacement">
-                                ${replacement}<br>
+                                <c:forEach items="${replacement.value}" var="condition">
+                                    <li><b>(${replacement.key})</b> -- ${condition}</li>
+                                </c:forEach>
                             </c:forEach>
+                            </ul>
                         </c:if>
                     </td>
                 </security:authorizeBlock>

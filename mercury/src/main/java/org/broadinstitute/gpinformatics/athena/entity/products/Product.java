@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.sap.entity.Condition;
+import org.broadinstitute.sap.entity.DeliveryCondition;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hibernate.annotations.BatchSize;
@@ -57,6 +58,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * This entity represents all the stored information for a Mercury Project.
@@ -1124,17 +1126,20 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return price;
     }
 
-    public List<String> getReplacementPrices()  {
+    public Map<String, List<String>> getReplacementPrices()  {
 
-        final List<String> discountCollection = new ArrayList<>();
+        final Map<String, List<String>> discountCollection = new TreeMap<>(Comparator.reverseOrder());
 
         sapMaterials.values().stream().filter(sapMaterial -> !sapMaterial
                 .getPossibleDeliveryConditions().isEmpty()).forEach(material -> {
                     material.getPossibleDeliveryConditions().forEach((deliveryCondition, conditionValue) -> {
-                    if (conditionValue.compareTo(BigDecimal.ZERO) < 0) {
-                        discountCollection.add("("+material.getSalesOrg()+") " +
-                                               deliveryCondition.getConditionName() + " = " +
-                                               NumberFormat.getCurrencyInstance().format(conditionValue));
+                    if (conditionValue.abs().compareTo(BigDecimal.ZERO) != 0) {
+                        discountCollection.computeIfAbsent(SapIntegrationClientImpl.SAPCompanyConfiguration
+                                .fromSalesOrgForMaterial(material.getSalesOrg()).getDisplayName(),s -> new ArrayList<>());
+                        discountCollection.get(SapIntegrationClientImpl.SAPCompanyConfiguration
+                                .fromSalesOrgForMaterial(material.getSalesOrg()).getDisplayName())
+                                .add(deliveryCondition.getDisplayName()
+                                     + " => " + NumberFormat.getCurrencyInstance().format(conditionValue));
                     }
             });
         });
