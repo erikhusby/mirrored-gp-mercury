@@ -232,7 +232,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String sampleSummary;
     private State state;
     private ProductOrder.QuoteSourceType quoteSource;
-    private String sapOrdder;
+    private String sapOrder;
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -569,15 +569,15 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, GET_SAMPLE_DATA})
     public void editInit() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
-        sapOrdder = getContext().getRequest().getParameter(SAP_ORDER_PARAMETER);
+        sapOrder = getContext().getRequest().getParameter(SAP_ORDER_PARAMETER).trim();
         // If there's no product order parameter, send an error.
-        if (StringUtils.isBlank(productOrder) && StringUtils.isBlank(sapOrdder)) {
+        if (StringUtils.isBlank(productOrder) && StringUtils.isBlank(sapOrder)) {
             addGlobalValidationError("No product order was specified.");
         } else {
             if(StringUtils.isNotBlank(productOrder)) {
                 editOrder = productOrderDao.findByBusinessKey(productOrder);
-            } else if (StringUtils.isNotBlank(sapOrdder)) {
-                editOrder = productOrderDao.findBySapOrderId(sapOrdder);
+            } else if (StringUtils.isNotBlank(sapOrder)) {
+                editOrder = productOrderDao.findBySapOrderId(sapOrder);
             }
             if (editOrder != null) {
                 List<Long> productOrderIds = new ArrayList<>();
@@ -588,6 +588,10 @@ public class ProductOrderActionBean extends CoreActionBean {
                     }
                 }
                 progressFetcher = new CompletionStatusFetcher(productOrderDao.getProgress(productOrderIds));
+            } else {
+                if (StringUtils.isBlank(productOrder) || StringUtils.isBlank(sapOrder)) {
+                    addGlobalValidationError("No product order was found matching " +(StringUtils.isNotBlank(productOrder)?productOrder:sapOrder)+ ".");
+                }
             }
         }
     }
