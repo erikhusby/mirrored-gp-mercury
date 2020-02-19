@@ -61,8 +61,6 @@ public class BillingAdaptor implements Serializable {
     public static final String NOT_ELIGIBLE_FOR_SAP_INDICATOR = "NotEligible";
     public static final String BILLING_LOG_TEXT_FORMAT =
         "Work item '%s' and SAP Document '%s' and SAP Return Order '%s' with completion date of '%s' posted at '%s' for '%2.2f' units of '%s' on behalf of %s in '%s'";
-    public static final String BILLING_CREDIT_EMAIL_SENT =
-        "Billing credit could not be applied in SAP. An email has been sent to business systems to resolve this.";
     public static final String CREDIT_QUANTITY_INVALID = "Credit value must be less than zero.";
     public static final String NEGATIVE_BILL_ERROR =
         "Attempt to create a billing credit for a quantity exceeding the previously billed quantity.";
