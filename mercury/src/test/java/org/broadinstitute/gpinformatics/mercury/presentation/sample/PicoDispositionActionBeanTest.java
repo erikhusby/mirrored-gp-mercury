@@ -71,7 +71,7 @@ public class PicoDispositionActionBeanTest {
                     new BigDecimal(incrementer % 2 == 1 ? incrementer : NUMBER_TUBES - incrementer);
             // Puts the quant metric on each tube.
             LabMetric labMetric = new LabMetric(concentration, LabMetric.MetricType.INITIAL_PICO,
-                    LabMetric.LabUnit.NG_PER_UL, cellname, timeSteps[0]);
+                    LabMetric.LabUnit.NG_PER_UL, VesselPosition.getByName(cellname), timeSteps[0]);
             tube.addMetric(labMetric);
             // Adds the lab metric decision which is used for the Risk Override indication.
             // This decision does NOT determine the next steps -- that is a separate categorization
@@ -208,7 +208,7 @@ public class PicoDispositionActionBeanTest {
 
         barcodedTube.getMetrics().clear();
         barcodedTube.addMetric(new LabMetric(new BigDecimal("11.1"), LabMetric.MetricType.CATCH_PICO,
-                LabMetric.LabUnit.NG_PER_UL, FIRST_CELLNAME, timeSteps[0]));
+                LabMetric.LabUnit.NG_PER_UL, VesselPosition.getByName(FIRST_CELLNAME), timeSteps[0]));
 
         // Should have 1 sample in list but having no next step.
         picoDispositionActionBean.displayList();
@@ -230,19 +230,19 @@ public class PicoDispositionActionBeanTest {
         barcodedTube.getMetrics().clear();
 
         LabMetric labMetric0 = new LabMetric(new BigDecimal("94.0"), LabMetric.MetricType.INITIAL_PICO,
-                LabMetric.LabUnit.NG_PER_UL, FIRST_CELLNAME, timeSteps[0]);
+                LabMetric.LabUnit.NG_PER_UL, VesselPosition.getByName(FIRST_CELLNAME), timeSteps[0]);
         labMetric0.setLabMetricDecision(new LabMetricDecision(LabMetricDecision.Decision.PASS, timeSteps[0],
                 BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric0));
         barcodedTube.addMetric(labMetric0);
 
         LabMetric labMetric1 = new LabMetric(BD_1_1, LabMetric.MetricType.INITIAL_PICO,
-                LabMetric.LabUnit.NG_PER_UL, FIRST_CELLNAME, timeSteps[1]);
+                LabMetric.LabUnit.NG_PER_UL, VesselPosition.getByName(FIRST_CELLNAME), timeSteps[1]);
         labMetric1.setLabMetricDecision(new LabMetricDecision(LabMetricDecision.Decision.RISK, timeSteps[1],
                 BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric1));
         barcodedTube.addMetric(labMetric1);
 
         LabMetric labMetric2 = new LabMetric(BD_1_1, LabMetric.MetricType.INITIAL_PICO,
-                LabMetric.LabUnit.NG_PER_UL, FIRST_CELLNAME, timeSteps[2]);
+                LabMetric.LabUnit.NG_PER_UL, VesselPosition.getByName(FIRST_CELLNAME), timeSteps[2]);
         labMetric2.setLabMetricDecision(new LabMetricDecision(LabMetricDecision.Decision.FAIL, timeSteps[2],
                 BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric2));
         barcodedTube.addMetric(labMetric2);
@@ -264,13 +264,13 @@ public class PicoDispositionActionBeanTest {
         barcodedTube.getMetrics().clear();
 
         LabMetric labMetric0 = new LabMetric(new BigDecimal("94.0"), LabMetric.MetricType.INITIAL_PICO,
-                LabMetric.LabUnit.NG_PER_UL, FIRST_CELLNAME, timeSteps[0]);
+                LabMetric.LabUnit.NG_PER_UL, VesselPosition.getByName(FIRST_CELLNAME), timeSteps[0]);
         labMetric0.setLabMetricDecision(new LabMetricDecision(LabMetricDecision.Decision.PASS, timeSteps[0],
                 BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric0));
         barcodedTube.addMetric(labMetric0);
 
         LabMetric labMetric1 = new LabMetric(BD_1_1, LabMetric.MetricType.INITIAL_PICO,
-                LabMetric.LabUnit.NG_PER_UL, FIRST_CELLNAME, null);
+                LabMetric.LabUnit.NG_PER_UL, VesselPosition.getByName(FIRST_CELLNAME), null);
         labMetric1.setLabMetricDecision(new LabMetricDecision(LabMetricDecision.Decision.FAIL, null,
                 BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric1));
         barcodedTube.addMetric(labMetric1);

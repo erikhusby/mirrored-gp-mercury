@@ -1,86 +1,28 @@
--- GPLIM-6069 Add event operator
-ALTER TABLE MERCURYDW.IM_EVENT_FACT
-    ADD OPERATOR VARCHAR2(32);
-ALTER TABLE MERCURYDW.EVENT_FACT
-    ADD OPERATOR VARCHAR2(32);
 
-CREATE TABLE MERCURYDW.IM_EVENT_METADATA
-(
-    LINE_NUMBER   NUMBER(9, 0),
-    ETL_DATE      DATE,
-    IS_DELETE     CHAR,
-    METADATA_ID   NUMBER(19, 0),
-    LAB_EVENT_ID  NUMBER(19, 0),
-    METADATA_TYPE VARCHAR2(32),
-    VALUE         VARCHAR2(255)
-);
-
-CREATE TABLE MERCURYDW.EVENT_METADATA
-(
-    METADATA_ID   NUMBER(19, 0) NOT NULL,
-    LAB_EVENT_ID  NUMBER(19, 0) NOT NULL,
-    METADATA_TYPE VARCHAR2(32)  NOT NULL,
-    VALUE         VARCHAR2(255),
-    ETL_DATE      DATE          NOT NULL
-);
-
-CREATE INDEX IDX_EVENT_METADATA
-    ON MERCURYDW.EVENT_METADATA (METADATA_ID);
-CREATE INDEX IDX_EVENT_METADATA_EVENT
-    ON MERCURYDW.EVENT_METADATA (LAB_EVENT_ID);
-
--- Generate event_fact.operator backfill file event_operator.dat
--- by executing org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventFixupTest.extractEventOperatorList
--- Full path of file shown in System.out output
-
--- Create table to load eventId - operator data exported from Mercury
-CREATE TABLE MERCURYDW.TMP_EVENT_OPERATOR_MAP
-(
-    EVENT_ID NUMBER(19, 0),
-    OPERATOR VARCHAR2(32)
-);
-
--- (Optional - use whatever tool is handy to load file event_operator.dat into table MERCURYDW.TMP_EVENT_OPERATOR_MAP)
--- Using Oracle client tool sqlldr:
--- Navigate to folder or copy output file event_operator.dat
---   of
--- Save this text in file event_operator.ctl in same folder:
-OPTIONS
-    (ERRORS=50,DIRECT= TRUE)
-    LOAD DATA
-INFILE 'event_operator.dat'
-REPLACE
-INTO TABLE MERCURYDW.TMP_EVENT_OPERATOR_MAP
-FIELDS TERMINATED BY ','
-( EVENT_ID,
-  OPERATOR CHAR (32) )
-
--- Change password and IP address and execute sqlldr to load data:
-sqlldr userid="mercurydw/****@seqdev.broad.mit.edu:1521/seqdev3" control=event_operator.ctl log=event_operator.log bad=event_operator.bad discard=event_operator.dsc
-
--- Script to bulk update event_fact with operator names:  (15-20 minutes - run after hours)
+-- GPLIM-6706 Force use of enum for LAB_METRIC.VESSEL_POSITION (vs.String)
+SET SERVEROUTPUT ON;
 DECLARE
-    TYPE ID_ARR_TY IS TABLE OF NUMBER(19) INDEX BY BINARY_INTEGER;
-    TYPE USER_ARR_TY IS TABLE OF VARCHAR2(32) INDEX BY BINARY_INTEGER;
-    V_ID_ARR   ID_ARR_TY;
-    V_USER_ARR USER_ARR_TY;
-    CURSOR CUR_SRC IS SELECT EVENT_ID, OPERATOR
-                      FROM MERCURYDW.TMP_EVENT_OPERATOR_MAP;
+    CURSOR CUR_UPD IS
+        select LAB_METRIC_ID
+        from LAB_METRIC
+        where REGEXP_INSTR(RACK_POSITION, '[A-Z][0-9]$') = 1;
+    TYPE V_ARR_TY IS TABLE OF NUMBER(19) INDEX BY PLS_INTEGER;
+    V_PK_ARR V_ARR_TY;
 BEGIN
-    OPEN CUR_SRC;
-    WHILE (TRUE)
-        LOOP
-            FETCH CUR_SRC BULK COLLECT INTO V_ID_ARR, V_USER_ARR LIMIT 100000;
-            EXIT WHEN V_ID_ARR.COUNT = 0;
-            FORALL IDX IN V_ID_ARR.FIRST .. V_ID_ARR.LAST
-                UPDATE EVENT_FACT
-                SET OPERATOR = V_USER_ARR(IDX)
-                WHERE LAB_EVENT_ID = V_ID_ARR(IDX);
-            COMMIT; -- Each batch
-        END LOOP;
-    CLOSE CUR_SRC;
+    OPEN CUR_UPD;
+    FETCH CUR_UPD BULK COLLECT INTO V_PK_ARR;
+    CLOSE CUR_UPD;
+    IF (V_PK_ARR.COUNT > 0) THEN
+        FORALL IDX IN V_PK_ARR.FIRST .. V_PK_ARR.LAST
+            UPDATE LAB_METRIC
+            SET RACK_POSITION = SUBSTR(RACK_POSITION, 1, 1) || '0' || SUBSTR(RACK_POSITION, 2, 1)
+            WHERE LAB_METRIC_ID = V_PK_ARR(IDX);
+    END IF;
+    COMMIT;
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR OCCURRED: ' || SQLERRM);
+        ROLLBACK;
+        RAISE;
 END;
 /
-
--- Drop when backfill script is complete
-DROP TABLE MERCURYDW.TMP_EVENT_OPERATOR_MAP;

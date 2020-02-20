@@ -10,7 +10,6 @@ import com.google.api.services.iam.v1.IamScopes;
 import com.google.api.services.iam.v1.model.CreateServiceAccountKeyRequest;
 import com.google.api.services.iam.v1.model.ServiceAccountKey;
 import com.google.auth.oauth2.ServiceAccountCredentials;
-import com.google.cloud.BaseServiceException;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
@@ -69,7 +68,7 @@ public class GoogleBucketDao {
                 storage.list(googleStorageConfig.getBucketName()).iterateAll()
                         .forEach(blob -> names.add(blob.getName()));
                 return names.stream().sorted().collect(Collectors.toList());
-            } catch (BaseServiceException e) {
+            } catch (Exception e) {
                 String msg = "Error getting file list from Google bucket. ";
                 messageCollection.addError(msg + e.toString());
                 logger.error(msg, e);
@@ -90,8 +89,10 @@ public class GoogleBucketDao {
                         .setProjectId(credentials.getProjectId()).build().getService();
                 Blob blob = storage.get(BlobId.of(googleStorageConfig.getBucketName(), filename));
                 return blob != null && blob.exists();
-            } catch (BaseServiceException e) {
-                messageCollection.addError("Error looking for " + filename + ": " + e.getMessage());
+            } catch (Exception e) {
+                String msg = "Error looking for " + filename + ": " + e.getMessage();
+                messageCollection.addError(msg);
+                logger.error(msg, e);
             }
         }
         return false;
@@ -107,7 +108,7 @@ public class GoogleBucketDao {
                         .setProjectId(credentials.getProjectId()).build().getService();
                 Blob blob = storage.get(BlobId.of(googleStorageConfig.getBucketName(), filename));
                 return (blob != null) ? blob.getContent() : null;
-            } catch (BaseServiceException e) {
+            } catch (Exception e) {
                 String msg = "Error reading " + filename + " from Google bucket. ";
                 messageCollection.addError(msg + e.toString());
                 logger.error(msg, e);
@@ -131,7 +132,7 @@ public class GoogleBucketDao {
                 Blob blob = storage.get(blobInfo.getBlobId());
                 // This will create a new file or overwrite an existing one.
                 storage.create(blobInfo, content);
-            } catch (BaseServiceException e) {
+            } catch (Exception e) {
                 String msg = "Error writing " + filename + " from Google bucket. ";
                 messageCollection.addError(msg + e.toString());
                 logger.error(msg, e);
@@ -145,66 +146,54 @@ public class GoogleBucketDao {
      * @return false if there was a credential error, true if ok.
      */
     private boolean makeCredential(boolean forWriting, MessageCollection messages) {
-        File file = null;
-        ServiceAccountCredentials serviceAccountCredentials = forWriting ? writerCredentials : credentials;
-        boolean credentialOk = serviceAccountCredentials != null;
-        if (!credentialOk) {
+        String errorMessage = null;
+        Exception exception = null;
+        if ((forWriting ? writerCredentials : credentials) == null) {
             File homeDir = new File(System.getProperty("user.home"));
-            String filename = forWriting ?
-                    googleStorageConfig.getWriterCredentialFilename() : googleStorageConfig.getCredentialFilename();
-            file = new File(homeDir, filename);
+            File file = new File(homeDir, forWriting ? googleStorageConfig.getWriterCredentialFilename() :
+                    googleStorageConfig.getCredentialFilename());
             if (file.exists()) {
                 try {
-                    serviceAccountCredentials = ServiceAccountCredentials.fromStream(new FileInputStream(file));
-                    if (serviceAccountCredentials == null) {
-                        messages.addError("Error making Google Service Account credentials from file.");
-                    } else {
+                    ServiceAccountCredentials serviceAccountCredentials =
+                            ServiceAccountCredentials.fromStream(new FileInputStream(file));
+                    // Tests that the credential works. It's valid if no exception is thrown.
+                    if (serviceAccountCredentials != null && StringUtils.isNotBlank(StorageOptions.newBuilder().
+                            setCredentials(serviceAccountCredentials).
+                            setProjectId(serviceAccountCredentials.getProjectId()).
+                            build().getService().
+                            getServiceAccount(serviceAccountCredentials.getProjectId()).toString())) {
                         if (forWriting) {
                             writerCredentials = serviceAccountCredentials;
                         } else {
                             credentials = serviceAccountCredentials;
                         }
-                        credentialOk = true;
+                    } else {
+                        errorMessage = "Failed to make a valid Google service account credential. ";
                     }
                 } catch (FileNotFoundException e) {
-                    messages.addError("Credential file is missing: %s", file.getAbsolutePath());
+                    exception = e;
+                    errorMessage = "Credential file is missing: " + file.getAbsolutePath();
                 } catch (IOException e) {
-                    messages.addError("Credential file stream gives: %s", e.toString());
-                } catch (BaseServiceException e) {
-                    String msg = "Error getting Google Service Account credentials. ";
-                    messages.addError(msg + e.toString());
-                    logger.error(msg, e);
+                    exception = e;
+                    errorMessage = "Exception while reading the credential file: " + e.toString();
+                } catch (Exception e) {
+                    exception = e;
+                    errorMessage = "Exception while making a Google Service Account credential: " + e.toString();
                 }
             } else {
-                messages.addError("Credential file is missing: %s", file.getAbsolutePath());
+                errorMessage = "Credential file is missing: " + file.getAbsolutePath();
             }
         }
-        // If the credential seems ok, test that it works. It's valid if no exception is thrown.
-        if (credentialOk) {
-            try {
-                if (StringUtils.isNotBlank(StorageOptions.newBuilder().
-                        setCredentials(serviceAccountCredentials).
-                        setProjectId(serviceAccountCredentials.getProjectId()).
-                        build().getService().
-                        getServiceAccount(serviceAccountCredentials.getProjectId()).toString())) {
-                    return credentialOk;
-                }
-            } catch (Exception e) {
-                if (forWriting) {
-                    writerCredentials = null;
-                } else {
-                    credentials = null;
-                }
-                credentialOk = false;
-                String msg = "The Google Service Account credential failed: ";
-                logger.error(msg, e);
-                messages.addError(msg + e.toString());
-                // Issues a recovery message since the credential file was ok but the credential failed.
-                messages.addError("It is likely that the Google service account credential " +
-                        "needs to be manually regenerated. " + regenerationMessage(file.getAbsolutePath()));
-            }
+        if ((forWriting ? writerCredentials : credentials) != null) {
+            return true;
         }
-        return credentialOk;
+        messages.addError(errorMessage);
+        if (exception == null) {
+            logger.error(errorMessage);
+        } else {
+            logger.error(errorMessage, exception);
+        }
+        return false;
     }
 
     /**
@@ -292,7 +281,7 @@ public class GoogleBucketDao {
             // Reading a non-existent file should return null. If it throws, there's a problem.
             storage.get(BlobId.of(googleStorageConfig.getBucketName(), "ProbablyDoesNotExist"));
             // Tries to get a file listing.
-             List<String> filenames = new ArrayList<>();
+            List<String> filenames = new ArrayList<>();
             storage.list(googleStorageConfig.getBucketName()).iterateAll()
                     .forEach(blob -> filenames.add(blob.getName()));
             messageCollection.addInfo("List of bucket " + googleStorageConfig.getBucketName() +
@@ -308,10 +297,8 @@ public class GoogleBucketDao {
                 }
             }
             return filenames;
-        } catch (BaseServiceException e) {
-            String msg = "Exception when listing or reading bucket. ";
-            messageCollection.addError(msg + e.toString());
-            logger.error(msg, e);
+        } catch (Exception e) {
+            messageCollection.addError("Exception when listing or reading bucket. " + e.toString());
             return Collections.emptyList();
         }
     }
@@ -352,36 +339,11 @@ public class GoogleBucketDao {
                     messages.addInfo("Wrote new service account key to " + credentialFile.getAbsolutePath());
                 }
             } catch (Exception e) {
-                String msg = "Failed to create new key for the service account: ";
+                String msg = "Failed to create new key for the Google service account. " +
+                        "It may need to be manually regenerated. ";
                 messages.addError(msg + e.toString());
-                // Issues a recovery message since the previous credential was ok but the new credential failed.
-                messages.addError("It is likely that the Google service account credential " +
-                        "needs to be manually regenerated. " + regenerationMessage(credentialFile.getAbsolutePath()));
+                logger.error(msg, e);
             }
         }
-    }
-
-    private String regenerationMessage(String absolutePath) {
-        boolean isProd = googleStorageConfig.getCredentialFilename().contains("/prod_");
-        boolean isDev = googleStorageConfig.getCredentialFilename().contains("/dev_");
-        boolean isRc = googleStorageConfig.getCredentialFilename().contains("/rc_");
-        assert (isProd || isDev || isRc);
-        String loginAs = isProd ? "pmi-ops.org" : isRc ? "rc-reader" : "dev-reader";
-        String serviceAccountName = isProd ? "awardee-broad@all-of-us-rdr-stable.iam.gserviceaccount.com" :
-                isRc ? "rc-reader@mercury-mayobucket-test-23591" : "dev-reader@mercury-mayobucket-test-23591";
-        return "To regenerate the Google credential: " +
-                "Login with your \"" + loginAs + "\" role account to " +
-                "the Google Cloud Console at https://console.cloud.google.com. " +
-                "Click the command prompt icon at the top right (\"Activate Cloud Shell\") " +
-                "to get a shell within the browser window. At the prompt run: " +
-                "\"gcloud iam service-accounts keys create newKey.json --iam-account " + serviceAccountName +
-                "\" to generate a new credential (a json file). " +
-                "Then run: \"cat newKey.json\" to output the json file to the shell window. " +
-                "Copy-paste the json from the shell window into an editor on your computer. " +
-                "Remove any line breaks found in \"private_key\" element so that it is one long line. " +
-                "Write the edited json to " + absolutePath +
-                " on the server where Mercury is running. Change the file permissions to allow Mercury to " +
-                "write the file in the future. No need to restart Mercury. " +
-                "To check if it was successful click Mercury -> Admin -> Mayo Manifest Admin -> Test Bucket Access";
     }
 }
