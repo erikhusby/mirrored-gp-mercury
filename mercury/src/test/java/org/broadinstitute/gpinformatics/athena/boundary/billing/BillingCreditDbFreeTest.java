@@ -80,7 +80,6 @@ import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.blankOrNullString;
-import static org.hamcrest.Matchers.emptyCollectionOf;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -776,12 +775,12 @@ public class BillingCreditDbFreeTest {
         QuoteImportItem quoteImportItem =
             new QuoteImportItem(quotePriceItem.getId(), priceItem, "1234", ledgerEntries, new Date(), pdo.getProduct(),
                 pdo);
-
-        Collection<BillingCredit> billingCredits = billingAdaptor.handleBillingCredit(quoteImportItem);
-        assertThat(billingCredits, not(emptyCollectionOf(BillingCredit.class)));
-        billingAdaptor.handleBillingCredit(quoteImportItem)
-            .forEach(billingCredit -> assertThat(billingCredit.getBillingResult().getErrorMessage(),
-                        is(BillingAdaptor.POSITIVE_QTY_ERROR_MESSAGE)));
+        try {
+            billingAdaptor.handleBillingCredit(quoteImportItem);
+            Assert.fail("Positive credits aren't a thing. An error should have been thrown.");
+        } catch (Exception e) {
+            assertThat(e.getLocalizedMessage(), equalTo(BillingAdaptor.CREDIT_QUANTITY_INVALID));
+        }
     }
 
     @Test(dataProvider = "mockedFailureClientProvider")
@@ -808,11 +807,12 @@ public class BillingCreditDbFreeTest {
         QuoteImportItem quoteImportItem =
             new QuoteImportItem(quotePriceItem.getId(), priceItem, "1234", ledgerEntries, new Date(), pdo.getProduct(),
                 pdo);
-
-            Collection<BillingCredit> billingCredits = billingAdaptor.handleBillingCredit(quoteImportItem);
-            assertThat(billingCredits, not(emptyCollectionOf(BillingCredit.class)));
-            billingCredits.forEach(billingCredit -> assertThat(billingCredit.getBillingResult().getErrorMessage(),
-                is(BillingAdaptor.NON_SAP_ITEM_ERROR_MESSAGE)));
+        try {
+            billingAdaptor.handleBillingCredit(quoteImportItem);
+            Assert.fail("Positive credits aren't a thing. An error should have been thrown.");
+        } catch (Exception e) {
+            assertThat(e.getLocalizedMessage(), equalTo(BillingAdaptor.NON_SAP_ITEM_ERROR_MESSAGE));
+        }
     }
 
     private void resetMocks(){

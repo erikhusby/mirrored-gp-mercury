@@ -27,6 +27,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -36,6 +37,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.sap.entity.SAPDeliveryDocument;
 import org.broadinstitute.sap.entity.SAPReturnOrder;
+import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hamcrest.Matchers;
@@ -179,7 +181,14 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
 
     public void testCreditDeliveryMultipleDeliveryTestOrder() throws Exception {
         ProductOrder productOrder = ProductOrderTestFactory.buildWholeGenomeProductOrder(100);
-        productOrder.setQuoteId("1234");
+        String sapQuoteId="1234";
+        SapQuote sapQuote = TestUtils
+            .buildTestSapQuote(sapQuoteId, BigDecimal.valueOf(0), BigDecimal.valueOf(0), productOrder,
+                TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
+
+        Mockito.when(sapIntegrationClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapQuote);
+
         Product product = productOrder.getProduct();
         productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         productOrder.addSapOrderDetail(new SapOrderDetail("1234", 100, "1234", "GP01"));
@@ -233,8 +242,8 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
         Mockito.when(billingSessionAccessEjb.findAndLockSession(Mockito.anyString())).thenReturn(billingSession);
 
         billingResults = billingAdaptor.billSessionItems(StringUtils.EMPTY, StringUtils.EMPTY);
-        String billingError = billingResults.stream().map(BillingEjb.BillingResult::getQuoteImportItem)
-                .map(QuoteImportItem::getBillingMessage).findFirst().orElse(null);
+        String billingError =
+            billingResults.stream().map(BillingEjb.BillingResult::getErrorMessage).findFirst().orElse(null);
         assertThat(billingError, equalTo(BillingAdaptor.NEGATIVE_BILL_ERROR));
         try {
             verifyBillingResults(billingResults);

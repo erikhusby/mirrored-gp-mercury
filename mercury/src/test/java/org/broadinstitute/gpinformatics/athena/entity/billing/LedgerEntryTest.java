@@ -46,7 +46,9 @@ public class LedgerEntryTest {
         BillingSession billingSession = new BillingSession();
         billingSession.setBilledDate(new Date());
         ledger1.setBillingSession(billingSession);
+        ledger1.setBillingMessage(BillingSession.SUCCESS);
         LedgerEntry ledger2 = createOneLedgerEntry("SM1", null, BigDecimal.ONE.negate(), null);
+        ledger2.setBillingMessage(BillingSession.SUCCESS);
         ledger2.setBillingSession(billingSession);
         ledger1.addCredit(ledger2, BigDecimal.ONE);
         assertThat(ledger1.calculateAvailableQuantity(), is(BigDecimal.valueOf(9)));
@@ -187,7 +189,7 @@ public class LedgerEntryTest {
     @Test
     public void testBean() {
         new BeanTester().testBean(LedgerEntry.class);
-        new EqualsMethodTester().testEqualsMethod(LedgerEntry.class, "autoLedgerTimestamp", "billingMessage", "quantity", "workItem", "workCompleteDate", "sapDeliveryDocumentId", "sapReturnOrderId", "sapOrderDetail", "sapReplacementPricing", "quantityCredited");
+        new EqualsMethodTester().testEqualsMethod(LedgerEntry.class, "autoLedgerTimestamp", "billingMessage", "quantity", "workItem", "workCompleteDate", "sapDeliveryDocumentId", "sapReturnOrderId", "sapOrderDetail", "sapReplacementPricing", "creditItems");
         new HashCodeMethodTester().testHashCodeMethod(LedgerEntry.class);
     }
 }

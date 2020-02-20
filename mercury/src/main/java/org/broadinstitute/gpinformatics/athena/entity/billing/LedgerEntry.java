@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingAdaptor;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -12,6 +13,7 @@ import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -20,7 +22,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
@@ -29,9 +30,9 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -119,12 +120,8 @@ public class LedgerEntry implements Serializable {
     @Column(name = "SAP_REPLACEMENT_PRICING")
     private Boolean sapReplacementPricing = Boolean.FALSE;
 
-    @OneToMany
-    @JoinTable(name = "LEDGER_ENTRY_BILLING_CREDITS")
-    private List<LedgerEntry> billingCredits = new ArrayList<>();
-
-    @Column(name = "QUANTITY_CREDITED")
-    private BigDecimal quantityCredited = BigDecimal.ZERO;
+    @OneToMany(mappedBy = "ledgerEntry", cascade = CascadeType.PERSIST)
+    private Set<CreditItem> creditItems = new HashSet<>();
 
     public static final Predicate<LedgerEntry> IS_SUCCESSFULLY_BILLED = LedgerEntry::isSuccessfullyBilled;
 
@@ -193,6 +190,10 @@ public class LedgerEntry implements Serializable {
             return getQuantity().subtract(getQuantityCredited());
         }
         return BigDecimal.ZERO;
+    }
+
+    public BigDecimal getQuantityCredited() {
+        return getCreditItems().stream().map(CreditItem::getQuantityCredited).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     public void setQuantity(BigDecimal quantity) {
@@ -433,24 +434,16 @@ public class LedgerEntry implements Serializable {
             .map(LedgerEntry::calculateAvailableQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    public void addCredit(LedgerEntry ledgerEntry, BigDecimal quantityForThisCredit) {
-        if (!ledgerEntry.isCredit()) {
-            throw new RuntimeException("Billing credits must have negative numbers");
+    public void addCredit(LedgerEntry ledgerEntry, BigDecimal quantity) {
+        if (ledgerEntry.getQuantity().add(quantity).compareTo(BigDecimal.ZERO) > 0) {
+            throw new RuntimeException(BillingAdaptor.NEGATIVE_BILL_ERROR);
         }
-        setQuantityCredited(quantityCredited.add(quantityForThisCredit));
-        billingCredits.add(ledgerEntry);
+        CreditItem ledgerCredit = new CreditItem(ledgerEntry, quantity);
+        getCreditItems().add(ledgerCredit);
     }
 
-    public List<LedgerEntry> getBillingCredits() {
-        return billingCredits;
-    }
-
-    public void setQuantityCredited(BigDecimal quantityCredited) {
-        this.quantityCredited = quantityCredited;
-    }
-
-    public BigDecimal getQuantityCredited() {
-        return quantityCredited;
+    public Set<CreditItem> getCreditItems() {
+        return creditItems;
     }
 
     /**

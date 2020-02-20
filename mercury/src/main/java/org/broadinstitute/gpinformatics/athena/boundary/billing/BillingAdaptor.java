@@ -43,6 +43,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -68,7 +69,6 @@ public class BillingAdaptor implements Serializable {
     private static final FastDateFormat BILLING_DATE_FORMAT =
         FastDateFormat.getDateTimeInstance(FastDateFormat.SHORT, FastDateFormat.SHORT);
     public static final String NON_SAP_ITEM_ERROR_MESSAGE = "Attempt to bill a non-SAP item in SAP";
-    public static final String POSITIVE_QTY_ERROR_MESSAGE = "Attempt credit an item which has a positive quantity.";
     private BillingEjb billingEjb;
 
     private PriceListCache priceListCache;
@@ -203,10 +203,17 @@ public class BillingAdaptor implements Serializable {
                                         if (quantityForSAP.compareTo(BigDecimal.ZERO) > 0) {
                                             itemResults.add(billSap(item));
                                         } else if (item.isBillingCredit()) {
-                                            Collection<BillingCredit> billingCredits = handleBillingCredit(item);
-                                            Set<BillingEjb.BillingResult> creditResults = billingCredits.stream()
-                                                .map(BillingCredit::getBillingResult).collect(Collectors.toSet());
-                                            itemResults.addAll(creditResults);
+                                            Collection<BillingCredit> billingCredits = null;
+                                            try {
+                                                billingCredits = handleBillingCredit(item);
+                                                Set<BillingEjb.BillingResult> creditResults = billingCredits.stream()
+                                                    .map(BillingCredit::getBillingResult).collect(Collectors.toSet());
+                                                itemResults.addAll(creditResults);
+                                            } catch (Exception e) {
+                                                BillingEjb.BillingResult billingResult = new BillingEjb.BillingResult(item);
+                                                billingResult.setErrorMessage(e.getLocalizedMessage());
+                                                itemResults.add(billingResult);
+                                            }
                                         }
                                         item.getProductOrder().latestSapOrderDetail()
                                             .addLedgerEntries(item.getLedgerItems());
@@ -233,7 +240,9 @@ public class BillingAdaptor implements Serializable {
                         StringBuilder errorMessageBuilder = new StringBuilder();
                         String workId = result.getWorkId();
                         QuoteImportItem quoteImportItem = result.getQuoteImportItem();
-                        if (!result.isBilledInQuoteServer() && StringUtils.isBlank(workId)
+                        if (!result.isBilledInQuoteServer() && result.isBillingCredit()) {
+                            errorMessageBuilder.append(result.getErrorMessage());
+                        } else if (!result.isBilledInQuoteServer() && StringUtils.isBlank(workId)
                             && quoteImportItem.isQuoteServerOrder()) {
                             errorMessageBuilder.append("A problem occurred attempting to post to the quote server for ")
                                 .append(billingSession.getBusinessKey()).append(".");
@@ -374,38 +383,11 @@ public class BillingAdaptor implements Serializable {
      * @return BillingResult with results of billing credit attempt.
      */
     public Collection<BillingCredit> handleBillingCredit(final QuoteImportItem item) throws Exception {
-        Set<BillingCredit> errorCredits = new HashSet<>();
         if (!item.isSapOrder()) {
-            item.setBillingMessages(NON_SAP_ITEM_ERROR_MESSAGE);
-
-            BillingEjb.BillingResult billingResult = new BillingEjb.BillingResult(item);
-            billingResult.setErrorMessage(NON_SAP_ITEM_ERROR_MESSAGE);
-            BillingCredit billingCredit = new BillingCredit(null, null);
-            billingCredit.setBillingResult(billingResult);
-            errorCredits.add(billingCredit);
-            return errorCredits;
-        }
-        if (!item.isBillingCredit()) {
-            item.setBillingMessages(POSITIVE_QTY_ERROR_MESSAGE);
-            BillingEjb.BillingResult billingResult = new BillingEjb.BillingResult(item);
-            billingResult.setErrorMessage(POSITIVE_QTY_ERROR_MESSAGE);
-            BillingCredit billingCredit = new BillingCredit(null, null);
-            billingCredit.setBillingResult(billingResult);
-            errorCredits.add(billingCredit);
-            return errorCredits;
+            throw new Exception(NON_SAP_ITEM_ERROR_MESSAGE);
         }
 
-        Collection<BillingCredit> billingCredits = new HashSet<>();
-        try {
-            billingCredits.addAll(BillingCredit.setupSapCredits(item));
-        } catch (Exception e) {
-            BillingEjb.BillingResult billingResult = new BillingEjb.BillingResult(item);
-            item.setBillingMessages(e.getMessage());
-            billingResult.setErrorMessage(e.getMessage());
-            BillingCredit billingCredit = new BillingCredit(null, null);
-            billingCredit.setBillingResult(billingResult);
-            errorCredits.add(billingCredit);
-        }
+        Collection<BillingCredit> billingCredits = BillingCredit.setupSapCredits(item);
 
         // There are cases where a single QuoteImportItem will need to be credited to more than one sapDocumentId.
         for (BillingCredit billingCredit : billingCredits) {
@@ -440,8 +422,10 @@ public class BillingAdaptor implements Serializable {
                     }
                 }
                 if (Arrays.asList(BillingSession.SUCCESS, BillingSession.BILLING_CREDIT).contains(billingMessage)) {
-                    billingCredit.getReturnLines().forEach(lineItem -> {
-                        billingCredit.getSourceLedger().addCredit(lineItem.getLedgerEntry(), lineItem.getQuantity());
+                    billingCredit.getReturnLines().stream().collect(Collectors.groupingBy(Function.identity(),
+                        Collectors.reducing(BigDecimal.ZERO, BillingCredit.LineItem::getQuantity,
+                                BigDecimal::add))).forEach((lineItem, quantity) -> {
+                        billingCredit.getSourceLedger().addCredit(lineItem.getLedgerEntry(), quantity);
                     });
                 }
 
@@ -461,7 +445,7 @@ public class BillingAdaptor implements Serializable {
                 billingEjb.updateSapQuoteImportItem(item, null, null, billingException.getMessage());
             }
         }
-        billingCredits.addAll(errorCredits);
+
         return billingCredits;
     }
 
