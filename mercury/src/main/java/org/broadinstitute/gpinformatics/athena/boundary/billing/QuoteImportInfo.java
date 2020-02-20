@@ -116,8 +116,6 @@ public class QuoteImportInfo {
     public List<QuoteImportItem> getQuoteImportItems(PriceListCache priceListCache) throws QuoteServerException {
         List<QuoteImportItem> quoteItems = new ArrayList<>();
 
-
-
         for (String quoteId : quantitiesByQuotePriceItem.keySet()) {
             Map<ProductOrder, Map<ProductLedgerIndex, Map<Date, Map<String, List<LedgerEntry>>>>> quotePriceItems =
                     quantitiesByQuotePriceItem.get(quoteId);
@@ -134,7 +132,6 @@ public class QuoteImportInfo {
                     }
 
                     for (Date bucketDate : ledgerEntrybyLedgerIndex.getValue().keySet()) {
-//                        List<LedgerEntry> ledgerItems =
                         Map<String, List<LedgerEntry>> stringListMap =
                                 quotePriceItems.get(orderIndex).get(ledgerIndex).get(bucketDate);
 
@@ -161,7 +158,6 @@ public class QuoteImportInfo {
                                     }
                                 }
                             }
-
 
                             addQuoteItemsForLedgerItems(quoteItems, quoteId,
                                     ledgerIndex.getPriceItem(),

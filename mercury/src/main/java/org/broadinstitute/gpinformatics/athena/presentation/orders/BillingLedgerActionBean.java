@@ -792,7 +792,6 @@ public class BillingLedgerActionBean extends CoreActionBean {
             this.quantities = quantities;
         }
 
-
         public boolean isDeliveryConditionAvailable() {
             return deliveryConditionAvailable;
         }

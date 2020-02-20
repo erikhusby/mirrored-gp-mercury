@@ -1,7 +1,6 @@
 <%--<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.BillingLedgerActionBean" %>--%>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry" %>
-<%@ page import="org.apache.commons.lang3.StringUtils" %>
 
 <stripes:useActionBean var="actionBean" beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.BillingLedgerActionBean"/>
 
@@ -482,7 +481,6 @@
                     unselectedRows.filter(".ledgerRepacement").prop('disabled', false);
                     inputs.filter(".ledgerQuantity").hSpinner().hSpinner('enable');
                 }
-
             });
 
             // initialize delivery discount select lists to the pre-selected value upon page load
