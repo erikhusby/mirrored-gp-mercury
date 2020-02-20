@@ -343,16 +343,23 @@ public class ProductOrderEjb {
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection,
                                          boolean allowCreateOrder) throws SAPInterfaceException {
+        publishProductOrderToSAP(editedProductOrder, messageCollection, allowCreateOrder, false);
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection,
+            boolean allowCreateOrder, boolean updateQuoteItems) throws SAPInterfaceException {
 
         if (!editedProductOrder.hasSapQuote()) {
             throw new SAPInterfaceException("This order is ineligible to create in SAP since it is not associated with "
                                             + "an SAP quote");
         }
-
         List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(editedProductOrder);
         try {
             SapQuote sapQuote = editedProductOrder.getSapQuote(sapService);
-
+            if (updateQuoteItems) {
+                editedProductOrder.updateQuoteItems(sapQuote);
+            }
             productPriceCache.determineIfProductsExist(allProductsOrdered,
                     sapQuote.getQuoteHeader().getSalesOrganization());
 
