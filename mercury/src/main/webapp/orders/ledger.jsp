@@ -1136,7 +1136,7 @@
                                                         id="ledgerData[${info.sample.samplePosition}].quantities[${billingIndex.indexId}].replacementCondition"
                                                         data-rownum="${info.sample.samplePosition}" class="ledgerReplacement" priceItemId="${billingIndex.indexId}"
                                                         originalValue="${currentReplacement}">
-                                                    <option value="">Price Replacement ...</option>
+                                                    <option value="">Select Discount Price ...</option>
                                                     <c:set var="replacementsByProduct" value="${actionBean.potentialSapReplacements.get(billingIndex.product)}"/>
                                                     <c:forEach items="${replacementsByProduct}" var="deliveryConditions">
                                                         <option value="${deliveryConditions.conditionName}"> ${deliveryConditions.displayName}</option>
