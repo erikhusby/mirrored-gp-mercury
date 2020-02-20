@@ -1095,19 +1095,31 @@ public class MayoManifestEjb {
         productOrderData.setSamples(accessionedTubes);
         productOrderData.setTitle(title);
 
+        ProductOrder productOrder = null;
         try {
-            ProductOrder productOrder = productOrderEjb.createProductOrder(productOrderData, watchers, owner,
+            productOrder = productOrderEjb.createProductOrder(productOrderData, watchers, owner,
                     manifestSession.getReceiptTicket());
             // Links the pdo samples to the mercury samples.
             Map<String, MercurySample> mercurySampleMap = mercurySampleDao.findMapIdToMercurySample(accessionedTubes);
             productOrder.getSamples().forEach(pdoSample ->
                     pdoSample.setMercurySample(mercurySampleMap.get(pdoSample.getSampleKey())));
-            productOrderEjb.placeProductOrder(productOrder.getProductOrderId(), productOrder.getBusinessKey(), messages);
-            messages.addInfo("Created " + productOrder.getBusinessKey() + " for " + accessionedTubes.size() +
-                    " samples.");
+            // Creates an SAP order.
+            productOrderEjb.publishProductOrderToSAP(productOrder, messages, true, true);
+            if (!messages.hasErrors()) {
+                productOrderEjb.placeProductOrder(productOrder.getProductOrderId(), productOrder.getBusinessKey(),
+                        messages);
+            }
         } catch (Exception e) {
             logger.error("Failed to make an AoU PDO", e);
-            messages.addError("Failed to make a PDO: " + e.toString());
+            messages.addError("Exception while making a PDO: " + e.toString());
+        }
+        if (productOrder == null) {
+            messages.addError("Failed to make a PDO for the accessioned samples.");
+        } else if (productOrder.getOrderStatus() == ProductOrder.OrderStatus.Submitted) {
+            messages.addInfo("Created " + productOrder.getBusinessKey() + " for " + accessionedTubes.size() +
+                    " samples.");
+        } else {
+            messages.addError(productOrder.getBusinessKey() + " PDO could not be completed.");
         }
     }
 
