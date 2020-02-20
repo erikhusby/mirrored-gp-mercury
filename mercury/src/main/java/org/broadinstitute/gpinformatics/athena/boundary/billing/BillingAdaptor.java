@@ -201,7 +201,7 @@ public class BillingAdaptor implements Serializable {
                                     if (StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
 
                                         if (quantityForSAP.compareTo(BigDecimal.ZERO) > 0) {
-                                            itemResults.add(billSap(item));
+                                            itemResults.add(billSap(item, sessionKey));
                                         } else if (item.isBillingCredit()) {
                                             Collection<BillingCredit> billingCredits = null;
                                             try {
@@ -294,7 +294,7 @@ public class BillingAdaptor implements Serializable {
      *
      * @return BillingResult with the result of billing attempt.
      */
-    private BillingEjb.BillingResult billSap(QuoteImportItem item) throws Exception {
+    private BillingEjb.BillingResult billSap(QuoteImportItem item, String sessionKey) throws Exception {
         if (!item.isSapOrder()) {
             throw new Exception("Attempt to bill non-SAP item in SAP");
         }
@@ -306,7 +306,11 @@ public class BillingAdaptor implements Serializable {
             billingEjb.updateSapQuoteImportItem(item, null, sapBillingId, BillingSession.SUCCESS);
             logSapBilling(item, getBilledPdoKeys(Collections.singleton(result)), sapBillingId);
         } catch (SAPIntegrationException e) {
-            result.setErrorMessage(e.getMessage());
+            String errorMessage = String
+                .format("A problem occurred attempting to post to SAP for %s. %s", sessionKey, e.toString());
+            item.setBillingMessages(errorMessage);
+            result.setErrorMessage(errorMessage);
+            log.error(errorMessage, e);
         }
         return result;
     }
@@ -371,7 +375,12 @@ public class BillingAdaptor implements Serializable {
             Set<String> billedPdoKeys = getBilledPdoKeys(Collections.singleton(result));
             logQuoteServerBilling(workId, item, priceItemBeingBilled, billedPdoKeys);
         } catch (Exception e) {
-            result.setErrorMessage(e.getMessage());
+            String errorMessage = String
+                .format("A problem occurred attempting to post to the quote server for %s. %s", sessionKey,
+                    e.toString());
+            item.setBillingMessages(errorMessage);
+            result.setErrorMessage(errorMessage);
+            log.error(errorMessage, e);
         }
 
         return result;

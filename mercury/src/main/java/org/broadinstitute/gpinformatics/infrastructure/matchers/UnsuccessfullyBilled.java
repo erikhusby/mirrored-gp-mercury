@@ -21,6 +21,14 @@ public class UnsuccessfullyBilled extends TypeSafeMatcher<LedgerEntry> {
         description.appendText("unsuccessfully billed");
     }
 
+    @Override
+    protected void describeMismatchSafely(LedgerEntry item, Description mismatchDescription) {
+        mismatchDescription.appendValue(String
+            .format("Ledger for %s in %s is %ssuccessfully billed", item.getProductOrderSample().getSampleKey(),
+                item.getProductOrderSample().getProductOrder().getBusinessKey(),
+            (!item.isSuccessfullyBilled()) ?"un": ""));
+    }
+
     @Factory
     public static Matcher<LedgerEntry> unsuccessfullyBilled() {
         return new UnsuccessfullyBilled();
