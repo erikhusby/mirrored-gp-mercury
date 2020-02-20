@@ -66,9 +66,12 @@ public class QuoteImportItem {
                     if (tabularIdentifier == null) {
                         tabularIdentifier = ledger.getWorkItem();
                     }
-                } else if (StringUtils.isNotBlank(ledger.getSapDeliveryDocumentId())) {
+                }
+                if (StringUtils.isNotBlank(ledger.getSapDeliveryDocumentId())) {
                     sapItems = ledger.getSapDeliveryDocumentId();
-                    tabularIdentifier = sapItems;
+                    if (tabularIdentifier == null) {
+                        tabularIdentifier = sapItems;
+                    }
                 } else {
                     if (!StringUtils.equals(ledger.getSapDeliveryDocumentId(), sapItems)) {
                         throw new RuntimeException("Mis Matched SAPDelivery Document Found");

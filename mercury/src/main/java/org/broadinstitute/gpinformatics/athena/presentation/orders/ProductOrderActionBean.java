@@ -145,7 +145,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.jvnet.inflector.Noun;
-import org.owasp.encoder.Encode;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -188,6 +187,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public static final String ACTIONBEAN_URL_BINDING = "/orders/order.action";
     public static final String PRODUCT_ORDER_PARAMETER = "productOrder";
+    public static final String SAP_ORDER_PARAMETER = "sapOrder";
     public static final String REGULATORY_ID_PARAMETER = "selectedRegulatoryIds";
 
     private static final String PRODUCT_ORDER = "Product Order";
@@ -231,6 +231,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String sampleSummary;
     private State state;
     private ProductOrder.QuoteSourceType quoteSource;
+    private String sapOrder;
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -567,11 +568,16 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, GET_SAMPLE_DATA})
     public void editInit() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
+        sapOrder = getContext().getRequest().getParameter(SAP_ORDER_PARAMETER);
         // If there's no product order parameter, send an error.
-        if (StringUtils.isBlank(productOrder)) {
-            addGlobalValidationError("No product order was specified.");
-        } else {
-            editOrder = productOrderDao.findByBusinessKey(productOrder);
+        if (StringUtils.isNotBlank(productOrder) || StringUtils.isNotBlank(sapOrder)) {
+//            addGlobalValidationError("No product order was specified.");
+//        } else {
+            if(StringUtils.isNotBlank(productOrder)) {
+                editOrder = productOrderDao.findByBusinessKey(productOrder.trim());
+            } else if (StringUtils.isNotBlank(sapOrder)) {
+                editOrder = productOrderDao.findBySapOrderId(sapOrder.trim());
+            }
             if (editOrder != null) {
                 List<Long> productOrderIds = new ArrayList<>();
                 productOrderIds.add(editOrder.getProductOrderId());
@@ -1477,7 +1483,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @After(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION})
     public void viewPageInit() {
-        buildCustomizationHelper();
+        if(editOrder != null) {
+            buildCustomizationHelper();
+        }
     }
 
     public void buildCustomizationHelper() {
@@ -1546,26 +1554,37 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     @HandlesEvent(VIEW_ACTION)
-    public Resolution view() {
+    public Resolution view() throws Exception {
         if (editOrder == null) {
-            addGlobalValidationError("A PDO named '" + Encode.forHtml(productOrder) +
-                    "' could not be found.");
+            String searchParameters = "";
+            if(StringUtils.isNotBlank(productOrder)) {
+                searchParameters = "Product order: " + productOrder;
+            } else if (StringUtils.isNotBlank(sapOrder)) {
+                searchParameters = "Sap Order: " + sapOrder;
+            }
+            addGlobalValidationError("A PDO could not be found for the given search parameters.  " +searchParameters);
             Resolution errorResolution;
 
             try {
                 errorResolution = getContext().getSourcePageResolution();
             } catch (SourcePageNotFoundException e) {
 
-                // FIXME?  This seems to cause the search preferences to not get loaded on the resulting list page.
-                // Because of this, the user is presented witha  list page with no search results.  If they click
-                // 'search' from that blank page, it would inadvertantly wipe out their previously defined search
-                // preferences
+                // The following 2 lines were added to address an issue found in GPLIM-2572 potentially exposed more
+                // with the fix of GPLIM-6916.  This will re-search and re-populate the search parameters when the page
+                // is redirected to the list page in the case of an error.
+                //
+                // To fully address the underlying issue, we will need to seariously revisit how so many Resolution
+                // methods in here are throwing Exception which leads to a really bad user experience.  This is a Tech
+                // debt item that should be addressed sometime soon.
+                //
+                setupSearchCriteria();
+                listInit();
+
                 errorResolution = new ForwardResolution(ORDER_LIST_PAGE);
             }
 
             return errorResolution;
         }
-
         updateFromInitiationTokenInputs();
         if (editOrder.isDraft()) {
             validateUser("place");

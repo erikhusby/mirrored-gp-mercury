@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -35,7 +36,7 @@ public class LabMetricEtlDbFreeTest {
     private final String runName = "PicoGreen hydra";
     private final Date runDate = new Date(1373988504L);
     private final Set<LabVessel> vesselList = new HashSet<>();
-    private final String vesselPosition = "D4";
+    private final VesselPosition vesselPosition = VesselPosition.D04;
     private final LabMetricDecision.Decision decision = LabMetricDecision.Decision.PASS;
     private final Long userID = 87L;
     private final String deciderName = "Maxwell Smart";
@@ -203,7 +204,7 @@ public class LabMetricEtlDbFreeTest {
         Assert.assertEquals(parts[i++], GenericEntityEtl.format(metricRunDate));
         Assert.assertEquals(parts[i++], String.valueOf(vesselID));
         Assert.assertEquals(parts[i++], String.valueOf(vesselBarcode));
-        Assert.assertEquals(parts[i++], vesselPosition);
+        Assert.assertEquals(parts[i++], vesselPosition.name());
         Assert.assertEquals(parts[i++], withDecision?decision.toString():"");
         Assert.assertEquals(parts[i++], withDecision?GenericEntityEtl.format(decisionDate):"");
         Assert.assertEquals(parts[i++], withDecision?deciderName:"");

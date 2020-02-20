@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.control;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.UpdateIssueRequest;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
@@ -84,15 +85,21 @@ public abstract class AbstractJsonJaxRsClientService extends AbstractJaxRsClient
     }
 
     /**
-     * PUT a JSON representation of the requestPojo to the specified {@link WebTarget} and return a POJO
-     * representation of the response.
+     * Sends the update request to the JIRA server.
      */
-    protected void put(WebTarget webResource, Object requestPojo) throws IOException {
-        String request = writeValue(requestPojo);
-        log.trace("PUT request: " + request);
-        Response response = setJsonMimeTypes(webResource).put(Entity.json(request));
+    protected void put(WebTarget webResource, UpdateIssueRequest updateIssueRequest) throws IOException {
+        String request = writeValue(updateIssueRequest);
+        put(webResource, request);
+    }
+
+    /**
+     * Does a REST PUT of the json string to the JIRA server.
+     */
+    protected void put(WebTarget webResource, String json) {
+        log.trace("PUT request: " + json);
+        Response response = setJsonMimeTypes(webResource).put(Entity.json(json));
         if (response.getStatus() >= 300) {
-            log.error("PUT request: " + request);
+            log.error("PUT request: " + json);
             String message = response.readEntity(String.class);
             response.close();
             throw new RuntimeException(message);

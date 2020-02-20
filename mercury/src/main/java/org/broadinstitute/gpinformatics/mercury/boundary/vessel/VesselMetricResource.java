@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -60,9 +61,14 @@ public class VesselMetricResource {
             if(labVessel == null) {
                 throw new RuntimeException("Failed to find vessel for barcode " + vesselMetricBean.getBarcode());
             }
+            VesselPosition position = VesselPosition.getByName(vesselMetricBean.getContainerPosition());
+            // Allow null only if bean value is null
+            if (position == null && vesselMetricBean.getContainerPosition() != null) {
+                throw new RuntimeException("Unknown position: " + vesselMetricBean.getContainerPosition());
+            }
             LabMetric labMetric = new LabMetric(new BigDecimal(vesselMetricBean.getValue()), metricType,
                     LabMetric.LabUnit.getByDisplayName(vesselMetricBean.getUnit()),
-                    vesselMetricBean.getContainerPosition(), vesselMetricRunBean.getRunDate());
+                    position, vesselMetricRunBean.getRunDate());
             labVessel.addMetric(labMetric);
             labMetricRun.addMetric(labMetric);
         }
