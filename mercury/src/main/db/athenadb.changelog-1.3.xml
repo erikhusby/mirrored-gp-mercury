@@ -168,20 +168,30 @@
                 <constraints nullable="true"/>
             </column>
         </createTable>
-        <addPrimaryKey tableName="BILLING_LEDGER_CREDIT_AUD" columnNames="BILLING_LEDGER_CREDIT_ID, CREDIT_QUANTITY, rev"
+        <addPrimaryKey tableName="BILLING_LEDGER_CREDIT_AUD" columnNames="REV, BILLING_LEDGER_CREDIT_ID"
                        schemaName="ATHENA" constraintName="PK_BILLING_LEDGER_CREDIT_AUD"/>
+    </changeSet>
+    <changeSet author="dryan" id="GPLIM-6436-ledger-credit-aud-fk">
+        <preConditions>
+            <not>
+                <indexExists tableName="BILLING_LEDGER_CREDIT_AUD" indexName="IDX_BL_CREDIT_AUD"
+                             schemaName="athena"/>
+            </not>
+        </preConditions>
         <addForeignKeyConstraint baseTableName="BILLING_LEDGER_CREDIT_AUD" baseTableSchemaName="athena"
-                                 baseColumnNames="rev" constraintName="PK_LEDGER_ENTRY_BC_REV_INFO"
+                                 baseColumnNames="rev" constraintName="FK_BL_CREDIT_AUD"
                                  referencedTableName="rev_info" referencedTableSchemaName="mercury"
                                  referencedColumnNames="rev_info_id"/>
-        <createIndex tableName="BILLING_LEDGER_CREDIT_AUD" indexName="IDX_BILLING_LEDGER_CREDIT_AUD">
+
+        <createIndex schemaName="athena" tableName="BILLING_LEDGER_CREDIT_AUD" indexName="IDX_BL_CREDIT_AUD">
             <column name="BILLING_LEDGER_CREDIT_ID"/>
         </createIndex>
-
     </changeSet>
+
     <changeSet author="dryan" id="GPLIM-6436-2_JOIN_PK">
         <addPrimaryKey constraintName="LEDGER_ENTRY_BC_PK" schemaName="athena"
-                       tableName="BILLING_LEDGER_CREDIT" columnNames="BILLING_LEDGER_CREDIT_ID, LEDGER_ENTRY_LEDGER_ID, CREDIT_QUANTITY"/>
+                       tableName="BILLING_LEDGER_CREDIT"
+                       columnNames="BILLING_LEDGER_CREDIT_ID, LEDGER_ENTRY_LEDGER_ID, CREDIT_QUANTITY"/>
     </changeSet>
     <changeSet author="dryan" id="GPLIM-6436-2_FK">
         <addForeignKeyConstraint constraintName="FK_LEDGER_ENTRY_BC" baseColumnNames="LEDGER_ENTRY_LEDGER_ID"
