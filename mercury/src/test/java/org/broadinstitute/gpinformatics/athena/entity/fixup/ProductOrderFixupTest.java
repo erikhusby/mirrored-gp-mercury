@@ -103,6 +103,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -110,6 +111,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 
 
 /**
@@ -1960,5 +1962,111 @@ public class ProductOrderFixupTest extends Arquillian {
 
         productOrderDao.persist(new FixupCommentary(commentary));
         commitTransaction();
+    }
+
+    /**
+     * For some sample swaps, the swapped sample may need to be moved to another Product order.  This fixup test is
+     * to assist doing just that.
+     * To make this more generic, the test will read from a file the pdo parameters which will need to be modified.
+     * It reads its parameters from the file, mercury/src/test/resources/testdata/finalizeSampleSwaps.txt
+     *
+     * The content of this file is as structured:
+     * line 1: Commentary of the fixup prefixed by the Jira Ticket [SUPPORT-XXXX  BLAH BLAH BLAH]
+     * Lines 2 and on: [Jira Ticket ID], [new Research Project ID], [Boolean indicating if a new PDO is to be made], [Sample name list to be moved separated by spaces], [new ORSP Indicators separated by spaces]
+     *
+     * Example:
+     * SUPPORT-6239 Finalize the sample swap in which the PDO is closed and certain samples need to be associated with
+     * a different RP
+     * PDO-17101, RP-1156, true, SM-IALUR, ORSP-2152
+     * PDO-17099, RP-1447, false, SM-IALUT, ORSP-2152
+     * PDO-17126, RP-1156, true, SM-IALUG, ORSP-2152
+     * PDO-17126, RP-1532, true, SM-IALUF, ORSP-2152
+     * PDO-17097, RP-1066, true, SM-IALUJ SM-IALUK, ORSP-2176
+     * @throws Exception
+     */
+    @Test(enabled = false)
+    public void support6239FurtherSwap() throws Exception {
+        userBean.loginOSUser();
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("CorrectReceipt.txt"));
+        String commentary = fixupLines.get(0);
+        beginTransaction();
+        for (String line : fixupLines.subList(1, fixupLines.size())) {
+            final String[] lineSegments = line.split(",");
+            String existingProductOrderKey = lineSegments[0].trim();
+            String newResearchProjectKey = lineSegments[1].trim();
+            Boolean createNewPDO = Boolean.valueOf(lineSegments[2].trim());
+            String[] sampleNames = lineSegments[3].trim().split(" ");
+            String[] orspIndicators = lineSegments[4].trim().split(" ");
+
+            ProductOrder currentProductOrder = productOrderDao.findByBusinessKey(existingProductOrderKey);
+            assertThat(currentProductOrder, is(notNullValue()));
+            ResearchProject newResearchProject = projectDao.findByBusinessKey(newResearchProjectKey);
+            assertThat(newResearchProject, is(notNullValue()));
+
+            Stream.of(sampleNames).forEach(sampleKey -> sampleKey=sampleKey.trim());
+            Stream.of(orspIndicators).forEach(orsp -> orsp=orsp.trim());
+
+            final ProductOrder finalProductOrder;
+            if(createNewPDO) {
+                int orginalSampleCount = currentProductOrder.getSamples().size();
+                finalProductOrder = clonePdoAndMoveSamples(currentProductOrder, Arrays.asList(sampleNames));
+                assertThat(currentProductOrder.getSamples().size(), is(equalTo(orginalSampleCount - sampleNames.length)));
+            } else {
+                finalProductOrder = currentProductOrder;
+                System.out.println(String.format("Keeping product order %s instead of making a new one.",
+                        finalProductOrder.getBusinessKey()));
+            }
+
+            List<String> regulatoryInfos = Arrays.asList(orspIndicators);
+            List<RegulatoryInfo> regulatoryInfoSubList = newResearchProject.getRegulatoryInfos().stream()
+                    .filter(regulatoryInfo -> regulatoryInfos.contains(regulatoryInfo.getIdentifier()))
+                    .collect(Collectors.toList());
+
+            finalProductOrder.setResearchProject(newResearchProject);
+            System.out.println(String.format("Adding research project %s to product order %s.",
+                    newResearchProject.getBusinessKey(), finalProductOrder.getBusinessKey()));
+            finalProductOrder.setRegulatoryInfos(regulatoryInfoSubList);
+            regulatoryInfoSubList.stream().forEach(regulatoryInfo -> {
+                System.out.println(String.format("Added regulatory info %s to PDO %s", regulatoryInfo.getIdentifier(),
+                        finalProductOrder.getBusinessKey()));
+            });
+        }
+        productOrderDao.persist(new FixupCommentary(commentary));
+        commitTransaction();
+    }
+
+    /**
+     * Helper method to assist in moving samples from one PDO to another and rectifying the Bucket Entries that they
+     * may have been affiliated with.
+     * @param originalProductOrder Product Order which is the source of the new cloned order.
+     * @param sampleNames List of sample names to move from the original Product order to the new cloned product order
+     * @return the newly cloned product order.
+     */
+    public static ProductOrder clonePdoAndMoveSamples(ProductOrder originalProductOrder, List<String> sampleNames) {
+        ProductOrder newOrder = ProductOrder.cloneProductOrder(originalProductOrder, true, false);
+
+        System.out.println(String.format("Created new PDO %s: %s to move samples to", newOrder.getBusinessKey(),
+                newOrder.getName()));
+
+        Iterator<ProductOrderSample> iterator = originalProductOrder.getSamples().iterator();
+        while(iterator.hasNext()) {
+            ProductOrderSample sample = iterator.next();
+            if(sampleNames.contains(sample.getSampleKey())) {
+                newOrder.addSample(sample);
+                System.out.println(String.format("Added sample %s to order %s", sample.getSampleKey(),
+                        newOrder.getBusinessKey()));
+                Iterator<BucketEntry> bucketEntryIterator = newOrder.getBucketEntries().iterator();
+                while(bucketEntryIterator.hasNext()) {
+                    BucketEntry currentBucketEntry = bucketEntryIterator.next();
+                    if(sample.getMercurySample().getLabVessel().contains(currentBucketEntry.getLabVessel())) {
+                        currentBucketEntry.setProductOrder(newOrder);
+                        System.out.println(String.format("Moved bucket entry %s from PDO %s to %s",
+                                currentBucketEntry.getBucketEntryId(), originalProductOrder.getBusinessKey(),
+                                newOrder.getBusinessKey()));
+                    }
+                }
+            }
+        }
+        return newOrder;
     }
 }

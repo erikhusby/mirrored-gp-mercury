@@ -83,6 +83,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -372,9 +373,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * @return A new Product Order which has certain elements copied from the original order
      */
     public static ProductOrder cloneProductOrder(ProductOrder toClone, boolean shareSapOrder) {
+        return cloneProductOrder(toClone, shareSapOrder, true);
+    }
+
+    public static ProductOrder cloneProductOrder(ProductOrder toClone, boolean shareSapOrder, boolean makeChild) {
 
         final ProductOrder cloned = new ProductOrder(toClone.getCreatedBy(),
-                "Clone " + toClone.getChildOrders().size() + ": " + toClone.getTitle(),
+                "Clone " + toClone.getChildOrders().size() + ": " + toClone.getTitle() + " " +
+                (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")).getDateTimeInstance().format(new Date()),
                 new ArrayList<ProductOrderSample>(), toClone.getQuoteId(), toClone.getProduct(),
                 toClone.getResearchProject());
         List<Product> potentialAddons = new ArrayList<>();
@@ -392,7 +398,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                     toClone.latestSapOrderDetail().getCompanyCode()));
         }
 
-        toClone.addChildOrder(cloned);
+        if(makeChild) {
+            toClone.addChildOrder(cloned);
+        }
 
         return cloned;
     }
