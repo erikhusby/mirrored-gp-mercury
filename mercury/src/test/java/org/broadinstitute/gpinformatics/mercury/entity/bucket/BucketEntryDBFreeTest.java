@@ -121,7 +121,7 @@ public class BucketEntryDBFreeTest {
         BucketEntry entry = new BucketEntry(
                 new BarcodedTube(barcode), productOrder, bucket, BucketEntry.BucketEntryType.PDO_ENTRY);
 
-        entry.getWorkflows(new WorkflowLoader().load());
+        entry.getWorkflows(new WorkflowLoader().getWorkflowConfig());
         Assert.assertTrue(entry.toString().contains("(no workflows)"));
 
     }

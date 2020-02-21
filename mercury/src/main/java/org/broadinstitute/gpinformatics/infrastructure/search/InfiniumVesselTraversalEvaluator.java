@@ -84,15 +84,23 @@ public class InfiniumVesselTraversalEvaluator extends CustomTraversalEvaluator {
                         if (sectionTransfer.getLabEvent().getLabEventType() == LabEventType.ARRAY_PLATING_DILUTION) {
                             VesselContainer<?> dnaPlate = sectionTransfer.getTargetVesselContainer();
                             infiniumVessels.add(dnaPlate.getEmbedder());
-                            // Grab all wells in the DNA plate to make sure controls are also included
-                            for(VesselPosition position : sectionTransfer.getTargetSection().getWells() ) {
-                                LabVessel dnaWell = dnaPlate.getVesselAtPosition(position);
-                                if( dnaWell != null ) {
-                                    infiniumVessels.add(dnaWell);
-                                    // Starting vessel would be daughter plate tube barcode
-                                    searchInstance.getEvalContext().getPagination().addExtraIdInfo(dnaWell.getLabel(),
-                                            rack.getContainerRole().getVesselAtPosition(position).getLabel());
+                            // If the search term yielded multiple vessels (e.g. PDO)
+                            if (rootEntities.size() > searchInstance.getSearchValues().get(0).getValues().size()) {
+                                // Grab all wells in the DNA plate to make sure controls are also included
+                                for(VesselPosition position : sectionTransfer.getTargetSection().getWells() ) {
+                                    LabVessel dnaWell = dnaPlate.getVesselAtPosition(position);
+                                    if( dnaWell != null ) {
+                                        infiniumVessels.add(dnaWell);
+                                        // Starting vessel would be daughter plate tube barcode
+                                        searchInstance.getEvalContext().getPagination().addExtraIdInfo(dnaWell.getLabel(),
+                                                rack.getContainerRole().getVesselAtPosition(position).getLabel());
+                                    }
                                 }
+                            } else {
+                                VesselPosition sourcePos = rack.getContainerRole().getPositionOfVessel(startingVessel);
+                                VesselPosition targetPos = sectionTransfer.getTargetSection().getWells().get(
+                                        sectionTransfer.getSourceSection().getWells().indexOf(sourcePos));
+                                infiniumVessels.add(dnaPlate.getVesselAtPosition(targetPos));
                             }
                             found = true;
                         }

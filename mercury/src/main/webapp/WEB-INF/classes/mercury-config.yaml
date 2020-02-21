@@ -168,37 +168,6 @@ deckMsgs:
     PROD:
         messageStoreDirRoot: /seq/lims/mercury/prod
 
-
-bettaLimsServer:
-
-    DEV:
-        wsHost: vbettalimsqa1
-        wsPort: 9997
-        jmsHost: vbettalimsqa1
-        jmsPort: 61616
-        jmsQueue: broad.queue.bettalims.test
-
-    TEST:
-        wsHost: vbettalimsqa1
-        wsPort: 9997
-        jmsHost: vbettalimsqa1
-        jmsPort: 61616
-        jmsQueue: broad.queue.bettalims.test
-
-    QA:
-        wsHost: vbettalimsqa1
-        wsPort: 9998
-        jmsHost: vbettalimsqa1
-        jmsPort: 61616
-        jmsQueue: broad.queue.bettalims.qa
-
-    PROD:
-        wsHost: seqlims
-        wsPort: 9998
-        jmsHost: seqlims
-        jmsPort: 61616
-        jmsQueue: broad.queue.bettalims
-
 datawhEtl:
 
     DEV:
@@ -407,7 +376,6 @@ mercury:
       thrift:   TEST
       deckMsgs: DEV
       datawhEtl: DEV
-      bettaLimsServer: DEV
       hipchat: DEV
       collaborate: DEV
       submission: DEV
@@ -428,7 +396,6 @@ mercury:
       thrift:   TEST
       deckMsgs: DEV
       datawhEtl: DEV
-      bettaLimsServer: DEV
       hipchat: DEV
       collaborate: DEV
       submission: DEV
@@ -449,7 +416,6 @@ mercury:
       thrift:   TEST
       deckMsgs: DEV
       datawhEtl: DEV
-      bettaLimsServer: TEST
       hipchat: DEV
       collaborate: DEV
       submission: DEV
@@ -469,7 +435,6 @@ mercury:
       thrift:   QA
       deckMsgs: QA
       datawhEtl: QA
-      bettaLimsServer: QA
       hipchat: DEV
       collaborate: RC
       submission: DEV
@@ -490,7 +455,6 @@ mercury:
       thrift:   QA
       deckMsgs: QA
       datawhEtl: QA
-      bettaLimsServer: QA
       hipchat: DEV
       collaborate: RC
       submission: DEV
@@ -512,7 +476,6 @@ mercury:
       thrift:   PROD
       deckMsgs: PROD
       datawhEtl: PROD
-      bettaLimsServer: PROD
       hipchat: PROD
       collaborate: PROD
       submission: PROD

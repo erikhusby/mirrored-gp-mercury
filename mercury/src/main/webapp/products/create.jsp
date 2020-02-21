@@ -144,6 +144,30 @@
                         addGenotypingChip('${iterator.left}', '${iterator.middle}', '${iterator.right}');
                     </c:forEach>
 
+                    var $pipelineDataTypeOption = $j("#pipelineDataType");
+                    $pipelineDataTypeOption.on("change", function () {
+                        var $selectedOption = $pipelineDataTypeOption.find("option:selected").filter(function () {
+                            return $j(this).text() !== "Choose...";
+                        });
+                        var dtActive = !$selectedOption.attr('disabled');
+                        if ($selectedOption != undefined && dtActive === false) {
+                            $pipelineDataTypeOption.addClass("error")
+                        } else {
+                            $pipelineDataTypeOption.removeClass("error")
+                        }
+                        $j("input[name='save']").attr("disabled", $pipelineDataTypeOption.hasClass("error"));
+                    });
+
+                    <c:set var="pipelineDataType" value="${actionBean.editProduct.pipelineDataTypeString}"/>;
+                    if ("${pipelineDataType}" !== "") {
+
+                        // Check if the selected aggregation type is valid
+                        $pipelineDataTypeOption.find("option")
+                            .filter(function(){return $j(this).text() === '${pipelineDataType}';})
+                            .attr('selected', true);
+                        $pipelineDataTypeOption.trigger("change");
+                    }
+
                     $j("#reagentDesignKey").prop('disabled', ${not actionBean.editProduct.baitLocked});
                     $j('#baitLocked').change(function() {
                         var locked = ($j(this).val() === 'true');
@@ -345,16 +369,16 @@
 
             function addGenotypingChip(chipTechnology, chipName, pdoSubstring) {
                 var newGenotypingChip = '<div id="genotypingChip-' + genotypingChipCount +
-                        '" style="margin-bottom:3px;" class="genotypingChipPanel">\n';
+                    '" style="margin-bottom:3px;" class="genotypingChipPanel">\n';
 
                 // Adds a button to remove this item
                 newGenotypingChip += '    <a class="btn btn-mini" style="font-size:14pt;text-decoration: none;"' +
-                        ' onclick="removeGenotypingChip(' + genotypingChipCount + ')">-</a>\n';
+                    ' onclick="removeGenotypingChip(' + genotypingChipCount + ')">-</a>\n';
 
                 // Populates the chip technology dropdown
                 newGenotypingChip += '    <select id="chipTechnology-' + genotypingChipCount + '" ' +
-                        '" onchange="updateGenotypingTechnology(' + genotypingChipCount + ')" ' +
-                        'style="width:auto;" name="genotypingChipTechnologies" value="' + chipTechnology + '">\n';
+                    '" onchange="updateGenotypingTechnology(' + genotypingChipCount + ')" ' +
+                    'style="width:auto;" name="genotypingChipTechnologies" value="' + chipTechnology + '">\n';
                 for (var optionName of Object.keys(genotypingTechAndChipNames)) {
                     var selectedString = '';
                     if (optionName == chipTechnology) {
@@ -366,7 +390,7 @@
 
                 // Populates the chip name dropdown
                 newGenotypingChip += '    <select id="chipName-' + genotypingChipCount +
-                        '" style="width:auto;" name="genotypingChipNames" value="' + chipName + '">\n';
+                    '" style="width:auto;" name="genotypingChipNames" value="' + chipName + '">\n';
                 if (genotypingTechAndChipNames[chipTechnology]) {
                     for (var optionName of genotypingTechAndChipNames[chipTechnology]) {
                         var selectedString = '';
@@ -381,13 +405,13 @@
                 // The text box for pdo name restriction
                 newGenotypingChip += '    <br/>Restrict to Product Orders whose names contain:';
                 newGenotypingChip += '    <br/><input style="width:80%" id="visiblePdoSubstring-' + genotypingChipCount + '" type="text" ' +
-                        'title="Enter the distinctive portion of a Product Order name. This chip will only apply when Product Order name has the distinctive portion. ' +
-                        'Leave blank when this genotyping chip should apply to any Product Order when name is not otherwise matched." ' +
-                        '" onchange="updateGenotypingPdoSubstring(' + genotypingChipCount + ')" name="visiblePdoSubstrings" value="' + pdoSubstring + '"/>\n';
+                    'title="Enter the distinctive portion of a Product Order name. This chip will only apply when Product Order name has the distinctive portion. ' +
+                    'Leave blank when this genotyping chip should apply to any Product Order when name is not otherwise matched." ' +
+                    '" onchange="updateGenotypingPdoSubstring(' + genotypingChipCount + ')" name="visiblePdoSubstrings" value="' + pdoSubstring + '"/>\n';
 
                 <!-- Uses hidden fields to set the arrays in the action bean since null strings don't get sent in the array and then the array indexes can't line up. -->
                 newGenotypingChip += '    <input style="display:none" id="pdoSubstring-' + genotypingChipCount + '" type="text" name="genotypingChipPdoSubstrings"' +
-                        ' value="item' + genotypingChipCount + ' ' + pdoSubstring + '"/>\n';
+                    ' value="item' + genotypingChipCount + ' ' + pdoSubstring + '"/>\n';
                 newGenotypingChip += '</div>\n';
 
                 $j('#genotypingChips').append(newGenotypingChip);
@@ -396,6 +420,7 @@
             }
 
         </script>
+
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
@@ -443,7 +468,7 @@
                                     Allow for Commercial Orders
                                 </stripes:label>
                                 <div class="controls">
-                                    <stripes:checkbox id="offeredAsCommercialProduct" name="editProduct.offeredAsCommercialProduct" style="margin-top: 10px;" disabled="${actionBean.productUsedInOrders}"/>
+                                    <stripes:checkbox id="offeredAsCommercialProduct" name="editProduct.offeredAsCommercialProduct" style="margin-top: 10px;" disabled="${actionBean.productUsedInLLCOrders}"/>
                                     <c:if test="${actionBean.productUsedInLLCOrders}">
                                         <stripes:hidden name="editProduct.offeredAsCommercialProduct" value="${actionBean.editProduct.offeredAsCommercialProduct}" />
                                     </c:if>
@@ -707,8 +732,19 @@
                         <div class="control-group">
                             <stripes:label for="aggregationDataType" name="AggregationDataType" class="control-label"/>
                             <div class="controls">
-                                <stripes:text id="aggregationDataType" name="editProduct.aggregationDataType"
-                                              class="defaultText" title="Enter data type to use for aggregation"/>
+                                <stripes:select name="editProduct.pipelineDataType" id="pipelineDataType">
+                                    <stripes:option value="">Choose...</stripes:option>
+                                    <c:forEach items="${actionBean.pipelineDataTypes}" var="dataType">
+                                        <c:choose>
+                                            <c:when test="${actionBean.editProduct.pipelineDataType != null}">
+                                                <stripes:option disabled="${! dataType.active}" value="${dataType.name}">${dataType.name}</stripes:option>
+                                            </c:when>
+                                            <c:when test="${actionBean.editProduct.pipelineDataType == null || actionBean.editProduct.pipelineDataType.active==true}">
+                                                <stripes:option value="${dataType.name}">${dataType.name}</stripes:option>
+                                            </c:when>
+                                        </c:choose>
+                                    </c:forEach>
+                                </stripes:select>
                             </div>
                         </div>
 

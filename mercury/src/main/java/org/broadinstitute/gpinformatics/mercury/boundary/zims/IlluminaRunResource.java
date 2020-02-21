@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemOfRecord;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.zims.SquidThriftLibraryConverter;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ThriftLibraryConverter;
@@ -77,7 +78,7 @@ public class IlluminaRunResource implements Serializable {
     private IlluminaSequencingRunDao illuminaSequencingRunDao;
 
     @Inject
-    private SystemRouter systemRouter;
+    private SystemOfRecord systemOfRecord;
 
     public IlluminaRunResource() {
     }
@@ -103,7 +104,7 @@ public class IlluminaRunResource implements Serializable {
             if (illuminaSequencingRun == null) {
                 runBean = callThrift(runName);
             } else {
-                SystemRouter.System systemOfRecordForVessel = systemRouter.getSystemOfRecordForVessel(
+                SystemOfRecord.System systemOfRecordForVessel = systemOfRecord.getSystemOfRecord(
                         illuminaSequencingRun.getSampleCartridge().getLabel());
                 switch (systemOfRecordForVessel) {
                 case MERCURY:
@@ -113,7 +114,7 @@ public class IlluminaRunResource implements Serializable {
                     runBean = callThrift(runName);
                     break;
                 default:
-                    throw new RuntimeException("Failed to route " + runName);
+                    throw new RuntimeException("Failed to find system of record for " + runName);
                 }
             }
         }
@@ -143,9 +144,9 @@ public class IlluminaRunResource implements Serializable {
             runBean.setError("runBarcode cannot be null");
         } else {
             Collection<IlluminaSequencingRun> runs = illuminaSequencingRunDao.findByBarcode(runBarcode);
-            SystemRouter.System systemOfRecordForVessel;
+            SystemOfRecord.System systemOfRecordForVessel;
             if (runs.size() == 0) {
-                systemOfRecordForVessel = SystemRouter.System.SQUID;
+                systemOfRecordForVessel = SystemOfRecord.System.SQUID;
             } else if (runs.size() > 1) {
                 String runNames = "";
                 for (IlluminaSequencingRun run : runs) {
@@ -154,8 +155,8 @@ public class IlluminaRunResource implements Serializable {
                 runBean.setError("Found multiple runNames : " + runNames);
                 return runBean;
             } else {
-                systemOfRecordForVessel = systemRouter.getSystemOfRecordForVessel(
-                        runs.iterator().next().getSampleCartridge().getLabel());
+                systemOfRecordForVessel = systemOfRecord.getSystemOfRecordForVessel(
+                        runs.iterator().next().getSampleCartridge());
             }
 
             switch (systemOfRecordForVessel) {

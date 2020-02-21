@@ -39,6 +39,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -346,8 +347,9 @@ public class BucketEjb {
     public Map<String, Collection<ProductOrderSample>> addSamplesToBucket(ProductOrder order,
             Collection<ProductOrderSample> samples, ProductWorkflowDefVersion.BucketingSource bucketingSource) {
         boolean hasWorkflow = false;
+        WorkflowConfig workflowConfig = workflowLoader.getWorkflowConfig();
         for (String workflow : order.getProductWorkflows()) {
-            ProductWorkflowDef productWorkflowDef = workflowLoader.load().getWorkflowByName(workflow);
+            ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(workflow);
             ProductWorkflowDefVersion workflowDefVersion = productWorkflowDef.getEffectiveVersion();
             hasWorkflow = !workflowDefVersion.getBuckets().isEmpty();
             if (hasWorkflow){
@@ -467,6 +469,7 @@ public class BucketEjb {
         possibleProducts.add(productOrder.getProduct());
         ProductWorkflowDefVersion workflowDefVersion = null;
         int offset = 0;
+        WorkflowConfig workflowConfig = workflowLoader.getWorkflowConfig();
         for (Product product : possibleProducts) {
             Date localDate = date;
             if (offset > 0) {
@@ -474,7 +477,7 @@ public class BucketEjb {
                 localDate = new Date(date.getTime() + offset);
             }
             if (product.getWorkflowName() != null) {
-                ProductWorkflowDef productWorkflowDef = workflowLoader.load().getWorkflowByName(product.getWorkflowName());
+                ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(product.getWorkflowName());
                 workflowDefVersion = productWorkflowDef.getEffectiveVersion();
                 Map<WorkflowBucketDef, Collection<LabVessel>> initialBucket =
                         workflowDefVersion.getInitialBucket(productOrder, vessels, bucketingSource);

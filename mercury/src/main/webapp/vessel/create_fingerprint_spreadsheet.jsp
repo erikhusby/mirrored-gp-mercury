@@ -12,7 +12,7 @@
             <stripes:form beanclass="${actionBean.class.name}" id="enterBarcodeForm" class="form-horizontal">
                 <div class="controls">
                     <stripes:label for="barcodeTextbox" name="Enter plate barcode" class="control-label"/>
-                    &MediumSpace;<stripes:text id="barcodeTextbox" name="plateBarcode" size="50" onblur="onBlurBarcode()"/>
+                    &MediumSpace;<stripes:text id="barcodeTextbox" name="plateBarcode" size="50"/>
                     &MediumSpace;<stripes:submit id="barcodeSubmit" name="barcodeSubmit" class="btn btn-primary" value="Submit"/>
                 </div>
             </stripes:form>

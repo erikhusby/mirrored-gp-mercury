@@ -15,7 +15,7 @@ public abstract class PriceAdjustment {
 
     public abstract String getCustomProductName();
 
-    public abstract Integer getAdjustmentQuantity();
+    public abstract BigDecimal getAdjustmentQuantity();
 
     public boolean hasPriceAdjustment() {
         return getAdjustmentValue() != null || StringUtils.isNotBlank(getCustomProductName()) || getAdjustmentQuantity() != null;

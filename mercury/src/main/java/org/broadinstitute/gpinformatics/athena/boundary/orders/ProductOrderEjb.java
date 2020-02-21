@@ -13,10 +13,12 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
+import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
@@ -146,6 +148,9 @@ public class ProductOrderEjb {
     private PriceListCache priceListCache;
 
     private SAPProductPriceCache productPriceCache;
+
+    @Inject
+    private ResearchProjectDao researchProjectDao;
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
@@ -338,16 +343,23 @@ public class ProductOrderEjb {
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection,
                                          boolean allowCreateOrder) throws SAPInterfaceException {
+        publishProductOrderToSAP(editedProductOrder, messageCollection, allowCreateOrder, false);
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection,
+            boolean allowCreateOrder, boolean updateQuoteItems) throws SAPInterfaceException {
 
         if (!editedProductOrder.hasSapQuote()) {
             throw new SAPInterfaceException("This order is ineligible to create in SAP since it is not associated with "
                                             + "an SAP quote");
         }
-
         List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(editedProductOrder);
         try {
             SapQuote sapQuote = editedProductOrder.getSapQuote(sapService);
-
+            if (updateQuoteItems) {
+                editedProductOrder.updateQuoteItems(sapQuote);
+            }
             productPriceCache.determineIfProductsExist(allProductsOrdered,
                     sapQuote.getQuoteHeader().getSalesOrganization());
 
@@ -1263,7 +1275,8 @@ public class ProductOrderEjb {
 
         if(targetSapPdo.isSavedInSAP() &&
            ((targetSapPdo.allOrdersAreComplete() &&
-             targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY) < targetSapPdo.latestSapOrderDetail().getPrimaryQuantity()
+             targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY)
+                     .compareTo(BigDecimal.valueOf(targetSapPdo.latestSapOrderDetail().getPrimaryQuantity()))<0
            ) || CollectionUtils.containsAny(Arrays.asList(OrderStatus.Abandoned, OrderStatus.Completed),Collections.singleton(targetSapPdo.getOrderStatus())))) {
 
             try {
@@ -1688,5 +1701,81 @@ public class ProductOrderEjb {
     @Inject
     public void setDeployment(Deployment deployment) {
         this.deployment = deployment;
+    }
+
+    /**
+     * Create a product order in Pending state, and create its corresponding JIRA ticket.
+     */
+    public ProductOrder createProductOrder(ProductOrderData productOrderData) throws DuplicateTitleException,
+            NoSamplesException, ApplicationValidationException, InvalidProductException {
+        return createProductOrder(productOrderData, Collections.emptyList(), null, null);
+    }
+
+    /**
+     * Creates a product order in Pending state, and creates its corresponding JIRA ticket.
+     */
+    public ProductOrder createProductOrder(ProductOrderData productOrderData, List<String> jiraWatchers,
+            String owner, String jiraLink)
+            throws DuplicateTitleException, NoSamplesException, ApplicationValidationException,
+            InvalidProductException {
+
+        ProductOrder productOrder = productOrderData.toProductOrder(productOrderDao, researchProjectDao, productDao,
+                sapService);
+
+        // A valid user is required.
+        BspUser user = userBean.getBspUser();
+        if (user == null || StringUtils.isBlank(user.getUsername())) {
+            throw new ApplicationValidationException(
+                    "Problem creating the product order, cannot find the user " + productOrderData.getUsername());
+        }
+
+        try {
+            productOrder.setCreatedBy(user.getUserId());
+            productOrder.prepareToSave(user, ProductOrder.SaveType.CREATING);
+            productOrder.setOrderStatus(ProductOrder.OrderStatus.Pending);
+            if(productOrder.getProduct().isClinicalProduct()) {
+                productOrder.setClinicalAttestationConfirmed(true);
+            }
+
+            // The PDO's IRB information is copied from its RP. For Collaboration PDOs, we require that there
+            // is only one IRB on the RP.
+            productOrder.setRegulatoryInfos(productOrder.getResearchProject().getRegulatoryInfos());
+
+            productOrderJiraUtil.createIssueForOrder(productOrder, jiraWatchers, owner, jiraLink);
+
+            // Not supplying add-ons at this point, just saving what we defined above and then flushing to make sure
+            // any DB constraints have been enforced.
+            productOrderDao.persist(productOrder);
+            productOrderDao.flush();
+
+            MessageCollection messageCollection = new MessageCollection();
+
+            for (String error : messageCollection.getErrors()) {
+                log.error(error);
+            }
+            for (String warn : messageCollection.getWarnings()) {
+                log.info("Warning: " + warn);
+            }
+            for (String info : messageCollection.getInfos()) {
+                log.info(info);
+            }
+
+
+        } catch (Exception e) {
+            String keyText;
+            if (productOrder.getJiraTicketKey() != null) {
+                keyText = " (" + productOrder.getJiraTicketKey() + ")";
+            } else {
+                keyText = "";
+            }
+            log.error(user.getUsername() + " could not create the product order " + productOrder.getTitle()
+                      + keyText, e);
+            throw new ApplicationValidationException("Cannot create the product order - " + e.getMessage());
+        }
+
+        log.info(user.getUsername() + " created product order " + productOrder.getBusinessKey()
+                 + " with an order status of " + productOrder.getOrderStatus().getDisplayName() + " that includes "
+                 + productOrder.getSamples().size() + " samples");
+        return productOrder;
     }
 }

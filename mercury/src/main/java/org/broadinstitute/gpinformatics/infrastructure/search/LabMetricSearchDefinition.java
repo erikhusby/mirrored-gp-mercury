@@ -506,7 +506,7 @@ public class LabMetricSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 LabMetric labMetric = (LabMetric) entity;
-                return labMetric.getVesselPosition();
+                return labMetric.getVesselPosition().name();
             }
         });
         searchTerms.add(searchTerm);
@@ -770,7 +770,7 @@ public class LabMetricSearchDefinition {
     }
 
     @NotNull
-    static List<Object> runBspSearch(SearchItem searchItem) {
+    public static List<Object> runBspSearch(SearchItem searchItem) {
         BSPConfig bspConfig = ServiceAccessUtility.getBean(BSPConfig.class);
         SearchManager searchManager = new SearchManager(bspConfig.getHost(), bspConfig.getPort(),
                 bspConfig.getLogin(), bspConfig.getPassword());

@@ -145,7 +145,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.jvnet.inflector.Noun;
-import org.owasp.encoder.Encode;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -188,6 +187,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public static final String ACTIONBEAN_URL_BINDING = "/orders/order.action";
     public static final String PRODUCT_ORDER_PARAMETER = "productOrder";
+    public static final String SAP_ORDER_PARAMETER = "sapOrder";
     public static final String REGULATORY_ID_PARAMETER = "selectedRegulatoryIds";
 
     private static final String PRODUCT_ORDER = "Product Order";
@@ -231,6 +231,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String sampleSummary;
     private State state;
     private ProductOrder.QuoteSourceType quoteSource;
+    private String sapOrder;
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -399,13 +400,15 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Validate(required = true, on = SET_RISK)
     private boolean riskStatus = true;
 
-    @Validate(required = true, on = SET_RISK)
+    @Validate(required = true, on = SET_RISK, maxlength = 255)
     private String riskComment;
 
     @Validate(required = true, on = SET_PROCEED_OOS)
     private ProductOrderSample.ProceedIfOutOfSpec proceedOos;
 
+    @Validate(required = true, on = ABANDON_SAMPLES_ACTION, maxlength = 255)
     private String abandonComment;
+    @Validate(required = true, on = UNABANDON_SAMPLES_ACTION, maxlength = 255)
     private String unAbandonComment;
 
     // This is used for prompting why the abandon button is disabled.
@@ -565,11 +568,16 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, GET_SAMPLE_DATA})
     public void editInit() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
+        sapOrder = getContext().getRequest().getParameter(SAP_ORDER_PARAMETER);
         // If there's no product order parameter, send an error.
-        if (StringUtils.isBlank(productOrder)) {
-            addGlobalValidationError("No product order was specified.");
-        } else {
-            editOrder = productOrderDao.findByBusinessKey(productOrder);
+        if (StringUtils.isNotBlank(productOrder) || StringUtils.isNotBlank(sapOrder)) {
+//            addGlobalValidationError("No product order was specified.");
+//        } else {
+            if(StringUtils.isNotBlank(productOrder)) {
+                editOrder = productOrderDao.findByBusinessKey(productOrder.trim());
+            } else if (StringUtils.isNotBlank(sapOrder)) {
+                editOrder = productOrderDao.findBySapOrderId(sapOrder.trim());
+            }
             if (editOrder != null) {
                 List<Long> productOrderIds = new ArrayList<>();
                 productOrderIds.add(editOrder.getProductOrderId());
@@ -804,7 +812,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         requireField(editOrder.getProduct(), "a product", action);
 
         if (editOrder.getProduct() != null && editOrder.getProduct().getSupportsNumberOfLanes()) {
-            requireField(editOrder.getLaneCount() > 0, "a specified number of lanes", action);
+            requireField(editOrder.getLaneCount().compareTo(BigDecimal.ZERO) > 0, "a specified number of lanes", action);
         }
 
         if(action.equals(PLACE_ORDER_ACTION) && editOrder.getProduct() != null && editOrder.getProduct().isClinicalProduct()) {
@@ -957,12 +965,12 @@ public class ProductOrderActionBean extends CoreActionBean {
             addGlobalValidationError(unFundedMessage);
         }
 
-        double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
-        double outstandingEstimate = estimateOutstandingOrders(quote, additionalSampleCount, editOrder);
-        double valueOfCurrentOrder = 0;
+        BigDecimal fundsRemaining = new BigDecimal(quote.getQuoteFunding().getFundsRemaining());
+        BigDecimal outstandingEstimate = estimateOutstandingOrders(quote, additionalSampleCount, editOrder);
+        BigDecimal valueOfCurrentOrder = BigDecimal.ZERO;
 
-        if (fundsRemaining <= 0d ||
-            (fundsRemaining < (outstandingEstimate+valueOfCurrentOrder))) {
+        if (fundsRemaining.compareTo(BigDecimal.ZERO) <= 0 ||
+            (fundsRemaining.compareTo(outstandingEstimate.add(valueOfCurrentOrder))) <0) {
             String inssuficientFundsMessage = "Insufficient funds are available on " + quote.getName();
             addGlobalValidationError( inssuficientFundsMessage);
         }
@@ -1024,7 +1032,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      * Retrieves and determines the monitary value of a subset of Open Orders within Mercury
      * @return total dollar amount of the monitary value of orders associated with the given quote
      */
-    double estimateOutstandingOrders(Quote foundQuote, int addedSampleCount, ProductOrder productOrder)
+    BigDecimal estimateOutstandingOrders(Quote foundQuote, int addedSampleCount, ProductOrder productOrder)
             throws InvalidProductException {
 
         //Creating a new array list to be able to remove items from it if need be
@@ -1033,7 +1041,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             ordersWithCommonQuote.addAll(productOrderDao.findOrdersWithCommonQuote(foundQuote.getAlphanumericId()));
         }
 
-        double value = 0d;
+        BigDecimal value = BigDecimal.ZERO;
 
         if (productOrder != null && !ordersWithCommonQuote.contains(productOrder)) {
 
@@ -1041,7 +1049,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             ordersWithCommonQuote.add(productOrder);
         }
 
-        return value + getValueOfOpenOrders(ordersWithCommonQuote, foundQuote);
+        return value.add(getValueOfOpenOrders(ordersWithCommonQuote, foundQuote));
     }
 
     /**
@@ -1051,15 +1059,15 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param quote
      * @return Total dollar amount which equates to the monitary value of all orders given
      */
-    double getValueOfOpenOrders(List<ProductOrder> ordersWithCommonQuote, Quote quote)
+    BigDecimal getValueOfOpenOrders(List<ProductOrder> ordersWithCommonQuote, Quote quote)
             throws InvalidProductException {
-        double value = 0d;
+        BigDecimal value = BigDecimal.ZERO;
 
         Set<ProductOrder> justParents = new HashSet<>();
         justParents.addAll(ordersWithCommonQuote);
 
         for (ProductOrder testOrder : justParents) {
-            value += getOrderValue(testOrder, testOrder.getUnbilledSampleCount(), quote);
+            value = value.add(getOrderValue(testOrder, new BigDecimal(testOrder.getUnbilledSampleCount()), quote));
         }
         return value;
     }
@@ -1074,21 +1082,21 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param quote         Quote used in the order for which this price is being derived
      * @return Total monitary value of the order
      */
-    double getOrderValue(ProductOrder testOrder, int sampleCount, Quote quote) throws InvalidProductException {
-        double value = 0d;
+    BigDecimal getOrderValue(ProductOrder testOrder, BigDecimal sampleCount, Quote quote) throws InvalidProductException {
+        BigDecimal value = BigDecimal.ZERO;
         if(testOrder.getProduct() != null) {
             try {
                 final Product product = testOrder.getProduct();
-                double productValue =
+                BigDecimal productValue =
                         getProductValue(getUnbilledCountForProduct(testOrder, sampleCount, product), product,
                                 quote, testOrder);
-                value += productValue;
+                value = value.add(productValue);
                 for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
                     final Product addOn = testOrderAddon.getAddOn();
-                    double addOnValue =
+                    BigDecimal addOnValue =
                             getProductValue(getUnbilledCountForProduct(testOrder, sampleCount, addOn), addOn,
                                     quote, testOrder);
-                    value += addOnValue;
+                    value = value.add(addOnValue);
                 }
             } catch (InvalidProductException e) {
                 throw new InvalidProductException("For " + testOrder.getBusinessKey() + ": " + testOrder.getName() +
@@ -1098,20 +1106,20 @@ public class ProductOrderActionBean extends CoreActionBean {
         return value;
     }
 
-    protected int getUnbilledCountForProduct(ProductOrder productOrder, int sampleCount, Product product)
+    protected BigDecimal getUnbilledCountForProduct(ProductOrder productOrder, BigDecimal sampleCount, Product product)
             throws InvalidProductException {
-        int unbilledCount = sampleCount;
+        BigDecimal unbilledCount = sampleCount;
 
         final PriceAdjustment adjustmentForProduct = productOrder.getAdjustmentForProduct(product);
-        int totalAdjustmentCount = 0;
+        BigDecimal totalAdjustmentCount = BigDecimal.ZERO;
         if(adjustmentForProduct != null && adjustmentForProduct.getAdjustmentQuantity() != null) {
             totalAdjustmentCount = adjustmentForProduct.getAdjustmentQuantity();
-            unbilledCount = (int) ProductOrder.getUnbilledNonSampleCount(productOrder, product, totalAdjustmentCount);
+            unbilledCount = ProductOrder.getUnbilledNonSampleCount(productOrder, product, totalAdjustmentCount);
         }
 
         if (product.getSupportsNumberOfLanes()) {
-            int totalCount = productOrder.getLaneCount();
-            unbilledCount = (int) ProductOrder.getUnbilledNonSampleCount(productOrder, product, totalCount);
+            BigDecimal totalCount = productOrder.getLaneCount();
+            unbilledCount = ProductOrder.getUnbilledNonSampleCount(productOrder, product, totalCount);
         }
         return unbilledCount;
     }
@@ -1126,9 +1134,9 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param productOrder
      * @return Derived value of the Product price multiplied by the number of unbilled samples
      */
-    double getProductValue(int unbilledCount, Product product, Quote quote,
+    BigDecimal getProductValue(BigDecimal unbilledCount, Product product, Quote quote,
                            ProductOrder productOrder) throws InvalidProductException {
-        double productValue = 0d;
+        BigDecimal productValue = BigDecimal.ZERO;
         String foundPrice;
         try {
             foundPrice = productOrderEjb.validateQuoteAndGetPrice(quote, product, productOrder);
@@ -1137,17 +1145,17 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         if (StringUtils.isNotBlank(foundPrice)) {
-            Double productPrice = Double.valueOf(foundPrice);
+            BigDecimal productPrice = new BigDecimal(foundPrice);
 
             final PriceAdjustment adjustmentForProduct = productOrder.getAdjustmentForProduct(product);
-            int adjustedCount = unbilledCount;
+            BigDecimal adjustedCount = unbilledCount;
             if(adjustmentForProduct != null) {
                 if(adjustmentForProduct.getAdjustmentValue() != null) {
-                    productPrice = adjustmentForProduct.getAdjustmentValue().doubleValue();
+                    productPrice = adjustmentForProduct.getAdjustmentValue();
                 }
             }
 
-            productValue = productPrice * (unbilledCount);
+            productValue = productPrice.multiply(unbilledCount);
         } else {
             throw new InvalidProductException("Price for " + product.getPriceItemDisplayName() +
                                               " for product " + product.getDisplayName() + " was not found.");
@@ -1475,7 +1483,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @After(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION})
     public void viewPageInit() {
-        buildCustomizationHelper();
+        if(editOrder != null) {
+            buildCustomizationHelper();
+        }
     }
 
     public void buildCustomizationHelper() {
@@ -1544,26 +1554,37 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     @HandlesEvent(VIEW_ACTION)
-    public Resolution view() {
+    public Resolution view() throws Exception {
         if (editOrder == null) {
-            addGlobalValidationError("A PDO named '" + Encode.forHtml(productOrder) +
-                    "' could not be found.");
+            String searchParameters = "";
+            if(StringUtils.isNotBlank(productOrder)) {
+                searchParameters = "Product order: " + productOrder;
+            } else if (StringUtils.isNotBlank(sapOrder)) {
+                searchParameters = "Sap Order: " + sapOrder;
+            }
+            addGlobalValidationError("A PDO could not be found for the given search parameters.  " +searchParameters);
             Resolution errorResolution;
 
             try {
                 errorResolution = getContext().getSourcePageResolution();
             } catch (SourcePageNotFoundException e) {
 
-                // FIXME?  This seems to cause the search preferences to not get loaded on the resulting list page.
-                // Because of this, the user is presented witha  list page with no search results.  If they click
-                // 'search' from that blank page, it would inadvertantly wipe out their previously defined search
-                // preferences
+                // The following 2 lines were added to address an issue found in GPLIM-2572 potentially exposed more
+                // with the fix of GPLIM-6916.  This will re-search and re-populate the search parameters when the page
+                // is redirected to the list page in the case of an error.
+                //
+                // To fully address the underlying issue, we will need to seariously revisit how so many Resolution
+                // methods in here are throwing Exception which leads to a really bad user experience.  This is a Tech
+                // debt item that should be addressed sometime soon.
+                //
+                setupSearchCriteria();
+                listInit();
+
                 errorResolution = new ForwardResolution(ORDER_LIST_PAGE);
             }
 
             return errorResolution;
         }
-
         updateFromInitiationTokenInputs();
         if (editOrder.isDraft()) {
             validateUser("place");
@@ -1863,9 +1884,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         final List<ProductOrderSample> replacementSamples = stringToSampleList(replacementSampleList);
 
-        if(editOrder.getNumberForReplacement() <= 0 ) {
+        if(editOrder.getNumberForReplacement().compareTo(BigDecimal.ZERO) <= 0 ) {
             addGlobalValidationError("There are no samples to replace.  If you must process samples, please open a new Product Order");
-        } else if (replacementSamples.size() > editOrder.getNumberForReplacement()) {
+        } else if (editOrder.getNumberForReplacement().compareTo(BigDecimal.valueOf(replacementSamples.size()))<0 ) {
             addGlobalValidationError("You are attempting to replace more samples than you are able to.  Please reduce the number samples entered");
         }
     }
@@ -1883,7 +1904,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         final List<ProductOrderSample> replacementSamples = stringToSampleList(replacementSampleList);
 
         if(editOrder.isPriorToSAP1_5() && editOrder.isSavedInSAP() && editOrder.hasAtLeastOneBilledLedgerEntry() &&
-           (editOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL) < editOrder.latestSapOrderDetail().getPrimaryQuantity()) ) {
+           (editOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL)
+                    .compareTo(BigDecimal.valueOf(editOrder.latestSapOrderDetail().getPrimaryQuantity()))<0) ) {
             shareSapOrder = true;
         }
         ProductOrder.SaveType saveType = ProductOrder.SaveType.CREATING;
