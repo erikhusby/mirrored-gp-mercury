@@ -6,7 +6,6 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.StateMachineDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
@@ -51,9 +50,6 @@ public class DragenRunResource {
 
     @Inject
     private IlluminaFlowcellDao illuminaFlowcellDao;
-
-    @Inject
-    private SystemRouter router;
 
     @Inject
     private FiniteStateMachineFactory finiteStateMachineFactory;
@@ -110,11 +106,6 @@ public class DragenRunResource {
             return null;
         }
 
-        SystemRouter.System route = router.routeForVessels(Collections.<LabVessel>singletonList(flowcell));
-        if (route != SystemRouter.System.MERCURY) {
-            return null;
-        }
-
         if (stateMachines.stream().anyMatch(FiniteStateMachine::isAlive)) {
             log.info("Found an already existing state machine for this run " + run.getRunDirectory());
             return null;
@@ -134,9 +125,9 @@ public class DragenRunResource {
                     vesselPosition)) {
                 BucketEntry singleBucketEntry = sampleInstance.getSingleBucketEntry();
                 if (singleBucketEntry != null) {
-                    if (Objects.equals(singleBucketEntry.getProductOrder().getProduct().getAggregationDataType(),
+                    if (Objects.equals(singleBucketEntry.getProductOrder().getProduct().getPipelineDataTypeString(),
                             Aggregation.DATA_TYPE_WGS) ||
-                        Aggregation.DATA_TYPE_WGS.equals(sampleInstance.getAggregationDataType())) {
+                        Aggregation.DATA_TYPE_WGS.equals(sampleInstance.getPipelineDataTypeString())) {
                         genomeLanes.add(vesselPosition);
                     }
                 }
