@@ -63,9 +63,8 @@ public class ProductOrderData {
      */
     private List<String> samples = new ArrayList<>();
 
-    @SuppressWarnings("UnusedDeclaration")
-    /** Required by JAXB. */
-    ProductOrderData() {
+    /** Also required by JAXB. */
+    public ProductOrderData() {
     }
 
     /**
@@ -102,7 +101,7 @@ public class ProductOrderData {
         if (product != null) {
             this.product = product.getBusinessKey();
             productName = product.getProductName();
-            aggregationDataType = product.getAggregationDataType();
+            aggregationDataType = product.getPipelineDataTypeString();
         }
 
 

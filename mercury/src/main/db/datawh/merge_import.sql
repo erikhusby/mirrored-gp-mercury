@@ -329,6 +329,14 @@ AS
       -- Now delete the import rows to ignore
       DELETE FROM im_sequencing_sample_fact WHERE sequencing_sample_fact_id = -1;
 
+      -- Do full replacement of all data due to lab_event reference
+      DELETE
+      FROM event_metadata
+      WHERE metadata_id IN (
+          SELECT DISTINCT metadata_id
+          FROM im_event_metadata);
+      DBMS_OUTPUT.PUT_LINE('Pre-deleted ' || SQL%ROWCOUNT || ' event_metadata rows');
+
       COMMIT;
 
     END DO_DELETES;
@@ -1560,18 +1568,20 @@ AS
           v_rowid := v_rowid_arr(V_IDX);
           -- All older ETL records deleted from import tables, inserts only
           INSERT INTO event_fact (
-            event_fact_id, lab_event_id, workflow_id,
-            process_id, lab_event_type, product_order_id,
-            sample_name, lcset_sample_name, batch_name,
-            station_name, lab_vessel_id, position,
-            event_date, etl_date, program_name,
-            molecular_indexing_scheme, library_name
-          ) SELECT event_fact_id_seq.nextval, lab_event_id, workflow_id,
-                   process_id, lab_event_type, product_order_id,
-                   sample_name, lcset_sample_name, batch_name,
-                   station_name, lab_vessel_id, position,
-                   event_date, etl_date, program_name,
-                   molecular_indexing_scheme, library_name
+              event_fact_id, lab_event_id, workflow_id,
+              process_id, lab_event_type, product_order_id,
+              sample_name, lcset_sample_name, batch_name,
+              station_name, lab_vessel_id, position,
+              event_date, etl_date, program_name,
+              molecular_indexing_scheme, library_name, operator
+          ) SELECT event_fact_id_seq.nextval,lab_event_id,workflow_id,
+                   process_id,lab_event_type,product_order_id,
+                   sample_name,lcset_sample_name,batch_name,
+                   station_name,lab_vessel_id,position,
+                   event_date,etl_date,program_name,
+                   molecular_indexing_scheme,
+                   library_name,
+                   operator
               from IM_EVENT_FACT
              where rowid = v_rowid;
 
@@ -2492,6 +2502,43 @@ AS
       SHOW_ETL_STATS(  0, V_INS_COUNT, 'sequencing_sample_fact' );
     END MERGE_SEQUENCING_SAMPLE_FACT;
 
+  PROCEDURE MERGE_EVENT_METADATA
+      IS
+      V_INS_COUNT PLS_INTEGER;
+      V_UPD_COUNT PLS_INTEGER;
+  BEGIN
+      V_INS_COUNT := 0;
+      V_UPD_COUNT := 0;
+
+      FOR new IN (SELECT *
+                  FROM im_event_metadata
+                  WHERE is_delete = 'F')
+          LOOP
+              BEGIN
+                  INSERT INTO event_metadata (metadata_id,
+                                              lab_event_id,
+                                              metadata_type,
+                                              value,
+                                              etl_date)
+                  VALUES (new.metadata_id,
+                          new.lab_event_id,
+                          new.metadata_type,
+                          new.value,
+                          new.etl_date);
+
+                  V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+              EXCEPTION
+                  WHEN OTHERS THEN
+                      errmsg := SQLERRM;
+                      DBMS_OUTPUT.PUT_LINE(
+                                  TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_le_metadata.dat line ' ||
+                                  new.line_number || '  ' || errmsg);
+                      CONTINUE;
+              END;
+          END LOOP;
+      SHOW_ETL_STATS(V_UPD_COUNT, V_INS_COUNT, 'event_metadata');
+  END MERGE_EVENT_METADATA;
+
 
   /* **********************
    * Removes any deleted data from warehouse tables
@@ -2540,6 +2587,7 @@ AS
       MERGE_PDO_SAMPLE_BILL();
       MERGE_BILLING_SESSION();
       MERGE_SEQUENCING_SAMPLE_FACT();
+      MERGE_EVENT_METADATA();
 
       COMMIT;
 

@@ -524,51 +524,23 @@ public abstract class LabVessel implements Serializable {
         return metricList.get(0);
     }
 
-    public String getStorageLocationStringify() {
-        if (getStorageLocation() != null) {
-            // If Barcoded Tube, attempt to find its container by grabbing most recent Storage Check-in event.
-            if (OrmUtil.proxySafeIsInstance(this, BarcodedTube.class)) {
-                SortedMap<Date, TubeFormation> sortedMap = new TreeMap<>();
-                for (LabVessel container : this.getContainers()) {
-                    if (OrmUtil.proxySafeIsInstance(container, TubeFormation.class)) {
-                        TubeFormation tubeFormation = OrmUtil.proxySafeCast(
-                                container, TubeFormation.class);
-                        for (LabEvent labEvent : tubeFormation.getInPlaceLabEvents()) {
-                            if (labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_IN) {
-                                sortedMap.put(labEvent.getEventDate(), tubeFormation);
-                            }
-                        }
-                    }
+    @Nullable
+    public LabMetricRun getMostRecentLabMetricRunForType(LabMetric.MetricType metricType) {
+        if(labMetrics != null) {
+            Set<LabMetric> metrics = new HashSet<>();
+            for (LabMetric labMetric: labMetrics) {
+                if(labMetric.getName()== metricType) {
+                    metrics.add(labMetric);
                 }
-                if (!sortedMap.isEmpty()) {
-                    TubeFormation tubeFormation = sortedMap.get(sortedMap.lastKey());
-                    for (RackOfTubes rackOfTubes : tubeFormation.getRacksOfTubes()) {
-                        if (rackOfTubes.getStorageLocation() != null) {
-                            if (rackOfTubes.getStorageLocation().equals(this.getStorageLocation())) {
-                                VesselContainer<BarcodedTube> containerRole = tubeFormation.getContainerRole();
-                                for (Map.Entry<VesselPosition, BarcodedTube> entry:
-                                        containerRole.getMapPositionToVessel().entrySet()) {
-                                    BarcodedTube value = entry.getValue();
-                                    if (value != null && value.getLabel().equals(this.getLabel())) {
-                                        String locationTrail = rackOfTubes.getStorageLocation().buildLocationTrail();
-                                        locationTrail = locationTrail + ": [" +
-                                                        rackOfTubes.getLabel() + "] : " +
-                                                        entry.getKey().name();
-                                        return locationTrail;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                // On Failure at least return storage location w/o container
-                return this.getStorageLocation().buildLocationTrail();
-            } else {
-                String location = this.getStorageLocation().buildLocationTrail();
-                location += " [" + this.getLabel() + "]";
-                return location;
             }
+            if (metrics.isEmpty()) {
+                return null;
+            }
+            List<LabMetric> metricList = new ArrayList<>(metrics);
+            metricList.sort(Collections.reverseOrder());
+            return metricList.get(0).getLabMetricRun();
         }
+
         return null;
     }
 
@@ -865,7 +837,7 @@ public abstract class LabVessel implements Serializable {
     public List<LabMetric> getNearestMetricsOfType(LabMetric.MetricType metricType,
             TransferTraverserCriteria.TraversalDirection traversalDirection) {
         if (getContainerRole() != null) {
-            return getContainerRole().getNearestMetricOfType(metricType);
+            return getContainerRole().getNearestMetricOfType(metricType, traversalDirection);
         } else {
             TransferTraverserCriteria.NearestLabMetricOfTypeCriteria metricOfTypeCriteria =
                     new TransferTraverserCriteria.NearestLabMetricOfTypeCriteria(metricType);

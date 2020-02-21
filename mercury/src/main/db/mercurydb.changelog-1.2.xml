@@ -1941,6 +1941,7 @@
             <column name="abandoned_by" type="number(19,0)"/>
         </addColumn>
     </changeSet>
+
     <changeSet id="GPLIM-6078" author="jsacco">
         <createIndex tableName="BUCKET_ENTRY" indexName="IX_BUCKET_BATCH_FK">
             <column name="LAB_BATCH"/>
@@ -2445,6 +2446,35 @@
         <addUniqueConstraint tableName="quarantined" columnNames="item_source, item_type, item"
                              constraintName="u_quarantined" schemaName="mercury" />
     </changeSet>
+
+    <changeSet id="GPLIM-5521-10-ADDCOLUMN" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="PIPELINE_DATA_TYPE" schemaName="MERCURY" tableName="sample_instance_entity"/>
+            </not>
+        </preConditions>
+        <addColumn schemaName="MERCURY" tableName="sample_instance_entity">
+            <column name="PIPELINE_DATA_TYPE" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-5521-10-ADDCOLUMN_AUD" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="MERCURY" columnName="PIPELINE_DATA_TYPE"
+                              tableName="SAMPLE_INSTANCE_ENTITY_AUD"/>
+            </not>
+        </preConditions>
+        <addColumn schemaName="mercury" tableName="sample_instance_entity_aud">
+            <column name="PIPELINE_DATA_TYPE" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+<!--    <changeSet id="GPLIM-5521-05-ADDFK" author="dryan">-->
+<!--        <addForeignKeyConstraint constraintName="FK_SAMPINST_ENT_DATA_TYPE"-->
+<!--                                 baseTableSchemaName="MERCURY" baseTableName="sample_instance_entity"-->
+<!--                                 baseColumnNames="PIPELINE_DATA_TYPE"-->
+<!--                                 referencedTableSchemaName="ATHENA" referencedTableName="PIPELINE_DATA_TYPE"-->
+<!--                                 referencedColumnNames="PIPELINE_DATA_TYPE_ID"/>-->
+<!--    </changeSet>-->
 
     <changeSet id="GPLIM-6643_1" author="jowalsh">
         <createIndex indexName="IX_FSM_AUD" tableName="FINITE_STATE_MACHINE_AUD" schemaName="MERCURY">
@@ -3074,4 +3104,52 @@
         <modifyDataType tableName="TASK_AUD" schemaName="mercury" columnName="COMMAND_LINE_ARGUMENT" newDataType="varchar2(1200)"/>
     </changeSet>
 
+    <changeSet id="GPLIM-6706" author="jsacco">
+        <sql splitStatements="false">
+            DECLARE
+            CURSOR CUR_UPD IS
+            select LAB_METRIC_ID
+            from LAB_METRIC
+            where REGEXP_INSTR( VESSEL_POSITION, '[A-Z][0-9]$' ) = 1;
+            TYPE V_ARR_TY IS TABLE OF NUMBER(19) INDEX BY PLS_INTEGER;
+            V_PK_ARR V_ARR_TY;
+            BEGIN
+            OPEN CUR_UPD;
+            FETCH CUR_UPD BULK COLLECT INTO V_PK_ARR;
+            CLOSE CUR_UPD;
+            IF( V_PK_ARR.COUNT > 0 ) THEN
+            FORALL IDX IN V_PK_ARR.FIRST .. V_PK_ARR.LAST
+            UPDATE LAB_METRIC
+            SET VESSEL_POSITION = SUBSTR( VESSEL_POSITION, 1, 1 ) || '0' || SUBSTR( VESSEL_POSITION, 2, 1 )
+            WHERE LAB_METRIC_ID = V_PK_ARR(IDX);
+
+            FORALL IDX IN V_PK_ARR.FIRST .. V_PK_ARR.LAST
+            UPDATE LAB_METRIC_AUD
+            SET VESSEL_POSITION = SUBSTR( VESSEL_POSITION, 1, 1 ) || '0' || SUBSTR( VESSEL_POSITION, 2, 1 )
+            WHERE LAB_METRIC_ID = V_PK_ARR(IDX);
+            END IF;
+            COMMIT;
+            EXCEPTION WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('ERROR OCCURRED: ' || SQLERRM );
+            ROLLBACK;
+            RAISE;
+            END;
+        </sql>
+    </changeSet>
+
+    <changeSet author="thompson" id="GPLIM-6080-1">
+        <addColumn schemaName="mercury" tableName="mercury_control">
+            <column name="CONCORDANCE_SAMPLE_ID" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-6080-2">
+        <addColumn schemaName="mercury" tableName="mercury_control_aud">
+            <column name="CONCORDANCE_SAMPLE_ID" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-6080-3">
+        <addForeignKeyConstraint constraintName="FK_MC_MERCURY_SAMPLE"
+                baseTableSchemaName="mercury" baseTableName="mercury_control" baseColumnNames="CONCORDANCE_SAMPLE_ID"
+                referencedTableSchemaName="mercury" referencedTableName="mercury_sample" referencedColumnNames="mercury_sample_id"/>
+    </changeSet>
 </databaseChangeLog>

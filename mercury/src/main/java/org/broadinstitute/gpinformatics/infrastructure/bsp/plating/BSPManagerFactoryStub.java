@@ -159,19 +159,6 @@ public class BSPManagerFactoryStub implements BSPManagerFactory {
             }
 
             @Override
-            public SampleResponse updateSample(String username, Sample sample) {
-                SampleResponse response = new SampleResponse();
-                response.setResult(sample);
-                response.setSuccess(true);
-                return response;
-            }
-
-            @Override
-            public SampleResponse updateSample(Sample sample) {
-                return updateSample(null, sample);
-            }
-
-            @Override
             public SampleResponse getSample(String s) {
                 SampleResponse response = new SampleResponse();
                 response.setResult(new Sample(s));

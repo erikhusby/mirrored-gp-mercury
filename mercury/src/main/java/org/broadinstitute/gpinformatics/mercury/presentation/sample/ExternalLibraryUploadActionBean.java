@@ -21,7 +21,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
-import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.PipelineDataTypeDao;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
@@ -55,7 +55,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
     private AnalysisTypeDao analysisTypeDao;
 
     @Inject
-    private ProductDao productDao;
+    private PipelineDataTypeDao pipelineDataTypeDao;
 
     @Inject
     private ReferenceSequenceDao referenceSequenceDao;
@@ -130,7 +130,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         String[] validAggregationDataTypes = (
                 new ArrayList<String>() {{
                     add("");
-                    addAll(productDao.findAggregationDataTypes());
+                    addAll(pipelineDataTypeDao.findAllActiveDataTypeNames());
                 }}).toArray(new String[0]);
 
         // Makes the header names for the drowdown columns.

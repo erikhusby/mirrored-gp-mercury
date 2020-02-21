@@ -21,5 +21,6 @@ TRAILING NULLCOLS
  event_date DATE "YYYYMMDDHH24MISS",
  program_name,
  molecular_indexing_scheme,
- library_name
+ library_name,
+ operator
 )

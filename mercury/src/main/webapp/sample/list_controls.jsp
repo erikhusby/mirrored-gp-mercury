@@ -54,6 +54,7 @@
             <thead>
             <tr>
                 <th>Collaborator Participant ID</th>
+                <th>Concordance Sample ID</th>
             </tr>
             </thead>
             <tbody>
@@ -65,6 +66,11 @@
                                            value="${positiveControl.businessKey}"/>
                             ${positiveControl.businessKey}
                         </stripes:link>
+                    </td>
+                    <td>
+                        <c:if test="${not empty positiveControl.concordanceMercurySample}">
+                            ${positiveControl.concordanceMercurySample.sampleKey}
+                        </c:if>
                     </td>
                 </tr>
             </c:forEach>

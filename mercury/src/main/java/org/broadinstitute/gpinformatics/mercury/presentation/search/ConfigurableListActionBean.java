@@ -42,7 +42,7 @@ import java.util.List;
 @UrlBinding("/util/ConfigurableList.action")
 public class ConfigurableListActionBean extends CoreActionBean {
     protected static final Log log = LogFactory.getLog(ConfigurableListActionBean.class);
-    private static final String SPREADSHEET_FILENAME = "List.xls";
+    private static final String SPREADSHEET_FILENAME = "List.xlsx";
 
     private String downloadColumnSetName;
 
@@ -202,7 +202,7 @@ public class ConfigurableListActionBean extends CoreActionBean {
     private static Resolution streamResultList(ConfigurableList.ResultList resultList) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
-            SpreadsheetCreator.createSpreadsheet("Sample Info", resultList.getAsArray(), out);
+            SpreadsheetCreator.createSpreadsheet("Sample Info", resultList.getAsArray(), out, SpreadsheetCreator.Type.XLSX);
         } catch (IOException ioEx) {
             log.error("Failed to create spreadsheet");
             throw new RuntimeException(ioEx);

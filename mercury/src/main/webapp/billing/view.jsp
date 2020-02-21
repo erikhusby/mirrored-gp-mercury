@@ -13,30 +13,27 @@
                 $j('#quoteReporting').dataTable( {
                     "oTableTools": ttExportDefines,
                     "aaSorting": [[0,'desc']],
-                    "aoColumns": [
-                        {"bSortable": true},                   // Quote
-                        {"bSortable": true},                   // PDOs
-                        {"bSortable": true},                   // quote server work items
-                        {"bSortable": true},                   // SAP Server document ID
-                        {"bSortable": true},                   // Product
-                        {"bSortable": true},                   // Platform
-                        {"bSortable": true},                   // Category
-                        {"bSortable": true},                   // Price Item
-                        {"bSortable": true},                   // Quantity
-                        {"bSortable": true, "sType": "date"},  // Work Completed
-                        {"bSortable": true, "sType": "date"},  // Work Reported
-                        {"bSortable": false}]                  // Billed Message
+                    'aoColumnDefs': [
+                        {'aTargets': [11], "sType": "date"},
+                        {'aTargets': [12], "bSortable": false}
+                    ],
                 })
             });
 
-            $j(window).load(function() {
-                var workItemIdToHighlight = '#'.concat(${actionBean.workItemIdToHighlight});
-                // if the url contains a quote server work item, highlight the corresponding row
-                $j(workItemIdToHighlight).attr('class','highlighted');
-                $('html, body').scrollTop($(workItemIdToHighlight).offset().top);
+            $j(window).load(function () {
+                // if the url contains a quote server work item or sap document id, highlight the corresponding row
+                if ("${actionBean.highlightRow}" == "") {
+                    return;
+                }
+                var highlightRow = $j("[id='${actionBean.highlightRow}']");
+                highlightRow.addClass('highlighted');
+                var offset = highlightRow.offset();
+                if (offset !== null && offset !== undefined) {
+                    $('html, body').scrollTop(offset.top);
+                }
             });
 
-        </script>
+    </script>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
@@ -94,22 +91,23 @@
             <h4 style="display:inline">Quote Items</h4>
         </div>
 
-        <table id="quoteReporting" class="table simple" style="table-layout: fixed;">
+    <div style="overflow-x: scroll">
+        <table id="quoteReporting" class="table simple">
             <thead>
             <tr>
-                <th width="60">Quote</th>
-                <th width="250">PDOs</th>
-                <th width="50">Work Items</th>
-                <th width="90">SAP<br/>Document ID(s)</th>
-                <th>Product</th>
+                <th>Quote</th>
+                <th>PDOs</th>
+                <th>Work Items</th>
+                <th>SAP<br/>Document ID(s)</th>
+                <th style="min-width: 15em">Product</th>
                 <th>Platform</th>
-                <th>Category</th>
-                <th>Price Item</th>
-                <th width="60">Quote Price Type</th>
-                <th width="40">Quantity</th>
-                <th width="70">Work Completed</th>
-                <th width="40">Work Reported</th>
-                <th>Billing Message</th>
+                <th style="min-width: 10em">Category</th>
+                <th style="min-width: 10em">Price Item</th>
+                <th style="min-width: 3em">Quote Price Type</th>
+                <th>Quantity</th>
+                <th>Work Completed</th>
+                <th>Work Reported</th>
+                <th style="min-width: 15em">Billing Message</th>
             </tr>
             </thead>
             <tbody>
@@ -154,7 +152,8 @@
                             </c:forEach>
                         </span>
                     </td>
-                    <td>${item.product.displayName}</td>
+                    <%-- For astetic reasons, replace the basic hyphen with a non-breaking one so that part numbers aren't word-wrapped                    --%>
+                    <td>${fn:replace(item.product.displayName,"-","&#x2011;")}</td>
                     <td>${item.priceItem.platform}</td>
                     <td>${item.priceItem.category}</td>
                     <td>${item.priceItem.name}</td>
@@ -169,5 +168,6 @@
             </c:forEach>
             </tbody>
         </table>
+    </div>
     </stripes:layout-component>
 </stripes:layout-render>

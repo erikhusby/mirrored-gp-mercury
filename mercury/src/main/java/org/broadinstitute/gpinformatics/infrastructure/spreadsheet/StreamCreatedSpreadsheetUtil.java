@@ -1,13 +1,11 @@
 package org.broadinstitute.gpinformatics.infrastructure.spreadsheet;
 
-import java.io.IOException;
-
-import javax.servlet.http.HttpServletResponse;
-
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.StreamingResolution;
-
 import org.apache.poi.ss.usermodel.Workbook;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 /**
  * Utility class to stream a {@link Workbook} directly to the {@link HttpServletResponse}.
@@ -38,6 +36,6 @@ public class StreamCreatedSpreadsheetUtil {
      * @return streamed spreadsheet
      */
     public static Resolution streamSpreadsheet(Object[][] rows, String fileName) {
-        return streamSpreadsheet(SpreadsheetCreator.createSpreadsheet("Sample Info", rows), fileName);
+        return streamSpreadsheet(SpreadsheetCreator.createSpreadsheet("Sample Info", rows, SpreadsheetCreator.Type.XLSX), fileName);
     }
 }

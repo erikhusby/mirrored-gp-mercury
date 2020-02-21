@@ -24,6 +24,7 @@ import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.persistence.PersistenceUnitUtil;
 import javax.transaction.UserTransaction;
+import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -280,11 +281,11 @@ public class ProductOrderDaoTest extends StubbyContainerTest {
 
                 ledgerEntry =
                         new LedgerEntry(productOrderSample, productOrder.getProduct(), new Date(),
-                                1);
+                                BigDecimal.ONE);
             } else {
                 ledgerEntry =
                         new LedgerEntry(productOrderSample, productOrder.getProduct().getPrimaryPriceItem(),
-                                new Date(),1);
+                                new Date(),BigDecimal.ONE);
             }
             ledgerEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
             ledgerEntries.add(ledgerEntry);

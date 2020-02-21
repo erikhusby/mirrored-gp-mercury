@@ -140,7 +140,7 @@ public class LabBatchEjbDBFreeTest {
 
         labBatchEJB.setProductOrderDao(productOrderDao);
 
-        labBatchEJB.setWorkflowConfig(new WorkflowLoader().load());
+        labBatchEJB.setWorkflowConfig(new WorkflowLoader().getWorkflowConfig());
 
         pdoNames = new ArrayList<>();
         Collections.addAll(pdoNames, STUB_TEST_PDO_KEY);

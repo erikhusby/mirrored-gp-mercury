@@ -40,7 +40,6 @@ import java.util.EnumSet;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -98,13 +97,16 @@ public class DesignationActionBean extends CoreActionBean implements Designation
     @HandlesEvent(VIEW_ACTION)
     @DefaultHandler
     public Resolution view() {
-        for (Iterator<DesignationDto> iter = dtos.iterator(); iter.hasNext(); ) {
-            DesignationDto dto = iter.next();
-            dto.setSelected(false);
-        }
-        Set<DesignationDto> uniqueDtos = new HashSet<>(dtos);
-        dtos.clear();
-        dtos.addAll(uniqueDtos);
+        // Removes the null dto when the UI filter is set, the empty dto when subsequently cleared,
+        // and the duplicate dto that can occur when the user does a second add operation.
+        dtos = dtos.stream().
+                filter(dto -> dto != null && StringUtils.isNotBlank(dto.getBarcode())).
+                map(dto -> {
+                    dto.setSelected(false);
+                    return dto;
+                }).
+                distinct().
+                collect(Collectors.toList());
         return new ForwardResolution(VIEW_PAGE);
     }
 

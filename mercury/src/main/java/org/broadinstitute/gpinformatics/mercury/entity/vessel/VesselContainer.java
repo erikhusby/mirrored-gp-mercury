@@ -676,11 +676,25 @@ public class VesselContainer<T extends LabVessel> {
      * @return A collection of the nearest metrics of the given type, ordered by ascending run date
      */
     @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
-    public List<LabMetric> getNearestMetricOfType(LabMetric.MetricType metricType) {
+    public List<LabMetric> getNearestMetricOfType(LabMetric.MetricType metricType,
+            TransferTraverserCriteria.TraversalDirection traversalDirection) {
         TransferTraverserCriteria.NearestLabMetricOfTypeCriteria metricTypeCriteria =
                 new TransferTraverserCriteria.NearestLabMetricOfTypeCriteria(metricType);
-        applyCriteriaToAllPositions(metricTypeCriteria,
-                TransferTraverserCriteria.TraversalDirection.Ancestors);
+        applyCriteriaToAllPositions(metricTypeCriteria, traversalDirection);
+        return metricTypeCriteria.getNearestMetrics();
+    }
+
+    /**
+     * This method returns a collection of the closest lab metrics given the metric type and a position.
+     *
+     * @return A collection of the nearest metrics of the given type, ordered by ascending run date
+     */
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
+    public List<LabMetric> getNearestMetricOfType(LabMetric.MetricType metricType, VesselPosition vesselPosition,
+            TransferTraverserCriteria.TraversalDirection traversalDirection) {
+        TransferTraverserCriteria.NearestLabMetricOfTypeCriteria metricTypeCriteria =
+                new TransferTraverserCriteria.NearestLabMetricOfTypeCriteria(metricType);
+        evaluateCriteria(vesselPosition, metricTypeCriteria, traversalDirection, 0);
         return metricTypeCriteria.getNearestMetrics();
     }
 
@@ -804,7 +818,7 @@ public class VesselContainer<T extends LabVessel> {
             }
         }
         // check whether event matches any workflows unambiguously
-        WorkflowConfig workflowConfig = new WorkflowLoader().load();
+        WorkflowConfig workflowConfig = new WorkflowLoader().getWorkflowConfig();
         for (SampleInstanceV2.LabBatchDepth labBatchDepth : labBatchDepths) {
             LabBatch labBatch = labBatchDepth.getLabBatch();
             if (StringUtils.isEmpty(labBatch.getWorkflowName())) {
