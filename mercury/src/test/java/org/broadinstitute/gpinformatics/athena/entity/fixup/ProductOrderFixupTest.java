@@ -2020,9 +2020,9 @@ public class ProductOrderFixupTest extends Arquillian {
                         finalProductOrder.getName()));
                 finalProductOrder.getSamples().forEach(productOrderSample -> System.out.println(String.format("Added sample %s to order %s", productOrderSample.getSampleKey(),
                         finalProductOrder.getBusinessKey())));
-//                finalProductOrder.getBucketEntries().forEach(bucketEntry -> System.out.println(String.format("Moved bucket entry %s from PDO %s to %s",
-//                        bucketEntry.getBucketEntryId(), currentProductOrder.getBusinessKey(),
-//                        finalProductOrder.getBusinessKey())));
+                finalProductOrder.getBucketEntries().forEach(bucketEntry -> System.out.println(String.format("Moved bucket entry %s from PDO %s to %s",
+                        bucketEntry.getBucketEntryId(), currentProductOrder.getBusinessKey(),
+                        finalProductOrder.getBusinessKey())));
             } else {
                 finalProductOrder = currentProductOrder;
                 System.out.println(String.format("Keeping product order %s instead of making a new one.",
@@ -2106,6 +2106,7 @@ public class ProductOrderFixupTest extends Arquillian {
             productOrderSample.getLedgerItems().forEach(ledgerEntry -> {
                 ledgerEntry.getBillingSession().getLedgerEntryItems().remove(ledgerEntry);
                 productOrderSample.getLedgerItems().remove(ledgerEntry);
+                productOrderSample.remove();
             });
         });
 

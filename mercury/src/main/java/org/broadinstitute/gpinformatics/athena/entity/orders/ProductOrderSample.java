@@ -141,7 +141,11 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
                 riskItem.getComparedValue(),riskItem.getRemark())));
         newSample.setRiskItems(clonedRiskItems);
 
-        sampleToClone.getSampleReceiptValidations().forEach(sampleReceiptValidation -> newSample.addValidation(sampleReceiptValidation));
+        sampleToClone.getSampleReceiptValidations()
+                .forEach(sampleReceiptValidation ->
+                        newSample.addValidation(new SampleReceiptValidation(newSample,
+                                sampleReceiptValidation.getCreatedBy(), sampleReceiptValidation.getStatus(),
+                                sampleReceiptValidation.getValidationType(), sampleReceiptValidation.getReason())));
 
         return newSample;
     }
