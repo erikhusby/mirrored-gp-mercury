@@ -135,6 +135,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         sampleToClone.getMercurySample().addProductOrderSample(newSample);
         newSample.setAggregationParticle(sampleToClone.aggregationParticle);
         newSample.setAliquotId(sampleToClone.aliquotId);
+        newSample.setDeliveryStatus(sampleToClone.deliveryStatus);
 
         Set<RiskItem> clonedRiskItems = new HashSet<>();
         sampleToClone.getRiskItems().forEach(riskItem -> clonedRiskItems.add(new RiskItem(riskItem.getRiskCriterion(),
@@ -146,6 +147,8 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
                         newSample.addValidation(new SampleReceiptValidation(newSample,
                                 sampleReceiptValidation.getCreatedBy(), sampleReceiptValidation.getStatus(),
                                 sampleReceiptValidation.getValidationType(), sampleReceiptValidation.getReason())));
+
+        sampleToClone.getLedgerItems().forEach(ledgerEntry -> newSample.addClonedLedgerItem(LedgerEntry.cloneLedgerEntryToNewSample(ledgerEntry, newSample)));
 
         return newSample;
     }
