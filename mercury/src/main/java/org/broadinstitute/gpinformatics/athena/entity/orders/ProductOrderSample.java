@@ -128,6 +128,24 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     private String aggregationParticle;
 
+    public static ProductOrderSample cloneProductOrderSample(ProductOrderSample sampleToClone) {
+        ProductOrderSample newSample = new ProductOrderSample(sampleToClone.sampleName, sampleToClone.getSampleData());
+
+        newSample.setSampleComment(sampleToClone.sampleComment);
+        sampleToClone.getMercurySample().addProductOrderSample(newSample);
+        newSample.setAggregationParticle(sampleToClone.aggregationParticle);
+        newSample.setAliquotId(sampleToClone.aliquotId);
+
+        Set<RiskItem> clonedRiskItems = new HashSet<>();
+        sampleToClone.getRiskItems().forEach(riskItem -> clonedRiskItems.add(new RiskItem(riskItem.getRiskCriterion(),
+                riskItem.getComparedValue(),riskItem.getRemark())));
+        newSample.setRiskItems(clonedRiskItems);
+
+        sampleToClone.getSampleReceiptValidations().forEach(sampleReceiptValidation -> newSample.addValidation(sampleReceiptValidation));
+
+        return newSample;
+    }
+
     /**
      * Detach this ProductOrderSample from all other objects so it can be removed, most importantly MercurySample whose
      * reference would otherwise keep this sample alive.
@@ -1313,6 +1331,15 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         log.debug(MessageFormat.format(
                 "Added LedgerEntry item for sample {0} to PDO {1} for partNumber: {2} - Quantity:{3}",
                 sampleName, productOrder.getBusinessKey(), product.getName(), delta));
+    }
+
+    /**
+     * Added primarily for the purpose of fixup tests
+     * @param clonedLedgerItem
+     */
+    public void addClonedLedgerItem(LedgerEntry clonedLedgerItem) {
+        ledgerItems.add(clonedLedgerItem);
+
     }
 
     /**

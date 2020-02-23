@@ -380,7 +380,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         final ProductOrder cloned = new ProductOrder(toClone.getCreatedBy(),
                 "Clone " + toClone.getChildOrders().size() + ": " + toClone.getTitle() + " " +
-                (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")).getDateTimeInstance().format(new Date()),
+                (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS")).getDateTimeInstance().format(new Date()),
                 new ArrayList<ProductOrderSample>(), toClone.getQuoteId(), toClone.getProduct(),
                 toClone.getResearchProject());
         List<Product> potentialAddons = new ArrayList<>();
@@ -933,7 +933,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * @param samples the samples to set
      */
     public void setSamples(@Nonnull Collection<ProductOrderSample> samples) {
-        if (samples.isEmpty()) {
+        setSamples(samples, false);
+    }
+    public void setSamples(@Nonnull Collection<ProductOrderSample> samples, boolean allowEmptyList) {
+        if (samples.isEmpty() && !allowEmptyList) {
             // FIXME: This seems incorrect in the case where current sample list is non-empty and incoming samples are empty.
             return;
         }
@@ -961,6 +964,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             sample.setSamplePosition(samplePos++);
             samples.add(sample);
         }
+        invalidateSampleCount();
+    }
+
+    public void invalidateSampleCount() {
         sampleCounts.invalidate();
     }
 
@@ -979,6 +986,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         } else {
             int samplePos = samples.get(samples.size() - 1).getSamplePosition();
             addSamplesInternal(newSamples, samplePos);
+        }
+    }
+
+    public void readjustSamplePositions() {
+        int samplePos = 0;
+        for (ProductOrderSample sample : samples) {
+            sample.setSamplePosition(samplePos);
+            samplePos++;
         }
     }
 
@@ -1741,7 +1756,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     /**
      * Class that encapsulates counting samples and storing the results.
      */
-    private class SampleCounts implements Serializable {
+    private class   SampleCounts implements Serializable {
         private static final long serialVersionUID = 3984705436979136125L;
         private final Counter stockTypeCounter = new Counter();
         private final Counter primaryDiseaseCounter = new Counter();
