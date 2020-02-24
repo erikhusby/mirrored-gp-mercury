@@ -28,7 +28,7 @@ public class StateManager {
         try {
             if (OrmUtil.proxySafeIsInstance(state, AlignmentState.class)) {
                 try {
-                    return alignmentStateHandler.onEnter(state);
+                    return alignmentStateHandler.onEnter(OrmUtil.proxySafeCast(state, AlignmentState.class));
                 } catch (IOException e) {
                     log.error("I/O Error handling alignment on enter", e);
                     return false;
@@ -36,7 +36,7 @@ public class StateManager {
             }
 
             if (OrmUtil.proxySafeIsInstance(state, AggregationState.class)) {
-                return aggregationStateHandler.onEnter(state);
+                return aggregationStateHandler.onEnter(OrmUtil.proxySafeCast(state, AggregationState.class));
             }
 
             return true;

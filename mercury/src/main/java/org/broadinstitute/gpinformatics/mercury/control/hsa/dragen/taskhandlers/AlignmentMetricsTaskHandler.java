@@ -44,7 +44,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Dependent
-public class AlignmentMetricsTaskHandler extends AbstractMetricsTaskHandler {
+public class AlignmentMetricsTaskHandler extends AbstractMetricsTaskHandler<AlignmentMetricsTask> {
 
     private static final Log log = LogFactory.getLog(AlignmentMetricsTaskHandler.class);
 
@@ -53,10 +53,8 @@ public class AlignmentMetricsTaskHandler extends AbstractMetricsTaskHandler {
             Pattern.compile("/seq/illumina/proc/SL-[A-Z]{3}/(.*)/dragen/(.*)/fastq.*");
 
     @Override
-    public void handleTask(Task task, SchedulerContext schedulerContext) {
-        AlignmentMetricsTask alignmentMetricsTask = OrmUtil.proxySafeCast(task, AlignmentMetricsTask.class);
-
-        State state = alignmentMetricsTask.getState();
+    public void handleTask(AlignmentMetricsTask task, SchedulerContext schedulerContext) {
+        State state = task.getState();
         if (!OrmUtil.proxySafeIsInstance(state, AlignmentState.class)) {
             throw new RuntimeException("Expect only an alignment state for an alignment metrics task.");
         }
@@ -72,15 +70,15 @@ public class AlignmentMetricsTaskHandler extends AbstractMetricsTaskHandler {
             try {
                 String commandLineArgument = alignmentTask.getCommandLineArgument();
                 String outputDirectoryPath = alignmentTask.getOutputDir().getPath();
-                parse(alignmentTask, alignmentMetricsTask, outputDirectoryPath, commandLineArgument, messageCollection);
-                if (alignmentMetricsTask.getStatus() != Status.COMPLETE) {
+                parse(alignmentTask, task, outputDirectoryPath, commandLineArgument, messageCollection);
+                if (task.getStatus() != Status.COMPLETE) {
                     failed = true;
                 }
             } catch (Exception e) {
-                String message = "Error processing alignment task metric " + alignmentMetricsTask;
+                String message = "Error processing alignment task metric " + task;
                 log.error(message, e);
-                alignmentMetricsTask.setErrorMessage(message);
-                alignmentMetricsTask.setStatus(Status.FAILED);
+                task.setErrorMessage(message);
+                task.setStatus(Status.FAILED);
             }
         }
 

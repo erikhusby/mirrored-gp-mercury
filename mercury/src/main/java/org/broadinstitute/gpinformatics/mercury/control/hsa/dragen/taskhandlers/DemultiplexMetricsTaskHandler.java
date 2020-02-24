@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 import static java.util.stream.Collectors.groupingBy;
 
 @Dependent
-public class DemultiplexMetricsTaskHandler extends BaseDemultiplexMetricsHandler {
+public class DemultiplexMetricsTaskHandler extends BaseDemultiplexMetricsHandler<DemultiplexMetricsTask> {
 
     private static final Log log = LogFactory.getLog(DemultiplexMetricsTaskHandler.class);
 
@@ -52,10 +52,8 @@ public class DemultiplexMetricsTaskHandler extends BaseDemultiplexMetricsHandler
     private DragenReplayInfo dragenReplayInfo;
 
     @Override
-    public void handleTask(Task task, SchedulerContext schedulerContext) {
-        DemultiplexMetricsTask demultiplexMetricsTask = OrmUtil.proxySafeCast(task, DemultiplexMetricsTask.class);
-
-        State state = demultiplexMetricsTask.getState();
+    public void handleTask(DemultiplexMetricsTask task, SchedulerContext schedulerContext) {
+        State state = task.getState();
         if (!OrmUtil.proxySafeIsInstance(state, DemultiplexState.class)) {
             throw new RuntimeException("Expect only a demultiplex state for a demultiplex metrics task.");
         }

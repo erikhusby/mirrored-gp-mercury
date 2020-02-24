@@ -7,6 +7,7 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -42,7 +43,6 @@ public class FingerprintWorkflowActionBean extends CoreActionBean {
     private static final String CREATE_ALIGNMENT_ACTION = "createFingerprint";
     private static final String SEARCH_ACTION = "search";
 
-    @Validate(field = "sampleIds", label = "Sample IDs", required = true, on = {SEARCH_ACTION})
     private String sampleIds;
 
     private Map<String, MercurySample> mapIdToMercurySample;
@@ -69,7 +69,15 @@ public class FingerprintWorkflowActionBean extends CoreActionBean {
 
     @ValidationMethod(on = {SEARCH_ACTION})
     public void validateSearch() {
+        if (StringUtils.isBlank(sampleIds)) {
+            addValidationError("sampleIds", "Sample ID is required.");
+            return;
+        }
         String[] split = sampleIds.split("\\s+");
+        if (split.length == 0) {
+            addValidationError("sampleIds", "Please include at least one sample");
+            return;
+        }
         mapIdToMercurySample =
                 mercurySampleDao.findMapIdToMercurySample(new HashSet<>(Arrays.asList(split)));
 

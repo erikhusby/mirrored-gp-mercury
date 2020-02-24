@@ -223,7 +223,7 @@ public class DragenSimulatorTest extends BaseEventTest {
             Task task = (Task) invocation.getArguments()[0];
             task.setStatus(Status.COMPLETE);
             return null;
-        }).when(demultiplexMetricsTaskHandler).handleTask(any(Task.class), any(SchedulerContext.class));
+        }).when(demultiplexMetricsTaskHandler).handleTask(any(DemultiplexMetricsTask.class), any(SchedulerContext.class));
 
         ShellUtils shellUtils = mock(ShellUtils.class);
         AlignmentMetricsTaskHandler alignmentMetricsTaskHandler = mock(AlignmentMetricsTaskHandler.class);
@@ -231,7 +231,7 @@ public class DragenSimulatorTest extends BaseEventTest {
             Task task = (Task) invocation.getArguments()[0];
             task.setStatus(Status.COMPLETE);
             return null;
-        }).when(alignmentMetricsTaskHandler).handleTask(any(Task.class), any(SchedulerContext.class));
+        }).when(alignmentMetricsTaskHandler).handleTask(any(AlignmentMetricsTask.class), any(SchedulerContext.class));
 
         ProcessResult processResult = new ProcessResult(0, new ProcessOutput("".getBytes()));
         when(shellUtils.runSyncProcess(anyList())).thenReturn(processResult);

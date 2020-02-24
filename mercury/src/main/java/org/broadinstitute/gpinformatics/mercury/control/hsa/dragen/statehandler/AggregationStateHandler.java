@@ -43,7 +43,7 @@ import java.util.Optional;
 import java.util.Set;
 
 @Dependent
-public class AggregationStateHandler extends StateHandler {
+public class AggregationStateHandler extends StateHandler<AggregationState> {
 
     private static final Log logger = LogFactory.getLog(AggregationStateHandler.class);
 
@@ -60,11 +60,8 @@ public class AggregationStateHandler extends StateHandler {
      * Only want to enter if its in a state ready to aggregate
      */
     @Override
-    public boolean onEnter(State state) {
+    public boolean onEnter(AggregationState state) {
         logger.debug("Aggregation start()");
-        if (!OrmUtil.proxySafeIsInstance(state, AggregationState.class)) {
-            throw new RuntimeException("Expect only aggregation states");
-        }
 
         try {
             AggregationState aggregationState = OrmUtil.proxySafeCast(state, AggregationState.class);
