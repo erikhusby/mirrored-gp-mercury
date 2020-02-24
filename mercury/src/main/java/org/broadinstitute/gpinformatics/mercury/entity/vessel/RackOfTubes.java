@@ -1,10 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.hibernate.annotations.BatchSize;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.workrequest.kit.ReceptacleType;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -12,8 +14,9 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.ManyToMany;
-import java.util.ArrayList;
 import javax.persistence.OneToMany;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -226,11 +229,29 @@ public class RackOfTubes extends LabVessel {
         return ancillaryInPlaceEvents;
     }
 
+    /**
+     * Overridden because a rack of tubes is not going be an event's in place vessel
+     * A rack of tubes will always be an ancillary vessel of an in-place event on a tube formation
+     */
     @Override
     public Set<LabEvent> getInPlaceLabEvents() {
-        Set<LabEvent> allInPlaceEvents = new HashSet<>();
-        allInPlaceEvents.addAll(super.getInPlaceLabEvents());
-        allInPlaceEvents.addAll(ancillaryInPlaceEvents);
-        return allInPlaceEvents;
+        return ancillaryInPlaceEvents;
+    }
+
+    @Override
+    public LabEvent getLatestStorageEvent() {
+        Date latestDate = new Date(0L);
+        LabEvent latestStorageEvent = null;
+        for (LabEvent event : ancillaryInPlaceEvents) {
+            if ((event.getLabEventType() == LabEventType.STORAGE_CHECK_IN
+                    || event.getLabEventType() == LabEventType.STORAGE_CHECK_OUT
+                    || event.getLabEventType() == LabEventType.IN_PLACE)
+                    && event.getEventDate().after(latestDate)
+                    && OrmUtil.proxySafeIsInstance(event.getInPlaceLabVessel(), TubeFormation.class)) {
+                latestDate = event.getEventDate();
+                latestStorageEvent = event;
+            }
+        }
+        return latestStorageEvent;
     }
 }

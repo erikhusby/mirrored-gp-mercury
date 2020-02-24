@@ -143,6 +143,8 @@ public class LabVesselLatestPositionPlugin implements ListPlugin {
         // In place events will always be before a transfer from so ignore
         for (VesselContainer<?> vesselContainer : containers ) {
             events.addAll(vesselContainer.getTransfersFrom());
+            events.addAll(vesselContainer.getTransfersTo());
+            events.addAll(vesselContainer.getEmbedder().getInPlaceLabEvents());
         }
 
         if( !events.isEmpty() ) {

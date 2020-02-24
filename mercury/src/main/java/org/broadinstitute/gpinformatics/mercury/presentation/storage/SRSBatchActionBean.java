@@ -17,7 +17,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStarting
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -48,6 +54,7 @@ public class SRSBatchActionBean extends CoreActionBean {
     private static final String ADD_SAMPLES_ACTION = "evtAddSamples";
     private static final String ADD_BARCODES_ACTION = "evtAddBarcodes";
     private static final String REMOVE_ACTION = "evtRemove";
+    private static final String TOGGLE_STATUS_ACTION = "evtToggleBatchStatus";
 
     private String batchName;
     private LabBatch labBatch;
@@ -70,12 +77,6 @@ public class SRSBatchActionBean extends CoreActionBean {
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
 
-        batchSelectionList = new ArrayList<>();
-        // TODO: JMS Add option for inactive batches
-        for (LabBatch batch : labBatchDao.findByTypeAndActiveStatus(LabBatch.LabBatchType.SRS, Boolean.TRUE)) {
-            batchSelectionList.add(new PickWorkspaceActionBean.BatchSelectionData(batch.getLabBatchId(), batch.getBatchName(), false, false));
-        }
-
         if (labBatchId == null) {
             stage = Stage.CHOOSING;
         } else {
@@ -87,13 +88,39 @@ public class SRSBatchActionBean extends CoreActionBean {
             }
         }
 
+        populateBatchList();
+        return new ForwardResolution(VIEW_PAGE);
+    }
+
+    @HandlesEvent(TOGGLE_STATUS_ACTION)
+    public Resolution toggleBatchStatus() {
+
+        if (labBatchId == null) {
+            addGlobalValidationError("No batch selected.");
+        } else {
+            labBatch = labBatchDao.findById(LabBatch.class, labBatchId);
+            // A little sanity test and some defense
+            if (labBatch != null && labBatch.getLabBatchType() == LabBatch.LabBatchType.SRS) {
+                if (labBatch.getActive()) {
+                    labBatch.setActive(false);
+                    addMessage("SRS batch " + labBatch.getBatchName() + " closed.");
+                } else {
+                    labBatch.setActive(true);
+                    addMessage("SRS batch " + labBatch.getBatchName() + " re-opened.");
+                }
+                labBatchDao.flush();
+            }
+        }
+
+        stage = Stage.CHOOSING;
+        populateBatchList();
         return new ForwardResolution(VIEW_PAGE);
     }
 
 
     @HandlesEvent(SAVE_ACTION)
     public Resolution saveNew() {
-        if( batchName == null || batchName.trim().isEmpty() ) {
+        if (batchName == null || batchName.trim().isEmpty()) {
             addValidationError("batchName", "Batch name required.");
             stage = Stage.CHOOSING;
             return new ForwardResolution(VIEW_PAGE);
@@ -109,6 +136,7 @@ public class SRSBatchActionBean extends CoreActionBean {
         labBatch = new LabBatch(batchName.trim(), Collections.emptySet(), LabBatch.LabBatchType.SRS);
         labBatchDao.persist(labBatch);
         stage = Stage.EDITING;
+        populateBatchList();
 
         return new ForwardResolution(VIEW_PAGE);
     }
@@ -133,12 +161,14 @@ public class SRSBatchActionBean extends CoreActionBean {
     @HandlesEvent(ADD_SAMPLES_ACTION)
     public Resolution addSamples() {
         persistVessels(ADD_SAMPLES_ACTION);
+        populateBatchList();
         return new ForwardResolution(VIEW_PAGE);
     }
 
     @HandlesEvent(ADD_BARCODES_ACTION)
     public Resolution addVessels() {
         persistVessels(ADD_BARCODES_ACTION);
+        populateBatchList();
         return new ForwardResolution(VIEW_PAGE);
     }
 
@@ -234,11 +264,22 @@ public class SRSBatchActionBean extends CoreActionBean {
         }
 
         stage = Stage.EDITING;
+        populateBatchList();
         return new ForwardResolution(VIEW_PAGE);
     }
 
+    private void populateBatchList() {
+        batchSelectionList = new ArrayList<>();
+        // TODO: JMS Add option for inactive batches
+        for (LabBatch batch : labBatchDao.findByType(LabBatch.LabBatchType.SRS)) {
+            PickWorkspaceActionBean.BatchSelectionData batchData = new PickWorkspaceActionBean.BatchSelectionData(batch.getLabBatchId(), batch.getBatchName(), false, false);
+            batchData.setActive(batch.getActive());
+            batchSelectionList.add(batchData);
+        }
+    }
+
     public String getBatchName() {
-        return labBatch!=null?labBatch.getBatchName():batchName;
+        return labBatch != null ? labBatch.getBatchName() : batchName;
     }
 
     public void setBatchName(String batchName) {
@@ -269,6 +310,27 @@ public class SRSBatchActionBean extends CoreActionBean {
     // For Testing
     public void setLabBatchDao(LabBatchDao labBatchDao) {
         this.labBatchDao = labBatchDao;
+    }
+
+    /**
+     * Avoid having to use jstl to display or hide batch selection area
+     */
+    public String getDisplayAttribChoosing() {
+        return Stage.CHOOSING.equals(stage) ? "block" : "none";
+    }
+
+    /**
+     * Avoid having to use jstl to display or hide batch selection area
+     */
+    public String getDisplayAttribEditing() {
+        return Stage.EDITING.equals(stage) ? "block" : "none";
+    }
+
+    /**
+     * Convenience method for flagging visibility of inputs
+     */
+    public boolean getIsBatchActive() {
+        return labBatch != null && labBatch.getActive();
     }
 
 }

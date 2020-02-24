@@ -2349,6 +2349,19 @@
             <column name="STORAGE_CAPACITY" type="NUMBER(10,0)"/>
         </addColumn>
     </changeSet>
+    <changeSet id="GPLIM-5728-3" author="jsacco">
+        <sql>
+            UPDATE storage_location
+            SET label = REGEXP_REPLACE( TRIM(label), '([A-Za-z]+) *(\d)', '\1 0\2' )
+            WHERE REGEXP_INSTR( TRIM(label), '^[A-Za-z]+ *\d$' ) > 0;
+
+            UPDATE storage_location
+            SET label = '0' || TRIM(label)
+            WHERE REGEXP_INSTR( TRIM(label), '^\d$' ) > 0;
+
+            COMMIT;
+        </sql>
+    </changeSet>
     <changeSet id="GPLIM-6005-001" author="epolk">
         <dropNotNullConstraint columnName="research_project_id" schemaName="mercury" tableName="manifest_session"/>
     </changeSet>

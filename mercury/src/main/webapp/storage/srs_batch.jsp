@@ -9,6 +9,17 @@
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
 
+            /** Expand and collapse the SRS selection section */
+            let toggleVisible = function (id, img) {
+                let div = $j('#' + id);
+                div.toggle();
+                if (div.css("display") == 'none') {
+                    img.src = "/Mercury/images/plus.gif";
+                } else {
+                    img.src = "/Mercury/images/minus.gif";
+                }
+            };
+
             let atLeastOneChecked = function (name, container) {
                 var checkboxes = $j(":checkbox", container);
                 for (var i = 0; i < checkboxes.length; ++i) {
@@ -21,7 +32,7 @@
             };
 
             let removeOne = function (event) {
-                var removeForm = $j('#formRemove');
+                let removeForm = $j('#formRemove');
                 $j('#removeInputValues', removeForm).val(event.data);
                 removeForm.submit();
             };
@@ -112,25 +123,43 @@
 
     <stripes:layout-component name="content">
         <div class="container-fluid"><stripes:form id="formBatch" name="formBatch" action="/storage/srs.action">
-        <div class="row-fluid">
-            <div class="span12">
+        <fieldset>
+            <c:if test="${stage eq 'CHOOSING'}"><c:set var="expandImage" scope="page"
+                                                       value="/Mercury/images/minus.gif"/></c:if>
+            <c:if test="${stage ne 'CHOOSING'}"><c:set var="expandImage" scope="page" value="/Mercury/images/plus.gif"/></c:if>
+            <legend>View SRS Batches <img id="savedSearchesPlus" src="${expandImage}"
+                                          onclick="toggleVisible('batchSelectDiv', this);"
+                                          alt="Expand / Contract SRS Batch Pick"></legend>
+            <div class="span12" style="display: ${actionBean.displayAttribChoosing}" id="batchSelectDiv">
                 Batches: <select id="lbBatches" name="batchId">
                 <option value="">Choose An SRS Batch</option>
                 <c:forEach items="${actionBean.batchSelectionList}" var="item" varStatus="row">
-                    <option value="${item.batchId}">${item.batchName}</option>
+                    <c:if test="${item.active}">
+                        <option value="${item.batchId}">${item.batchName}</option>
+                    </c:if>
+                    <c:if test="${not item.active}">
+                        <option value="${item.batchId}"
+                                style="background-color: #f8b9b7;font-style: italic">${item.batchName}</option>
+                    </c:if>
                 </c:forEach></select> <stripes:submit id="btnViewBatch" name="view" value="View SRS Batch"/> <input
-                    style="margin-left: 40px" type="button" id="btnNewBatch" value="Create New SRS Batch"/>
+                    type="button"
+                    style="margin-left: 40px" id="btnNewBatch" value="Create New SRS Batch"/> <input type="submit"
+                                                                                                     style="margin-left: 40px"
+                                                                                                     id="btnToggleBatchStatus"
+                                                                                                     name="evtToggleBatchStatus"
+                                                                                                     value="Close/Re-Open SRS Batch"/>
             </div>
+        </fieldset>
         </div>
         <hr style="color: #b9b9b9; margin: 6px 0 6px 0"/>
-        <div class="row-fluid">
+        <div class="row-fluid" style="display: ${actionBean.displayAttribEditing}">
             <div class="span3">
-                <h4>SRS Batch: ${actionBean.labBatch.batchName}</h4>
-                Created <fmt:formatDate value="${actionBean.labBatch.createdOn}"
-                                        pattern="${actionBean.dateTimePattern}"/>
+                <h4>${actionBean.labBatch.batchName}<c:if test="${not actionBean.isBatchActive}"> (inactive)</c:if></h4>
+                <h5>Created <fmt:formatDate value="${actionBean.labBatch.createdOn}"
+                                            pattern="${actionBean.dateTimePattern}"/></h5>
             </div>
-            <c:if test="${stage eq 'EDITING' and actionBean.labBatch.active}"><input type="hidden" name="batchId"
-                                                                                     value="${actionBean.labBatch.labBatchId}"/>
+            <c:if test="${stage eq 'EDITING' and actionBean.isBatchActive}"><input type="hidden" name="batchId"
+                                                                                   value="${actionBean.labBatch.labBatchId}"/>
                 <div class="span9">
                     <label for="txtAddValues" style="padding-top: 10px">Samples/Barcodes to Add</label>
                     <textarea name="inputValues" id="txtAddValues"></textarea> <stripes:submit
@@ -140,13 +169,15 @@
             </c:if>
         </div>
     </stripes:form>
-        <div class="row-fluid">
+        <div class="row-fluid" style="display: ${actionBean.displayAttribEditing}">
             <div class="span12">
                 <table id="vesselList" class="table simple">
                     <thead>
                     <tr>
-                        <th><input for="count" type="checkbox" class="checkAll" id="checkAllTop">
+                        <th><c:if test="${actionBean.isBatchActive}"><input for="count" type="checkbox" class="checkAll"
+                                                                            id="checkAllTop">
                             <div id="count" class="checkedCount">0</div>
+                        </c:if>
                         </th>
                         <th>Sample ID</th>
                         <th>Barcode</th>
@@ -157,8 +188,10 @@
                     <tbody>
                     <c:forEach items="${actionBean.labBatch.labBatchStartingVessels}" var="sv" varStatus="row">
                         <tr>
-                            <td><input name="selectedLabels" value="${sv.labVessel.label}" class="shiftCheckbox"
-                                       type="checkbox"></td>
+                            <td><c:if test="${actionBean.isBatchActive}"><input name="selectedLabels"
+                                                                                value="${sv.labVessel.label}"
+                                                                                class="shiftCheckbox"
+                                                                                type="checkbox"></c:if></td>
                             <td><c:forEach items="${sv.labVessel.mercurySamples}"
                                            var="sample">${sample.sampleKey} </c:forEach></td>
                             <td>${sv.labVessel.label}</td>
@@ -166,17 +199,23 @@
                                 <c:if test="${sv.labVessel.storageLocation ne null}">${sv.labVessel.storageLocation.buildLocationTrail()}</c:if>
                                 <c:if test="${sv.labVessel.storageLocation eq null}">(not in storage)</c:if>
                             </td>
-                            <td><img id="removeOneIcon[${row.index}]" src="${ctxpath}/images/error.png" alt="Remove"
-                                     data-value="${sv.labVessel.label}"/></td>
+                            <td><c:if test="${actionBean.isBatchActive}"><img id="removeOneIcon[${row.index}]"
+                                                                              src="${ctxpath}/images/error.png"
+                                                                              alt="Remove"
+                                                                              data-value="${sv.labVessel.label}"/></c:if>
+                            </td>
                         </tr>
                     </c:forEach>
                     </tbody>
                 </table>
-                <form id="formRemove" name="formRemove" action="${ctxpath}/storage/srs.action?evtRemove=" method="post">
-                    <input type="button" id="btnDeleteChecked" value="Delete Checked"/>
-                    <input type="hidden" name="batchId" id="batchIdRemove" value="${actionBean.batchId}"/>
-                    <input type="hidden" name="inputValues" id="removeInputValues" value=""/>
-                </form>
+                <c:if test="${actionBean.isBatchActive}">
+                    <form id="formRemove" name="formRemove" action="${ctxpath}/storage/srs.action?evtRemove="
+                          method="post">
+                        <input type="button" id="btnDeleteChecked" value="Delete Checked"/>
+                        <input type="hidden" name="batchId" id="batchIdRemove" value="${actionBean.batchId}"/>
+                        <input type="hidden" name="inputValues" id="removeInputValues" value=""/>
+                    </form>
+                </c:if>
             </div>
         </div><%--container-fluid--%>
 

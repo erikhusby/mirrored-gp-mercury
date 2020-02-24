@@ -1395,7 +1395,7 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     * @return Latest storage lab event - STORAGE_CHECK_IN, STORAGE_CHECK_OUT <br/>
+     * @return Latest storage lab event - STORAGE_CHECK_IN, STORAGE_CHECK_OUT, or IN_PLACE (rack scan registration) <br/>
      * (For this vessel and any containers only - no transfer traversal performed)
      */
     public LabEvent getLatestStorageEvent() {

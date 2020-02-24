@@ -18,6 +18,7 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Stateful
@@ -67,7 +68,7 @@ public class StorageLocationDao extends GenericDao {
                 criteriaQuery.where(getCriteriaBuilder().isNull(root.get(StorageLocation_.parentStorageLocation)));
             }
         });
-        freezerList.sort(StorageLocation.BY_LABEL_COMPARATOR);
+        Collections.sort(freezerList);
         return freezerList;
     }
 

@@ -1,21 +1,46 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.storage;
 
-import net.sourceforge.stripes.action.*;
+import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.StreamingResolution;
+import net.sourceforge.stripes.action.UrlBinding;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.storage.StorageEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocationDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.*;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
-import javax.json.*;
+import javax.json.Json;
+import javax.json.JsonObject;
 import javax.persistence.LockModeType;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.logging.Logger;
 
 /**
@@ -396,65 +421,73 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
      */
     private Pair<String, String> doCheckIn( RackOfTubes rack, StorageLocation storageLocation, Long userId ) {
 
+        // Prefix a warning to status message
+        String warningMessage = null;
+
         TreeSet<LabEvent> sortedEvents = new TreeSet<>(LabEvent.BY_EVENT_DATE);
         LabVessel tubeFormation = null;
         LabEvent latestRackEvent = null;
 
-        // Find the last in-place event of either StorageCheckIn or InPlace (XL20 transfer)
-        sortedEvents.addAll( rack.getInPlaceLabEvents() );
-        for( Iterator<LabEvent> iter = sortedEvents.descendingIterator(); iter.hasNext(); ) {
-            LabEvent evt = iter.next();
-            if( evt.getLabEventType() == LabEventType.IN_PLACE || evt.getLabEventType() == LabEventType.STORAGE_CHECK_IN  ) {
-                latestRackEvent = evt;
-                break;
-            }
+        // Find the latest event
+        sortedEvents.addAll(rack.getInPlaceLabEvents());
+        for (TubeFormation formation : rack.getTubeFormations()) {
+            sortedEvents.addAll(formation.getContainerRole().getTransfersTo());
+            sortedEvents.addAll(formation.getContainerRole().getTransfersFrom());
+        }
+        for (Iterator<LabEvent> iter = sortedEvents.descendingIterator(); iter.hasNext(); ) {
+            latestRackEvent = iter.next();
+            break;
         }
 
-        // Expected a sample pick XL20 event or StorageCheckIn.
-        if( latestRackEvent == null ) {
+        if (latestRackEvent == null) {
             return Pair.of("danger", "Rack barcode " + barcode
-                    + " has no check-in or SRS pick event activity.");
+                    + " has no lab event activity.");
         }
 
-        // First use-case: Check-in a rack directly (ish) after an InPlace (XL20 transfer)
-        if( latestRackEvent.getLabEventType() == LabEventType.IN_PLACE ) {
-            Date twoWorkingDaysAgo = DateUtils.getPastWorkdaysFrom(new Date(), MAX_WORKDAYS_FOR_PICK_EVENT);
-            Date eventDate = latestRackEvent.getEventDate();
-            // XL20 transfer only valid if less than MAX_WORKDAYS_FOR_PICK_EVENT old
-            if( eventDate.before( twoWorkingDaysAgo ) ) {
-                // XL20 pick event too old, how?  Left it sitting on the counter?  Go home with nothing.
-                return Pair.of("danger", "Picker robot event date (" + DateUtils.formatISO8601Date( eventDate ) + ") for rack " + barcode
-                        + " is over " + MAX_WORKDAYS_FOR_PICK_EVENT + " working days ago. Tube layout questionable - ignoring.");
-            } else {
-                // Trust tube formation of the (very recent) XL20 pick
+        switch (latestRackEvent.getLabEventType()) {
+            case IN_PLACE:
+                Date twoWorkingDaysAgo = DateUtils.getPastWorkdaysFrom(new Date(), MAX_WORKDAYS_FOR_PICK_EVENT);
+                Date eventDate = latestRackEvent.getEventDate();
+                // A scan warning should accompany status message if scan occurred more than MAX_WORKDAYS_FOR_PICK_EVENT ago
+                if (eventDate.before(twoWorkingDaysAgo)) {
+                    // Scan event is old, how?  Left it sitting on the counter?
+                    warningMessage = "Scan date (" + DateUtils.formatISO8601Date(eventDate) + ") for rack " + barcode
+                            + " is over " + MAX_WORKDAYS_FOR_PICK_EVENT + " working days ago.";
+                }
+                // Trust tube formation of the (very recent) scan
                 tubeFormation = latestRackEvent.getInPlaceLabVessel();
-            }
-        } else if( latestRackEvent.getLabEventType() == LabEventType.STORAGE_CHECK_IN ) {
-            // Second use-case: Storage consolidation, fully relies on existence of a check-in event and rack currently being in storage
-            if( rack.getStorageLocation() == null ) {
-                return Pair.of("danger", "Attempting to relocate a rack (" + barcode + ") which currently is not in storage. Tube layout questionable - ignoring.");
-            }
-            // Possibly forgot to check out?  See if subsequent events exist and find latest
-            Pair<LabEvent,LabVessel> eventData = getLatestRackEvent( rack, latestRackEvent.getEventDate() );
-            if( eventData != null ) {
-                // Trust tube layout of latest transfer after check-in  TODO: JMS - Is this a valid assumption?
-                tubeFormation = eventData.getRight();
-            } else {
-                // Last event was check-in, trust it
+                break;
+            case STORAGE_CHECK_IN:
+                warningMessage = "Using layout at storage check-in date (" + DateUtils.formatISO8601Date(latestRackEvent.getEventDate())
+                        + ") for rack " + barcode + ".";
                 tubeFormation = latestRackEvent.getInPlaceLabVessel();
-            }
+                break;
+            case STORAGE_CHECK_OUT:
+                // Checked out and now checking back in?
+                warningMessage = "Last event for rack " + barcode + " was a check-out, assuming the layout hasn't changed.";
+                tubeFormation = latestRackEvent.getInPlaceLabVessel();
+                break;
+            default:
+                // Checked out and now checking back in?
+                warningMessage = "Using layout of last event for rack " + barcode + ":  " + latestRackEvent.getLabEventType().getName() + " on " + DateUtils.formatISO8601Date(latestRackEvent.getEventDate());
+                tubeFormation = latestRackEvent.getInPlaceLabVessel();
         }
 
-        LabEvent checkInEvent = storageEjb.createStorageEvent( LabEventType.STORAGE_CHECK_IN, tubeFormation, storageLocation, rack, getUserBean().getBspUser().getUserId() );
+        LabEvent checkInEvent = storageEjb.createStorageEvent(LabEventType.STORAGE_CHECK_IN, tubeFormation, storageLocation, rack, userId);
         rack.setStorageLocation(storageLocation);
-        for( LabVessel tube : tubeFormation.getContainerRole().getContainedVessels() ) {
+        for (LabVessel tube : tubeFormation.getContainerRole().getContainedVessels()) {
             tube.setStorageLocation(storageLocation);
         }
         storageLocationDao.flush();
 
-        return Pair.of("success", "Rack barcode " + barcode
-                + " and all tubes checked into "
-                + storageLocationDao.getLocationTrail( storageLocation ) + ".");
+        if (warningMessage != null) {
+            return Pair.of("warning", warningMessage + "  Checked into "
+                    + storageLocationDao.getLocationTrail(storageLocation) + ".");
+        } else {
+            return Pair.of("success", "Rack barcode " + barcode
+                    + " and all tubes checked into "
+                    + storageLocationDao.getLocationTrail(storageLocation) + ".");
+        }
     }
 
     /**

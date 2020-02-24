@@ -1,19 +1,36 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.storage;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.sourceforge.stripes.action.*;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.StreamingResolution;
+import net.sourceforge.stripes.action.UrlBinding;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.storage.StorageEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocationDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableListActionBean;
@@ -24,7 +41,16 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 /**
@@ -43,15 +69,21 @@ public class PickWorkspaceActionBean extends CoreActionBean {
     private static final String EVT_DOWNLOAD_XFER_FILE = "buildXferFile";
     private static final String EVT_BULK_CHECKOUT = "processBulkCheckOut";
     private static final String EVT_CLOSE_BATCHES = "closeBatches";
+    private static final String EVT_SHOW_PICK_VERIFY = "showVerifyPicks";
+    private static final String EVT_REGISTER_TRANSFERS = "registerTransfers";
     // UI Resolutions
     private static final String UI_DEFAULT = "/storage/picklist_workspace.jsp";
     private static final String UI_BULK_CHECKOUT = "/storage/bulk_checkout.jsp";
+    private static final String UI_PICK_VERIFY = "/storage/srs_batch_verify.jsp";
 
     @Inject
     private StorageLocationDao storageLocationDao;
 
     @Inject
     private LabBatchDao labBatchDao;
+
+    @Inject
+    private LabVesselDao labVesselDao;
 
     @Inject
     private StorageEjb storageEjb;
@@ -61,6 +93,8 @@ public class PickWorkspaceActionBean extends CoreActionBean {
      */
     private List<BatchSelectionData> batchSelectionList = Collections.EMPTY_LIST;
     private List<PickerDataRow> pickerDataRows = Collections.EMPTY_LIST;
+
+    private String scanDataJson;
 
     /* These come in from UI but aren't used */
     //private String tubesPerRack;
@@ -249,7 +283,120 @@ public class PickWorkspaceActionBean extends CoreActionBean {
         StreamingResolution stream = new StreamingResolution("text/html",
                 msg.toString());
         return stream;
-        ** for now just recycle to batch page with errors   */
+        ** but for now just recycle to batch page with errors   */
+
+        return new ForwardResolution(UI_DEFAULT);
+    }
+
+    /**
+     * Basically a redirect to allow user to verify all expected vessels are picked
+     * Data table rebuilt from what's passed in
+     */
+    @HandlesEvent(EVT_SHOW_PICK_VERIFY)
+    public Resolution showVerifyPicks() {
+        return new ForwardResolution(UI_PICK_VERIFY);
+    }
+
+    /**
+     * Registers the barcodes and layouts of all source and destination racks after picking
+     */
+    @HandlesEvent(EVT_REGISTER_TRANSFERS)
+    public Resolution registerTransfers() {
+        if (scanDataJson == null) {
+            addGlobalValidationError("No scan data provided");
+            return new ForwardResolution(UI_PICK_VERIFY);
+        }
+
+        Long userId = userBean.getBspUser().getUserId();
+
+        // Extract scan data from JSON
+        Map<String, List<Pair<String, VesselPosition>>> destinationLayouts = new HashMap<>();
+        Set<String> allDestBarcodes = new HashSet<>();
+        boolean hadFailure = extractDestinationLayouts(destinationLayouts, allDestBarcodes);
+        if (hadFailure) {
+            return new ForwardResolution(UI_PICK_VERIFY);
+        }
+
+        // Create racks and formations without persisting (tubes MUST exist!)
+        Map<RackOfTubes, TubeFormation> destRacksAndTubes = new HashMap<>();
+        hadFailure = buildRacksAndFormations(destinationLayouts, destRacksAndTubes);
+        if (hadFailure) {
+            return new ForwardResolution(UI_PICK_VERIFY);
+        }
+
+        // Build racks, formations, and scan events for destinations
+        int disambiguator = 0;
+        Date now = new Date();
+        for (Map.Entry<RackOfTubes, TubeFormation> rackAndFormation : destRacksAndTubes.entrySet()) {
+            RackOfTubes rack = OrmUtil.proxySafeCast(
+                    storageEjb.tryPersistRackOrTubes(rackAndFormation.getKey()), RackOfTubes.class);
+            TubeFormation formation = OrmUtil.proxySafeCast(
+                    storageEjb.tryPersistRackOrTubes(rackAndFormation.getValue()), TubeFormation.class);
+
+            rack.getTubeFormations().add(formation);
+            formation.getRacksOfTubes().add(rack);
+            LabEvent inPlaceEvent = storageEjb.createDisambiguatedStorageEvent(LabEventType.IN_PLACE, formation, null, rack, userId, now, ++disambiguator);
+            addMessage("Registered layout of destination rack " + rack.getLabel());
+        }
+
+        // Now remove tubes from source racks and register new layout
+        Map<RackOfTubes, TubeFormation> srcRacksAndTubes = new HashMap<>();
+        // All Racks
+        for (PickerDataRow pickerDataRow : pickerDataRows) {
+            LabVessel maybeRack = labVesselDao.findByIdentifier(pickerDataRow.sourceVessel);
+            if (OrmUtil.proxySafeIsInstance(maybeRack, LabVessel.class)) {
+                RackOfTubes rack = OrmUtil.proxySafeCast(maybeRack, RackOfTubes.class);
+                srcRacksAndTubes.put(rack, null);
+                if (rack.getStorageLocation() != null) {
+                    // TODO JMS Should probably make it fatal!
+                    addMessage("Rack " + rack.getLabel() + " is not checked out of storage!");
+                }
+            }
+        }
+
+        // Find tube formations of rack based upon latest storage or scan event
+        for (Map.Entry<RackOfTubes, TubeFormation> mapEntry : srcRacksAndTubes.entrySet()) {
+            RackOfTubes rack = mapEntry.getKey();
+            LabEvent latestStorageEvent = rack.getLatestStorageEvent();
+            if (latestStorageEvent != null) {
+                // In place vessel always a tube formation
+                mapEntry.setValue(OrmUtil.proxySafeCast(latestStorageEvent.getInPlaceLabVessel(), TubeFormation.class));
+            } else {
+                addMessage("Rack " + rack.getLabel() + " is not checked out of storage!");
+            }
+        }
+
+        // Make a copy of prior layout map
+        Map<RackOfTubes, Map<VesselPosition, BarcodedTube>> rackLayouts = new HashMap<>();
+        for (Map.Entry<RackOfTubes, TubeFormation> mapEntry : srcRacksAndTubes.entrySet()) {
+            RackOfTubes rack = mapEntry.getKey();
+            if (mapEntry.getValue() == null) {
+                addMessage("No tube layout found for rack " + rack.getLabel());
+            } else {
+                rackLayouts.put(rack, new HashMap(mapEntry.getValue().getContainerRole().getMapPositionToVessel()));
+            }
+        }
+
+        for (Map.Entry<RackOfTubes, Map<VesselPosition, BarcodedTube>> rackMapEntry : rackLayouts.entrySet()) {
+            for (Iterator layoutIter = rackMapEntry.getValue().entrySet().iterator(); layoutIter.hasNext(); ) {
+                Map.Entry<VesselPosition, BarcodedTube> layoutMap = (Map.Entry<VesselPosition, BarcodedTube>) layoutIter.next();
+                if (allDestBarcodes.contains(layoutMap.getValue().getLabel())) {
+                    layoutIter.remove();
+                }
+            }
+        }
+
+        // Build racks, formations, and scan events for destinations
+        for (Map.Entry<RackOfTubes, Map<VesselPosition, BarcodedTube>> rackMapEntry : rackLayouts.entrySet()) {
+            RackOfTubes rack = rackMapEntry.getKey();
+            TubeFormation formation = new TubeFormation(rackMapEntry.getValue(), rack.getRackType());
+            formation = OrmUtil.proxySafeCast(storageEjb.tryPersistRackOrTubes(formation), TubeFormation.class);
+
+            rack.getTubeFormations().add(formation);
+            formation.getRacksOfTubes().add(rack);
+            LabEvent inPlaceEvent = storageEjb.createDisambiguatedStorageEvent(LabEventType.IN_PLACE, formation, null, rack, userId, now, ++disambiguator);
+            addMessage("Registered layout of source rack " + rack.getLabel());
+        }
 
         return new ForwardResolution(UI_DEFAULT);
     }
@@ -259,9 +406,9 @@ public class PickWorkspaceActionBean extends CoreActionBean {
      */
     @HandlesEvent(EVT_CLOSE_BATCHES)
     public Resolution eventCloseBatches() {
-        Map<Long,LabBatch> batches = new HashMap<>();
-        Map<RackOfTubes,TubeFormation> racksAndLayouts = new HashMap<>();
-        for( PickerDataRow row : pickerDataRows ) {
+        Map<Long, LabBatch> batches = new HashMap<>();
+        Map<RackOfTubes, TubeFormation> racksAndLayouts = new HashMap<>();
+        for (PickerDataRow row : pickerDataRows) {
             Long batchId = row.getBatchId();
             if( !batches.containsKey(batchId) ) {
                 batches.put( batchId, labBatchDao.findById( LabBatch.class, batchId ) );
@@ -316,22 +463,107 @@ public class PickWorkspaceActionBean extends CoreActionBean {
 
     /**
      * Builds a new tube formation based upon removing picked vessel from prior tube formation <br/>
-     * Does no persistence existence check
+     * Everything should exist - does no persistence existence check
      */
     private TubeFormation removePicksFromLayout(TubeFormation priorTubeFormation, List<PickerVessel> pickerVessels) {
         Set<String> barcodesToRemove = new HashSet<>();
         for( PickerVessel pick : pickerVessels ) {
             barcodesToRemove.add( pick.getSourceVessel() );
         }
-        Map<VesselPosition,BarcodedTube> newLayoutMap = new HashMap<>();
-        for( Map.Entry<VesselPosition,BarcodedTube> priorLayoutEntry : priorTubeFormation.getContainerRole().getMapPositionToVessel().entrySet() ) {
-            if( !barcodesToRemove.contains(priorLayoutEntry.getValue().getLabel() ) ) {
-                newLayoutMap.put( priorLayoutEntry.getKey(), priorLayoutEntry.getValue() );
+        Map<VesselPosition, BarcodedTube> newLayoutMap = new HashMap<>();
+        for (Map.Entry<VesselPosition, BarcodedTube> priorLayoutEntry : priorTubeFormation.getContainerRole().getMapPositionToVessel().entrySet()) {
+            if (!barcodesToRemove.contains(priorLayoutEntry.getValue().getLabel())) {
+                newLayoutMap.put(priorLayoutEntry.getKey(), priorLayoutEntry.getValue());
             }
         }
         return new TubeFormation(newLayoutMap, priorTubeFormation.getRackType());
     }
 
+    /**
+     * Extract pick destination layouts from scan JSON
+     *
+     * @return boolean for had failure - true if error, false if no error
+     */
+    private boolean extractDestinationLayouts(Map<String, List<Pair<String, VesselPosition>>> destinationLayouts,
+                                              Set<String> allDestBarcodes) {
+        boolean hadFailure = false;
+        ObjectMapper mapper = new ObjectMapper();
+        ArrayNode root = null;
+        try {
+            root = (ArrayNode) mapper.readTree(scanDataJson);
+            rackScanLoop:
+            for (JsonNode rackScan : root) {
+                String rackBarcode = rackScan.get("rackBarcode").textValue();
+                if (StringUtils.isEmpty(rackBarcode)) {
+                    hadFailure = true;
+                    addGlobalValidationError("Rack barcode missing");
+                    break rackScanLoop;
+                } else if (destinationLayouts.containsKey(rackBarcode)) {
+                    hadFailure = true;
+                    addGlobalValidationError("Duplicate destination rack barcode: " + rackBarcode);
+                    break rackScanLoop;
+                }
+                ArrayNode tubeScans = (ArrayNode) rackScan.get("scans");
+                List<Pair<String, VesselPosition>> tubeLayout = new ArrayList<>();
+                tubeLoop:
+                for (JsonNode tubeScan : tubeScans) {
+                    String barcode = tubeScan.get("barcode").textValue();
+                    VesselPosition position = VesselPosition.valueOf(tubeScan.get("position").textValue());
+                    tubeLayout.add(Pair.of(barcode, position));
+                    allDestBarcodes.add(barcode);
+                }
+                destinationLayouts.put(rackBarcode, tubeLayout);
+            }
+        } catch (IOException e) {
+            hadFailure = true;
+            addGlobalValidationError(e.getMessage());
+            e.printStackTrace();
+        }
+        return hadFailure;
+    }
+
+    /**
+     * Build racks and tube formations without persisting (tubes MUST exist!)
+     *
+     * @return boolean for had failure - true if error, false if no error
+     */
+    private boolean buildRacksAndFormations(Map<String, List<Pair<String, VesselPosition>>> destinationLayouts,
+                                            Map<RackOfTubes, TubeFormation> racksAndTubes) {
+        boolean hadFailure = false;
+        for (Map.Entry<String, List<Pair<String, VesselPosition>>> barcodeAndTubesEntry : destinationLayouts.entrySet()) {
+            // Create rack
+            RackOfTubes rack = new RackOfTubes(barcodeAndTubesEntry.getKey(), RackOfTubes.RackType.Matrix96);
+
+            // Defend against scanning something weird
+            LabVessel tryRack = labVesselDao.findByIdentifier(rack.getLabel());
+            if (tryRack != null && !OrmUtil.proxySafeIsInstance(tryRack, RackOfTubes.class)) {
+                hadFailure = true;
+                addGlobalValidationError("Barcode " + rack.getLabel() + " exists but is not a rack.");
+                continue;
+            }
+
+            Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
+            for (Pair<String, VesselPosition> labelAndPos : barcodeAndTubesEntry.getValue()) {
+                LabVessel tube = labVesselDao.findByIdentifier(labelAndPos.getLeft());
+                if (tube == null) {
+                    hadFailure = true;
+                    addGlobalValidationError("Tube barcode " + labelAndPos.getLeft() + " not found.");
+                    continue;
+                } else {
+                    if (OrmUtil.proxySafeIsInstance(tube, BarcodedTube.class)) {
+                        mapPositionToTube.put(labelAndPos.getRight(), OrmUtil.proxySafeCast(tube, BarcodedTube.class));
+                    } else {
+                        hadFailure = true;
+                        addGlobalValidationError("Barcode " + labelAndPos.getLeft() + " is not a tube.");
+                        continue;
+                    }
+                }
+            }
+            TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
+            racksAndTubes.put(rack, tubeFormation);
+        }
+        return hadFailure;
+    }
 
     /**
      * Refreshes list of SRS batches and merges with existing
@@ -384,7 +616,7 @@ public class PickWorkspaceActionBean extends CoreActionBean {
     /**
      * State changes of picker data table is posted back as JSON
      */
-    public void setPickerData( String pickerDataJson ) {
+    public void setPickerData(String pickerDataJson ) {
         // Empty list is default
         pickerDataRows = new ArrayList<>();
         if( pickerDataJson == null || pickerDataJson.isEmpty() ) {
@@ -393,16 +625,27 @@ public class PickWorkspaceActionBean extends CoreActionBean {
         // De-serialize post-back
         ObjectMapper mapper = new ObjectMapper();
         try {
-            pickerDataRows = mapper.readValue(pickerDataJson, new TypeReference<List<PickerDataRow>>(){});
+            pickerDataRows = mapper.readValue(pickerDataJson, new TypeReference<List<PickerDataRow>>() {
+            });
         } catch (IOException e) {
             addGlobalValidationError(e.getMessage());
             e.printStackTrace();
         }
     }
 
-    public int getRackCount(){
+    /**
+     * Read only data containing list of rack scans posted as JSON
+     */
+    public void setScanData(String scanDataJson) {
+        if (scanDataJson == null || scanDataJson.isEmpty()) {
+            return;
+        }
+        this.scanDataJson = scanDataJson;
+    }
+
+    public int getRackCount() {
         Set<String> racks = new HashSet<>();
-        for( PickerDataRow row : pickerDataRows ) {
+        for (PickerDataRow row : pickerDataRows) {
             racks.add(row.getSourceVessel());
         }
         return racks.size();
@@ -615,6 +858,7 @@ public class PickWorkspaceActionBean extends CoreActionBean {
         String batchName;
         boolean wasSelected;
         boolean isSelected;
+        boolean isActive;
 
         // JSON
         BatchSelectionData(){}
@@ -656,6 +900,14 @@ public class PickWorkspaceActionBean extends CoreActionBean {
 
         public void setSelected(boolean selected) {
             isSelected = selected;
+        }
+
+        public boolean isActive() {
+            return isActive;
+        }
+
+        public void setActive(boolean active) {
+            isActive = active;
         }
     }
 
@@ -775,6 +1027,7 @@ public class PickWorkspaceActionBean extends CoreActionBean {
         public void setRackScannable(boolean rackScannable) {
             this.rackScannable = rackScannable;
         }
+
     }
 
     public static class PickerVessel {

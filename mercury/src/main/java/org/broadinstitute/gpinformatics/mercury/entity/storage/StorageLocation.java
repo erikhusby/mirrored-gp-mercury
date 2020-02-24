@@ -3,8 +3,30 @@ package org.broadinstitute.gpinformatics.mercury.entity.storage;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
-import javax.persistence.*;
-import java.util.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.persistence.UniqueConstraint;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -14,10 +36,8 @@ import java.util.regex.Pattern;
  */
 @Entity
 @Audited
-@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(name = "U_STORAGE_BARCODE",columnNames = {"BARCODE"}))
-public class StorageLocation {
-
-    public static final StorageLocationLabelComparator BY_LABEL_COMPARATOR = new StorageLocationLabelComparator();
+@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(name = "U_STORAGE_BARCODE", columnNames = {"BARCODE"}))
+public class StorageLocation implements Comparable<StorageLocation> {
 
     public enum LocationType {
         REFRIGERATOR("Refrigerator", ExpectParentLocation.FALSE),
@@ -225,15 +245,34 @@ public class StorageLocation {
     @Transient
     private String locationTrail = null;
 
+    /**
+     * Avoid sorting problems and regex replacements of single digit rack and slot locations
+     */
+    @Transient
+    private static Pattern SINGLE_DIGIT_PATTERN = Pattern.compile("([A-Za-z]+ *)(\\d+)");
+
     public StorageLocation() {
     }
 
     public StorageLocation(String label,
                            LocationType locationType,
                            StorageLocation parentStorageLocation) {
-        this.label = label;
+        this.label = normalizeLabel(label);
         this.locationType = locationType;
         this.parentStorageLocation = parentStorageLocation;
+    }
+
+    /**
+     * Change names to 2 digit numerical to avoid sorting on regex throughout application UI. <br/>
+     * e.g. 'Rack 1' saved as 'Rack 01' <br/>
+     * Note: A problem (UI only) if more than 99 named and numbered racks or slots in any location
+     */
+    public static String normalizeLabel(String label) {
+        Matcher matcher = SINGLE_DIGIT_PATTERN.matcher(label);
+        if (matcher.matches()) {
+            return matcher.group(1) + "0" + matcher.group(2);
+        }
+        return label;
     }
 
     public Long getStorageLocationId() {
@@ -249,7 +288,7 @@ public class StorageLocation {
     }
 
     public void setLabel(String label) {
-        this.label = label;
+        this.label = normalizeLabel(label);
     }
 
     public LocationType getLocationType() {
@@ -274,9 +313,8 @@ public class StorageLocation {
     }
 
     public List<StorageLocation> getSortedChildLocations() {
-        List<StorageLocation> sortedList = new ArrayList<>();
-        sortedList.addAll(getChildrenStorageLocation());
-        sortedList.sort(BY_LABEL_COMPARATOR);
+        List<StorageLocation> sortedList = new ArrayList<>(getChildrenStorageLocation());
+        Collections.sort(sortedList);
         return sortedList;
     }
 
@@ -311,7 +349,8 @@ public class StorageLocation {
 
     /**
      * Uses JPA entities to get hierarchy storage path to a location - requires multiple database round trips
-     * @see org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocationDao#getLocationTrail(java.lang.Long) for single Oracle hierarchy query logic
+     *
+     * @see org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocationDao#getLocationTrail(StorageLocation) for single Oracle hierarchy query logic
      */
     @Transient
     public String buildLocationTrail() {
@@ -338,23 +377,10 @@ public class StorageLocation {
         return this.locationTrail;
     }
 
-    public static class StorageLocationLabelComparator
-            implements Comparator<StorageLocation> {
-
-        private static Pattern IS_NUMBER_PATTERN = Pattern.compile("[A-Za-z]+ *\\d+");
-
-        @Override
-        public int compare(StorageLocation storageLocation1, StorageLocation storageLocation2) {
-            Matcher matcher1 = IS_NUMBER_PATTERN.matcher(storageLocation1.getLabel());
-            Matcher matcher2 = IS_NUMBER_PATTERN.matcher(storageLocation2.getLabel());
-            boolean isNumbered = matcher1.matches() && matcher2.matches();
-            if (isNumbered) {
-                Integer slotNumber = Integer.parseInt(storageLocation1.getLabel().replaceAll("\\D+",""));
-                Integer slot2Number = Integer.parseInt(storageLocation2.getLabel().replaceAll("\\D+",""));
-                return slotNumber.compareTo(slot2Number);
-            }
-            return storageLocation1.getLabel()
-                    .compareTo(storageLocation2.getLabel());
-        }
+    @Override
+    public int compareTo(StorageLocation other) {
+        return this.getLabel()
+                .compareTo(other.getLabel());
     }
+
 }
