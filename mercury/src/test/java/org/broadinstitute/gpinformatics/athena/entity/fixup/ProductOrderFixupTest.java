@@ -1986,7 +1986,7 @@ public class ProductOrderFixupTest extends Arquillian {
      * PDO-17097, sarahw, RP-1066, true, SM-IALUJ SM-IALUK, ORSP-2176
      * @throws Exception
      */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void support6239FurtherSwap() throws Exception {
         userBean.loginOSUser();
         List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("finalizeSampleSwaps.txt"));
