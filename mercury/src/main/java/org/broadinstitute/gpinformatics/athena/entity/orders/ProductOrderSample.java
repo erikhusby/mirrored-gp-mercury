@@ -138,16 +138,20 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         newSample.setDeliveryStatus(sampleToClone.deliveryStatus);
 
         Set<RiskItem> clonedRiskItems = new HashSet<>();
+
+        // "Clone" risk items to the new sample
         sampleToClone.getRiskItems().forEach(riskItem -> clonedRiskItems.add(new RiskItem(riskItem.getRiskCriterion(),
                 riskItem.getComparedValue(),riskItem.getRemark())));
         newSample.setRiskItems(clonedRiskItems);
 
+        // "Clone" sample receipt validations for the new sample
         sampleToClone.getSampleReceiptValidations()
                 .forEach(sampleReceiptValidation ->
                         newSample.addValidation(new SampleReceiptValidation(newSample,
                                 sampleReceiptValidation.getCreatedBy(), sampleReceiptValidation.getStatus(),
                                 sampleReceiptValidation.getValidationType(), sampleReceiptValidation.getReason())));
 
+        // Clone Ledger items for the new sample
         sampleToClone.getLedgerItems().forEach(ledgerEntry -> newSample.addClonedLedgerItem(LedgerEntry.cloneLedgerEntryToNewSample(ledgerEntry, newSample)));
 
         return newSample;

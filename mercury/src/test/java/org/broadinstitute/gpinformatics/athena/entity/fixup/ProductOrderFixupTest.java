@@ -2011,8 +2011,11 @@ public class ProductOrderFixupTest extends Arquillian {
             Stream.of(orspIndicators).forEach(orsp -> orsp=orsp.trim());
 
             final ProductOrder finalProductOrder;
+            // Determine if we are modifying the current PDO or making a new one for the samples to be moved.
             if(createNewPDO) {
                 int orginalSampleCount = currentProductOrder.getSamples().size();
+
+                // Clone and move the samples and their associated information to a new cloned PDO.
                 finalProductOrder = clonePdoAndMoveSamples(currentProductOrder, ownerUsernName, Arrays.asList(sampleNames));
 
                 assertThat(currentProductOrder.getSamples().size(), is(equalTo(orginalSampleCount - sampleNames.length)));
@@ -2027,13 +2030,17 @@ public class ProductOrderFixupTest extends Arquillian {
             }
 
             List<String> regulatoryInfos = Arrays.asList(orspIndicators);
+            // Get the new regulatory info (ORSP IDs) references for the targeted PDO
             List<RegulatoryInfo> regulatoryInfoSubList = newResearchProject.getRegulatoryInfos().stream()
                     .filter(regulatoryInfo -> regulatoryInfos.contains(regulatoryInfo.getIdentifier()))
                     .collect(Collectors.toList());
 
+            // Set the new Research project for the targeted PDO
             finalProductOrder.setResearchProject(newResearchProject);
             System.out.println(String.format("Adding research project %s to product order %s.",
                     newResearchProject.getBusinessKey(), finalProductOrder.getBusinessKey()));
+
+            //Set the new Regulatory Info for the PDO
             finalProductOrder.setRegulatoryInfos(regulatoryInfoSubList);
             regulatoryInfoSubList.stream().forEach(regulatoryInfo -> {
                 System.out.println(String.format("Added regulatory info %s to PDO %s", regulatoryInfo.getIdentifier(),
@@ -2060,10 +2067,12 @@ public class ProductOrderFixupTest extends Arquillian {
             throws QuoteNotFoundException, IOException, SAPInterfaceException, ProductOrderEjb.NoSuchPDOException {
         ProductOrder newOrder = ProductOrder.cloneProductOrder(originalProductOrder, true, false);
 
+        // Find the id of the user who will be the owner and set it on the targeted PDO
         BspUser newOwner = bspUserList.getByUsername(ownerUserName);
         assertThat(newOwner, is(notNullValue()));
         newOrder.setCreatedBy(newOwner.getUserId());
 
+        // Find the ProductOrderSamples which will be moved to a new PDO
         final List<ProductOrderSample> samplesToRemove = originalProductOrder.getSamples().stream()
                 .filter(productOrderSample -> sampleNames.contains(productOrderSample.getSampleKey()))
                 .collect(Collectors.toList());
@@ -2074,8 +2083,12 @@ public class ProductOrderFixupTest extends Arquillian {
             ProductOrderSample sample = iterator.next();
             if(sampleNames.contains(sample.getSampleKey())) {
 
+                //  Deep clone this Product order Sample as necessary and add it to the targeted PDO
                 ProductOrderSample newSample = ProductOrderSample.cloneProductOrderSample(sample);
                 newOrder.addSample(newSample);
+
+                // Update all relevant bucket entries so that the Pipeline Query will find the newly created PDO for
+                // the Sample information
                 Iterator<BucketEntry> bucketEntryIterator = originalProductOrder.getBucketEntries().iterator();
                 while(bucketEntryIterator.hasNext()) {
                     BucketEntry currentBucketEntry = bucketEntryIterator.next();
@@ -2092,6 +2105,8 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderEjb.persistProductOrder(ProductOrder.SaveType.CREATING, newOrder, Collections.emptySet(),
                 Collections.emptySet(), messageCollection);
 
+        // Flush the persist of the Product order to the database so as not to confused the deletion of the old Product
+        // order samples and their associated Ledger Entries which comes next.
         productOrderDao.flush();
 
         List<ProductOrderSample> movedSamples = originalProductOrder.getSamples().stream()
