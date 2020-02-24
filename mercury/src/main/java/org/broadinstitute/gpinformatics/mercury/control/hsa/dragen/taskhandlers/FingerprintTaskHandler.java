@@ -16,7 +16,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FingerprintBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FingerprintCallsBean;
-import org.broadinstitute.gpinformatics.mercury.boundary.run.FingerprintEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FingerprintResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.SnpListDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -28,6 +27,7 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FingerprintSta
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
+import org.broadinstitute.gpinformatics.mercury.control.run.FingerprintEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
@@ -55,7 +55,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Dependent
-public class FingerprintTaskHandler extends AbstractTaskHandler {
+public class FingerprintTaskHandler extends AbstractTaskHandler<FingerprintUploadTask> {
 
     private static final Log log = LogFactory.getLog(FingerprintTaskHandler.class);
 
@@ -75,9 +75,8 @@ public class FingerprintTaskHandler extends AbstractTaskHandler {
     private MercurySampleDao mercurySampleDao;
 
     @Override
-    public void handleTask(Task task, SchedulerContext schedulerContext) {
-        FingerprintUploadTask fpUploadTask = OrmUtil.proxySafeCast(task, FingerprintUploadTask.class);
-        State state = fpUploadTask.getState();
+    public void handleTask(FingerprintUploadTask task, SchedulerContext schedulerContext) {
+        State state = task.getState();
         if (!OrmUtil.proxySafeIsInstance(state, FingerprintState.class)) {
             task.setErrorMessage("Expect only a fingerprint state for a fingerprint metrics task.");
             task.setStatus(Status.FAILED);
@@ -148,8 +147,8 @@ public class FingerprintTaskHandler extends AbstractTaskHandler {
 
         Optional<Fingerprint> optionalFingerprint = fluidigmFingerprints.stream().max(comparator);
         if (!optionalFingerprint.isPresent()) {
-            fpUploadTask.setStatus(Status.SUSPENDED);
-            fpUploadTask.setErrorMessage("No Fluidigm Fingerprints.");
+            task.setStatus(Status.SUSPENDED);
+            task.setErrorMessage("No Fluidigm Fingerprints.");
 
             return;
         }
@@ -160,8 +159,8 @@ public class FingerprintTaskHandler extends AbstractTaskHandler {
             Double lodScore = fingerprintEjb.handleNewFingerprint(fingerprintBean, mercurySample, fluidigmFingerprint);
 
             if (lodScore == null) {
-                fpUploadTask.setErrorMessage("Failed to create lod score for " + mercurySample.getSampleKey());
-                fpUploadTask.setStatus(Status.FAILED);
+                task.setErrorMessage("Failed to create lod score for " + mercurySample.getSampleKey());
+                task.setStatus(Status.FAILED);
             } else {
                 FingerprintScore fpScore = new FingerprintScore();
                 fpScore.setLodScore(BigDecimal.valueOf(lodScore));
@@ -172,11 +171,11 @@ public class FingerprintTaskHandler extends AbstractTaskHandler {
                 fpScore.setRunDate(new Date());
                 fpScore.setAnalysisName(analysisName);
                 fingerprintScoreDao.persist(fpScore);
-                fpUploadTask.setStatus(Status.COMPLETE);
+                task.setStatus(Status.COMPLETE);
             }
         } else {
-            fpUploadTask.setStatus(Status.FAILED);
-            fpUploadTask.setErrorMessage("Failed to build fingerprint bean");
+            task.setStatus(Status.FAILED);
+            task.setErrorMessage("Failed to build fingerprint bean");
         }
     }
 

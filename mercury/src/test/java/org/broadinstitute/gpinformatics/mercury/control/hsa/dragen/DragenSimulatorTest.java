@@ -8,18 +8,14 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.DragenConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemOfRecord;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.SampleSheetBuilder;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.statehandler.AlignmentStateHandler;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.statehandler.StateHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.AlignmentMetricsTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.DemultiplexMetricsTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.FiniteStateMachineEngine;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.metrics.DemultiplexStats;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.metrics.DemultiplexStatsParser;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.metrics.DragenReplayInfo;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.metrics.MetricsRecordWriter;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerContext;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerControllerStub;
@@ -57,7 +53,6 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityB
 import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.easymock.EasyMock;
-import org.mockito.stubbing.Answer;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -82,7 +77,6 @@ import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyList;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -103,11 +97,11 @@ public class DragenSimulatorTest extends BaseEventTest {
         dragen = new DragenSimulator();
         super.setUp();
 
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
 
         super.setUp();
         SequencingTemplateFactory factory = new SequencingTemplateFactory();
-        factory.setWorkflowConfig(new WorkflowLoader().load());
+        factory.setWorkflowConfig(new WorkflowLoader().getWorkflowConfig());
 
         // Method calls on factory will always use our list of flowcell designations.
         List<FlowcellDesignation> flowcellDesignations = new ArrayList<>();
@@ -229,7 +223,7 @@ public class DragenSimulatorTest extends BaseEventTest {
             Task task = (Task) invocation.getArguments()[0];
             task.setStatus(Status.COMPLETE);
             return null;
-        }).when(demultiplexMetricsTaskHandler).handleTask(any(Task.class), any(SchedulerContext.class));
+        }).when(demultiplexMetricsTaskHandler).handleTask(any(DemultiplexMetricsTask.class), any(SchedulerContext.class));
 
         ShellUtils shellUtils = mock(ShellUtils.class);
         AlignmentMetricsTaskHandler alignmentMetricsTaskHandler = mock(AlignmentMetricsTaskHandler.class);
@@ -237,7 +231,7 @@ public class DragenSimulatorTest extends BaseEventTest {
             Task task = (Task) invocation.getArguments()[0];
             task.setStatus(Status.COMPLETE);
             return null;
-        }).when(alignmentMetricsTaskHandler).handleTask(any(Task.class), any(SchedulerContext.class));
+        }).when(alignmentMetricsTaskHandler).handleTask(any(AlignmentMetricsTask.class), any(SchedulerContext.class));
 
         ProcessResult processResult = new ProcessResult(0, new ProcessOutput("".getBytes()));
         when(shellUtils.runSyncProcess(anyList())).thenReturn(processResult);

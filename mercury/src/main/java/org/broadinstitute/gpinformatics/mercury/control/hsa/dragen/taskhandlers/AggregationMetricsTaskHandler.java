@@ -23,15 +23,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Dependent
-public class AggregationMetricsTaskHandler extends AbstractMetricsTaskHandler {
+public class AggregationMetricsTaskHandler extends AbstractMetricsTaskHandler<AlignmentMetricsTask>{
 
     private static final Log log = LogFactory.getLog(AggregationMetricsTaskHandler.class);
 
     @Override
-    public void handleTask(Task task, SchedulerContext schedulerContext) {
-        AlignmentMetricsTask alignmentMetricsTask = OrmUtil.proxySafeCast(task, AlignmentMetricsTask.class);
-
-        State state = alignmentMetricsTask.getState();
+    public void handleTask(AlignmentMetricsTask task, SchedulerContext schedulerContext) {
+        State state = task.getState();
         if (!OrmUtil.proxySafeIsInstance(state, AggregationState.class)) {
             throw new RuntimeException("Expect only an Aggregation state for an alignment metrics task.");
         }
@@ -120,7 +118,7 @@ public class AggregationMetricsTaskHandler extends AbstractMetricsTaskHandler {
             task.setStatus(failed ? Status.FAILED : Status.COMPLETE);
 
         } catch (Exception e) {
-            String message = "Error processing alignment task metric " + alignmentMetricsTask;
+            String message = "Error processing alignment task metric " + task;
             log.error(message, e);
             task.setErrorMessage(message);
             task.setStatus(Status.FAILED);

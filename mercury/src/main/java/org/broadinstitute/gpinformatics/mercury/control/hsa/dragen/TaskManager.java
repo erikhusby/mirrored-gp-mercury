@@ -47,17 +47,17 @@ public class TaskManager {
             handleStartProcess(task, schedulerContext);
             Thread.sleep(1000L); // Slurm Docs recommend a slight delay between job creation
         } else if (OrmUtil.proxySafeIsInstance(task, DemultiplexMetricsTask.class)) {
-            demultiplexMetricsTaskHandler.handleTask(task, schedulerContext);
+            demultiplexMetricsTaskHandler.handleTask(OrmUtil.proxySafeCast(task, DemultiplexMetricsTask.class) , schedulerContext);
         }  else if (OrmUtil.proxySafeIsInstance(task, BclDemultiplexMetricsTask.class)) {
-            bclMetricsTaskHandler.handleTask(task, schedulerContext);
+            bclMetricsTaskHandler.handleTask(OrmUtil.proxySafeCast(task, BclDemultiplexMetricsTask.class), schedulerContext);
         } else if (OrmUtil.proxySafeIsInstance(task, AlignmentMetricsTask.class)) {
             if (OrmUtil.proxySafeIsInstance(task.getState(), AggregationState.class)) {
-                aggregationMetricsTaskHandler.handleTask(task, schedulerContext);
+                aggregationMetricsTaskHandler.handleTask(OrmUtil.proxySafeCast(task, AlignmentMetricsTask.class), schedulerContext);
             } else {
-                alignmentMetricsTaskHandler.handleTask(task, schedulerContext);
+                alignmentMetricsTaskHandler.handleTask(OrmUtil.proxySafeCast(task, AlignmentMetricsTask.class), schedulerContext);
             }
         } else if (OrmUtil.proxySafeIsInstance(task, FingerprintUploadTask.class)) {
-            fingerprintTaskHandler.handleTask(task, schedulerContext);
+            fingerprintTaskHandler.handleTask(OrmUtil.proxySafeCast(task, FingerprintUploadTask.class), schedulerContext);
         } else if (OrmUtil.proxySafeIsInstance(task, CrosscheckFingerprintUploadTask.class)) {
             crosscheckFingerprintUploadTaskHandler.handleTask(task, schedulerContext);
         }

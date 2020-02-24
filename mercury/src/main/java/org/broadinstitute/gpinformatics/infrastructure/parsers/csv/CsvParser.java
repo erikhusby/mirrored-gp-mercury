@@ -44,6 +44,30 @@ public class CsvParser {
         return parseCsv(new BufferedReader(new InputStreamReader(inputStream)), fieldDelimiter, strategy, filter, skipLines);
     }
 
+    /**
+     * Parses a csv file into a list of beans.
+     *
+     * @param <T> the type of the bean
+     * @param inputStream the input stream of the csv file to parse
+     * @param fieldDelimiter the field delimiter
+     * @param beanClass the bean class to map csv records to
+     * @param columnNameToBeanMap the mapping from Column Name to field name of the beanClass
+     * @param filter the filter to apply to a row if any
+     * @return the list of beans or an empty list there are none
+     */
+    public static <T> List<T> parseCsvStreamToBeanByMapping(BufferedReader br,
+                                                            char fieldDelimiter,
+                                                            Class<T> beanClass,
+                                                            @Nullable Map<String, String> columnNameToBeanMap,
+                                                            CsvToBeanFilter filter,
+                                                            int skipLines) {
+        HeaderColumnNameTranslateMappingStrategy<T> strategy =
+                new HeaderColumnNameTranslateMappingStrategy<>();
+        strategy.setColumnMapping(columnNameToBeanMap);
+        strategy.setType(beanClass);
+        return parseCsv(br, fieldDelimiter, strategy, filter, skipLines);
+    }
+
     public static <T> List<T> parseCsvStreamToBeanByColumnPosition(BufferedReader reader,
                                                             char fieldDelimiter,
                                                             Class<T> beanClass,

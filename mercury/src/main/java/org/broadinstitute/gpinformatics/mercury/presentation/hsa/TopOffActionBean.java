@@ -809,7 +809,7 @@ public class TopOffActionBean extends CoreActionBean {
             dto.setTopOffLcset(topOffLcset);
             dto.setLibrary(pond.getLabel());
             dto.setVolume(pond.getVolume());
-            dto.setStorage(pond.getStorageLocationStringify());
+            dto.setStorage(pond.getStorageLocation().buildLocationTrail());
             dto.setClinical(isClinical);
         }
         return dto;

@@ -27,15 +27,13 @@ import java.io.FileInputStream;
 import java.util.List;
 
 @Dependent
-public class BclMetricsTaskHandler extends BaseDemultiplexMetricsHandler {
+public class BclMetricsTaskHandler extends BaseDemultiplexMetricsHandler<BclDemultiplexMetricsTask> {
 
     private static final Log log = LogFactory.getLog(BclMetricsTaskHandler.class);
 
     @Override
-    public void handleTask(Task task, SchedulerContext schedulerContext) {
-        BclDemultiplexMetricsTask demultiplexMetricsTask = OrmUtil.proxySafeCast(task, BclDemultiplexMetricsTask.class);
-
-        State state = demultiplexMetricsTask.getState();
+    public void handleTask(BclDemultiplexMetricsTask task, SchedulerContext schedulerContext) {
+        State state = task.getState();
         if (!OrmUtil.proxySafeIsInstance(state, DemultiplexState.class)) {
             throw new RuntimeException("Expect only a demultiplex state for a BclMetricsTask.");
         }

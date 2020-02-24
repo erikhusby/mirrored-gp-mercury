@@ -108,7 +108,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
                 "NextSeq", LoadFromColumn.NO, ReverseComplement.YES, null),
         ISeqFlowcell("Flowcell1LaneISeq", "iSeq Flowcell", VesselGeometry.FLOWCELL1x1, "Illumina iSeq",
                 "^\\w+\\-\\d{4}$", "iSeq", CreateFields.IssueType.ISEQ, LabBatch.LabBatchType.FCT, CreateFct.YES,
-                "iSeq", LoadFromColumn.NO),
+                "iSeq", LoadFromColumn.NO, ReverseComplement.NO, null),
         OtherFlowcell("FlowcellUnknown", "Unknown Flowcell", VesselGeometry.FLOWCELL1x2, "Unknown Model", ".*", null,
                 null, null, CreateFct.NO, "Unknown", LoadFromColumn.NO, ReverseComplement.NO, null);
 

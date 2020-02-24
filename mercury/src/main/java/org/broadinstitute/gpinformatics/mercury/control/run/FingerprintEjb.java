@@ -25,14 +25,22 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.search.LabMetricSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
+import org.broadinstitute.gpinformatics.mercury.boundary.run.FingerprintBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.run.FingerprintCallsBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FingerprintResource;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.FingerprintDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.SnpListDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FpGenotype;
+import org.broadinstitute.gpinformatics.mercury.entity.run.Snp;
+import org.broadinstitute.gpinformatics.mercury.entity.run.SnpList;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -64,6 +72,12 @@ public class FingerprintEjb {
 
     @Inject
     private ConcordanceCalculator concordanceCalculator;
+
+    @Inject
+    private SnpListDao snpListDao;
+
+    @Inject
+    private FingerprintDao fingerprintDao;
 
     /**
      * Builds a pairwise matrix to display calculated lod scores for each combination of samples
@@ -341,5 +355,62 @@ public class FingerprintEjb {
             anchor = isFluigidm;
         }
         return anchor;
+    }
+
+    public Double handleNewFingerprint(FingerprintBean fingerprintBean, MercurySample mercurySample, Fingerprint fluidigmFingerprint) {
+        if (fingerprintBean.getSnpListName() == null) {
+            throw new RuntimeException("snpListName is required");
+        }
+        SnpList snpList = snpListDao.findByName(fingerprintBean.getSnpListName());
+        if (snpList == null) {
+            throw new RuntimeException("snpListName not found");
+        }
+
+        Fingerprint fingerprint = fingerprintDao.findBySampleAndDateGenerated(mercurySample,
+                fingerprintBean.getDateGenerated());
+        if (fingerprint == null) {
+            fingerprint = new Fingerprint(mercurySample,
+                    Fingerprint.Disposition.byAbbreviation(fingerprintBean.getDisposition()),
+                    Fingerprint.Platform.valueOf(fingerprintBean.getPlatform()),
+                    Fingerprint.GenomeBuild.valueOf(fingerprintBean.getGenomeBuild()),
+                    fingerprintBean.getDateGenerated(),
+                    snpList,
+                    Fingerprint.Gender.byAbbreviation(fingerprintBean.getGender()),
+                    true);
+
+        } else {
+            fingerprint.setDisposition(Fingerprint.Disposition.byAbbreviation(fingerprintBean.getDisposition()));
+            fingerprint.setPlatform(Fingerprint.Platform.valueOf(fingerprintBean.getPlatform()));
+            fingerprint.setGenomeBuild(Fingerprint.GenomeBuild.valueOf(fingerprintBean.getGenomeBuild()));
+            fingerprint.setGender(Fingerprint.Gender.byAbbreviation(fingerprintBean.getGender()));
+            fingerprint.getFpGenotypes().clear();
+        }
+        if (fingerprintBean.getCalls() != null) {
+            for (FingerprintCallsBean fingerprintCallsBean : fingerprintBean.getCalls()) {
+                if (fingerprintCallsBean != null) {
+                    Snp snp = snpList.getMapRsIdToSnp().get(fingerprintCallsBean.getRsid());
+                    if (snp == null) {
+                        throw new RuntimeException("Snp not found: " + fingerprintCallsBean.getRsid());
+                    }
+                    BigDecimal callConfidence = (fingerprintCallsBean.getCallConfidence() == null) ? null :
+                            new BigDecimal(fingerprintCallsBean.getCallConfidence());
+                    fingerprint.addFpGenotype(new FpGenotype(fingerprint, snp, fingerprintCallsBean.getGenotype(),
+                            callConfidence));
+                }
+            }
+        }
+
+        Double lodScore = null;
+        if (fluidigmFingerprint != null) {
+            ConcordanceCalculator concordanceCalculator = new ConcordanceCalculator();
+            lodScore = concordanceCalculator.calculateLodScore(fingerprint, fluidigmFingerprint);
+        }
+
+        // TODO Don't store for now. Also, don't store on the stock?
+        if (!mercurySample.getFingerprints().remove(fingerprint)) {
+            throw new RuntimeException("Failed to delete fingerprint from mercury sample " + mercurySample.getSampleKey());
+        }
+
+        return lodScore;
     }
 }

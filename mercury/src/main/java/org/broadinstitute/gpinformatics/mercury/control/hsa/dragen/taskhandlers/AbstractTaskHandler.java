@@ -6,13 +6,13 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
 /**
  * This abstract class defines the makeup of each event handler.
  */
-public abstract class AbstractTaskHandler {
+public abstract class AbstractTaskHandler<T extends Task> {
 
     /**
      * The handleEvent method is where each metrics task type handler will define the logic to upload metrics/Fingerprints
      * @param task task triggered by the state machine. Tasks have access to parent state and Task specific entities.
      * @param schedulerContext context for the scheduler if needed. Used for Slurm tasks and Dragen simulations)
      */
-    public abstract void handleTask(Task task, SchedulerContext schedulerContext) ;
+    public abstract void handleTask(T task, SchedulerContext schedulerContext) ;
 
 }

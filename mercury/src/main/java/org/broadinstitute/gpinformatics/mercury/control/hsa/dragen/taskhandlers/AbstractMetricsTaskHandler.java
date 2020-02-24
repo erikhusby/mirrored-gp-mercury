@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.metrics.DemultiplexS
 import org.broadinstitute.gpinformatics.mercury.control.hsa.metrics.DragenReplayInfo;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.ShellUtils;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
 import org.zeroturnaround.exec.ProcessResult;
@@ -22,7 +23,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
-public abstract class AbstractMetricsTaskHandler extends AbstractTaskHandler {
+public abstract class AbstractMetricsTaskHandler<T extends Task> extends AbstractTaskHandler<T> {
 
     private static final Log log = LogFactory.getLog(AbstractMetricsTaskHandler.class);
 

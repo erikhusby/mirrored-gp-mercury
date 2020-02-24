@@ -40,7 +40,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
-public abstract class BaseDemultiplexMetricsHandler extends AbstractMetricsTaskHandler {
+public abstract class BaseDemultiplexMetricsHandler<T extends Task> extends AbstractMetricsTaskHandler<T> {
 
     private static final Log log = LogFactory.getLog(BaseDemultiplexMetricsHandler.class);
 

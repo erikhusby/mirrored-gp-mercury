@@ -37,7 +37,7 @@ import java.util.Optional;
 import java.util.Set;
 
 @Dependent
-public class AlignmentStateHandler extends StateHandler {
+public class AlignmentStateHandler extends StateHandler<AlignmentState> {
 
     private static final Log log = LogFactory.getLog(AlignmentStateHandler.class);
 
@@ -48,7 +48,7 @@ public class AlignmentStateHandler extends StateHandler {
     private AggregationStateDao aggregationStateDao;
 
     @Override
-    public boolean onEnter(State state) throws IOException {
+    public boolean onEnter(AlignmentState state) throws IOException {
 
         if (!OrmUtil.proxySafeIsInstance(state, AlignmentState.class)) {
             throw new RuntimeException("Expect only alignment states");
@@ -99,7 +99,7 @@ public class AlignmentStateHandler extends StateHandler {
     }
 
     @Override
-    public boolean onExit(State state) {
+    public boolean onExit(AlignmentState state) {
         if (!OrmUtil.proxySafeIsInstance(state, AlignmentState.class)) {
             throw new RuntimeException("Expect only alignment states");
         }
