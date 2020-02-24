@@ -41,7 +41,7 @@
         </style>
         <script type="text/javascript">
             $j(document).ready(function() {
-               var inSpecTable = $j('#inSpecTable').DataTable({
+               let inSpecTable = $j('#inSpecTable').dataTable({
                     renderer: "bootstrap",
                     columns: [
                         {sortable: false},
@@ -63,7 +63,7 @@
                     ],
                 });
 
-                var oosTable = $j('#oosSpecTable').DataTable({
+                let oosTable = $j('#oosSpecTable').dataTable({
                     renderer: "bootstrap",
                     paging: true,
                     pageLength : 150,
@@ -100,7 +100,7 @@
                     countDisplayClass:'oosSpecTable-checkedCount',
                     checkboxClass:'oosSpecTable-checkbox'});
 
-                $('#inSpecTab a').click(function (e) {
+                $j('#inSpecTab a').click(function (e) {
                     e.preventDefault();
                     $(this).tab('show');
                 });
@@ -110,7 +110,7 @@
                     $(this).tab('show');
                 });
 
-                $('#oosSpecTable tbody').on('click', 'td.details-control', function () {
+                $j('#oosSpecTable tbody').on('click', 'td.details-control', function () {
                     var tr = $(this).closest('tr');
                     var row = oosTable.row( tr );
                     var rowData = row.data();
@@ -128,7 +128,6 @@
                             datatype: 'html',
                             success: function (resultHtml) {
                                 tr.removeClass("spinning");
-                                console.log(resultHtml);
                                 var div = $('<div/>');
                                 div.html(resultHtml);
                                 row.child(div).show();
@@ -142,18 +141,8 @@
                     }
                 });
 
-                $('.dataTables_filter input[type="search"]').css(
-                    {'width':'350px','display':'inline-block'}
-                );
-
-                // TODO JW Refactor
-                $('.dataTables_filter input[type="search"]').keyup(function() {
-                    var inputTxt = $(this).val();
-                    var searchTerms = inputTxt.split(/[ ,]+/).filter(Boolean);
-                    var asRegex = searchTerms.join("|");
-                    console.log(asRegex);
-                    oosTable.search(asRegex, true, false).draw() ;
-                });
+                includeAdvancedFilter(inSpecTable, "#inSpecTable");
+                includeAdvancedFilter(oosTable, "#oosSpecTable");
 
                 $j('.flowcellStatusTable').hide();
 

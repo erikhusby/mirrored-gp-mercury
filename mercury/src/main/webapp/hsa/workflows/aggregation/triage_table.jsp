@@ -52,8 +52,8 @@
                     <stripes:hidden name="${dtoName}[${status.index}].coverage20x" value="${dto.coverage20x}"/>
             </td>
             <td>
-                    ${dto.contaminination}
-                    <stripes:hidden name="${dtoName}[${status.index}].contaminination" value="${dto.contaminination}"/>
+                    ${dto.contamination}
+                    <stripes:hidden name="${dtoName}[${status.index}].contamination" value="${dto.contamination}"/>
             </td>
             <td>
                     ${dto.alignedQ20Bases}
