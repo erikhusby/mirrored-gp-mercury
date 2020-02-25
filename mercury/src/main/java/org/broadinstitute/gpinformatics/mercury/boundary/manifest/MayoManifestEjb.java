@@ -1097,16 +1097,16 @@ public class MayoManifestEjb {
         productOrderData.setTitle(title);
 
         // Creates the PDO with samples, places the PDO, then publishes it to SAP.
+        MessageCollection pdoMessageCollection = new MessageCollection();
         ProductOrder productOrder = productOrderEjb.createPlaceAndPublish(productOrderData, watchers,
-                owner, manifestSession.getReceiptTicket(), messages);
-        if (productOrder == null) {
-            messages.addError("Failed to make a PDO for the accessioned samples.");
-        } else if (productOrder.getOrderStatus() == ProductOrder.OrderStatus.Submitted) {
+                owner, manifestSession.getReceiptTicket(), pdoMessageCollection);
+        if (productOrder != null && productOrder.getOrderStatus() == ProductOrder.OrderStatus.Submitted) {
             messages.addInfo("Created " + productOrder.getBusinessKey() + " for " + accessionedTubes.size() +
                     " samples.");
         } else {
-            messages.addError(productOrder.getBusinessKey() + " PDO could not be completed.");
+            messages.addError("Failed to make a PDO for the accessioned samples.");
         }
+        messages.addAll(pdoMessageCollection);
     }
 
     /**

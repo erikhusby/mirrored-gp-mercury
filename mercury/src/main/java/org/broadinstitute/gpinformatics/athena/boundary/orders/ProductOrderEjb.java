@@ -4,6 +4,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Multimaps;
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
@@ -351,8 +352,8 @@ public class ProductOrderEjb {
             boolean allowCreateOrder, boolean updateQuoteItems) throws SAPInterfaceException {
 
         if (!editedProductOrder.hasSapQuote()) {
-            throw new SAPInterfaceException("This order is ineligible to create in SAP since it is not associated with "
-                                            + "an SAP quote");
+            throw new SAPInterfaceException("Cannot make an SAP order for " + editedProductOrder.getBusinessKey() +
+                    ". Its quote '" + editedProductOrder.getQuoteId() + "' is not an SAP quote.");
         }
         List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(editedProductOrder);
         try {
@@ -1777,20 +1778,32 @@ public class ProductOrderEjb {
             // Places the PDO.
             placeProductOrder(productOrder.getProductOrderId(), productOrder.getBusinessKey(), messageCollection);
             if (!messageCollection.hasErrors()) {
-                // Buckets the PDO samples.
-                bucketEjb.addSamplesToBucket(productOrder, productOrder.getSamples(),
-                        ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION).entrySet().
-                        forEach(mapEntry -> messageCollection.addInfo(mapEntry.getValue().size() +
-                                " samples added to " + mapEntry.getKey()));
                 // Publishes the PDO to SAP.
                 publishProductOrderToSAP(productOrder, messageCollection, true, true);
                 if (StringUtils.isBlank(productOrder.getSapOrderNumber())) {
-                    messageCollection.addWarning("Failed to create an SAP order for " + productOrder.getBusinessKey());
+                } else {
+                    // Buckets the PDO samples.
+                    bucketEjb.addSamplesToBucket(productOrder, productOrder.getSamples(),
+                            ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION).entrySet().
+                            forEach(mapEntry -> messageCollection.addInfo(mapEntry.getValue().size() +
+                                    " samples added to " + mapEntry.getKey()));
                 }
             }
         } catch (Exception e) {
-            log.error("Failed to make an AoU PDO", e);
-            messageCollection.addError("Exception while making a PDO: " + e.toString());
+            log.error(e);
+            messageCollection.addWarning(e.toString());
+        }
+        // If the SAP order fails, the PDO is abandoned and its Jira ticket is cancelled.
+        if (productOrder != null && StringUtils.isBlank(productOrder.getSapOrderNumber())) {
+            messageCollection.addWarning("Cancelled " + productOrder.getBusinessKey() +
+                    " because Mercury could not create an SAP order for it.");
+            productOrder.setOrderStatus(OrderStatus.Abandoned);
+            productOrder.setTitle(productOrder.getTitle());
+            try {
+                productOrderJiraUtil.cancel(productOrder.getJiraTicketKey(), "Could not create an SAP order.");
+            } catch (Exception e) {
+                messageCollection.addWarning("Could not cancel Jira ticket " + productOrder.getJiraTicketKey());
+            }
         }
         return productOrder;
     }
