@@ -2257,7 +2257,7 @@ public class LabEventFixupTest extends Arquillian {
      * 4050687	InfiniumXStainHD	InfiniumXStain
      * 4050688	InfiniumXStainHD	InfiniumXStain
      */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void fixupSupport5820ChangeEventType() throws Exception {
         userBean.loginOSUser();
         utx.begin();
