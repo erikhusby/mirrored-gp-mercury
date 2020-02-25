@@ -4,7 +4,6 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Multimaps;
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
