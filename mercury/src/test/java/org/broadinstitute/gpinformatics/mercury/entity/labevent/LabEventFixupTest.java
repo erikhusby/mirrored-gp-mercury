@@ -81,6 +81,7 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -2238,6 +2239,7 @@ public class LabEventFixupTest extends Arquillian {
             Assert.assertEquals(labEvent.getLabEventType().getName(), eventType);
             labEvent.getMapPositionToLcSets().clear();
             labEvent.getComputedLcSets().clear();
+            labEvent.getLabEventMetadatas().clear();
             System.out.println("Deleting lab event " + labEvent.getLabEventId());
             labEventDao.remove(labEvent);
         }
@@ -2255,7 +2257,7 @@ public class LabEventFixupTest extends Arquillian {
      * 4050687	InfiniumXStainHD	InfiniumXStain
      * 4050688	InfiniumXStainHD	InfiniumXStain
      */
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void fixupSupport5820ChangeEventType() throws Exception {
         userBean.loginOSUser();
         utx.begin();
