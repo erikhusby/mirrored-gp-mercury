@@ -1777,32 +1777,35 @@ public class ProductOrderEjb {
             productOrderDao.persist(productOrder);
             // Places the PDO.
             placeProductOrder(productOrder.getProductOrderId(), productOrder.getBusinessKey(), messageCollection);
-            if (!messageCollection.hasErrors()) {
+            if (!messageCollection.hasErrors() && productOrder.hasSapQuote()) {
                 // Publishes the PDO to SAP.
                 publishProductOrderToSAP(productOrder, messageCollection, true, true);
-                if (StringUtils.isBlank(productOrder.getSapOrderNumber())) {
-                } else {
-                    // Buckets the PDO samples.
-                    bucketEjb.addSamplesToBucket(productOrder, productOrder.getSamples(),
-                            ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION).entrySet().
-                            forEach(mapEntry -> messageCollection.addInfo(mapEntry.getValue().size() +
-                                    " samples added to " + mapEntry.getKey()));
-                }
+            }
+            if ((!productOrder.hasSapQuote() || StringUtils.isNotBlank(productOrder.getSapOrderNumber())) &&
+                    !messageCollection.hasErrors()) {
+                // Buckets the PDO samples.
+                bucketEjb.addSamplesToBucket(productOrder, productOrder.getSamples(),
+                        ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION).entrySet().
+                        forEach(mapEntry -> messageCollection.addInfo(mapEntry.getValue().size() +
+                                " samples added to " + mapEntry.getKey()));
             }
         } catch (Exception e) {
             log.error(e);
             messageCollection.addWarning(e.toString());
         }
-        // If the SAP order fails, the PDO is abandoned and its Jira ticket is cancelled.
-        if (productOrder != null && StringUtils.isBlank(productOrder.getSapOrderNumber())) {
-            messageCollection.addWarning("Cancelled " + productOrder.getBusinessKey() +
-                    " because Mercury could not create an SAP order for it.");
-            productOrder.setOrderStatus(OrderStatus.Abandoned);
-            productOrder.setTitle(productOrder.getTitle());
+        // If the SAP order fails, the PDO is reset to draft and its Jira ticket is cancelled.
+        if (productOrder != null && productOrder.hasSapQuote() &&
+                StringUtils.isBlank(productOrder.getSapOrderNumber())) {
+            String jiraTicketKey = productOrder.getJiraTicketKey();
+            messageCollection.addWarning("Resetting " + jiraTicketKey +
+                    " to draft because Mercury could not create an SAP order for it.");
+            productOrder.setOrderStatus(OrderStatus.Draft);
+            productOrder.setJiraTicketKey(null);
+            productOrder.setTitle(productOrder.getTitle() + "-draft");
             try {
-                productOrderJiraUtil.cancel(productOrder.getJiraTicketKey(), "Could not create an SAP order.");
+                productOrderJiraUtil.cancel(jiraTicketKey, "Mercury could not create an SAP order.");
             } catch (Exception e) {
-                messageCollection.addWarning("Could not cancel Jira ticket " + productOrder.getJiraTicketKey());
+                messageCollection.addWarning("Could not cancel Jira ticket " + jiraTicketKey);
             }
         }
         return productOrder;
