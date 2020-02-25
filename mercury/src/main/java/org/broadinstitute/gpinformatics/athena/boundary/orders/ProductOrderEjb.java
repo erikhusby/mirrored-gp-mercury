@@ -1801,7 +1801,6 @@ public class ProductOrderEjb {
                     " to draft because Mercury could not create an SAP order for it.");
             productOrder.setOrderStatus(OrderStatus.Draft);
             productOrder.setJiraTicketKey(null);
-            productOrder.setTitle(productOrder.getTitle() + "-draft");
             try {
                 productOrderJiraUtil.cancel(jiraTicketKey, "Mercury could not create an SAP order.");
             } catch (Exception e) {
