@@ -143,6 +143,8 @@ public class LabVesselLatestPositionPlugin implements ListPlugin {
         // In place events will always be before a transfer from so ignore
         for (VesselContainer<?> vesselContainer : containers ) {
             events.addAll(vesselContainer.getTransfersFrom());
+            events.addAll(vesselContainer.getTransfersTo());
+            events.addAll(vesselContainer.getEmbedder().getInPlaceLabEvents());
         }
 
         if( !events.isEmpty() ) {
@@ -205,6 +207,13 @@ public class LabVesselLatestPositionPlugin implements ListPlugin {
     private Triple<RackOfTubes, VesselContainer<BarcodedTube>, LabEvent> getRackAndPosition( LabEvent labEvent, BarcodedTube tube, boolean useTarget ){
         LabVessel rack = null;
         VesselContainer vesselContainer = null;
+
+        // In-place vessel?
+        if( labEvent.getAncillaryInPlaceVessel() != null ) {
+            rack = labEvent.getAncillaryInPlaceVessel();
+            vesselContainer = labEvent.getInPlaceLabVessel().getContainerRole();
+            return Triple.of( OrmUtil.proxySafeCast( rack, RackOfTubes.class ), vesselContainer, labEvent );
+        }
 
         // Section transfer most likely?
         for( SectionTransfer xfer : labEvent.getSectionTransfers() ) {

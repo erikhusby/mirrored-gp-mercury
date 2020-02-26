@@ -1423,23 +1423,26 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     * @return return latest storage lab event.
+     * @return Latest storage lab event - STORAGE_CHECK_IN, STORAGE_CHECK_OUT, or IN_PLACE (rack scan registration) <br/>
+     * (For this vessel and any containers only - no transfer traversal performed)
      */
     public LabEvent getLatestStorageEvent() {
-        List<LabEvent> eventsList = getAllEventsSortedByDate();
-        int size = eventsList.size();
-        if (size > 0) {
-            int index = eventsList.size() - 1;
-            while (index >= 0) {
-                LabEvent labEvent = eventsList.get(index);
-                if (labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_IN ||
-                    labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_OUT) {
-                    return labEvent;
-                }
-                index--;
+        LabEvent latestEvent = null;
+        Set<LabEvent> eventsList = getInPlaceEventsWithContainers();
+        if( eventsList == null || eventsList.size() == 0 ) {
+            return latestEvent;
+        }
+        Set<LabEvent> sortedTreeSet = new TreeSet<>(LabEvent.BY_EVENT_DATE);
+        for (LabEvent event : getEvents()) {
+            if (event.getLabEventType() == LabEventType.STORAGE_CHECK_IN ||
+                    event.getLabEventType() == LabEventType.STORAGE_CHECK_OUT) {
+                sortedTreeSet.add(event);
             }
         }
-        return null;
+        for( LabEvent e : sortedTreeSet ) {
+            latestEvent = e;
+        }
+        return latestEvent;
     }
 
     @SuppressWarnings("unused")

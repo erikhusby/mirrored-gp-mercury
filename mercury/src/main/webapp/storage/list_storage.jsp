@@ -16,13 +16,61 @@
                 /*ensure lower nodes move down*/
                 height : auto !important;
                 /*offset icon width*/
-                padding-right : 24px;
+                padding-right : 18px;
+                font-size: 11pt;
             }
             .show-loading-icon {
                 background: url("${ctxpath}/resources/scripts/jsTree/themes/default/throbber.gif") center center no-repeat;
             }
         </style>
         <script type="text/javascript">
+
+            function removeLooseVessels(){
+                var theform = new FormData($j("#replaceMeWithStorageContents > #looseVesselForm" )[0]);
+                // Submit value needed
+                theform.append("removeLooseLoc", "");
+                $j.ajax("${ctxpath}/container/container.action", {
+                    type: 'POST',
+                    accepts:"text/html",
+                    data: theform,
+                    async: false,
+                    cache: false,
+                    dataType: "html",
+                    processData: false,
+                    contentType: false,
+                    success: function (results) {
+                        $j("#replaceMeWithStorageContents").html(results);
+                    },
+                    error: function(results){
+                        $j("#looseMessages").html("An unspecified error occurred");
+                    }
+
+                });
+            }
+
+            function storeLooseVessels(){
+                var theform = new FormData($j("#replaceMeWithStorageContents > #looseVesselForm" )[0]);
+                // Submit value needed
+                theform.append("saveLocation", "");
+                $j.ajax("${ctxpath}/container/container.action", {
+                    type: 'POST',
+                    accepts:"text/html",
+                    data: theform,
+                    async: false,
+                    cache: false,
+                    dataType: "html",
+                    processData: false,
+                    contentType: false,
+                    success: function (results) {
+                        $j("#replaceMeWithStorageContents").html(results);
+                    },
+                    error: function(results){
+                        $j("#looseMessages").html("An unspecified error occurred");
+                    }
+
+                });
+            }
+
             $j(document).ready(function () {
                 $j("#error-dialog").hide();
                 var canCreate = ${actionBean.moveAllowed};
@@ -46,8 +94,14 @@
                 function findContainer(containerBarcode, node) {
                     $j("#error-dialog").hide();
                     var formData = new FormData();
-                    formData.append("viewContainerAjax", "");
-                    formData.append("containerBarcode", containerBarcode);
+                    formData.append("<csrf:tokenname/>", "<csrf:tokenvalue/>");
+                    if( node != undefined && node.type == "LOOSE" ) {
+                        formData.append("viewContainerAjax", node.type);
+                        formData.append("storageId", node.id);
+                    } else {
+                        formData.append("viewContainerAjax", "");
+                        formData.append("containerBarcode", containerBarcode);
+                    }
                     var replaceDom = $j("#replaceMeWithStorageContents");
                     replaceDom.addClass("show-loading-icon");
                     var nodeDom;
@@ -57,11 +111,15 @@
                         console.log(nodeDom);
                         nodeDom.addClass("jstree-loading")
                     }
-                    $j.ajax({
-                        url: "${ctxpath}/container/container.action",
+                    $j.ajax("${ctxpath}/container/container.action", {
                         type: 'POST',
+                        accepts:"text/html",
                         data: formData,
                         async: true,
+                        cache: false,
+                        dataType: "html",
+                        processData: false,
+                        contentType: false,
                         success: function (results) {
                             replaceDom.removeClass("show-loading-icon");
                             if (node) {
@@ -71,17 +129,18 @@
                         },
                         error: function(results){
                             console.log(results);
-                            displayError("Failed to find container.");
-                            $j('#jstree').jstree("refresh");
                             replaceDom.removeClass("show-loading-icon");
                             if (node) {
                                 nodeDom.removeClass("jstree-loading");
+                                if( node.type === "LOOSE" ) {
+                                    displayError("Failed to load loose vessels.");
+                                } else {
+                                    displayError("Failed to find container.");
+                                }
+                            } else {
+                                displayError("Server error occurred.");
                             }
-                        },
-                        cache: false,
-                        datatype: "text",
-                        processData: false,
-                        contentType: false
+                        }
                     });
                 }
 
@@ -98,7 +157,7 @@
                         try {
                             $j("#jstree").jstree(true).settings.core.data.url = newPath;
                             $j("#jstree").jstree(true).refresh();
-                        } finally {
+                        } catch( err ) {
                             $j("#jstree").jstree(true).settings.core.data.url = oldPath;
                         }
                     }
@@ -167,12 +226,12 @@
                             "valid_children" : [ "lab_vessel" ],
                             "max_depth" : 1
                         },
-                        StaticPlate: {
-
+                        LOOSE: {
+                            "valid_children" : [ "lab_vessel" ],
+                            "max_depth" : 1
                         },
-                        RackOfTubes: {
-
-                        }
+                        StaticPlate: {},
+                        RackOfTubes: {}
                     },
                     'core' : {
                         "check_callback" :  function (op, node, par, pos, more) {
@@ -205,16 +264,21 @@
                         'data' : {
                             "url" : "${ctxpath}/storage/storage.action?loadTreeAjax=",
                             "data" : function (node) {
-                                if (node.id == "#") {
-                                    return {"id": node.id};
-                                } else {
-                                    return {"id": node.data.storageLocationId};
+                                try {
+                                    if (node.id == "#") {
+                                        return {"id": node.id};
+                                    } else {
+                                        return {"id": node.data.storageLocationId};
+                                    }
+                                } catch(err) {
+                                    // Session timeout? jQuery ajax handler does no capture
+                                    displayError("Your session may have timed out.");
+                                    return {};
                                 }
                             },
                             "dataType" : "json",
                             'error': function (data) {
-                                displayError("Failed to find storage.");
-                                $j("#jstree").jstree(true).refresh();
+                                displayError("Server error finding storage.");
                             }
                         }
                     }
@@ -254,7 +318,7 @@
                 }).bind("select_node.jstree", function (e, data) {
                     var node = data.node;
                     console.log(node);
-                    if (node.type === "StaticPlate" || node.type === "RackOfTubes") {
+                    if (node.type === "StaticPlate" || node.type === "RackOfTubes" || node.type === "LOOSE" ) {
                         findContainer(node.text, node);
                     }
                 }).bind("rename_node.jstree", function (e, data) {
@@ -290,6 +354,7 @@
                 });
             });
         </script>
+        <script src="${ctxpath}/resources/scripts/storage-location-ajax.js"></script>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
@@ -309,10 +374,22 @@
             </div>
             <div class="row-fluid">
                 <div id="jstree" class="span3"></div>
-                <div id="replaceMeWithStorageContents" class="span9">
-
+                <div id="replaceMeWithStorageContents" class="span9"></div>
+            </div>
+        </div>
+        <div id="storage_location_overlay">
+            <div class="alert" id="error-dialog-ajax">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <span id="error-text-ajax">default error message.</span>
+            </div>
+            <div class="control-group">
+                <div class="control">
+                    <input type="text" id="searchTermAjax" name="searchTerm" placeholder="storage barcode"/>
+                    <input type="submit" value="Find" id="searchTermAjaxSubmit"/>
                 </div>
             </div>
+
+            <div id="ajax-jstree"></div>
         </div>
 
     </stripes:layout-component>

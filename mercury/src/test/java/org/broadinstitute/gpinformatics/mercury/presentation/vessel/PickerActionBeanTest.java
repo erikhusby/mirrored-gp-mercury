@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -20,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
+import org.broadinstitute.gpinformatics.mercury.presentation.storage.PickerActionBean;
 import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
@@ -46,7 +46,6 @@ public class PickerActionBeanTest extends BaseEventTest {
     private PickerActionBean actionBean;
     private LabVesselDao labVesselDaoMock;
     private LabBatchDao labBatchMock;
-    private BSPUserList bspUserListMock;
 
     public static final String BARCODE_SUFFIX = "1";
     private static final BigDecimal BIG_DECIMAL_12_33 = new BigDecimal("12.33");
@@ -70,8 +69,6 @@ public class PickerActionBeanTest extends BaseEventTest {
         actionBean.setLabVesselDao(labVesselDaoMock);
         labBatchMock = mock(LabBatchDao.class);
         actionBean.setLabBatchDao(labBatchMock);
-        bspUserListMock = mock(BSPUserList.class);
-        actionBean.setBspUserList(bspUserListMock);
 
         productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         runDate = new Date();
@@ -127,6 +124,7 @@ public class PickerActionBeanTest extends BaseEventTest {
         LabEvent labEvent = new LabEvent(LabEventType.STORAGE_CHECK_IN, new Date(),
                 "UnitTest", 1L, 1L, "UnitTest");
         labEvent.setInPlaceLabVessel(denatureTube2500.getContainers().iterator().next());
+        labEvent.setAncillaryInPlaceVessel(denatureTube2500Rack);
         denatureTube2500.getContainers().iterator().next().addInPlaceEvent(labEvent);
     }
 

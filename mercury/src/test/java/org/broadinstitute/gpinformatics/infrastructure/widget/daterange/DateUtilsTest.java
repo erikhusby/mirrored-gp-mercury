@@ -50,6 +50,30 @@ public class DateUtilsTest {
         return testCases.iterator();
     }
 
+    /**
+     * Produces list of 3 value arrays:  current date and time, days in past, and expected date of number of workdays in past
+     */
+    @DataProvider(name = "pastWorkdaysTestProvider")
+    public Iterator<Object[]> pastWorkdaysTestProvider() throws ParseException {
+        DateFormat dateInstance = SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT,DateFormat.SHORT);
+        List<Object[]> testCases = new ArrayList<>();
+        // Zero days should truncate to same day 12:00 AM
+        testCases.add(new Object[]{dateInstance.parse("07/01/2019 10:00 AM" ), 0, dateInstance.parse("07/01/2019 12:00 AM" )});
+        // Monday - 1 should be Friday
+        testCases.add(new Object[]{dateInstance.parse("07/01/2019 10:00 AM" ), 1, dateInstance.parse("06/28/2019 12:00 AM" )});
+        // Sat & Sun - 1 should be Friday
+        testCases.add(new Object[]{dateInstance.parse("06/30/2019 10:00 AM" ), 1, dateInstance.parse("06/28/2019 12:00 AM" )});
+        testCases.add(new Object[]{dateInstance.parse("06/29/2019 10:00 AM" ), 1, dateInstance.parse("06/28/2019 12:00 AM" )});
+        // Thu - 3 should be Monday
+        testCases.add(new Object[]{dateInstance.parse("07/04/2019 10:00 AM" ), 3, dateInstance.parse("07/01/2019 12:00 AM" )});
+        // Thu - 7 should be prior Tuesday
+        testCases.add(new Object[]{dateInstance.parse("07/04/2019 10:00 AM" ), 7, dateInstance.parse("06/25/2019 12:00 AM" )});
+        // Thu - 9 should be 2 Fridays ago
+        testCases.add(new Object[]{dateInstance.parse("07/04/2019 10:00 AM" ), 9, dateInstance.parse("06/21/2019 12:00 AM" )});
+
+        return testCases.iterator();
+    }
+
     @Test(dataProvider = "daysBetweenTestProvider")
     public void testGetNumDaysBetween(Date d1, Date d2, long expected) throws Exception {
         long numDaysBetween =
@@ -57,4 +81,14 @@ public class DateUtilsTest {
 
         assertThat(numDaysBetween, equalTo(expected));
     }
+
+    @Test(dataProvider = "pastWorkdaysTestProvider")
+    public void testworkdaysInPast(Date from, int past, Date expected) throws Exception {
+        Date result =
+                org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils.getPastWorkdaysFrom( from, past );
+
+        assertThat(result, equalTo(expected));
+    }
+
+
 }

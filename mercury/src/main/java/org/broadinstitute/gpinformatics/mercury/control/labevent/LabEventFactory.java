@@ -1144,7 +1144,7 @@ public class LabEventFactory implements Serializable {
     }
 
     /**
-     * Builds a lab event entity from a JAXB plate event (reagent addition) bean
+     * Builds an in-place lab event entity from a JAXB plate event (reagent addition) bean
      *
      * @param plateEventType JAXB event bean
      *
@@ -1155,8 +1155,11 @@ public class LabEventFactory implements Serializable {
         PlateType plateType = plateEventType.getPlate();
         if (plateType.getPhysType().equals(PHYS_TYPE_TUBE_RACK) ||
                 RackOfTubes.RackType.getByName(plateType.getPhysType()) != null) {
-
             RackOfTubes rackOfTubes = rackOfTubesDao.findByBarcode(plateEventType.getPlate().getBarcode());
+            if( rackOfTubes == null ) {
+                // A newly labeled rack should be created and persisted
+                rackOfTubes = new RackOfTubes( plateEventType.getPlate().getBarcode(), getRackType( plateEventType.getPlate() ) );
+            }
             Map<String, BarcodedTube> mapBarcodeToVessel = findTubesByBarcodes(plateEventType.getPositionMap());
             //noinspection unchecked
             TubeFormation tubeFormation = tubeFormationDao.findByDigest(makeDigest(plateEventType.getPositionMap(),
@@ -1166,12 +1169,11 @@ public class LabEventFactory implements Serializable {
                     collect(Collectors.toList()), (Map<String, LabVessel>) (Map<?, ?>)mapBarcodeToVessel, mercurySampleDao);
             labEvent = buildFromBettaLimsRackEventDbFree(plateEventType, tubeFormation, mapBarcodeToVessel, rackOfTubes);
         } else {
-            PlateType plate = plateEventType.getPlate();
-            if (plate == null) {
+            if (plateType == null) {
                 // todo jmt why isn't this error caught in JAXB?
                 throw new RuntimeException("No plate element in plateEvent");
             }
-            StaticPlate staticPlate = staticPlateDao.findByBarcode(plate.getBarcode());
+            StaticPlate staticPlate = staticPlateDao.findByBarcode(plateType.getBarcode());
             labEvent = buildFromBettaLimsPlateEventDbFree(plateEventType, staticPlate);
         }
         labEvent.setStationEventType(plateEventType);
@@ -1533,6 +1535,10 @@ public class LabEventFactory implements Serializable {
         }
     }
 
+    /**
+     * Builds an in-place event on a static plate
+     * @throws Exception When plate does not exist.  Static plate must ALWAYS exist if an in-place event is acting on it.  (CREATE_SOURCES = false)
+     */
     @DaoFree
     public LabEvent buildFromBettaLimsPlateEventDbFree(PlateEventType plateEvent, StaticPlate staticPlate) {
         LabEvent labEvent = constructReferenceData(plateEvent, labEventRefDataFetcher);
@@ -1614,6 +1620,9 @@ public class LabEventFactory implements Serializable {
         }
     }
 
+    /**
+     * Builds an in-place event on a tube formation and rack of tubes
+     */
     @DaoFree
     public LabEvent buildFromBettaLimsRackEventDbFree(PlateEventType plateEvent, @Nullable TubeFormation tubeFormation,
                                                       Map<String, BarcodedTube> mapBarcodeToTubes,
@@ -1627,6 +1636,10 @@ public class LabEventFactory implements Serializable {
             setTubeQuantities(mapBarcodeToTubes, plateEvent.getPositionMap(), labEvent, true);
         }
         tubeFormation.addInPlaceEvent(labEvent);
+        labEvent.setAncillaryInPlaceVessel(rackOfTubes);
+        if( rackOfTubes != null ) {
+            rackOfTubes.getAncillaryInPlaceEvents().add(labEvent);
+        }
         return labEvent;
     }
 

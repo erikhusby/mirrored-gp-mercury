@@ -21,7 +21,6 @@ $j(document).ready( function() {
                 if( resultObj.hasErrors) {
                     displayNotification(resultObj.errors, "alert-error");
                 } else {
-                    console.log(resultObj);
                     $j("#storageName").val(resultObj.locationTrail);
                     $j("#storageName").css("width", resultObj.locationTrail.length * 8);
                     $j("#storageId").val(storageId);
@@ -130,8 +129,9 @@ $j(document).ready( function() {
         }
     });
 
-    $j("#browse").click(function(e) {
-        e.preventDefault();
-        $j("#storage_location_overlay").dialog("open");
-    });
 });
+
+function handleBrowseClick(event) {
+    event.preventDefault();
+    $j("#storage_location_overlay").dialog("open");
+}

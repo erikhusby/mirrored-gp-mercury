@@ -1,0 +1,72 @@
+/**
+* multi-list.js is a jQuery plugin to turn a <ul> element into a multiple selectable list
+*
+* Author: Albert Gonzalez - http://www.albertgonzalez.coffee
+* 
+* Under a UNLICENSE (http://unlicense.org/)
+*/
+
+/* Main ul container */
+.ml-container {
+	margin: 0 10px;
+}
+
+/* List */
+.ml-ul {
+	overflow:auto;
+	list-style-type: none;
+	padding: 0;
+	margin-top: 4px;
+	max-height: 130px;
+}
+
+.ml-ul label {
+	width: 100%;
+	font-size: 12px;
+	font-family: sans-serif;
+	cursor: pointer;
+	padding: 0px !important;
+
+	/* Non selectable */
+	-webkit-user-select: none; /* Chrome/Safari */        
+	-moz-user-select: none; /* Firefox */
+	-ms-user-select: none; /* IE10+ */
+
+	/* Rules below not implemented in browsers yet */
+	-o-user-select: none;
+	user-select: none;
+}
+
+/* List input item */
+.ml-input-container .ml-input-filter {
+	width: 140px;
+	height: 20px;
+	padding: 2px 4px;
+	font-size: 12px;
+	color: #555555;
+	background-color: #FFFFFF;
+	background-image: none;
+	border: 1px solid #CCCCCC;
+	border-radius: 4px;
+}
+
+/* List item */
+.ml-li {
+	margin-right: 10px;
+}
+
+.ml-li input {
+	margin-right: 10px;
+}
+
+.ml-disabled-element-li {
+	background-color: #E4E8EA;
+}
+
+.ml-disabled-element-li label {
+	padding-left: 23px;
+}
+
+.ml-hide {
+	display: none !important;
+}

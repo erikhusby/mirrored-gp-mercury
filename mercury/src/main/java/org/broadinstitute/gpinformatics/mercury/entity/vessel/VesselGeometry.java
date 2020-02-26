@@ -59,6 +59,36 @@ public enum VesselGeometry {
                     VesselPosition.P01, VesselPosition.P02, VesselPosition.P03, VesselPosition.P04, VesselPosition.P05, VesselPosition.P06, VesselPosition.P07, VesselPosition.P08, VesselPosition.P09, VesselPosition.P10, VesselPosition.P11, VesselPosition.P12, VesselPosition.P13, VesselPosition.P14, VesselPosition.P15, VesselPosition.P16, VesselPosition.P17, VesselPosition.P18, VesselPosition.P19, VesselPosition.P20, VesselPosition.P21, VesselPosition.P22, VesselPosition.P23, VesselPosition.P24,
             }),
 
+    G3x2(
+            "3 x 2",
+            new String[] {"01", "02", "03"},
+            new String[] {"A", "B"},
+            new VesselPosition[]{
+                    VesselPosition.A01, VesselPosition.A02, VesselPosition.A03,
+                    VesselPosition.B01, VesselPosition.B02, VesselPosition.B03
+            }),
+
+    G4x3(
+            "4 x 3",
+            new String[] {"01", "02", "03", "04"},
+            new String[] {"A", "B", "C"},
+            new VesselPosition[]{
+                    VesselPosition.A01, VesselPosition.A02, VesselPosition.A03, VesselPosition.A04,
+                    VesselPosition.B01, VesselPosition.B02, VesselPosition.B03, VesselPosition.B04,
+                    VesselPosition.C01, VesselPosition.C02, VesselPosition.C03, VesselPosition.C04
+            }),
+
+    G6x4(
+            "6 x 4",
+            new String[] {"01", "02", "03", "04", "05", "06"},
+            new String[] {"A", "B", "C", "D"},
+            new VesselPosition[]{
+                    VesselPosition.A01, VesselPosition.A02, VesselPosition.A03, VesselPosition.A04, VesselPosition.A05, VesselPosition.A06,
+                    VesselPosition.B01, VesselPosition.B02, VesselPosition.B03, VesselPosition.B04, VesselPosition.B05, VesselPosition.B06,
+                    VesselPosition.C01, VesselPosition.C02, VesselPosition.C03, VesselPosition.C04, VesselPosition.C05, VesselPosition.C06,
+                    VesselPosition.D01, VesselPosition.D02, VesselPosition.D03, VesselPosition.D04, VesselPosition.D05, VesselPosition.D06
+            }),
+
     G8x6(
             "8 x 6",
             new String[] {"01", "02", "03", "04", "05", "06", "07", "08"},
@@ -69,7 +99,7 @@ public enum VesselGeometry {
                     VesselPosition.C01, VesselPosition.C02, VesselPosition.C03, VesselPosition.C04, VesselPosition.C05, VesselPosition.C06, VesselPosition.C07, VesselPosition.C08,
                     VesselPosition.D01, VesselPosition.D02, VesselPosition.D03, VesselPosition.D04, VesselPosition.D05, VesselPosition.D06, VesselPosition.D07, VesselPosition.D08,
                     VesselPosition.E01, VesselPosition.E02, VesselPosition.E03, VesselPosition.E04, VesselPosition.E05, VesselPosition.E06, VesselPosition.E07, VesselPosition.E08,
-                    VesselPosition.F01, VesselPosition.F02, VesselPosition.F03, VesselPosition.F04, VesselPosition.F05, VesselPosition.F06, VesselPosition.F07, VesselPosition.F08,
+                    VesselPosition.F01, VesselPosition.F02, VesselPosition.F03, VesselPosition.F04, VesselPosition.F05, VesselPosition.F06, VesselPosition.F07, VesselPosition.F08
             }),
 
     SAGE_CASSETTE(
@@ -303,6 +333,24 @@ public enum VesselGeometry {
                     VesselPosition._21_1, VesselPosition._22_1, VesselPosition._23_1, VesselPosition._24_1,
                     VesselPosition._25_1}),
 
+    G2x25_NUM("2 x 25",
+            new String[]{"01", "02"},
+            new String[]{"01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16",
+                    "17", "18", "19", "20", "21", "22", "23", "24", "25"},
+            new VesselPosition[]{VesselPosition._1_1, VesselPosition._1_2, VesselPosition._2_1, VesselPosition._2_2,
+                    VesselPosition._3_1, VesselPosition._3_2, VesselPosition._4_1, VesselPosition._4_2,
+                    VesselPosition._5_1, VesselPosition._5_2, VesselPosition._6_1, VesselPosition._6_2,
+                    VesselPosition._7_1, VesselPosition._7_2, VesselPosition._8_1, VesselPosition._8_2,
+                    VesselPosition._9_1, VesselPosition._9_2, VesselPosition._10_1, VesselPosition._10_2,
+                    VesselPosition._11_1, VesselPosition._11_2, VesselPosition._12_1, VesselPosition._12_2,
+                    VesselPosition._13_1, VesselPosition._13_2, VesselPosition._14_1, VesselPosition._14_2,
+                    VesselPosition._15_1, VesselPosition._15_2, VesselPosition._16_1, VesselPosition._16_2,
+                    VesselPosition._17_1, VesselPosition._17_2, VesselPosition._18_1, VesselPosition._18_2,
+                    VesselPosition._19_1, VesselPosition._19_2, VesselPosition._20_1, VesselPosition._20_2,
+                    VesselPosition._21_1, VesselPosition._21_2, VesselPosition._22_1, VesselPosition._22_2,
+                    VesselPosition._23_1, VesselPosition._23_2, VesselPosition._24_1, VesselPosition._24_2,
+                    VesselPosition._25_1, VesselPosition._25_2}),
+
     G2x50_NUM("2 x 50",
             new String[]{"01", "02"},
             new String[]{"01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16",
@@ -501,27 +549,21 @@ public enum VesselGeometry {
                     VesselPosition._1_5, VesselPosition._1_6, VesselPosition._1_7, VesselPosition._1_8,
                     VesselPosition._1_9, VesselPosition._1_10}),
 
-    G12x6_NUM("12 x 6",
-            new String[]{"01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"},
+    G6x12_NUM("6 x 12",
             new String[]{"01", "02", "03", "04", "05", "06"},
-            new VesselPosition[]{VesselPosition._1_1, VesselPosition._1_2, VesselPosition._1_3, VesselPosition._1_4,
-                    VesselPosition._1_5, VesselPosition._1_6, VesselPosition._1_7, VesselPosition._1_8,
-                    VesselPosition._1_9, VesselPosition._1_10, VesselPosition._1_11, VesselPosition._1_12,
-                    VesselPosition._2_1, VesselPosition._2_2, VesselPosition._2_3, VesselPosition._2_4,
-                    VesselPosition._2_5, VesselPosition._2_6, VesselPosition._2_7, VesselPosition._2_8,
-                    VesselPosition._2_9, VesselPosition._2_10, VesselPosition._2_11, VesselPosition._2_12,
-                    VesselPosition._3_1, VesselPosition._3_2, VesselPosition._3_3, VesselPosition._3_4,
-                    VesselPosition._3_5, VesselPosition._3_6, VesselPosition._3_7, VesselPosition._3_8,
-                    VesselPosition._3_9, VesselPosition._3_10, VesselPosition._3_11, VesselPosition._3_12,
-                    VesselPosition._4_1, VesselPosition._4_2, VesselPosition._4_3, VesselPosition._4_4,
-                    VesselPosition._4_5, VesselPosition._4_6, VesselPosition._4_7, VesselPosition._4_8,
-                    VesselPosition._4_9, VesselPosition._4_10, VesselPosition._4_11, VesselPosition._4_12,
-                    VesselPosition._5_1, VesselPosition._5_2, VesselPosition._5_3, VesselPosition._5_4,
-                    VesselPosition._5_5, VesselPosition._5_6, VesselPosition._5_7, VesselPosition._5_8,
-                    VesselPosition._5_9, VesselPosition._5_10, VesselPosition._5_11, VesselPosition._5_12,
-                    VesselPosition._6_1, VesselPosition._6_2, VesselPosition._6_3, VesselPosition._6_4,
-                    VesselPosition._6_5, VesselPosition._6_6, VesselPosition._6_7, VesselPosition._6_8,
-                    VesselPosition._6_9, VesselPosition._6_10, VesselPosition._6_11, VesselPosition._6_12}),
+            new String[]{"01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"},
+            new VesselPosition[]{VesselPosition._1_1, VesselPosition._1_2, VesselPosition._1_3, VesselPosition._1_4, VesselPosition._1_5, VesselPosition._1_6,
+                    VesselPosition._2_1, VesselPosition._2_2, VesselPosition._2_3, VesselPosition._2_4, VesselPosition._2_5, VesselPosition._2_6,
+                    VesselPosition._3_1, VesselPosition._3_2, VesselPosition._3_3, VesselPosition._3_4, VesselPosition._3_5, VesselPosition._3_6,
+                    VesselPosition._4_1, VesselPosition._4_2, VesselPosition._4_3, VesselPosition._4_4, VesselPosition._4_5, VesselPosition._4_6,
+                    VesselPosition._5_1, VesselPosition._5_2, VesselPosition._5_3, VesselPosition._5_4, VesselPosition._5_5, VesselPosition._5_6,
+                    VesselPosition._6_1, VesselPosition._6_2, VesselPosition._6_3, VesselPosition._6_4, VesselPosition._6_5, VesselPosition._6_6,
+                    VesselPosition._7_1, VesselPosition._7_2, VesselPosition._7_3, VesselPosition._7_4, VesselPosition._7_5, VesselPosition._7_6,
+                    VesselPosition._8_1, VesselPosition._8_2, VesselPosition._8_3, VesselPosition._8_4, VesselPosition._8_5, VesselPosition._8_6,
+                    VesselPosition._9_1, VesselPosition._9_2, VesselPosition._9_3, VesselPosition._9_4, VesselPosition._9_5, VesselPosition._9_6,
+                    VesselPosition._10_1, VesselPosition._10_2, VesselPosition._10_3, VesselPosition._10_4, VesselPosition._10_5, VesselPosition._10_6,
+                    VesselPosition._11_1, VesselPosition._11_2, VesselPosition._11_3, VesselPosition._11_4, VesselPosition._11_5, VesselPosition._11_6,
+                    VesselPosition._12_1, VesselPosition._12_2, VesselPosition._12_3, VesselPosition._12_4, VesselPosition._12_5, VesselPosition._12_6}),
 
     INFINIUM_24_CHIP("2 x 12",
             new String[] {"C01","C02"},

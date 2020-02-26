@@ -38,6 +38,7 @@ public class CreateStorageActionBean extends CoreActionBean {
     private int sections;
     private int shelves;
     private int slots;
+    private int slotStorageCapacity = 1;
 
     private List<StorageLocation.LocationType> creatableLocationTypes =
             StorageLocation.LocationType.getCreateableLocationTypes();
@@ -59,12 +60,10 @@ public class CreateStorageActionBean extends CoreActionBean {
             messageCollection.addError("Storage name is required.");
         } else if (!storageLocationDao.findByLabel(getName()).isEmpty()) {
             messageCollection.addError("Storage name already in use: " + getName());
-            addMessages(messageCollection);
         } else if (storageUnitTypeName == null || storageUnitTypeName.isEmpty()) {
             messageCollection.addError("Location Type is required.");
-            addMessages(messageCollection);
         }
-        locationType = StorageLocation.LocationType.getByDisplayName(storageUnitTypeName);
+        locationType = StorageLocation.LocationType.valueOf(storageUnitTypeName);
         if (messageCollection.hasErrors()) {
             addMessages(messageCollection);
             readyForDetails = false;
@@ -90,7 +89,7 @@ public class CreateStorageActionBean extends CoreActionBean {
             return new ForwardResolution(VIEW_PAGE);
         }
 
-        locationType = StorageLocation.LocationType.getByDisplayName(storageUnitTypeName);
+        locationType = StorageLocation.LocationType.valueOf(storageUnitTypeName);
         boolean isRackType = locationType == StorageLocation.LocationType.GAUGERACK ||
                              locationType == StorageLocation.LocationType.BOX;
         if (isRackType) {
@@ -143,6 +142,7 @@ public class CreateStorageActionBean extends CoreActionBean {
         for (int i = 1; i <= getSlots(); i++) {
             String slotName = "Slot " + i;
             StorageLocation slot = new StorageLocation(slotName, StorageLocation.LocationType.SLOT, rack);
+            slot.setStorageCapacity(slotStorageCapacity);
             rack.getChildrenStorageLocation().add(slot);
         }
         return rack;
@@ -261,5 +261,13 @@ public class CreateStorageActionBean extends CoreActionBean {
 
     public void setCreatedStorageId(Long createdStorageId) {
         this.createdStorageId = createdStorageId;
+    }
+
+    public int getSlotStorageCapacity() {
+        return slotStorageCapacity;
+    }
+
+    public void setSlotStorageCapacity(int slotStorageCapacity) {
+        this.slotStorageCapacity = slotStorageCapacity;
     }
 }

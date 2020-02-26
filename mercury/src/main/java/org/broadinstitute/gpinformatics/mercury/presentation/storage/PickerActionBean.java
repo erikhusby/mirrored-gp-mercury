@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
+package org.broadinstitute.gpinformatics.mercury.presentation.storage;
 
 
 import net.sourceforge.stripes.action.DefaultHandler;
@@ -25,7 +25,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao
 import org.broadinstitute.gpinformatics.mercury.entity.storage.NotInStorageException;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
@@ -33,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -63,8 +63,8 @@ public class PickerActionBean extends CoreActionBean {
 
     private static final Logger logger = Logger.getLogger(PickerActionBean.class.getName());
 
-    public static final String ACTION_BEAN_URL = "/vessel/picker.action";
-    private static final String VIEW_PAGE = "/vessel/create_picker_csv.jsp";
+    public static final String ACTION_BEAN_URL = "/storage/picker.action";
+    private static final String VIEW_PAGE = "/storage/create_picker_csv.jsp";
     private static final String SEARCH_ACTION = "search";
 
     @Inject
@@ -106,7 +106,7 @@ public class PickerActionBean extends CoreActionBean {
         List<String> barcodeList = Arrays.asList(this.barcodes.trim().split("\\s+"));
         Set<String> foundBarcodes = new HashSet<>();
         if (barcodeList.isEmpty()) {
-            addMessage("Barcodes are a required field.");
+            addMessage("Search values are required.");
         } else {
             switch (searchType) {
             case LAB_BATCH:
@@ -126,10 +126,7 @@ public class PickerActionBean extends CoreActionBean {
 
                 Set<LabVessel> startingLabVessels = new HashSet<>();
                 for (LabBatch labBatch: labBatches) {
-                    Set<LabBatchStartingVessel> startingVessels = labBatch.getLabBatchStartingVessels();
-                    for (LabBatchStartingVessel labBatchStartingVessel: startingVessels) {
-                        startingLabVessels.add(labBatchStartingVessel.getLabVessel());
-                    }
+                    startingLabVessels.addAll(labBatch.getNonReworkStartingLabVessels());
                 }
                 if (!messageCollection.hasErrors()) {
                     pickLabVessels(new ArrayList<>(startingLabVessels), messageCollection);
@@ -199,9 +196,16 @@ public class PickerActionBean extends CoreActionBean {
         try {
             configurableList.addRows(searchTerms, searchContext);
             this.resultList = configurableList.getResultList();
-            for (ConfigurableList.ResultRow resultRow : resultList.getResultRows()) {
-                String storageLocation = resultRow.getRenderableCells().get(0);
-                this.storageLocations.add(storageLocation);
+            for(Iterator<ConfigurableList.ResultRow> iter = resultList.getResultRows().iterator(); iter.hasNext(); ) {
+                ConfigurableList.ResultRow resultRow = iter.next();
+                List<String> values = resultRow.getRenderableCells();
+                if( values.get(1).isEmpty() ) {
+                    // No container - not pickable
+                    unpickableBarcodes.add(resultRow.getResultId());
+                    iter.remove();
+                } else {
+                    this.storageLocations.add(values.get(0));
+                }
             }
         } catch (NotInStorageException e) {
             for (String missing: e.getMissingVessels()) {
@@ -275,7 +279,4 @@ public class PickerActionBean extends CoreActionBean {
         this.labBatchDao = labBatchDao;
     }
 
-    public void setBspUserList(BSPUserList bspUserList) {
-        this.bspUserList = bspUserList;
-    }
 }

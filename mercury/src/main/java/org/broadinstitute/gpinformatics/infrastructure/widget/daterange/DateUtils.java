@@ -19,6 +19,8 @@ import java.text.DateFormat;
 import java.text.Format;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
 import java.util.Date;
@@ -600,6 +602,41 @@ public class DateUtils {
      */
     public static boolean happenedRecently(Date first, Date second, long timeInterval) {
         return (first.getTime() + timeInterval) <= second.getTime();
+    }
+
+    /**
+     * Gets the 12:00 AM start of the given number of M-F weekdays in the past, does not count Sat, Sun, or company holidays
+     * @param pastDays The number of M-F workdays before today
+     */
+    public static Date getPastWorkdaysFrom( Date from, int pastDays ) {
+        LocalDateTime startingAt = from.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime()
+                .truncatedTo(ChronoUnit.DAYS);
+        // Edge cases
+        if( pastDays == 0 ) {
+            return Date.from( startingAt.atZone(ZoneId.systemDefault()).toInstant() );
+        } else if ( pastDays < 0 ) {
+            throw new RuntimeException( "Functionality of negative range has not been validated." );
+        }
+
+        // Add 2 days for every full week
+        int fullWeeks = (int)(pastDays / 7 );
+        int partialDays = pastDays - ( fullWeeks * 7 );
+        pastDays = ( fullWeeks * 7 ) + ( fullWeeks * 2 ) + partialDays;
+        LocalDateTime prior = startingAt.minus( pastDays , ChronoUnit.DAYS );
+
+        switch (prior.getDayOfWeek()) {
+            case SUNDAY: // Go to Friday
+                prior = prior.minus( 2 , ChronoUnit.DAYS );
+                break;
+            case SATURDAY: // Go to Friday
+                prior = prior.minus( 1 , ChronoUnit.DAYS );
+                break;
+            default:
+                break;
+        }
+        return Date.from( prior.atZone(ZoneId.systemDefault()).toInstant() );
     }
 
     /**

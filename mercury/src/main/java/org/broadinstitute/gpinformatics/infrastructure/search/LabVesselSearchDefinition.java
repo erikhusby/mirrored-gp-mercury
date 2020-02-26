@@ -39,6 +39,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.AbandonVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
@@ -76,6 +77,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -2028,51 +2030,50 @@ public class LabVesselSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 LabVessel labVessel = (LabVessel) entity;
-                if (labVessel.getStorageLocation() != null) {
-                    // If Barcoded Tube, attempt to find its container by grabbing most recent Storage Check-in event.
-                    if (OrmUtil.proxySafeIsInstance(labVessel, BarcodedTube.class)) {
-                        SortedMap<Date, TubeFormation> sortedMap = new TreeMap<>();
-                        for (LabVessel container : labVessel.getContainers()) {
-                            if (OrmUtil.proxySafeIsInstance(container, TubeFormation.class)) {
-                                TubeFormation tubeFormation = OrmUtil.proxySafeCast(
-                                        container, TubeFormation.class);
-                                for (LabEvent labEvent : tubeFormation.getInPlaceLabEvents()) {
-                                    if (labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_IN) {
-                                        sortedMap.put(labEvent.getEventDate(), tubeFormation);
-                                    }
-                                }
-                            }
-                        }
-                        if (!sortedMap.isEmpty()) {
-                            TubeFormation tubeFormation = sortedMap.get(sortedMap.lastKey());
-                            for (RackOfTubes rackOfTubes : tubeFormation.getRacksOfTubes()) {
-                                if (rackOfTubes.getStorageLocation() != null) {
-                                    if (rackOfTubes.getStorageLocation().equals(labVessel.getStorageLocation())) {
-                                        VesselContainer<BarcodedTube> containerRole = tubeFormation.getContainerRole();
-                                        for (Map.Entry<VesselPosition, BarcodedTube> entry:
-                                                containerRole.getMapPositionToVessel().entrySet()) {
-                                            BarcodedTube value = entry.getValue();
-                                            if (value != null && value.getLabel().equals(labVessel.getLabel())) {
-                                                String locationTrail = rackOfTubes.getStorageLocation().buildLocationTrail();
-                                                locationTrail = locationTrail + ": [" +
-                                                                rackOfTubes.getLabel() + "] : " +
-                                                                entry.getKey().name();
-                                                return locationTrail;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        // On Failure at least return storage location w/o container
-                        return labVessel.getStorageLocation().buildLocationTrail();
-                    } else {
-                        String location = labVessel.getStorageLocation().buildLocationTrail();
-                        location += " [" + labVessel.getLabel() + "]";
-                        return location;
-                    }
+                StorageLocation storageLocation = labVessel.getStorageLocation();
+                if (storageLocation == null) {
+                    // Just die quickly
+                    return null;
                 }
-                return null;
+
+                String locationTrail = storageLocation.buildLocationTrail();
+                if (storageLocation.getLocationType() == StorageLocation.LocationType.LOOSE ) {
+                    return locationTrail;
+                }
+
+                // If Barcoded Tube, attempt to find its container by grabbing most recent Storage Check-in event.
+                if (OrmUtil.proxySafeIsInstance(labVessel, BarcodedTube.class)) {
+                    SortedSet<LabEvent> eventSortedSet = new TreeSet<>(LabEvent.BY_EVENT_DATE);
+                    for (LabVessel container : labVessel.getContainers()) {
+                        if (OrmUtil.proxySafeIsInstance(container, TubeFormation.class)) {
+                            TubeFormation tubeFormation = OrmUtil.proxySafeCast(
+                                    container, TubeFormation.class);
+                            for (LabEvent labEvent : tubeFormation.getInPlaceLabEvents()) {
+                                if (labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_IN) {
+                                    eventSortedSet.add(labEvent);
+                                }
+                            }
+                        }
+                    }
+                    if (eventSortedSet.isEmpty()) {
+                        return locationTrail + ": [(container not checked in)]";
+                    } else {
+                        LabEvent latestCheckIn = eventSortedSet.last();
+                        LabVessel rack = latestCheckIn.getAncillaryInPlaceVessel();
+                        if( rack == null ) {
+                            return locationTrail + ": [(container not registered)]";
+                        } else {
+                            String result = locationTrail + ": [" +
+                                            rack.getLabel() + "] : " +
+                                            latestCheckIn.getInPlaceLabVessel().getContainerRole()
+                                                    .getPositionOfVessel(labVessel);
+                            return result;
+                        }
+                    }
+                } else {
+                    // Static plate or rack
+                    return locationTrail + " [" + labVessel.getLabel() + "]";
+                }
             }
         });
         searchTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {

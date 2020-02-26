@@ -2522,6 +2522,47 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-5728-1" author="jsacco">
+        <addColumn tableName="LAB_EVENT">
+            <column name="STORAGE_LOCATION" type="NUMBER(19,0)"/>
+        </addColumn>
+        <addColumn tableName="LAB_EVENT">
+            <column name="ANCILLARY_IN_PLACE_VESSEL" type="NUMBER(19,0)"/>
+        </addColumn>
+        <createIndex tableName="LAB_EVENT" indexName="IX_EVT_ANC_INPLCE_VESS">
+            <column name="ANCILLARY_IN_PLACE_VESSEL"/>
+        </createIndex>
+        <addForeignKeyConstraint constraintName="FK_EVENT_ANCILLARY_VESSEL"
+                                 baseTableName="LAB_EVENT" baseColumnNames="ANCILLARY_IN_PLACE_VESSEL"
+                                 referencedTableName="LAB_VESSEL" referencedColumnNames="LAB_VESSEL_ID"/>
+        <addColumn tableName="LAB_EVENT_AUD">
+            <column name="STORAGE_LOCATION" type="NUMBER(19,0)"/>
+        </addColumn>
+        <addColumn tableName="LAB_EVENT_AUD">
+            <column name="ANCILLARY_IN_PLACE_VESSEL" type="NUMBER(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-5728-2" author="jsacco">
+        <addColumn tableName="STORAGE_LOCATION">
+            <column name="STORAGE_CAPACITY" type="NUMBER(10,0)" defaultValue="0"/>
+        </addColumn>
+        <addColumn tableName="STORAGE_LOCATION_AUD">
+            <column name="STORAGE_CAPACITY" type="NUMBER(10,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-5728-3" author="jsacco">
+        <sql>
+            UPDATE storage_location
+            SET label = REGEXP_REPLACE( TRIM(label), '([A-Za-z]+) *(\d)', '\1 0\2' )
+            WHERE REGEXP_INSTR( TRIM(label), '^[A-Za-z]+ *\d$' ) > 0;
+
+            UPDATE storage_location
+            SET label = '0' || TRIM(label)
+            WHERE REGEXP_INSTR( TRIM(label), '^\d$' ) > 0;
+
+            COMMIT;
+        </sql>
+    </changeSet>
     <changeSet id="GPLIM-6005-001" author="epolk">
         <dropNotNullConstraint columnName="research_project_id" schemaName="mercury" tableName="manifest_session"/>
     </changeSet>

@@ -1,7 +1,7 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
-                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.PickerActionBean" />
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.storage.PickerActionBean" />
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Create Picker CSV"
                        sectionTitle="Create Picker CSV" showCreate="false">
@@ -42,7 +42,7 @@
                     <div class="controls">
                         <stripes:select name="searchType" id="searchType">
                             <stripes:options-enumeration
-                                    enum="org.broadinstitute.gpinformatics.mercury.presentation.vessel.PickerActionBean.SearchType"
+                                    enum="org.broadinstitute.gpinformatics.mercury.presentation.storage.PickerActionBean.SearchType"
                                     label="displayName"/>
                         </stripes:select>
                     </div>
@@ -87,8 +87,8 @@
                                        downloadColumnSets="${actionBean.downloadColumnSets}"
                                        resultList="${actionBean.resultList}"
                                        action="${ctxpath}/search/ConfigurableSearch.action"
-                                       downloadViewedColumns="False"
-                                       isDbSortAllowed="False"
+                                       downloadViewedColumns="false"
+                                       isDbSortAllowed="false"
                                        dbSortPath=""
                                        dataTable="true"
                                        loadDatatable="false"

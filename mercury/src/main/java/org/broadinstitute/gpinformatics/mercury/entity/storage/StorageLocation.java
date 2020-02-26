@@ -20,13 +20,15 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Stores location of vessels in the lab. Self references to Parent Location allow for deeply
@@ -34,8 +36,8 @@ import java.util.Set;
  */
 @Entity
 @Audited
-@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(name = "U_STORAGE_BARCODE",columnNames = {"BARCODE"}))
-public class StorageLocation {
+@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(name = "U_STORAGE_BARCODE", columnNames = {"BARCODE"}))
+public class StorageLocation implements Comparable<StorageLocation> {
 
     public enum LocationType {
         REFRIGERATOR("Refrigerator", ExpectParentLocation.FALSE),
@@ -44,9 +46,13 @@ public class StorageLocation {
         CABINET("Cabinet", ExpectParentLocation.FALSE),
         SECTION("Section", ExpectParentLocation.TRUE, ExpectSlots.FALSE, Moveable.FALSE, CanCreate.FALSE),
         SHELF("Shelf", ExpectParentLocation.TRUE, CanRename.TRUE),
+        DRAWER("Drawer", ExpectParentLocation.TRUE),
+        RACK("Rack", ExpectParentLocation.TRUE),
         GAUGERACK("Gauge Rack", ExpectParentLocation.TRUE, ExpectSlots.TRUE, Moveable.TRUE, CanRename.TRUE),
         BOX("Box", ExpectParentLocation.TRUE, ExpectSlots.TRUE, Moveable.TRUE, CanRename.TRUE),
-        SLOT("Slot", ExpectParentLocation.TRUE, ExpectSlots.FALSE, Moveable.FALSE, CanCreate.FALSE);
+        SLOT("Slot", ExpectParentLocation.TRUE, ExpectSlots.FALSE, Moveable.FALSE, CanCreate.FALSE),
+        // Special case to collect loose BarcodedTubes (cryo straws, slides) stored outside of any automation container
+        LOOSE("Loose", ExpectParentLocation.TRUE, ExpectSlots.FALSE, Moveable.FALSE, CanCreate.FALSE);
 
         private enum CanCreate {
             TRUE(true),
@@ -167,6 +173,13 @@ public class StorageLocation {
             }
         }
 
+        /**
+         * Getter required for stripes bean logic
+         */
+        public String getName(){
+            return name();
+        }
+
         public String getDisplayName() {
             return displayName;
         }
@@ -227,15 +240,39 @@ public class StorageLocation {
 
     private String barcode;
 
+    private Integer storageCapacity = new Integer(0);
+
+    @Transient
+    private String locationTrail = null;
+
+    /**
+     * Avoid sorting problems and regex replacements of single digit rack and slot locations
+     */
+    @Transient
+    private static Pattern SINGLE_DIGIT_PATTERN = Pattern.compile("([A-Za-z]+ *)(\\d+)");
+
     public StorageLocation() {
     }
 
     public StorageLocation(String label,
                            LocationType locationType,
                            StorageLocation parentStorageLocation) {
-        this.label = label;
+        this.label = normalizeLabel(label);
         this.locationType = locationType;
         this.parentStorageLocation = parentStorageLocation;
+    }
+
+    /**
+     * Change names to 2 digit numerical to avoid sorting on regex throughout application UI. <br/>
+     * e.g. 'Rack 1' saved as 'Rack 01' <br/>
+     * Note: A problem (UI only) if more than 99 named and numbered racks or slots in any location
+     */
+    public static String normalizeLabel(String label) {
+        Matcher matcher = SINGLE_DIGIT_PATTERN.matcher(label);
+        if (matcher.matches()) {
+            return matcher.group(1) + "0" + matcher.group(2);
+        }
+        return label;
     }
 
     public Long getStorageLocationId() {
@@ -251,7 +288,7 @@ public class StorageLocation {
     }
 
     public void setLabel(String label) {
-        this.label = label;
+        this.label = normalizeLabel(label);
     }
 
     public LocationType getLocationType() {
@@ -275,6 +312,12 @@ public class StorageLocation {
         return childrenStorageLocation;
     }
 
+    public List<StorageLocation> getSortedChildLocations() {
+        List<StorageLocation> sortedList = new ArrayList<>(getChildrenStorageLocation());
+        Collections.sort(sortedList);
+        return sortedList;
+    }
+
     public void setChildrenStorageLocation(
             Set<StorageLocation> childrenStorageLocation) {
         this.childrenStorageLocation = childrenStorageLocation;
@@ -296,41 +339,48 @@ public class StorageLocation {
         this.barcode = barcode;
     }
 
+    public Integer getStorageCapacity() {
+        return storageCapacity;
+    }
+
+    public void setStorageCapacity(Integer capacity) {
+        this.storageCapacity = capacity;
+    }
+
+    /**
+     * Uses JPA entities to get hierarchy storage path to a location - requires multiple database round trips
+     *
+     * @see org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocationDao#getLocationTrail(StorageLocation) for single Oracle hierarchy query logic
+     */
     @Transient
     public String buildLocationTrail() {
+        if( this.locationTrail != null ) {
+            return this.locationTrail;
+        }
         String locationTrailString = "";
-        LinkedList<StorageLocation> locationTrail = new LinkedList<>();
-        locationTrail.add(this);
+        LinkedList<StorageLocation> locationTrailList = new LinkedList<>();
+        locationTrailList.add(this);
         StorageLocation parentLocation = getParentStorageLocation();
         while (parentLocation != null) {
-            locationTrail.addFirst(parentLocation);
+            locationTrailList.addFirst(parentLocation);
             parentLocation = parentLocation.getParentStorageLocation();
         }
 
-        for (int i = 0; i < locationTrail.size(); i++) {
-            StorageLocation location = locationTrail.get(i);
+        for (int i = 0; i < locationTrailList.size(); i++) {
+            StorageLocation location = locationTrailList.get(i);
             locationTrailString += location.getLabel();
-            if (i < locationTrail.size() - 1) {
+            if (i < locationTrailList.size() - 1) {
                 locationTrailString += " > ";
             }
         }
-        return locationTrailString;
+        this.locationTrail = locationTrailString;
+        return this.locationTrail;
     }
 
-    public static class StorageLocationLabelComparator
-            implements Comparator<StorageLocation> {
-        @Override
-        public int compare(StorageLocation storageLocation1, StorageLocation storageLocation2) {
-            boolean isNumbered = storageLocation1.getLabel().matches("[A-Za-z]+ \\d+");
-            if (storageLocation1.getLocationType() == LocationType.SLOT &&
-                storageLocation2.getLocationType() == LocationType.SLOT &&
-                isNumbered) {
-                Integer slotNumber = Integer.parseInt(storageLocation1.getLabel().replaceAll("\\D+",""));
-                Integer slot2Number = Integer.parseInt(storageLocation2.getLabel().replaceAll("\\D+",""));
-                return slotNumber.compareTo(slot2Number);
-            }
-            return storageLocation1.getLabel()
-                    .compareTo(storageLocation2.getLabel());
-        }
+    @Override
+    public int compareTo(StorageLocation other) {
+        return this.getLabel()
+                .compareTo(other.getLabel());
     }
+
 }

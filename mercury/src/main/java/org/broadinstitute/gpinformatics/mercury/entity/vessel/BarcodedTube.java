@@ -23,12 +23,15 @@ import java.util.TreeMap;
  */
 public class BarcodedTube extends LabVessel {
 
+    // displayName matches BSP_RECEPTACLE_TYPE.RECEPTACLE_NAME
     public enum BarcodedTubeType implements VesselTypeGeometry {
         AbgeneTube96plugcap065("AbgeneTube96plugcap065", "2D Abgene Tube - 96 per rack format plug cap [0.65mL]"),
         AbgeneTube96screwcap05("AbgeneTube96screwcap05", "2D Abgene Tube - 96 per rack format screw cap [0.5mL]"),
         Aluminum_Pack("Aluminum_Pack", "Aluminum Pack"),
         CBSStraw_03("CBSStraw_03", "CBS Straw [0.3mL]"),
         Cell_Culture_Dish_100mm2("Cell_Culture_Dish_100mm2", "Cell Culture Dish 100mm2"),
+        Cell_Culture_Dish_150mm2("Cell_Culture_Dish_150mm2", "Cell Culture Dish 150mm2"),
+        Cell_Culture_Dish_60mm2("Cell_Culture_Dish_60mm2", "Cell Culture Dish 60mm2"),
         CentriCutieSC_5("CentriCutieSC_5", "CentriCutie Screw cap [5.0mL]"),
         Conical15("Conical15", "Conical [15mL]"),
         Conical50("Conical50", "Conical [50mL]"),
@@ -40,8 +43,10 @@ public class BarcodedTube extends LabVessel {
         Cryovial5048("Cryovial5048", "Cryo vial [5.0 (4.8)mL]"),
         Cryovial010("Cryovial010", "Cryo vial [10.0 (9.8)mL]"),
         Cryovial_GSSR("Cryovial_GSSR", "Cryo vial [GSSR LABEL]"),
-        EppendoffFliptop15("EppendoffFliptop15", "Eppendoff Flip-top [1.5mL]"),
-        EppendorfFliptop15("EppendorfFliptop15", "Eppendoff Flip-top [1.5mL]"),
+        Cryovial_HCMI("Cryovial_HCMI", "Cryo vial [HCMI Label]"),
+        @Deprecated /** TODO Clear up persistent data and usages with misspelled enum and display name and delete this **/
+        EppendoffFliptop15("EppendoffFliptop15", "Eppendof Flip-top [1.5mL]"),
+        EppendorfFliptop15("EppendorfFliptop15", "Eppendorf Flip-top [1.5mL]"),
         EppendorfFliptop15_Gates("EppendorfFliptop15_Gates", "Eppendorf Flip-top [1.5mL] (Gates)"),
         EppendorfFliptop20("EppendorfFliptop20", "Eppendorf Flip-top [2.0mL]"),
         EppendorfScrewcap15("EppendorfScrewcap15", "Eppendorf Screw cap [1.5mL]"),

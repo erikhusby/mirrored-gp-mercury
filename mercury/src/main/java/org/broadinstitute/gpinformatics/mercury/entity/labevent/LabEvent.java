@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -187,6 +188,14 @@ public class LabEvent {
     private LabVessel inPlaceLabVessel;
 
     /**
+     * For tube formation in place vessels, record the associated RackOfTubes at the event point in time
+     */
+    @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
+    @JoinColumn(name = "ANCILLARY_IN_PLACE_VESSEL")
+    @Nullable
+    private LabVessel ancillaryInPlaceVessel;
+
+    /**
      * Required for configurable search nested criteria
      */
     @Column(name = "IN_PLACE_LAB_VESSEL", insertable = false, updatable = false)
@@ -196,10 +205,20 @@ public class LabEvent {
     @Column(name = "LAB_EVENT_TYPE")
     private LabEventType labEventType;
 
-    /** For events that apply to an entire Batch in a Workflow, e.g. add reagent. */
+    /**
+     * For events that apply to an entire Batch in a Workflow, e.g. add reagent.
+     */
     @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
     @JoinColumn(name = "LAB_BATCH")
     private LabBatch labBatch;
+
+    /**
+     * Used to keep track of STORAGE_CHECK_IN and STORAGE_CHECK_OUT locations
+     * TODO JMS Sparsely populated, it might be better if persisted out of line in another table
+     **/
+    @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
+    @JoinColumn(name = "STORAGE_LOCATION")
+    private StorageLocation storageLocation;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinTable(schema = "mercury", name = "le_lab_event_metadatas"
@@ -512,6 +531,21 @@ todo jmt adder methods
         this.inPlaceLabVessel = inPlaceLabVessel;
     }
 
+    /**
+     * Retrieve the RackOfTubes at the point in time of this event
+     */
+    @Nullable
+    public LabVessel getAncillaryInPlaceVessel() {
+        return ancillaryInPlaceVessel;
+    }
+
+    /**
+     * Record the RackOfTubes at the point in time of this event
+     */
+    public void setAncillaryInPlaceVessel( LabVessel ancillaryInPlaceVessel ) {
+        this.ancillaryInPlaceVessel = ancillaryInPlaceVessel;
+    }
+
     public LabEventType getLabEventType() {
         return labEventType;
     }
@@ -528,6 +562,14 @@ todo jmt adder methods
 
     public LabBatch getLabBatch() {
         return labBatch;
+    }
+
+    public StorageLocation getStorageLocation() {
+        return storageLocation;
+    }
+
+    public void setStorageLocation(StorageLocation storageLocation) {
+        this.storageLocation = storageLocation;
     }
 
     public LabBatch getManualOverrideLcSet() {
