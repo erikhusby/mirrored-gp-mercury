@@ -248,6 +248,7 @@ dragen:
       logFilePath: /seq/dragen/log/slurm-%j.out
       sqlldrPath: sqlldr #/opt/oracle/sqlldr
       ctlFolder: /seq/lims/datawh/dev/dragen
+      arraysBucket: gs://broad-gplims-dev/arrays #TODO Get real bucket
 
     QA:
       demultiplexOutputPath:  /seq/illumina/proc/
@@ -262,6 +263,7 @@ dragen:
       logFilePath: /seq/dragen/log/slurm-%j.out
       sqlldrPath: sqlldr
       ctlFolder: /seq/lims/datawh/dev/dragen
+      arraysBucket: gs://broad-gplims-dev/arrays #TODO Get real bucket
 
     PROD:
       demultiplexOutputPath:  /seq/illumina/proc/
@@ -276,6 +278,7 @@ dragen:
       logFilePath: /seq/dragen/log/slurm-%j.out
       sqlldrPath: sqlldr
       ctlFolder: /seq/lims/datawh/prod/dragen
+      arraysBucket: gs://broad-gplims-dev/arrays #TODO Get real bucket
 
 hipchat:
     DEV:

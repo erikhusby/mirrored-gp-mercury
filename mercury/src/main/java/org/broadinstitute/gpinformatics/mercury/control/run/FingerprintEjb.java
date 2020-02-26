@@ -74,10 +74,10 @@ public class FingerprintEjb {
     private ConcordanceCalculator concordanceCalculator;
 
     @Inject
-    private SnpListDao snpListDao;
+    private FingerprintDao fingerprintDao;
 
     @Inject
-    private FingerprintDao fingerprintDao;
+    private SnpListDao snpListDao;
 
     /**
      * Builds a pairwise matrix to display calculated lod scores for each combination of samples

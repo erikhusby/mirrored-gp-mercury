@@ -48,7 +48,7 @@ public class CsvParser {
      * Parses a csv file into a list of beans.
      *
      * @param <T> the type of the bean
-     * @param inputStream the input stream of the csv file to parse
+     * @param br bufferedReader of file to parse
      * @param fieldDelimiter the field delimiter
      * @param beanClass the bean class to map csv records to
      * @param columnNameToBeanMap the mapping from Column Name to field name of the beanClass

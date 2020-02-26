@@ -45,6 +45,19 @@ public class GsUtilTask extends ComputeTask {
         return task;
     }
 
+    /**
+     * Placeholder cp event.
+     */
+    public static GsUtilTask cp() {
+        GsUtilTask task = new GsUtilTask();
+        task.setTaskName("Cp_" + System.currentTimeMillis());
+
+        List<String> cmds = gsUtilParallel();
+        cmds.add("cp");
+        task.setCommandLineArgument(String.join(" ", cmds));
+        return task;
+    }
+
     private static List<String> gsUtilParallel() {
         List<String> cmds = new ArrayList<>();
         // TODO JW Fix path issue

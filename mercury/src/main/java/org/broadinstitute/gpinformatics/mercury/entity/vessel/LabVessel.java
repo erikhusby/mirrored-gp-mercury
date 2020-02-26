@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.search.LabVesselSearchDefinition;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -288,6 +289,9 @@ public abstract class LabVessel implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="STORAGE_LOCATION")
     private StorageLocation storageLocation;
+
+    @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "labVessels")
+    private Set<State> states = new HashSet<>();
 
     @Transient
     private Map<LabMetric.MetricType, Set<LabMetric>> ancestorMetricMap;
@@ -1898,5 +1902,10 @@ public abstract class LabVessel implements Serializable {
             }
         }
         return values.toArray(new String[values.size()]);
+    }
+
+    public void addState(State state) {
+        states.add(state);
+        state.addLabVessel(this);
     }
 }

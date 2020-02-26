@@ -3151,4 +3151,46 @@
                                  baseTableSchemaName="mercury" baseTableName="mercury_control" baseColumnNames="CONCORDANCE_SAMPLE_ID"
                                  referencedTableSchemaName="mercury" referencedTableName="mercury_sample" referencedColumnNames="mercury_sample_id"/>
     </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-6907-1">
+        <createTable schemaName="mercury" tableName="lv_state">
+            <column name="lab_vessel" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="state" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="lv_state" columnNames="lab_vessel, state"/>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-6907-2">
+        <createTable schemaName="mercury" tableName="lv_state_aud">
+            <column name="lab_vessel" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="state" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)" />
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="lv_state_aud" columnNames="rev, lab_vessel, state"/>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-6907-3">
+        <addForeignKeyConstraint baseTableName="lv_state" baseTableSchemaName="mercury" baseColumnNames="state"
+                                 constraintName="fk_lv_state_state"
+                                 referencedTableName="state" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="state_id"/>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-6907-4">
+        <addForeignKeyConstraint baseTableName="lv_state" baseTableSchemaName="mercury" baseColumnNames="lab_vessel"
+                                 constraintName="fk_lv_state_lv"
+                                 referencedTableName="lab_vessel" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="lab_vessel_id"/>
+    </changeSet>
 </databaseChangeLog>

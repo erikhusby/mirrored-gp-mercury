@@ -22,18 +22,21 @@ public class EventHandlerSelector {
     private FlowcellLoadedHandler flowcellLoadedHandler;
     private BspNewRootHandler bspNewRootHandler;
     private CreateLabBatchHandler createLabBatchHandler;
+    private CreateArraysStateMachineHandler createArraysStateMachineHandler;
 
     @Inject
     public EventHandlerSelector(DenatureToDilutionTubeHandler denatureToDilutionTubeHandler,
             FlowcellMessageHandler flowcellMessageHandler,
             FlowcellLoadedHandler flowcellLoadedHandler,
             BspNewRootHandler bspNewRootHandler,
-            CreateLabBatchHandler createLabBatchHandler) {
+            CreateLabBatchHandler createLabBatchHandler,
+            CreateArraysStateMachineHandler createArraysStateMachineHandler) {
         this.denatureToDilutionTubeHandler = denatureToDilutionTubeHandler;
         this.flowcellMessageHandler = flowcellMessageHandler;
         this.flowcellLoadedHandler = flowcellLoadedHandler;
         this.bspNewRootHandler = bspNewRootHandler;
         this.createLabBatchHandler = createLabBatchHandler;
+        this.createArraysStateMachineHandler = createArraysStateMachineHandler;
     }
 
     /**
@@ -70,6 +73,10 @@ public class EventHandlerSelector {
             break;
         case ARRAY_PLATING_DILUTION:
             createLabBatchHandler.handleEvent(targetEvent, stationEvent);
+            break;
+        case INFINIUM_XSTAIN:
+        case INFINIUM_XSTAIN_HD:
+            createArraysStateMachineHandler.handleEvent(targetEvent, stationEvent);
             break;
         }
     }

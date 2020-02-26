@@ -6,6 +6,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.DragenConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.AggregationStateDao;
@@ -25,8 +26,13 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DemultiplexTa
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenFolderUtil;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.FingerprintTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.FingerprintUploadTask;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.GsUtilTask;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.PushIdatsToCloudTask;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.WaitForCustomerFilesTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.WaitForFileTask;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.WaitForIdatTask;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.WaitForInfiniumMetric;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.WaitForReviewTask;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.GsUtilTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AggregationState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AlignmentState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.CrosscheckFingerprintState;
@@ -43,6 +49,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.hsa.AggregationActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.hsa.FingerprintWorkflowActionBean;
@@ -74,6 +83,8 @@ import java.util.stream.Collectors;
 public class FiniteStateMachineFactory {
 
     private static final Log log = LogFactory.getLog(FiniteStateMachineFactory.class);
+
+    public static String ARRAYS_MACHINE_FORMAT = "Arrays_%s";
 
     @Inject
     private DragenConfig dragenConfig;
@@ -492,6 +503,88 @@ public class FiniteStateMachineFactory {
         return finiteStateMachine;
     }
 
+    public FiniteStateMachine findOrCreateArraysStateMachine(StaticPlate staticPlate, VesselPosition vesselPosition) {
+
+        PlateWell chipWell = staticPlate.getContainerRole().getVesselAtPosition(vesselPosition);
+        if (chipWell == null) {
+            chipWell = new PlateWell(staticPlate, vesselPosition);
+            staticPlate.getContainerRole().addContainedVessel(chipWell, vesselPosition);
+        }
+
+        String chipWellBarcode = chipWell.getLabel();
+        String machineName = String.format(ARRAYS_MACHINE_FORMAT, chipWellBarcode);
+        FiniteStateMachine stateMachine = stateMachineDao.findByIdentifier(machineName);
+        if (stateMachine != null && stateMachine.getStatus() != Status.CANCELLED) {
+            return stateMachine;
+        }
+
+        FiniteStateMachine finiteStateMachine = new FiniteStateMachine();
+        finiteStateMachine.setStateMachineName(machineName);
+        finiteStateMachine.setStatus(Status.RUNNING);
+
+        List<State> states = new ArrayList<>();
+        List<Transition> transitions = new ArrayList<>();
+
+        State waitForidats = new GenericState("WaitForIdats", finiteStateMachine);
+        waitForidats.addLabVessels(Collections.singletonList(chipWell));
+        waitForidats.setStartState(true);
+        waitForidats.setAlive(true);
+        waitForidats.addTask(new WaitForIdatTask("WaitingForIdats" + chipWellBarcode));
+        states.add(waitForidats);
+
+        State uploadIdatsState = createIdatUploadTasks(finiteStateMachine, chipWell);
+        states.add(uploadIdatsState);
+
+        Transition waitToUploadTransition = new Transition("IdatCreationToUpload", finiteStateMachine);
+        waitToUploadTransition.setFromState(waitForidats);
+        waitToUploadTransition.setToState( uploadIdatsState);
+        transitions.add(waitToUploadTransition);
+
+        String waitForMetricsName = "WaitForMetrics";
+        GenericState waitForInfiniumState = new GenericState(waitForMetricsName,
+                finiteStateMachine);
+        waitForInfiniumState.addLabVessel(chipWell);
+        WaitForInfiniumMetric waitForInfiniumMetric = new WaitForInfiniumMetric(waitForMetricsName);
+        waitForInfiniumState.addTask(waitForInfiniumMetric);
+        states.add(waitForInfiniumState);
+
+        Transition uploadToWait = new Transition("WaitForMetrics", finiteStateMachine);
+        uploadToWait.setFromState(uploadIdatsState);
+        uploadToWait.setToState( waitForInfiniumState);
+        transitions.add(uploadToWait);
+
+        String waitForReview = "DataReview";
+        GenericState dataReviewState = new GenericState(waitForReview, finiteStateMachine);
+        dataReviewState.addLabVessel(chipWell);
+        WaitForReviewTask waitForReviewTask = new WaitForReviewTask(waitForReview);
+        dataReviewState.addTask(waitForReviewTask);
+        states.add(dataReviewState);
+
+        Transition metricsToReview = new Transition("MetricsToReview", finiteStateMachine);
+        metricsToReview.setFromState(waitForInfiniumState);
+        metricsToReview.setToState(dataReviewState);
+        transitions.add(metricsToReview);
+
+        String waitForCustomerFiles = "WaitForFilesInBucket";
+        GenericState waitForCustomerFilesState = new GenericState(waitForCustomerFiles, finiteStateMachine);
+        waitForCustomerFilesState.addLabVessel(chipWell);
+        WaitForCustomerFilesTask waitForCustomerFilesTask = new WaitForCustomerFilesTask(waitForReview);
+        waitForCustomerFilesState.addTask(waitForCustomerFilesTask);
+        states.add(waitForCustomerFilesState);
+
+        Transition reviewToCustomerFiles = new Transition("MetricsToReview", finiteStateMachine);
+        reviewToCustomerFiles.setFromState(dataReviewState);
+        reviewToCustomerFiles.setToState(waitForCustomerFilesState);
+        transitions.add(reviewToCustomerFiles);
+
+        finiteStateMachine.setStates(states);
+        finiteStateMachine.setTransitions(transitions);
+
+        stateMachineDao.persist(finiteStateMachine);
+        stateMachineDao.flush();
+        return finiteStateMachine;
+    }
+
     public List<FiniteStateMachine> createFingerprintTasks(List<FingerprintWorkflowActionBean.AlignmentDirectoryDto> alignmentDtos) {
         List<String> sampleKeys = alignmentDtos.stream()
                 .map(FingerprintWorkflowActionBean.AlignmentDirectoryDto::getSampleKey)
@@ -582,6 +675,17 @@ public class FiniteStateMachineFactory {
         return fsm;
     }
 
+    public State createIdatUploadTasks(FiniteStateMachine fsm, PlateWell chipWell) {
+        State state = new GenericState("UploadIDats", fsm);
+        state.addLabVessel(chipWell);
+        for (PushIdatsToCloudTask.IdatColor color: PushIdatsToCloudTask.IdatColor.values()) {
+            PushIdatsToCloudTask pushIdatsToCloudTask = new PushIdatsToCloudTask(color);
+            state.addTask(pushIdatsToCloudTask);
+        }
+
+        return state;
+    }
+
     public static boolean writeFile(File f, String content, MessageCollection messageCollection) {
         Writer fw = null;
         try {
@@ -600,5 +704,13 @@ public class FiniteStateMachineFactory {
 
     public void setDragenConfig(DragenConfig dragenConfig) {
         this.dragenConfig = dragenConfig;
+    }
+
+    public void setStateMachineDao(StateMachineDao stateMachineDao) {
+        this.stateMachineDao = stateMachineDao;
+    }
+
+    public StateMachineDao getStateMachineDao() {
+        return stateMachineDao;
     }
 }

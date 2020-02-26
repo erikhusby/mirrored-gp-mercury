@@ -1,13 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.dragen;
 
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.state.TaskResult;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 import java.io.File;
 
 @Entity
@@ -22,6 +19,7 @@ public class WaitForFileTask extends Task {
 
     public WaitForFileTask(File file) {
         this.filePath = file.getPath();
+        setTaskName("WaitFor_" + file.getName());
     }
 
     public String getFilePath() {

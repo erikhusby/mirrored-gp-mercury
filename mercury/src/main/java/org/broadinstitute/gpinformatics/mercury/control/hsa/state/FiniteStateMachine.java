@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.state;
 
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -17,6 +18,8 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Entity
@@ -171,4 +174,13 @@ public class FiniteStateMachine {
         states.remove(state);
         state.setFiniteStateMachine(null);
     }
+
+    public <T extends Task> List<T> fetchAllTasksOfType(Class<T> clazz) {
+        return getStates().stream()
+                .map(state -> state.getTasksOfType(clazz))
+                .flatMap(x -> x == null? null : x.stream())
+                .map(state -> OrmUtil.proxySafeCast(state, clazz))
+                .collect(Collectors.toList());
+    }
+
 }

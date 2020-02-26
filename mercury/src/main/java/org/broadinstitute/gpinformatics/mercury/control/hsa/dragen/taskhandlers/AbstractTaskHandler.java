@@ -1,7 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers;
 
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.WaitForIdatTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerContext;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 
 /**
  * This abstract class defines the makeup of each event handler.

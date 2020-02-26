@@ -34,6 +34,8 @@ public class DragenConfig extends AbstractConfig implements Serializable {
 
     private String ctlFolder;
 
+    private String arraysBucket;
+
     public DragenConfig() {
     }
 
@@ -136,5 +138,13 @@ public class DragenConfig extends AbstractConfig implements Serializable {
 
     public void setCtlFolder(String ctlFolder) {
         this.ctlFolder = ctlFolder;
+    }
+
+    public String getArraysBucket() {
+        return arraysBucket;
+    }
+
+    public void setArraysBucket(String arraysBucket) {
+        this.arraysBucket = arraysBucket;
     }
 }

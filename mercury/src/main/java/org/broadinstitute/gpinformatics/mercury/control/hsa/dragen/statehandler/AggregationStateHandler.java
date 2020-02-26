@@ -87,7 +87,6 @@ public class AggregationStateHandler extends StateHandler<AggregationState> {
 
             for (IlluminaSequencingRunChamber sequencingRunChamber : state.getSequencingRunChambers()) {
                 IlluminaSequencingRun illuminaSequencingRun = sequencingRunChamber.getIlluminaSequencingRun();
-                System.out.println(illuminaSequencingRun.getRunName() + " " + sequencingRunChamber.getLaneNumber());
                 Optional<DemultiplexState> demultiplexStateOpt =
                         sequencingRunChamber.getMostRecentCompleteStateOfType(DemultiplexState.class);
                 DemultiplexState demultiplexState = demultiplexStateOpt.get();
@@ -96,6 +95,7 @@ public class AggregationStateHandler extends StateHandler<AggregationState> {
                 }
                 IlluminaSequencingRun run =
                         demultiplexState.getRunForChamber(sequencingRunChamber);
+                // TODO JW Bcl2Fastq isn't a dragen folder, grab the states task to get output folder
                 DragenFolderUtil dragenFolderUtil = new DragenFolderUtil(dragenConfig, run,
                         demultiplexState.getStateName());
 

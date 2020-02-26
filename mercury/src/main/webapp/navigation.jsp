@@ -438,6 +438,11 @@
                                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.TopOffActionBean"
                                       event="list">Top Offs</stripes:link>
                     </li>
+                    <li>
+                        <stripes:link id="viewArraysReview"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.ArraysDataReviewActionBean"
+                                      event="view">Arrays Review</stripes:link>
+                    </li>
                 </ul>
             </li>
         </ul>

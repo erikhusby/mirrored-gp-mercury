@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.engine;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.StateMachineDao;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.StateManager;
@@ -48,7 +48,7 @@ public class FiniteStateMachineEngine implements Serializable {
         this.context = context;
     }
 
-    public void resumeMachine(FiniteStateMachine stateMachine) {
+    public boolean resumeMachine(FiniteStateMachine stateMachine) {
 
         if (stateMachine.getActiveStates().isEmpty()) {
             throw new RuntimeException("No active states for " + stateMachine);
@@ -58,9 +58,12 @@ public class FiniteStateMachineEngine implements Serializable {
             executeProcessDaoFree(stateMachine);
             stateMachineDao.persist(stateMachine);
             stateMachineDao.flush();
+            return true;
         } catch (Exception e) {
             log.error("Error occurred when resuming state machine " + stateMachine, e);
         }
+
+        return false;
     }
 
     @DaoFree
@@ -69,40 +72,20 @@ public class FiniteStateMachineEngine implements Serializable {
 
             if (state.isStartState() && stateMachine.getDateStarted() == null) {
                 stateMachine.setDateStarted(new Date());
-                if (stateManager.handleOnEnter(state)) {
-                    state.setStartTime(new Date());
-                    for (Task task : state.getTasks()) {
-                        try {
-                            taskManager.fireEvent(task, context);
-                        } catch (Exception e) {
-                            log.error("Error starting machine tasks " + task.getTaskName(), e);
-                            task.setStatus(Status.SUSPENDED);
-                        }
-                    }
-                }
             }
 
             if (state.isStateOnEnter()) {
                 if (stateManager.handleOnEnter(state)) {
                     state.setStartTime(new Date());
                     for (Task task : state.getTasks()) {
-                        try {
-                            taskManager.fireEvent(task, context);
-                        } catch (Exception e) {
-                            log.error("Error firing next task " + task.getTaskName(), e);
-                            task.setStatus(Status.SUSPENDED);
-                        }
+                        fireEventAndCheckStatus(task);
                     }
                 }
             }
 
             log.debug("Checking transitions from " + state);
             for (Task task: state.getActiveTasks()) {
-                Pair<Status, Date> statusDatePair = taskManager.checkTaskStatus(task, context);
-                task.setStatus(statusDatePair.getLeft());
-                if (task.getStatus() == Status.COMPLETE) {
-                    task.setEndTime(statusDatePair.getRight());
-                }
+                taskManager.checkTaskStatus(task, context);
             }
 
             if (state.isMainTasksComplete()) {
@@ -123,26 +106,7 @@ public class FiniteStateMachineEngine implements Serializable {
             }
 
             if (state.isComplete()) {
-                if (stateManager.handleOnExit(state)) {
-                    state.setAlive(false);
-                    state.setEndTime(new Date());
-                    List<Transition> transitionsFromState = stateMachine.getTransitionsFromState(state);
-                    for (Transition transition : transitionsFromState) {
-                        State toState = transition.getToState();
-                        toState.setAlive(true);
-                        if (stateManager.handleOnEnter(toState)) {
-                            toState.setStartTime(new Date());
-                            for (Task task : toState.getTasks()) {
-                                try {
-                                    taskManager.fireEvent(task, context);
-                                } catch (Exception e) {
-                                    log.error("Error firing next task " + task.getTaskName(), e);
-                                    task.setStatus(Status.SUSPENDED);
-                                }
-                            }
-                        }
-                    }
-                }
+                incrementStateMachine(stateMachine, state, new MessageCollection());
             } else {
                 for (Task task: state.getTasksFromStatusList(Arrays.asList(Status.RETRY, Status.REQUEUE))) {
                     try {
@@ -152,10 +116,7 @@ public class FiniteStateMachineEngine implements Serializable {
                                 continue;
                             }
                         }
-                        taskManager.fireEvent(task, context);
-                        if (task.getStatus() == Status.COMPLETE) {
-                            task.setEndTime(new Date());
-                        }
+                        fireEventAndCheckStatus(task);
                     } catch (Exception e) {
                         log.error("Error retrying failed task " + task.getTaskName(), e);
                         task.setStatus(Status.SUSPENDED);
@@ -170,9 +131,63 @@ public class FiniteStateMachineEngine implements Serializable {
         }
     }
 
+    public void incrementStateMachine(FiniteStateMachine stateMachine, MessageCollection messageCollection) {
+        if (stateMachine.getActiveStates().isEmpty()) {
+            throw new RuntimeException("No active states for " + stateMachine);
+        }
+
+        try {
+            for (State state: stateMachine.getActiveStates()) {
+                incrementStateMachine(stateMachine, state, messageCollection);
+            }
+            stateMachineDao.persist(stateMachine);
+            stateMachineDao.flush();
+        } catch (Exception e) {
+            String errMsg = "Error occurred when resuming state machine " + stateMachine;
+            log.error(errMsg, e);
+            messageCollection.addError(errMsg);
+        }
+    }
+
+    private void incrementStateMachine(FiniteStateMachine stateMachine, State state, MessageCollection messageCollection) {
+        if (stateManager.handleOnExit(state)) {
+            state.setAlive(false);
+            state.setEndTime(new Date());
+            List<Transition> transitionsFromState = stateMachine.getTransitionsFromState(state);
+            for (Transition transition : transitionsFromState) {
+                State toState = transition.getToState();
+                toState.setAlive(true);
+                if (stateManager.handleOnEnter(toState)) {
+                    toState.setStartTime(new Date());
+                    for (Task task : toState.getTasks()) {
+                        fireEventAndCheckStatus(task);
+                    }
+                } else {
+                    messageCollection.addError("Failed to enter state " + toState.getStateId());
+                }
+            }
+        } else {
+            messageCollection.addError("Failed to exit state " + state.getStateId());
+        }
+    }
+
+    private void fireEventAndCheckStatus(Task task){
+        try {
+            taskManager.fireEvent(task, context);
+            taskManager.checkTaskStatus(task, context);
+        } catch (Exception e) {
+            log.error("Error firing next task " + task.getTaskName(), e);
+            task.setStatus(Status.SUSPENDED);
+        }
+    }
+
     // For tests only
     public void setTaskManager(TaskManager taskManager) {
         this.taskManager = taskManager;
+    }
+
+    public TaskManager getTaskManager() {
+        return taskManager;
     }
 
     public void setContext(SchedulerContext context) {

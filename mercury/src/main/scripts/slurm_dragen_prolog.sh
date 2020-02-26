@@ -12,9 +12,10 @@ then
     echo "No Reset needed. Continuing with job."
     exit 0
   else
-    echo "dragen requires a reset. Draining node $SLURM_JOB_NODELIST"
-    echo "scontrol update NodeName=$SLURM_JOB_NODELIST State=DRAIN Reason=\"Reset Required\""
-    $(scontrol update NodeName=$SLURM_JOB_NODELIST State=DRAIN Reason='Reset Required')
+    echo "dragen requires a reset: $SLURM_JOB_NODELIST"
+    $(echo "dragen requires a reset: $SLURM_JOB_NODELIST" |   mail -s 'dragen failure' jowalsh@broadinstitute.org)
+    #$(sudo sosreport --batch --tmp-dir /staging/tmp)
+    $(/opt/edico/bin/dragen_reset)
     exit 1
   fi
 fi

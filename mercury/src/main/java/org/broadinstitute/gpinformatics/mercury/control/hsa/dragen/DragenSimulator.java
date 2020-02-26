@@ -54,6 +54,8 @@ public class DragenSimulator implements Dragen {
                 return handleAlignment((AlignmentTask) task);
             } else if (task instanceof AggregationTask) {
                 return handleAggregationTask((AggregationTask) task);
+            } else if (task instanceof PushIdatsToCloudTask) {
+                return new TaskResult(new Random().nextLong(), "Success", 0);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

@@ -72,6 +72,13 @@ public abstract class State {
     @BatchSize(size = 20)
     private Set<IlluminaSequencingRunChamber> sequencingRunChambers = new HashSet<>();
 
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST})
+    @JoinTable(schema = "mercury", name = "lv_state"
+            , joinColumns = {@JoinColumn(name = "STATE")}
+            , inverseJoinColumns = {@JoinColumn(name = "LAB_VESSEL")})
+    @BatchSize(size = 20)
+    private Set<LabVessel> labVessels = new HashSet<>();
+
     private String stateName;
 
     private boolean alive;
@@ -92,6 +99,15 @@ public abstract class State {
         }
         for (IlluminaSequencingRunChamber sequencingRunChamber: sequencingRunChambers) {
             sequencingRunChamber.addState(this);
+        }
+    }
+
+    public State(String stateName, FiniteStateMachine finiteStateMachine, Set<LabVessel> labVessels) {
+        this.stateName = stateName;
+        this.finiteStateMachine = finiteStateMachine;
+
+        for (LabVessel labVessel: labVessels) {
+            labVessel.addState(this);
         }
     }
 
@@ -332,6 +348,24 @@ public abstract class State {
 
     public void removeSample(MercurySample mercurySample) {
         mercurySamples.remove(mercurySample);
+    }
+
+    public Set<LabVessel> getLabVessels() {
+        return labVessels;
+    }
+
+    public void setLabVessels(Set<LabVessel> labVessels) {
+        this.labVessels = labVessels;
+    }
+
+    public void addLabVessel(LabVessel labVessel) {
+        labVessels.add(labVessel);
+    }
+
+    public void addLabVessels(List<LabVessel> labVessels) {
+        for (LabVessel labVessel: labVessels) {
+            labVessel.addState(this);
+        }
     }
 
     public static class StateStartComparator implements Comparator<State> {
