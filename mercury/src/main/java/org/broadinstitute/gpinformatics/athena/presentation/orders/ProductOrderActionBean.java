@@ -1547,6 +1547,25 @@ public class ProductOrderActionBean extends CoreActionBean {
         return new StreamingResolution("text/json", item.toString());
     }
 
+    @HandlesEvent("determinePDOCanChangeQuote")
+    public Resolution determinePDOCanChangeQuote() throws Exception {
+        productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
+        final String changeQuoteResultsKey = "changeQuoteResults";
+        final JSONObject changeOrderResults = new JSONObject();
+        changeOrderResults.put(changeQuoteResultsKey, false);
+        Optional<ProductOrder> order = Optional.ofNullable(productOrderDao.findByBusinessKey(productOrder));
+        order.ifPresent(productOrder1 -> {
+            boolean canChangeQuote = canChangeQuote(productOrder1, productOrder1.getQuoteId(), quoteIdentifier);
+            try {
+                changeOrderResults.put(changeQuoteResultsKey,canChangeQuote);
+            } catch (JSONException e) {
+
+            }
+        });
+
+        return new StreamingResolution("text/json", changeOrderResults.toString());
+    }
+
     @DefaultHandler
     @HandlesEvent(LIST_ACTION)
     public Resolution list() {
