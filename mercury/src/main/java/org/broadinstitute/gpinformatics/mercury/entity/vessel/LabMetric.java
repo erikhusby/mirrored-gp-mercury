@@ -49,6 +49,9 @@ public class LabMetric implements Comparable<LabMetric> {
         GBp("GBp"),
         Bp("Bp"),
         RQS("Rqs"),
+        PERCENTAGE("%"),
+        GENDER("XX/XY"),
+        NUMBER(""),
         UL("uL"),
         NM("nM");
 
@@ -228,6 +231,96 @@ public class LabMetric implements Comparable<LabMetric> {
 
                 return new LabMetricDecision(decision, new Date(), decidingUser, labMetric, decisionNote, needsReview);
             }
+        }),
+
+        // Fingerprinting Metrics
+        FLUIDIGM_FINGERPRINTING("Fluidigm Fingerprinting", false, Category.QUALITY, LabUnit.NUMBER, null),
+        FLUIDIGM_GENDER("Fluidigm Gender", false, Category.PERCENTAGE, LabUnit.GENDER, null),
+        AUTOCALL_CONFIDENCE("Autocall Confidence", false, Category.DNA_LENGTH, LabUnit.NUMBER, null),
+        HAPMAP_CONCORDANCE_LOD("HapMap Concordance LOD", false, Category.QUALITY, LabUnit.NUMBER, new Decider() {
+            @Override
+            public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
+                return new LabMetricDecision(labMetric.getValue().doubleValue() > 3.0 ?
+                        LabMetricDecision.Decision.PASS : LabMetricDecision.Decision.FAIL,
+                        new Date(), decidingUser, labMetric);
+            }
+        }),
+        CALL_RATE_Q17("Q17 Call Rate", false, Category.PERCENTAGE, LabUnit.PERCENTAGE, new Decider() {
+            @Override
+            public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
+                LabMetricDecision.Decision decision = LabMetricDecision.Decision.PASS;
+                if (labMetric.getValue().doubleValue() < 75) {
+                    decision = LabMetricDecision.Decision.FAIL;
+                }
+
+                return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
+            }
+        }),
+        CALL_RATE_Q20("Q20 Call Rate", false, Category.PERCENTAGE, LabUnit.PERCENTAGE, new Decider() {
+            @Override
+            public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
+                LabMetricDecision.Decision decision = LabMetricDecision.Decision.PASS;
+                if (labMetric.getValue().doubleValue() < 75) {
+                    decision = LabMetricDecision.Decision.FAIL;
+                }
+
+                return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
+            }
+        }),
+        ROX_ASSAY_RAW_DATA_COUNT("ROX Assay Raw Data Count", false, Category.NUMBER, LabUnit.NUMBER, new Decider() {
+            @Override
+            public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
+                return null;
+            }
+        }),
+        ROX_SAMPLE_RAW_DATA_COUNT("ROX Sample Raw Data Count", false, Category.NUMBER, LabUnit.NUMBER, new Decider() {
+            @Override
+            public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
+                return null;
+            }
+        }),
+        ROX_SAMPLE_RAW_DATA_MEAN("ROX Sample Raw Data Mean", false, Category.NUMBER, LabUnit.NUMBER, new Decider() {
+            @Override
+            public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
+                return null;
+            }
+        }),
+        ROX_SAMPLE_RAW_DATA_MEDIAN("ROX Sample Raw Data Median", false, Category.NUMBER, LabUnit.NUMBER, new Decider() {
+            @Override
+            public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
+                return null;
+            }
+        }),
+        ROX_SAMPLE_RAW_DATA_STD_DEV("ROX Sample Raw Data Std Dev", false, Category.NUMBER, LabUnit.NUMBER, new Decider() {
+            @Override
+            public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
+                return null;
+            }
+        }),
+
+        ROX_SAMPLE_BKGD_DATA_COUNT("ROX Sample Bkgd Data Count", false, Category.NUMBER, LabUnit.NUMBER, new Decider() {
+            @Override
+            public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
+                return null;
+            }
+        }),
+        ROX_SAMPLE_BKGD_DATA_MEAN("ROX Sample BKGD Data Mean", false, Category.NUMBER, LabUnit.NUMBER, new Decider() {
+            @Override
+            public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
+                return null;
+            }
+        }),
+        ROX_SAMPLE_BKGD_DATA_MEDIAN("ROX Sample BKGD Data Median", false, Category.NUMBER, LabUnit.NUMBER, new Decider() {
+            @Override
+            public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
+                return null;
+            }
+        }),
+        ROX_SAMPLE_BKGD_DATA_STD_DEV("ROX Sample BKGD Data Std Dev", false, Category.NUMBER, LabUnit.NUMBER, new Decider() {
+            @Override
+            public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
+                return null;
+            }
         });
 
         private String displayName;
@@ -292,9 +385,12 @@ public class LabMetric implements Comparable<LabMetric> {
          */
         public enum Category {
             VOLUME,
+            NUMBER,
             CONCENTRATION,
             DNA_LENGTH,
-            QUALITY
+            QUALITY,
+            PERCENTAGE,
+            GENDER
         }
     }
 
@@ -332,8 +428,8 @@ public class LabMetric implements Comparable<LabMetric> {
     @JoinColumn(name = "LAB_VESSEL")
     private LabVessel labVessel;
 
-    //todo jmt convert to enum?
-    private String vesselPosition;
+    @Enumerated(EnumType.STRING)
+    private VesselPosition vesselPosition;
 
     private Date createdDate;
 
@@ -354,7 +450,7 @@ public class LabMetric implements Comparable<LabMetric> {
     protected LabMetric() {
     }
 
-    public LabMetric(BigDecimal value, MetricType metricType, LabUnit labUnit, String vesselPosition,
+    public LabMetric(BigDecimal value, MetricType metricType, LabUnit labUnit, VesselPosition vesselPosition,
                      Date createdDate) {
         this.value = value;
         this.metricType = metricType;
@@ -423,7 +519,7 @@ public class LabMetric implements Comparable<LabMetric> {
         this.labVessel = labVessel;
     }
 
-    public String getVesselPosition() {
+    public VesselPosition getVesselPosition() {
         return vesselPosition;
     }
 
