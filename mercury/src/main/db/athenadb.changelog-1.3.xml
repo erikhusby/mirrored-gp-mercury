@@ -143,4 +143,14 @@
         <modifyDataType tableName="PRODUCT_ORDER_AUD" columnName="count" newDataType="number(14,4)" schemaName="ATHENA" />
     </changeSet>
 
+
+    <changeSet id="GPLIM-6677-1" author="thompson">
+        <sql>
+            <![CDATA[
+            insert into athena.pref_preference(PREFERENCE_ID, USER_ID, PREFERENCE_TYPE, DATA, CREATED_DATE, CREATED_BY)
+            values (athena.seq_preference.nextval, -1, 'CONTRACT_CLIENT_QUEUES',
+            '<nameValuePreferenceDefinition><dataMap><entry><key>MAYO</key><value>DNA_QUANT</value></entry></dataMap></nameValuePreferenceDefinition>', sysdate, -1);
+            ]]>
+        </sql>
+    </changeSet>
 </databaseChangeLog>

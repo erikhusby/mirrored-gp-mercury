@@ -4,24 +4,14 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.storage.NotInStorageException;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 public class PickerVesselPlugin implements ListPlugin {
 
@@ -69,7 +59,7 @@ public class PickerVesselPlugin implements ListPlugin {
         String destinationContainer = "DEST";
         List<String> missingLabVessels = new ArrayList<>();
         for (LabVessel labVessel: labVesselList) {
-            Triple<RackOfTubes, VesselPosition, String> triple = findStorageContainer(labVessel);
+            Triple<RackOfTubes, VesselPosition, String> triple = labVessel.findStorageContainer();
             if (triple == null) {
                 messageCollection.addError("Failed to find in storage: " + labVessel.getLabel());
                 missingLabVessels.add(labVessel.getLabel());
