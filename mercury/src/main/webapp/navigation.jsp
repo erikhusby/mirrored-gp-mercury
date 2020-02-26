@@ -42,6 +42,13 @@
                                           tabindex="=1" event="create">Create</stripes:link>
                         </li>
                     </security:authorizeBlock>
+                    <security:authorizeBlock roles="<%= roles(Developer) %>">
+                        <li>
+                            <stripes:link id="aouPdoConfig"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.AouPdoConfigActionBean"
+                                          tabindex="=1" event="list">AoU PDO Parameters</stripes:link>
+                        </li>
+                    </security:authorizeBlock>
 
                     <security:authorizeBlock roles="<%= roles(Developer, BillingManager, PDM) %>">
                         <li class="divider"></li>

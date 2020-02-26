@@ -465,8 +465,8 @@ public class VesselEjb {
     }
 
     public Triple<LabMetricRun, List<Result>, Map<String, String>> createLunaticRun(InputStream inputStream,
-            String filename, LabMetric.MetricType metricType, Long decidingUser,
-            MessageCollection messageCollection, boolean acceptRePico) {
+                                                                                    String filename, LabMetric.MetricType metricType, Long decidingUser,
+                                                                                    MessageCollection messageCollection, boolean acceptRePico) {
 
         String runName;
         Date runDate;
@@ -559,8 +559,12 @@ public class VesselEjb {
     private LabMetricRun createNexomeStylePicoRun(String runName, Date runDate, LabMetric.MetricType metricType,
             long decidingUser, List<VarioskanPlateProcessor.PlateWellResult> plateWellResults,
             Map<String, StaticPlate> mapBarcodeToPlate, MessageCollection messageCollection) {
+        Map<String, Map<VesselPosition, VesselPosition>> mapPlateToWellMap = new HashMap<>();
         Map<String, Set<LabVessel.VesselEvent>> mapPlateToVesselEvent = new HashMap<>();
         for (StaticPlate staticPlate: mapBarcodeToPlate.values()) {
+            if (mapPlateToWellMap.containsKey(staticPlate.getLabel())) {
+                mapPlateToWellMap.put(staticPlate.getLabel(), new HashMap<>());
+            }
             for (VesselPosition vesselPosition : staticPlate.getVesselGeometry().getVesselPositions()) {
                 List<LabVessel.VesselEvent> ancestors =
                         staticPlate.getContainerRole().getAncestors(vesselPosition);
@@ -598,7 +602,7 @@ public class VesselEjb {
             BigDecimal concValue = plateWellResult.getResult();
 
             LabMetric labMetric = new LabMetric(concValue, metricType, LabMetric.LabUnit.NG_PER_UL,
-                    plateWellResult.getVesselPosition().name(), runDate);
+                    plateWellResult.getVesselPosition(), runDate);
             labMetricRun.addMetric(labMetric);
 
             // Stores the lab metric on the microfluor plate well.
@@ -651,7 +655,7 @@ public class VesselEjb {
             }
             average = MathUtils.scaleTwoDecimalPlaces(average.divide(new BigDecimal(values.size()), HALF_EVEN));
             LabMetric labMetric = new LabMetric(average, metricType, LabMetric.LabUnit.NG_PER_UL,
-                    mapTubeToPosition.get(plateWell).name(), runDate);
+                    mapTubeToPosition.get(plateWell), runDate);
 
             LabMetric.Decider decider = metricType.getDecider();
             LabMetricDecision decision = null;
@@ -898,7 +902,7 @@ public class VesselEjb {
                         multiply(dilutionFactor).divide(sensitivityFactor, HALF_EVEN);
 
                 LabMetric labMetric = new LabMetric(concValue, metricType, LabMetric.LabUnit.NG_PER_UL,
-                        plateWellResult.getVesselPosition().name(), runStarted);
+                        plateWellResult.getVesselPosition(), runStarted);
                 labMetricRun.addMetric(labMetric);
 
                 StaticPlate staticPlate = mapBarcodeToPlate.get(plateWellResult.getPlateBarcode());
@@ -944,7 +948,7 @@ public class VesselEjb {
                     LabMetric mostRecentConcentration = tube.getMostRecentConcentration();
                     BigDecimal quant = mostRecentConcentration != null ? mostRecentConcentration.getValue() : BigDecimal.ZERO;
                     LabMetric labMetric = new LabMetric(quant, metricType, LabMetric.LabUnit.NG_PER_UL,
-                            posEntry.getKey().name(), runStarted);
+                            posEntry.getKey(), runStarted);
                     LabMetricDecision decision = new LabMetricDecision(
                             LabMetricDecision.Decision.REPEAT, new Date(), decidingUser, labMetric, "Not Enough Reads");
                     labMetric.setLabMetricDecision(decision);
@@ -987,7 +991,7 @@ public class VesselEjb {
                     }
 
                     LabMetric labMetric = new LabMetric(quant, metricType, LabMetric.LabUnit.NG_PER_UL,
-                            posEntry.getKey().name(), runStarted);
+                            posEntry.getKey(), runStarted);
                     LabMetricDecision decision = null;
                     LabMetric.Decider decider = metricType.getDecider();
 
@@ -1088,7 +1092,7 @@ public class VesselEjb {
                     multiply(dilutionFactor).divide(sensitivityFactor, HALF_EVEN);
 
             LabMetric labMetric = new LabMetric(concValue, metricType, LabMetric.LabUnit.NG_PER_UL,
-                    plateWellResult.getVesselPosition().name(), runStarted);
+                    plateWellResult.getVesselPosition(), runStarted);
             labMetricRun.addMetric(labMetric);
 
             // Stores the lab metric on the microfluor plate well.
@@ -1133,7 +1137,7 @@ public class VesselEjb {
             }
             average = MathUtils.scaleTwoDecimalPlaces(average.divide(new BigDecimal(values.size()), HALF_EVEN));
             LabMetric labMetric = new LabMetric(average, metricType, LabMetric.LabUnit.NG_PER_UL,
-                    mapTubeToPosition.get(tube).name(), runStarted);
+                    mapTubeToPosition.get(tube), runStarted);
 
             if (tube.getVolume() == null) {
                 messageCollection.addError("No volume for tube " + tube.getLabel());
@@ -1320,7 +1324,7 @@ public class VesselEjb {
             BigDecimal concValue = plateWellResult.getResult().
                     multiply(dilutionFactor).divide(sensitivityFactor, HALF_EVEN);
             LabMetric labMetric = new LabMetric(concValue, metricType, LabMetric.LabUnit.NG_PER_UL,
-                    plateWellResult.getVesselPosition().name(), runStarted);
+                    plateWellResult.getVesselPosition(), runStarted);
             labMetricRun.addMetric(labMetric);
             PlateWell plateWell = staticPlate.getContainerRole().getVesselAtPosition(
                     plateWellResult.getVesselPosition());
@@ -1380,7 +1384,7 @@ public class VesselEjb {
             }
             average = MathUtils.scaleTwoDecimalPlaces(average.divide(new BigDecimal(values.size()), HALF_EVEN));
             LabMetric labMetric = new LabMetric(average, metricType, LabMetric.LabUnit.NG_PER_UL,
-                    mapTubeToPosition.get(tube).name(), runStarted);
+                    mapTubeToPosition.get(tube), runStarted);
 
             if (tube.getVolume() == null) {
                 messageCollection.addError("No volume for tube " + tube.getLabel());
@@ -1532,7 +1536,7 @@ public class VesselEjb {
         for (CaliperPlateProcessor.PlateWellResultMarker plateWellResult : caliperRun.getPlateWellResultMarkers()) {
             StaticPlate staticPlate = mapBarcodeToPlate.get(plateWellResult.getPlateBarcode());
             LabMetric labMetric = new LabMetric(plateWellResult.getResult(), metricType, LabMetric.LabUnit.RQS,
-                    plateWellResult.getVesselPosition().name(), caliperRun.getRunDate());
+                    plateWellResult.getVesselPosition(), caliperRun.getRunDate());
             labMetricRun.addMetric(labMetric);
             PlateWell plateWell = staticPlate.getContainerRole().getVesselAtPosition(
                     plateWellResult.getVesselPosition());
@@ -1557,7 +1561,7 @@ public class VesselEjb {
                     if (sourceTube != null) {
                         LabMetric sourceVesselLabMetric = new LabMetric(plateWellResult.getResult(),
                                 metricType, LabMetric.LabUnit.RQS,
-                                sourcePosition.name(), caliperRun.getRunDate());
+                                sourcePosition, caliperRun.getRunDate());
                         sourceVesselLabMetric.getMetadataSet().add(new Metadata(Metadata.Key.DV_200,
                                 new BigDecimal(plateWellResult.getDv200TotalArea())));
                         sourceVesselLabMetric.getMetadataSet().add(new Metadata(Metadata.Key.LOWER_MARKER_TIME,
@@ -1661,9 +1665,14 @@ public class VesselEjb {
                 continue;
             }
 
+            VesselPosition position = VesselPosition.getByName(libraryBeans.getRackPositionName());
+            // Allow null only if bean value is null
+            if (position == null && libraryBeans.getRackPositionName() != null) {
+                throw new RuntimeException("Unknown position: " + libraryBeans.getRackPositionName());
+            }
 
             LabMetric labMetric = new LabMetric(libraryBeans.getValue(), metricType,
-                    metricType.getLabUnit(), libraryBeans.getRackPositionName(), libraryQuantRun.getRunDate());
+                    metricType.getLabUnit(), position, libraryQuantRun.getRunDate());
             labMetricRun.addMetric(labMetric);
             for (MetricMetadataType metricMetadataType: libraryBeans.getMetadata()) {
                 Metadata.Key metadataKey = Metadata.Key.fromDisplayName(metricMetadataType.getName());
@@ -1747,7 +1756,7 @@ public class VesselEjb {
             }
 
             LabMetric labMetric = new LabMetric(libraryBeans.getConcentration(), metricType, metricType.getLabUnit(),
-                    libraryBeans.getWell(), qpcrRunBean.getRunDate());
+                    vesselPosition, qpcrRunBean.getRunDate());
             labMetricRun.addMetric(labMetric);
             labVessel.addMetric(labMetric);
 

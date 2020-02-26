@@ -42,6 +42,7 @@ public class BillingSessionAccessEjb implements Serializable {
         if (BooleanUtils.isTrue(billingSessionLockStatus.get(billingSessionKey))) {
             throw new BillingException(BillingEjb.LOCKED_SESSION_TEXT);
         }
+        log.info("Setting billing session " + billingSessionKey + " to locked");
         billingSessionLockStatus.put(billingSessionKey, Boolean.TRUE);
         session = billingSessionDao.findByBusinessKey(billingSessionKey);
 
