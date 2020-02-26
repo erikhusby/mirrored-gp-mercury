@@ -126,6 +126,21 @@ public class FingerprintResourceTest extends Arquillian {
     }
 
     /**
+     * Test conversion of lsid of format broad.mit.edu:bsp.prod.sample:QA2A.
+     */
+    @Test
+    public void testRetrieveOldSamples() {
+        try {
+            String queryLsid = "broadinstitute.org:bsp.prod.sample:5VXEP";
+            FingerprintsBean fingerprintsBean = fpWsRoleEjb.call(() ->
+                    fingerprintResource.get(Collections.singletonList(queryLsid)));
+            Assert.assertEquals(fingerprintsBean.getFingerprints().size(), 23);
+        } catch (Exception e) {
+            throw new RuntimeException();
+        }
+    }
+
+    /**
      * DO NOT DISABLE OR QUARANTINE THIS TEST.  It verifies that authentication is required to access the fingerprint
      * web service, which is visible to the outside world.
      */
