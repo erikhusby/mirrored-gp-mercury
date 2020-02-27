@@ -75,7 +75,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -774,7 +774,10 @@ public abstract class LabVessel implements Serializable {
         return totalInPlaceEventsSet;
     }
 
-    private List<LabEvent> getAllEventsSortedByDate() {
+    /**
+     * Get all events for vessel and containers sorted by date ascending
+     */
+    public List<LabEvent> getAllEventsSortedByDate() {
         Map<Date, LabEvent> sortedTreeMap = new TreeMap<>();
         for (LabEvent event : getEvents()) {
             sortedTreeMap.put(event.getEventDate(), event);
@@ -1420,29 +1423,6 @@ public abstract class LabVessel implements Serializable {
             event = eventsList.get(size - 1);
         }
         return event;
-    }
-
-    /**
-     * @return Latest storage lab event - STORAGE_CHECK_IN, STORAGE_CHECK_OUT, or IN_PLACE (rack scan registration) <br/>
-     * (For this vessel and any containers only - no transfer traversal performed)
-     */
-    public LabEvent getLatestStorageEvent() {
-        LabEvent latestEvent = null;
-        Set<LabEvent> eventsList = getInPlaceEventsWithContainers();
-        if( eventsList == null || eventsList.size() == 0 ) {
-            return latestEvent;
-        }
-        Set<LabEvent> sortedTreeSet = new TreeSet<>(LabEvent.BY_EVENT_DATE);
-        for (LabEvent event : getEvents()) {
-            if (event.getLabEventType() == LabEventType.STORAGE_CHECK_IN ||
-                    event.getLabEventType() == LabEventType.STORAGE_CHECK_OUT) {
-                sortedTreeSet.add(event);
-            }
-        }
-        for( LabEvent e : sortedTreeSet ) {
-            latestEvent = e;
-        }
-        return latestEvent;
     }
 
     @SuppressWarnings("unused")

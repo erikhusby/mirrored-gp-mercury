@@ -1,11 +1,15 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.workrequest.kit.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
@@ -16,12 +20,18 @@ import javax.persistence.Enumerated;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * A piece of plastic that holds tubes.  Can be reused to hold different sets of tubes.
@@ -238,20 +248,64 @@ public class RackOfTubes extends LabVessel {
         return ancillaryInPlaceEvents;
     }
 
-    @Override
-    public LabEvent getLatestStorageEvent() {
-        Date latestDate = new Date(0L);
-        LabEvent latestStorageEvent = null;
-        for (LabEvent event : ancillaryInPlaceEvents) {
-            if ((event.getLabEventType() == LabEventType.STORAGE_CHECK_IN
-                    || event.getLabEventType() == LabEventType.STORAGE_CHECK_OUT
-                    || event.getLabEventType() == LabEventType.IN_PLACE)
-                    && event.getEventDate().after(latestDate)
-                    && OrmUtil.proxySafeIsInstance(event.getInPlaceLabVessel(), TubeFormation.class)) {
-                latestDate = event.getEventDate();
-                latestStorageEvent = event;
-            }
+    /**
+     * Get all events and the associated tube layout for this rack sorted by date ascending
+     */
+    public SortedMap<LabEvent, TubeFormation> getRackEventsSortedByDate() {
+        SortedMap<LabEvent, TubeFormation> sortedEvents = new TreeMap<>(LabEvent.BY_EVENT_DATE);
+
+        // In-place events have rack as direct ancillary vessel post GPLIM-6012 and GPLIM-5728
+        // Otherwise, there's no deterministic rack barcode on in-place event for a tube formation
+        getAncillaryInPlaceEvents().stream().forEach((evt)
+                -> sortedEvents.put(evt, OrmUtil.proxySafeCast(evt.getInPlaceLabVessel(), TubeFormation.class)));
+
+        // Get all associated events for the rack's tube formations
+        // Note: May not map back to same rack!
+        for (TubeFormation layout : getTubeFormations()) {
+
+            layout.getTransfersTo().stream().forEach((evt) -> {
+                LabVessel xferRack;
+                for (SectionTransfer xfer : evt.getSectionTransfers()) {
+                    xferRack = xfer.getAncillaryTargetVessel();
+                    if (xferRack != null && xferRack.getLabel().equals(getLabel())) {
+                        sortedEvents.put(evt, layout);
+                        // Only 1 target rack for a SectionTransfer event
+                        break;
+                    }
+                }
+                for (VesselToSectionTransfer xfer : evt.getVesselToSectionTransfers()) {
+                    xferRack = xfer.getAncillaryTargetVessel();
+                    if (xferRack != null && xferRack.getLabel().equals(getLabel())) {
+                        sortedEvents.put(evt, layout);
+                        break;
+                    }
+                }
+                for (CherryPickTransfer xfer : evt.getCherryPickTransfers()) {
+                    xferRack = xfer.getAncillaryTargetVessel();
+                    if (xferRack != null && xferRack.getLabel().equals(getLabel())) {
+                        sortedEvents.put(evt, layout);
+                        break;
+                    }
+                }
+            });
+
+            layout.getTransfersFrom().stream().forEach((evt) -> {
+                LabVessel xferRack;
+                for (SectionTransfer xfer : evt.getSectionTransfers()) {
+                    xferRack = xfer.getAncillarySourceVessel();
+                    if (xferRack != null && xferRack.getLabel().equals(getLabel())) {
+                        sortedEvents.put(evt, layout);
+                        break;
+                    }
+                }
+                for (CherryPickTransfer xfer : evt.getCherryPickTransfers()) {
+                    xferRack = xfer.getAncillarySourceVessel();
+                    if (xferRack != null && xferRack.getLabel().equals(getLabel())) {
+                        sortedEvents.put(evt, layout);
+                    }
+                }
+            });
         }
-        return latestStorageEvent;
+        return sortedEvents;
     }
 }

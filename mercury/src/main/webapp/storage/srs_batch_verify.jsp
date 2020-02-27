@@ -294,7 +294,11 @@
                            onclick="buildConsolidationReport()"> <input type="button" id="rptRegister"
                                                                         class="btn btn-primary"
                                                                         value="Register Transfers"
-                                                                        onclick="registerTransfers()">
+                                                                        onclick="registerTransfers()"> <a
+                        id="pickWorkspace" href="/Mercury/storage/pickWorkspace.action?view="><input type="button"
+                                                                                                     id="btnCancel"
+                                                                                                     class="btn btn-primary"
+                                                                                                     value="Cancel"/></a>
                     <hr/>
                     <ul id="misMatchList"></ul>
                 </div>

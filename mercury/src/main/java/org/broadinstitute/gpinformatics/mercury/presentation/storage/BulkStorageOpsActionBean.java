@@ -491,75 +491,6 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
     }
 
     /**
-     * Need to find the latest in-place or transfer event and associated Tubeformation for a rack after a given date
-     *   (check-in date) to get layout for a bulk check-in <br/>
-     * How much of a leap of faith is it to assume the tube layout was not changed since?
-     */
-    private Pair<LabEvent,LabVessel> getLatestRackEvent(RackOfTubes rack, Date earliestDate ){
-        TreeSet<LabEvent> sortedEvents = new TreeSet<>(LabEvent.BY_EVENT_DATE);
-
-        // Get all associated events for the rack's tube formations
-        for (TubeFormation tubes : rack.getTubeFormations()) {
-            sortedEvents.addAll( tubes.getTransfersTo() );
-            sortedEvents.addAll(tubes.getInPlaceLabEvents());
-            sortedEvents.addAll(tubes.getTransfersFrom());
-        }
-
-        // Prune all earlier events
-        for( Iterator<LabEvent> iter = sortedEvents.iterator(); iter.hasNext(); ) {
-            if( iter.next().getEventDate().before(earliestDate)){
-                iter.remove();
-            }
-        }
-
-        if( sortedEvents.isEmpty() ) {
-            return null;
-        }
-
-        // Use the latest tube formation
-        // Make sure rack (ancillary vessel) associated with the tube formation is the same as being attempted to check in
-        LabEvent latest = null;
-        for( Iterator<LabEvent> iter = sortedEvents.descendingIterator(); iter.hasNext(); ) {
-            latest = iter.next();
-            LabVessel xferRack;
-            if( latest.getAncillaryInPlaceVessel() != null && latest.getAncillaryInPlaceVessel().getLabel().equals(rack.getLabel()) ) {
-                return Pair.of(latest, latest.getInPlaceLabVessel());
-            }
-            for( CherryPickTransfer xfer: latest.getCherryPickTransfers() ) {
-                xferRack = xfer.getAncillaryTargetVessel();
-                if( xferRack != null && xferRack.getLabel().equals(rack.getLabel())) {
-                    return Pair.of(latest, xfer.getTargetVessel());
-                }
-                xferRack = xfer.getAncillarySourceVessel();
-                if( xferRack != null && xferRack.getLabel().equals(rack.getLabel())) {
-                    return Pair.of(latest, xfer.getSourceVessel());
-                }
-            }
-            for( SectionTransfer xfer: latest.getSectionTransfers() ) {
-                xferRack = xfer.getAncillaryTargetVessel();
-                if( xferRack != null && xferRack.getLabel().equals(rack.getLabel())) {
-                    return Pair.of(latest, xfer.getTargetVessel());
-                }
-                xferRack = xfer.getAncillarySourceVessel();
-                if( xferRack != null && xferRack.getLabel().equals(rack.getLabel())) {
-                    return Pair.of(latest, xfer.getSourceVessel());
-                }
-            }
-            // Only valid for target
-            for( VesselToSectionTransfer xfer: latest.getVesselToSectionTransfers() ) {
-                xferRack = xfer.getAncillaryTargetVessel();
-                if( xferRack != null && xferRack.getLabel().equals(rack.getLabel())) {
-                    return Pair.of(latest, xfer.getTargetVessel());
-                }
-            }
-        }
-
-        // Still here?  Fail
-        return null;
-    }
-
-
-    /**
      * Given a list of barcodes forwarded from pick workspace, build a list of statuses
      */
     private void buildVesselsCheckOutStatus() {
@@ -575,11 +506,11 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
                 vesselsCheckOutStatus.put(barcode, "Pending: " + barcode + " - " +  storageLocationDao.getLocationTrail( storageLocation ) );
             } else {
                 // This had better be check-out if not in storage
-                LabEvent checkOutEvent = vessel.getLatestStorageEvent();
-                if( checkOutEvent.getLabEventType() == LabEventType.STORAGE_CHECK_OUT ) {
+                LabEvent checkOutEvent = storageEjb.getLatestStorageEvent(vessel);
+                if (checkOutEvent != null && checkOutEvent.getLabEventType() == LabEventType.STORAGE_CHECK_OUT) {
                     vesselsCheckOutStatus.put(barcode, "N/A: " + barcode + " checked out on " + SimpleDateFormat.getDateInstance().format(checkOutEvent.getEventDate()));
                 } else {
-                    vesselsCheckOutStatus.put(barcode, "N/A: " + barcode + " not in storage (and never checked out)" );
+                    vesselsCheckOutStatus.put(barcode, "N/A: " + barcode + " not in storage (and never checked out)");
                 }
             }
         }
