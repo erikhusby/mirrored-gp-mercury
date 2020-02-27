@@ -4797,8 +4797,8 @@
                 <optional>false</optional>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>384 Well Pond Pico</name>
-                <labEventTypes>THREE_84_WELL_POND_PICO</labEventTypes>
+                <name>Pond Pico</name>
+                <labEventTypes>POND_PICO</labEventTypes>
                 <optional>false</optional>
                 <jiraTransition>
                     <project>LCSET</project>
