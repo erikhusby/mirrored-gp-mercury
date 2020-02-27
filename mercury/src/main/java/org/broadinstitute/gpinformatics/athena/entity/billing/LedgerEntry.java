@@ -105,6 +105,30 @@ public class LedgerEntry implements Serializable {
     @Column(name = "SAP_REPLACEMENT_PRICING")
     private Boolean sapReplacementPricing = Boolean.FALSE;
 
+    public static LedgerEntry cloneLedgerEntryToNewSample(LedgerEntry ledgerToClone, ProductOrderSample newSample) {
+        final LedgerEntry newLedgerEntry;
+        if(ledgerToClone.getProductOrderSample().getProductOrder().hasSapQuote()) {
+            newLedgerEntry =
+                    new LedgerEntry(newSample, ledgerToClone.getProduct(), ledgerToClone.getWorkCompleteDate(),
+                            ledgerToClone.getQuantity());
+        } else {
+            newLedgerEntry = new LedgerEntry(newSample, ledgerToClone.getPriceItem(),
+                    ledgerToClone.getWorkCompleteDate(), ledgerToClone.getQuantity());
+        }
+
+        newLedgerEntry.setAutoLedgerTimestamp(ledgerToClone.autoLedgerTimestamp);
+        newLedgerEntry.setBillingSession(ledgerToClone.billingSession);
+        newLedgerEntry.setBillingMessage(ledgerToClone.billingMessage);
+        newLedgerEntry.setQuoteId(ledgerToClone.quoteId);
+        newLedgerEntry.setPriceItemType(ledgerToClone.priceItemType);
+        newLedgerEntry.setWorkItem(ledgerToClone.workItem);
+        newLedgerEntry.setSapDeliveryDocumentId(ledgerToClone.sapDeliveryDocumentId);
+        newLedgerEntry.setSapOrderDetail(ledgerToClone.sapOrderDetail);
+        newLedgerEntry.setSapReplacementPricing(ledgerToClone.sapReplacementPricing);
+
+        return newLedgerEntry;
+    }
+
     /**
      * Package private constructor for JPA use.
      */
