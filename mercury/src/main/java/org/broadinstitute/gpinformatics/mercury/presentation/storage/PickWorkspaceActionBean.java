@@ -50,6 +50,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
@@ -321,10 +323,11 @@ public class PickWorkspaceActionBean extends CoreActionBean {
         Map<RackOfTubes, TubeFormation> destRacksAndTubes = new HashMap<>();
         hadFailure = buildRacksAndFormations(destinationLayouts, destRacksAndTubes);
         if (hadFailure) {
+            // Die - tubes did not exist
             return new ForwardResolution(UI_PICK_VERIFY);
         }
 
-        // Build racks, formations, and scan events for destinations
+        // Build and persist racks, formations, and scan events for destinations
         int disambiguator = 0;
         Date now = new Date();
         for (Map.Entry<RackOfTubes, TubeFormation> rackAndFormation : destRacksAndTubes.entrySet()) {
@@ -341,28 +344,27 @@ public class PickWorkspaceActionBean extends CoreActionBean {
 
         // Now remove tubes from source racks and register new layout
         Map<RackOfTubes, TubeFormation> srcRacksAndTubes = new HashMap<>();
-        // All Racks
+        // All source racks
         for (PickerDataRow pickerDataRow : pickerDataRows) {
             LabVessel maybeRack = labVesselDao.findByIdentifier(pickerDataRow.sourceVessel);
-            if (OrmUtil.proxySafeIsInstance(maybeRack, LabVessel.class)) {
-                RackOfTubes rack = OrmUtil.proxySafeCast(maybeRack, RackOfTubes.class);
-                srcRacksAndTubes.put(rack, null);
-                if (rack.getStorageLocation() != null) {
-                    // TODO JMS Should probably make it fatal!
-                    addMessage("Rack " + rack.getLabel() + " is not checked out of storage!");
-                }
+            if (OrmUtil.proxySafeIsInstance(maybeRack, RackOfTubes.class)) {
+                srcRacksAndTubes.put(OrmUtil.proxySafeCast(maybeRack, RackOfTubes.class), null);
             }
         }
 
-        // Find tube formations of rack based upon latest storage or scan event
+        // Find tube formations of source racks based upon latest event
         for (Map.Entry<RackOfTubes, TubeFormation> mapEntry : srcRacksAndTubes.entrySet()) {
             RackOfTubes rack = mapEntry.getKey();
-            LabEvent latestStorageEvent = rack.getLatestStorageEvent();
-            if (latestStorageEvent != null) {
-                // In place vessel always a tube formation
-                mapEntry.setValue(OrmUtil.proxySafeCast(latestStorageEvent.getInPlaceLabVessel(), TubeFormation.class));
+            SortedMap<LabEvent, TubeFormation> rackEvents = rack.getRackEventsSortedByDate();
+            if (rackEvents.isEmpty()) {
+                addMessage("No event for source rack " + rack.getLabel() + ", skipping source layout update!");
             } else {
-                addMessage("Rack " + rack.getLabel() + " is not checked out of storage!");
+                LabEvent latest = rackEvents.lastKey();
+                if (storageEjb.isStorageEvent(latest)) {
+                    mapEntry.setValue(rackEvents.get(latest));
+                } else {
+                    addMessage("Last event (" + latest.getLabEventType().getName() + ") for source rack " + rack.getLabel() + " is not storage related, skipping layout update!");
+                }
             }
         }
 
@@ -370,9 +372,7 @@ public class PickWorkspaceActionBean extends CoreActionBean {
         Map<RackOfTubes, Map<VesselPosition, BarcodedTube>> rackLayouts = new HashMap<>();
         for (Map.Entry<RackOfTubes, TubeFormation> mapEntry : srcRacksAndTubes.entrySet()) {
             RackOfTubes rack = mapEntry.getKey();
-            if (mapEntry.getValue() == null) {
-                addMessage("No tube layout found for rack " + rack.getLabel());
-            } else {
+            if (mapEntry.getValue() != null) {
                 rackLayouts.put(rack, new HashMap(mapEntry.getValue().getContainerRole().getMapPositionToVessel()));
             }
         }
@@ -398,7 +398,8 @@ public class PickWorkspaceActionBean extends CoreActionBean {
             addMessage("Registered layout of source rack " + rack.getLabel());
         }
 
-        return new ForwardResolution(UI_DEFAULT);
+        // Reset everything and return to pick workspace
+        return eventInit();
     }
 
     /**
@@ -425,12 +426,11 @@ public class PickWorkspaceActionBean extends CoreActionBean {
                 // Preferably last is a check-out as part of this pick or an old check-in, otherwise, force a scan
                 LabEvent evt = sortedEvents.last();
                 if( evt != null ) {
-                    LabEventType evtType = evt.getLabEventType();
-                    if( evtType == LabEventType.STORAGE_CHECK_IN || evtType == LabEventType.STORAGE_CHECK_OUT ) {
+                    if (storageEjb.isStorageEvent(evt)) {
                         // Something registered layout, use it.  Always a tube formation when ancillary is a rack of tubes
-                        priorTubeLayout = OrmUtil.proxySafeCast( evt.getInPlaceLabVessel(), TubeFormation.class );
-                        newTubeLayout = removePicksFromLayout( priorTubeLayout, row.getPickerVessels() );
-                        racksAndLayouts.put( rack, newTubeLayout );
+                        priorTubeLayout = OrmUtil.proxySafeCast(evt.getInPlaceLabVessel(), TubeFormation.class);
+                        newTubeLayout = removePicksFromLayout(priorTubeLayout, row.getPickerVessels());
+                        racksAndLayouts.put(rack, newTubeLayout);
                         break;
                     }
                 } else {
@@ -691,7 +691,7 @@ public class PickWorkspaceActionBean extends CoreActionBean {
                 pickerDataRow.getPickerVessels().add(pickerVessel);
             } else {
                 // Much uglier - racks and tubes
-                Triple<LabVessel, TubeFormation, LabEvent> vesselStorageData = findVesselAndLocation(batchVessel);
+                Triple<LabVessel, TubeFormation, LabEvent> vesselStorageData = storageEjb.findLatestRackAndLayout(batchVessel);
                 if( vesselStorageData == null ) {
                     continue;
                 }
@@ -726,12 +726,6 @@ public class PickWorkspaceActionBean extends CoreActionBean {
                     if (storedTubeFormation != null) {
                         // Total sample count value - only need to do it once
                         int vesselCount = storedTubeFormation.getContainerRole().getContainedVessels().size();
-                        // Trust latest layout - assumes a checkout was done before a check-in
-                        // for (LabVessel tube : storedTubeFormation.getContainerRole().getContainedVessels()) {
-                        //     if (tube.getStorageLocation() != null && tube.getStorageLocation().getStorageLocationId().equals(storageLocationId)) {
-                        //         vesselCount++;
-                        //     }
-                        // }
                         pickerDataRow.setTotalVesselCount(vesselCount);
                     }
                     containerRows.put(rackOrPlate, pickerDataRow);
@@ -777,7 +771,7 @@ public class PickWorkspaceActionBean extends CoreActionBean {
             pickerDataRow.setStorageLocId( storageLocation.getStorageLocationId() );
             pickerDataRow.setStorageLocPath( storageLocation.buildLocationTrail() );
         } else {
-            LabEvent latestStorageEvent = plate.getLatestStorageEvent();
+            LabEvent latestStorageEvent = storageEjb.getLatestStorageEvent(plate);
             if( latestStorageEvent != null && latestStorageEvent.getLabEventType() == LabEventType.STORAGE_CHECK_OUT ) {
                 storageLocation = latestStorageEvent.getStorageLocation();
                 if( storageLocation != null ) {
@@ -792,65 +786,6 @@ public class PickWorkspaceActionBean extends CoreActionBean {
         }
 
         return pickerDataRow;
-    }
-
-    /**
-     * Find rack and location for a tube
-     */
-    private Triple<LabVessel, TubeFormation, LabEvent> findVesselAndLocation( LabVessel tube ) {
-
-        LabEvent latestCheckInEvent;
-        LabEvent latestCheckOutEvent;
-        LabEvent latestStorageEvent = tube.getLatestStorageEvent();
-        if( latestStorageEvent != null && latestStorageEvent.getLabEventType() == LabEventType.STORAGE_CHECK_OUT ) {
-            latestCheckInEvent = null;
-            latestCheckOutEvent = latestStorageEvent;
-        } else {
-            latestCheckInEvent = latestStorageEvent;
-            latestCheckOutEvent = null;
-        }
-
-        // Most are 1:1 rack to tube formation
-        TubeFormation singleTubeFormation = null;
-        if( latestCheckInEvent != null ) {
-            if( OrmUtil.proxySafeIsInstance(latestCheckInEvent.getInPlaceLabVessel(), TubeFormation.class) ) {
-                singleTubeFormation = OrmUtil.proxySafeCast(latestCheckInEvent.getInPlaceLabVessel(), TubeFormation.class);
-            } else {
-                singleTubeFormation = null;
-            }
-            return Triple.of(latestCheckInEvent.getAncillaryInPlaceVessel(), singleTubeFormation, latestCheckInEvent);
-        } else if( latestCheckOutEvent != null ) {
-            if (OrmUtil.proxySafeIsInstance(latestCheckOutEvent.getInPlaceLabVessel(), TubeFormation.class)) {
-                singleTubeFormation = OrmUtil.proxySafeCast(latestCheckOutEvent.getInPlaceLabVessel(), TubeFormation.class);
-            } else {
-                singleTubeFormation = null;
-            }
-            return Triple.of(latestCheckOutEvent.getAncillaryInPlaceVessel(), singleTubeFormation, latestCheckOutEvent);
-        } else {
-            TreeSet<LabEvent> sortedEvents = new TreeSet<>(LabEvent.BY_EVENT_DATE);
-            // Which event owns which tube formation?
-            Map<LabEvent,TubeFormation> eventTubes = new HashMap<>();
-            for (LabVessel tubeContainer : tube.getContainers() ) {
-                if( OrmUtil.proxySafeIsInstance( tubeContainer, TubeFormation.class ) ) {
-                    TubeFormation formation = OrmUtil.proxySafeCast( tubeContainer, TubeFormation.class );
-                    for( LabEvent evt : formation.getTransfersTo() ) {
-                        sortedEvents.add(evt);
-                        eventTubes.put(evt,formation);
-                    }
-                    for( LabEvent evt : formation.getTransfersFrom() ) {
-                        sortedEvents.add(evt);
-                        eventTubes.put(evt,formation);
-                    }
-                }
-            }
-            if (sortedEvents.size() > 0) {
-                LabEvent latestRackEvent = sortedEvents.last();
-                return Triple.of(latestRackEvent.getAncillaryInPlaceVessel(), OrmUtil.proxySafeCast( latestRackEvent.getInPlaceLabVessel(), TubeFormation.class ), sortedEvents.last());
-            } else {
-                return null;
-            }
-        }
-
     }
 
     public static class BatchSelectionData {

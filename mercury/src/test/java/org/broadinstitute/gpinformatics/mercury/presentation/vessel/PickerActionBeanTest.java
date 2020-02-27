@@ -136,7 +136,7 @@ public class PickerActionBeanTest extends BaseEventTest {
         Assert.assertNotNull(resultList);
         ConfigurableList.ResultRow resultRow = resultList.getResultRows().get(0);
         String freezerLocation = resultRow.getRenderableCells().get(0);
-        Assert.assertEquals("Freezer > Shelf 1[DenatureRack1]", freezerLocation);
+        Assert.assertEquals("Freezer > Shelf 01 [DenatureRack1]", freezerLocation);
         Assert.assertEquals(resultRow.getRenderableCells().get(3), denatureTube2500.getLabel());
     }
 
@@ -148,7 +148,7 @@ public class PickerActionBeanTest extends BaseEventTest {
         Assert.assertNotNull(resultList);
         ConfigurableList.ResultRow resultRow = resultList.getResultRows().get(0);
         String freezerLocation = resultRow.getRenderableCells().get(0);
-        Assert.assertEquals("Freezer > Shelf 1[DenatureRack1]", freezerLocation);
+        Assert.assertEquals("Freezer > Shelf 01 [DenatureRack1]", freezerLocation);
         Assert.assertEquals(resultRow.getRenderableCells().get(3), denatureTube2500.getLabel());
     }
 }
