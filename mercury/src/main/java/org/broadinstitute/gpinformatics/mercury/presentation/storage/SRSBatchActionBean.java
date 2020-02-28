@@ -333,4 +333,11 @@ public class SRSBatchActionBean extends CoreActionBean {
         return labBatch != null && labBatch.getActive();
     }
 
+    public void setDbFreeTestMocks(LabVesselDao labVesselDaoMock,
+                                   LabBatchDao labBatchDaoMock, MercurySampleDao mercurySampleDaoMock) {
+        labVesselDao = labVesselDaoMock;
+        labBatchDao = labBatchDaoMock;
+        mercurySampleDao = mercurySampleDaoMock;
+    }
+
 }

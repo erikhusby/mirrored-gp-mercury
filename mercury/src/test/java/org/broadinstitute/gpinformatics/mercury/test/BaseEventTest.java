@@ -298,6 +298,7 @@ public class BaseEventTest {
             for (MercurySample mercurySample : tube.getMercurySamples()) {
                 if (mapSampleNameToPdoSample.containsKey(mercurySample.getSampleKey())) {
                     mercurySample.addProductOrderSample(mapSampleNameToPdoSample.get(mercurySample.getSampleKey()));
+                    mercurySample.getLabVessel().add(tube);
                 }
             }
         }
