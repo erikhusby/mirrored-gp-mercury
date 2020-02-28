@@ -657,7 +657,7 @@ public enum LabEventType {
             LibraryType.NONE_ASSIGNED),
     DBS_FINAL_TRANSFER("DBSFinalTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP_APPLY_SM_IDS, VolumeConcUpdate.MERCURY_ONLY,
             null, MaterialType.DNA_DNA_GENOMIC, LibraryType.NONE_ASSIGNED),
 
     //Cryovial Blood and Saliva Extraction
@@ -790,7 +790,7 @@ public enum LabEventType {
             LibraryType.NONE_ASSIGNED),
     QIASYMPHONY_CELL_FREE("QiaSymphonyCellFree",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP_APPLY_SM_IDS, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
                     RackOfTubes.RackType.QiasymphonyCarrier24,
                     RackOfTubes.RackType.Matrix96SlotRack14,
@@ -802,7 +802,7 @@ public enum LabEventType {
             MaterialType.DNA_DNA_CELL_FREE, LibraryType.NONE_ASSIGNED, SourceHandling.DEPLETE),
     QIASYMPHONY_GENOMIC("QiaSymphonyGenomic",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP_APPLY_SM_IDS, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
                     RackOfTubes.RackType.QiasymphonyCarrier24,
                     RackOfTubes.RackType.Matrix96SlotRack14,
