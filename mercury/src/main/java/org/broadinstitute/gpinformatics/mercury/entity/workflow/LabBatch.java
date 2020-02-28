@@ -208,7 +208,8 @@ public class LabBatch {
         /**
          * MISEQ FCT Batch
          */
-        MISEQ
+        MISEQ,
+        SRS
     }
 
     @Enumerated(EnumType.STRING)

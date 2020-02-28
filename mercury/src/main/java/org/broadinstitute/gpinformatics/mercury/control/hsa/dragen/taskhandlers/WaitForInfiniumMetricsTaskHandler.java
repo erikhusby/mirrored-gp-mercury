@@ -22,19 +22,14 @@ import java.util.Set;
  * Wait for the metrics for a given chipwell
  */
 @Dependent
-public class WaitForInfiniumMetricsTaskHandler extends AbstractTaskHandler {
+public class WaitForInfiniumMetricsTaskHandler extends AbstractTaskHandler<WaitForInfiniumMetric> {
 
     @Inject
     private ArraysQcDao arraysQcDao;
 
     @Override
-    public void handleTask(Task task, SchedulerContext schedulerContext) {
-        if (!OrmUtil.proxySafeIsInstance(task, WaitForInfiniumMetric.class)) {
-            throw new RuntimeException("Expect only WaitForInfiniumMetric in WaitForInfiniumMetricsTaskHandler");
-        }
-
-        WaitForInfiniumMetric waitForInfiniumMetric = OrmUtil.proxySafeCast(task, WaitForInfiniumMetric.class);
-        LabVessel labVessel = waitForInfiniumMetric.getState().getLabVessels().iterator().next();
+    public void handleTask(WaitForInfiniumMetric task, SchedulerContext schedulerContext) {
+        LabVessel labVessel = task.getState().getLabVessels().iterator().next();
         if (!OrmUtil.proxySafeIsInstance(labVessel, PlateWell.class)) {
             throw new RuntimeException("Expect only chip well's in WaitForIdatTask's");
         }

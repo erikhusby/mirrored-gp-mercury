@@ -126,6 +126,7 @@ public class MayoManifestEjb {
     private static final String TEST_NAME = "manifest test_name";
     private static final List<String> EXPECTED_PDO_PARAMS = ImmutableList.of(OWNER_PARAM, WATCHERS_PARAM,
             RESEARCH_PROJECT_PARAM, PRODUCT_PARAM, QUOTE_PARAM, TEST_NAME);
+    public static final String AOU_ARRAY = "aou_array";
 
     public static final Map<String, CustomFieldDefinition> JIRA_DEFINITION_MAP =
             new HashMap<String, CustomFieldDefinition>() {{

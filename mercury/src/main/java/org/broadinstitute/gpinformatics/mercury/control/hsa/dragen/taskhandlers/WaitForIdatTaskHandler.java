@@ -14,19 +14,14 @@ import javax.inject.Inject;
 import java.io.File;
 
 @Dependent
-public class WaitForIdatTaskHandler extends AbstractTaskHandler {
+public class WaitForIdatTaskHandler extends AbstractTaskHandler<WaitForIdatTask> {
 
     @Inject
     private InfiniumStarterConfig infiniumStarterConfig;
 
     @Override
-    public void handleTask(Task task, SchedulerContext schedulerContext) {
-        if (!OrmUtil.proxySafeIsInstance(task, WaitForIdatTask.class)) {
-            throw new RuntimeException("Expect only WaitForIdatTask in this handler");
-        }
-
-        WaitForIdatTask waitForIdatTask = OrmUtil.proxySafeCast(task, WaitForIdatTask.class);
-        LabVessel labVessel = waitForIdatTask.getState().getLabVessels().iterator().next();
+    public void handleTask(WaitForIdatTask task, SchedulerContext schedulerContext) {
+        LabVessel labVessel = task.getState().getLabVessels().iterator().next();
         if (!OrmUtil.proxySafeIsInstance(labVessel, PlateWell.class)) {
             throw new RuntimeException("Expect only chip well's in WaitForIdatTask's");
         }
