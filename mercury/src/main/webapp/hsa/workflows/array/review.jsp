@@ -31,6 +31,9 @@
                         {sortable: true, "sClass": "nowrap"},
                         {sortable: true, "sClass": "nowrap"},
                         {sortable: true, "sClass": "nowrap"},
+                        {sortable: true, "sClass": "nowrap"},
+                        {sortable: true, "sClass": "nowrap"},
+                        {sortable: true, "sClass": "nowrap"},
                     ],
                 });
 
@@ -46,24 +49,37 @@
                 $j( "#decision" ).change(function() {
                     let decision = $(this).val();
                     switch (decision) {
-                        case "ReadyToDeliver":
+                        case "READY_TO_DELIVER":
                             hideBucketFields();
                             break;
-                        case "Rework":
+                        case "REWORK":
                             $j(".bucketGroup").show();
+                            if ($j("#rework-reason-value").val() === 'Other...') {
+                                $j("#rework-reason-user-value").show();
+                            } else {
+                                $j("#rework-reason-user-value").hide();
+                            }
                             break;
+                    }
+                });
+
+                $j("#rework-reason-value").change(function () {
+                    if (this.value === 'Other...') {
+                        $j("#rework-reason-user-value").show();
+                    } else {
+                        $j("#rework-reason-user-value").hide();
                     }
                 });
 
                 includeAdvancedFilter(reviewTable, "#reviewTable");
 
-                hideBucketFields();
+                $j( "#decision" ).change();
             });
         </script>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
-        <stripes:form beanclass="${actionBean.class.name}" id="searchForm">
+        <stripes:form beanclass="${actionBean.class.name}" class="form-horizontal" id="searchForm">
             <table id="reviewTable" class="table simple">
                 <thead>
                 <tr>
@@ -72,11 +88,14 @@
                         <span id="count" class="reviewTable-checkedCount"></span>
                     </th>
                     <th>PDO Sample Name</th>
+                    <th>PDO</th>
                     <th>Chip Well Barcode</th>
                     <th>Call Rate</th>
                     <th>Contamination</th>
                     <th>% Het</th>
                     <th>HapMap Concordance</th>
+                    <th>Gender Concordance</th>
+                    <th>Try Count</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -90,21 +109,29 @@
                         <td>${dto.pdoSampleName}
                             <stripes:hidden name="metricsDtos[${status.index}].pdoSampleName" value="${dto.pdoSampleName}"/>
                         </td>
+                        <td>${dto.productOrder}
+                            <stripes:hidden name="metricsDtos[${status.index}].productOrder" value="${dto.productOrder}"/>
+                        </td>
                         <td>${dto.chipWellBarcode}
                             <stripes:hidden name="metricsDtos[${status.index}].chipWellBarcode" value="${dto.chipWellBarcode}"/>
                         </td>
                         <td>${dto.callRate}
                             <stripes:hidden name="metricsDtos[${status.index}].callRate" value="${dto.callRate}"/>
                         </td>
-                        <td>
-                                ${dto.contamination}
-                                <stripes:hidden name="metricsDtos[${status.index}].contamination" value="${dto.contamination}"/>
+                        <td>${dto.contamination}
+                            <stripes:hidden name="metricsDtos[${status.index}].contamination" value="${dto.contamination}"/>
                         </td>
                         <td>${dto.hetPct}
                             <stripes:hidden name="metricsDtos[${status.index}].hetPct" value="${dto.hetPct}"/>
                         </td>
                         <td>${dto.hapMapConcordance}
                             <stripes:hidden name="metricsDtos[${status.index}].hapMapConcordance" value="${dto.hapMapConcordance}"/>
+                        </td>
+                        <td>${dto.genderConcordance}
+                            <stripes:hidden name="metricsDtos[${status.index}].genderConcordance" value="${dto.genderConcordance}"/>
+                        </td>
+                        <td>${dto.tryCount}
+                            <stripes:hidden name="metricsDtos[${status.index}].tryCount" value="${dto.tryCount}"/>
                         </td>
                     </tr>
                 </c:forEach>
@@ -120,16 +147,16 @@
                 </div>
             </div>
             <div class="control-group bucketGroup">
-                <stripes:label for="bucketDefName" class="control-label">
-                    Bucket Name
+                <stripes:label for="reworkReason" class="control-label" id="rework-reason-label">
+                    Reason for Rework
                 </stripes:label>
                 <div class="controls">
-
-                    <select id="bucketDefName" name="bucketDefName">
-                        <c:forEach items="${actionBean.buckets}" var="bucket">
-                            <option>${bucket.name}</option>
-                        </c:forEach>
-                    </select>
+                    <stripes:select name="reworkReason" id="rework-reason-value">
+                        <stripes:options-collection collection="${actionBean.getAllReworkReasons()}"
+                                                    value="reason" label="reason"/>
+                        <stripes:option label="Other..." value="Other..."/>
+                    </stripes:select>
+                    <stripes:text name="userReworkReason" id="rework-reason-user-value"/>
                 </div>
             </div>
             <div class="control-group bucketGroup">

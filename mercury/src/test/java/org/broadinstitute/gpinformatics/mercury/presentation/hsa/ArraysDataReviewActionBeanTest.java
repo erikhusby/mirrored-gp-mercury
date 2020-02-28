@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarte
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemOfRecord;
+import org.broadinstitute.gpinformatics.mercury.boundary.manifest.MayoManifestEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.StateMachineDao;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.PushIdatsToCloudTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.StateManager;
@@ -27,6 +28,7 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMac
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.CreateArraysStateMachineHandler;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -46,6 +48,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -103,6 +106,19 @@ public class ArraysDataReviewActionBeanTest extends BaseEventTest {
         handler.handleEvent(infiniumEntityBuilder.getxStainEvents().iterator().next(), null);
 
         List<FiniteStateMachine> finiteStateMachines = valueCapture.getAllValues();
+        Assert.assertNotNull(finiteStateMachines);
+        Assert.assertEquals(finiteStateMachines.size(), 0);
+
+        // Add AoU metadata and retry
+        for (BarcodedTube barcodedTube: mapBarcodeToTube.values()) {
+            for (MercurySample mercurySample: barcodedTube.getMercurySamples()) {
+                Metadata metadata = new Metadata(Metadata.Key.PRODUCT_TYPE, MayoManifestEjb.AOU_ARRAY);
+                mercurySample.addMetadata(Collections.singleton(metadata));
+            }
+        }
+
+        handler.handleEvent(infiniumEntityBuilder.getxStainEvents().iterator().next(), null);
+        finiteStateMachines = valueCapture.getAllValues();
         Assert.assertNotNull(finiteStateMachines);
         Assert.assertEquals(finiteStateMachines.size(), 24);
 
@@ -187,9 +203,9 @@ public class ArraysDataReviewActionBeanTest extends BaseEventTest {
 
         LabVessel chipWell = task.getState().getLabVessels().iterator().next();
         String chipBarcode = ((PlateWell)chipWell).getPlate().getLabel();
-        String label = chipWell.getLabel();
-        String red = String.format("%s_%s_Red.idat", chipBarcode, label);
-        String green = String.format("%s_%s_Grn.idat", chipBarcode, label);
+        String vesselPosition = ((PlateWell) chipWell).getVesselPosition().name();
+        String red = String.format("%s_%s_Red.idat", chipBarcode, vesselPosition);
+        String green = String.format("%s_%s_Grn.idat", chipBarcode, vesselPosition);
         File dataFolder = new File(infiniumConfig.getDataPath());
         File chipFolder = new File(dataFolder, chipBarcode);
         chipFolder.mkdir();

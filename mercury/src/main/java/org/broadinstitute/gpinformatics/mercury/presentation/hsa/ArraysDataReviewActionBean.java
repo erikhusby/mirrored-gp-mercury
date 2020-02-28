@@ -1,12 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.hsa;
 
-import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
-import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -25,45 +23,43 @@ import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcContamination;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcGtConcordance;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
-import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
-import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselArrayMetricPlugin;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.ControlEjb;
-import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.ReworkReasonDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.WaitForReviewTaskDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.WaitForCustomerFilesTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.WaitForReviewTask;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.FiniteStateMachineEngine;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.FiniteStateMachineEngine;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkReason;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static org.broadinstitute.gpinformatics.mercury.presentation.workflow.AddReworkActionBean.OTHER_REASON_REFERENCE;
 
 @UrlBinding(ArraysDataReviewActionBean.ACTION_BEAN_URL)
 public class ArraysDataReviewActionBean extends CoreActionBean {
@@ -73,6 +69,7 @@ public class ArraysDataReviewActionBean extends CoreActionBean {
     public static final String REVIEW_PAGE = "/hsa/workflows/array/review.jsp";
     public static final String ACTION_BEAN_URL = "/hsa/workflows/array_review.action";
     public static final String DECIDE_ACTION = "decide";
+    private static final String INFINIUM_BUCKET = "Infinium Bucket";
 
     @Inject
     private WaitForReviewTaskDao waitForReviewTaskDao;
@@ -93,13 +90,7 @@ public class ArraysDataReviewActionBean extends CoreActionBean {
     private MercurySampleDao mercurySampleDao;
 
     @Inject
-    private BucketDao bucketDao;
-
-    @Inject
     private ProductOrderDao productOrderDao;
-
-    @Inject
-    private WorkflowConfig workflowConfig;
 
     @Inject
     private FiniteStateMachineEngine finiteStateMachineEngine;
@@ -107,17 +98,20 @@ public class ArraysDataReviewActionBean extends CoreActionBean {
     @Inject
     private ControlEjb controlEjb;
 
+    @Inject
+    private ReworkReasonDao reworkReasonDao;
+
     private List<MetricsDto> metricsDtos = new ArrayList<>();
 
     private List<String> selectedSamples = new ArrayList<>();
 
     private ArraysReviewDecision decision;
 
+    private String reworkReason;
+
     private String commentText;
 
-    private String bucketDefName;
-
-    private List<WorkflowBucketDef> buckets = new ArrayList<>();
+    private String userReworkReason;
 
     private MessageCollection messageCollection = new MessageCollection();
 
@@ -141,8 +135,6 @@ public class ArraysDataReviewActionBean extends CoreActionBean {
             PlateWell plateWell = OrmUtil.proxySafeCast(labVessel, PlateWell.class);
             createDto(plateWell, mapChipWellToMetric.get(toChipWell(plateWell.getLabel())));
         }
-
-        initBuckets();
 
         // Lookup controls
         Map<String, MetricsDto> mapSampleToMetric = metricsDtos.stream()
@@ -170,29 +162,23 @@ public class ArraysDataReviewActionBean extends CoreActionBean {
     @ValidationMethod(on = DECIDE_ACTION)
     public void validateSamplesSelected() {
         if (selectedSamples.isEmpty()) {
-            addValidationError("selectedSamples", "Please select a sample.");
+            addValidationError("selectedSamples", "Must select at least one sample.");
         }
-    }
 
-    private void initBuckets() {
-        Set<String> bucketNames = new HashSet<>();
-        for (ProductWorkflowDef workflowDef : workflowConfig.getProductWorkflowDefs()) {
-            ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
-            for (WorkflowBucketDef workflowBucketDef : workflowVersion.getBuckets()) {
-                if (bucketNames.add(workflowBucketDef.getName())) {
-                    buckets.add(workflowBucketDef);
+        if (decision == ArraysReviewDecision.REWORK) {
+            if (reworkReason == null) {
+                addValidationError("reworkReason", "A reason is required for rework vessels");
+            } else {
+                if (reworkReason.equals(OTHER_REASON_REFERENCE) && StringUtils.isBlank(userReworkReason)) {
+                    addValidationError("reworkReason",
+                            "When choosing 'Other...' for a reason, you must enter an alternate reason");
                 }
             }
-        }
-        // Set the initial bucket to the first one found.
-        if (!buckets.isEmpty()) {
-            bucketDefName = buckets.iterator().next().getName();
-        }
-    }
 
-    @After(on = DECIDE_ACTION, stages = LifecycleStage.EventHandling)
-    public void after() {
-        initBuckets();
+            if (StringUtils.isEmpty(commentText)) {
+                addValidationError("commentText", "A Comment is required for rework vessels");
+            }
+        }
     }
 
     @HandlesEvent(DECIDE_ACTION)
@@ -213,7 +199,7 @@ public class ArraysDataReviewActionBean extends CoreActionBean {
             }
         }
 
-        if (decision == ArraysReviewDecision.ReadyToDeliver) {
+        if (decision == ArraysReviewDecision.READY_TO_DELIVER) {
             for (Map.Entry<String, WaitForReviewTask> entry: mapSampleToTask.entrySet()) {
                 WaitForReviewTask task = entry.getValue();
                 String sampleKey = entry.getKey();
@@ -232,7 +218,6 @@ public class ArraysDataReviewActionBean extends CoreActionBean {
             addMessages(messageCollection);
             return new ForwardResolution(REVIEW_PAGE);
         }
-        String reworkReason = "Other..."; // TODO JW
         List<ReworkEjb.BucketCandidate> bucketCandidates = new ArrayList<>();
 
         Map<String, MercurySample> mapNameToSample =
@@ -258,7 +243,7 @@ public class ArraysDataReviewActionBean extends CoreActionBean {
 
         try {
             Collection<String> validationMessages = reworkEjb.addAndValidateCandidates(bucketCandidates,
-                    reworkReason, commentText, getUserBean().getLoginUserName(), getBucketDefName());
+                    reworkReason, commentText, getUserBean().getLoginUserName(), "");
 
             if (CollectionUtils.isNotEmpty(validationMessages)) {
                 for (String validationMessage : validationMessages) {
@@ -266,7 +251,7 @@ public class ArraysDataReviewActionBean extends CoreActionBean {
                 }
             } else {
                 // TODO Cancel the machine or restart?
-                addMessage("{0} vessel(s) have been added to the {1} bucket.", bucketCandidates.size(), getBucketDefName());
+                addMessage("{0} vessel(s) have been added to the {1} bucket.", bucketCandidates.size(), INFINIUM_BUCKET);
             }
 
         } catch (ValidationException e) {
@@ -310,6 +295,8 @@ public class ArraysDataReviewActionBean extends CoreActionBean {
                 value = ColumnValueType.TWO_PLACE_DECIMAL.format(qcContamination.getPctMix().multiply(BigDecimal.valueOf(100)), "");
                 dto.setContamination(value);
             }
+
+            dto.setGenderConcordance(arraysQc.getGenderConcordancePf());
         }
 
         SampleInstanceV2 sampleInstance = plateWell.getSampleInstancesV2().iterator().next();
@@ -320,20 +307,21 @@ public class ArraysDataReviewActionBean extends CoreActionBean {
         if (dto.getProductOrderSample() != null) {
             dto.setPdoSampleName(dto.getProductOrderSample().getSampleKey());
         }
+        LabVessel labVessel = dto.getProductOrderSample().getMercurySample().getLabVessel().iterator().next();
+        dto.setTryCount(calculateTryCount(labVessel));
         metricsDtos.add(dto);
     }
 
+    public int calculateTryCount(LabVessel labVessel) {
+        System.out.println(labVessel.getLabel());
+        TransferTraverserCriteria.VesselForEventTypeCriteria eventTypeCriteria
+                = new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(LabEventType.INFINIUM_HYBRIDIZATION), true);
+        labVessel.evaluateCriteria(eventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+        return eventTypeCriteria.getVesselsForLabEventType().size() - 1;
+    }
 
-    private Control evaluateAsControl(SampleData sampleData) {
-        List<Control> controls = controlDao.findAllActive();
-        Control processControl = null;
-        for (Control control : controls) {
-            if (control.getCollaboratorParticipantId().equals(sampleData.getCollaboratorParticipantId())) {
-                processControl = control;
-                break;
-            }
-        }
-        return processControl;
+    public List<ReworkReason> getAllReworkReasons() {
+        return reworkReasonDao.findAll();
     }
 
     public List<MetricsDto> getMetricsDtos() {
@@ -368,20 +356,20 @@ public class ArraysDataReviewActionBean extends CoreActionBean {
         this.commentText = commentText;
     }
 
-    public String getBucketDefName() {
-        return bucketDefName;
+    public String getReworkReason() {
+        return reworkReason;
     }
 
-    public void setBucketDefName(String bucketDefName) {
-        this.bucketDefName = bucketDefName;
+    public void setReworkReason(String reworkReason) {
+        this.reworkReason = reworkReason;
     }
 
-    public List<WorkflowBucketDef> getBuckets() {
-        return buckets;
+    public String getUserReworkReason() {
+        return userReworkReason;
     }
 
-    public void setBuckets(List<WorkflowBucketDef> buckets) {
-        this.buckets = buckets;
+    public void setUserReworkReason(String userReworkReason) {
+        this.userReworkReason = userReworkReason;
     }
 
     public static class MetricsDto {
@@ -395,6 +383,8 @@ public class ArraysDataReviewActionBean extends CoreActionBean {
         private String nearestSampleName;
         private String productOrder;
         private String chipWellBarcode;
+        private String genderConcordance;
+        private int tryCount;
 
         public MetricsDto() {
         }
@@ -478,11 +468,27 @@ public class ArraysDataReviewActionBean extends CoreActionBean {
         public void setChipWellBarcode(String chipWellBarcode) {
             this.chipWellBarcode = chipWellBarcode;
         }
+
+        public String getGenderConcordance() {
+            return genderConcordance;
+        }
+
+        public void setGenderConcordance(String genderConcordance) {
+            this.genderConcordance = genderConcordance;
+        }
+
+        public int getTryCount() {
+            return tryCount;
+        }
+
+        public void setTryCount(int tryCount) {
+            this.tryCount = tryCount;
+        }
     }
 
     public enum ArraysReviewDecision implements Displayable {
-        ReadyToDeliver("Ready For Delivery"),
-        Rework("Rework");
+        READY_TO_DELIVER("Ready For Delivery"),
+        REWORK("Rework");
 
         private String displayName;
 

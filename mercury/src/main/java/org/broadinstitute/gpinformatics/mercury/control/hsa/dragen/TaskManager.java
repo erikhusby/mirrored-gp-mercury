@@ -57,7 +57,7 @@ public class TaskManager {
         task.setQueuedTime(new Date());
         if (OrmUtil.proxySafeIsInstance(task, ProcessTask.class)) {
             if (OrmUtil.proxySafeIsInstance(task, PushIdatsToCloudTask.class)) {
-                pushIdatsToCloudHandler.handleTask(task, schedulerContext);
+                pushIdatsToCloudHandler.handleTask(OrmUtil.proxySafeCast(task, PushIdatsToCloudTask.class), schedulerContext);
             }
             handleStartProcess(task, schedulerContext);
             Thread.sleep(1000L); // Slurm Docs recommend a slight delay between job creation
@@ -113,14 +113,14 @@ public class TaskManager {
             Date endTime = file.exists() ? new Date(file.lastModified()) : null;
             statusDatepair = Pair.of(status, endTime);
         } if (OrmUtil.proxySafeIsInstance(task, WaitForInfiniumMetric.class)) {
-            waitForInfiniumMetricsTaskHandler.handleTask(task, schedulerContext);
+            waitForInfiniumMetricsTaskHandler.handleTask(OrmUtil.proxySafeCast(task, WaitForInfiniumMetric.class), schedulerContext);
             if (task.isComplete()) {
                 statusDatepair = Pair.of(Status.COMPLETE, new Date());
             } else {
                 statusDatepair = Pair.of(task.getStatus(), null);
             }
         } else if (OrmUtil.proxySafeIsInstance(task, WaitForIdatTask.class)) {
-            waitForIdatTaskHandler.handleTask(task, schedulerContext);
+            waitForIdatTaskHandler.handleTask(OrmUtil.proxySafeCast(task, WaitForIdatTask.class), schedulerContext);
             if (task.isComplete()) {
                 statusDatepair = Pair.of(Status.COMPLETE, new Date());
             } else {

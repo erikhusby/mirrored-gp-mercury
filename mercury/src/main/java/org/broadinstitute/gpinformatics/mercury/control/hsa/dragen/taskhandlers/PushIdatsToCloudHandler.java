@@ -16,7 +16,7 @@ import java.io.File;
 import java.util.Set;
 
 @Dependent
-public class PushIdatsToCloudHandler extends AbstractTaskHandler {
+public class PushIdatsToCloudHandler extends AbstractTaskHandler<PushIdatsToCloudTask> {
 
     @Inject
     private InfiniumStarterConfig infiniumStarterConfig;
@@ -25,7 +25,7 @@ public class PushIdatsToCloudHandler extends AbstractTaskHandler {
     private DragenConfig dragenConfig;
 
     @Override
-    public void handleTask(Task task, SchedulerContext schedulerContext) {
+    public void handleTask(PushIdatsToCloudTask task, SchedulerContext schedulerContext) {
         Set<LabVessel> labVessels = task.getState().getLabVessels();
         if (labVessels == null || labVessels.size() != 1) {
             throw new RuntimeException("Expect a single plate well to upload.");
@@ -35,9 +35,6 @@ public class PushIdatsToCloudHandler extends AbstractTaskHandler {
             throw new RuntimeException("Expect a plate well.");
         }
 
-        if (!OrmUtil.proxySafeIsInstance(task, PushIdatsToCloudTask.class)) {
-            throw new RuntimeException("Expect only PushIdatsToCloudTask's");
-        }
         PlateWell chipWell = OrmUtil.proxySafeCast(labVessel, PlateWell.class);
         PushIdatsToCloudTask pushIdatsToCloudTask = OrmUtil.proxySafeCast(task, PushIdatsToCloudTask.class);
         String color = pushIdatsToCloudTask.getIdatColor();
