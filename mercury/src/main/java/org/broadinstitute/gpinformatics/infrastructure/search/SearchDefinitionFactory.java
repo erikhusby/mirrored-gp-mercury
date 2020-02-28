@@ -117,7 +117,7 @@ public class SearchDefinitionFactory {
         //noinspection ConstantIfStatement
 
         // *************************************** REVERT TO FALSE BEFORE MERGE ************** //
-        if( true ) {
+        if( false ) {
             SearchDefinitionFactory fact = new SearchDefinitionFactory();
             fact.buildLabEventSearchDef();
             fact.buildLabVesselSearchDef();
