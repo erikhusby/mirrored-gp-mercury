@@ -3,6 +3,11 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.workrequest.kit.ReceptacleType;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -16,6 +21,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * A piece of plastic that holds tubes.  Can be reused to hold different sets of tubes.
@@ -192,5 +199,62 @@ public class RackOfTubes extends LabVessel {
 
     public Set<TubeFormation> getTubeFormations() {
         return tubeFormations;
+    }
+
+    /**
+     * Get all events and the associated tube layout for this rack sorted by date ascending
+     */
+    public SortedMap<LabEvent,TubeFormation> getRackEventsSortedByDate() {
+        SortedMap<LabEvent,TubeFormation> sortedEvents = new TreeMap<>(LabEvent.BY_EVENT_DATE);
+        // In-place events have rack as direct ancillary vessel post GPLIM-6012 and GPLIM-5728
+        // Otherwise, there's no deterministic rack barcode on in-place event for a tube formation
+//        getAncillaryInPlaceEvents().stream().forEach( (evt)
+//                -> sortedEvents.put( evt, OrmUtil.proxySafeCast( evt.getInPlaceLabVessel(), TubeFormation.class ) ) );
+        // Get all associated events for the rack's tube formations
+        // Note: May not map back to same rack!
+        for ( TubeFormation layout : getTubeFormations() ) {
+            layout.getTransfersTo().stream().forEach((evt) -> {
+                LabVessel xferRack;
+                for (SectionTransfer xfer : evt.getSectionTransfers()) {
+                    xferRack = xfer.getAncillaryTargetVessel();
+                    if (xferRack != null && xferRack.getLabel().equals(getLabel())) {
+                        sortedEvents.put(evt, layout);
+                        // Only 1 target rack for a SectionTransfer event
+                        break;
+                    }
+                }
+                for (VesselToSectionTransfer xfer : evt.getVesselToSectionTransfers()) {
+                    xferRack = xfer.getAncillaryTargetVessel();
+                    if (xferRack != null && xferRack.getLabel().equals(getLabel())) {
+                        sortedEvents.put(evt, layout);
+                        break;
+                    }
+                }
+                for (CherryPickTransfer xfer : evt.getCherryPickTransfers()) {
+                    xferRack = xfer.getAncillaryTargetVessel();
+                    if (xferRack != null && xferRack.getLabel().equals(getLabel())) {
+                        sortedEvents.put(evt, layout);
+                        break;
+                    }
+                }
+            });
+            layout.getTransfersFrom().stream().forEach((evt) -> {
+                LabVessel xferRack;
+                for (SectionTransfer xfer : evt.getSectionTransfers()) {
+                    xferRack = xfer.getAncillarySourceVessel();
+                    if (xferRack != null && xferRack.getLabel().equals(getLabel())) {
+                        sortedEvents.put(evt, layout);
+                        break;
+                    }
+                }
+                for (CherryPickTransfer xfer : evt.getCherryPickTransfers()) {
+                    xferRack = xfer.getAncillarySourceVessel();
+                    if (xferRack != null && xferRack.getLabel().equals(getLabel())) {
+                        sortedEvents.put(evt, layout);
+                    }
+                }
+            });
+        }
+        return sortedEvents;
     }
 }

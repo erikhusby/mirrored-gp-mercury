@@ -26,7 +26,10 @@ public abstract class AbstractQueueSearchTerms {
     // todo unclear whether this should be loading base queue search terms or not (haven't seen any yet).
     protected abstract void addSearchTerms();
 
-    public abstract Set<SearchTerm> getAllowedTerms();
+    // Search terms allowed to be shown and selectable by a user in a queue page.
+    public abstract Set<SearchTerm> getAllowedDisplaySearchTerms();
+    // All possible search terms for UDS.
+    public abstract Set<SearchTerm> getSearchTerms();
     public abstract List<String> getAllowedResultFields();
     public abstract List<String> getNotFoundResultRows();
 

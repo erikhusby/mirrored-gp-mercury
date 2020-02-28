@@ -180,8 +180,8 @@ public class QueueActionBean extends CoreActionBean {
         this.selectedSearchTermValues = selectedSearchTermValues;
     }
 
-    public Set<SearchTerm> getAllowedSearchTerms() {
-        return QueueEntitySearchDefinition.QUEUE_ENTITY_SEARCH_TERMS.getAllowedSearchTerms();
+    public Set<SearchTerm> getAllowedDisplaySearchTerms() {
+        return QueueEntitySearchDefinition.QUEUE_ENTITY_SEARCH_TERMS.getAllowedDisplaySearchTerms();
     }
 
     public String getEntityName() {
@@ -222,51 +222,59 @@ public class QueueActionBean extends CoreActionBean {
      */
     @HandlesEvent("searchQueue")
     public Resolution searchQueue() {
-        // Construct the search instance.
 
-        if (sessionKey == null) {
-            searchInstance = new SearchInstance();
-            // todo need to figure out how this is best used.. We want to have only one ID required per search.
-//            searchInstance.addRequired(configurableSearchDef);
+        // If the selected term is container barcode, then we need to do a code search to find the vessels.
+        if (selectedSearchTermType.compareToIgnoreCase(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.CONTAINER_BARCODE.getTerm())==0) {
 
-            // Save the searchInstance, in case the user re-sorts the results
-            sessionKey = Integer.toString(new Random().nextInt(10000));
-            getContext().getRequest().getSession().setAttribute(SEARCH_INSTANCE_PREFIX + sessionKey, searchInstance);
         } else {
-            // We're resorting results we retrieved previously
-            // Get saved form parameters, so the JSP re-renders correctly
-            searchInstance = (SearchInstance) getContext().getRequest().getSession()
-                    .getAttribute(SEARCH_INSTANCE_PREFIX + sessionKey);
+
+            // Construct the search instance.
+            if (sessionKey == null) {
+                searchInstance = new SearchInstance();
+
+                // Save the searchInstance, in case the user re-sorts the results
+                sessionKey = Integer.toString(new Random().nextInt(10000));
+                getContext().getRequest().getSession()
+                        .setAttribute(SEARCH_INSTANCE_PREFIX + sessionKey, searchInstance);
+            } else {
+                // We're resorting results we retrieved previously
+                // Get saved form parameters, so the JSP re-renders correctly
+                searchInstance = (SearchInstance) getContext().getRequest().getSession()
+                        .getAttribute(SEARCH_INSTANCE_PREFIX + sessionKey);
+            }
+
+            entityName = ColumnEntity.QUEUE_ENTITY.getEntityName();
+            configurableSearchDef = SearchDefinitionFactory.getForEntity(entityName);
+
+            SearchInstance.SearchValue searchValue =
+                    searchInstance.addTopLevelTerm(selectedSearchTermType, configurableSearchDef);
+            searchValue.setOperator(SearchInstance.Operator.IN);
+
+            searchValue.setValues(Collections.singletonList(selectedSearchTermValues));
+
+            // Check for vessels specifically in DNA Quant queue.
+            SearchInstance.SearchValue queue_type = searchInstance.addTopLevelTerm("Queue Type", configurableSearchDef);
+            queue_type.setOperator(SearchInstance.Operator.EQUALS);
+            queue_type.setValues(Collections.singletonList(QueueType.DNA_QUANT.toString()));
+            queue_type.setIncludeInResults(false);
+
+            // Check for vessels that are NOT active in a queue entity
+            SearchInstance.SearchValue queue_entity_status =
+                    searchInstance.addTopLevelTerm("Queue Entity Status", configurableSearchDef);
+            queue_entity_status.setOperator(SearchInstance.Operator.NOT_IN);
+            queue_entity_status.setValues(Collections.singletonList(QueueStatus.Active.getName()));
+            queue_entity_status.setIncludeInResults(false);
+
+            searchInstance.getPredefinedViewColumns().add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.SAMPLE_ID.getTerm());
+            searchInstance.getPredefinedViewColumns()
+                    .add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.MANUFACTURER_BARCODE.getTerm());
+            searchInstance.getPredefinedViewColumns()
+                    .add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.CONTAINER_INFO.getTerm());
+            searchInstance.establishRelationships(configurableSearchDef);
+            ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
+                    searchInstance, configurableSearchDef, null, 0, null, "ASC", entityName);
+            labSearchResultList = firstPageResults.getResultList();
         }
-
-        entityName = ColumnEntity.QUEUE_ENTITY.getEntityName();
-        configurableSearchDef = SearchDefinitionFactory.getForEntity(entityName);
-
-        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm(selectedSearchTermType, configurableSearchDef);
-        searchValue.setOperator(SearchInstance.Operator.IN);
-
-        searchValue.setValues(Collections.singletonList(selectedSearchTermValues));
-
-        // Check for vessels specifically in DNA Quant queue.
-        SearchInstance.SearchValue queue_type = searchInstance.addTopLevelTerm("Queue Type", configurableSearchDef);
-        queue_type.setOperator(SearchInstance.Operator.EQUALS);
-        queue_type.setValues(Collections.singletonList(QueueType.DNA_QUANT.toString()));
-        queue_type.setIncludeInResults(false);
-
-        // Check for vessels that are NOT active in a queue entity
-        SearchInstance.SearchValue queue_entity_status = searchInstance.addTopLevelTerm("Queue Entity Status", configurableSearchDef);
-        queue_entity_status.setOperator(SearchInstance.Operator.NOT_IN);
-        queue_entity_status.setValues(Collections.singletonList(QueueStatus.Active.getName()));
-        queue_entity_status.setIncludeInResults(false);
-
-        searchInstance.getPredefinedViewColumns().add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.SAMPLE_ID.getTerm());
-        searchInstance.getPredefinedViewColumns().add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.MANUFACTURER_BARCODE.getTerm());
-        searchInstance.getPredefinedViewColumns().add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.CONTAINER_INFO.getTerm());
-        searchInstance.establishRelationships(configurableSearchDef);
-
-        ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
-                searchInstance, configurableSearchDef, null, 0, null, "ASC", entityName);
-        labSearchResultList = firstPageResults.getResultList();
 
         return new ForwardResolution("/queue/show_search_results.jsp");
     }

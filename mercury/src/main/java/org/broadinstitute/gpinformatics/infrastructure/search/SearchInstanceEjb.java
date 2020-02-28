@@ -85,6 +85,7 @@ public class SearchInstanceEjb {
                 PreferenceType.GLOBAL_REAGENT_SEARCH_INSTANCES,
                 PreferenceType.GLOBAL_EXT_LIBRARY_SEARCH_INSTANCES,
                 PreferenceType.GLOBAL_QUEUE_GROUPING_SEARCH_INSTANCES,
+                PreferenceType.GLOBAL_QUEUE_ENTITY_SEARCH_INSTANCES,
                 PreferenceType.USER_LAB_EVENT_SEARCH_INSTANCES,
                 PreferenceType.USER_LAB_METRIC_RUN_SEARCH_INSTANCES,
                 PreferenceType.USER_LAB_METRIC_SEARCH_INSTANCES,
@@ -93,7 +94,9 @@ public class SearchInstanceEjb {
                 PreferenceType.USER_PRODUCT_ORDER_SEARCH_INSTANCES,
                 PreferenceType.USER_REAGENT_SEARCH_INSTANCES,
                 PreferenceType.USER_EXT_LIBRARY_SEARCH_INSTANCES,
-                PreferenceType.USER_QUEUE_GROUPING_SEARCH_INSTANCES
+                PreferenceType.USER_QUEUE_GROUPING_SEARCH_INSTANCES,
+                PreferenceType.USER_QUEUE_ENTITY_SEARCH_INSTANCES,
+                PreferenceType.GLOBAL_QUEUE_ENTITY_COLUMN_SETS
         }) {
             mapTypeToPreferenceAccess.put(preferenceType, new PreferenceAccess() {
                 @Override
