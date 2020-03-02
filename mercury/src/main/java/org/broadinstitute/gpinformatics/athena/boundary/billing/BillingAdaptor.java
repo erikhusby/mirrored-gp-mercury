@@ -35,7 +35,6 @@ import javax.inject.Inject;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,7 +42,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -81,7 +79,7 @@ public class BillingAdaptor implements Serializable {
 
     private SapIntegrationService sapService;
 
-    private SAPProductPriceCache    productPriceCache;
+    private SAPProductPriceCache productPriceCache;
 
     private SAPAccessControlEjb sapAccessControlEjb;
 
@@ -411,41 +409,38 @@ public class BillingAdaptor implements Serializable {
                     String returnOrderId = sapService.creditDelivery(billingCredit);
                     if (StringUtils.isNotBlank(returnOrderId)) {
                         billingCredit.setReturnOrderId(returnOrderId);
-                        billingMessage = BillingSession.SUCCESS;
                     } else {
-                        billingMessage = handleBillingCreditInvoiceNotFound(billingCredit);
+                        billingCredit.setReturnOrderInvoiceNotFound();
                     }
+                    billingMessage = BillingSession.SUCCESS;
                     billingResult.setSapBillingId(billingCredit.getReturnOrderId());
 
                 } catch (SAPIntegrationException e) {
                     billingMessage = e.getLocalizedMessage();
                     if (billingMessage.contains(INVOICE_NOT_FOUND)) {
-                        billingMessage = handleBillingCreditInvoiceNotFound(billingCredit);
-                        billingResult.setSapBillingId(billingCredit.getSourceLedger().getSapDeliveryDocumentId());
+                        billingCredit.setReturnOrderInvoiceNotFound();
+                        billingResult.setSapBillingId(billingCredit.getDeliveryDoc());
+                        billingMessage = BillingSession.SUCCESS;
                     } else {
 
                         // the billing credit failed so clear out the sapDeliveryDocumentId to prevent the ledgers
                         // from being incorrectly updated.
-                        billingCredit.setSourceLedger(null);
+                        billingCredit.setDeliveryDoc(null);
                         billingResult.setErrorMessage(billingMessage);
                     }
                 }
-                if (Arrays.asList(BillingSession.SUCCESS, BillingSession.BILLING_CREDIT).contains(billingMessage)) {
-                    billingCredit.getReturnLines().stream().collect(Collectors.groupingBy(Function.identity(),
-                        Collectors.reducing(BigDecimal.ZERO, BillingCredit.LineItem::getQuantity,
-                                BigDecimal::add))).forEach((lineItem, quantity) -> {
-                        billingCredit.getSourceLedger().addCredit(lineItem.getLedgerEntry(), quantity);
-                    });
+                if (BillingSession.SUCCESS.equals(billingMessage)) {
+                    billingCredit.getReturnLines().forEach(BillingCredit.LineItem::updateCredits);
                 }
 
                 billingEjb.updateSapLedgerEntries(updatedLedgers, item.getQuoteId(), item.getSingleWorkItem(),
-                    billingCredit.getSourceLedger().getSapDeliveryDocumentId(), billingCredit.getReturnOrderId(),
+                    billingCredit.getDeliveryDoc(), billingCredit.getReturnOrderId(),
                     billingMessage);
                 Set<String> billedPdos = billingCredit.getBillingResult().getQuoteImportItem().getLedgerItems()
                     .stream().map(le -> le.getProductOrderSample().getProductOrder().getBusinessKey())
                     .collect(Collectors.toSet());
                 if (!billingResult.isError()) {
-                    logSapBillingCredit(item, billedPdos, billingCredit.getSourceLedger().getSapDeliveryDocumentId(),
+                    logSapBillingCredit(item, billedPdos, billingCredit.getDeliveryDoc(),
                         billingCredit.getReturnOrderId());
                 }
             } catch (BillingException billingException) {
@@ -456,11 +451,6 @@ public class BillingAdaptor implements Serializable {
         }
 
         return billingCredits;
-    }
-
-    public String handleBillingCreditInvoiceNotFound(BillingCredit billingCredit) {
-        billingCredit.setReturnOrderInvoiceNotFound();
-        return BillingSession.BILLING_CREDIT;
     }
 
     /**

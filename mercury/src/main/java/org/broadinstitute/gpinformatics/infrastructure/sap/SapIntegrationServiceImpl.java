@@ -596,7 +596,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                    .map(BillingCredit.LineItem::getSapOrderItem).collect(Collectors.toList());
 
         SAPReturnOrder returnOrder =
-            new SAPReturnOrder(billingReturn.getSourceLedger().getSapDeliveryDocumentId(), orderItems);
+            new SAPReturnOrder(billingReturn.getDeliveryDoc(), orderItems);
 
         return getClient().createReturnOrder(returnOrder);
     }

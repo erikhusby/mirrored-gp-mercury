@@ -20,6 +20,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -28,22 +29,23 @@ import java.math.BigDecimal;
 
 @Entity
 @Audited
-@Table(name= "BILLING_LEDGER_CREDIT", schema = "athena")
-public class CreditItem implements Serializable {
+@Table(name= "BILLING_CREDIT_ITEM", schema = "athena")
+public class BillingCreditItem implements Serializable {
     private static final long serialVersionUID = 4744695001908815106L;
 
     @Id
-    @SequenceGenerator(name = "SEQ_BILLING_LEDGER_CREDIT", schema = "athena", sequenceName = "SEQ_BILLING_LEDGER_CREDIT", allocationSize = 50)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_BILLING_LEDGER_CREDIT")
-    private Long BillingLedgerCreditId;
+    @SequenceGenerator(name = "SEQ_BILLING_CREDIT_ITEM", schema = "athena", sequenceName = "SEQ_BILLING_CREDIT_ITEM", allocationSize = 50)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_BILLING_CREDIT_ITEM")
+    private Long BillingCreditItemId;
 
-    @Column(name = "CREDIT_QUANTITY")
+    @Column(name = "QUANTITY_CREDITED")
     private BigDecimal quantityCredited=BigDecimal.ZERO;
 
     @ManyToOne
+    @JoinColumn(name = "LEDGER_CREDIT_SOURCE_ID")
     private LedgerEntry ledgerEntry;
 
-    public CreditItem(LedgerEntry ledgerEntry, BigDecimal quantity) {
+    public BillingCreditItem(LedgerEntry ledgerEntry, BigDecimal quantity) {
         if (quantity.compareTo(BigDecimal.ZERO) < 0) {
             throw new RuntimeException("Credit quantities should have positive values");
         }
@@ -51,7 +53,7 @@ public class CreditItem implements Serializable {
         this.quantityCredited = quantity;
     }
 
-    public CreditItem() {
+    public BillingCreditItem() {
     }
 
     public void setLedgerEntry(LedgerEntry ledgerEntry) {
@@ -77,11 +79,11 @@ public class CreditItem implements Serializable {
             return true;
         }
 
-        if (!(other instanceof CreditItem)) {
+        if (!(other instanceof BillingCreditItem)) {
             return false;
         }
 
-        CreditItem that = (CreditItem) other;
+        BillingCreditItem that = (BillingCreditItem) other;
 
         return new EqualsBuilder()
             .append(getQuantityCredited(), that.getQuantityCredited())

@@ -113,8 +113,7 @@ public class BillingEjb {
         }
 
         public boolean isSuccessfullyBilled() {
-            return BillingSession.SUCCESS.equals(getQuoteImportItem().getBillingMessage())
-                   || BillingSession.BILLING_CREDIT.equals(getQuoteImportItem().getBillingMessage());
+            return BillingSession.SUCCESS.equals(getQuoteImportItem().getBillingMessage());
         }
 
         public boolean isBillingCredit() {

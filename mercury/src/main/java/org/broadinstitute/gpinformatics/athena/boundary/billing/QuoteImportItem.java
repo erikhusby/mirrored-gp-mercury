@@ -4,7 +4,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
@@ -404,10 +403,11 @@ public class QuoteImportItem {
     }
 
     public BigDecimal totalPriorBillingQuantity() {
-        Set<LedgerEntry> allProductOrderLedgers = ledgerItems.stream().map(LedgerEntry::getProductOrderSample).flatMap(
-            (ProductOrderSample productOrderSample) -> productOrderSample.getLedgerItems().stream()).collect(
-            Collectors.toSet());
-        return allProductOrderLedgers.stream().map(LedgerEntry::calculateAvailableQuantity)
+        Set<LedgerEntry> allProductOrderLedgers =
+            getPriorLedgersMatchingProduct().stream().map(LedgerEntry::getProductOrderSample)
+                .flatMap(productOrderSample -> productOrderSample.getLedgerItems().stream())
+                .collect(Collectors.toSet());
+        return getPriorLedgersMatchingProduct().stream().map(LedgerEntry::calculateAvailableQuantity)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

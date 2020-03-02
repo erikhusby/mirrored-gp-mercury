@@ -121,7 +121,7 @@ public class LedgerEntry implements Serializable {
     private Boolean sapReplacementPricing = Boolean.FALSE;
 
     @OneToMany(mappedBy = "ledgerEntry", cascade = CascadeType.PERSIST)
-    private Set<CreditItem> creditItems = new HashSet<>();
+    private Set<BillingCreditItem> billingCreditItems = new HashSet<>();
 
     public static final Predicate<LedgerEntry> IS_SUCCESSFULLY_BILLED = LedgerEntry::isSuccessfullyBilled;
 
@@ -193,7 +193,7 @@ public class LedgerEntry implements Serializable {
     }
 
     public BigDecimal getQuantityCredited() {
-        return getCreditItems().stream().map(CreditItem::getQuantityCredited).reduce(BigDecimal.ZERO, BigDecimal::add);
+        return getBillingCreditItems().stream().map(BillingCreditItem::getQuantityCredited).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     public void setQuantity(BigDecimal quantity) {
@@ -275,7 +275,7 @@ public class LedgerEntry implements Serializable {
      * This ledger entry has a positively successful billing message.
      */
     public boolean isSuccessfullyBilled() {
-        return BillingSession.SUCCESS.equals(billingMessage) || BillingSession.BILLING_CREDIT.equals(billingMessage);
+        return BillingSession.SUCCESS.equals(billingMessage);
     }
 
     public boolean isCredit() {
@@ -386,27 +386,24 @@ public class LedgerEntry implements Serializable {
         }
 
         LedgerEntry castOther = (LedgerEntry) other;
-        EqualsBuilder ledgerEntryEqualsBuilder = new EqualsBuilder()
-                .append(productOrderSample, castOther.getProductOrderSample())
-                .append(priceItem, castOther.getPriceItem())
-                .append(priceItemType, castOther.getPriceItemType())
-                .append(quoteId, castOther.getQuoteId())
-                .append(billingSession, castOther.getBillingSession());
-
-        ledgerEntryEqualsBuilder.append(product, castOther.getProduct());
-        return ledgerEntryEqualsBuilder.isEquals();
+        return new EqualsBuilder()
+            .append(productOrderSample, castOther.getProductOrderSample())
+            .append(priceItem, castOther.getPriceItem())
+            .append(priceItemType, castOther.getPriceItemType())
+            .append(quoteId, castOther.getQuoteId())
+            .append(billingSession, castOther.getBillingSession())
+            .append(product, castOther.getProduct()).isEquals();
     }
 
     @Override
     public int hashCode() {
-        HashCodeBuilder ledgerEntryHashcodeBuilder = new HashCodeBuilder()
-                .append(productOrderSample)
-                .append(priceItem)
-                .append(priceItemType)
-                .append(quoteId)
-                .append(billingSession);
-        ledgerEntryHashcodeBuilder.append(product);
-        return ledgerEntryHashcodeBuilder.toHashCode();
+        return new HashCodeBuilder()
+            .append(productOrderSample)
+            .append(priceItem)
+            .append(priceItemType)
+            .append(quoteId)
+            .append(billingSession)
+            .append(product).toHashCode();
     }
 
     public Date getBucketDate() {
@@ -438,12 +435,12 @@ public class LedgerEntry implements Serializable {
         if (ledgerEntry.getQuantity().add(quantity).compareTo(BigDecimal.ZERO) > 0) {
             throw new RuntimeException(BillingAdaptor.NEGATIVE_BILL_ERROR);
         }
-        CreditItem ledgerCredit = new CreditItem(ledgerEntry, quantity);
-        getCreditItems().add(ledgerCredit);
+        BillingCreditItem ledgerCredit = new BillingCreditItem(ledgerEntry, quantity);
+        getBillingCreditItems().add(ledgerCredit);
     }
 
-    public Set<CreditItem> getCreditItems() {
-        return creditItems;
+    public Set<BillingCreditItem> getBillingCreditItems() {
+        return billingCreditItems;
     }
 
     /**

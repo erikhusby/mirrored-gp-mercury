@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.billing;
 
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingAdaptor;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -19,8 +20,12 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -53,18 +58,29 @@ public class LedgerEntryTest {
         ledger1.addCredit(ledger2, BigDecimal.ONE);
         assertThat(ledger1.calculateAvailableQuantity(), is(BigDecimal.valueOf(9)));
 
-        ledger1.addCredit(createOneLedgerEntry("SM1", null, BigDecimal.ONE.negate(), null), BigDecimal.ONE);
+        LedgerEntry ledger1Credit = createOneLedgerEntry("SM1", null, BigDecimal.ONE.negate(), null);
+        ledger1.addCredit(ledger1Credit, BigDecimal.ONE);
         assertThat(ledger1.calculateAvailableQuantity(), is(BigDecimal.valueOf(8)));
+        Set<BillingCreditItem> billingCreditItems = ledger1.getBillingCreditItems();
+        assertThat(billingCreditItems.stream().map(BillingCreditItem::getLedgerEntry).collect(Collectors.toList()),
+            hasItems(ledger1Credit, ledger2));
+        billingCreditItems.forEach(item->{
+            if (item.getLedgerEntry().equals(ledger2)) {
+                assertThat(item.getQuantityCredited(), equalTo(BigDecimal.ONE));
+            } else if (item.getLedgerEntry().equals(ledger1Credit)) {
+                assertThat(item.getQuantityCredited(), equalTo(BigDecimal.ONE));
+            }
+        });
         assertThat(ledger1.getQuantityCredited(), is(BigDecimal.valueOf(2)));
     }
 
-    public void testCreditIsNegative() {
+    public void testCreditExceedsPriorBilledQuantity() {
         LedgerEntry ledger1 = createOneLedgerEntry("SM1", null, BigDecimal.TEN, null);
         try {
             ledger1.addCredit(createOneLedgerEntry("SM1", null, BigDecimal.ONE, null), BigDecimal.ONE);
             Assert.fail("An Exception should have been thrown when a credit is a positive number");
         } catch (Exception e) {
-            assertThat(e.getMessage(), is("Billing credits must have negative numbers"));
+            assertThat(e.getMessage(), is(BillingAdaptor.NEGATIVE_BILL_ERROR));
         }
     }
 
@@ -189,7 +205,10 @@ public class LedgerEntryTest {
     @Test
     public void testBean() {
         new BeanTester().testBean(LedgerEntry.class);
-        new EqualsMethodTester().testEqualsMethod(LedgerEntry.class, "autoLedgerTimestamp", "billingMessage", "quantity", "workItem", "workCompleteDate", "sapDeliveryDocumentId", "sapReturnOrderId", "sapOrderDetail", "sapReplacementPricing", "creditItems");
+        new EqualsMethodTester()
+            .testEqualsMethod(LedgerEntry.class, "autoLedgerTimestamp", "billingMessage", "quantity", "workItem",
+                "workCompleteDate", "sapDeliveryDocumentId", "sapReturnOrderId", "sapOrderDetail",
+                "sapReplacementPricing", "billingCreditItems");
         new HashCodeMethodTester().testHashCodeMethod(LedgerEntry.class);
     }
 }

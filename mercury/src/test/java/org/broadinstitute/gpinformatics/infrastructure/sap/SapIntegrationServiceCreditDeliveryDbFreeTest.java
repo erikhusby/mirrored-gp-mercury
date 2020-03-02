@@ -68,6 +68,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.not;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SapIntegrationServiceCreditDeliveryDbFreeTest {
@@ -142,7 +143,7 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
             String deliveryDocumentId = String.format("00%d", i);
             ProductOrderSample productOrderSample = productOrder.getSamples().get(i);
             BigDecimal quantity = BigDecimal.valueOf(i).add(BigDecimal.valueOf(i));
-            LedgerEntry ledger = createLedgerEntry(productOrderSample, product, deliveryDocumentId, quantity);
+            LedgerEntry ledger = createLedgerEntry(productOrderSample, product, deliveryDocumentId, quantity, new Date());
             ledger.setBillingMessage(BillingSession.SUCCESS);
             ledgerEntries.add(ledger);
         });
@@ -156,7 +157,7 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
             String deliveryDocumentId = String.format("00%d", i);
             ProductOrderSample productOrderSample = productOrder.getSamples().get(i);
             BigDecimal quantity = BigDecimal.valueOf(i).negate();
-            LedgerEntry ledger = createLedgerEntry(productOrderSample, product, deliveryDocumentId, quantity);
+            LedgerEntry ledger = createLedgerEntry(productOrderSample, product, deliveryDocumentId, quantity, new Date());
             ledgerEntries.add(ledger);
         });
         billingSession = new BillingSession(System.currentTimeMillis(), new HashSet<>(ledgerEntries));
@@ -181,7 +182,7 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
 
     public void testCreditDeliveryMultipleDeliveryTestOrder() throws Exception {
         ProductOrder productOrder = ProductOrderTestFactory.buildWholeGenomeProductOrder(100);
-        String sapQuoteId="1234";
+        String sapQuoteId = String.valueOf(System.currentTimeMillis());
         SapQuote sapQuote = TestUtils
             .buildTestSapQuote(sapQuoteId, BigDecimal.valueOf(0), BigDecimal.valueOf(0), productOrder,
                 TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,
@@ -191,7 +192,9 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
 
         Product product = productOrder.getProduct();
         productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-        productOrder.addSapOrderDetail(new SapOrderDetail("1234", 100, "1234", "GP01"));
+//        if (CollectionUtils.isEmpty(productOrder.getSapReferenceOrders())) {
+            productOrder.addSapOrderDetail(new SapOrderDetail("1234", 100, "1234", "GP01"));
+//        }
         ProductOrderSample sample1 = productOrder.getSamples().get(0);
         ProductOrderSample sample2 = productOrder.getSamples().get(1);
         ProductOrderSample sample3 = productOrder.getSamples().get(2);
@@ -205,43 +208,52 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
 
         // Bill QTY 1 for one sample1 and QTY 1 for sample2;
         Set<LedgerEntry> session1Ledgers = new HashSet<>();
-        LedgerEntry session1Ledger1 = createLedgerEntry(sample1, product, null, BigDecimal.ONE);
+        Date workCompleteDate = new Date();
+        LedgerEntry session1Ledger1 = createLedgerEntry(sample1, product, null, BigDecimal.ONE, workCompleteDate);
         session1Ledgers.add(session1Ledger1);
-        LedgerEntry session1Ledger2 = createLedgerEntry(sample2, product, null, BigDecimal.ONE);
+        LedgerEntry session1Ledger2 = createLedgerEntry(sample2, product, null, BigDecimal.ONE, workCompleteDate);
         session1Ledgers.add(session1Ledger2);
-        BillingSession billingSession = new BillingSession(System.currentTimeMillis(), session1Ledgers);
-        Mockito.when(billingSessionAccessEjb.findAndLockSession(Mockito.anyString())).thenReturn(billingSession);
+        BillingSession billingSession1 = new BillingSession(System.currentTimeMillis(), session1Ledgers);
+        Mockito.when(billingSessionAccessEjb.findAndLockSession(Mockito.anyString())).thenReturn(billingSession1);
         List<BillingEjb.BillingResult> billingResults =
             billingAdaptor.billSessionItems(StringUtils.EMPTY, StringUtils.EMPTY);
         verifyBillingResults(billingResults);
         verifyRemainingQuantity(billingResults, TWO);
+        Mockito.verify(sapIntegrationClient, Mockito.never()).createReturnOrder(Mockito.any(SAPReturnOrder.class));
 
-        LedgerEntry session2Ledger = createLedgerEntry(sample1, product, null, TWO);
-        billingSession = new BillingSession(System.currentTimeMillis(), Collections.singleton(session2Ledger));
-        Mockito.when(billingSessionAccessEjb.findAndLockSession(Mockito.anyString())).thenReturn(billingSession);
+        assertThat(workCompleteDate.getTime(), not(new Date().getTime()));
+        workCompleteDate = new Date();
+        LedgerEntry session2Ledger = createLedgerEntry(sample1, product, null, TWO, workCompleteDate);
+        BillingSession billingSession2 = new BillingSession(System.currentTimeMillis(), Collections.singleton(session2Ledger));
+        Mockito.when(billingSessionAccessEjb.findAndLockSession(Mockito.anyString())).thenReturn(billingSession2);
         billingResults = billingAdaptor.billSessionItems(StringUtils.EMPTY, StringUtils.EMPTY);
         verifyBillingResults(billingResults);
         verifyRemainingQuantity(billingResults, FOUR);
+        Mockito.verify(sapIntegrationClient, Mockito.never()).createReturnOrder(Mockito.any(SAPReturnOrder.class));
 
         // Credit QTY 3.
-        LedgerEntry session3Ledger = createLedgerEntry(sample1, product, null, THREE.negate());
-        billingSession = new BillingSession(System.currentTimeMillis(), Collections.singleton(session3Ledger));
-        Mockito.when(billingSessionAccessEjb.findAndLockSession(Mockito.anyString())).thenReturn(billingSession);
+        workCompleteDate = new Date();
+        LedgerEntry session3Ledger = createLedgerEntry(sample1, product, null, THREE.negate(), workCompleteDate);
+        BillingSession billingSession3 = new BillingSession(System.currentTimeMillis(), Collections.singleton(session3Ledger));
+        Mockito.when(billingSessionAccessEjb.findAndLockSession(Mockito.anyString())).thenReturn(billingSession3);
         billingResults = billingAdaptor.billSessionItems(StringUtils.EMPTY, StringUtils.EMPTY);
         verifyBillingResults(billingResults);
         verifyRemainingQuantity(billingResults, BigDecimal.ONE);
         verifyReturnOrderId(billingResults);
+        Mockito.verify(sapIntegrationClient, Mockito.times(2)).createReturnOrder(Mockito.any(SAPReturnOrder.class));
 
         assertThat(session1Ledger1.calculateAvailableQuantity(), is(BigDecimal.ZERO));
         assertThat(session1Ledger2.calculateAvailableQuantity(), is(BigDecimal.ZERO));
         assertThat(session2Ledger.calculateAvailableQuantity(), is(BigDecimal.ONE));
 
         // Crediting QTY 2 should fail since there is only one available
-        LedgerEntry session4Ledger = createLedgerEntry(sample1, product, null, TWO.negate());
-        billingSession = new BillingSession(System.currentTimeMillis(), Collections.singleton(session4Ledger));
-        Mockito.when(billingSessionAccessEjb.findAndLockSession(Mockito.anyString())).thenReturn(billingSession);
+        LedgerEntry session4Ledger = createLedgerEntry(sample1, product, null, TWO.negate(), workCompleteDate);
+        BillingSession billingSession4 = new BillingSession(System.currentTimeMillis(), Collections.singleton(session4Ledger));
+        Mockito.when(billingSessionAccessEjb.findAndLockSession(Mockito.anyString())).thenReturn(billingSession4);
 
         billingResults = billingAdaptor.billSessionItems(StringUtils.EMPTY, StringUtils.EMPTY);
+        Mockito.verify(sapIntegrationClient, Mockito.times(2)).createReturnOrder(Mockito.any(SAPReturnOrder.class));
+
         String billingError =
             billingResults.stream().map(BillingEjb.BillingResult::getErrorMessage).findFirst().orElse(null);
         assertThat(billingError, equalTo(BillingAdaptor.NEGATIVE_BILL_ERROR));
@@ -254,46 +266,54 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
 
         // No Credit QTY 1 which will succeed.
         session4Ledger.setQuantity(BigDecimal.ONE.negate());
-        billingSession = new BillingSession(System.currentTimeMillis(), Collections.singleton(session4Ledger));
-        Mockito.when(billingSessionAccessEjb.findAndLockSession(Mockito.anyString())).thenReturn(billingSession);
+        BillingSession billingSession5 = new BillingSession(System.currentTimeMillis(), Collections.singleton(session4Ledger));
+        Mockito.when(billingSessionAccessEjb.findAndLockSession(Mockito.anyString())).thenReturn(billingSession5);
         billingResults = billingAdaptor.billSessionItems(StringUtils.EMPTY, StringUtils.EMPTY);
         verifyBillingResults(billingResults);
         verifyRemainingQuantity(billingResults, BigDecimal.ZERO);
         verifyReturnOrderId(billingResults);
 
+        Mockito.verify(sapIntegrationClient, Mockito.times(3)).createReturnOrder(Mockito.any(SAPReturnOrder.class));
+
         // Bill QTY 2 for one sample3;
-        LedgerEntry session5Ledger = createLedgerEntry(sample3, product, null, TWO);
-        billingSession = new BillingSession(System.currentTimeMillis(), Collections.singleton(session5Ledger));
-        Mockito.when(billingSessionAccessEjb.findAndLockSession(Mockito.anyString())).thenReturn(billingSession);
+        LedgerEntry session5Ledger = createLedgerEntry(sample3, product, null, TWO, workCompleteDate);
+        BillingSession billingSession6 = new BillingSession(System.currentTimeMillis(), Collections.singleton(session5Ledger));
+        Mockito.when(billingSessionAccessEjb.findAndLockSession(Mockito.anyString())).thenReturn(billingSession6);
         billingResults = billingAdaptor.billSessionItems(StringUtils.EMPTY, StringUtils.EMPTY);
+
         verifyBillingResults(billingResults);
         verifyRemainingQuantity(billingResults, TWO);
 
         // Bill QTY -1
-        LedgerEntry session6Ledger = createLedgerEntry(sample3, product, null, BigDecimal.ONE.negate());
-        billingSession = new BillingSession(System.currentTimeMillis(), Collections.singleton(session6Ledger));
-        Mockito.when(billingSessionAccessEjb.findAndLockSession(Mockito.anyString())).thenReturn(billingSession);
+        LedgerEntry session6Ledger = createLedgerEntry(sample3, product, null, BigDecimal.ONE.negate(),
+            workCompleteDate);
+        BillingSession billingSession7 = new BillingSession(System.currentTimeMillis(), Collections.singleton(session6Ledger));
+        Mockito.when(billingSessionAccessEjb.findAndLockSession(Mockito.anyString())).thenReturn(billingSession7);
         billingResults = billingAdaptor.billSessionItems(StringUtils.EMPTY, StringUtils.EMPTY);
+        Mockito.verify(sapIntegrationClient, Mockito.times(4)).createReturnOrder(Mockito.any(SAPReturnOrder.class));
         verifyBillingResults(billingResults);
         verifyRemainingQuantity(billingResults, BigDecimal.ONE);
         verifyReturnOrderId(billingResults);
 
         // this ledger has already been billed so simply changing the value and re-billing will fail.
         session6Ledger.setQuantity(BigDecimal.ONE.negate());
-        billingSession = new BillingSession(System.currentTimeMillis(), Collections.singleton(session6Ledger));
-        Mockito.when(billingSessionAccessEjb.findAndLockSession(Mockito.anyString())).thenReturn(billingSession);
+        BillingSession billingSession8 = new BillingSession(System.currentTimeMillis(), Collections.singleton(session6Ledger));
+        Mockito.when(billingSessionAccessEjb.findAndLockSession(Mockito.anyString())).thenReturn(billingSession8);
         try {
             billingAdaptor.billSessionItems(StringUtils.EMPTY, StringUtils.EMPTY);
             Assert.fail("Should have failed with " + BillingEjb.NO_ITEMS_TO_BILL_ERROR_TEXT);
         } catch (Exception e) {
             assertThat(e.getMessage(), equalTo(BillingEjb.NO_ITEMS_TO_BILL_ERROR_TEXT));
+            Mockito.verify(sapIntegrationClient, Mockito.times(4)).createReturnOrder(Mockito.any(SAPReturnOrder.class));
         }
 
         // Bill QTY -1 again but on a new Ledger
-        LedgerEntry session7Ledger = createLedgerEntry(sample3, product, null, BigDecimal.ONE.negate());
-        billingSession = new BillingSession(System.currentTimeMillis(), Collections.singleton(session7Ledger));
-        Mockito.when(billingSessionAccessEjb.findAndLockSession(Mockito.anyString())).thenReturn(billingSession);
+        LedgerEntry session7Ledger = createLedgerEntry(sample3, product, null, BigDecimal.ONE.negate(), workCompleteDate);
+        BillingSession billingSession9 = new BillingSession(System.currentTimeMillis(), Collections.singleton(session7Ledger));
+        Mockito.when(billingSessionAccessEjb.findAndLockSession(Mockito.anyString())).thenReturn(billingSession9);
         billingResults = billingAdaptor.billSessionItems(StringUtils.EMPTY, StringUtils.EMPTY);
+        Mockito.verify(sapIntegrationClient, Mockito.times(5)).createReturnOrder(Mockito.any(SAPReturnOrder.class));
+
         verifyBillingResults(billingResults);
         verifyRemainingQuantity(billingResults, BigDecimal.ZERO);
         verifyReturnOrderId(billingResults);
@@ -402,7 +422,8 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
         for (int i = 0; i < positiveQuantities.size(); i++) {
             BigDecimal quantity = positiveQuantities.get(i);
             String deliveryDocumentId = String.format("00%d", i);
-            LedgerEntry ledger = createLedgerEntry(productOrderSample, product, deliveryDocumentId, quantity);
+            Date uniqueDate = new Date(new Date().getTime() + i);
+            LedgerEntry ledger = createLedgerEntry(productOrderSample, product, deliveryDocumentId, quantity, uniqueDate);
             if (quantity.compareTo(BigDecimal.ZERO) < 0) {
                 ledger.setSapReturnOrderId(String.format("99%d", i));
             }
@@ -412,7 +433,8 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
         for (int i = 0; i < negativeQuantities.size(); i++) {
             BigDecimal quantity = negativeQuantities.get(i);
             String deliveryDocumentId = String.format("00%d", i);
-            LedgerEntry ledger = createLedgerEntry(productOrderSample, product, deliveryDocumentId, quantity);
+            Date uniqueDate = new Date(new Date().getTime() + i);
+            LedgerEntry ledger = createLedgerEntry(productOrderSample, product, deliveryDocumentId, quantity, uniqueDate);
             ledgerEntries.add(ledger);
         }
 
@@ -454,10 +476,10 @@ public class SapIntegrationServiceCreditDeliveryDbFreeTest {
     }
 
     public LedgerEntry createLedgerEntry(ProductOrderSample productOrderSample, Product product,
-                                         String deliveryDocument, BigDecimal qty) {
+                                         String deliveryDocument, BigDecimal qty, Date workCompleteDate) {
         LedgerEntry ledgerEntry =
-            new LedgerEntry(productOrderSample, product, new Date(), qty);
-        ledgerEntry.setQuoteId(String.valueOf(System.nanoTime()));
+            new LedgerEntry(productOrderSample, product, workCompleteDate, qty);
+        ledgerEntry.setQuoteId(productOrderSample.getProductOrder().getQuoteId());
         if (deliveryDocument != null) {
             ledgerEntry.setSapDeliveryDocumentId(deliveryDocument);
         }
