@@ -1,2 +1,0 @@
-SUPPORT-5802 ignore Infinium fingerprint
-broadinstitute.org:bsp.prod.sample:J55NB,2019-06-29 04:32:00,IGNORE

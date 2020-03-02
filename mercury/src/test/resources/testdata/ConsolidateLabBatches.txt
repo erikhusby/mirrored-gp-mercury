@@ -1,3 +1,0 @@
-GPLIM-5927 move samples to get one LCSET for ShearingTransfer
-LCSET-13706
-LCSET-13705
