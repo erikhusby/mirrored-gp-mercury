@@ -7,9 +7,13 @@ import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.ValidationMethod;
+import org.broadinstitute.bsp.client.queue.DequeueingOptions;
+import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -72,6 +76,8 @@ public class SRSBatchActionBean extends CoreActionBean {
     private LabVesselDao labVesselDao;
     @Inject
     private MercurySampleDao mercurySampleDao;
+    @Inject
+    private QueueEjb queueEjb;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -104,6 +110,13 @@ public class SRSBatchActionBean extends CoreActionBean {
                 if (labBatch.getActive()) {
                     labBatch.setActive(false);
                     addMessage("SRS batch " + labBatch.getBatchName() + " closed.");
+                    MessageCollection messageCollection = new MessageCollection();
+                    Set<LabVessel> labVessels = labBatch.getStartingBatchLabVessels();
+                    queueEjb.dequeueLabVessels(labVessels, QueueType.ARRAYS_STORAGE_RETRIEVAL, messageCollection,
+                            DequeueingOptions.DEFAULT_DEQUEUE_RULES);
+                    queueEjb.dequeueLabVessels(labVessels, QueueType.SEQUENCING_STORAGE_RETRIEVAL, messageCollection,
+                            DequeueingOptions.DEFAULT_DEQUEUE_RULES);
+                    addMessages(messageCollection);
                 } else {
                     labBatch.setActive(true);
                     addMessage("SRS batch " + labBatch.getBatchName() + " re-opened.");
@@ -276,6 +289,10 @@ public class SRSBatchActionBean extends CoreActionBean {
             batchData.setActive(batch.getActive());
             batchSelectionList.add(batchData);
         }
+    }
+
+    public List<QueueType> getSrsQueues() {
+        return QueueType.getSrsQueues();
     }
 
     public String getBatchName() {

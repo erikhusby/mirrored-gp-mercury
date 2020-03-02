@@ -3464,4 +3464,20 @@
                                  referencedTableName="lab_vessel" referencedTableSchemaName="mercury"
                                  referencedColumnNames="lab_vessel_id"/>
     </changeSet>
+
+    <changeSet id="GPLIM-6929-1" author="jowalsh">
+        <sql>
+            insert into mercury.queue(queue_id, queue_type, queue_name, queue_description)
+            values (mercury.seq_queue.nextval, 'ARRAYS_STORAGE_RETRIEVAL', 'Arrays Storage Retrieval Queue',
+            'Arrays Storage retrieval Queue for samples to be fetched by SRS headed to Arrays');
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-6929-2" author="jowalsh">
+        <sql>
+            insert into mercury.queue(queue_id, queue_type, queue_name, queue_description)
+            values (mercury.seq_queue.nextval, 'SEQUENCING_STORAGE_RETRIEVAL', 'Sequencing Storage Retrieval Queue',
+            'Sequencing Storage retrieval Queue for samples to be fetched by SRS headed for Sequencing');
+        </sql>
+    </changeSet>
 </databaseChangeLog>

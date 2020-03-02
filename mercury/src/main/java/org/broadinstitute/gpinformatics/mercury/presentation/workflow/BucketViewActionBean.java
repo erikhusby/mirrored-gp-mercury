@@ -18,6 +18,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
@@ -30,7 +31,10 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.JiraU
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.MaterialTypeTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.DnaQuantEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
@@ -39,6 +43,9 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketCount;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueSpecialization;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -79,6 +86,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private static final String SEARCH_PAGE = "/workflow/bucket_search.jsp";
     private static final String ADD_TO_BATCH_ACTION = "addToBatch";
     private static final String CREATE_BATCH_ACTION = "createBatch";
+    private static final String CREATE_SRS_BATCH_ACTION = "createSrsBatch";
     public static final String FIND_BUCKET_ENTRIES = "findBucketEntries";
     private static final String EXISTING_TICKET = "existingTicket";
     private static final String NEW_TICKET = "newTicket";
@@ -123,6 +131,10 @@ public class BucketViewActionBean extends CoreActionBean {
     private PreferenceEjb preferenceEjb;
     @Inject
     private PreferenceDao preferenceDao;
+    @Inject
+    private QueueEjb queueEjb;
+    @Inject
+    private DnaQuantEnqueueOverride dnaQuantEnqueueOverride;
 
     private static final Log log = LogFactory.getLog(BucketViewActionBean.class);
 
@@ -149,6 +161,8 @@ public class BucketViewActionBean extends CoreActionBean {
     private String summary;
     private Date dueDate;
     private String selectedLcset;
+    private String srsBatchName;
+    private QueueType queueType;
     private LabBatch batch;
     private String jiraUserQuery;
     private Map<String, BucketCount> mapBucketToBucketEntryCount;
@@ -291,7 +305,7 @@ public class BucketViewActionBean extends CoreActionBean {
         }
     }
 
-    @ValidationMethod(on = {ADD_TO_BATCH_ACTION})
+    @ValidationMethod(on = {ADD_TO_BATCH_ACTION, CREATE_SRS_BATCH_ACTION})
     public void batchValidation() {
         if (CollectionUtils.isEmpty(selectedEntryIds)) {
             addValidationError("selectedEntryIds", "At least one item must be selected.");
@@ -306,6 +320,51 @@ public class BucketViewActionBean extends CoreActionBean {
             addValidationError("bucketEntryView", "At least one sample must be selected to remove from the bucket.");
             viewBucket();
         }
+    }
+
+    @ValidationMethod(on = CREATE_SRS_BATCH_ACTION)
+    public void addReworkToSrsBatchValidation() {
+        if (StringUtils.isBlank(srsBatchName)) {
+            addValidationError("srsBatchName", "You must provide a batch name to create an SRS Batch.");
+            entrySearch();
+        }
+        if (queueType == null) {
+            addValidationError("queuename", "You must choose an SRS Queue.");
+            entrySearch();
+        }
+        LabBatch batch = labBatchDao.findByName(srsBatchName.trim());
+        if( batch != null ) {
+            addValidationError("batchName", "A batch already exists named {1}.", srsBatchName);
+        }
+    }
+
+    @HandlesEvent(CREATE_SRS_BATCH_ACTION)
+    public void createSrsBatch() {
+        MessageCollection messageCollection = new MessageCollection();
+        try {
+            separateEntriesByType();
+            LabBatch labBatch = labBatchEjb.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.SRS, null,
+                    bucketEntryIds, reworkEntryIds, srsBatchName.trim(), null, null, null,
+                    getUserBean().getLoginUserName(), bucket.getBucketDefinitionName());
+            QueueOrigin queueOrigin = (reworkEntryIds.size() > 0) ? QueueOrigin.REWORK : QueueOrigin.OTHER;
+            Set<LabVessel> starterVessels = labBatch.getStartingBatchLabVessels();
+            QueueSpecialization queueSpecialization =
+                    dnaQuantEnqueueOverride.determineDnaQuantQueueSpecialization(starterVessels);
+            queueEjb.enqueueLabVessels(starterVessels, queueType,
+                    "Queued on " + DateUtils.convertDateTimeToString(new Date()), messageCollection,
+                    queueOrigin, queueSpecialization);
+            if (messageCollection.hasErrors()) {
+                addMessages(messageCollection);
+            } else {
+                addMessage(MessageFormat.format("Queued {0} for storage retrieval.", starterVessels.size()));
+                addMessage(MessageFormat.format("Lab batch ''{0}'' has been created.", labBatch.getBatchName()));
+            }
+        } catch (Exception e) {
+            String errMsg = "Failed to create SRS Batch: " + e.getMessage();
+            log.error(errMsg, e);
+            addGlobalValidationError(errMsg);
+        }
+        entrySearch();
     }
 
     @HandlesEvent(SAVE_SEARCH_DATA)
@@ -553,6 +612,14 @@ public class BucketViewActionBean extends CoreActionBean {
         this.selectedLcset = selectedLcset;
     }
 
+    public String getSrsBatchName() {
+        return srsBatchName;
+    }
+
+    public void setSrsBatchName(String srsBatchName) {
+        this.srsBatchName = srsBatchName;
+    }
+
     public Collection<BucketEntry> getCollectiveEntries() {
         return collectiveEntries;
     }
@@ -739,4 +806,15 @@ public class BucketViewActionBean extends CoreActionBean {
             .get(columnName));
     }
 
+    public List<QueueType> getSrsQueues() {
+        return QueueType.getSrsQueues();
+    }
+
+    public QueueType getQueueType() {
+        return queueType;
+    }
+
+    public void setQueueType(QueueType queueType) {
+        this.queueType = queueType;
+    }
 }

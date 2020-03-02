@@ -336,8 +336,9 @@ public class LabBatchEjb {
         allBucketEntries.addAll(reworkBucketEntries);
         bucketEjb.moveFromBucketToBatch(allBucketEntries, batch);
 
-        createJiraTicket(workflowName, username, bucketName, reporter, watchers, pdoKeys, batch);
-
+        if (labBatchType != LabBatch.LabBatchType.SRS) {
+            createJiraTicket(workflowName, username, bucketName, reporter, watchers, pdoKeys, batch);
+        }
         return batch;
     }
 

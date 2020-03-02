@@ -6,6 +6,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.queue;
 public enum QueueOrigin {
     EXTRACTION("Extraction"),
     RECEIVING("Receiving"),
+    REWORK("Rework"),
     OTHER("Other");
 
     private final String displayName;

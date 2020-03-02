@@ -161,7 +161,7 @@ public class PickerVesselPlugin implements ListPlugin {
      * Find latest check-in event for a lab vessel (barcoded tube only) <br/>
      * If a check-out occurs after a check-in, do not report the check-in event
      */
-    private LabEvent findLatestCheckInEvent(LabVessel labVessel ) {
+    private static LabEvent findLatestCheckInEvent(LabVessel labVessel ) {
         LabEvent latestCheckInEvent = null;
         List<LabEvent> inPlaceLabEvents;
 

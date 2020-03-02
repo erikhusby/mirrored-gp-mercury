@@ -177,7 +177,7 @@
         function setupBucketEvents() {
             var CONFIRM_TEXT = "Confirm";
 
-            $j("input[name='addToBatch'],input[name='createBatch'],input[name='removeFromBucket']").on("click dblclick", function (event) {
+            $j("input[name='addToBatch'],input[name='createBatch'],input[name='removeFromBucket'],input[name='createSrsBatch']").on("click dblclick", function (event) {
 
                 // Clear any errors that may be displayed.
                 $j(".alert-error, .error").each(function () {
@@ -215,6 +215,8 @@
                             return;
                         }
                     }
+                } else if (clickedButtonEvent === "createSrsBatch") {
+                    $j(".srs-batch").slideDown(200);
                 }
 
                 // if the button starts with CONFIRM_TEXT, we know the user is on the confirmation page now, and the
@@ -607,6 +609,23 @@
                         <span id="lcsetErrorText"></span>
                     </div>
                 </div>
+                <div class="srs-batch" style="display: none;">
+                    <div class="control-group">
+                        <stripes:label for="srsText" name="Batch Name" class="control-label"/>
+                        <div class="controls">
+                            <stripes:text id="srsText" class="defaultText" name="srsBatchName"
+                                          title="Create a new SRS Batch"/>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <stripes:label for="queueType" name="Srs Queue" class="control-label"/>
+                        <div class="controls">
+                            <stripes:select name="queueType" id="queueType">
+                                <stripes:options-collection collection="${actionBean.srsQueues}" label="textName"/>
+                            </stripes:select>
+                        </div>
+                    </div>
+                </div>
                 <div class="control-group batch-create" style="display: none;">
                     <stripes:label for="summary" name="Summary" class="control-label"/>
                     <div class="controls">
@@ -664,6 +683,7 @@
                 <stripes:submit name="addToBatch" value="Add to Batch" class="btn bucket-control" disabled="true"/>
                 <stripes:submit name="removeFromBucket" value="Remove From Bucket" class="btn bucket-control"
                                 disabled="true"/>
+                <stripes:submit name="createSrsBatch" value="Create SRS Batch" class="btn bucket-control" disabled="true"/>
                 <a href="#" id="cancel" onClick="$j('#bucketForm').submit()" style="display: none;">Cancel</a>
                 <div id="chooseNext" class="table-control">Select Next <input value="${actionBean.selectNextSize}"
                                                                         style="width: 3em;" id="batchSize" title="Batch Size"/>&nbsp;

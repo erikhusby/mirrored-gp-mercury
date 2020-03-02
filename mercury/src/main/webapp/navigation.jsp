@@ -306,6 +306,22 @@
                                 Seq Plating Queue
                             </stripes:link>
                         </li>
+                        <li>
+                            <stripes:link id="arraysStorageRetrievalQueue"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean"
+                                          event="view">
+                                <stripes:param name="queueType" value="ARRAYS_STORAGE_RETRIEVAL"/>
+                                Arrays Storage Retrieval Queue
+                            </stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="storageRetrievalQueue"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean"
+                                          event="view">
+                                <stripes:param name="queueType" value="SEQUENCING_STORAGE_RETRIEVAL"/>
+                                Sequencing Storage Retrieval Queue
+                            </stripes:link>
+                        </li>
                     </ul>
                 </li>
             </security:authorizeBlock>

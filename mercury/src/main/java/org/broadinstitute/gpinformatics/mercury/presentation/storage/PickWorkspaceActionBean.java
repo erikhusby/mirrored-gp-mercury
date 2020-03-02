@@ -15,6 +15,10 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.queue.DequeueingOptions;
+import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.storage.StorageEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -22,6 +26,10 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueSpecialization;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -51,7 +59,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
-import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
@@ -89,6 +96,9 @@ public class PickWorkspaceActionBean extends CoreActionBean {
 
     @Inject
     private StorageEjb storageEjb;
+
+    @Inject
+    private QueueEjb queueEjb;
 
     /**
      * JSON display collections - default to empty
@@ -451,10 +461,17 @@ public class PickWorkspaceActionBean extends CoreActionBean {
             storageLocationDao.persist( rackLayoutRegistrationEvent );
             addMessage("New layout for rack " + rack.getLabel() + " recorded.");
         }
+        MessageCollection messageCollection = new MessageCollection();
         for( LabBatch batch : batches.values() ) {
             batch.setActive(false);
             addMessage("Batch " + batch.getBatchName() + " set to inactive.");
+            Set<LabVessel> labVessels = batch.getStartingBatchLabVessels();
+            queueEjb.dequeueLabVessels(labVessels, QueueType.ARRAYS_STORAGE_RETRIEVAL, messageCollection,
+                    DequeueingOptions.DEFAULT_DEQUEUE_RULES);
+            queueEjb.dequeueLabVessels(labVessels, QueueType.SEQUENCING_STORAGE_RETRIEVAL, messageCollection,
+                    DequeueingOptions.DEFAULT_DEQUEUE_RULES);
         }
+        addMessages(messageCollection);
         storageLocationDao.flush();
 
         // Start from clean slate - remove inactive batches

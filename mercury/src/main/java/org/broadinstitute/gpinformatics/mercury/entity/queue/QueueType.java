@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.queue.datadump.DnaQuant
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.dequeueRules.AbstractPostDequeueHandler;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.dequeueRules.DnaQuantPostDequeueHandler;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.dequeueRules.FingerprintingPostDequeueHandler;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.dequeueRules.SrsPostDequeueHandler;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.dequeueRules.VolumeCheckPostDequeueHandler;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.AbstractEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.DnaQuantEnqueueOverride;
@@ -14,6 +15,10 @@ import org.broadinstitute.gpinformatics.mercury.boundary.queue.validation.Abstra
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.validation.DnaQuantQueueValidator;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.validation.FingerprintingQueueValidator;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.validation.VolumeCheckQueueValidator;
+import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Enum which defines a queue and its implementation.
@@ -29,6 +34,10 @@ public enum QueueType {
             DnaQuantDataDumpGenerator.class, QueueContainerRule.TUBES_ONLY),
     SEQ_PLATING("Seq Plating", DnaQuantQueueValidator.class, DnaQuantEnqueueOverride.class, DnaQuantPostDequeueHandler.class,
             DnaQuantDataDumpGenerator.class, QueueContainerRule.TUBES_ONLY),
+    ARRAYS_STORAGE_RETRIEVAL("Arrays Storage Retrieval", DnaQuantQueueValidator.class, DnaQuantEnqueueOverride.class, SrsPostDequeueHandler.class,
+            DnaQuantDataDumpGenerator.class, QueueContainerRule.TUBES_ONLY, SrsQueue.TRUE),
+    SEQUENCING_STORAGE_RETRIEVAL("Sequencing Storage Retrieval", DnaQuantQueueValidator.class, DnaQuantEnqueueOverride.class, SrsPostDequeueHandler.class,
+            DnaQuantDataDumpGenerator.class, QueueContainerRule.TUBES_ONLY, SrsQueue.TRUE),
     ;
 
     // Name displayed in the queue page
@@ -43,17 +52,39 @@ public enum QueueType {
     private final Class<? extends AbstractDataDumpGenerator> dataDumpGenerator;
     // Used throughout to do some verification based upon whether we want to allow only tubes or any vessel.
     private final QueueContainerRule queueContainerRule;
+    private final SrsQueue srsQueue;
+
+    private static final List<QueueType> LIST_SRS_QUEUES = new
+            ArrayList<>(QueueType.values().length);
 
     QueueType(String textName, Class<? extends AbstractQueueValidator> validatorClass,
               Class<? extends AbstractEnqueueOverride> enqueueOverrideClass,
               Class<? extends AbstractPostDequeueHandler> postDequeueHandlerClass,
               Class<? extends AbstractDataDumpGenerator> dataDumpGenerator, QueueContainerRule queueContainerRule) {
+        this(textName, validatorClass, enqueueOverrideClass, postDequeueHandlerClass, dataDumpGenerator,
+                queueContainerRule, SrsQueue.FALSE);
+    }
+
+    QueueType(String textName, Class<? extends AbstractQueueValidator> validatorClass,
+              Class<? extends AbstractEnqueueOverride> enqueueOverrideClass,
+              Class<? extends AbstractPostDequeueHandler> postDequeueHandlerClass,
+              Class<? extends AbstractDataDumpGenerator> dataDumpGenerator, QueueContainerRule queueContainerRule,
+              SrsQueue srsQueue) {
         this.textName = textName;
         this.validatorClass = validatorClass;
         this.enqueueOverrideClass = enqueueOverrideClass;
         this.postDequeueHandlerClass = postDequeueHandlerClass;
         this.dataDumpGenerator = dataDumpGenerator;
         this.queueContainerRule = queueContainerRule;
+        this.srsQueue = srsQueue;
+    }
+
+    static {
+        for (QueueType queueType: QueueType.values()) {
+            if (queueType.isSrsQueue()) {
+                LIST_SRS_QUEUES.add(queueType);
+            }
+        }
     }
 
     public String getTextName() {
@@ -78,5 +109,23 @@ public enum QueueType {
 
     public QueueContainerRule getQueueContainerRule() {
         return queueContainerRule;
+    }
+
+    public static List<QueueType> getSrsQueues() {
+        return LIST_SRS_QUEUES;
+    }
+
+    public boolean isSrsQueue() {
+        return srsQueue == SrsQueue.TRUE;
+    }
+
+    public enum SrsQueue {
+        TRUE(true),
+        FALSE(false);
+        private boolean value;
+
+        private SrsQueue(boolean value) {
+            this.value = value;
+        }
     }
 }

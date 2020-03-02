@@ -70,7 +70,7 @@ public class QueueEventHandler extends AbstractEventHandler {
                         }
                         String rack = ((TubeFormation) labEvent.getInPlaceLabVessel()).getRacksOfTubes().iterator().next().getLabel();
                         queueEjb.enqueueLabVessels(labVessels, queueType,
-                                rack + " Volme Checked on " + DateUtils.convertDateTimeToString(new Date()),
+                                rack + " Volume Checked on " + DateUtils.convertDateTimeToString(new Date()),
                                 messageCollection, QueueOrigin.OTHER, null);
                     } else {
                         throw new RuntimeException("Multiple product types " + productTypes);
