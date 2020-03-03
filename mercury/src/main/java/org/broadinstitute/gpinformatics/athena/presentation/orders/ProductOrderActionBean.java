@@ -381,6 +381,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     // used only as part of ajax call to get funds remaining.  Quote field is bound to editOrder.
     private String quoteIdentifier;
+    private String testQuote;
     private String originalQuote;
 
     private String product;
@@ -1539,11 +1540,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("getQuoteFunding")
     public Resolution getQuoteFunding() throws Exception {
-        productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
-        if (!StringUtils.isBlank(productOrder)) {
-            editOrder = productOrderDao.findByBusinessKey(productOrder);
-        }
-        JSONObject item = quoteDetailsHelper.getQuoteDetailsJson(this, quoteIdentifier, originalQuote);
+        JSONObject item = quoteDetailsHelper.getQuoteDetailsJson(this, quoteIdentifier);
         return new StreamingResolution("text/json", item.toString());
     }
 
@@ -1555,7 +1552,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         changeOrderResults.put(changeQuoteResultsKey, false);
         Optional<ProductOrder> order = Optional.ofNullable(productOrderDao.findByBusinessKey(productOrder));
         order.ifPresent(productOrder1 -> {
-            boolean canChangeQuote = canChangeQuote(productOrder1, productOrder1.getQuoteId(), quoteIdentifier);
+            boolean canChangeQuote = canChangeQuote(productOrder1, productOrder1.getQuoteId(), testQuote);
             try {
                 changeOrderResults.put(changeQuoteResultsKey,canChangeQuote);
             } catch (JSONException e) {

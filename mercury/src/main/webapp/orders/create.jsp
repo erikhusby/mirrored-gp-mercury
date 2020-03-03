@@ -138,7 +138,7 @@
                         var numberOfLanes = $j("#numberOfLanes");
                         var lanesFieldDiv = $j("#numberOfLanesDiv");
 
-                        $.post("${ctxpath}/orders/order.action?determinePDOCanChangeQuote=&productOrder="+ productOrderKey.val()+"&quoteIdentifier="+ quoteIdentifier,
+                        $.post("${ctxpath}/orders/order.action?determinePDOCanChangeQuote=&productOrder="+ productOrderKey.val()+"&testQuote="+ quoteIdentifier,
                              function(json){
                             if (json.changeQuoteResults === "false") {
                                 alert("Switching between Quote Server and SAP quotes is not permitted once an order has been placed.");
@@ -1123,8 +1123,7 @@
             var productOrderKey = $j("input[name='productOrder']").val();
             if (quoteIdentifier && quoteIdentifier !== quoteTitle) {
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier +
-                        "&productOrder=" + productOrderKey + "&originalQuote=" + originalQuote,
+                    url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier,
                     dataType: 'json',
                     success: updateFunds
                 });
