@@ -5,7 +5,11 @@ import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcBlacklisting;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcBlacklisting_;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcContamination;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcGtConcordance;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc_;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.CriteriaInClauseCreator;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.JPASplitter;
 
@@ -13,6 +17,7 @@ import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceContextType;
@@ -20,11 +25,17 @@ import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import java.io.File;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @RequestScoped
 @Stateful
@@ -34,11 +45,54 @@ public class ArraysQcDao {
     @PersistenceContext(type = PersistenceContextType.EXTENDED, unitName = "analytics_pu")
     private EntityManager entityManager;
 
+    @Inject
+    private Deployment deployment;
+
+    @Inject
+    private InfiniumStarterConfig infiniumStarterConfig;
+
     public List<ArraysQc> findByBarcodes(List<String> chipWellBarcodes) {
         if( chipWellBarcodes == null || chipWellBarcodes.isEmpty() ) {
             return Collections.emptyList();
         }
-        return JPASplitter.runCriteriaQuery(chipWellBarcodes, new CriteriaInClauseCreator<String>() {
+
+        List<String> chipWellsInDatasource = new ArrayList<>();
+        List<ArraysQc> syntheticData = new ArrayList<>();
+        if (deployment != Deployment.PROD) {
+            // Check trigger files
+            File dataPath = new File(infiniumStarterConfig.getDataPath());
+            File triggers = new File(dataPath, "triggers");
+            File clinicalTriggers = new File(dataPath, "clinical_triggers");
+            Set<String> triggerChipFolders = new HashSet<>();
+            for (File folder: Arrays.asList(triggers, clinicalTriggers)) {
+                if (folder != null && folder.exists()) {
+                    Collections.addAll(triggerChipFolders, folder.list());
+                }
+            }
+
+            for (String chipWellBarcode: chipWellBarcodes) {
+                String chipBarcode = chipWellBarcode.replaceAll("_R\\d\\dC\\d\\d", "");
+                if (triggerChipFolders.contains(chipBarcode)) {
+                    chipWellsInDatasource.add(chipWellBarcode);
+                } else {
+                    ArraysQc arraysQc = new ArraysQc();
+                    arraysQc.setChipWellBarcode(chipWellBarcode);
+                    arraysQc.setCallRate(new BigDecimal(".99461"));
+                    ArraysQcContamination contamination = new ArraysQcContamination();
+                    contamination.setPctMix(new BigDecimal(".0551"));
+                    arraysQc.setArraysQcContamination(Collections.singleton(contamination));
+                    arraysQc.setHetPct(new BigDecimal(".11121"));
+                    arraysQc.setGenderConcordancePf(true);
+                    ArraysQcGtConcordance concordance = new ArraysQcGtConcordance();
+                    concordance.setVariantType("SNP");
+                    concordance.setGenotypeConcordance(new BigDecimal(".451"));
+                    arraysQc.setArraysQcGtConcordances(Collections.singleton(concordance));
+                    syntheticData.add(arraysQc);
+                }
+            }
+        }
+
+        List<ArraysQc> entities = JPASplitter.runCriteriaQuery(chipWellsInDatasource, new CriteriaInClauseCreator<String>() {
             @Override
             public Query createCriteriaInQuery(Collection<String> parameterList) {
                 CriteriaBuilder cb = entityManager.getCriteriaBuilder();
@@ -50,6 +104,9 @@ public class ArraysQcDao {
                 return entityManager.createQuery(criteria);
             }
         });
+
+        syntheticData.addAll(entities);
+        return syntheticData;
     }
 
     public Map<String, ArraysQc> findMapByBarcodes(List<String> chipWellBarcodes) {

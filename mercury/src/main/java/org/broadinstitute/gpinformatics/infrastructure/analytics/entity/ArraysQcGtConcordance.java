@@ -89,4 +89,12 @@ public class ArraysQcGtConcordance implements Serializable {
     public BigDecimal getNonRefGenotypeConcordance() {
         return nonRefGenotypeConcordance;
     }
+
+    public void setVariantType(String variantType) {
+        this.variantType = variantType;
+    }
+
+    public void setGenotypeConcordance(BigDecimal genotypeConcordance) {
+        this.genotypeConcordance = genotypeConcordance;
+    }
 }

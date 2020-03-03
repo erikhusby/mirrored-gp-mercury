@@ -297,4 +297,163 @@ public class ArraysQc {
         }
         return arraysQcContamination.iterator().next();
     }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setChipWellBarcode(String chipWellBarcode) {
+        this.chipWellBarcode = chipWellBarcode;
+    }
+
+    public void setSampleAlias(String sampleAlias) {
+        this.sampleAlias = sampleAlias;
+    }
+
+    public void setAnalysisVersion(Long analysisVersion) {
+        this.analysisVersion = analysisVersion;
+    }
+
+    public void setLatest(Boolean latest) {
+        isLatest = latest;
+    }
+
+    public void setChipType(String chipType) {
+        this.chipType = chipType;
+    }
+
+    public void setCallRate(BigDecimal callRate) {
+        this.callRate = callRate;
+    }
+
+    public void setAutocallCallRate(BigDecimal autocallCallRate) {
+        this.autocallCallRate = autocallCallRate;
+    }
+
+    public void setNumAutocallCalls(Long numAutocallCalls) {
+        this.numAutocallCalls = numAutocallCalls;
+    }
+
+    public void setAutocallPf(Boolean autocallPf) {
+        this.autocallPf = autocallPf;
+    }
+
+    public void setAutocallDate(Date autocallDate) {
+        this.autocallDate = autocallDate;
+    }
+
+    public void setImagingDate(Date imagingDate) {
+        this.imagingDate = imagingDate;
+    }
+
+    public void setZcalled(Boolean zcalled) {
+        isZcalled = zcalled;
+    }
+
+    public void setAutocallGender(Character autocallGender) {
+        this.autocallGender = autocallGender;
+    }
+
+    public void setFpGender(Character fpGender) {
+        this.fpGender = fpGender;
+    }
+
+    public void setReportedGender(Character reportedGender) {
+        this.reportedGender = reportedGender;
+    }
+
+    public void setGenderConcordancePf(Boolean genderConcordancePf) {
+        this.genderConcordancePf = genderConcordancePf;
+    }
+
+    public void setHetPct(BigDecimal hetPct) {
+        this.hetPct = hetPct;
+    }
+
+    public void setHetHomvarRatio(BigDecimal hetHomvarRatio) {
+        this.hetHomvarRatio = hetHomvarRatio;
+    }
+
+    public void setClusterFileName(String clusterFileName) {
+        this.clusterFileName = clusterFileName;
+    }
+
+    public void setP95Green(Long p95Green) {
+        this.p95Green = p95Green;
+    }
+
+    public void setP95Red(Long p95Red) {
+        this.p95Red = p95Red;
+    }
+
+    public void setAutocallVersion(String autocallVersion) {
+        this.autocallVersion = autocallVersion;
+    }
+
+    public void setZcallVersion(String zcallVersion) {
+        this.zcallVersion = zcallVersion;
+    }
+
+    public void setTotalAssays(Long totalAssays) {
+        this.totalAssays = totalAssays;
+    }
+
+    public void setTotalSnps(Long totalSnps) {
+        this.totalSnps = totalSnps;
+    }
+
+    public void setTotalIndels(Long totalIndels) {
+        this.totalIndels = totalIndels;
+    }
+
+    public void setNumCalls(Long numCalls) {
+        this.numCalls = numCalls;
+    }
+
+    public void setNumNoCalls(Long numNoCalls) {
+        this.numNoCalls = numNoCalls;
+    }
+
+    public void setNumInDbSnp(Long numInDbSnp) {
+        this.numInDbSnp = numInDbSnp;
+    }
+
+    public void setNovelSnps(Long novelSnps) {
+        this.novelSnps = novelSnps;
+    }
+
+    public void setFilteredSnps(Long filteredSnps) {
+        this.filteredSnps = filteredSnps;
+    }
+
+    public void setPctDbsnp(BigDecimal pctDbsnp) {
+        this.pctDbsnp = pctDbsnp;
+    }
+
+    public void setNumSingletons(Long numSingletons) {
+        this.numSingletons = numSingletons;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public void setModifiedAt(Date modifiedAt) {
+        this.modifiedAt = modifiedAt;
+    }
+
+    public void setArraysQcFingerprints(
+            Set<ArraysQcFingerprint> arraysQcFingerprints) {
+        this.arraysQcFingerprints = arraysQcFingerprints;
+    }
+
+    public void setArraysQcGtConcordances(
+            Set<ArraysQcGtConcordance> arraysQcGtConcordances) {
+        this.arraysQcGtConcordances = arraysQcGtConcordances;
+    }
+
+    public void setArraysQcContamination(
+            Set<ArraysQcContamination> arraysQcContamination) {
+        this.arraysQcContamination = arraysQcContamination;
+    }
 }

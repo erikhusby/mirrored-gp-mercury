@@ -35,6 +35,10 @@ public class ArraysQcContamination implements Serializable {
         return pctMix;
     }
 
+    public void setPctMix(BigDecimal pctMix) {
+        this.pctMix = pctMix;
+    }
+
     public BigDecimal getLlk() {
         return llk;
     }
