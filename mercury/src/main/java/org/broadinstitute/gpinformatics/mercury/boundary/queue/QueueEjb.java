@@ -79,7 +79,7 @@ public class QueueEjb {
      */
     public void enqueueBySampleIdList(String sampleIds, QueueType queueType, @Nullable String readableText,
                                       @Nonnull MessageCollection messageCollection, QueueOrigin queueOrigin, QueueSpecialization queueSpecialization) {
-        List<String> sampleNames = SearchActionBean.cleanInputStringForSamples(sampleIds.trim().toUpperCase());
+        List<String> sampleNames = SearchActionBean.cleanInputStringForSamples(sampleIds);
         enqueueBySampleIdList(sampleNames, queueType, readableText, messageCollection, queueOrigin, queueSpecialization);
     }
 
@@ -97,6 +97,10 @@ public class QueueEjb {
      */
     public void enqueueBySampleIdList(List<String> sampleIds, QueueType queueType, @Nullable String readableText,
                                        @Nonnull MessageCollection messageCollection, QueueOrigin queueOrigin, QueueSpecialization queueSpecialization) {
+        if (sampleIds.isEmpty()) {
+            messageCollection.addError("No barcodes to add were provided");
+            return;
+        }
         List<LabVessel> labVessels = labVesselDao.findBySampleKeyOrLabVesselLabel(sampleIds);
         enqueueLabVessels(labVessels, queueType, readableText, messageCollection, queueOrigin, queueSpecialization);
     }
@@ -485,6 +489,10 @@ public class QueueEjb {
      * @param messageCollection     Messages back to the user.
      */
     public void excludeItemsById(List<String> excludeVessels, QueueType queueType, MessageCollection messageCollection) {
+        if (excludeVessels.isEmpty()) {
+            messageCollection.addError("No barcodes to remove were provided");
+            return;
+        }
         List<LabVessel> vessels = labVesselDao.findBySampleKeyOrLabVesselLabel(excludeVessels);
 
         vessels.addAll(labVesselDao.findByBarcodes(excludeVessels).values());
@@ -503,7 +511,7 @@ public class QueueEjb {
      * @param messageCollection     Messages back to the user.
      */
     public void excludeItemsById(String excludeVessels, QueueType queueType, MessageCollection messageCollection) {
-        List<String> barcodes = SearchActionBean.cleanInputStringForSamples(excludeVessels.trim().toUpperCase());
+        List<String> barcodes = SearchActionBean.cleanInputStringForSamples(excludeVessels);
         excludeItemsById(barcodes, queueType, messageCollection);
     }
 
