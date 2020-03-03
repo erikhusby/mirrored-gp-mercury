@@ -103,7 +103,7 @@ public class LabMetricEtlDbFreeTest {
         EasyMock.expect(obj.getName()).andReturn(type);
         EasyMock.expect(obj.getUnits()).andReturn(units);
         EasyMock.expect(obj.getValue()).andReturn(value);
-        EasyMock.expect(obj.getVesselPosition()).andReturn(vesselPosition);
+        EasyMock.expect(obj.getVesselPosition()).andReturn(vesselPosition).times(2);
         EasyMock.expect(obj.getLabMetricDecision()).andReturn(null).anyTimes();
         EasyMock.expect(run.getRunName()).andReturn(runName);
         EasyMock.expect(run.getRunDate()).andReturn(runDate);
@@ -123,7 +123,7 @@ public class LabMetricEtlDbFreeTest {
         EasyMock.expect(obj.getUnits()).andReturn(units);
         EasyMock.expect(obj.getValue()).andReturn(value);
         EasyMock.expect(obj.getCreatedDate()).andReturn(runDate);
-        EasyMock.expect(obj.getVesselPosition()).andReturn(vesselPosition);
+        EasyMock.expect(obj.getVesselPosition()).andReturn(vesselPosition).times(2);
         EasyMock.expect(obj.getLabMetricDecision()).andReturn(null).anyTimes();
 
         EasyMock.replay(mocks);
@@ -146,7 +146,7 @@ public class LabMetricEtlDbFreeTest {
         EasyMock.expect(obj.getName()).andReturn(type);
         EasyMock.expect(obj.getUnits()).andReturn(units);
         EasyMock.expect(obj.getValue()).andReturn(value);
-        EasyMock.expect(obj.getVesselPosition()).andReturn(vesselPosition);
+        EasyMock.expect(obj.getVesselPosition()).andReturn(vesselPosition).times(2);
         EasyMock.expect(obj.getLabMetricDecision()).andReturn(null).anyTimes();
         EasyMock.expect(run.getRunName()).andReturn(runName);
         EasyMock.expect(run.getRunDate()).andReturn(runDate);
@@ -170,7 +170,7 @@ public class LabMetricEtlDbFreeTest {
         EasyMock.expect(obj.getName()).andReturn(type);
         EasyMock.expect(obj.getUnits()).andReturn(units);
         EasyMock.expect(obj.getValue()).andReturn(value);
-        EasyMock.expect(obj.getVesselPosition()).andReturn(vesselPosition);
+        EasyMock.expect(obj.getVesselPosition()).andReturn(vesselPosition).times(2);
         EasyMock.expect(obj.getLabMetricDecision()).andReturn(labMetricDecision).anyTimes();
 
         EasyMock.expect(labMetricDecision.getDecidedDate()).andReturn(decisionDate);
