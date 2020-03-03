@@ -1,3 +1,0 @@
-SUPPORT-5842 change InfiniumXStainHD
-4074870	InfiniumXStainHD	InfiniumXStain
-4074869	InfiniumXStainHD	InfiniumXStain

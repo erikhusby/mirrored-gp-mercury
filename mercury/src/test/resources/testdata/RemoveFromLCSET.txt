@@ -1,2 +1,0 @@
-SUPPORT-4842 remove 1 sample from XTR-4568
-XTR-4568 SM-HKJFE
