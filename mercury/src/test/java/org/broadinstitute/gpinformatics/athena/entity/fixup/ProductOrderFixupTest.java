@@ -2127,4 +2127,29 @@ public class ProductOrderFixupTest extends Arquillian {
                 messageCollection);
         return newOrder;
     }
+
+    @Test(enabled = false)
+    public void po24238UpdateBucketEntryProductOrderKey() throws Exception {
+
+        userBean.loginOSUser();
+
+        final List<String> targetPDOKeyss =
+                Arrays.asList("PDO-20848", "PDO-20849", "PDO-20850", "PDO-20851");
+        beginTransaction();
+
+        for (String targetPDOKey : targetPDOKeyss) {
+            final ProductOrder targetPdo = productOrderDao.findByBusinessKey(targetPDOKey);
+
+            for (BucketEntry bucketEntry : targetPdo.getBucketEntries()) {
+                System.out.println(String.format("Adding pdo Key %s to bucket entry %s.",
+                        targetPdo.getBusinessKey(), bucketEntry.getBucketEntryId()));
+                bucketEntry.setPoBusinessKey(targetPdo.getBusinessKey());
+            }
+        }
+        productOrderDao.persist(new FixupCommentary("GPLIM-6940: Added PDOKeys to deprecated poBusinessKey "
+                                                    + "field in bucket entries to account for bug in "
+                                                    + "ZimsIllumnaRunFactory implementation"));
+
+        commitTransaction();
+    }
 }
