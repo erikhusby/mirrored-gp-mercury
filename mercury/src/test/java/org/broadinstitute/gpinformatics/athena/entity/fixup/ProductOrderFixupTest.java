@@ -2128,7 +2128,7 @@ public class ProductOrderFixupTest extends Arquillian {
         return newOrder;
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void po24238UpdateBucketEntryProductOrderKey() throws Exception {
 
         userBean.loginOSUser();
