@@ -2152,4 +2152,66 @@ public class ProductOrderFixupTest extends Arquillian {
 
         commitTransaction();
     }
+
+    @Test(enabled = true)
+    public void gplim6881MoveSamplesToCompleted() throws Exception {
+
+        userBean.loginOSUser();
+        
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("finalizeSampleSwaps.txt"));
+        final String commentary = fixupLines.get(0);
+
+        beginTransaction();
+
+        for (String line : fixupLines.subList(1, fixupLines.size())) {
+            final String[] lineSegments = line.split(",");
+            final String pdoKey = lineSegments[0].trim();
+
+            Optional<ProductOrder> optionalProductOrder = Optional.ofNullable(productOrderDao.findByBusinessKey(pdoKey));
+            if(optionalProductOrder.isPresent()) {
+
+                ProductOrder orderToClose = optionalProductOrder.get();
+
+                String[] sampleNames = null;
+                String abandonComment = null;
+                if (lineSegments.length > 1) {
+                    sampleNames = lineSegments[1].trim().split(" ");
+                    abandonComment = lineSegments[2];
+
+                }
+                if (sampleNames != null && sampleNames.length > 0) {
+                    List<String> sampleNameArray = (List<String>) Arrays.asList(sampleNames);
+                    List<ProductOrderSample> samplesToAbandon = new ArrayList<>();
+                    List<ProductOrderSample.DeliveryStatus> statusesForSamples = new ArrayList<>();
+                    orderToClose.getSamples().forEach(productOrderSample -> {
+                        if(sampleNameArray.contains(productOrderSample.getSampleKey())) {
+                            samplesToAbandon.add(productOrderSample);
+                            statusesForSamples.add(ProductOrderSample.DeliveryStatus.ABANDONED);
+                        }
+                    });
+
+                    final String username = bspUserList.getById(orderToClose.getCreatedBy()).getUsername();
+
+                    System.out.println(String.format("Transitioning samples %s in PDO %s to abandoned",
+                            StringUtils.join(sampleNameArray,","),orderToClose.getBusinessKey()));
+                    productOrderEjb.transitionSamples(orderToClose,
+                            EnumSet.of(ProductOrderSample.DeliveryStatus.ABANDONED,
+                                    ProductOrderSample.DeliveryStatus.NOT_STARTED),
+
+                            ProductOrderSample.DeliveryStatus.ABANDONED, samplesToAbandon);
+                    JiraIssue issue = jiraService.getIssue(orderToClose.getJiraTicketKey());
+                    issue.addComment(MessageFormat.format("{0} transitioned samples to status {1}: {2}\n\n{3}",
+                            username, ProductOrderSample.DeliveryStatus.ABANDONED.getDisplayName(),
+                            StringUtils.join(ProductOrderSample.getSampleNames(samplesToAbandon), ","),
+                            StringUtils.stripToEmpty(abandonComment)));
+                }
+                productOrderEjb.updateOrderStatusNoRollback(orderToClose.getBusinessKey());
+                if(orderToClose.hasSapQuote()) {
+                    productOrderEjb.conditionallyShortCloseOrder(orderToClose);
+                }
+            }
+        }
+        productOrderDao.persist(new FixupCommentary(commentary));
+        commitTransaction();
+    }
 }
