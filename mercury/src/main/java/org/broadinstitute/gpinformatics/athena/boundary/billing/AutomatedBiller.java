@@ -12,7 +12,10 @@ import javax.ejb.Startup;
 import javax.inject.Inject;
 import java.text.MessageFormat;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * This is a scheduled class that can generate ledger entries for product orders based on messages in the message
@@ -27,11 +30,11 @@ public class AutomatedBiller {
     // with the schedule, which is happening from midnight to 4:45.
     public static final int PROCESSING_START_HOUR = 0;
     public static final int PROCESSING_END_HOUR = 5;
+    public static final String CAN_BILL = "CAN_BILL";
 
     private final WorkCompleteMessageDao workCompleteMessageDao;
     private final BillingEjb billingEjb;
     private final SessionContextUtility sessionContextUtility;
-
     private final Log log = LogFactory.getLog(AutomatedBiller.class);
 
     @Inject
@@ -53,37 +56,50 @@ public class AutomatedBiller {
      * The schedule is every 30 minutes from 2 minutes after Midnight through 4:30 (before 5AM). It is offset
      * by 2 minutes because the Quote server reboots at midnight (prod) and 3AM (dev).
      */
-    @Schedule(minute = "2/30", hour = "0,1,2,3,4", persistent = false)
+//    @Schedule(minute = "2/30", hour = "0,1,2,3,4", persistent = false)
+    @Schedule(minute = "*", hour = "*", persistent = false)
     public void processMessages() {
         // Use SessionContextUtility here because ProductOrderEjb depends on session scoped beans.
-        sessionContextUtility.executeInContext(new SessionContextUtility.Function() {
-            @Override
-            public void apply() {
+        sessionContextUtility.executeInContext(() -> {
 
-                // Since we may check on product orders one at a time per sample, this will keep us from
-                // doing two queries every time within the following loop.
-                Map<String, Boolean> orderLockoutCache = new HashMap<> ();
+            // Since we may check on product orders one at a time per sample, this will keep us from
+            // doing two queries every time within the following loop.
+            Map<String, Boolean> orderLockoutCache = new HashMap<>();
+            Map<Long, Set<WorkCompleteMessage>> messagesByPdo = new HashMap<>();
 
-                for (WorkCompleteMessage message : workCompleteMessageDao.getNewMessages()) {
-                    // Default to true. Even if an exception is thrown, the message is considered to be processed
-                    // to avoid re-throwing every time.
-                    boolean processed = true;
-                    try {
-                        // For each message, request auto billing of the sample in the order.
-                        processed = billingEjb.autoBillSample(message.getPdoName(), message.getAliquotId(),
-                                message.getCompletedDate(), message.getData(), orderLockoutCache);
-                    } catch (Exception e) {
-                        log.error(MessageFormat.format(
-                                "Error while processing work complete message. PDO: {0}, Sample: {1} {2}",
-                                message.getPdoName(), message.getAliquotId() + e.getLocalizedMessage()
-                                ));
-                    }
-                    if (processed) {
-                        // Once a message is processed, mark it to avoid processing it again.
-                        workCompleteMessageDao.markMessageProcessed(message);
-                    }
+            List<WorkCompleteMessage> newMessages = workCompleteMessageDao.getNewMessages();
+            for (WorkCompleteMessage message : newMessages) {
+                // Default to true. Even if an exception is thrown, the message is considered to be processed
+                // to avoid re-throwing every time.
+                boolean processed = true;
+                boolean forceBilling = message.getData().get(CAN_BILL).booleanValue();
+                String pdoName = message.getPdoName();
+                try {
+                    // For each message, request auto billing of the sample in the order.
+                    processed = billingEjb.autoBillSample(pdoName, message.getAliquotId(), message.getCompletedDate(),
+                        message.getPartNumber(), message.getData(), orderLockoutCache);
+                } catch (Exception e) {
+                    log.error(MessageFormat.format(
+                        "Error while processing work complete message. PDO: {0}, Sample: {1} {2}",
+                        pdoName, message.getAliquotId() + e.getLocalizedMessage()
+                    ));
                 }
+                if (processed) {
+                    // Once a message is processed, mark it to avoid processing it again.
+                    workCompleteMessageDao.markMessageProcessed(message);
+                }
+//                Optional.ofNullable(message.getUserId()).ifPresent(msg->{
+//                    messagesByPdo.computeIfAbsent(msg, k -> new HashSet<>()).add(message);
+//                });
+
             }
+            messagesByPdo.forEach((userId, messages) -> {
+                billingEjb.createAndBillSession(messages.stream().map(WorkCompleteMessage::getPdoName).collect(
+                    Collectors.toList()), userId);
+            });
+//            messagesByPdo.forEach((productOrder, messages) -> messages.stream()
+//                .map(AutomatedBiller::getBillingUserId).filter(Optional::isPresent).forEach(messageValue ->
+//                billingEjb.createAndBillSession(productOrder, messageValue.get())));
         });
     }
 }

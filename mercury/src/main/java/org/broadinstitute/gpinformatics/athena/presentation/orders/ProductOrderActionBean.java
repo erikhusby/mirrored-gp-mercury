@@ -232,6 +232,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private State state;
     private ProductOrder.QuoteSourceType quoteSource;
     private String sapOrder;
+    private ResearchProject.BillingTrigger billingTrigger;
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);

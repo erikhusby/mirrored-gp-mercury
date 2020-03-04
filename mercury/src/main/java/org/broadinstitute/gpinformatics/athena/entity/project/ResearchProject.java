@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
@@ -238,6 +239,33 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
      */
     @OneToMany(mappedBy = "researchProject", cascade = CascadeType.PERSIST)
     private Set<ManifestSession> manifestSessions = new HashSet<>();
+
+    public enum BillingTrigger implements Displayable {
+        NONE("Manual Billing Only"), RECEIPT("Bill on Sample Receipt");
+
+        private final String displayName;
+
+        BillingTrigger(String displayName) {
+            this.displayName = displayName;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
+
+    @Enumerated(EnumType.STRING)
+    private BillingTrigger defaultBillingTrigger=BillingTrigger.NONE;
+
+    public BillingTrigger getDefaultBillingTrigger() {
+        return defaultBillingTrigger;
+    }
+
+    public void setDefaultBillingTrigger(
+        BillingTrigger defaultBillingTrigger) {
+        this.defaultBillingTrigger = defaultBillingTrigger;
+    }
 
     // todo: we can cache the submissiontrackers in a static map
     public SubmissionTracker getSubmissionTracker(SubmissionTuple submissionTuple) {

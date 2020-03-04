@@ -373,13 +373,13 @@ public class ProductFixupTest extends Arquillian {
                     BigDecimal sapPrice = new BigDecimal(material.getBasePrice());
                     if (sapPrice.compareTo(qsPrice) != 0) {
                         errors.add("Price for " + currentProduct.getPartNumber() + " sold in " + configuration
-                                .getCompanyCode() + " does not match SAP: QS price is " +
+                            .getCompanyCode() + " does not match SAP: QS price is " +
                                    qsPrice.toString() + " and SAP price is " + sapPrice.toString());
                     }
                 }
             }
         }
-        System.out.println(StringUtils.join(errors,"\n"));
+        System.out.println(StringUtils.join(errors, "\n"));
     }
 
     /**

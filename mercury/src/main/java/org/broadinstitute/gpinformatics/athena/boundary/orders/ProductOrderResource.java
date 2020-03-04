@@ -28,6 +28,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGroupCollectionList;
@@ -382,7 +383,7 @@ public class ProductOrderResource {
                     // The sample's business key IS the aliquot Id since that is the sample on the order.
                     Map<String, Object> dataMap = Collections.emptyMap();
                     WorkCompleteMessage workComplete =
-                            new WorkCompleteMessage(pdoKey, sample.getBusinessKey(), currentDate, dataMap);
+                            new WorkCompleteMessage(pdoKey, sample.getBusinessKey(), Product.SAMPLE_INITIATION_PART_NUMBER, currentDate, dataMap);
                     workCompleteMessageDao.persist(workComplete);
                 }
             }

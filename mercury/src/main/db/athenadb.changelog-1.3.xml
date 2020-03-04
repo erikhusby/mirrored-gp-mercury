@@ -143,4 +143,30 @@
         <modifyDataType tableName="PRODUCT_ORDER_AUD" columnName="count" newDataType="number(14,4)" schemaName="ATHENA" />
     </changeSet>
 
+    <changeSet id="GPLIM-6698_columns_to_suport_billing" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <and>
+                    <columnExists schemaName="ATHENA" tableName="WORK_COMPLETE_MESSAGE" columnName="PART_NUMBER"/>
+                </and>
+            </not>
+        </preConditions>
+        <addColumn schemaName="ATHENA" tableName="WORK_COMPLETE_MESSAGE">
+            <column name="PART_NUMBER" type="VARCHAR2(40)"/>
+        </addColumn>
+
+    </changeSet>
+    <changeSet id="GPLIM-6698_columns_to_suport_billing_aud" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <and>
+                    <columnExists schemaName="ATHENA" tableName="WORK_COMPLETE_MESSAGE_AUD" columnName="PART_NUMBER"/>
+                </and>
+            </not>
+        </preConditions>
+        <addColumn schemaName="ATHENA" tableName="WORK_COMPLETE_MESSAGE_AUD">
+            <column  name="PART_NUMBER" type="VARCHAR2(40)"/>
+        </addColumn>
+
+    </changeSet>
 </databaseChangeLog>

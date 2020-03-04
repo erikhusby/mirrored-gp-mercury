@@ -157,6 +157,17 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return cachedSapQuote;
     }
 
+    @Nullable
+    public Product findProduct(String partNumber) {
+        Product foundProduct;
+        if (partNumber == null || getProduct().getPartNumber().equals(partNumber)) {
+            foundProduct = getProduct();
+        } else {
+            foundProduct = getAddOns().stream().map(ProductOrderAddOn::getAddOn).findFirst().orElse(null);
+        }
+        return foundProduct;
+    }
+
     public enum SaveType {CREATING, UPDATING}
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
@@ -216,6 +227,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     @Enumerated(EnumType.STRING)
     private Product.AggregationParticle defaultAggregationParticle;
+
+    @Enumerated(EnumType.STRING)
+    private ResearchProject.BillingTrigger billingTrigger;
+
     /**
      * Alphanumeric Id
      */
@@ -888,6 +903,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             displayValue = defaultAggregationParticle.getDisplayName();
         }
         return displayValue;
+    }
+
+    @Transient
+    public String getBillingTriggerDisplayName() {
+        if (billingTrigger == null) {
+            billingTrigger = researchProject.getDefaultBillingTrigger();
+        }
+        return billingTrigger.getDisplayName();
     }
 
     public Product.AggregationParticle getDefaultAggregationParticle() {
