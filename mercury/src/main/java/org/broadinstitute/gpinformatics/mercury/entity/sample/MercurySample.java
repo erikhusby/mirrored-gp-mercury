@@ -124,14 +124,58 @@ public class MercurySample extends AbstractSample {
      * Checks if the sample is eligible to be used for Clinical work.  The only criteria here would be that the
      * sample originated in Mercury.
      */
-    public boolean canSampleBeUsedForClinical() {
-        return getMetadataSource() == MetadataSource.MERCURY;
+    public boolean isClinicalSample() {
+
+        ContractClient client = null;
+        for (Metadata localMetadata : getMetadata()) {
+            if (localMetadata.getKey() == Metadata.Key.CLIENT) {
+                client = ContractClient.findByNameOrText(localMetadata.getValue());
+                break;
+            }
+        }
+
+        // Have to allow client to be null, for positive controls
+        return getMetadataSource() == MetadataSource.CRSP_PORTAL ||
+                (getMetadataSource() == MetadataSource.MERCURY && (client == null || client.isClinical()));
     }
 
     /** Determines from which system Mercury gets metadata, e.g. collaborator sample ID */
     public enum MetadataSource implements Displayable {
-        BSP("BSP"),
-        MERCURY("Mercury");
+        BSP("BSP") {
+            @Override
+            public boolean sourceSpecificAvailabilityCheck(ProductOrderSample productOrderSample) {
+                return productOrderSample.isSampleReceived();
+            }
+
+            @Override
+            public SampleData makeSampleData(MercurySample mercurySample) {
+                return new BspSampleData();
+            }
+        },
+        MERCURY("Mercury") {
+            @Override
+            public boolean sourceSpecificAvailabilityCheck(ProductOrderSample productOrderSample) {
+                return productOrderSample.isSampleAccessioned() && productOrderSample.isSampleReceived();
+            }
+
+            @Override
+            public SampleData makeSampleData(MercurySample mercurySample) {
+                return new MercurySampleData(mercurySample.getSampleKey(), Collections.<Metadata>emptySet(),
+                                             mercurySample.getReceivedDate());
+            }
+        },
+        CRSP_PORTAL("CRSP Portal") {
+            @Override
+            public boolean sourceSpecificAvailabilityCheck(ProductOrderSample productOrderSample) {
+                return MetadataSource.MERCURY.sourceSpecificAvailabilityCheck(productOrderSample);
+            }
+
+            @Override
+            public SampleData makeSampleData(MercurySample mercurySample) {
+                return MetadataSource.MERCURY.makeSampleData(mercurySample);
+            }
+        };
+
         private final String value;
 
         MetadataSource(String value) {
@@ -142,6 +186,10 @@ public class MercurySample extends AbstractSample {
         public String getDisplayName() {
             return value;
         }
+
+        public abstract boolean sourceSpecificAvailabilityCheck(ProductOrderSample productOrderSample);
+
+        public abstract SampleData makeSampleData(MercurySample mercurySample);
     }
 
     @Id
@@ -292,7 +340,7 @@ public class MercurySample extends AbstractSample {
     }
 
     public void addMetadata(Set<Metadata> metadata) {
-        if (metadataSource == MetadataSource.MERCURY) {
+        if (metadataSource != MetadataSource.BSP) {
             this.metadata.addAll(metadata);
             setSampleData(new MercurySampleData(sampleKey, this.metadata, getReceivedDate()));
         } else {
@@ -411,19 +459,16 @@ public class MercurySample extends AbstractSample {
         MercurySample.MetadataSource metadataSource = getMetadataSource();
         String metadataSourceString;
 
-        if (metadataSource == MercurySample.MetadataSource.BSP) {
-            metadataSourceString = BSP_METADATA_SOURCE;
-        }
-        else if (metadataSource == MercurySample.MetadataSource.MERCURY) {
-            metadataSourceString = MERCURY_METADATA_SOURCE;
-        }
-        else {
-            if (isInGSSRFormat(getSampleKey())) {
-                metadataSourceString = GSSR_METADATA_SOURCE;
-            }
-            else {
-                metadataSourceString = OTHER_METADATA_SOURCE;
-            }
+        switch (metadataSource) {
+            case BSP:
+                metadataSourceString = MetadataSource.BSP.name();
+                break;
+            case MERCURY:
+            case CRSP_PORTAL:
+                metadataSourceString = MetadataSource.MERCURY.name();
+                break;
+            default:
+                throw new RuntimeException("Somehow there was a null metadata source. This needs to be fixed.");
         }
         return metadataSourceString;
     }
@@ -434,14 +479,7 @@ public class MercurySample extends AbstractSample {
 
     @Override
     public SampleData makeSampleData() {
-        switch (metadataSource) {
-        case BSP:
-            return new BspSampleData();
-        case MERCURY:
-            return new MercurySampleData(sampleKey, Collections.<Metadata>emptySet(), getReceivedDate());
-        default:
-            throw new IllegalStateException("Unknown sample data source: " + metadataSource);
-        }
+        return getMetadataSource().makeSampleData(this);
     }
 
     @Override
@@ -474,5 +512,9 @@ public class MercurySample extends AbstractSample {
     public void addLabVessel(LabVessel vesselToAdd) {
         getLabVessel().add(vesselToAdd);
         vesselToAdd.addSample(this);
+    }
+
+    public void changeMetadataSourceToCrspPortal() {
+        metadataSource = MetadataSource.CRSP_PORTAL;
     }
 }

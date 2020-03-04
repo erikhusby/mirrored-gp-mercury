@@ -4,6 +4,7 @@ import com.google.common.collect.Sets;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -71,6 +72,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -878,6 +880,10 @@ public abstract class LabVessel implements Serializable {
                 new LabEvent(LabEventType.SAMPLE_RECEIPT, receivedDate, eventLocation,
                         disambiguator, user.getUserId(), LabEvent.UI_PROGRAM_NAME);
         addInPlaceEvent(receiptEvent);
+    }
+
+    public Triple<RackOfTubes, VesselPosition, String> findStorageContainer() {
+        return null;
     }
 
     public enum ContainerType {

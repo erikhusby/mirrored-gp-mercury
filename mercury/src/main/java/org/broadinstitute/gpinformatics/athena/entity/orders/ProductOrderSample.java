@@ -209,6 +209,19 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     }
 
     /**
+     * Rolls up visibility of the samples availability from just the sample data
+     */
+    public boolean isSampleAvailable() {
+        boolean available;
+        if(!isMetadataSourceInitialized()) {
+            available = false;
+        } else {
+            available = getMetadataSource().sourceSpecificAvailabilityCheck(this);
+        }
+        return available;
+    }
+
+    /**
      * Whether to continue processing a sample if a quantification (e.g. Pico) is out of specification
      * (e.g. concentration is too low).
      */
@@ -479,13 +492,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     @Override
     public SampleData makeSampleData() {
-        SampleData sampleData;
-        if(mercurySample != null) {
-            sampleData = mercurySample.makeSampleData();
-        } else {
-            sampleData = new BspSampleData();
-        }
-        return sampleData;
+        return getMercurySample().makeSampleData();
     }
 
     @Override
@@ -1429,38 +1436,14 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         }
     }
 
-    /**
-     * Rolls up visibility of the samples availability from just the sample data
-     *
-     * If the metadata is essentially BSP,
-     */
-    public boolean isSampleAvailable() {
-        boolean available;
-        if(!isMetadataSourceInitialized()) {
-            available = false;
-        } else {
-            switch (getMetadataSource()) {
-            case BSP:
-                available = isSampleReceived();
-                break;
-            case MERCURY:
-                available = isSampleAccessioned() && isSampleReceived();
-                break;
-            default:
-                throw new IllegalStateException("The metadata Source is undetermined");
-            }
-        }
-        return available;
-    }
-
-    private boolean isMetadataSourceInitialized() {
+    public boolean isMetadataSourceInitialized() {
         return mercurySample != null || metadataSource != null ;
     }
 
     /**
      * Exposes if a sample has been Accessioned.
      */
-    private boolean isSampleAccessioned() {
+    public boolean isSampleAccessioned() {
         boolean sampleAccessioned = false;
         if (mercurySample != null) {
             sampleAccessioned = mercurySample.hasSampleBeenAccessioned();
