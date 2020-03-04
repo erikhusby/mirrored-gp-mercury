@@ -214,10 +214,22 @@ public class SampleDataFetcher implements Serializable {
         Map<String, MercurySample> sampleMap = mercurySampleDao.findMapIdToMercurySample(sampleNames);
         sampleNames.stream().forEach(sampleName -> {
             MercurySample mercurySample = sampleMap.get(sampleName);
+
             if (mercurySample == null || mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
                 bsp.add(sampleName);
             } else {
-                mercury.add(mercurySample);
+                switch (mercurySample.getMetadataSource()) {
+                    case CRSP_PORTAL:
+                    case MERCURY:
+                        mercury.add(mercurySample);
+                        break;
+                    case BSP:
+                        bsp.add(sampleName);
+                        break;
+                    default:
+                        throw new IllegalStateException(
+                                String.format("Unknown sample data source %s for sample %s", mercurySample.getMetadataSource(), sampleName));
+                }
             }
         });
         return Pair.of(mercury, bsp);
@@ -295,10 +307,10 @@ public class SampleDataFetcher implements Serializable {
                 // Prefers the mercurySample name since a BSP sample can be put in a PDO using its tube barcode.
                 String sampleName = mercurySample == null ? productOrderSample.getName() : mercurySample.getSampleKey();
                 if (mercurySample != null &&
-                        mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
-                    mercurySamplesWithMercurySource.add(mercurySample);
-                } else {
+                        mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
                     bspSourceSampleNames.add(sampleName);
+                } else {
+                    mercurySamplesWithMercurySource.add(mercurySample);
                 }
                 // To improve performance, check for Mercury quants only if the product indicates that they're there.
                 if (productOrderSample != null && productOrderSample.getProductOrder() != null) {

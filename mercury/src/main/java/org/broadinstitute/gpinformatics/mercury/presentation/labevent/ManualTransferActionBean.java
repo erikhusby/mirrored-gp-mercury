@@ -856,7 +856,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     }
                     Map<String, LabVessel> stringLabVesselMap = loadPlateFromDb(plateCherryPickEvent.getPlate().get(0),
                             plateCherryPickEvent.getPositionMap().get(0),
-                            false, null, labBatch, messageCollection, Direction.TARGET, true);
+                            false, null, labBatch, messageCollection, Direction.TARGET, manualTransferDetails.allowKnownDestination());
                     verifyCherryPickDestinations(((PlateCherryPickEvent) stationEvent).getPositionMap().get(0), ((PlateCherryPickEvent) stationEvent).getSource(), stringLabVesselMap , messageCollection);
                 }
                 break;
@@ -900,7 +900,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
         }
 
         for (String destinationBarcode : destinationBarcodes) {
-            if (labelLabVesselMap.get(destinationBarcode) != null) {
+            if (labelLabVesselMap.get(destinationBarcode) != null && !manualTransferDetails.allowKnownDestination()) {
                 messageCollection.addError("Unable to use destination " + destinationBarcode
                                            + " as it is in the database and has seen transfers.");
             }
@@ -1110,12 +1110,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     } else if (!allowKnownDestinations){
                         messageCollection.addError(message);
                     } else {
-                        // If we are allowing known destinations in the plate (e.g. cherry pick transfer event expects cherry picks to be unknown, but regular position map can have known)
-                        if (labEventType != LabEventType.DEV && !allowKnownDestinations) {
-                            messageCollection.addError(message);
-                        } else {
-                            messageCollection.addWarning(message);
-                        }
+                        messageCollection.addWarning(message);
                     }
                     if (expectedEmpty != null) {
                         if (labVessel.getTransfersTo().isEmpty()) {

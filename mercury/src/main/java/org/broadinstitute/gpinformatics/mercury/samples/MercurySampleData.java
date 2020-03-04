@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.samples;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -11,7 +12,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -43,6 +46,9 @@ public class MercurySampleData implements SampleData {
     private String species;
     private String sampleLSID;
     private QuantData quantData;
+    private String manufacturerBarcode;
+    private String position = null;
+    private String storageLocation;
 
     public MercurySampleData(@Nonnull String sampleId, @Nonnull Set<Metadata> metadata) {
         this(sampleId, metadata, null);
@@ -58,6 +64,20 @@ public class MercurySampleData implements SampleData {
     public MercurySampleData(@Nonnull MercurySample mercurySample) {
         this(mercurySample.getSampleKey(), mercurySample.getMetadata(), mercurySample.getReceivedDate());
         this.mercurySample = mercurySample;
+        LabVessel labVessel = mercurySample.getLabVessel().iterator().next();
+        this.storageLocation =
+                  (labVessel.getStorageLocation() != null ? labVessel.getStorageLocation().buildLocationTrail() : null);
+        this.manufacturerBarcode = labVessel.getLabel();
+
+        if (labVessel.getContainerRole() == null) {
+            Triple<RackOfTubes, VesselPosition, String> storageContainer = labVessel.findStorageContainer();
+            if (storageContainer != null) {
+                VesselPosition vesselPosition = storageContainer.getMiddle();
+                if (vesselPosition != null) {
+                    this.position = vesselPosition.name();
+                }
+            }
+        }
     }
 
     private void extractSampleDataFromMetadata(Set<Metadata> metadata) {
@@ -482,5 +502,30 @@ public class MercurySampleData implements SampleData {
     @Override
     public String getSampleStatus() {
         return null;
+    }
+
+    @Override
+    public String containerName() {
+        return null;
+    }
+
+    @Override
+    public String getBspStorageLocation() {
+        return null;
+    }
+
+    @Override
+    public String getManufacturerBarcode() {
+        return manufacturerBarcode;
+    }
+
+    @Override
+    public String getPosition() {
+        return position;
+    }
+
+    @Override
+    public String getMercuryStorageLocation() {
+        return storageLocation;
     }
 }
