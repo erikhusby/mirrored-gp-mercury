@@ -347,14 +347,14 @@ public class ManifestSession implements Updatable {
     }
 
     /**
-     * Helper method to Build a MultiMap of manifest records by a given Metadata Key.
+     * Builds a MultiMap of manifest records by a given Metadata Key.
      *
      * @param allEligibleManifestRecords The set of manifest records to be divided up into a MultiMap
      * @param key                        type of Metadata key who's value will be index into the newly created MultiMap
      *
      * @return A MultiMap of manifest records indexed the corresponding value represented by key
      */
-    private Multimap<String, ManifestRecord> buildMultimapByKey(
+    public Multimap<String, ManifestRecord> buildMultimapByKey(
             Collection<ManifestRecord> allEligibleManifestRecords, final Metadata.Key key) {
 
         return Multimaps.index(allEligibleManifestRecords,

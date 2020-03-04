@@ -268,13 +268,6 @@ sap:
       sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
       sapSupportEmailSubjectPrefix: "TEST SAP Order"
       url:  https://quote-qa.broadinstitute.org
-    QA:
-      #Maps to the Old SAP QA environment.  Previously used as a parallel SAP environment.  Defunct and Not used by us anymore.
-      login:      GPCOMU
-      password:   SAPERQ300!
-      sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
-      sapSupportEmailSubjectPrefix: "TEST SAP Order"
-      url:  https://quote-qa.broadinstitute.org
     RC:
       #Maps to the primary SAP QA 400 environment.  Used for testing with Mercury DEV and Mercury QA environments
       login:      GPCOMU

@@ -323,7 +323,7 @@ public class PicoToBspContainerTest extends Arquillian {
         for (LabMetric labMetric : dto.getRunAndFormation().getLeft().getLabMetrics()) {
             LabVessel labVessel = labMetric.getLabVessel();
             actualBarcodes.add(labVessel.getLabel());
-            actualPositions.add(labMetric.getVesselPosition());
+            actualPositions.add(labMetric.getVesselPosition().name());
             if (OrmUtil.proxySafeIsInstance(labVessel, BarcodedTube.class)) {
                 MercurySample mercurySample = labVessel.getMercurySamples().iterator().next();
                 if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
@@ -367,11 +367,10 @@ public class PicoToBspContainerTest extends Arquillian {
         for (int i = 0; i < dto.getTotalTubeCount(); ++i) {
             BarcodedTube tube = (i >= dto.getResearchTubeCount() ? bspTubeIterator : mercuryTubeIterator).next();
             String barcode = tube.getLabel();
-            String position = positionFor(i);
-            mapTubeToPosition.put(barcode, position);
+            mapTubeToPosition.put(barcode, positionFor(i));
             Assert.assertTrue(CollectionUtils.isNotEmpty(tube.getMercurySamples()), "barcode " + barcode);
             tubeBeans.add(new ChildVesselBean(barcode, tube.getMercurySamples().iterator().next().getSampleKey(),
-                    tube.getTubeType().getAutomationName(), position));
+                    tube.getTubeType().getAutomationName(), positionFor(i)));
         }
         // Builds the racks and plates.
         List<LabVessel> labVessels = labVesselFactory.buildLabVessels(Arrays.asList(new ParentVesselBean(
