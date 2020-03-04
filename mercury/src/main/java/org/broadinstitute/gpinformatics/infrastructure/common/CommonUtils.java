@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
+import org.apache.commons.collections4.CollectionUtils;
+
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -14,7 +16,7 @@ public class CommonUtils {
         return Collectors.collectingAndThen(
                 Collectors.toList(),
                 list->{
-                    return list.get(0);
+                    return (CollectionUtils.isNotEmpty(list))?list.get(0):null;
                 }
         );
     }
