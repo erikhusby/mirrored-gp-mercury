@@ -136,8 +136,6 @@ public class LabBatchEjb {
 
     private ControlDao controlDao;
 
-    private WorkflowLoader workflowLoader;
-
     private LabVesselDao labVesselDao;
 
     private FlowcellDesignationEjb flowcellDesignationEjb;
@@ -364,7 +362,7 @@ public class LabBatchEjb {
         String workflowIssueType = null;
         String projectType = null;
         ProductWorkflowDefVersion workflowVersion =
-                workflowLoader.getWorkflowConfig().getWorkflowByName(workflowName).getEffectiveVersion();
+                WorkflowLoader.getWorkflowConfig().getWorkflowByName(workflowName).getEffectiveVersion();
 
         for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
             if (bucketName.equals(bucket.getName())) {
@@ -419,7 +417,7 @@ public class LabBatchEjb {
 
             AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
                     .getInstance(projectType, newBatch, sequencingTemplateFactory, productOrderDao,
-                            workflowLoader.getWorkflowConfig());
+                            WorkflowLoader.getWorkflowConfig());
             if (projectType == null) {
                 projectType = fieldBuilder.getProjectType();
             }
@@ -590,7 +588,7 @@ public class LabBatchEjb {
 
         AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
                 .getInstance(projectType, batch, sequencingTemplateFactory, productOrderDao,
-                        workflowLoader.getWorkflowConfig());
+                        WorkflowLoader.getWorkflowConfig());
         if (projectType == null) {
             projectType = fieldBuilder.getProjectType();
         }
@@ -1541,11 +1539,6 @@ public class LabBatchEjb {
     @Inject
     public void setControlDao(ControlDao controlDao) {
         this.controlDao = controlDao;
-    }
-
-    @Inject
-    public void setWorkflowLoader(WorkflowLoader workflowLoader) {
-        this.workflowLoader = workflowLoader;
     }
 
     @Inject

@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.JiraTransitionType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.VesselSearchActionBean;
 
@@ -54,15 +55,11 @@ public class JiraCommentUtil {
 
     private final BSPUserList bspUserList;
 
-    private WorkflowLoader workflowLoader;
-
     @Inject
-    public JiraCommentUtil(JiraService jiraService, AppConfig appConfig, BSPUserList bspUserList,
-                           WorkflowLoader workflowLoader) {
+    public JiraCommentUtil(JiraService jiraService, AppConfig appConfig, BSPUserList bspUserList) {
         this.jiraService = jiraService;
         this.appConfig = appConfig;
         this.bspUserList = bspUserList;
-        this.workflowLoader = workflowLoader;
     }
 
     /**
@@ -207,6 +204,7 @@ public class JiraCommentUtil {
      */
     private void accumulateTickets(Set<JiraTicket> tickets, Set<JiraTransitionType> jiraTransitionTypes,
                                    LabVessel vessel, LabEvent labEvent) {
+        WorkflowConfig workflowConfig = WorkflowLoader.getWorkflowConfig();
         for (SampleInstanceV2 sampleInstance : vessel.getSampleInstancesV2()) {
             LabBatch batch = sampleInstance.getSingleBatch();
             String workflowName = sampleInstance.getWorkflowName();
@@ -214,7 +212,7 @@ public class JiraCommentUtil {
                 tickets.add(batch.getJiraTicket());
                 if (workflowName != null) {
                     ProductWorkflowDefVersion workflowVersion =
-                            workflowLoader.getWorkflowConfig().getWorkflowVersionByName(workflowName, batch.getCreatedOn());
+                            workflowConfig.getWorkflowVersionByName(workflowName, batch.getCreatedOn());
                     String labEventType = labEvent.getLabEventType().getName();
                     Collection<ProductWorkflowDefVersion.LabEventNode> labEventNodes =
                             workflowVersion.findStepsByEventType(labEventType);

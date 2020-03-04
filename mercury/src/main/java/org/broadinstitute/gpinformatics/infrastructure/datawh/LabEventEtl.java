@@ -41,7 +41,6 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     private final Collection<EventFactDto> loggingDtos = new ArrayList<>();
     private final Set<Long> loggingDeletedEventIds = new HashSet<>();
     private SequencingSampleFactEtl sequencingSampleFactEtl;
-    private WorkflowLoader workflowLoader;
     public static final String NONE = "NONE";
     public static final String MULTIPLE = "MULTIPLE";
     public final String ancestorFileName = "library_ancestry";
@@ -52,11 +51,10 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
     @Inject
     public LabEventEtl(WorkflowConfigLookup workflowConfigLookup, LabEventDao dao,
-                       SequencingSampleFactEtl sequencingSampleFactEtl, WorkflowLoader workflowLoader, BSPUserList bspUserList) {
+            SequencingSampleFactEtl sequencingSampleFactEtl, BSPUserList bspUserList) {
         super(LabEvent.class, "event_fact", "lab_event_aud", "lab_event_id", dao);
         this.workflowConfigLookup = workflowConfigLookup;
         this.sequencingSampleFactEtl = sequencingSampleFactEtl;
-        this.workflowLoader = workflowLoader;
         this.bspUserList = bspUserList;
     }
 
@@ -153,7 +151,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         // Creates the wrapped Writer to the sqlLoader data file.
         DataFile eventDataFile = new DataFile(dataFilename(etlDateStr, baseFilename));
         DataFile ancestryDataFile = new DataFile(dataFilename(etlDateStr, ancestorFileName));
-        this.eventAncestryEtlUtil = new EventAncestryEtlUtil(workflowLoader.getWorkflowConfig());
+        this.eventAncestryEtlUtil = new EventAncestryEtlUtil(WorkflowLoader.getWorkflowConfig());
 
         try {
             // Deletion records only contain the entityId field.
@@ -462,7 +460,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
         // Supports testing of just this method in a DBFree test
         if( eventAncestryEtlUtil == null ) {
-            eventAncestryEtlUtil = new EventAncestryEtlUtil(workflowLoader.getWorkflowConfig());
+            eventAncestryEtlUtil = new EventAncestryEtlUtil(WorkflowLoader.getWorkflowConfig());
         }
 
         // Sanity check bail out

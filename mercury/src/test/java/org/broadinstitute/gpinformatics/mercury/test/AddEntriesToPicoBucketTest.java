@@ -38,8 +38,6 @@ public class AddEntriesToPicoBucketTest extends Arquillian {
     @Inject
     private UserTransaction utx;
     @Inject
-    private WorkflowLoader workflowLoader;
-    @Inject
     private ProductOrderDao productOrderDao;
     @Inject
     private SampleDataFetcher sampleDataFetcher;
@@ -67,7 +65,7 @@ public class AddEntriesToPicoBucketTest extends Arquillian {
 
         if (order != null) {
             ProductWorkflowDef workflowDef =
-                    workflowLoader.getWorkflowConfig().getWorkflow(order.getProduct().getWorkflowName());
+                    WorkflowLoader.getWorkflowConfig().getWorkflow(order.getProduct().getWorkflowName());
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
             WorkflowBucketDef workingBucketIdentifier = null;
             for (WorkflowBucketDef bucketDef : workflowVersion.getBuckets()) {

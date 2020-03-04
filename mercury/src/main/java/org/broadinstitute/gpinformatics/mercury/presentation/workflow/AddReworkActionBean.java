@@ -57,9 +57,6 @@ public class AddReworkActionBean extends CoreActionBean {
     private LabEventHandler labEventHandler;
 
     @Inject
-    private WorkflowLoader workflowLoader;
-
-    @Inject
     private ReworkReasonDao reworkReasonDao;
 
     private static final String FIND_VESSEL_ACTION = "viewVessel";
@@ -179,7 +176,7 @@ public class AddReworkActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VESSEL_INFO_ACTION, ADD_SAMPLE_ACTION})
     public void initWorkflowBuckets() {
         Set<String> bucketNames = new HashSet<>();
-        for (ProductWorkflowDef workflowDef : workflowLoader.getWorkflowConfig().getProductWorkflowDefs()) {
+        for (ProductWorkflowDef workflowDef : WorkflowLoader.getWorkflowConfig().getProductWorkflowDefs()) {
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
             for (WorkflowBucketDef workflowBucketDef : workflowVersion.getBuckets()) {
                 if (bucketNames.add(workflowBucketDef.getName())) {

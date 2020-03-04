@@ -20,7 +20,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 
 import javax.annotation.Nonnull;
 import javax.enterprise.context.Dependent;
-import javax.inject.Inject;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
@@ -45,16 +44,13 @@ public class WorkflowDiagrammer implements Serializable {
     public static final String DIAGRAM_FILE_EXTENSION = ".png";
     public static final String DIAGRAM_DIRECTORY = System.getProperty("java.io.tmpdir") + File.separator +
                                                    "images" + File.separator + "workflow" + File.separator;
-    @Inject
-    private WorkflowLoader workflowLoader;
 
     public WorkflowDiagrammer() {
-        if (workflowLoader != null) {
-            workflowConfig = workflowLoader.getWorkflowConfig();
-        }
+        workflowConfig = WorkflowLoader.getWorkflowConfig();
     }
 
-    public void setWorkflowConfig(WorkflowConfig workflowConfig) {
+    /** Setter used for testing purposes. */
+    void setWorkflowConfig(WorkflowConfig workflowConfig) {
         this.workflowConfig = workflowConfig;
     }
 
@@ -75,10 +71,6 @@ public class WorkflowDiagrammer implements Serializable {
      */
     List<Graph> createGraphs() throws Exception {
         List<Graph> graphs = new ArrayList<>();
-        if (workflowConfig == null) {
-            return graphs;
-        }
-
         for (ProductWorkflowDef workflowDef : workflowConfig.getProductWorkflowDefs()) {
             String workflowName = workflowDef.getName();
 

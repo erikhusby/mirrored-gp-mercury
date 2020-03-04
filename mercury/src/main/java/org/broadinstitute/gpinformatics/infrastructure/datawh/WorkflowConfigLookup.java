@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.annotation.PostConstruct;
 import javax.ejb.Stateful;
-import javax.inject.Inject;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -43,9 +42,6 @@ public class WorkflowConfigLookup implements Serializable {
 
     private static final boolean PDO_NOT_NEEDED = false;
     private static final boolean BATCH_NOT_NEEDED = false;
-
-    @Inject
-    private WorkflowLoader workflowLoader;
 
     static {
         // This should move to WorkflowConfigDao if it ever exists.
@@ -191,8 +187,6 @@ public class WorkflowConfigLookup implements Serializable {
 
     @PostConstruct
     private void postConstruct() {
-        if (workflowLoader != null) {
-            setWorkflowConfig(workflowLoader.getWorkflowConfig());
-        }
+        setWorkflowConfig(WorkflowLoader.getWorkflowConfig());
     }
 }

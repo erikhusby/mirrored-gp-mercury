@@ -48,7 +48,6 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.D
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.FlowcellLoadedHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.FlowcellMessageHandler;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -209,7 +208,6 @@ public class BaseEventTest {
             }
         });
         labBatchEJB.setProductOrderDao(mockProductOrderDao);
-        labBatchEJB.setWorkflowLoader(new WorkflowLoader());
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
         BSPSetVolumeConcentration bspSetVolumeConcentration =  new BSPSetVolumeConcentrationStub();
@@ -235,7 +233,7 @@ public class BaseEventTest {
         labEventFactory.setEventHandlerSelector(eventHandlerSelector);
 
         bucketEjb = new BucketEjb(labEventFactory, jiraService, null, null, null, null,
-                null, null, null, EasyMock.createNiceMock(ProductOrderDao.class),
+                null, null, EasyMock.createNiceMock(ProductOrderDao.class),
                 Mockito.mock(MercurySampleDao.class));
     }
 
@@ -1163,8 +1161,6 @@ public class BaseEventTest {
         Assert.assertEquals(SystemOfRecord.System.MERCURY, expectedRouting);
 
         WorkflowValidator workflowValidator = new WorkflowValidator();
-        workflowValidator.setWorkflowLoader(new WorkflowLoader());
-
         List<WorkflowValidator.WorkflowValidationError> workflowValidationErrors =
                 workflowValidator.validateWorkflow(labVessels, nextEventTypeName);
         if (!workflowValidationErrors.isEmpty()) {
@@ -1191,7 +1187,6 @@ public class BaseEventTest {
         });
         SequencingTemplateFactory sequencingTemplateFactory = new SequencingTemplateFactory();
         sequencingTemplateFactory.setFlowcellDesignationEjb(flowcellDesignationEjb);
-        sequencingTemplateFactory.setWorkflowLoader(new WorkflowLoader());
         return new ZimsIlluminaRunFactory(
                 new SampleDataFetcher() {
                     @Override
@@ -1209,9 +1204,5 @@ public class BaseEventTest {
                 productOrderDao,
                 crspPipelineUtils, flowcellDesignationEjb, attributeArchetypeDao
         );
-    }
-
-    public LabBatchEjb getLabBatchEJB() {
-        return labBatchEJB;
     }
 }

@@ -16,7 +16,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Parent;
 
@@ -818,13 +817,12 @@ public class VesselContainer<T extends LabVessel> {
             }
         }
         // check whether event matches any workflows unambiguously
-        WorkflowConfig workflowConfig = new WorkflowLoader().getWorkflowConfig();
         for (SampleInstanceV2.LabBatchDepth labBatchDepth : labBatchDepths) {
             LabBatch labBatch = labBatchDepth.getLabBatch();
             if (StringUtils.isEmpty(labBatch.getWorkflowName())) {
                 continue;
             }
-            ProductWorkflowDefVersion workflowDefVersion = workflowConfig.getWorkflowByName(
+            ProductWorkflowDefVersion workflowDefVersion = WorkflowLoader.getWorkflowConfig().getWorkflowByName(
                     labBatch.getWorkflowName()).getEffectiveVersion(labEvent.getEventDate());
             Collection<ProductWorkflowDefVersion.LabEventNode> stepsByEventType = workflowDefVersion.findStepsByEventType(
                     labEvent.getLabEventType().getName());

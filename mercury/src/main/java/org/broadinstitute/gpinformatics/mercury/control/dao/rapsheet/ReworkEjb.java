@@ -92,8 +92,6 @@ public class ReworkEjb {
     @Inject
     private ProductOrderSampleDao productOrderSampleDao;
 
-    private WorkflowLoader workflowLoader;
-
     public ReworkEjb() {
     }
 
@@ -232,7 +230,7 @@ public class ReworkEjb {
                 StringUtils.isBlank(sample.getProductOrder().getProduct().getWorkflowName())) {
             return false;
         }
-        ProductWorkflowDef workflowDef = workflowLoader.getWorkflowConfig().getWorkflowByName(
+        ProductWorkflowDef workflowDef = WorkflowLoader.getWorkflowConfig().getWorkflowByName(
                 sample.getProductOrder().getProduct().getWorkflowName());
         return !workflowDef.getEffectiveVersion().getBuckets().isEmpty();
     }
@@ -395,7 +393,7 @@ public class ReworkEjb {
             throws ValidationException {
         WorkflowBucketDef bucketDef = null;
         try {
-            bucketDef = workflowLoader.getWorkflowConfig().findWorkflowBucketDef(bucketCandidate.getProductOrder(),
+            bucketDef = WorkflowLoader.getWorkflowConfig().findWorkflowBucketDef(bucketCandidate.getProductOrder(),
                     bucket.getBucketDefinitionName());
         } catch (RuntimeException e) {
             String error = e.getLocalizedMessage();
@@ -479,11 +477,6 @@ public class ReworkEjb {
     @Inject
     public void setBspSampleDataFetcher(BSPSampleDataFetcher bspSampleDataFetcher) {
         this.bspSampleDataFetcher = bspSampleDataFetcher;
-    }
-
-    @Inject
-    public void setWorkflowLoader(WorkflowLoader workflowLoader) {
-        this.workflowLoader = workflowLoader;
     }
 
     /**

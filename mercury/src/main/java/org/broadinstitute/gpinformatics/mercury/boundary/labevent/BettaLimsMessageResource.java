@@ -96,26 +96,15 @@ public class BettaLimsMessageResource {
     @Inject
     private UserBean userBean;
 
-    @Inject
-    private WorkflowLoader workflowLoader;
-
     private WorkflowConfig workflowConfig;
 
     public BettaLimsMessageResource() {
-    }
-
-    /** Constructor used for test purposes. */
-    public BettaLimsMessageResource(WorkflowConfig workflowConfig) {
-        this.workflowConfig = workflowConfig;
-        postConstructor();
+        workflowConfig = WorkflowLoader.getWorkflowConfig();
     }
 
     @PostConstruct
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void postConstructor() {
-        if (workflowLoader != null) {
-            workflowConfig = workflowLoader.getWorkflowConfig();
-        }
         // Does the one-time lab event setup that is needed when processing messages.
         LabEvent.setupEventTypesThatCanFollowBucket(workflowConfig);
     }

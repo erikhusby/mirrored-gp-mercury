@@ -102,8 +102,6 @@ public class BucketViewActionBean extends CoreActionBean {
     @Inject
     private MaterialTypeTokenInput materialTypeTokenInput;
     @Inject
-    private WorkflowLoader workflowLoader;
-    @Inject
     private BucketDao bucketDao;
     @Inject
     private ProductOrderDao productOrderDao;
@@ -201,7 +199,7 @@ public class BucketViewActionBean extends CoreActionBean {
     public void init() {
         // Gets bucket names for supported products (workflows), and associates workflow(s) for each bucket.
         Multimap<String, String> bucketWorkflows = HashMultimap.create();
-        for (ProductWorkflowDef workflowDef : workflowLoader.getWorkflowConfig().getProductWorkflowDefs()) {
+        for (ProductWorkflowDef workflowDef : WorkflowLoader.getWorkflowConfig().getProductWorkflowDefs()) {
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
             for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
                 String bucketName = bucket.getName();
@@ -522,7 +520,7 @@ public class BucketViewActionBean extends CoreActionBean {
 
     private Map<String, BucketCount> initBucketCountsMap(Map<String, BucketCount> bucketCountMap) {
         Map<String, BucketCount> resultBucketCountMap = new TreeMap<>();
-        for (ProductWorkflowDef workflowDef : workflowLoader.getWorkflowConfig().getProductWorkflowDefs()) {
+        for (ProductWorkflowDef workflowDef : WorkflowLoader.getWorkflowConfig().getProductWorkflowDefs()) {
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
             for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
                 BucketCount bucketCount = bucketCountMap.get(bucket.getName());
@@ -728,7 +726,7 @@ public class BucketViewActionBean extends CoreActionBean {
 
     public List<String> bucketWorkflowNames(BucketEntry bucketEntry) {
         List<String> workflowNames = new ArrayList<>();
-        for (String workflow : bucketEntry.getWorkflows(workflowLoader.getWorkflowConfig())) {
+        for (String workflow : bucketEntry.getWorkflows(WorkflowLoader.getWorkflowConfig())) {
             workflowNames.add(workflow);
         }
         return workflowNames;

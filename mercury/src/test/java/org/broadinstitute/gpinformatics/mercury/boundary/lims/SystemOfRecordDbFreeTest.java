@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestF
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -126,7 +125,7 @@ public class SystemOfRecordDbFreeTest extends BaseEventTest {
         // existed before that method was factored out.
         mockLabVesselDao = mock(LabVesselDao.class);
         mockBspExportService = mock(BSPExportsService.class);
-        systemOfRecord = new SystemOfRecord(mockLabVesselDao, new WorkflowLoader(), mockBspExportService);
+        systemOfRecord = new SystemOfRecord(mockLabVesselDao, mockBspExportService);
 
         // By default, make BSP answer that it knows about all vessels and returns that they have not been exported.
         when(mockBspExportService.findExportDestinations(anyCollectionOf(LabVessel.class))).thenAnswer(

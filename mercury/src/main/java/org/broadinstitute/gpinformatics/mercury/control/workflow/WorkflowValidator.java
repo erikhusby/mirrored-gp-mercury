@@ -60,8 +60,6 @@ public class WorkflowValidator {
     @Inject
     private EmailSender emailSender;
 
-    private WorkflowLoader workflowLoader;
-
     @Inject
     private AppConfig appConfig;
 
@@ -147,7 +145,7 @@ public class WorkflowValidator {
                     is what will happen if the batch is not found (Sample exists in multiple batches)
                  */
             if (workflowName != null && effectiveBatch != null) {
-                ProductWorkflowDefVersion workflowVersion = workflowLoader.getWorkflowConfig().
+                ProductWorkflowDefVersion workflowVersion = WorkflowLoader.getWorkflowConfig().
                         getWorkflowVersionByName(workflowName, effectiveBatch.getCreatedOn());
 
                 if (workflowVersion != null) {
@@ -331,11 +329,6 @@ public class WorkflowValidator {
                     validateSampleInstances(labVessel, sampleInstances, Collections.singleton(eventType)));
         }
         return validationErrors;
-    }
-
-    @Inject
-    public void setWorkflowLoader(WorkflowLoader workflowLoader) {
-        this.workflowLoader = workflowLoader;
     }
 
     public void setEmailSender(EmailSender emailSender) {

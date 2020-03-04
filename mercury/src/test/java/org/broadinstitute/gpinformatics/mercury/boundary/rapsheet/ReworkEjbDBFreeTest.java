@@ -11,7 +11,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -55,7 +54,6 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
     public void setUp() {
 
         reworkEjb = new ReworkEjb();
-        reworkEjb.setWorkflowLoader(new WorkflowLoader());
 
         labVessel = new BarcodedTube("22834023", BarcodedTube.BarcodedTubeType.MatrixTube);
 

@@ -34,8 +34,6 @@ public class WorkflowActionBean extends CoreActionBean {
 
     @Inject
     private ProductResource productResource;
-    @Inject
-    private WorkflowLoader workflowLoader;
 
     // Combination of workflow def and one of its effective dates.
     public static class WorkflowDefDateDto {
@@ -95,7 +93,7 @@ public class WorkflowActionBean extends CoreActionBean {
     public void init() {
         // Collects all workflows, each with possibly multiple effective dates.
         int id = 0;
-        for (ProductWorkflowDef workflowDef : workflowLoader.getWorkflowConfig().getProductWorkflowDefs()) {
+        for (ProductWorkflowDef workflowDef : WorkflowLoader.getWorkflowConfig().getProductWorkflowDefs()) {
             for (Date date : workflowDef.getEffectiveDates()) {
                 allWorkflows.add(new WorkflowDefDateDto(id++, workflowDef, date));
             }

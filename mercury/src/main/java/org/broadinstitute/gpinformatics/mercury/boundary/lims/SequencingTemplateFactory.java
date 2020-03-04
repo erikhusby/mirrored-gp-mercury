@@ -83,8 +83,6 @@ public class SequencingTemplateFactory {
     @Inject
     private FlowcellDesignationEjb flowcellDesignationEjb;
 
-    private WorkflowLoader workflowLoader;
-
     /** Defines the type of entity to query. */
     public static enum QueryVesselType {
         FLOWCELL(LabVessel.ContainerType.FLOWCELL),
@@ -691,7 +689,7 @@ public class SequencingTemplateFactory {
     }
 
     private SequencingConfigDef getSequencingConfig(boolean isPoolTest) {
-        return workflowLoader.getWorkflowConfig().getSequencingConfigByName(isPoolTest ?
+        return WorkflowLoader.getWorkflowConfig().getSequencingConfigByName(isPoolTest ?
                 "Resequencing-Pool-Default": "Resequencing-Production");
     }
 
@@ -705,10 +703,5 @@ public class SequencingTemplateFactory {
         return flowcellDesignationEjb.getFlowcellDesignations(fctBatch).stream().
                 filter(designation -> designation.isPoolTest() == isPoolTest).
                 collect(Collectors.toMap(FlowcellDesignation::getStartingTube, Function.identity(), (fd1, fd2) -> fd2));
-    }
-
-    @Inject
-    public void setWorkflowLoader(WorkflowLoader workflowLoader) {
-        this.workflowLoader = workflowLoader;
     }
 }
