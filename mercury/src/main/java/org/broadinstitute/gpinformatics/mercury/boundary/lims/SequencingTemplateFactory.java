@@ -21,11 +21,11 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregatio
 import org.broadinstitute.gpinformatics.infrastructure.search.LabVesselSearchDefinition;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
-import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.MiSeqReagentKitDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
@@ -42,7 +42,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.SequencingConfigDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ProductType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
@@ -82,12 +81,9 @@ public class SequencingTemplateFactory {
     private LabBatchDao labBatchDao;
 
     @Inject
-    private LabBatchEjb labBatchEjb;
-
-    @Inject
     private FlowcellDesignationEjb flowcellDesignationEjb;
 
-    private WorkflowConfig workflowConfig;
+    private WorkflowLoader workflowLoader;
 
     /** Defines the type of entity to query. */
     public static enum QueryVesselType {
@@ -695,21 +691,13 @@ public class SequencingTemplateFactory {
     }
 
     private SequencingConfigDef getSequencingConfig(boolean isPoolTest) {
-        if (isPoolTest) {
-            return workflowConfig.getSequencingConfigByName("Resequencing-Pool-Default");
-        } else {
-            return workflowConfig.getSequencingConfigByName("Resequencing-Production");
-        }
+        return workflowLoader.getWorkflowConfig().getSequencingConfigByName(isPoolTest ?
+                "Resequencing-Pool-Default": "Resequencing-Production");
     }
 
     /** Use only for dao-free testing. */
     public void setFlowcellDesignationEjb(FlowcellDesignationEjb testEjb) {
         flowcellDesignationEjb = testEjb;
-    }
-
-    @Inject
-    public void setWorkflowConfig(WorkflowConfig workflowConfig) {
-        this.workflowConfig = workflowConfig;
     }
 
     /** Matches designations with the pool test flag and finds most recent designation for each starting tube. */
@@ -719,4 +707,8 @@ public class SequencingTemplateFactory {
                 collect(Collectors.toMap(FlowcellDesignation::getStartingTube, Function.identity(), (fd1, fd2) -> fd2));
     }
 
+    @Inject
+    public void setWorkflowLoader(WorkflowLoader workflowLoader) {
+        this.workflowLoader = workflowLoader;
+    }
 }

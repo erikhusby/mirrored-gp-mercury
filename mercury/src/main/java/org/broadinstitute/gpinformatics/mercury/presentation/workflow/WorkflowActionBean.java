@@ -10,8 +10,8 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductResource;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
@@ -35,7 +35,7 @@ public class WorkflowActionBean extends CoreActionBean {
     @Inject
     private ProductResource productResource;
     @Inject
-    private WorkflowConfig workflowConfig;
+    private WorkflowLoader workflowLoader;
 
     // Combination of workflow def and one of its effective dates.
     public static class WorkflowDefDateDto {
@@ -95,7 +95,7 @@ public class WorkflowActionBean extends CoreActionBean {
     public void init() {
         // Collects all workflows, each with possibly multiple effective dates.
         int id = 0;
-        for (ProductWorkflowDef workflowDef : workflowConfig.getProductWorkflowDefs()) {
+        for (ProductWorkflowDef workflowDef : workflowLoader.getWorkflowConfig().getProductWorkflowDefs()) {
             for (Date date : workflowDef.getEffectiveDates()) {
                 allWorkflows.add(new WorkflowDefDateDto(id++, workflowDef, date));
             }

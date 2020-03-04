@@ -13,7 +13,6 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
@@ -48,6 +47,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.AbstractBatchJiraFieldFactory;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
@@ -66,7 +66,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStarting
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationDto;
@@ -137,7 +136,7 @@ public class LabBatchEjb {
 
     private ControlDao controlDao;
 
-    private WorkflowConfig workflowConfig;
+    private WorkflowLoader workflowLoader;
 
     private LabVesselDao labVesselDao;
 
@@ -365,7 +364,7 @@ public class LabBatchEjb {
         String workflowIssueType = null;
         String projectType = null;
         ProductWorkflowDefVersion workflowVersion =
-                workflowConfig.getWorkflowByName(workflowName).getEffectiveVersion();
+                workflowLoader.getWorkflowConfig().getWorkflowByName(workflowName).getEffectiveVersion();
 
         for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
             if (bucketName.equals(bucket.getName())) {
@@ -419,7 +418,8 @@ public class LabBatchEjb {
             }
 
             AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
-                    .getInstance(projectType, newBatch, sequencingTemplateFactory, productOrderDao, workflowConfig);
+                    .getInstance(projectType, newBatch, sequencingTemplateFactory, productOrderDao,
+                            workflowLoader.getWorkflowConfig());
             if (projectType == null) {
                 projectType = fieldBuilder.getProjectType();
             }
@@ -589,7 +589,8 @@ public class LabBatchEjb {
         }
 
         AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
-                .getInstance(projectType, batch, sequencingTemplateFactory, productOrderDao, workflowConfig);
+                .getInstance(projectType, batch, sequencingTemplateFactory, productOrderDao,
+                        workflowLoader.getWorkflowConfig());
         if (projectType == null) {
             projectType = fieldBuilder.getProjectType();
         }
@@ -1543,8 +1544,8 @@ public class LabBatchEjb {
     }
 
     @Inject
-    public void setWorkflowConfig(WorkflowConfig workflowConfig) {
-        this.workflowConfig = workflowConfig;
+    public void setWorkflowLoader(WorkflowLoader workflowLoader) {
+        this.workflowLoader = workflowLoader;
     }
 
     @Inject

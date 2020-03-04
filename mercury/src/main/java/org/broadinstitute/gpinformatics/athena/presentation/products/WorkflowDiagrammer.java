@@ -9,6 +9,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
@@ -44,11 +45,15 @@ public class WorkflowDiagrammer implements Serializable {
     public static final String DIAGRAM_FILE_EXTENSION = ".png";
     public static final String DIAGRAM_DIRECTORY = System.getProperty("java.io.tmpdir") + File.separator +
                                                    "images" + File.separator + "workflow" + File.separator;
+    @Inject
+    private WorkflowLoader workflowLoader;
 
     public WorkflowDiagrammer() {
+        if (workflowLoader != null) {
+            workflowConfig = workflowLoader.getWorkflowConfig();
+        }
     }
 
-    @Inject
     public void setWorkflowConfig(WorkflowConfig workflowConfig) {
         this.workflowConfig = workflowConfig;
     }

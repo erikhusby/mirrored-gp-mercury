@@ -69,7 +69,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ArrayPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.CrspRiboPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
@@ -210,7 +209,7 @@ public class BaseEventTest {
             }
         });
         labBatchEJB.setProductOrderDao(mockProductOrderDao);
-        labBatchEJB.setWorkflowConfig(new WorkflowLoader().getWorkflowConfig());
+        labBatchEJB.setWorkflowLoader(new WorkflowLoader());
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
         BSPSetVolumeConcentration bspSetVolumeConcentration =  new BSPSetVolumeConcentrationStub();
@@ -1160,25 +1159,12 @@ public class BaseEventTest {
     }
 
     public static void validateWorkflow(String nextEventTypeName, List<LabVessel> labVessels) {
-        WorkflowConfig workflowConfig = new WorkflowLoader().getWorkflowConfig();
-
         // All messages are now routed to Mercury.
         Assert.assertEquals(SystemOfRecord.System.MERCURY, expectedRouting);
 
         WorkflowValidator workflowValidator = new WorkflowValidator();
-        workflowValidator.setWorkflowConfig(workflowConfig);
-        ProductOrderDao mockProductOrderDao = Mockito.mock(ProductOrderDao.class);
-        Mockito.when(mockProductOrderDao.findByBusinessKey(Mockito.anyString())).then(new Answer<Object>() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+        workflowValidator.setWorkflowLoader(new WorkflowLoader());
 
-                Object[] arguments = invocationOnMock.getArguments();
-
-                return ProductOrderTestFactory.createDummyProductOrder((String) arguments[0]);
-            }
-        });
-
-        workflowValidator.setProductOrderDao(mockProductOrderDao);
         List<WorkflowValidator.WorkflowValidationError> workflowValidationErrors =
                 workflowValidator.validateWorkflow(labVessels, nextEventTypeName);
         if (!workflowValidationErrors.isEmpty()) {
@@ -1205,7 +1191,7 @@ public class BaseEventTest {
         });
         SequencingTemplateFactory sequencingTemplateFactory = new SequencingTemplateFactory();
         sequencingTemplateFactory.setFlowcellDesignationEjb(flowcellDesignationEjb);
-        sequencingTemplateFactory.setWorkflowConfig(new WorkflowLoader().getWorkflowConfig());
+        sequencingTemplateFactory.setWorkflowLoader(new WorkflowLoader());
         return new ZimsIlluminaRunFactory(
                 new SampleDataFetcher() {
                     @Override

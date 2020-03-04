@@ -46,6 +46,7 @@ import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.CoverageTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -132,7 +133,7 @@ public class ProductActionBean extends CoreActionBean {
     private ResearchProjectDao researchProjectDao;
 
     @Inject
-    private WorkflowConfig workflowConfig;
+    private WorkflowLoader workflowLoader;
 
     @Inject
     private SAPProductPriceCache productPriceCache;
@@ -823,7 +824,7 @@ public class ProductActionBean extends CoreActionBean {
      */
     public Set<String> getAvailableWorkflows() {
         Set<String> workflows = new TreeSet<>();
-        List<ProductWorkflowDef> productWorkflowDefs = workflowConfig.getProductWorkflowDefs();
+        List<ProductWorkflowDef> productWorkflowDefs = workflowLoader.getWorkflowConfig().getProductWorkflowDefs();
         for (ProductWorkflowDef productWorkflowDef : productWorkflowDefs) {
             workflows.add(productWorkflowDef.getName());
         }

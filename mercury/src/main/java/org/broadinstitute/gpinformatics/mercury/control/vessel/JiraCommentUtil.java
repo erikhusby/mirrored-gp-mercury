@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -23,7 +24,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.JiraTransitionType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.VesselSearchActionBean;
 
@@ -54,15 +54,15 @@ public class JiraCommentUtil {
 
     private final BSPUserList bspUserList;
 
-    private WorkflowConfig workflowConfig;
+    private WorkflowLoader workflowLoader;
 
     @Inject
     public JiraCommentUtil(JiraService jiraService, AppConfig appConfig, BSPUserList bspUserList,
-                           WorkflowConfig workflowConfig) {
+                           WorkflowLoader workflowLoader) {
         this.jiraService = jiraService;
         this.appConfig = appConfig;
         this.bspUserList = bspUserList;
-        this.workflowConfig = workflowConfig;
+        this.workflowLoader = workflowLoader;
     }
 
     /**
@@ -213,8 +213,8 @@ public class JiraCommentUtil {
             if (batch != null && batch.getJiraTicket() != null) {
                 tickets.add(batch.getJiraTicket());
                 if (workflowName != null) {
-                    ProductWorkflowDefVersion workflowVersion = workflowConfig.getWorkflowVersionByName(
-                            workflowName, batch.getCreatedOn());
+                    ProductWorkflowDefVersion workflowVersion =
+                            workflowLoader.getWorkflowConfig().getWorkflowVersionByName(workflowName, batch.getCreatedOn());
                     String labEventType = labEvent.getLabEventType().getName();
                     Collection<ProductWorkflowDefVersion.LabEventNode> labEventNodes =
                             workflowVersion.findStepsByEventType(labEventType);

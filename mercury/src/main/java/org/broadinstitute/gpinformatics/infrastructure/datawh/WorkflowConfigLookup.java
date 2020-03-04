@@ -3,9 +3,11 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 import org.apache.commons.collections4.map.LRUMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
+import javax.annotation.PostConstruct;
 import javax.ejb.Stateful;
 import javax.inject.Inject;
 import java.io.Serializable;
@@ -41,6 +43,9 @@ public class WorkflowConfigLookup implements Serializable {
 
     private static final boolean PDO_NOT_NEEDED = false;
     private static final boolean BATCH_NOT_NEEDED = false;
+
+    @Inject
+    private WorkflowLoader workflowLoader;
 
     static {
         // This should move to WorkflowConfigDao if it ever exists.
@@ -179,10 +184,15 @@ public class WorkflowConfigLookup implements Serializable {
         return !ACCEPT_WITHOUT_BATCH_NAME.contains(workflowStepEventName);
     }
 
-    @Inject
     public void setWorkflowConfig(WorkflowConfig workflowConfig) {
         this.workflowConfig = workflowConfig;
         initWorkflowConfigDenorm();
     }
 
+    @PostConstruct
+    private void postConstruct() {
+        if (workflowLoader != null) {
+            setWorkflowConfig(workflowLoader.getWorkflowConfig());
+        }
+    }
 }

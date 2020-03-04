@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.BettaLimsMessageUtils;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -96,7 +97,9 @@ public class BettaLimsMessageResource {
     private UserBean userBean;
 
     @Inject
-    private WorkflowConfig workflowConfig;;
+    private WorkflowLoader workflowLoader;
+
+    private WorkflowConfig workflowConfig;
 
     public BettaLimsMessageResource() {
     }
@@ -110,6 +113,9 @@ public class BettaLimsMessageResource {
     @PostConstruct
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void postConstructor() {
+        if (workflowLoader != null) {
+            workflowConfig = workflowLoader.getWorkflowConfig();
+        }
         // Does the one-time lab event setup that is needed when processing messages.
         LabEvent.setupEventTypesThatCanFollowBucket(workflowConfig);
     }

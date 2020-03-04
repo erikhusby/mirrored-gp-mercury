@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -60,9 +61,9 @@ public class SystemOfRecord implements Serializable {
     }
 
     @Inject
-    public SystemOfRecord(LabVesselDao labVesselDao, WorkflowConfig workflowConfig, BSPExportsService bspExportsService) {
+    public SystemOfRecord(LabVesselDao labVesselDao, WorkflowLoader workflowLoader, BSPExportsService bspExportsService) {
         this.labVesselDao = labVesselDao;
-        this.workflowConfig = workflowConfig;
+        this.workflowConfig = workflowLoader.getWorkflowConfig();
         this.bspExportsService = bspExportsService;
     }
 

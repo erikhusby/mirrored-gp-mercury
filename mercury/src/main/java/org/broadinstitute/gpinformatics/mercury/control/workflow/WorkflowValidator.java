@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.control.workflow;
 import clover.org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
@@ -23,7 +22,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.VesselSearchActionBean;
 
@@ -62,9 +60,7 @@ public class WorkflowValidator {
     @Inject
     private EmailSender emailSender;
 
-    private WorkflowConfig workflowConfig;
-
-    private ProductOrderDao productOrderDao;
+    private WorkflowLoader workflowLoader;
 
     @Inject
     private AppConfig appConfig;
@@ -151,8 +147,9 @@ public class WorkflowValidator {
                     is what will happen if the batch is not found (Sample exists in multiple batches)
                  */
             if (workflowName != null && effectiveBatch != null) {
-                ProductWorkflowDefVersion workflowVersion = workflowConfig.getWorkflowVersionByName(
-                        workflowName, effectiveBatch.getCreatedOn());
+                ProductWorkflowDefVersion workflowVersion = workflowLoader.getWorkflowConfig().
+                        getWorkflowVersionByName(workflowName, effectiveBatch.getCreatedOn());
+
                 if (workflowVersion != null) {
                     List<ProductWorkflowDefVersion.ValidationError> errors =
                             workflowVersion.validate(labVessel, eventNames);
@@ -337,13 +334,8 @@ public class WorkflowValidator {
     }
 
     @Inject
-    public void setProductOrderDao(ProductOrderDao productOrderDao) {
-        this.productOrderDao = productOrderDao;
-    }
-
-    @Inject
-    public void setWorkflowConfig(WorkflowConfig workflowConfig) {
-        this.workflowConfig = workflowConfig;
+    public void setWorkflowLoader(WorkflowLoader workflowLoader) {
+        this.workflowLoader = workflowLoader;
     }
 
     public void setEmailSender(EmailSender emailSender) {

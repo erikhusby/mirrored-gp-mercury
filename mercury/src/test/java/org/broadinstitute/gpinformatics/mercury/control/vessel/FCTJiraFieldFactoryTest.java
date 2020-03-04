@@ -123,7 +123,7 @@ public class FCTJiraFieldFactoryTest extends BaseEventTest {
 
         FlowcellDesignationEjb flowcellDesignationEjb = mock(FlowcellDesignationEjb.class);
         SequencingTemplateFactory sequencingTemplateFactory = new SequencingTemplateFactory();
-        sequencingTemplateFactory.setWorkflowConfig(new WorkflowLoader().getWorkflowConfig());
+        sequencingTemplateFactory.setWorkflowLoader(new WorkflowLoader());
         sequencingTemplateFactory.setFlowcellDesignationEjb(flowcellDesignationEjb);
         when(flowcellDesignationEjb.getFlowcellDesignations(labBatch)).thenReturn(Collections.emptyList());
 

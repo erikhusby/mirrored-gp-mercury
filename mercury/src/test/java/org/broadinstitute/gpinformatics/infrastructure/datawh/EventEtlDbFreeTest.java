@@ -118,7 +118,7 @@ public class EventEtlDbFreeTest {
         mercurySamples.clear();
         mercurySamples.add(sample);
 
-        tst = new LabEventEtl(wfLookup, dao, sequencingSampleFactEtl, new WorkflowLoader().getWorkflowConfig(), bspUserList);
+        tst = new LabEventEtl(wfLookup, dao, sequencingSampleFactEtl, new WorkflowLoader(), bspUserList);
         tst.setAuditReaderDao(auditReader);
     }
 

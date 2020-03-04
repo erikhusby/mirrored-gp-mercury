@@ -28,6 +28,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.ReworkReasonDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkDetail;
@@ -40,7 +41,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -92,7 +92,7 @@ public class ReworkEjb {
     @Inject
     private ProductOrderSampleDao productOrderSampleDao;
 
-    private WorkflowConfig workflowConfig;
+    private WorkflowLoader workflowLoader;
 
     public ReworkEjb() {
     }
@@ -232,7 +232,7 @@ public class ReworkEjb {
                 StringUtils.isBlank(sample.getProductOrder().getProduct().getWorkflowName())) {
             return false;
         }
-        ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(
+        ProductWorkflowDef workflowDef = workflowLoader.getWorkflowConfig().getWorkflowByName(
                 sample.getProductOrder().getProduct().getWorkflowName());
         return !workflowDef.getEffectiveVersion().getBuckets().isEmpty();
     }
@@ -395,7 +395,7 @@ public class ReworkEjb {
             throws ValidationException {
         WorkflowBucketDef bucketDef = null;
         try {
-            bucketDef = workflowConfig.findWorkflowBucketDef(bucketCandidate.getProductOrder(),
+            bucketDef = workflowLoader.getWorkflowConfig().findWorkflowBucketDef(bucketCandidate.getProductOrder(),
                     bucket.getBucketDefinitionName());
         } catch (RuntimeException e) {
             String error = e.getLocalizedMessage();
@@ -482,8 +482,8 @@ public class ReworkEjb {
     }
 
     @Inject
-    public void setWorkflowConfig(WorkflowConfig workflowConfig) {
-        this.workflowConfig = workflowConfig;
+    public void setWorkflowLoader(WorkflowLoader workflowLoader) {
+        this.workflowLoader = workflowLoader;
     }
 
     /**

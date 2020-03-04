@@ -55,8 +55,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
     public void setUp() {
 
         reworkEjb = new ReworkEjb();
-        WorkflowLoader workflowLoader = new WorkflowLoader();
-        reworkEjb.setWorkflowConfig(workflowLoader.getWorkflowConfig());
+        reworkEjb.setWorkflowLoader(new WorkflowLoader());
 
         labVessel = new BarcodedTube("22834023", BarcodedTube.BarcodedTubeType.MatrixTube);
 
