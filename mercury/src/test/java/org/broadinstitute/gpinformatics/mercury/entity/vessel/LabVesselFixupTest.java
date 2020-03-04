@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import com.opencsv.CSVReader;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -1854,4 +1855,17 @@ public class LabVesselFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false, groups = TestGroups.FIXUP)
+    public void gplim_5743BackPopulateCrspPortalMetadataSource() throws IOException {
+        List<String> sampleIds = IOUtils.readLines(VarioskanParserTest.getTestResource("crsp_metadata_source.txt"));
+        List<LabVessel> crspPortalLabVessels = labVesselDao.findBySampleKeyOrLabVesselLabel(sampleIds);
+        for (LabVessel labVessel : crspPortalLabVessels) {
+            if (!CollectionUtils.isEmpty(labVessel.getMercurySamples())) {
+
+                for (MercurySample mercurySample : labVessel.getMercurySamples()) {
+                    mercurySample.changeMetadataSourceToCrspPortal();
+                }
+            }
+        }
+    }
 }

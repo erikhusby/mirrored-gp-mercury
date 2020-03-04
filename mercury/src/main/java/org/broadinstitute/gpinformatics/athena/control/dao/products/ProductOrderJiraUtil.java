@@ -179,4 +179,9 @@ public class ProductOrderJiraUtil {
     public void setCustomField(JiraIssue issue, ProductOrder.JiraField field, Object value) throws IOException {
         issue.setCustomFieldUsingTransition(field, value, ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
     }
+
+    public void cancel(String jiraTicketKey, String comment) throws IOException {
+        JiraIssue issue = jiraService.getIssue(jiraTicketKey);
+        issue.postTransition("Cancel", comment);
+    }
 }

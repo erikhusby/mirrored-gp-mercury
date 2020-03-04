@@ -129,6 +129,35 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     private String aggregationParticle;
 
+    public static ProductOrderSample cloneProductOrderSample(ProductOrderSample sampleToClone) {
+        ProductOrderSample newSample = new ProductOrderSample(sampleToClone.sampleName, sampleToClone.getSampleData());
+
+        newSample.setSampleComment(sampleToClone.sampleComment);
+        sampleToClone.getMercurySample().addProductOrderSample(newSample);
+        newSample.setAggregationParticle(sampleToClone.aggregationParticle);
+        newSample.setAliquotId(sampleToClone.aliquotId);
+        newSample.setDeliveryStatus(sampleToClone.deliveryStatus);
+
+        Set<RiskItem> clonedRiskItems = new HashSet<>();
+
+        // "Clone" risk items to the new sample
+        sampleToClone.getRiskItems().forEach(riskItem -> clonedRiskItems.add(new RiskItem(riskItem.getRiskCriterion(),
+                riskItem.getComparedValue(),riskItem.getRemark())));
+        newSample.setRiskItems(clonedRiskItems);
+
+        // "Clone" sample receipt validations for the new sample
+        sampleToClone.getSampleReceiptValidations()
+                .forEach(sampleReceiptValidation ->
+                        newSample.addValidation(new SampleReceiptValidation(newSample,
+                                sampleReceiptValidation.getCreatedBy(), sampleReceiptValidation.getStatus(),
+                                sampleReceiptValidation.getValidationType(), sampleReceiptValidation.getReason())));
+
+        // Clone Ledger items for the new sample
+        sampleToClone.getLedgerItems().forEach(ledgerEntry -> newSample.addClonedLedgerItem(LedgerEntry.cloneLedgerEntryToNewSample(ledgerEntry, newSample)));
+
+        return newSample;
+    }
+
     /**
      * Detach this ProductOrderSample from all other objects so it can be removed, most importantly MercurySample whose
      * reference would otherwise keep this sample alive.
@@ -178,6 +207,19 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
             throw new RuntimeException("Unable to find a product associated with the given price item");
         }
         return result;
+    }
+
+    /**
+     * Rolls up visibility of the samples availability from just the sample data
+     */
+    public boolean isSampleAvailable() {
+        boolean available;
+        if(!isMetadataSourceInitialized()) {
+            available = false;
+        } else {
+            available = getMetadataSource().sourceSpecificAvailabilityCheck(this);
+        }
+        return available;
     }
 
     /**
@@ -451,13 +493,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     @Override
     public SampleData makeSampleData() {
-        SampleData sampleData;
-        if(mercurySample != null) {
-            sampleData = mercurySample.makeSampleData();
-        } else {
-            sampleData = new BspSampleData();
-        }
-        return sampleData;
+        return getMercurySample().makeSampleData();
     }
 
     @Override
@@ -1322,6 +1358,15 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     }
 
     /**
+     * Added primarily for the purpose of fixup tests
+     * @param clonedLedgerItem
+     */
+    public void addClonedLedgerItem(LedgerEntry clonedLedgerItem) {
+        ledgerItems.add(clonedLedgerItem);
+
+    }
+
+    /**
      * @return If there are any risk items with non-null criteria, then it is on risk.
      */
     public boolean isOnRisk() {
@@ -1397,38 +1442,14 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         }
     }
 
-    /**
-     * Rolls up visibility of the samples availability from just the sample data
-     *
-     * If the metadata is essentially BSP,
-     */
-    public boolean isSampleAvailable() {
-        boolean available;
-        if(!isMetadataSourceInitialized()) {
-            available = false;
-        } else {
-            switch (getMetadataSource()) {
-            case BSP:
-                available = isSampleReceived();
-                break;
-            case MERCURY:
-                available = isSampleAccessioned() && isSampleReceived();
-                break;
-            default:
-                throw new IllegalStateException("The metadata Source is undetermined");
-            }
-        }
-        return available;
-    }
-
-    private boolean isMetadataSourceInitialized() {
+    public boolean isMetadataSourceInitialized() {
         return mercurySample != null || metadataSource != null ;
     }
 
     /**
      * Exposes if a sample has been Accessioned.
      */
-    private boolean isSampleAccessioned() {
+    public boolean isSampleAccessioned() {
         boolean sampleAccessioned = false;
         if (mercurySample != null) {
             sampleAccessioned = mercurySample.hasSampleBeenAccessioned();

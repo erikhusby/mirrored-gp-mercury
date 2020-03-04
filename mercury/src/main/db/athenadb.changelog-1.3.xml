@@ -144,6 +144,16 @@
     </changeSet>
 
 
+    <changeSet id="GPLIM-6677-1" author="thompson">
+        <sql>
+            <![CDATA[
+            insert into athena.pref_preference(PREFERENCE_ID, USER_ID, PREFERENCE_TYPE, DATA, CREATED_DATE, CREATED_BY)
+            values (athena.seq_preference.nextval, -1, 'CONTRACT_CLIENT_QUEUES',
+            '<nameValuePreferenceDefinition><dataMap><entry><key>MAYO</key><value>DNA_QUANT</value></entry></dataMap></nameValuePreferenceDefinition>', sysdate, -1);
+            ]]>
+        </sql>
+    </changeSet>
+
     <changeSet id="GPLIM-6779-sap-ledger-replacement" author="scottmat">
         <addColumn tableName="BILLING_LEDGER" schemaName="ATHENA">
             <column name="SAP_REPLACEMENT_CONDITION" type="varchar(255)"/>

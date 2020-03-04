@@ -104,19 +104,17 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         case PROD:
             environment = SAPEnvironment.PRODUCTION;
             break;
-            case DEV:
-                environment = SAPEnvironment.DEV;
-                break;
-            case TEST:
-                environment = SAPEnvironment.DEV_400;
-                break;
-            case RC:
-                environment = SAPEnvironment.QA_400;
-                break;
-            case QA:
-            default:
-                environment = SAPEnvironment.QA;
-                break;
+        case DEV:
+            environment = SAPEnvironment.DEV;
+            break;
+        case TEST:
+            environment = SAPEnvironment.DEV_400;
+            break;
+        case RC:
+        case QA:
+        default:
+            environment = SAPEnvironment.QA_100;
+            break;
         }
 
         log.debug("Config environment is: " + sapConfig.getExternalDeployment().name());
