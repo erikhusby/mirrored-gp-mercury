@@ -124,7 +124,7 @@ public class LedgerEntry implements Serializable {
         newLedgerEntry.setWorkItem(ledgerToClone.workItem);
         newLedgerEntry.setSapDeliveryDocumentId(ledgerToClone.sapDeliveryDocumentId);
         newLedgerEntry.setSapOrderDetail(ledgerToClone.sapOrderDetail);
-        newLedgerEntry.setSapReplacementPricing(ledgerToClone.sapReplacementPricing);
+        newLedgerEntry.setSapReplacement(ledgerToClone.sapReplacement);
 
         return newLedgerEntry;
     }
