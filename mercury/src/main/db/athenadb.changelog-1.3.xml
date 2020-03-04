@@ -153,4 +153,15 @@
             ]]>
         </sql>
     </changeSet>
+
+    <changeSet id="GPLIM-6779-sap-ledger-replacement" author="scottmat">
+        <addColumn tableName="BILLING_LEDGER" schemaName="ATHENA">
+            <column name="SAP_REPLACEMENT_CONDITION" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6779-sap-ledger-replacement_aud" author="scottmat">
+        <addColumn tableName="BILLING_LEDGER_AUD" schemaName="ATHENA">
+            <column name="SAP_REPLACEMENT_CONDITION" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
