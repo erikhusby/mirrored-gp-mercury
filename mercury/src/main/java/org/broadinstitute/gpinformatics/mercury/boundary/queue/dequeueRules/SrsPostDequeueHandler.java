@@ -30,7 +30,6 @@ public class SrsPostDequeueHandler extends AbstractPostDequeueHandler {
         }
         Set<String> productTypes = labVessels.stream().flatMap(
                 lv -> Arrays.stream(lv.getMetadataValues(Metadata.Key.PRODUCT_TYPE))).collect(Collectors.toSet());
-        productTypes.add(MayoManifestEjb.AOU_ARRAY); // TODO Remove
         if (!productTypes.isEmpty()) {
             if (productTypes.size() == 1) {
                 String productType = productTypes.iterator().next();
