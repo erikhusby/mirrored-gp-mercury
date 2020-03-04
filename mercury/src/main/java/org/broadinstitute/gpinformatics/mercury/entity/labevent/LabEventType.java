@@ -366,7 +366,8 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT, RackOfTubes.RackType.Matrix96Anonymous,
-                    RackOfTubes.RackType.Matrix96Anonymous).sourceContainerPrefix("DevSrc").targetContainerPrefix("DevDest").build(),
+                    RackOfTubes.RackType.Matrix96Anonymous).sourceContainerPrefix("DevSrc").targetContainerPrefix("DevDest")
+                    .allowKnownDestination(true).build(),
             LibraryType.NONE_ASSIGNED),
 
     // Sage
@@ -2793,6 +2794,19 @@ public enum LabEventType {
     }
 
     /**
+     * Whether it's an error to
+     */
+    private enum AllowKnownDestinations {
+        TRUE(true),
+        FALSE(false);
+        private boolean value;
+
+        private AllowKnownDestinations(boolean value) {
+            this.value = value;
+        }
+    }
+
+    /**
      * Whether to send this event message to BSP.
      */
     public enum ForwardMessage {
@@ -3082,6 +3096,9 @@ public enum LabEventType {
         /** Whether to allow entry of target mass. */
         private boolean sourceMassRemoved;
 
+        /** Whether to allow sample to go to known destination. */
+        private boolean allowKnownDestination;
+
         /** Options to mark destination receptacles as Backup, Active, or Reserved Stock*/
         private MarkStock[] destinationMarkStock = {};
 
@@ -3171,6 +3188,7 @@ public enum LabEventType {
             targetSection = builder.targetSection;
             targetVolume = builder.targetVolume;
             sourceMassRemoved = builder.sourceMassRemoved;
+            allowKnownDestination = builder.allowKnownDestination;
             destinationMarkStock = builder.destinationMarkStock;
             targetContainerPrefix = builder.targetContainerPrefix;
             numEvents = builder.numEvents;
@@ -3209,6 +3227,7 @@ public enum LabEventType {
             private BarcodedTube.BarcodedTubeType targetBarcodedTubeType;
             private boolean targetVolume;
             private boolean sourceMassRemoved;
+            private boolean allowKnownDestination;
             private MarkStock[] destinationMarkStock = {};
             private String targetContainerPrefix;
             private LabEventType secondaryEvent;
@@ -3302,6 +3321,11 @@ public enum LabEventType {
 
             public Builder sourceMassRemoved(boolean sourceMassRemoved) {
                 this.sourceMassRemoved = sourceMassRemoved;
+                return this;
+            }
+
+            public Builder allowKnownDestination(boolean allowKnownDestination) {
+                this.allowKnownDestination = allowKnownDestination;
                 return this;
             }
 
@@ -3480,6 +3504,10 @@ public enum LabEventType {
 
         public boolean sourceMassRemoved() {
             return sourceMassRemoved;
+        }
+
+        public boolean allowKnownDestination() {
+            return allowKnownDestination;
         }
 
         public MarkStock[] getDestinationMarkStock() {
