@@ -1,8 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.queue;
 
-import java.util.Arrays;
-import java.util.Collections;
-
 import org.broadinstitute.bsp.client.queue.DequeueingOptions;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -16,6 +13,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import java.util.Arrays;
+import java.util.Collections;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 
@@ -33,11 +33,11 @@ public class QueueEjbDbFreeTest {
         LabVessel labVessel2 = new BarcodedTube(BARCODE_2);
 
         MessageCollection messageCollection = new MessageCollection();
-        queueEjb.enqueueLabVessels(Arrays.asList(labVessel, labVessel2), QueueType.PICO,
+        queueEjb.enqueueLabVessels(Arrays.asList(labVessel, labVessel2), QueueType.DNA_QUANT,
                         null, messageCollection, QueueOrigin.EXTRACTION, null);
-        GenericQueue picoQueue = queueEjb.findQueueByType(QueueType.PICO);
+        GenericQueue dnaQuantQueue = queueEjb.findQueueByType(QueueType.DNA_QUANT);
         int foundItems = 0;
-        for (QueueGrouping queueGrouping : picoQueue.getQueueGroupings()) {
+        for (QueueGrouping queueGrouping : dnaQuantQueue.getQueueGroupings()) {
             for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
                 if (queueEntity.getLabVessel().getLabel().equals(BARCODE_1)) {
                     foundItems++;
@@ -57,7 +57,7 @@ public class QueueEjbDbFreeTest {
 
         MessageCollection messageCollection = new MessageCollection();
 
-        QueueType queueType = QueueType.PICO;
+        QueueType queueType = QueueType.DNA_QUANT;
 
         queueEjb.dequeueLabVessels(Collections.singletonList(QueueTestFactory.generateLabVessel(LAB_VESSEL_ID)),
                 queueType, messageCollection, DequeueingOptions.DEFAULT_DEQUEUE_RULES);
@@ -73,10 +73,10 @@ public class QueueEjbDbFreeTest {
 
         MessageCollection messageCollection = new MessageCollection();
         queueEjb.dequeueLabVessels(Collections.singletonList(QueueTestFactory.generateLabVessel(LAB_VESSEL_ID)),
-                QueueType.PICO, messageCollection, DequeueingOptions.DEFAULT_DEQUEUE_RULES);
+                QueueType.DNA_QUANT, messageCollection, DequeueingOptions.DEFAULT_DEQUEUE_RULES);
         Assert.assertFalse(messageCollection.hasWarnings());
 
-        Assert.assertTrue(queueEjb.findQueueByType(QueueType.PICO).isQueueEmpty());
+        Assert.assertTrue(queueEjb.findQueueByType(QueueType.DNA_QUANT).isQueueEmpty());
     }
 
     @Test(groups = DATABASE_FREE)
@@ -84,14 +84,14 @@ public class QueueEjbDbFreeTest {
 
         QueueEjb queueEjb = new QueueEjb(QueueTestFactory.getDequeueTestQueue(LAB_VESSEL_ID), QueueTestFactory.getPicoValidationWithErrors());
 
-        QueueType queueType = QueueType.PICO;
+        QueueType queueType = QueueType.DNA_QUANT;
 
         MessageCollection messageCollection = new MessageCollection();
         queueEjb.dequeueLabVessels(Collections.singletonList(QueueTestFactory.generateLabVessel(LAB_VESSEL_ID)),
                 queueType, messageCollection, DequeueingOptions.OVERRIDE);
         Assert.assertFalse(messageCollection.hasWarnings());
 
-        Assert.assertTrue(queueEjb.findQueueByType(QueueType.PICO).isQueueEmpty());
+        Assert.assertTrue(queueEjb.findQueueByType(QueueType.DNA_QUANT).isQueueEmpty());
     }
 
     @Test(groups = DATABASE_FREE)
@@ -101,10 +101,10 @@ public class QueueEjbDbFreeTest {
 
         MessageCollection messageCollection = new MessageCollection();
         queueEjb.dequeueLabVessels(Collections.singletonList(QueueTestFactory.generateLabVessel(LAB_VESSEL_ID)),
-                QueueType.PICO, messageCollection, DequeueingOptions.OVERRIDE);
+                QueueType.DNA_QUANT, messageCollection, DequeueingOptions.OVERRIDE);
         Assert.assertFalse(messageCollection.hasWarnings());
 
-        Assert.assertTrue(queueEjb.findQueueByType(QueueType.PICO).isQueueEmpty());
+        Assert.assertTrue(queueEjb.findQueueByType(QueueType.DNA_QUANT).isQueueEmpty());
     }
 
     @Test(groups = DATABASE_FREE)
@@ -112,8 +112,8 @@ public class QueueEjbDbFreeTest {
         MessageCollection messageCollection = new MessageCollection();
         QueueEjb queueEjb = new QueueEjb(QueueTestFactory.getResortQueue(), QueueTestFactory.getPicoValidationNoErrors());
 
-        Long validQueueGroupingId = queueEjb.findQueueByType(QueueType.PICO).getQueueGroupings().first().getQueueGroupingId();
-        queueEjb.reOrderQueue(validQueueGroupingId, 2, QueueType.PICO, messageCollection);
+        Long validQueueGroupingId = queueEjb.findQueueByType(QueueType.DNA_QUANT).getQueueGroupings().first().getQueueGroupingId();
+        queueEjb.reOrderQueue(validQueueGroupingId, 2, QueueType.DNA_QUANT, messageCollection);
 
         // NOTE:  Because we are mocking, the only thing we can do is verify no error occurs, we can't verify the change
         //        itself because the mocked dao will ALWAYS return the same queue groupings order.   The funcitonality
@@ -127,7 +127,7 @@ public class QueueEjbDbFreeTest {
         MessageCollection messageCollection = new MessageCollection();
         QueueEjb queueEjb = new QueueEjb(QueueTestFactory.getResortQueue(), QueueTestFactory.getPicoValidationNoErrors());
 
-        queueEjb.reOrderQueue(Long.MAX_VALUE, 2, QueueType.PICO, messageCollection);
+        queueEjb.reOrderQueue(Long.MAX_VALUE, 2, QueueType.DNA_QUANT, messageCollection);
 
         Assert.assertTrue(messageCollection.hasErrors());
     }
@@ -139,20 +139,20 @@ public class QueueEjbDbFreeTest {
         LabVessel labVessel = QueueTestFactory.generateLabVessel(LAB_VESSEL_ID);
 
         MessageCollection messageCollection = new MessageCollection();
-        queueEjb.enqueueLabVessels(Collections.singletonList(labVessel), QueueType.PICO,
+        queueEjb.enqueueLabVessels(Collections.singletonList(labVessel), QueueType.DNA_QUANT,
                 null, messageCollection, QueueOrigin.RECEIVING, null);
 
-        queueEjb.excludeItems(Collections.singletonList(labVessel), QueueType.PICO, messageCollection);
+        queueEjb.excludeItems(Collections.singletonList(labVessel), QueueType.DNA_QUANT, messageCollection);
 
-        GenericQueue picoQueue = queueEjb.findQueueByType(QueueType.PICO);
+        GenericQueue dnaQuantQueue = queueEjb.findQueueByType(QueueType.DNA_QUANT);
         int foundItems = 0;
-        for (QueueGrouping queueGrouping : picoQueue.getQueueGroupings()) {
+        for (QueueGrouping queueGrouping : dnaQuantQueue.getQueueGroupings()) {
             for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
                 if (queueEntity.getLabVessel().getLabel().equals(BARCODE_1)
-                            && queueEntity.getQueueStatus() == QueueStatus.Excluded) {
+                            && queueEntity.getQueueStatus() == QueueStatus.EXCLUDED) {
                     foundItems++;
                 } else if (queueEntity.getLabVessel().getLabel().equals(BARCODE_2)
-                            && queueEntity.getQueueStatus() == QueueStatus.Excluded) {
+                            && queueEntity.getQueueStatus() == QueueStatus.EXCLUDED) {
                     foundItems++;
                 }
             }

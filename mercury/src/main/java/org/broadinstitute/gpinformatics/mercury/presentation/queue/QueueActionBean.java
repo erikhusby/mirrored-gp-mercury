@@ -8,35 +8,40 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.SimpleMessage;
 import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.StreamCreatedSpreadsheetUtil;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.datadump.AbstractDataDumpGenerator;
 import org.broadinstitute.gpinformatics.mercury.control.dao.queue.GenericQueueDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.queue.QueueGroupingDao;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueuePriority;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueSpecialization;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueStatus;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.security.SecurityActionBean;
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import javax.inject.Inject;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -51,7 +56,7 @@ import java.util.Map;
  */
 @UrlBinding("/queue/Queue.action")
 public class QueueActionBean extends CoreActionBean {
-    private static final Log log = LogFactory.getLog(CoreActionBean.class);
+    private static final Log log = LogFactory.getLog(QueueActionBean.class);
     private static final String SPREADSHEET_FILENAME = "_queue_data_dump.xls";
 
     private QueueType queueType;
@@ -59,13 +64,12 @@ public class QueueActionBean extends CoreActionBean {
     private GenericQueue queue;
 
     private Long queueGroupingId;
+    private String newGroupName;
     private Integer positionToMoveTo;
     private String excludeVessels;
     private String enqueueSampleIds;
 
     private QueueGrouping queueGrouping;
-
-    private Map<Long, BspUser> userIdToUsername = new HashMap<>();
 
     @Inject
     private QueueEjb queueEjb;
@@ -74,7 +78,14 @@ public class QueueActionBean extends CoreActionBean {
     private GenericQueueDao queueDao;
 
     @Inject
+    private QueueGroupingDao queueGroupingDao;
+
+    @Inject
     private BSPUserList userList;
+
+    @Inject
+    private SampleDataFetcher sampleDataFetcher;
+
     private static final String READABLE_TEXT = "Manually added on ";
     private Map<String, SampleData> sampleIdToSampleData;
     private Map<Long, String> labVesselIdToSampleId;
@@ -82,8 +93,10 @@ public class QueueActionBean extends CoreActionBean {
     private QueueSpecialization queueSpecialization;
     private int totalInQueue;
     private int totalNeedRework;
-    private Map<Long, Long> remainingEntities = new HashMap<>();
-    private Map<QueuePriority, Long> entitiesInQueueByPriority = new HashMap<>();
+    private Map<Long, Integer> remainingEntitiesInQueue;
+    private Map<Long, Integer> totalEntitiesInQueue;
+    private Map<QueuePriority, Integer> entitiesQueuedByPriority;
+    private List<QueueGrouping> queueGroupings;
 
     /**
      * Shows the main Queue page.
@@ -100,29 +113,40 @@ public class QueueActionBean extends CoreActionBean {
             return new RedirectResolution(SecurityActionBean.HOME_PAGE);
         }
 
+        remainingEntitiesInQueue = new HashMap<>();
+        totalEntitiesInQueue = new HashMap<>();
+        entitiesQueuedByPriority = new HashMap<>();
+
         queue = queueEjb.findQueueByType(queueType);
-        for (QueueGrouping grouping : queue.getQueueGroupings()) {
+        queueGroupings = queueGroupingDao.findActiveGroupsByQueueType(queueType);
+        for (QueueGrouping grouping : queueGroupings) {
 
             QueuePriority queuePriority = grouping.getQueuePriority();
+            Long queueGroupingId = grouping.getQueueGroupingId();
 
             // Fill in the initial value for both remaining entities within this grouping, and for the entities by
             // priority (if it is a new priority).
-            remainingEntities.put(grouping.getQueueGroupingId(), 0L);
-            if (!entitiesInQueueByPriority.containsKey(queuePriority)) {
-                entitiesInQueueByPriority.put(queuePriority, 0L);
+            remainingEntitiesInQueue.put(queueGroupingId, 0);
+            totalEntitiesInQueue.put(queueGroupingId, 0);
+            if (!entitiesQueuedByPriority.containsKey(queuePriority)) {
+                entitiesQueuedByPriority.put(queuePriority, 0);
             }
-            // Fill in the proper numbers.
-            for (QueueEntity queueEntity : grouping.getQueuedEntities()) {
-                switch (queueEntity.getQueueStatus()) {
-                    case Repeat:
-                        totalNeedRework++;
-                    case Active:
 
-                        totalInQueue++;
-                        entitiesInQueueByPriority.put(queuePriority, entitiesInQueueByPriority.get(queuePriority) + 1);
-                        remainingEntities.put(grouping.getQueueGroupingId(),
-                                remainingEntities.get(grouping.getQueueGroupingId()) + 1);
+            Map<QueueStatus, Long> entityStatusCounts = queueGroupingDao.getEntityStatusCounts(queueGroupingId);
+
+            // Fill in the proper numbers.
+            for (Map.Entry<QueueStatus, Long> entry : entityStatusCounts.entrySet()) {
+                totalEntitiesInQueue.put(queueGroupingId, totalEntitiesInQueue.get(queueGroupingId) + entry.getValue().intValue());
+                switch (entry.getKey()) {
+                    case REPEAT:
+                        totalNeedRework += entry.getValue().intValue();
+                    case ACTIVE:
+                        totalInQueue += entry.getValue().intValue();
+                        entitiesQueuedByPriority.put(queuePriority, entitiesQueuedByPriority.get(queuePriority) + entry.getValue().intValue());
+                        remainingEntitiesInQueue.put(queueGroupingId,
+                                remainingEntitiesInQueue.get(queueGroupingId) + entry.getValue().intValue());
                         break;
+                    // Completed?, Excluded?
                     default:
                 }
             }
@@ -137,12 +161,12 @@ public class QueueActionBean extends CoreActionBean {
     @HandlesEvent("viewGrouping")
     public Resolution viewGrouping() {
         if (queueGroupingId == null) {
+            addGlobalValidationError("Queue Grouping not specified");
             return getSourcePageResolution();
         }
 
         queueGrouping = queueDao.findById(QueueGrouping.class, queueGroupingId);
 
-        List<Long> userIds = new ArrayList<>();
         List<LabVessel> labVessels = new ArrayList<>();
         labVesselIdToSampleId = new HashMap<>();
         labVesselIdToMercurySample = new HashMap<>();
@@ -156,23 +180,60 @@ public class QueueActionBean extends CoreActionBean {
 
         sampleIdToSampleData = loadData(mercurySamples);
 
-        for (Long userId : userIds) {
-            userIdToUsername.put(userId, userList.getById(userId));
-        }
-
         return new ForwardResolution("/queue/show_queue_grouping.jsp");
     }
 
     private Map<String, SampleData> loadData(List<MercurySample> mercurySamples) {
-        SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
         return sampleDataFetcher.fetchSampleDataForSamples(mercurySamples, getSearchColumns());
     }
 
     private BSPSampleSearchColumn[] getSearchColumns() {
-        return new BSPSampleSearchColumn[] {
+        return new BSPSampleSearchColumn[]{
                 BSPSampleSearchColumn.COLLECTION,
                 BSPSampleSearchColumn.LOCATION
         };
+    }
+
+    /**
+     * Rename a grouping - AJAX call!
+     */
+    @HandlesEvent("renameGroup")
+    public Resolution renameGroup() throws JSONException {
+        final JSONObject resultJson = new JSONObject();
+        final StringBuilder errors = new StringBuilder();
+        if (queueGroupingId == null) {
+            errors.append("Queue Grouping not specified");
+        } else if (StringUtils.isEmpty(newGroupName)) {
+            errors.append("New group name not supplied.");
+        } else {
+            try {
+                queueGroupingDao.renameGrouping(queueGroupingId, newGroupName);
+            } catch (Exception e) {
+                // Wrapped in an EJBException
+                if (!(e.getCause() instanceof IllegalArgumentException)) {
+                    errors.append("Unexpected error:  ").append(e.getMessage());
+                    log.error("Failure renaming queue group", e);
+                } else {
+                    errors.append(e.getCause().getMessage());
+                }
+            }
+        }
+
+        if (errors.length() > 0) {
+            resultJson.put("errors", new String[]{errors.toString()});
+        } else {
+            resultJson.put("newGroupName", newGroupName);
+        }
+
+        return new StreamingResolution("text/json") {
+            @Override
+            public void stream(HttpServletResponse response) throws Exception {
+                ServletOutputStream out = response.getOutputStream();
+                out.write(resultJson.toString().getBytes());
+                out.close();
+            }
+        };
+
     }
 
     /**
@@ -182,6 +243,7 @@ public class QueueActionBean extends CoreActionBean {
     public Resolution downloadGroupingData() {
         try {
             if (queueGroupingId == null) {
+                addGlobalValidationError("Queue Grouping not specified");
                 return getSourcePageResolution();
             }
 
@@ -303,20 +365,16 @@ public class QueueActionBean extends CoreActionBean {
         this.queueGroupingId = queueGroupingId;
     }
 
+    public void setNewGroupName(String newGroupName) {
+        this.newGroupName = newGroupName.trim();
+    }
+
     public QueueGrouping getQueueGrouping() {
         return queueGrouping;
     }
 
     public void setQueueGrouping(QueueGrouping queueGrouping) {
         this.queueGrouping = queueGrouping;
-    }
-
-    public Map<Long, BspUser> getUserIdToUsername() {
-        return userIdToUsername;
-    }
-
-    public void setUserIdToUsername(Map<Long, BspUser> userIdToUsername) {
-        this.userIdToUsername = userIdToUsername;
     }
 
     public Integer getPositionToMoveTo() {
@@ -387,15 +445,23 @@ public class QueueActionBean extends CoreActionBean {
         return totalNeedRework;
     }
 
-    public Map<Long, Long> getRemainingEntities() {
-        return remainingEntities;
+    public Map<Long, Integer> getRemainingEntitiesInQueue() {
+        return remainingEntitiesInQueue;
     }
 
     public QueuePriority[] getQueuePriorities() {
         return QueuePriority.values();
     }
 
-    public Map<QueuePriority, Long> getEntitiesInQueueByPriority() {
-        return entitiesInQueueByPriority;
+    public Map<QueuePriority, Integer> getEntitiesQueuedByPriority() {
+        return entitiesQueuedByPriority;
+    }
+
+    public Map<Long, Integer> getTotalEntitiesInQueue() {
+        return totalEntitiesInQueue;
+    }
+
+    public List<QueueGrouping> getQueueGroupings() {
+        return queueGroupings;
     }
 }

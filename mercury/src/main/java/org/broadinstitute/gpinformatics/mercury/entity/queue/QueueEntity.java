@@ -49,7 +49,7 @@ public class QueueEntity {
 
     public QueueEntity(QueueGrouping queueGrouping, LabVessel labVessel) {
         this.queueGrouping = queueGrouping;
-        this.queueStatus = QueueStatus.Active;
+        this.queueStatus = QueueStatus.ACTIVE;
         this.labVessel = labVessel;
     }
 

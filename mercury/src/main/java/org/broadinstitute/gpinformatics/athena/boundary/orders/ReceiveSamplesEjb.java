@@ -16,7 +16,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
-import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.PicoEnqueueOverride;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.DnaQuantEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleInfo;
@@ -66,6 +66,7 @@ public class ReceiveSamplesEjb {
     private BSPRestService bspRestService;
     private LabVesselDao labVesselDao;
     private QueueEjb queueEjb;
+    private DnaQuantEnqueueOverride dnaQuantEnqueueOverride;
 
     public ReceiveSamplesEjb() {
     }
@@ -78,7 +79,8 @@ public class ReceiveSamplesEjb {
                              BSPRestService bspRestService,
                              SampleReceiptResource sampleReceiptResource,
                              LabVesselDao labVesselDao,
-                             QueueEjb queueEjb) {
+                             QueueEjb queueEjb,
+                             DnaQuantEnqueueOverride dnaQuantEnqueueOverride) {
         this.receiptService = receiptService;
         this.managerFactory = managerFactory;
         this.productOrderSampleDao = productOrderSampleDao;
@@ -87,6 +89,7 @@ public class ReceiveSamplesEjb {
         this.bspRestService = bspRestService;
         this.labVesselDao = labVesselDao;
         this.queueEjb = queueEjb;
+        this.dnaQuantEnqueueOverride = dnaQuantEnqueueOverride;
     }
 
     /**
@@ -205,7 +208,7 @@ public class ReceiveSamplesEjb {
                     sampleReceiptResource.notifyOfReceipt(sampleReceiptBean);
                 }
 
-                addToPicoQueueIfNecessary(sampleIds, messageCollection);
+                addToDnaQuantQueueIfNecessary(sampleIds, messageCollection);
             }
         }
 
@@ -213,24 +216,24 @@ public class ReceiveSamplesEjb {
     }
 
     /**
-     * Adds all DNA samples to pico queue.
+     * Adds all DNA samples to quant queue.
      *
      * @param sampleIds             SampleIDs which are being received.
      * @param messageCollection     Messages back to the user.
      */
-    private void addToPicoQueueIfNecessary(List<String> sampleIds, MessageCollection messageCollection) {
-        List<LabVessel> vesselsForPico = new ArrayList<>();
+    private void addToDnaQuantQueueIfNecessary(List<String> sampleIds, MessageCollection messageCollection) {
+        List<LabVessel> vesselsForQuanting = new ArrayList<>();
         List<LabVessel> labVessels = labVesselDao.findBySampleKeyOrLabVesselLabel(sampleIds);
         labVessels.addAll(labVesselDao.findByBarcodes(sampleIds).values());
 
         for (LabVessel labVessel : labVessels) {
             if (labVessel.isDNA()) {
-                vesselsForPico.add(labVessel);
+                vesselsForQuanting.add(labVessel);
             }
         }
         QueueSpecialization queueSpecialization =
-                PicoEnqueueOverride.determinePicoQueueSpecialization(vesselsForPico);
-        queueEjb.enqueueLabVessels(vesselsForPico, QueueType.PICO,
+                dnaQuantEnqueueOverride.determineDnaQuantQueueSpecialization(vesselsForQuanting);
+        queueEjb.enqueueLabVessels(vesselsForQuanting, QueueType.DNA_QUANT,
                 "Received on " + DateUtils.convertDateTimeToString(new Date()), messageCollection,
                 QueueOrigin.RECEIVING, queueSpecialization);
     }
@@ -266,7 +269,7 @@ public class ReceiveSamplesEjb {
                         parentVesselBeans.add(new ParentVesselBean(null, barcodes.getSampleBarcode(), tubeType,null));
                     }
 
-                    addToPicoQueueIfNecessary(sampleBarcodesReceived, messageCollection);
+                    addToDnaQuantQueueIfNecessary(sampleBarcodesReceived, messageCollection);
 
                     SampleReceiptBean sampleReceiptBean = new SampleReceiptBean(new Date(), kit.getKitId(),
                             parentVesselBeans, bspUser.getUsername());

@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn
 /**
  * Used to generate the data dump for the Pico queue
  */
-public class PicoDataDumpGenerator extends AbstractDataDumpGenerator {
+public class DnaQuantDataDumpGenerator extends AbstractDataDumpGenerator {
 
     @Override
     protected Object[] extractData(SampleData sampleData) {

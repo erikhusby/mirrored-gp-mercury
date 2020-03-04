@@ -25,14 +25,14 @@ import java.util.Set;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 
 @Test(groups = DATABASE_FREE)
-public class PicoEnqueueOverrideDbFreeTest extends AbstractEnqueueOverrideTest {
+public class DnaQuantEnqueueOverrideDbFreeTest extends AbstractEnqueueOverrideTest {
 
     public static final String RANDOM_SAMPLE_BARCODE = "SM-1234";
 
     @Override
     @BeforeClass
     public void setup() {
-        enqueueOverride = new PicoEnqueueOverride(generateBspRestClient(true));
+        enqueueOverride = new DnaQuantEnqueueOverride(generateBspRestClient(true));
     }
 
     /**
@@ -44,7 +44,7 @@ public class PicoEnqueueOverrideDbFreeTest extends AbstractEnqueueOverrideTest {
     public void queueSpecificCheckForSpecialPriorityTypeTest() {
 
         // Change default exome express value to be false for next test
-        enqueueOverride = new PicoEnqueueOverride(generateBspRestClient(false));
+        enqueueOverride = new DnaQuantEnqueueOverride(generateBspRestClient(false));
 
         // Standard sample that is non-exome express and non-clinical
         MercurySample standardSample = new MercurySample(RANDOM_SAMPLE_BARCODE, MercurySample.MetadataSource.BSP);

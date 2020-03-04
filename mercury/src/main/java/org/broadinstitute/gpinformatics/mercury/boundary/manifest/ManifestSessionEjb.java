@@ -16,7 +16,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
-import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.PicoEnqueueOverride;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.DnaQuantEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -87,6 +87,8 @@ public class ManifestSessionEjb {
 
     private JiraService jiraService;
 
+    private DnaQuantEnqueueOverride dnaQuantEnqueueOverride;
+
     private static Log logger = LogFactory.getLog(ManifestSessionEjb.class);
 
     /**
@@ -99,7 +101,8 @@ public class ManifestSessionEjb {
     @Inject
     public ManifestSessionEjb(ManifestSessionDao manifestSessionDao, ResearchProjectDao researchProjectDao,
                               MercurySampleDao mercurySampleDao, LabVesselDao labVesselDao, UserBean userBean,
-                              BSPUserList bspUserList, JiraService jiraService, QueueEjb queueEjb) {
+                              BSPUserList bspUserList, JiraService jiraService, QueueEjb queueEjb,
+                              DnaQuantEnqueueOverride dnaQuantEnqueueOverride) {
         this.manifestSessionDao = manifestSessionDao;
         this.researchProjectDao = researchProjectDao;
         this.mercurySampleDao = mercurySampleDao;
@@ -108,6 +111,7 @@ public class ManifestSessionEjb {
         this.bspUserList = bspUserList;
         this.jiraService = jiraService;
         this.queueEjb = queueEjb;
+        this.dnaQuantEnqueueOverride = dnaQuantEnqueueOverride;
     }
 
     /**
@@ -256,10 +260,19 @@ public class ManifestSessionEjb {
         List<LabVessel> accessionedVessels = new ArrayList<>();
         for (ManifestRecord record : manifestSession.getNonQuarantinedRecords()) {
             if (record.getStatus() == ManifestRecord.Status.ACCESSIONED) {
-                LabVessel labVessel = findAndValidateTargetSampleAndVessel(record.getSampleId(), record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
+                LabVessel labVessel;
                 if (manifestSession.isFromSampleKit()) {
+                    labVessel = findAndValidateTargetSampleAndVessel(record.getSampleId(),
+                            record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
                     transferSample(manifestSessionId, record.getValueByKey(Metadata.Key.SAMPLE_ID),
                             record.getSampleId(), disambiguator++, labVessel);
+                } else {
+                    List<LabVessel> labVessels = labVesselDao.findBySampleKey(record.getSampleId());
+                    if (labVessels.size() != 1) {
+                        throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET,
+                                MERCURY_SAMPLE_KEY, record.getSampleId(), SAMPLE_NOT_FOUND_MESSAGE);
+                    }
+                    labVessel = labVessels.get(0);
                 }
                 accessionedVessels.add(labVessel);
                 accessionedSamples.add(record.getSampleId());
@@ -268,12 +281,12 @@ public class ManifestSessionEjb {
 
         MessageCollection messageCollection = new MessageCollection();
 
-        QueueSpecialization queueSpecialization = PicoEnqueueOverride.determinePicoQueueSpecialization(accessionedVessels);
-        queueEjb.enqueueLabVessels(accessionedVessels, QueueType.PICO,
+        QueueSpecialization queueSpecialization = dnaQuantEnqueueOverride.determineDnaQuantQueueSpecialization(accessionedVessels);
+        queueEjb.enqueueLabVessels(accessionedVessels, QueueType.DNA_QUANT,
                 "Accessioned on " + DateUtils.convertDateTimeToString(new Date()), messageCollection,
                 QueueOrigin.RECEIVING, queueSpecialization);
         for (String error : messageCollection.getErrors()) {
-            logger.debug("Error Occurred in Enqueue to pico queue:  " + error);
+            logger.debug("Error Occurred in Enqueue to " + QueueType.DNA_QUANT.getTextName() + " queue:  " + error);
         }
 
         if (StringUtils.isNotBlank(manifestSession.getReceiptTicket())) {

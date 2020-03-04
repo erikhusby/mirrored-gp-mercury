@@ -13,8 +13,8 @@
             Queue: ${actionBean.queueType.textName}<br />
             Queue Grouping: ${actionBean.queueGrouping.queueGroupingText}
             <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean">
-                <stripes:param name="queueType" />
-                <stripes:param name="queueGroupingId" />
+                <stripes:param name="queueType" value="${actionBean.queueType}"/>
+                <stripes:param name="queueGroupingId" value="${actionBean.queueGrouping.queueGroupingId}"/>
                 <stripes:param name="downloadGroupingData" />
                 Download Details
             </stripes:link>
@@ -39,7 +39,7 @@
                     <td>${actionBean.sampleIdToSampleData[sampleId].bspStorageLocation}</td>
                     <td>${actionBean.sampleIdToSampleData[sampleId].collection}</td>
                     <td>${actionBean.labVesselIdToMercurySample[queueEntity.labVessel.labVesselId].metadataSource.displayName}</td>
-                    <td>${queueEntity.queueStatus.name}</td>
+                    <td>${queueEntity.queueStatus.displayName}</td>
                     <td>${queueEntity.completedOn}</td>
                 </tr>
             </c:forEach>

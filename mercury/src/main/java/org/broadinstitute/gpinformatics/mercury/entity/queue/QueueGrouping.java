@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.queue;
 
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
@@ -20,6 +21,8 @@ import javax.persistence.Version;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Used to group together Queue Entities.  It is expected that, for whatever reason, the samples within a grouping are
@@ -83,6 +86,10 @@ public class QueueGrouping {
     @Enumerated(EnumType.STRING)
     private QueueSpecialization queueSpecialization;
 
+    @Column(name = "queue_status", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private QueueStatus queueStatus;
+
     public QueueGrouping() {
     }
 
@@ -91,8 +98,22 @@ public class QueueGrouping {
         this.sortOrder = Long.MAX_VALUE;
         this.associatedQueue = genericQueue;
         this.queueSpecialization = queueSpecialization;
+        this.queueStatus = QueueStatus.ACTIVE;
 
         this.queuedEntities = new ArrayList<>();
+    }
+
+    public Set<String> bspLocations() {
+        Set<String> locations = new TreeSet<>();
+        for (QueueEntity queuedEntity : queuedEntities) {
+            for (MercurySample mercurySample : queuedEntity.getLabVessel().getMercurySamples()) {
+                String bspStorageLocation = mercurySample.getSampleData().getBspStorageLocation();
+                if (bspStorageLocation != null) {
+                    locations.add(bspStorageLocation);
+                }
+            }
+        }
+        return locations;
     }
 
     public Long getQueueGroupingId() {
@@ -155,13 +176,30 @@ public class QueueGrouping {
     public boolean shouldSkipPriorityCheck() {
         boolean isRepeat = false;
         for (QueueEntity queueEntity : getQueuedEntities()) {
-            if (queueEntity.getQueueStatus() == QueueStatus.Repeat) {
+            if (queueEntity.getQueueStatus() == QueueStatus.REPEAT) {
                 isRepeat = true;
                 break;
             }
         }
 
         return getQueuePriority().shouldSkipPriorityCheck() || isRepeat;
+    }
+
+    /**
+     * @return True if there are {@link QueueEntity} with a status of QueueStatus.Active or QueueStatus.Repeat.
+     */
+    public boolean hasRemainingActiveEntities() {
+        return getRemainingEntities() != 0;
+    }
+
+    /**
+     * Utility method to go through the current queue grouping and check to see if all the {@link QueueEntity}'s have a
+     * status of QueueStatus.Active or QueueStatus.Repeat.
+     */
+    public void updateGroupingStatus() {
+        if (!hasRemainingActiveEntities()) {
+            setQueueStatus(QueueStatus.COMPLETED);
+        }
     }
 
     /**
@@ -198,10 +236,18 @@ public class QueueGrouping {
         this.queueSpecialization = queueSpecialization;
     }
 
+    public QueueStatus getQueueStatus() {
+        return queueStatus;
+    }
+
+    public void setQueueStatus(QueueStatus queueStatus) {
+        this.queueStatus = queueStatus;
+    }
+
     public long getRemainingEntities() {
         int remainingEntities = 0;
         for (QueueEntity queueEntity : getQueuedEntities()) {
-            if (queueEntity.getQueueStatus() != QueueStatus.Completed) {
+            if (queueEntity.getQueueStatus().isStillInQueue()) {
                 remainingEntities++;
             }
         }

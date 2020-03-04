@@ -6,7 +6,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueuePriority;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueSpecialization;
@@ -17,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -26,23 +26,26 @@ import java.util.Map;
  * Logic for overriding default handling for enqueueing for the Pico Queue.
  */
 @RequestScoped
-public class PicoEnqueueOverride extends AbstractEnqueueOverride {
+public class DnaQuantEnqueueOverride extends AbstractEnqueueOverride {
 
-    public PicoEnqueueOverride() {
-        this(ServiceAccessUtility.getBean(BSPRestClient.class));
+    @Inject
+    private BSPRestClient bspRestClientImpl;
+
+    @Inject
+    private SampleDataFetcher sampleDataFetcher;
+
+    public DnaQuantEnqueueOverride() {
     }
 
-    public PicoEnqueueOverride(BSPRestClient bspRestClientImpl) {
+    public DnaQuantEnqueueOverride(BSPRestClient bspRestClientImpl) {
         this.bspRestClientImpl = bspRestClientImpl;
     }
-
-    private BSPRestClient bspRestClientImpl;
 
     /**
      * Currently only specialization is if something is FFPE
      */
     @Nullable
-    public static QueueSpecialization determinePicoQueueSpecialization(Collection<LabVessel> targetLabVessels) {
+    public QueueSpecialization determineDnaQuantQueueSpecialization(Collection<LabVessel> targetLabVessels) {
         List<MercurySample> mercurySamples = new ArrayList<>();
 
         QueueSpecialization queueSpecialization = null;
@@ -53,12 +56,11 @@ public class PicoEnqueueOverride extends AbstractEnqueueOverride {
             }
         }
 
-        SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
         Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleDataForSamples(mercurySamples, BSPSampleSearchColumn.MATERIAL_TYPE, BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE);
 
         // Check for FFPE
         for (SampleData sampleData : sampleDataMap.values()) {
-            if (sampleData.getFfpeStatus()) {
+            if (Boolean.TRUE.equals(sampleData.getFfpeStatus())) {
                 queueSpecialization = QueueSpecialization.FFPE;
             }
         }

@@ -61,7 +61,35 @@ public abstract class AbstractDataDumpGenerator {
         Map<String, SampleData> sampleIdToSampleData = loadData(mercurySamples);
 
         for (LabVessel labVessel : labVessels) {
-            rows.add(extractData(sampleIdToSampleData.get(labVesselIdToSampleId.get(labVessel.getLabVesselId()))));
+            SampleData sampleData = sampleIdToSampleData.get(labVesselIdToSampleId.get(labVessel.getLabVesselId()));
+            if (sampleData != null) {
+                rows.add(extractData(sampleData));
+            } else {
+                // If no mercury sample association found then we can just return the vessel label.
+                int index = 0;
+                Object[] objects = new Object[getSearchColumns().length];
+                objects[index++] = "";  // Sample Id
+                objects[index++] = "";  // Sample Status
+                objects[index++] = "";  // Root Sample
+                objects[index++] = "";  // Sample Kit ID
+                objects[index++] = "";  // Patient Id
+                objects[index++] = "";  // Collection Id
+                objects[index++] = "";  // Original Material Type
+                objects[index++] = "";  // Material Type
+                objects[index++] = "";  // Volume
+                objects[index++] = "";  // Concentration
+                objects[index++] = labVessel.getLabel();  // Manufacturer barcode
+                objects[index++] = "";  // Container Id
+                objects[index++] = "";  // Position
+                objects[index++] = "";  // Bsp Storage Location
+                objects[index++] = "";  // Container Name
+                objects[index++] = "";  // Collaborator Participant Id
+                // to avoid a warning for the ++ on the index not being used.  I like to keep it there in case more columns
+                // are added so we don't forget to put the ++ back.
+                //noinspection UnusedAssignment
+                objects[index++] = "";  // Collaborator Sample Id
+                rows.add(objects);
+            }
         }
 
         return rows;
@@ -81,9 +109,12 @@ public abstract class AbstractDataDumpGenerator {
         for (LabVessel labVessel : labVessels) {
             for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
                 MercurySample mercurySample = sampleInstanceV2.getNearestMercurySample();
-                mercurySamples.add(mercurySample);
-                labVesselIdToSampleId.put(labVessel.getLabVesselId(), mercurySample.getSampleKey());
-                labVesselIdToMercurySample.put(labVessel.getLabVesselId(), mercurySample);
+                // Safely handle the possibly of no associated single sample
+                if (mercurySample != null) {
+                    mercurySamples.add(mercurySample);
+                    labVesselIdToSampleId.put(labVessel.getLabVesselId(), mercurySample.getSampleKey());
+                    labVesselIdToMercurySample.put(labVessel.getLabVesselId(), mercurySample);
+                }
             }
         }
     }
@@ -93,6 +124,7 @@ public abstract class AbstractDataDumpGenerator {
         int index = 0;
         for (BSPSampleSearchColumn bspSampleSearchColumn : dataDumpHeaderColumns) {
             headers[index] = bspSampleSearchColumn.columnName();
+            index++;
         }
 
         return headers;

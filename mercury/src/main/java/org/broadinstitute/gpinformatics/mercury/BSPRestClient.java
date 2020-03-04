@@ -11,7 +11,6 @@
 
 package org.broadinstitute.gpinformatics.mercury;
 
-import org.broadinstitute.bsp.client.queue.CompletedSamples;
 import org.broadinstitute.bsp.client.response.ExomeExpressCheckResponse;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJaxRsClientService;
@@ -34,8 +33,6 @@ import java.util.List;
 public class BSPRestClient extends AbstractJaxRsClientService {
 
     private static final String EXOMEEXPRESS_CHECK_IS_EXEX = "exomeexpress/check_is_exex_with_wrapper";
-
-    private static final String SEND_PICO_MESSAGE = "afterPico/notifyOfCompletedPico";
 
     private static final long serialVersionUID = 5472586820069306030L;
 
@@ -72,11 +69,6 @@ public class BSPRestClient extends AbstractJaxRsClientService {
         WebTarget webResource = getJaxRsClient().target(getUrl(EXOMEEXPRESS_CHECK_IS_EXEX));
         Response post = webResource.request().post(Entity.entity(new ListWrapper(barcodes), MediaType.APPLICATION_JSON_TYPE));
         return post.readEntity(ExomeExpressCheckResponse.class);
-    }
-
-    public void informUsersOfPicoCompletion(List<String> sampleIds) {
-        WebTarget webResource = getJaxRsClient().target(getUrl(SEND_PICO_MESSAGE));
-        webResource.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.entity(new CompletedSamples(sampleIds), MediaType.APPLICATION_JSON_TYPE));
     }
 
     @XmlRootElement
