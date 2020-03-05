@@ -109,7 +109,11 @@ public class WorkflowContainerTest extends Arquillian {
         WorkflowConfig workflowConfig = WorkflowLoader.getWorkflowConfig();
         WorkflowConfig workflowConfigFile = WorkflowLoader.loadFromFile();
         // Just needs to find one mismatch to establish that the config was not loaded from file.
-        Assert.assertFalse(CollectionUtils.isEqualCollection(
-                workflowConfig.getProductWorkflowDefs(), workflowConfigFile.getProductWorkflowDefs()));
+        Assert.assertTrue(!CollectionUtils.isEqualCollection(workflowConfig.getProductWorkflowDefs(),
+                workflowConfigFile.getProductWorkflowDefs()) ||
+                !CollectionUtils.isEqualCollection(workflowConfig.getMapProcessDefToWorkflow().keySet(),
+                        workflowConfigFile.getMapProcessDefToWorkflow().keySet()) ||
+                !CollectionUtils.isEqualCollection(workflowConfig.getMapProcessDefToWorkflow().values(),
+                        workflowConfigFile.getMapProcessDefToWorkflow().values()));
     }
 }
