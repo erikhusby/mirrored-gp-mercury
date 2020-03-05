@@ -509,10 +509,6 @@ public class GetSampleInstancesTest {
                                                                               MercurySample.BSP_METADATA_SOURCE);
         Assert.assertEquals(createSampleInstanceForPipelineAPIMetadataTesting(MercurySample.MetadataSource.MERCURY, "sample").getMetadataSourceForPipelineAPI(),
                             MercurySample.MERCURY_METADATA_SOURCE);
-        Assert.assertEquals(createSampleInstanceForPipelineAPIMetadataTesting(null, "123.5").getMetadataSourceForPipelineAPI(),
-                            MercurySample.GSSR_METADATA_SOURCE);
-        Assert.assertEquals(createSampleInstanceForPipelineAPIMetadataTesting(null, "samples from outer space").getMetadataSourceForPipelineAPI(),
-                            MercurySample.OTHER_METADATA_SOURCE);
     }
 
     @DataProvider(name = "aggregationParticleProvider")

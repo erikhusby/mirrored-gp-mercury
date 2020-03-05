@@ -493,7 +493,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     @Override
     public SampleData makeSampleData() {
-        return getMercurySample().makeSampleData();
+        return mercurySample != null ? mercurySample.makeSampleData() : new BspSampleData();
     }
 
     @Override
