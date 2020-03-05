@@ -90,7 +90,7 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
             sampleForTest = new MercurySample(sampleId, MercurySample.MetadataSource.MERCURY);
             mercurySampleDao.persist(sampleForTest);
         } else {
-            assertThat(sampleForTest.getMetadataSource(), equalTo(MercurySample.MetadataSource.MERCURY));
+            assertThat(sampleForTest.getMetadataSource(), equalTo(MercurySample.MetadataSource.CRSP_PORTAL));
         }
 
         ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory
@@ -120,7 +120,7 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
             sampleForTest = new MercurySample(sampleId, MercurySample.MetadataSource.MERCURY);
             mercurySampleDao.persist(sampleForTest);
         } else {
-            assertThat(sampleForTest.getMetadataSource(), equalTo(MercurySample.MetadataSource.MERCURY));
+            assertThat(sampleForTest.getMetadataSource(), equalTo(MercurySample.MetadataSource.CRSP_PORTAL));
         }
 
         ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory
@@ -145,7 +145,7 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
             sampleForTest = new MercurySample(sampleId, MercurySample.MetadataSource.MERCURY);
             mercurySampleDao.persist(sampleForTest);
         } else {
-            assertThat(sampleForTest.getMetadataSource(), equalTo(MercurySample.MetadataSource.MERCURY));
+            assertThat(sampleForTest.getMetadataSource(), equalTo(MercurySample.MetadataSource.CRSP_PORTAL));
         }
 
         ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory

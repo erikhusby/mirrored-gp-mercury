@@ -323,7 +323,8 @@ public class ManifestSessionEjb {
                     MERCURY_SAMPLE_KEY, targetSampleKey, SAMPLE_NOT_FOUND_MESSAGE);
         }
 
-        if (!targetSample.isClinicalSample()) {
+        // Can't use isClinicalSample here, due to positive controls
+        if (targetSample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSessionEjb.MERCURY_SAMPLE_KEY,
                     targetSample.getSampleKey(), ManifestSessionEjb.SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE);
         }

@@ -133,9 +133,8 @@ public class MercurySample extends AbstractSample {
             }
         }
 
-        // Have to allow client to be null, for positive controls
         return getMetadataSource() == MetadataSource.CRSP_PORTAL ||
-                (getMetadataSource() == MetadataSource.MERCURY && (client == null || client.isClinical()));
+                (getMetadataSource() == MetadataSource.MERCURY && client != null && client.isClinical());
     }
 
     /** Determines from which system Mercury gets metadata, e.g. collaborator sample ID */
