@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -13,6 +14,12 @@ import java.util.Set;
  * Service to talk to the quote server.
  */
 public interface QuoteService extends Serializable {
+    List<String> DEV_QUOTES = Arrays.asList("GP87U", "CRSPEVR", "GPSPGR7");
+
+    static boolean isDevQuote(String alphanumericId) {
+        return DEV_QUOTES.contains(alphanumericId);
+    }
+
     public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException;
 
     public Quotes getAllSequencingPlatformQuotes() throws QuoteServerException, QuoteNotFoundException;
@@ -52,6 +59,18 @@ public interface QuoteService extends Serializable {
      * @throws QuoteNotFoundException When the specified quote does not exist in the quote server.
      */
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException;
+
+    /**
+     * Get the quote for a particular quote identifier.
+     *
+     * @param alphaId The quote identifier.
+     * @param forceDevQuoteRefresh whether or not to force a refresh of the cached dev quotes, such as GP87U
+     *
+     * @return The quote representation.
+     * @throws QuoteServerException Quote server problems.
+     * @throws QuoteNotFoundException When the specified quote does not exist in the quote server.
+     */
+    public Quote getQuoteByAlphaId(String alphaId, boolean forceDevQuoteRefresh) throws QuoteServerException, QuoteNotFoundException;
 
     /**
      * Get the quote and all its associated price items for a particular quote identifier.

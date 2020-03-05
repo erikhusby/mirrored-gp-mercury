@@ -112,6 +112,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
@@ -169,8 +170,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver.SAVE_SEARCH_DATA;
 
@@ -226,8 +225,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     public static final String GET_SAMPLE_SUMMARY = "getSampleSummary";
     public static final String OPEN_CUSTOM_VIEW_ACTION = "openCustomView";
 
-    public static final List<String> EXCLUDED_QUOTES_FROM_VALUE = Stream.of("GP87U", "CRSPEVR", "GPSPGR7").collect(Collectors.toList());
-
     private String sampleSummary;
     private State state;
     private ProductOrder.QuoteSourceType quoteSource;
@@ -267,7 +264,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private BSPUserList bspUserList;
 
-    @Inject
     private QuoteLink quoteLink;
 
     @Inject
@@ -957,6 +953,9 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     protected void validateQuoteDetails(Quote quote, int additionalSampleCount) throws InvalidProductException,
             SAPIntegrationException {
+        if (QuoteService.isDevQuote(quote.getAlphanumericId())) {
+            return;
+        }
         if (!canChangeQuote(editOrder, originalQuote, quote.getAlphanumericId())) {
             addGlobalValidationError(SWITCHING_QUOTES_NOT_PERMITTED);
         }
@@ -1037,7 +1036,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         //Creating a new array list to be able to remove items from it if need be
         List<ProductOrder> ordersWithCommonQuote = new ArrayList<>();
-        if(!EXCLUDED_QUOTES_FROM_VALUE.contains(foundQuote.getAlphanumericId())) {
+        if (!QuoteService.isDevQuote(foundQuote.getAlphanumericId())) {
             ordersWithCommonQuote.addAll(productOrderDao.findOrdersWithCommonQuote(foundQuote.getAlphanumericId()));
         }
 
@@ -4082,6 +4081,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     public void setResearchProjectDao(ResearchProjectDao researchProjectDao) {
         this.researchProjectDao = researchProjectDao;
+    }
+
+    @Inject
+    public void setQuoteLink(QuoteLink quoteLink) {
+        this.quoteLink = quoteLink;
     }
 
     public void setOwner(UserTokenInput owner) {

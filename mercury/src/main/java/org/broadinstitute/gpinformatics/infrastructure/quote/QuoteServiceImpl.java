@@ -53,6 +53,8 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
     @Inject
     private QuoteConfig quoteConfig;
 
+    @Inject DevQuotesCache devQuotesCache;
+
     static final String WORK_ITEM_ID = "workItemId\t";
 
     private final static Log log = LogFactory.getLog(QuoteServiceImpl.class);
@@ -278,7 +280,13 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
 
     @Override
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
-        return getSingleQuoteById(alphaId, url(Endpoint.SINGLE_QUOTE));
+        return getQuoteByAlphaId(alphaId, false);
+    }
+
+    @Override
+    public Quote getQuoteByAlphaId(String alphaId, boolean forceDevQuoteRefresh)
+        throws QuoteServerException, QuoteNotFoundException {
+        return getSingleQuoteById(alphaId, url(Endpoint.SINGLE_QUOTE), forceDevQuoteRefresh);
     }
 
     @Override
@@ -297,10 +305,34 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
     * @throws QuoteServerException Any other error with the quote server.
     **/
     private Quote getSingleQuoteById(String id, String url) throws QuoteNotFoundException, QuoteServerException {
-        Quote quote;
+        return getSingleQuoteById(id, url, false);
+    }
+
+    /**
+     * private method to get a single quote. Can be overridden by mocks.
+     *
+     * @param id                   The quote identifier.
+     * @param url                  The url to use for the quote server.
+     * @param forceDevQuoteRefresh whether or not to force a refresh of the cached dev quotes, such as GP87U
+     *
+     * @return The quote found.
+     * @throws QuoteNotFoundException Error when quote is not found.
+     * @throws QuoteServerException   Any other error with the quote server.
+     **/
+    private Quote getSingleQuoteById(String id, String url, boolean forceDevQuoteRefresh) throws QuoteNotFoundException, QuoteServerException {
         if (StringUtils.isEmpty(id)) {
             return (null);
         }
+        Quote quote = null;
+
+        if (!forceDevQuoteRefresh){
+            quote = devQuotesCache.getQuote(id);
+        }
+
+        if (quote != null) {
+            return quote;
+        }
+
 
         final String ENCODING = "UTF-8";
 

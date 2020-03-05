@@ -189,6 +189,11 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
 
         @Override
         public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
+            return getQuoteByAlphaId(alphaId, false);
+        }
+
+        @Override
+        public Quote getQuoteByAlphaId(String alphaId, boolean forceDevQuoteRefresh) throws QuoteServerException, QuoteNotFoundException {
             throw new NotImplementedException();
         }
 
