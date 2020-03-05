@@ -306,11 +306,14 @@ public class SampleDataFetcher implements Serializable {
                 }
                 // Prefers the mercurySample name since a BSP sample can be put in a PDO using its tube barcode.
                 String sampleName = mercurySample == null ? productOrderSample.getName() : mercurySample.getSampleKey();
-                if (mercurySample != null &&
-                        mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                if (mercurySample == null) {
                     bspSourceSampleNames.add(sampleName);
                 } else {
-                    mercurySamplesWithMercurySource.add(mercurySample);
+                    if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                        bspSourceSampleNames.add(sampleName);
+                    } else {
+                        mercurySamplesWithMercurySource.add(mercurySample);
+                    }
                 }
                 // To improve performance, check for Mercury quants only if the product indicates that they're there.
                 if (productOrderSample != null && productOrderSample.getProductOrder() != null) {

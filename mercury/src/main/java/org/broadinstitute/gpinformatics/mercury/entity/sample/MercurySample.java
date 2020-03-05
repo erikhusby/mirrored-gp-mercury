@@ -59,7 +59,6 @@ import java.util.Set;
 @Table(schema = "mercury")
 public class MercurySample extends AbstractSample {
 
-    public static final String OTHER_METADATA_SOURCE = "OTHER";
     public static final String BSP_METADATA_SOURCE = "BSP";
     public static final String MERCURY_METADATA_SOURCE = "MERCURY";
     public static final String GSSR_METADATA_SOURCE = "GSSR";
@@ -137,9 +136,8 @@ public class MercurySample extends AbstractSample {
             }
         }
 
-        // Have to allow client to be null, for positive controls
         return getMetadataSource() == MetadataSource.CRSP_PORTAL ||
-                (getMetadataSource() == MetadataSource.MERCURY && (client == null || client.isClinical()));
+                (getMetadataSource() == MetadataSource.MERCURY && client != null && client.isClinical());
     }
 
     /** Determines from which system Mercury gets metadata, e.g. collaborator sample ID */
@@ -467,6 +465,9 @@ public class MercurySample extends AbstractSample {
         MercurySample.MetadataSource metadataSource = getMetadataSource();
         String metadataSourceString;
 
+        if (metadataSource == null) {
+            throw new RuntimeException("Somehow there was a null metadata source. This needs to be fixed.");
+        }
         switch (metadataSource) {
             case BSP:
                 metadataSourceString = MetadataSource.BSP.name();
@@ -476,7 +477,7 @@ public class MercurySample extends AbstractSample {
                 metadataSourceString = MetadataSource.MERCURY.name();
                 break;
             default:
-                throw new RuntimeException("Somehow there was a null metadata source. This needs to be fixed.");
+                throw new RuntimeException("Unknown metadata source " + metadataSource);
         }
         return metadataSourceString;
     }

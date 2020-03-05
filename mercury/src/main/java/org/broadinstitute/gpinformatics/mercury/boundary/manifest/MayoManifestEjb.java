@@ -192,14 +192,14 @@ public class MayoManifestEjb {
         this.tubeFormationDao = tubeFormationDao;
         this.quarantinedDao = quarantinedDao;
         this.jiraService = jiraService;
-        this.queueEjb = queueEjb;
-        this.dnaQuantEnqueueOverride = dnaQuantEnqueueOverride;
-
         this.productOrderEjb = productOrderEjb;
         this.attributeArchetypeDao = attributeArchetypeDao;
         this.productDao = productDao;
         this.bspUserList = bspUserList;
         this.researchProjectDao = researchProjectDao;
+        this.queueEjb = queueEjb;
+        this.dnaQuantEnqueueOverride = dnaQuantEnqueueOverride;
+
         // This config is from the yaml file.
         MayoManifestConfig mayoManifestConfig = (MayoManifestConfig) MercuryConfiguration.getInstance().
                 getConfig(MayoManifestConfig.class, deployment);

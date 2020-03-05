@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.sap.entity.DeliveryCondition;
 import org.jetbrains.annotations.NotNull;
 import org.meanbean.test.BeanTester;
 import org.meanbean.test.EqualsMethodTester;
@@ -128,6 +129,14 @@ public class LedgerEntryTest {
         LedgerEntry ledgerEntrySap2 = LedgerEntryTest.createOneLedgerEntry(sample, BigDecimal.ONE, date2,new Product(), null);
         ledgerEntrySap2.setBillingMessage("something else");
 
+        LedgerEntry ledgerEntrySap3 = LedgerEntryTest.createOneLedgerEntry(sample, BigDecimal.ONE, date2,new Product(), null);
+        ledgerEntrySap3.setBillingMessage("something else");
+        ledgerEntrySap3.setSapReplacement(DeliveryCondition.LATE_DELIVERY_DISCOUNT.getConditionName());
+
+        LedgerEntry ledgerEntrySap4 = LedgerEntryTest.createOneLedgerEntry(sample, BigDecimal.ONE, date2,new Product(), null);
+        ledgerEntrySap4.setBillingMessage("something else");
+        ledgerEntrySap4.setSapReplacement(DeliveryCondition.FULL_PLATE_AND_LATE_DISCOUNT.getConditionName());
+
         return new Object[][] {
                 // Different message, different date, should be equal.
                 {ledgerEntry1, ledgerEntry2, true },
@@ -143,7 +152,10 @@ public class LedgerEntryTest {
                 {ledgerEntry1, LedgerEntryTest.createOneLedgerEntry(sample, BigDecimal.valueOf(2), date1, new Product(), null), false },
                 {ledgerEntrySap1, LedgerEntryTest.createOneLedgerEntry(sample, priceItemName2, BigDecimal.valueOf(1), date1), false },
                 {ledgerEntrySap1, LedgerEntryTest.createOneLedgerEntry(sample, priceItemName1, BigDecimal.valueOf(2), date1), false },
-                {ledgerEntrySap1, LedgerEntryTest.createOneLedgerEntry(sample, BigDecimal.valueOf(2), date1, new Product(), null), true}
+                {ledgerEntrySap1, LedgerEntryTest.createOneLedgerEntry(sample, BigDecimal.valueOf(2), date1, new Product(), null), true},
+                {ledgerEntrySap1, ledgerEntrySap2, true},
+                {ledgerEntrySap1, ledgerEntrySap3, false},
+                {ledgerEntrySap3, ledgerEntrySap4, false}
         };
     }
 
@@ -159,7 +171,7 @@ public class LedgerEntryTest {
     @Test
     public void testBean() {
         new BeanTester().testBean(LedgerEntry.class);
-        new EqualsMethodTester().testEqualsMethod(LedgerEntry.class, "autoLedgerTimestamp", "billingMessage", "quantity", "workItem", "workCompleteDate", "sapDeliveryDocumentId", "sapOrderDetail", "sapReplacementPricing");
+        new EqualsMethodTester().testEqualsMethod(LedgerEntry.class, "autoLedgerTimestamp", "billingMessage", "quantity", "workItem", "workCompleteDate", "sapDeliveryDocumentId", "sapOrderDetail");
         new HashCodeMethodTester().testHashCodeMethod(LedgerEntry.class);
     }
 }

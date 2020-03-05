@@ -1271,6 +1271,7 @@ public abstract class LabVessel implements Serializable {
     }
 
     public void addSample(MercurySample mercurySample) {
+        mercurySample.getLabVessel().add(this);
         mercurySamples.add(mercurySample);
         if (mercurySamplesCount == null) {
             mercurySamplesCount = 0;

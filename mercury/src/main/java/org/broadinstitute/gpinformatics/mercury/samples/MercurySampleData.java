@@ -1,11 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.samples;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -64,6 +62,9 @@ public class MercurySampleData implements SampleData {
     public MercurySampleData(@Nonnull MercurySample mercurySample) {
         this(mercurySample.getSampleKey(), mercurySample.getMetadata(), mercurySample.getReceivedDate());
         this.mercurySample = mercurySample;
+        if (mercurySample.getLabVessel().isEmpty()) {
+            return;
+        }
         LabVessel labVessel = mercurySample.getLabVessel().iterator().next();
         this.storageLocation =
                   (labVessel.getStorageLocation() != null ? labVessel.getStorageLocation().buildLocationTrail() : null);
