@@ -2237,6 +2237,10 @@ public class ProductOrderFixupTest extends Arquillian {
                 productOrderEjb.updateOrderStatusNoRollback(orderToClose.getBusinessKey());
                 System.out.println(String.format("Attempted to move order %s to completed.  The status is now %s.",
                         orderToClose.getBusinessKey(), orderToClose.getOrderStatus().getDisplayName()));
+                assertThat(orderToClose.getOrderStatus(), is(equalTo(ProductOrder.OrderStatus.Completed)));
+                JiraIssue issue = jiraService.getIssue(orderToClose.getJiraTicketKey());
+                assertThat(issue.getStatus(), is(equalTo(ProductOrderEjb.JiraTransition.CLOSED.getStateName())));
+
                 if(orderToClose.hasSapQuote()) {
                     System.out.println("The current order is an SAP order");
                     productOrderEjb.conditionallyShortCloseOrder(orderToClose);
