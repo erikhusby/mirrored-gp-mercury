@@ -25,9 +25,9 @@ import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.ControlEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.ReworkReasonDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.TaskDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.WaitForReviewTaskDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
-import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.WaitForReviewTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.FiniteStateMachineEngine;
@@ -55,6 +55,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -78,9 +79,6 @@ public class ArraysDataReviewActionBean extends CoreActionBean {
     private ArraysQcDao arraysQcDao;
 
     @Inject
-    private ControlDao controlDao;
-
-    @Inject
     private SampleDataFetcher sampleDataFetcher;
 
     @Inject
@@ -101,6 +99,9 @@ public class ArraysDataReviewActionBean extends CoreActionBean {
     @Inject
     private ReworkReasonDao reworkReasonDao;
 
+    @Inject
+    private TaskDao taskDao;
+
     private List<MetricsDto> metricsDtos = new ArrayList<>();
 
     private List<String> selectedSamples = new ArrayList<>();
@@ -118,6 +119,7 @@ public class ArraysDataReviewActionBean extends CoreActionBean {
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
+        metricsDtos = new ArrayList<>();
         List<WaitForReviewTask> tasks = waitForReviewTaskDao.findAllByStatus(Status.RUNNING);
 
         Set<String> chipWells = tasks.stream().map(Task::getState)
@@ -145,9 +147,11 @@ public class ArraysDataReviewActionBean extends CoreActionBean {
                 .collect(Collectors.toList());
         Map<String, SampleData> mapSampleToData = sampleDataFetcher.fetchSampleData(controlSamples);
         for (Map.Entry<String, SampleData> entry: mapSampleToData.entrySet()) {
-            Control control = controlEjb.evaluateAsControl(entry.getValue());
+            SampleData sampleData = entry.getValue();
+            Control control = controlEjb.evaluateAsControl(sampleData);
             if (control != null) {
-                mapSampleToMetric.get(entry.getValue()).setPdoSampleName(control.getType().getDisplayName());
+                MetricsDto dto = mapSampleToMetric.get(entry.getKey());
+                dto.setPdoSampleName(control.getType().getDisplayName());
             } else {
                 String errMsg = "Found a sample with no PDO and is not a control " + entry.getKey();
                 log.error(errMsg);
@@ -184,10 +188,16 @@ public class ArraysDataReviewActionBean extends CoreActionBean {
     @HandlesEvent(DECIDE_ACTION)
     public Resolution decide() {
         Map<String, WaitForReviewTask> mapSampleToTask = new HashMap<>();
+        List<Task> controlTasks = new ArrayList<>();
         List<WaitForReviewTask> tasks = waitForReviewTaskDao.findAllByStatus(Status.RUNNING);
 
         List<MetricsDto> selectedDtos = metricsDtos.stream()
+                .filter(Objects::nonNull)
                 .filter(metricsDto -> selectedSamples.contains(metricsDto.getPdoSampleName()))
+                .collect(Collectors.toList());
+
+        List<MetricsDto> selectedControls = metricsDtos.stream()
+                .filter(metric -> metric.getPdoSampleName() == null)
                 .collect(Collectors.toList());
 
         for (WaitForReviewTask task: tasks) {
@@ -199,66 +209,102 @@ public class ArraysDataReviewActionBean extends CoreActionBean {
             }
         }
 
+        for (WaitForReviewTask task: tasks) {
+            LabVessel labVessel = task.getState().getLabVessels().iterator().next();
+            for (MetricsDto metricsDto: selectedControls) {
+                if (labVessel.getLabel().equals(metricsDto.getChipWellBarcode())) {
+                    controlTasks.add(task);
+                }
+            }
+        }
+
         if (decision == ArraysReviewDecision.READY_TO_DELIVER) {
             for (Map.Entry<String, WaitForReviewTask> entry: mapSampleToTask.entrySet()) {
-                WaitForReviewTask task = entry.getValue();
-                String sampleKey = entry.getKey();
-                FiniteStateMachine finiteStateMachine = task.getState().getFiniteStateMachine();
-                MessageCollection stateMessageCollection = new MessageCollection();
+                incrementMachine(entry);
+            }
+        } else {
+            List<ReworkEjb.BucketCandidate> bucketCandidates = new ArrayList<>();
+
+            Map<String, MercurySample> mapNameToSample =
+                    mercurySampleDao.findMapIdToMercurySample(selectedSamples);
+
+            Set<String> pdoNames = selectedDtos.stream().map(MetricsDto::getProductOrder).collect(Collectors.toSet());
+            List<ProductOrder> productOrders = productOrderDao.findListByBusinessKeys(pdoNames);
+            Map<String, ProductOrder> mapNameToPdo =
+                    productOrders.stream().collect(Collectors.toMap(ProductOrder::getBusinessKey, Function.identity()));
+
+            for (MetricsDto dto : selectedDtos) {
+                String sample = dto.getPdoSampleName();
+                MercurySample mercurySample = mapNameToSample.get(sample);
+                ProductOrder productOrder = mapNameToPdo.get(dto.getProductOrder());
+                LabVessel library = mercurySample.getLabVessel().iterator().next();
+                String lastEventName = library.getLastEventName();
+                String tubeBarcode = library.getLabel();
+                ReworkEjb.BucketCandidate bucketCandidate = new ReworkEjb.BucketCandidate(
+                        sample, tubeBarcode, productOrder, library, lastEventName
+                );
+                bucketCandidates.add(bucketCandidate);
+            }
+
+            try {
+                Collection<String> validationMessages = reworkEjb.addAndValidateCandidates(bucketCandidates,
+                        reworkReason, commentText, getUserBean().getLoginUserName(), INFINIUM_BUCKET);
+
+                if (CollectionUtils.isNotEmpty(validationMessages)) {
+                    for (String validationMessage : validationMessages) {
+                        messageCollection.addError(validationMessage);
+                    }
+                } else {
+                    List<Task> tasksToUpdate = new ArrayList<>();
+                    for (WaitForReviewTask task : mapSampleToTask.values()) {
+                        task.setStatus(Status.COMPLETE);
+                        task.setEndTime(new Date());
+                        FiniteStateMachine finiteStateMachine = task.getState().getFiniteStateMachine();
+                        finiteStateMachine.setStatus(Status.CANCELLED);
+                        tasksToUpdate.add(task);
+                    }
+                    taskDao.persistAll(tasksToUpdate);
+                    taskDao.flush();
+                    addMessage("{0} vessel(s) have been added to the {1} bucket.", bucketCandidates.size(),
+                            INFINIUM_BUCKET);
+                }
+
+            } catch (ValidationException e) {
+                log.error("Failed to add to bucket", e);
+                messageCollection.addError(e.getMessage());
+            }
+        }
+
+        if (!messageCollection.hasErrors()) {
+            // Complete Controls
+            for (Task task: controlTasks) {
                 task.setStatus(Status.COMPLETE);
                 task.setEndTime(new Date());
-                finiteStateMachineEngine.incrementStateMachine(finiteStateMachine, stateMessageCollection);
-                if (!stateMessageCollection.hasErrors()) {
-                    messageCollection.addInfo("Moved %s sample to the review state.", sampleKey);
-                } else {
-                    messageCollection.addErrors(stateMessageCollection.getErrors());
-                }
+                task.getState().getFiniteStateMachine().setStatus(Status.COMPLETE);
             }
 
-            addMessages(messageCollection);
-            return new ForwardResolution(REVIEW_PAGE);
-        }
-        List<ReworkEjb.BucketCandidate> bucketCandidates = new ArrayList<>();
-
-        Map<String, MercurySample> mapNameToSample =
-                mercurySampleDao.findMapIdToMercurySample(selectedSamples);
-
-        Set<String> pdoNames = selectedDtos.stream().map(MetricsDto::getProductOrder).collect(Collectors.toSet());
-        List<ProductOrder> productOrders = productOrderDao.findListByBusinessKeys(pdoNames);
-        Map<String, ProductOrder> mapNameToPdo =
-                productOrders.stream().collect(Collectors.toMap(ProductOrder::getBusinessKey, Function.identity()));
-
-        for (MetricsDto dto: selectedDtos) {
-            String sample = dto.getPdoSampleName();
-            MercurySample mercurySample = mapNameToSample.get(sample);
-            ProductOrder productOrder = mapNameToPdo.get(dto.getProductOrder());
-            LabVessel library = mercurySample.getLabVessel().iterator().next();
-            String lastEventName = library.getLastEventName();
-            String tubeBarcode = library.getLabel();
-            ReworkEjb.BucketCandidate bucketCandidate = new ReworkEjb.BucketCandidate(
-                    sample, tubeBarcode, productOrder, library, lastEventName
-            );
-            bucketCandidates.add(bucketCandidate);
-        }
-
-        try {
-            Collection<String> validationMessages = reworkEjb.addAndValidateCandidates(bucketCandidates,
-                    reworkReason, commentText, getUserBean().getLoginUserName(), "");
-
-            if (CollectionUtils.isNotEmpty(validationMessages)) {
-                for (String validationMessage : validationMessages) {
-                    addGlobalValidationError(validationMessage);
-                }
-            } else {
-                // TODO Cancel the machine or restart?
-                addMessage("{0} vessel(s) have been added to the {1} bucket.", bucketCandidates.size(), INFINIUM_BUCKET);
+            if (!controlTasks.isEmpty()) {
+                taskDao.persistAll(controlTasks);
+                taskDao.flush();
             }
-
-        } catch (ValidationException e) {
-            log.error("Failed to add to bucket", e);
-            addGlobalValidationError(e.getMessage());
         }
-        return new ForwardResolution(REVIEW_PAGE);
+
+        return view();
+    }
+
+    private void incrementMachine(Map.Entry<String, WaitForReviewTask> entry) {
+        WaitForReviewTask task = entry.getValue();
+        String sampleKey = entry.getKey();
+        FiniteStateMachine finiteStateMachine = task.getState().getFiniteStateMachine();
+        MessageCollection stateMessageCollection = new MessageCollection();
+        task.setStatus(Status.COMPLETE);
+        task.setEndTime(new Date());
+        finiteStateMachineEngine.incrementStateMachine(finiteStateMachine, stateMessageCollection);
+        if (!stateMessageCollection.hasErrors()) {
+            messageCollection.addInfo("Moved %s sample to the review state.", sampleKey);
+        } else {
+            messageCollection.addErrors(stateMessageCollection.getErrors());
+        }
     }
 
     private String toChipWell(String chipWellBarcode) {
@@ -301,19 +347,21 @@ public class ArraysDataReviewActionBean extends CoreActionBean {
 
         SampleInstanceV2 sampleInstance = plateWell.getSampleInstancesV2().iterator().next();
         dto.setNearestSampleName(sampleInstance.getNearestMercurySampleName());
-        dto.setProductOrderSample(sampleInstance.getProductOrderSampleForSingleBucket());
-        dto.setProductOrder(sampleInstance.getProductOrderSampleForSingleBucket().getProductOrder().getBusinessKey());
+        ProductOrderSample productOrderSampleForSingleBucket = sampleInstance.getProductOrderSampleForSingleBucket();
+        if (productOrderSampleForSingleBucket != null) {
+            dto.setProductOrderSample(productOrderSampleForSingleBucket);
+            dto.setProductOrder(productOrderSampleForSingleBucket.getProductOrder().getBusinessKey());
+        }
         dto.setSampleInstance(sampleInstance);
         if (dto.getProductOrderSample() != null) {
             dto.setPdoSampleName(dto.getProductOrderSample().getSampleKey());
+            LabVessel labVessel = dto.getProductOrderSample().getMercurySample().getLabVessel().iterator().next();
+            dto.setTryCount(calculateTryCount(labVessel));
         }
-        LabVessel labVessel = dto.getProductOrderSample().getMercurySample().getLabVessel().iterator().next();
-        dto.setTryCount(calculateTryCount(labVessel));
         metricsDtos.add(dto);
     }
 
     public int calculateTryCount(LabVessel labVessel) {
-        System.out.println(labVessel.getLabel());
         TransferTraverserCriteria.VesselForEventTypeCriteria eventTypeCriteria
                 = new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(LabEventType.INFINIUM_HYBRIDIZATION), true);
         labVessel.evaluateCriteria(eventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);

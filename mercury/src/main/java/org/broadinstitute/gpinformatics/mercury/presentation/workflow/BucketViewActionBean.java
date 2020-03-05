@@ -328,18 +328,20 @@ public class BucketViewActionBean extends CoreActionBean {
             addValidationError("srsBatchName", "You must provide a batch name to create an SRS Batch.");
             entrySearch();
         }
-        if (queueType == null) {
+        else if (queueType == null) {
             addValidationError("queuename", "You must choose an SRS Queue.");
             entrySearch();
-        }
-        LabBatch batch = labBatchDao.findByName(srsBatchName.trim());
-        if( batch != null ) {
-            addValidationError("batchName", "A batch already exists named {1}.", srsBatchName);
+        } else {
+            LabBatch batch = labBatchDao.findByName(srsBatchName.trim());
+            if (batch != null) {
+                addValidationError("batchName", "A batch already exists named {1}.", srsBatchName);
+                entrySearch();
+            }
         }
     }
 
     @HandlesEvent(CREATE_SRS_BATCH_ACTION)
-    public void createSrsBatch() {
+    public Resolution createSrsBatch() {
         MessageCollection messageCollection = new MessageCollection();
         try {
             separateEntriesByType();
@@ -364,7 +366,7 @@ public class BucketViewActionBean extends CoreActionBean {
             log.error(errMsg, e);
             addGlobalValidationError(errMsg);
         }
-        entrySearch();
+        return entrySearch();
     }
 
     @HandlesEvent(SAVE_SEARCH_DATA)
