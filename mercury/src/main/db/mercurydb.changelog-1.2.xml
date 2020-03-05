@@ -2933,4 +2933,32 @@
         </sql>
     </changeSet>
 
+    <changeSet id="GPLIM-6372-3" author="thompson">
+        <addPrimaryKey tableName="QUEUE_AUD" schemaName="mercury" columnNames="rev, queue_id"
+                       constraintName="PK_QUEUE_AUD"/>
+    </changeSet>
+    <changeSet id="GPLIM-6372-4" author="thompson">
+        <addPrimaryKey tableName="QUEUE_ENTITY_AUD" schemaName="mercury" columnNames="rev, queue_entity_id"
+                       constraintName="PK_QUEUE_ENTITY_AUD"/>
+    </changeSet>
+    <changeSet id="GPLIM-6372-5" author="thompson">
+        <addPrimaryKey tableName="QUEUE_GROUPING_AUD" schemaName="mercury" columnNames="rev, queue_grouping_id"
+                       constraintName="PK_QUEUE_GROUPING_AUD"/>
+    </changeSet>
+    <changeSet id="GPLIM-6372-6" author="thompson">
+        <createIndex schemaName="mercury" tableName="QUEUE_AUD" indexName="IDX_QA_QUEUE_ID" >
+            <column name="QUEUE_ID"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-6372-7" author="thompson">
+        <createIndex schemaName="mercury" tableName="QUEUE_ENTITY_AUD" indexName="IDX_QEA_QUEUE_ENTITY_ID" >
+            <column name="QUEUE_ENTITY_ID"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-6372-8" author="thompson">
+        <createIndex schemaName="mercury" tableName="QUEUE_GROUPING_AUD" indexName="IDX_QGA_QUEUE_GROUPING_ID" >
+            <column name="QUEUE_GROUPING_ID"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

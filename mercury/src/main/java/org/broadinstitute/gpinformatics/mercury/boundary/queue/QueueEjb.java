@@ -340,7 +340,7 @@ public class QueueEjb {
      * @param queueType                 Queue type to remove them from
      * @param messageCollection         Messages back to the user.
      */
-    void excludeItems(Collection<? extends LabVessel> labVesselsToExclude, QueueType queueType, MessageCollection messageCollection) {
+    public void excludeItems(Collection<? extends LabVessel> labVesselsToExclude, QueueType queueType, MessageCollection messageCollection) {
 
         List<Long> labVesselIds = new ArrayList<>();
         for (LabVessel labVessel : labVesselsToExclude) {
