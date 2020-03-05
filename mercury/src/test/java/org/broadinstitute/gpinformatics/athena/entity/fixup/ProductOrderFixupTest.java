@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
@@ -2153,12 +2154,32 @@ public class ProductOrderFixupTest extends Arquillian {
         commitTransaction();
     }
 
-    @Test(enabled = true)
+    /**
+     *
+     * Driven by the input file mercury/src/test/resources/testdata/forceCloseOrders.txt, this fixup test will
+     * take a given set of PDOs and an optional set of samples.  The PDOs will be moved to closed and if the samples
+     * are given, they will be Abandoned.  If samples are given, it is expected that a reason for abandonment is give
+     * as well.  The structure of the file is as follows:
+     *
+     * Line 1: Fixup reason
+     * Lines 2-x: [PDO jira key], [space separated set of samples (Optional)], [Rework Reason (not optional if samples are provided)]
+     *
+     * Example:
+     * SUPPORT-6197, SUPPORT-6247, SUPPORT-6243, SUPPORT-6148, GPLIM-6881 closing PDOs that are blocked from closing due to SAP bug
+     * PDO-20279, SM-JEOC1 SM-JDC7D SM-JEOC6 SM-JEOCQ, failed 2 attempts in exome LC
+     * PDO-19681
+     * PDO-19882
+     * PDO-19881, SM-JDIB8, deliverable not met - unable to topoff or rework
+     * PDO-20319, SM-J39KK, deliverable not met high %duplication - unable to rework
+     *
+     * @throws Exception
+     */
+    @Test(enabled = false)
     public void gplim6881MoveSamplesToCompleted() throws Exception {
 
         userBean.loginOSUser();
         
-        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("finalizeSampleSwaps.txt"));
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("forceCloseOrders.txt"));
         final String commentary = fixupLines.get(0);
 
         beginTransaction();
@@ -2171,6 +2192,7 @@ public class ProductOrderFixupTest extends Arquillian {
             if(optionalProductOrder.isPresent()) {
 
                 ProductOrder orderToClose = optionalProductOrder.get();
+                System.out.println(String.format("Found order %s", orderToClose.getBusinessKey()));
 
                 String[] sampleNames = null;
                 String abandonComment = null;
@@ -2197,17 +2219,28 @@ public class ProductOrderFixupTest extends Arquillian {
                     productOrderEjb.transitionSamples(orderToClose,
                             EnumSet.of(ProductOrderSample.DeliveryStatus.ABANDONED,
                                     ProductOrderSample.DeliveryStatus.NOT_STARTED),
-
                             ProductOrderSample.DeliveryStatus.ABANDONED, samplesToAbandon);
+                    productOrderDao.flush();
                     JiraIssue issue = jiraService.getIssue(orderToClose.getJiraTicketKey());
                     issue.addComment(MessageFormat.format("{0} transitioned samples to status {1}: {2}\n\n{3}",
                             username, ProductOrderSample.DeliveryStatus.ABANDONED.getDisplayName(),
                             StringUtils.join(ProductOrderSample.getSampleNames(samplesToAbandon), ","),
                             StringUtils.stripToEmpty(abandonComment)));
+                    samplesToAbandon.forEach(productOrderSample -> {
+                        System.out.println(String.format("The status for sample %s in order %s is currently %s",
+                                productOrderSample.getSampleKey(), orderToClose.getBusinessKey(),
+                                productOrderSample.getDeliveryStatus().getDisplayName()));
+                    });
                 }
+                System.out.println(String.format("The current order %s has a status of %s.",
+                        orderToClose.getBusinessKey(), orderToClose.getOrderStatus().getDisplayName()));
                 productOrderEjb.updateOrderStatusNoRollback(orderToClose.getBusinessKey());
+                System.out.println(String.format("Attempted to move order %s to completed.  The status is now %s.",
+                        orderToClose.getBusinessKey(), orderToClose.getOrderStatus().getDisplayName()));
                 if(orderToClose.hasSapQuote()) {
+                    System.out.println("The current order is an SAP order");
                     productOrderEjb.conditionallyShortCloseOrder(orderToClose);
+                    System.out.println("Tried to close the order in SAP");
                 }
             }
         }
