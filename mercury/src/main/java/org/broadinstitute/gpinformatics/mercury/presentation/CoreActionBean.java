@@ -22,6 +22,7 @@ import net.sourceforge.stripes.action.SimpleMessage;
 import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.controller.FlashScope;
 import net.sourceforge.stripes.controller.LifecycleStage;
+import net.sourceforge.stripes.controller.StripesConstants;
 import net.sourceforge.stripes.exception.SourcePageNotFoundException;
 import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.ValidationError;
@@ -56,10 +57,13 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.servlet.RequestDispatcher;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -409,6 +413,23 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
                 return null;
             }
         }));
+    }
+
+    /**
+     * So unit testing can access stripes messages
+     * (See net.sourceforge.stripes.tag.MessagesTag.java)
+     */
+    public List<Message> getStripesMessages() {
+        HttpServletRequest request = (HttpServletRequest) getContext().getRequest();
+        List<Message> messages = (List<Message>) request.getAttribute(StripesConstants.REQ_ATTR_MESSAGES);
+
+        if (messages == null) {
+            HttpSession session = request.getSession(false);
+            if (session != null) {
+                messages = (List<Message>) session.getAttribute(StripesConstants.REQ_ATTR_MESSAGES);
+            }
+        }
+        return messages == null ? Collections.emptyList() : messages;
     }
 
     /**

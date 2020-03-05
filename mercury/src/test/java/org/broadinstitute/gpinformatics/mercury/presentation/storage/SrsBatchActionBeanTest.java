@@ -1,8 +1,9 @@
-package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
+package org.broadinstitute.gpinformatics.mercury.presentation.storage;
 
-import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.mock.MockRoundtrip;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.presentation.StripesMockTestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemOfRecord;
@@ -14,8 +15,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
-import org.broadinstitute.gpinformatics.mercury.presentation.TestCoreActionBeanContext;
-import org.broadinstitute.gpinformatics.mercury.presentation.storage.SRSBatchActionBean;
 import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
 import org.junit.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -31,10 +30,8 @@ import java.util.Map;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@Test(groups = TestGroups.DATABASE_FREE)
+@Test(groups = TestGroups.DATABASE_FREE, singleThreaded = true)
 public class SrsBatchActionBeanTest extends BaseEventTest {
-
-    private SRSBatchActionBean actionBean;
 
     private LabVesselDao labVesselDaoMock;
     private LabBatchDao labBatchDaoMock;
@@ -52,13 +49,9 @@ public class SrsBatchActionBeanTest extends BaseEventTest {
         expectedRouting = SystemOfRecord.System.MERCURY;
         super.setUp();
 
-        actionBean = new SRSBatchActionBean();
-        actionBean.setContext(new TestCoreActionBeanContext());
         labVesselDaoMock = mock(LabVesselDao.class);
         labBatchDaoMock = mock(LabBatchDao.class);
         mercurySampleDaoMock = mock(MercurySampleDao.class);
-        actionBean.setDbFreeTestMocks(labVesselDaoMock,
-                labBatchDaoMock, mercurySampleDaoMock);
 
         try {
             batchIdField = LabBatch.class.getDeclaredField("labBatchId");
@@ -83,7 +76,10 @@ public class SrsBatchActionBeanTest extends BaseEventTest {
 
     }
 
-    public void pickLabBatchInit() throws Exception {
+    /**
+     * Default handler
+     */
+    public void testSrsBatchInit() throws Exception {
 
         // Put a couple dummy batches in place
         List<LabBatch> initialBatches = new ArrayList<>();
@@ -93,8 +89,12 @@ public class SrsBatchActionBeanTest extends BaseEventTest {
         batchIdField.set(emptyBatch02, new Long(2L));
         initialBatches.add(emptyBatch01);
         initialBatches.add(emptyBatch02);
+
+        MockRoundtrip trip = StripesMockTestUtils.createMockRoundtrip(SRSBatchActionBean.class, labVesselDaoMock, labBatchDaoMock, mercurySampleDaoMock);
         when(labBatchDaoMock.findByType(LabBatch.LabBatchType.SRS)).thenReturn(initialBatches);
-        Resolution outcome = actionBean.view();
+        trip.execute();
+        SRSBatchActionBean actionBean = trip.getActionBean(SRSBatchActionBean.class);
+        trip.getContext().getFilters().get(0).destroy();
 
         Assert.assertTrue("Action bean stage CHOOSING expected", SRSBatchActionBean.Stage.CHOOSING.equals(actionBean.getStage()));
         Assert.assertTrue("Action bean batchName should be empty", actionBean.getBatchName() == null);
@@ -102,7 +102,10 @@ public class SrsBatchActionBeanTest extends BaseEventTest {
 
     }
 
-    public void pickLabBatchCreate() throws Exception {
+    /**
+     * Can't use MockRoundtrip logic, multiple instances fail in same thread
+     */
+    public void testBatchCreateNoName() throws Exception {
 
         // Put a couple dummy batches in place
         List<LabBatch> initialBatches = new ArrayList<>();
@@ -114,30 +117,36 @@ public class SrsBatchActionBeanTest extends BaseEventTest {
         initialBatches.add(emptyBatch02);
         when(labBatchDaoMock.findByType(LabBatch.LabBatchType.SRS)).thenReturn(initialBatches);
 
-        Resolution outcome = actionBean.saveNew();
+        MockRoundtrip trip = StripesMockTestUtils.createMockRoundtrip(SRSBatchActionBean.class, labVesselDaoMock, labBatchDaoMock, mercurySampleDaoMock);
+        trip.execute(SRSBatchActionBean.SAVE_ACTION);
+        SRSBatchActionBean actionBean = trip.getActionBean(SRSBatchActionBean.class);
         Assert.assertTrue("Expected field error on action bean saveNew() with null batchName", actionBean.getValidationErrors().hasFieldErrors());
         Assert.assertTrue("Action bean stage CHOOSING expected", SRSBatchActionBean.Stage.CHOOSING.equals(actionBean.getStage()));
+        trip.getContext().getFilters().get(0).destroy();
 
-        actionBean.getValidationErrors().clear();
-        actionBean.setBatchName("Empty_01");
+        trip = StripesMockTestUtils.createMockRoundtrip(SRSBatchActionBean.class, labVesselDaoMock, labBatchDaoMock, mercurySampleDaoMock);
         when(labBatchDaoMock.findByName("Empty_01")).thenReturn(emptyBatch01);
-        outcome = actionBean.saveNew();
+        trip.setParameter("batchName", "Empty_01");
+        trip.execute(SRSBatchActionBean.SAVE_ACTION);
+        actionBean = trip.getActionBean(SRSBatchActionBean.class);
         Assert.assertTrue("Expected field error on action bean saveNew() with duplicate batchName", actionBean.getValidationErrors().hasFieldErrors());
         Assert.assertTrue("Action bean stage CHOOSING expected", SRSBatchActionBean.Stage.CHOOSING.equals(actionBean.getStage()));
+        trip.getContext().getFilters().get(0).destroy();
 
-        actionBean.getValidationErrors().clear();
-        actionBean.setBatchName("Empty_03");
+        trip = StripesMockTestUtils.createMockRoundtrip(SRSBatchActionBean.class, labVesselDaoMock, labBatchDaoMock, mercurySampleDaoMock);
         when(labBatchDaoMock.findByName("Empty_03")).thenReturn(null);
-        outcome = actionBean.saveNew();
-        initialBatches.add(actionBean.getLabBatch());
-        Assert.assertFalse("No field errors expected on action bean saveNew() with valid batchName", actionBean.getValidationErrors().hasFieldErrors());
+        trip.setParameter("batchName", "Empty_03");
+        trip.execute(SRSBatchActionBean.SAVE_ACTION);
+        actionBean = trip.getActionBean(SRSBatchActionBean.class);
+        Assert.assertFalse("No field errors expected on action bean saveNew() with valid batchName", trip.getValidationErrors().hasFieldErrors());
         Assert.assertTrue("Action bean stage EDITING expected", SRSBatchActionBean.Stage.EDITING.equals(actionBean.getStage()));
         Assert.assertEquals("Action bean new batch name should be Empty_03", "Empty_03", actionBean.getLabBatch().getBatchName());
         Assert.assertTrue("Action bean batch vessel list should be empty", actionBean.getLabBatch().getLabBatchStartingVessels().isEmpty());
         Assert.assertEquals("Expected 3 batches in action bean", 2, actionBean.getBatchSelectionList().size());
+        Assert.assertEquals("Expected 3 batches in action bean", 2, actionBean.getBatchSelectionList().size());
     }
 
-    public void toggleBatchStatus() throws Exception {
+    public void testToggleSrsBatchStatus() throws Exception {
 
         // Put a couple dummy batches in place
         List<LabBatch> initialBatches = new ArrayList<>();
@@ -152,32 +161,40 @@ public class SrsBatchActionBeanTest extends BaseEventTest {
         initialBatches.add(emptyBatch03);
         when(labBatchDaoMock.findByType(LabBatch.LabBatchType.SRS)).thenReturn(initialBatches);
 
-        actionBean.setBatchId(null);
-        Resolution outcome = actionBean.toggleBatchStatus();
+        MockRoundtrip trip = StripesMockTestUtils.createMockRoundtrip(SRSBatchActionBean.class, labVesselDaoMock, labBatchDaoMock, mercurySampleDaoMock);
+        trip.setParameter("batchId", null);
+        trip.execute(SRSBatchActionBean.TOGGLE_STATUS_ACTION);
+        SRSBatchActionBean actionBean = trip.getActionBean(SRSBatchActionBean.class);
         Assert.assertTrue("Expected error on action bean toggleBatchStatus() with null batch ID", actionBean.getValidationErrors().size() == 1);
         Assert.assertTrue("Action bean stage CHOOSING expected", SRSBatchActionBean.Stage.CHOOSING.equals(actionBean.getStage()));
+        trip.getContext().getFilters().get(0).destroy();
 
-        actionBean.getValidationErrors().clear();
-        actionBean.setBatchId(Long.valueOf(3));
         when(labBatchDaoMock.findById(LabBatch.class, Long.valueOf(3))).thenReturn(emptyBatch03);
-        outcome = actionBean.toggleBatchStatus();
+        trip = StripesMockTestUtils.createMockRoundtrip(SRSBatchActionBean.class, labVesselDaoMock, labBatchDaoMock, mercurySampleDaoMock);
+        trip.setParameter("batchId", "3");
+        trip.execute(SRSBatchActionBean.TOGGLE_STATUS_ACTION);
+        actionBean = trip.getActionBean(SRSBatchActionBean.class);
 
-        Assert.assertTrue("Expected no errors on action bean toggleBatchStatus()", actionBean.getValidationErrors().isEmpty());
-        Assert.assertTrue("Expected success message on action bean toggleBatchStatus()", actionBean.getFormattedMessages().size() == 1);
+        Assert.assertTrue("Expected no errors on action bean toggleBatchStatus()", trip.getValidationErrors().isEmpty());
+        Assert.assertTrue("Expected success message on action bean toggleBatchStatus()", actionBean.getStripesMessages().size() == 1);
         Assert.assertTrue("Action bean stage CHOOSING expected", SRSBatchActionBean.Stage.CHOOSING.equals(actionBean.getStage()));
         Assert.assertFalse("Expected inactive batch", actionBean.getLabBatch().getActive());
+        trip.getContext().getFilters().get(0).destroy();
 
-        actionBean.getContext().getMessages().clear();
-        outcome = actionBean.toggleBatchStatus();
+        trip = StripesMockTestUtils.createMockRoundtrip(SRSBatchActionBean.class, labVesselDaoMock, labBatchDaoMock, mercurySampleDaoMock);
+        trip.setParameter("batchId", "3");
+        trip.execute(SRSBatchActionBean.TOGGLE_STATUS_ACTION);
+        actionBean = trip.getActionBean(SRSBatchActionBean.class);
 
         Assert.assertTrue("Expected no errors on action bean toggleBatchStatus()", actionBean.getValidationErrors().isEmpty());
-        Assert.assertTrue("Expected success message on action bean toggleBatchStatus()", actionBean.getFormattedMessages().size() == 1);
+        Assert.assertTrue("Expected success message on action bean toggleBatchStatus()", actionBean.getStripesMessages().size() == 1);
         Assert.assertTrue("Action bean stage CHOOSING expected", SRSBatchActionBean.Stage.CHOOSING.equals(actionBean.getStage()));
         Assert.assertTrue("Expected active batch", actionBean.getLabBatch().getActive());
+        trip.getContext().getFilters().get(0).destroy();
 
     }
 
-    public void batchEdit() throws Exception {
+    public void testSrsbatchEdit() throws Exception {
 
         Long batchId2 = new Long(2);
         Long batchId3 = new Long(3);
@@ -195,14 +212,19 @@ public class SrsBatchActionBeanTest extends BaseEventTest {
         initialBatches.add(emptyBatch03);
         when(labBatchDaoMock.findByType(LabBatch.LabBatchType.SRS)).thenReturn(initialBatches);
 
-        actionBean.setBatchId(null);
-        actionBean.validateAdd();
+        MockRoundtrip trip = StripesMockTestUtils.createMockRoundtrip(SRSBatchActionBean.class, labVesselDaoMock, labBatchDaoMock, mercurySampleDaoMock);
+        trip.execute(SRSBatchActionBean.ADD_SAMPLES_ACTION);
+        SRSBatchActionBean actionBean = trip.getActionBean(SRSBatchActionBean.class);
         Assert.assertTrue("Action bean stage CHOOSING expected", SRSBatchActionBean.Stage.CHOOSING.equals(actionBean.getStage()));
+        trip.getContext().getFilters().get(0).destroy();
 
-        actionBean.setBatchId(batchId2);
-        actionBean.validateAdd();
+        trip = StripesMockTestUtils.createMockRoundtrip(SRSBatchActionBean.class, labVesselDaoMock, labBatchDaoMock, mercurySampleDaoMock);
+        trip.setParameter("batchId", batchId2.toString());
+        trip.execute(SRSBatchActionBean.ADD_SAMPLES_ACTION);
+        actionBean = trip.getActionBean(SRSBatchActionBean.class);
+
         Assert.assertFalse("Expected errors on action bean validation when no vessels to add", actionBean.getValidationErrors().isEmpty());
-        actionBean.getValidationErrors().clear();
+        trip.getContext().getFilters().get(0).destroy();
 
         int vesselCount = 0;
         StringBuilder barcodes = new StringBuilder();
@@ -224,37 +246,47 @@ public class SrsBatchActionBeanTest extends BaseEventTest {
         }
 
         when(labBatchDaoMock.findById(LabBatch.class, batchId2)).thenReturn(emptyBatch02);
-        actionBean.setInputValues(barcodes.toString());
-        actionBean.validateAdd();
-        Resolution outcome = actionBean.addVessels();
+        trip = StripesMockTestUtils.createMockRoundtrip(SRSBatchActionBean.class, labVesselDaoMock, labBatchDaoMock, mercurySampleDaoMock);
+        trip.setParameter("inputValues", barcodes.toString());
+        trip.setParameter("batchId", batchId2.toString());
+        trip.execute(SRSBatchActionBean.ADD_BARCODES_ACTION);
+        actionBean = trip.getActionBean(SRSBatchActionBean.class);
+
         Assert.assertTrue("Expected no errors on action bean add vessels", actionBean.getValidationErrors().isEmpty());
         Assert.assertEquals("Expected " + vesselCount + " batch vessels", actionBean.getLabBatch().getLabBatchStartingVessels().size(), vesselCount);
+        trip.getContext().getFilters().get(0).destroy();
 
         // Test adding a sample which will produce a duplicate vessel
-        actionBean.validateAdd();
-        actionBean.setInputValues(dupSample);
-        outcome = actionBean.addSamples();
+        trip = StripesMockTestUtils.createMockRoundtrip(SRSBatchActionBean.class, labVesselDaoMock, labBatchDaoMock, mercurySampleDaoMock);
+        trip.setParameter("inputValues", dupSample);
+        trip.setParameter("batchId", batchId2.toString());
+        trip.execute(SRSBatchActionBean.ADD_SAMPLES_ACTION);
+        actionBean = trip.getActionBean(SRSBatchActionBean.class);
         Assert.assertFalse("Expected errors on action bean add duplicate vessel", actionBean.getValidationErrors().isEmpty());
         Assert.assertEquals("Expected " + vesselCount + " batch vessels", actionBean.getLabBatch().getLabBatchStartingVessels().size(), vesselCount);
-        actionBean.getValidationErrors().clear();
+        trip.getContext().getFilters().get(0).destroy();
 
         // Different batch
         when(labBatchDaoMock.findById(LabBatch.class, batchId3)).thenReturn(emptyBatch03);
-        actionBean.setBatchId(batchId3);
-        actionBean.setInputValues(samples.toString());
-        actionBean.validateAdd();
-        outcome = actionBean.addSamples();
+        trip = StripesMockTestUtils.createMockRoundtrip(SRSBatchActionBean.class, labVesselDaoMock, labBatchDaoMock, mercurySampleDaoMock);
+        trip.setParameter("inputValues", samples.toString());
+        trip.setParameter("batchId", batchId3.toString());
+        trip.execute(SRSBatchActionBean.ADD_SAMPLES_ACTION);
+        actionBean = trip.getActionBean(SRSBatchActionBean.class);
         Assert.assertTrue("Expected no errors on action bean add vessels", actionBean.getValidationErrors().isEmpty());
         Assert.assertEquals("Expected " + vesselCount + " batch vessels", actionBean.getLabBatch().getLabBatchStartingVessels().size(), vesselCount);
+        trip.getContext().getFilters().get(0).destroy();
 
         // Test adding a vessel which will produce a duplicate sample
-        actionBean.validateAdd();
-        actionBean.setInputValues(dupBarcode);
-        outcome = actionBean.addVessels();
+        trip = StripesMockTestUtils.createMockRoundtrip(SRSBatchActionBean.class, labVesselDaoMock, labBatchDaoMock, mercurySampleDaoMock);
+        trip.setParameter("inputValues", dupBarcode);
+        trip.setParameter("batchId", batchId3.toString());
+        trip.execute(SRSBatchActionBean.ADD_BARCODES_ACTION);
+        actionBean = trip.getActionBean(SRSBatchActionBean.class);
+
         Assert.assertFalse("Expected errors on action bean add duplicate vessel", actionBean.getValidationErrors().isEmpty());
         Assert.assertEquals("Expected " + vesselCount + " batch vessels", actionBean.getLabBatch().getLabBatchStartingVessels().size(), vesselCount);
-        actionBean.getValidationErrors().clear();
+        trip.getContext().getFilters().get(0).destroy();
 
     }
-
 }

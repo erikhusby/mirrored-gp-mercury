@@ -197,7 +197,7 @@ public class RackOfTubes extends LabVessel {
     /**
      * Reagent additions and machine loaded events, i.e. not transfers
      */
-    @OneToMany(mappedBy = "ancillaryInPlaceVessel", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @OneToMany(mappedBy = "ancillaryInPlaceVessel", cascade = {CascadeType.PERSIST})
     @BatchSize(size = 20)
     private Set<LabEvent> ancillaryInPlaceEvents = new HashSet<>();
 

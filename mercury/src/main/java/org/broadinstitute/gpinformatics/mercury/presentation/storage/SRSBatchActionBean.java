@@ -51,10 +51,10 @@ public class SRSBatchActionBean extends CoreActionBean {
 
     // Events and outcomes
     private Stage stage;
-    private static final String ADD_SAMPLES_ACTION = "evtAddSamples";
-    private static final String ADD_BARCODES_ACTION = "evtAddBarcodes";
-    private static final String REMOVE_ACTION = "evtRemove";
-    private static final String TOGGLE_STATUS_ACTION = "evtToggleBatchStatus";
+    static final String ADD_SAMPLES_ACTION = "evtAddSamples";
+    static final String ADD_BARCODES_ACTION = "evtAddBarcodes";
+    static final String REMOVE_ACTION = "evtRemove";
+    static final String TOGGLE_STATUS_ACTION = "evtToggleBatchStatus";
 
     private String batchName;
     private LabBatch labBatch;
@@ -62,7 +62,7 @@ public class SRSBatchActionBean extends CoreActionBean {
     private String[] inputValues;
     List<PickWorkspaceActionBean.BatchSelectionData> batchSelectionList;
 
-    public SRSBatchActionBean(){
+    public SRSBatchActionBean() {
         super(CREATE_BATCH, EDIT_BATCH, SRS_BATCH_PARAMETER);
     }
 
@@ -149,6 +149,7 @@ public class SRSBatchActionBean extends CoreActionBean {
     public void validateAdd() {
         stage = Stage.EDITING;
         if (labBatchId == null) {
+            addGlobalValidationError("No batch selected");
             stage = Stage.CHOOSING;
             return;
         }
@@ -331,13 +332,6 @@ public class SRSBatchActionBean extends CoreActionBean {
      */
     public boolean getIsBatchActive() {
         return labBatch != null && labBatch.getActive();
-    }
-
-    public void setDbFreeTestMocks(LabVesselDao labVesselDaoMock,
-                                   LabBatchDao labBatchDaoMock, MercurySampleDao mercurySampleDaoMock) {
-        labVesselDao = labVesselDaoMock;
-        labBatchDao = labBatchDaoMock;
-        mercurySampleDao = mercurySampleDaoMock;
     }
 
 }

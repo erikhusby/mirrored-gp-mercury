@@ -11,11 +11,8 @@ import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtil
 import org.broadinstitute.gpinformatics.mercury.boundary.storage.StorageEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocationDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -331,7 +328,7 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
      */
     private StreamingResolution buildAjaxOutcome( Pair<String,String> statusMessage ) {
         JsonObject result = Json.createObjectBuilder()
-                .add( "barcode", barcode )
+                .add("barcode", barcode == null ? "(empty)" : barcode)
                 .add( "status", statusMessage.getLeft() )
                 .add( "feedbackMsg", statusMessage.getRight() )
                 .build();
@@ -537,9 +534,11 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
      */
     public void setProposedLocationIds(String proposedLocationIdString) {
         this.proposedLocationIds = new ArrayList<>();
-        String[] ids = proposedLocationIdString.split(",");
+        String[] ids = proposedLocationIdString == null ? new String[]{} : proposedLocationIdString.split(",");
         for( int i = 0; i < ids.length; i++ ) {
-            this.proposedLocationIds.add( ids[i] );
+            if (ids[i].length() > 0) {
+                this.proposedLocationIds.add(ids[i]);
+            }
         }
     }
 
