@@ -2976,7 +2976,9 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
 
             customizedProductInfo.setUnits(product.getUnitsDisplay());
-            customizedProductInfo.setOriginalPrice(NumberFormat.getCurrencyInstance().format(formatedPrice));
+            if(formatedPrice != null) {
+                customizedProductInfo.setOriginalPrice(NumberFormat.getCurrencyInstance().format(formatedPrice));
+            }
             productCustomizations.add(customizedProductInfo);
         }
     }
