@@ -125,6 +125,17 @@
 
                 $j(".edit-cell").tooltip();
 
+
+                $j("#searchQueue").click(function(){
+                    var selection=document.querySelector('input[name="selectedSearchTermType"]:checked')!=null?
+                        document.querySelector('input[name="selectedSearchTermType"]:checked').value:"";
+                    if(selection==='') {
+                        alert('Please select a search type.');
+                    } else {
+                        // make it search?
+                        $j("#queueSearchForm").submit();
+                    }
+                });
             });
 
             let editGroupName = function (src) {
@@ -164,13 +175,13 @@
                     contentType: false
                 });
             };
-
         </script>
     </stripes:layout-component>
     <stripes:layout-component name="content">
 
-        <stripes:form id="queueSearchForm" beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean">
-            <stripes:param name="queueType" value="${actionBean.queueType}" />
+        <form id="queueSearchForm" action="${ctxpath}/queue/Queue.action">
+            <input type="hidden" name="queueType" value="${actionBean.queueType}" />
+            <input type="hidden" name="searchQueue" />
             <div>
                 <ul class="searchWrapper">
                     <c:forEach items="${actionBean.allowedDisplaySearchTerms}" var="searchTerm">
@@ -183,9 +194,9 @@
 
                 <textarea name="selectedSearchTermValues" id="selectedSearchTermValues" rows="4" ></textarea>
                 <br/>
-                <stripes:submit id="searchQueue" name="searchQueue">Search</stripes:submit>
+                <input type="button" id="searchQueue" name="searchQueue" value="Search" />
             </div>
-        </stripes:form>
+        </form>
 
         <div id="searchResults"></div>
 
