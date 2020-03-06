@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueSpecialization;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.jetbrains.annotations.NotNull;
@@ -157,8 +158,11 @@ public class QueueEventHandler extends AbstractEventHandler {
     private boolean isAllOfUs(LabEvent labEvent) {
         Set<LabVessel> labVessels = getVesselsPreferTubes(labEvent, Direction.SOURCE);
         return labVessels.stream().anyMatch(lv -> lv.getSampleInstancesV2().stream().anyMatch(
-                si -> si.getRootOrEarliestMercurySample().getMetadata().stream().anyMatch(
-                        md -> md.getKey() == Metadata.Key.CLIENT && md.getStringValue().equals(MAYO.name()))));
+                si -> {
+                    MercurySample rootSample = si.getRootOrEarliestMercurySample();
+                    return rootSample != null && rootSample.getMetadata().stream().anyMatch(
+                            md -> md.getKey() == Metadata.Key.CLIENT && md.getStringValue().equals(MAYO.name()));
+                }));
     }
 
     /*
