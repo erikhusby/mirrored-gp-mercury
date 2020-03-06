@@ -16,7 +16,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -348,7 +350,7 @@ public class SrsBulkActionBeanTest extends BaseEventTest {
     }
 
     /**
-     * Try a valid bulk check-in, rack has ancillary in place event associated with it
+     * Try a valid bulk check-out, rack has ancillary in place event associated with it
      */
     public void testCheckOut() throws Exception {
         MockRoundtrip trip = StripesMockTestUtils.createMockRoundtrip(BulkStorageOpsActionBean.class
@@ -363,6 +365,83 @@ public class SrsBulkActionBeanTest extends BaseEventTest {
         Assert.assertEquals("Result status should be 'success'", "success", result.getString("status"));
         String feedback = result.getString("feedbackMsg");
         Assert.assertTrue("Unexpected result message: " + feedback, feedback.contains(rackOfTubes01.getLabel()));
+    }
+
+    /**
+     * Try an invalid bulk check-out, rack has no ancillary in place event associated with it
+     */
+    public void testCheckOutBad() throws Exception {
+        MockRoundtrip trip = StripesMockTestUtils.createMockRoundtrip(BulkStorageOpsActionBean.class
+                , storageLocationDaoMock, storageEjbMock, testUserBean);
+        trip.addParameter("barcode", rackOfTubes01.getLabel());
+        // TODO: JMS I give up, time is being hoovered up because the StorageLocation I added has disappeared:  "Rack not in storage."
+        rackOfTubes01.setStorageLocation(slot1);
+        rackOfTubes01.getAncillaryInPlaceEvents().clear();
+        when(storageLocationDaoMock.findSingle(LabVessel.class, LabVessel_.label, rackOfTubes01.getLabel())).thenReturn(rackOfTubes01);
+        trip.execute(BulkStorageOpsActionBean.EVT_CHECK_OUT);
+        JsonObject result = Json.createReader(new StringReader(trip.getOutputString())).readObject();
+        trip.getContext().getFilters().get(0).destroy();
+        Assert.assertEquals("Result status should be 'danger'", "danger", result.getString("status"));
+        String feedback = result.getString("feedbackMsg");
+        Assert.assertTrue("Unexpected result message: " + feedback, feedback.contains(rackOfTubes01.getLabel()));
+    }
+
+    /**
+     * Try an invalid bulk check-in, plate well
+     */
+    public void testCheckInWell() throws Exception {
+        StaticPlate plate = new StaticPlate("plate01", StaticPlate.PlateType.Eppendorf96);
+        PlateWell well = new PlateWell(plate, VesselPosition.A01);
+        MockRoundtrip trip = StripesMockTestUtils.createMockRoundtrip(BulkStorageOpsActionBean.class
+                , storageLocationDaoMock, storageEjbMock, testUserBean);
+        trip.addParameter("barcode", well.getLabel());
+        trip.addParameter("storageLocationId", "1000");
+        when(storageLocationDaoMock.findSingle(LabVessel.class, LabVessel_.label, well.getLabel())).thenReturn(well);
+        trip.execute(BulkStorageOpsActionBean.EVT_CHECK_IN);
+        JsonObject result = Json.createReader(new StringReader(trip.getOutputString())).readObject();
+        trip.getContext().getFilters().get(0).destroy();
+        Assert.assertEquals("Result status should be 'danger'", "danger", result.getString("status"));
+        String feedback = result.getString("feedbackMsg");
+        Assert.assertTrue("Unexpected result message: " + feedback, feedback.contains(well.getLabel()));
+    }
+
+    /**
+     * Try an invalid bulk check-in, tube in non-loose location
+     */
+    public void testCheckInTubeFail() throws Exception {
+        BarcodedTube tube = new BarcodedTube("loosetube");
+        MockRoundtrip trip = StripesMockTestUtils.createMockRoundtrip(BulkStorageOpsActionBean.class
+                , storageLocationDaoMock, storageEjbMock, testUserBean);
+        trip.addParameter("barcode", tube.getLabel());
+        trip.addParameter("storageLocationId", "1000");
+        when(storageLocationDaoMock.findSingle(LabVessel.class, LabVessel_.label, tube.getLabel())).thenReturn(tube);
+        trip.execute(BulkStorageOpsActionBean.EVT_CHECK_IN);
+        JsonObject result = Json.createReader(new StringReader(trip.getOutputString())).readObject();
+        trip.getContext().getFilters().get(0).destroy();
+        Assert.assertEquals("Result status should be 'warning'", "warning", result.getString("status"));
+        String feedback = result.getString("feedbackMsg");
+        Assert.assertTrue("Unexpected result message: " + feedback, feedback.contains("loose vessels"));
+    }
+
+    /**
+     * Try a valid bulk check-in, tube in loose location
+     */
+    public void testCheckInTube() throws Exception {
+        BarcodedTube tube = new BarcodedTube("loosetube");
+        StorageLocation loose = new StorageLocation("Loose", StorageLocation.LocationType.LOOSE, null);
+        storageIdField.set(loose, Long.valueOf(22));
+        MockRoundtrip trip = StripesMockTestUtils.createMockRoundtrip(BulkStorageOpsActionBean.class
+                , storageLocationDaoMock, storageEjbMock, testUserBean);
+        trip.addParameter("barcode", tube.getLabel());
+        trip.addParameter("storageLocationId", "22");
+        when(storageLocationDaoMock.findSingle(LabVessel.class, LabVessel_.label, tube.getLabel())).thenReturn(tube);
+        when(storageLocationDaoMock.findById(StorageLocation.class, Long.valueOf(22))).thenReturn(loose);
+        trip.execute(BulkStorageOpsActionBean.EVT_CHECK_IN);
+        JsonObject result = Json.createReader(new StringReader(trip.getOutputString())).readObject();
+        trip.getContext().getFilters().get(0).destroy();
+        Assert.assertEquals("Result status should be 'success'", "success", result.getString("status"));
+        String feedback = result.getString("feedbackMsg");
+        Assert.assertTrue("Unexpected result message: " + feedback, feedback.contains(tube.getLabel()));
     }
 
 }
