@@ -75,7 +75,7 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
         this.quotesCache = quotesCache;
     }
 
-    public enum Endpoint {
+    enum Endpoint {
         SINGLE_QUOTE("/quotes/ws/portals/private/getquotes?with_funding=true&quote_alpha_ids="),
         SINGLE_QUOTE_WITH_PRICE_ITEMS("/quotes/ws/portals/private/getquotes?with_funding=true&with_quote_items=true&quote_alpha_ids="),
         ALL_SEQUENCING_QUOTES("/quotes/ws/portals/private/getquotes?platform_name=DNA+Sequencing&with_funding=true"),
@@ -97,7 +97,7 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
         }
     }
 
-    public String url(Endpoint endpoint) {
+    private String url(Endpoint endpoint) {
         final StringBuilder constructedUrl = new StringBuilder(quoteConfig.getUrl() + endpoint.suffixUrl);
 
         return constructedUrl.toString();
