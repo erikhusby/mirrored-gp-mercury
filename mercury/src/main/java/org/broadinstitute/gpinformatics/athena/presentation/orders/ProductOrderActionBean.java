@@ -2965,20 +2965,20 @@ public class ProductOrderActionBean extends CoreActionBean {
             QuotePriceItem priceListItem = null;
             BigDecimal formatedPrice = null;
 
-            if (sapQuote != null) {
-                formatedPrice = new BigDecimal(productPriceCache.findByProduct(product,
-                        sapQuote.getQuoteHeader().getSalesOrganization()).getBasePrice());
-            } else {
-                if (product.getPrimaryPriceItem() != null) {
-                    priceListItem = priceListCache.findByKeyFields(product.getPrimaryPriceItem());
-                    formatedPrice = new BigDecimal(priceListItem.getPrice());
+            if(StringUtils.isNotBlank(quoteIdentifier)) {
+                if (sapQuote != null) {
+                    formatedPrice = new BigDecimal(productPriceCache.findByProduct(product,
+                            sapQuote.getQuoteHeader().getSalesOrganization()).getBasePrice());
+                } else {
+                    if (product.getPrimaryPriceItem() != null) {
+                        priceListItem = priceListCache.findByKeyFields(product.getPrimaryPriceItem());
+                        formatedPrice = new BigDecimal(priceListItem.getPrice());
+                    }
                 }
+                customizedProductInfo.setOriginalPrice(NumberFormat.getCurrencyInstance().format(formatedPrice));
             }
 
             customizedProductInfo.setUnits(product.getUnitsDisplay());
-            if(formatedPrice != null) {
-                customizedProductInfo.setOriginalPrice(NumberFormat.getCurrencyInstance().format(formatedPrice));
-            }
             productCustomizations.add(customizedProductInfo);
         }
     }
