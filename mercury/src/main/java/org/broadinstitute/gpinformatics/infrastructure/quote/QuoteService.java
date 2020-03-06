@@ -61,18 +61,6 @@ public interface QuoteService extends Serializable {
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException;
 
     /**
-     * Get the quote for a particular quote identifier.
-     *
-     * @param alphaId The quote identifier.
-     * @param forceDevQuoteRefresh whether or not to force a refresh of the cached dev quotes, such as GP87U
-     *
-     * @return The quote representation.
-     * @throws QuoteServerException Quote server problems.
-     * @throws QuoteNotFoundException When the specified quote does not exist in the quote server.
-     */
-    public Quote getQuoteByAlphaId(String alphaId, boolean forceDevQuoteRefresh) throws QuoteServerException, QuoteNotFoundException;
-
-    /**
      * Get the quote and all its associated price items for a particular quote identifier.
      *
      * @param alphaId The quote identifier.

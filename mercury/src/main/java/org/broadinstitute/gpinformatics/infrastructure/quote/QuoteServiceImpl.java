@@ -50,10 +50,9 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
 
     private static final long serialVersionUID = 8458283723746937096L;
 
-    @Inject
     private QuoteConfig quoteConfig;
 
-    @Inject DevQuotesCache devQuotesCache;
+    private QuotesCache quotesCache;
 
     static final String WORK_ITEM_ID = "workItemId\t";
 
@@ -68,12 +67,15 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
      * Non CDI constructor, all dependencies must be explicitly initialized!
      *
      * @param quoteConfig The configuration.
+     * @param quotesCache
      */
-    public QuoteServiceImpl(QuoteConfig quoteConfig) {
+    @Inject
+    public QuoteServiceImpl(QuoteConfig quoteConfig, QuotesCache quotesCache) {
         this.quoteConfig = quoteConfig;
+        this.quotesCache = quotesCache;
     }
 
-    enum Endpoint {
+    public enum Endpoint {
         SINGLE_QUOTE("/quotes/ws/portals/private/getquotes?with_funding=true&quote_alpha_ids="),
         SINGLE_QUOTE_WITH_PRICE_ITEMS("/quotes/ws/portals/private/getquotes?with_funding=true&with_quote_items=true&quote_alpha_ids="),
         ALL_SEQUENCING_QUOTES("/quotes/ws/portals/private/getquotes?platform_name=DNA+Sequencing&with_funding=true"),
@@ -95,7 +97,7 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
         }
     }
 
-    private String url(Endpoint endpoint) {
+    public String url(Endpoint endpoint) {
         final StringBuilder constructedUrl = new StringBuilder(quoteConfig.getUrl() + endpoint.suffixUrl);
 
         return constructedUrl.toString();
@@ -280,13 +282,7 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
 
     @Override
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
-        return getQuoteByAlphaId(alphaId, false);
-    }
-
-    @Override
-    public Quote getQuoteByAlphaId(String alphaId, boolean forceDevQuoteRefresh)
-        throws QuoteServerException, QuoteNotFoundException {
-        return getSingleQuoteById(alphaId, url(Endpoint.SINGLE_QUOTE), forceDevQuoteRefresh);
+        return getSingleQuoteById(alphaId, url(Endpoint.SINGLE_QUOTE));
     }
 
     @Override
@@ -305,34 +301,18 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
     * @throws QuoteServerException Any other error with the quote server.
     **/
     private Quote getSingleQuoteById(String id, String url) throws QuoteNotFoundException, QuoteServerException {
-        return getSingleQuoteById(id, url, false);
-    }
-
-    /**
-     * private method to get a single quote. Can be overridden by mocks.
-     *
-     * @param id                   The quote identifier.
-     * @param url                  The url to use for the quote server.
-     * @param forceDevQuoteRefresh whether or not to force a refresh of the cached dev quotes, such as GP87U
-     *
-     * @return The quote found.
-     * @throws QuoteNotFoundException Error when quote is not found.
-     * @throws QuoteServerException   Any other error with the quote server.
-     **/
-    private Quote getSingleQuoteById(String id, String url, boolean forceDevQuoteRefresh) throws QuoteNotFoundException, QuoteServerException {
         if (StringUtils.isEmpty(id)) {
             return (null);
         }
         Quote quote = null;
 
-        if (!forceDevQuoteRefresh){
-            quote = devQuotesCache.getQuote(id);
+        if (QuoteService.isDevQuote(id)) {
+            quote = quotesCache.getQuote(id);
         }
 
         if (quote != null) {
             return quote;
         }
-
 
         final String ENCODING = "UTF-8";
 
@@ -486,5 +466,15 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
         }
 
         return priceList;
+    }
+
+    /**
+     * Method for subclasses to retrieve the {@link Client} for making webservice calls.
+     * <p>
+     * <b>Overridden for testing</b>
+     */
+    @Override
+    protected Client getJaxRsClient() {
+        return super.getJaxRsClient();
     }
 }

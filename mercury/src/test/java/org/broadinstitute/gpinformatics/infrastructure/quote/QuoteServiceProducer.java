@@ -10,7 +10,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 public class QuoteServiceProducer {
 
     public static QuoteService testInstance() {
-        return new QuoteServiceImpl(QuoteConfig.produce(DEV));
+        return new QuoteServiceImpl(QuoteConfig.produce(DEV), null);
     }
 
     public static QuoteService stubInstance() {

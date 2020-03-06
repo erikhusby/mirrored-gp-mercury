@@ -78,12 +78,6 @@ public class QuoteServiceStub implements QuoteService {
     }
 
     @Override
-    public Quote getQuoteByAlphaId(String alphaId, boolean forceDevQuoteRefresh)
-        throws QuoteServerException, QuoteNotFoundException {
-        return getQuoteByAlphaId(alphaId);
-    }
-
-    @Override
     public Quote getQuoteWithPriceItems(String alphaId) throws QuoteServerException, QuoteNotFoundException {
         return getQuoteByAlphaId(alphaId);
     }
