@@ -79,11 +79,12 @@ public class QuotesCache extends AbstractCacheControl implements Serializable {
         this.maximumCacheSize = maximumCacheSize;
     }
 
+//    @Lock(LockType.WRITE)
     public synchronized void refreshCache() {
         QuoteService.DEV_QUOTES.forEach(quoteId -> {
             Quote quote = null;
             try {
-                quote = quoteService.getQuoteByAlphaId(quoteId);
+                quote = quoteService.getQuoteByAlphaId(quoteId, true);
                 if (quote != null) {
                     if (quoteMap == null) {
                         quoteMap = new HashMap<>();

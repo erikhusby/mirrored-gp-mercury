@@ -282,7 +282,12 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
 
     @Override
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
-        return getSingleQuoteById(alphaId, url(Endpoint.SINGLE_QUOTE));
+        return getQuoteByAlphaId(alphaId, false);
+    }
+
+    @Override
+    public Quote getQuoteByAlphaId(String alphaId, boolean isCacheRefresh) throws QuoteServerException, QuoteNotFoundException {
+        return getSingleQuoteById(alphaId, url(Endpoint.SINGLE_QUOTE), isCacheRefresh);
     }
 
     @Override
@@ -301,17 +306,30 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
     * @throws QuoteServerException Any other error with the quote server.
     **/
     private Quote getSingleQuoteById(String id, String url) throws QuoteNotFoundException, QuoteServerException {
+        return getSingleQuoteById(id, url, false);
+    }
+
+    /**
+    * private method to get a single quote. Can be overridden by mocks.
+    *
+    * @param id The quote identifier.
+    * @param url The url to use for the quote server.
+     *
+    * @return The quote found.
+    * @throws QuoteNotFoundException Error when quote is not found.
+    * @throws QuoteServerException Any other error with the quote server.
+    **/
+    private Quote getSingleQuoteById(String id, String url, boolean isCacheRefresh) throws QuoteNotFoundException, QuoteServerException {
         if (StringUtils.isEmpty(id)) {
             return (null);
         }
         Quote quote = null;
 
-        if (QuoteService.isDevQuote(id)) {
+        if (QuoteService.isDevQuote(id) && !isCacheRefresh) {
             quote = quotesCache.getQuote(id);
-        }
-
-        if (quote != null) {
-            return quote;
+            if (quote != null) {
+                return quote;
+            }
         }
 
         final String ENCODING = "UTF-8";

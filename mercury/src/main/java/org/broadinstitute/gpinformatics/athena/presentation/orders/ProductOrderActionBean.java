@@ -817,53 +817,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                     action);
         }
 
-        try {
-            final Optional<Quote> quote = (editOrder.hasQuoteServerQuote())?Optional.ofNullable(validateQuote(editOrder)):Optional.ofNullable(null);
-            final Optional<SapQuote> sapQuote = (editOrder.hasSapQuote())?Optional.ofNullable(validateSapQuote(editOrder)):Optional.ofNullable(null);
-
-            if (editOrder.hasSapQuote()) {
-                if (sapQuote.isPresent()) {
-                    ProductOrder.checkSapQuoteValidity(sapQuote.get());
-                    sapQuote.get().getFundingDetails().stream().filter(fundingDetail -> {
-                        return fundingDetail.getFundingType() == SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION;
-                    }).forEach(fundingDetail -> {
-                        if(fundingDetail.getFundingStatus() != FundingStatus.APPROVED ) {
-                            addMessage("The funding source %s is considered to be expired and may likely not "
-                                       + "work for billing.  Please work on updating the funding sourcd so billing "
-                                       + "errors can be avoided");
-                        } else {
-                            validateGrantEndDate(fundingDetail.getFundingHeaderChangeDate(),
-                                    fundingDetail.getItemNumber().toString(),
-                                    sapQuote.get().getQuoteHeader().getQuoteNumber() + " -- " +
-                                    sapQuote.get().getQuoteHeader().getProjectName());
-                        }
-                    });
-                }
-                validateSapQuoteDetails(sapQuote.orElseThrow(() -> new SAPIntegrationException("A Quote was not found for " + editOrder.getQuoteId())), 0);
-            } else if (editOrder.hasQuoteServerQuote()) {
-                if (quote.isPresent()) {
-                    ProductOrder.checkQuoteValidity(quote.get());
-                    quote.get().getFunding().stream()
-                        .filter(Funding::isFundsReservation)
-                        .forEach(funding -> {
-                            validateGrantEndDate(funding.getGrantEndDate(),
-                                        funding.getDisplayName(), quote.get().getAlphanumericId());
-                        });
-                }
-                validateQuoteDetails(quote.orElseThrow(() -> new QuoteServerException("A quote was not found for " +
-                                                                                      editOrder.getQuoteId())), 0);
-            }
-
-        } catch (QuoteServerException e) {
-            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
-            logger.error(e);
-        } catch (InvalidProductException | SAPIntegrationException e) {
-            String errorMessage = "Unable to determine the existing value of open orders for " +
-                                  editOrder.getQuoteId() + ": " + e.getMessage();
-            addGlobalValidationError(errorMessage);
-            logger.error(e);
-        }
-
         if (editOrder != null) {
             validateRinScores(editOrder);
 
@@ -3460,12 +3413,63 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         if (action.equals(PLACE_ORDER_ACTION) || action.equals(VALIDATE_ORDER) ||
             (action.equals(SAVE_ACTION) && editOrder.isSubmitted())) {
+            if (QuoteService.isDevQuote(editOrder.getQuoteId())){
+                return;
+            }
             boolean hasQuote = StringUtils.isNotBlank(editOrder.getQuoteId());
             requireField(hasQuote || editOrder.canSkipQuote(), "a quote specified", action);
             if (!hasQuote && editOrder.allowedToSkipQuote()) {
                 requireField(editOrder.getSkipQuoteReason() , "an explanation for why a quote cannot be entered", action);
             }
         }
+
+        try {
+            final Optional<Quote> quote = (editOrder.hasQuoteServerQuote())?Optional.ofNullable(validateQuote(editOrder)):Optional.ofNullable(null);
+            final Optional<SapQuote> sapQuote = (editOrder.hasSapQuote())?Optional.ofNullable(validateSapQuote(editOrder)):Optional.ofNullable(null);
+
+            if (editOrder.hasSapQuote()) {
+                if (sapQuote.isPresent()) {
+                    ProductOrder.checkSapQuoteValidity(sapQuote.get());
+                    sapQuote.get().getFundingDetails().stream().filter(fundingDetail -> {
+                        return fundingDetail.getFundingType() == SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION;
+                    }).forEach(fundingDetail -> {
+                        if(fundingDetail.getFundingStatus() != FundingStatus.APPROVED ) {
+                            addMessage("The funding source %s is considered to be expired and may likely not "
+                                       + "work for billing.  Please work on updating the funding sourcd so billing "
+                                       + "errors can be avoided");
+                        } else {
+                            validateGrantEndDate(fundingDetail.getFundingHeaderChangeDate(),
+                                    fundingDetail.getItemNumber().toString(),
+                                    sapQuote.get().getQuoteHeader().getQuoteNumber() + " -- " +
+                                    sapQuote.get().getQuoteHeader().getProjectName());
+                        }
+                    });
+                }
+                validateSapQuoteDetails(sapQuote.orElseThrow(() -> new SAPIntegrationException("A Quote was not found for " + editOrder.getQuoteId())), 0);
+            } else if (editOrder.hasQuoteServerQuote()) {
+                if (quote.isPresent()) {
+                    ProductOrder.checkQuoteValidity(quote.get());
+                    quote.get().getFunding().stream()
+                        .filter(Funding::isFundsReservation)
+                        .forEach(funding -> {
+                            validateGrantEndDate(funding.getGrantEndDate(),
+                                        funding.getDisplayName(), quote.get().getAlphanumericId());
+                        });
+                }
+                validateQuoteDetails(quote.orElseThrow(() -> new QuoteServerException("A quote was not found for " +
+                                                                                      editOrder.getQuoteId())), 0);
+            }
+
+        } catch (QuoteServerException e) {
+            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
+            logger.error(e);
+        } catch (InvalidProductException | SAPIntegrationException e) {
+            String errorMessage = "Unable to determine the existing value of open orders for " +
+                                  editOrder.getQuoteId() + ": " + e.getMessage();
+            addGlobalValidationError(errorMessage);
+            logger.error(e);
+        }
+
     }
 
     /**

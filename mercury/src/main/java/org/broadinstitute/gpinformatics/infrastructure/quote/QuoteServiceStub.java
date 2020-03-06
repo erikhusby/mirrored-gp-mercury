@@ -66,6 +66,10 @@ public class QuoteServiceStub implements QuoteService {
 
     @Override
     public Quote getQuoteByAlphaId(String id) throws QuoteServerException, QuoteNotFoundException {
+        return getQuoteByAlphaId(id, false);
+    }
+    @Override
+    public Quote getQuoteByAlphaId(String id, boolean isCacheRefresh) throws QuoteServerException, QuoteNotFoundException {
         Quote quote = null;
 
         for (Quote aQuote : getAllSequencingPlatformQuotes().getQuotes()) {
@@ -79,7 +83,7 @@ public class QuoteServiceStub implements QuoteService {
 
     @Override
     public Quote getQuoteWithPriceItems(String alphaId) throws QuoteServerException, QuoteNotFoundException {
-        return getQuoteByAlphaId(alphaId);
+        return getQuoteByAlphaId(alphaId, false);
     }
 
     @Override
