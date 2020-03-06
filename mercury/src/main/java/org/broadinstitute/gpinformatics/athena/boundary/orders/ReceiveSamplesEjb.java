@@ -208,7 +208,8 @@ public class ReceiveSamplesEjb {
                     sampleReceiptResource.notifyOfReceipt(sampleReceiptBean);
                 }
 
-                addToDnaQuantQueueIfNecessary(sampleIds, messageCollection);
+                // todo jmt disabling to focus on All of Us
+//                addToDnaQuantQueueIfNecessary(sampleIds, messageCollection);
             }
         }
 
@@ -269,7 +270,8 @@ public class ReceiveSamplesEjb {
                         parentVesselBeans.add(new ParentVesselBean(null, barcodes.getSampleBarcode(), tubeType,null));
                     }
 
-                    addToDnaQuantQueueIfNecessary(sampleBarcodesReceived, messageCollection);
+                    // todo jmt disabling to focus on All of Us
+//                    addToDnaQuantQueueIfNecessary(sampleBarcodesReceived, messageCollection);
 
                     SampleReceiptBean sampleReceiptBean = new SampleReceiptBean(new Date(), kit.getKitId(),
                             parentVesselBeans, bspUser.getUsername());
