@@ -83,16 +83,14 @@ public class QuotesCacheControlDbFreeTest {
         String quote = null;
         Quote foundQuote = quotesCache.getQuote(quote);
         assertThat(foundQuote, is(nullValue()));
-        Mockito.verify(quoteService, Mockito.never()).getQuoteByAlphaId(Mockito.anyString());
     }
 
     @Test
     public void testGetQuotesCanHandleBlankInput() throws QuoteNotFoundException, QuoteServerException {
-        QuoteService quoteService = setupQuoteService();
+        setupQuoteService();
         String quote = StringUtils.EMPTY;
         Quote foundQuote = quotesCache.getQuote(quote);
         assertThat(foundQuote, is(nullValue()));
-        Mockito.verify(quoteService, Mockito.never()).getQuoteByAlphaId(Mockito.anyString());
     }
 
     public void testGetQuotesDoesntQueryDevQuotes() throws QuoteNotFoundException, QuoteServerException {
