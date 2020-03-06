@@ -19,7 +19,9 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class DNAQuantQueueSearchTerms extends AbstractQueueSearchTerms {
 
@@ -168,6 +170,7 @@ public class DNAQuantQueueSearchTerms extends AbstractQueueSearchTerms {
                     LabVessel labVessel = queueEntity.getLabVessel();
 
                     context.setMultiValueDelimiter("<br/>");
+                    TreeMap<String, String> sortedResults = new TreeMap<>();
 
                     for (LabVessel container : labVessel.getContainers()) {
                         TubeFormation containerTubeFormation = (TubeFormation) container;
@@ -179,9 +182,15 @@ public class DNAQuantQueueSearchTerms extends AbstractQueueSearchTerms {
 
                         Set<RackOfTubes> racksOfTubes = containerTubeFormation.getRacksOfTubes();
                         for (RackOfTubes rackOfTubes : racksOfTubes) {
-                            results.add(rackOfTubes.getLabel() + "/" + vesselPositionInContainer + ":" + ColumnValueType.DATE_TIME.format(createdOn, ""));
+                            String formattedCreatedOn = ColumnValueType.DATE_TIME.format(createdOn, "");
+                            String containerInfo = "<b>" + rackOfTubes.getLabel() + "</b>/<b>" + vesselPositionInContainer + "</b>:" + formattedCreatedOn;
+                            sortedResults.put(formattedCreatedOn, containerInfo);
                         }
                     }
+                    for (Map.Entry<String, String> containerInformation : sortedResults.entrySet()) {
+                        results.add(containerInformation.getValue());
+                    }
+
                     // Set the delimiter back.
                     context.setMultiValueDelimiter(multiValueDelimiter);
                     return results;
@@ -211,58 +220,6 @@ public class DNAQuantQueueSearchTerms extends AbstractQueueSearchTerms {
             termDescriptionMap.put(searchTerm, "Container Information");
             mapNameToSearchTerm.put(searchTerm.getName(), searchTerm);
         }
-//        {
-//            SearchTerm searchTerm = new SearchTerm();
-//            searchTerm.setName(DNA_QUANT_TERMS.CONTAINER_BARCODE.getTerm());
-//            SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
-//            // todo Get the container...
-//            criteriaPath.setCriteria(Arrays.asList("ContainerBarcode", "tubeFormations", "vesselContainer"));
-//
-//            // TODO  get the vessels in the container... Not really sure how
-//            SearchTerm.CriteriaPath criteriaPath2 = new SearchTerm.CriteriaPath();
-//            criteriaPath2.setCriteria(Arrays.asList("ContainerVessel", "queueEntityId", "labVessel"));
-//
-//            // todo check the queue status for vessels
-//            SearchTerm.CriteriaPath nestedCriteriaPath = new SearchTerm.CriteriaPath();
-//            nestedCriteriaPath.setCriteria(Arrays.asList("QueueEntityVessel", "queueEntityId", "labVessel"));
-//            criteriaPath.setNestedCriteriaPath(nestedCriteriaPath);
-//            criteriaPath.setPropertyName("labVessel");
-//            criteriaPath.setJoinFetch(Boolean.TRUE);
-//            searchTerm.setCriteriaPaths(ImmutableList.of(criteriaPath, criteriaPath2));
-//
-//            searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-//                @Override
-//                public List<String> evaluate(Object entity, SearchContext context) {
-//                    String multiValueDelimiter = context.getMultiValueDelimiter();
-//                    QueueEntity queueEntity = (QueueEntity) entity;
-//                    List<String> results = new ArrayList<>();
-//                    LabVessel labVessel = queueEntity.getLabVessel();
-//
-//                    context.setMultiValueDelimiter("<br/>");
-//                    // TODO need to figure out how we want this to work. We want this to work like this:
-//                    // TODO Searching by Container barcode, find all of the lab vessels that are NOT in the queue.
-//
-//                    for (LabVessel container : labVessel.getContainers()) {
-//                        TubeFormation containerTubeFormation = (TubeFormation) container;
-//
-//                        TubeFormation tubeFormation = OrmUtil.proxySafeCast(container, TubeFormation.class);
-//
-//                        String vesselPositionInContainer = tubeFormation.getContainerRole().getPositionOfVessel(labVessel).name();
-//
-//                        Set<RackOfTubes> racksOfTubes = containerTubeFormation.getRacksOfTubes();
-//                        for (RackOfTubes rackOfTubes : racksOfTubes) {
-//                            results.add(rackOfTubes.getLabel() + "/" + vesselPositionInContainer);
-//                        }
-//                    }
-//                    // Set the delimiter back.
-//                    context.setMultiValueDelimiter(multiValueDelimiter);
-//                    return results;
-//                }
-//            });
-//
-//            termDescriptionMap.put(searchTerm, "Container Barcode");
-//            mapNameToSearchTerm.put(searchTerm.getName(), searchTerm);
-//        }
     }
 
     /**
@@ -272,17 +229,18 @@ public class DNAQuantQueueSearchTerms extends AbstractQueueSearchTerms {
      * @return
      */
     @Override
-    public Set<SearchTerm> getAllowedDisplaySearchTerms() {
-        Set<SearchTerm> allowed = new HashSet();
+    public Set<String> getAllowedDisplaySearchTerms() {
+        Set<String> allowed = new HashSet();
         // Loop through the terms and if there is a criteria path, then add it to the allowed terms.
         for (SearchTerm searchTerm : termDescriptionMap.keySet()) {
             List<SearchTerm.CriteriaPath> criteriaPaths = searchTerm.getCriteriaPaths();
             if (criteriaPaths != null && !criteriaPaths.isEmpty() &&
                 ((searchTerm.getName().compareToIgnoreCase("Queue Type") != 0) &&
                  (searchTerm.getName().compareToIgnoreCase("Queue Entity Status") != 0))) {
-                allowed.add(searchTerm);
+                allowed.add(searchTerm.getName());
             }
         }
+        allowed.add(DNA_QUANT_TERMS.CONTAINER_BARCODE.getTerm());
         return allowed;
     }
 
@@ -300,17 +258,5 @@ public class DNAQuantQueueSearchTerms extends AbstractQueueSearchTerms {
             allowed.add(searchTerm);
         }
         return allowed;
-    }
-
-    @Override
-    public List<String> getAllowedResultFields() {
-        ArrayList resultFields = new ArrayList();
-        // todo they are all allowed based off what the user selects.
-        return resultFields;
-    }
-
-    @Override
-    public List<String> getNotFoundResultRows() {
-        return null;
     }
 }

@@ -47,6 +47,9 @@ public class QueueEntitySearchDefinition {
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("SampleID", "labVessel",
                 "labVessel", QueueEntity.class));
 
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("LabVesselID", "labVessel",
+                "labVessel", QueueEntity.class));
+
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
                 ColumnEntity.QUEUE_ENTITY, criteriaProjections, mapGroupSearchTerms);
         configurableSearchDefinition.setAddRowsListenerFactory(

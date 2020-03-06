@@ -175,8 +175,8 @@
                 <ul class="searchWrapper">
                     <c:forEach items="${actionBean.allowedDisplaySearchTerms}" var="searchTerm">
                         <li style="width:70px;height:auto;">
-                            <input name="selectedSearchTermType" id="selectedSearchTermType" value="${searchTerm.name}" type="radio" />
-                            <label for="selectedSearchTermType">${searchTerm.name}</label>
+                            <input name="selectedSearchTermType" id="selectedSearchTermType" value="${searchTerm}" type="radio" />
+                            <label for="selectedSearchTermType">${searchTerm}</label>
                         </li>
                     </c:forEach>
                 </ul>

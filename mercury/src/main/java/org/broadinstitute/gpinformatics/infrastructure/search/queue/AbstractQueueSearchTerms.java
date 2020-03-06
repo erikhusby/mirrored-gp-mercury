@@ -3,9 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.search.queue;
 
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,25 +25,11 @@ public abstract class AbstractQueueSearchTerms {
     protected abstract void addSearchTerms();
 
     // Search terms allowed to be shown and selectable by a user in a queue page.
-    public abstract Set<SearchTerm> getAllowedDisplaySearchTerms();
+    public abstract Set<String> getAllowedDisplaySearchTerms();
     // All possible search terms for UDS.
     public abstract Set<SearchTerm> getSearchTerms();
-    public abstract List<String> getAllowedResultFields();
-    public abstract List<String> getNotFoundResultRows();
-
-    public Map<SearchTerm, String> getTermDescriptionMap() {
-        return termDescriptionMap;
-    }
 
     public SearchTerm geSearchTerm(String term) {
         return mapNameToSearchTerm.get(term);
-    }
-
-    public List<SearchTerm> getSelectedSearchTerms(List<String> selectedSearchTerms) {
-        List<SearchTerm> terms = new ArrayList<>(selectedSearchTerms.size());
-        for (String selectedSearchTerm : selectedSearchTerms) {
-            terms.add(geSearchTerm(selectedSearchTerm));
-        }
-        return terms;
     }
 }

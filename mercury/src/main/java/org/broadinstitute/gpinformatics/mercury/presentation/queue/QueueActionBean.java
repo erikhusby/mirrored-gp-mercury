@@ -33,6 +33,8 @@ import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.datadump.AbstractDataDumpGenerator;
 import org.broadinstitute.gpinformatics.mercury.control.dao.queue.GenericQueueDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.queue.QueueGroupingDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
@@ -42,7 +44,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueSpecialization
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueStatus;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.security.SecurityActionBean;
 import org.jetbrains.annotations.NotNull;
@@ -63,6 +69,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.SortedMap;
 
 /**
  * ActionBean for interacting with Queues.
@@ -96,6 +103,9 @@ public class QueueActionBean extends CoreActionBean {
 
     @Inject
     private QueueGroupingDao queueGroupingDao;
+
+    @Inject
+    private RackOfTubesDao rackOfTubesDao;
 
     @Inject
     private BSPUserList userList;
@@ -180,7 +190,7 @@ public class QueueActionBean extends CoreActionBean {
         this.selectedSearchTermValues = selectedSearchTermValues;
     }
 
-    public Set<SearchTerm> getAllowedDisplaySearchTerms() {
+    public Set<String> getAllowedDisplaySearchTerms() {
         return QueueEntitySearchDefinition.QUEUE_ENTITY_SEARCH_TERMS.getAllowedDisplaySearchTerms();
     }
 
@@ -223,34 +233,59 @@ public class QueueActionBean extends CoreActionBean {
     @HandlesEvent("searchQueue")
     public Resolution searchQueue() {
 
-        // If the selected term is container barcode, then we need to do a code search to find the vessels.
-        if (selectedSearchTermType.compareToIgnoreCase(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.CONTAINER_BARCODE.getTerm())==0) {
+        // Construct the search instance.
+        if (sessionKey == null) {
+            searchInstance = new SearchInstance();
 
+            // Save the searchInstance, in case the user re-sorts the results
+            sessionKey = Integer.toString(new Random().nextInt(10000));
+            getContext().getRequest().getSession()
+                    .setAttribute(SEARCH_INSTANCE_PREFIX + sessionKey, searchInstance);
         } else {
+            // We're resorting results we retrieved previously
+            // Get saved form parameters, so the JSP re-renders correctly
+            searchInstance = (SearchInstance) getContext().getRequest().getSession()
+                    .getAttribute(SEARCH_INSTANCE_PREFIX + sessionKey);
+        }
 
-            // Construct the search instance.
-            if (sessionKey == null) {
-                searchInstance = new SearchInstance();
+        entityName = ColumnEntity.QUEUE_ENTITY.getEntityName();
+        configurableSearchDef = SearchDefinitionFactory.getForEntity(entityName);
+        SearchInstance.SearchValue userSelectedTerm = null;
+        if (selectedSearchTermType != null) {
+            // If the selected term is container barcode, then we need to do a code search to find the vessels.
+            if (selectedSearchTermType.compareToIgnoreCase(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.CONTAINER_BARCODE.getTerm()) == 0) {
 
-                // Save the searchInstance, in case the user re-sorts the results
-                sessionKey = Integer.toString(new Random().nextInt(10000));
-                getContext().getRequest().getSession()
-                        .setAttribute(SEARCH_INSTANCE_PREFIX + sessionKey, searchInstance);
+                RackOfTubes rackOfTubes = rackOfTubesDao.findByBarcode(selectedSearchTermValues);
+
+                if (rackOfTubes != null) {
+                    SortedMap<LabEvent, TubeFormation> rackEventsSortedByDate = rackOfTubes.getRackEventsSortedByDate();
+
+                    TubeFormation tubeFormation = rackEventsSortedByDate.values().iterator().next();
+
+                    VesselContainer<BarcodedTube> containerRole = tubeFormation.getContainerRole();
+
+                    Map<String, String> mapOfVesselToContainerBarcode = new HashMap<>();
+                    for (BarcodedTube containedVessel : containerRole.getContainedVessels()) {
+                        mapOfVesselToContainerBarcode.put(containedVessel.getLabel(), selectedSearchTermValues);
+                    }
+
+                    Set<String> values = mapOfVesselToContainerBarcode.keySet();
+                    List<String> manufacturerBarcodes = new ArrayList<>(values);
+
+                    userSelectedTerm = searchInstance.addTopLevelTerm(
+                            DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.MANUFACTURER_BARCODE.getTerm(),
+                            configurableSearchDef);
+                    userSelectedTerm.setOperator(SearchInstance.Operator.IN);
+                    userSelectedTerm.setValues(manufacturerBarcodes);
+                } else {
+                    // todo need to figure out how we wanna handle a search with bad/unknown container id.
+                }
             } else {
-                // We're resorting results we retrieved previously
-                // Get saved form parameters, so the JSP re-renders correctly
-                searchInstance = (SearchInstance) getContext().getRequest().getSession()
-                        .getAttribute(SEARCH_INSTANCE_PREFIX + sessionKey);
+
+                userSelectedTerm = searchInstance.addTopLevelTerm(selectedSearchTermType, configurableSearchDef);
+                userSelectedTerm.setOperator(SearchInstance.Operator.IN);
+                userSelectedTerm.setValues(Collections.singletonList(selectedSearchTermValues));
             }
-
-            entityName = ColumnEntity.QUEUE_ENTITY.getEntityName();
-            configurableSearchDef = SearchDefinitionFactory.getForEntity(entityName);
-
-            SearchInstance.SearchValue searchValue =
-                    searchInstance.addTopLevelTerm(selectedSearchTermType, configurableSearchDef);
-            searchValue.setOperator(SearchInstance.Operator.IN);
-
-            searchValue.setValues(Collections.singletonList(selectedSearchTermValues));
 
             // Check for vessels specifically in DNA Quant queue.
             SearchInstance.SearchValue queue_type = searchInstance.addTopLevelTerm("Queue Type", configurableSearchDef);
@@ -270,10 +305,13 @@ public class QueueActionBean extends CoreActionBean {
                     .add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.MANUFACTURER_BARCODE.getTerm());
             searchInstance.getPredefinedViewColumns()
                     .add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.CONTAINER_INFO.getTerm());
+
             searchInstance.establishRelationships(configurableSearchDef);
             ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
                     searchInstance, configurableSearchDef, null, 0, null, "ASC", entityName);
             labSearchResultList = firstPageResults.getResultList();
+        } else {
+            addGlobalValidationError("You must select a search term.");
         }
 
         return new ForwardResolution("/queue/show_search_results.jsp");
