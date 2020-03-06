@@ -50,14 +50,14 @@ bsp:
     DEV:
       login:    seqsystem
       password: bspbsp
-      host:     localhost #xxxMLH
-      port: 8118 #xxxMLH
+      host:     gapdev.broadinstitute.org
+      port:     8080
 
     RC:
       login:    seqsystem
       password: bspbsp
       host:     gaprc.broadinstitute.org
-      port: 8118 #xxxMLH
+      port:     8080
 
     PROD:
       login:    seqsystem
@@ -251,7 +251,7 @@ submission:
 
     PROD:
       host:     seqsubmission01.broadinstitute.org
-      port: 8118 #xxxMLH
+      port:     8080
 
 sap:
     DEV:
