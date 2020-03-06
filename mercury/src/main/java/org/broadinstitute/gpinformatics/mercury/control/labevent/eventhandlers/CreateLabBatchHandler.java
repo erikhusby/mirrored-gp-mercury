@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -34,6 +35,7 @@ import java.util.stream.Collectors;
  */
 @Dependent
 public class CreateLabBatchHandler extends AbstractEventHandler {
+    private Logger logger = Logger.getLogger(this.getClass().getName());
 
     @Inject
     private LabBatchEjb labBatchEjb;
@@ -46,6 +48,23 @@ public class CreateLabBatchHandler extends AbstractEventHandler {
 
     @Override
     public void handleEvent(LabEvent targetEvent, StationEventType stationEvent) {
+        String productFamily;
+
+        switch (targetEvent.getLabEventType()) {
+        case AUTO_DAUGHTER_PLATE_CREATION:
+            productFamily = ProductFamily.WHOLE_GENOME_SEQUENCING;
+            // Creates LabBatch only when all are AoU samples.
+            if (!QueueEventHandler.isAllOfUs(targetEvent, true)) {
+                return;
+            }
+            break;
+        case ARRAY_PLATING_DILUTION:
+            productFamily = ProductFamily.WHOLE_GENOME_GENOTYPING;
+            break;
+        default:
+            throw new RuntimeException("Unsupported event: " + targetEvent.getLabEventType().getName());
+        }
+
         Set<LabVessel> sourceLabVessels = targetEvent.getSourceLabVessels();
         Set<LabVessel> targetLabVessels = targetEvent.getTargetLabVessels();
         if (targetEvent.getSectionTransfers().size() != 1 || sourceLabVessels.size() != 1 ||
@@ -83,10 +102,12 @@ public class CreateLabBatchHandler extends AbstractEventHandler {
         Set<LabVessel> labVesselSet = new HashSet<>(targetLabVessel.getContainerRole().getContainedVessels());
         LabBatch labBatch = new LabBatch("dummy" , labVesselSet, LabBatch.LabBatchType.WORKFLOW);
         Set<ProductOrder> productOrders = LabBatchResource.addToBatch(labVesselSet, labBatch,
-                ProductFamily.WHOLE_GENOME_GENOTYPING, username, targetEvent.getEventDate(), bucketEjb);
+                productFamily, username, targetEvent.getEventDate(), bucketEjb);
         String bucketDefinitionName = labBatch.getBucketEntries().iterator().next().getBucket().getBucketDefinitionName();
         Set<String> pdoKeys = productOrders.stream().map(ProductOrder::getBusinessKey).collect(Collectors.toSet());
         labBatchEjb.createJiraTicket(labBatch.getWorkflowName(), username, bucketDefinitionName, MessageReporter.UNUSED,
                 Collections.emptyList(), pdoKeys, labBatch);
+        logger.info("Created " + labBatch.getBatchName() + " for " + targetEvent.getLabEventType().getName() +
+                " on " + targetLabVessel.getLabel());
     }
 }
