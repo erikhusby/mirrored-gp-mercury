@@ -30,7 +30,8 @@ public class QueueValidationHandler {
         Map<Long, ValidationResult> validationResultsByVesselId = queueValidator.validatePreEnqueue(labVessels, messageCollection);
 
         for (LabVessel labVessel : labVessels) {
-            switch (validationResultsByVesselId.get(labVessel.getLabVesselId())) {
+            if (validationResultsByVesselId.containsKey(labVessel.getLabVesselId())) {
+                switch (validationResultsByVesselId.get(labVessel.getLabVesselId())) {
                 case FAIL:
                     messageCollection.addWarning("Lab Vessel: " + labVessel.getLabel()
                             + " failed validation but was still entered into the " + queueType.getTextName()
@@ -41,6 +42,7 @@ public class QueueValidationHandler {
                             + " could not be validated but was still entered into the " + queueType.getTextName()
                             + " queue.");
                     break;
+                }
             }
         }
     }
