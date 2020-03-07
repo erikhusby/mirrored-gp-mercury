@@ -4,6 +4,7 @@ import com.google.common.collect.Sets;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -883,6 +884,10 @@ public abstract class LabVessel implements Serializable {
         addInPlaceEvent(receiptEvent);
     }
 
+    public Triple<RackOfTubes, VesselPosition, String> findStorageContainer() {
+        return null;
+    }
+
     public Map<IlluminaFlowcell, Collection<VesselPosition>> getFlowcellLanesFrom() {
         Map<IlluminaFlowcell, Collection<VesselPosition>> illuminaFlowcells = new HashMap<>();
         LabVesselSearchDefinition.VesselsForEventTraverserCriteria eval
@@ -1259,6 +1264,7 @@ public abstract class LabVessel implements Serializable {
     }
 
     public void addSample(MercurySample mercurySample) {
+        mercurySample.getLabVessel().add(this);
         mercurySamples.add(mercurySample);
         if (mercurySamplesCount == null) {
             mercurySamplesCount = 0;

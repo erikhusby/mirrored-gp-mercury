@@ -175,7 +175,8 @@ public class FingerprintResource {
 
     @NotNull
     public static String getSmIdFromLsid(String lsid) {
-        if (lsid.startsWith("broadinstitute.org:bsp") || lsid.startsWith(CRSP_LSID_PREFIX)) {
+        if (lsid.startsWith("broadinstitute.org:bsp") || lsid.startsWith("broad.mit.edu:bsp") ||
+                lsid.startsWith(CRSP_LSID_PREFIX)) {
             return "SM-" + lsid.substring(lsid.lastIndexOf(':') + 1);
         } else if (lsid.startsWith(MERCURY_LSID_PREFIX)) {
             return lsid.substring(lsid.lastIndexOf(':') + 1);
