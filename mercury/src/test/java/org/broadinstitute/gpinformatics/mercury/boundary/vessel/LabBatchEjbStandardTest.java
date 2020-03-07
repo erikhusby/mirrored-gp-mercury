@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
@@ -136,7 +137,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
 
         Collections.addAll(vesselSampleList, "SM-423", "SM-243", "SM-765", "SM-143", "SM-9243", "SM-118");
 
-        mapBarcodeToTube = labBatchTestUtils.initializeTubes(vesselSampleList);
+        mapBarcodeToTube = labBatchTestUtils.initializeTubes(vesselSampleList, MaterialType.CELLS_PELLET_FROZEN);
     }
 
     @AfterMethod
@@ -202,7 +203,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
 
         Collections.addAll(vesselSampleList, "SM-423RS");
 
-        LinkedHashMap<String, BarcodedTube> newMapBarcodeToTube = labBatchTestUtils.initializeTubes(vesselSampleList);
+        LinkedHashMap<String, BarcodedTube> newMapBarcodeToTube = labBatchTestUtils.initializeTubes(vesselSampleList, MaterialType.CELLS_PELLET_FROZEN);
 
         bucket = labBatchTestUtils.putTubesInSpecificBucket(LabBatchEJBTest.BUCKET_NAME,
                 BucketEntry.BucketEntryType.PDO_ENTRY, newMapBarcodeToTube);
@@ -267,7 +268,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
 
         Collections.addAll(vesselSampleList, "SM-423RS");
 
-        LinkedHashMap<String, BarcodedTube> newMapBarcodeToTube = labBatchTestUtils.initializeTubes(vesselSampleList);
+        LinkedHashMap<String, BarcodedTube> newMapBarcodeToTube = labBatchTestUtils.initializeTubes(vesselSampleList, MaterialType.CELLS_PELLET_FROZEN);
 
         bucket = labBatchTestUtils.putTubesInSpecificBucket(LabBatchEJBTest.EXTRACTION_BUCKET,
                 BucketEntry.BucketEntryType.PDO_ENTRY, newMapBarcodeToTube);

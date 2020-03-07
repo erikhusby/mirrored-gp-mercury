@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -61,7 +62,7 @@ public class QueueEjbTest extends Arquillian {
 
         Collections.addAll(vesselSampleList, "SM-423", "SM-243", "SM-765", "SM-143", "SM-9243", "SM-118");
 
-        mapBarcodeToTube.putAll(labBatchTestUtils.initializeTubes(vesselSampleList));
+        mapBarcodeToTube.putAll(labBatchTestUtils.initializeTubes(vesselSampleList, MaterialType.DNA_DNA_GENOMIC));
     }
 
     @AfterMethod(groups = TestGroups.STUBBY)
