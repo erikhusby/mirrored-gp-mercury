@@ -6,14 +6,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.DnaQuantEnqueueOverride;
@@ -24,9 +22,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
-import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueSpecialization;
-import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestStatus;
@@ -44,7 +39,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -257,7 +251,7 @@ public class ManifestSessionEjb {
         Set<String> accessionedSamples = new HashSet<>();
         long disambiguator = 1L;
 
-        List<LabVessel> accessionedVessels = new ArrayList<>();
+//        List<LabVessel> accessionedVessels = new ArrayList<>();
         for (ManifestRecord record : manifestSession.getNonQuarantinedRecords()) {
             if (record.getStatus() == ManifestRecord.Status.ACCESSIONED) {
                 LabVessel labVessel;
@@ -266,7 +260,7 @@ public class ManifestSessionEjb {
                             record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
                     transferSample(manifestSessionId, record.getValueByKey(Metadata.Key.SAMPLE_ID),
                             record.getSampleId(), disambiguator++, labVessel);
-                } else {
+                }/* else { // todo jmt this code doesn't work for positive controls, disabling to focus on All of Us
                     List<LabVessel> labVessels = labVesselDao.findBySampleKey(record.getSampleId());
                     if (labVessels.size() != 1) {
                         throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET,
@@ -274,13 +268,14 @@ public class ManifestSessionEjb {
                     }
                     labVessel = labVessels.get(0);
                 }
-                accessionedVessels.add(labVessel);
+                accessionedVessels.add(labVessel);*/
                 accessionedSamples.add(record.getSampleId());
             }
         }
 
+/*
+        todo jmt disabling to focus on All of Us
         MessageCollection messageCollection = new MessageCollection();
-
         QueueSpecialization queueSpecialization = dnaQuantEnqueueOverride.determineDnaQuantQueueSpecialization(accessionedVessels);
         queueEjb.enqueueLabVessels(accessionedVessels, QueueType.DNA_QUANT,
                 "Accessioned on " + DateUtils.convertDateTimeToString(new Date()), messageCollection,
@@ -288,6 +283,7 @@ public class ManifestSessionEjb {
         for (String error : messageCollection.getErrors()) {
             logger.debug("Error Occurred in Enqueue to " + QueueType.DNA_QUANT.getTextName() + " queue:  " + error);
         }
+*/
 
         if (StringUtils.isNotBlank(manifestSession.getReceiptTicket())) {
             transitionReceiptTicket(manifestSession, accessionedSamples);

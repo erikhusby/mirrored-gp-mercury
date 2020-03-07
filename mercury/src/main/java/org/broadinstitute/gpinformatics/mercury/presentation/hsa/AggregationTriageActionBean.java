@@ -396,7 +396,7 @@ public class AggregationTriageActionBean extends CoreActionBean {
         String contamination = value == null ? "" : value.toString();
 
         TriageDto dto = new TriageDto();
-        dto.setContaminination(contamination);
+        dto.setContamination(contamination);
         dto.setCoverage20x(pctCov20);
         dto.setGender(gender);
         dto.setPdo(pdo);
@@ -486,8 +486,8 @@ public class AggregationTriageActionBean extends CoreActionBean {
     }
 
     private static Predicate<TriageDto> isAggregationInSpec(Set<String> sampleKeys) {
-        return p -> sampleKeys.contains(p.getPdoSample()) || (compareLess(p.getContaminination(), MAX_CONTAM) &&
-                    compareGreater(p.getCoverage20x(), MIN_COV_20));
+        return p -> sampleKeys.contains(p.getPdoSample()) || (compareLess(p.getContamination(), MAX_CONTAM) &&
+                                                              compareGreater(p.getCoverage20x(), MIN_COV_20));
     }
 
     private static boolean compareGreater(String value, double min) {
@@ -579,7 +579,7 @@ public class AggregationTriageActionBean extends CoreActionBean {
         private String sampleVessel;
         private String pdo;
         private String coverage20x;
-        private String contaminination;
+        private String contamination;
         private String alignedQ20Bases;
         private String gender;
         private int numberOfReadGroupsAggregated;
@@ -623,12 +623,12 @@ public class AggregationTriageActionBean extends CoreActionBean {
             this.coverage20x = coverage20x;
         }
 
-        public String getContaminination() {
-            return contaminination;
+        public String getContamination() {
+            return contamination;
         }
 
-        public void setContaminination(String contaminination) {
-            this.contaminination = contaminination;
+        public void setContamination(String contamination) {
+            this.contamination = contamination;
         }
 
         public String getAlignedQ20Bases() {
