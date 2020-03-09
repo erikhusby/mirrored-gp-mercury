@@ -13,6 +13,8 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.DnaQuantEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -63,6 +65,8 @@ public class ManifestSessionEjb {
     static final String SAMPLE_IDS_ARE_NOT_FOUND_MESSAGE = "Sample ids are not found: ";
     static final String RECEIPT_NOT_FOUND = "Unable to find receipt information: ";
 
+    private QueueEjb queueEjb;
+
     private ManifestSessionDao manifestSessionDao;
 
     private ResearchProjectDao researchProjectDao;
@@ -77,6 +81,8 @@ public class ManifestSessionEjb {
 
     private JiraService jiraService;
 
+    private DnaQuantEnqueueOverride dnaQuantEnqueueOverride;
+
     private static Log logger = LogFactory.getLog(ManifestSessionEjb.class);
 
     /**
@@ -89,7 +95,8 @@ public class ManifestSessionEjb {
     @Inject
     public ManifestSessionEjb(ManifestSessionDao manifestSessionDao, ResearchProjectDao researchProjectDao,
                               MercurySampleDao mercurySampleDao, LabVesselDao labVesselDao, UserBean userBean,
-                              BSPUserList bspUserList, JiraService jiraService) {
+                              BSPUserList bspUserList, JiraService jiraService, QueueEjb queueEjb,
+                              DnaQuantEnqueueOverride dnaQuantEnqueueOverride) {
         this.manifestSessionDao = manifestSessionDao;
         this.researchProjectDao = researchProjectDao;
         this.mercurySampleDao = mercurySampleDao;
@@ -97,6 +104,8 @@ public class ManifestSessionEjb {
         this.userBean = userBean;
         this.bspUserList = bspUserList;
         this.jiraService = jiraService;
+        this.queueEjb = queueEjb;
+        this.dnaQuantEnqueueOverride = dnaQuantEnqueueOverride;
     }
 
     /**
@@ -242,15 +251,39 @@ public class ManifestSessionEjb {
         Set<String> accessionedSamples = new HashSet<>();
         long disambiguator = 1L;
 
+//        List<LabVessel> accessionedVessels = new ArrayList<>();
         for (ManifestRecord record : manifestSession.getNonQuarantinedRecords()) {
             if (record.getStatus() == ManifestRecord.Status.ACCESSIONED) {
+                LabVessel labVessel;
                 if (manifestSession.isFromSampleKit()) {
+                    labVessel = findAndValidateTargetSampleAndVessel(record.getSampleId(),
+                            record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
                     transferSample(manifestSessionId, record.getValueByKey(Metadata.Key.SAMPLE_ID),
-                            record.getSampleId(), record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE), disambiguator++);
+                            record.getSampleId(), disambiguator++, labVessel);
+                }/* else { // todo jmt this code doesn't work for positive controls, disabling to focus on All of Us
+                    List<LabVessel> labVessels = labVesselDao.findBySampleKey(record.getSampleId());
+                    if (labVessels.size() != 1) {
+                        throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET,
+                                MERCURY_SAMPLE_KEY, record.getSampleId(), SAMPLE_NOT_FOUND_MESSAGE);
+                    }
+                    labVessel = labVessels.get(0);
                 }
+                accessionedVessels.add(labVessel);*/
                 accessionedSamples.add(record.getSampleId());
             }
         }
+
+/*
+        todo jmt disabling to focus on All of Us
+        MessageCollection messageCollection = new MessageCollection();
+        QueueSpecialization queueSpecialization = dnaQuantEnqueueOverride.determineDnaQuantQueueSpecialization(accessionedVessels);
+        queueEjb.enqueueLabVessels(accessionedVessels, QueueType.DNA_QUANT,
+                "Accessioned on " + DateUtils.convertDateTimeToString(new Date()), messageCollection,
+                QueueOrigin.RECEIVING, queueSpecialization);
+        for (String error : messageCollection.getErrors()) {
+            logger.debug("Error Occurred in Enqueue to " + QueueType.DNA_QUANT.getTextName() + " queue:  " + error);
+        }
+*/
 
         if (StringUtils.isNotBlank(manifestSession.getReceiptTicket())) {
             transitionReceiptTicket(manifestSession, accessionedSamples);
@@ -286,7 +319,8 @@ public class ManifestSessionEjb {
                     MERCURY_SAMPLE_KEY, targetSampleKey, SAMPLE_NOT_FOUND_MESSAGE);
         }
 
-        if(!targetSample.canSampleBeUsedForClinical()) {
+        // Can't use isClinicalSample here, due to positive controls
+        if (targetSample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSessionEjb.MERCURY_SAMPLE_KEY,
                     targetSample.getSampleKey(), ManifestSessionEjb.SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE);
         }
@@ -333,7 +367,7 @@ public class ManifestSessionEjb {
      */
     public void transferSample(long manifestSessionId, String sourceCollaboratorSample, String sampleKey,
                                String vesselLabel) {
-        transferSample(manifestSessionId, sourceCollaboratorSample, sampleKey, vesselLabel, 1L);
+        transferSample(manifestSessionId, sourceCollaboratorSample, sampleKey, 1L, findAndValidateTargetSampleAndVessel(sampleKey, vesselLabel));
     }
 
     /**
@@ -343,15 +377,13 @@ public class ManifestSessionEjb {
      * @param manifestSessionId        Database ID of the session which is affiliated with this transfer
      * @param sourceCollaboratorSample sample identifier for a source clinical sample
      * @param sampleKey                The sample Key for the target mercury sample for the tube transfer
-     * @param vesselLabel              The label of the lab vessel that should be associated with the given mercury sample
      * @param disambiguator            LabEvent disambiguator to avoid unique constraint errors when called in a tight loop
+     * @param targetVessel             Target LabVessel being transferred into.
      */
     public void transferSample(long manifestSessionId, String sourceCollaboratorSample, String sampleKey,
-                               String vesselLabel, long disambiguator) {
+                                    long disambiguator, LabVessel targetVessel) {
         ManifestSession session = findManifestSession(manifestSessionId);
         MercurySample targetSample = findAndValidateTargetSample(sampleKey);
-
-        LabVessel targetVessel = findAndValidateTargetSampleAndVessel(sampleKey, vesselLabel);
 
         session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, userBean.getBspUser(),
                 disambiguator);
@@ -486,7 +518,7 @@ public class ManifestSessionEjb {
                                                   StringUtils.join(missingSampleIds, ", "));
         }
         for (MercurySample mercurySample : mercurySampleMap.values()) {
-            if(!mercurySample.canSampleBeUsedForClinical()) {
+            if(mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
                 throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET,
                         ManifestSessionEjb.MERCURY_SAMPLE_KEY, mercurySample.getSampleKey(),
                         ManifestSessionEjb.SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE);

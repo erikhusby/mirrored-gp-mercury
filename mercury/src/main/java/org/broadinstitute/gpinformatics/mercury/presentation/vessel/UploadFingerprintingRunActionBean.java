@@ -90,8 +90,9 @@ public class UploadFingerprintingRunActionBean extends CoreActionBean {
         InputStream fileStream = null;
         try {
             fileStream = runFile.getInputStream();
-            Pair<StaticPlate, LabMetricRun> pair = fluidigmRunFactory.createFluidigmChipRun(runFile.getInputStream(),
-                    userBean.getBspUser().getUserId(), messageCollection);
+            Pair<StaticPlate, LabMetricRun> pair = fluidigmRunFactory.createFluidigmChipRunAndDequeue(
+                    runFile.getInputStream(), userBean.getBspUser().getUserId(), messageCollection);
+
             if (messageCollection.hasErrors()) {
                 addMessages(messageCollection);
             } else {
