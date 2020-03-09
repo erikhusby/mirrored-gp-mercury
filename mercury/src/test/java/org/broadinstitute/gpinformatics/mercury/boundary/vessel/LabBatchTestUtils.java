@@ -88,7 +88,7 @@ public class LabBatchTestUtils {
         return bucket;
     }
 
-    public LinkedHashMap<String, BarcodedTube> initializeTubes(List<String> vesselSampleList) {
+    public LinkedHashMap<String, BarcodedTube> initializeTubes(List<String> vesselSampleList, final MaterialType materialType) {
 
         LinkedHashMap<String, BarcodedTube> barcodedTubes = new LinkedHashMap<>();
         // starting rack
@@ -97,7 +97,7 @@ public class LabBatchTestUtils {
             String bspStock = vesselSampleList.get(sampleIndex - 1);
             BarcodedTube bspAliquot = new BarcodedTube(barcode);
             BspSampleData bspSampleData = new BspSampleData(new HashMap<BSPSampleSearchColumn, String>() {{
-                put(BSPSampleSearchColumn.MATERIAL_TYPE, MaterialType.CELLS_PELLET_FROZEN.getDisplayName());
+                put(BSPSampleSearchColumn.MATERIAL_TYPE, materialType.getDisplayName());
             }});
             bspAliquot.addSample(new MercurySample(bspStock, bspSampleData));
             tubeDao.persist(bspAliquot);
