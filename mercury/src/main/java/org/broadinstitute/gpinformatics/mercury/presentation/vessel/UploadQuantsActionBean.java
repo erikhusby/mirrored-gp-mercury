@@ -303,11 +303,12 @@ public class UploadQuantsActionBean extends CoreActionBean {
                 flatMap(tubeFormation -> tubeFormation.getContainerRole().getContainedVessels().stream()).
                 filter(tube -> tubeBarcodeToQuantValue.containsKey(tube.getLabel())).
                 forEach(tube -> {
-                    // Clinical sample tubes should not go to BSP.
-                    if (tube.getMercurySamples().stream().anyMatch(MercurySample::isClinicalSample)) {
-                        tubesNotSent.add(tube.getLabel());
-                    } else {
+                    // Clinical sample tubes should not go to BSP.  Can't use isClinicalSample due to positive controls.
+                    if (tube.getMercurySamples().stream().anyMatch(
+                            mercurySample -> mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP)) {
                         tubes.add(tube);
+                    } else {
+                        tubesNotSent.add(tube.getLabel());
                     }
                 });
         if (!tubesNotSent.isEmpty()) {
