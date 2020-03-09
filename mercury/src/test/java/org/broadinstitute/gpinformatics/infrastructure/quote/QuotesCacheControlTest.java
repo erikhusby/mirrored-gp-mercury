@@ -51,16 +51,16 @@ public class QuotesCacheControlTest {
         Quote foundQuote = quotesCache.getQuote(testQuoteId);
         assertThat(foundQuote, not(nullValue()));
 
-        Mockito.verify(mockQuoteService, Mockito.times(desiredInvocationCount)).getQuoteByAlphaId(Mockito.anyString());
+        Mockito.verify(mockQuoteService, Mockito.times(desiredInvocationCount)).getQuoteByAlphaId(Mockito.anyString(), Mockito.anyBoolean());
         foundQuote = quotesCache.getQuote(testQuoteId);
         assertThat(foundQuote, not(nullValue()));
-        Mockito.verify(mockQuoteService, Mockito.times(desiredInvocationCount)).getQuoteByAlphaId(Mockito.anyString());
+        Mockito.verify(mockQuoteService, Mockito.times(desiredInvocationCount)).getQuoteByAlphaId(Mockito.anyString(), Mockito.anyBoolean());
 
     }
 
     public QuoteService setupQuoteService() throws Exception {
         QuoteService mockQuoteService = Mockito.mock(QuoteService.class);
-        Mockito.when(mockQuoteService.getQuoteByAlphaId(Mockito.anyString())).thenAnswer(invocation -> {
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(Mockito.anyString(), Mockito.anyBoolean())).thenAnswer(invocation -> {
             String quoteId = (String) invocation.getArguments()[0];
             return new Quote(quoteId, null, null);
         });

@@ -2476,15 +2476,9 @@ public class ProductOrderActionBeanTest {
         mockPDOListAnswer.clear();
         mockPDOListAnswer.addAll(allOrdersMinusTestOrder);
 
-
         if (!QuoteService.isDevQuote(testQuoteIdentifier)) {
             Mockito.when(mockProductOrderDao.findOrdersWithCommonQuote(Mockito.anyString())).thenAnswer(
-                    new Answer<List<ProductOrder>>() {
-                        @Override
-                        public List<ProductOrder> answer(InvocationOnMock invocationOnMock) throws Throwable {
-                            return mockPDOListAnswer;
-                        }
-                    });
+                (Answer<List<ProductOrder>>) invocationOnMock -> mockPDOListAnswer);
         } else {
             Mockito.when(mockProductOrderDao.findOrdersWithCommonQuote(Mockito.anyString()))
                     .thenThrow(new RuntimeException("Find orders with common quote should not be thrown at this time"));
@@ -2899,6 +2893,9 @@ public class ProductOrderActionBeanTest {
                     .getPrice();
 
             if(quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
+                if (QuoteService.isDevQuote(testQuote)) {
+                    return BigDecimal.ZERO;
+                }
                 final QuoteItem cachedQuoteItem =
                         testQuote.findCachedQuoteItem(testOrder.getProduct().getPrimaryPriceItem().getPlatform(),
                                 testOrder.getProduct().getPrimaryPriceItem().getCategory(),

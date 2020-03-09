@@ -644,9 +644,7 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
     protected Quote validateQuote(ProductOrder productOrder) {
         Quote quoteDetails = null;
         try {
-            if (!QuoteService.isDevQuote(productOrder.getQuoteId())) {
-                quoteDetails = productOrder.getQuote(quoteService);
-            }
+            quoteDetails = productOrder.getQuote(quoteService);
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", productOrder.getQuoteId(), e.getMessage());
         } catch (QuoteNotFoundException e) {
