@@ -20,6 +20,13 @@ public interface QuoteService extends Serializable {
         return DEV_QUOTES.contains(alphanumericId);
     }
 
+    static boolean isDevQuote(Quote quote) {
+        if (quote != null) {
+            return isDevQuote(quote.getAlphanumericId());
+        }
+        return false;
+    }
+
     public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException;
 
     public Quotes getAllSequencingPlatformQuotes() throws QuoteServerException, QuoteNotFoundException;

@@ -65,7 +65,6 @@ public class QuotesCache extends AbstractCacheControl implements Serializable {
         } catch (Exception e) {
             log.error("Could not refresh quote cache " + getClass().getName(), e);
         }
-
     }
 
     @Override

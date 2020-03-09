@@ -904,9 +904,8 @@ public class ProductOrderActionBean extends CoreActionBean {
      *               include in evaluating and the funds remaining
      * @param additionalSampleCount
      */
-    protected void validateQuoteDetails(Quote quote, int additionalSampleCount) throws InvalidProductException,
-            SAPIntegrationException {
-        if (QuoteService.isDevQuote(quote.getAlphanumericId())) {
+    protected void validateQuoteDetails(Quote quote, int additionalSampleCount) throws InvalidProductException {
+        if (QuoteService.isDevQuote(quote)) {
             return;
         }
         if (!canChangeQuote(editOrder, originalQuote, quote.getAlphanumericId())) {
@@ -989,7 +988,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         //Creating a new array list to be able to remove items from it if need be
         List<ProductOrder> ordersWithCommonQuote = new ArrayList<>();
-        if (!QuoteService.isDevQuote(foundQuote.getAlphanumericId())) {
+        if (!QuoteService.isDevQuote(foundQuote)) {
             ordersWithCommonQuote.addAll(productOrderDao.findOrdersWithCommonQuote(foundQuote.getAlphanumericId()));
         }
 
@@ -1036,7 +1035,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     BigDecimal getOrderValue(ProductOrder testOrder, BigDecimal sampleCount, Quote quote) throws InvalidProductException {
         BigDecimal value = BigDecimal.ZERO;
-        if(testOrder.getProduct() != null) {
+        if(testOrder.getProduct() != null && !QuoteService.isDevQuote(quote)) {
             try {
                 final Product product = testOrder.getProduct();
                 BigDecimal productValue =

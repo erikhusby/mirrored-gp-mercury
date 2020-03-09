@@ -1656,7 +1656,7 @@ public class ProductOrderActionBeanTest {
         actionBean.setEditOrder(testOrder);
 
         BigDecimal calculatedOrderValue = BigDecimal.ZERO;
-        if (!QuoteService.isDevQuote(testQuote.getAlphanumericId())) {
+        if (!QuoteService.isDevQuote(testQuote)) {
             calculatedOrderValue = getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote);
         }
         if (quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
@@ -1674,7 +1674,7 @@ public class ProductOrderActionBeanTest {
         }
         testQuote.setQuoteItems(quoteItems);
 
-        if (!QuoteService.isDevQuote(testQuote.getAlphanumericId())) {
+        if (!QuoteService.isDevQuote(testQuote)) {
             calculatedOrderValue = getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote);
         }
         if (quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
@@ -1693,7 +1693,7 @@ public class ProductOrderActionBeanTest {
 
         testOrder.updateAddOnProducts(Arrays.asList(addonNonSeqProduct, seqProduct));
 
-        if (!QuoteService.isDevQuote(testQuote.getAlphanumericId())) {
+        if (!QuoteService.isDevQuote(testQuote)) {
             calculatedOrderValue = getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote);
         }
         if (quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
@@ -1721,7 +1721,7 @@ public class ProductOrderActionBeanTest {
 
         testOrder.setProduct(seqProduct);
 
-        if (!QuoteService.isDevQuote(testQuote.getAlphanumericId())) {
+        if (!QuoteService.isDevQuote(testQuote)) {
             calculatedOrderValue = getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote);
         }
         if (quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
@@ -1752,7 +1752,7 @@ public class ProductOrderActionBeanTest {
         abandonedSample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.ABANDONED);
 
         Assert.assertEquals(testOrder.getUnbilledSampleCount(), 74);
-        if (!QuoteService.isDevQuote(testQuote.getAlphanumericId())) {
+        if (!QuoteService.isDevQuote(testQuote)) {
             calculatedOrderValue = getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote);
         }
         if (quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
@@ -1780,7 +1780,7 @@ public class ProductOrderActionBeanTest {
 
         Assert.assertEquals(testOrder.getUnbilledSampleCount(), 74);
 
-        if (!QuoteService.isDevQuote(testQuote.getAlphanumericId())) {
+        if (!QuoteService.isDevQuote(testQuote)) {
             calculatedOrderValue = getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote);
         }
         if (quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
@@ -1807,7 +1807,7 @@ public class ProductOrderActionBeanTest {
             actionBean.clearValidationErrors();
         }
 
-        if (!QuoteService.isDevQuote(testQuote.getAlphanumericId())) {
+        if (!QuoteService.isDevQuote(testQuote)) {
             calculatedOrderValue = getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote);
         }
         if (quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
