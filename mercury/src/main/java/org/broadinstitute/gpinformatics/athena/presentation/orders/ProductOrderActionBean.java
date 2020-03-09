@@ -3459,11 +3459,11 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         if (action.equals(PLACE_ORDER_ACTION) || action.equals(VALIDATE_ORDER) ||
             (action.equals(SAVE_ACTION) && editOrder.isSubmitted())) {
+            boolean hasQuote = StringUtils.isNotBlank(editOrder.getQuoteId());
+            requireField(hasQuote || editOrder.canSkipQuote(), "a quote specified", action);
             if (QuoteService.isDevQuote(editOrder.getQuoteId())){
                 return;
             }
-            boolean hasQuote = StringUtils.isNotBlank(editOrder.getQuoteId());
-            requireField(hasQuote || editOrder.canSkipQuote(), "a quote specified", action);
             if (!hasQuote && editOrder.allowedToSkipQuote()) {
                 requireField(editOrder.getSkipQuoteReason() , "an explanation for why a quote cannot be entered", action);
             }
