@@ -640,6 +640,7 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
         return createTitle;
     }
 
+    @Nullable
     protected Quote validateQuote(ProductOrder productOrder) {
         Quote quoteDetails = null;
         try {

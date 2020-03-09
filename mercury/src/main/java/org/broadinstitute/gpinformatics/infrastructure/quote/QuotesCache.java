@@ -28,12 +28,12 @@ import java.util.Map;
  * The purpose of this class is to cache QuoteServer Quotes which:
  * <ol>
  *     <li>Are large and therefore cause timeouts in Mercury and put undo burden on the Quote Server</li>
- *     <li>Are always valid, such as DEV quotes such as GP87U, CRSPEVR or GPSPGR7</li>
+ *     <li>Are always valid, such as DEV quotes GP87U, CRSPEVR or GPSPGR7</li>
  *     <li>Are defined in QuoteService.DEV_QUOTES</li>
  * </ol>
- * Therefore, to add a quote to the cache it must be added QuoteService.DEV_QUOTES
- * <p></p>The quotes cache is updated once daily, or when getQuote(quoteId) is called before when the cache hasn't been
- * initialized.</p>
+ * To add a quote to the cache it must be added QuoteService.DEV_QUOTES
+ * <p>The quotes cache is updated once daily or when getQuote(quoteId) is called if the cache hasn't been initialized
+ * yet. </p>
  *
  * @see QuoteService#DEV_QUOTES
  */
@@ -42,10 +42,10 @@ import java.util.Map;
 public class QuotesCache extends AbstractCacheControl implements Serializable {
     private static final long serialVersionUID = 4310647434148494492L;
     private static final Log log = LogFactory.getLog(QuotesCache.class);
-    private int maximumCacheSize = 100000;
 
+    // Unused but required by CacheControlMXBean
+    private int maximumCacheSize = 1000;
     private QuoteService quoteService;
-
     private Map<String, Quote> quoteMap = null;
 
     public QuotesCache() {
@@ -60,11 +60,10 @@ public class QuotesCache extends AbstractCacheControl implements Serializable {
     @Schedule(minute = "30", hour = "1", persistent = false)
     public void invalidateCache() {
         try {
-            quoteMap=null;
+            quoteMap = null;
             refreshCache();
-        }
-        catch(Exception e) {
-            log.error("Could not refresh cache " + getClass().getName(), e);
+        } catch (Exception e) {
+            log.error("Could not refresh quote cache " + getClass().getName(), e);
         }
 
     }
@@ -79,17 +78,15 @@ public class QuotesCache extends AbstractCacheControl implements Serializable {
         this.maximumCacheSize = maximumCacheSize;
     }
 
-//    @Lock(LockType.WRITE)
     public synchronized void refreshCache() {
         QuoteService.DEV_QUOTES.forEach(quoteId -> {
-            Quote quote = null;
+            Quote quote;
             try {
                 quote = quoteService.getQuoteByAlphaId(quoteId, true);
                 if (quote != null) {
                     if (quoteMap == null) {
                         quoteMap = new HashMap<>();
                     }
-
                     quoteMap.put(quote.getAlphanumericId(), quote);
                 }
             } catch (QuoteServerException | QuoteNotFoundException ex) {
@@ -109,5 +106,4 @@ public class QuotesCache extends AbstractCacheControl implements Serializable {
     public void setQuoteService(QuoteService quoteService) {
         this.quoteService = quoteService;
     }
-
 }

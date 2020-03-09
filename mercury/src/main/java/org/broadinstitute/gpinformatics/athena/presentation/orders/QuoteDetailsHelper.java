@@ -263,6 +263,10 @@ public class QuoteDetailsHelper {
             return fundingInfo;
         }
 
+        /**
+         * Since DEV Quotes are cached we should not show quote details since they will not be up-to-date.
+         * For these quotes create a link to the Quote Server.
+         */
         public static FundingInfo excludedQuote(String quoteIdentifier, String quoteUrl) {
             FundingInfo fundingInfo = new FundingInfo(Funding.FUNDS_RESERVATION);
             fundingInfo.setQuoteWarning(false);

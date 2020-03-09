@@ -3424,8 +3424,10 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         try {
-            final Optional<Quote> quote = (editOrder.hasQuoteServerQuote())?Optional.ofNullable(validateQuote(editOrder)):Optional.ofNullable(null);
-            final Optional<SapQuote> sapQuote = (editOrder.hasSapQuote())?Optional.ofNullable(validateSapQuote(editOrder)):Optional.ofNullable(null);
+            Optional<Quote> quote =
+                (editOrder.hasQuoteServerQuote()) ? Optional.ofNullable(validateQuote(editOrder)) : Optional.empty();
+            Optional<SapQuote> sapQuote =
+                (editOrder.hasSapQuote()) ? Optional.ofNullable(validateSapQuote(editOrder)) : Optional.empty();
 
             if (editOrder.hasSapQuote()) {
                 if (sapQuote.isPresent()) {
