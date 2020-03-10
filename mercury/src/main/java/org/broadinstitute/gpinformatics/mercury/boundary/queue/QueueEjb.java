@@ -310,7 +310,7 @@ public class QueueEjb {
 
         List<QueueGrouping> queueGroupings = new ArrayList<>(genericQueue.getQueueGroupings());
 
-        if (positionToMoveTo < 1 || positionToMoveTo >= queueGroupings.size()) {
+        if (positionToMoveTo < 1 || positionToMoveTo > queueGroupings.size()) {
             messageCollection.addError("Position to move must be between 1 and " + queueGroupings.size());
             return;
         }
