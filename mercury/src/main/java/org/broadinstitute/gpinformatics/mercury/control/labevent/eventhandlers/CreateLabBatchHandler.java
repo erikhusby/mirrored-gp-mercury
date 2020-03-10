@@ -7,11 +7,11 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEvent
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchResource;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -28,6 +28,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+
+import static org.broadinstitute.gpinformatics.mercury.entity.sample.ContractClient.MAYO;
 
 /**
  * Creates a LabBatch for a given message.  Initially, creates ARRAY ticket for ArrayPlatingDilution message that is
@@ -48,18 +50,41 @@ public class CreateLabBatchHandler extends AbstractEventHandler {
 
     @Override
     public void handleEvent(LabEvent targetEvent, StationEventType stationEvent) {
+        boolean nonAouSampleFound = false;
+        for (LabVessel labVessel : QueueEventHandler.getVesselsPreferTubes(targetEvent,
+                QueueEventHandler.Direction.SOURCE)) {
+            MercurySample mercurySample = labVessel.getSampleInstancesV2().stream().
+                    map(sampleInstance -> sampleInstance.getRootOrEarliestMercurySample()).
+                    findFirst().orElse(null);
+            if (mercurySample != null) {
+                // Create LabBatch only when all samples originated in Mercury (not BSP).
+                if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                    return;
+                }
+                // Finds any samples that are neither process controls nor from AoU.
+                if (!mercurySample.getProductOrderSamples().isEmpty() &&
+                        mercurySample.getMetadata().stream().
+                                noneMatch(metadata -> metadata.getKey() == Metadata.Key.CLIENT &&
+                                        MAYO.name().equals(metadata.getStringValue()))) {
+                    nonAouSampleFound = true;
+                }
+            }
+        }
         String productFamily;
+        boolean bucketedControls;
 
         switch (targetEvent.getLabEventType()) {
         case AUTO_DAUGHTER_PLATE_CREATION:
             productFamily = ProductFamily.WHOLE_GENOME_SEQUENCING;
-            // Creates LabBatch only when all are AoU samples.
-            if (!QueueEventHandler.isAllOfUs(targetEvent, true)) {
+            bucketedControls = false;
+            // LCSET should only be made when all samples are from AoU.
+            if (nonAouSampleFound) {
                 return;
             }
             break;
         case ARRAY_PLATING_DILUTION:
             productFamily = ProductFamily.WHOLE_GENOME_GENOTYPING;
+            bucketedControls = true;
             break;
         default:
             throw new RuntimeException("Unsupported event: " + targetEvent.getLabEventType().getName());
@@ -71,16 +96,7 @@ public class CreateLabBatchHandler extends AbstractEventHandler {
                 targetLabVessels.size() != 1) {
             throw new RuntimeException("Currently supports single section transfer only.");
         }
-
-        // Create LabBatch only for Mercury (not BSP) samples
         LabVessel sourceLabVessel = sourceLabVessels.iterator().next();
-        for (SampleInstanceV2 sampleInstanceV2 : sourceLabVessel.getSampleInstancesV2()) {
-            if (sampleInstanceV2.getRootOrEarliestMercurySample().getMetadataSource() ==
-                    MercurySample.MetadataSource.BSP) {
-                return;
-            }
-        }
-
         LabVessel targetLabVessel = targetLabVessels.iterator().next();
         if (targetLabVessel.getType() == LabVessel.ContainerType.STATIC_PLATE &&
                 targetLabVessel.getContainerRole().getContainedVessels().isEmpty()) {
@@ -102,7 +118,7 @@ public class CreateLabBatchHandler extends AbstractEventHandler {
         Set<LabVessel> labVesselSet = new HashSet<>(targetLabVessel.getContainerRole().getContainedVessels());
         LabBatch labBatch = new LabBatch("dummy" , labVesselSet, LabBatch.LabBatchType.WORKFLOW);
         Set<ProductOrder> productOrders = LabBatchResource.addToBatch(labVesselSet, labBatch,
-                productFamily, username, targetEvent.getEventDate(), bucketEjb);
+                productFamily, username, targetEvent.getEventDate(), bucketEjb, bucketedControls);
         String bucketDefinitionName = labBatch.getBucketEntries().iterator().next().getBucket().getBucketDefinitionName();
         Set<String> pdoKeys = productOrders.stream().map(ProductOrder::getBusinessKey).collect(Collectors.toSet());
         labBatchEjb.createJiraTicket(labBatch.getWorkflowName(), username, bucketDefinitionName, MessageReporter.UNUSED,

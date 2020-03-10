@@ -82,7 +82,7 @@ public class QueueEventHandler extends AbstractEventHandler {
             // dilution plate is input to pico, then input to fingerprinting
             // Determine: whether All of Us; source or dest; queue or dequeue; queue type
             case PICO_DILUTION_TRANSFER_FORWARD_BSP: {
-                if (isAllOfUs(labEvent, false)) {
+                if (isAllOfUs(labEvent)) {
                     try {
                         // Check the contract client preference
                         boolean addToQueue = true;
@@ -118,7 +118,7 @@ public class QueueEventHandler extends AbstractEventHandler {
             }
             case PICO_TRANSFER:
             case PICO_MICROFLUOR_TRANSFER: {
-                if (isAllOfUs(labEvent, false)) {
+                if (isAllOfUs(labEvent)) {
                     Set<LabVessel> vesselsPreferTubes = getVesselsPreferTubes(labEvent, Direction.SOURCE);
                     String[] productTypes = vesselsPreferTubes.iterator().next().getMetadataValues(Metadata.Key.PRODUCT_TYPE);
                     if (productTypes.length > 0 && productTypes[0].equals(MayoManifestEjb.AOU_GENOME)) {
@@ -149,44 +149,27 @@ public class QueueEventHandler extends AbstractEventHandler {
 
     private void dequeue(LabEvent labEvent, Direction direction, QueueType arrayPlating,
             MessageCollection messageCollection) {
-        if (isAllOfUs(labEvent, false)) {
+        if (isAllOfUs(labEvent)) {
             queueEjb.dequeueLabVessels(getVesselsPreferTubes(labEvent, direction), arrayPlating, messageCollection,
                     DequeueingOptions.DEFAULT_DEQUEUE_RULES);
         }
     }
 
-    /**
-     * Tests whether samples are from All of Us.
-     * @param allVessels if false, tests if any sample is from AoU. If true, tests if all samples are from AoU.
-     */
-    public static boolean isAllOfUs(LabEvent labEvent, boolean allVessels) {
+    private boolean isAllOfUs(LabEvent labEvent) {
         Set<LabVessel> labVessels = getVesselsPreferTubes(labEvent, Direction.SOURCE);
-        return allVessels ?
-                // All samples must be from Mayo, or be process controls having no product order sample.
-                labVessels.stream().
-                        map(labVessel -> labVessel.getSampleInstancesV2().stream().
-                                map(sampleInstance -> sampleInstance.getRootOrEarliestMercurySample()).
-                                findFirst().orElse(null)).
-                        filter(mercurySample -> mercurySample != null).
-                        allMatch(mercurySample -> mercurySample.getProductOrderSamples().isEmpty() ||
-                                mercurySample.getMetadata().stream().
-                                        anyMatch(metadata -> metadata.getKey() == Metadata.Key.CLIENT &&
-                                                MAYO.name().equals(metadata.getStringValue())))
-                :
-                // At least one sample is from Mayo.
-                labVessels.stream().anyMatch(lv -> lv.getSampleInstancesV2().stream().anyMatch(
-                        si -> {
-                            MercurySample rootSample = si.getRootOrEarliestMercurySample();
-                            return rootSample != null && rootSample.getMetadata().stream().anyMatch(
-                                    md -> md.getKey() == Metadata.Key.CLIENT && md.getStringValue().equals(MAYO.name()));
-                        }));
+        return labVessels.stream().anyMatch(lv -> lv.getSampleInstancesV2().stream().anyMatch(
+                si -> {
+                    MercurySample rootSample = si.getRootOrEarliestMercurySample();
+                    return rootSample != null && rootSample.getMetadata().stream().anyMatch(
+                            md -> md.getKey() == Metadata.Key.CLIENT && md.getStringValue().equals(MAYO.name()));
+                }));
     }
 
     /*
     get
      */
     @NotNull
-    private static Set<LabVessel> getVesselsPreferTubes(LabEvent labEvent, Direction direction) {
+    public static Set<LabVessel> getVesselsPreferTubes(LabEvent labEvent, Direction direction) {
         Set<LabVessel> labVessels = direction == Direction.SOURCE ? labEvent.getSourceVesselTubes() :
                 labEvent.getTargetVesselTubes();
         if (labVessels.isEmpty()) {
