@@ -15,7 +15,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.FiniteStateMachineActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="List Dragen Workflows" sectionTitle="List Dragen Workflows" showCreate="true">
+<stripes:layout-render name="/layout.jsp" pageTitle="List DRAGEN Workflows" sectionTitle="List DRAGEN Workflows" showCreate="true">
 
     <stripes:layout-component name="extraHead">
         <style type="text/css">

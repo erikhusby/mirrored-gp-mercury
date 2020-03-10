@@ -91,9 +91,4 @@ public class DemultiplexSampleDao {
 
         return resultList;
     }
-
-    public List<DemultiplexSampleMetric> findByBarcodes(List<String> barcodes) {
-        //TODO
-        return null;
-    }
 }

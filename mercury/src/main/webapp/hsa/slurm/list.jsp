@@ -15,26 +15,27 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.SlurmActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="List Dragen Nodes" sectionTitle="List Dragen Nodes" showCreate="true">
+<stripes:layout-render name="/layout.jsp" pageTitle="List DRAGEN Nodes" sectionTitle="List DRAGEN Nodes" showCreate="false"
+                       dataTablesVersion="1.10" >
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function() {
-                $j('#nodeList').dataTable( {
-                    "oTableTools": ttExportDefines,
-                    "aaSorting": [[0,'asc']],
-                    "aoColumns": [
-                        {"bSortable": true, "sType": "html"},
-                        {"bSortable": true},
-                        {"bSortable": true},
-                        {"bSortable": true},
+                $j('#nodeList').dataTable({
+                    renderer: "bootstrap",
+                    columns: [
+                        {sortable: false},
+                        {sortable: true},
+                        {sortable: true},
+                        {sortable: true},
+                        {sortable: true}
                     ],
                 });
 
-                $j('.node-checkbox').enableCheckboxRangeSelection({
-                    checkAllClass:'node-checkAll',
-                    countDisplayClass:'node-checkedCount',
-                    checkboxClass:'node-checkbox'});
+                $j('.nodeList-checkbox').enableCheckboxRangeSelection({
+                    checkAllClass:'nodeList-checkAll',
+                    countDisplayClass:'nodeList-checkedCount',
+                    checkboxClass:'nodeList-checkbox'});
             });
         </script>
     </stripes:layout-component>
@@ -45,8 +46,8 @@
                 <thead>
                 <tr>
                     <th width="30px">
-                        <input type="checkbox" class="node-checkAll" title="Check All"/>
-                        <span id="count" class="node-checkedCount"></span>
+                        <input type="checkbox" class="nodeList-checkAll" title="Check All"/>
+                        <span id="count" class="nodeList-checkedCount"></span>
                     </th>
                     <th>Name</th>
                     <th>Available</th>
@@ -69,11 +70,6 @@
                 </c:forEach>
                 </tbody>
             </table>
-            <stripes:select name="overrideStatus">
-                <stripes:options-enumeration label="statusName"
-                                             enum="org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status"/>
-            </stripes:select>
-            <stripes:submit name="updateStateStatus" value="Update Status" class="btn btn-primary"/>
         </stripes:form>
     </stripes:layout-component>
 </stripes:layout-render>

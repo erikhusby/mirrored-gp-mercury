@@ -3,16 +3,13 @@ package org.broadinstitute.gpinformatics.infrastructure.analytics;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.AlignmentMetric;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.AlignmentMetric_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.CriteriaInClauseCreator;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.JPASplitter;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceContextType;
 import javax.persistence.Query;
@@ -26,10 +23,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -106,10 +101,5 @@ public class AlignmentMetricsDao {
     public Map<String, AlignmentMetric> findMapBySampleAlias(Collection<String> sampleAlias) {
         return findAggregationBySampleAlias(sampleAlias).stream().collect(Collectors.toMap(AlignmentMetric::getSampleAlias,
                 Function.identity()));
-    }
-
-    public Map<String, AlignmentMetric> findMapByMercurySample(Collection<MercurySample> mercurySamples) {
-        List<String> sampleKeys = mercurySamples.stream().map(MercurySample::getSampleKey).collect(Collectors.toList());
-        return findMapBySampleAlias(sampleKeys);
     }
 }

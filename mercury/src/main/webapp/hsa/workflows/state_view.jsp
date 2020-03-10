@@ -160,8 +160,10 @@ This fragment is used by  workflows view.jsp to re-use code when displaying stat
                     </tr>
                     <c:forEach items="${nextState.tasks}" var="task">
                         <tr>
-                            <td>Command</td>
-                            <td>${task.commandLineArgument}</td>
+                            <c:if test="${task.class.superclass.simpleName == 'ProcessTask' or task.class.superclass.simpleName == 'PicardTask' or task.class.superclass.simpleName == 'ComputeTask'}">
+                                <td>Command</td>
+                                <td>${task.commandLineArgument}</td>
+                            </c:if>
                         </tr>
                     </c:forEach>
                 </table>
