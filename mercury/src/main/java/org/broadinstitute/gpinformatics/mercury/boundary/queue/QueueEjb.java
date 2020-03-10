@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.queue.validation.QueueV
 import org.broadinstitute.gpinformatics.mercury.control.dao.queue.GenericQueueDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.queue.QueueEntityDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueContainerRule;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
@@ -22,6 +23,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 import org.jetbrains.annotations.NotNull;
 
@@ -127,6 +131,34 @@ public class QueueEjb {
         if (genericQueue.getQueueGroupings() == null) {
             genericQueue.setQueueGroupings(new TreeSet<>(QueueGrouping.BY_SORT_ORDER));
         }
+        // If parameter is a plate, accumulate plate wells (and create them if necessary), to have a QueueEntry for
+        // each well, rather than one for the entire plate
+        boolean expandWells = false;
+        List<LabVessel> vesselsToRemove = new ArrayList<>();
+        for (LabVessel labVessel : vesselList) {
+            if (labVessel.getType() == LabVessel.ContainerType.STATIC_PLATE) {
+                vesselsToRemove.add(labVessel);
+                StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
+                if(labVessel.getContainerRole().getContainedVessels().isEmpty()) {
+                    expandWells = true;
+                    for (VesselPosition vesselPosition : staticPlate.getVesselGeometry().getVesselPositions()) {
+                        PlateWell plateWell = new PlateWell(staticPlate, vesselPosition);
+                        staticPlate.getContainerRole().addContainedVessel(plateWell,
+                                vesselPosition);
+                        vesselList.add(plateWell);
+                    }
+                } else {
+                    vesselList.addAll(staticPlate.getContainerRole().getContainedVessels());
+                }
+            }
+        }
+        if (!vesselsToRemove.isEmpty()) {
+            vesselList.removeAll(vesselsToRemove);
+        }
+        if (expandWells) {
+            labVesselDao.flush();
+        }
+
         List<Long> vesselIds = getApplicableLabVesselIds(queueType, vesselList);
 
         boolean isUniqueSetOfActiveVessels = true;
@@ -206,6 +238,17 @@ public class QueueEjb {
     public void dequeueLabVessels(Collection<LabVessel> labVessels, QueueType queueType,
                                   MessageCollection messageCollection, DequeueingOptions dequeueingOptions) {
 
+        List<LabVessel> vesselsToRemove = new ArrayList<>();
+        for (LabVessel labVessel : labVessels) {
+            // Convert plate to plate wells, to get individual QueueEntries
+            if (labVessel.getType() == LabVessel.ContainerType.STATIC_PLATE) {
+                vesselsToRemove.add(labVessel);
+                labVessels.addAll(labVessel.getContainerRole().getContainedVessels());
+            }
+        }
+        if (!vesselsToRemove.isEmpty()) {
+            labVessels.removeAll(vesselsToRemove);
+        }
         List<Long> labVesselIds = getApplicableLabVesselIds(queueType, labVessels);
 
         // Finds all the Active entities by the vessel Ids
@@ -401,9 +444,11 @@ public class QueueEjb {
         genericQueueDao.flush();
 
         for (LabVessel labVessel : vesselList) {
-            QueueEntity queueEntity = new QueueEntity(queueGrouping, labVessel);
-            queueGrouping.getQueuedEntities().add(queueEntity);
-            persist(queueEntity);
+            if (labVessel.getSampleInstanceCount() > 0) {
+                QueueEntity queueEntity = new QueueEntity(queueGrouping, labVessel);
+                queueGrouping.getQueuedEntities().add(queueEntity);
+                persist(queueEntity);
+            }
         }
         setInitialOrder(queueGrouping);
         return queueGrouping;

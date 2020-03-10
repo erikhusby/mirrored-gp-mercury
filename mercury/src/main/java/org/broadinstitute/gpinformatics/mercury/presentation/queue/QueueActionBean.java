@@ -57,7 +57,7 @@ import java.util.Map;
 @UrlBinding("/queue/Queue.action")
 public class QueueActionBean extends CoreActionBean {
     private static final Log log = LogFactory.getLog(QueueActionBean.class);
-    private static final String SPREADSHEET_FILENAME = "_queue_data_dump.xls";
+    private static final String SPREADSHEET_FILENAME = "_queue_data_dump.xlsx";
 
     private QueueType queueType;
 
