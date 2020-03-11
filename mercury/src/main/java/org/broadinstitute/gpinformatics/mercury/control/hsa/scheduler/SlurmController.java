@@ -30,13 +30,13 @@ public class SlurmController implements SchedulerController {
 
     @Override
     public List<PartitionInfo> listPartitions() {
-        return runProcesssParseList(Arrays.asList("ssh", dragenConfig.getSlurmHost(), "sinfo", "-o", "\"%all\""),
+        return runProcesssParseList(Arrays.asList("ssh", "-l", "thompson", dragenConfig.getSlurmHost(), "sinfo", "-o", "\"%all\""),
                 PartitionInfo.class, 1);
     }
 
     @Override
     public List<QueueInfo> listQueue() {
-        return runProcesssParseList(Arrays.asList("ssh", dragenConfig.getSlurmHost(), "squeue", "-o", "\"%all\""), QueueInfo.class, 1);
+        return runProcesssParseList(Arrays.asList("ssh", "-l", "thompson", dragenConfig.getSlurmHost(), "squeue", "-o", "\"%all\""), QueueInfo.class, 1);
     }
 
     /**
@@ -67,10 +67,10 @@ public class SlurmController implements SchedulerController {
         }
 
         if (partition == null) {
-            cmd = Arrays.asList( "ssh", dragenConfig.getSlurmHost(), "sbatch", "--exclusive",
+            cmd = Arrays.asList( "ssh", "-l", "thompson", dragenConfig.getSlurmHost(), "sbatch", "--exclusive",
                     "-J", processTask.getTaskName(), "--output", dragenConfig.getLogFilePath(), dragenCmd);
         } else {
-            cmd = new ArrayList<>(Arrays.asList( "ssh", dragenConfig.getSlurmHost(), "sbatch",
+            cmd = new ArrayList<>(Arrays.asList( "ssh", "-l", "thompson", dragenConfig.getSlurmHost(), "sbatch",
                     "-J", processTask.getTaskName(), "--output", dragenConfig.getLogFilePath(),
                     "-p", partition));
             if (processTask.isExclusive()) {
@@ -97,7 +97,7 @@ public class SlurmController implements SchedulerController {
 
     @Override
     public boolean cancelJob(String jobId) {
-        List<String> cmd = Arrays.asList("ssh", dragenConfig.getSlurmHost(), "scancel", jobId);
+        List<String> cmd = Arrays.asList("ssh", "-l", "thompson", dragenConfig.getSlurmHost(), "scancel", jobId);
         ProcessResult processResult = runProcess(cmd);
         return processResult.getExitValue() == 0;
     }
@@ -112,7 +112,7 @@ public class SlurmController implements SchedulerController {
     public JobInfo fetchJobInfo(long jobId) {
         String format = "--format=jobid,jobname,partition,account,alloccpus,state,exitcode,start,end,nodelist";
         List<JobInfo> jobInfoList = runProcesssParseList(Arrays.asList(
-                        "ssh", dragenConfig.getSlurmHost(), "sacct", "-j", String.valueOf(jobId), "-X", format, "-p"), JobInfo.class);
+                        "ssh", "-l", "thompson", dragenConfig.getSlurmHost(), "sacct", "-j", String.valueOf(jobId), "-X", format, "-p"), JobInfo.class);
         if (jobInfoList.size() > 0) {
             return jobInfoList.get(0);
         }
@@ -123,7 +123,7 @@ public class SlurmController implements SchedulerController {
     @Override
     public boolean holdJobs(List<Long> jobIds) {
         String joblist = StringUtils.join(jobIds, ",");
-        List<String> cmd = Arrays.asList("ssh", dragenConfig.getSlurmHost(), "scontrol", "hold", joblist);
+        List<String> cmd = Arrays.asList("ssh", "-l", "thompson", dragenConfig.getSlurmHost(), "scontrol", "hold", joblist);
         ProcessResult result = runProcess(cmd);
         return result.getExitValue() == 0;
     }
@@ -131,7 +131,7 @@ public class SlurmController implements SchedulerController {
     @Override
     public boolean releaseJobs(List<Long> jobIds) {
         String joblist = StringUtils.join(jobIds, ",");
-        List<String> cmd = Arrays.asList("ssh", dragenConfig.getSlurmHost(), "scontrol", "release", joblist);
+        List<String> cmd = Arrays.asList("ssh", "-l", "thompson", dragenConfig.getSlurmHost(), "scontrol", "release", joblist);
         ProcessResult result = runProcess(cmd);
         return result.getExitValue() == 0;
     }
