@@ -51,7 +51,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
-import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
@@ -66,13 +65,13 @@ public class PickWorkspaceActionBean extends CoreActionBean {
     public static final String ACTION_BEAN_URL = "/storage/pickWorkspace.action";
 
     // Events
-    private static final String EVT_INIT = "init";
-    private static final String EVT_PROCESS_BATCHES = "processBatches";
-    private static final String EVT_DOWNLOAD_XFER_FILE = "buildXferFile";
-    private static final String EVT_BULK_CHECKOUT = "processBulkCheckOut";
-    private static final String EVT_CLOSE_BATCHES = "closeBatches";
-    private static final String EVT_SHOW_PICK_VERIFY = "showVerifyPicks";
-    private static final String EVT_REGISTER_TRANSFERS = "registerTransfers";
+    static final String EVT_INIT = "init";
+    static final String EVT_PROCESS_BATCHES = "processBatches";
+    static final String EVT_DOWNLOAD_XFER_FILE = "buildXferFile";
+    static final String EVT_BULK_CHECKOUT = "processBulkCheckOut";
+    static final String EVT_CLOSE_BATCHES = "closeBatches";
+    static final String EVT_SHOW_PICK_VERIFY = "showVerifyPicks";
+    static final String EVT_REGISTER_TRANSFERS = "registerTransfers";
     // UI Resolutions
     private static final String UI_DEFAULT = "/storage/picklist_workspace.jsp";
     private static final String UI_BULK_CHECKOUT = "/storage/bulk_checkout.jsp";
@@ -114,7 +113,7 @@ public class PickWorkspaceActionBean extends CoreActionBean {
 
         batchSelectionList = new ArrayList<>();
         for (LabBatch batch : labBatchDao.findByTypeAndActiveStatus(LabBatch.LabBatchType.SRS, Boolean.TRUE)) {
-            batchSelectionList.add(new BatchSelectionData(batch.getLabBatchId(), batch.getBatchName(), false, false));
+            batchSelectionList.add(new BatchSelectionData(batch.getLabBatchId(), batch.getBatchName(), false, false, batch.getActive()));
         }
         return new ForwardResolution(UI_DEFAULT);
     }
@@ -147,13 +146,18 @@ public class PickWorkspaceActionBean extends CoreActionBean {
 
         List<LabBatch> batchListToAdd = new ArrayList<>();
         Set<Long> batchIdsToRemove = new HashSet<>();
+        int selectedCount = 0;
         for( BatchSelectionData batchSelectionData :  batchSelectionList ) {
+            if (batchSelectionData.isSelected) {
+                selectedCount++;
+            }
+
             // Data changed?
-            if( batchSelectionData.wasSelected != batchSelectionData.isSelected ) {
-                if( batchSelectionData.isSelected ) {
+            if (batchSelectionData.wasSelected != batchSelectionData.isSelected) {
+                if (batchSelectionData.isSelected) {
                     LabBatch thebatch = labBatchDao.findById(LabBatch.class, batchSelectionData.batchId);
-                    if( thebatch == null ) {
-                        addMessage(batchSelectionData.batchName + " not found." );
+                    if (thebatch == null) {
+                        addMessage(batchSelectionData.batchName + " not found.");
                     } else {
                         addMessage(batchSelectionData.batchName + " added");
                         batchListToAdd.add(thebatch);
@@ -176,18 +180,18 @@ public class PickWorkspaceActionBean extends CoreActionBean {
         // Reset any targets that may have been assigned on the client side, a change hoses the layout
         for( PickerDataRow row : pickerDataRows ) {
             row.setTargetRack(null);
-            for( PickerVessel pickerVessel : row.getPickerVessels()) {
+            for (PickerVessel pickerVessel : row.getPickerVessels()) {
                 pickerVessel.setTargetPosition(null);
                 pickerVessel.setTargetVessel(null);
             }
         }
 
-        for( LabBatch batchToAdd : batchListToAdd ) {
+        for (LabBatch batchToAdd : batchListToAdd) {
             pickerDataRows.addAll(getDataRowsForBatch(batchToAdd));
         }
 
-        if( pickerDataRows.isEmpty()) {
-            addMessage("No batches selected.");
+        if (pickerDataRows.isEmpty() && selectedCount > 0) {
+            addMessage("No available batch vessels.");
         }
 
         return new ForwardResolution(UI_DEFAULT);
@@ -245,7 +249,7 @@ public class PickWorkspaceActionBean extends CoreActionBean {
 
         if( getContext().getValidationErrors().isEmpty() ) {
             byte[] comma = ",".getBytes();
-            byte[] crlf = {0x0D, 0x0A};
+            byte[] crlf = {0x0D, 0x0A}; // XL20 is a Windows interface
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             try {
                 for( String[] srcTarg : sourceTargetPickList ) {
@@ -798,11 +802,12 @@ public class PickWorkspaceActionBean extends CoreActionBean {
         // JSON
         BatchSelectionData(){}
 
-        BatchSelectionData(Long batchId, String batchName, boolean wasSelected, boolean isSelected){
+        BatchSelectionData(Long batchId, String batchName, boolean wasSelected, boolean isSelected, boolean isActive) {
             this.batchId = batchId;
             this.batchName = batchName;
             this.wasSelected = wasSelected;
             this.isSelected = isSelected;
+            this.isActive = isActive;
         }
 
         public Long getBatchId() {

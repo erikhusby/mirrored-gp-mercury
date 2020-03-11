@@ -71,7 +71,7 @@ public class SrsBatchActionBeanTest extends BaseEventTest {
         workflowBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
 
-        //Build Event History
+        // Build Event History
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, null);
 
     }

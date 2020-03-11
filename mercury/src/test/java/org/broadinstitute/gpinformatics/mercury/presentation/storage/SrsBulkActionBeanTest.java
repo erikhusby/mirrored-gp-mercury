@@ -51,8 +51,6 @@ public class SrsBulkActionBeanTest extends BaseEventTest {
     private UserBean testUserBean;
 
     private Field storageIdField;
-    private Field vesselIdField;
-    private Field vesselEventCountField;
 
     private RackOfTubes rackOfTubes01, rackOfTubes02;
     private TubeFormation tubes01, tubes02;
@@ -88,9 +86,9 @@ public class SrsBulkActionBeanTest extends BaseEventTest {
         try {
             storageIdField = StorageLocation.class.getDeclaredField("storageLocationId");
             storageIdField.setAccessible(true);
-            vesselIdField = LabVessel.class.getDeclaredField("labVesselId");
+            Field vesselIdField = LabVessel.class.getDeclaredField("labVesselId");
             vesselIdField.setAccessible(true);
-            vesselEventCountField = LabVessel.class.getDeclaredField("inPlaceEventsCount");
+            Field vesselEventCountField = LabVessel.class.getDeclaredField("inPlaceEventsCount");
             vesselEventCountField.setAccessible(true);
         } catch (Exception ex) {
             System.out.println("Failure enabling reflection: " + ex.getMessage());
@@ -98,79 +96,79 @@ public class SrsBulkActionBeanTest extends BaseEventTest {
         }
 
         parent = new StorageLocation("Freezer", StorageLocation.LocationType.FREEZER, null);
-        when(storageLocationDaoMock.findById(StorageLocation.class, Long.valueOf(1))).thenReturn(parent);
+        when(storageLocationDaoMock.findById(StorageLocation.class, 1L)).thenReturn(parent);
 
         shelf1 = new StorageLocation("Shelf 1", StorageLocation.LocationType.SHELF, parent);
-        when(storageLocationDaoMock.findById(StorageLocation.class, Long.valueOf(10))).thenReturn(shelf1);
+        when(storageLocationDaoMock.findById(StorageLocation.class, 10L)).thenReturn(shelf1);
         rack1 = new StorageLocation("Rack 1", StorageLocation.LocationType.GAUGERACK, shelf1);
-        when(storageLocationDaoMock.findById(StorageLocation.class, Long.valueOf(100))).thenReturn(rack1);
+        when(storageLocationDaoMock.findById(StorageLocation.class, 100L)).thenReturn(rack1);
         slot1 = new StorageLocation("Slot 1", StorageLocation.LocationType.SLOT, rack1);
         slot1.setStorageCapacity(1);
-        when(storageLocationDaoMock.findById(StorageLocation.class, Long.valueOf(1000))).thenReturn(slot1);
+        when(storageLocationDaoMock.findById(StorageLocation.class, 1000L)).thenReturn(slot1);
         when(storageLocationDaoMock.getLocationTrail(slot1)).thenReturn("Trail to slot1");
         // Bypass criteria query
         when(storageLocationDaoMock.getSlotStoredContainerCount(slot1)).thenReturn(1);
         slot2 = new StorageLocation("Slot 2", StorageLocation.LocationType.SLOT, rack1);
         slot2.setStorageCapacity(1);
-        when(storageLocationDaoMock.findById(StorageLocation.class, Long.valueOf(2000))).thenReturn(slot2);
+        when(storageLocationDaoMock.findById(StorageLocation.class, 2000L)).thenReturn(slot2);
         when(storageLocationDaoMock.getLocationTrail(slot2)).thenReturn("Trail to slot2");
         rack2 = new StorageLocation("Rack 2", StorageLocation.LocationType.GAUGERACK, shelf1);
-        when(storageLocationDaoMock.findById(StorageLocation.class, Long.valueOf(200))).thenReturn(rack2);
+        when(storageLocationDaoMock.findById(StorageLocation.class, 200L)).thenReturn(rack2);
         slot3 = new StorageLocation("Slot 3", StorageLocation.LocationType.SLOT, rack2);
         slot3.setStorageCapacity(1);
         when(storageLocationDaoMock.getLocationTrail(slot3)).thenReturn("Trail to slot3");
-        when(storageLocationDaoMock.findById(StorageLocation.class, Long.valueOf(3000))).thenReturn(slot3);
+        when(storageLocationDaoMock.findById(StorageLocation.class, 3000L)).thenReturn(slot3);
         slot4 = new StorageLocation("Slot 4", StorageLocation.LocationType.SLOT, rack2);
         slot4.setStorageCapacity(1);
-        when(storageLocationDaoMock.findById(StorageLocation.class, Long.valueOf(4000))).thenReturn(slot4);
+        when(storageLocationDaoMock.findById(StorageLocation.class, 4000L)).thenReturn(slot4);
         when(storageLocationDaoMock.getLocationTrail(slot4)).thenReturn("Trail to slot4");
 
         shelf2 = new StorageLocation("Shelf 2", StorageLocation.LocationType.SHELF, parent);
-        when(storageLocationDaoMock.findById(StorageLocation.class, Long.valueOf(20))).thenReturn(shelf2);
+        when(storageLocationDaoMock.findById(StorageLocation.class, 20L)).thenReturn(shelf2);
         rack3 = new StorageLocation("Rack 1", StorageLocation.LocationType.GAUGERACK, shelf2);
-        when(storageLocationDaoMock.findById(StorageLocation.class, Long.valueOf(300))).thenReturn(rack3);
+        when(storageLocationDaoMock.findById(StorageLocation.class, 300L)).thenReturn(rack3);
         slot5 = new StorageLocation("Slot 5", StorageLocation.LocationType.SLOT, rack3);
         slot5.setStorageCapacity(1);
-        when(storageLocationDaoMock.findById(StorageLocation.class, Long.valueOf(5000))).thenReturn(slot5);
+        when(storageLocationDaoMock.findById(StorageLocation.class, 5000L)).thenReturn(slot5);
         slot6 = new StorageLocation("Slot 6", StorageLocation.LocationType.SLOT, rack3);
         slot6.setStorageCapacity(1);
-        when(storageLocationDaoMock.findById(StorageLocation.class, Long.valueOf(6000))).thenReturn(slot6);
+        when(storageLocationDaoMock.findById(StorageLocation.class, 6000L)).thenReturn(slot6);
         rack4 = new StorageLocation("Rack 2", StorageLocation.LocationType.GAUGERACK, shelf2);
-        when(storageLocationDaoMock.findById(StorageLocation.class, Long.valueOf(400))).thenReturn(rack4);
+        when(storageLocationDaoMock.findById(StorageLocation.class, 400L)).thenReturn(rack4);
         slot7 = new StorageLocation("Slot 7", StorageLocation.LocationType.SLOT, rack4);
         slot7.setStorageCapacity(1);
-        when(storageLocationDaoMock.findById(StorageLocation.class, Long.valueOf(7000))).thenReturn(slot7);
+        when(storageLocationDaoMock.findById(StorageLocation.class, 7000L)).thenReturn(slot7);
         slot8 = new StorageLocation("Slot 8", StorageLocation.LocationType.SLOT, rack4);
         slot8.setStorageCapacity(1);
-        when(storageLocationDaoMock.findById(StorageLocation.class, Long.valueOf(8000))).thenReturn(slot8);
+        when(storageLocationDaoMock.findById(StorageLocation.class, 8000L)).thenReturn(slot8);
 
-        parent.setChildrenStorageLocation(new HashSet(Arrays.asList(shelf1, shelf2)));
-        shelf1.setChildrenStorageLocation(new HashSet(Arrays.asList(rack1, rack2)));
-        rack1.setChildrenStorageLocation(new HashSet(Arrays.asList(slot1, slot2)));
-        rack2.setChildrenStorageLocation(new HashSet(Arrays.asList(slot3, slot4)));
-        shelf2.setChildrenStorageLocation(new HashSet(Arrays.asList(rack3, rack4)));
-        rack3.setChildrenStorageLocation(new HashSet(Arrays.asList(slot5, slot6)));
-        rack4.setChildrenStorageLocation(new HashSet(Arrays.asList(slot7, slot8)));
+        parent.setChildrenStorageLocation(new HashSet<>(Arrays.asList(shelf1, shelf2)));
+        shelf1.setChildrenStorageLocation(new HashSet<>(Arrays.asList(rack1, rack2)));
+        rack1.setChildrenStorageLocation(new HashSet<>(Arrays.asList(slot1, slot2)));
+        rack2.setChildrenStorageLocation(new HashSet<>(Arrays.asList(slot3, slot4)));
+        shelf2.setChildrenStorageLocation(new HashSet<>(Arrays.asList(rack3, rack4)));
+        rack3.setChildrenStorageLocation(new HashSet<>(Arrays.asList(slot5, slot6)));
+        rack4.setChildrenStorageLocation(new HashSet<>(Arrays.asList(slot7, slot8)));
 
         try {
-            storageIdField.set(parent, new Long(1L));
+            storageIdField.set(parent, 1L);
 
-            storageIdField.set(shelf1, new Long(10L));
-            storageIdField.set(shelf2, new Long(20L));
+            storageIdField.set(shelf1, 10L);
+            storageIdField.set(shelf2, 20L);
 
-            storageIdField.set(rack1, new Long(100L));
-            storageIdField.set(rack2, new Long(200L));
-            storageIdField.set(rack3, new Long(300L));
-            storageIdField.set(rack4, new Long(400L));
+            storageIdField.set(rack1, 100L);
+            storageIdField.set(rack2, 200L);
+            storageIdField.set(rack3, 300L);
+            storageIdField.set(rack4, 400L);
 
-            storageIdField.set(slot1, new Long(1000L));
-            storageIdField.set(slot2, new Long(2000L));
-            storageIdField.set(slot3, new Long(3000L));
-            storageIdField.set(slot4, new Long(4000L));
-            storageIdField.set(slot5, new Long(5000L));
-            storageIdField.set(slot6, new Long(6000L));
-            storageIdField.set(slot7, new Long(7000L));
-            storageIdField.set(slot8, new Long(8000L));
+            storageIdField.set(slot1, 1000L);
+            storageIdField.set(slot2, 2000L);
+            storageIdField.set(slot3, 3000L);
+            storageIdField.set(slot4, 4000L);
+            storageIdField.set(slot5, 5000L);
+            storageIdField.set(slot6, 6000L);
+            storageIdField.set(slot7, 7000L);
+            storageIdField.set(slot8, 8000L);
 
         } catch (Exception ex) {
             System.out.println("Failure using reflection to set storageLocationId: " + ex.getMessage());
@@ -202,6 +200,7 @@ public class SrsBulkActionBeanTest extends BaseEventTest {
                 , 1L, BSPManagerFactoryStub.QA_DUDE_USER_ID, "");
         rack01_inPlace.setAncillaryInPlaceVessel(rackOfTubes01);
         rack01_inPlace.setInPlaceLabVessel(tubes01);
+        rack01_inPlace.setStorageLocation(slot1);
         rackOfTubes01.getInPlaceLabEvents().add(rack01_inPlace);
         Assert.assertEquals(rackOfTubes01.getAncillaryInPlaceEvents().size(), 1);
         Assert.assertEquals(rackOfTubes01.getStorageLocation().getLabel(), "Slot 01");
@@ -347,6 +346,10 @@ public class SrsBulkActionBeanTest extends BaseEventTest {
         Assert.assertEquals("Result status should be 'success'", "success", result.getString("status"));
         String feedback = result.getString("feedbackMsg");
         Assert.assertTrue("Unexpected result message: " + feedback, feedback.contains(rackOfTubes02.getLabel()));
+
+        for (BarcodedTube tube : tubes01.getContainerRole().getContainedVessels()) {
+            Assert.assertEquals("Invalid/missing storage location", "Slot 01", tube.getStorageLocation().getLabel());
+        }
     }
 
     /**
@@ -356,8 +359,6 @@ public class SrsBulkActionBeanTest extends BaseEventTest {
         MockRoundtrip trip = StripesMockTestUtils.createMockRoundtrip(BulkStorageOpsActionBean.class
                 , storageLocationDaoMock, storageEjbMock, testUserBean);
         trip.addParameter("barcode", rackOfTubes01.getLabel());
-        // TODO: JMS I give up, time is being hoovered up because the StorageLocation I added has disappeared:  "Rack not in storage."
-        rackOfTubes01.setStorageLocation(slot1);
         when(storageLocationDaoMock.findSingle(LabVessel.class, LabVessel_.label, rackOfTubes01.getLabel())).thenReturn(rackOfTubes01);
         trip.execute(BulkStorageOpsActionBean.EVT_CHECK_OUT);
         JsonObject result = Json.createReader(new StringReader(trip.getOutputString())).readObject();
@@ -365,6 +366,10 @@ public class SrsBulkActionBeanTest extends BaseEventTest {
         Assert.assertEquals("Result status should be 'success'", "success", result.getString("status"));
         String feedback = result.getString("feedbackMsg");
         Assert.assertTrue("Unexpected result message: " + feedback, feedback.contains(rackOfTubes01.getLabel()));
+
+        for (BarcodedTube tube : tubes01.getContainerRole().getContainedVessels()) {
+            Assert.assertNull("Checkout didn't remove torage location", tube.getStorageLocation());
+        }
     }
 
     /**
@@ -374,8 +379,6 @@ public class SrsBulkActionBeanTest extends BaseEventTest {
         MockRoundtrip trip = StripesMockTestUtils.createMockRoundtrip(BulkStorageOpsActionBean.class
                 , storageLocationDaoMock, storageEjbMock, testUserBean);
         trip.addParameter("barcode", rackOfTubes01.getLabel());
-        // TODO: JMS I give up, time is being hoovered up because the StorageLocation I added has disappeared:  "Rack not in storage."
-        rackOfTubes01.setStorageLocation(slot1);
         rackOfTubes01.getAncillaryInPlaceEvents().clear();
         when(storageLocationDaoMock.findSingle(LabVessel.class, LabVessel_.label, rackOfTubes01.getLabel())).thenReturn(rackOfTubes01);
         trip.execute(BulkStorageOpsActionBean.EVT_CHECK_OUT);
@@ -429,19 +432,20 @@ public class SrsBulkActionBeanTest extends BaseEventTest {
     public void testCheckInTube() throws Exception {
         BarcodedTube tube = new BarcodedTube("loosetube");
         StorageLocation loose = new StorageLocation("Loose", StorageLocation.LocationType.LOOSE, null);
-        storageIdField.set(loose, Long.valueOf(22));
+        storageIdField.set(loose, 22L);
         MockRoundtrip trip = StripesMockTestUtils.createMockRoundtrip(BulkStorageOpsActionBean.class
                 , storageLocationDaoMock, storageEjbMock, testUserBean);
         trip.addParameter("barcode", tube.getLabel());
         trip.addParameter("storageLocationId", "22");
         when(storageLocationDaoMock.findSingle(LabVessel.class, LabVessel_.label, tube.getLabel())).thenReturn(tube);
-        when(storageLocationDaoMock.findById(StorageLocation.class, Long.valueOf(22))).thenReturn(loose);
+        when(storageLocationDaoMock.findById(StorageLocation.class, 22L)).thenReturn(loose);
         trip.execute(BulkStorageOpsActionBean.EVT_CHECK_IN);
         JsonObject result = Json.createReader(new StringReader(trip.getOutputString())).readObject();
         trip.getContext().getFilters().get(0).destroy();
         Assert.assertEquals("Result status should be 'success'", "success", result.getString("status"));
         String feedback = result.getString("feedbackMsg");
         Assert.assertTrue("Unexpected result message: " + feedback, feedback.contains(tube.getLabel()));
+        Assert.assertEquals("Unexpected storage location", "Loose", tube.getStorageLocation().getLabel());
     }
 
 }

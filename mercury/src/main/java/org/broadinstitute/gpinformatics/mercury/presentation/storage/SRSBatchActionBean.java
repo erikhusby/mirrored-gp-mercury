@@ -273,7 +273,7 @@ public class SRSBatchActionBean extends CoreActionBean {
         batchSelectionList = new ArrayList<>();
         // TODO: JMS Add option for inactive batches
         for (LabBatch batch : labBatchDao.findByType(LabBatch.LabBatchType.SRS)) {
-            PickWorkspaceActionBean.BatchSelectionData batchData = new PickWorkspaceActionBean.BatchSelectionData(batch.getLabBatchId(), batch.getBatchName(), false, false);
+            PickWorkspaceActionBean.BatchSelectionData batchData = new PickWorkspaceActionBean.BatchSelectionData(batch.getLabBatchId(), batch.getBatchName(), false, false, batch.getActive());
             batchData.setActive(batch.getActive());
             batchSelectionList.add(batchData);
         }
