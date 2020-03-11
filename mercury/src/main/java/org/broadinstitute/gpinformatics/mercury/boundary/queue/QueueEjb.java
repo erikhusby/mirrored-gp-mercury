@@ -353,9 +353,14 @@ public class QueueEjb {
 
         List<QueueGrouping> queueGroupings = new ArrayList<>(genericQueue.getQueueGroupings());
 
+        if (positionToMoveTo < 1 || positionToMoveTo > queueGroupings.size()) {
+            messageCollection.addError("Position to move must be between 1 and " + queueGroupings.size());
+            return;
+        }
         for (QueueGrouping queueGrouping : queueGroupings) {
             if (queueGrouping.getQueueGroupingId().equals(queueGroupingId)) {
                 queueGroupingBeingMoved = queueGrouping;
+                break;
             }
         }
 
@@ -365,14 +370,15 @@ public class QueueEjb {
 
             for (QueueGrouping queueGrouping : queueGroupings) {
                 if (positionToMoveTo.longValue() == currentIndex) {
-                    queueGroupingBeingMoved.setSortOrder(currentIndex++);
-                    queueGroupingBeingMoved.setQueuePriority(QueuePriority.ALTERED);
+                    currentIndex++;
                 }
 
                 if (!queueGrouping.getQueueGroupingId().equals(queueGroupingId)) {
                     queueGrouping.setSortOrder(currentIndex++);
                 }
             }
+            queueGroupingBeingMoved.setSortOrder(positionToMoveTo.longValue());
+            queueGroupingBeingMoved.setQueuePriority(QueuePriority.ALTERED);
         }
     }
 
