@@ -370,15 +370,15 @@ public class QueueEjb {
 
             for (QueueGrouping queueGrouping : queueGroupings) {
                 if (positionToMoveTo.longValue() == currentIndex) {
-                    queueGroupingBeingMoved.setSortOrder(currentIndex++);
-                    queueGroupingBeingMoved.setQueuePriority(QueuePriority.ALTERED);
+                    currentIndex++;
                 }
 
                 if (!queueGrouping.getQueueGroupingId().equals(queueGroupingId)) {
                     queueGrouping.setSortOrder(currentIndex++);
                 }
             }
-            // todo jmt sanity check for duplicate positions?
+            queueGroupingBeingMoved.setSortOrder(positionToMoveTo.longValue());
+            queueGroupingBeingMoved.setQueuePriority(QueuePriority.ALTERED);
         }
     }
 
