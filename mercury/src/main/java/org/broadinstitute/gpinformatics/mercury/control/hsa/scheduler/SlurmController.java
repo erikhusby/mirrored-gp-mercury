@@ -22,6 +22,8 @@ import java.util.List;
 public class SlurmController implements SchedulerController {
     private static final Log log = LogFactory.getLog(SlurmController.class);
 
+    private static final int NICE_DEFAULT = 500;
+
     @Inject
     private ShellUtils shellUtils;
 
@@ -40,7 +42,7 @@ public class SlurmController implements SchedulerController {
     }
 
     /**
-     * Schedule a job through slurm with exclusive flag - meaning job allocation can not share nodes with other running jobs.
+     * Schedule a job through slurm. Tasks can override fields to specify if its exclusive and a cpu limit.
      * @param partition - Request a specific partition to be used
      * @param processTask - Task object defining the command line argument to be supplied
      * @return Process ID of the task being started
@@ -51,7 +53,7 @@ public class SlurmController implements SchedulerController {
 
         String dragenCmd = "";
         if (processTask.requiresDragenPrefix()) {
-            dragenCmd = String.format("--wrap=\"%sdragen_reset && %s%s\"", dragenConfig.getDragenPath(),
+            dragenCmd = String.format("--wrap=\"%s%s\"", dragenConfig.getDragenPath(),
                     dragenConfig.getDragenPath(), processTask.getCommandLineArgument());
         } else {
             if (processTask.hasProlog()) {
@@ -68,11 +70,12 @@ public class SlurmController implements SchedulerController {
 
         if (partition == null) {
             cmd = Arrays.asList( "ssh", dragenConfig.getSlurmHost(), "sbatch", "--exclusive",
-                    "-J", processTask.getTaskName(), "--output", dragenConfig.getLogFilePath(), dragenCmd);
+                    "-J", processTask.getTaskName(), "--output", dragenConfig.getLogFilePath(),
+                    "--nice=" + NICE_DEFAULT, dragenCmd);
         } else {
             cmd = new ArrayList<>(Arrays.asList( "ssh", dragenConfig.getSlurmHost(), "sbatch",
                     "-J", processTask.getTaskName(), "--output", dragenConfig.getLogFilePath(),
-                    "-p", partition));
+                    "-p", partition, "--nice=" + NICE_DEFAULT));
             if (processTask.isExclusive()) {
                 cmd.add( "--exclusive");
             }

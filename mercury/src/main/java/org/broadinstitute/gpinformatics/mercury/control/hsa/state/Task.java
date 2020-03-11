@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.state;
 
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
+import org.broadinstitute.gpinformatics.mercury.presentation.hsa.TaskDecision;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
@@ -45,6 +47,11 @@ public abstract class Task {
 
     @Enumerated(EnumType.STRING)
     private TaskActionTime taskActionTime;
+
+    /** This is actually OneToOne, but using ManyToOne to avoid N+1 selects */
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
+    @JoinColumn(name = "TASK_DECISION")
+    private TaskDecision taskDecision;
 
     private String taskName;
 
@@ -134,7 +141,22 @@ public abstract class Task {
         this.errorMessage = errorMessage;
     }
 
+    public TaskDecision getTaskDecision() {
+        return taskDecision;
+    }
+
+    public void setTaskDecision(TaskDecision taskDecision) {
+        this.taskDecision = taskDecision;
+    }
+
     public boolean isComplete() {
         return getStatus() == Status.COMPLETE;
+    }
+
+    public boolean isOverrideOutOfSpec() {
+        if (taskDecision == null) {
+            return false;
+        }
+        return taskDecision.getDecision() == TaskDecision.Decision.OVERRIDE_TO_IN_SPEC;
     }
 }

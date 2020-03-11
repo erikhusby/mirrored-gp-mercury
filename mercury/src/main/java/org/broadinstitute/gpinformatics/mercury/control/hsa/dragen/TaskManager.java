@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.AlignmentMetricsTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.BclMetricsTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.CrosscheckFingerprintUploadTaskHandler;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.DeleteFolderTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.DemultiplexMetricsTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.FingerprintTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.JobInfo;
@@ -40,6 +41,9 @@ public class TaskManager {
     @Inject
     private CrosscheckFingerprintUploadTaskHandler crosscheckFingerprintUploadTaskHandler;
 
+    @Inject
+    private DeleteFolderTaskHandler deleteFolderTaskHandler;
+
     public void fireEvent(Task task, SchedulerContext schedulerContext) throws InterruptedException {
         task.setStatus(Status.QUEUED);
         task.setQueuedTime(new Date());
@@ -60,6 +64,12 @@ public class TaskManager {
             fingerprintTaskHandler.handleTask(OrmUtil.proxySafeCast(task, FingerprintUploadTask.class), schedulerContext);
         } else if (OrmUtil.proxySafeIsInstance(task, CrosscheckFingerprintUploadTask.class)) {
             crosscheckFingerprintUploadTaskHandler.handleTask(task, schedulerContext);
+        } else if (OrmUtil.proxySafeIsInstance(task, WaitForReviewTask.class)) {
+            // TODO JW handle better as its own state to avoid entering in the normal sense?
+            task.setStatus(Status.RUNNING);
+            task.getState().getFiniteStateMachine().setStatus(Status.TRIAGE);
+        } else if (OrmUtil.proxySafeIsInstance(task, DeleteFolderTask.class)) {
+            task.setStatus(Status.RUNNING);
         }
     }
 
@@ -93,6 +103,13 @@ public class TaskManager {
             Status status = file.exists() ? Status.COMPLETE : Status.RUNNING;
             Date endTime = file.exists() ? new Date(file.lastModified()) : null;
             return Pair.of(status, endTime);
+        } else if (OrmUtil.proxySafeIsInstance(task, WaitForReviewTask.class)) {
+            return Pair.of(Status.RUNNING, null);
+        } else if (OrmUtil.proxySafeIsInstance(task, DeleteFolderTask.class)) {
+            deleteFolderTaskHandler.handleTask(OrmUtil.proxySafeCast(task, DeleteFolderTask.class), schedulerContext);
+            if (task.isComplete()) {
+                return Pair.of(task.getStatus(), new Date());
+            }
         }
 
         return Pair.of(Status.UNKNOWN, null);
