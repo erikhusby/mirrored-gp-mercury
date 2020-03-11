@@ -22,7 +22,7 @@ public class DragenInfoFetcher {
     private DragenConfig dragenConfig;
 
     public String getVersion(String node) {
-        List<String> cmds = Arrays.asList("ssh", node.trim(), buildCommand("-V"));
+        List<String> cmds = Arrays.asList("ssh", "-l", "thompson", node.trim(), buildCommand("-V"));
         ProcessResult processResult = runProcess(cmds);
         if (processResult.getExitValue() != 0) {
             String output = processResult.hasOutput() ? processResult.getOutput().getString() : "";
