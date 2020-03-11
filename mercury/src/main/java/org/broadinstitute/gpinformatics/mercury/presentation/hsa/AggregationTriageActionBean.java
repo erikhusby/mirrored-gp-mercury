@@ -196,7 +196,7 @@ public class AggregationTriageActionBean extends CoreActionBean {
 
     @ValidationMethod(on = {UPDATE_IN_SPEC, UPDATE_OOS_ACTION})
     public void validateSamplesSelected() {
-        if (selectedSamples.isEmpty()) {
+        if (selectedSamples == null || selectedSamples.isEmpty()) {
             addValidationError("selectedIds", "Please select a sample.");
         } else {
             List<TriageDto> allDtos = ListUtils.union(passingTriageDtos, oosTriageDtos);

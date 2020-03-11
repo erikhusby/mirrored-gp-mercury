@@ -180,7 +180,7 @@
                     <div class="control-group">
                         <stripes:label for="commentText" class="control-label"/>
                         <div class="controls">
-                            <stripes:textarea id="commentText" name="commentText"/>
+                            <stripes:textarea id="inSpecComment" name="commentText"/>
                         </div>
                     </div>
                     <div class="control-group">
@@ -209,7 +209,7 @@
                     <div class="control-group">
                         <stripes:label for="commentText" class="control-label"/>
                         <div class="controls">
-                            <stripes:textarea id="commentText" name="commentText"/>
+                            <stripes:textarea id="oosComment" name="commentText"/>
                         </div>
                     </div>
                     <div class="control-group">
