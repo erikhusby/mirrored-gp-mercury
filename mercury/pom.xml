@@ -199,7 +199,7 @@
         <!--<passwords.properties>must be specified as the location of the password properties file</passwords.properties>-->
 
         <!-- Default database settings for datawh Liquibase plugin -->
-        <datawh.database.url>jdbc:postgresql://localhost/postgres</datawh.database.url>
+        <datawh.url>jdbc:postgresql://localhost/postgres</datawh.url>
 
         <!-- Note - For the Feature branch builds, the mercury.fb.ip must contain an @ otherwise the resources-fb/mercury-dev-ds.xml will not be syntactically correct.
         The @ is a meta character to the maven filtering such that the combination of
@@ -926,6 +926,7 @@
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.url>jdbc:oracle:thin:${mercury.fb.ip}:1521:gpgold</database.url>
+                <datawh.url>jdbc:oracle:thin:@seqdev.broad.mit.edu:1521:seqdev3</datawh.url>
                 <passwords.properties>src/test/resources-fb/fb-passwords.properties</passwords.properties>
             </properties>
 
@@ -949,6 +950,7 @@
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.url>jdbc:oracle:thin:@vmgpinform:1521:gpinfdev</database.url>
+                <datawh.url>jdbc:oracle:thin:@seqdev.broad.mit.edu:1521:seqdev3</datawh.url>
                 <passwords.properties>src/test/resources/mercury-dev-passwords.properties</passwords.properties>
             </properties>
             <build>
@@ -986,6 +988,7 @@
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.url>jdbc:oracle:thin:@gpinfqa:1521:gpinfqa</database.url>
+                <datawh.url>jdbc:oracle:thin:@seqdev.broad.mit.edu:1521:seqdev3</datawh.url>
                 <passwords.properties>src/test/resources/mercury-qa-passwords.properties</passwords.properties>
             </properties>
             <build>
@@ -1022,6 +1025,7 @@
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.url>jdbc:oracle:thin:@gpinfqa:1521:gpinfqa</database.url>
+                <datawh.url>jdbc:oracle:thin:@seqdev.broad.mit.edu:1521:seqdev3</datawh.url>
                 <passwords.properties>src/test/resources/mercury-qa-passwords.properties</passwords.properties>
             </properties>
         </profile>
@@ -1037,6 +1041,7 @@
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.url>jdbc:oracle:thin:@gpinfoprod:1521:gpinfprd</database.url>
+                <datawh.url>jdbc:oracle:thin:@gpinfoprod:1521:gpinfprd</datawh.url>
                 <!-- The production password is stored outside of the GIT repo in the Release Engineer's home directory -->
                 <passwords.properties>${user.home}/mercury-prod-passwords.properties</passwords.properties>
             </properties>
@@ -1181,10 +1186,10 @@ nodePrinter.print(webapp)
                                 <phase>initialize</phase>
                                 <configuration>
                                     <changeLogFile>src/main/db/datawh.changelog-master.xml</changeLogFile>
-                                    <driver>oracle.jdbc.driver.OracleDriver</driver>
-                                    <url>jdbc:oracle:thin:@seqdev.broad.mit.edu:1521:seqdev3</url>
+                                    <driver>${database.driver}</driver>
+                                    <url>${datawh.url}</url>
                                     <username>mercurydw</username>
-                                    <password>seq_dev3</password>
+                                    <password>${datawh.password}</password>
                                     <defaultSchemaName>mercurydw</defaultSchemaName>
                                     <promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
                                 </configuration>
