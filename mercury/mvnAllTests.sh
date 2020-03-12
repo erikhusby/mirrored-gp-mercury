@@ -67,7 +67,8 @@ EOF
 if [ -e "/broad/tools/scripts/useuse" ]
 then
     source /broad/tools/scripts/useuse
-    use Maven-3.1
+    export MAVEN2_HOME=/prodinfo/prod3pty/apache-maven-3.6.3
+    PATH=$MAVEN2_HOME/bin:$PATH
     use $JAVA_USE
 else
     echo "Unable to set $JAVA_USE"

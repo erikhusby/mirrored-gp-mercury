@@ -28,9 +28,10 @@ source /broad/tools/scripts/useuse
 unuse Maven-2.2
 unuse Java-1.6-Prodinfo
 unuse Git-2.0
-use Maven-3.1
-use Java-1.7
-use Git-1.8
+export MAVEN2_HOME=/prodinfo/prod3pty/apache-maven-3.6.3
+PATH=$MAVEN2_HOME/bin:$PATH
+use Java-1.8
+use Git-2.5
 NOCOMMIT=0
 
 while getopts "hn" OPTION
